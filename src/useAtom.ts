@@ -8,9 +8,9 @@ const isWritable = (
   atom: Atom<unknown> | WritableAtom<unknown>
 ): atom is WritableAtom<unknown> => !!(atom as WritableAtom<unknown>).write
 
-export function useAtom<Value>(
-  atom: WritableAtom<Value>
-): [Value, Dispatch<SetStateAction<Value>>]
+export function useAtom<WriteValue, Value>(
+  atom: WritableAtom<WriteValue, Value>
+): [Value, Dispatch<SetStateAction<WriteValue>>]
 export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 
 export function useAtom<Value>(atom: Atom<Value> | WritableAtom<Value>) {

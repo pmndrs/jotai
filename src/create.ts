@@ -2,10 +2,13 @@ import { Atom, WritableAtom } from './types'
 
 type NonPromise<T> = T extends Promise<unknown> ? never : T
 
-export function create<Value>(options: { default: Value }): WritableAtom<Value>
-
+// primitive atom
 export function create<Value>(options: {
-  read: (arg: { get: <V>(a: Atom<V>) => V }) => NonPromise<Value>
+  default: Value
+}): WritableAtom<Value, Value>
+
+// write-only atom
+export function create<Value>(options: {
   write: (
     arg: {
       get: <V>(a: Atom<V>) => V
@@ -13,23 +16,38 @@ export function create<Value>(options: {
     },
     newValue: Value
   ) => void | Promise<void>
-}): WritableAtom<Value>
+}): WritableAtom<Value, never>
 
-export function create<Value>(options: {
+// writable derived atom
+export function create<WriteValue, Value>(options: {
+  read: (arg: { get: <V>(a: Atom<V>) => V }) => NonPromise<Value>
+  write: (
+    arg: {
+      get: <V>(a: Atom<V>) => V
+      set: <V>(a: WritableAtom<V>, v: V) => void
+    },
+    newValue: WriteValue
+  ) => void | Promise<void>
+}): WritableAtom<WriteValue, Value>
+
+// async writable derived atom
+export function create<WriteValue, Value>(options: {
   read: (arg: { get: <V>(a: Atom<V>) => V }) => Promise<Value>
   write: (
     arg: {
       get: <V>(a: Atom<V>) => V
       set: <V>(a: WritableAtom<V>, v: V) => void
     },
-    newValue: Value
+    newValue: WriteValue
   ) => void | Promise<void>
-}): WritableAtom<Value | null>
+}): WritableAtom<WriteValue, Value | null>
 
+// read-only derived atom
 export function create<Value>(options: {
   read: (arg: { get: <V>(a: Atom<V>) => V }) => NonPromise<Value>
 }): Atom<Value>
 
+// async read-only derived atom
 export function create<Value>(options: {
   write: (arg: { get: <V>(a: Atom<V>) => V }) => Promise<Value>
 }): Atom<Value | null>
@@ -50,6 +68,7 @@ export function create<Value>(options: {
     default: (options.default ?? null) as Value | null,
   }
   if (atom.read) {
+    // derived atom
     const value = atom.read({
       get: a => a.default,
     })
@@ -60,8 +79,12 @@ export function create<Value>(options: {
     } else {
       atom.default = value
     }
+  } else if (atom.write) {
+    // write-only atom
+    atom.read = () => undefined as any
   } else {
-    atom.read = arg => arg.get(atom as WritableAtom<Value>)
+    // primitive atom
+    atom.read = arg => arg.get(atom as WritableAtom<Value, Value>)
     atom.write = (arg, newValue) =>
       arg.set(atom as WritableAtom<Value>, newValue)
   }

@@ -23,6 +23,8 @@ const countAtom = create({
 })
 ```
 
+You can create as many primitive atoms as you want.
+
 ### Wrap entire component with Provider
 
 ```jsx
@@ -74,7 +76,6 @@ Just like an action.
 import { create } from 'jotai'
 
 const multiplyCountAtom = create({
-  read: () => undefined, // FIXME it should be omitted
   write: ({ get, set }, multiplicator) => set(countAtom, get(countAtom) * multiplicator),
 })
 
