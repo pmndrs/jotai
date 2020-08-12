@@ -11,15 +11,13 @@
 
 ### Create a primitive atom
 
-An atom represents a piece of state. All you need is to specify a default value, which can be atomics, objects and arrays.
+An atom represents a piece of state. All you need is to specify an initial value, which can be atomics, objects and arrays.
 
 ```jsx
 import { create } from 'jotai'
 
 const countAtom = create({
-  default: {
-    count: 0,
-  },
+  initialValue: 0,
 })
 ```
 

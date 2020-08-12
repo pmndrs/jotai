@@ -88,7 +88,7 @@ const getAtomState = (state: State, atom: Atom<unknown>) => {
 
 const getAtomStateValue = (state: State, atom: Atom<unknown>) => {
   const atomState = state.get(atom)
-  return atomState ? atomState.value : atom.default
+  return atomState ? atomState.value : atom.initialValue
 }
 
 function appendMap<K, V>(dst: Map<K, V>, src: Map<K, V>) {
@@ -141,7 +141,7 @@ const initAtom = (
     })
     atomState = {
       promise,
-      value: atom.default,
+      value: atom.initialValue,
       getDependents: new Set(),
       setDependents: new Set(),
     }
@@ -197,7 +197,7 @@ const updateValue = (
       return valuesToUpdate.get(atom)
     }
     const atomState = nextState.get(atom)
-    return atomState ? atomState.value : atom.default
+    return atomState ? atomState.value : atom.initialValue
   }
 
   const updateDependents = (atom: Atom<unknown>) => {

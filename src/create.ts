@@ -4,7 +4,7 @@ type NonPromise<T> = T extends Promise<unknown> ? never : T
 
 // primitive atom
 export function create<Value>(options: {
-  default: Value
+  initialValue: Value
 }): WritableAtom<Value, Value>
 
 // write-only atom
@@ -53,7 +53,7 @@ export function create<Value>(options: {
 }): Atom<Value | null>
 
 export function create<Value>(options: {
-  default?: Value
+  initialValue?: Value
   read?: (arg: { get: <V>(a: Atom<V>) => V }) => Value | Promise<Value>
   write?: (
     arg: {
@@ -65,19 +65,19 @@ export function create<Value>(options: {
 }) {
   const atom = {
     ...options,
-    default: (options.default ?? null) as Value | null,
+    initialValue: (options.initialValue ?? null) as Value | null,
   }
   if (atom.read) {
     // derived atom
     const value = atom.read({
-      get: a => a.default,
+      get: a => a.initialValue,
     })
     if (value instanceof Promise) {
       value.then(v => {
-        atom.default = v
+        atom.initialValue = v
       })
     } else {
-      atom.default = value
+      atom.initialValue = value
     }
   } else if (atom.write) {
     // write-only atom

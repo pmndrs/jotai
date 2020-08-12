@@ -20,7 +20,7 @@ export function useAtom<Value>(atom: Atom<Value> | WritableAtom<Value>) {
     useCallback(
       state => {
         const atomState = state.get(atom) as AtomState<Value> | undefined
-        if (!atomState) return atom.default
+        if (!atomState) return atom.initialValue
         if (atomState.promise) return atomState.promise
         return atomState.value
       },

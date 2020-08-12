@@ -1,5 +1,5 @@
 export type Atom<Value> = {
-  default: Value
+  initialValue: Value
   read: (arg: { get: <V>(a: Atom<V>) => V }) => Value | Promise<Value>
 }
 

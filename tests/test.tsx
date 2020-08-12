@@ -11,12 +11,12 @@ afterEach(() => {
 
 it('creates a primitive atom', () => {
   const result = create({
-    default: 0,
+    initialValue: 0,
   })
   expect({ result }).toMatchInlineSnapshot(`
     Object {
       "result": Object {
-        "default": 0,
+        "initialValue": 0,
         "read": [Function],
         "write": [Function],
       },
