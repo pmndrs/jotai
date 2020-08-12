@@ -9,7 +9,7 @@
 
     npm install jotai
 
-### Create a primitive atom
+#### 1. Create a primitive atom
 
 An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays.
 
@@ -19,11 +19,15 @@ import { create } from 'jotai'
 const countAtom = create({
   initialValue: 0,
 })
+
+const colorsAtom = create({
+  initialValue: ["#ff0000"],
+})
 ```
 
-You can create as many primitive atoms as you want.
+👉 You can create as many primitive atoms as you want.
 
-### Wrap entire component with Provider
+#### 2. Wrap any component tree with Jotai's Provider 
 
 ```jsx
 import { Provider } from 'jotai'
@@ -35,21 +39,26 @@ const Root = () => (
 )
 ```
 
-### Then use the atom in your components
+#### 3. Use the atom in your components
 
-It can be used just like React.useState.
+It can be used just like `React.useState`:
 
 ```jsx
 import { useAtom } from 'jotai'
 
 function Counter() {
   const [count, setCount] = useAtom(countAtom)
-  const increment = () => setCount(c => c + 1)
-  return <h1>{count} <button onClick={increment}>up</button></h1>
+ 
+  return (
+    <h1>
+      {count} 
+      <button onClick={() => setCount(c => c + 1)}>Increase</button>
+     </h1>
+   )
 }
 ```
 
-### You can create a derived atom with computed value
+#### You can create a derived atom with computed value
 
 A new atom can be created from existing atoms.
 
@@ -62,13 +71,14 @@ const doubledCountAtom = create({
 
 function DoubleCounter() {
   const [doubledCount] = useAtom(doubledCountAtom);
+  
   return <h2>{doubledCount}</h2>
 }
 ```
 
-### A write only atom can be created
+#### You can create write only atom
 
-Just like an action.
+A write only atom doesn't need an initial value or a read method.
 
 ```jsx
 import { create } from 'jotai'
@@ -83,9 +93,7 @@ function Controls() {
 }
 ```
 
-Having both `read` and `write` is also possible.
-
-#### Why Jotai over Recoil?
+### Why Jotai over Recoil?
 
 * Minimalistic API
 * No string keys
