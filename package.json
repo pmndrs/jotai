@@ -1,0 +1,111 @@
+{
+  "name": "jotai",
+  "private": true,
+  "version": "0.0.1",
+  "description": "👻 Ghost extensions for state management in React",
+  "main": "index.cjs.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "**"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "rollup -c && yarn copy",
+    "prepare": "yarn build",
+    "pretest": "tsc tests/test.tsx --noEmit --jsx preserve -m None -t ESNext --isolatedModules --esModuleInterop --skipLibCheck --moduleResolution node",
+    "test": "jest",
+    "test:dev": "jest --watch --no-coverage",
+    "test:coverage:watch": "jest --watch",
+    "copy": "copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "prettier": {
+    "semi": false,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "jsxBracketSameLine": true,
+    "tabWidth": 2,
+    "printWidth": 80
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/react-spring/jotai.git"
+  },
+  "keywords": [
+    "react",
+    "state",
+    "manager",
+    "management",
+    "recoil",
+    "store"
+  ],
+  "author": "Daishi Kato",
+  "contributors": [],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/react-spring/jotai/issues"
+  },
+  "homepage": "https://github.com/react-spring/jotai",
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "jest",
+      "legacy"
+    ],
+    "testRegex": "test.(js|ts|tsx)$",
+    "coverageDirectory": "./coverage/",
+    "collectCoverage": true,
+    "coverageReporters": [
+      "json",
+      "html",
+      "text",
+      "text-summary"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.{js,ts,tsx}",
+      "tests/**/*.{js,ts,tsx}"
+    ]
+  },
+  "dependencies": {
+    "use-context-selector": "^1.1.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.6.4",
+    "@babel/plugin-transform-react-jsx": "^7.3.0",
+    "@babel/plugin-transform-typescript": "^7.6.3",
+    "@babel/preset-env": "^7.6.3",
+    "@testing-library/react": "^9.3.0",
+    "@types/jest": "^24.0.19",
+    "@types/react": "^16.9.9",
+    "copyfiles": "^2.1.1",
+    "husky": "^3.0.9",
+    "jest": "^24.9.0",
+    "json": "^9.0.6",
+    "lint-staged": "^9.4.2",
+    "prettier": "^1.18.2",
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
+    "rimraf": "^3.0.0",
+    "rollup": "^1.25.2",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-size-snapshot": "^0.10.0",
+    "rollup-plugin-typescript2": "^0.24.3",
+    "typescript": "^3.6.4"
+  },
+  "peerDependencies": {
+    "react": ">=16.8"
+  }
+}
