@@ -82,13 +82,14 @@ A write only atom doesn't need an initial value or a read method.
 
 ```jsx
 import { create } from 'jotai'
+import countAtom from './countAtom'
 
 const multiplyCountAtom = create({
   write: ({ get, set }, multiplicator) => set(countAtom, get(countAtom) * multiplicator),
 })
 
 function Controls() {
-  const [, multiply] = useAtom(decrementCountAtom)
+  const [, multiply] = useAtom(multiplyCountAtom)
   return <button onClick={() => multiply(3)}>triple</button>
 }
 ```
