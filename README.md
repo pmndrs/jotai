@@ -11,7 +11,7 @@
 
 ### Create a primitive atom
 
-An atom represents a piece of state. All you need is to specify an initial value, which can be atomics, objects and arrays.
+An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays.
 
 ```jsx
 import { create } from 'jotai'
