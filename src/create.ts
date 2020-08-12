@@ -30,7 +30,7 @@ export function create<WriteValue, Value>(options: {
   ) => void | Promise<void>
 }): WritableAtom<WriteValue, Value>
 
-// async writable derived atom
+// async-read writable derived atom
 export function create<WriteValue, Value>(options: {
   read: (arg: { get: <V>(a: Atom<V>) => V }) => Promise<Value>
   write: (
@@ -47,7 +47,7 @@ export function create<Value>(options: {
   read: (arg: { get: <V>(a: Atom<V>) => V }) => NonPromise<Value>
 }): Atom<Value>
 
-// async read-only derived atom
+// async-read read-only derived atom
 export function create<Value>(options: {
   write: (arg: { get: <V>(a: Atom<V>) => V }) => Promise<Value>
 }): Atom<Value | null>
@@ -85,8 +85,9 @@ export function create<Value>(options: {
   } else {
     // primitive atom
     atom.read = arg => arg.get(atom as WritableAtom<Value, Value>)
-    atom.write = (arg, newValue) =>
+    atom.write = (arg, newValue) => {
       arg.set(atom as WritableAtom<Value>, newValue)
+    }
   }
   return atom
 }
