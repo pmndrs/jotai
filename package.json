@@ -2,7 +2,7 @@
   "name": "jotai",
   "private": true,
   "version": "0.0.1",
-  "description": "👻 Ghost extensions for state management in React",
+  "description": "👻 Next gen state management that will spook you",
   "main": "index.cjs.js",
   "module": "index.js",
   "types": "index.d.ts",
