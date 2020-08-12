@@ -85,7 +85,9 @@ import { create } from 'jotai'
 import countAtom from './countAtom'
 
 const multiplyCountAtom = create({
-  write: ({ get, set }, multiplicator) => set(countAtom, get(countAtom) * multiplicator),
+  write: ({ get, set }, multiplicator) => {
+    set(countAtom, get(countAtom) * multiplicator)
+  },
 })
 
 function Controls() {
@@ -110,11 +112,14 @@ Limitations:
 
 ## Async actions
 
-Just call `set` when you're ready, it doesn't care if your actions are async or not.
+Just make `write` async function and call `set` when you're ready.
 
 ```jsx
-const delayedCountAtom = create({
+const fetchCountAtom = create({
   read: ({ get }) => get(countAtom),
-  write: ({ set }, newValue) => setTimeout(() => set(countAtom, newValue), 1000),
+  write: async ({ set }, url) => {
+    const response = await fetch(url)
+    set(countAtom, await response.json().count)
+  }
 })
 ```
