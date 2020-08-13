@@ -96,7 +96,7 @@ function Controls() {
 }
 ```
 
-#### You can create a writeable derived atom
+#### You can create a writable derived atom
 
 Just define both read and write methods.
 
