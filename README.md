@@ -14,20 +14,18 @@
 An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays.
 
 ```jsx
-import { create } from 'jotai'
+import { atom } from 'jotai'
 
-const countAtom = create({
-  initialValue: 0,
-})
+const countAtom = atom(0)
 
-const colorsAtom = create({
-  initialValue: ["#ff0000"],
-})
+const colorsAtom = atom(["#ff0000"])
 ```
 
 👉 You can create as many primitive atoms as you want.
 
 #### 2. Wrap any component tree with Jotai's Provider
+
+You can only use atoms under this component tree.
 
 ```jsx
 import { Provider } from 'jotai'
@@ -61,13 +59,12 @@ function Counter() {
 #### You can create a derived atom with computed value
 
 A new atom can be created from existing atoms with a read method.
+`get` will return current value of atom.
 
 ```jsx
-import { create } from 'jotai'
+import { atom } from 'jotai'
 
-const doubledCountAtom = create({
-  read: ({ get }) => get(countAtom) * 2,
-})
+const doubledCountAtom = atom(get => get(countAtom) * 2)
 
 function DoubleCounter() {
   const [doubledCount] = useAtom(doubledCountAtom);
@@ -76,40 +73,21 @@ function DoubleCounter() {
 }
 ```
 
-#### You can create a write only atom
-
-A write only atom doesn't need an initial value or a read method.
-
-```jsx
-import { create } from 'jotai'
-import countAtom from './countAtom'
-
-const multiplyCountAtom = create({
-  write: ({ get, set }, multiplicator) => {
-    set(countAtom, get(countAtom) * multiplicator)
-  },
-})
-
-function Controls() {
-  const [, multiply] = useAtom(multiplyCountAtom)
-  return <button onClick={() => multiply(3)}>triple</button>
-}
-```
-
 #### You can create a writable derived atom
 
-Just define both read and write methods.
+Define both read and write methods.
+`get` will return current value of atom.
+`set` will update value of atom.
 
 ```jsx
-import { create } from 'jotai'
-import countAtom from './countAtom'
+import { atom } from 'jotai'
 
-const decrementCountAtom = create({
-  read: ({ get }) => get(countAtom),
-  write: ({ get, set }, _unused) => {
+const decrementCountAtom = atom(
+  get => get(countAtom),
+  (get, set, _unused) => {
     set(countAtom, get(countAtom) - 1)
   },
-})
+)
 
 function Counter() {
   const [count, decrement] = useAtom(decrementCountAtom)
@@ -130,12 +108,35 @@ function Counter() {
 * TypeScript oriented
 
 Limitations:
-* Requires React Suspense for loading state
 * No persistence nor URL encoded state
 
 ---
 
 # Recipes
+
+## Deriving an atom from multiple atoms
+
+TODO
+
+#### Write-only atoms
+
+Just do not define a read method.
+
+```jsx
+import { atom } from 'jotai'
+
+const multiplyCountAtom = atom(
+  , // no read method
+  (get, set, multiplicator) => {
+    set(countAtom, get(countAtom) * multiplicator)
+  },
+)
+
+function Controls() {
+  const [, multiply] = useAtom(multiplyCountAtom)
+  return <button onClick={() => multiply(3)}>triple</button>
+}
+```
 
 ## Async actions
 
