@@ -146,7 +146,7 @@ const fetchCountAtom = create({
   read: ({ get }) => get(countAtom),
   write: async ({ set }, url) => {
     const response = await fetch(url)
-    set(countAtom, await response.json().count)
+    set(countAtom, (await response.json()).count)
   }
 })
 ```
