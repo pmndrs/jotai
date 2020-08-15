@@ -1,13 +1,12 @@
 export type NonPromise<T> = T extends Promise<unknown> ? never : T
 export type NonFunction<T> = T extends Function ? never : T
 
-export interface Getter {
-  <Value>(a: Atom<Value>): Value
-}
+export type Getter = <Value>(atom: Atom<Value>) => Value
 
-export interface Setter {
-  <Value, WriteValue>(a: WritableAtom<Value, WriteValue>, v: WriteValue): void
-}
+export type Setter = <Value, WriteValue>(
+  atom: WritableAtom<Value, WriteValue>,
+  newValue: WriteValue
+) => void
 
 export type Atom<Value> = {
   initialValue: Value

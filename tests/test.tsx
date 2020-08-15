@@ -56,7 +56,7 @@ it('creates atoms', () => {
   `)
 })
 
-it('use a primitive atom', async () => {
+it('uses a primitive atom', async () => {
   const countAtom = atom(0)
 
   function Counter() {
@@ -74,4 +74,31 @@ it('use a primitive atom', async () => {
   )
 
   await findByText('count: 1')
+})
+
+it('uses a read-only derived atom', async () => {
+  const countAtom = atom(0)
+  const doubledCountAtom = atom(get => get(countAtom) * 2)
+
+  function Counter() {
+    const [count, setCount] = useAtom(countAtom)
+    const [doubledCount] = useAtom(doubledCountAtom)
+    React.useEffect(() => {
+      setCount(c => c + 1)
+    }, [setCount])
+    return (
+      <>
+        <div>count: {count}</div>
+        <div>doubledCount: {doubledCount}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('doubledCount: 2')
 })
