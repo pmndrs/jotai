@@ -126,7 +126,7 @@ Just do not define a read method.
 import { atom } from 'jotai'
 
 const multiplyCountAtom = atom(
-  , // no read method
+  null, // no read method
   (get, set, multiplicator) => {
     set(countAtom, get(countAtom) * multiplicator)
   },

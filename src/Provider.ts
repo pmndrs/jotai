@@ -7,7 +7,7 @@ import React, {
 } from 'react'
 import { createContext } from 'use-context-selector'
 
-import { Atom, WritableAtom } from './types'
+import { AnyAtom, AnyWritableAtom } from './types'
 
 const warningObject = new Proxy(
   {},
@@ -23,38 +23,38 @@ const warningObject = new Proxy(
 
 type InitAction = {
   type: 'INIT_ATOM'
-  atom: Atom<unknown>
+  atom: AnyAtom
   id: symbol
 }
 
 type DisposeAction = {
   type: 'DISPOSE_ATOM'
-  atom: Atom<unknown>
+  atom: AnyAtom
   id: symbol
 }
 
 type UpdateAction = {
   type: 'UPDATE_VALUE'
-  atom: WritableAtom<unknown>
+  atom: AnyWritableAtom
   update: SetStateAction<unknown>
 }
 
 type Action = InitAction | DisposeAction | UpdateAction
 
-export type AtomState<Value> = {
+export type AtomState<Value = unknown> = {
   promise: Promise<void> | null
   value: Value
-  getDependents: Set<Atom<unknown> | symbol> // symbol is id from INIT_ATOM
-  setDependents: Set<Atom<unknown>>
+  getDependents: Set<AnyAtom | symbol> // symbol is id from INIT_ATOM
+  setDependents: Set<AnyAtom>
 }
 
-type State = Map<Atom<unknown>, AtomState<unknown>>
+type State = Map<AnyAtom, AtomState>
 
 const initialState: State = new Map()
 
-const getAllDependents = (state: State, atom: Atom<unknown>) => {
-  const dependents = new Set<Atom<unknown>>()
-  const appendSetDependents = (a: Atom<unknown>) => {
+const getAllDependents = (state: State, atom: AnyAtom) => {
+  const dependents = new Set<AnyAtom>()
+  const appendSetDependents = (a: AnyAtom) => {
     const aState = state.get(a)
     if (!aState) return
     aState.setDependents.forEach(dependent => {
@@ -65,7 +65,7 @@ const getAllDependents = (state: State, atom: Atom<unknown>) => {
     })
   }
   appendSetDependents(atom)
-  const appendGetDependents = (a: Atom<unknown>) => {
+  const appendGetDependents = (a: AnyAtom) => {
     const aState = state.get(a)
     if (!aState) return
     aState.getDependents.forEach(dependent => {
@@ -78,7 +78,7 @@ const getAllDependents = (state: State, atom: Atom<unknown>) => {
   return dependents
 }
 
-const getAtomState = (state: State, atom: Atom<unknown>) => {
+const getAtomState = (state: State, atom: AnyAtom) => {
   const atomState = state.get(atom)
   if (!atomState) {
     throw new Error('atom is not initialized')
@@ -86,7 +86,7 @@ const getAtomState = (state: State, atom: Atom<unknown>) => {
   return atomState
 }
 
-const getAtomStateValue = (state: State, atom: Atom<unknown>) => {
+const getAtomStateValue = (state: State, atom: AnyAtom) => {
   const atomState = state.get(atom)
   return atomState ? atomState.value : atom.initialValue
 }
@@ -101,8 +101,8 @@ function appendMap<K, V>(dst: Map<K, V>, src: Map<K, V>) {
 const initAtom = (
   prevState: State,
   setState: Dispatch<SetStateAction<State>>,
-  atom: Atom<unknown>,
-  dependent: Atom<unknown> | symbol
+  atom: AnyAtom,
+  dependent: AnyAtom | symbol
 ) => {
   let atomState = prevState.get(atom)
   if (atomState) {
@@ -115,7 +115,7 @@ const initAtom = (
   const updateState: State = new Map()
   let isSync = true
   const nextValue = atom.read({
-    get: (a: Atom<unknown>) => {
+    get: (a: AnyAtom) => {
       if (a !== atom) {
         if (isSync) {
           appendMap(updateState, initAtom(prevState, setState, a, atom))
@@ -159,9 +159,9 @@ const initAtom = (
   return updateState
 }
 
-const disposeAtom = (prevState: State, dependent: Atom<unknown> | symbol) => {
+const disposeAtom = (prevState: State, dependent: AnyAtom | symbol) => {
   let nextState = new Map(prevState)
-  const deleted: Atom<unknown>[] = []
+  const deleted: AnyAtom[] = []
   nextState.forEach((atomState, atom) => {
     if (atomState.getDependents.has(dependent)) {
       const nextGetDependents = new Set(atomState.getDependents)
@@ -188,11 +188,11 @@ const updateValue = (
 ) => {
   const nextState = new Map(prevState)
   let isSync = true
-  const valuesToUpdate = new Map<Atom<unknown>, unknown>()
+  const valuesToUpdate = new Map<AnyAtom, unknown>()
   const promises: Promise<void>[] = []
   const allDependents = getAllDependents(nextState, action.atom)
 
-  const getCurrAtomValue = (atom: Atom<unknown>) => {
+  const getCurrAtomValue = (atom: AnyAtom) => {
     if (valuesToUpdate.has(atom)) {
       return valuesToUpdate.get(atom)
     }
@@ -200,13 +200,13 @@ const updateValue = (
     return atomState ? atomState.value : atom.initialValue
   }
 
-  const updateDependents = (atom: Atom<unknown>) => {
+  const updateDependents = (atom: AnyAtom) => {
     const atomState = nextState.get(atom)
     if (!atomState) return
     atomState.getDependents.forEach(dependent => {
       if (typeof dependent === 'symbol') return
       const v = dependent.read({
-        get: (a: Atom<unknown>) => {
+        get: (a: AnyAtom) => {
           if (a !== dependent) {
             if (isSync) {
               appendMap(nextState, initAtom(prevState, setState, a, dependent))
@@ -235,17 +235,17 @@ const updateValue = (
     })
   }
 
-  const updateAtomValue = (atom: Atom<unknown>, value: unknown) => {
+  const updateAtomValue = (atom: AnyAtom, value: unknown) => {
     valuesToUpdate.set(atom, value)
     allDependents.delete(atom)
     updateDependents(atom)
   }
 
-  const setValue = (atom: WritableAtom<unknown>, value: unknown) => {
+  const setValue = (atom: AnyWritableAtom, value: unknown) => {
     const promise = atom.write(
       {
         get: getCurrAtomValue,
-        set: (a: WritableAtom<unknown>, v: unknown) => {
+        set: (a: AnyWritableAtom, v: unknown) => {
           if (isSync) {
             const atomState = getAtomState(nextState, a)
             nextState.set(a, {

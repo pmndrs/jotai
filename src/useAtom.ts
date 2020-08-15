@@ -4,16 +4,19 @@ import { useContext, useContextSelector } from 'use-context-selector'
 import { StateContext, DispatchContext, AtomState } from './Provider'
 import { Atom, WritableAtom } from './types'
 
-const isWritable = (
-  atom: Atom<unknown> | WritableAtom<unknown>
-): atom is WritableAtom<unknown> => !!(atom as WritableAtom<unknown>).write
+const isWritable = <Value, WriteValue>(
+  atom: Atom<Value> | WritableAtom<Value, WriteValue>
+): atom is WritableAtom<Value, WriteValue> =>
+  !!(atom as WritableAtom<Value, WriteValue>).write
 
-export function useAtom<WriteValue, Value>(
-  atom: WritableAtom<WriteValue, Value>
+export function useAtom<Value, WriteValue>(
+  atom: WritableAtom<Value, WriteValue>
 ): [Value, Dispatch<SetStateAction<WriteValue>>]
 export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 
-export function useAtom<Value>(atom: Atom<Value> | WritableAtom<Value>) {
+export function useAtom<Value, WriteValue>(
+  atom: Atom<Value> | WritableAtom<Value, WriteValue>
+) {
   const dispatch = useContext(DispatchContext)
   const promiseOrValue = useContextSelector(
     StateContext,
@@ -28,7 +31,7 @@ export function useAtom<Value>(atom: Atom<Value> | WritableAtom<Value>) {
     )
   )
   const setAtom = useCallback(
-    (update: SetStateAction<Value>) => {
+    (update: SetStateAction<WriteValue>) => {
       if (isWritable(atom)) {
         dispatch({ type: 'UPDATE_VALUE', atom, update })
       } else {

@@ -1,48 +1,53 @@
-import { Atom, WritableAtom, NonPromise, NonFunction } from './types'
-
-// primitive atom
-export function atom<Value>(
-  initialValue: NonFunction<Value>
-): WritableAtom<Value, Value>
+import {
+  Getter,
+  Setter,
+  Atom,
+  WritableAtom,
+  NonPromise,
+  NonFunction,
+} from './types'
 
 // writable derived atom
-export function atom<WriteValue, Value>(
-  read: (get: <V>(a: Atom<V>) => V) => NonPromise<Value>,
+export function atom<Value, WriteValue>(
+  read: (get: Getter) => NonPromise<Value>,
   write: (
-    get: <V>(a: Atom<V>) => V,
-    set: <V>(a: WritableAtom<V>, v: V) => void,
+    get: Getter,
+    set: Setter,
     newValue: WriteValue
   ) => void | Promise<void>
-): WritableAtom<WriteValue, Value>
+): WritableAtom<Value, WriteValue>
 
 // async-read writable derived atom
-export function atom<WriteValue, Value>(
-  read: (get: <V>(a: Atom<V>) => V) => Promise<Value>,
+export function atom<Value, WriteValue>(
+  read: (get: Getter) => Promise<Value>,
   write: (
-    get: <V>(a: Atom<V>) => V,
-    set: <V>(a: WritableAtom<V>, v: V) => void,
+    get: Getter,
+    set: Setter,
     newValue: WriteValue
   ) => void | Promise<void>
-): WritableAtom<WriteValue, Value | null>
+): WritableAtom<Value | null, WriteValue>
 
 // read-only derived atom
 export function atom<Value>(
-  read: (get: <V>(a: Atom<V>) => V) => NonPromise<Value>
+  read: (get: Getter) => NonPromise<Value>
 ): Atom<Value>
 
 // async-read read-only derived atom
 export function atom<Value>(
-  read: (get: <V>(a: Atom<V>) => V) => Promise<Value>
+  read: (get: Getter) => Promise<Value>
 ): Atom<Value | null>
 
+// primitive atom
 export function atom<Value>(
-  read:
-    | Value
-    | ((arg: { get: <V>(a: Atom<V>) => V }) => Value | Promise<Value>),
+  initialValue: NonFunction<NonPromise<Value>>
+): WritableAtom<Value, Value>
+
+export function atom<Value, WriteValue>(
+  read: Value | ((get: Getter) => Value | Promise<Value>),
   write?: (
-    get: <V>(a: Atom<V>) => V,
-    set: <V>(a: WritableAtom<V>, v: V) => void,
-    newValue: Value
+    get: Getter,
+    set: Setter,
+    newValue: WriteValue
   ) => void | Promise<void>
 ) {
   const instance: any = {
@@ -50,9 +55,11 @@ export function atom<Value>(
   }
   if (typeof read === 'function') {
     // read function
-    instance.read = (arg: Parameters<Atom<Value>['read']>[0]) =>
-      (read as Function)(arg.get)
-    const value = (read as Function)((a: Atom<Value>) => a.initialValue)
+    instance.read = (arg: { get: Getter }) =>
+      (read as (get: Getter) => Value | Promise<Value>)(arg.get)
+    const value = (read as (get: Getter) => Value | Promise<Value>)(
+      a => a.initialValue
+    )
     if (value instanceof Promise) {
       value.then(v => {
         instance.initialValue = v
@@ -63,19 +70,19 @@ export function atom<Value>(
   } else {
     // primitive atom
     instance.initialValue = read
-    instance.read = (arg: Parameters<Atom<Value>['read']>[0]) =>
-      arg.get(instance as WritableAtom<Value, Value>)
+    instance.read = (arg: { get: Getter }) =>
+      arg.get(instance as WritableAtom<Value, WriteValue>)
     instance.write = (
-      arg: Parameters<WritableAtom<Value>['write']>[0],
-      newValue: Parameters<WritableAtom<Value>['write']>[1]
+      arg: { get: Getter; set: Setter },
+      newValue: WriteValue
     ) => {
-      arg.set(instance as WritableAtom<Value>, newValue)
+      arg.set(instance as WritableAtom<Value, WriteValue>, newValue)
     }
   }
   if (write) {
     instance.write = (
-      arg: Parameters<WritableAtom<Value>['write']>[0],
-      newValue: Parameters<WritableAtom<Value>['write']>[1]
+      arg: { get: Getter; set: Setter },
+      newValue: WriteValue
     ) => write(arg.get, arg.set, newValue)
   }
   return instance
