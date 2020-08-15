@@ -1,3 +1,3 @@
 export { Provider } from './Provider'
-export { create } from './create'
+export { atom } from './atom'
 export { useAtom } from './useAtom'
