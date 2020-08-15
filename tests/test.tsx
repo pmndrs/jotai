@@ -1,6 +1,5 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
-import { act, cleanup, render } from '@testing-library/react'
+import { cleanup, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
 const consoleError = console.error
@@ -55,4 +54,24 @@ it('creates atoms', () => {
       },
     }
   `)
+})
+
+it('use a primitive atom', async () => {
+  const countAtom = atom(0)
+
+  function Counter() {
+    const [count, setCount] = useAtom(countAtom)
+    React.useEffect(() => {
+      setCount(c => c + 1)
+    }, [setCount])
+    return <div>count: {count}</div>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 1')
 })
