@@ -10,13 +10,14 @@ export interface Setter {
 }
 
 export type Atom<Value> = {
-  initialValue: NonFunction<NonPromise<Value>>
-  read: (arg: { get: Getter }) => Value | Promise<Value>
+  initialValue: Value
+  read: (get: Getter) => Value | Promise<Value>
 }
 
 export type WritableAtom<Value, WriteValue> = Atom<Value> & {
   write: (
-    arg: { get: Getter; set: Setter },
+    get: Getter,
+    set: Setter,
     newValue: WriteValue
   ) => void | Promise<void>
 }

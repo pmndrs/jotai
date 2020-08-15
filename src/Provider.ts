@@ -7,7 +7,7 @@ import React, {
 } from 'react'
 import { createContext } from 'use-context-selector'
 
-import { AnyAtom, AnyWritableAtom } from './types'
+import { AnyAtom, AnyWritableAtom, Getter, Setter } from './types'
 
 const warningObject = new Proxy(
   {},
@@ -114,21 +114,18 @@ const initAtom = (
   }
   const updateState: State = new Map()
   let isSync = true
-  const nextValue = atom.read({
-    get: (a: AnyAtom) => {
-      if (a !== atom) {
-        if (isSync) {
-          appendMap(updateState, initAtom(prevState, setState, a, atom))
-        } else {
-          setState(prev =>
-            appendMap(new Map(prev), initAtom(prev, setState, a, atom))
-          )
-        }
+  const nextValue = atom.read(((a: AnyAtom) => {
+    if (a !== atom) {
+      if (isSync) {
+        appendMap(updateState, initAtom(prevState, setState, a, atom))
+      } else {
+        setState(prev =>
+          appendMap(new Map(prev), initAtom(prev, setState, a, atom))
+        )
       }
-      return getAtomStateValue(prevState, a)
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
+    }
+    return getAtomStateValue(prevState, a)
+  }) as Getter)
   if (nextValue instanceof Promise) {
     const promise = nextValue.then(value => {
       setState(prev =>
@@ -205,21 +202,18 @@ const updateValue = (
     if (!atomState) return
     atomState.getDependents.forEach(dependent => {
       if (typeof dependent === 'symbol') return
-      const v = dependent.read({
-        get: (a: AnyAtom) => {
-          if (a !== dependent) {
-            if (isSync) {
-              appendMap(nextState, initAtom(prevState, setState, a, dependent))
-            } else {
-              setState(prev =>
-                appendMap(new Map(prev), initAtom(prev, setState, a, dependent))
-              )
-            }
+      const v = dependent.read(((a: AnyAtom) => {
+        if (a !== dependent) {
+          if (isSync) {
+            appendMap(nextState, initAtom(prevState, setState, a, dependent))
+          } else {
+            setState(prev =>
+              appendMap(new Map(prev), initAtom(prev, setState, a, dependent))
+            )
           }
-          return getCurrAtomValue(a)
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
+        }
+        return getCurrAtomValue(a)
+      }) as Getter)
       if (v instanceof Promise) {
         promises.push(
           v.then(vv => {
@@ -243,32 +237,29 @@ const updateValue = (
 
   const setValue = (atom: AnyWritableAtom, value: unknown) => {
     const promise = atom.write(
-      {
-        get: getCurrAtomValue,
-        set: (a: AnyWritableAtom, v: unknown) => {
-          if (isSync) {
-            const atomState = getAtomState(nextState, a)
-            nextState.set(a, {
+      getCurrAtomValue as Getter,
+      ((a: AnyWritableAtom, v: unknown) => {
+        if (isSync) {
+          const atomState = getAtomState(nextState, a)
+          nextState.set(a, {
+            ...atomState,
+            setDependents: new Set(atomState.setDependents).add(atom),
+          })
+        } else {
+          setState(prev => {
+            const atomState = getAtomState(prev, a)
+            return new Map(prev).set(a, {
               ...atomState,
               setDependents: new Set(atomState.setDependents).add(atom),
             })
-          } else {
-            setState(prev => {
-              const atomState = getAtomState(prev, a)
-              return new Map(prev).set(a, {
-                ...atomState,
-                setDependents: new Set(atomState.setDependents).add(atom),
-              })
-            })
-          }
-          if (a === atom) {
-            updateAtomValue(atom, v)
-          } else {
-            setValue(a, v)
-          }
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any,
+          })
+        }
+        if (a === atom) {
+          updateAtomValue(atom, v)
+        } else {
+          setValue(a, v)
+        }
+      }) as Setter,
       value
     )
     if (promise instanceof Promise) {

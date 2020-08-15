@@ -50,13 +50,12 @@ export function atom<Value, WriteValue>(
     newValue: WriteValue
   ) => void | Promise<void>
 ) {
-  const instance: any = {
+  const instance = ({
     initialValue: null,
-  }
+  } as unknown) as WritableAtom<Value, WriteValue>
   if (typeof read === 'function') {
     // read function
-    instance.read = (arg: { get: Getter }) =>
-      (read as (get: Getter) => Value | Promise<Value>)(arg.get)
+    instance.read = read as (get: Getter) => Value | Promise<Value>
     const value = (read as (get: Getter) => Value | Promise<Value>)(
       a => a.initialValue
     )
@@ -70,20 +69,14 @@ export function atom<Value, WriteValue>(
   } else {
     // primitive atom
     instance.initialValue = read
-    instance.read = (arg: { get: Getter }) =>
-      arg.get(instance as WritableAtom<Value, WriteValue>)
-    instance.write = (
-      arg: { get: Getter; set: Setter },
-      newValue: WriteValue
-    ) => {
-      arg.set(instance as WritableAtom<Value, WriteValue>, newValue)
+    instance.read = (get: Getter) =>
+      get(instance as WritableAtom<Value, WriteValue>)
+    instance.write = (_get: Getter, set: Setter, newValue: WriteValue) => {
+      set(instance as WritableAtom<Value, WriteValue>, newValue)
     }
   }
   if (write) {
-    instance.write = (
-      arg: { get: Getter; set: Setter },
-      newValue: WriteValue
-    ) => write(arg.get, arg.set, newValue)
+    instance.write = write
   }
   return instance
 }

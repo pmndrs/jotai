@@ -33,7 +33,11 @@ export function useAtom<Value, WriteValue>(
   const setAtom = useCallback(
     (update: SetStateAction<WriteValue>) => {
       if (isWritable(atom)) {
-        dispatch({ type: 'UPDATE_VALUE', atom, update })
+        dispatch({
+          type: 'UPDATE_VALUE',
+          atom: atom as WritableAtom<unknown, unknown>,
+          update,
+        })
       } else {
         throw new Error('not writable atom')
       }
