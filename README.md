@@ -109,6 +109,7 @@ function Counter() {
 
 Limitations:
 * No persistence nor URL encoded state
+* No loading state (prefer using React Suspense)
 
 ---
 
