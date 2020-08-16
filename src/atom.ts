@@ -13,7 +13,7 @@ export function atom<Value, WriteValue>(
   write: (
     get: Getter,
     set: Setter,
-    newValue: WriteValue
+    writeValue: WriteValue
   ) => void | Promise<void>
 ): WritableAtom<Value, WriteValue>
 
@@ -23,7 +23,7 @@ export function atom<Value, WriteValue>(
   write: (
     get: Getter,
     set: Setter,
-    newValue: WriteValue
+    writeValue: WriteValue
   ) => void | Promise<void>
 ): WritableAtom<Value | null, WriteValue>
 
@@ -47,7 +47,7 @@ export function atom<Value, WriteValue>(
   write?: (
     get: Getter,
     set: Setter,
-    newValue: WriteValue
+    writeValue: WriteValue
   ) => void | Promise<void>
 ) {
   const instance = ({
@@ -71,8 +71,8 @@ export function atom<Value, WriteValue>(
     instance.initialValue = read
     instance.read = (get: Getter) =>
       get(instance as WritableAtom<Value, WriteValue>)
-    instance.write = (_get: Getter, set: Setter, newValue: WriteValue) => {
-      set(instance as WritableAtom<Value, WriteValue>, newValue)
+    instance.write = (_get: Getter, set: Setter, writeValue: WriteValue) => {
+      set(instance as WritableAtom<Value, WriteValue>, writeValue)
     }
   }
   if (write) {

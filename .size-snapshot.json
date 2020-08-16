@@ -1,6 +1,6 @@
 {
   "dist/index.js": {
-    "bundled": 10791,
+    "bundled": 10795,
     "minified": 4969,
     "gzipped": 1758,
     "treeshaked": {
@@ -14,12 +14,12 @@
     }
   },
   "dist/index.cjs.js": {
-    "bundled": 13540,
+    "bundled": 13544,
     "minified": 6209,
     "gzipped": 2116
   },
   "dist/index.iife.js": {
-    "bundled": 14391,
+    "bundled": 14395,
     "minified": 5332,
     "gzipped": 1922
   }

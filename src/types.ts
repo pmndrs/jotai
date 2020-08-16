@@ -5,7 +5,7 @@ export type Getter = <Value>(atom: Atom<Value>) => Value
 
 export type Setter = <Value, WriteValue>(
   atom: WritableAtom<Value, WriteValue>,
-  newValue: WriteValue
+  writeValue: WriteValue
 ) => void
 
 export type Atom<Value> = {
@@ -17,7 +17,7 @@ export type WritableAtom<Value, WriteValue> = Atom<Value> & {
   write: (
     get: Getter,
     set: Setter,
-    newValue: WriteValue
+    writeValue: WriteValue
   ) => void | Promise<void>
 }
 

@@ -115,7 +115,8 @@ it('uses a read-write derived atom', async () => {
   const countAtom = atom(0)
   const doubledCountAtom = atom(
     get => get(countAtom) * 2,
-    (get, set, newValue: number) => set(countAtom, get(countAtom) + newValue)
+    (get, set, writeValue: number) =>
+      set(countAtom, get(countAtom) + writeValue)
   )
 
   const Counter: React.FC = () => {
