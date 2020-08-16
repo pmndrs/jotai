@@ -61,18 +61,23 @@ it('uses a primitive atom', async () => {
 
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
-    React.useEffect(() => {
-      setCount(c => c + 1)
-    }, [setCount])
-    return <div>count: {count}</div>
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount(c => c + 1)}>button</button>
+      </>
+    )
   }
 
-  const { findByText } = render(
+  const { getByText, findByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
   await findByText('count: 1')
 })
 
@@ -83,23 +88,25 @@ it('uses a read-only derived atom', async () => {
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledCountAtom)
-    React.useEffect(() => {
-      setCount(c => c + 1)
-    }, [setCount])
     return (
       <>
         <div>count: {count}</div>
         <div>doubledCount: {doubledCount}</div>
+        <button onClick={() => setCount(c => c + 1)}>button</button>
       </>
     )
   }
 
-  const { findByText } = render(
+  const { getByText, findByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
+  await findByText('count: 0')
+  await findByText('doubledCount: 0')
+
+  fireEvent.click(getByText('button'))
   await findByText('count: 1')
   await findByText('doubledCount: 2')
 })
@@ -114,23 +121,25 @@ it('uses a read-write derived atom', async () => {
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
     const [doubledCount, increaseCount] = useAtom(doubledCountAtom)
-    React.useEffect(() => {
-      increaseCount(2)
-    }, [increaseCount])
     return (
       <>
         <div>count: {count}</div>
         <div>doubledCount: {doubledCount}</div>
+        <button onClick={() => increaseCount(2)}>button</button>
       </>
     )
   }
 
-  const { findByText } = render(
+  const { getByText, findByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
+  await findByText('count: 0')
+  await findByText('doubledCount: 0')
+
+  fireEvent.click(getByText('button'))
   await findByText('count: 2')
   await findByText('doubledCount: 4')
 })
@@ -159,6 +168,7 @@ it('uses a write-only derived atom', async () => {
   )
 
   await findByText('count: 0')
+
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
 })
