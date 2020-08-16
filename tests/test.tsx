@@ -59,7 +59,7 @@ it('creates atoms', () => {
 it('uses a primitive atom', async () => {
   const countAtom = atom(0)
 
-  function Counter() {
+  const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
     React.useEffect(() => {
       setCount(c => c + 1)
@@ -80,7 +80,7 @@ it('uses a read-only derived atom', async () => {
   const countAtom = atom(0)
   const doubledCountAtom = atom(get => get(countAtom) * 2)
 
-  function Counter() {
+  const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledCountAtom)
     React.useEffect(() => {
@@ -111,7 +111,7 @@ it('uses a read-write derived atom', async () => {
     (get, set, newValue: number) => set(countAtom, get(countAtom) + newValue)
   )
 
-  function Counter() {
+  const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
     const [doubledCount, increaseCount] = useAtom(doubledCountAtom)
     React.useEffect(() => {
@@ -141,12 +141,12 @@ it('uses a write-only derived atom', async () => {
     set(countAtom, get(countAtom) + 1)
   )
 
-  function Counter() {
+  const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
     return <div>count: {count}</div>
   }
 
-  function Control() {
+  const Control: React.FC = () => {
     const [, increment] = useAtom(incrementCountAtom)
     return <button onClick={increment}>button</button>
   }
@@ -161,4 +161,58 @@ it('uses a write-only derived atom', async () => {
   await findByText('count: 0')
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
+})
+
+it('only re-renders if value has changed', async () => {
+  const count1Atom = atom(0)
+  const count2Atom = atom(0)
+  const productAtom = atom(get => get(count1Atom) * get(count2Atom))
+
+  type Props = { countAtom: typeof count1Atom; name: string }
+  const Counter: React.FC<Props> = ({ countAtom, name }) => {
+    const [count, setCount] = useAtom(countAtom)
+    const renderCount = React.useRef(0)
+    return (
+      <>
+        <div>
+          renderCount: {++renderCount.current}, {name}: {count}
+        </div>
+        <button onClick={() => setCount(c => c + 1)}>button-{name}</button>
+      </>
+    )
+  }
+
+  const Product: React.FC = () => {
+    const [product] = useAtom(productAtom)
+    const renderCount = React.useRef(0)
+    return (
+      <>
+        <div>
+          renderCount: {++renderCount.current}, product: {product}
+        </div>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter countAtom={count1Atom} name="count1" />
+      <Counter countAtom={count2Atom} name="count2" />
+      <Product />
+    </Provider>
+  )
+
+  await findByText('renderCount: 1, count1: 0')
+  await findByText('renderCount: 1, count2: 0')
+  await findByText('renderCount: 1, product: 0')
+
+  fireEvent.click(getByText('button-count1'))
+  await findByText('renderCount: 2, count1: 1')
+  await findByText('renderCount: 1, count2: 0')
+  await findByText('renderCount: 1, product: 0')
+
+  fireEvent.click(getByText('button-count2'))
+  await findByText('renderCount: 2, count1: 1')
+  await findByText('renderCount: 2, count2: 1')
+  await findByText('renderCount: 2, product: 1')
 })
