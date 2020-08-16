@@ -1,5 +1,5 @@
 import React from 'react'
-import { cleanup, render } from '@testing-library/react'
+import { fireEvent, cleanup, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
 const consoleError = console.error
@@ -100,5 +100,65 @@ it('uses a read-only derived atom', async () => {
     </Provider>
   )
 
+  await findByText('count: 1')
   await findByText('doubledCount: 2')
+})
+
+it('uses a read-write derived atom', async () => {
+  const countAtom = atom(0)
+  const doubledCountAtom = atom(
+    get => get(countAtom) * 2,
+    (get, set, newValue: number) => set(countAtom, get(countAtom) + newValue)
+  )
+
+  function Counter() {
+    const [count] = useAtom(countAtom)
+    const [doubledCount, increaseCount] = useAtom(doubledCountAtom)
+    React.useEffect(() => {
+      increaseCount(2)
+    }, [increaseCount])
+    return (
+      <>
+        <div>count: {count}</div>
+        <div>doubledCount: {doubledCount}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 2')
+  await findByText('doubledCount: 4')
+})
+
+it('uses a write-only derived atom', async () => {
+  const countAtom = atom(0)
+  const incrementCountAtom = atom(null, (get, set) =>
+    set(countAtom, get(countAtom) + 1)
+  )
+
+  function Counter() {
+    const [count] = useAtom(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  function Control() {
+    const [, increment] = useAtom(incrementCountAtom)
+    return <button onClick={increment}>button</button>
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+      <Control />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
 })
