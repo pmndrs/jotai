@@ -227,3 +227,82 @@ it('only re-renders if value has changed', async () => {
   await findByText('renderCount: 2, count2: 1')
   await findByText('renderCount: 2, product: 1')
 })
+
+it('works with async get', async () => {
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(async get => {
+    await new Promise(r => setTimeout(r, 10))
+    return get(countAtom)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [delayedCount] = useAtom(asyncCountAtom)
+    const renderCount = React.useRef(0)
+    return (
+      <>
+        <div>
+          renderCount: {++renderCount.current}, count: {count}, delayedCount:{' '}
+          {delayedCount === null ? 'N/A' : delayedCount}
+        </div>
+        <button onClick={() => setCount(c => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <React.Suspense fallback="loading">
+      <Provider>
+        <Counter />
+      </Provider>
+    </React.Suspense>
+  )
+
+  await findByText('renderCount: 1, count: 0, delayedCount: N/A')
+
+  await findByText('loading')
+  await findByText('renderCount: 2, count: 0, delayedCount: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('renderCount: 3, count: 1, delayedCount: 0')
+  await findByText('renderCount: 4, count: 1, delayedCount: 1')
+})
+
+it('shows loading with async set', async () => {
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(
+    get => get(countAtom),
+    async (_get, set, value: number) => {
+      await new Promise(r => setTimeout(r, 10))
+      set(countAtom, value)
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(asyncCountAtom)
+    const renderCount = React.useRef(0)
+    return (
+      <>
+        <div>
+          renderCount: {++renderCount.current}, count: {count}
+        </div>
+        <button onClick={() => setCount(c => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <React.Suspense fallback="loading">
+      <Provider>
+        <Counter />
+      </Provider>
+    </React.Suspense>
+  )
+
+  await findByText('renderCount: 1, count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+
+  await findByText('renderCount: 2, count: 1')
+})
