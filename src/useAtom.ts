@@ -21,7 +21,7 @@ export function useAtom<Value, WriteValue>(
   const promiseOrValue = useContextSelector(
     StateContext,
     useCallback(
-      state => {
+      (state) => {
         const atomState = state.get(atom) as AtomState<Value> | undefined
         if (!atomState) return atom.initialValue
         if (atomState.promise) return atomState.promise

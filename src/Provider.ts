@@ -57,7 +57,7 @@ const getAllDependents = (state: State, atom: AnyAtom) => {
   const appendSetDependents = (a: AnyAtom) => {
     const aState = state.get(a)
     if (!aState) return
-    aState.setDependents.forEach(dependent => {
+    aState.setDependents.forEach((dependent) => {
       dependents.add(dependent)
       if (a !== dependent) {
         appendSetDependents(dependent)
@@ -68,7 +68,7 @@ const getAllDependents = (state: State, atom: AnyAtom) => {
   const appendGetDependents = (a: AnyAtom) => {
     const aState = state.get(a)
     if (!aState) return
-    aState.getDependents.forEach(dependent => {
+    aState.getDependents.forEach((dependent) => {
       if (typeof dependent === 'symbol') return
       dependents.add(dependent)
       appendGetDependents(dependent)
@@ -119,7 +119,7 @@ const initAtom = (
       if (isSync) {
         appendMap(updateState, initAtom(prevState, setState, a, atom))
       } else {
-        setState(prev =>
+        setState((prev) =>
           appendMap(new Map(prev), initAtom(prev, setState, a, atom))
         )
       }
@@ -127,8 +127,8 @@ const initAtom = (
     return getAtomStateValue(prevState, a)
   }) as Getter)
   if (nextValue instanceof Promise) {
-    const promise = nextValue.then(value => {
-      setState(prev =>
+    const promise = nextValue.then((value) => {
+      setState((prev) =>
         new Map(prev).set(atom, {
           ...getAtomState(prev, atom),
           promise: null,
@@ -200,14 +200,14 @@ const updateValue = (
   const updateDependents = (atom: AnyAtom) => {
     const atomState = nextState.get(atom)
     if (!atomState) return
-    atomState.getDependents.forEach(dependent => {
+    atomState.getDependents.forEach((dependent) => {
       if (typeof dependent === 'symbol') return
       const v = dependent.read(((a: AnyAtom) => {
         if (a !== dependent) {
           if (isSync) {
             appendMap(nextState, initAtom(prevState, setState, a, dependent))
           } else {
-            setState(prev =>
+            setState((prev) =>
               appendMap(new Map(prev), initAtom(prev, setState, a, dependent))
             )
           }
@@ -216,7 +216,7 @@ const updateValue = (
       }) as Getter)
       if (v instanceof Promise) {
         promises.push(
-          v.then(vv => {
+          v.then((vv) => {
             valuesToUpdate.set(dependent, vv)
             allDependents.delete(dependent)
           })
@@ -246,7 +246,7 @@ const updateValue = (
             setDependents: new Set(atomState.setDependents).add(atom),
           })
         } else {
-          setState(prev => {
+          setState((prev) => {
             const atomState = getAtomState(prev, a)
             return new Map(prev).set(a, {
               ...atomState,
@@ -283,7 +283,7 @@ const updateValue = (
       if (allDependents.size !== 0) {
         throw new Error('allDependents is not empty, maybe a bug')
       }
-      setState(prev => {
+      setState((prev) => {
         const nextS = new Map(prev)
         valuesToUpdate.forEach((value, atom) => {
           const atomState = getAtomState(nextS, atom)
@@ -303,7 +303,7 @@ const updateValue = (
     const atomState = getAtomState(nextState, action.atom)
     nextState.set(action.atom, { ...atomState, promise })
   }
-  allDependents.forEach(dependent => {
+  allDependents.forEach((dependent) => {
     const dependentState = getAtomState(nextState, dependent)
     nextState.set(dependent, { ...dependentState, promise })
   })
@@ -323,7 +323,7 @@ export const Provider: React.FC = ({ children }) => {
   const [state, setState] = useState(initialState)
   const dispatch = useCallback(
     (action: Action) =>
-      setState(prevState => {
+      setState((prevState) => {
         if (action.type === 'INIT_ATOM') {
           const updateState = initAtom(
             prevState,
@@ -340,7 +340,7 @@ export const Provider: React.FC = ({ children }) => {
           const atomState = getAtomState(prevState, action.atom)
           if (atomState.promise) {
             const promise = atomState.promise.then(() => {
-              setState(prev => {
+              setState((prev) => {
                 const nextState = updateValue(prev, setState, action)
                 return nextState
               })

@@ -23,7 +23,7 @@ it('creates atoms', () => {
     }
   )
   // write-only derived atom
-  const decrementCountAtom = atom(undefined, (get, set) => {
+  const decrementCountAtom = atom(null, (get, set) => {
     set(countAtom, get(countAtom) - 1)
   })
   expect({
@@ -39,7 +39,7 @@ it('creates atoms', () => {
         "write": [Function],
       },
       "decrementCountAtom": Object {
-        "initialValue": undefined,
+        "initialValue": null,
         "read": [Function],
         "write": [Function],
       },

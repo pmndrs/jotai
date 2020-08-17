@@ -7,6 +7,26 @@ import {
   NonFunction,
 } from './types'
 
+// write-only derived atom
+export function atom<Value, WriteValue>(
+  read: null,
+  write: (
+    get: Getter,
+    set: Setter,
+    writeValue: WriteValue
+  ) => void | Promise<void>
+): WritableAtom<null, WriteValue>
+
+// async-read write-only derived atom
+export function atom<Value, WriteValue>(
+  read: null,
+  write: (
+    get: Getter,
+    set: Setter,
+    writeValue: WriteValue
+  ) => void | Promise<void>
+): WritableAtom<null, WriteValue>
+
 // writable derived atom
 export function atom<Value, WriteValue>(
   read: (get: Getter) => NonPromise<Value>,
@@ -57,10 +77,10 @@ export function atom<Value, WriteValue>(
     // read function
     instance.read = read as (get: Getter) => Value | Promise<Value>
     const value = (read as (get: Getter) => Value | Promise<Value>)(
-      a => a.initialValue
+      (a) => a.initialValue
     )
     if (value instanceof Promise) {
-      value.then(v => {
+      value.then((v) => {
         instance.initialValue = v
       })
     } else {
@@ -69,10 +89,9 @@ export function atom<Value, WriteValue>(
   } else {
     // primitive atom
     instance.initialValue = read
-    instance.read = (get: Getter) =>
-      get(instance as WritableAtom<Value, WriteValue>)
+    instance.read = (get: Getter) => get(instance)
     instance.write = (_get: Getter, set: Setter, writeValue: WriteValue) => {
-      set(instance as WritableAtom<Value, WriteValue>, writeValue)
+      set(instance, writeValue)
     }
   }
   if (write) {
