@@ -22,5 +22,29 @@
     "bundled": 14395,
     "minified": 5332,
     "gzipped": 1922
+  },
+  "index.js": {
+    "bundled": 10795,
+    "minified": 4962,
+    "gzipped": 1756,
+    "treeshaked": {
+      "rollup": {
+        "code": 199,
+        "import_statements": 67
+      },
+      "webpack": {
+        "code": 1250
+      }
+    }
+  },
+  "index.cjs.js": {
+    "bundled": 13530,
+    "minified": 6209,
+    "gzipped": 2116
+  },
+  "index.iife.js": {
+    "bundled": 14373,
+    "minified": 5324,
+    "gzipped": 1916
   }
 }

@@ -13,10 +13,10 @@ it('creates atoms', () => {
   const countAtom = atom(0)
   const anotherCountAtom = atom(1)
   // read-only derived atom
-  const doubledCountAtom = atom(get => get(countAtom) * 2)
+  const doubledCountAtom = atom((get) => get(countAtom) * 2)
   // read-write derived atom
   const sumCountAtom = atom(
-    get => get(countAtom) + get(anotherCountAtom),
+    (get) => get(countAtom) + get(anotherCountAtom),
     (get, set, value: number) => {
       set(countAtom, get(countAtom) + value / 2)
       set(anotherCountAtom, get(anotherCountAtom) + value / 2)
@@ -64,7 +64,7 @@ it('uses a primitive atom', async () => {
     return (
       <>
         <div>count: {count}</div>
-        <button onClick={() => setCount(c => c + 1)}>button</button>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
     )
   }
@@ -83,7 +83,7 @@ it('uses a primitive atom', async () => {
 
 it('uses a read-only derived atom', async () => {
   const countAtom = atom(0)
-  const doubledCountAtom = atom(get => get(countAtom) * 2)
+  const doubledCountAtom = atom((get) => get(countAtom) * 2)
 
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -92,7 +92,7 @@ it('uses a read-only derived atom', async () => {
       <>
         <div>count: {count}</div>
         <div>doubledCount: {doubledCount}</div>
-        <button onClick={() => setCount(c => c + 1)}>button</button>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
     )
   }
@@ -114,7 +114,7 @@ it('uses a read-only derived atom', async () => {
 it('uses a read-write derived atom', async () => {
   const countAtom = atom(0)
   const doubledCountAtom = atom(
-    get => get(countAtom) * 2,
+    (get) => get(countAtom) * 2,
     (get, set, writeValue: number) =>
       set(countAtom, get(countAtom) + writeValue)
   )
@@ -177,7 +177,7 @@ it('uses a write-only derived atom', async () => {
 it('only re-renders if value has changed', async () => {
   const count1Atom = atom(0)
   const count2Atom = atom(0)
-  const productAtom = atom(get => get(count1Atom) * get(count2Atom))
+  const productAtom = atom((get) => get(count1Atom) * get(count2Atom))
 
   type Props = { countAtom: typeof count1Atom; name: string }
   const Counter: React.FC<Props> = ({ countAtom, name }) => {
@@ -188,7 +188,7 @@ it('only re-renders if value has changed', async () => {
         <div>
           renderCount: {++renderCount.current}, {name}: {count}
         </div>
-        <button onClick={() => setCount(c => c + 1)}>button-{name}</button>
+        <button onClick={() => setCount((c) => c + 1)}>button-{name}</button>
       </>
     )
   }
@@ -230,8 +230,8 @@ it('only re-renders if value has changed', async () => {
 
 it('works with async get', async () => {
   const countAtom = atom(0)
-  const asyncCountAtom = atom(async get => {
-    await new Promise(r => setTimeout(r, 10))
+  const asyncCountAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 10))
     return get(countAtom)
   })
 
@@ -243,9 +243,9 @@ it('works with async get', async () => {
       <>
         <div>
           renderCount: {++renderCount.current}, count: {count}, delayedCount:{' '}
-          {delayedCount === null ? 'N/A' : delayedCount}
+          {delayedCount ?? 'N/A'}
         </div>
-        <button onClick={() => setCount(c => c + 1)}>button</button>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
     )
   }
@@ -271,9 +271,9 @@ it('works with async get', async () => {
 it('shows loading with async set', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(
-    get => get(countAtom),
+    (get) => get(countAtom),
     async (_get, set, value: number) => {
-      await new Promise(r => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 10))
       set(countAtom, value)
     }
   )
@@ -286,7 +286,7 @@ it('shows loading with async set', async () => {
         <div>
           renderCount: {++renderCount.current}, count: {count}
         </div>
-        <button onClick={() => setCount(c => c + 1)}>button</button>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
     )
   }
