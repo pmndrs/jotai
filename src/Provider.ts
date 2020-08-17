@@ -240,17 +240,17 @@ const updateValue = (
       getCurrAtomValue as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
         if (isSync) {
-          const atomState = getAtomState(nextState, a)
-          nextState.set(a, {
+          const atomState = getAtomState(nextState, atom)
+          nextState.set(atom, {
             ...atomState,
-            setDependents: new Set(atomState.setDependents).add(atom),
+            setDependents: new Set(atomState.setDependents).add(a),
           })
         } else {
           setState((prev) => {
-            const atomState = getAtomState(prev, a)
-            return new Map(prev).set(a, {
+            const atomState = getAtomState(prev, atom)
+            return new Map(prev).set(atom, {
               ...atomState,
-              setDependents: new Set(atomState.setDependents).add(atom),
+              setDependents: new Set(atomState.setDependents).add(a),
             })
           })
         }

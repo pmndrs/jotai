@@ -306,3 +306,45 @@ it('shows loading with async set', async () => {
 
   await findByText('renderCount: 2, count: 1')
 })
+
+it('uses atoms with tree dependencies', async () => {
+  const topAtom = atom(0)
+  const leftAtom = atom((get) => get(topAtom))
+  const rightAtom = atom(
+    (get) => get(topAtom),
+    async (_get, set, writeValue: number) => {
+      await new Promise((r) => setTimeout(r, 10))
+      set(topAtom, writeValue)
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(leftAtom)
+    const [, setCount] = useAtom(rightAtom)
+    const renderCount = React.useRef(0)
+    return (
+      <>
+        <div>
+          renderCount: {++renderCount.current}, count: {count}
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <React.Suspense fallback="loading">
+      <Provider>
+        <Counter />
+      </Provider>
+    </React.Suspense>
+  )
+
+  await findByText('renderCount: 1, count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('renderCount: 2, count: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('renderCount: 3, count: 2')
+})
