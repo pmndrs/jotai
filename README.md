@@ -100,7 +100,7 @@ const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 You can make the first argument an async function, too.
 
 ```jsx
-const urlAtom = create("https://json.host")
+const urlAtom = create("https://json.host.com")
 const fetchUrlAtom = create(
   async get => {
     const response = await fetch(get(urlAtom))
