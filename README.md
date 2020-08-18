@@ -1,7 +1,5 @@
 <p align="center">
-  <!--<img width="500" src="ghost.png" />-->
-  <h1>Jotai</h1>
-  <h3>👻 Next gen state management that will spook you</h3>
+  <img width="500" src="jotai.png" />
 </p>
 
 ![Bundle Size](https://badgen.net/bundlephobia/minzip/jotai) [![Build Status](https://travis-ci.org/react-spring/jotai.svg?branch=master)](https://travis-ci.org/react-spring/jotai) [![npm version](https://badge.fury.io/js/jotai.svg)](https://badge.fury.io/js/jotai) ![npm](https://img.shields.io/npm/dt/jotai.svg)
@@ -16,23 +14,22 @@ to a large app with complicated state.
 
 You can try a live demo soon.
 
-    npm install jotai
+```bash
+npm install jotai
+```    
 
-#### 1. Create a primitive atom
+### First create a primitive atom
 
-An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays.
+An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays. You can create as many primitive atoms as you want.
 
 ```jsx
 import { atom } from 'jotai'
 
 const countAtom = atom(0)
-
 const colorsAtom = atom(["#ff0000"])
 ```
 
-👉 You can create as many primitive atoms as you want.
-
-#### 2. Wrap any component tree with Jotai's Provider
+### Wrap your component tree with Jotai's Provider
 
 You can only use atoms under this component tree.
 
@@ -46,7 +43,7 @@ const Root = () => (
 )
 ```
 
-#### 3. Use the atom in your components
+### Use the atom in your components
 
 It can be used just like `React.useState`:
 
@@ -55,76 +52,35 @@ import { useAtom } from 'jotai'
 
 function Counter() {
   const [count, setCount] = useAtom(countAtom)
-
   return (
     <h1>
       {count}
-      <button onClick={() => setCount(c => c + 1)}>Increase</button>
-    </h1>
-  )
-}
+      <button onClick={() => setCount(c => c + 1)}>one up</button>
 ```
 
-#### You can create a derived atom with computed value
+### Create derived atoms with computed values
 
-A new atom can be created from existing atoms with a read method.
-`get` will return current value of atom.
+A new read-only atom can be created from existing atoms by passing a function. `get` allows you to fetch the contextual value of any atom.
 
 ```jsx
-import { atom, useAtom } from 'jotai'
-
 const doubledCountAtom = atom(get => get(countAtom) * 2)
 
 function DoubleCounter() {
-  const [doubledCount] = useAtom(doubledCountAtom);
-
+  const [doubledCount] = useAtom(doubledCountAtom)
   return <h2>{doubledCount}</h2>
-}
 ```
 
-#### You can create a writable derived atom
-
-Define both read and write methods.
-`get` will return current value of atom.
-`set` will update value of atom.
-
-```jsx
-import { atom, useAtom } from 'jotai'
-
-const decrementCountAtom = atom(
-  get => get(countAtom),
-  (get, set, _unused) => {
-    set(countAtom, get(countAtom) - 1)
-  },
-)
-
-function Counter() {
-  const [count, decrement] = useAtom(decrementCountAtom)
-
-  return (
-    <h1>
-      {count}
-      <button onClick={decrement}>Decrease</button>
-    </h1>
-  )
-}
-```
-
-### Why Jotai over Recoil?
+#### Why Jotai over Recoil?
 
 * Minimalistic API
 * No string keys
 * TypeScript oriented
 
-Limitations:
-* No persistence nor URL encoded state
-* No loading state (prefer using React Suspense)
-
 ---
 
 # Recipes
 
-## Creating an atom from multiple atoms
+### Creating an atom from multiple atoms
 
 You can combine multiple atoms to create a derived atom.
 
@@ -136,46 +92,75 @@ const count3 = atom(0)
 const sum = atom(get => get(count1) + get(count2) + get(count3))
 ```
 
-## Write-only atoms
+Or if you like fp patterns ... 
+
+```jsx
+const atoms = [count1, count1, count3, ...]
+const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
+```
+
+### Derived async actions ![](https://img.shields.io/badge/-needs_suspense-brightgreen)
+
+You can make the first argument an async function, too.
+
+```jsx
+const urlAtom = create("https://json.host.com")
+const fetchUrlAtom = create(
+  async get => {
+    const response = await fetch(get(urlAtom))
+    return await response.json()
+  }
+)
+
+function Status() {
+  // Re-renders the component after urlAtom changed and the async function above concludes
+  const [json] = useAtom(fetchUrlAtom)
+```
+
+### You can create a writable derived atom
+
+`get` will return the current value of an atom, `set` will update an atoms value.
+
+```jsx
+const decrementCountAtom = atom(
+  get => get(countAtom),
+  (get, set, ...args) => set(countAtom, get(countAtom) - 1),
+)
+
+function Counter() {
+  const [count, decrement] = useAtom(decrementCountAtom)
+  return (
+    <h1>
+      {count}
+      <button onClick={decrement}>Decrease</button>
+```
+
+### Write-only atoms
 
 Just do not define a read method.
 
 ```jsx
-const multiplyCountAtom = atom(
-  null, // no read
-  (get, set, multiplicator) => {
-    set(countAtom, get(countAtom) * multiplicator)
-  },
-)
+const multiplyCountAtom = atom(null, (get, set, by) => set(countAtom, get(countAtom) * by))
 
 function Controls() {
   const [, multiply] = useAtom(multiplyCountAtom)
   return <button onClick={() => multiply(3)}>triple</button>
-}
 ```
 
-## Async actions
+### Async actions ![](https://img.shields.io/badge/-needs_suspense-brightgreen)
 
 Just make the second argument `write` async function and call `set` when you're ready.
 
 ```jsx
 const fetchCountAtom = create(
   get => get(countAtom),
-  async (_get, set, url) => {
+  async (get, set, url) => {
     const response = await fetch(url)
     set(countAtom, (await response.json()).count)
   }
 )
-```
-## Async read
 
-You can make the first argument `read` async function too.
-
-```jsx
-const delayedCountAtom = create(
-  async get => {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    get(countAtom);
-  }
-)
+function Controls() {
+  const [count, compute] = useAtom(fetchCountAtom)
+  return <button onClick={() => compute("http://count.host.com")}>compute</button>
 ```
