@@ -1,11 +1,20 @@
 <p align="center">
   <!--<img width="500" src="ghost.png" />-->
   <h1>Jotai</h1>
+  <h3>👻 Next gen state management that will spook you</h3>
 </p>
 
 ![Bundle Size](https://badgen.net/bundlephobia/minzip/jotai) [![Build Status](https://travis-ci.org/react-spring/jotai.svg?branch=master)](https://travis-ci.org/react-spring/jotai) [![npm version](https://badge.fury.io/js/jotai.svg)](https://badge.fury.io/js/jotai) ![npm](https://img.shields.io/npm/dt/jotai.svg)
 
-👻 Next gen state management that will spook you
+Primitive and flexible state management for React.
+
+No extra re-renders even with React Context.
+State resides within React. You can get full benefit from
+React Suspense, and Concurrent Mode in the future.
+It's scalable from a simple React.useState replacement
+to a large app with complicated state.
+
+You can try a live demo soon.
 
     npm install jotai
 
