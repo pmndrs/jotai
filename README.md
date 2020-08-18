@@ -62,7 +62,7 @@ A new atom can be created from existing atoms with a read method.
 `get` will return current value of atom.
 
 ```jsx
-import { atom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 
 const doubledCountAtom = atom(get => get(countAtom) * 2)
 
@@ -80,7 +80,7 @@ Define both read and write methods.
 `set` will update value of atom.
 
 ```jsx
-import { atom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 
 const decrementCountAtom = atom(
   get => get(countAtom),
@@ -115,19 +115,25 @@ Limitations:
 
 # Recipes
 
-## Deriving an atom from multiple atoms
+## Creating an atom from multiple atoms
 
-TODO
+You can combine multiple atoms to create a derived atom.
+
+```jsx
+const count1 = atom(0)
+const count2 = atom(0)
+const count3 = atom(0)
+
+const sum = atom(get => get(count1) + get(count2) + get(count3))
+```
 
 ## Write-only atoms
 
 Just do not define a read method.
 
 ```jsx
-import { atom } from 'jotai'
-
 const multiplyCountAtom = atom(
-  null, // no read method
+  null, // no read
   (get, set, multiplicator) => {
     set(countAtom, get(countAtom) * multiplicator)
   },
@@ -141,14 +147,26 @@ function Controls() {
 
 ## Async actions
 
-Just make `write` async function and call `set` when you're ready.
+Just make the second argument `write` async function and call `set` when you're ready.
 
 ```jsx
-const fetchCountAtom = create({
-  read: ({ get }) => get(countAtom),
-  write: async ({ set }, url) => {
+const fetchCountAtom = create(
+  get => get(countAtom),
+  async (_get, set, url) => {
     const response = await fetch(url)
     set(countAtom, (await response.json()).count)
   }
-})
+)
+```
+## Async read
+
+You can make the first argument `read` async function too.
+
+```jsx
+const delayedCountAtom = create(
+  async get => {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    get(countAtom);
+  }
+)
 ```
