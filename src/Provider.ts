@@ -22,19 +22,19 @@ const warningObject = new Proxy(
 )
 
 type InitAction = {
-  type: 'INIT_ATOM'
+  type: 'INIT'
   atom: AnyAtom
   id: symbol
 }
 
 type DisposeAction = {
-  type: 'DISPOSE_ATOM'
+  type: 'DISPOSE'
   atom: AnyAtom
   id: symbol
 }
 
 type UpdateAction = {
-  type: 'UPDATE_VALUE'
+  type: 'UPDATE'
   atom: AnyWritableAtom
   update: SetStateAction<unknown>
 }
@@ -324,7 +324,7 @@ export const Provider: React.FC = ({ children }) => {
   const dispatch = useCallback(
     (action: Action) =>
       setState((prevState) => {
-        if (action.type === 'INIT_ATOM') {
+        if (action.type === 'INIT') {
           const updateState = initAtom(
             prevState,
             setState,
@@ -333,10 +333,10 @@ export const Provider: React.FC = ({ children }) => {
           )
           return appendMap(new Map(prevState), updateState)
         }
-        if (action.type === 'DISPOSE_ATOM') {
+        if (action.type === 'DISPOSE') {
           return disposeAtom(prevState, action.id)
         }
-        if (action.type === 'UPDATE_VALUE') {
+        if (action.type === 'UPDATE') {
           const atomState = getAtomState(prevState, action.atom)
           if (atomState.promise) {
             const promise = atomState.promise.then(() => {

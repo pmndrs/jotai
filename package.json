@@ -1,11 +1,11 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "👻 Next gen state management that will spook you",
   "main": "index.cjs.js",
   "module": "index.js",
-  "types": "index.d.ts",
+  "types": "src/index.d.ts",
   "files": [
     "**"
   ],
