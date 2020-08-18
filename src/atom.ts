@@ -17,16 +17,6 @@ export function atom<Value, WriteValue>(
   ) => void | Promise<void>
 ): WritableAtom<null, WriteValue>
 
-// async-read write-only derived atom
-export function atom<Value, WriteValue>(
-  read: null,
-  write: (
-    get: Getter,
-    set: Setter,
-    writeValue: WriteValue
-  ) => void | Promise<void>
-): WritableAtom<null, WriteValue>
-
 // writable derived atom
 export function atom<Value, WriteValue>(
   read: (get: Getter) => NonPromise<Value>,
