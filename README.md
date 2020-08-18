@@ -20,7 +20,9 @@ An atom represents a piece of state. All you need is to specify an initial value
 import { atom } from 'jotai'
 
 const countAtom = atom(0)
-const colorsAtom = atom(["#ff0000"])
+const countryAtom = atom("Japan")
+const colorsAtom = atom(["aquamarine", "hotpink", "peachpuff"])
+const objectAtom = atom({ foo: 1, bar: 2 })
 ```
 
 ### Wrap your component tree with Jotai's Provider
