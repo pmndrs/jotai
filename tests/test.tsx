@@ -264,8 +264,7 @@ it('works with async get', async () => {
   await findByText('renderCount: 2, count: 0, delayedCount: 0')
 
   fireEvent.click(getByText('button'))
-  await findByText('renderCount: 3, count: 1, delayedCount: 0')
-  await findByText('renderCount: 4, count: 1, delayedCount: 1')
+  await findByText('renderCount: 3, count: 1, delayedCount: 1')
 })
 
 it('shows loading with async set', async () => {
@@ -386,7 +385,7 @@ it('runs update only once in StrictMode', async () => {
   expect(updateCount).toBe(1)
 })
 
-it.skip('works with async write-only atom', async () => {
+it('works with async write-only atom', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(null, async (_get, set, value: number) => {
     await new Promise((r) => setTimeout(r, 10))

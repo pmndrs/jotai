@@ -30,42 +30,65 @@ export type Actions = {
   update: (atom: AnyWritableAtom, update: SetStateAction<unknown>) => void
 }
 
+type DependentsSets = [
+  // 0: dependents for get operation
+  WeakMap<AnyAtom, Set<AnyAtom | symbol>>, // symbol is id from INIT_ATOM
+  // 1: dependents for set operation
+  WeakMap<AnyAtom, Set<AnyAtom>>
+]
+
+const addGetDependent = (
+  dependentsSets: DependentsSets,
+  atom: AnyAtom,
+  dependent: AnyAtom | symbol
+) => {
+  let dependents = dependentsSets[0].get(atom)
+  if (!dependents) {
+    dependents = new Set<AnyAtom | symbol>()
+    dependentsSets[0].set(atom, dependents)
+  }
+  dependents.add(dependent)
+}
+
+const deleteGetDependent = (
+  dependentsSets: DependentsSets,
+  atom: AnyAtom,
+  dependent: AnyAtom | symbol
+) => {
+  const dependents = dependentsSets[0].get(atom)
+  if (dependents && dependents.has(dependent)) {
+    dependents.delete(dependent)
+    return dependents.size === 0 // empty
+  }
+  return false // not found
+}
+
+const listGetDependents = (dependentsSets: DependentsSets, atom: AnyAtom) => {
+  const dependents = dependentsSets[0].get(atom)
+  return dependents || new Set<AnyAtom | symbol>()
+}
+
+const addSetDependent = (
+  dependentsSets: DependentsSets,
+  atom: AnyAtom,
+  dependent: AnyAtom
+) => {
+  let dependents = dependentsSets[1].get(atom)
+  if (!dependents) {
+    dependents = new Set<AnyAtom>()
+    dependentsSets[1].set(atom, dependents)
+  }
+  dependents.add(dependent)
+}
+
 export type AtomState<Value = unknown> = {
   promise: Promise<void> | null
   value: Value
-  getDependents: Set<AnyAtom | symbol> // symbol is id from INIT_ATOM
-  setDependents: Set<AnyAtom>
 }
 
 type State = Map<AnyAtom, AtomState>
 
 const initialState: State = new Map()
-
-const getAllDependents = (state: State, atom: AnyAtom) => {
-  const dependents = new Set<AnyAtom>()
-  const appendSetDependents = (a: AnyAtom) => {
-    const aState = state.get(a)
-    if (!aState) return
-    aState.setDependents.forEach((dependent) => {
-      dependents.add(dependent)
-      if (a !== dependent) {
-        appendSetDependents(dependent)
-      }
-    })
-  }
-  appendSetDependents(atom)
-  const appendGetDependents = (a: AnyAtom) => {
-    const aState = state.get(a)
-    if (!aState) return
-    aState.getDependents.forEach((dependent) => {
-      if (typeof dependent === 'symbol') return
-      dependents.add(dependent)
-      appendGetDependents(dependent)
-    })
-  }
-  Array.from(dependents).forEach(appendGetDependents)
-  return dependents
-}
 
 const getAtomState = (state: State, atom: AnyAtom) => {
   const atomState = state.get(atom)
@@ -80,280 +103,233 @@ const getAtomStateValue = (state: State, atom: AnyAtom) => {
   return atomState ? atomState.value : atom.initialValue
 }
 
-function appendMap<K, V>(dst: Map<K, V>, src: Map<K, V>) {
+const appendMap = <K, V>(dst: Map<K, V>, src: Map<K, V>) => {
   src.forEach((v, k) => {
     dst.set(k, v)
   })
   return dst
 }
 
-const initAtomSub = (
-  prevState: State,
-  setState: Dispatch<SetStateAction<State>>,
-  atom: AnyAtom,
-  dependent: AnyAtom | symbol
-) => {
-  let atomState = prevState.get(atom)
-  if (atomState) {
-    const nextAtomState = {
-      ...atomState,
-      getDependents: new Set(atomState.getDependents).add(dependent),
-    }
-    return new Map().set(atom, nextAtomState)
-  }
-  const updateState: State = new Map()
-  let isSync = true
-  const nextValue = atom.read(((a: AnyAtom) => {
-    if (a !== atom) {
-      if (isSync) {
-        appendMap(updateState, initAtomSub(prevState, setState, a, atom))
-      } else {
-        setState((prev) =>
-          appendMap(new Map(prev), initAtomSub(prev, setState, a, atom))
-        )
-      }
-    }
-    return getAtomStateValue(prevState, a)
-  }) as Getter)
-  if (nextValue instanceof Promise) {
-    const promise = nextValue.then((value) => {
-      setState((prev) =>
-        new Map(prev).set(atom, {
-          ...getAtomState(prev, atom),
-          promise: null,
-          value,
-        })
-      )
-    })
-    atomState = {
-      promise,
-      value: atom.initialValue,
-      getDependents: new Set(),
-      setDependents: new Set(),
-    }
-  } else {
-    atomState = {
-      promise: null,
-      value: nextValue,
-      getDependents: new Set(),
-      setDependents: new Set(),
-    }
-  }
-  atomState.getDependents.add(dependent)
-  updateState.set(atom, atomState)
-  isSync = false
-  return updateState
+const concatMap = <K, V>(src1: Map<K, V>, src2: Map<K, V>) => {
+  const dst = new Map<K, V>()
+  src1.forEach((v, k) => {
+    dst.set(k, v)
+  })
+  src2.forEach((v, k) => {
+    dst.set(k, v)
+  })
+  return dst
 }
 
-const disposeAtomSub = (prevState: State, dependent: AnyAtom | symbol) => {
-  let nextState = new Map(prevState)
-  const deleted: AnyAtom[] = []
-  nextState.forEach((atomState, atom) => {
-    if (atomState.getDependents.has(dependent)) {
-      const nextGetDependents = new Set(atomState.getDependents)
-      nextGetDependents.delete(dependent)
-      if (nextGetDependents.size) {
-        nextState.set(atom, {
-          ...atomState,
-          getDependents: nextGetDependents,
-        })
-      } else {
+const initAtom = (
+  id: symbol,
+  initializingAtom: AnyAtom,
+  stateRef: MutableRefObject<State>,
+  setState: Dispatch<SetStateAction<State>>,
+  dependentsSets: DependentsSets
+) => {
+  const createAtomState = (
+    prevState: State,
+    atom: AnyAtom,
+    dependent: AnyAtom | symbol
+  ) => {
+    addGetDependent(dependentsSets, atom, dependent)
+    const partialState: State = new Map()
+    let atomState = prevState.get(atom)
+    if (atomState) {
+      return partialState // already initialized
+    }
+    let isSync = true
+    const nextValue = atom.read(((a: AnyAtom) => {
+      if (a !== atom) {
+        if (isSync) {
+          const nextPartialState = createAtomState(prevState, a, atom)
+          appendMap(partialState, nextPartialState)
+        } else {
+          const nextPartialState = createAtomState(stateRef.current, a, atom)
+          setState((prev) => appendMap(new Map(prev), nextPartialState))
+        }
+      }
+      return getAtomStateValue(prevState, a)
+    }) as Getter)
+    if (nextValue instanceof Promise) {
+      const promise = nextValue.then((value) => {
+        setState((prev) => new Map(prev).set(atom, { promise: null, value }))
+      })
+      atomState = { promise, value: atom.initialValue }
+    } else {
+      atomState = { promise: null, value: nextValue }
+    }
+    partialState.set(atom, atomState)
+    isSync = false
+    return partialState
+  }
+
+  const updateState = createAtomState(stateRef.current, initializingAtom, id)
+  setState((prevState) => appendMap(new Map(prevState), updateState))
+}
+
+const disposeAtom = (
+  id: symbol,
+  setState: Dispatch<SetStateAction<State>>,
+  dependentsSets: DependentsSets
+) => {
+  const deleteAtomState = (prevState: State, dependent: AnyAtom | symbol) => {
+    let nextState = new Map(prevState)
+    const deleted: AnyAtom[] = []
+    nextState.forEach((_atomState, atom) => {
+      const isEmpty = deleteGetDependent(dependentsSets, atom, dependent)
+      if (isEmpty) {
         nextState.delete(atom)
         deleted.push(atom)
+        // TODO delete in dependentsSets too (even thought they are WeakMap)
       }
-    }
-  })
-  nextState = deleted.reduce((p, c) => disposeAtomSub(p, c), nextState)
-  return nextState
-}
-
-const updateAtomValueSub = (
-  prevState: State,
-  setState: Dispatch<SetStateAction<State>>,
-  actionAtom: AnyWritableAtom,
-  actionUpdate: SetStateAction<unknown>
-) => {
-  const nextState = new Map(prevState)
-  let isSync = true
-  const valuesToUpdate = new Map<AnyAtom, unknown>()
-  const promises: Promise<void>[] = []
-  const allDependents = getAllDependents(nextState, actionAtom)
-
-  const getCurrAtomValue = (atom: AnyAtom) => {
-    if (valuesToUpdate.has(atom)) {
-      return valuesToUpdate.get(atom)
-    }
-    const atomState = nextState.get(atom)
-    return atomState ? atomState.value : atom.initialValue
+    })
+    nextState = deleted.reduce((p, c) => deleteAtomState(p, c), nextState)
+    return nextState
   }
 
-  const updateDependents = (atom: AnyAtom) => {
-    const atomState = nextState.get(atom)
-    if (!atomState) return
-    atomState.getDependents.forEach((dependent) => {
+  setState((prevState) => deleteAtomState(prevState, id))
+}
+
+const updateAtomValue = (
+  updatingAtom: AnyWritableAtom,
+  update: SetStateAction<unknown>,
+  stateRef: MutableRefObject<State>,
+  setState: Dispatch<SetStateAction<State>>,
+  dependentsSets: DependentsSets
+) => {
+  const updateDependentsState = (prevState: State, atom: AnyAtom) => {
+    const partialState: State = new Map()
+    listGetDependents(dependentsSets, atom).forEach((dependent) => {
       if (typeof dependent === 'symbol') return
       const v = dependent.read(((a: AnyAtom) => {
         if (a !== dependent) {
-          if (isSync) {
-            appendMap(nextState, initAtomSub(prevState, setState, a, dependent))
-          } else {
-            setState((prev) =>
-              appendMap(
-                new Map(prev),
-                initAtomSub(prev, setState, a, dependent)
-              )
-            )
-          }
+          addGetDependent(dependentsSets, a, dependent)
         }
-        return getCurrAtomValue(a)
+        return getAtomStateValue(prevState, a)
       }) as Getter)
       if (v instanceof Promise) {
-        promises.push(
-          v.then((vv) => {
-            valuesToUpdate.set(dependent, vv)
-            allDependents.delete(dependent)
-          })
-        )
+        const promise = v.then((vv) => {
+          const nextAtomState: AtomState = { promise: null, value: vv }
+          const nextPartialState = updateDependentsState(
+            new Map(stateRef.current).set(dependent, nextAtomState),
+            dependent
+          )
+          setState((prev) =>
+            appendMap(
+              new Map(prev).set(dependent, {
+                promise: null,
+                value: vv,
+              }),
+              nextPartialState
+            )
+          )
+        })
+        partialState.set(dependent, {
+          ...getAtomState(prevState, dependent),
+          promise,
+        })
       } else {
-        valuesToUpdate.set(dependent, v)
-        allDependents.delete(dependent)
+        partialState.set(dependent, {
+          promise: null,
+          value: v,
+        })
+        appendMap(partialState, updateDependentsState(prevState, dependent))
       }
-      updateDependents(dependent)
     })
+    return partialState
   }
 
-  const updateAtomValue = (atom: AnyAtom, value: unknown) => {
-    valuesToUpdate.set(atom, value)
-    allDependents.delete(atom)
-    updateDependents(atom)
-  }
-
-  const setValue = (atom: AnyWritableAtom, value: unknown) => {
+  const updateAtomState = (
+    prevState: State,
+    atom: AnyWritableAtom,
+    value: unknown
+  ) => {
+    const partialState: State = new Map()
+    let isSync = true
     const promise = atom.write(
-      getCurrAtomValue as Getter,
+      ((a: AnyAtom) => getAtomStateValue(prevState, a)) as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
-        if (isSync) {
-          const atomState = getAtomState(nextState, atom)
-          nextState.set(atom, {
-            ...atomState,
-            setDependents: new Set(atomState.setDependents).add(a),
-          })
-        } else {
-          setState((prev) => {
-            const atomState = getAtomState(prev, atom)
-            return new Map(prev).set(atom, {
-              ...atomState,
-              setDependents: new Set(atomState.setDependents).add(a),
-            })
-          })
-        }
+        addSetDependent(dependentsSets, atom, a)
         if (a === atom) {
-          updateAtomValue(atom, v)
+          const nextAtomState: AtomState = { promise: null, value: v }
+          if (isSync) {
+            partialState.set(a, nextAtomState)
+            appendMap(
+              partialState,
+              updateDependentsState(concatMap(prevState, partialState), a)
+            )
+          } else {
+            const nextPartialState = updateAtomState(
+              new Map(stateRef.current).set(a, nextAtomState),
+              a,
+              v
+            )
+            setState((prev) =>
+              appendMap(new Map(prev).set(a, nextAtomState), nextPartialState)
+            )
+          }
         } else {
-          setValue(a, v)
+          if (isSync) {
+            const nextPartialState = updateAtomState(
+              concatMap(prevState, partialState),
+              a,
+              v
+            )
+            appendMap(partialState, nextPartialState)
+          } else {
+            const nextPartialState = updateAtomState(stateRef.current, a, v)
+            setState((prev) => appendMap(new Map(prev), nextPartialState))
+          }
         }
       }) as Setter,
       value
     )
     if (promise instanceof Promise) {
-      promises.push(promise)
-    }
-  }
-
-  const nextValue =
-    typeof actionUpdate === 'function'
-      ? actionUpdate(getCurrAtomValue(actionAtom))
-      : actionUpdate
-  setValue(actionAtom, nextValue)
-
-  const hasPromises = promises.length > 0
-  const resolve = async () => {
-    if (promises.length) {
-      const promisesToWait = promises.splice(0, promises.length)
-      await Promise.all(promisesToWait)
-      await resolve()
-    } else {
-      if (allDependents.size !== 0) {
-        throw new Error('allDependents is not empty, maybe a bug')
+      const nextAtomState: AtomState = {
+        ...getAtomState(prevState, atom),
+        promise: promise.then(() => {
+          setState((prev) =>
+            new Map(prev).set(atom, {
+              ...getAtomState(prev, atom),
+              promise: null,
+            })
+          )
+        }),
       }
-      setState((prev) => {
-        const nextS = new Map(prev)
-        valuesToUpdate.forEach((value, atom) => {
-          const atomState = getAtomState(nextS, atom)
-          nextS.set(atom, { ...atomState, promise: null, value })
-        })
-        return nextS
-      })
+      partialState.set(atom, nextAtomState)
     }
+    isSync = false
+    return partialState
   }
-  const promise = resolve()
 
-  if (hasPromises) {
-    promise.then(() => {
-      const atomState = getAtomState(nextState, actionAtom)
-      nextState.set(actionAtom, { ...atomState, promise: null })
-    })
-    const atomState = getAtomState(nextState, actionAtom)
-    nextState.set(actionAtom, { ...atomState, promise })
-  }
-  allDependents.forEach((dependent) => {
-    const dependentState = getAtomState(nextState, dependent)
-    nextState.set(dependent, { ...dependentState, promise })
-  })
-  valuesToUpdate.forEach((value, atom) => {
-    const atomState = getAtomState(nextState, atom)
-    nextState.set(atom, { ...atomState, promise: null, value })
-  })
-  valuesToUpdate.clear()
-  isSync = false
-  return nextState
-}
-
-const initAtom = (
-  atom: AnyAtom,
-  id: symbol,
-  stateRef: MutableRefObject<State>,
-  setState: Dispatch<SetStateAction<State>>
-) => {
-  /*
-  const updateState = initAtomSub(stateRef.current, setState, atom, id)
-  setState((prevState) => appendMap(new Map(prevState), updateState))
-  */
-  setState((prevState) => {
-    const updateState = initAtomSub(prevState, setState, atom, id)
-    return appendMap(new Map(prevState), updateState)
-  })
-}
-
-const disposeAtom = (id: symbol, setState: Dispatch<SetStateAction<State>>) => {
-  setState((prevState) => disposeAtomSub(prevState, id))
-}
-
-const updateAtomValue = (
-  atom: AnyWritableAtom,
-  update: SetStateAction<unknown>,
-  stateRef: MutableRefObject<State>,
-  setState: Dispatch<SetStateAction<State>>
-) => {
-  const atomState = getAtomState(stateRef.current, atom)
-  if (atomState.promise) {
-    const promise = atomState.promise.then(() => {
-      const nextState = updateAtomValueSub(
+  const updatingAtomState = getAtomState(stateRef.current, updatingAtom)
+  if (updatingAtomState.promise) {
+    const promise = updatingAtomState.promise.then(() => {
+      const updateState = updateAtomState(
         stateRef.current,
-        setState,
-        atom,
-        update
+        updatingAtom,
+        typeof update === 'function'
+          ? update(getAtomStateValue(stateRef.current, updatingAtom))
+          : update
       )
-      setState(nextState)
+      setState((prevState) => appendMap(new Map(prevState), updateState))
     })
-    const nextState = new Map(stateRef.current).set(atom, {
-      ...atomState,
-      promise,
-    })
-    setState(nextState)
+    setState((prevState) =>
+      new Map(prevState).set(updatingAtom, {
+        ...updatingAtomState,
+        promise,
+      })
+    )
+  } else {
+    const updateState = updateAtomState(
+      stateRef.current,
+      updatingAtom,
+      typeof update === 'function' ? update(updatingAtomState.value) : update
+    )
+    setState((prevState) => appendMap(new Map(prevState), updateState))
   }
-  const nextState = updateAtomValueSub(stateRef.current, setState, atom, update)
-  setState(nextState)
 }
 
 export const ActionsContext = createContext(warningObject as Actions)
@@ -365,13 +341,30 @@ export const Provider: React.FC = ({ children }) => {
   useIsoLayoutEffect(() => {
     stateRef.current = state
   })
+  const dependentsSetsRef = useRef<DependentsSets>()
+  if (!dependentsSetsRef.current) {
+    dependentsSetsRef.current = [new WeakMap(), new WeakMap()]
+  }
   const actions = useMemo(
     () => ({
       init: (id: symbol, atom: AnyAtom) =>
-        initAtom(atom, id, stateRef, setState),
-      dispose: (id: symbol) => disposeAtom(id, setState),
+        initAtom(
+          id,
+          atom,
+          stateRef,
+          setState,
+          dependentsSetsRef.current as DependentsSets
+        ),
+      dispose: (id: symbol) =>
+        disposeAtom(id, setState, dependentsSetsRef.current as DependentsSets),
       update: (atom: AnyWritableAtom, update: SetStateAction<unknown>) =>
-        updateAtomValue(atom, update, stateRef, setState),
+        updateAtomValue(
+          atom,
+          update,
+          stateRef,
+          setState,
+          dependentsSetsRef.current as DependentsSets
+        ),
     }),
     []
   )
