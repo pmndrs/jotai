@@ -1,8 +1,9 @@
-import { Dispatch, SetStateAction, useCallback, useEffect } from 'react'
+import { Dispatch, SetStateAction, useCallback } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
 import { StateContext, ActionsContext, AtomState } from './Provider'
 import { Atom, WritableAtom, AnyWritableAtom } from './types'
+import { useIsoLayoutEffect } from './utils'
 
 const isWritable = <Value, WriteValue>(
   atom: Atom<Value> | WritableAtom<Value, WriteValue>
@@ -41,7 +42,7 @@ export function useAtom<Value, WriteValue>(
     },
     [atom, actions]
   )
-  useEffect(() => {
+  useIsoLayoutEffect(() => {
     const id = Symbol()
     actions.init(id, atom)
     return () => {

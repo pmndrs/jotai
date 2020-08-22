@@ -1,13 +1,16 @@
 import React, {
   Dispatch,
   SetStateAction,
+  MutableRefObject,
   createElement,
   useMemo,
   useState,
+  useRef,
 } from 'react'
 import { createContext } from 'use-context-selector'
 
 import { AnyAtom, AnyWritableAtom, Getter, Setter } from './types'
+import { useIsoLayoutEffect } from './utils'
 
 const warningObject = new Proxy(
   {},
@@ -309,8 +312,13 @@ const updateAtomValueSub = (
 const initAtom = (
   atom: AnyAtom,
   id: symbol,
+  stateRef: MutableRefObject<State>,
   setState: Dispatch<SetStateAction<State>>
 ) => {
+  /*
+  const updateState = initAtomSub(stateRef.current, setState, atom, id)
+  setState((prevState) => appendMap(new Map(prevState), updateState))
+  */
   setState((prevState) => {
     const updateState = initAtomSub(prevState, setState, atom, id)
     return appendMap(new Map(prevState), updateState)
@@ -318,33 +326,34 @@ const initAtom = (
 }
 
 const disposeAtom = (id: symbol, setState: Dispatch<SetStateAction<State>>) => {
-  setState((prevState) => {
-    return disposeAtomSub(prevState, id)
-  })
+  setState((prevState) => disposeAtomSub(prevState, id))
 }
 
 const updateAtomValue = (
   atom: AnyWritableAtom,
   update: SetStateAction<unknown>,
+  stateRef: MutableRefObject<State>,
   setState: Dispatch<SetStateAction<State>>
 ) => {
-  setState((prevState) => {
-    const atomState = getAtomState(prevState, atom)
-    if (atomState.promise) {
-      const promise = atomState.promise.then(() => {
-        setState((prev) => {
-          const nextState = updateAtomValueSub(prev, setState, atom, update)
-          return nextState
-        })
-      })
-      return new Map(prevState).set(atom, {
-        ...atomState,
-        promise,
-      })
-    }
-    const nextState = updateAtomValueSub(prevState, setState, atom, update)
-    return nextState
-  })
+  const atomState = getAtomState(stateRef.current, atom)
+  if (atomState.promise) {
+    const promise = atomState.promise.then(() => {
+      const nextState = updateAtomValueSub(
+        stateRef.current,
+        setState,
+        atom,
+        update
+      )
+      setState(nextState)
+    })
+    const nextState = new Map(stateRef.current).set(atom, {
+      ...atomState,
+      promise,
+    })
+    setState(nextState)
+  }
+  const nextState = updateAtomValueSub(stateRef.current, setState, atom, update)
+  setState(nextState)
 }
 
 export const ActionsContext = createContext(warningObject as Actions)
@@ -352,12 +361,17 @@ export const StateContext = createContext(warningObject as State)
 
 export const Provider: React.FC = ({ children }) => {
   const [state, setState] = useState(initialState)
+  const stateRef = useRef(state)
+  useIsoLayoutEffect(() => {
+    stateRef.current = state
+  })
   const actions = useMemo(
     () => ({
-      init: (id: symbol, atom: AnyAtom) => initAtom(atom, id, setState),
+      init: (id: symbol, atom: AnyAtom) =>
+        initAtom(atom, id, stateRef, setState),
       dispose: (id: symbol) => disposeAtom(id, setState),
       update: (atom: AnyWritableAtom, update: SetStateAction<unknown>) =>
-        updateAtomValue(atom, update, setState),
+        updateAtomValue(atom, update, stateRef, setState),
     }),
     []
   )

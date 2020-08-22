@@ -349,7 +349,7 @@ it('uses atoms with tree dependencies', async () => {
   await findByText('renderCount: 3, count: 2')
 })
 
-it.skip('runs update only once in StrictMode', async () => {
+it('runs update only once in StrictMode', async () => {
   let updateCount = 0
   const countAtom = atom(0)
   const derivedAtom = atom(
@@ -386,7 +386,7 @@ it.skip('runs update only once in StrictMode', async () => {
   expect(updateCount).toBe(1)
 })
 
-it.skip('works with write-only atom', async () => {
+it.skip('works with async write-only atom', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(null, async (_get, set, value: number) => {
     await new Promise((r) => setTimeout(r, 10))
