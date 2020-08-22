@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { StrictMode } from 'react'
 import { fireEvent, cleanup, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
@@ -347,4 +347,41 @@ it('uses atoms with tree dependencies', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('renderCount: 3, count: 2')
+})
+
+it.skip('runs update only once in StrictMode', async () => {
+  let updateCount = 0
+  const countAtom = atom(0)
+  const derivedAtom = atom(
+    (get) => get(countAtom),
+    (_get, set, writeValue: number) => {
+      updateCount += 1
+      set(countAtom, writeValue)
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(derivedAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+  expect(updateCount).toBe(0)
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
+  expect(updateCount).toBe(1)
 })
