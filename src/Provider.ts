@@ -30,32 +30,28 @@ export type Actions = {
   update: (atom: AnyWritableAtom, update: SetStateAction<unknown>) => void
 }
 
-type DependentsSets = [
-  // 0: dependents for get operation
-  WeakMap<AnyAtom, Set<AnyAtom | symbol>>, // symbol is id from INIT_ATOM
-  // 1: dependents for set operation
-  WeakMap<AnyAtom, Set<AnyAtom>>
-]
+// dependents for get operation
+type DependentsMap = WeakMap<AnyAtom, Set<AnyAtom | symbol>> // symbol is id from INIT_ATOM
 
-const addGetDependent = (
-  dependentsSets: DependentsSets,
+const addDependent = (
+  dependentsMap: DependentsMap,
   atom: AnyAtom,
   dependent: AnyAtom | symbol
 ) => {
-  let dependents = dependentsSets[0].get(atom)
+  let dependents = dependentsMap.get(atom)
   if (!dependents) {
     dependents = new Set<AnyAtom | symbol>()
-    dependentsSets[0].set(atom, dependents)
+    dependentsMap.set(atom, dependents)
   }
   dependents.add(dependent)
 }
 
-const deleteGetDependent = (
-  dependentsSets: DependentsSets,
+const deleteDependent = (
+  dependentsMap: DependentsMap,
   atom: AnyAtom,
   dependent: AnyAtom | symbol
 ) => {
-  const dependents = dependentsSets[0].get(atom)
+  const dependents = dependentsMap.get(atom)
   if (dependents && dependents.has(dependent)) {
     dependents.delete(dependent)
     return dependents.size === 0 // empty
@@ -63,22 +59,9 @@ const deleteGetDependent = (
   return false // not found
 }
 
-const listGetDependents = (dependentsSets: DependentsSets, atom: AnyAtom) => {
-  const dependents = dependentsSets[0].get(atom)
+const listDependents = (dependentsMap: DependentsMap, atom: AnyAtom) => {
+  const dependents = dependentsMap.get(atom)
   return dependents || new Set<AnyAtom | symbol>()
-}
-
-const addSetDependent = (
-  dependentsSets: DependentsSets,
-  atom: AnyAtom,
-  dependent: AnyAtom
-) => {
-  let dependents = dependentsSets[1].get(atom)
-  if (!dependents) {
-    dependents = new Set<AnyAtom>()
-    dependentsSets[1].set(atom, dependents)
-  }
-  dependents.add(dependent)
 }
 
 export type AtomState<Value = unknown> = {
@@ -126,14 +109,14 @@ const initAtom = (
   initializingAtom: AnyAtom,
   stateRef: MutableRefObject<State>,
   setState: Dispatch<SetStateAction<State>>,
-  dependentsSets: DependentsSets
+  dependentsMap: DependentsMap
 ) => {
   const createAtomState = (
     prevState: State,
     atom: AnyAtom,
     dependent: AnyAtom | symbol
   ) => {
-    addGetDependent(dependentsSets, atom, dependent)
+    addDependent(dependentsMap, atom, dependent)
     const partialState: State = new Map()
     let atomState = prevState.get(atom)
     if (atomState) {
@@ -172,17 +155,17 @@ const initAtom = (
 const disposeAtom = (
   id: symbol,
   setState: Dispatch<SetStateAction<State>>,
-  dependentsSets: DependentsSets
+  dependentsMap: DependentsMap
 ) => {
   const deleteAtomState = (prevState: State, dependent: AnyAtom | symbol) => {
     let nextState = new Map(prevState)
     const deleted: AnyAtom[] = []
     nextState.forEach((_atomState, atom) => {
-      const isEmpty = deleteGetDependent(dependentsSets, atom, dependent)
+      const isEmpty = deleteDependent(dependentsMap, atom, dependent)
       if (isEmpty) {
         nextState.delete(atom)
         deleted.push(atom)
-        // TODO delete in dependentsSets too (even thought they are WeakMap)
+        // TODO delete in dependentsMap too (even though it is WeakMap)
       }
     })
     nextState = deleted.reduce((p, c) => deleteAtomState(p, c), nextState)
@@ -197,15 +180,15 @@ const updateAtomValue = (
   update: SetStateAction<unknown>,
   stateRef: MutableRefObject<State>,
   setState: Dispatch<SetStateAction<State>>,
-  dependentsSets: DependentsSets
+  dependentsMap: DependentsMap
 ) => {
   const updateDependentsState = (prevState: State, atom: AnyAtom) => {
     const partialState: State = new Map()
-    listGetDependents(dependentsSets, atom).forEach((dependent) => {
+    listDependents(dependentsMap, atom).forEach((dependent) => {
       if (typeof dependent === 'symbol') return
       const v = dependent.read(((a: AnyAtom) => {
         if (a !== dependent) {
-          addGetDependent(dependentsSets, a, dependent)
+          addDependent(dependentsMap, a, dependent)
         }
         return getAtomStateValue(prevState, a)
       }) as Getter)
@@ -251,7 +234,6 @@ const updateAtomValue = (
     const promise = atom.write(
       ((a: AnyAtom) => getAtomStateValue(prevState, a)) as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
-        addSetDependent(dependentsSets, atom, a)
         if (a === atom) {
           const nextAtomState: AtomState = { promise: null, value: v }
           if (isSync) {
@@ -341,9 +323,9 @@ export const Provider: React.FC = ({ children }) => {
   useIsoLayoutEffect(() => {
     stateRef.current = state
   })
-  const dependentsSetsRef = useRef<DependentsSets>()
-  if (!dependentsSetsRef.current) {
-    dependentsSetsRef.current = [new WeakMap(), new WeakMap()]
+  const dependentsMapRef = useRef<DependentsMap>()
+  if (!dependentsMapRef.current) {
+    dependentsMapRef.current = new WeakMap()
   }
   const actions = useMemo(
     () => ({
@@ -353,17 +335,17 @@ export const Provider: React.FC = ({ children }) => {
           atom,
           stateRef,
           setState,
-          dependentsSetsRef.current as DependentsSets
+          dependentsMapRef.current as DependentsMap
         ),
       dispose: (id: symbol) =>
-        disposeAtom(id, setState, dependentsSetsRef.current as DependentsSets),
+        disposeAtom(id, setState, dependentsMapRef.current as DependentsMap),
       update: (atom: AnyWritableAtom, update: SetStateAction<unknown>) =>
         updateAtomValue(
           atom,
           update,
           stateRef,
           setState,
-          dependentsSetsRef.current as DependentsSets
+          dependentsMapRef.current as DependentsMap
         ),
     }),
     []
