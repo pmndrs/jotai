@@ -385,3 +385,40 @@ it.skip('runs update only once in StrictMode', async () => {
   await findByText('count: 1')
   expect(updateCount).toBe(1)
 })
+
+it.skip('works with write-only atom', async () => {
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(null, async (_get, set, value: number) => {
+    await new Promise((r) => setTimeout(r, 10))
+    set(countAtom, value)
+  })
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    const [, setCount] = useAtom(asyncCountAtom)
+    const renderCount = React.useRef(0)
+    return (
+      <>
+        <div>
+          renderCount: {++renderCount.current}, count: {count}
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <React.Suspense fallback="loading">
+      <Provider>
+        <Counter />
+      </Provider>
+    </React.Suspense>
+  )
+
+  await findByText('renderCount: 1, count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+
+  await findByText('renderCount: 2, count: 1')
+})
