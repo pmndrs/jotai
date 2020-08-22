@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useCallback, useEffect } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
-import { StateContext, DispatchContext, AtomState } from './Provider'
+import { StateContext, ActionsContext, AtomState } from './Provider'
 import { Atom, WritableAtom, AnyWritableAtom } from './types'
 
 const isWritable = <Value, WriteValue>(
@@ -18,7 +18,7 @@ export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 export function useAtom<Value, WriteValue>(
   atom: Atom<Value> | WritableAtom<Value, WriteValue>
 ) {
-  const dispatch = useContext(DispatchContext)
+  const actions = useContext(ActionsContext)
   const promiseOrValue = useContextSelector(
     StateContext,
     useCallback(
@@ -34,24 +34,20 @@ export function useAtom<Value, WriteValue>(
   const setAtom = useCallback(
     (update: SetStateAction<WriteValue>) => {
       if (isWritable(atom)) {
-        dispatch({
-          type: 'UPDATE',
-          atom: atom as AnyWritableAtom,
-          update,
-        })
+        actions.update(atom as AnyWritableAtom, update)
       } else {
         throw new Error('not writable atom')
       }
     },
-    [atom, dispatch]
+    [atom, actions]
   )
   useEffect(() => {
     const id = Symbol()
-    dispatch({ type: 'INIT', atom, id })
+    actions.init(id, atom)
     return () => {
-      dispatch({ type: 'DISPOSE', atom, id })
+      actions.dispose(id)
     }
-  }, [dispatch, atom])
+  }, [actions, atom])
   if (promiseOrValue instanceof Promise) {
     throw promiseOrValue
   }

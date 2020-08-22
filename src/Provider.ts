@@ -2,7 +2,7 @@ import React, {
   Dispatch,
   SetStateAction,
   createElement,
-  useCallback,
+  useMemo,
   useState,
 } from 'react'
 import { createContext } from 'use-context-selector'
@@ -21,25 +21,11 @@ const warningObject = new Proxy(
   }
 )
 
-type InitAction = {
-  type: 'INIT'
-  atom: AnyAtom
-  id: symbol
+export type Actions = {
+  init: (id: symbol, atom: AnyAtom) => void
+  dispose: (id: symbol) => void
+  update: (atom: AnyWritableAtom, update: SetStateAction<unknown>) => void
 }
-
-type DisposeAction = {
-  type: 'DISPOSE'
-  atom: AnyAtom
-  id: symbol
-}
-
-type UpdateAction = {
-  type: 'UPDATE'
-  atom: AnyWritableAtom
-  update: SetStateAction<unknown>
-}
-
-type Action = InitAction | DisposeAction | UpdateAction
 
 export type AtomState<Value = unknown> = {
   promise: Promise<void> | null
@@ -98,7 +84,7 @@ function appendMap<K, V>(dst: Map<K, V>, src: Map<K, V>) {
   return dst
 }
 
-const initAtom = (
+const initAtomSub = (
   prevState: State,
   setState: Dispatch<SetStateAction<State>>,
   atom: AnyAtom,
@@ -117,10 +103,10 @@ const initAtom = (
   const nextValue = atom.read(((a: AnyAtom) => {
     if (a !== atom) {
       if (isSync) {
-        appendMap(updateState, initAtom(prevState, setState, a, atom))
+        appendMap(updateState, initAtomSub(prevState, setState, a, atom))
       } else {
         setState((prev) =>
-          appendMap(new Map(prev), initAtom(prev, setState, a, atom))
+          appendMap(new Map(prev), initAtomSub(prev, setState, a, atom))
         )
       }
     }
@@ -156,7 +142,7 @@ const initAtom = (
   return updateState
 }
 
-const disposeAtom = (prevState: State, dependent: AnyAtom | symbol) => {
+const disposeAtomSub = (prevState: State, dependent: AnyAtom | symbol) => {
   let nextState = new Map(prevState)
   const deleted: AnyAtom[] = []
   nextState.forEach((atomState, atom) => {
@@ -174,20 +160,21 @@ const disposeAtom = (prevState: State, dependent: AnyAtom | symbol) => {
       }
     }
   })
-  nextState = deleted.reduce((p, c) => disposeAtom(p, c), nextState)
+  nextState = deleted.reduce((p, c) => disposeAtomSub(p, c), nextState)
   return nextState
 }
 
-const updateValue = (
+const updateAtomValueSub = (
   prevState: State,
   setState: Dispatch<SetStateAction<State>>,
-  action: UpdateAction
+  actionAtom: AnyWritableAtom,
+  actionUpdate: SetStateAction<unknown>
 ) => {
   const nextState = new Map(prevState)
   let isSync = true
   const valuesToUpdate = new Map<AnyAtom, unknown>()
   const promises: Promise<void>[] = []
-  const allDependents = getAllDependents(nextState, action.atom)
+  const allDependents = getAllDependents(nextState, actionAtom)
 
   const getCurrAtomValue = (atom: AnyAtom) => {
     if (valuesToUpdate.has(atom)) {
@@ -205,10 +192,13 @@ const updateValue = (
       const v = dependent.read(((a: AnyAtom) => {
         if (a !== dependent) {
           if (isSync) {
-            appendMap(nextState, initAtom(prevState, setState, a, dependent))
+            appendMap(nextState, initAtomSub(prevState, setState, a, dependent))
           } else {
             setState((prev) =>
-              appendMap(new Map(prev), initAtom(prev, setState, a, dependent))
+              appendMap(
+                new Map(prev),
+                initAtomSub(prev, setState, a, dependent)
+              )
             )
           }
         }
@@ -268,10 +258,10 @@ const updateValue = (
   }
 
   const nextValue =
-    typeof action.update === 'function'
-      ? action.update(getCurrAtomValue(action.atom))
-      : action.update
-  setValue(action.atom, nextValue)
+    typeof actionUpdate === 'function'
+      ? actionUpdate(getCurrAtomValue(actionAtom))
+      : actionUpdate
+  setValue(actionAtom, nextValue)
 
   const hasPromises = promises.length > 0
   const resolve = async () => {
@@ -297,11 +287,11 @@ const updateValue = (
 
   if (hasPromises) {
     promise.then(() => {
-      const atomState = getAtomState(nextState, action.atom)
-      nextState.set(action.atom, { ...atomState, promise: null })
+      const atomState = getAtomState(nextState, actionAtom)
+      nextState.set(actionAtom, { ...atomState, promise: null })
     })
-    const atomState = getAtomState(nextState, action.atom)
-    nextState.set(action.atom, { ...atomState, promise })
+    const atomState = getAtomState(nextState, actionAtom)
+    nextState.set(actionAtom, { ...atomState, promise })
   }
   allDependents.forEach((dependent) => {
     const dependentState = getAtomState(nextState, dependent)
@@ -316,50 +306,64 @@ const updateValue = (
   return nextState
 }
 
-export const DispatchContext = createContext(warningObject as Dispatch<Action>)
+const initAtom = (
+  atom: AnyAtom,
+  id: symbol,
+  setState: Dispatch<SetStateAction<State>>
+) => {
+  setState((prevState) => {
+    const updateState = initAtomSub(prevState, setState, atom, id)
+    return appendMap(new Map(prevState), updateState)
+  })
+}
+
+const disposeAtom = (id: symbol, setState: Dispatch<SetStateAction<State>>) => {
+  setState((prevState) => {
+    return disposeAtomSub(prevState, id)
+  })
+}
+
+const updateAtomValue = (
+  atom: AnyWritableAtom,
+  update: SetStateAction<unknown>,
+  setState: Dispatch<SetStateAction<State>>
+) => {
+  setState((prevState) => {
+    const atomState = getAtomState(prevState, atom)
+    if (atomState.promise) {
+      const promise = atomState.promise.then(() => {
+        setState((prev) => {
+          const nextState = updateAtomValueSub(prev, setState, atom, update)
+          return nextState
+        })
+      })
+      return new Map(prevState).set(atom, {
+        ...atomState,
+        promise,
+      })
+    }
+    const nextState = updateAtomValueSub(prevState, setState, atom, update)
+    return nextState
+  })
+}
+
+export const ActionsContext = createContext(warningObject as Actions)
 export const StateContext = createContext(warningObject as State)
 
 export const Provider: React.FC = ({ children }) => {
   const [state, setState] = useState(initialState)
-  const dispatch = useCallback(
-    (action: Action) =>
-      setState((prevState) => {
-        if (action.type === 'INIT') {
-          const updateState = initAtom(
-            prevState,
-            setState,
-            action.atom,
-            action.id
-          )
-          return appendMap(new Map(prevState), updateState)
-        }
-        if (action.type === 'DISPOSE') {
-          return disposeAtom(prevState, action.id)
-        }
-        if (action.type === 'UPDATE') {
-          const atomState = getAtomState(prevState, action.atom)
-          if (atomState.promise) {
-            const promise = atomState.promise.then(() => {
-              setState((prev) => {
-                const nextState = updateValue(prev, setState, action)
-                return nextState
-              })
-            })
-            return new Map(prevState).set(action.atom, {
-              ...atomState,
-              promise,
-            })
-          }
-          const nextState = updateValue(prevState, setState, action)
-          return nextState
-        }
-        throw new Error('unexpected action type')
-      }),
+  const actions = useMemo(
+    () => ({
+      init: (id: symbol, atom: AnyAtom) => initAtom(atom, id, setState),
+      dispose: (id: symbol) => disposeAtom(id, setState),
+      update: (atom: AnyWritableAtom, update: SetStateAction<unknown>) =>
+        updateAtomValue(atom, update, setState),
+    }),
     []
   )
   return createElement(
-    DispatchContext.Provider,
-    { value: dispatch },
+    ActionsContext.Provider,
+    { value: actions },
     createElement(StateContext.Provider, { value: state }, children)
   )
 }
