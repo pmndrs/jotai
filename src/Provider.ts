@@ -243,10 +243,9 @@ const updateAtomValue = (
               updateDependentsState(concatMap(prevState, partialState), a)
             )
           } else {
-            const nextPartialState = updateAtomState(
+            const nextPartialState = updateDependentsState(
               new Map(stateRef.current).set(a, nextAtomState),
-              a,
-              v
+              a
             )
             setState((prev) =>
               appendMap(new Map(prev).set(a, nextAtomState), nextPartialState)
