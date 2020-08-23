@@ -251,11 +251,11 @@ it('works with async get', async () => {
   }
 
   const { getByText, findByText } = render(
-    <React.Suspense fallback="loading">
-      <Provider>
+    <Provider>
+      <React.Suspense fallback="loading">
         <Counter />
-      </Provider>
-    </React.Suspense>
+      </React.Suspense>
+    </Provider>
   )
 
   await findByText('renderCount: 1, count: 0, delayedCount: N/A')
@@ -264,6 +264,7 @@ it('works with async get', async () => {
   await findByText('renderCount: 2, count: 0, delayedCount: 0')
 
   fireEvent.click(getByText('button'))
+  await findByText('loading')
   await findByText('renderCount: 3, count: 1, delayedCount: 1')
 })
 
@@ -291,11 +292,11 @@ it('shows loading with async set', async () => {
   }
 
   const { getByText, findByText } = render(
-    <React.Suspense fallback="loading">
-      <Provider>
+    <Provider>
+      <React.Suspense fallback="loading">
         <Counter />
-      </Provider>
-    </React.Suspense>
+      </React.Suspense>
+    </Provider>
   )
 
   await findByText('renderCount: 1, count: 0')
@@ -332,19 +333,21 @@ it('uses atoms with tree dependencies', async () => {
   }
 
   const { getByText, findByText } = render(
-    <React.Suspense fallback="loading">
-      <Provider>
+    <Provider>
+      <React.Suspense fallback="loading">
         <Counter />
-      </Provider>
-    </React.Suspense>
+      </React.Suspense>
+    </Provider>
   )
 
   await findByText('renderCount: 1, count: 0')
 
   fireEvent.click(getByText('button'))
+  await findByText('loading')
   await findByText('renderCount: 2, count: 1')
 
   fireEvent.click(getByText('button'))
+  await findByText('loading')
   await findByText('renderCount: 3, count: 2')
 })
 
@@ -407,11 +410,11 @@ it('uses an async write-only atom', async () => {
   }
 
   const { getByText, findByText } = render(
-    <React.Suspense fallback="loading">
-      <Provider>
+    <Provider>
+      <React.Suspense fallback="loading">
         <Counter />
-      </Provider>
-    </React.Suspense>
+      </React.Suspense>
+    </Provider>
   )
 
   await findByText('renderCount: 1, count: 0')
@@ -442,11 +445,11 @@ it('uses a writable atom without read function', async () => {
   }
 
   const { getByText, findByText } = render(
-    <React.Suspense fallback="loading">
-      <Provider>
+    <Provider>
+      <React.Suspense fallback="loading">
         <Counter />
-      </Provider>
-    </React.Suspense>
+      </React.Suspense>
+    </Provider>
   )
 
   await findByText('count: 1')
