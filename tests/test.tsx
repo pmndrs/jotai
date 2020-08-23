@@ -1,6 +1,6 @@
 import React, { StrictMode } from 'react'
 import { fireEvent, cleanup, render } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
+import { Provider, atom, useAtom, WritableAtom } from '../src/index'
 
 const consoleError = console.error
 afterEach(() => {
@@ -385,7 +385,7 @@ it('runs update only once in StrictMode', async () => {
   expect(updateCount).toBe(1)
 })
 
-it('works with async write-only atom', async () => {
+it('uses an async write-only atom', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(null, async (_get, set, value: number) => {
     await new Promise((r) => setTimeout(r, 10))
@@ -420,4 +420,38 @@ it('works with async write-only atom', async () => {
   await findByText('loading')
 
   await findByText('renderCount: 2, count: 1')
+})
+
+it('uses a writable atom without read function', async () => {
+  const countAtom: WritableAtom<number, number> = atom(
+    1,
+    async (get, set, v) => {
+      await new Promise((r) => setTimeout(r, 10))
+      set(countAtom, get(countAtom) + 10 * v)
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count, addCount10Times] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => addCount10Times(1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <React.Suspense fallback="loading">
+      <Provider>
+        <Counter />
+      </Provider>
+    </React.Suspense>
+  )
+
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('count: 11')
 })
