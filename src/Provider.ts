@@ -10,7 +10,7 @@ import React, {
 import { createContext } from 'use-context-selector'
 
 import { AnyAtom, AnyWritableAtom, Getter, Setter } from './types'
-import { useIsoLayoutEffect } from './utils'
+import { useIsoLayoutEffect, appendMap, concatMap } from './utils'
 
 const warningObject = new Proxy(
   {},
@@ -84,24 +84,6 @@ const getAtomState = (state: State, atom: AnyAtom) => {
 const getAtomStateValue = (state: State, atom: AnyAtom) => {
   const atomState = state.get(atom)
   return atomState ? atomState.value : atom.initialValue
-}
-
-const appendMap = <K, V>(dst: Map<K, V>, src: Map<K, V>) => {
-  src.forEach((v, k) => {
-    dst.set(k, v)
-  })
-  return dst
-}
-
-const concatMap = <K, V>(src1: Map<K, V>, src2: Map<K, V>) => {
-  const dst = new Map<K, V>()
-  src1.forEach((v, k) => {
-    dst.set(k, v)
-  })
-  src2.forEach((v, k) => {
-    dst.set(k, v)
-  })
-  return dst
 }
 
 const initAtom = (
@@ -287,6 +269,7 @@ const updateAtomValue = (
 
   const updatingAtomState = getAtomState(stateRef.current, updatingAtom)
   if (updatingAtomState.promise) {
+    // schedule update after promise is resolved
     const promise = updatingAtomState.promise.then(() => {
       const updateState = updateAtomState(
         stateRef.current,
@@ -298,10 +281,7 @@ const updateAtomValue = (
       setState((prevState) => appendMap(new Map(prevState), updateState))
     })
     setState((prevState) =>
-      new Map(prevState).set(updatingAtom, {
-        ...updatingAtomState,
-        promise,
-      })
+      new Map(prevState).set(updatingAtom, { ...updatingAtomState, promise })
     )
   } else {
     const updateState = updateAtomState(

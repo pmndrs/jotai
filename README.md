@@ -120,7 +120,7 @@ function Status() {
 ```jsx
 const decrementCountAtom = atom(
   get => get(countAtom),
-  (get, set, ...args) => set(countAtom, get(countAtom) - 1),
+  (get, set, _arg) => set(countAtom, get(countAtom) - 1),
 )
 
 function Counter() {
@@ -150,7 +150,7 @@ Just make the second argument `write` async function and call `set` when you're 
 ```jsx
 const fetchCountAtom = create(
   get => get(countAtom),
-  async (get, set, url) => {
+  async (_get, set, url) => {
     const response = await fetch(url)
     set(countAtom, (await response.json()).count)
   }
