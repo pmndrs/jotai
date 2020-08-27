@@ -12,6 +12,8 @@ You can try a live demo soon.
 npm install jotai
 ```    
 
+Jotai is pronounced "jaw-tie" and means "state" in Japanese.
+
 ### First create a primitive atom
 
 An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays. You can create as many primitive atoms as you want.
