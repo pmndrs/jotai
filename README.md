@@ -83,9 +83,9 @@ function DoubleCounter() {
 You can combine multiple atoms to create a derived atom.
 
 ```jsx
-const count1 = atom(0)
-const count2 = atom(0)
-const count3 = atom(0)
+const count1 = atom(1)
+const count2 = atom(2)
+const count3 = atom(3)
 
 const sum = atom(get => get(count1) + get(count2) + get(count3))
 ```
