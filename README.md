@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="500" src="jotai.png" />
+  <img width="500" src="jotai_not_yet_ready.png" />
 </p>
 
 ![Bundle Size](https://badgen.net/bundlephobia/minzip/jotai) [![Build Status](https://travis-ci.org/react-spring/jotai.svg?branch=master)](https://travis-ci.org/react-spring/jotai) [![npm version](https://badge.fury.io/js/jotai.svg)](https://badge.fury.io/js/jotai) ![npm](https://img.shields.io/npm/dt/jotai.svg)
