@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="#" alt="Primitive and flexible state management for React"><img src="img/cover.svg" alt="Primitive and flexible state management for React" /></a>
+  <a href="#"><img src="img/cover.svg" alt="Primitive and flexible state management for React" /></a>
 </p>
 
 [![Build Size](https://img.shields.io/bundlephobia/min/jotai?label=bunlde%20size&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
@@ -9,7 +9,7 @@
 
 Jotai is pronounced "jaw-tie" and means "state" in Japanese.
 
-<img src="img/doc.01.svg" alt="First create a primitive atom" />
+<a id="firstcreateaprimitiveatom" href="#firstcreateaprimitiveatom"><img src="img/doc.01.svg" alt="First create a primitive atom" /></a>
 
 An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays. You can create as many primitive atoms as you want.
 
