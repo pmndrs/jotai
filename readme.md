@@ -9,7 +9,7 @@
 
 Jotai is pronounced "jaw-tie" and means "state" in Japanese.
 
-### First create a primitive atom
+![01](img/doc.01.svg)
 
 An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays. You can create as many primitive atoms as you want.
 
@@ -22,7 +22,7 @@ const citiesAtom = atom(["Tokyo", "Kyoto", "Osaka"])
 const mangaAtom = atom({ "Dragon Ball": 1984, "One Piece": 1997, "Naruto": 1999 })
 ```
 
-### Wrap your component tree with Jotai's Provider
+![02](img/doc.02.svg)
 
 You can only use atoms under this component tree.
 
@@ -36,7 +36,7 @@ const Root = () => (
 )
 ```
 
-### Use the atom in your components
+![03](img/doc.03.svg)
 
 It can be used just like `React.useState`:
 
@@ -51,7 +51,7 @@ function Counter() {
       <button onClick={() => setCount(c => c + 1)}>one up</button>
 ```
 
-### Create derived atoms with computed values
+![04](img/doc.04.svg)
 
 A new read-only atom can be created from existing atoms by passing a function. `get` allows you to fetch the contextual value of any atom.
 
@@ -73,7 +73,7 @@ function DoubleCounter() {
 
 # Recipes
 
-### Creating an atom from multiple atoms
+![01](img/rec.01.svg)
 
 You can combine multiple atoms to create a derived atom.
 
@@ -92,7 +92,7 @@ const atoms = [count1, count1, count3, ...otherAtoms]
 const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
-### Derived async atoms `(needs suspense)`
+![02](img/rec.02.svg)
 
 You can make the first argument an async function, too.
 
@@ -110,7 +110,7 @@ function Status() {
   const [json] = useAtom(fetchUrlAtom)
 ```
 
-### You can create a writable derived atom
+![03](img/rec.03.svg)
 
 `get` will return the current value of an atom, `set` will update an atoms value.
 
@@ -128,7 +128,7 @@ function Counter() {
       <button onClick={decrement}>Decrease</button>
 ```
 
-### Write-only atoms
+![04](img/rec.04.svg)
 
 Just do not define a read method.
 
@@ -140,7 +140,7 @@ function Controls() {
   return <button onClick={() => multiply(3)}>triple</button>
 ```
 
-### Async actions `(needs suspense)`
+![05](img/rec.05.svg)
 
 Just make the second argument `write` async function and call `set` when you're ready.
 
