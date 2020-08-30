@@ -69,7 +69,7 @@ function DoubleCounter() {
 * No string keys
 * TypeScript oriented
 
-<img src="img/rec.00.svg" alt="Recipes" />
+<a id="recipes" href="#recipes"><img src="img/rec.00.svg" alt="Recipes" /></a>
 
 <a id="multipleatoms" href="#multipleatoms"><img src="img/rec.01.svg" alt="Creating an atom from multiple atoms" /></a>
 
