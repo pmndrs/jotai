@@ -9,6 +9,12 @@
 
 Jotai is pronounced "jaw-tie" and means "state" in Japanese.
 
+#### Why Jotai over Recoil?
+
+* Minimalistic API
+* No string keys
+* TypeScript oriented
+
 <a id="firstcreateaprimitiveatom" href="#firstcreateaprimitiveatom"><img src="img/doc.01.svg" alt="First create a primitive atom" /></a>
 
 An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays. You can create as many primitive atoms as you want.
@@ -62,12 +68,6 @@ function DoubleCounter() {
   const [doubledCount] = useAtom(doubledCountAtom)
   return <h2>{doubledCount}</h2>
 ```
-
-#### Why Jotai over Recoil?
-
-* Minimalistic API
-* No string keys
-* TypeScript oriented
 
 <a id="recipes" href="#recipes"><img src="img/rec.00.svg" alt="Recipes" /></a>
 
