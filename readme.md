@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="#"><img src="img/cover.svg" alt="Primitive and flexible state management for React" /></a>
+  <a href="#" alt="Primitive and flexible state management for React"><img src="img/cover.svg" alt="Primitive and flexible state management for React" /></a>
 </p>
 
 [![Build Size](https://img.shields.io/bundlephobia/min/jotai?label=bunlde%20size&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
