@@ -22,7 +22,7 @@ const citiesAtom = atom(["Tokyo", "Kyoto", "Osaka"])
 const mangaAtom = atom({ "Dragon Ball": 1984, "One Piece": 1997, "Naruto": 1999 })
 ```
 
-<img src="img/doc.02.svg" alt="Wrap your component tree with Jotai's Provider" />
+<a id="wrapyourcomponenttree" href="#wrapyourcomponenttree"><img src="img/doc.02.svg" alt="Wrap your component tree with Jotai's Provider" /></a>
 
 You can only use atoms under this component tree.
 
@@ -36,7 +36,7 @@ const Root = () => (
 )
 ```
 
-<img src="img/doc.03.svg" alt="Use the atom in your components" />
+<a id="usetheatom" href="#usetheatom"><img src="img/doc.03.svg" alt="Use the atom in your components" /></a>
 
 It can be used just like `React.useState`:
 
@@ -51,7 +51,7 @@ function Counter() {
       <button onClick={() => setCount(c => c + 1)}>one up</button>
 ```
 
-<img src="img/doc.04.svg" alt="Create derived atoms with computed values" />
+<a id="derivedatomswithcomputedvalues" href="#derivedatomswithcomputedvalues"><img src="img/doc.04.svg" alt="Create derived atoms with computed values" /></a>
 
 A new read-only atom can be created from existing atoms by passing a function. `get` allows you to fetch the contextual value of any atom.
 
@@ -73,7 +73,7 @@ function DoubleCounter() {
 
 # Recipes
 
-<img src="img/rec.01.svg" alt="Creating an atom from multiple atoms" />
+<a id="multipleatoms" href="#multipleatoms"><img src="img/rec.01.svg" alt="Creating an atom from multiple atoms" /></a>
 
 You can combine multiple atoms to create a derived atom.
 
@@ -92,7 +92,7 @@ const atoms = [count1, count1, count3, ...otherAtoms]
 const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
-<img src="img/rec.02.svg" alt="Derived async atoms (needs suspense)" />
+<a id="derivedasyncatoms" href="#derivedasyncatoms"><img src="img/rec.02.svg" alt="Derived async atoms (needs suspense)" /></a>
 
 You can make the first argument an async function, too.
 
@@ -110,7 +110,7 @@ function Status() {
   const [json] = useAtom(fetchUrlAtom)
 ```
 
-<img src="img/rec.03.svg" alt="You can create a writable derived atom" />
+<a id="writabledrivedatom" href="#writabledrivedatom"><img src="img/rec.03.svg" alt="You can create a writable derived atom" /></a>
 
 `get` will return the current value of an atom, `set` will update an atoms value.
 
@@ -128,7 +128,7 @@ function Counter() {
       <button onClick={decrement}>Decrease</button>
 ```
 
-<img src="img/rec.04.svg" alt="Write only atoms" />
+<a id="writeonlyatoms" href="#writeonlyatoms"><img src="img/rec.04.svg" alt="Write only atoms" /></a>
 
 Just do not define a read method.
 
@@ -140,7 +140,7 @@ function Controls() {
   return <button onClick={() => multiply(3)}>triple</button>
 ```
 
-<img src="img/rec.05.svg" alt="Async actions (needs suspense)" />
+<a id="asyncactions" href="#asyncactions"><img src="img/rec.05.svg" alt="Async actions (needs suspense)" /></a>
 
 Just make the second argument `write` async function and call `set` when you're ready.
 
