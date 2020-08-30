@@ -2,7 +2,7 @@
   <a id="cover" href="#cover"><img src="img/cover.svg" alt="Primitive and flexible state management for React" /></a>
 </p>
 
-[![Build Size](https://img.shields.io/bundlephobia/min/jotai?label=bunlde%20size&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
+[![Build Size](https://img.shields.io/bundlephobia/min/jotai?label=bunlde%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=jotai)
 [![Build Status](https://img.shields.io/travis/react-spring/jotai/master?style=flat&colorA=000000&colorB=000000)](https://travis-ci.org/react-spring/jotai)
 [![Version](https://img.shields.io/npm/v/jotai?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
 [![Downloads](https://img.shields.io/npm/dt/jotai.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
