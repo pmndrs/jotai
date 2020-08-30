@@ -1,16 +1,11 @@
 <p align="center">
-  <img width="500" src="jotai.png" />
+  <img src="img/cover.svg" />
 </p>
 
-![Bundle Size](https://badgen.net/bundlephobia/minzip/jotai) [![Build Status](https://travis-ci.org/react-spring/jotai.svg?branch=master)](https://travis-ci.org/react-spring/jotai) [![npm version](https://badge.fury.io/js/jotai.svg)](https://badge.fury.io/js/jotai) ![npm](https://img.shields.io/npm/dt/jotai.svg)
-
-Primitive and flexible state management for React. No extra re-renders, state resides within React and you get full benefits from suspense, and concurrent mode. It's scalable from a simple React.useState replacement up to a large appplication with complex requirements.
-
-You can try a live demo soon.
-
-```bash
-npm install jotai
-```    
+[![Build Size](https://img.shields.io/bundlephobia/min/jotai?label=bunlde%20size&style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
+[![Build Status](https://img.shields.io/travis/react-spring/jotai/master?style=flat&colorA=000000&colorB=000000)](https://travis-ci.org/react-spring/jotai)
+[![Version](https://img.shields.io/npm/v/jotai?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
+[![Downloads](https://img.shields.io/npm/dt/jotai.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
 
 Jotai is pronounced "jaw-tie" and means "state" in Japanese.
 
@@ -97,7 +92,7 @@ const atoms = [count1, count1, count3, ...otherAtoms]
 const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
-### Derived async atoms ![](https://img.shields.io/badge/-needs_suspense-brightgreen)
+### Derived async atoms `(needs suspense)`
 
 You can make the first argument an async function, too.
 
@@ -145,7 +140,7 @@ function Controls() {
   return <button onClick={() => multiply(3)}>triple</button>
 ```
 
-### Async actions ![](https://img.shields.io/badge/-needs_suspense-brightgreen)
+### Async actions `(needs suspense)`
 
 Just make the second argument `write` async function and call `set` when you're ready.
 
