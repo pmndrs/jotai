@@ -9,6 +9,8 @@
 
 Jotai is pronounced "jaw-tie" and means "state" in Japanese.
 
+You can try a live demo [here](https://codesandbox.io/s/jotai-demo-47wvh).
+
 #### Why Jotai over Recoil?
 
 * Minimalistic API
