@@ -10,11 +10,11 @@ ReactDOM.render(
       <h1 className="text-6xl font-bold">Jōtai</h1>
       <h2
         className="
-        text-2xl font-medium text-gray-400 
+        text-2xl font-regular text-gray-400 
         lg:flex justify-between items-center
         ">
         <div>Primitive and flexible state management for React.</div>
-        <div className="text-xl font-medium text-gray-400">状態 </div>
+        <div className="text-xl font-regular text-gray-400">状態 </div>
       </h2>
     </header>
     <App />
