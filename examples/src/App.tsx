@@ -58,7 +58,7 @@ const MyApp = () => (
 
 const App = () => (
   <div>
-    <h3 className="font-bold text-2xl">A simple example.</h3>
+    <p className="">A simple example:</p>
     <div
       className="
       ">
