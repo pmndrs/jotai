@@ -1,21 +1,31 @@
 @import url('https://rsms.me/inter/inter.css');
-html { font-family: 'Inter', sans-serif; }
+html {
+  font-family: 'Inter', sans-serif;
+}
 
 @supports (font-variation-settings: normal) {
-  html { font-family: 'Inter var', sans-serif; }
+  html {
+    font-family: 'Inter var', sans-serif;
+  }
 }
 
 * {
   box-sizing: border-box;
 }
 
-::selection { background: #212121; color: white; }
+::selection {
+  background: #212121;
+  color: white;
+}
 
-html, body {
+html,
+body {
   overflow-x: hidden;
 }
 
-h1, h2, p {
+h1,
+h2,
+p {
   user-select: none;
 }
 
