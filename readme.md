@@ -61,7 +61,7 @@ function Counter() {
 
 <a id="derivedatomswithcomputedvalues" href="#derivedatomswithcomputedvalues"><img src="img/doc.04.svg" alt="Create derived atoms with computed values" /></a>
 
-A new read-only atom can be created from existing atoms by passing a function. `get` allows you to fetch the contextual value of any atom.
+A new read-only atom can be created from existing atoms by passing a read function as the first argument. `get` allows you to fetch the contextual value of any atom.
 
 ```jsx
 const doubledCountAtom = atom(get => get(countAtom) * 2)
@@ -94,7 +94,7 @@ const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 
 <a id="derivedasyncatoms" href="#derivedasyncatoms"><img src="img/rec.02.svg" alt="Derived async atoms (needs suspense)" /></a>
 
-You can make the first argument an async function, too.
+You can make the read function an async function, too.
 
 ```jsx
 const urlAtom = create("https://json.host.com")
@@ -112,7 +112,7 @@ function Status() {
 
 <a id="writabledrivedatom" href="#writabledrivedatom"><img src="img/rec.03.svg" alt="You can create a writable derived atom" /></a>
 
-`get` will return the current value of an atom, `set` will update an atoms value.
+Specify a write function at the second argument. `get` will return the current value of an atom, `set` will update an atoms value.
 
 ```jsx
 const decrementCountAtom = atom(
@@ -130,7 +130,7 @@ function Counter() {
 
 <a id="writeonlyatoms" href="#writeonlyatoms"><img src="img/rec.04.svg" alt="Write only atoms" /></a>
 
-Just do not define a read method.
+Just do not define a read function.
 
 ```jsx
 const multiplyCountAtom = atom(null, (get, set, by) => set(countAtom, get(countAtom) * by))
@@ -142,7 +142,7 @@ function Controls() {
 
 <a id="asyncactions" href="#asyncactions"><img src="img/rec.05.svg" alt="Async actions (needs suspense)" /></a>
 
-Just make the second argument `write` async function and call `set` when you're ready.
+Just make the write function an async function and call `set` when you're ready.
 
 ```jsx
 const fetchCountAtom = create(
