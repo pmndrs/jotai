@@ -5,6 +5,7 @@ import PrismCode from 'react-prism'
 import 'prismjs'
 import 'prismjs/components/prism-jsx.min'
 import 'prismjs/themes/prism-okaidia.css'
+
 const textAtom = atom<string>('hello')
 const textLenAtom = atom((get) => get(textAtom).length)
 const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
@@ -30,7 +31,11 @@ const Uppercase = () => {
   return <div>Uppercase: {uppercase}</div>
 }
 
-const code = `const Input = () => {
+const code = `const textAtom = atom('hello')
+const textLenAtom = atom((get) => get(textAtom).length)
+const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
+
+const Input = () => {
   const [text, setText] = useAtom(textAtom)
   return <input 
     value={text} 
@@ -49,21 +54,24 @@ const Uppercase = () => {
 }`
 
 const App = () => (
-  <div
-    className="
-      lg:flex
-      space-x-5
-    ">
-    <div className="w-1/2">
-      <Provider>
-        <Input />
-        <CharCount />
-        <Uppercase />
-      </Provider>
-    </div>
+  <div>
+    <h3 className="font-bold text-2xl">A simple example.</h3>
+    <div
+      className="
+        lg:flex
+        lg:space-x-20
+      ">
+      <div className="lg:w-7/12 py-8 text-sm">
+        <PrismCode component="pre" className="language-jsx" children={code} />
+      </div>
 
-    <div className="w-1/2">
-      <PrismCode component="pre" className="language-jsx" children={code} />
+      <div className="lg:w-5/12">
+        <Provider>
+          <Input />
+          <CharCount />
+          <Uppercase />
+        </Provider>
+      </div>
     </div>
   </div>
 )

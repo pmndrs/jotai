@@ -1,9 +1,6 @@
 ::selection { background: #212121; color: white; }
 
 pre {
-  display: inline-block !important;
-  padding: 2.5rem 3rem !important;
   font-size: 0.8em;
-  border-radius: 10px !important;
-  box-shadow: 0 16px 40px -5px rgba(0, 0, 0, 0.5);
+  width: 100%;
 }
