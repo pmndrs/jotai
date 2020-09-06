@@ -1,7 +1,7 @@
 import React from 'react'
 import { Provider, atom, useAtom } from 'jotai'
 
-const textAtom = atom('hello')
+const textAtom = atom<string>('hello')
 const textLenAtom = atom((get) => get(textAtom).length)
 const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
 
@@ -21,11 +21,23 @@ const Uppercase = () => {
 }
 
 const App = () => (
-  <Provider>
-    <Input />
-    <CharCount />
-    <Uppercase />
-  </Provider>
+  <div className="container mx-auto px-8">
+    <header className="mt-12 mb-12">
+      <h1 className="text-6xl font-bold">Jōtai</h1>
+      <h2
+        className="
+        text-3xl font-weight-500 text-gray-400 
+        lg:flex justify-between">
+        <div>Primitive and flexible state management for React.</div>
+        <div className="text-xl font-weight-300 text-gray-900">状態 </div>
+      </h2>
+    </header>
+    <Provider>
+      <Input />
+      <CharCount />
+      <Uppercase />
+    </Provider>
+  </div>
 )
 
 export default App
