@@ -27,7 +27,7 @@ const warningObject = new Proxy(
 export type Actions = {
   init: (id: symbol, atom: AnyAtom) => void
   dispose: (id: symbol) => void
-  update: (atom: AnyWritableAtom, update: SetStateAction<unknown>) => void
+  write: (atom: AnyWritableAtom, update: unknown) => void
 }
 
 // dependents for get operation
@@ -157,9 +157,9 @@ const disposeAtom = (
   setState((prevState) => deleteAtomState(prevState, id))
 }
 
-const updateAtomValue = (
+const writeAtomValue = (
   updatingAtom: AnyWritableAtom,
-  update: SetStateAction<unknown>,
+  update: unknown,
   stateRef: MutableRefObject<State>,
   setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap
@@ -274,9 +274,7 @@ const updateAtomValue = (
       const updateState = updateAtomState(
         stateRef.current,
         updatingAtom,
-        typeof update === 'function'
-          ? update(getAtomStateValue(stateRef.current, updatingAtom))
-          : update
+        update
       )
       setState((prevState) => appendMap(new Map(prevState), updateState))
     })
@@ -284,11 +282,7 @@ const updateAtomValue = (
       new Map(prevState).set(updatingAtom, { ...updatingAtomState, promise })
     )
   } else {
-    const updateState = updateAtomState(
-      stateRef.current,
-      updatingAtom,
-      typeof update === 'function' ? update(updatingAtomState.value) : update
-    )
+    const updateState = updateAtomState(stateRef.current, updatingAtom, update)
     setState((prevState) => appendMap(new Map(prevState), updateState))
   }
 }
@@ -318,8 +312,8 @@ export const Provider: React.FC = ({ children }) => {
         ),
       dispose: (id: symbol) =>
         disposeAtom(id, setState, dependentsMapRef.current as DependentsMap),
-      update: (atom: AnyWritableAtom, update: SetStateAction<unknown>) =>
-        updateAtomValue(
+      write: (atom: AnyWritableAtom, update: unknown) =>
+        writeAtomValue(
           atom,
           update,
           stateRef,
