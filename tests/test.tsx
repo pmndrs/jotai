@@ -115,8 +115,7 @@ it('uses a read-write derived atom', async () => {
   const countAtom = atom(0)
   const doubledCountAtom = atom(
     (get) => get(countAtom) * 2,
-    (get, set, writeValue: number) =>
-      set(countAtom, get(countAtom) + writeValue)
+    (get, set, update: number) => set(countAtom, get(countAtom) + update)
   )
 
   const Counter: React.FC = () => {
@@ -286,7 +285,7 @@ it('shows loading with async set', async () => {
         <div>
           renderCount: {++renderCount.current}, count: {count}
         </div>
-        <button onClick={() => setCount((c) => c + 1)}>button</button>
+        <button onClick={() => setCount(count + 1)}>button</button>
       </>
     )
   }
@@ -312,9 +311,9 @@ it('uses atoms with tree dependencies', async () => {
   const leftAtom = atom((get) => get(topAtom))
   const rightAtom = atom(
     (get) => get(topAtom),
-    async (_get, set, writeValue: number) => {
+    async (get, set, update: (prev: number) => number) => {
       await new Promise((r) => setTimeout(r, 10))
-      set(topAtom, writeValue)
+      set(topAtom, update(get(topAtom)))
     }
   )
 
@@ -356,9 +355,9 @@ it('runs update only once in StrictMode', async () => {
   const countAtom = atom(0)
   const derivedAtom = atom(
     (get) => get(countAtom),
-    (_get, set, writeValue: number) => {
+    (_get, set, update: number) => {
       updateCount += 1
-      set(countAtom, writeValue)
+      set(countAtom, update)
     }
   )
 
@@ -367,7 +366,7 @@ it('runs update only once in StrictMode', async () => {
     return (
       <>
         <div>count: {count}</div>
-        <button onClick={() => setCount((c) => c + 1)}>button</button>
+        <button onClick={() => setCount(count + 1)}>button</button>
       </>
     )
   }
@@ -390,10 +389,13 @@ it('runs update only once in StrictMode', async () => {
 
 it('uses an async write-only atom', async () => {
   const countAtom = atom(0)
-  const asyncCountAtom = atom(null, async (_get, set, value: number) => {
-    await new Promise((r) => setTimeout(r, 10))
-    set(countAtom, value)
-  })
+  const asyncCountAtom = atom(
+    null,
+    async (get, set, update: (prev: number) => number) => {
+      await new Promise((r) => setTimeout(r, 10))
+      set(countAtom, update(get(countAtom)))
+    }
+  )
 
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)

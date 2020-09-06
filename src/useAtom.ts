@@ -1,23 +1,23 @@
-import { Dispatch, SetStateAction, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
 import { StateContext, ActionsContext, AtomState } from './Provider'
 import { Atom, WritableAtom, AnyWritableAtom } from './types'
 import { useIsoLayoutEffect } from './utils'
 
-const isWritable = <Value, WriteValue>(
-  atom: Atom<Value> | WritableAtom<Value, WriteValue>
-): atom is WritableAtom<Value, WriteValue> =>
-  !!(atom as WritableAtom<Value, WriteValue>).write
+const isWritable = <Value, Update>(
+  atom: Atom<Value> | WritableAtom<Value, Update>
+): atom is WritableAtom<Value, Update> =>
+  !!(atom as WritableAtom<Value, Update>).write
 
-export function useAtom<Value, WriteValue>(
-  atom: WritableAtom<Value, WriteValue>
-): [Value, Dispatch<SetStateAction<WriteValue>>]
+export function useAtom<Value, Update>(
+  atom: WritableAtom<Value, Update>
+): [Value, (update: Update) => void]
 
 export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 
-export function useAtom<Value, WriteValue>(
-  atom: Atom<Value> | WritableAtom<Value, WriteValue>
+export function useAtom<Value, Update>(
+  atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
   const actions = useContext(ActionsContext)
   const promiseOrValue = useContextSelector(
@@ -33,9 +33,9 @@ export function useAtom<Value, WriteValue>(
     )
   )
   const setAtom = useCallback(
-    (update: SetStateAction<WriteValue>) => {
+    (update: Update) => {
       if (isWritable(atom)) {
-        actions.update(atom as AnyWritableAtom, update)
+        actions.write(atom as AnyWritableAtom, update)
       } else {
         throw new Error('not writable atom')
       }
