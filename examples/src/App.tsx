@@ -63,10 +63,6 @@ const App = () => (
       className="
       ">
       <div className="py-8 text-sm">
-        <PrismCode component="pre" className="language-jsx" children={code} />
-      </div>
-
-      <div className="">
         <Provider>
           <div className="relative">
             <Input />
@@ -75,6 +71,10 @@ const App = () => (
             </div>
           </div>
         </Provider>
+      </div>
+
+      <div className="">
+        <PrismCode component="pre" className="language-jsx" children={code} />
       </div>
     </div>
   </div>

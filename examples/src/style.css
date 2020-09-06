@@ -5,7 +5,7 @@
 ::selection { background: #212121; color: white; }
 
 html, body {
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 pre {
