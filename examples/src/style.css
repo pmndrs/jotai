@@ -11,6 +11,7 @@ html {
 
 * {
   box-sizing: border-box;
+  user-select: none;
 }
 
 ::selection {
@@ -21,12 +22,6 @@ html {
 html,
 body {
   overflow-x: hidden;
-}
-
-h1,
-h2,
-p {
-  user-select: none;
 }
 
 pre {
