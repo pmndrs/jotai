@@ -4,7 +4,6 @@ import { Provider, atom, useAtom } from 'jotai'
 import PrismCode from 'react-prism'
 import 'prismjs'
 import 'prismjs/components/prism-jsx.min'
-import 'prismjs/themes/prism-okaidia.css'
 
 const textAtom = atom<string>('hello')
 const textLenAtom = atom((get) => get(textAtom).length)
@@ -28,48 +27,53 @@ const CharCount = () => {
 
 const Uppercase = () => {
   const [uppercase] = useAtom(uppercaseAtom)
-  return <div>Uppercase: {uppercase}</div>
+  return uppercase
 }
 
-const code = `const textAtom = atom('hello')
-const textLenAtom = atom((get) => get(textAtom).length)
+const code = `import { Provider, atom, useAtom } from 'jotai'
+
+// 1️⃣ create your atoms
+const textAtom = atom('hello')
 const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
 
+// 2️⃣ use them anywhere in your app
 const Input = () => {
   const [text, setText] = useAtom(textAtom)
-  return <input 
-    value={text} 
-    onChange={(e) => setText(e.target.value)} 
-  />
-}
-
-const CharCount = () => {
-  const [len] = useAtom(textLenAtom)
-  return <div>Length: {len}</div>
+  return <input value={text} onChange={(e) => setText(e.target.value)} />
 }
 
 const Uppercase = () => {
   const [uppercase] = useAtom(uppercaseAtom)
   return <div>Uppercase: {uppercase}</div>
-}`
+}
+
+// 3️⃣ Wrap your components in the Jotai provider
+const MyApp = () => (
+  <Provider>
+    <Input />
+    <Uppercase />
+  </Provider>
+)
+`
 
 const App = () => (
   <div>
     <h3 className="font-bold text-2xl">A simple example.</h3>
     <div
       className="
-        lg:flex
-        lg:space-x-20
       ">
-      <div className="lg:w-7/12 py-8 text-sm">
+      <div className="py-8 text-sm">
         <PrismCode component="pre" className="language-jsx" children={code} />
       </div>
 
-      <div className="lg:w-5/12">
+      <div className="">
         <Provider>
-          <Input />
-          <CharCount />
-          <Uppercase />
+          <div className="relative">
+            <Input />
+            <div className="absolute top-0 right-0 h-full flex items-center mr-4 font-bold">
+              <Uppercase />
+            </div>
+          </div>
         </Provider>
       </div>
     </div>

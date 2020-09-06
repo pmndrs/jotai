@@ -1,6 +1,27 @@
+* {
+  box-sizing: border-box;
+}
+
 ::selection { background: #212121; color: white; }
+
+html, body {
+  overflow: hidden;
+}
 
 pre {
   font-size: 0.8em;
   width: 100%;
+  margin-left: -2.5rem !important;
+  margin-right: -2.5rem !important;
+  width: calc(100% + 5rem);
+  padding: 3em !important;
+  border: 1px solid #eee !important;
+  border-radius: 4px;
+}
+
+@media screen and (min-width: 800px) {
+  pre {
+    width: 100% !important;
+    margin: 0 !important;
+  }
 }

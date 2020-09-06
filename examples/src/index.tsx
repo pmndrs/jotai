@@ -1,10 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import App from './App'
+import './prism.css'
 import './style.css'
 
 ReactDOM.render(
-  <div className="container mx-auto px-8">
+  <div className="max-w-4xl mx-auto px-8 pb-8">
     <header className="mt-12 mb-12">
       <h1 className="text-6xl font-bold">Jōtai</h1>
       <h2
