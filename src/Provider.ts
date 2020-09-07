@@ -26,7 +26,7 @@ const warningObject = new Proxy(
 export type Actions = {
   init: (id: symbol, atom: AnyAtom) => void
   dispose: (id: symbol) => void
-  write: (id: symbol, atom: AnyWritableAtom, update: unknown) => void
+  write: (atom: AnyWritableAtom, update: unknown) => void
 }
 
 // dependents for get operation
@@ -71,7 +71,7 @@ export type AtomState<Value = unknown> = {
 type State = Map<AnyAtom, AtomState>
 
 type PartialState = State
-type WriteCache = WeakMap<State, Map<symbol, PartialState>> // symbols is id from write
+type WriteCache = WeakMap<State, Map<symbol, PartialState>> // symbol is writeId
 
 const initialState: State = new Map()
 
@@ -163,7 +163,6 @@ const disposeAtom = (
 }
 
 const writeAtomValue = (
-  id: symbol,
   updatingAtom: AnyWritableAtom,
   update: unknown,
   setState: Dispatch<SetStateAction<State>>,
@@ -276,12 +275,18 @@ const writeAtomValue = (
     return partialState
   }
 
+  const newWriteId = Symbol()
   setState((prevState) => {
     const updatingAtomState = prevState.get(updatingAtom)
     if (updatingAtomState && updatingAtomState.promise) {
       // schedule update after promise is resolved
       const promise = updatingAtomState.promise.then(() => {
-        const updateState = updateAtomState(id, prevState, updatingAtom, update)
+        const updateState = updateAtomState(
+          newWriteId,
+          prevState,
+          updatingAtom,
+          update
+        )
         setState((prev) => appendMap(new Map(prev), updateState))
       })
       return new Map(prevState).set(updatingAtom, {
@@ -289,7 +294,12 @@ const writeAtomValue = (
         promise,
       })
     } else {
-      const updateState = updateAtomState(id, prevState, updatingAtom, update)
+      const updateState = updateAtomState(
+        newWriteId,
+        prevState,
+        updatingAtom,
+        update
+      )
       return appendMap(new Map(prevState), updateState)
     }
   })
@@ -314,9 +324,8 @@ export const Provider: React.FC = ({ children }) => {
         initAtom(id, atom, setState, dependentsMapRef.current as DependentsMap),
       dispose: (id: symbol) =>
         disposeAtom(id, setState, dependentsMapRef.current as DependentsMap),
-      write: (id: symbol, atom: AnyWritableAtom, update: unknown) =>
+      write: (atom: AnyWritableAtom, update: unknown) =>
         writeAtomValue(
-          id,
           atom,
           update,
           setState,
