@@ -17,7 +17,7 @@ You can try a live demo [here](https://codesandbox.io/s/jotai-demo-47wvh).
 * No string keys
 * TypeScript oriented
 
-## First create a primitive atom
+<a id="wrapyourcomponenttree" href="#wrapyourcomponenttree"><h2>First create a primitive atom</h2></a>
 
 An atom represents a piece of state. All you need is to specify an initial value, which can be primitive values like strings and numbers, objects and arrays. You can create as many primitive atoms as you want.
 
@@ -30,7 +30,7 @@ const citiesAtom = atom(["Tokyo", "Kyoto", "Osaka"])
 const mangaAtom = atom({ "Dragon Ball": 1984, "One Piece": 1997, "Naruto": 1999 })
 ```
 
-## Wrap your component tree with Jotai's Provider
+<a id="wrapyourcomponenttree" href="#wrapyourcomponenttree"><h2>Wrap your component tree with Jotai's Provider</h2></a>
 
 You can only use atoms under this component tree.
 
@@ -44,7 +44,7 @@ const Root = () => (
 )
 ```
 
-## Use the atom in your components
+<a id="usetheatom" href="#usetheatom"><h2>Use the atom in your components</h2></a>
 
 It can be used just like `React.useState`:
 
@@ -59,7 +59,7 @@ function Counter() {
       <button onClick={() => setCount(c => c + 1)}>one up</button>
 ```
 
-## Create derived atoms with computed values
+<a id="derivedatomswithcomputedvalues" href="#derivedatomswithcomputedvalues"><h2>Create derived atoms with computed values</h2></a>
 
 A new read-only atom can be created from existing atoms by passing a read function as the first argument. `get` allows you to fetch the contextual value of any atom.
 
@@ -71,9 +71,9 @@ function DoubleCounter() {
   return <h2>{doubledCount}</h2>
 ```
 
-# Recipes
+<a id="recipes" href="#recipes"><h1>Recipes</h1></a>
 
-## Creating an atom from multiple atoms
+<a id="multipleatoms" href="#multipleatoms"><h2>Creating an atom from multiple atoms</h2></a>
 
 You can combine multiple atoms to create a derived atom.
 
@@ -92,7 +92,7 @@ const atoms = [count1, count1, count3, ...otherAtoms]
 const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
-## Derived async atoms (needs suspense)
+<a id="derivedasyncatoms" href="#derivedasyncatoms"><h2>Derived async atoms (needs suspense)</h2></a>
 
 You can make the read function an async function, too.
 
@@ -110,7 +110,7 @@ function Status() {
   const [json] = useAtom(fetchUrlAtom)
 ```
 
-## You can create a writable derived atom
+<a id="writabledrivedatom" href="#writabledrivedatom"><h2>You can create a writable derived atom</h2></a>
 
 Specify a write function at the second argument. `get` will return the current value of an atom, `set` will update an atoms value.
 
@@ -128,7 +128,7 @@ function Counter() {
       <button onClick={decrement}>Decrease</button>
 ```
 
-## Write only atoms
+<a id="writeonlyatoms" href="#writeonlyatoms"><h2>Write only atoms</h2></a>
 
 Just do not define a read function.
 
@@ -140,7 +140,7 @@ function Controls() {
   return <button onClick={() => multiply(3)}>triple</button>
 ```
 
-## Async actions (needs suspense)
+<a id="asyncactions" href="#asyncactions"><h2>Async actions (needs suspense)</h2></a>
 
 Just make the write function an async function and call `set` when you're ready.
 
