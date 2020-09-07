@@ -267,8 +267,8 @@ const writeAtomValue = (
     return partialState
   }
 
-  const updatingAtomState = getAtomState(stateRef.current, updatingAtom)
-  if (updatingAtomState.promise) {
+  const updatingAtomState = stateRef.current.get(updatingAtom)
+  if (updatingAtomState && updatingAtomState.promise) {
     // schedule update after promise is resolved
     const promise = updatingAtomState.promise.then(() => {
       const updateState = updateAtomState(
