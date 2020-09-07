@@ -480,3 +480,36 @@ it('can write an atom value on useEffect', async () => {
 
   await findByText('count: 1')
 })
+
+it('can write an atom value on useEffect in children', async () => {
+  const countAtom = atom(0)
+
+  const Child: React.FC<{
+    setCount: (f: (c: number) => number) => void
+  }> = ({ setCount }) => {
+    useEffect(() => {
+      setCount((c) => c + 1)
+    }, [])
+    // It will fail with useLayoutEffect
+    // useLayoutEffect(() => { setCount((c) => c + 1) }, [])
+    return null
+  }
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <div>
+        count: {count}
+        <Child setCount={setCount} />
+      </div>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 1')
+})
