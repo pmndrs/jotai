@@ -490,8 +490,6 @@ it('can write an atom value on useEffect in children', async () => {
     useEffect(() => {
       setCount((c) => c + 1)
     }, [])
-    // It will fail with useLayoutEffect
-    // useLayoutEffect(() => { setCount((c) => c + 1) }, [])
     return null
   }
 
@@ -500,6 +498,7 @@ it('can write an atom value on useEffect in children', async () => {
     return (
       <div>
         count: {count}
+        <Child setCount={setCount} />
         <Child setCount={setCount} />
       </div>
     )
@@ -511,5 +510,5 @@ it('can write an atom value on useEffect in children', async () => {
     </Provider>
   )
 
-  await findByText('count: 1')
+  await findByText('count: 2')
 })
