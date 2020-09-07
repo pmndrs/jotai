@@ -1,4 +1,4 @@
-import React, { StrictMode } from 'react'
+import React, { StrictMode, useEffect } from 'react'
 import { fireEvent, cleanup, render } from '@testing-library/react'
 import { Provider, atom, useAtom, WritableAtom } from '../src/index'
 
@@ -459,4 +459,24 @@ it('uses a writable atom without read function', async () => {
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('count: 11')
+})
+
+it('can write an atom value on useEffect', async () => {
+  const countAtom = atom(0)
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    useEffect(() => {
+      setCount((c) => c + 1)
+    }, [])
+    return <div>count: {count}</div>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 1')
 })
