@@ -24,27 +24,27 @@
     "gzipped": 1922
   },
   "index.js": {
-    "bundled": 115,
-    "minified": 98,
-    "gzipped": 72,
+    "bundled": 10583,
+    "minified": 4557,
+    "gzipped": 1669,
     "treeshaked": {
       "rollup": {
-        "code": 61,
-        "import_statements": 61
+        "code": 300,
+        "import_statements": 67
       },
       "webpack": {
-        "code": 1111
+        "code": 1384
       }
     }
   },
   "index.cjs.js": {
-    "bundled": 554,
-    "minified": 464,
-    "gzipped": 203
+    "bundled": 11643,
+    "minified": 5161,
+    "gzipped": 1747
   },
   "index.iife.js": {
-    "bundled": 515,
-    "minified": 334,
-    "gzipped": 170
+    "bundled": 12312,
+    "minified": 4294,
+    "gzipped": 1566
   }
 }
