@@ -32,11 +32,11 @@ const Uppercase = () => {
 
 const code = `import { Provider, atom, useAtom } from 'jotai'
 
-// 1️⃣ create your atoms
+// Create your atoms and derivatives
 const textAtom = atom('hello')
 const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
 
-// 2️⃣ use them anywhere in your app
+// Use them anywhere in your app
 const Input = () => {
   const [text, setText] = useAtom(textAtom)
   return <input value={text} onChange={(e) => setText(e.target.value)} />
@@ -47,7 +47,7 @@ const Uppercase = () => {
   return <div>Uppercase: {uppercase}</div>
 }
 
-// 3️⃣ Wrap your components in the Jotai provider
+// Wrap your components in the Jotai provider
 const MyApp = () => (
   <Provider>
     <Input />
@@ -58,10 +58,8 @@ const MyApp = () => (
 
 const App = () => (
   <div>
-    <p className="">A simple example:</p>
-    <div
-      className="
-      ">
+    <p>A simple example:</p>
+    <div>
       <div className="py-8 text-sm">
         <Provider>
           <div className="relative">
@@ -72,16 +70,8 @@ const App = () => (
           </div>
         </Provider>
       </div>
-
-      <div className="">
+      <div>
         <PrismCode component="pre" className="language-jsx" children={code} />
-      </div>
-
-      <div className="src">
-        <a href="http://github.com/react-spring/jotai" target="_blank">
-          <img src="https://img.icons8.com/windows/22/github.png" alt="" />
-          <p>GitHub ↗</p>
-        </a>
       </div>
     </div>
   </div>

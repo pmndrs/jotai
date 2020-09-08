@@ -47,3 +47,15 @@ pre {
     margin: 0 !important;
   }
 }
+
+pre > span:nth-child(11),
+pre > span:nth-child(17),
+pre > span:nth-child(20),
+pre > span:nth-child(23),
+pre > span:nth-child(44),
+pre > span:nth-child(61),
+pre > span:nth-child(78),
+pre > span:nth-child(79) > span > span.class-name,
+pre > span:nth-child(85) > span > span.class-name {
+  color: #ff7bab!important;
+}
