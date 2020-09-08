@@ -76,6 +76,13 @@ const App = () => (
       <div className="">
         <PrismCode component="pre" className="language-jsx" children={code} />
       </div>
+
+      <div className="src">
+        <a href="http://github.com/react-spring/jotai" target="_blank">
+          <img src="https://img.icons8.com/windows/22/github.png" alt="" />
+          <p>GitHub ↗</p>
+        </a>
+      </div>
     </div>
   </div>
 )

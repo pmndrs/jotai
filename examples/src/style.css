@@ -35,6 +35,12 @@ pre {
   border-radius: 4px;
 }
 
+.src a * {
+  opacity: 0.5;
+  display: inline-block;
+  margin: 10px 5px;
+}
+
 @media screen and (min-width: 800px) {
   pre {
     width: 100% !important;
