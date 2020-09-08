@@ -97,8 +97,8 @@ const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 You can make the read function an async function, too.
 
 ```jsx
-const urlAtom = create("https://json.host.com")
-const fetchUrlAtom = create(
+const urlAtom = atom("https://json.host.com")
+const fetchUrlAtom = atom(
   async get => {
     const response = await fetch(get(urlAtom))
     return await response.json()
@@ -145,7 +145,7 @@ function Controls() {
 Just make the write function an async function and call `set` when you're ready.
 
 ```jsx
-const fetchCountAtom = create(
+const fetchCountAtom = atom(
   get => get(countAtom),
   async (_get, set, url) => {
     const response = await fetch(url)
