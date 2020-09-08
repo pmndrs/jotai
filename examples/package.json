@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "jotai": "^0.2.0",
+    "prismjs": "^1.21.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-prism": "^4.3.2",
     "react-scripts": "3.4.3"
   },
   "devDependencies": {

@@ -1,34 +1,49 @@
+@import url('https://rsms.me/inter/inter.css');
+html {
+  font-family: 'Inter', sans-serif;
+}
+
+@supports (font-variation-settings: normal) {
+  html {
+    font-family: 'Inter var', sans-serif;
+  }
+}
+
 * {
   box-sizing: border-box;
+  user-select: none;
+}
+
+::selection {
+  background: #212121;
+  color: white;
 }
 
 html,
-body,
-#root {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  overflow: hidden;
-}
-
-#root {
-  overflow: auto;
-}
-
 body {
-  position: fixed;
-  overflow: hidden;
-  overscroll-behavior-y: none;
-  font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto, segoe ui, arial, sans-serif;
-  color: black;
-  perspective: 3000px;
-  perspective-origin: 50% 50%;
-  background: rgb(173, 138, 138);
+  overflow-x: hidden;
+}
+
+pre {
+  font-size: 0.8em;
+  width: 100%;
+  margin-left: -2.5rem !important;
+  margin-right: -2.5rem !important;
+  width: calc(100% + 5rem);
+  padding: 3em !important;
+  border: 1px solid #eee !important;
+  border-radius: 4px;
+}
+
+.src a * {
+  opacity: 0.5;
+  display: inline-block;
+  margin: 10px 5px;
+}
+
+@media screen and (min-width: 800px) {
+  pre {
+    width: 100% !important;
+    margin: 0 !important;
+  }
 }
