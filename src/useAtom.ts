@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useDebugValue } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
 import { StateContext, ActionsContext, AtomState } from './Provider'
@@ -58,5 +58,6 @@ export function useAtom<Value, Update>(
   if (promiseOrValue instanceof Promise) {
     throw promiseOrValue
   }
+  useDebugValue(promiseOrValue)
   return [promiseOrValue, setAtom]
 }
