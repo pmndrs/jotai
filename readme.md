@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/npm/v/jotai?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
 [![Downloads](https://img.shields.io/npm/dt/jotai.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
 
-Jotai is pronounced "jaw-tie" and means "state" in Japanese.
+Jotai is pronounced "joe-tie" and means "state" in Japanese.
 
 You can try a live demo [here](https://codesandbox.io/s/jotai-demo-47wvh).
 
