@@ -24,7 +24,7 @@ export function atom<Value, Update>(
 export function atom<Value, Update>(
   read: (get: Getter) => Promise<Value>,
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value | null, Update>
+): WritableAtom<Value | Promise<Value>, Update>
 
 // read-only derived atom
 export function atom<Value>(
@@ -34,7 +34,7 @@ export function atom<Value>(
 // async-read read-only derived atom
 export function atom<Value>(
   read: (get: Getter) => Promise<Value>
-): Atom<Value | null>
+): Atom<Value | Promise<Value>>
 
 // primitive atom
 export function atom<Value>(
@@ -45,9 +45,7 @@ export function atom<Value, Update>(
   read: Value | ((get: Getter) => Value | Promise<Value>),
   write?: (get: Getter, set: Setter, update: Update) => void | Promise<void>
 ) {
-  const instance = ({
-    initialValue: null,
-  } as unknown) as WritableAtom<Value, Update>
+  const instance = {} as WritableAtom<Value | Promise<Value>, Update>
   if (typeof read === 'function') {
     instance.read = read as (get: Getter) => Value | Promise<Value>
     const value = (read as (get: Getter) => Value | Promise<Value>)(
@@ -57,9 +55,8 @@ export function atom<Value, Update>(
       value.then((v) => {
         instance.initialValue = v
       })
-    } else {
-      instance.initialValue = value
     }
+    instance.initialValue = value
   } else {
     instance.initialValue = read
     instance.read = (get: Getter) => get(instance)

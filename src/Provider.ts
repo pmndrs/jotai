@@ -24,7 +24,7 @@ const warningObject = new Proxy(
 )
 
 export type Actions = {
-  init: (id: symbol, atom: AnyAtom) => void
+  init: (id: symbol | null, atom: AnyAtom) => void
   dispose: (id: symbol) => void
   write: (atom: AnyWritableAtom, update: unknown) => void
 }
@@ -89,7 +89,7 @@ const getAtomStateValue = (state: State, atom: AnyAtom) => {
 }
 
 const initAtom = (
-  id: symbol,
+  id: symbol | null,
   initializingAtom: AnyAtom,
   setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap
@@ -97,9 +97,11 @@ const initAtom = (
   const createAtomState = (
     prevState: State,
     atom: AnyAtom,
-    dependent: AnyAtom | symbol
+    dependent: AnyAtom | symbol | null
   ) => {
-    addDependent(dependentsMap, atom, dependent)
+    if (dependent) {
+      addDependent(dependentsMap, atom, dependent)
+    }
     const partialState: State = new Map()
     let atomState = prevState.get(atom)
     if (atomState) {
@@ -320,7 +322,7 @@ export const Provider: React.FC = ({ children }) => {
   }
   const actions = useMemo(
     () => ({
-      init: (id: symbol, atom: AnyAtom) =>
+      init: (id: symbol | null, atom: AnyAtom) =>
         initAtom(id, atom, setState, dependentsMapRef.current as DependentsMap),
       dispose: (id: symbol) =>
         disposeAtom(id, setState, dependentsMapRef.current as DependentsMap),

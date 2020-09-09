@@ -242,7 +242,7 @@ it('works with async get', async () => {
       <>
         <div>
           renderCount: {++renderCount.current}, count: {count}, delayedCount:{' '}
-          {delayedCount ?? 'N/A'}
+          {delayedCount}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
@@ -257,14 +257,12 @@ it('works with async get', async () => {
     </Provider>
   )
 
-  await findByText('renderCount: 1, count: 0, delayedCount: N/A')
-
   await findByText('loading')
-  await findByText('renderCount: 2, count: 0, delayedCount: 0')
+  await findByText('renderCount: 1, count: 0, delayedCount: 0')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  await findByText('renderCount: 3, count: 1, delayedCount: 1')
+  await findByText('renderCount: 2, count: 1, delayedCount: 1')
 })
 
 it('shows loading with async set', async () => {
