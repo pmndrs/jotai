@@ -466,7 +466,7 @@ it('can write an atom value on useEffect', async () => {
     const [count, setCount] = useAtom(countAtom)
     useEffect(() => {
       setCount((c) => c + 1)
-    }, [])
+    }, [setCount])
     return <div>count: {count}</div>
   }
 
@@ -487,7 +487,7 @@ it('can write an atom value on useEffect in children', async () => {
   }> = ({ setCount }) => {
     useEffect(() => {
       setCount((c) => c + 1)
-    }, [])
+    }, [setCount])
     return null
   }
 
