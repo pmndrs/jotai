@@ -1,5 +1,8 @@
 <p align="center">
-  <a id="cover" href="#cover"><img src="img/cover.svg" alt="Primitive and flexible state management for React" /></a>
+  <a id="cover" href="#cover"><img src="img/cover.svg" alt="Jotai Primitive and flexible state management for React.
+  No extra re-renders, state resides within React, you get full benefits from suspense, and concurrent mode.
+  It's scalable from a simple React.useState replacement up to a large application with complex requirements.
+  npm i jotai" /></a>
 </p>
 
 [![Build Size](https://img.shields.io/bundlephobia/min/jotai?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=jotai)
