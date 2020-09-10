@@ -510,3 +510,40 @@ it('can write an atom value on useEffect in children', async () => {
 
   await findByText('count: 2')
 })
+
+it('only invoke read function on use atom', async () => {
+  const countAtom = atom(0)
+  let readCount = 0
+  const doubledCountAtom = atom((get) => {
+    readCount += 1
+    return get(countAtom) * 2
+  })
+
+  expect(readCount).toBe(0) // do not invoke on atom()
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [doubledCount] = useAtom(doubledCountAtom)
+    const renderCount = React.useRef(0)
+    return (
+      <>
+        <div>
+          renderCount: {++renderCount.current}, count: {count}, readCount:{' '}
+          {readCount}, doubled: {doubledCount}
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('renderCount: 1, count: 0, readCount: 1, doubled: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('renderCount: 2, count: 1, readCount: 2, doubled: 2')
+})
