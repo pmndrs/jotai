@@ -35,7 +35,7 @@ export function useAtom<Value, Update>(
         }
         return atom.initialValue
       },
-      [atom]
+      [atom, actions]
     )
   )
   const setAtom = useCallback(
