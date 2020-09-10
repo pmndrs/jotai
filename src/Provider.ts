@@ -154,7 +154,7 @@ const disposeAtom = (
       if (isEmpty) {
         nextState.delete(atom)
         deleted.push(atom)
-        // TODO delete in dependentsMap too (even though it is WeakMap)
+        dependentsMap.delete(atom)
       }
     })
     nextState = deleted.reduce((p, c) => deleteAtomState(p, c), nextState)
