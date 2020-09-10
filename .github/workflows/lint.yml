@@ -21,35 +21,22 @@ jobs:
           path: "."
           key: ${{ github.sha }}
 
-  typescript:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/cache@v1
-        id: restore-build
-        with:
-          path: "."
-          key: ${{ github.sha }}
-      - run: yarn postbuild
-
   lint:
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/cache@v1
         id: restore-build
         with:
           path: "."
           key: ${{ github.sha }}
-      - run: yarn eslint
+      - run: yarn eslint:ci
 
-  lint-examples:
+  test:
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/cache@v1
         id: restore-build
         with:
           path: "."
           key: ${{ github.sha }}
-      - run: yarn eslint-examples
+      - run: yarn test
