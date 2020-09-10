@@ -23,6 +23,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - uses: actions/cache@v1
         id: restore-build
@@ -33,6 +34,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - uses: actions/cache@v1
         id: restore-build
