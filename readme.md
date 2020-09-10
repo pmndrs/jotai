@@ -5,8 +5,8 @@
   npm i jotai" /></a>
 </p>
 
+[![Build Status](https://img.shields.io/github/workflow/status/react-spring/jotai/Lint?style=flat&colorA=000000&colorB=000000)](https://github.com/react-spring/jotai/actions?query=workflow%3ALint)
 [![Build Size](https://img.shields.io/bundlephobia/min/jotai?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=jotai)
-[![Build Status](https://img.shields.io/travis/react-spring/jotai/master?style=flat&colorA=000000&colorB=000000)](https://travis-ci.org/react-spring/jotai)
 [![Version](https://img.shields.io/npm/v/jotai?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
 [![Downloads](https://img.shields.io/npm/dt/jotai.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
 
