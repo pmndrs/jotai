@@ -1,4 +1,4 @@
-import { useCallback, useDebugValue } from 'react'
+import { useCallback, useRef, useDebugValue } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
 import { StateContext, ActionsContext, AtomState } from './Provider'
@@ -20,20 +20,30 @@ export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
   const actions = useContext(ActionsContext)
-  const promiseOrValue = useContextSelector(
+  const pendingPartialStateRef = useRef<ReturnType<typeof actions.read>[2]>()
+  const value = useContextSelector(
     StateContext,
     useCallback(
       (state) => {
         const atomState = state.get(atom) as AtomState<Value> | undefined
         if (atomState) {
-          return atomState.promise || atomState.value
+          if (atomState.promise) {
+            throw atomState.promise
+          }
+          return atomState.value
         }
-        if (atom.initialValue instanceof Promise) {
-          atom.initialValue.then(() => {
-            actions.init(null, atom)
-          })
+        const [
+          initialPromise,
+          initialValue,
+          pendingPartialState,
+        ] = actions.read(state, atom)
+        if (initialPromise) {
+          throw initialPromise
         }
-        return atom.initialValue
+        if (!pendingPartialStateRef.current) {
+          pendingPartialStateRef.current = pendingPartialState
+        }
+        return initialValue
       },
       [atom, actions]
     )
@@ -50,14 +60,11 @@ export function useAtom<Value, Update>(
   )
   useIsoLayoutEffect(() => {
     const id = Symbol()
-    actions.init(id, atom)
+    actions.add(id, atom, pendingPartialStateRef.current)
     return () => {
-      actions.dispose(id)
+      actions.del(id)
     }
   }, [actions, atom])
-  if (promiseOrValue instanceof Promise) {
-    throw promiseOrValue
-  }
-  useDebugValue(promiseOrValue)
-  return [promiseOrValue, setAtom]
+  useDebugValue(value)
+  return [value, setAtom]
 }
