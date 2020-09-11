@@ -165,6 +165,6 @@ function Controls() {
 
 ## More information
 
-We will be organizing some more information later. Meanwhile, please visit WIP materials in the issues.
+We will be organizing some more information later. Meanwhile, please see WIP materials in the issues.
 - [API Doc](https://github.com/react-spring/jotai/issues/27)
 - [Example code snippets](https://github.com/react-spring/jotai/labels/has%20snippet)
