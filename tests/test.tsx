@@ -34,21 +34,19 @@ it('creates atoms', () => {
   }).toMatchInlineSnapshot(`
     Object {
       "countAtom": Object {
-        "initialValue": 0,
+        "init": 0,
         "read": [Function],
         "write": [Function],
       },
       "decrementCountAtom": Object {
-        "initialValue": null,
+        "init": null,
         "read": [Function],
         "write": [Function],
       },
       "doubledCountAtom": Object {
-        "initialValue": 0,
         "read": [Function],
       },
       "sumCountAtom": Object {
-        "initialValue": 1,
         "read": [Function],
         "write": [Function],
       },
