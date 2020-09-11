@@ -3,9 +3,9 @@ import {
   Setter,
   Atom,
   WritableAtom,
+  PrimitiveAtom,
   NonPromise,
   NonFunction,
-  SetStateAction,
 } from './types'
 
 // writable derived atom
@@ -39,7 +39,7 @@ export function atom<Value>(
 // primitive atom
 export function atom<Value>(
   initialValue: NonFunction<NonPromise<Value>>
-): WritableAtom<Value, SetStateAction<Value>>
+): PrimitiveAtom<Value>
 
 export function atom<Value, Update>(
   read: Value | ((get: Getter) => Value | Promise<Value>),
