@@ -91,7 +91,7 @@ const sum = atom(get => get(count1) + get(count2) + get(count3))
 Or if you like fp patterns ... 
 
 ```jsx
-const atoms = [count1, count1, count3, ...otherAtoms]
+const atoms = [count1, count2, count3, ...otherAtoms]
 const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
