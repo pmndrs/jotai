@@ -13,7 +13,7 @@ export type Setter = <Value, Update>(
 ) => void
 
 export type Atom<Value> = {
-  initialValue: Value
+  init?: Value
   read: (get: Getter) => Value | Promise<Value>
 }
 

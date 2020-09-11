@@ -48,17 +48,8 @@ export function atom<Value, Update>(
   const instance = {} as WritableAtom<Value | Promise<Value>, Update>
   if (typeof read === 'function') {
     instance.read = read as (get: Getter) => Value | Promise<Value>
-    const value = (read as (get: Getter) => Value | Promise<Value>)(
-      (a) => a.initialValue
-    )
-    if (value instanceof Promise) {
-      value.then((v) => {
-        instance.initialValue = v
-      })
-    }
-    instance.initialValue = value
   } else {
-    instance.initialValue = read
+    instance.init = read
     instance.read = (get: Getter) => get(instance)
     instance.write = (get: Getter, set: Setter, update: Update) => {
       set(

@@ -8,7 +8,14 @@ import React, {
 } from 'react'
 import { createContext } from 'use-context-selector'
 
-import { AnyAtom, AnyWritableAtom, Getter, Setter } from './types'
+import {
+  Atom,
+  WritableAtom,
+  AnyAtom,
+  AnyWritableAtom,
+  Getter,
+  Setter,
+} from './types'
 import { appendMap, concatMap } from './utils'
 
 const warningObject = new Proxy(
@@ -23,14 +30,8 @@ const warningObject = new Proxy(
   }
 )
 
-export type Actions = {
-  init: (id: symbol | null, atom: AnyAtom) => void
-  dispose: (id: symbol) => void
-  write: (atom: AnyWritableAtom, update: unknown) => void
-}
-
 // dependents for get operation
-type DependentsMap = WeakMap<AnyAtom, Set<AnyAtom | symbol>> // symbol is id from INIT_ATOM
+type DependentsMap = WeakMap<AnyAtom, Set<AnyAtom | symbol>> // symbol is id from useAtom
 
 const addDependent = (
   dependentsMap: DependentsMap,
@@ -73,6 +74,23 @@ type State = Map<AnyAtom, AtomState>
 type PartialState = State
 type WriteCache = WeakMap<State, Map<symbol, PartialState>> // symbol is writeId
 
+export type Actions = {
+  add: <Value>(
+    id: symbol,
+    atom: Atom<Value>,
+    partialState?: PartialState
+  ) => void
+  del: (id: symbol) => void
+  read: <Value>(
+    state: State,
+    atom: Atom<Value>
+  ) => readonly [Promise<void> | null, Value | null, PartialState]
+  write: <Value, Update>(
+    atom: WritableAtom<Value, Update>,
+    update: Update
+  ) => void
+}
+
 const initialState: State = new Map()
 
 const getAtomState = (state: State, atom: AnyAtom) => {
@@ -85,63 +103,98 @@ const getAtomState = (state: State, atom: AnyAtom) => {
 
 const getAtomStateValue = (state: State, atom: AnyAtom) => {
   const atomState = state.get(atom)
-  return atomState ? atomState.value : atom.initialValue
+  return atomState ? atomState.value : atom.init
 }
 
-const initAtom = (
-  id: symbol | null,
-  initializingAtom: AnyAtom,
+const readAtom = <Value>(
+  state: State,
+  readingAtom: Atom<Value>,
   setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap
 ) => {
-  const createAtomState = (
+  const readAtomValue = <V>(
     prevState: State,
-    atom: AnyAtom,
-    dependent: AnyAtom | symbol | null
+    atom: Atom<V>,
+    dependent: AnyAtom | null
   ) => {
     if (dependent) {
       addDependent(dependentsMap, atom, dependent)
     }
-    const partialState: State = new Map()
-    let atomState = prevState.get(atom)
+    const partialState: PartialState = new Map()
+    const atomState = prevState.get(atom) as AtomState<V> | undefined
     if (atomState) {
-      return partialState // already initialized
+      return [atomState.promise, atomState.value, partialState] as const
     }
+    let promise: Promise<void> | null = null
+    let value: V | null = null
     let isSync = true
-    const nextValue = atom.read(((a: AnyAtom) => {
-      if (a !== atom) {
-        if (isSync) {
-          const nextPartialState = createAtomState(prevState, a, atom)
-          appendMap(partialState, nextPartialState)
-        } else {
-          setState((prev) => {
-            const nextPartialState = createAtomState(prev, a, atom)
-            return appendMap(new Map(prev), nextPartialState)
-          })
+    try {
+      const promiseOrValue = atom.read(((a: AnyAtom) => {
+        if (a !== atom) {
+          const [nextPromise, nextValue, nextPartialState] = readAtomValue(
+            prevState,
+            a,
+            atom
+          )
+          if (isSync) {
+            appendMap(partialState, nextPartialState)
+          } else {
+            setState((prev) => appendMap(new Map(prev), nextPartialState))
+          }
+          if (nextPromise) {
+            throw nextPromise
+          }
+          return nextValue
         }
+        // primitive atom
+        const aState = prevState.get(a)
+        if (aState) {
+          if (aState.promise) {
+            throw aState.promise
+          }
+          return aState.value
+        }
+        return a.init // this should not be undefined
+      }) as Getter)
+      if (promiseOrValue instanceof Promise) {
+        promise = promiseOrValue.then((value) => {
+          setState((prev) => new Map(prev).set(atom, { promise: null, value }))
+        })
+      } else {
+        value = promiseOrValue
       }
-      return getAtomStateValue(prevState, a)
-    }) as Getter)
-    if (nextValue instanceof Promise) {
-      const promise = nextValue.then((value) => {
-        setState((prev) => new Map(prev).set(atom, { promise: null, value }))
-      })
-      atomState = { promise, value: atom.initialValue }
-    } else {
-      atomState = { promise: null, value: nextValue }
+    } catch (errorOrPromise) {
+      if (errorOrPromise instanceof Promise) {
+        promise = errorOrPromise
+      } else {
+        throw errorOrPromise
+      }
     }
-    partialState.set(atom, atomState)
+    partialState.set(
+      atom,
+      promise ? { promise, value: atom.init } : { promise: null, value }
+    )
     isSync = false
-    return partialState
+    return [promise, value, partialState] as const
   }
 
-  setState((prev) => {
-    const nextPartialState = createAtomState(prev, initializingAtom, id)
-    return appendMap(new Map(prev), nextPartialState)
-  })
+  return readAtomValue(state, readingAtom, null)
 }
 
-const disposeAtom = (
+const addAtom = <Value>(
+  id: symbol,
+  atom: Atom<Value>,
+  partialState: PartialState | undefined,
+  setState: Dispatch<SetStateAction<State>>,
+  dependentsMap: DependentsMap
+) => {
+  addDependent(dependentsMap, atom, id)
+  if (partialState) {
+    setState((prev) => appendMap(new Map(prev), partialState))
+  }
+}
+
+const delAtom = (
   id: symbol,
   setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap
@@ -164,15 +217,15 @@ const disposeAtom = (
   setState((prev) => deleteAtomState(prev, id))
 }
 
-const writeAtomValue = (
-  updatingAtom: AnyWritableAtom,
-  update: unknown,
+const writeAtom = <Value, Update>(
+  updatingAtom: WritableAtom<Value, Update>,
+  update: Update,
   setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap,
   writeCache: WriteCache
 ) => {
   const updateDependentsState = (prevState: State, atom: AnyAtom) => {
-    const partialState: State = new Map()
+    const partialState: PartialState = new Map()
     listDependents(dependentsMap, atom).forEach((dependent) => {
       if (typeof dependent === 'symbol') return
       const v = dependent.read(((a: AnyAtom) => {
@@ -205,11 +258,11 @@ const writeAtomValue = (
     return partialState
   }
 
-  const updateAtomState = (
+  const updateAtomState = <Value, Update>(
     writeId: symbol,
     prevState: State,
-    atom: AnyWritableAtom,
-    value: unknown
+    atom: WritableAtom<Value, Update>,
+    update: Update
   ) => {
     if (!writeCache.has(prevState)) {
       writeCache.set(prevState, new Map())
@@ -217,7 +270,7 @@ const writeAtomValue = (
     const cache = writeCache.get(prevState) as Map<symbol, PartialState>
     const hit = cache.get(writeId)
     if (hit) return hit
-    const partialState: State = new Map()
+    const partialState: PartialState = new Map()
     let isSync = true
     const promise = atom.write(
       ((a: AnyAtom) =>
@@ -256,7 +309,7 @@ const writeAtomValue = (
           }
         }
       }) as Setter,
-      value
+      update
     )
     if (promise instanceof Promise) {
       const nextAtomState: AtomState = {
@@ -322,12 +375,32 @@ export const Provider: React.FC = ({ children }) => {
   }
   const actions = useMemo(
     () => ({
-      init: (id: symbol | null, atom: AnyAtom) =>
-        initAtom(id, atom, setState, dependentsMapRef.current as DependentsMap),
-      dispose: (id: symbol) =>
-        disposeAtom(id, setState, dependentsMapRef.current as DependentsMap),
-      write: (atom: AnyWritableAtom, update: unknown) =>
-        writeAtomValue(
+      add: <Value>(
+        id: symbol,
+        atom: Atom<Value>,
+        partialState?: PartialState
+      ) =>
+        addAtom(
+          id,
+          atom,
+          partialState,
+          setState,
+          dependentsMapRef.current as DependentsMap
+        ),
+      del: (id: symbol) =>
+        delAtom(id, setState, dependentsMapRef.current as DependentsMap),
+      read: <Value>(state: State, atom: Atom<Value>) =>
+        readAtom(
+          state,
+          atom,
+          setState,
+          dependentsMapRef.current as DependentsMap
+        ),
+      write: <Value, Update>(
+        atom: WritableAtom<Value, Update>,
+        update: Update
+      ) =>
+        writeAtom(
           atom,
           update,
           setState,
