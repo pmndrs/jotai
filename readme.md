@@ -91,7 +91,7 @@ const sum = atom(get => get(count1) + get(count2) + get(count3))
 Or if you like fp patterns ... 
 
 ```jsx
-const atoms = [count1, count1, count3, ...otherAtoms]
+const atoms = [count1, count2, count3, ...otherAtoms]
 const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
@@ -160,3 +160,11 @@ function Controls() {
   const [count, compute] = useAtom(fetchCountAtom)
   return <button onClick={() => compute("http://count.host.com")}>compute</button>
 ```
+
+----
+
+## More information
+
+We will be organizing some more information later. Meanwhile, please see WIP materials in the issues.
+- [API Doc](https://github.com/react-spring/jotai/issues/27)
+- [Example code snippets](https://github.com/react-spring/jotai/labels/has%20snippet)
