@@ -252,7 +252,10 @@ const writeAtom = <Value, Update>(
           promise: null,
           value: v,
         })
-        appendMap(partialState, updateDependentsState(prevState, dependent))
+        appendMap(
+          partialState,
+          updateDependentsState(concatMap(prevState, partialState), dependent)
+        )
       }
     })
     return partialState
