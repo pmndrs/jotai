@@ -45,21 +45,18 @@ export function atom<Value, Update>(
   read: Value | ((get: Getter) => Value | Promise<Value>),
   write?: (get: Getter, set: Setter, update: Update) => void | Promise<void>
 ) {
-  const instance = {} as WritableAtom<Value | Promise<Value>, Update>
+  const config = {} as WritableAtom<Value | Promise<Value>, Update>
   if (typeof read === 'function') {
-    instance.read = read as (get: Getter) => Value | Promise<Value>
+    config.read = read as (get: Getter) => Value | Promise<Value>
   } else {
-    instance.init = read
-    instance.read = (get: Getter) => get(instance)
-    instance.write = (get: Getter, set: Setter, update: Update) => {
-      set(
-        instance,
-        typeof update === 'function' ? update(get(instance)) : update
-      )
+    config.init = read
+    config.read = (get: Getter) => get(config)
+    config.write = (get: Getter, set: Setter, update: Update) => {
+      set(config, typeof update === 'function' ? update(get(config)) : update)
     }
   }
   if (write) {
-    instance.write = write
+    config.write = write
   }
-  return instance
+  return config
 }
