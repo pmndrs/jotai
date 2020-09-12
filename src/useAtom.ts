@@ -20,7 +20,10 @@ export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
   const actions = useContext(ActionsContext)
-  const pendingPartialStateRef = useRef<ReturnType<typeof actions.read>[2]>()
+  type PendingPartialState = ReturnType<typeof actions.read>[2]
+
+  const pendingPartialStateRef = useRef<PendingPartialState>()
+  pendingPartialStateRef.current = undefined
   const value = useContextSelector(
     StateContext,
     useCallback(
@@ -40,7 +43,7 @@ export function useAtom<Value, Update>(
         if (initialPromise) {
           throw initialPromise
         }
-        if (!pendingPartialStateRef.current) {
+        if (pendingPartialState.size) {
           pendingPartialStateRef.current = pendingPartialState
         }
         return initialValue
@@ -48,6 +51,15 @@ export function useAtom<Value, Update>(
       [atom, actions]
     )
   )
+
+  useIsoLayoutEffect(() => {
+    const id = Symbol()
+    actions.add(id, atom, pendingPartialStateRef.current)
+    return () => {
+      actions.del(id)
+    }
+  }, [actions, atom])
+
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
@@ -58,13 +70,7 @@ export function useAtom<Value, Update>(
     },
     [atom, actions]
   )
-  useIsoLayoutEffect(() => {
-    const id = Symbol()
-    actions.add(id, atom, pendingPartialStateRef.current)
-    return () => {
-      actions.del(id)
-    }
-  }, [actions, atom])
+
   useDebugValue(value)
   return [value, setAtom]
 }
