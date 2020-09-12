@@ -56,10 +56,12 @@ export function useAtom<Value, Update>(
 
   const pendingPartialStateRef = useRef<PendingPartialState>()
   useIsoLayoutEffect(() => {
-    const found = pendingListRef.current.find(({ v }) => v === value)
+    const pendingList = pendingListRef.current
+    const found = pendingList.find(({ v }) => v === value)
     if (found) {
       pendingPartialStateRef.current = found.p
     }
+    pendingList.splice(0, pendingList.length)
   })
 
   useIsoLayoutEffect(() => {
