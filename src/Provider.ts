@@ -214,6 +214,7 @@ const delAtom = (
 }
 
 const gcAtom = (
+  state: State,
   setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap
 ) => {
@@ -236,13 +237,10 @@ const gcAtom = (
     return nextState
   }
 
-  setState((prev) => {
-    const nextState = gcAtomState(prev)
-    if (prev.size === nextState.size) {
-      return prev
-    }
-    return nextState
-  })
+  const nextState = gcAtomState(state)
+  if (state.size !== nextState.size) {
+    setState(nextState)
+  }
 }
 
 const writeAtom = <Value, Update>(
@@ -412,7 +410,7 @@ export const Provider: React.FC = ({ children }) => {
     if (!gcRequiredRef.current) {
       return
     }
-    gcAtom(setState, dependentsMapRef.current as DependentsMap)
+    gcAtom(state, setState, dependentsMapRef.current as DependentsMap)
     gcRequiredRef.current = false
   }, [state])
 
