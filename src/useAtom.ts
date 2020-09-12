@@ -52,6 +52,14 @@ export function useAtom<Value, Update>(
     )
   )
 
+  useIsoLayoutEffect(() => {
+    const id = Symbol()
+    actions.add(id, atom, pendingPartialStateRef.current)
+    return () => {
+      actions.del(id)
+    }
+  }, [actions, atom])
+
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
@@ -62,14 +70,6 @@ export function useAtom<Value, Update>(
     },
     [atom, actions]
   )
-
-  useIsoLayoutEffect(() => {
-    const id = Symbol()
-    actions.add(id, atom, pendingPartialStateRef.current)
-    return () => {
-      // TODO actions.del(id)
-    }
-  }, [actions, atom])
 
   useDebugValue(value)
   return [value, setAtom]

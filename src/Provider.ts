@@ -1,10 +1,12 @@
 import React, {
   Dispatch,
   SetStateAction,
+  MutableRefObject,
   createElement,
   useMemo,
   useState,
   useRef,
+  useEffect,
 } from 'react'
 import { createContext } from 'use-context-selector'
 
@@ -197,24 +199,50 @@ const addAtom = <Value>(
 const delAtom = (
   id: symbol,
   setState: Dispatch<SetStateAction<State>>,
+  dependentsMap: DependentsMap,
+  gcRequiredRef: MutableRefObject<boolean>
+) => {
+  const deleteAtomState = (prevState: State, dependent: symbol) => {
+    prevState.forEach((_atomState, atom) => {
+      deleteDependent(dependentsMap, atom, dependent)
+    })
+    return prevState
+  }
+
+  gcRequiredRef.current = true
+  setState((prev) => deleteAtomState(prev, id))
+}
+
+const gcAtom = (
+  setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap
 ) => {
-  const deleteAtomState = (prevState: State, dependent: AnyAtom | symbol) => {
-    let nextState = new Map(prevState)
-    const deleted: AnyAtom[] = []
-    nextState.forEach((_atomState, atom) => {
-      const isEmpty = deleteDependent(dependentsMap, atom, dependent)
-      if (isEmpty) {
-        nextState.delete(atom)
-        deleted.push(atom)
-        dependentsMap.delete(atom)
+  const gcAtomState = (prevState: State) => {
+    const nextState = new Map(prevState)
+    while (true) {
+      let deleted = false
+      nextState.forEach((_atomState, atom) => {
+        const isEmpty = dependentsMap.get(atom)?.size === 0
+        if (isEmpty) {
+          nextState.delete(atom)
+          dependentsMap.delete(atom)
+          deleted = true
+        }
+      })
+      if (!deleted) {
+        break
       }
-    })
-    nextState = deleted.reduce((p, c) => deleteAtomState(p, c), nextState)
+    }
     return nextState
   }
 
-  setState((prev) => deleteAtomState(prev, id))
+  setState((prev) => {
+    const nextState = gcAtomState(prev)
+    if (prev.size === nextState.size) {
+      return prev
+    }
+    return nextState
+  })
 }
 
 const writeAtom = <Value, Update>(
@@ -368,14 +396,26 @@ export const StateContext = createContext(warningObject as State)
 
 export const Provider: React.FC = ({ children }) => {
   const [state, setState] = useState(initialState)
+
   const dependentsMapRef = useRef<DependentsMap>()
   if (!dependentsMapRef.current) {
     dependentsMapRef.current = new WeakMap()
   }
+
   const writeCacheRef = useRef<WriteCache>()
   if (!writeCacheRef.current) {
     writeCacheRef.current = new WeakMap()
   }
+
+  const gcRequiredRef = useRef(false)
+  useEffect(() => {
+    if (!gcRequiredRef.current) {
+      return
+    }
+    gcAtom(setState, dependentsMapRef.current as DependentsMap)
+    gcRequiredRef.current = false
+  }, [state])
+
   const actions = useMemo(
     () => ({
       add: <Value>(
@@ -391,7 +431,12 @@ export const Provider: React.FC = ({ children }) => {
           dependentsMapRef.current as DependentsMap
         ),
       del: (id: symbol) =>
-        delAtom(id, setState, dependentsMapRef.current as DependentsMap),
+        delAtom(
+          id,
+          setState,
+          dependentsMapRef.current as DependentsMap,
+          gcRequiredRef
+        ),
       read: <Value>(state: State, atom: Atom<Value>) =>
         readAtom(
           state,
