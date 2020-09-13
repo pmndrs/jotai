@@ -7,7 +7,12 @@ import {
 } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
-import { StateContext, ActionsContext, AtomState } from './Provider'
+import {
+  StateContext,
+  ActionsContext,
+  AtomState,
+  PartialState,
+} from './Provider'
 import { Atom, WritableAtom, AnyWritableAtom, NonPromise } from './types'
 
 const isClient =
@@ -31,41 +36,43 @@ export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
   const actions = useContext(ActionsContext)
-  type PendingPartialState = ReturnType<typeof actions.read>[2]
 
-  const pendingListRef = useRef<{ v: Value; p: PendingPartialState }[]>([])
+  const pendingListRef = useRef<{ v: Value; p: PartialState }[]>([])
   const value = useContextSelector(
     StateContext,
     useCallback(
       (state) => {
-        const atomState = state.get(atom) as AtomState<Value> | undefined
-        if (atomState) {
-          if (atomState.promise) {
-            throw atomState.promise
+        let atomState = state.get(atom) as AtomState<Value> | undefined
+        if (!atomState) {
+          const [initialAtomState, pendingPartialState] = actions.read(
+            state,
+            atom
+          )
+          atomState = initialAtomState as AtomState<Value>
+          if (
+            !atomState.error &&
+            !atomState.promise &&
+            pendingPartialState.size
+          ) {
+            pendingListRef.current.unshift({
+              v: initialAtomState.value as Value,
+              p: pendingPartialState,
+            })
           }
-          return atomState.value
         }
-        const [
-          initialPromise,
-          initialValue,
-          pendingPartialState,
-        ] = actions.read(state, atom)
-        if (initialPromise) {
-          throw initialPromise
+        if (atomState.error) {
+          throw atomState.error
         }
-        if (pendingPartialState.size) {
-          pendingListRef.current.unshift({
-            v: initialValue as Value,
-            p: pendingPartialState,
-          })
+        if (atomState.promise) {
+          throw atomState.promise
         }
-        return initialValue
+        return atomState.value
       },
       [atom, actions]
     )
   )
 
-  const pendingPartialStateRef = useRef<PendingPartialState>()
+  const pendingPartialStateRef = useRef<PartialState>()
   useIsoLayoutEffect(() => {
     const pendingList = pendingListRef.current
     const found = pendingList.find(({ v }) => v === value)
