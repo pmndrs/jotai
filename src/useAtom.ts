@@ -7,7 +7,12 @@ import {
 } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
-import { StateContext, ActionsContext, AtomState } from './Provider'
+import {
+  StateContext,
+  ActionsContext,
+  AtomState,
+  PartialState,
+} from './Provider'
 import { Atom, WritableAtom, AnyWritableAtom, NonPromise } from './types'
 
 const isClient =
@@ -31,25 +36,31 @@ export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
   const actions = useContext(ActionsContext)
-  type PendingPartialState = ReturnType<typeof actions.read>[2]
 
-  const pendingListRef = useRef<{ v: Value; p: PendingPartialState }[]>([])
+  const pendingListRef = useRef<{ v: Value; p: PartialState }[]>([])
   const value = useContextSelector(
     StateContext,
     useCallback(
       (state) => {
         const atomState = state.get(atom) as AtomState<Value> | undefined
         if (atomState) {
+          if (atomState.error) {
+            throw atomState.error
+          }
           if (atomState.promise) {
             throw atomState.promise
           }
           return atomState.value
         }
         const [
+          initialError,
           initialPromise,
           initialValue,
           pendingPartialState,
         ] = actions.read(state, atom)
+        if (initialError) {
+          throw initialError
+        }
         if (initialPromise) {
           throw initialPromise
         }
@@ -65,7 +76,7 @@ export function useAtom<Value, Update>(
     )
   )
 
-  const pendingPartialStateRef = useRef<PendingPartialState>()
+  const pendingPartialStateRef = useRef<PartialState>()
   useIsoLayoutEffect(() => {
     const pendingList = pendingListRef.current
     const found = pendingList.find(({ v }) => v === value)
