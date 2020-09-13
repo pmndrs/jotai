@@ -182,7 +182,6 @@ const readAtom = <Value>(
         value = promiseOrValue
       }
     } catch (errorOrPromise) {
-      console.log('catch err', errorOrPromise)
       if (errorOrPromise instanceof Promise) {
         promise = errorOrPromise
       } else if (errorOrPromise instanceof Error) {
