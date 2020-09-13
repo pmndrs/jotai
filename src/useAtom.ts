@@ -1,9 +1,20 @@
-import { useCallback, useRef, useDebugValue } from 'react'
+import {
+  useCallback,
+  useRef,
+  useLayoutEffect,
+  useEffect,
+  useDebugValue,
+} from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
 import { StateContext, ActionsContext, AtomState } from './Provider'
 import { Atom, WritableAtom, AnyWritableAtom, NonPromise } from './types'
-import { useIsoLayoutEffect } from './utils'
+
+const isClient =
+  typeof window !== 'undefined' &&
+  !/ServerSideRendering/.test(window.navigator && window.navigator.userAgent)
+
+const useIsoLayoutEffect = isClient ? useLayoutEffect : useEffect
 
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
