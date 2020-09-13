@@ -546,6 +546,45 @@ it('only invoke read function on use atom', async () => {
   await findByText('renderCount: 2, count: 1, readCount: 2, doubled: 2')
 })
 
+it('can throw an initial error in read function', async () => {
+  console.error = jest.fn()
+
+  const errorAtom = atom(() => {
+    throw new Error()
+  })
+
+  class ErrorBoundary extends React.Component<{}, { hasError: boolean }> {
+    constructor(props: {}) {
+      super(props)
+      this.state = { hasError: false }
+    }
+    static getDerivedStateFromError() {
+      return { hasError: true }
+    }
+    render() {
+      return this.state.hasError ? <div>errored</div> : this.props.children
+    }
+  }
+
+  const Counter: React.FC = () => {
+    useAtom(errorAtom)
+    return (
+      <>
+        <div>no error</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <ErrorBoundary>
+        <Counter />
+      </ErrorBoundary>
+    </Provider>
+  )
+  await findByText('errored')
+})
+
 it('can throw an error in read function', async () => {
   console.error = jest.fn()
 
