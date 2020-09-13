@@ -22,8 +22,7 @@ export function useAtom<Value, Update>(
   const actions = useContext(ActionsContext)
   type PendingPartialState = ReturnType<typeof actions.read>[2]
 
-  const pendingPartialStateRef = useRef<PendingPartialState>()
-  pendingPartialStateRef.current = undefined
+  const pendingListRef = useRef<{ v: Value; p: PendingPartialState }[]>([])
   const value = useContextSelector(
     StateContext,
     useCallback(
@@ -44,13 +43,26 @@ export function useAtom<Value, Update>(
           throw initialPromise
         }
         if (pendingPartialState.size) {
-          pendingPartialStateRef.current = pendingPartialState
+          pendingListRef.current.unshift({
+            v: initialValue as Value,
+            p: pendingPartialState,
+          })
         }
         return initialValue
       },
       [atom, actions]
     )
   )
+
+  const pendingPartialStateRef = useRef<PendingPartialState>()
+  useIsoLayoutEffect(() => {
+    const pendingList = pendingListRef.current
+    const found = pendingList.find(({ v }) => v === value)
+    if (found) {
+      pendingPartialStateRef.current = found.p
+    }
+    pendingList.splice(0, pendingList.length)
+  })
 
   useIsoLayoutEffect(() => {
     const id = Symbol()
