@@ -7,10 +7,10 @@ import typescript from 'rollup-plugin-typescript2'
 const createBabelConfig = require('./babel.config')
 
 const { root } = path.parse(process.cwd())
-const external = id => !id.startsWith('.') && !id.startsWith(root)
+const external = (id) => !id.startsWith('.') && !id.startsWith(root)
 const extensions = ['.js', '.ts', '.tsx']
-const getBabelOptions = targets => ({
-  ...createBabelConfig({ env: env => env === 'build' }, targets),
+const getBabelOptions = (targets) => ({
+  ...createBabelConfig({ env: (env) => env === 'build' }, targets),
   extensions,
 })
 
@@ -68,4 +68,5 @@ export default [
   createESMConfig('src/index.ts', 'dist/index.js'),
   createCommonJSConfig('src/index.ts', 'dist/index.cjs.js'),
   createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'jotai'),
+  createESMConfig('src/utils.ts', 'dist/utils.js'),
 ]

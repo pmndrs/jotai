@@ -18,7 +18,26 @@ import {
   Getter,
   Setter,
 } from './types'
-import { appendMap, concatMap } from './utils'
+
+// mutate map with additonal map
+const appendMap = <K, V>(dst: Map<K, V>, src: Map<K, V>) => {
+  src.forEach((v, k) => {
+    dst.set(k, v)
+  })
+  return dst
+}
+
+// create new map from two maps
+const concatMap = <K, V>(src1: Map<K, V>, src2: Map<K, V>) => {
+  const dst = new Map<K, V>()
+  src1.forEach((v, k) => {
+    dst.set(k, v)
+  })
+  src2.forEach((v, k) => {
+    dst.set(k, v)
+  })
+  return dst
+}
 
 const warningObject = new Proxy(
   {},
