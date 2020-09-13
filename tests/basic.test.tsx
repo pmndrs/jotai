@@ -1,12 +1,6 @@
 import React, { StrictMode, useEffect } from 'react'
-import { fireEvent, cleanup, render } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom, WritableAtom } from '../src/index'
-
-const consoleError = console.error
-afterEach(() => {
-  cleanup()
-  console.error = consoleError
-})
 
 it('creates atoms', () => {
   // primitive atom
