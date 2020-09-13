@@ -175,9 +175,18 @@ const readAtom = <Value>(
         return a.init // this should not be undefined
       }) as Getter)
       if (promiseOrValue instanceof Promise) {
-        promise = promiseOrValue.then((value) => {
-          setState((prev) => new Map(prev).set(atom, { value }))
-        })
+        promise = promiseOrValue
+          .then((value) => {
+            setState((prev) => new Map(prev).set(atom, { value }))
+          })
+          .catch((e) => {
+            setState((prev) =>
+              new Map(prev).set(atom, {
+                value: getAtomStateValue(prev, atom),
+                error: e instanceof Error ? e : new Error(e),
+              })
+            )
+          })
       } else {
         value = promiseOrValue
       }
@@ -281,14 +290,26 @@ const writeAtom = <Value, Update>(
         return getAtomStateValue(prevState, a)
       }) as Getter)
       if (v instanceof Promise) {
-        const promise = v.then((vv) => {
-          const nextAtomState: AtomState = { value: vv }
-          setState((prev) => {
-            const nextState = new Map(prev).set(dependent, nextAtomState)
-            const nextPartialState = updateDependentsState(nextState, dependent)
-            return appendMap(nextState, nextPartialState)
+        const promise = v
+          .then((vv) => {
+            const nextAtomState: AtomState = { value: vv }
+            setState((prev) => {
+              const nextState = new Map(prev).set(dependent, nextAtomState)
+              const nextPartialState = updateDependentsState(
+                nextState,
+                dependent
+              )
+              return appendMap(nextState, nextPartialState)
+            })
           })
-        })
+          .catch((e) => {
+            setState((prev) =>
+              new Map(prev).set(dependent, {
+                value: getAtomStateValue(prev, dependent),
+                error: e instanceof Error ? e : new Error(e),
+              })
+            )
+          })
         partialState.set(dependent, {
           value: getAtomStateValue(prevState, dependent),
           promise,
@@ -361,14 +382,23 @@ const writeAtom = <Value, Update>(
       if (promise instanceof Promise) {
         const nextAtomState: AtomState = {
           value: getAtomStateValue(concatMap(prevState, partialState), atom),
-          promise: promise.then(() => {
-            setState((prev) =>
-              new Map(prev).set(atom, {
-                value: getAtomStateValue(prev, atom),
-                promise: undefined,
-              })
-            )
-          }),
+          promise: promise
+            .then(() => {
+              setState((prev) =>
+                new Map(prev).set(atom, {
+                  value: getAtomStateValue(prev, atom),
+                  promise: undefined,
+                })
+              )
+            })
+            .catch((e) => {
+              setState((prev) =>
+                new Map(prev).set(atom, {
+                  value: getAtomStateValue(prev, atom),
+                  error: e instanceof Error ? e : new Error(e),
+                })
+              )
+            }),
         }
         partialState.set(atom, nextAtomState)
       }
