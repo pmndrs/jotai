@@ -106,12 +106,7 @@ export type Actions = {
   read: <Value>(
     state: State,
     atom: Atom<Value>
-  ) => readonly [
-    Error | undefined,
-    Promise<void> | undefined,
-    Value | null,
-    PartialState
-  ]
+  ) => readonly [AtomState, PartialState]
   write: <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
@@ -142,12 +137,7 @@ const readAtom = <Value>(
     const partialState: PartialState = new Map()
     const atomState = prevState.get(atom) as AtomState<V> | undefined
     if (atomState) {
-      return [
-        atomState.error,
-        atomState.promise,
-        atomState.value,
-        partialState,
-      ] as const
+      return [atomState, partialState] as const
     }
     let error: Error | undefined = undefined
     let promise: Promise<void> | undefined = undefined
@@ -156,24 +146,23 @@ const readAtom = <Value>(
     try {
       const promiseOrValue = atom.read(((a: AnyAtom) => {
         if (a !== atom) {
-          const [
-            nextError,
-            nextPromise,
-            nextValue,
-            nextPartialState,
-          ] = readAtomValue(prevState, a, atom)
+          const [nextAtomState, nextPartialState] = readAtomValue(
+            prevState,
+            a,
+            atom
+          )
           if (isSync) {
             appendMap(partialState, nextPartialState)
           } else {
             setState((prev) => appendMap(new Map(prev), nextPartialState))
           }
-          if (nextError) {
-            throw nextError
+          if (nextAtomState.error) {
+            throw nextAtomState.error
           }
-          if (nextPromise) {
-            throw nextPromise
+          if (nextAtomState.promise) {
+            throw nextAtomState.promise
           }
-          return nextValue
+          return nextAtomState.value
         }
         // primitive atom
         const aState = prevState.get(a)
@@ -193,6 +182,7 @@ const readAtom = <Value>(
         value = promiseOrValue
       }
     } catch (errorOrPromise) {
+      console.log('catch err', errorOrPromise)
       if (errorOrPromise instanceof Promise) {
         promise = errorOrPromise
       } else if (errorOrPromise instanceof Error) {
@@ -201,13 +191,14 @@ const readAtom = <Value>(
         error = new Error(errorOrPromise)
       }
     }
-    partialState.set(atom, {
+    const nextAtomState: AtomState = {
       error,
       promise,
       value: promise ? atom.init : value,
-    })
+    }
+    partialState.set(atom, nextAtomState)
     isSync = false
-    return [error, promise, value, partialState] as const
+    return [nextAtomState, partialState] as const
   }
 
   return readAtomValue(state, readingAtom, null)

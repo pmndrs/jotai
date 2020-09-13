@@ -582,6 +582,7 @@ it('can throw an initial error in read function', async () => {
       </ErrorBoundary>
     </Provider>
   )
+
   await findByText('errored')
 })
 
@@ -628,6 +629,7 @@ it('can throw an error in read function', async () => {
       </ErrorBoundary>
     </Provider>
   )
+
   await findByText('no error')
 
   fireEvent.click(getByText('button'))

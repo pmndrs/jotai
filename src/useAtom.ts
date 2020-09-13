@@ -42,35 +42,31 @@ export function useAtom<Value, Update>(
     StateContext,
     useCallback(
       (state) => {
-        const atomState = state.get(atom) as AtomState<Value> | undefined
-        if (atomState) {
-          if (atomState.error) {
-            throw atomState.error
+        let atomState = state.get(atom) as AtomState<Value> | undefined
+        if (!atomState) {
+          const [initialAtomState, pendingPartialState] = actions.read(
+            state,
+            atom
+          )
+          atomState = initialAtomState as AtomState<Value>
+          if (
+            !atomState.error &&
+            !atomState.promise &&
+            pendingPartialState.size
+          ) {
+            pendingListRef.current.unshift({
+              v: initialAtomState.value as Value,
+              p: pendingPartialState,
+            })
           }
-          if (atomState.promise) {
-            throw atomState.promise
-          }
-          return atomState.value
         }
-        const [
-          initialError,
-          initialPromise,
-          initialValue,
-          pendingPartialState,
-        ] = actions.read(state, atom)
-        if (initialError) {
-          throw initialError
+        if (atomState.error) {
+          throw atomState.error
         }
-        if (initialPromise) {
-          throw initialPromise
+        if (atomState.promise) {
+          throw atomState.promise
         }
-        if (pendingPartialState.size) {
-          pendingListRef.current.unshift({
-            v: initialValue as Value,
-            p: pendingPartialState,
-          })
-        }
-        return initialValue
+        return atomState.value
       },
       [atom, actions]
     )
