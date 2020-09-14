@@ -23,3 +23,44 @@ const Controls = () => {
 ```
 
 https://codesandbox.io/s/react-typescript-forked-3q11k
+
+## atomWithReset / useResetAtom
+
+Ref: https://github.com/react-spring/jotai/issues/41
+
+```js
+import { useAtom } from 'jotai'
+import { atomWithReset, useResetAtom } from 'jotai/utils'
+
+const todoListAtom = atomWithReset([{
+  description: "Add a todo",
+  checked: false
+}])
+
+const TodoList = () => {
+  const [todoList, setTodoList] = useAtom(todoListAtom)
+  const resetTodoList = useResetAtom(todoListAtom)
+
+  return (
+    <>
+      <ul>
+        {todoList.map((todo) => (
+          <li>{todo.description}</li>
+        ))}
+      </ul>
+
+      <button
+        onClick={() => setTodoList((l) => [ ...l, {
+          description: `New todo ${new Date().toDateString()}`,
+          checked: false
+        }])}
+      >
+        Add todo
+      </button>
+      <button onClick={resetTodoList}>Reset</button>
+    </>
+  )
+}
+```
+
+https://codesandbox.io/s/react-typescript-forked-w91cq
