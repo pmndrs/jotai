@@ -32,7 +32,7 @@ type SetAtom<Update> = [Update] extends [never]
 
 export function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>
-): [NonPromise<Value>, (update: Update) => void]
+): [NonPromise<Value>, SetAtom<Update>]
 
 export function useAtom<Value>(atom: Atom<Value>): [NonPromise<Value>, never]
 
@@ -103,7 +103,7 @@ export function useAtom<Value, Update>(
       }
     },
     [atom, actions]
-  ) as SetAtom<Update>
+  )
 
   useDebugValue(value)
   return [value, setAtom]

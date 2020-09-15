@@ -142,7 +142,7 @@ it('uses a read-write derived atom', async () => {
 
 it('uses a write-only derived atom', async () => {
   const countAtom = atom(0)
-  const incrementCountAtom = atom(null, (get, set) =>
+  const incrementCountAtom = atom(null, (get, set, _arg: never) =>
     set(countAtom, get(countAtom) + 1)
   )
 
@@ -153,7 +153,7 @@ it('uses a write-only derived atom', async () => {
 
   const Control: React.FC = () => {
     const [, increment] = useAtom(incrementCountAtom)
-    return <button onClick={increment}>button</button>
+    return <button onClick={() => increment()}>button</button>
   }
 
   const { getByText, findByText } = render(
