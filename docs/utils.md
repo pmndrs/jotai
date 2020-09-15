@@ -64,3 +64,49 @@ const TodoList = () => {
 ```
 
 https://codesandbox.io/s/react-typescript-forked-w91cq
+
+## useReducerAtom
+
+```js
+import { atom } from 'jotai'
+import { useReducerAtom } from 'jotai/utils'
+
+const countReducer = (prev, action) => {
+  if (action.type === 'inc') return prev + 1
+  if (action.type === 'dec') return prev - 1
+  throw new Error('unknown action type')
+}
+
+const countAtom = atom(0)
+
+const Counter = () => {
+  const [count, dispatch] = useReducerAtom(countAtom, countReducer);
+  return (
+    <div>
+      {count}
+      <button onClick={() => dispatch({ type: "inc" })}>+1</button>
+      <button onClick={() => dispatch({ type: "dec" })}>-1</button>
+    </div>
+  );
+};
+```
+
+https://codesandbox.io/s/react-typescript-forked-eg0mw
+
+## atomWithReducer
+
+Ref: https://github.com/react-spring/jotai/issues/38
+
+```js
+import { atomWithReducer } from 'jotai/utils'
+
+const countReducer = (prev, action) => {
+  if (action.type === 'inc') return prev + 1
+  if (action.type === 'dec') return prev - 1
+  throw new Error('unknown action type')
+}
+
+const countReducerAtom = atomWithReducer(0, countReducer)
+```
+
+https://codesandbox.io/s/react-typescript-forked-g3tsx
