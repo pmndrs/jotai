@@ -26,6 +26,10 @@ const isWritable = <Value, Update>(
 ): atom is WritableAtom<Value, Update> =>
   !!(atom as WritableAtom<Value, Update>).write
 
+type SetAtom<Update> = Update extends undefined
+  ? () => void
+  : (update: Update) => void
+
 export function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>
 ): [NonPromise<Value>, (update: Update) => void]
@@ -99,7 +103,7 @@ export function useAtom<Value, Update>(
       }
     },
     [atom, actions]
-  )
+  ) as SetAtom<Update>
 
   useDebugValue(value)
   return [value, setAtom]
