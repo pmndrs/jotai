@@ -13,7 +13,7 @@ export type Setter = <Value, Update>(
 ) => void
 
 export type Atom<Value> = {
-  key: unknown
+  key: string | number
   init?: Value
   read: (get: Getter) => Value | Promise<Value>
 }
