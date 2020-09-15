@@ -29,18 +29,22 @@ it('creates atoms', () => {
     Object {
       "countAtom": Object {
         "init": 0,
+        "key": 1,
         "read": [Function],
         "write": [Function],
       },
       "decrementCountAtom": Object {
         "init": null,
+        "key": 5,
         "read": [Function],
         "write": [Function],
       },
       "doubledCountAtom": Object {
+        "key": 3,
         "read": [Function],
       },
       "sumCountAtom": Object {
+        "key": 4,
         "read": [Function],
         "write": [Function],
       },
