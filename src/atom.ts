@@ -8,6 +8,8 @@ import {
   NonFunction,
 } from './types'
 
+let keyCount = 0 // global key count for all atoms
+
 // writable derived atom
 export function atom<Value, Update>(
   read: (get: Getter) => NonPromise<Value>,
@@ -45,7 +47,9 @@ export function atom<Value, Update>(
   read: Value | ((get: Getter) => Value | Promise<Value>),
   write?: (get: Getter, set: Setter, update: Update) => void | Promise<void>
 ) {
-  const config = {} as WritableAtom<Value | Promise<Value>, Update>
+  const config = {
+    key: ++keyCount,
+  } as WritableAtom<Value | Promise<Value>, Update>
   if (typeof read === 'function') {
     config.read = read as (get: Getter) => Value | Promise<Value>
   } else {
