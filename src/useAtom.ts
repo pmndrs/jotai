@@ -26,7 +26,7 @@ const isWritable = <Value, Update>(
 ): atom is WritableAtom<Value, Update> =>
   !!(atom as WritableAtom<Value, Update>).write
 
-type SetAtom<Update> = Update extends undefined
+type SetAtom<Update> = Update extends never
   ? () => void
   : (update: Update) => void
 
