@@ -235,7 +235,7 @@ const delAtom = (
     prevState.forEach((_atomState, atom) => {
       deleteDependent(dependentsMap, atom, dependent)
     })
-    return prevState
+    return new Map(prevState) // to re-render
   }
 
   gcRequiredRef.current = true
@@ -450,13 +450,6 @@ export const Provider: React.FC = ({ children }) => {
     setStateOrig(setStateAction)
   }
 
-  const lastStateRef = useRef<State | null>(null)
-  const writeThunkQueueRef = useRef<WriteThunk[]>([])
-  useEffect(() => {
-    lastStateRef.current = state
-    runWriteThunk(lastStateRef, setState, writeThunkQueueRef.current)
-  }, [state])
-
   const dependentsMapRef = useRef<DependentsMap>()
   if (!dependentsMapRef.current) {
     dependentsMapRef.current = new WeakMap()
@@ -469,6 +462,13 @@ export const Provider: React.FC = ({ children }) => {
     }
     gcAtom(state, setState, dependentsMapRef.current as DependentsMap)
     gcRequiredRef.current = false
+  }, [state])
+
+  const lastStateRef = useRef<State | null>(null)
+  const writeThunkQueueRef = useRef<WriteThunk[]>([])
+  useEffect(() => {
+    lastStateRef.current = state
+    runWriteThunk(lastStateRef, setState, writeThunkQueueRef.current)
   }, [state])
 
   const actions = useMemo(

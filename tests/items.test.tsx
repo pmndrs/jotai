@@ -8,7 +8,7 @@ afterEach(() => {
   console.error = consoleError
 })
 
-it('remove an item', async () => {
+it('remove an item, then add another', async () => {
   type Item = {
     text: string
     checked: boolean
@@ -47,9 +47,9 @@ it('remove an item', async () => {
     }
     return (
       <ul>
-        {items.map((itemAtom, i) => (
+        {items.map((itemAtom) => (
           <ListItem
-            key={i /* not for production, just to hide warning */}
+            key={itemAtom.key}
             itemAtom={itemAtom}
             remove={() => removeItem(itemAtom)}
           />
@@ -80,4 +80,8 @@ it('remove an item', async () => {
 
   fireEvent.click(getByText('Remove item1'))
   await findByText('item2 checked: yes')
+
+  fireEvent.click(getByText('Add'))
+  await findByText('item2 checked: yes')
+  await findByText('item3 checked: no')
 })
