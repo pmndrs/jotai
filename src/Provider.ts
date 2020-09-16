@@ -94,7 +94,7 @@ export type AtomState<Value = unknown> = {
 type State = Map<AnyAtom, AtomState>
 
 export type PartialState = State
-type WriteCache = WeakMap<State, Map<symbol, PartialState>> // symbol is writeId
+type WriteThunk = (lastState: State) => State // returns next state
 
 export type Actions = {
   add: <Value>(
@@ -275,9 +275,8 @@ const gcAtom = (
 const writeAtom = <Value, Update>(
   updatingAtom: WritableAtom<Value, Update>,
   update: Update,
-  setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap,
-  writeCache: WriteCache
+  addWriteThunk: (thunk: WriteThunk) => void
 ) => {
   const updateDependentsState = (prevState: State, atom: AnyAtom) => {
     const partialState: PartialState = new Map()
@@ -293,7 +292,7 @@ const writeAtom = <Value, Update>(
         const promise = v
           .then((vv) => {
             const nextAtomState: AtomState = { value: vv }
-            setState((prev) => {
+            addWriteThunk((prev) => {
               const nextState = new Map(prev).set(dependent, nextAtomState)
               const nextPartialState = updateDependentsState(
                 nextState,
@@ -303,7 +302,7 @@ const writeAtom = <Value, Update>(
             })
           })
           .catch((e) => {
-            setState((prev) =>
+            addWriteThunk((prev) =>
               new Map(prev).set(dependent, {
                 value: getAtomStateValue(prev, dependent),
                 error: e instanceof Error ? e : new Error(e),
@@ -326,17 +325,10 @@ const writeAtom = <Value, Update>(
   }
 
   const updateAtomState = <Value, Update>(
-    writeId: symbol,
     prevState: State,
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => {
-    if (!writeCache.has(prevState)) {
-      writeCache.set(prevState, new Map())
-    }
-    const cache = writeCache.get(prevState) as Map<symbol, PartialState>
-    const hit = cache.get(writeId)
-    if (hit) return hit
     const partialState: PartialState = new Map()
     let isSync = true
     try {
@@ -353,25 +345,19 @@ const writeAtom = <Value, Update>(
                 updateDependentsState(concatMap(prevState, partialState), a)
               )
             } else {
-              setState((prev) => {
+              addWriteThunk((prev) => {
                 const nextState = new Map(prev).set(a, nextAtomState)
                 const nextPartialState = updateDependentsState(nextState, a)
                 return appendMap(nextState, nextPartialState)
               })
             }
           } else {
-            const newWriteId = Symbol()
             if (isSync) {
-              const nextPartialState = updateAtomState(
-                newWriteId,
-                prevState,
-                a,
-                v
-              )
+              const nextPartialState = updateAtomState(prevState, a, v)
               appendMap(partialState, nextPartialState)
             } else {
-              setState((prev) => {
-                const nextPartialState = updateAtomState(newWriteId, prev, a, v)
+              addWriteThunk((prev) => {
+                const nextPartialState = updateAtomState(prev, a, v)
                 return appendMap(new Map(prev), nextPartialState)
               })
             }
@@ -384,7 +370,7 @@ const writeAtom = <Value, Update>(
           value: getAtomStateValue(concatMap(prevState, partialState), atom),
           promise: promise
             .then(() => {
-              setState((prev) =>
+              addWriteThunk((prev) =>
                 new Map(prev).set(atom, {
                   value: getAtomStateValue(prev, atom),
                   promise: undefined,
@@ -392,7 +378,7 @@ const writeAtom = <Value, Update>(
               )
             })
             .catch((e) => {
-              setState((prev) =>
+              addWriteThunk((prev) =>
                 new Map(prev).set(atom, {
                   value: getAtomStateValue(prev, atom),
                   error: e instanceof Error ? e : new Error(e),
@@ -410,54 +396,70 @@ const writeAtom = <Value, Update>(
       partialState.set(atom, nextAtomState)
     }
     isSync = false
-    cache.set(writeId, partialState)
     return partialState
   }
 
-  const newWriteId = Symbol()
-  setState((prevState) => {
+  addWriteThunk((prevState) => {
     const updatingAtomState = prevState.get(updatingAtom)
     if (updatingAtomState && updatingAtomState.promise) {
       // schedule update after promise is resolved
       const promise = updatingAtomState.promise.then(() => {
-        const updateState = updateAtomState(
-          newWriteId,
-          prevState,
-          updatingAtom,
-          update
-        )
-        setState((prev) => appendMap(new Map(prev), updateState))
+        const updateState = updateAtomState(prevState, updatingAtom, update)
+        addWriteThunk((prev) => appendMap(new Map(prev), updateState))
       })
       return new Map(prevState).set(updatingAtom, {
         ...updatingAtomState,
         promise,
       })
     } else {
-      const updateState = updateAtomState(
-        newWriteId,
-        prevState,
-        updatingAtom,
-        update
-      )
+      const updateState = updateAtomState(prevState, updatingAtom, update)
       return appendMap(new Map(prevState), updateState)
     }
   })
+}
+
+const runWriteThunk = (
+  lastStateRef: MutableRefObject<State | null>,
+  setState: Dispatch<SetStateAction<State>>,
+  writeThunkQueue: WriteThunk[]
+) => {
+  while (true) {
+    if (lastStateRef.current === null) {
+      return
+    }
+    if (writeThunkQueue.length === 0) {
+      return
+    }
+    const thunk = writeThunkQueue.shift() as WriteThunk
+    const lastState = lastStateRef.current
+    const nextState = thunk(lastState)
+    if (nextState !== lastState) {
+      setState(nextState)
+      return
+    }
+  }
 }
 
 export const ActionsContext = createContext(warningObject as Actions)
 export const StateContext = createContext(warningObject as State)
 
 export const Provider: React.FC = ({ children }) => {
-  const [state, setState] = useState(initialState)
+  const [state, setStateOrig] = useState(initialState)
+  const setState = (setStateAction: SetStateAction<State>) => {
+    lastStateRef.current = null
+    setStateOrig(setStateAction)
+  }
+
+  const lastStateRef = useRef<State | null>(null)
+  const writeThunkQueueRef = useRef<WriteThunk[]>([])
+  useEffect(() => {
+    lastStateRef.current = state
+    runWriteThunk(lastStateRef, setState, writeThunkQueueRef.current)
+  }, [state])
 
   const dependentsMapRef = useRef<DependentsMap>()
   if (!dependentsMapRef.current) {
     dependentsMapRef.current = new WeakMap()
-  }
-
-  const writeCacheRef = useRef<WriteCache>()
-  if (!writeCacheRef.current) {
-    writeCacheRef.current = new WeakMap()
   }
 
   const gcRequiredRef = useRef(false)
@@ -500,14 +502,17 @@ export const Provider: React.FC = ({ children }) => {
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,
         update: Update
-      ) =>
+      ) => {
         writeAtom(
           atom,
           update,
-          setState,
           dependentsMapRef.current as DependentsMap,
-          writeCacheRef.current as WriteCache
-        ),
+          (thunk: WriteThunk) => {
+            writeThunkQueueRef.current.push(thunk)
+            runWriteThunk(lastStateRef, setState, writeThunkQueueRef.current)
+          }
+        )
+      },
     }),
     []
   )
