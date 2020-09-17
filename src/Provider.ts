@@ -18,6 +18,7 @@ import {
   Getter,
   Setter,
 } from './types'
+import { useIsoLayoutEffect } from './useIsoLayoutEffect'
 
 // mutate map with additonal map
 const appendMap = <K, V>(dst: Map<K, V>, src: Map<K, V>) => {
@@ -465,9 +466,12 @@ export const Provider: React.FC = ({ children }) => {
   }, [state])
 
   const lastStateRef = useRef<State | null>(null)
+  useIsoLayoutEffect(() => {
+    lastStateRef.current = state
+  })
+
   const writeThunkQueueRef = useRef<WriteThunk[]>([])
   useEffect(() => {
-    lastStateRef.current = state
     runWriteThunk(lastStateRef, setState, writeThunkQueueRef.current)
   }, [state])
 
