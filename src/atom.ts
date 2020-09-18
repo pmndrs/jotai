@@ -4,23 +4,10 @@ import {
   Atom,
   WritableAtom,
   PrimitiveAtom,
-  NonPromise,
-  NonFunction,
+  SetStateAction,
 } from './types'
 
 let keyCount = 0 // global key count for all atoms
-
-// writable derived atom
-export function atom<Value, Update>(
-  read: (get: Getter) => NonPromise<Value>,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value, Update>
-
-// write-only derived atom
-export function atom<Value, Update>(
-  read: NonFunction<NonPromise<Value>>,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value, Update>
 
 // async-read writable derived atom
 export function atom<Value, Update>(
@@ -28,20 +15,33 @@ export function atom<Value, Update>(
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
 ): WritableAtom<Value | Promise<Value>, Update>
 
-// read-only derived atom
-export function atom<Value>(
-  read: (get: Getter) => NonPromise<Value>
-): Atom<Value>
+// writable derived atom
+export function atom<Value, Update>(
+  read: (get: Getter) => Value,
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): WritableAtom<Value, Update>
+
+// write-only derived atom
+export function atom<Value, Update>(
+  read: Value,
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): WritableAtom<Value, Update>
 
 // async-read read-only derived atom
-export function atom<Value>(
+export function atom<Value, Update extends never = never>(
   read: (get: Getter) => Promise<Value>
 ): Atom<Value | Promise<Value>>
 
+// read-only derived atom
+export function atom<Value, Update extends never = never>(
+  read: (get: Getter) => Value
+): Atom<Value>
+
 // primitive atom
-export function atom<Value>(
-  initialValue: NonFunction<NonPromise<Value>>
-): PrimitiveAtom<Value>
+export function atom<
+  Value,
+  Update extends SetStateAction<Value> = SetStateAction<Value>
+>(initialValue: Value): PrimitiveAtom<Value>
 
 export function atom<Value, Update>(
   read: Value | ((get: Getter) => Value | Promise<Value>),
