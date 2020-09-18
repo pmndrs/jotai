@@ -44,7 +44,7 @@ export function atom<Value, Update extends never = never>(
 ): Atom<Value>
 
 // invalid read-only derived atom
-export function atom<Value, Update extends never = never>(read: Function): never
+export function atom<Value, Update>(read: Function): never
 
 // primitive atom
 export function atom<
