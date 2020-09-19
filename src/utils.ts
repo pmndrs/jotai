@@ -77,7 +77,7 @@ type AtomReturnType<Read, Write> = typeof atom extends (
 
 type AtomFamilyReturnType<Param, Read, Write> = {
   (param: Param): AtomReturnType<Read, Write>
-  remove(atom: any): void
+  remove(param: Param): void
 }
 
 type AtomFamily = {
@@ -112,8 +112,8 @@ export const atomFamily: AtomFamily = <Param, Read, Write>(
     atoms.unshift([param, newAtom])
     return newAtom
   }
-  createAtom.remove = (a: AtomType) => {
-    const index = atoms.findIndex((x) => x[1] === a)
+  createAtom.remove = (p: Param) => {
+    const index = atoms.findIndex((x) => x[0] === p)
     if (index >= 0) {
       atoms.splice(index, 1)
     }
