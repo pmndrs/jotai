@@ -119,14 +119,7 @@ const readAtom = <Value>(
   setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap
 ) => {
-  const readAtomValue = <V>(
-    prevState: State,
-    atom: Atom<V>,
-    dependent: AnyAtom | null
-  ) => {
-    if (dependent) {
-      addDependent(dependentsMap, atom, dependent)
-    }
+  const readAtomValue = <V>(prevState: State, atom: Atom<V>) => {
     const partialState: PartialState = new Map()
     const atomState = prevState.get(atom) as AtomState<V> | undefined
     if (atomState) {
@@ -139,11 +132,8 @@ const readAtom = <Value>(
     try {
       const promiseOrValue = atom.read(((a: AnyAtom) => {
         if (a !== atom) {
-          const [nextAtomState, nextPartialState] = readAtomValue(
-            prevState,
-            a,
-            atom
-          )
+          addDependent(dependentsMap, a, atom) // TODO add self dependent
+          const [nextAtomState, nextPartialState] = readAtomValue(prevState, a)
           if (isSync) {
             appendMap(partialState, nextPartialState)
           } else {
@@ -157,7 +147,7 @@ const readAtom = <Value>(
           }
           return nextAtomState.value
         }
-        // primitive atom
+        // a === atom
         const aState = prevState.get(a)
         if (aState) {
           if (aState.promise) {
@@ -202,7 +192,7 @@ const readAtom = <Value>(
     return [nextAtomState, partialState] as const
   }
 
-  return readAtomValue(state, readingAtom, null)
+  return readAtomValue(state, readingAtom)
 }
 
 const addAtom = <Value>(
