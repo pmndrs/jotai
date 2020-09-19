@@ -76,7 +76,8 @@ export function atomFamily<Param, Value, Update>(
   initializeRead: (param: Param) => (get: Getter) => Promise<Value>,
   initializeWrite: (
     param: Param
-  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>
+  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>,
+  areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, WritableAtom<Value | Promise<Value>, Update>>
 
 // writable derived atom
@@ -84,7 +85,8 @@ export function atomFamily<Param, Value, Update>(
   initializeRead: (param: Param) => (get: Getter) => Value,
   initializeWrite: (
     param: Param
-  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>
+  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>,
+  areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, WritableAtom<Value, Update>>
 
 // invalid writable derived atom
@@ -92,7 +94,8 @@ export function atomFamily<Param, Value, Update>(
   initializeRead: (param: Param) => Function,
   initializeWrite: (
     param: Param
-  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>
+  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>,
+  areEqual?: (a: Param, b: Param) => boolean
 ): never
 
 // write-only derived atom
@@ -100,27 +103,36 @@ export function atomFamily<Param, Value, Update>(
   initializeRead: (param: Param) => Value,
   initializeWrite: (
     param: Param
-  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>
+  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>,
+  areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, WritableAtom<Value, Update>>
 
 // async-read read-only derived atom
 export function atomFamily<Param, Value, Update extends never = never>(
-  initializeRead: (param: Param) => (get: Getter) => Promise<Value>
+  initializeRead: (param: Param) => (get: Getter) => Promise<Value>,
+  initializeWrite?: null,
+  areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, Atom<Value | Promise<Value>>>
 
 // read-only derived atom
 export function atomFamily<Param, Value, Update extends never = never>(
-  initializeRead: (param: Param) => (get: Getter) => Value
+  initializeRead: (param: Param) => (get: Getter) => Value,
+  initializeWrite?: null,
+  areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, Atom<Value>>
 
 // invalid read-only derived atom
 export function atomFamily<Param, Value, Update>(
-  initializeRead: (param: Param) => Function
+  initializeRead: (param: Param) => Function,
+  initializeWrite?: null,
+  areEqual?: (a: Param, b: Param) => boolean
 ): never
 
 // primitive atom
 export function atomFamily<Param, Value, Update extends never = never>(
-  initializeRead: (param: Param) => Value
+  initializeRead: (param: Param) => Value,
+  initializeWrite?: null,
+  areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, PrimitiveAtom<Value>>
 
 export function atomFamily<Param, Value, Update>(
