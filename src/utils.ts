@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
-import { atom, useAtom, WritableAtom, PrimitiveAtom } from 'jotai'
+import { atom, useAtom, Atom, WritableAtom, PrimitiveAtom } from 'jotai'
 
-import type { SetStateAction } from './types'
+import type { SetStateAction, Getter, Setter } from './types'
 
 export const useUpdateAtom = <Value, Update>(
   anAtom: WritableAtom<Value, Update>
@@ -66,38 +66,69 @@ export const atomWithReducer = <Value, Action>(
   return anAtom as WritableAtom<Value, Action>
 }
 
-type AtomReturnType<Read, Write> = [Write] extends [never]
-  ? typeof atom extends (read: Read) => infer R
-    ? R
-    : never
-  : typeof atom extends (read: Read, write: Write) => infer R
-  ? R
-  : never
-
-type AtomFamilyReturnType<Param, Read, Write> = {
-  (param: Param): AtomReturnType<Read, Write>
+type AtomFamily<Param, AtomType> = {
+  (param: Param): AtomType
   remove(param: Param): void
 }
 
-type AtomFamily = {
-  <Param, Read, Write>(
-    initializeRead: (param: Param) => Read,
-    initializeWrite: (param: Param) => Write,
-    areEqual?: (a: Param, b: Param) => boolean
-  ): AtomFamilyReturnType<Param, Read, Write>
-  <Param, Read>(
-    initializeRead: (param: Param) => Read,
-    initializeWrite?: null,
-    areEqual?: (a: Param, b: Param) => boolean
-  ): AtomFamilyReturnType<Param, Read, never>
-}
+// async-read writable derived atom
+export function atomFamily<Param, Value, Update>(
+  initializeRead: (param: Param) => (get: Getter) => Promise<Value>,
+  initializeWrite: (
+    param: Param
+  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): AtomFamily<Param, WritableAtom<Value | Promise<Value>, Update>>
 
-export const atomFamily: AtomFamily = <Param, Read, Write>(
-  initializeRead: (param: Param) => Read,
-  initializeWrite?: null | ((param: Param) => Write),
+// writable derived atom
+export function atomFamily<Param, Value, Update>(
+  initializeRead: (param: Param) => (get: Getter) => Value,
+  initializeWrite: (
+    param: Param
+  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): AtomFamily<Param, WritableAtom<Value, Update>>
+
+// invalid writable derived atom
+export function atomFamily<Param, Value, Update>(
+  initializeRead: (param: Param) => Function,
+  initializeWrite: (
+    param: Param
+  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): never
+
+// write-only derived atom
+export function atomFamily<Param, Value, Update>(
+  initializeRead: (param: Param) => Value,
+  initializeWrite: (
+    param: Param
+  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): AtomFamily<Param, WritableAtom<Value, Update>>
+
+// async-read read-only derived atom
+export function atomFamily<Param, Value, Update extends never = never>(
+  initializeRead: (param: Param) => (get: Getter) => Promise<Value>
+): AtomFamily<Param, Atom<Value | Promise<Value>>>
+
+// read-only derived atom
+export function atomFamily<Param, Value, Update extends never = never>(
+  initializeRead: (param: Param) => (get: Getter) => Value
+): AtomFamily<Param, Atom<Value>>
+
+// invalid read-only derived atom
+export function atomFamily<Param, Value, Update>(
+  initializeRead: (param: Param) => Function
+): never
+
+// primitive atom
+export function atomFamily<Param, Value, Update extends never = never>(
+  initializeRead: (param: Param) => Value
+): AtomFamily<Param, PrimitiveAtom<Value>>
+
+export function atomFamily<Param, Value, Update>(
+  initializeRead: (param: Param) => any,
+  initializeWrite?: null | ((param: Param) => any),
   areEqual: (a: Param, b: Param) => boolean = Object.is
-) => {
-  type AtomType = AtomReturnType<Read, Write>
+) {
+  type AtomType = WritableAtom<Value, Update>
   const atoms: [Param, AtomType][] = []
   const createAtom = (param: Param) => {
     const found = atoms.find((x) => areEqual(x[0], param))
@@ -106,7 +137,7 @@ export const atomFamily: AtomFamily = <Param, Read, Write>(
     }
     const newAtom = atom(
       initializeRead(param),
-      initializeWrite && (initializeWrite(param) as any)
+      initializeWrite && initializeWrite(param)
     ) as AtomType
     atoms.unshift([param, newAtom])
     return newAtom
