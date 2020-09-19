@@ -1,9 +1,6 @@
 export type NonPromise<T> = T extends Promise<unknown> ? never : T
-export type NonFunction<T> = T extends Function ? never : T
 
-export type SetStateAction<Value> =
-  | NonFunction<Value>
-  | ((prev: Value) => NonFunction<Value>)
+export type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
 export type Getter = <Value>(atom: Atom<Value>) => Value
 

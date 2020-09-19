@@ -1,26 +1,6 @@
-import {
-  Getter,
-  Setter,
-  Atom,
-  WritableAtom,
-  PrimitiveAtom,
-  NonPromise,
-  NonFunction,
-} from './types'
+import { Getter, Setter, Atom, WritableAtom, PrimitiveAtom } from './types'
 
 let keyCount = 0 // global key count for all atoms
-
-// writable derived atom
-export function atom<Value, Update>(
-  read: (get: Getter) => NonPromise<Value>,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value, Update>
-
-// write-only derived atom
-export function atom<Value, Update>(
-  read: NonFunction<NonPromise<Value>>,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value, Update>
 
 // async-read writable derived atom
 export function atom<Value, Update>(
@@ -28,19 +8,40 @@ export function atom<Value, Update>(
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
 ): WritableAtom<Value | Promise<Value>, Update>
 
-// read-only derived atom
-export function atom<Value>(
-  read: (get: Getter) => NonPromise<Value>
-): Atom<Value>
+// writable derived atom
+export function atom<Value, Update>(
+  read: (get: Getter) => Value,
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): WritableAtom<Value, Update>
+
+// invalid writable derived atom
+export function atom<Value, Update>(
+  read: Function,
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): never
+
+// write-only derived atom
+export function atom<Value, Update>(
+  read: Value,
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): WritableAtom<Value, Update>
 
 // async-read read-only derived atom
-export function atom<Value>(
+export function atom<Value, Update extends never = never>(
   read: (get: Getter) => Promise<Value>
 ): Atom<Value | Promise<Value>>
 
+// read-only derived atom
+export function atom<Value, Update extends never = never>(
+  read: (get: Getter) => Value
+): Atom<Value>
+
+// invalid read-only derived atom
+export function atom<Value, Update>(read: Function): never
+
 // primitive atom
-export function atom<Value>(
-  initialValue: NonFunction<NonPromise<Value>>
+export function atom<Value, Update extends never = never>(
+  initialValue: Value
 ): PrimitiveAtom<Value>
 
 export function atom<Value, Update>(
