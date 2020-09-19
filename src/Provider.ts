@@ -317,8 +317,18 @@ const writeAtom = <Value, Update>(
     let isSync = true
     try {
       const promise = atom.write(
-        ((a: AnyAtom) =>
-          getAtomStateValue(concatMap(prevState, partialState), a)) as Getter,
+        ((a: AnyAtom) => {
+          if (process.env.NODE_ENV !== 'production') {
+            const s = partialState.get(a) || prevState.get(a)
+            if (s && s.promise) {
+              console.warn(
+                'Reading pending atom state in write operation. Not sure how to deal with it. Returning obsolete vaule for',
+                a
+              )
+            }
+          }
+          return getAtomStateValue(concatMap(prevState, partialState), a)
+        }) as Getter,
         ((a: AnyWritableAtom, v: unknown) => {
           if (a === atom) {
             const nextAtomState: AtomState = { value: v }
@@ -385,22 +395,8 @@ const writeAtom = <Value, Update>(
   }
 
   addWriteThunk((prevState) => {
-    const updatingAtomState = prevState.get(updatingAtom)
-    if (updatingAtomState && updatingAtomState.promise) {
-      // TODO this is not correct
-      // schedule update after promise is resolved
-      const promise = updatingAtomState.promise.then(() => {
-        const updateState = updateAtomState(prevState, updatingAtom, update)
-        addWriteThunk((prev) => concatMap(prev, updateState))
-      })
-      return new Map(prevState).set(updatingAtom, {
-        ...updatingAtomState,
-        promise,
-      })
-    } else {
-      const updateState = updateAtomState(prevState, updatingAtom, update)
-      return concatMap(prevState, updateState)
-    }
+    const nextPartialState = updateAtomState(prevState, updatingAtom, update)
+    return concatMap(prevState, nextPartialState)
   })
 }
 
