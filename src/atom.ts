@@ -27,18 +27,22 @@ export function atom<Value, Update>(
 ): WritableAtom<Value, Update>
 
 // async-read read-only derived atom
-export function atom<Value>(
+export function atom<Value, Update extends never = never>(
   read: (get: Getter) => Promise<Value>
 ): Atom<Value | Promise<Value>>
 
 // read-only derived atom
-export function atom<Value>(read: (get: Getter) => Value): Atom<Value>
+export function atom<Value, Update extends never = never>(
+  read: (get: Getter) => Value
+): Atom<Value>
 
 // invalid read-only derived atom
-export function atom<Value>(read: Function): never
+export function atom<Value, Update>(read: Function): never
 
 // primitive atom
-export function atom<Value>(initialValue: Value): PrimitiveAtom<Value>
+export function atom<Value, Update extends never = never>(
+  initialValue: Value
+): PrimitiveAtom<Value>
 
 export function atom<Value, Update>(
   read: Value | ((get: Getter) => Value | Promise<Value>),
