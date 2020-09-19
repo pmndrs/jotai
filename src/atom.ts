@@ -1,11 +1,4 @@
-import {
-  Getter,
-  Setter,
-  Atom,
-  WritableAtom,
-  PrimitiveAtom,
-  SetStateAction,
-} from './types'
+import { Getter, Setter, Atom, WritableAtom, PrimitiveAtom } from './types'
 
 let keyCount = 0 // global key count for all atoms
 
@@ -47,10 +40,9 @@ export function atom<Value, Update extends never = never>(
 export function atom<Value, Update>(read: Function): never
 
 // primitive atom
-export function atom<
-  Value,
-  Update extends SetStateAction<Value> = SetStateAction<Value>
->(initialValue: Value): PrimitiveAtom<Value>
+export function atom<Value, Update extends never = never>(
+  initialValue: Value
+): PrimitiveAtom<Value>
 
 export function atom<Value, Update>(
   read: Value | ((get: Getter) => Value | Promise<Value>),
