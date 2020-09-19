@@ -267,7 +267,7 @@ const writeAtom = <Value, Update>(
       if (typeof dependent === 'symbol') return
       const v = dependent.read(((a: AnyAtom) => {
         if (a !== dependent) {
-          addDependent(dependentsMap, a, dependent)
+          addDependent(dependentsMap, a, dependent) // TODO add self dependent
         }
         return getAtomStateValue(prevState, a)
       }) as Getter)
@@ -349,6 +349,7 @@ const writeAtom = <Value, Update>(
         update
       )
       if (promise instanceof Promise) {
+        // TODO this is not correct either
         const nextAtomState: AtomState = {
           value: getAtomStateValue(concatMap(prevState, partialState), atom),
           promise: promise
@@ -385,6 +386,7 @@ const writeAtom = <Value, Update>(
   addWriteThunk((prevState) => {
     const updatingAtomState = prevState.get(updatingAtom)
     if (updatingAtomState && updatingAtomState.promise) {
+      // TODO this is not correct
       // schedule update after promise is resolved
       const promise = updatingAtomState.promise.then(() => {
         const updateState = updateAtomState(prevState, updatingAtom, update)
