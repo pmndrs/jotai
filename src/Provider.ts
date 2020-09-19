@@ -258,6 +258,7 @@ const gcAtom = (
 const writeAtom = <Value, Update>(
   updatingAtom: WritableAtom<Value, Update>,
   update: Update,
+  setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap,
   addWriteThunk: (thunk: WriteThunk) => void
 ) => {
@@ -275,7 +276,7 @@ const writeAtom = <Value, Update>(
         const promise = v
           .then((vv) => {
             const nextAtomState: AtomState = { value: vv }
-            addWriteThunk((prev) => {
+            setState((prev) => {
               const nextState = new Map(prev).set(dependent, nextAtomState)
               const nextPartialState = updateDependentsState(
                 nextState,
@@ -285,7 +286,7 @@ const writeAtom = <Value, Update>(
             })
           })
           .catch((e) => {
-            addWriteThunk((prev) =>
+            setState((prev) =>
               new Map(prev).set(dependent, {
                 value: getAtomStateValue(prev, dependent),
                 error: e instanceof Error ? e : new Error(e),
@@ -328,7 +329,7 @@ const writeAtom = <Value, Update>(
                 updateDependentsState(concatMap(prevState, partialState), a)
               )
             } else {
-              addWriteThunk((prev) => {
+              setState((prev) => {
                 const nextState = new Map(prev).set(a, nextAtomState)
                 const nextPartialState = updateDependentsState(nextState, a)
                 return appendMap(nextState, nextPartialState)
@@ -494,6 +495,7 @@ export const Provider: React.FC = ({ children }) => {
         writeAtom(
           atom,
           update,
+          setState,
           dependentsMapRef.current as DependentsMap,
           (thunk: WriteThunk) => {
             writeThunkQueueRef.current.push(thunk)
