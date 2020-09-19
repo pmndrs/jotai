@@ -66,12 +66,11 @@ export const atomWithReducer = <Value, Action>(
   return anAtom as WritableAtom<Value, Action>
 }
 
-type AtomReturnType<Read, Write> = typeof atom extends (
-  read: Read,
-  write: Write
-) => infer R
-  ? R
-  : typeof atom extends (read: Read) => infer R
+type AtomReturnType<Read, Write> = [Write] extends [never]
+  ? typeof atom extends (read: Read) => infer R
+    ? R
+    : never
+  : typeof atom extends (read: Read, write: Write) => infer R
   ? R
   : never
 
@@ -82,20 +81,20 @@ type AtomFamilyReturnType<Param, Read, Write> = {
 
 type AtomFamily = {
   <Param, Read, Write>(
-    initializeRead: (param?: Param) => Read,
-    initializeWrite: (param?: Param) => Write,
+    initializeRead: (param: Param) => Read,
+    initializeWrite: (param: Param) => Write,
     areEqual?: (a: Param, b: Param) => boolean
   ): AtomFamilyReturnType<Param, Read, Write>
   <Param, Read>(
-    initializeRead: (param?: Param) => Read,
+    initializeRead: (param: Param) => Read,
     initializeWrite?: null,
     areEqual?: (a: Param, b: Param) => boolean
   ): AtomFamilyReturnType<Param, Read, never>
 }
 
 export const atomFamily: AtomFamily = <Param, Read, Write>(
-  initializeRead: (param?: Param) => Read,
-  initializeWrite?: null | ((param?: Param) => Write),
+  initializeRead: (param: Param) => Read,
+  initializeWrite?: null | ((param: Param) => Write),
   areEqual: (a: Param, b: Param) => boolean = Object.is
 ) => {
   type AtomType = AtomReturnType<Read, Write>
@@ -105,10 +104,10 @@ export const atomFamily: AtomFamily = <Param, Read, Write>(
     if (found) {
       return found[1]
     }
-    const newAtom: AtomType = atom(
+    const newAtom = atom(
       initializeRead(param),
       initializeWrite && (initializeWrite(param) as any)
-    )
+    ) as AtomType
     atoms.unshift([param, newAtom])
     return newAtom
   }
