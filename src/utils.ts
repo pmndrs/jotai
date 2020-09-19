@@ -53,7 +53,12 @@ export const useReducerAtom = <Value, Action>(
     },
     [setState, reducer]
   )
-  return [state, dispatch] as const
+  type Dispatch = [Action] extends [never]
+    ? () => void
+    : undefined extends Action
+    ? (a?: Action) => void
+    : (a: Action) => void
+  return [state, dispatch as Dispatch] as const
 }
 
 export const atomWithReducer = <Value, Action>(

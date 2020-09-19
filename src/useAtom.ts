@@ -17,7 +17,9 @@ const isWritable = <Value, Update>(
 
 type SetAtom<Update> = [Update] extends [never]
   ? () => void
-  : (update: Update) => void
+  : undefined extends Update
+  ? (a?: Update) => void
+  : (a: Update) => void
 
 export function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>
