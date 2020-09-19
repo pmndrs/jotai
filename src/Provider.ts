@@ -29,16 +29,8 @@ const appendMap = <K, V>(dst: Map<K, V>, src: Map<K, V>) => {
 }
 
 // create new map from two maps
-const concatMap = <K, V>(src1: Map<K, V>, src2: Map<K, V>) => {
-  const dst = new Map<K, V>()
-  src1.forEach((v, k) => {
-    dst.set(k, v)
-  })
-  src2.forEach((v, k) => {
-    dst.set(k, v)
-  })
-  return dst
-}
+const concatMap = <K, V>(src1: Map<K, V>, src2: Map<K, V>) =>
+  appendMap(new Map<K, V>(src1), src2)
 
 const warningObject = new Proxy(
   {},
@@ -155,7 +147,7 @@ const readAtom = <Value>(
           if (isSync) {
             appendMap(partialState, nextPartialState)
           } else {
-            setState((prev) => appendMap(new Map(prev), nextPartialState))
+            setState((prev) => concatMap(prev, nextPartialState))
           }
           if (nextAtomState.error) {
             throw nextAtomState.error
@@ -222,7 +214,7 @@ const addAtom = <Value>(
 ) => {
   addDependent(dependentsMap, atom, id)
   if (partialState) {
-    setState((prev) => appendMap(new Map(prev), partialState))
+    setState((prev) => concatMap(prev, partialState))
   }
 }
 
@@ -359,7 +351,7 @@ const writeAtom = <Value, Update>(
             } else {
               addWriteThunk((prev) => {
                 const nextPartialState = updateAtomState(prev, a, v)
-                return appendMap(new Map(prev), nextPartialState)
+                return concatMap(prev, nextPartialState)
               })
             }
           }
@@ -406,7 +398,7 @@ const writeAtom = <Value, Update>(
       // schedule update after promise is resolved
       const promise = updatingAtomState.promise.then(() => {
         const updateState = updateAtomState(prevState, updatingAtom, update)
-        addWriteThunk((prev) => appendMap(new Map(prev), updateState))
+        addWriteThunk((prev) => concatMap(prev, updateState))
       })
       return new Map(prevState).set(updatingAtom, {
         ...updatingAtomState,
@@ -414,7 +406,7 @@ const writeAtom = <Value, Update>(
       })
     } else {
       const updateState = updateAtomState(prevState, updatingAtom, update)
-      return appendMap(new Map(prevState), updateState)
+      return concatMap(prevState, updateState)
     }
   })
 }
