@@ -1,12 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { atom, WritableAtom, useAtom } from 'jotai'
 
-import type {
-  NonPromise,
-  NonFunction,
-  SetStateAction,
-  PrimitiveAtom,
-} from './types'
+import type { SetStateAction, PrimitiveAtom } from './types'
 
 export const useUpdateAtom = <Value, Update>(
   anAtom: WritableAtom<Value, Update>
@@ -20,9 +15,7 @@ export const useUpdateAtom = <Value, Update>(
 
 const RESET = Symbol()
 
-export const atomWithReset = <Value>(
-  initialValue: NonFunction<NonPromise<Value>>
-) => {
+export const atomWithReset = <Value>(initialValue: Value) => {
   type Update = SetStateAction<Value> | typeof RESET
   const anAtom: any = atom<Value, Update>(initialValue, (get, set, update) => {
     if (update === RESET) {
@@ -51,7 +44,7 @@ export const useResetAtom = <Value>(
 
 export const useReducerAtom = <Value, Action>(
   anAtom: PrimitiveAtom<Value>,
-  reducer: (v: Value, a: Action) => NonFunction<Value>
+  reducer: (v: Value, a: Action) => Value
 ) => {
   const [state, setState] = useAtom(anAtom)
   const dispatch = useCallback(
@@ -64,7 +57,7 @@ export const useReducerAtom = <Value, Action>(
 }
 
 export const atomWithReducer = <Value, Action>(
-  initialValue: NonFunction<NonPromise<Value>>,
+  initialValue: Value,
   reducer: (v: Value, a: Action) => Value
 ) => {
   const anAtom: any = atom<Value, Action>(initialValue, (get, set, action) =>
