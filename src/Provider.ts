@@ -65,9 +65,7 @@ const deleteDependent = (
   dependent: AnyAtom | symbol
 ) => {
   dependentsMap.forEach((dependents) => {
-    if (dependents.has(dependent)) {
-      dependents.delete(dependent)
-    }
+    dependents.delete(dependent)
   })
 }
 
@@ -87,11 +85,9 @@ const listDependents = (
   atom: AnyAtom,
   excludeSelf: boolean
 ) => {
-  const dependents = dependentsMap.get(atom) || new Set<AnyAtom | symbol>()
-  if (excludeSelf && dependents.has(atom)) {
-    const copied = new Set(dependents)
-    copied.delete(atom)
-    return copied
+  const dependents = new Set(dependentsMap.get(atom))
+  if (excludeSelf) {
+    dependents.delete(atom)
   }
   return dependents
 }
@@ -146,10 +142,15 @@ const readAtom = <Value>(
     let error: Error | undefined = undefined
     let promise: Promise<void> | undefined = undefined
     let value: V | null = null
+    let dependencies: Set<AnyAtom> | null = new Set()
     let isSync = true
     try {
       const promiseOrValue = atom.read(((a: AnyAtom) => {
-        addDependent(dependentsMap, a, atom)
+        if (dependencies) {
+          dependencies.add(a)
+        } else {
+          addDependent(dependentsMap, a, atom)
+        }
         if (a !== atom) {
           const [nextAtomState, nextPartialState] = readAtomValue(prevState, a)
           if (isSync) {
@@ -178,6 +179,8 @@ const readAtom = <Value>(
       if (promiseOrValue instanceof Promise) {
         promise = promiseOrValue
           .then((value) => {
+            setDependencies(dependentsMap, atom, dependencies as Set<AnyAtom>)
+            dependencies = null
             setState((prev) => new Map(prev).set(atom, { value }))
           })
           .catch((e) => {
@@ -189,6 +192,8 @@ const readAtom = <Value>(
             )
           })
       } else {
+        setDependencies(dependentsMap, atom, dependencies)
+        dependencies = null
         value = promiseOrValue
       }
     } catch (errorOrPromise) {
@@ -276,13 +281,24 @@ const writeAtom = <Value, Update>(
     const partialState: PartialState = new Map()
     listDependents(dependentsMap, atom, true).forEach((dependent) => {
       if (typeof dependent === 'symbol') return
+      let dependencies: Set<AnyAtom> | null = new Set()
       const v = dependent.read(((a: AnyAtom) => {
-        addDependent(dependentsMap, a, dependent)
+        if (dependencies) {
+          dependencies.add(a)
+        } else {
+          addDependent(dependentsMap, a, dependent)
+        }
         return getAtomStateValue(prevState, a)
       }) as Getter)
       if (v instanceof Promise) {
         const promise = v
           .then((vv) => {
+            setDependencies(
+              dependentsMap,
+              dependent,
+              dependencies as Set<AnyAtom>
+            )
+            dependencies = null
             const nextAtomState: AtomState = { value: vv }
             setState((prev) => {
               const nextState = new Map(prev).set(dependent, nextAtomState)
@@ -306,6 +322,8 @@ const writeAtom = <Value, Update>(
           promise,
         })
       } else {
+        setDependencies(dependentsMap, dependent, dependencies)
+        dependencies = null
         partialState.set(dependent, { value: v })
         appendMap(
           partialState,
