@@ -315,9 +315,7 @@ it('can throw an error in write function', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <Suspense fallback={null}>
-        <Counter />
-      </Suspense>
+      <Counter />
     </Provider>
   )
 
@@ -368,5 +366,52 @@ it('can throw an error in async write function', async () => {
 
   fireEvent.click(getByText('button'))
   await new Promise((r) => setTimeout(r, 10))
+  expect(console.error).toHaveBeenCalledTimes(1)
+})
+
+it('can throw a chained error in write function', async () => {
+  console.error = jest.fn()
+
+  const countAtom = atom(0)
+  const errorAtom = atom(
+    (get) => get(countAtom),
+    () => {
+      throw new Error()
+    }
+  )
+  const chainedAtom = atom(
+    (get) => get(errorAtom),
+    (_get, set, _arg: never) => {
+      set(errorAtom, null)
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count, dispatch] = useAtom(chainedAtom)
+    const onClick = () => {
+      try {
+        dispatch()
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    return (
+      <>
+        <div>count: {count}</div>
+        <div>no error</div>
+        <button onClick={onClick}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('no error')
+
+  fireEvent.click(getByText('button'))
   expect(console.error).toHaveBeenCalledTimes(1)
 })
