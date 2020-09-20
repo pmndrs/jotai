@@ -71,9 +71,29 @@ const deleteDependent = (
   })
 }
 
-const listDependents = (dependentsMap: DependentsMap, atom: AnyAtom) => {
-  const dependents = dependentsMap.get(atom)
-  return dependents || new Set<AnyAtom | symbol>()
+const setDependencies = (
+  dependentsMap: DependentsMap,
+  atom: AnyAtom,
+  dependencies: Set<AnyAtom>
+) => {
+  deleteDependent(dependentsMap, atom)
+  dependencies.forEach((dependency) => {
+    addDependent(dependentsMap, dependency, atom)
+  })
+}
+
+const listDependents = (
+  dependentsMap: DependentsMap,
+  atom: AnyAtom,
+  excludeSelf: boolean
+) => {
+  const dependents = dependentsMap.get(atom) || new Set<AnyAtom | symbol>()
+  if (excludeSelf && dependents.has(atom)) {
+    const copied = new Set(dependents)
+    copied.delete(atom)
+    return copied
+  }
+  return dependents
 }
 
 export type AtomState<Value = unknown> = {
@@ -129,8 +149,8 @@ const readAtom = <Value>(
     let isSync = true
     try {
       const promiseOrValue = atom.read(((a: AnyAtom) => {
+        addDependent(dependentsMap, a, atom)
         if (a !== atom) {
-          addDependent(dependentsMap, a, atom) // TODO add self dependent
           const [nextAtomState, nextPartialState] = readAtomValue(prevState, a)
           if (isSync) {
             appendMap(partialState, nextPartialState)
@@ -254,12 +274,10 @@ const writeAtom = <Value, Update>(
 ) => {
   const updateDependentsState = (prevState: State, atom: AnyAtom) => {
     const partialState: PartialState = new Map()
-    listDependents(dependentsMap, atom).forEach((dependent) => {
+    listDependents(dependentsMap, atom, true).forEach((dependent) => {
       if (typeof dependent === 'symbol') return
       const v = dependent.read(((a: AnyAtom) => {
-        if (a !== dependent) {
-          addDependent(dependentsMap, a, dependent) // TODO add self dependent
-        }
+        addDependent(dependentsMap, a, dependent)
         return getAtomStateValue(prevState, a)
       }) as Getter)
       if (v instanceof Promise) {
