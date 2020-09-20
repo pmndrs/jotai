@@ -319,9 +319,9 @@ const writeAtom = <Value, Update>(
       const promise = atom.write(
         ((a: AnyAtom) => {
           if (process.env.NODE_ENV !== 'production') {
-            const s = partialState.get(a) || prevState.get(a)
+            const s = prevState.get(a)
             if (s && s.promise) {
-              console.warn(
+              console.log(
                 'Reading pending atom state in write operation. Not sure how to deal with it. Returning obsolete vaule for',
                 a
               )
