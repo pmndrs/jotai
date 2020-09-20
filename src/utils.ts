@@ -3,6 +3,8 @@ import { atom, useAtom, Atom, WritableAtom, PrimitiveAtom } from 'jotai'
 
 import type { SetStateAction, Getter, Setter } from './types'
 
+// -----------------------------------------------------------------------
+
 export const useUpdateAtom = <Value, Update>(
   anAtom: WritableAtom<Value, Update>
 ) => {
@@ -12,6 +14,8 @@ export const useUpdateAtom = <Value, Update>(
   )
   return useAtom(writeOnlyAtom)[1]
 }
+
+// -----------------------------------------------------------------------
 
 const RESET = Symbol()
 
@@ -42,6 +46,8 @@ export const useResetAtom = <Value>(
   return useAtom(writeOnlyAtom)[1]
 }
 
+// -----------------------------------------------------------------------
+
 export const useReducerAtom = <Value, Action>(
   anAtom: PrimitiveAtom<Value>,
   reducer: (v: Value, a: Action) => Value
@@ -56,6 +62,8 @@ export const useReducerAtom = <Value, Action>(
   return [state, dispatch] as const
 }
 
+// -----------------------------------------------------------------------
+
 export const atomWithReducer = <Value, Action>(
   initialValue: Value,
   reducer: (v: Value, a: Action) => Value
@@ -65,6 +73,8 @@ export const atomWithReducer = <Value, Action>(
   )
   return anAtom as WritableAtom<Value, Action>
 }
+
+// -----------------------------------------------------------------------
 
 type AtomFamily<Param, AtomType> = {
   (param: Param): AtomType
@@ -162,3 +172,5 @@ export function atomFamily<Param, Value, Update>(
   }
   return createAtom
 }
+
+// -----------------------------------------------------------------------
