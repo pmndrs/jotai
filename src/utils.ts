@@ -62,8 +62,8 @@ export const useReducerAtom = <Value, Action>(
   type Dispatch = [Action] extends [never]
     ? () => void
     : undefined extends Action
-    ? (a?: Action) => void
-    : (a: Action) => void
+    ? (action?: Action) => void
+    : (action: Action) => void
   return [state, dispatch as Dispatch] as const
 }
 
