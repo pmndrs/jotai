@@ -7,7 +7,7 @@ import {
   AtomState,
   PartialState,
 } from './Provider'
-import { Atom, WritableAtom, AnyWritableAtom, NonPromise } from './types'
+import { Atom, WritableAtom, AnyWritableAtom } from './types'
 import { useIsoLayoutEffect } from './useIsoLayoutEffect'
 
 const isWritable = <Value, Update>(
@@ -16,16 +16,16 @@ const isWritable = <Value, Update>(
   !!(atom as WritableAtom<Value, Update>).write
 
 type SetAtom<Update> = [Update] extends [never]
-  ? () => void
+  ? () => void | Promise<void>
   : undefined extends Update
-  ? (a?: Update) => void
-  : (a: Update) => void
+  ? (a?: Update) => void | Promise<void>
+  : (a: Update) => void | Promise<void>
 
 export function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>
-): [NonPromise<Value>, SetAtom<Update>]
+): [Value, SetAtom<Update>]
 
-export function useAtom<Value>(atom: Atom<Value>): [NonPromise<Value>, never]
+export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 
 export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
@@ -88,7 +88,7 @@ export function useAtom<Value, Update>(
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        actions.write(atom as AnyWritableAtom, update)
+        return actions.write(atom as AnyWritableAtom, update)
       } else {
         throw new Error('not writable atom')
       }

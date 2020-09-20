@@ -290,49 +290,39 @@ it('can throw an error in write function', async () => {
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
-    () => {
+    (_get, _set, _arg: never) => {
       throw new Error()
     }
   )
 
-  class ErrorBoundary extends React.Component<{}, { hasError: boolean }> {
-    constructor(props: {}) {
-      super(props)
-      this.state = { hasError: false }
-    }
-    static getDerivedStateFromError() {
-      return { hasError: true }
-    }
-    render() {
-      return this.state.hasError ? <div>errored</div> : this.props.children
-    }
-  }
-
   const Counter: React.FC = () => {
     const [count, dispatch] = useAtom(errorAtom)
+    const onClick = () => {
+      try {
+        dispatch()
+      } catch (e) {
+        console.error(e)
+      }
+    }
     return (
       <>
         <div>count: {count}</div>
         <div>no error</div>
-        <button onClick={dispatch}>button</button>
+        <button onClick={onClick}>button</button>
       </>
     )
   }
 
   const { getByText, findByText } = render(
     <Provider>
-      <ErrorBoundary>
-        <Suspense fallback={null}>
-          <Counter />
-        </Suspense>
-      </ErrorBoundary>
+      <Counter />
     </Provider>
   )
 
   await findByText('no error')
 
   fireEvent.click(getByText('button'))
-  await findByText('errored')
+  expect(console.error).toHaveBeenCalledTimes(1)
 })
 
 it('can throw an error in async write function', async () => {
@@ -341,47 +331,87 @@ it('can throw an error in async write function', async () => {
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
-    async () => {
+    async (_get, _set, _arg: never) => {
       throw new Error()
     }
   )
 
-  class ErrorBoundary extends React.Component<{}, { hasError: boolean }> {
-    constructor(props: {}) {
-      super(props)
-      this.state = { hasError: false }
-    }
-    static getDerivedStateFromError() {
-      return { hasError: true }
-    }
-    render() {
-      return this.state.hasError ? <div>errored</div> : this.props.children
-    }
-  }
-
   const Counter: React.FC = () => {
     const [count, dispatch] = useAtom(errorAtom)
+    const onClick = async () => {
+      try {
+        await dispatch()
+      } catch (e) {
+        console.error(e)
+      }
+    }
     return (
       <>
         <div>count: {count}</div>
         <div>no error</div>
-        <button onClick={dispatch}>button</button>
+        <button onClick={onClick}>button</button>
       </>
     )
   }
 
   const { getByText, findByText } = render(
     <Provider>
-      <ErrorBoundary>
-        <Suspense fallback={null}>
-          <Counter />
-        </Suspense>
-      </ErrorBoundary>
+      <Suspense fallback={null}>
+        <Counter />
+      </Suspense>
     </Provider>
   )
 
   await findByText('no error')
 
   fireEvent.click(getByText('button'))
-  await findByText('errored')
+  await new Promise((r) => setTimeout(r, 10))
+  expect(console.error).toHaveBeenCalledTimes(1)
+})
+
+it('can throw a chained error in write function', async () => {
+  console.error = jest.fn()
+
+  const countAtom = atom(0)
+  const errorAtom = atom(
+    (get) => get(countAtom),
+    () => {
+      throw new Error()
+    }
+  )
+  const chainedAtom = atom(
+    (get) => get(errorAtom),
+    (_get, set, _arg: never) => {
+      set(errorAtom, null)
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count, dispatch] = useAtom(chainedAtom)
+    const onClick = () => {
+      try {
+        dispatch()
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    return (
+      <>
+        <div>count: {count}</div>
+        <div>no error</div>
+        <button onClick={onClick}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('no error')
+
+  fireEvent.click(getByText('button'))
+  expect(console.error).toHaveBeenCalledTimes(1)
 })
