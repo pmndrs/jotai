@@ -44,7 +44,7 @@ const warningObject = new Proxy(
   }
 )
 
-// dependents for get operation
+// dependents for read operation
 type DependentsMap = Map<AnyAtom, Set<AnyAtom | symbol>> // symbol is id from useAtom
 
 const addDependent = (
@@ -117,13 +117,17 @@ export type Actions = {
   write: <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
-  ) => void
+  ) => void | Promise<void>
 }
 
 const initialState: State = new Map()
 
-const getAtomStateValue = (state: State, atom: AnyAtom) => {
-  const atomState = state.get(atom)
+const getAtomStateValue = (
+  atom: AnyAtom,
+  state: State,
+  tmpState?: PartialState
+) => {
+  const atomState = (tmpState && tmpState.get(atom)) || state.get(atom)
   return atomState ? atomState.value : atom.init
 }
 
@@ -186,7 +190,7 @@ const readAtom = <Value>(
           .catch((e) => {
             setState((prev) =>
               new Map(prev).set(atom, {
-                value: getAtomStateValue(prev, atom),
+                value: getAtomStateValue(atom, prev),
                 error: e instanceof Error ? e : new Error(e),
               })
             )
@@ -277,54 +281,74 @@ const writeAtom = <Value, Update>(
   dependentsMap: DependentsMap,
   addWriteThunk: (thunk: WriteThunk) => void
 ) => {
+  const pendingPromises: Promise<void>[] = []
+
   const updateDependentsState = (prevState: State, atom: AnyAtom) => {
     const partialState: PartialState = new Map()
     listDependents(dependentsMap, atom, true).forEach((dependent) => {
       if (typeof dependent === 'symbol') return
       let dependencies: Set<AnyAtom> | null = new Set()
-      const v = dependent.read(((a: AnyAtom) => {
-        if (dependencies) {
-          dependencies.add(a)
-        } else {
-          addDependent(dependentsMap, a, dependent)
-        }
-        return getAtomStateValue(prevState, a)
-      }) as Getter)
-      if (v instanceof Promise) {
-        const promise = v
-          .then((vv) => {
-            setDependencies(
-              dependentsMap,
-              dependent,
-              dependencies as Set<AnyAtom>
-            )
-            dependencies = null
-            const nextAtomState: AtomState = { value: vv }
-            setState((prev) => {
-              const nextState = new Map(prev).set(dependent, nextAtomState)
-              const nextPartialState = updateDependentsState(
-                nextState,
-                dependent
+      try {
+        const v = dependent.read(((a: AnyAtom) => {
+          if (dependencies) {
+            dependencies.add(a)
+          } else {
+            addDependent(dependentsMap, a, dependent)
+          }
+          const s = prevState.get(a)
+          if (!s) {
+            throw new Error('atom state not found. possibly a bug.')
+          }
+          if (s.error) {
+            throw s.error
+          }
+          return s.value
+        }) as Getter)
+        if (v instanceof Promise) {
+          const promise = v
+            .then((vv) => {
+              setDependencies(
+                dependentsMap,
+                dependent,
+                dependencies as Set<AnyAtom>
               )
-              return appendMap(nextState, nextPartialState)
-            })
-          })
-          .catch((e) => {
-            setState((prev) =>
-              new Map(prev).set(dependent, {
-                value: getAtomStateValue(prev, dependent),
-                error: e instanceof Error ? e : new Error(e),
+              dependencies = null
+              const nextAtomState: AtomState = { value: vv }
+              setState((prev) => {
+                const nextState = new Map(prev).set(dependent, nextAtomState)
+                const nextPartialState = updateDependentsState(
+                  nextState,
+                  dependent
+                )
+                return appendMap(nextState, nextPartialState)
               })
-            )
+            })
+            .catch((e) => {
+              setState((prev) =>
+                new Map(prev).set(dependent, {
+                  value: getAtomStateValue(dependent, prev),
+                  error: e instanceof Error ? e : new Error(e),
+                })
+              )
+            })
+          partialState.set(dependent, {
+            value: getAtomStateValue(dependent, prevState),
+            promise,
           })
+        } else {
+          setDependencies(dependentsMap, dependent, dependencies)
+          dependencies = null
+          partialState.set(dependent, { value: v })
+          appendMap(
+            partialState,
+            updateDependentsState(concatMap(prevState, partialState), dependent)
+          )
+        }
+      } catch (e) {
         partialState.set(dependent, {
-          value: getAtomStateValue(prevState, dependent),
-          promise,
+          value: getAtomStateValue(dependent, prevState),
+          error: e instanceof Error ? e : new Error(e),
         })
-      } else {
-        setDependencies(dependentsMap, dependent, dependencies)
-        dependencies = null
-        partialState.set(dependent, { value: v })
         appendMap(
           partialState,
           updateDependentsState(concatMap(prevState, partialState), dependent)
@@ -353,7 +377,7 @@ const writeAtom = <Value, Update>(
               )
             }
           }
-          return getAtomStateValue(concatMap(prevState, partialState), a)
+          return getAtomStateValue(a, prevState, partialState)
         }) as Getter,
         ((a: AnyWritableAtom, v: unknown) => {
           if (a === atom) {
@@ -386,35 +410,30 @@ const writeAtom = <Value, Update>(
         update
       )
       if (promise instanceof Promise) {
-        // TODO this is not correct either
+        pendingPromises.push(promise)
+        // XXX this is write pending (can be confused with read pending)
         const nextAtomState: AtomState = {
-          value: getAtomStateValue(concatMap(prevState, partialState), atom),
-          promise: promise
-            .then(() => {
-              addWriteThunk((prev) =>
-                new Map(prev).set(atom, {
-                  value: getAtomStateValue(prev, atom),
-                  promise: undefined,
-                })
-              )
-            })
-            .catch((e) => {
-              addWriteThunk((prev) =>
-                new Map(prev).set(atom, {
-                  value: getAtomStateValue(prev, atom),
-                  error: e instanceof Error ? e : new Error(e),
-                })
-              )
-            }),
+          value: getAtomStateValue(atom, prevState, partialState),
+          promise: promise.then(() => {
+            addWriteThunk((prev) =>
+              new Map(prev).set(atom, {
+                value: getAtomStateValue(atom, prev),
+              })
+            )
+          }),
         }
         partialState.set(atom, nextAtomState)
       }
     } catch (e) {
-      const nextAtomState: AtomState = {
-        value: getAtomStateValue(concatMap(prevState, partialState), atom),
-        error: e instanceof Error ? e : new Error(e),
+      if (pendingPromises.length) {
+        pendingPromises.push(
+          new Promise((_resolve, reject) => {
+            reject(e)
+          })
+        )
+      } else {
+        throw e
       }
-      partialState.set(atom, nextAtomState)
     }
     isSync = false
     return partialState
@@ -424,6 +443,25 @@ const writeAtom = <Value, Update>(
     const nextPartialState = updateAtomState(prevState, updatingAtom, update)
     return concatMap(prevState, nextPartialState)
   })
+
+  if (pendingPromises.length) {
+    return new Promise<void>((resolve, reject) => {
+      const loop = () => {
+        const len = pendingPromises.length
+        if (len === 0) {
+          resolve()
+        } else {
+          Promise.all(pendingPromises)
+            .then(() => {
+              pendingPromises.splice(0, len)
+              loop()
+            })
+            .catch(reject)
+        }
+      }
+      loop()
+    })
+  }
 }
 
 const runWriteThunk = (
@@ -504,7 +542,7 @@ export const Provider: React.FC = ({ children }) => {
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,
         update: Update
-      ) => {
+      ) =>
         writeAtom(
           atom,
           update,
@@ -514,8 +552,7 @@ export const Provider: React.FC = ({ children }) => {
             writeThunkQueueRef.current.push(thunk)
             runWriteThunk(lastStateRef, setState, writeThunkQueueRef.current)
           }
-        )
-      },
+        ),
     }),
     []
   )
