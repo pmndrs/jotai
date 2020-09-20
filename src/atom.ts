@@ -6,7 +6,7 @@ let keyCount = 0 // global key count for all atoms
 export function atom<Value, Update>(
   read: (get: Getter) => Promise<Value>,
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value | Promise<Value>, Update>
+): WritableAtom<Value, Update>
 
 // writable derived atom
 export function atom<Value, Update>(
@@ -29,7 +29,7 @@ export function atom<Value, Update>(
 // async-read read-only derived atom
 export function atom<Value, Update extends never = never>(
   read: (get: Getter) => Promise<Value>
-): Atom<Value | Promise<Value>>
+): Atom<Value>
 
 // read-only derived atom
 export function atom<Value, Update extends never = never>(
@@ -50,7 +50,7 @@ export function atom<Value, Update>(
 ) {
   const config = {
     key: ++keyCount,
-  } as WritableAtom<Value | Promise<Value>, Update>
+  } as WritableAtom<Value, Update>
   if (typeof read === 'function') {
     config.read = read as (get: Getter) => Value | Promise<Value>
   } else {

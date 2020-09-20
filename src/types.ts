@@ -1,5 +1,3 @@
-export type NonPromise<T> = T extends Promise<unknown> ? never : T
-
 export type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
 export type Getter = <Value>(atom: Atom<Value>) => Value
