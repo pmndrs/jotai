@@ -16,8 +16,8 @@ const isWritable = <Value, Update>(
   !!(atom as WritableAtom<Value, Update>).write
 
 type SetAtom<Update> = [Update] extends [never]
-  ? () => void
-  : (update: Update) => void
+  ? () => void | Promise<void>
+  : (update: Update) => void | Promise<void>
 
 export function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>
@@ -86,7 +86,7 @@ export function useAtom<Value, Update>(
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        actions.write(atom as AnyWritableAtom, update)
+        return actions.write(atom as AnyWritableAtom, update)
       } else {
         throw new Error('not writable atom')
       }
