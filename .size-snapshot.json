@@ -48,7 +48,7 @@
     "gzipped": 2013
   },
   "utils.js": {
-    "bundled": 1823,
+    "bundled": 2126,
     "minified": 870,
     "gzipped": 436,
     "treeshaked": {
