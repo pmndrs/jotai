@@ -7,7 +7,7 @@ import {
   AtomState,
   PartialState,
 } from './Provider'
-import { Atom, WritableAtom, AnyWritableAtom, NonPromise } from './types'
+import { Atom, WritableAtom, AnyWritableAtom } from './types'
 import { useIsoLayoutEffect } from './useIsoLayoutEffect'
 
 const isWritable = <Value, Update>(
@@ -21,9 +21,9 @@ type SetAtom<Update> = [Update] extends [never]
 
 export function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>
-): [NonPromise<Value>, SetAtom<Update>]
+): [Value, SetAtom<Update>]
 
-export function useAtom<Value>(atom: Atom<Value>): [NonPromise<Value>, never]
+export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 
 export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
