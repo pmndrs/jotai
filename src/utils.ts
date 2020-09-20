@@ -78,7 +78,7 @@ export function atomFamily<Param, Value, Update>(
     param: Param
   ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>,
   areEqual?: (a: Param, b: Param) => boolean
-): AtomFamily<Param, WritableAtom<Value | Promise<Value>, Update>>
+): AtomFamily<Param, WritableAtom<Value, Update>>
 
 // writable derived atom
 export function atomFamily<Param, Value, Update>(
@@ -112,7 +112,7 @@ export function atomFamily<Param, Value, Update extends never = never>(
   initializeRead: (param: Param) => (get: Getter) => Promise<Value>,
   initializeWrite?: null,
   areEqual?: (a: Param, b: Param) => boolean
-): AtomFamily<Param, Atom<Value | Promise<Value>>>
+): AtomFamily<Param, Atom<Value>>
 
 // read-only derived atom
 export function atomFamily<Param, Value, Update extends never = never>(
