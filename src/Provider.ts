@@ -122,8 +122,12 @@ export type Actions = {
 
 const initialState: State = new Map()
 
-const getAtomStateValue = (state: State, atom: AnyAtom) => {
-  const atomState = state.get(atom)
+const getAtomStateValue = (
+  atom: AnyAtom,
+  state: State,
+  tmpState?: PartialState
+) => {
+  const atomState = (tmpState && tmpState.get(atom)) || state.get(atom)
   return atomState ? atomState.value : atom.init
 }
 
@@ -186,7 +190,7 @@ const readAtom = <Value>(
           .catch((e) => {
             setState((prev) =>
               new Map(prev).set(atom, {
-                value: getAtomStateValue(prev, atom),
+                value: getAtomStateValue(atom, prev),
                 error: e instanceof Error ? e : new Error(e),
               })
             )
@@ -322,13 +326,13 @@ const writeAtom = <Value, Update>(
             .catch((e) => {
               setState((prev) =>
                 new Map(prev).set(dependent, {
-                  value: getAtomStateValue(prev, dependent),
+                  value: getAtomStateValue(dependent, prev),
                   error: e instanceof Error ? e : new Error(e),
                 })
               )
             })
           partialState.set(dependent, {
-            value: getAtomStateValue(prevState, dependent),
+            value: getAtomStateValue(dependent, prevState),
             promise,
           })
         } else {
@@ -342,7 +346,7 @@ const writeAtom = <Value, Update>(
         }
       } catch (e) {
         partialState.set(dependent, {
-          value: getAtomStateValue(prevState, dependent),
+          value: getAtomStateValue(dependent, prevState),
           error: e instanceof Error ? e : new Error(e),
         })
         appendMap(
@@ -373,7 +377,7 @@ const writeAtom = <Value, Update>(
               )
             }
           }
-          return getAtomStateValue(concatMap(prevState, partialState), a)
+          return getAtomStateValue(a, prevState, partialState)
         }) as Getter,
         ((a: AnyWritableAtom, v: unknown) => {
           if (a === atom) {
@@ -409,11 +413,11 @@ const writeAtom = <Value, Update>(
         pendingPromises.push(promise)
         // XXX this is write pending (can be confused with read pending)
         const nextAtomState: AtomState = {
-          value: getAtomStateValue(concatMap(prevState, partialState), atom),
+          value: getAtomStateValue(atom, prevState, partialState),
           promise: promise.then(() => {
             addWriteThunk((prev) =>
               new Map(prev).set(atom, {
-                value: getAtomStateValue(prev, atom),
+                value: getAtomStateValue(atom, prev),
               })
             )
           }),
