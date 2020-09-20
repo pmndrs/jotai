@@ -45,7 +45,7 @@ const warningObject = new Proxy(
 )
 
 // dependents for get operation
-type DependentsMap = WeakMap<AnyAtom, Set<AnyAtom | symbol>> // symbol is id from useAtom
+type DependentsMap = Map<AnyAtom, Set<AnyAtom | symbol>> // symbol is id from useAtom
 
 const addDependent = (
   dependentsMap: DependentsMap,
@@ -62,15 +62,13 @@ const addDependent = (
 
 const deleteDependent = (
   dependentsMap: DependentsMap,
-  atom: AnyAtom,
   dependent: AnyAtom | symbol
 ) => {
-  const dependents = dependentsMap.get(atom)
-  if (dependents && dependents.has(dependent)) {
-    dependents.delete(dependent)
-    return dependents.size === 0 // empty
-  }
-  return false // not found
+  dependentsMap.forEach((dependents) => {
+    if (dependents.has(dependent)) {
+      dependents.delete(dependent)
+    }
+  })
 }
 
 const listDependents = (dependentsMap: DependentsMap, atom: AnyAtom) => {
@@ -210,19 +208,11 @@ const addAtom = <Value>(
 
 const delAtom = (
   id: symbol,
-  setState: Dispatch<SetStateAction<State>>,
-  dependentsMap: DependentsMap,
-  gcRequiredRef: MutableRefObject<boolean>
+  setGcCount: Dispatch<SetStateAction<number>>,
+  dependentsMap: DependentsMap
 ) => {
-  const deleteAtomState = (prevState: State, dependent: symbol) => {
-    prevState.forEach((_atomState, atom) => {
-      deleteDependent(dependentsMap, atom, dependent)
-    })
-    return new Map(prevState) // to re-render
-  }
-
-  gcRequiredRef.current = true
-  setState((prev) => deleteAtomState(prev, id))
+  deleteDependent(dependentsMap, id)
+  setGcCount((c) => c + 1) // trigger re-render for gc
 }
 
 const gcAtom = (
@@ -434,17 +424,13 @@ export const Provider: React.FC = ({ children }) => {
 
   const dependentsMapRef = useRef<DependentsMap>()
   if (!dependentsMapRef.current) {
-    dependentsMapRef.current = new WeakMap()
+    dependentsMapRef.current = new Map()
   }
 
-  const gcRequiredRef = useRef(false)
+  const [gcCount, setGcCount] = useState(0) // to trigger gc
   useEffect(() => {
-    if (!gcRequiredRef.current) {
-      return
-    }
     gcAtom(state, setState, dependentsMapRef.current as DependentsMap)
-    gcRequiredRef.current = false
-  }, [state])
+  }, [state, gcCount])
 
   const lastStateRef = useRef<State | null>(null)
   useIsoLayoutEffect(() => {
@@ -471,12 +457,7 @@ export const Provider: React.FC = ({ children }) => {
           dependentsMapRef.current as DependentsMap
         ),
       del: (id: symbol) =>
-        delAtom(
-          id,
-          setState,
-          dependentsMapRef.current as DependentsMap,
-          gcRequiredRef
-        ),
+        delAtom(id, setGcCount, dependentsMapRef.current as DependentsMap),
       read: <Value>(state: State, atom: Atom<Value>) =>
         readAtom(
           state,
