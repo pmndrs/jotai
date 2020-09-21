@@ -290,7 +290,7 @@ it('can throw an error in write function', async () => {
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
-    (_get, _set, _arg?: unknown) => {
+    () => {
       throw new Error()
     }
   )
