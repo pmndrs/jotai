@@ -142,7 +142,7 @@ it('uses a read-write derived atom', async () => {
 
 it('uses a write-only derived atom', async () => {
   const countAtom = atom(0)
-  const incrementCountAtom = atom(null, (get, set, _arg: never) =>
+  const incrementCountAtom = atom(null, (get, set) =>
     set(countAtom, get(countAtom) + 1)
   )
 
