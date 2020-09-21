@@ -48,9 +48,9 @@
     "gzipped": 2013
   },
   "utils.js": {
-    "bundled": 2126,
-    "minified": 870,
-    "gzipped": 436,
+    "bundled": 1966,
+    "minified": 880,
+    "gzipped": 441,
     "treeshaked": {
       "rollup": {
         "code": 28,

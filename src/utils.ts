@@ -79,11 +79,6 @@ export function useReducerAtom<Value, Action>(
 
 // -----------------------------------------------------------------------
 
-export function atomWithReducer<Value, Action extends never = never>(
-  initialValue: Value,
-  reducer: (v: Value) => Value
-): WritableAtom<Value, Action>
-
 export function atomWithReducer<Value, Action>(
   initialValue: Value,
   reducer: (v: Value, a?: Action) => Value
