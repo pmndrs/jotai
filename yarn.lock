@@ -7000,10 +7000,10 @@ url@^0.11.0:
     punycode "1.3.2"
     querystring "0.2.0"
 
-use-context-selector@^1.1.3:
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/use-context-selector/-/use-context-selector-1.1.3.tgz#47e9f4972df0b23c34eb3ed18057b13b595b1bb3"
-  integrity sha512-xdwD8s7nvPIsZHP8MtKZQ8Q1bC4KynhXOLN9Ck8dKkuXDVOYQQ0xqe0ueFpImeJeHPpFDiN/3chmlk1PuPfGxw==
+use-context-selector@^1.1.4-beta.2:
+  version "1.1.4-beta.2"
+  resolved "https://registry.yarnpkg.com/use-context-selector/-/use-context-selector-1.1.4-beta.2.tgz#e0962ea6ef0ede523f279e7c8383e79775ebb009"
+  integrity sha512-vDDqicyGN0KcAcyI2PuX/fPE723s9Ys1Zp1jry/4c0atjSFWWDjqLb64ONZBMRbvOjh8YgfzhzCf2DM5sZFm2g==
 
 use@^3.1.0:
   version "3.1.1"
