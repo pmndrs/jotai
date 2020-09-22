@@ -48,10 +48,25 @@ export const useResetAtom = <Value>(
 
 // -----------------------------------------------------------------------
 
-export const useReducerAtom = <Value, Action>(
+export function useReducerAtom<Value, Action>(
+  anAtom: PrimitiveAtom<Value>,
+  reducer: (v: Value) => Value
+): [Value, () => void]
+
+export function useReducerAtom<Value, Action>(
+  anAtom: PrimitiveAtom<Value>,
+  reducer: (v: Value, a?: Action) => Value
+): [Value, (action?: Action) => void]
+
+export function useReducerAtom<Value, Action>(
   anAtom: PrimitiveAtom<Value>,
   reducer: (v: Value, a: Action) => Value
-) => {
+): [Value, (action: Action) => void]
+
+export function useReducerAtom<Value, Action>(
+  anAtom: PrimitiveAtom<Value>,
+  reducer: (v: Value, a: Action) => Value
+) {
   const [state, setState] = useAtom(anAtom)
   const dispatch = useCallback(
     (action: Action) => {
@@ -59,19 +74,29 @@ export const useReducerAtom = <Value, Action>(
     },
     [setState, reducer]
   )
-  return [state, dispatch] as const
+  return [state, dispatch]
 }
 
 // -----------------------------------------------------------------------
 
-export const atomWithReducer = <Value, Action>(
+export function atomWithReducer<Value, Action>(
+  initialValue: Value,
+  reducer: (v: Value, a?: Action) => Value
+): WritableAtom<Value, Action | undefined>
+
+export function atomWithReducer<Value, Action>(
   initialValue: Value,
   reducer: (v: Value, a: Action) => Value
-) => {
+): WritableAtom<Value, Action>
+
+export function atomWithReducer<Value, Action>(
+  initialValue: Value,
+  reducer: (v: Value, a: Action) => Value
+) {
   const anAtom: any = atom<Value, Action>(initialValue, (get, set, action) =>
     set(anAtom, reducer(get(anAtom), action))
   )
-  return anAtom as WritableAtom<Value, Action>
+  return anAtom
 }
 
 // -----------------------------------------------------------------------

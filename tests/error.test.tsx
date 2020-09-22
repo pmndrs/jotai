@@ -290,7 +290,7 @@ it('can throw an error in write function', async () => {
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
-    (_get, _set, _arg: never) => {
+    () => {
       throw new Error()
     }
   )
@@ -331,7 +331,7 @@ it('can throw an error in async write function', async () => {
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
-    async (_get, _set, _arg: never) => {
+    async () => {
       throw new Error()
     }
   )
@@ -381,7 +381,7 @@ it('can throw a chained error in write function', async () => {
   )
   const chainedAtom = atom(
     (get) => get(errorAtom),
-    (_get, set, _arg: never) => {
+    (_get, set) => {
       set(errorAtom, null)
     }
   )
