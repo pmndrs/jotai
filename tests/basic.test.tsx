@@ -543,3 +543,48 @@ it('only invoke read function on use atom', async () => {
   fireEvent.click(getByText('button'))
   await findByText('renderCount: 2, count: 1, readCount: 2, doubled: 2')
 })
+
+it('uses a read-write derived atom with two primitive atoms', async () => {
+  const countAAtom = atom(0)
+  const countBAtom = atom(0)
+  const sumAtom = atom(
+    (get) => get(countAAtom) + get(countBAtom),
+    (_get, set) => {
+      set(countAAtom, 0)
+      set(countBAtom, 0)
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [countA, setCountA] = useAtom(countAAtom)
+    const [countB, setCountB] = useAtom(countBAtom)
+    const [sum, reset] = useAtom(sumAtom)
+    return (
+      <>
+        <div>
+          countA: {countA}, countB: {countB}, sum: {sum}
+        </div>
+        <button onClick={() => setCountA((c) => c + 1)}>incA</button>
+        <button onClick={() => setCountB((c) => c + 1)}>incB</button>
+        <button onClick={reset}>reset</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('countA: 0, countB: 0, sum: 0')
+
+  fireEvent.click(getByText('incA'))
+  await findByText('countA: 1, countB: 0, sum: 1')
+
+  fireEvent.click(getByText('incB'))
+  await findByText('countA: 1, countB: 1, sum: 2')
+
+  fireEvent.click(getByText('reset'))
+  await findByText('countA: 0, countB: 0, sum: 0')
+})
