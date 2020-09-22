@@ -69,4 +69,5 @@ export default [
   createCommonJSConfig('src/index.ts', 'dist/index.cjs.js'),
   createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'jotai'),
   createESMConfig('src/utils.ts', 'dist/utils.js'),
+  createCommonJSConfig('src/utils.ts', 'dist/utils.cjs.js'),
 ]
