@@ -372,7 +372,7 @@ const writeAtom = <Value, Update>(
             const s = prevState.get(a)
             if (s && s.promise) {
               console.log(
-                'Reading pending atom state in write operation. Not sure how to deal with it. Returning obsolete vaule for',
+                'Reading pending atom state in write operation. Not sure how to deal with it. Returning stale vaule for',
                 a
               )
             }
@@ -397,7 +397,11 @@ const writeAtom = <Value, Update>(
             }
           } else {
             if (isSync) {
-              const nextPartialState = updateAtomState(prevState, a, v)
+              const nextPartialState = updateAtomState(
+                concatMap(prevState, partialState),
+                a,
+                v
+              )
               appendMap(partialState, nextPartialState)
             } else {
               addWriteThunk((prev) => {
