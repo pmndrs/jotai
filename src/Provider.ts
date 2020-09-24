@@ -249,27 +249,20 @@ const gcAtom = (
   setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap
 ) => {
-  const gcAtomState = (prevState: State) => {
-    const nextState = new Map(prevState)
-    while (true) {
-      let deleted = false
-      nextState.forEach((_atomState, atom) => {
-        const isEmpty = dependentsMap.get(atom)?.size === 0
-        if (isEmpty) {
-          nextState.delete(atom)
-          dependentsMap.delete(atom)
-          deleted = true
-        }
-      })
-      if (!deleted) {
-        break
+  const nextState = new Map(state)
+  let deleted: boolean
+  do {
+    deleted = false
+    nextState.forEach((_atomState, atom) => {
+      const isEmpty = dependentsMap.get(atom)?.size === 0
+      if (isEmpty) {
+        nextState.delete(atom)
+        dependentsMap.delete(atom)
+        deleted = true
       }
-    }
-    return nextState
-  }
-
-  const nextState = gcAtomState(state)
-  if (state.size !== nextState.size) {
+    })
+  } while (deleted)
+  if (nextState.size !== state.size) {
     setState(nextState)
   }
 }
