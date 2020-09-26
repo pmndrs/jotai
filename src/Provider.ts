@@ -308,6 +308,11 @@ const writeAtom = <Value, Update>(
               dependencies = null
               const nextAtomState: AtomState = { value }
               setState((prev) => {
+                const prevPromise = prev.get(dependent)?.promise
+                if (prevPromise && prevPromise !== promise) {
+                  // There is a new promise, so we skip updating this one.
+                  return prev
+                }
                 const nextState = new Map(prev).set(dependent, nextAtomState)
                 const nextPartialState = updateDependentsState(
                   nextState,
