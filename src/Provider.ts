@@ -93,28 +93,24 @@ const listDependents = (
 }
 
 export type AtomState<Value = unknown> = {
-  readE?: Error // error for read
-  readP?: Promise<void> // promise for read
-  writeP?: Promise<void> // promise for write
+  readE?: Error // read error
+  readP?: Promise<void> // read promise
+  writeP?: Promise<void> // write promise
   value: Value
 }
 
 type State = Map<AnyAtom, AtomState>
+type PartialState = State
 
-export type PartialState = State
+// pending partial state for adding a new atom
+type ReadPendingMap = WeakMap<AnyAtom, PartialState>
+
 type WriteThunk = (lastState: State) => State // returns next state
 
 export type Actions = {
-  add: <Value>(
-    id: symbol,
-    atom: Atom<Value>,
-    partialState?: PartialState
-  ) => void
+  add: <Value>(id: symbol, atom: Atom<Value>) => void
   del: (id: symbol) => void
-  read: <Value>(
-    state: State,
-    atom: Atom<Value>
-  ) => readonly [AtomState, PartialState]
+  read: <Value>(state: State, atom: Atom<Value>) => AtomState<Value>
   write: <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
@@ -144,7 +140,8 @@ const readAtom = <Value>(
   state: State,
   readingAtom: Atom<Value>,
   setState: Dispatch<SetStateAction<State>>,
-  dependentsMap: DependentsMap
+  dependentsMap: DependentsMap,
+  readPendingMap: ReadPendingMap
 ) => {
   const readAtomValue = <V>(prevState: State, atom: Atom<V>) => {
     const partialState: PartialState = new Map()
@@ -228,18 +225,22 @@ const readAtom = <Value>(
     return [nextAtomState, partialState] as const
   }
 
-  return readAtomValue(state, readingAtom)
+  const [atomState, partialState] = readAtomValue(state, readingAtom)
+  readPendingMap.set(readingAtom, partialState)
+  return atomState as AtomState<Value>
 }
 
 const addAtom = <Value>(
   id: symbol,
   atom: Atom<Value>,
-  partialState: PartialState | undefined,
   setState: Dispatch<SetStateAction<State>>,
-  dependentsMap: DependentsMap
+  dependentsMap: DependentsMap,
+  readPendingMap: ReadPendingMap
 ) => {
   addDependent(dependentsMap, atom, id)
+  const partialState = readPendingMap.get(atom)
   if (partialState) {
+    readPendingMap.delete(atom)
     setState((prev) => concatMap(prev, partialState))
   }
 }
@@ -531,6 +532,11 @@ export const Provider: React.FC = ({ children }) => {
     dependentsMapRef.current = new Map()
   }
 
+  const readPendingMapRef = useRef<ReadPendingMap>()
+  if (!readPendingMapRef.current) {
+    readPendingMapRef.current = new WeakMap()
+  }
+
   const [gcCount, setGcCount] = useState(0) // to trigger gc
   useEffect(() => {
     gcAtom(state, setState, dependentsMapRef.current as DependentsMap)
@@ -548,17 +554,13 @@ export const Provider: React.FC = ({ children }) => {
 
   const actions = useMemo(
     () => ({
-      add: <Value>(
-        id: symbol,
-        atom: Atom<Value>,
-        partialState?: PartialState
-      ) =>
+      add: <Value>(id: symbol, atom: Atom<Value>) =>
         addAtom(
           id,
           atom,
-          partialState,
           setState,
-          dependentsMapRef.current as DependentsMap
+          dependentsMapRef.current as DependentsMap,
+          readPendingMapRef.current as ReadPendingMap
         ),
       del: (id: symbol) =>
         delAtom(id, setGcCount, dependentsMapRef.current as DependentsMap),
@@ -567,7 +569,8 @@ export const Provider: React.FC = ({ children }) => {
           state,
           atom,
           setState,
-          dependentsMapRef.current as DependentsMap
+          dependentsMapRef.current as DependentsMap,
+          readPendingMapRef.current as ReadPendingMap
         ),
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,

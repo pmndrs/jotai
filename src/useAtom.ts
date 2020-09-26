@@ -1,12 +1,7 @@
-import { useCallback, useRef, useDebugValue } from 'react'
+import { useCallback, useDebugValue } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
-import {
-  StateContext,
-  ActionsContext,
-  AtomState,
-  PartialState,
-} from './Provider'
+import { StateContext, ActionsContext } from './Provider'
 import { Atom, WritableAtom, AnyWritableAtom } from './types'
 import { useIsoLayoutEffect } from './useIsoLayoutEffect'
 
@@ -30,37 +25,19 @@ export function useAtom<Value, Update>(
 ) {
   const actions = useContext(ActionsContext)
 
-  const pendingListRef = useRef<{ v: Value; p: PartialState }[]>([])
   const value = useContextSelector(
     StateContext,
     useCallback(
       (state) => {
-        let atomState = state.get(atom) as AtomState<Value> | undefined
-        if (!atomState) {
-          const [initialAtomState, pendingPartialState] = actions.read(
-            state,
-            atom
-          )
-          atomState = initialAtomState as AtomState<Value>
-          if (
-            !atomState.readE &&
-            !atomState.readP &&
-            pendingPartialState.size
-          ) {
-            pendingListRef.current.unshift({
-              v: initialAtomState.value as Value,
-              p: pendingPartialState,
-            })
-          }
-        }
+        const atomState = actions.read(state, atom)
         if (atomState.readE) {
-          throw atomState.readE // error for read
+          throw atomState.readE // read error
         }
         if (atomState.readP) {
-          throw atomState.readP // promise for read
+          throw atomState.readP // read promise
         }
         if (atomState.writeP) {
-          throw atomState.writeP // promise for write
+          throw atomState.writeP // write promise
         }
         return atomState.value
       },
@@ -68,19 +45,9 @@ export function useAtom<Value, Update>(
     )
   )
 
-  const pendingPartialStateRef = useRef<PartialState>()
-  useIsoLayoutEffect(() => {
-    const pendingList = pendingListRef.current
-    const found = pendingList.find(({ v }) => v === value)
-    if (found) {
-      pendingPartialStateRef.current = found.p
-    }
-    pendingList.splice(0, pendingList.length)
-  })
-
   useIsoLayoutEffect(() => {
     const id = Symbol()
-    actions.add(id, atom, pendingPartialStateRef.current)
+    actions.add(id, atom)
     return () => {
       actions.del(id)
     }
