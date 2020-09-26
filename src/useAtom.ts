@@ -43,8 +43,8 @@ export function useAtom<Value, Update>(
           )
           atomState = initialAtomState as AtomState<Value>
           if (
-            !atomState.error &&
-            !atomState.promise &&
+            !atomState.readE &&
+            !atomState.readP &&
             pendingPartialState.size
           ) {
             pendingListRef.current.unshift({
@@ -53,11 +53,14 @@ export function useAtom<Value, Update>(
             })
           }
         }
-        if (atomState.error) {
-          throw atomState.error
+        if (atomState.readE) {
+          throw atomState.readE // error for read
         }
-        if (atomState.promise) {
-          throw atomState.promise
+        if (atomState.readP) {
+          throw atomState.readP // promise for read
+        }
+        if (atomState.writeP) {
+          throw atomState.writeP // promise for write
         }
         return atomState.value
       },

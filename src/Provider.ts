@@ -93,8 +93,9 @@ const listDependents = (
 }
 
 export type AtomState<Value = unknown> = {
-  error?: Error
-  promise?: Promise<void>
+  readE?: Error // error for read
+  readP?: Promise<void> // promise for read
+  writeP?: Promise<void> // promise for write
   value: Value
 }
 
@@ -121,6 +122,14 @@ export type Actions = {
 }
 
 const initialState: State = new Map()
+
+const getAtomState = (atom: AnyAtom, state: State, tmpState?: PartialState) => {
+  const atomState = (tmpState && tmpState.get(atom)) || state.get(atom)
+  if (!atomState) {
+    throw new Error('atom state not found. possibly a bug.')
+  }
+  return atomState
+}
 
 const getAtomStateValue = (
   atom: AnyAtom,
@@ -162,19 +171,19 @@ const readAtom = <Value>(
           } else {
             setState((prev) => concatMap(prev, nextPartialState))
           }
-          if (nextAtomState.error) {
-            throw nextAtomState.error
+          if (nextAtomState.readE) {
+            throw nextAtomState.readE
           }
-          if (nextAtomState.promise) {
-            throw nextAtomState.promise
+          if (nextAtomState.readP) {
+            throw nextAtomState.readP
           }
           return nextAtomState.value
         }
         // a === atom
         const aState = prevState.get(a)
         if (aState) {
-          if (aState.promise) {
-            throw aState.promise
+          if (aState.readP) {
+            throw aState.readP
           }
           return aState.value
         }
@@ -191,7 +200,7 @@ const readAtom = <Value>(
             setState((prev) =>
               new Map(prev).set(atom, {
                 value: getAtomStateValue(atom, prev),
-                error: e instanceof Error ? e : new Error(e),
+                readE: e instanceof Error ? e : new Error(e),
               })
             )
           })
@@ -210,8 +219,8 @@ const readAtom = <Value>(
       }
     }
     const nextAtomState: AtomState = {
-      error,
-      promise,
+      readE: error,
+      readP: promise,
       value: promise ? atom.init : value,
     }
     partialState.set(atom, nextAtomState)
@@ -288,12 +297,9 @@ const writeAtom = <Value, Update>(
           } else {
             addDependent(dependentsMap, a, dependent)
           }
-          const s = prevState.get(a)
-          if (!s) {
-            throw new Error('atom state not found. possibly a bug.')
-          }
-          if (s.error) {
-            throw s.error
+          const s = getAtomState(a, prevState)
+          if (s.readE) {
+            throw s.readE
           }
           return s.value
         }) as Getter)
@@ -308,7 +314,7 @@ const writeAtom = <Value, Update>(
               dependencies = null
               const nextAtomState: AtomState = { value }
               setState((prev) => {
-                const prevPromise = prev.get(dependent)?.promise
+                const prevPromise = prev.get(dependent)?.readP
                 if (prevPromise && prevPromise !== promise) {
                   // There is a new promise, so we skip updating this one.
                   return prev
@@ -325,13 +331,13 @@ const writeAtom = <Value, Update>(
               setState((prev) =>
                 new Map(prev).set(dependent, {
                   value: getAtomStateValue(dependent, prev),
-                  error: e instanceof Error ? e : new Error(e),
+                  readE: e instanceof Error ? e : new Error(e),
                 })
               )
             })
           partialState.set(dependent, {
             value: getAtomStateValue(dependent, prevState),
-            promise,
+            readP: promise,
           })
         } else {
           setDependencies(dependentsMap, dependent, dependencies)
@@ -345,7 +351,7 @@ const writeAtom = <Value, Update>(
       } catch (e) {
         partialState.set(dependent, {
           value: getAtomStateValue(dependent, prevState),
-          error: e instanceof Error ? e : new Error(e),
+          readE: e instanceof Error ? e : new Error(e),
         })
         appendMap(
           partialState,
@@ -361,6 +367,20 @@ const writeAtom = <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => {
+    const prevAtomState = prevState.get(atom)
+    if (prevAtomState && prevAtomState.writeP) {
+      const promise = prevAtomState.writeP.then(() => {
+        addWriteThunk((prev) => {
+          const nextPartialState = updateAtomState(prev, atom, update)
+          if (nextPartialState) {
+            return concatMap(prevState, nextPartialState)
+          }
+          return prev
+        })
+      })
+      pendingPromises.push(promise)
+      return null
+    }
     const partialState: PartialState = new Map()
     let isSync = true
     try {
@@ -368,7 +388,7 @@ const writeAtom = <Value, Update>(
         ((a: AnyAtom) => {
           if (process.env.NODE_ENV !== 'production') {
             const s = prevState.get(a)
-            if (s && s.promise) {
+            if (s && s.readP) {
               console.log(
                 'Reading pending atom state in write operation. Not sure how to deal with it. Returning stale vaule for',
                 a
@@ -400,11 +420,16 @@ const writeAtom = <Value, Update>(
                 a,
                 v
               )
-              appendMap(partialState, nextPartialState)
+              if (nextPartialState) {
+                appendMap(partialState, nextPartialState)
+              }
             } else {
               addWriteThunk((prev) => {
                 const nextPartialState = updateAtomState(prev, a, v)
-                return concatMap(prev, nextPartialState)
+                if (nextPartialState) {
+                  return concatMap(prev, nextPartialState)
+                }
+                return prev
               })
             }
           }
@@ -413,13 +438,13 @@ const writeAtom = <Value, Update>(
       )
       if (promiseOrVoid instanceof Promise) {
         pendingPromises.push(promiseOrVoid)
-        // XXX this is write pending (can be confused with read pending)
         const nextAtomState: AtomState = {
-          value: getAtomStateValue(atom, prevState, partialState),
-          promise: promiseOrVoid.then(() => {
+          ...getAtomState(atom, prevState, partialState),
+          writeP: promiseOrVoid.then(() => {
             addWriteThunk((prev) =>
               new Map(prev).set(atom, {
-                value: getAtomStateValue(atom, prev),
+                ...getAtomState(atom, prev),
+                writeP: undefined,
               })
             )
           }),
@@ -443,7 +468,10 @@ const writeAtom = <Value, Update>(
 
   addWriteThunk((prevState) => {
     const nextPartialState = updateAtomState(prevState, updatingAtom, update)
-    return concatMap(prevState, nextPartialState)
+    if (nextPartialState) {
+      return concatMap(prevState, nextPartialState)
+    }
+    return prevState
   })
 
   if (pendingPromises.length) {
