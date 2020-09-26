@@ -282,7 +282,7 @@ const writeAtom = <Value, Update>(
       if (typeof dependent === 'symbol') return
       let dependencies: Set<AnyAtom> | null = new Set()
       try {
-        const v = dependent.read(((a: AnyAtom) => {
+        const promiseOrValue = dependent.read(((a: AnyAtom) => {
           if (dependencies) {
             dependencies.add(a)
           } else {
@@ -297,17 +297,21 @@ const writeAtom = <Value, Update>(
           }
           return s.value
         }) as Getter)
-        if (v instanceof Promise) {
-          const promise = v
-            .then((vv) => {
+        if (promiseOrValue instanceof Promise) {
+          const promise = promiseOrValue
+            .then((value) => {
               setDependencies(
                 dependentsMap,
                 dependent,
                 dependencies as Set<AnyAtom>
               )
               dependencies = null
-              const nextAtomState: AtomState = { value: vv }
+              const nextAtomState: AtomState = { value }
               setState((prev) => {
+                if (prev.get(dependent)?.promise !== promise) {
+                  // promise is already changed, let's bail out
+                  return prev
+                }
                 const nextState = new Map(prev).set(dependent, nextAtomState)
                 const nextPartialState = updateDependentsState(
                   nextState,
@@ -331,7 +335,7 @@ const writeAtom = <Value, Update>(
         } else {
           setDependencies(dependentsMap, dependent, dependencies)
           dependencies = null
-          partialState.set(dependent, { value: v })
+          partialState.set(dependent, { value: promiseOrValue })
           appendMap(
             partialState,
             updateDependentsState(concatMap(prevState, partialState), dependent)
@@ -359,7 +363,7 @@ const writeAtom = <Value, Update>(
     const partialState: PartialState = new Map()
     let isSync = true
     try {
-      const promise = atom.write(
+      const promiseOrVoid = atom.write(
         ((a: AnyAtom) => {
           if (process.env.NODE_ENV !== 'production') {
             const s = prevState.get(a)
@@ -406,12 +410,12 @@ const writeAtom = <Value, Update>(
         }) as Setter,
         update
       )
-      if (promise instanceof Promise) {
-        pendingPromises.push(promise)
+      if (promiseOrVoid instanceof Promise) {
+        pendingPromises.push(promiseOrVoid)
         // XXX this is write pending (can be confused with read pending)
         const nextAtomState: AtomState = {
           value: getAtomStateValue(atom, prevState, partialState),
-          promise: promise.then(() => {
+          promise: promiseOrVoid.then(() => {
             addWriteThunk((prev) =>
               new Map(prev).set(atom, {
                 value: getAtomStateValue(atom, prev),
