@@ -554,11 +554,16 @@ it('uses a read-write derived atom with two primitive atoms', async () => {
       set(countBAtom, 0)
     }
   )
+  const incBothAtom = atom(null, (get, set) => {
+    set(countAAtom, get(countAAtom) + 1)
+    set(countBAtom, get(countBAtom) + 1)
+  })
 
   const Counter: React.FC = () => {
     const [countA, setCountA] = useAtom(countAAtom)
     const [countB, setCountB] = useAtom(countBAtom)
     const [sum, reset] = useAtom(sumAtom)
+    const [, incBoth] = useAtom(incBothAtom)
     return (
       <>
         <div>
@@ -567,6 +572,7 @@ it('uses a read-write derived atom with two primitive atoms', async () => {
         <button onClick={() => setCountA((c) => c + 1)}>incA</button>
         <button onClick={() => setCountB((c) => c + 1)}>incB</button>
         <button onClick={reset}>reset</button>
+        <button onClick={incBoth}>incBoth</button>
       </>
     )
   }
@@ -587,4 +593,7 @@ it('uses a read-write derived atom with two primitive atoms', async () => {
 
   fireEvent.click(getByText('reset'))
   await findByText('countA: 0, countB: 0, sum: 0')
+
+  fireEvent.click(getByText('incBoth'))
+  await findByText('countA: 1, countB: 1, sum: 2')
 })
