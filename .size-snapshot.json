@@ -24,9 +24,9 @@
     "gzipped": 1922
   },
   "index.js": {
-    "bundled": 16284,
-    "minified": 6490,
-    "gzipped": 2362,
+    "bundled": 16314,
+    "minified": 6493,
+    "gzipped": 2366,
     "treeshaked": {
       "rollup": {
         "code": 300,
@@ -38,14 +38,14 @@
     }
   },
   "index.cjs.js": {
-    "bundled": 17989,
-    "minified": 7424,
-    "gzipped": 2494
+    "bundled": 18019,
+    "minified": 7427,
+    "gzipped": 2496
   },
   "index.iife.js": {
-    "bundled": 19020,
-    "minified": 6109,
-    "gzipped": 2251
+    "bundled": 19054,
+    "minified": 6112,
+    "gzipped": 2253
   },
   "utils.js": {
     "bundled": 1966,

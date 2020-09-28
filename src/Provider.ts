@@ -223,7 +223,9 @@ const readAtom = <Value>(
       readP: promise,
       value: promise ? atom.init : value,
     }
-    partialState.set(atom, nextAtomState)
+    if (!promise) {
+      partialState.set(atom, nextAtomState)
+    }
     isSync = false
     return [nextAtomState, partialState] as const
   }
