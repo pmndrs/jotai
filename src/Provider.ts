@@ -162,7 +162,10 @@ const readAtom = <Value>(
           addDependent(dependentsMap, a, atom)
         }
         if (a !== atom) {
-          const [nextAtomState, nextPartialState] = readAtomValue(prevState, a)
+          const [nextAtomState, nextPartialState] = readAtomValue(
+            concatMap(prevState, partialState),
+            a
+          )
           if (isSync) {
             appendMap(partialState, nextPartialState)
           } else {
@@ -177,7 +180,7 @@ const readAtom = <Value>(
           return nextAtomState.value
         }
         // a === atom
-        const aState = prevState.get(a)
+        const aState = partialState.get(a) || prevState.get(a)
         if (aState) {
           if (aState.readP) {
             throw aState.readP
@@ -220,13 +223,19 @@ const readAtom = <Value>(
       readP: promise,
       value: promise ? atom.init : value,
     }
-    partialState.set(atom, nextAtomState)
+    if (!promise) {
+      partialState.set(atom, nextAtomState)
+    }
     isSync = false
     return [nextAtomState, partialState] as const
   }
 
   const [atomState, partialState] = readAtomValue(state, readingAtom)
-  readPendingMap.set(readingAtom, partialState)
+  const prevPartialState = readPendingMap.get(readingAtom)
+  readPendingMap.set(
+    readingAtom,
+    prevPartialState ? concatMap(prevPartialState, partialState) : partialState
+  )
   return atomState as AtomState<Value>
 }
 
