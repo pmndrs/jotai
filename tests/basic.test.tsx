@@ -597,3 +597,31 @@ it('uses a read-write derived atom with two primitive atoms', async () => {
   fireEvent.click(getByText('incBoth'))
   await findByText('countA: 1, countB: 1, sum: 2')
 })
+
+it('updates a derived atom in useEffect with two primitive atoms', async () => {
+  const countAAtom = atom(0)
+  const countBAtom = atom(1)
+  const sumAtom = atom((get) => get(countAAtom) + get(countBAtom))
+
+  const Counter: React.FC = () => {
+    const [countA, setCountA] = useAtom(countAAtom)
+    const [countB] = useAtom(countBAtom)
+    const [sum] = useAtom(sumAtom)
+    useEffect(() => {
+      setCountA((c) => c + 1)
+    }, [setCountA])
+    return (
+      <div>
+        countA: {countA}, countB: {countB}, sum: {sum}
+      </div>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('countA: 1, countB: 1, sum: 2')
+})
