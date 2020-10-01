@@ -510,7 +510,7 @@ const runWriteThunk = (
   writeThunkQueue: WriteThunk[]
 ) => {
   while (true) {
-    if (lastStateRef.current === null) {
+    if (!lastStateRef.current) {
       return
     }
     if (writeThunkQueue.length === 0) {
@@ -530,12 +530,6 @@ export const ActionsContext = createContext(warningObject as Actions)
 export const StateContext = createContext(warningObject as State)
 
 export const Provider: React.FC = ({ children }) => {
-  const [state, setStateOrig] = useState(initialState)
-  const setState = (setStateAction: SetStateAction<State>) => {
-    lastStateRef.current = null
-    setStateOrig(setStateAction)
-  }
-
   const dependentsMapRef = useRef<DependentsMap>()
   if (!dependentsMapRef.current) {
     dependentsMapRef.current = new Map()
@@ -546,15 +540,23 @@ export const Provider: React.FC = ({ children }) => {
     readPendingMapRef.current = new WeakMap()
   }
 
+  const [state, setStateOrig] = useState(initialState)
+  const lastStateRef = useRef<State | null>(null)
+  const setState = (setStateAction: SetStateAction<State>) => {
+    lastStateRef.current = null
+    setStateOrig(setStateAction)
+  }
+
+  useIsoLayoutEffect(() => {
+    if (state !== initialState) {
+      lastStateRef.current = state
+    }
+  })
+
   const [gcCount, setGcCount] = useState(0) // to trigger gc
   useEffect(() => {
     gcAtom(state, setState, dependentsMapRef.current as DependentsMap)
   }, [state, gcCount])
-
-  const lastStateRef = useRef<State | null>(null)
-  useIsoLayoutEffect(() => {
-    lastStateRef.current = state
-  })
 
   const writeThunkQueueRef = useRef<WriteThunk[]>([])
   useEffect(() => {
