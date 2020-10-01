@@ -605,23 +605,29 @@ it('updates a derived atom in useEffect with two primitive atoms', async () => {
 
   const Counter: React.FC = () => {
     const [countA, setCountA] = useAtom(countAAtom)
-    const [countB] = useAtom(countBAtom)
+    const [countB, setCountB] = useAtom(countBAtom)
     const [sum] = useAtom(sumAtom)
     useEffect(() => {
       setCountA((c) => c + 1)
-    }, [setCountA])
+    }, [setCountA, countB])
     return (
-      <div>
-        countA: {countA}, countB: {countB}, sum: {sum}
-      </div>
+      <>
+        <div>
+          countA: {countA}, countB: {countB}, sum: {sum}
+        </div>
+        <button onClick={() => setCountB((c) => c + 1)}>button</button>
+      </>
     )
   }
 
-  const { findByText } = render(
+  const { getByText, findByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
   await findByText('countA: 1, countB: 1, sum: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('countA: 2, countB: 2, sum: 4')
 })
