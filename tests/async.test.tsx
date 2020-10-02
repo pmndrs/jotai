@@ -99,3 +99,30 @@ it('works with async get with extra deps', async () => {
   await findByText('count: 1')
   await findByText('delayedCount: 1')
 })
+
+it('reuses promises on initial read (no strict mode)', async () => {
+  let invokeCount = 0
+  const asyncAtom = atom(async () => {
+    invokeCount += 1
+    await new Promise((r) => setTimeout(r, 10))
+    return 'ready'
+  })
+
+  const Child: React.FC = () => {
+    const [str] = useAtom(asyncAtom)
+    return <div>{str}</div>
+  }
+
+  const { findByText, findAllByText } = render(
+    <Provider>
+      <React.Suspense fallback="loading">
+        <Child />
+        <Child />
+      </React.Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findAllByText('ready')
+  expect(invokeCount).toBe(1)
+})

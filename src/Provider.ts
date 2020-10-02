@@ -32,6 +32,13 @@ const appendMap = <K, V>(dst: Map<K, V>, src: Map<K, V>) => {
 const concatMap = <K, V>(src1: Map<K, V>, src2: Map<K, V>) =>
   appendMap(new Map<K, V>(src1), src2)
 
+// create new map and delete item
+const deleteMapItem = <K, V>(src: Map<K, V>, key: K) => {
+  const dst = new Map<K, V>(src)
+  dst.delete(key)
+  return dst
+}
+
 const warningObject = new Proxy(
   {},
   {
@@ -194,9 +201,17 @@ const readAtom = <Value>(
           .then((value) => {
             setDependencies(dependentsMap, atom, dependencies as Set<AnyAtom>)
             dependencies = null
+            const prev = readPendingMap.get(atom)
+            if (prev && prev.get(atom)?.readP === promise) {
+              readPendingMap.set(atom, deleteMapItem(prev, atom))
+            }
             setState((prev) => new Map(prev).set(atom, { value }))
           })
           .catch((e) => {
+            const prev = readPendingMap.get(atom)
+            if (prev && prev.get(atom)?.readP === promise) {
+              readPendingMap.set(atom, deleteMapItem(prev, atom))
+            }
             setState((prev) =>
               new Map(prev).set(atom, {
                 value: getAtomStateValue(atom, prev),
@@ -223,15 +238,16 @@ const readAtom = <Value>(
       readP: promise,
       value: promise ? atom.init : value,
     }
-    if (!promise) {
-      partialState.set(atom, nextAtomState)
-    }
+    partialState.set(atom, nextAtomState)
     isSync = false
     return [nextAtomState, partialState] as const
   }
 
-  const [atomState, partialState] = readAtomValue(state, readingAtom)
   const prevPartialState = readPendingMap.get(readingAtom)
+  const [atomState, partialState] = readAtomValue(
+    prevPartialState ? concatMap(state, prevPartialState) : state,
+    readingAtom
+  )
   readPendingMap.set(
     readingAtom,
     prevPartialState ? concatMap(prevPartialState, partialState) : partialState
