@@ -631,3 +631,38 @@ it('updates a derived atom in useEffect with two primitive atoms', async () => {
   fireEvent.click(getByText('button'))
   await findByText('countA: 2, countB: 2, sum: 4')
 })
+
+it('updates two atoms in child useEffect', async () => {
+  const countAAtom = atom(0)
+  const countBAtom = atom(1)
+
+  const Child: React.FC = () => {
+    const [countB, setCountB] = useAtom(countBAtom)
+    useEffect(() => {
+      setCountB((c) => c + 1)
+    }, [setCountB])
+    return <div>countB: {countB}</div>
+  }
+
+  const Counter: React.FC = () => {
+    const [countA, setCountA] = useAtom(countAAtom)
+    useEffect(() => {
+      setCountA((c) => c + 1)
+    }, [setCountA])
+    return (
+      <>
+        <div>countA: {countA}</div>
+        {countA > 0 && <Child />}
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('countA: 1')
+  await findByText('countB: 2')
+})
