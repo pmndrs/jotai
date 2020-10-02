@@ -67,9 +67,7 @@ function createIIFEConfig(input, output, globalName) {
 export default [
   createESMConfig('src/index.ts', 'dist/index.js'),
   createCommonJSConfig('src/index.ts', 'dist/index.cjs.js'),
-  createCommonJSConfig('src/index.ts', 'dist/index.cjs'),
   createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'jotai'),
   createESMConfig('src/utils.ts', 'dist/utils.js'),
   createCommonJSConfig('src/utils.ts', 'dist/utils.cjs.js'),
-  createCommonJSConfig('src/utils.ts', 'dist/utils.cjs'),
 ]
