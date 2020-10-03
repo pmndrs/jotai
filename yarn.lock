@@ -1346,6 +1346,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/scheduler@^0.16.1":
+  version "0.16.1"
+  resolved "https://registry.yarnpkg.com/@types/scheduler/-/scheduler-0.16.1.tgz#18845205e86ff0038517aab7a18a62a6b9f71275"
+  integrity sha512-EaCxbanVeyxDRTQBkdLb3Bvl/HK7PBK6UJjsSixB0iHKoWxE5uu2Q/DgtpOhPIojN0Zl1whvOd7PoHs2P0s5eA==
+
 "@types/stack-utils@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-1.0.1.tgz#0a851d3bd96498fa25c33ab7278ed3bd65f06c3e"
@@ -7066,10 +7071,10 @@ url@^0.11.0:
     punycode "1.3.2"
     querystring "0.2.0"
 
-use-context-selector@1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/use-context-selector/-/use-context-selector-1.2.2.tgz#b1a7d0899e7ab4391a5a08a3d7ab71f1e27cf5de"
-  integrity sha512-1kkfRrlk3ol422nWurgdGq1M2xig4n/cYNd9Xqly1MtrNPiEbxQYLBE1adE5BeGu374pIq0garxtf6/wd1GNbw==
+use-context-selector@1.2.3:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/use-context-selector/-/use-context-selector-1.2.3.tgz#f60cc928871c67f5b506f8c12eb94bf46ef11ec2"
+  integrity sha512-IZuqaT3mxLyDMXbDJQdMqnd6sDI199aQrxfTiz4I8O1vvA5z8valZmtyBLxnM8dOF2hserHdFSza+cjf5gWdyg==
 
 use@^3.1.0:
   version "3.1.1"

@@ -1,4 +1,4 @@
-import React, { StrictMode, useEffect } from 'react'
+import React, { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom, WritableAtom } from '../src/index'
 
@@ -177,11 +177,14 @@ it('only re-renders if value has changed', async () => {
   type Props = { countAtom: typeof count1Atom; name: string }
   const Counter: React.FC<Props> = ({ countAtom, name }) => {
     const [count, setCount] = useAtom(countAtom)
-    const renderCount = React.useRef(0)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
     return (
       <>
         <div>
-          renderCount: {++renderCount.current}, {name}: {count}
+          commits: {commits.current}, {name}: {count}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button-{name}</button>
       </>
@@ -190,11 +193,14 @@ it('only re-renders if value has changed', async () => {
 
   const Product: React.FC = () => {
     const [product] = useAtom(productAtom)
-    const renderCount = React.useRef(0)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
     return (
       <>
-        <div>
-          renderCount: {++renderCount.current}, product: {product}
+        <div data-testid="product">
+          commits: {commits.current}, product: {product}
         </div>
       </>
     )
@@ -208,19 +214,19 @@ it('only re-renders if value has changed', async () => {
     </Provider>
   )
 
-  await findByText('renderCount: 1, count1: 0')
-  await findByText('renderCount: 1, count2: 0')
-  await findByText('renderCount: 1, product: 0')
+  await findByText('commits: 1, count1: 0')
+  await findByText('commits: 1, count2: 0')
+  await findByText('commits: 1, product: 0')
 
   fireEvent.click(getByText('button-count1'))
-  await findByText('renderCount: 2, count1: 1')
-  await findByText('renderCount: 1, count2: 0')
-  await findByText('renderCount: 1, product: 0')
+  await findByText('commits: 2, count1: 1')
+  await findByText('commits: 1, count2: 0')
+  await findByText('commits: 1, product: 0')
 
   fireEvent.click(getByText('button-count2'))
-  await findByText('renderCount: 2, count1: 1')
-  await findByText('renderCount: 2, count2: 1')
-  await findByText('renderCount: 2, product: 1')
+  await findByText('commits: 2, count1: 1')
+  await findByText('commits: 2, count2: 1')
+  await findByText('commits: 2, product: 1')
 })
 
 it('works with async get', async () => {
@@ -233,11 +239,14 @@ it('works with async get', async () => {
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [delayedCount] = useAtom(asyncCountAtom)
-    const renderCount = React.useRef(0)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
     return (
       <>
         <div>
-          renderCount: {++renderCount.current}, count: {count}, delayedCount:{' '}
+          commits: {commits.current}, count: {count}, delayedCount:{' '}
           {delayedCount}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
@@ -254,11 +263,11 @@ it('works with async get', async () => {
   )
 
   await findByText('loading')
-  await findByText('renderCount: 1, count: 0, delayedCount: 0')
+  await findByText('commits: 1, count: 0, delayedCount: 0')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  await findByText('renderCount: 2, count: 1, delayedCount: 1')
+  await findByText('commits: 2, count: 1, delayedCount: 1')
 })
 
 it('shows loading with async set', async () => {
@@ -273,11 +282,14 @@ it('shows loading with async set', async () => {
 
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(asyncCountAtom)
-    const renderCount = React.useRef(0)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
     return (
       <>
         <div>
-          renderCount: {++renderCount.current}, count: {count}
+          commits: {commits.current}, count: {count}
         </div>
         <button onClick={() => setCount(count + 1)}>button</button>
       </>
@@ -292,12 +304,12 @@ it('shows loading with async set', async () => {
     </Provider>
   )
 
-  await findByText('renderCount: 1, count: 0')
+  await findByText('commits: 1, count: 0')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
 
-  await findByText('renderCount: 2, count: 1')
+  await findByText('commits: 2, count: 1')
 })
 
 it('uses atoms with tree dependencies', async () => {
@@ -314,11 +326,14 @@ it('uses atoms with tree dependencies', async () => {
   const Counter: React.FC = () => {
     const [count] = useAtom(leftAtom)
     const [, setCount] = useAtom(rightAtom)
-    const renderCount = React.useRef(0)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
     return (
       <>
         <div>
-          renderCount: {++renderCount.current}, count: {count}
+          commits: {commits.current}, count: {count}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
@@ -333,15 +348,15 @@ it('uses atoms with tree dependencies', async () => {
     </Provider>
   )
 
-  await findByText('renderCount: 1, count: 0')
+  await findByText('commits: 1, count: 0')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  await findByText('renderCount: 2, count: 1')
+  await findByText('commits: 2, count: 1')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  await findByText('renderCount: 3, count: 2')
+  await findByText('commits: 3, count: 2')
 })
 
 it('runs update only once in StrictMode', async () => {
@@ -394,11 +409,14 @@ it('uses an async write-only atom', async () => {
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
     const [, setCount] = useAtom(asyncCountAtom)
-    const renderCount = React.useRef(0)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
     return (
       <>
         <div>
-          renderCount: {++renderCount.current}, count: {count}
+          commits: {commits.current}, count: {count}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
@@ -413,12 +431,12 @@ it('uses an async write-only atom', async () => {
     </Provider>
   )
 
-  await findByText('renderCount: 1, count: 0')
+  await findByText('commits: 1, count: 0')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
 
-  await findByText('renderCount: 2, count: 1')
+  await findByText('commits: 2, count: 1')
 })
 
 it('uses a writable atom without read function', async () => {
@@ -520,12 +538,15 @@ it('only invoke read function on use atom', async () => {
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledCountAtom)
-    const renderCount = React.useRef(0)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
     return (
       <>
         <div>
-          renderCount: {++renderCount.current}, count: {count}, readCount:{' '}
-          {readCount}, doubled: {doubledCount}
+          commits: {commits.current}, count: {count}, readCount: {readCount},
+          doubled: {doubledCount}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
@@ -538,10 +559,10 @@ it('only invoke read function on use atom', async () => {
     </Provider>
   )
 
-  await findByText('renderCount: 1, count: 0, readCount: 1, doubled: 0')
+  await findByText('commits: 1, count: 0, readCount: 1, doubled: 0')
 
   fireEvent.click(getByText('button'))
-  await findByText('renderCount: 2, count: 1, readCount: 2, doubled: 2')
+  await findByText('commits: 2, count: 1, readCount: 2, doubled: 2')
 })
 
 it('uses a read-write derived atom with two primitive atoms', async () => {

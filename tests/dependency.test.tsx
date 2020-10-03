@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { fireEvent, cleanup, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
@@ -17,12 +17,15 @@ it('works with 2 level dependencies', async () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledAtom)
     const [tripledCount] = useAtom(tripledAtom)
-    const renderCount = React.useRef(0)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
     return (
       <>
         <div>
-          renderCount: {++renderCount.current}, count: {count}, doubled:{' '}
-          {doubledCount}, tripled: {tripledCount}
+          commits: {commits.current}, count: {count}, doubled: {doubledCount},
+          tripled: {tripledCount}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
@@ -35,8 +38,8 @@ it('works with 2 level dependencies', async () => {
     </Provider>
   )
 
-  await findByText('renderCount: 1, count: 1, doubled: 2, tripled: 6')
+  await findByText('commits: 1, count: 1, doubled: 2, tripled: 6')
 
   fireEvent.click(getByText('button'))
-  await findByText('renderCount: 2, count: 2, doubled: 4, tripled: 12')
+  await findByText('commits: 2, count: 2, doubled: 4, tripled: 12')
 })

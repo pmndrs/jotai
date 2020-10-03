@@ -2,13 +2,18 @@ import React, {
   Dispatch,
   SetStateAction,
   MutableRefObject,
+  ReactElement,
   createElement,
   useMemo,
   useState,
   useRef,
   useEffect,
 } from 'react'
-import { createContext } from 'use-context-selector'
+import {
+  unstable_UserBlockingPriority as UserBlockingPriority,
+  unstable_runWithPriority as runWithPriority,
+} from 'scheduler'
+import { createContext, useContextUpdate } from 'use-context-selector'
 
 import {
   Atom,
@@ -545,7 +550,19 @@ const runWriteThunk = (
 export const ActionsContext = createContext(warningObject as Actions)
 export const StateContext = createContext(warningObject as State)
 
+const InnerProvider: React.FC<{
+  contextUpdateRef: MutableRefObject<((t: () => void) => void) | undefined>
+}> = ({ contextUpdateRef, children }) => {
+  const contextUpdate = useContextUpdate(StateContext)
+  if (!contextUpdateRef.current) {
+    contextUpdateRef.current = contextUpdate
+  }
+  return children as ReactElement
+}
+
 export const Provider: React.FC = ({ children }) => {
+  const contextUpdateRef = useRef<(t: () => void) => void>()
+
   const dependentsMapRef = useRef<DependentsMap>()
   if (!dependentsMapRef.current) {
     dependentsMapRef.current = new Map()
@@ -562,6 +579,15 @@ export const Provider: React.FC = ({ children }) => {
     lastStateRef.current = null
     setStateOrig(setStateAction)
   }
+  const setStateForWrite = (setStateAction: SetStateAction<State>) => {
+    const contextUpdate = contextUpdateRef.current as (t: () => void) => void
+    contextUpdate(() => {
+      runWithPriority(UserBlockingPriority, () => {
+        lastStateRef.current = null
+        setStateOrig(setStateAction)
+      })
+    })
+  }
 
   useIsoLayoutEffect(() => {
     if (state !== initialState) {
@@ -576,7 +602,7 @@ export const Provider: React.FC = ({ children }) => {
 
   const writeThunkQueueRef = useRef<WriteThunk[]>([])
   useEffect(() => {
-    runWriteThunk(lastStateRef, setState, writeThunkQueueRef.current)
+    runWriteThunk(lastStateRef, setStateForWrite, writeThunkQueueRef.current)
   }, [state])
 
   const actions = useMemo(
@@ -610,7 +636,11 @@ export const Provider: React.FC = ({ children }) => {
           dependentsMapRef.current as DependentsMap,
           (thunk: WriteThunk) => {
             writeThunkQueueRef.current.push(thunk)
-            runWriteThunk(lastStateRef, setState, writeThunkQueueRef.current)
+            runWriteThunk(
+              lastStateRef,
+              setStateForWrite,
+              writeThunkQueueRef.current
+            )
           }
         ),
     }),
@@ -619,6 +649,10 @@ export const Provider: React.FC = ({ children }) => {
   return createElement(
     ActionsContext.Provider,
     { value: actions },
-    createElement(StateContext.Provider, { value: state }, children)
+    createElement(
+      StateContext.Provider,
+      { value: state },
+      createElement(InnerProvider, { contextUpdateRef }, children)
+    )
   )
 }
