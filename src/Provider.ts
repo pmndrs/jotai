@@ -2,13 +2,14 @@ import React, {
   Dispatch,
   SetStateAction,
   MutableRefObject,
+  ReactElement,
   createElement,
   useMemo,
   useState,
   useRef,
   useEffect,
 } from 'react'
-import { createContext } from 'use-context-selector'
+import { createContext, useContextUpdate } from 'use-context-selector'
 
 import {
   Atom,
@@ -545,7 +546,19 @@ const runWriteThunk = (
 export const ActionsContext = createContext(warningObject as Actions)
 export const StateContext = createContext(warningObject as State)
 
+const InnerStateProvider: React.FC<{
+  contextUpdateRef: MutableRefObject<((t: () => void) => void) | undefined>
+}> = ({ contextUpdateRef, children }) => {
+  const contextUpdate = useContextUpdate(StateContext)
+  if (!contextUpdateRef.current) {
+    contextUpdateRef.current = contextUpdate
+  }
+  return children as ReactElement
+}
+
 export const Provider: React.FC = ({ children }) => {
+  const contextUpdateRef = useRef<(t: () => void) => void>()
+
   const dependentsMapRef = useRef<DependentsMap>()
   if (!dependentsMapRef.current) {
     dependentsMapRef.current = new Map()
@@ -559,8 +572,11 @@ export const Provider: React.FC = ({ children }) => {
   const [state, setStateOrig] = useState(initialState)
   const lastStateRef = useRef<State | null>(null)
   const setState = (setStateAction: SetStateAction<State>) => {
-    lastStateRef.current = null
-    setStateOrig(setStateAction)
+    const contextUpdate = contextUpdateRef.current as (t: () => void) => void
+    contextUpdate(() => {
+      lastStateRef.current = null
+      setStateOrig(setStateAction)
+    })
   }
 
   useIsoLayoutEffect(() => {
@@ -619,6 +635,10 @@ export const Provider: React.FC = ({ children }) => {
   return createElement(
     ActionsContext.Provider,
     { value: actions },
-    createElement(StateContext.Provider, { value: state }, children)
+    createElement(
+      StateContext.Provider,
+      { value: state },
+      createElement(InnerStateProvider, { contextUpdateRef }, children)
+    )
   )
 }
