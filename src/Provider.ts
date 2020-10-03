@@ -550,7 +550,7 @@ const runWriteThunk = (
 export const ActionsContext = createContext(warningObject as Actions)
 export const StateContext = createContext(warningObject as State)
 
-const InnerStateProvider: React.FC<{
+const InnerProvider: React.FC<{
   contextUpdateRef: MutableRefObject<((t: () => void) => void) | undefined>
 }> = ({ contextUpdateRef, children }) => {
   const contextUpdate = useContextUpdate(StateContext)
@@ -652,7 +652,7 @@ export const Provider: React.FC = ({ children }) => {
     createElement(
       StateContext.Provider,
       { value: state },
-      createElement(InnerStateProvider, { contextUpdateRef }, children)
+      createElement(InnerProvider, { contextUpdateRef }, children)
     )
   )
 }
