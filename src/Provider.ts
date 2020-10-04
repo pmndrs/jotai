@@ -8,6 +8,7 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useDebugValue,
 } from 'react'
 import {
   unstable_UserBlockingPriority as UserBlockingPriority,
@@ -645,6 +646,16 @@ export const Provider: React.FC = ({ children }) => {
         ),
     }),
     []
+  )
+  useDebugValue(
+    state,
+    (s: State) =>
+      new Map(
+        [...s.entries()].map(([k, v]) => [
+          `${k.key}:${k.debugLabel}`,
+          v.readE || v.readP || v.writeP || v.value,
+        ])
+      )
   )
   return createElement(
     ActionsContext.Provider,
