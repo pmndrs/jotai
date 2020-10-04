@@ -2,15 +2,9 @@ import { Getter, Setter, Atom, WritableAtom, PrimitiveAtom } from './types'
 
 let keyCount = 0 // global key count for all atoms
 
-// async-read writable derived atom
-export function atom<Value, Update>(
-  read: (get: Getter) => Promise<Value>,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value, Update>
-
 // writable derived atom
 export function atom<Value, Update>(
-  read: (get: Getter) => Value,
+  read: (get: Getter) => Value | Promise<Value>,
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
 ): WritableAtom<Value, Update>
 
@@ -26,14 +20,9 @@ export function atom<Value, Update>(
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
 ): WritableAtom<Value, Update>
 
-// async-read read-only derived atom
-export function atom<Value, Update extends never = never>(
-  read: (get: Getter) => Promise<Value>
-): Atom<Value>
-
 // read-only derived atom
 export function atom<Value, Update extends never = never>(
-  read: (get: Getter) => Value
+  read: (get: Getter) => Value | Promise<Value>
 ): Atom<Value>
 
 // invalid read-only derived atom
