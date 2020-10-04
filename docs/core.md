@@ -44,7 +44,7 @@ The useAtom hook is to read an atom value stored in the Provider. It returns the
 const [value, updateValue] = useAtom(anAtom)
 ```
 
-The `updateValue` takes just one argument, which will be passed to the third argument of writeFunction of the atom. The behavior is totally depends on how the writeFunction is implemented.
+The `updateValue` takes just one argument, which will be passed to the third argument of writeFunction of the atom. The behavior totally depends on how the writeFunction is implemented.
 
 ## useBridge/Bridge
 
