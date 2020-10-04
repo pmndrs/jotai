@@ -167,7 +167,13 @@ function Controls() {
 
 ## More information
 
-We will be organizing some more information later. Meanwhile, please see WIP materials in the issues.
+We will be organizing some more information later. Meanwhile, please see WIP materials.
+
+- [Core Doc](./docs/core.md)
+- [Async Doc](./docs/async.md)
 - [Utils Doc](./docs/utils.md)
+- [TypeScript Doc](./docs/typescript.md)
+- [Persistence Doc](./docs/persistence.md)
+- [Next.js Dooc](./docs/nextjs.md)
+- [Showcase](./docs/showcase.md)
 - [Example code snippets](https://github.com/react-spring/jotai/labels/has%20snippet)
-- [API Doc draft](https://github.com/react-spring/jotai/issues/27)
