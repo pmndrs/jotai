@@ -647,6 +647,22 @@ export const Provider: React.FC = ({ children }) => {
     }),
     []
   )
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useDebugState(state)
+  }
+  return createElement(
+    ActionsContext.Provider,
+    { value: actions },
+    createElement(
+      StateContext.Provider,
+      { value: state },
+      createElement(InnerProvider, { contextUpdateRef }, children)
+    )
+  )
+}
+
+const useDebugState = (state: State) => {
   useDebugValue(
     state,
     (s: State) =>
@@ -656,14 +672,5 @@ export const Provider: React.FC = ({ children }) => {
           v.readE || v.readP || v.writeP || v.value,
         ])
       )
-  )
-  return createElement(
-    ActionsContext.Provider,
-    { value: actions },
-    createElement(
-      StateContext.Provider,
-      { value: state },
-      createElement(InnerProvider, { contextUpdateRef }, children)
-    )
   )
 }
