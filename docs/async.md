@@ -1,5 +1,45 @@
 This doc describes about the behavior with async.
 
+# async
+
+`Async` is a `utility module` which provides straight-forward, powerful functions for working with asynchronous JavaScript. Although originally designed for use with Node.js and installable via npm i async, it can also be used directly in the browser.
+
+Async is also installable via:
+
+`yarn: yarn add async`
+
+# async function
+Async provides around 70 functions that include the usual 'functional' suspects (map, reduce, filter, each…) as well as some common patterns for asynchronous control flow (parallel, series, waterfall…). All these functions assume you follow the Node.js convention of providing a single callback as the last argument of your asynchronous function -- a callback which expects an Error as its first argument -- and calling the callback once.
+
+You can also pass async functions to Async methods, instead of callback-accepting functions. 
+
+# example
+    ```js
+    async.map(['file1','file2','file3'], fs.stat, function(err, results) {
+        // results is now an array of stats for each file
+    });
+
+    async.filter(['file1','file2','file3'], function(filePath, callback) {
+    fs.access(filePath, function(err) {
+        callback(null, !err)
+     });
+    }, function(err, results) {
+        // results now equals an array of the existing files
+    });
+
+    async.parallel([
+        function(callback) { ... },
+        function(callback) { ... }
+    ], function(err, results) {
+        // optional callback
+    });
+
+    async.series([
+        function(callback) { ... },
+        function(callback) { ... }
+    ]);
+    ```
+
 ## Some notes
 
 - You need to wrap components with `<Suspense>` inside `<Provider>`.
