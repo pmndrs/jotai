@@ -1,12 +1,17 @@
-type ImmutableMap<K, V> = Map<K, V>[]
+export type ImmutableMap<K, V> = Map<K, V>[]
 
 const MAX_CHAIN_LENGTH = 10
 
+// V has to be non falsy
 type MCreate = <K, V>() => ImmutableMap<K, V>
-type MHas = <K, V>(m: ImmutableMap<K, V>, k: K) => boolean
 type MGet = <K, V>(m: ImmutableMap<K, V>, k: K) => V | undefined
 type MSet = <K, V>(m: ImmutableMap<K, V>, k: K, v: V) => ImmutableMap<K, V>
 type MDel = <K, V>(m: ImmutableMap<K, V>, k: K) => ImmutableMap<K, V>
+type MKeys = <K, V>(m: ImmutableMap<K, V>) => Set<K>
+type MMerge = <K, V>(
+  m: ImmutableMap<K, V>,
+  newM: ImmutableMap<K, V>
+) => ImmutableMap<K, V>
 type MToPrintable = <K, V>(
   m: ImmutableMap<K, V>,
   toPrintableK: (k: K) => unknown,
@@ -14,9 +19,6 @@ type MToPrintable = <K, V>(
 ) => unknown
 
 export const mCreate: MCreate = <K, V>() => [new Map<K, V>()]
-
-export const mHas: MHas = <K, V>(m: ImmutableMap<K, V>, k: K) =>
-  m.some((map) => map.has(k))
 
 export const mGet: MGet = <K, V>(m: ImmutableMap<K, V>, k: K) => {
   for (let i = 0; i < m.length; ++i) {
@@ -28,12 +30,14 @@ export const mGet: MGet = <K, V>(m: ImmutableMap<K, V>, k: K) => {
 }
 
 const squash = <K, V>(m: ImmutableMap<K, V>) => {
-  const dst = new Map<K, V>()
-  m.forEach((map) => {
-    map.forEach((v, k) => {
+  let i = m.length - 1
+  const dst = new Map<K, V>(m[i])
+  while (i) {
+    --i
+    m[i].forEach((v, k) => {
       dst.set(k, v)
     })
-  })
+  }
   return [dst]
 }
 
@@ -51,6 +55,27 @@ export const mDel: MDel = <K, V>(m: ImmutableMap<K, V>, k: K) => {
   const map = new Map(m[0])
   map.delete(k)
   return [map]
+}
+
+export const mKeys: MKeys = <K, V>(m: ImmutableMap<K, V>) => {
+  const keys = new Set<K>()
+  m.forEach((map) => {
+    for (const key of map.keys()) {
+      keys.add(key)
+    }
+  })
+  return keys
+}
+
+export const mMerge: MMerge = <K, V>(
+  m: ImmutableMap<K, V>,
+  newM: ImmutableMap<K, V>
+) => {
+  m = [...newM, ...m]
+  if (m.length > MAX_CHAIN_LENGTH) {
+    m = squash(m)
+  }
+  return m
 }
 
 export const mToPrintable: MToPrintable = <K, V>(
