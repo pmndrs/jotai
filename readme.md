@@ -13,9 +13,7 @@
 
 Jotai is pronounced "joe-tie" and means "state" in Japanese.
 
-You can try live demos in the following: 
-* [Demo 1](https://codesandbox.io/s/jotai-demo-47wvh)
-* [Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d).
+You can try live demos in the following: [Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) | [Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d).
 
 #### How does Jotai differ from Recoil?
 
@@ -52,7 +50,7 @@ const Root = () => (
 
 <a id="usetheatom" href="#usetheatom"><img src="img/doc.03.svg" alt="Use the atom in your components" /></a>
 
-It can be used like React hooks (e.g. `React.useState`):
+It can be used like `React.useState`:
 
 ```jsx
 import { useAtom } from 'jotai'

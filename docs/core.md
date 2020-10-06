@@ -5,7 +5,7 @@ For async behavior, refer [./async.md](async.md).
 
 ## atom
 
-`atom` is a function to create an atom config. It's an object that can be created anywhere however, once created, the object cannot be modified (immutable). (Note: There might be an advanced use case to mutate atom configs after creation. At the moment, it's not officially supported.)
+`atom` is a function to create an atom config. It's an object and the object identity is important. It can be created from anywhere and once created, you shouldn't modify the object. (Note: There might be an advanced use case to mutate atom configs after creation. At the moment, it's not officially supported though.)
 
 ```js
 const primitiveAtom = atom(initialValue)
@@ -14,7 +14,7 @@ const derivedAtomWithReadWrite = atom(readFunction, writeFunction)
 const derivedAtomWithWriteOnly = atom(null, writeFunction)
 ```
 
-There are two kinds of atoms:  a writable atom and a read-only atom.
+There are two kinds of atoms: a writable atom and a read-only atom.
 Primitive atoms are always writable. Derived atoms are writable if `writeFunction` is specified.
 The `writeFunction` of primitive atoms is equivalent to the setState of React.useState.
 
@@ -38,7 +38,7 @@ const Root = () => (
 
 ## useAtom
 
-The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. The `Provider` is initially empty and an initial value will only be assigned to `Provider` when `useAtom` is used. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning the component using it is unmounted, the value is removed from the Provider.
+The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning the component using it is unmounted, the value is removed from the Provider.
 
 ```js
 const [value, updateValue] = useAtom(anAtom)
@@ -69,7 +69,7 @@ A working example: https://codesandbox.io/s/jotai-r3f-fri9d
 
 # How atom dependency works
 
-To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh dependencies.
+To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh dependencies. For example, If A depends on B, it means that B is a dependency of A, and A is a dependent of B.
 
 ```js
 const uppercaseAtom = atom(get => get(textAtom).toUpperCase())
