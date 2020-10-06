@@ -544,11 +544,11 @@ export const ActionsContext = createContext(warningObject as Actions)
 export const StateContext = createContext(warningObject as State)
 
 const InnerProvider: React.FC<{
-  contextUpdateRef: MutableRefObject<ContextUpdate | undefined>
-}> = ({ contextUpdateRef, children }) => {
+  ref: MutableRefObject<ContextUpdate | undefined>
+}> = ({ ref, children }) => {
   const contextUpdate = useContextUpdate(StateContext)
-  if (!contextUpdateRef.current) {
-    contextUpdateRef.current = contextUpdate
+  if (!ref.current) {
+    ref.current = contextUpdate
   }
   return children as ReactElement
 }
@@ -655,7 +655,7 @@ export const Provider: React.FC = ({ children }) => {
     createElement(
       StateContext.Provider,
       { value: state },
-      createElement(InnerProvider, { contextUpdateRef }, children)
+      createElement(InnerProvider, { ref: contextUpdateRef }, children)
     )
   )
 }
