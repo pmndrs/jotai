@@ -33,6 +33,7 @@ import {
   mDel,
   mKeys,
   mMerge,
+  mToPrintable,
 } from './immutableMap'
 
 const warningObject = new Proxy(
@@ -640,14 +641,11 @@ export const Provider: React.FC = ({ children }) => {
 }
 
 const useDebugState = (state: State) => {
-  useDebugValue(
-    state,
-    (s: State) =>
-      new Map(
-        [...s.entries()].map(([k, v]) => [
-          `${k.key}:${k.debugLabel}`,
-          v.readE || v.readP || v.writeP || v.value,
-        ])
-      )
+  useDebugValue(state, (s: State) =>
+    mToPrintable(
+      s,
+      (k) => `${k.key}:${k.debugLabel}`,
+      (v) => v.readE || v.readP || v.writeP || v.value
+    )
   )
 }
