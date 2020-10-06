@@ -586,10 +586,7 @@ export const Provider: React.FC = ({ children }) => {
       setState(pendingState)
       return
     }
-    // XXX can remove this condition?
-    if (state !== initialState) {
-      lastStateRef.current = state
-    }
+    lastStateRef.current = state
   })
 
   const [gcCount, setGcCount] = useState(0) // to trigger gc
