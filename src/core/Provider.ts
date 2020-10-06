@@ -24,25 +24,15 @@ import {
   Setter,
 } from './types'
 import { useIsoLayoutEffect } from './useIsoLayoutEffect'
-
-// mutate map with additonal map
-const appendMap = <K, V>(dst: Map<K, V>, src: Map<K, V>) => {
-  src.forEach((v, k) => {
-    dst.set(k, v)
-  })
-  return dst
-}
-
-// create new map from two maps
-const concatMap = <K, V>(src1: Map<K, V>, src2: Map<K, V>) =>
-  appendMap(new Map<K, V>(src1), src2)
-
-// create new map and delete item
-const deleteMapItem = <K, V>(src: Map<K, V>, key: K) => {
-  const dst = new Map<K, V>(src)
-  dst.delete(key)
-  return dst
-}
+import {
+  ImmutableMap,
+  mCreate,
+  mGet,
+  mSet,
+  mDel,
+  mKeys,
+  mMerge,
+} from './immutableMap'
 
 const warningObject = new Proxy(
   {},
@@ -111,11 +101,11 @@ export type AtomState<Value = unknown> = {
   value: Value
 }
 
-type State = Map<AnyAtom, AtomState>
+type State = ImmutableMap<AnyAtom, AtomState>
 type PartialState = State
 
-// pending partial state for adding a new atom
-type ReadPendingMap = WeakMap<AnyAtom, PartialState>
+// pending state for adding a new atom
+type ReadPendingMap = WeakMap<State, State> // the value is next state
 
 type WriteThunk = (lastState: State) => State // returns next state
 
@@ -129,22 +119,18 @@ export type Actions = {
   ) => void | Promise<void>
 }
 
-const initialState: State = new Map()
+const initialState: State = mCreate()
 
-const getAtomState = (atom: AnyAtom, state: State, tmpState?: PartialState) => {
-  const atomState = (tmpState && tmpState.get(atom)) || state.get(atom)
+const getAtomState = (atom: AnyAtom, state: State) => {
+  const atomState = mGet(state, atom)
   if (!atomState) {
     throw new Error('atom state not found. possibly a bug.')
   }
   return atomState
 }
 
-const getAtomStateValue = (
-  atom: AnyAtom,
-  state: State,
-  tmpState?: PartialState
-) => {
-  const atomState = (tmpState && tmpState.get(atom)) || state.get(atom)
+const getAtomStateValue = (atom: AnyAtom, state: State) => {
+  const atomState = mGet(state, atom)
   return atomState ? atomState.value : atom.init
 }
 
@@ -156,11 +142,11 @@ const readAtom = <Value>(
   readPendingMap: ReadPendingMap
 ) => {
   const readAtomValue = <V>(prevState: State, atom: Atom<V>) => {
-    const partialState: PartialState = new Map()
-    const atomState = prevState.get(atom) as AtomState<V> | undefined
+    const atomState = mGet(prevState, atom) as AtomState<V> | undefined
     if (atomState) {
-      return [atomState, partialState] as const
+      return prevState
     }
+    let nextState = prevState
     let error: Error | undefined = undefined
     let promise: Promise<void> | undefined = undefined
     let value: V | null = null
@@ -174,25 +160,24 @@ const readAtom = <Value>(
           addDependent(dependentsMap, a, atom)
         }
         if (a !== atom) {
-          const [nextAtomState, nextPartialState] = readAtomValue(
-            concatMap(prevState, partialState),
-            a
-          )
+          const nextNextState = readAtomValue(nextState, a)
           if (isSync) {
-            appendMap(partialState, nextPartialState)
+            nextState = nextNextState
           } else {
-            setState((prev) => concatMap(prev, nextPartialState))
+            // XXX is this really valid?
+            setState((prev) => mMerge(nextNextState, prev))
           }
-          if (nextAtomState.readE) {
-            throw nextAtomState.readE
+          const nextNextAtomState = mGet(nextNextState, a) as AtomState<Value>
+          if (nextNextAtomState.readE) {
+            throw nextNextAtomState.readE
           }
-          if (nextAtomState.readP) {
-            throw nextAtomState.readP
+          if (nextNextAtomState.readP) {
+            throw nextNextAtomState.readP
           }
-          return nextAtomState.value
+          return nextNextAtomState.value
         }
         // a === atom
-        const aState = partialState.get(a) || prevState.get(a)
+        const aState = mGet(nextState, a)
         if (aState) {
           if (aState.readP) {
             throw aState.readP
@@ -206,19 +191,19 @@ const readAtom = <Value>(
           .then((value) => {
             setDependencies(dependentsMap, atom, dependencies as Set<AnyAtom>)
             dependencies = null
-            const prev = readPendingMap.get(atom)
-            if (prev && prev.get(atom)?.readP === promise) {
-              readPendingMap.set(atom, deleteMapItem(prev, atom))
+            const prev = readPendingMap.get(state)
+            if (prev && mGet(prev, atom)?.readP === promise) {
+              readPendingMap.set(state, mDel(prev, atom))
             }
-            setState((prev) => new Map(prev).set(atom, { value }))
+            setState((prev) => mSet(prev, atom, { value }))
           })
           .catch((e) => {
-            const prev = readPendingMap.get(atom)
-            if (prev && prev.get(atom)?.readP === promise) {
-              readPendingMap.set(atom, deleteMapItem(prev, atom))
+            const prev = readPendingMap.get(state)
+            if (prev && mGet(prev, atom)?.readP === promise) {
+              readPendingMap.set(state, mDel(prev, atom))
             }
             setState((prev) =>
-              new Map(prev).set(atom, {
+              mSet(prev, atom, {
                 value: getAtomStateValue(atom, prev),
                 readE: e instanceof Error ? e : new Error(e),
               })
@@ -243,36 +228,25 @@ const readAtom = <Value>(
       readP: promise,
       value: promise ? atom.init : value,
     }
-    partialState.set(atom, nextAtomState)
+    nextState = mSet(nextState, atom, nextAtomState)
     isSync = false
-    return [nextAtomState, partialState] as const
+    return nextState
   }
 
-  const prevPartialState = readPendingMap.get(readingAtom)
-  const [atomState, partialState] = readAtomValue(
-    prevPartialState ? concatMap(state, prevPartialState) : state,
-    readingAtom
-  )
-  readPendingMap.set(
-    readingAtom,
-    prevPartialState ? concatMap(prevPartialState, partialState) : partialState
-  )
-  return atomState as AtomState<Value>
+  let prevState = readPendingMap.get(state) || state
+  const nextState = readAtomValue(prevState, readingAtom)
+  if (nextState !== prevState) {
+    readPendingMap.set(state, nextState)
+  }
+  return mGet(nextState, readingAtom) as AtomState<Value>
 }
 
 const addAtom = <Value>(
   id: symbol,
   atom: Atom<Value>,
-  setState: Dispatch<SetStateAction<State>>,
-  dependentsMap: DependentsMap,
-  readPendingMap: ReadPendingMap
+  dependentsMap: DependentsMap
 ) => {
   addDependent(dependentsMap, atom, id)
-  const partialState = readPendingMap.get(atom)
-  if (partialState) {
-    readPendingMap.delete(atom)
-    setState((prev) => concatMap(prev, partialState))
-  }
 }
 
 const delAtom = (
@@ -289,20 +263,20 @@ const gcAtom = (
   setState: Dispatch<SetStateAction<State>>,
   dependentsMap: DependentsMap
 ) => {
-  const nextState = new Map(state)
+  let nextState = state
   let deleted: boolean
   do {
     deleted = false
-    nextState.forEach((_atomState, atom) => {
+    mKeys(nextState).forEach((atom) => {
       const isEmpty = dependentsMap.get(atom)?.size === 0
       if (isEmpty) {
-        nextState.delete(atom)
+        nextState = mDel(nextState, atom)
         dependentsMap.delete(atom)
         deleted = true
       }
     })
   } while (deleted)
-  if (nextState.size !== state.size) {
+  if (nextState !== state) {
     setState(nextState)
   }
 }
@@ -317,7 +291,7 @@ const writeAtom = <Value, Update>(
   const pendingPromises: Promise<void>[] = []
 
   const updateDependentsState = (prevState: State, atom: AnyAtom) => {
-    const partialState: PartialState = new Map()
+    let partialState: PartialState = mCreate()
     listDependents(dependentsMap, atom, true).forEach((dependent) => {
       if (typeof dependent === 'symbol') return
       let dependencies: Set<AnyAtom> | null = new Set()
@@ -345,48 +319,50 @@ const writeAtom = <Value, Update>(
               dependencies = null
               const nextAtomState: AtomState = { value }
               setState((prev) => {
-                const prevPromise = prev.get(dependent)?.readP
+                const prevPromise = mGet(prev, dependent)?.readP
                 if (prevPromise && prevPromise !== promise) {
                   // There is a new promise, so we skip updating this one.
                   return prev
                 }
-                const nextState = new Map(prev).set(dependent, nextAtomState)
+                const nextState = mSet(prev, dependent, nextAtomState)
                 const nextPartialState = updateDependentsState(
                   nextState,
                   dependent
                 )
-                return appendMap(nextState, nextPartialState)
+                return mMerge(nextState, nextPartialState)
               })
             })
             .catch((e) => {
               setState((prev) =>
-                new Map(prev).set(dependent, {
+                mSet(prev, dependent, {
                   value: getAtomStateValue(dependent, prev),
                   readE: e instanceof Error ? e : new Error(e),
                 })
               )
             })
-          partialState.set(dependent, {
+          partialState = mSet(partialState, dependent, {
             value: getAtomStateValue(dependent, prevState),
             readP: promise,
           })
         } else {
           setDependencies(dependentsMap, dependent, dependencies)
           dependencies = null
-          partialState.set(dependent, { value: promiseOrValue })
-          appendMap(
+          partialState = mSet(partialState, dependent, {
+            value: promiseOrValue,
+          })
+          partialState = mMerge(
             partialState,
-            updateDependentsState(concatMap(prevState, partialState), dependent)
+            updateDependentsState(mMerge(prevState, partialState), dependent)
           )
         }
       } catch (e) {
-        partialState.set(dependent, {
+        partialState = mSet(partialState, dependent, {
           value: getAtomStateValue(dependent, prevState),
           readE: e instanceof Error ? e : new Error(e),
         })
-        appendMap(
+        partialState = mMerge(
           partialState,
-          updateDependentsState(concatMap(prevState, partialState), dependent)
+          updateDependentsState(mMerge(prevState, partialState), dependent)
         )
       }
     })
@@ -398,13 +374,13 @@ const writeAtom = <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => {
-    const prevAtomState = prevState.get(atom)
+    const prevAtomState = mGet(prevState, atom)
     if (prevAtomState && prevAtomState.writeP) {
       const promise = prevAtomState.writeP.then(() => {
         addWriteThunk((prev) => {
           const nextPartialState = updateAtomState(prev, atom, update)
           if (nextPartialState) {
-            return concatMap(prevState, nextPartialState)
+            return mMerge(prevState, nextPartialState)
           }
           return prev
         })
@@ -412,13 +388,13 @@ const writeAtom = <Value, Update>(
       pendingPromises.push(promise)
       return null
     }
-    const partialState: PartialState = new Map()
+    let partialState: PartialState = mCreate()
     let isSync = true
     try {
       const promiseOrVoid = atom.write(
         ((a: AnyAtom) => {
           if (process.env.NODE_ENV !== 'production') {
-            const s = prevState.get(a)
+            const s = mGet(prevState, a)
             if (s && s.readP) {
               console.log(
                 'Reading pending atom state in write operation. Not sure how to deal with it. Returning stale vaule for',
@@ -426,39 +402,39 @@ const writeAtom = <Value, Update>(
               )
             }
           }
-          return getAtomStateValue(a, prevState, partialState)
+          return getAtomStateValue(a, mMerge(prevState, partialState))
         }) as Getter,
         ((a: AnyWritableAtom, v: unknown) => {
           if (a === atom) {
             const nextAtomState: AtomState = { value: v }
             if (isSync) {
-              partialState.set(a, nextAtomState)
-              appendMap(
+              partialState = mSet(partialState, a, nextAtomState)
+              partialState = mMerge(
                 partialState,
-                updateDependentsState(concatMap(prevState, partialState), a)
+                updateDependentsState(mMerge(prevState, partialState), a)
               )
             } else {
               setState((prev) => {
-                const nextState = new Map(prev).set(a, nextAtomState)
+                const nextState = mSet(prev, a, nextAtomState)
                 const nextPartialState = updateDependentsState(nextState, a)
-                return appendMap(nextState, nextPartialState)
+                return mMerge(nextState, nextPartialState)
               })
             }
           } else {
             if (isSync) {
               const nextPartialState = updateAtomState(
-                concatMap(prevState, partialState),
+                mMerge(prevState, partialState),
                 a,
                 v
               )
               if (nextPartialState) {
-                appendMap(partialState, nextPartialState)
+                partialState = mMerge(partialState, nextPartialState)
               }
             } else {
               addWriteThunk((prev) => {
                 const nextPartialState = updateAtomState(prev, a, v)
                 if (nextPartialState) {
-                  return concatMap(prev, nextPartialState)
+                  return mMerge(prev, nextPartialState)
                 }
                 return prev
               })
@@ -470,17 +446,17 @@ const writeAtom = <Value, Update>(
       if (promiseOrVoid instanceof Promise) {
         pendingPromises.push(promiseOrVoid)
         const nextAtomState: AtomState = {
-          ...getAtomState(atom, prevState, partialState),
+          ...getAtomState(atom, mMerge(prevState, partialState)),
           writeP: promiseOrVoid.then(() => {
             addWriteThunk((prev) =>
-              new Map(prev).set(atom, {
+              mSet(prev, atom, {
                 ...getAtomState(atom, prev),
                 writeP: undefined,
               })
             )
           }),
         }
-        partialState.set(atom, nextAtomState)
+        partialState = mSet(partialState, atom, nextAtomState)
       }
     } catch (e) {
       if (pendingPromises.length) {
@@ -500,7 +476,7 @@ const writeAtom = <Value, Update>(
   addWriteThunk((prevState) => {
     const nextPartialState = updateAtomState(prevState, updatingAtom, update)
     if (nextPartialState) {
-      return concatMap(prevState, nextPartialState)
+      return mMerge(prevState, nextPartialState)
     }
     return prevState
   })
@@ -590,6 +566,13 @@ export const Provider: React.FC = ({ children }) => {
   }
 
   useIsoLayoutEffect(() => {
+    const readPendingMap = readPendingMapRef.current as ReadPendingMap
+    const pendingState = readPendingMap.get(state)
+    if (pendingState) {
+      setState(pendingState)
+      return
+    }
+    // XXX can remove this condition?
     if (state !== initialState) {
       lastStateRef.current = state
     }
@@ -608,13 +591,7 @@ export const Provider: React.FC = ({ children }) => {
   const actions = useMemo(
     () => ({
       add: <Value>(id: symbol, atom: Atom<Value>) =>
-        addAtom(
-          id,
-          atom,
-          setState,
-          dependentsMapRef.current as DependentsMap,
-          readPendingMapRef.current as ReadPendingMap
-        ),
+        addAtom(id, atom, dependentsMapRef.current as DependentsMap),
       del: (id: symbol) =>
         delAtom(id, setGcCount, dependentsMapRef.current as DependentsMap),
       read: <Value>(state: State, atom: Atom<Value>) =>
