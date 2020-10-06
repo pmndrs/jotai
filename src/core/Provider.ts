@@ -8,6 +8,7 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useDebugValue,
 } from 'react'
 import {
   unstable_UserBlockingPriority as UserBlockingPriority,
@@ -32,6 +33,7 @@ import {
   mDel,
   mKeys,
   mMerge,
+  mToPrintable,
 } from './immutableMap'
 
 const warningObject = new Proxy(
@@ -623,6 +625,10 @@ export const Provider: React.FC = ({ children }) => {
     }),
     []
   )
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useDebugState(state)
+  }
   return createElement(
     ActionsContext.Provider,
     { value: actions },
@@ -630,6 +636,16 @@ export const Provider: React.FC = ({ children }) => {
       StateContext.Provider,
       { value: state },
       createElement(InnerProvider, { contextUpdateRef }, children)
+    )
+  )
+}
+
+const useDebugState = (state: State) => {
+  useDebugValue(state, (s: State) =>
+    mToPrintable(
+      s,
+      (k) => `${k.key}:${k.debugLabel ?? '<no debugLabel>'}`,
+      (v) => v.readE || v.readP || v.writeP || v.value
     )
   )
 }
