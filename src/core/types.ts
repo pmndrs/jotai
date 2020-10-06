@@ -9,6 +9,7 @@ export type Setter = <Value, Update>(
 
 export type Atom<Value> = {
   key: string | number
+  debugLabel?: string
   init?: Value
   read: (get: Getter) => Value | Promise<Value>
 }
