@@ -12,6 +12,7 @@ import React, {
 } from 'react'
 import {
   unstable_UserBlockingPriority as UserBlockingPriority,
+  unstable_NormalPriority as NormalPriority,
   unstable_runWithPriority as runWithPriority,
 } from 'scheduler'
 import { createContext, useContextUpdate } from 'use-context-selector'
@@ -108,6 +109,8 @@ type PartialState = State
 
 // pending state for adding a new atom
 type ReadPendingMap = WeakMap<State, State> // the value is next state
+
+type ContextUpdate = (t: () => void) => void
 
 type WriteThunk = (lastState: State) => State // returns next state
 
@@ -505,7 +508,9 @@ const writeAtom = <Value, Update>(
 
 const runWriteThunk = (
   lastStateRef: MutableRefObject<State | null>,
+  pendingStateRef: MutableRefObject<State | null>,
   setState: Dispatch<SetStateAction<State>>,
+  contextUpdate: ContextUpdate,
   writeThunkQueue: WriteThunk[]
 ) => {
   while (true) {
@@ -516,11 +521,21 @@ const runWriteThunk = (
       return
     }
     const thunk = writeThunkQueue.shift() as WriteThunk
-    const lastState = lastStateRef.current
-    const nextState = thunk(lastState)
-    if (nextState !== lastState) {
-      setState(nextState)
-      return
+    const prevState = pendingStateRef.current || lastStateRef.current
+    const nextState = thunk(prevState)
+    if (nextState !== prevState) {
+      pendingStateRef.current = nextState
+      runWithPriority(NormalPriority, () => {
+        const pendingState = pendingStateRef.current
+        if (pendingState) {
+          pendingStateRef.current = null
+          contextUpdate(() => {
+            runWithPriority(UserBlockingPriority, () => {
+              setState(pendingState)
+            })
+          })
+        }
+      })
     }
   }
 }
@@ -529,17 +544,17 @@ export const ActionsContext = createContext(warningObject as Actions)
 export const StateContext = createContext(warningObject as State)
 
 const InnerProvider: React.FC<{
-  contextUpdateRef: MutableRefObject<((t: () => void) => void) | undefined>
-}> = ({ contextUpdateRef, children }) => {
+  r: MutableRefObject<ContextUpdate | undefined>
+}> = ({ r, children }) => {
   const contextUpdate = useContextUpdate(StateContext)
-  if (!contextUpdateRef.current) {
-    contextUpdateRef.current = contextUpdate
+  if (!r.current) {
+    r.current = contextUpdate
   }
   return children as ReactElement
 }
 
 export const Provider: React.FC = ({ children }) => {
-  const contextUpdateRef = useRef<(t: () => void) => void>()
+  const contextUpdateRef = useRef<ContextUpdate>()
 
   const dependentsMapRef = useRef<DependentsMap>()
   if (!dependentsMapRef.current) {
@@ -553,18 +568,15 @@ export const Provider: React.FC = ({ children }) => {
 
   const [state, setStateOrig] = useState(initialState)
   const lastStateRef = useRef<State | null>(null)
+  const pendingStateRef = useRef<State | null>(null)
   const setState = (setStateAction: SetStateAction<State>) => {
     lastStateRef.current = null
+    const pendingState = pendingStateRef.current
+    if (pendingState) {
+      pendingStateRef.current = null
+      setStateOrig(pendingState)
+    }
     setStateOrig(setStateAction)
-  }
-  const setStateForWrite = (setStateAction: SetStateAction<State>) => {
-    const contextUpdate = contextUpdateRef.current as (t: () => void) => void
-    contextUpdate(() => {
-      runWithPriority(UserBlockingPriority, () => {
-        lastStateRef.current = null
-        setStateOrig(setStateAction)
-      })
-    })
   }
 
   useIsoLayoutEffect(() => {
@@ -574,10 +586,7 @@ export const Provider: React.FC = ({ children }) => {
       setState(pendingState)
       return
     }
-    // XXX can remove this condition?
-    if (state !== initialState) {
-      lastStateRef.current = state
-    }
+    lastStateRef.current = state
   })
 
   const [gcCount, setGcCount] = useState(0) // to trigger gc
@@ -587,7 +596,13 @@ export const Provider: React.FC = ({ children }) => {
 
   const writeThunkQueueRef = useRef<WriteThunk[]>([])
   useEffect(() => {
-    runWriteThunk(lastStateRef, setStateForWrite, writeThunkQueueRef.current)
+    runWriteThunk(
+      lastStateRef,
+      pendingStateRef,
+      setState,
+      contextUpdateRef.current as ContextUpdate,
+      writeThunkQueueRef.current
+    )
   }, [state])
 
   const actions = useMemo(
@@ -617,7 +632,9 @@ export const Provider: React.FC = ({ children }) => {
             writeThunkQueueRef.current.push(thunk)
             runWriteThunk(
               lastStateRef,
-              setStateForWrite,
+              pendingStateRef,
+              setState,
+              contextUpdateRef.current as ContextUpdate,
               writeThunkQueueRef.current
             )
           }
@@ -635,7 +652,7 @@ export const Provider: React.FC = ({ children }) => {
     createElement(
       StateContext.Provider,
       { value: state },
-      createElement(InnerProvider, { contextUpdateRef }, children)
+      createElement(InnerProvider, { r: contextUpdateRef }, children)
     )
   )
 }
