@@ -1,6 +1,7 @@
 export type ImmutableMap<K, V> = Map<K, V>[]
 
 const MAX_CHAIN_LENGTH = 10
+const SMALL_MAP_SIZE = 10
 
 // V has to be non falsy
 type MCreate = <K, V>() => ImmutableMap<K, V>
@@ -42,6 +43,9 @@ const squash = <K, V>(m: ImmutableMap<K, V>) => {
 }
 
 export const mSet: MSet = <K, V>(m: ImmutableMap<K, V>, k: K, v: V) => {
+  if (m[0].size < SMALL_MAP_SIZE) {
+    return [new Map(m[0]).set(k, v), ...m.slice(1)]
+  }
   if (m.length >= MAX_CHAIN_LENGTH) {
     m = squash(m)
   }
