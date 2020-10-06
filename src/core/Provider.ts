@@ -644,7 +644,7 @@ const useDebugState = (state: State) => {
   useDebugValue(state, (s: State) =>
     mToPrintable(
       s,
-      (k) => `${k.key}:${k.debugLabel}`,
+      (k) => `${k.key}:${k.debugLabel ?? '<no debugLabel>'}`,
       (v) => v.readE || v.readP || v.writeP || v.value
     )
   )
