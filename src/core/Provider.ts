@@ -291,7 +291,7 @@ const updateDependentsState = <Value>(
             )
           })
         nextState = mSet(nextState, dependent, {
-          value: getAtomStateValue(dependent, prevState),
+          value: getAtomStateValue(dependent, nextState),
           readP: promise,
         })
       } else {
@@ -302,19 +302,19 @@ const updateDependentsState = <Value>(
         })
         nextState = updateDependentsState(
           dependent,
-          mMerge(prevState, nextState),
+          nextState,
           setState,
           dependentsMap
         )
       }
     } catch (e) {
       nextState = mSet(nextState, dependent, {
-        value: getAtomStateValue(dependent, prevState),
+        value: getAtomStateValue(dependent, nextState),
         readE: e instanceof Error ? e : new Error(e),
       })
       nextState = updateDependentsState(
         dependent,
-        mMerge(prevState, nextState),
+        nextState,
         setState,
         dependentsMap
       )
