@@ -1,8 +1,8 @@
 {
   "index.js": {
-    "bundled": 17593,
-    "minified": 7629,
-    "gzipped": 2855,
+    "bundled": 16322,
+    "minified": 7157,
+    "gzipped": 2756,
     "treeshaked": {
       "rollup": {
         "code": 318,
@@ -14,14 +14,14 @@
     }
   },
   "index.cjs.js": {
-    "bundled": 21181,
-    "minified": 9681,
-    "gzipped": 3362
+    "bundled": 19796,
+    "minified": 9181,
+    "gzipped": 3276
   },
   "index.iife.js": {
-    "bundled": 22436,
-    "minified": 7898,
-    "gzipped": 2999
+    "bundled": 20979,
+    "minified": 7502,
+    "gzipped": 2913
   },
   "utils.js": {
     "bundled": 1894,

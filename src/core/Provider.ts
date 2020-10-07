@@ -137,11 +137,14 @@ const readAtomState = <Value>(
   atom: Atom<Value>,
   prevState: State,
   setState: Dispatch<SetStateAction<State>>,
-  dependentsMap: DependentsMap
+  dependentsMap: DependentsMap,
+  force?: boolean
 ) => {
-  const atomState = mGet(prevState, atom) as AtomState<Value> | undefined
-  if (atomState) {
-    return [atomState, prevState] as const
+  if (!force) {
+    const atomState = mGet(prevState, atom) as AtomState<Value> | undefined
+    if (atomState) {
+      return [atomState, prevState] as const
+    }
   }
   let nextState = prevState
   let error: Error | undefined = undefined
@@ -166,7 +169,7 @@ const readAtomState = <Value>(
         if (isSync) {
           nextState = nextNextState
         } else {
-          // XXX is this really valid?
+          // XXX is this really correct?
           setState((prev) => mMerge(nextNextState, prev))
         }
         if (aState.readE) {
@@ -192,15 +195,25 @@ const readAtomState = <Value>(
         .then((value) => {
           setDependencies(dependentsMap, atom, dependencies as Set<AnyAtom>)
           dependencies = null
-          setState((prev) => mSet(prev, atom, { value }))
+          setState((prev) => {
+            const prevPromise = mGet(prev, atom)?.readP
+            if (prevPromise && prevPromise !== promise) {
+              return prev
+            }
+            return mSet(prev, atom, { value })
+          })
         })
         .catch((e) => {
-          setState((prev) =>
-            mSet(prev, atom, {
+          setState((prev) => {
+            const prevPromise = mGet(prev, atom)?.readP
+            if (prevPromise && prevPromise !== promise) {
+              return prev
+            }
+            return mSet(prev, atom, {
               value: getAtomStateValue(atom, prev),
               readE: e instanceof Error ? e : new Error(e),
             })
-          )
+          })
         })
     } else {
       setDependencies(dependentsMap, atom, dependencies)
@@ -235,86 +248,25 @@ const updateDependentsState = <Value>(
   let nextState = prevState
   listDependents(dependentsMap, atom, true).forEach((dependent) => {
     if (typeof dependent === 'symbol') return
-    let dependencies: Set<AnyAtom> | null = new Set()
-    try {
-      const promiseOrValue = dependent.read(((a: AnyAtom) => {
-        if (dependencies) {
-          dependencies.add(a)
-        } else {
-          addDependent(dependentsMap, a, dependent)
-        }
-        const [aState, nextNextState] = readAtomState(
-          a,
-          nextState,
-          setState,
-          dependentsMap
+    const [dependentState, nextNextState] = readAtomState(
+      dependent,
+      nextState,
+      setState,
+      dependentsMap,
+      true
+    )
+    const promise = dependentState.readP
+    if (promise) {
+      promise.then(() => {
+        setState((prev) =>
+          updateDependentsState(dependent, prev, setState, dependentsMap)
         )
-        // FIXME not sync??
-        nextState = nextNextState
-        if (aState.readE) {
-          throw aState.readE
-        }
-        return aState.value
-      }) as Getter)
-      if (promiseOrValue instanceof Promise) {
-        const promise = promiseOrValue
-          .then((value) => {
-            setDependencies(
-              dependentsMap,
-              dependent,
-              dependencies as Set<AnyAtom>
-            )
-            dependencies = null
-            const nextAtomState: AtomState = { value }
-            setState((prev) => {
-              const prevPromise = mGet(prev, dependent)?.readP
-              if (prevPromise && prevPromise !== promise) {
-                // There is a new promise, so we skip updating this one.
-                return prev
-              }
-              const nextState = mSet(prev, dependent, nextAtomState)
-              const nextPartialState = updateDependentsState(
-                dependent,
-                nextState,
-                setState,
-                dependentsMap
-              )
-              return mMerge(nextState, nextPartialState)
-            })
-          })
-          .catch((e) => {
-            setState((prev) =>
-              mSet(prev, dependent, {
-                value: getAtomStateValue(dependent, prev),
-                readE: e instanceof Error ? e : new Error(e),
-              })
-            )
-          })
-        nextState = mSet(nextState, dependent, {
-          value: getAtomStateValue(dependent, nextState),
-          readP: promise,
-        })
-      } else {
-        setDependencies(dependentsMap, dependent, dependencies)
-        dependencies = null
-        nextState = mSet(nextState, dependent, {
-          value: promiseOrValue,
-        })
-        nextState = updateDependentsState(
-          dependent,
-          nextState,
-          setState,
-          dependentsMap
-        )
-      }
-    } catch (e) {
-      nextState = mSet(nextState, dependent, {
-        value: getAtomStateValue(dependent, nextState),
-        readE: e instanceof Error ? e : new Error(e),
       })
+      nextState = nextNextState
+    } else {
       nextState = updateDependentsState(
         dependent,
-        nextState,
+        nextNextState,
         setState,
         dependentsMap
       )
@@ -413,7 +365,7 @@ const writeAtom = <Value, Update>(
           if (process.env.NODE_ENV !== 'production') {
             const s = mGet(prevState, a)
             if (s && s.readP) {
-              // TODO
+              // TODO will try to detect this
               console.log(
                 'Reading pending atom state in write operation. Not sure how to deal with it. Returning stale vaule for',
                 a
