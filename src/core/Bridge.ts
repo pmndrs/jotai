@@ -1,9 +1,5 @@
 import React, { createElement, useMemo } from 'react'
-import {
-  useContext,
-  BridgeProvider,
-  useBridgeValue,
-} from 'use-context-selector'
+import { BridgeProvider, useBridgeValue } from 'use-context-selector'
 
 import { StateContext, ActionsContext } from './Provider'
 
