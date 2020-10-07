@@ -381,7 +381,7 @@ const writeAtom = <Value, Update>(
               nextState = mSet(nextState, a, nextAtomState)
               nextState = updateDependentsState(
                 a,
-                mMerge(prevState, nextState),
+                nextState,
                 setState,
                 dependentsMap
               )
