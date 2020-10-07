@@ -13,8 +13,7 @@
 
 Jotai is pronounced "joe-tie" and means "state" in Japanese.
 
-You can try a live demo [here](https://codesandbox.io/s/jotai-demo-47wvh)
-and [there](https://codesandbox.io/s/jotai-demo-forked-x2g5d).
+You can try live demos in the following: [Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) | [Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d).
 
 #### How does Jotai differ from Recoil?
 
@@ -51,7 +50,7 @@ const Root = () => (
 
 <a id="usetheatom" href="#usetheatom"><img src="img/doc.03.svg" alt="Use the atom in your components" /></a>
 
-It can be used just like `React.useState`:
+It can be used like `React.useState`:
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -99,7 +98,7 @@ const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
 
 <a id="derivedasyncatoms" href="#derivedasyncatoms"><img src="img/rec.02.svg" alt="Derived async atoms (needs suspense)" /></a>
 
-You can make the read function an async function, too.
+You can make the read function an async function too.
 
 ```jsx
 const urlAtom = atom("https://json.host.com")
@@ -117,7 +116,7 @@ function Status() {
 
 <a id="writabledrivedatom" href="#writabledrivedatom"><img src="img/rec.03.svg" alt="You can create a writable derived atom" /></a>
 
-Specify a write function at the second argument. `get` will return the current value of an atom, `set` will update an atoms value.
+Specify a write function at the second argument. `get` will return the current value of an atom. `set` will update an atoms value.
 
 ```jsx
 const decrementCountAtom = atom(
