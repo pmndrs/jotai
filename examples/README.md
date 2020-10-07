@@ -1,15 +1,14 @@
 # Explore Examples
 
 ```bash
-git clone https://github.com/react-spring/jotai
+git clone https://github.com/pmndrs/jotai
 
 # install project dependencies & build the library
 cd jotai && yarn
 
 # move to the examples folder & install dependencies 
-cd examples && yarn
+cd examples/hello && yarn
 
 # start the dev server 
 yarn start
 ```
-After playing with the examples you can explore the src code. Each example URL maps to a folder name in the `examples/src/demos` folder.
