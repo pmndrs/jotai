@@ -116,9 +116,7 @@ function Status() {
 
 <a id="writabledrivedatom" href="#writabledrivedatom"><img src="img/rec.03.svg" alt="You can create a writable derived atom" /></a>
 
-Specify a write function at the second argument. 
-* `get` will return the current value of an atom
-* `set` will update an atoms value
+Specify a write function at the second argument. `get` will return the current value of an atom. `set` will update an atoms value.
 
 ```jsx
 const decrementCountAtom = atom(
