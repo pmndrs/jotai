@@ -226,7 +226,7 @@ const readAtomState = <Value>(
   return [nextAtomState, nextState] as const
 }
 
-const updateAtomState = <Value>(
+const updateDependentsState = <Value>(
   atom: Atom<Value>,
   prevState: State,
   setState: Dispatch<SetStateAction<State>>,
@@ -273,7 +273,7 @@ const updateAtomState = <Value>(
                 return prev
               }
               const nextState = mSet(prev, dependent, nextAtomState)
-              const nextPartialState = updateAtomState(
+              const nextPartialState = updateDependentsState(
                 dependent,
                 nextState,
                 setState,
@@ -300,7 +300,7 @@ const updateAtomState = <Value>(
         nextState = mSet(nextState, dependent, {
           value: promiseOrValue,
         })
-        nextState = updateAtomState(
+        nextState = updateDependentsState(
           dependent,
           mMerge(prevState, nextState),
           setState,
@@ -312,7 +312,7 @@ const updateAtomState = <Value>(
         value: getAtomStateValue(dependent, prevState),
         readE: e instanceof Error ? e : new Error(e),
       })
-      nextState = updateAtomState(
+      nextState = updateDependentsState(
         dependent,
         mMerge(prevState, nextState),
         setState,
@@ -427,7 +427,7 @@ const writeAtom = <Value, Update>(
             const nextAtomState: AtomState = { value: v }
             if (isSync) {
               nextState = mSet(nextState, a, nextAtomState)
-              nextState = updateAtomState(
+              nextState = updateDependentsState(
                 a,
                 mMerge(prevState, nextState),
                 setState,
@@ -435,7 +435,7 @@ const writeAtom = <Value, Update>(
               )
             } else {
               setState((prev) =>
-                updateAtomState(
+                updateDependentsState(
                   a,
                   mSet(prev, a, nextAtomState),
                   setState,
