@@ -39,7 +39,7 @@ export function useAtom<Value, Update>(
         if (atomState.writeP) {
           throw atomState.writeP // write promise
         }
-        return atomState.value
+        return atomState.value as Value
       },
       [atom, actions]
     )
