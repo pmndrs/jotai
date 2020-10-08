@@ -6,18 +6,21 @@
     "build": "next build",
     "start": "next start"
   },
-  "devDependencies": {
-    "customize-cra": "^1.0.0",
-    "customize-cra-react-refresh": "^1.1.0",
-    "raw-loader": "^4.0.1",
-    "react-app-rewired": "^2.1.6",
-    "serve": "^11.3.2"
-  },
   "dependencies": {
     "jotai": "0.7.4",
     "next": "latest",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
+  },
+  "devDependencies": {
+    "customize-cra": "^1.0.0",
+    "customize-cra-react-refresh": "^1.1.0",
+    "raw-loader": "^4.0.1",
+    "react-app-rewired": "^2.1.6",
+    "@types/react": "16.9.19",
+    "@types/react-dom": "16.9.5",
+    "typescript": "3.7.5",
+    "serve": "^11.3.2"
   },
   "license": "MIT",
   "keywords": [],
