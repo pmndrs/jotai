@@ -84,7 +84,7 @@
     ]
   },
   "dependencies": {
-    "use-context-selector": "1.2.5"
+    "use-context-selector": "1.2.8"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
@@ -119,8 +119,8 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "rollup-plugin-typescript2": "^0.27.3",
-    "shx": "^0.3.2",
     "scheduler": "^0.19.1",
+    "shx": "^0.3.2",
     "typescript": "^4.0.3"
   },
   "peerDependencies": {

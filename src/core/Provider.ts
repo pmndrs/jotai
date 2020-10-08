@@ -128,7 +128,10 @@ const initialState: State = mCreate()
 const getAtomStateValue = (atom: AnyAtom, state: State) => {
   const atomState = mGet(state, atom)
   if (!atomState) {
-    throw new Error('atom state not found. possibly a bug.')
+    console.warn(
+      'Atom state not found. Possibly a bug. Please file an issue with repro.'
+    )
+    return atom.init
   }
   return atomState.value
 }
@@ -363,11 +366,11 @@ const writeAtom = <Value, Update>(
       const promiseOrVoid = atom.write(
         ((a: AnyAtom) => {
           if (process.env.NODE_ENV !== 'production') {
-            const s = mGet(prevState, a)
+            const s = mGet(nextState, a)
             if (s && s.readP) {
               // TODO will try to detect this
-              console.log(
-                'Reading pending atom state in write operation. Not sure how to deal with it. Returning stale vaule for',
+              console.warn(
+                'Reading pending atom state in write operation. We need to detect this and fallback. Please file an issue for repro.',
                 a
               )
             }
