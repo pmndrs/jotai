@@ -1,6 +1,13 @@
 import React, { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, atom, useAtom, WritableAtom } from '../src/index'
+import {
+  Provider,
+  atom,
+  useAtom,
+  WritableAtom,
+  useBridge,
+  Bridge,
+} from '../src/index'
 
 it('creates atoms', () => {
   // primitive atom
@@ -686,4 +693,57 @@ it('updates two atoms in child useEffect', async () => {
 
   await findByText('countA: 1')
   await findByText('countB: 2')
+})
+
+it.only('works with Brige', async () => {
+  const countAtom = atom(0)
+
+  const Child: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>child: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>child</button>
+      </>
+    )
+  }
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const Parent: React.FC = () => {
+    const valueToBridge = useBridge()
+    return (
+      <>
+        <Counter />
+        <Bridge value={valueToBridge}>
+          <Child />
+        </Bridge>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Parent />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+  await findByText('child: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
+  await findByText('child: 1')
+
+  fireEvent.click(getByText('child'))
+  await findByText('count: 2')
+  await findByText('child: 2')
 })
