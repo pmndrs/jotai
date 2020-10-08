@@ -17,7 +17,7 @@
     "customize-cra-react-refresh": "^1.1.0",
     "raw-loader": "^4.0.1",
     "react-app-rewired": "^2.1.6",
-    "@types/node":"12.12.2",
+    "@types/node": "12.12.2",
     "@types/react": "16.9.19",
     "@types/react-dom": "16.9.5",
     "typescript": "3.7.5",
@@ -27,11 +27,7 @@
   "keywords": [],
   "description": "",
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
+    "production": [">0.2%", "not dead", "not op_mini all"],
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
