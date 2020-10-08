@@ -7,7 +7,7 @@ git clone https://github.com/pmndrs/jotai
 cd jotai && yarn
 
 # move to the examples folder & install dependencies
-cd examples/Minimal && yarn
+cd examples/text_length && yarn
 
 # start the dev server
 yarn start
