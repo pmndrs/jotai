@@ -695,7 +695,7 @@ it('updates two atoms in child useEffect', async () => {
   await findByText('countB: 2')
 })
 
-it.only('works with Brige', async () => {
+it('works with Brige', async () => {
   const countAtom = atom(0)
 
   const Child: React.FC = () => {
