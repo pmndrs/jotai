@@ -41,5 +41,24 @@
     "bundled": 2533,
     "minified": 1319,
     "gzipped": 541
+  },
+  "immer.js": {
+    "bundled": 789,
+    "minified": 376,
+    "gzipped": 214,
+    "treeshaked": {
+      "rollup": {
+        "code": 42,
+        "import_statements": 42
+      },
+      "webpack": {
+        "code": 1092
+      }
+    }
+  },
+  "immer.cjs.js": {
+    "bundled": 1228,
+    "minified": 676,
+    "gzipped": 307
   }
 }
