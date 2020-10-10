@@ -70,4 +70,6 @@ export default [
   createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'jotai'),
   createESMConfig('src/utils.ts', 'dist/utils.js'),
   createCommonJSConfig('src/utils.ts', 'dist/utils.cjs.js'),
+  createESMConfig('src/immer.ts', 'dist/immer.js'),
+  createCommonJSConfig('src/immer.ts', 'dist/immer.cjs.js'),
 ]
