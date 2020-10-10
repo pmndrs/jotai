@@ -6,6 +6,7 @@
   "main": "src/index.js",
   "dependencies": {
     "@react-spring/web": "9.0.0-rc.3",
+    "html-react-parser": "^0.14.0",
     "jotai": "0.4.1",
     "react": "16.13.1",
     "react-dom": "16.13.1",
@@ -16,8 +17,8 @@
     "customize-cra-react-refresh": "^1.1.0",
     "raw-loader": "^4.0.1",
     "react-app-rewired": "^2.1.6",
-    "typescript": "3.8.3",
-    "serve": "^11.3.2"
+    "serve": "^11.3.2",
+    "typescript": "3.8.3"
   },
   "scripts": {
     "start": "react-scripts start",

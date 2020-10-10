@@ -1,17 +1,20 @@
-import React, { Suspense } from "react"
-import { Provider, atom, useAtom } from "jotai"
-import { a, useSpring } from "@react-spring/web"
+import React, { Suspense } from 'react'
+import Parser from 'html-react-parser'
+import { Provider, atom, useAtom } from 'jotai'
+import { a, useSpring } from '@react-spring/web'
 
 const postId = atom(9001)
 const postData = atom(async (get) => {
   const id = get(postId)
-  const response = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)
+  const response = await fetch(
+    `https://hacker-news.firebaseio.com/v0/item/${id}.json`
+  )
   return await response.json()
 })
 
 function Id() {
   const [id] = useAtom(postId)
-  const props = useSpring({ from: { id: 0 }, id, reset: true })
+  const props = useSpring({ from: { id: id }, id, reset: true })
   return <a.h1>{props.id.to(Math.round)}</a.h1>
 }
 
@@ -29,10 +32,10 @@ function PostTitle() {
   return (
     <>
       <h2>{by}</h2>
-      <h6>{new Date(time * 1000).toLocaleDateString("en-US")}</h6>
+      <h6>{new Date(time * 1000).toLocaleDateString('en-US')}</h6>
       {title && <h4>{title}</h4>}
       <a href={url}>{url}</a>
-      <p>{text}</p>
+      <p>{Parser(text)}</p>
     </>
   )
 }
