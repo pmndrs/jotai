@@ -76,10 +76,11 @@ it('atomFamily functionality as usual', async () => {
     )
   }
 
+  const indicesAtom = atom((get) => [...new Array(get(arrayAtom).length)])
+
   const Parent: React.FC = () => {
-    const [indices] = useAtom(
-      atom((get) => [...new Array(get(arrayAtom).length)])
-    )
+    const [indices] = useAtom(indicesAtom)
+
     return (
       <div>
         {indices.map((_, index) => (
