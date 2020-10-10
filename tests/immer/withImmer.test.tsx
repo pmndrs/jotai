@@ -1,7 +1,7 @@
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
-import { atomWithImmer, useImmerAtom, withImmer } from '../../src/immer'
+import { withImmer } from '../../src/immer'
 
 it('withImmer derived atom with useAtom', async () => {
   const regularCountAtom = atom(0)
