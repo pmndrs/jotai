@@ -114,3 +114,23 @@ it('atomFamily functionality as usual', async () => {
   await findByText('index: 1, count: 1')
   await findByText('index: 2, count: 1')
 })
+
+it('custom equality function work', async () => {
+  const bigAtom = atom([0])
+
+  const badFamily = atomFamily<{ index: number }, number>((num) => (get) =>
+    get(bigAtom)[num.index]
+  )
+
+  const goodFamily = atomFamily<{ index: number }, number>(
+    (num) => (get) => get(bigAtom)[num.index],
+    null,
+    (l, r) => l.index === r.index
+  )
+
+  expect(badFamily({ index: 0 })).not.toEqual(badFamily({ index: 0 }))
+  expect(badFamily({ index: 0 })).not.toEqual(badFamily({ index: 0 }))
+
+  expect(goodFamily({ index: 0 })).toEqual(goodFamily({ index: 0 }))
+  expect(goodFamily({ index: 0 })).not.toEqual(goodFamily({ index: 1 }))
+})
