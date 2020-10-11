@@ -483,6 +483,7 @@ const runWriteThunk = (
         const pendingState = pendingStateRef.current
         if (pendingState) {
           pendingStateRef.current = null
+          lastStateRef.current = null
           contextUpdate(() => {
             runWithPriority(UserBlockingPriority, () => {
               setState(pendingState)
