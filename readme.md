@@ -174,6 +174,7 @@ We will be organizing some more information later. Meanwhile, please see WIP mat
 - [Core Doc](./docs/core.md)
 - [Async Doc](./docs/async.md)
 - [Utils Doc](./docs/utils.md)
+- [Immer Doc](./docs/immer.md)
 - [TypeScript Doc](./docs/typescript.md)
 - [Persistence Doc](./docs/persistence.md)
 - [Next.js Doc](./docs/nextjs.md)
