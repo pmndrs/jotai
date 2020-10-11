@@ -139,7 +139,7 @@ const getAtomStateValue = (atom: AnyAtom, state: State) => {
 const readAtomState = <Value>(
   atom: Atom<Value>,
   prevState: State,
-  setState: Dispatch<SetStateAction<State>>,
+  setState: Dispatch<(prev: State) => State>,
   dependentsMap: DependentsMap,
   force?: boolean
 ) => {
@@ -245,7 +245,7 @@ const readAtomState = <Value>(
 const updateDependentsState = <Value>(
   atom: Atom<Value>,
   prevState: State,
-  setState: Dispatch<SetStateAction<State>>,
+  setState: Dispatch<(prev: State) => State>,
   dependentsMap: DependentsMap
 ) => {
   let nextState = prevState
@@ -281,7 +281,7 @@ const updateDependentsState = <Value>(
 const readAtom = <Value>(
   state: State,
   readingAtom: Atom<Value>,
-  setState: Dispatch<SetStateAction<State>>,
+  setState: Dispatch<(prev: State) => State>,
   dependentsMap: DependentsMap,
   readPendingMap: ReadPendingMap
 ) => {
@@ -317,7 +317,7 @@ const delAtom = (
 
 const gcAtom = (
   state: State,
-  setState: Dispatch<SetStateAction<State>>,
+  setState: Dispatch<State>,
   dependentsMap: DependentsMap
 ) => {
   let nextState = state
@@ -341,7 +341,7 @@ const gcAtom = (
 const writeAtom = <Value, Update>(
   writingAtom: WritableAtom<Value, Update>,
   update: Update,
-  setState: Dispatch<SetStateAction<State>>,
+  setState: Dispatch<(prev: State) => State>,
   dependentsMap: DependentsMap,
   addWriteThunk: (thunk: WriteThunk) => void
 ) => {
@@ -463,7 +463,7 @@ const writeAtom = <Value, Update>(
 const runWriteThunk = (
   lastStateRef: MutableRefObject<State | null>,
   pendingStateRef: MutableRefObject<State | null>,
-  setState: Dispatch<SetStateAction<State>>,
+  setState: Dispatch<State>,
   contextUpdate: ContextUpdate,
   writeThunkQueue: WriteThunk[]
 ) => {
