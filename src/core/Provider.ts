@@ -584,13 +584,18 @@ export const Provider: React.FC = ({ children }) => {
           dependentsMapRef.current as DependentsMap,
           (thunk: WriteThunk) => {
             writeThunkQueueRef.current.push(thunk)
-            runWriteThunk(
-              lastStateRef,
-              pendingStateRef,
-              setState,
-              contextUpdateRef.current as ContextUpdate,
-              writeThunkQueueRef.current
-            )
+            if (lastStateRef.current) {
+              runWriteThunk(
+                lastStateRef,
+                pendingStateRef,
+                setState,
+                contextUpdateRef.current as ContextUpdate,
+                writeThunkQueueRef.current
+              )
+            } else {
+              // force update (FIXME this is a workaround for now)
+              setState((prev) => mMerge(prev, mCreate()))
+            }
           }
         ),
     }),
