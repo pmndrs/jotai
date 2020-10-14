@@ -113,17 +113,16 @@ const updateAtomState = <Value>(
 }
 
 const addDependent = (atom: AnyAtom, dependent: AnyAtom, prevState: State) => {
-  let nextState = prevState
-  const atomState = mGet(nextState, atom)
+  const atomState = mGet(prevState, atom)
   if (atomState) {
     if (!atomState.deps.has(dependent)) {
       const newDeps = new Set(atomState.deps).add(dependent)
-      nextState = mSet(nextState, atom, { ...atomState, deps: newDeps })
+      return mSet(prevState, atom, { ...atomState, deps: newDeps })
     }
   } else if (process.env.NODE_ENV !== 'production') {
     warnAtomStateNotFound('addDependent', atom)
   }
-  return nextState
+  return prevState
 }
 
 const replaceDependencies = (
@@ -557,7 +556,7 @@ export const Provider: React.FC = ({ children }) => {
       mKeys(nextState).forEach((a) => {
         const aState = mGet(nextState, a) as AtomState<unknown>
         if (aState.writeP || aState.readP) {
-          // wait until promises are resolved
+          // do not delete while promises are not resolved
           return
         }
         const depsSize = aState.deps.size
