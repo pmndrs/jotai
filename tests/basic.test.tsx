@@ -277,6 +277,45 @@ it('works with async get', async () => {
   await findByText('commits: 2, count: 1, delayedCount: 1')
 })
 
+it('works with async get without setTimeout', async () => {
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(async (get) => {
+    return get(countAtom)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [delayedCount] = useAtom(asyncCountAtom)
+    return (
+      <>
+        <div>
+          count: {count}, delayedCount: {delayedCount}
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <React.Suspense fallback="loading">
+        <Counter />
+      </React.Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0, delayedCount: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('count: 1, delayedCount: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('count: 2, delayedCount: 2')
+})
+
 it('shows loading with async set', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(
