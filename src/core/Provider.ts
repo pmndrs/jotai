@@ -49,6 +49,14 @@ const warningObject = new Proxy(
   }
 )
 
+const useWeakMapRef = <T extends WeakMap<object, unknown>>() => {
+  const ref = useRef<T>()
+  if (!ref.current) {
+    ref.current = new WeakMap() as T
+  }
+  return ref.current
+}
+
 const warnAtomStateNotFound = (info: string, atom: AnyAtom) => {
   console.warn(
     '[Bug] Atom state not found. Please file an issue with repro: ' + info,
@@ -108,8 +116,7 @@ const updateAtomState = <Value>(
   if (prevPromise && prevPromise !== atomState.readP) {
     return prevState
   }
-  const nextAtomState: AtomState<Value> = { ...atomState, ...partial }
-  return mSet(prevState, atom, nextAtomState)
+  return mSet(prevState, atom, { ...atomState, ...partial })
 }
 
 const addDependent = (atom: AnyAtom, dependent: AnyAtom, prevState: State) => {
@@ -300,18 +307,22 @@ const updateDependentsState = <Value>(
   prevState: State,
   setState: Dispatch<(prev: State) => State>
 ) => {
-  let nextState = prevState
-  const atomState = mGet(nextState, atom)
+  const atomState = mGet(prevState, atom)
   if (!atomState) {
     if (process.env.NODE_ENV !== 'production') {
       warnAtomStateNotFound('updateDependentsState', atom)
     }
-    return nextState
+    return prevState
   }
+  let nextState = prevState
   atomState.deps.forEach((dependent) => {
-    if (dependent === atom) return
-    if (typeof dependent === 'symbol') return
-    if (!mGet(nextState, dependent)) return
+    if (
+      dependent === atom ||
+      typeof dependent === 'symbol' ||
+      !mGet(nextState, dependent)
+    ) {
+      return
+    }
     const [dependentState, nextNextState] = readAtomState(
       dependent,
       nextState,
@@ -337,7 +348,7 @@ const readAtom = <Value>(
   readPendingMap: ReadPendingMap,
   atomStateCache?: AtomStateCache
 ) => {
-  let prevState = readPendingMap.get(state) || state
+  const prevState = readPendingMap.get(state) || state
   const [atomState, nextState] = readAtomState(
     readingAtom,
     prevState,
@@ -394,13 +405,24 @@ const writeAtom = <Value, Update>(
         }) as Getter,
         ((a: AnyWritableAtom, v: unknown) => {
           if (a === atom) {
-            const u = { readE: undefined, readP: undefined, value: v }
+            const partialAtomState = {
+              readE: undefined,
+              readP: undefined,
+              value: v,
+            }
             if (isSync) {
-              nextState = updateAtomState(a, nextState, u)
-              nextState = updateDependentsState(a, nextState, setState)
+              nextState = updateDependentsState(
+                a,
+                updateAtomState(a, nextState, partialAtomState),
+                setState
+              )
             } else {
               setState((prev) =>
-                updateDependentsState(a, updateAtomState(a, prev, u), setState)
+                updateDependentsState(
+                  a,
+                  updateAtomState(a, prev, partialAtomState),
+                  setState
+                )
               )
             }
           } else {
@@ -468,10 +490,7 @@ const runWriteThunk = (
   writeThunkQueue: WriteThunk[]
 ) => {
   while (true) {
-    if (!lastStateRef.current) {
-      return
-    }
-    if (writeThunkQueue.length === 0) {
+    if (!lastStateRef.current || !writeThunkQueue.length) {
       return
     }
     const thunk = writeThunkQueue.shift() as WriteThunk
@@ -510,15 +529,9 @@ const InnerProvider: React.FC<{
 export const Provider: React.FC = ({ children }) => {
   const contextUpdateRef = useRef<ContextUpdate>()
 
-  const readPendingMapRef = useRef<ReadPendingMap>()
-  if (!readPendingMapRef.current) {
-    readPendingMapRef.current = new WeakMap()
-  }
+  const readPendingMap = useWeakMapRef<ReadPendingMap>()
 
-  const atomStateCacheRef = useRef<AtomStateCache>()
-  if (!atomStateCacheRef.current) {
-    atomStateCacheRef.current = new WeakMap()
-  }
+  const atomStateCache = useWeakMapRef<AtomStateCache>()
 
   const [state, setStateOrig] = useState(initialState)
   const lastStateRef = useRef<State | null>(null)
@@ -534,7 +547,6 @@ export const Provider: React.FC = ({ children }) => {
   }
 
   useIsoLayoutEffect(() => {
-    const readPendingMap = readPendingMapRef.current as ReadPendingMap
     const pendingState = readPendingMap.get(state)
     if (pendingState) {
       setState(pendingState)
@@ -546,25 +558,21 @@ export const Provider: React.FC = ({ children }) => {
   const [used, setUsed] = useState(initialUsedState)
   useEffect(() => {
     const lastState = lastStateRef.current
-    if (!lastState) {
-      return
-    }
+    if (!lastState) return
     let nextState = lastState
     let deleted: boolean
     do {
       deleted = false
       mKeys(nextState).forEach((a) => {
         const aState = mGet(nextState, a) as AtomState<unknown>
-        if (aState.writeP || aState.readP) {
-          // do not delete while promises are not resolved
-          return
-        }
+        // do not delete while promises are not resolved
+        if (aState.writeP || aState.readP) return
         const depsSize = aState.deps.size
         const isEmpty =
           (depsSize === 0 || (depsSize === 1 && aState.deps.has(a))) &&
           !mGet(used, a)?.size
         if (isEmpty) {
-          ;(atomStateCacheRef.current as AtomStateCache).set(a, aState)
+          atomStateCache.set(a, aState)
           nextState = mDel(nextState, a)
           deleted = true
         }
@@ -573,7 +581,7 @@ export const Provider: React.FC = ({ children }) => {
     if (nextState !== lastState) {
       setState(nextState)
     }
-  }, [used])
+  }, [used, atomStateCache])
 
   const writeThunkQueueRef = useRef<WriteThunk[]>([])
   useEffect(() => {
@@ -604,13 +612,7 @@ export const Provider: React.FC = ({ children }) => {
         })
       },
       read: <Value>(state: State, atom: Atom<Value>) =>
-        readAtom(
-          state,
-          atom,
-          setState,
-          readPendingMapRef.current as ReadPendingMap,
-          atomStateCacheRef.current as AtomStateCache
-        ),
+        readAtom(state, atom, setState, readPendingMap, atomStateCache),
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,
         update: Update
@@ -631,7 +633,7 @@ export const Provider: React.FC = ({ children }) => {
           }
         }),
     }),
-    []
+    [readPendingMap, atomStateCache]
   )
   if (process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
