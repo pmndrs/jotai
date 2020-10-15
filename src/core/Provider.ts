@@ -230,43 +230,29 @@ const readAtomState = <Value>(
         .then((value) => {
           const dependenciesToReplace = dependencies as Set<AnyAtom>
           dependencies = null
-          setState((prev) => {
-            let nextState = prev
-            nextState = replaceDependencies(
+          setState((prev) =>
+            updateAtomState(
               atom,
-              nextState,
-              dependenciesToReplace
-            )
-            nextState = updateAtomState(
-              atom,
-              nextState,
+              replaceDependencies(atom, prev, dependenciesToReplace),
               { readE: undefined, readP: undefined, value },
               promise
             )
-            return nextState
-          })
+          )
         })
         .catch((e) => {
           const dependenciesToReplace = dependencies as Set<AnyAtom>
           dependencies = null
-          setState((prev) => {
-            let nextState = prev
-            nextState = replaceDependencies(
+          setState((prev) =>
+            updateAtomState(
               atom,
-              nextState,
-              dependenciesToReplace
-            )
-            nextState = updateAtomState(
-              atom,
-              nextState,
+              replaceDependencies(atom, prev, dependenciesToReplace),
               {
                 readE: e instanceof Error ? e : new Error(e),
                 readP: undefined,
               },
               promise
             )
-            return nextState
-          })
+          )
         })
     } else {
       value = promiseOrValue
