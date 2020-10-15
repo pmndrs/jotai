@@ -1,9 +1,8 @@
-import { useCallback, useDebugValue } from 'react'
+import { useEffect, useCallback, useDebugValue } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
 import { StateContext, ActionsContext } from './Provider'
 import { Atom, WritableAtom, AnyWritableAtom } from './types'
-import { useIsoLayoutEffect } from './useIsoLayoutEffect'
 
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
@@ -45,11 +44,11 @@ export function useAtom<Value, Update>(
     )
   )
 
-  useIsoLayoutEffect(() => {
+  useEffect(() => {
     const id = Symbol()
     actions.add(id, atom)
     return () => {
-      actions.del(id)
+      actions.del(id, atom)
     }
   }, [actions, atom])
 
