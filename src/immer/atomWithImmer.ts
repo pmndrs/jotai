@@ -2,7 +2,7 @@
 import { produce, Draft } from 'immer'
 import { atom, WritableAtom } from 'jotai'
 
-export const atomWithImmer = <Value>(initialValue: Value) => {
+export function atomWithImmer<Value>(initialValue: Value) {
   const anAtom: WritableAtom<
     Value,
     Function | ((draft: Draft<Value>) => void)

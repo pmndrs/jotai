@@ -24,8 +24,8 @@
     "gzipped": 3200
   },
   "utils.js": {
-    "bundled": 1894,
-    "minified": 880,
+    "bundled": 1888,
+    "minified": 901,
     "gzipped": 441,
     "treeshaked": {
       "rollup": {
@@ -38,14 +38,14 @@
     }
   },
   "utils.cjs.js": {
-    "bundled": 2533,
-    "minified": 1319,
-    "gzipped": 541
+    "bundled": 2471,
+    "minified": 1320,
+    "gzipped": 540
   },
   "immer.js": {
-    "bundled": 789,
-    "minified": 376,
-    "gzipped": 214,
+    "bundled": 797,
+    "minified": 400,
+    "gzipped": 226,
     "treeshaked": {
       "rollup": {
         "code": 42,
@@ -57,8 +57,8 @@
     }
   },
   "immer.cjs.js": {
-    "bundled": 1228,
-    "minified": 676,
-    "gzipped": 307
+    "bundled": 1170,
+    "minified": 673,
+    "gzipped": 310
   }
 }

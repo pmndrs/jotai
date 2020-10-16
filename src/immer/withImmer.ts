@@ -2,8 +2,8 @@
 import { produce, Draft } from 'immer'
 import { atom, WritableAtom } from 'jotai'
 
-export const withImmer = <Value>(anAtom: WritableAtom<Value, Value>) =>
-  atom(
+export function withImmer<Value>(anAtom: WritableAtom<Value, Value>) {
+  return atom(
     (get) => get(anAtom),
     (get, set, fn: (draft: Draft<Value>) => void) =>
       set(
@@ -11,3 +11,4 @@ export const withImmer = <Value>(anAtom: WritableAtom<Value, Value>) =>
         produce(get(anAtom), (draft) => fn(draft))
       )
   )
+}
