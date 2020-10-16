@@ -24,9 +24,9 @@
     "gzipped": 3200
   },
   "utils.js": {
-    "bundled": 2365,
-    "minified": 1046,
-    "gzipped": 490,
+    "bundled": 2359,
+    "minified": 1067,
+    "gzipped": 492,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -38,14 +38,14 @@
     }
   },
   "utils.cjs.js": {
-    "bundled": 3104,
-    "minified": 1553,
-    "gzipped": 594
+    "bundled": 3042,
+    "minified": 1554,
+    "gzipped": 593
   },
   "immer.js": {
-    "bundled": 789,
-    "minified": 376,
-    "gzipped": 214,
+    "bundled": 797,
+    "minified": 400,
+    "gzipped": 226,
     "treeshaked": {
       "rollup": {
         "code": 42,
@@ -57,8 +57,8 @@
     }
   },
   "immer.cjs.js": {
-    "bundled": 1228,
-    "minified": 676,
-    "gzipped": 307
+    "bundled": 1170,
+    "minified": 673,
+    "gzipped": 310
   }
 }

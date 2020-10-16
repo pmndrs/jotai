@@ -3,9 +3,9 @@ import { useCallback } from 'react'
 import { produce, Draft } from 'immer'
 import { WritableAtom, useAtom } from 'jotai'
 
-export const useImmerAtom = <Value, Update>(
+export function useImmerAtom<Value, Update>(
   anAtom: WritableAtom<Value, Update>
-): [Value, (fn: (draft: Draft<Value>) => void) => void] => {
+): [Value, (fn: (draft: Draft<Value>) => void) => void] {
   const [state, setState] = useAtom<Value, any>(anAtom)
   const setStateWithImmer = useCallback(
     (fn) => {
