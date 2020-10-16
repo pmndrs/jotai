@@ -84,7 +84,7 @@
     ]
   },
   "dependencies": {
-    "use-context-selector": "1.2.8"
+    "use-context-selector": "1.2.9"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
