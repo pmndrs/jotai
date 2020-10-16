@@ -174,3 +174,71 @@ const todoFamily = atomFamily(
 ### Codesandbox
 
 https://codesandbox.io/s/react-typescript-forked-8zfrn
+
+## useSelector
+
+Ref: https://github.com/pmndrs/jotai/issues/36
+
+### Usage
+
+```js
+useSelector(anAtom, selector, equalityFn)
+```
+
+The equalityFn is optional.
+
+### Examples
+
+```js
+import { Provider } from "jotai";
+import { useSelector, atomWithReducer, useUpdateAtom } from "jotai/utils";
+
+const initialState = {
+  count: 0,
+  text: "hello"
+};
+
+const reducer = (state, action) => {
+  if (action.type === "INC") {
+    return { ...state, count: state.count + 1 };
+  } else if (action.type === "SET_TEXT") {
+    return { ...state, text: action.text };
+  } else {
+    throw Error("no such action");
+  }
+};
+
+const stateAtom = atomWithReducer(initialState, reducer);
+
+const selectCount = (state: State) => state.count;
+
+const Counter = () => {
+  const dispatch = useUpdateAtom(stateAtom);
+  const count = useSelector(stateAtom, selectCount);
+  return (
+    <div>
+      {count} <button onClick={() => dispatch({ type: "INC" })}>+1</button>
+    </div>
+  );
+};
+
+const selectText = (state: State) => state.text;
+
+const TextBox = () => {
+  const dispatch = useUpdateAtom(stateAtom);
+  const text = useSelector(stateAtom, selectText);
+  return (
+    <div>
+      {text}{" "}
+      <input
+        value={text}
+        onChange={(e) => dispatch({ type: "SET_TEXT", text: e.target.value })}
+      />
+    </div>
+  );
+};
+```
+
+### Codesandbox
+
+https://codesandbox.io/s/react-typescript-forked-i4880
