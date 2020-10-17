@@ -3,7 +3,15 @@ import { atom, useAtom } from 'jotai'
 
 import type { Getter, Setter } from '../core/types'
 
-export function useAtomCallback<Arg, Result>(
+export function useAtomCallback<Result>(
+  callback: (get: Getter, set: Setter) => Result
+): () => Promise<Result>
+
+export function useAtomCallback<Result, Arg>(
+  callback: (get: Getter, set: Setter, arg: Arg) => Result
+): (arg: Arg) => Promise<Result>
+
+export function useAtomCallback<Result, Arg>(
   callback: (get: Getter, set: Setter, arg: Arg) => Result
 ) {
   const anAtom = useMemo(
