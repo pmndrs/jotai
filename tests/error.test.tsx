@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react'
+import React, { Suspense, useState, useEffect } from 'react'
 import { fireEvent, cleanup, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
@@ -387,5 +387,53 @@ it('throws an error while updating in effect', async () => {
     </ErrorBoundary>
   )
 
+  await findByText('outer errored')
+})
+
+it('throws an error while updating in effect cleanup', async () => {
+  console.error = jest.fn()
+
+  const countAtom = atom(0)
+
+  const Counter: React.FC = () => {
+    const [, setCount] = useAtom(countAtom)
+    useEffect(() => {
+      return () => {
+        // setCount((x) => x + 1)
+        setCount(() => {
+          throw Error()
+        })
+      }
+    }, [setCount])
+    return (
+      <>
+        <div>no error</div>
+      </>
+    )
+  }
+
+  const Main: React.FC = () => {
+    const [hide, setHide] = useState(false)
+    return (
+      <>
+        <button onClick={() => setHide(true)}>close</button>
+        {!hide && <Counter />}
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <ErrorBoundary message="outer errored">
+      <Provider>
+        <ErrorBoundary message="inner errored">
+          <Main />
+        </ErrorBoundary>
+      </Provider>
+    </ErrorBoundary>
+  )
+
+  await findByText('no error')
+
+  fireEvent.click(getByText('close'))
   await findByText('outer errored')
 })
