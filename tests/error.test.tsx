@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import { fireEvent, cleanup, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
@@ -8,25 +8,32 @@ afterEach(() => {
   console.error = consoleError
 })
 
+class ErrorBoundary extends React.Component<
+  { message: string },
+  { hasError: boolean }
+> {
+  constructor(props: { message: string }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  render() {
+    return this.state.hasError ? (
+      <div>{this.props.message}</div>
+    ) : (
+      this.props.children
+    )
+  }
+}
+
 it('can throw an initial error in read function', async () => {
   console.error = jest.fn()
 
   const errorAtom = atom(() => {
     throw new Error()
   })
-
-  class ErrorBoundary extends React.Component<{}, { hasError: boolean }> {
-    constructor(props: {}) {
-      super(props)
-      this.state = { hasError: false }
-    }
-    static getDerivedStateFromError() {
-      return { hasError: true }
-    }
-    render() {
-      return this.state.hasError ? <div>errored</div> : this.props.children
-    }
-  }
 
   const Counter: React.FC = () => {
     useAtom(errorAtom)
@@ -39,7 +46,7 @@ it('can throw an initial error in read function', async () => {
 
   const { findByText } = render(
     <Provider>
-      <ErrorBoundary>
+      <ErrorBoundary message="errored">
         <Counter />
       </ErrorBoundary>
     </Provider>
@@ -59,19 +66,6 @@ it('can throw an error in read function', async () => {
     throw new Error()
   })
 
-  class ErrorBoundary extends React.Component<{}, { hasError: boolean }> {
-    constructor(props: {}) {
-      super(props)
-      this.state = { hasError: false }
-    }
-    static getDerivedStateFromError() {
-      return { hasError: true }
-    }
-    render() {
-      return this.state.hasError ? <div>errored</div> : this.props.children
-    }
-  }
-
   const Counter: React.FC = () => {
     const [, setCount] = useAtom(countAtom)
     const [count] = useAtom(errorAtom)
@@ -86,7 +80,7 @@ it('can throw an error in read function', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <ErrorBoundary>
+      <ErrorBoundary message="errored">
         <Counter />
       </ErrorBoundary>
     </Provider>
@@ -106,19 +100,6 @@ it('can throw an initial chained error in read function', async () => {
   })
   const derivedAtom = atom((get) => get(errorAtom))
 
-  class ErrorBoundary extends React.Component<{}, { hasError: boolean }> {
-    constructor(props: {}) {
-      super(props)
-      this.state = { hasError: false }
-    }
-    static getDerivedStateFromError() {
-      return { hasError: true }
-    }
-    render() {
-      return this.state.hasError ? <div>errored</div> : this.props.children
-    }
-  }
-
   const Counter: React.FC = () => {
     useAtom(derivedAtom)
     return (
@@ -130,7 +111,7 @@ it('can throw an initial chained error in read function', async () => {
 
   const { findByText } = render(
     <Provider>
-      <ErrorBoundary>
+      <ErrorBoundary message="errored">
         <Counter />
       </ErrorBoundary>
     </Provider>
@@ -151,19 +132,6 @@ it('can throw a chained error in read function', async () => {
   })
   const derivedAtom = atom((get) => get(errorAtom))
 
-  class ErrorBoundary extends React.Component<{}, { hasError: boolean }> {
-    constructor(props: {}) {
-      super(props)
-      this.state = { hasError: false }
-    }
-    static getDerivedStateFromError() {
-      return { hasError: true }
-    }
-    render() {
-      return this.state.hasError ? <div>errored</div> : this.props.children
-    }
-  }
-
   const Counter: React.FC = () => {
     const [, setCount] = useAtom(countAtom)
     const [count] = useAtom(derivedAtom)
@@ -178,7 +146,7 @@ it('can throw a chained error in read function', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <ErrorBoundary>
+      <ErrorBoundary message="errored">
         <Counter />
       </ErrorBoundary>
     </Provider>
@@ -197,19 +165,6 @@ it('can throw an initial error in async read function', async () => {
     throw new Error()
   })
 
-  class ErrorBoundary extends React.Component<{}, { hasError: boolean }> {
-    constructor(props: {}) {
-      super(props)
-      this.state = { hasError: false }
-    }
-    static getDerivedStateFromError() {
-      return { hasError: true }
-    }
-    render() {
-      return this.state.hasError ? <div>errored</div> : this.props.children
-    }
-  }
-
   const Counter: React.FC = () => {
     useAtom(errorAtom)
     return (
@@ -221,7 +176,7 @@ it('can throw an initial error in async read function', async () => {
 
   const { findByText } = render(
     <Provider>
-      <ErrorBoundary>
+      <ErrorBoundary message="errored">
         <Suspense fallback={null}>
           <Counter />
         </Suspense>
@@ -243,19 +198,6 @@ it('can throw an error in async read function', async () => {
     throw new Error()
   })
 
-  class ErrorBoundary extends React.Component<{}, { hasError: boolean }> {
-    constructor(props: {}) {
-      super(props)
-      this.state = { hasError: false }
-    }
-    static getDerivedStateFromError() {
-      return { hasError: true }
-    }
-    render() {
-      return this.state.hasError ? <div>errored</div> : this.props.children
-    }
-  }
-
   const Counter: React.FC = () => {
     const [, setCount] = useAtom(countAtom)
     const [count] = useAtom(errorAtom)
@@ -270,7 +212,7 @@ it('can throw an error in async read function', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <ErrorBoundary>
+      <ErrorBoundary message="errored">
         <Suspense fallback={null}>
           <Counter />
         </Suspense>
@@ -414,4 +356,36 @@ it('can throw a chained error in write function', async () => {
 
   fireEvent.click(getByText('button'))
   expect(console.error).toHaveBeenCalledTimes(1)
+})
+
+it('throws an error while updating in effect', async () => {
+  console.error = jest.fn()
+
+  const countAtom = atom(0)
+
+  const Counter: React.FC = () => {
+    const [, setCount] = useAtom(countAtom)
+    useEffect(() => {
+      setCount(() => {
+        throw Error()
+      })
+    }, [setCount])
+    return (
+      <>
+        <div>no error</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <ErrorBoundary message="outer errored">
+      <Provider>
+        <ErrorBoundary message="inner errored">
+          <Counter />
+        </ErrorBoundary>
+      </Provider>
+    </ErrorBoundary>
+  )
+
+  await findByText('outer errored')
 })
