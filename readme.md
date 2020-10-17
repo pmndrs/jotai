@@ -164,9 +164,9 @@ function Controls() {
 
 ----
 
-## Installation notes for Yarn 2 users
+## Installation notes
 
-If you are using yarn v2 (yarn berry), you need to install all peer dependencies by yourself.
+This package requires some peer dependencies, which you need to install by yourself.
 
 ```bash
 yarn add jotai react scheduler react-dom
