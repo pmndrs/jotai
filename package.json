@@ -84,7 +84,7 @@
     ]
   },
   "dependencies": {
-    "use-context-selector": "1.2.9"
+    "use-context-selector": "1.2.10"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
@@ -126,6 +126,16 @@
   },
   "peerDependencies": {
     "react": ">=16.8",
-    "scheduler": ">=0.19"
+    "scheduler": ">=0.19",
+    "react-dom": "*",
+    "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "react-dom": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    }
   }
 }
