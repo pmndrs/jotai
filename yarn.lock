@@ -7111,10 +7111,10 @@ url@^0.11.0:
     punycode "1.3.2"
     querystring "0.2.0"
 
-use-context-selector@1.2.9:
-  version "1.2.9"
-  resolved "https://registry.yarnpkg.com/use-context-selector/-/use-context-selector-1.2.9.tgz#da79747c0788db50dfbcb5e6f46b245e077f1b55"
-  integrity sha512-0XXsdRC2REJYe3HYgYb4SwAOA/CXucMoxCcEoMA9VnPkrVTwEK9WmTxrEtTDXi2Lypx6E//ZyEkluRvRwoxOdw==
+use-context-selector@1.2.10:
+  version "1.2.10"
+  resolved "https://registry.yarnpkg.com/use-context-selector/-/use-context-selector-1.2.10.tgz#47230099cd381119ae1c0f4a44737f336932aec0"
+  integrity sha512-gSKcvwl2I683GY5JG/ixsVDeVsIdEdLJz3ccl7y1KaKJqXitX2PjC0Z1F0LEtni1pc7u1J3cy5dHT8+MI69naA==
 
 use@^3.1.0:
   version "3.1.1"
