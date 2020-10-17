@@ -185,6 +185,7 @@ Ref: https://github.com/pmndrs/jotai/issues/36
 useSelector(anAtom, selector, equalityFn)
 ```
 
+Selector and equalityFn must be stable (should be wrapped with useCallback).
 The equalityFn is optional.
 
 ### Examples

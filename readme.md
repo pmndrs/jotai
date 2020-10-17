@@ -164,6 +164,22 @@ function Controls() {
 
 ----
 
+## Installation notes for Yarn 2 users
+
+If you are using yarn v2 (yarn berry), you need to install all peer dependencies by yourself.
+
+```bash
+yarn add jotai react scheduler react-dom
+```
+
+For React Native users:
+
+```bash
+yarn add jotai react scheduler react-native
+```
+
+For users who use workspaces, check out [this issue](https://github.com/pmndrs/jotai/issues/135) for some workarounds.
+
 ## More information
 
 We will be organizing some more information later. Meanwhile, please see WIP materials.
