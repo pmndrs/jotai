@@ -308,11 +308,9 @@ it('works with async get without setTimeout', async () => {
   await findByText('count: 0, delayedCount: 0')
 
   fireEvent.click(getByText('button'))
-  await findByText('loading')
   await findByText('count: 1, delayedCount: 1')
 
   fireEvent.click(getByText('button'))
-  await findByText('loading')
   await findByText('count: 2, delayedCount: 2')
 })
 
