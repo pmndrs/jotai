@@ -12,7 +12,6 @@ import React, {
 } from 'react'
 import {
   unstable_UserBlockingPriority as UserBlockingPriority,
-  unstable_NormalPriority as NormalPriority,
   unstable_runWithPriority as runWithPriority,
 } from 'scheduler'
 import { createContext, useContextUpdate } from 'use-context-selector'
@@ -484,7 +483,7 @@ const runWriteThunk = (
     const nextState = thunk(prevState)
     if (nextState !== prevState) {
       pendingStateRef.current = nextState
-      runWithPriority(NormalPriority, () => {
+      Promise.resolve().then(() => {
         const pendingState = pendingStateRef.current
         if (pendingState) {
           pendingStateRef.current = null
