@@ -243,3 +243,64 @@ const TextBox = () => {
 ### Codesandbox
 
 https://codesandbox.io/s/react-typescript-forked-i4880
+
+## useAtomCallback
+
+Ref: https://github.com/pmndrs/jotai/issues/60
+
+### Usage
+
+```js
+useAtomCallback(
+  callback: (get: Getter, set: Setter, arg: Arg) => Result
+): (arg: Arg) => Promise<Result>
+```
+
+This hook allows to interact with atoms imperatively.
+It takes a callback function that works like atom write function,
+and returns a function that returns a promise.
+
+The callback to pass in the hook must be stable (should be wrapped with useCallback).
+
+### Examples
+
+```js
+import { useEffect, useState, useCallback } from "react";
+import { Provider, atom, useAtom } from "jotai";
+import { useAtomCallback } from "jotai/utils";
+
+const countAtom = atom(0);
+
+const Counter = () => {
+  const [count, setCount] = useAtom(countAtom);
+  return (
+    <>
+      {count} <button onClick={() => setCount((c) => c + 1)}>+1</button>
+    </>
+  );
+};
+
+const Monitor = () => {
+  const [count, setCount] = useState(0);
+  const readCount = useAtomCallback(
+    useCallback((get) => {
+      const currCount = get(countAtom);
+      setCount(currCount);
+      return currCount;
+    }, [])
+  );
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      console.log(await readCount());
+    }, 1000);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [readCount]);
+  return <div>current count: {count}</div>;
+};
+```
+
+### Codesandbox
+
+https://codesandbox.io/s/react-typescript-forked-6ur43

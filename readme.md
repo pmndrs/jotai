@@ -164,6 +164,20 @@ function Controls() {
 
 ----
 
+## Installation notes
+
+This package requires some peer dependencies, which you need to install by yourself.
+
+```bash
+yarn add jotai react scheduler react-dom
+```
+
+For React Native users:
+
+```bash
+yarn add jotai react scheduler react-native
+```
+
 ## More information
 
 We will be organizing some more information later. Meanwhile, please see WIP materials.
