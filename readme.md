@@ -178,8 +178,6 @@ For React Native users:
 yarn add jotai react scheduler react-native
 ```
 
-For users who use workspaces, check out [this issue](https://github.com/pmndrs/jotai/issues/135) for some workarounds.
-
 ## More information
 
 We will be organizing some more information later. Meanwhile, please see WIP materials.
