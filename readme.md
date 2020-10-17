@@ -187,6 +187,7 @@ We will be organizing some more information later. Meanwhile, please see WIP mat
   - [How is jotai different from recoil?](./docs/comparison.md#how-is-jotai-different-from-recoil)
 - [Core Doc](./docs/core.md)
 - [Async Doc](./docs/async.md)
+- [Debugging Doc](./docs/debugging.md)
 - [Utils Doc](./docs/utils.md)
 - [Immer Doc](./docs/immer.md)
 - [TypeScript Doc](./docs/typescript.md)
