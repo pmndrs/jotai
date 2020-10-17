@@ -390,16 +390,18 @@ it('throws an error while updating in effect', async () => {
   await findByText('outer errored')
 })
 
-it('throws an error while updating in effect cleanup', async () => {
-  console.error = jest.fn()
-
+describe('throws an error while updating in effect cleanup', () => {
   const countAtom = atom(0)
+
+  let doubleSetCount = false
 
   const Counter: React.FC = () => {
     const [, setCount] = useAtom(countAtom)
     useEffect(() => {
       return () => {
-        // setCount((x) => x + 1)
+        if (doubleSetCount) {
+          setCount((x) => x + 1)
+        }
         setCount(() => {
           throw Error()
         })
@@ -422,18 +424,42 @@ it('throws an error while updating in effect cleanup', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
-    <ErrorBoundary message="outer errored">
-      <Provider>
-        <ErrorBoundary message="inner errored">
-          <Main />
-        </ErrorBoundary>
-      </Provider>
-    </ErrorBoundary>
-  )
+  it('single setCount', async () => {
+    console.error = jest.fn()
 
-  await findByText('no error')
+    const { getByText, findByText } = render(
+      <ErrorBoundary message="outer errored">
+        <Provider>
+          <ErrorBoundary message="inner errored">
+            <Main />
+          </ErrorBoundary>
+        </Provider>
+      </ErrorBoundary>
+    )
 
-  fireEvent.click(getByText('close'))
-  await findByText('outer errored')
+    await findByText('no error')
+
+    fireEvent.click(getByText('close'))
+    await findByText('inner errored')
+  })
+
+  it('dobule setCount', async () => {
+    console.error = jest.fn()
+    doubleSetCount = true
+
+    const { getByText, findByText } = render(
+      <ErrorBoundary message="outer errored">
+        <Provider>
+          <ErrorBoundary message="inner errored">
+            <Main />
+          </ErrorBoundary>
+        </Provider>
+      </ErrorBoundary>
+    )
+
+    await findByText('no error')
+
+    fireEvent.click(getByText('close'))
+    await findByText('inner errored')
+  })
 })
