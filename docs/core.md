@@ -80,6 +80,25 @@ The dependency will initially be empty. On first use, we run the read function a
 When we re-run the read function (because its dependency (=textAtom) is updated),
 the dependency is built again, which is the same in this case. We then remove stale dependents and replace with the latest one.
 
+# Atoms can be created on demand
+
+Basic examples in readme only show defining atoms globally outside components.
+There is no restrictions about when we create an atom.
+As long as we know atoms are identified by their object referential identity,
+it's okay to create them at anytime.
+
+If you create atoms in render functions, you would typically want to use
+some hooks like `useRef` or `useMemo`.
+
+You can create an atom and store it wth `useState` or even in another atom.
+See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
+
+You can cache atoms somewhere globally.
+See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or 
+[that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
+
+Check [atomFamily](https://github.com/pmndrs/jotai/blob/master/docs/utils.md#atomfamily) in utils too.
+
 # Some more notes about atoms
 
 - If you create a primitive atom, it will use predefined read/write functions to emulate `useState` behavior.
