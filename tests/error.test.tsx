@@ -9,10 +9,10 @@ afterEach(() => {
 })
 
 class ErrorBoundary extends React.Component<
-  { message: string },
+  { message?: string },
   { hasError: boolean }
 > {
-  constructor(props: { message: string }) {
+  constructor(props: { message?: string }) {
     super(props)
     this.state = { hasError: false }
   }
@@ -21,7 +21,7 @@ class ErrorBoundary extends React.Component<
   }
   render() {
     return this.state.hasError ? (
-      <div>{this.props.message}</div>
+      <div>{this.props.message || 'errored'}</div>
     ) : (
       this.props.children
     )
@@ -46,7 +46,7 @@ it('can throw an initial error in read function', async () => {
 
   const { findByText } = render(
     <Provider>
-      <ErrorBoundary message="errored">
+      <ErrorBoundary>
         <Counter />
       </ErrorBoundary>
     </Provider>
@@ -80,7 +80,7 @@ it('can throw an error in read function', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <ErrorBoundary message="errored">
+      <ErrorBoundary>
         <Counter />
       </ErrorBoundary>
     </Provider>
@@ -111,7 +111,7 @@ it('can throw an initial chained error in read function', async () => {
 
   const { findByText } = render(
     <Provider>
-      <ErrorBoundary message="errored">
+      <ErrorBoundary>
         <Counter />
       </ErrorBoundary>
     </Provider>
@@ -146,7 +146,7 @@ it('can throw a chained error in read function', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <ErrorBoundary message="errored">
+      <ErrorBoundary>
         <Counter />
       </ErrorBoundary>
     </Provider>
@@ -176,7 +176,7 @@ it('can throw an initial error in async read function', async () => {
 
   const { findByText } = render(
     <Provider>
-      <ErrorBoundary message="errored">
+      <ErrorBoundary>
         <Suspense fallback={null}>
           <Counter />
         </Suspense>
@@ -212,7 +212,7 @@ it('can throw an error in async read function', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <ErrorBoundary message="errored">
+      <ErrorBoundary>
         <Suspense fallback={null}>
           <Counter />
         </Suspense>
@@ -366,9 +366,15 @@ it('throws an error while updating in effect', async () => {
   const Counter: React.FC = () => {
     const [, setCount] = useAtom(countAtom)
     useEffect(() => {
-      setCount(() => {
-        throw Error()
-      })
+      ;(async () => {
+        try {
+          await setCount(() => {
+            throw Error()
+          })
+        } catch (e) {
+          console.error(e)
+        }
+      })()
     }, [setCount])
     return (
       <>
@@ -378,16 +384,16 @@ it('throws an error while updating in effect', async () => {
   }
 
   const { findByText } = render(
-    <ErrorBoundary message="outer errored">
-      <Provider>
-        <ErrorBoundary message="inner errored">
-          <Counter />
-        </ErrorBoundary>
-      </Provider>
-    </ErrorBoundary>
+    <Provider>
+      <ErrorBoundary>
+        <Counter />
+      </ErrorBoundary>
+    </Provider>
   )
 
-  await findByText('outer errored')
+  expect(console.error).toHaveBeenCalledTimes(0)
+  await findByText('no error')
+  expect(console.error).toHaveBeenCalledTimes(1)
 })
 
 describe('throws an error while updating in effect cleanup', () => {
@@ -428,19 +434,17 @@ describe('throws an error while updating in effect cleanup', () => {
     console.error = jest.fn()
 
     const { getByText, findByText } = render(
-      <ErrorBoundary message="outer errored">
-        <Provider>
-          <ErrorBoundary message="inner errored">
-            <Main />
-          </ErrorBoundary>
-        </Provider>
-      </ErrorBoundary>
+      <Provider>
+        <ErrorBoundary>
+          <Main />
+        </ErrorBoundary>
+      </Provider>
     )
 
     await findByText('no error')
 
     fireEvent.click(getByText('close'))
-    await findByText('inner errored')
+    await findByText('errored')
   })
 
   it('dobule setCount', async () => {
@@ -448,18 +452,16 @@ describe('throws an error while updating in effect cleanup', () => {
     doubleSetCount = true
 
     const { getByText, findByText } = render(
-      <ErrorBoundary message="outer errored">
-        <Provider>
-          <ErrorBoundary message="inner errored">
-            <Main />
-          </ErrorBoundary>
-        </Provider>
-      </ErrorBoundary>
+      <Provider>
+        <ErrorBoundary>
+          <Main />
+        </ErrorBoundary>
+      </Provider>
     )
 
     await findByText('no error')
 
     fireEvent.click(getByText('close'))
-    await findByText('inner errored')
+    await findByText('errored')
   })
 })
