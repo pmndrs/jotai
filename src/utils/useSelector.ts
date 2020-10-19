@@ -4,7 +4,7 @@ import { atom, useAtom, Atom } from 'jotai'
 export function useSelector<Value, Slice>(
   anAtom: Atom<Value>,
   selector: (v: Value) => Slice,
-  equalityFn: (a: Slice, b: Slice) => boolean = Object.is as any
+  equalityFn: (a: Slice, b: Slice) => boolean = Object.is
 ): Slice {
   const sliceAtom = useMemo(() => {
     let prevSlice: Slice

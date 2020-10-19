@@ -82,5 +82,3 @@ export function atomFamily<Param, Value, Update>(
   }
   return createAtom
 }
-
-// -----------------------------------------------------------------------
