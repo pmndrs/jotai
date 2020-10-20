@@ -446,7 +446,23 @@ const writeAtom = <Value, Update>(
     return nextState
   }
 
-  addWriteThunk((prevState) => writeAtomState(prevState, writingAtom, update))
+  let isSync = true
+  let writeResolve: () => void
+  const writePromise = new Promise<void>((resolve) => {
+    writeResolve = resolve
+  })
+  pendingPromises.unshift(writePromise)
+  addWriteThunk((prevState) => {
+    if (isSync) {
+      pendingPromises.shift()
+    }
+    const nextState = writeAtomState(prevState, writingAtom, update)
+    if (!isSync) {
+      writeResolve()
+    }
+    return nextState
+  })
+  isSync = false
 
   if (pendingPromises.length) {
     return new Promise<void>((resolve, reject) => {
