@@ -4,6 +4,7 @@ import React, {
   MutableRefObject,
   ReactElement,
   createElement,
+  useCallback,
   useMemo,
   useState,
   useRef,
@@ -521,20 +522,32 @@ export const Provider: React.FC = ({ children }) => {
   const [state, setStateOrig] = useState(initialState)
   const lastStateRef = useRef<State | null>(null)
   const pendingStateRef = useRef<State | null>(null)
-  const setState = (setStateAction: SetStateAction<State>) => {
-    lastStateRef.current = null
-    const pendingState = pendingStateRef.current
-    if (pendingState) {
-      pendingStateRef.current = null
-      setStateOrig(pendingState)
-    }
-    setStateOrig(setStateAction)
-  }
+  const setState = useCallback(
+    (setStateAction: SetStateAction<State>) => {
+      const pendingState = pendingStateRef.current
+      if (pendingState) {
+        pendingStateRef.current = null
+        setStateOrig(pendingState)
+      }
+      if (lastStateRef.current) {
+        const readPending = readPendingMap.get(lastStateRef.current)
+        if (readPending) {
+          setStateOrig(readPending)
+          if (pendingState && process.env.NODE_ENV !== 'production') {
+            console.warn('[Bug] conflict pendingState and readPending')
+          }
+        }
+      }
+      lastStateRef.current = null
+      setStateOrig(setStateAction)
+    },
+    [readPendingMap]
+  )
 
   useIsoLayoutEffect(() => {
-    const pendingState = readPendingMap.get(state)
-    if (pendingState) {
-      setState(pendingState)
+    const readPending = readPendingMap.get(state)
+    if (readPending) {
+      setState(readPending)
       return
     }
     lastStateRef.current = state
@@ -566,7 +579,7 @@ export const Provider: React.FC = ({ children }) => {
     if (nextState !== lastState) {
       setState(nextState)
     }
-  }, [used, atomStateCache])
+  }, [used, atomStateCache, setState])
 
   const writeThunkQueueRef = useRef<WriteThunk[]>([])
   useEffect(() => {
@@ -577,7 +590,7 @@ export const Provider: React.FC = ({ children }) => {
       contextUpdateRef.current as ContextUpdate,
       writeThunkQueueRef.current
     )
-  }, [state])
+  }, [state, setState])
 
   const actions = useMemo(
     () => ({
@@ -618,7 +631,7 @@ export const Provider: React.FC = ({ children }) => {
           }
         }),
     }),
-    [readPendingMap, atomStateCache]
+    [readPendingMap, atomStateCache, setState]
   )
   if (process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
