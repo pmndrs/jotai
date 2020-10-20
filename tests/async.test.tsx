@@ -126,3 +126,37 @@ it('reuses promises on initial read (no strict mode)', async () => {
   await findAllByText('ready')
   expect(invokeCount).toBe(1)
 })
+
+it('uses multiple async atoms at once', async () => {
+  const someAtom = atom(async () => {
+    await new Promise((r) => setTimeout(r, 10))
+    return 'ready'
+  })
+  const someAtom2 = atom(async () => {
+    await new Promise((r) => setTimeout(r, 10))
+    return 'ready2'
+  })
+
+  const Component: React.FC = () => {
+    const [some] = useAtom(someAtom)
+    const [some2] = useAtom(someAtom2)
+    return (
+      <>
+        <div>
+          {some} {some2}
+        </div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <React.Suspense fallback="loading">
+        <Component />
+      </React.Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('ready ready2')
+})
