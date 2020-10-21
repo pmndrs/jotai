@@ -442,9 +442,10 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     await findByText('no error')
+    expect(console.error).toHaveBeenCalledTimes(0)
 
     fireEvent.click(getByText('close'))
-    await findByText('errored')
+    expect(console.error).toHaveBeenCalledTimes(1)
   })
 
   it('dobule setCount', async () => {
@@ -460,8 +461,9 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     await findByText('no error')
+    expect(console.error).toHaveBeenCalledTimes(0)
 
     fireEvent.click(getByText('close'))
-    await findByText('errored')
+    expect(console.error).toHaveBeenCalledTimes(1)
   })
 })
