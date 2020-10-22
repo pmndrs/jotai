@@ -160,3 +160,40 @@ it('uses multiple async atoms at once', async () => {
   await findByText('loading')
   await findByText('ready ready2')
 })
+
+it('uses async atom in the middle of dependency chain', async () => {
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 10))
+    return get(countAtom)
+  })
+  const delayedCountAtom = atom((get) => get(asyncCountAtom))
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [delayedCount] = useAtom(delayedCountAtom)
+    return (
+      <>
+        <div>
+          count: {count}, delayed: {delayedCount}
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <React.Suspense fallback="loading">
+        <Counter />
+      </React.Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0, delayed: 0')
+
+  fireEvent.click(getByText('button'))
+  // no loading
+  await findByText('count: 1, delayed: 1')
+})

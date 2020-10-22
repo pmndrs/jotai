@@ -168,9 +168,10 @@ const readAtomState = <Value>(
   atom: Atom<Value>,
   prevState: State,
   setState: Dispatch<(prev: State) => State>,
-  atomStateCache?: AtomStateCache // read state then cache
+  atomStateCache: AtomStateCache,
+  force?: boolean
 ) => {
-  if (atomStateCache) {
+  if (!force) {
     let atomState = mGet(prevState, atom) as AtomState<Value> | undefined
     if (atomState) {
       return [atomState, prevState] as const
@@ -260,7 +261,12 @@ const readAtomState = <Value>(
     }
   } catch (errorOrPromise) {
     if (errorOrPromise instanceof Promise) {
-      promise = errorOrPromise
+      promise = errorOrPromise.then(() => {
+        setState(
+          (prev) =>
+            readAtomState(atom, mDel(prev, atom), setState, atomStateCache)[1]
+        )
+      })
     } else if (errorOrPromise instanceof Error) {
       error = errorOrPromise
     } else {
@@ -291,7 +297,8 @@ const readAtomState = <Value>(
 const updateDependentsState = <Value>(
   atom: Atom<Value>,
   prevState: State,
-  setState: Dispatch<(prev: State) => State>
+  setState: Dispatch<(prev: State) => State>,
+  atomStateCache: AtomStateCache
 ) => {
   const atomState = mGet(prevState, atom)
   if (!atomState) {
@@ -312,16 +319,25 @@ const updateDependentsState = <Value>(
     const [dependentState, nextNextState] = readAtomState(
       dependent,
       nextState,
-      setState
+      setState,
+      atomStateCache,
+      true
     )
     const promise = dependentState.readP
     if (promise) {
       promise.then(() => {
-        setState((prev) => updateDependentsState(dependent, prev, setState))
+        setState((prev) =>
+          updateDependentsState(dependent, prev, setState, atomStateCache)
+        )
       })
       nextState = nextNextState
     } else {
-      nextState = updateDependentsState(dependent, nextNextState, setState)
+      nextState = updateDependentsState(
+        dependent,
+        nextNextState,
+        setState,
+        atomStateCache
+      )
     }
   })
   return nextState
@@ -332,7 +348,7 @@ const readAtom = <Value>(
   readingAtom: Atom<Value>,
   setState: Dispatch<(prev: State) => State>,
   readPendingMap: ReadPendingMap,
-  atomStateCache?: AtomStateCache
+  atomStateCache: AtomStateCache
 ) => {
   const prevState = readPendingMap.get(state) || state
   const [atomState, nextState] = readAtomState(
@@ -351,6 +367,7 @@ const writeAtom = <Value, Update>(
   writingAtom: WritableAtom<Value, Update>,
   update: Update,
   setState: Dispatch<(prev: State) => State>,
+  atomStateCache: AtomStateCache,
   addWriteThunk: (thunk: WriteThunk) => void
 ) => {
   const pendingPromises: Promise<void>[] = []
@@ -400,14 +417,16 @@ const writeAtom = <Value, Update>(
               nextState = updateDependentsState(
                 a,
                 updateAtomState(a, nextState, partialAtomState),
-                setState
+                setState,
+                atomStateCache
               )
             } else {
               setState((prev) =>
                 updateDependentsState(
                   a,
                   updateAtomState(a, prev, partialAtomState),
-                  setState
+                  setState,
+                  atomStateCache
                 )
               )
             }
@@ -631,21 +650,27 @@ export const Provider: React.FC = ({ children }) => {
         atom: WritableAtom<Value, Update>,
         update: Update
       ) =>
-        writeAtom(atom, update, setState, (thunk: WriteThunk) => {
-          writeThunkQueueRef.current.push(thunk)
-          if (lastStateRef.current) {
-            runWriteThunk(
-              lastStateRef,
-              pendingStateRef,
-              setState,
-              contextUpdateRef.current as ContextUpdate,
-              writeThunkQueueRef.current
-            )
-          } else {
-            // force update (FIXME this is a workaround for now)
-            setState((prev) => mMerge(prev, mCreate()))
+        writeAtom(
+          atom,
+          update,
+          setState,
+          atomStateCache,
+          (thunk: WriteThunk) => {
+            writeThunkQueueRef.current.push(thunk)
+            if (lastStateRef.current) {
+              runWriteThunk(
+                lastStateRef,
+                pendingStateRef,
+                setState,
+                contextUpdateRef.current as ContextUpdate,
+                writeThunkQueueRef.current
+              )
+            } else {
+              // force update (FIXME this is a workaround for now)
+              setState((prev) => mMerge(prev, mCreate()))
+            }
           }
-        }),
+        ),
     }),
     [readPendingMap, atomStateCache, setState]
   )
