@@ -1,5 +1,9 @@
 # How to use jotai with typescript
 
+## Version requirement
+
+jotai uses TypeScript 3.8+ syntax. Upgrade your TypeScript version if you're on 3.7.5 or lower.
+
 ## Notes
 
 ### Primitive atoms are basically type inferred
@@ -35,7 +39,3 @@ const [num, setNum] = useAtom(primitiveNumAtom)
 const [num] = useAtom(readOnlyNumAtom)
 const [, setNum] = useAtom(writeOnlyNumAtom)
 ```
-
-#### Version requirement
-
-jotai uses TypeScript 3.8+ syntax. Upgrade your TypeScript version if you're on 3.7.5 or lower.
