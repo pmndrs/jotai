@@ -1,8 +1,8 @@
 import path from 'path'
-import babel from 'rollup-plugin-babel'
-import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
+import babel from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
+import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 
 const createBabelConfig = require('./babel.config')
 
