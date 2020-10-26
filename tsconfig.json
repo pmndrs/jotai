@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "declaration": true,
     "strict": true,
     "jsx": "preserve",
     "allowSyntheticDefaultImports": true,
@@ -12,12 +11,6 @@
       "jotai": ["./src/index.ts"]
     }
   },
-  "include": [
-    "src/**/*",
-    "tests/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
