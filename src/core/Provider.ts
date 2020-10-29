@@ -37,6 +37,9 @@ import {
   mToPrintable,
 } from './immutableMap'
 
+// guessing if it react experimental channel
+const isReactExperimental = !!(React as any).unstable_useMutableSource
+
 const warningObject = new Proxy(
   {},
   {
@@ -524,9 +527,7 @@ const runWriteThunk = (
         if (pendingState) {
           pendingStateRef.current = null
           contextUpdate(() => {
-            runWithPriority(UserBlockingPriority, () => {
-              setState(pendingState)
-            })
+            setState(pendingState)
           })
         }
       })
@@ -542,7 +543,17 @@ const InnerProvider: React.FC<{
 }> = ({ r, children }) => {
   const contextUpdate = useContextUpdate(StateContext)
   if (!r.current) {
-    r.current = contextUpdate
+    if (isReactExperimental) {
+      r.current = (f) => {
+        contextUpdate(() => {
+          runWithPriority(UserBlockingPriority, f)
+        })
+      }
+    } else {
+      r.current = (f) => {
+        f()
+      }
+    }
   }
   return children as ReactElement
 }

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
@@ -36,12 +36,12 @@ it('does not show async stale result', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Counter />
-      </React.Suspense>
-      <React.Suspense fallback="loading">
+      </Suspense>
+      <Suspense fallback="loading">
         <DelayedCounter />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -83,10 +83,10 @@ it('works with async get with extra deps', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Counter />
         <DelayedCounter />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -115,10 +115,10 @@ it('reuses promises on initial read (no strict mode)', async () => {
 
   const { findByText, findAllByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Child />
         <Child />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -151,9 +151,9 @@ it('uses multiple async atoms at once', async () => {
 
   const { findByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Component />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -184,9 +184,9 @@ it('uses async atom in the middle of dependency chain', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Counter />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -196,4 +196,53 @@ it('uses async atom in the middle of dependency chain', async () => {
   fireEvent.click(getByText('button'))
   // no loading
   await findByText('count: 1, delayed: 1')
+})
+
+it('updates an async atom in child useEffect on remount', async () => {
+  const toggleAtom = atom(true)
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(
+    async (get) => {
+      await new Promise((r) => setTimeout(r, 10))
+      return get(countAtom)
+    },
+    async (get, set) => {
+      await new Promise((r) => setTimeout(r, 10))
+      set(countAtom, (get(countAtom) as number) + 1)
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count, incCount] = useAtom(asyncCountAtom)
+    useEffect(() => {
+      incCount()
+    }, [incCount])
+    return <div>count: {count}</div>
+  }
+
+  const Parent: React.FC = () => {
+    const [toggle, setToggle] = useAtom(toggleAtom)
+    return (
+      <>
+        <button onClick={() => setToggle((x) => !x)}>button</button>
+        {toggle ? <Counter /> : <div>no child</div>}
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('no child')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 2')
 })
