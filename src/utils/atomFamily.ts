@@ -2,9 +2,12 @@ import { atom, Atom, WritableAtom, PrimitiveAtom } from 'jotai'
 
 import type { Getter, Setter } from '../core/types'
 
+type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
+
 type AtomFamily<Param, AtomType> = {
   (param: Param): AtomType
   remove(param: Param): void
+  gc(shoudRemove: ShouldRemove<Param> | null): void
 }
 
 // writable derived atom
@@ -61,23 +64,43 @@ export function atomFamily<Param, Value, Update>(
   areEqual: (a: Param, b: Param) => boolean = Object.is
 ) {
   type AtomType = WritableAtom<Value, Update>
-  const atoms: [Param, AtomType][] = []
+  type CreatedAt = number // in milliseconds
+  let shouldRemove: ShouldRemove<Param> | null = null
+  const atoms: [Param, AtomType, CreatedAt][] = []
   const createAtom = (param: Param) => {
-    const found = atoms.find((x) => areEqual(x[0], param))
-    if (found) {
-      return found[1]
+    const index = atoms.findIndex((x) => areEqual(x[0], param))
+    if (index >= 0) {
+      const item = atoms[index]
+      if (shouldRemove && shouldRemove(item[2], item[0])) {
+        atoms.splice(index, 1)
+      } else {
+        return item[1]
+      }
     }
     const newAtom = atom(
       initializeRead(param),
       initializeWrite && initializeWrite(param)
     ) as AtomType
-    atoms.unshift([param, newAtom])
+    atoms.unshift([param, newAtom, Date.now()])
     return newAtom
   }
   createAtom.remove = (p: Param) => {
     const index = atoms.findIndex((x) => x[0] === p)
     if (index >= 0) {
       atoms.splice(index, 1)
+    }
+  }
+  createAtom.gc = (fn: ShouldRemove<Param> | null) => {
+    shouldRemove = fn
+    if (!shouldRemove) return
+    let index = 0
+    while (index < atom.length) {
+      const item = atoms[index]
+      if (shouldRemove(item[2], item[0])) {
+        atoms.splice(index, 1)
+      } else {
+        ++index
+      }
     }
   }
   return createAtom
