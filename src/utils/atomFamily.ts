@@ -94,7 +94,7 @@ export function atomFamily<Param, Value, Update>(
     shouldRemove = fn
     if (!shouldRemove) return
     let index = 0
-    while (index < atom.length) {
+    while (index < atoms.length) {
       const item = atoms[index]
       if (shouldRemove(item[2], item[0])) {
         atoms.splice(index, 1)
