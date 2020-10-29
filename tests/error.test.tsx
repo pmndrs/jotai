@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useEffect } from 'react'
-import { fireEvent, cleanup, render } from '@testing-library/react'
+import { fireEvent, cleanup, render, act } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
 const consoleError = console.error
@@ -306,8 +306,10 @@ it('can throw an error in async write function', async () => {
 
   await findByText('no error')
 
-  fireEvent.click(getByText('button'))
-  await new Promise((r) => setTimeout(r, 10))
+  await act(async () => {
+    fireEvent.click(getByText('button'))
+    await new Promise((r) => setTimeout(r, 10))
+  })
   expect(console.error).toHaveBeenCalledTimes(1)
 })
 

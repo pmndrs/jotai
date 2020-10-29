@@ -37,8 +37,10 @@ import {
   mToPrintable,
 } from './immutableMap'
 
-// guessing if it react experimental channel
-const isReactExperimental = !!(React as any).unstable_useMutableSource
+// guessing if it's react experimental channel
+const isReactExperimental =
+  !!process.env.IS_REACT_EXPERIMENTAL ||
+  !!(React as any).unstable_useMutableSource
 
 const warningObject = new Proxy(
   {},
