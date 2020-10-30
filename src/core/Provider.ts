@@ -37,6 +37,11 @@ import {
   mToPrintable,
 } from './immutableMap'
 
+// guessing if it's react experimental channel
+const isReactExperimental =
+  !!process.env.IS_REACT_EXPERIMENTAL ||
+  !!(React as any).unstable_useMutableSource
+
 const warningObject = new Proxy(
   {},
   {
@@ -82,8 +87,8 @@ const initialUsedState: UsedState = mCreate()
 // and reuse it as long as it's not gc'd
 type AtomStateCache = WeakMap<AnyAtom, AtomState>
 
-// pending state for adding a new atom
-type ReadPendingMap = WeakMap<State, State> // the value is next state
+// pending state for adding a new atom and write batching
+type PendingStateMap = WeakMap<State, State> // the value is next state
 
 type ContextUpdate = (t: () => void) => void
 
@@ -346,11 +351,11 @@ const updateDependentsState = <Value>(
 const readAtom = <Value>(
   state: State,
   readingAtom: Atom<Value>,
-  setState: Dispatch<(prev: State) => State>,
-  readPendingMap: ReadPendingMap,
+  setState: Dispatch<SetStateAction<State>>,
+  pendingStateMap: PendingStateMap,
   atomStateCache: AtomStateCache
 ) => {
-  const prevState = readPendingMap.get(state) || state
+  const prevState = pendingStateMap.get(state) || state
   const [atomState, nextState] = readAtomState(
     readingAtom,
     prevState,
@@ -358,7 +363,7 @@ const readAtom = <Value>(
     atomStateCache
   )
   if (nextState !== prevState) {
-    readPendingMap.set(state, nextState)
+    pendingStateMap.set(state, nextState)
   }
   return atomState
 }
@@ -504,29 +509,29 @@ const writeAtom = <Value, Update>(
 }
 
 const runWriteThunk = (
-  lastStateRef: MutableRefObject<State | null>,
-  pendingStateRef: MutableRefObject<State | null>,
+  lastStateRef: MutableRefObject<State>,
+  isLastStateValidRef: MutableRefObject<boolean>,
+  pendingStateMap: PendingStateMap,
   setState: Dispatch<State>,
   contextUpdate: ContextUpdate,
   writeThunkQueue: WriteThunk[]
 ) => {
   while (true) {
-    if (!lastStateRef.current || !writeThunkQueue.length) {
+    if (!isLastStateValidRef.current || !writeThunkQueue.length) {
       return
     }
     const thunk = writeThunkQueue.shift() as WriteThunk
-    const prevState = pendingStateRef.current || lastStateRef.current
+    const prevState =
+      pendingStateMap.get(lastStateRef.current) || lastStateRef.current
     const nextState = thunk(prevState)
     if (nextState !== prevState) {
-      pendingStateRef.current = nextState
+      pendingStateMap.set(lastStateRef.current, nextState)
       Promise.resolve().then(() => {
-        const pendingState = pendingStateRef.current
+        const pendingState = pendingStateMap.get(lastStateRef.current)
         if (pendingState) {
-          pendingStateRef.current = null
+          pendingStateMap.delete(lastStateRef.current)
           contextUpdate(() => {
-            runWithPriority(UserBlockingPriority, () => {
-              setState(pendingState)
-            })
+            setState(pendingState)
           })
         }
       })
@@ -542,7 +547,17 @@ const InnerProvider: React.FC<{
 }> = ({ r, children }) => {
   const contextUpdate = useContextUpdate(StateContext)
   if (!r.current) {
-    r.current = contextUpdate
+    if (isReactExperimental) {
+      r.current = (f) => {
+        contextUpdate(() => {
+          runWithPriority(UserBlockingPriority, f)
+        })
+      }
+    } else {
+      r.current = (f) => {
+        f()
+      }
+    }
   }
   return children as ReactElement
 }
@@ -550,48 +565,48 @@ const InnerProvider: React.FC<{
 export const Provider: React.FC = ({ children }) => {
   const contextUpdateRef = useRef<ContextUpdate>()
 
-  const readPendingMap = useWeakMapRef<ReadPendingMap>()
+  const pendingStateMap = useWeakMapRef<PendingStateMap>()
 
   const atomStateCache = useWeakMapRef<AtomStateCache>()
 
   const [state, setStateOrig] = useState(initialState)
-  const lastStateRef = useRef<State | null>(null)
-  const pendingStateRef = useRef<State | null>(null)
+  const lastStateRef = useRef<State>(state)
+  const isLastStateValidRef = useRef(false)
   const setState = useCallback(
     (setStateAction: SetStateAction<State>) => {
-      const pendingState = pendingStateRef.current
+      const pendingState = pendingStateMap.get(lastStateRef.current)
       if (pendingState) {
-        pendingStateRef.current = null
+        if (
+          typeof setStateAction !== 'function' &&
+          process.env.NODE_ENV !== 'production'
+        ) {
+          console.warn(
+            '[Bug] pendingState can only be applied with function update'
+          )
+        }
         setStateOrig(pendingState)
       }
-      if (lastStateRef.current) {
-        const readPending = readPendingMap.get(lastStateRef.current)
-        if (readPending) {
-          setStateOrig(readPending)
-          if (pendingState && process.env.NODE_ENV !== 'production') {
-            console.warn('[Bug] conflict pendingState and readPending')
-          }
-        }
-      }
-      lastStateRef.current = null
+      isLastStateValidRef.current = false
       setStateOrig(setStateAction)
     },
-    [readPendingMap]
+    [pendingStateMap]
   )
 
   useIsoLayoutEffect(() => {
-    const readPending = readPendingMap.get(state)
-    if (readPending) {
-      setState(readPending)
+    const pendingState = pendingStateMap.get(state)
+    if (pendingState) {
+      pendingStateMap.delete(state)
+      setState(pendingState)
       return
     }
     lastStateRef.current = state
+    isLastStateValidRef.current = true
   })
 
   const [used, setUsed] = useState(initialUsedState)
   useEffect(() => {
+    if (!isLastStateValidRef.current) return
     const lastState = lastStateRef.current
-    if (!lastState) return
     let nextState = lastState
     let deleted: boolean
     do {
@@ -620,12 +635,13 @@ export const Provider: React.FC = ({ children }) => {
   useEffect(() => {
     runWriteThunk(
       lastStateRef,
-      pendingStateRef,
+      isLastStateValidRef,
+      pendingStateMap,
       setState,
       contextUpdateRef.current as ContextUpdate,
       writeThunkQueueRef.current
     )
-  }, [state, setState])
+  }, [state, setState, pendingStateMap])
 
   const actions = useMemo(
     () => ({
@@ -645,7 +661,7 @@ export const Provider: React.FC = ({ children }) => {
         })
       },
       read: <Value>(state: State, atom: Atom<Value>) =>
-        readAtom(state, atom, setState, readPendingMap, atomStateCache),
+        readAtom(state, atom, setState, pendingStateMap, atomStateCache),
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,
         update: Update
@@ -657,10 +673,11 @@ export const Provider: React.FC = ({ children }) => {
           atomStateCache,
           (thunk: WriteThunk) => {
             writeThunkQueueRef.current.push(thunk)
-            if (lastStateRef.current) {
+            if (isLastStateValidRef.current) {
               runWriteThunk(
                 lastStateRef,
-                pendingStateRef,
+                isLastStateValidRef,
+                pendingStateMap,
                 setState,
                 contextUpdateRef.current as ContextUpdate,
                 writeThunkQueueRef.current
@@ -672,7 +689,7 @@ export const Provider: React.FC = ({ children }) => {
           }
         ),
     }),
-    [readPendingMap, atomStateCache, setState]
+    [pendingStateMap, atomStateCache, setState]
   )
   if (process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
