@@ -7,7 +7,7 @@ type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 type AtomFamily<Param, AtomType> = {
   (param: Param): AtomType
   remove(param: Param): void
-  gc(shoudRemove: ShouldRemove<Param> | null): void
+  setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
 }
 
 // writable derived atom
@@ -90,7 +90,7 @@ export function atomFamily<Param, Value, Update>(
       atoms.splice(index, 1)
     }
   }
-  createAtom.gc = (fn: ShouldRemove<Param> | null) => {
+  createAtom.setShouldRemove = (fn: ShouldRemove<Param> | null) => {
     shouldRemove = fn
     if (!shouldRemove) return
     let index = 0
