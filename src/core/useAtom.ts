@@ -4,6 +4,12 @@ import { useContext, useContextSelector } from 'use-context-selector'
 import { StateContext, ActionsContext } from './Provider'
 import { Atom, WritableAtom, AnyWritableAtom } from './types'
 
+function assertContextValue<T extends object>(x: T | null): asserts x is T {
+  if (!x) {
+    throw new Error('Please use <Provider>')
+  }
+}
+
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ): atom is WritableAtom<Value, Update> =>
@@ -23,11 +29,13 @@ export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
   const actions = useContext(ActionsContext)
+  assertContextValue(actions)
 
   const value = useContextSelector(
     StateContext,
     useCallback(
       (state) => {
+        assertContextValue(state)
         const atomState = actions.read(state, atom)
         if (atomState.readE) {
           throw atomState.readE // read error

@@ -42,18 +42,6 @@ const isReactExperimental =
   !!process.env.IS_REACT_EXPERIMENTAL ||
   !!(React as any).unstable_useMutableSource
 
-const warningObject = new Proxy(
-  {},
-  {
-    get() {
-      throw new Error('Please use <Provider>')
-    },
-    apply() {
-      throw new Error('Please use <Provider>')
-    },
-  }
-)
-
 const useWeakMapRef = <T extends WeakMap<object, unknown>>() => {
   const ref = useRef<T>()
   if (!ref.current) {
@@ -539,8 +527,8 @@ const runWriteThunk = (
   }
 }
 
-export const ActionsContext = createContext(warningObject as Actions)
-export const StateContext = createContext(warningObject as State)
+export const ActionsContext = createContext<Actions | null>(null)
+export const StateContext = createContext<State | null>(null)
 
 const InnerProvider: React.FC<{
   r: MutableRefObject<ContextUpdate | undefined>
