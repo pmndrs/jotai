@@ -551,7 +551,7 @@ const InnerProvider: React.FC<{
 }
 
 export const Provider: React.FC<{
-  initialValues?: Iterable<[AnyAtom, unknown]>
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>
 }> = ({ initialValues, children }) => {
   const contextUpdateRef = useRef<ContextUpdate>()
 
