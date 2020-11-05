@@ -6,6 +6,20 @@
   "main": "index.cjs.js",
   "module": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs.js"
+    },
+    "./utils": {
+      "import": "./utils.js",
+      "require": "./utils.cjs.js"
+    },
+    "./immer": {
+      "import": "./immer.js",
+      "require": "./immer.cjs.js"
+    }
+  },
   "files": [
     "**"
   ],
