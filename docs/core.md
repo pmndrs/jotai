@@ -36,6 +36,18 @@ const Root = () => (
 )
 ```
 
+A Provider accepts an optional prop `initialValues` which you can specify
+some initial atom values.
+The use cases of this are testing and server side rendering.
+
+```js
+const TestRoot = () => (
+  <Provider initialValues=[[atom1, 1], [atom2, 'b']]>
+    <Component />
+  </Provider>
+)
+```
+
 ## useAtom
 
 The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it is unmounted, and the atom config no longer exists, the value is removed from the Provider.
