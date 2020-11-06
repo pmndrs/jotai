@@ -550,14 +550,24 @@ const InnerProvider: React.FC<{
   return children as ReactElement
 }
 
-export const Provider: React.FC = ({ children }) => {
+export const Provider: React.FC<{
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+}> = ({ initialValues, children }) => {
   const contextUpdateRef = useRef<ContextUpdate>()
 
   const pendingStateMap = useWeakMapRef<PendingStateMap>()
 
   const atomStateCache = useWeakMapRef<AtomStateCache>()
 
-  const [state, setStateOrig] = useState(initialState)
+  const [state, setStateOrig] = useState(() => {
+    let s = initialState
+    if (initialValues) {
+      for (const [atom, value] of initialValues) {
+        s = mSet(s, atom, { value, deps: new Set() })
+      }
+    }
+    return s
+  })
   const lastStateRef = useRef<State>(state)
   const isLastStateValidRef = useRef(false)
   const setState = useCallback(
