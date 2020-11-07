@@ -21,6 +21,7 @@ export function useAtomDevtools<Value>(
 
   const [value, setValue] = useAtom(anAtom)
   const lastValue = useRef(value)
+  const isTimeTraveling = useRef(false)
   const devtools = useRef<any>()
 
   useEffect(() => {
@@ -29,6 +30,12 @@ export function useAtomDevtools<Value>(
       devtools.current = extension.connect({ name })
       const unsubscribe = devtools.current.subscribe((message: any) => {
         if (message.type === 'DISPATCH' && message.state) {
+          if (
+            message.payload.type === 'JUMP_TO_ACTION' ||
+            message.payload.type === 'JUMP_TO_STATE'
+          ) {
+            isTimeTraveling.current = true
+          }
           setValue(message.state)
         } else if (
           message.type === 'DISPATCH' &&
@@ -48,6 +55,8 @@ export function useAtomDevtools<Value>(
       if (devtools.current.shouldInit) {
         devtools.current.init(value)
         devtools.current.shouldInit = false
+      } else if (isTimeTraveling.current) {
+        isTimeTraveling.current = false
       } else {
         devtools.current.send('update', value)
       }
