@@ -36,7 +36,7 @@ export function useAtomDevtools<Value>(
           ) {
             isTimeTraveling.current = true
           }
-          setValue(message.state)
+          setValue(JSON.parse(message.state))
         } else if (
           message.type === 'DISPATCH' &&
           message.payload?.type === 'COMMIT'
