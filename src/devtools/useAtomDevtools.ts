@@ -58,7 +58,10 @@ export function useAtomDevtools<Value>(
       } else if (isTimeTraveling.current) {
         isTimeTraveling.current = false
       } else {
-        devtools.current.send('update', value)
+        devtools.current.send(
+            `${anAtom.debugLabel} - ${new Date().toLocaleString()}`,
+            value,
+        )
       }
     }
   }, [anAtom, extension, value])
