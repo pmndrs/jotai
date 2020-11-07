@@ -4,30 +4,30 @@ import { useAtom, WritableAtom } from 'jotai'
 import type { SetStateAction } from '../core/types'
 
 interface Config {
-    instanceID?: number,
-    name?: string,
-    serialize?: boolean,
-    actionCreators?: any,
-    latency?: number,
-    predicate?: any,
-    autoPause?: boolean
+  instanceID?: number
+  name?: string
+  serialize?: boolean
+  actionCreators?: any
+  latency?: number
+  predicate?: any
+  autoPause?: boolean
 }
 
 interface Message {
-    type: string,
-    payload?: any,
-    state?: any
+  type: string
+  payload?: any
+  state?: any
 }
 
 interface IConnectionResult {
-    subscribe: (dispatch: any) => {};
-    unsubscribe: () => {};
-    send: (action: string, state: any) => {};
-    error: (payload: any) => {};
+  subscribe: (dispatch: any) => {}
+  unsubscribe: () => {}
+  send: (action: string, state: any) => {}
+  error: (payload: any) => {}
 }
 
 interface Extension {
-    connect: (options?: Config) => IConnectionResult;
+  connect: (options?: Config) => IConnectionResult
 }
 
 export function useAtomDevtools<Value>(
@@ -36,7 +36,7 @@ export function useAtomDevtools<Value>(
 ) {
   let extension: any
   try {
-    extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension 
+    extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
   } catch {}
   if (!extension) {
     if (
