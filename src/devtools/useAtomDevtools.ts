@@ -20,10 +20,11 @@ interface Message {
 }
 
 interface IConnectionResult {
-  subscribe: (dispatch: any) => {}
-  unsubscribe: () => {}
-  send: (action: string, state: any) => {}
-  error: (payload: any) => {}
+  subscribe: (dispatch: any) => () => void
+  unsubscribe: () => void
+  send: (action: string, state: any) => void
+  init: (state: any) => void
+  error: (payload: any) => void
 }
 
 interface Extension {
@@ -34,7 +35,7 @@ export function useAtomDevtools<Value>(
   anAtom: WritableAtom<Value, SetStateAction<Value>>,
   name?: string
 ) {
-  let extension: any
+  let extension: Extension | undefined
   try {
     extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
   } catch {}
@@ -50,7 +51,7 @@ export function useAtomDevtools<Value>(
   const [value, setValue] = useAtom(anAtom)
   const lastValue = useRef(value)
   const isTimeTraveling = useRef(false)
-  const devtools = useRef<any>()
+  const devtools = useRef<IConnectionResult & { shouldInit?: boolean }>()
 
   const atomName =
     name || `${anAtom.key}:${anAtom.debugLabel ?? '<no debugLabel>'}`
@@ -58,11 +59,11 @@ export function useAtomDevtools<Value>(
   useEffect(() => {
     if (extension) {
       devtools.current = extension.connect({ name: atomName })
-      const unsubscribe = devtools.current.subscribe((message: any) => {
+      const unsubscribe = devtools.current.subscribe((message: Message) => {
         if (message.type === 'DISPATCH' && message.state) {
           if (
-            message.payload.type === 'JUMP_TO_ACTION' ||
-            message.payload.type === 'JUMP_TO_STATE'
+            message.payload?.type === 'JUMP_TO_ACTION' ||
+            message.payload?.type === 'JUMP_TO_STATE'
           ) {
             isTimeTraveling.current = true
           }
@@ -71,7 +72,7 @@ export function useAtomDevtools<Value>(
           message.type === 'DISPATCH' &&
           message.payload?.type === 'COMMIT'
         ) {
-          devtools.current.init(lastValue.current)
+          devtools.current?.init(lastValue.current)
         }
       })
       devtools.current.shouldInit = true
