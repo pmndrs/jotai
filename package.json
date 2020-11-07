@@ -9,15 +9,18 @@
   "exports": {
     ".": {
       "import": "./index.js",
-      "require": "./index.cjs.js"
+      "require": "./index.cjs.js",
+      "node": "./index.cjs.js"
     },
     "./utils": {
       "import": "./utils.js",
-      "require": "./utils.cjs.js"
+      "require": "./utils.cjs.js",
+      "node": "./utils.cjs.js"
     },
     "./immer": {
       "import": "./immer.js",
-      "require": "./immer.cjs.js"
+      "require": "./immer.cjs.js",
+      "node": "./immer.cjs.js"
     }
   },
   "files": [
