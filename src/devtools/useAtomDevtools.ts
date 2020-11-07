@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useAtom, WritableAtom } from 'jotai'
 
-import type { SetStateAction } from '../core/types'
-
 interface Config {
   instanceID?: number
   name?: string
@@ -32,7 +30,7 @@ interface Extension {
 }
 
 export function useAtomDevtools<Value>(
-  anAtom: WritableAtom<Value, SetStateAction<Value>>,
+  anAtom: WritableAtom<Value, Value>,
   name?: string
 ) {
   let extension: Extension | undefined
