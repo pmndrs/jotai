@@ -26,7 +26,9 @@ interface IConnectionResult {
     error: (payload: any) => {};
 }
 
-type ConnectionResult = IConnectionResult
+interface Extension {
+    connect: (options?: Config) => IConnectionResult;
+}
 
 export function useAtomDevtools<Value>(
   anAtom: WritableAtom<Value, SetStateAction<Value>>,
