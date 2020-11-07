@@ -4,7 +4,8 @@ import { useAtom, WritableAtom } from 'jotai'
 import type { SetStateAction } from '../core/types'
 
 export function useAtomDevtools<Value>(
-  anAtom: WritableAtom<Value, SetStateAction<Value>>
+  anAtom: WritableAtom<Value, SetStateAction<Value>>,
+  name?: string
 ) {
   let extension: any
   try {
@@ -24,10 +25,12 @@ export function useAtomDevtools<Value>(
   const isTimeTraveling = useRef(false)
   const devtools = useRef<any>()
 
+  const atomName =
+    name || `${anAtom.key}:${anAtom.debugLabel ?? '<no debugLabel>'}`
+
   useEffect(() => {
     if (extension) {
-      const name = `${anAtom.key}:${anAtom.debugLabel ?? '<no debugLabel>'}`
-      devtools.current = extension.connect({ name })
+      devtools.current = extension.connect({ name: atomName })
       const unsubscribe = devtools.current.subscribe((message: any) => {
         if (message.type === 'DISPATCH' && message.state) {
           if (
@@ -47,7 +50,7 @@ export function useAtomDevtools<Value>(
       devtools.current.shouldInit = true
       return unsubscribe
     }
-  }, [anAtom, extension, setValue])
+  }, [anAtom, extension, atomName, setValue])
 
   useEffect(() => {
     if (devtools.current) {
@@ -59,10 +62,10 @@ export function useAtomDevtools<Value>(
         isTimeTraveling.current = false
       } else {
         devtools.current.send(
-            `${anAtom.debugLabel} - ${new Date().toLocaleString()}`,
-            value,
+          `${atomName} - ${new Date().toLocaleString()}`,
+          value
         )
       }
     }
-  }, [anAtom, extension, value])
+  }, [anAtom, extension, atomName, value])
 }
