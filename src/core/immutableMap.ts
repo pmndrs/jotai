@@ -9,6 +9,7 @@ type MGet = <K, V>(m: ImmutableMap<K, V>, k: K) => V | undefined
 type MSet = <K, V>(m: ImmutableMap<K, V>, k: K, v: V) => ImmutableMap<K, V>
 type MDel = <K, V>(m: ImmutableMap<K, V>, k: K) => ImmutableMap<K, V>
 type MKeys = <K, V>(m: ImmutableMap<K, V>) => Set<K>
+type MForEach = <K, V>(m: ImmutableMap<K, V>, cb: (k: K) => void) => void
 type MMerge = <K, V>(
   m: ImmutableMap<K, V>,
   newM: ImmutableMap<K, V>
@@ -69,6 +70,21 @@ export const mKeys: MKeys = <K, V>(m: ImmutableMap<K, V>) => {
     }
   })
   return keys
+}
+
+export const mForEach: MForEach = <K, V>(
+  map: ImmutableMap<K, V>,
+  cb: (a: K) => void
+) => {
+  const cache = new Map()
+  map.forEach((m) => {
+    m.forEach((_, a) => {
+      if (!cache.has(a)) {
+        cb(a)
+        cache.set(a, true)
+      }
+    })
+  })
 }
 
 export const mMerge: MMerge = <K, V>(

@@ -32,9 +32,9 @@ import {
   mGet,
   mSet,
   mDel,
-  mKeys,
   mMerge,
   mToPrintable,
+  mForEach,
 } from './immutableMap'
 
 // guessing if it's react experimental channel
@@ -132,7 +132,7 @@ const replaceDependencies = (
 ) => {
   const dependencies = new Set(dependenciesToReplace)
   let nextState = prevState
-  mKeys(nextState).forEach((a) => {
+  mForEach(nextState, (a) => {
     const aState = mGet(nextState, a) as AtomState<unknown>
     if (aState.deps.has(atom)) {
       if (dependencies.has(a)) {
@@ -609,7 +609,7 @@ export const Provider: React.FC<{
     let deleted: boolean
     do {
       deleted = false
-      mKeys(nextState).forEach((a) => {
+      mForEach(nextState, (a) => {
         const aState = mGet(nextState, a) as AtomState<unknown>
         // do not delete while promises are not resolved
         if (aState.writeP || aState.readP) return
