@@ -132,8 +132,7 @@ const replaceDependencies = (
 ) => {
   const dependencies = new Set(dependenciesToReplace)
   let nextState = prevState
-  mForEach(nextState, (a) => {
-    const aState = mGet(nextState, a) as AtomState<unknown>
+  mForEach(nextState, (aState, a) => {
     if (aState.deps.has(atom)) {
       if (dependencies.has(a)) {
         // not changed
@@ -609,8 +608,7 @@ export const Provider: React.FC<{
     let deleted: boolean
     do {
       deleted = false
-      mForEach(nextState, (a) => {
-        const aState = mGet(nextState, a) as AtomState<unknown>
+      mForEach(nextState, (aState, a) => {
         // do not delete while promises are not resolved
         if (aState.writeP || aState.readP) return
         const depsSize = aState.deps.size
