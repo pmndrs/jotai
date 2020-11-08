@@ -8,7 +8,6 @@ type MCreate = <K, V>() => ImmutableMap<K, V>
 type MGet = <K, V>(m: ImmutableMap<K, V>, k: K) => V | undefined
 type MSet = <K, V>(m: ImmutableMap<K, V>, k: K, v: V) => ImmutableMap<K, V>
 type MDel = <K, V>(m: ImmutableMap<K, V>, k: K) => ImmutableMap<K, V>
-type MKeys = <K, V>(m: ImmutableMap<K, V>) => Set<K>
 type MForEach = <K, V>(
   m: ImmutableMap<K, V>,
   cb: (value: V, key: K, map: Map<K, V>) => void
@@ -63,16 +62,6 @@ export const mDel: MDel = <K, V>(m: ImmutableMap<K, V>, k: K) => {
   const map = new Map(m[0])
   map.delete(k)
   return [map]
-}
-
-export const mKeys: MKeys = <K, V>(m: ImmutableMap<K, V>) => {
-  const keys = new Set<K>()
-  m.forEach((map) => {
-    for (const key of map.keys()) {
-      keys.add(key)
-    }
-  })
-  return keys
 }
 
 export const mForEach: MForEach = <K, V>(
