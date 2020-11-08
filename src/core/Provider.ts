@@ -552,7 +552,8 @@ const InnerProvider: React.FC<{
 
 export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
-}> = ({ initialValues, children }) => {
+  freeze?: (obj: unknown) => void
+}> = ({ initialValues, freeze, children }) => {
   const contextUpdateRef = useRef<ContextUpdate>()
 
   const pendingStateMap = useWeakMapRef<PendingStateMap>()
@@ -692,6 +693,13 @@ export const Provider: React.FC<{
   if (process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(state)
+    if (freeze) {
+      // XXX this is not very efficient
+      mKeys(state).forEach((a) => {
+        const aState = mGet(state, a) as AtomState<unknown>
+        freeze(aState.value)
+      })
+    }
   }
   return createElement(
     ActionsContext.Provider,
