@@ -78,10 +78,10 @@ export const mForEach: MForEach = <K, V>(
 ) => {
   const cache = new Map()
   map.forEach((m) => {
-    m.forEach((_, a) => {
-      if (!cache.has(a)) {
-        cb(a)
-        cache.set(a, true)
+    m.forEach((_, k) => {
+      if (!cache.has(k)) {
+        cb(k)
+        cache.set(k, true)
       }
     })
   })
