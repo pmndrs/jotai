@@ -697,7 +697,9 @@ export const Provider: React.FC<{
       // XXX this is not very efficient
       mKeys(state).forEach((a) => {
         const aState = mGet(state, a) as AtomState<unknown>
-        freeze(aState.value)
+        if (aState.value) {
+          freeze(aState.value)
+        }
       })
     }
   }
