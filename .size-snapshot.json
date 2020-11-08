@@ -62,9 +62,9 @@
     "gzipped": 310
   },
   "devtools.js": {
-    "bundled": 1645,
-    "minified": 833,
-    "gzipped": 507,
+    "bundled": 2289,
+    "minified": 1076,
+    "gzipped": 618,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -76,8 +76,8 @@
     }
   },
   "devtools.cjs.js": {
-    "bundled": 1820,
-    "minified": 959,
-    "gzipped": 553
+    "bundled": 2462,
+    "minified": 1206,
+    "gzipped": 660
   }
 }
