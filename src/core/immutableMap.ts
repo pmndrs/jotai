@@ -8,7 +8,7 @@ type MCreate = <K, V>() => ImmutableMap<K, V>
 type MGet = <K, V>(m: ImmutableMap<K, V>, k: K) => V | undefined
 type MSet = <K, V>(m: ImmutableMap<K, V>, k: K, v: V) => ImmutableMap<K, V>
 type MDel = <K, V>(m: ImmutableMap<K, V>, k: K) => ImmutableMap<K, V>
-type MForEach = <K, V>(
+type MForEach = <K extends object, V>(
   m: ImmutableMap<K, V>,
   cb: (value: V, key: K, map: Map<K, V>) => void
 ) => void
@@ -64,11 +64,11 @@ export const mDel: MDel = <K, V>(m: ImmutableMap<K, V>, k: K) => {
   return [map]
 }
 
-export const mForEach: MForEach = <K, V>(
+export const mForEach: MForEach = <K extends object, V>(
   map: ImmutableMap<K, V>,
   cb: (value: V, key: K, map: Map<K, V>) => void
 ) => {
-  const seen = new Set()
+  const seen = new WeakSet()
   map.forEach((m) => {
     m.forEach((...args) => {
       const [, k] = args
