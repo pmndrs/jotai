@@ -68,7 +68,7 @@ export const mForEach: MForEach = <K extends object, V>(
   map: ImmutableMap<K, V>,
   cb: (value: V, key: K) => void
 ) => {
-  const seen = new WeakSet()
+  const seen = new WeakSet<K>()
   map.forEach((m) => {
     m.forEach((v, k) => {
       if (!seen.has(k)) {
