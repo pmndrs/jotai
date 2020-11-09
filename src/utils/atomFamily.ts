@@ -67,6 +67,10 @@ export function atomFamily<Param, Value, Update>(
   let shouldRemove: ShouldRemove<Param> | null = null
   const atoms: Map<Param, [AtomType, CreatedAt]> = new Map()
   const createAtom = (param: Param) => {
+    if (param === undefined) {
+      throw new Error("param can't be undefined")
+    }
+
     let item: [AtomType, CreatedAt] | undefined
     if (areEqual === undefined) {
       item = atoms.get(param)
@@ -96,8 +100,24 @@ export function atomFamily<Param, Value, Update>(
     return newAtom
   }
 
-  createAtom.remove = (p: Param) => {
-    atoms.delete(p)
+  createAtom.remove = (param: Param) => {
+    let atomKey: Param | undefined
+    if (areEqual === undefined) {
+      atomKey = param
+    } else {
+      for (let [key, _] of atoms) {
+        if (areEqual(key, param)) {
+          atomKey = key
+          break
+        }
+      }
+    }
+
+    // We can miss case when param is undefined
+    // Do not allow undefined key in Map
+    if (atomKey !== undefined) {
+      atoms.delete(atomKey)
+    }
   }
 
   createAtom.setShouldRemove = (fn: ShouldRemove<Param> | null) => {
