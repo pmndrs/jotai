@@ -8,7 +8,10 @@ type MCreate = <K, V>() => ImmutableMap<K, V>
 type MGet = <K, V>(m: ImmutableMap<K, V>, k: K) => V | undefined
 type MSet = <K, V>(m: ImmutableMap<K, V>, k: K, v: V) => ImmutableMap<K, V>
 type MDel = <K, V>(m: ImmutableMap<K, V>, k: K) => ImmutableMap<K, V>
-type MKeys = <K, V>(m: ImmutableMap<K, V>) => Set<K>
+type MForEach = <K extends object, V>(
+  m: ImmutableMap<K, V>,
+  cb: (value: V, key: K) => void
+) => void
 type MMerge = <K, V>(
   m: ImmutableMap<K, V>,
   newM: ImmutableMap<K, V>
@@ -61,14 +64,19 @@ export const mDel: MDel = <K, V>(m: ImmutableMap<K, V>, k: K) => {
   return [map]
 }
 
-export const mKeys: MKeys = <K, V>(m: ImmutableMap<K, V>) => {
-  const keys = new Set<K>()
-  m.forEach((map) => {
-    for (const key of map.keys()) {
-      keys.add(key)
-    }
+export const mForEach: MForEach = <K extends object, V>(
+  map: ImmutableMap<K, V>,
+  cb: (value: V, key: K) => void
+) => {
+  const seen = new WeakSet<K>()
+  map.forEach((m) => {
+    m.forEach((v, k) => {
+      if (!seen.has(k)) {
+        cb(v, k)
+        seen.add(k)
+      }
+    })
   })
-  return keys
 }
 
 export const mMerge: MMerge = <K, V>(
