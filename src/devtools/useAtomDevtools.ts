@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useAtom, WritableAtom } from 'jotai'
 
-interface Config {
+type Config = {
   instanceID?: number
   name?: string
   serialize?: boolean
@@ -11,13 +11,13 @@ interface Config {
   autoPause?: boolean
 }
 
-interface Message {
+type Message = {
   type: string
   payload?: any
   state?: any
 }
 
-interface IConnectionResult {
+type ConnectionResult = {
   subscribe: (dispatch: any) => () => void
   unsubscribe: () => void
   send: (action: string, state: any) => void
@@ -25,8 +25,8 @@ interface IConnectionResult {
   error: (payload: any) => void
 }
 
-interface Extension {
-  connect: (options?: Config) => IConnectionResult
+type Extension = {
+  connect: (options?: Config) => ConnectionResult
 }
 
 export function useAtomDevtools<Value>(
@@ -49,7 +49,7 @@ export function useAtomDevtools<Value>(
   const [value, setValue] = useAtom(anAtom)
   const lastValue = useRef(value)
   const isTimeTraveling = useRef(false)
-  const devtools = useRef<IConnectionResult & { shouldInit?: boolean }>()
+  const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
 
   const atomName =
     name || `${anAtom.key}:${anAtom.debugLabel ?? '<no debugLabel>'}`
