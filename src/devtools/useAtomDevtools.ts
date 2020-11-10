@@ -29,21 +29,21 @@ type Extension = {
   connect: (options?: Config) => ConnectionResult
 }
 
-type UseAtomDevtools = <Value>(
+export function useAtomDevtools<Value>(
   anAtom: WritableAtom<Value, Value>,
   name?: string
-) => void
-
-const useAtomDevtoolsImpl: UseAtomDevtools = <Value>(
-  anAtom: WritableAtom<Value, Value>,
-  name?: string
-) => {
+) {
   let extension: Extension | undefined
   try {
     extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
   } catch {}
   if (!extension) {
-    console.warn('Please install/enable Redux devtools extension')
+    if (
+      process.env.NODE_ENV === 'development' &&
+      typeof window !== 'undefined'
+    ) {
+      console.warn('Please install/enable Redux devtools extension')
+    }
   }
 
   const [value, setValue] = useAtom(anAtom)
@@ -95,8 +95,3 @@ const useAtomDevtoolsImpl: UseAtomDevtools = <Value>(
     }
   }, [anAtom, extension, atomName, value])
 }
-
-export const useAtomDevtools: UseAtomDevtools =
-  process.env.NODE_ENV === 'development' && typeof window !== 'undefined'
-    ? useAtomDevtoolsImpl
-    : () => {}
