@@ -24,23 +24,23 @@
     "gzipped": 3504
   },
   "utils.js": {
-    "bundled": 3413,
-    "minified": 1477,
-    "gzipped": 653,
+    "bundled": 4060,
+    "minified": 1876,
+    "gzipped": 819,
     "treeshaked": {
       "rollup": {
         "code": 28,
         "import_statements": 28
       },
       "webpack": {
-        "code": 1054
+        "code": 1067
       }
     }
   },
   "utils.cjs.js": {
-    "bundled": 6061,
-    "minified": 3203,
-    "gzipped": 1266
+    "bundled": 6909,
+    "minified": 3699,
+    "gzipped": 1442
   },
   "immer.js": {
     "bundled": 797,
