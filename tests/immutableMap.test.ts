@@ -13,14 +13,16 @@ import {
 describe('immutable writes', () => {
   it('returns copy on set item', () => {
     const m = mCreate()
-    const m2 = mSet(m, 1, 'a')
+    const key = new Map()
+    const m2 = mSet(m, key, 'a')
     expect(m).not.toEqual(m2)
   })
 
   it('returns copy on delete item', () => {
     const m = mCreate()
-    const m2 = mSet(m, 1, 'a')
-    const m3 = mDel(m, 1)
+    const key = new Map()
+    const m2 = mSet(m, key, 'a')
+    const m3 = mDel(m, key)
     expect(m2).not.toEqual(m3)
   })
 
@@ -34,29 +36,32 @@ describe('immutable writes', () => {
 
   it('does not mutate on set', () => {
     const m = mCreate()
-    const m2 = mSet(m, 1, 'a')
-    const v = mGet(m, 1)
-    const v2 = mGet(m2, 1)
+    const key = new Map()
+    const m2 = mSet(m, key, 'a')
+    const v = mGet(m, key)
+    const v2 = mGet(m2, key)
     expect(v).toBeUndefined()
     expect(v2).toBe('a')
   })
 
   it('does not mutate on delete', () => {
     const m = mCreate()
-    const m2 = mSet(m, 1, 'a')
-    const m3 = mDel(m, 1)
-    const v = mGet(m2, 1)
-    const v2 = mGet(m3, 1)
+    const key = new Map()
+    const m2 = mSet(m, key, 'a')
+    const m3 = mDel(m, key)
+    const v = mGet(m2, key)
+    const v2 = mGet(m3, key)
     expect(v).toBe('a')
     expect(v2).toBeUndefined()
   })
 
   it('can immutably update existing item', () => {
     const m = mCreate()
-    const m2 = mSet(m, 1, 'a')
-    const m3 = mSet(m2, 1, 'b')
-    const v = mGet(m2, 1)
-    const v2 = mGet(m3, 1)
+    const key = new Map()
+    const m2 = mSet(m, key, 'a')
+    const m3 = mSet(m2, key, 'b')
+    const v = mGet(m2, key)
+    const v2 = mGet(m3, key)
     expect(v).toBe('a')
     expect(v2).toBe('b')
   })
@@ -65,9 +70,17 @@ describe('immutable writes', () => {
 describe('getting values', () => {
   it('can get existing values by key', () => {
     const m = mCreate()
-    const m2 = mSet(m, 1, 'a')
-    const v = mGet(m2, 1)
-    expect(v).toBe('a')
+    const key = new Map()
+    const key2 = new Map()
+
+    const m2 = mSet(m, key, { something: 'nice' })
+    const latestM = mSet(m2, key2, { something: 'else' })
+
+    const v = mGet(latestM, key)
+    const v2 = mGet(latestM, key2)
+
+    expect(v).toEqual({ something: 'nice' })
+    expect(v2).toEqual({ something: 'else' })
   })
 
   it('returns undefined on get if item not found', () => {
@@ -77,3 +90,17 @@ describe('getting values', () => {
     expect(v).toBeUndefined()
   })
 })
+
+// describe('iteration', () => {
+//   it('can iterate through items', () => {
+//     const m = mCreate()
+//     const items = [
+//       { key: new Map(), value: 1 },
+//       { key: new Map(), value: 2 },
+//     ]
+//     mSet(m)
+
+//     let pointer = 0
+//     mForEach(m, (k, v) => {})
+//   })
+// })
