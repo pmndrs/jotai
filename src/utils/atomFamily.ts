@@ -96,8 +96,17 @@ export function atomFamily<Param, Value, Update>(
     return newAtom
   }
 
-  createAtom.remove = (p: Param) => {
-    atoms.delete(p)
+  createAtom.remove = (param: Param) => {
+    if (areEqual === undefined) {
+      atoms.delete(param)
+    } else {
+      for (let [key] of atoms) {
+        if (areEqual(key, param)) {
+          atoms.delete(key)
+          break
+        }
+      }
+    }
   }
 
   createAtom.setShouldRemove = (fn: ShouldRemove<Param> | null) => {
