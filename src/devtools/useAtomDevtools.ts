@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useAtom, WritableAtom } from 'jotai'
 
-interface Config {
+type Config = {
   instanceID?: number
   name?: string
   serialize?: boolean
@@ -11,13 +11,13 @@ interface Config {
   autoPause?: boolean
 }
 
-interface Message {
+type Message = {
   type: string
   payload?: any
   state?: any
 }
 
-interface IConnectionResult {
+type ConnectionResult = {
   subscribe: (dispatch: any) => () => void
   unsubscribe: () => void
   send: (action: string, state: any) => void
@@ -25,31 +25,31 @@ interface IConnectionResult {
   error: (payload: any) => void
 }
 
-interface Extension {
-  connect: (options?: Config) => IConnectionResult
+type Extension = {
+  connect: (options?: Config) => ConnectionResult
 }
 
-export function useAtomDevtools<Value>(
+type UseAtomDevtools = <Value>(
   anAtom: WritableAtom<Value, Value>,
   name?: string
-) {
+) => void
+
+const useAtomDevtoolsImpl: UseAtomDevtools = <Value>(
+  anAtom: WritableAtom<Value, Value>,
+  name?: string
+) => {
   let extension: Extension | undefined
   try {
     extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
   } catch {}
   if (!extension) {
-    if (
-      process.env.NODE_ENV === 'development' &&
-      typeof window !== 'undefined'
-    ) {
-      console.warn('Please install/enable Redux devtools extension')
-    }
+    console.warn('Please install/enable Redux devtools extension')
   }
 
   const [value, setValue] = useAtom(anAtom)
   const lastValue = useRef(value)
   const isTimeTraveling = useRef(false)
-  const devtools = useRef<IConnectionResult & { shouldInit?: boolean }>()
+  const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
 
   const atomName =
     name || `${anAtom.key}:${anAtom.debugLabel ?? '<no debugLabel>'}`
@@ -95,3 +95,8 @@ export function useAtomDevtools<Value>(
     }
   }, [anAtom, extension, atomName, value])
 }
+
+export const useAtomDevtools: UseAtomDevtools =
+  process.env.NODE_ENV === 'development' && typeof window !== 'undefined'
+    ? useAtomDevtoolsImpl
+    : () => {}
