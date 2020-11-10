@@ -92,7 +92,7 @@ describe('getting values', () => {
 })
 
 describe('iteration', () => {
-  it('can iterate through items', () => {
+  it('can iterate through items with insertion order', () => {
     let m = mCreate<object, unknown>()
     const items = [
       { key: new Map([['id', 1]]), value: 'a' },
