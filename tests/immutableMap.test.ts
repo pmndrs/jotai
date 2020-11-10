@@ -91,16 +91,24 @@ describe('getting values', () => {
   })
 })
 
-// describe('iteration', () => {
-//   it('can iterate through items', () => {
-//     const m = mCreate()
-//     const items = [
-//       { key: new Map(), value: 1 },
-//       { key: new Map(), value: 2 },
-//     ]
-//     mSet(m)
+describe('iteration', () => {
+  it('can iterate through items', () => {
+    let m = mCreate<object, unknown>()
+    const items = [
+      { key: new Map([['id', 1]]), value: 'a' },
+      { key: new Map([['id', 2]]), value: 'b' },
+      { key: new Map([['id', 3]]), value: 'c' },
+    ]
 
-//     let pointer = 0
-//     mForEach(m, (k, v) => {})
-//   })
-// })
+    for (const el of items) {
+      m = mSet(m, el.key, el.value)
+    }
+
+    let pointer = 0
+    mForEach(m, (v, k) => {
+      expect(k).toBe(items[pointer].key)
+      expect(v).toBe(items[pointer].value)
+      pointer++
+    })
+  })
+})
