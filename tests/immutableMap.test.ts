@@ -1,6 +1,3 @@
-import React, { Suspense, useEffect } from 'react'
-import { fireEvent, render } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
 import {
   mCreate,
   mDel,
