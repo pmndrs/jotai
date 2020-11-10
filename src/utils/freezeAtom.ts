@@ -19,11 +19,13 @@ export function freezeAtom<T extends Atom<unknown>>(atomToFreeze: T) {
     deepFreeze(value)
     return value
   }
-  return atomToFreeze
 }
 
-const atomFrozen: typeof atom = ((read: any, write: any) =>
-  freezeAtom(atom(read, write))) as any
+const atomFrozen: typeof atom = ((read: any, write: any) => {
+  const anAtom = atom(read, write)
+  freezeAtom(anAtom)
+  return anAtom
+}) as any
 
 export const atomFrozenInDev =
   process.env.NODE_ENV === 'development' ? atomFrozen : atom
