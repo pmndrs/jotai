@@ -5,19 +5,20 @@ import {
   mGet,
   mSet,
   mMerge,
+  mToPrintable,
 } from '../src/core/immutableMap'
 
-describe('immutable writes', () => {
+describe('Immutable writes', () => {
   it('returns copy on set item', () => {
     const m = mCreate()
-    const key = new Map()
+    const key = {}
     const m2 = mSet(m, key, 'a')
     expect(m).not.toEqual(m2)
   })
 
   it('returns copy on delete item', () => {
     const m = mCreate()
-    const key = new Map()
+    const key = {}
     const m2 = mSet(m, key, 'a')
     const m3 = mDel(m, key)
     expect(m2).not.toEqual(m3)
@@ -33,7 +34,7 @@ describe('immutable writes', () => {
 
   it('does not mutate on set', () => {
     const m = mCreate()
-    const key = new Map()
+    const key = {}
     const m2 = mSet(m, key, 'a')
     const v = mGet(m, key)
     const v2 = mGet(m2, key)
@@ -43,7 +44,7 @@ describe('immutable writes', () => {
 
   it('does not mutate on delete', () => {
     const m = mCreate()
-    const key = new Map()
+    const key = {}
     const m2 = mSet(m, key, 'a')
     const m3 = mDel(m, key)
     const v = mGet(m2, key)
@@ -54,7 +55,7 @@ describe('immutable writes', () => {
 
   it('can immutably update existing item', () => {
     const m = mCreate()
-    const key = new Map()
+    const key = {}
     const m2 = mSet(m, key, 'a')
     const m3 = mSet(m2, key, 'b')
     const v = mGet(m2, key)
@@ -64,11 +65,11 @@ describe('immutable writes', () => {
   })
 })
 
-describe('getting values', () => {
+describe('Retrieving values', () => {
   it('can get existing values by key', () => {
     const m = mCreate()
-    const key = new Map()
-    const key2 = new Map()
+    const key = {}
+    const key2 = {}
 
     const m2 = mSet(m, key, { something: 'nice' })
     const latestM = mSet(m2, key2, { something: 'else' })
@@ -88,13 +89,13 @@ describe('getting values', () => {
   })
 })
 
-describe('iteration', () => {
+describe('Iteration', () => {
   it('can iterate through items with insertion order', () => {
     let m = mCreate<object, unknown>()
     const items = [
-      { key: new Map([['id', 1]]), value: 'a' },
-      { key: new Map([['id', 2]]), value: 'b' },
-      { key: new Map([['id', 3]]), value: 'c' },
+      { key: { id: 1 }, value: 'a' },
+      { key: { id: 2 }, value: 'b' },
+      { key: { id: 3 }, value: 'c' },
     ]
 
     for (const el of items) {
@@ -107,5 +108,20 @@ describe('iteration', () => {
       expect(v).toBe(items[pointer].value)
       pointer++
     })
+  })
+})
+
+describe('Printable', () => {
+  it('can convert items to printable formats', () => {
+    let m = mCreate<object, unknown>()
+    m = mSet(m, { id: 1, meta: 234 }, { v: 'c', otherStuff: 'notNeeded' })
+
+    const printableM: any = mToPrintable(
+      m,
+      (k: any) => `${k.id}-debug-label`,
+      (val: any) => val.v
+    )
+
+    expect(printableM.get('1-debug-label')).toBe('c')
   })
 })
