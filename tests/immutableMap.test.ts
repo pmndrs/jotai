@@ -31,6 +31,35 @@ describe('immutable writes', () => {
     expect(m).not.toEqual(m3)
     expect(m2).not.toEqual(m3)
   })
+
+  it('does not mutate on set', () => {
+    const m = mCreate()
+    const m2 = mSet(m, 1, 'a')
+    const v = mGet(m, 1)
+    const v2 = mGet(m2, 1)
+    expect(v).toBeUndefined()
+    expect(v2).toBe('a')
+  })
+
+  it('does not mutate on delete', () => {
+    const m = mCreate()
+    const m2 = mSet(m, 1, 'a')
+    const m3 = mDel(m, 1)
+    const v = mGet(m2, 1)
+    const v2 = mGet(m3, 1)
+    expect(v).toBe('a')
+    expect(v2).toBeUndefined()
+  })
+
+  it('can immutably update existing item', () => {
+    const m = mCreate()
+    const m2 = mSet(m, 1, 'a')
+    const m3 = mSet(m2, 1, 'b')
+    const v = mGet(m2, 1)
+    const v2 = mGet(m3, 1)
+    expect(v).toBe('a')
+    expect(v2).toBe('b')
+  })
 })
 
 describe('getting values', () => {
@@ -41,14 +70,7 @@ describe('getting values', () => {
     expect(v).toBe('a')
   })
 
-  it('returns undefined if item not found on get', () => {
-    const m = mCreate()
-    const m2 = mSet(m, 2, 'a')
-    const v = mGet(m2, 1)
-    expect(v).toBeUndefined()
-  })
-
-  it('returns undefined if item not found on get', () => {
+  it('returns undefined on get if item not found', () => {
     const m = mCreate()
     const m2 = mSet(m, 2, 'a')
     const v = mGet(m2, 1)
