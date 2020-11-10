@@ -105,7 +105,7 @@ export function atomFamily<Param, Value, Update>(
     if (areEqual === undefined) {
       atomKey = param
     } else {
-      for (let [key, _] of atoms) {
+      for (let [key] of atoms) {
         if (areEqual(key, param)) {
           atomKey = key
           break
