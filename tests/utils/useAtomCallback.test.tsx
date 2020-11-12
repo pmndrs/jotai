@@ -18,8 +18,7 @@ it('useAtomCallback with get', async () => {
       }, [])
     )
     useEffect(() => {
-      const read = async () => await readCount()
-      read()
+      readCount()
     }, [count, readCount])
     return (
       <>
