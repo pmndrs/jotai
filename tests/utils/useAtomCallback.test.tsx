@@ -49,8 +49,10 @@ it('useAtomCallback with get', async () => {
 
   await findByText('atom count: 0')
   fireEvent.click(getByText('dispatch'))
-  await findByText('atom count: 1')
-  await findByText('state count: 1')
+  await waitFor(() => {
+    getByText('atom count: 1')
+    getByText('state count: 1')
+  })
 })
 
 it('useAtomCallback with set and update', async () => {
@@ -99,6 +101,8 @@ it('useAtomCallback with set and update', async () => {
 
   await findByText('count: 0')
   fireEvent.click(getByText('dispatch'))
-  await findByText('count: 1')
-  await findByText('changeable count: 1')
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('changeable count: 1')
+  })
 })
