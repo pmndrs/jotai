@@ -1,47 +1,59 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, useAtom, atom } from '../../src/index'
 import { useAtomCallback } from '../../src/utils'
 
 it('useAtomCallback with get', async () => {
   const countAtom = atom(0)
 
-  const Parent: React.FC = () => {
+  const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
-    const [secondCount, setSecondCount] = useState(0)
+    return (
+      <>
+        <div>atom count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>dispatch</button>
+      </>
+    )
+  }
+
+  const Monitor: React.FC = () => {
+    const [count, setCount] = useState(0)
     const readCount = useAtomCallback(
       useCallback((get) => {
         const currentCount = get(countAtom)
-
-        setSecondCount(currentCount)
+        setCount(currentCount)
         return currentCount
       }, [])
     )
     useEffect(() => {
-      readCount()
-    }, [count, readCount])
+      const timer = setInterval(async () => {
+        await readCount()
+      }, 10)
+      return () => {
+        clearInterval(timer)
+      }
+    }, [readCount])
     return (
       <>
-        <div>count: {count}</div>
-        <button onClick={() => setCount(count + 1)}>dispatch</button>
-        <div>secondCount: {secondCount}</div>
+        <div>state count: {count}</div>
       </>
     )
   }
 
   const { findByText, getByText } = render(
     <Provider>
-      <Parent />
+      <Counter />
+      <Monitor />
     </Provider>
   )
 
-  await findByText('count: 0')
-
+  await findByText('atom count: 0')
   fireEvent.click(getByText('dispatch'))
-  await findByText('secondCount: 1')
+  await findByText('atom count: 1')
+  await findByText('state count: 1')
 })
 
-it('useAtomCallback with set', async () => {
+it('useAtomCallback with set and update', async () => {
   const countAtom = atom(0)
   const changeableAtom = atom(0)
 
@@ -52,7 +64,6 @@ it('useAtomCallback with set', async () => {
     const readCount = useAtomCallback(
       useCallback((get) => {
         const currentCount = get(countAtom)
-
         setSecondCount(currentCount)
         return currentCount
       }, [])
@@ -67,12 +78,10 @@ it('useAtomCallback with set', async () => {
       )
     )
     useEffect(() => {
-      const read = async () => await readCount()
-      read()
+      readCount()
     }, [count, readCount])
     useEffect(() => {
-      const change = async () => await changeCount()
-      change()
+      changeCount()
     }, [secondCount, changeCount])
     return (
       <>
