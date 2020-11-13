@@ -56,50 +56,49 @@ it('useAtomCallback with get', async () => {
 it('useAtomCallback with set and update', async () => {
   const countAtom = atom(0)
   const changeableAtom = atom(0)
-
-  const Parent: React.FC = () => {
+  const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
-    const [secondCount, setSecondCount] = useState(0)
-    const [changeableCount] = useAtom(changeableAtom)
-    const readCount = useAtomCallback(
-      useCallback((get) => {
-        const currentCount = get(countAtom)
-        setSecondCount(currentCount)
-        return currentCount
-      }, [])
-    )
-    const changeCount = useAtomCallback(
-      useCallback(
-        (_, set) => {
-          set(changeableAtom, secondCount)
-          return secondCount
-        },
-        [secondCount]
-      )
-    )
-    useEffect(() => {
-      readCount()
-    }, [count, readCount])
-    useEffect(() => {
-      changeCount()
-    }, [secondCount, changeCount])
     return (
       <>
         <div>count: {count}</div>
-        <button onClick={() => setCount(count + 1)}>dispatch</button>
-        <div>secondCount: {secondCount}</div>
-        <div>changeableCount: {changeableCount}</div>
+        <button onClick={() => setCount((c) => c + 1)}>dispatch</button>
+      </>
+    )
+  }
+
+  const Monitor: React.FC = () => {
+    const [changeableCount] = useAtom(changeableAtom)
+    const chagneCount = useAtomCallback(
+      useCallback((get, set) => {
+        const currentCount = get(countAtom)
+        set(changeableAtom, currentCount)
+        return currentCount
+      }, [])
+    )
+    useEffect(() => {
+      const timer = setInterval(async () => {
+        await chagneCount()
+      }, 10)
+      return () => {
+        clearInterval(timer)
+      }
+    }, [chagneCount])
+    return (
+      <>
+        <div>changeable count: {changeableCount}</div>
       </>
     )
   }
 
   const { findByText, getByText } = render(
     <Provider>
-      <Parent />
+      <Counter />
+      <Monitor />
     </Provider>
   )
 
   await findByText('count: 0')
   fireEvent.click(getByText('dispatch'))
-  await findByText('changeableCount: 1')
+  await findByText('count: 1')
+  await findByText('changeable count: 1')
 })
