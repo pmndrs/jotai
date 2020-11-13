@@ -116,12 +116,12 @@ describe('Printable', () => {
     let m = mCreate<object, unknown>()
     m = mSet(m, { id: 1, meta: 234 }, { v: 'c', otherStuff: 'notNeeded' })
 
-    const printableM: any = mToPrintable(
+    const printableM = mToPrintable(
       m,
       (k: any) => `${k.id}-debug-label`,
       (val: any) => val.v
     )
 
-    expect(printableM.get('1-debug-label')).toBe('c')
+    expect(printableM['1-debug-label']).toBe('c')
   })
 })
