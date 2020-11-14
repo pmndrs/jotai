@@ -61,7 +61,6 @@ Zustand is an external store and the hook is to connect the external world to th
 ## When to use which
 
 - If you want to learn something new, either should work.
-- If you want a Facebook product, choose Recoil obviously.
 - If you like Zustand, Jotai would also be pleasant.
 - If your app heavily requires state serialization (storing state in storage, server, or URL), Recoil comes with good features.
 - If you need React Context alternatives, Jotai comes with enough features.

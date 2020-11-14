@@ -18,9 +18,9 @@ type MMerge = <K, V>(
 ) => ImmutableMap<K, V>
 type MToPrintable = <K, V>(
   m: ImmutableMap<K, V>,
-  toPrintableK: (k: K) => unknown,
+  toPrintableK: (k: K) => string,
   toPrintableV: (v: V) => unknown
-) => unknown
+) => Record<string, unknown>
 
 export const mCreate: MCreate = <K, V>() => [new Map<K, V>()]
 
@@ -92,13 +92,13 @@ export const mMerge: MMerge = <K, V>(
 
 export const mToPrintable: MToPrintable = <K, V>(
   m: ImmutableMap<K, V>,
-  toPrintableK: (k: K) => unknown,
+  toPrintableK: (k: K) => string,
   toPrintableV: (v: V) => unknown
 ) => {
   if (m.length > 1) {
     m = squash(m)
   }
-  return new Map(
+  return Object.fromEntries(
     [...m[0].entries()].map(([k, v]) => [toPrintableK(k), toPrintableV(v)])
   )
 }
