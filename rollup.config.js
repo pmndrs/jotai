@@ -86,4 +86,6 @@ export default [
   createCommonJSConfig('src/devtools.ts', 'dist/devtools.cjs.js'),
   createESMConfig('src/immer.ts', 'dist/immer.js'),
   createCommonJSConfig('src/immer.ts', 'dist/immer.cjs.js'),
+  createESMConfig('src/optics.ts', 'dist/optics.js'),
+  createCommonJSConfig('src/optics.ts', 'dist/optics.cjs.js'),
 ]
