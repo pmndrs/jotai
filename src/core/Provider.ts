@@ -413,9 +413,9 @@ const readAtom = <Value>(
 const addAtom = <Value>(
   id: symbol,
   addingAtom: Atom<Value>,
-  setState: Dispatch<SetStateAction<State>>
+  addWriteThunk: (thunk: WriteThunk) => void
 ) => {
-  setState((prev) => {
+  addWriteThunk((prev) => {
     let nextDependentsMap = prev.d
     const dependents = mGet(nextDependentsMap, addingAtom)
     const newDependents = new Set(dependents).add(id)
@@ -437,10 +437,8 @@ const delAtom = <Value>(
       const dependents = mGet(nextDependentsMap, atom)
       const newDependents = new Set(dependents)
       newDependents.delete(dependent)
-      nextDependentsMap = mSet(nextDependentsMap, atom, newDependents)
-      const size = newDependents.size
-      const isEmpty = size === 0 || (size === 1 && newDependents.has(atom))
-      if (isEmpty) {
+      if (!newDependents.size) {
+        nextDependentsMap = mDel(nextDependentsMap, atom)
         const atomState = mGet(nextAtomStateMap, atom)
         if (atomState) {
           if (atomState.readP && process.env.NODE_ENV !== 'production') {
@@ -454,6 +452,8 @@ const delAtom = <Value>(
         } else if (process.env.NODE_ENV !== 'production') {
           warnAtomStateNotFound('delAtom', atom)
         }
+      } else {
+        nextDependentsMap = mSet(nextDependentsMap, atom, newDependents)
       }
     }
     del(deletingAtom, id)
@@ -745,7 +745,7 @@ export const Provider: React.FC<{
   const actions = useMemo(
     () => ({
       add: <Value>(id: symbol, atom: Atom<Value>) => {
-        addAtom(id, atom, setState)
+        addAtom(id, atom, addWriteThunk)
       },
       del: <Value>(id: symbol, atom: Atom<Value>) => {
         delAtom(id, atom, atomStateCache, addWriteThunk)
