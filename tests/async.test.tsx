@@ -198,6 +198,49 @@ it('uses async atom in the middle of dependency chain', async () => {
   await findByText('count: 1, delayed: 1')
 })
 
+it('updates an async atom in child useEffect on remount without setTimeout', async () => {
+  const toggleAtom = atom(true)
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(
+    async (get) => get(countAtom),
+    async (get, set) => set(countAtom, (get(countAtom) as number) + 1)
+  )
+
+  const Counter: React.FC = () => {
+    const [count, incCount] = useAtom(asyncCountAtom)
+    useEffect(() => {
+      incCount()
+    }, [incCount])
+    return <div>count: {count}</div>
+  }
+
+  const Parent: React.FC = () => {
+    const [toggle, setToggle] = useAtom(toggleAtom)
+    return (
+      <>
+        <button onClick={() => setToggle((x) => !x)}>button</button>
+        {toggle ? <Counter /> : <div>no child</div>}
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('no child')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 2')
+})
+
 it('updates an async atom in child useEffect on remount', async () => {
   const toggleAtom = atom(true)
   const countAtom = atom(0)

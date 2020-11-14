@@ -259,7 +259,7 @@ const readAtomState = <Value>(
         return aState.value
       }
       // a === atom
-      const aState = mGet(nextState.s, a)
+      const aState = mGet(nextState.s, a) || atomStateCache.get(a)
       if (aState) {
         if (aState.readP) {
           throw aState.readP
@@ -427,22 +427,25 @@ const addAtom = <Value>(
 const delAtom = <Value>(
   id: symbol,
   deletingAtom: Atom<Value>,
-  setState: Dispatch<SetStateAction<State>>,
-  atomStateCache: AtomStateCache
+  atomStateCache: AtomStateCache,
+  addWriteThunk: (thunk: WriteThunk) => void
 ) => {
-  setState((prev) => {
+  addWriteThunk((prev) => {
     let nextAtomStateMap = prev.s
     let nextDependentsMap = prev.d
     const del = (atom: AnyAtom, dependent: AnyAtom | symbol) => {
       const dependents = mGet(nextDependentsMap, atom)
       const newDependents = new Set(dependents)
       newDependents.delete(dependent)
+      nextDependentsMap = mSet(nextDependentsMap, atom, newDependents)
       const size = newDependents.size
       const isEmpty = size === 0 || (size === 1 && newDependents.has(atom))
       if (isEmpty) {
         const atomState = mGet(nextAtomStateMap, atom)
         if (atomState) {
-          // XXX side effect in render (how should we fix this)
+          if (atomState.readP && process.env.NODE_ENV !== 'production') {
+            console.warn('[Bug] saving atomState with read promise', atom)
+          }
           atomStateCache.set(atom, atomState)
           nextAtomStateMap = mDel(nextAtomStateMap, atom)
           atomState.deps.forEach((_, a) => {
@@ -485,7 +488,7 @@ const writeAtom = <Value, Update>(
     try {
       const promiseOrVoid = atom.write(
         ((a: AnyAtom) => {
-          const aState = mGet(nextState.s, a)
+          const aState = mGet(nextState.s, a) || atomStateCache.get(a)
           if (!aState) {
             if (process.env.NODE_ENV !== 'production') {
               warnAtomStateNotFound('writeAtomState', a)
@@ -709,6 +712,25 @@ export const Provider: React.FC<{
   })
 
   const writeThunkQueueRef = useRef<WriteThunk[]>([])
+  const addWriteThunk = useCallback(
+    (thunk: WriteThunk) => {
+      writeThunkQueueRef.current.push(thunk)
+      if (isLastStateValidRef.current) {
+        runWriteThunk(
+          lastStateRef,
+          isLastStateValidRef,
+          pendingStateMap,
+          setState,
+          contextUpdateRef.current as ContextUpdate,
+          writeThunkQueueRef.current
+        )
+      } else {
+        // force update (FIXME this is a workaround for now)
+        setState((prev) => ({ ...prev }))
+      }
+    },
+    [setState, pendingStateMap]
+  )
   useEffect(() => {
     runWriteThunk(
       lastStateRef,
@@ -726,38 +748,16 @@ export const Provider: React.FC<{
         addAtom(id, atom, setState)
       },
       del: <Value>(id: symbol, atom: Atom<Value>) => {
-        delAtom(id, atom, setState, atomStateCache)
+        delAtom(id, atom, atomStateCache, addWriteThunk)
       },
       read: <Value>(state: State, atom: Atom<Value>) =>
         readAtom(state, atom, setState, pendingStateMap, atomStateCache),
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,
         update: Update
-      ) =>
-        writeAtom(
-          atom,
-          update,
-          setState,
-          atomStateCache,
-          (thunk: WriteThunk) => {
-            writeThunkQueueRef.current.push(thunk)
-            if (isLastStateValidRef.current) {
-              runWriteThunk(
-                lastStateRef,
-                isLastStateValidRef,
-                pendingStateMap,
-                setState,
-                contextUpdateRef.current as ContextUpdate,
-                writeThunkQueueRef.current
-              )
-            } else {
-              // force update (FIXME this is a workaround for now)
-              setState((prev) => ({ ...prev }))
-            }
-          }
-        ),
+      ) => writeAtom(atom, update, setState, atomStateCache, addWriteThunk),
     }),
-    [pendingStateMap, atomStateCache, setState]
+    [pendingStateMap, atomStateCache, setState, addWriteThunk]
   )
   if (process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
