@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, useAtom, atom } from '../../src/index'
+import { Provider, atom } from '../../src/index'
 import { useSelector, useUpdateAtom } from '../../src/utils'
 
 it('useSelector works as expected', async () => {
@@ -21,7 +21,10 @@ it('useSelector works as expected', async () => {
   }
 
   const Selector = () => {
-    const a = useSelector(bigAtom, (value) => value.a)
+    const a = useSelector(
+      bigAtom,
+      useCallback((value) => value.a, [])
+    )
     return (
       <>
         <div>a: {a}</div>
@@ -77,8 +80,11 @@ it('do not update unless equality function says value has changed', async () => 
   const Selector = () => {
     const value = useSelector(
       bigAtom,
-      (value) => value,
-      (left, right) => JSON.stringify(left) === JSON.stringify(right)
+      useCallback((value) => value, []),
+      useCallback(
+        (left, right) => JSON.stringify(left) === JSON.stringify(right),
+        []
+      )
     )
     const commits = useCommitCount()
     return (
