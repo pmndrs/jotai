@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useDebugValue } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
-import { StateContext, ActionsContext } from './Provider'
+import { getContexts } from './Contexts'
 import { Atom, WritableAtom, AnyWritableAtom } from './types'
 
 function assertContextValue<T extends object>(x: T | null): asserts x is T {
@@ -28,6 +28,7 @@ export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
+  const [ActionsContext, StateContext] = getContexts(atom.scope)
   const actions = useContext(ActionsContext)
   assertContextValue(actions)
 
