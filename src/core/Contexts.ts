@@ -26,16 +26,16 @@ export type Actions = {
   ) => void | Promise<void>
 }
 
+// dummy function for typing
 const createContexts = () =>
   [
     createContext<Actions | null>(null),
     createContext<State | null>(null),
   ] as const
 
-const ContextsMap = new Map<
-  Scope | undefined,
-  ReturnType<typeof createContexts>
->()
+type Contexts = ReturnType<typeof createContexts>
+
+const ContextsMap = new Map<Scope | undefined, Contexts>()
 
 export const getContexts = (scope?: Scope) => {
   if (!ContextsMap.has(scope)) {
@@ -44,5 +44,5 @@ export const getContexts = (scope?: Scope) => {
       createContext<State | null>(null),
     ])
   }
-  return ContextsMap.get(scope) as ReturnType<typeof createContexts>
+  return ContextsMap.get(scope) as Contexts
 }
