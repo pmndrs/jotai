@@ -15,7 +15,7 @@ import {
   unstable_UserBlockingPriority as UserBlockingPriority,
   unstable_runWithPriority as runWithPriority,
 } from 'scheduler'
-import { createContext, useContextUpdate } from 'use-context-selector'
+import { useContextUpdate } from 'use-context-selector'
 
 import {
   Atom,
@@ -24,10 +24,10 @@ import {
   AnyWritableAtom,
   Getter,
   Setter,
+  Scope,
 } from './types'
 import { useIsoLayoutEffect } from './useIsoLayoutEffect'
 import {
-  ImmutableMap,
   mCreate,
   mGet,
   mSet,
@@ -36,6 +36,7 @@ import {
   mForEach,
   mToPrintable,
 } from './immutableMap'
+import { AtomState, State, getContexts } from './contexts'
 
 // guessing if it's react experimental channel
 const isReactExperimental =
@@ -57,19 +58,6 @@ const warnAtomStateNotFound = (info: string, atom: AnyAtom) => {
   )
 }
 
-type Revision = number
-
-export type AtomState<Value = unknown> = {
-  readE?: Error // read error
-  readP?: Promise<void> // read promise
-  writeP?: Promise<void> // write promise
-  value?: Value
-  rev: Revision
-  deps: Map<AnyAtom, Revision> // read dependencies
-}
-
-type State = ImmutableMap<AnyAtom, AtomState>
-
 type DependentsMap = WeakMap<AnyAtom, Set<AnyAtom | symbol>> // symbol is id from useAtom
 
 // we store last atom state before deleting from provider state
@@ -82,16 +70,6 @@ type PendingStateMap = WeakMap<State, State> // the value is next state
 type ContextUpdate = (t: () => void) => void
 
 type WriteThunk = (lastState: State) => State // returns next state
-
-export type Actions = {
-  add: <Value>(id: symbol, atom: Atom<Value>) => void
-  del: <Value>(id: symbol, atom: Atom<Value>) => void
-  read: <Value>(state: State, atom: Atom<Value>) => AtomState<Value>
-  write: <Value, Update>(
-    atom: WritableAtom<Value, Update>,
-    update: Update
-  ) => void | Promise<void>
-}
 
 const updateAtomState = <Value>(
   prevState: State,
@@ -623,14 +601,12 @@ const runWriteThunk = (
   }
 }
 
-export const ActionsContext = createContext<Actions | null>(null)
-export const StateContext = createContext<State | null>(null)
-
 const InnerProvider: React.FC<{
   r: MutableRefObject<ContextUpdate | undefined>
-}> = ({ r, children }) => {
-  const contextUpdate = useContextUpdate(StateContext)
-  if (!r.current) {
+  c: ReturnType<typeof getContexts>[1]
+}> = ({ r, c, children }) => {
+  const contextUpdate = useContextUpdate(c)
+  useIsoLayoutEffect(() => {
     if (isReactExperimental) {
       r.current = (f) => {
         contextUpdate(() => {
@@ -642,13 +618,14 @@ const InnerProvider: React.FC<{
         f()
       }
     }
-  }
+  }, [contextUpdate])
   return children as ReactElement
 }
 
 export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
-}> = ({ initialValues, children }) => {
+  scope?: Scope
+}> = ({ initialValues, scope, children }) => {
   const contextUpdateRef = useRef<ContextUpdate>()
 
   const pendingStateMap = useWeakMapRef<PendingStateMap>()
@@ -768,13 +745,18 @@ export const Provider: React.FC<{
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(state)
   }
+  const [ActionsContext, StateContext] = getContexts(scope)
   return createElement(
     ActionsContext.Provider,
     { value: actions },
     createElement(
       StateContext.Provider,
       { value: state },
-      createElement(InnerProvider, { r: contextUpdateRef }, children)
+      createElement(
+        InnerProvider,
+        { r: contextUpdateRef, c: StateContext },
+        children
+      )
     )
   )
 }
