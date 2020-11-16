@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useDebugValue } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
-import { getContexts } from './Contexts'
+import { getContexts } from './contexts'
 import { Atom, WritableAtom, AnyWritableAtom } from './types'
 
 function assertContextValue<T extends object>(x: T | null): asserts x is T {

@@ -1,7 +1,7 @@
 import React, { createElement, useMemo } from 'react'
 import { BridgeProvider, useBridgeValue } from 'use-context-selector'
 
-import { getContexts } from './Contexts'
+import { getContexts } from './contexts'
 import { Scope } from './types'
 
 export const useBridge = (scope?: Scope) => {

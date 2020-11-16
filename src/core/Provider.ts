@@ -36,7 +36,7 @@ import {
   mForEach,
   mToPrintable,
 } from './immutableMap'
-import { AtomState, State, getContexts } from './Contexts'
+import { AtomState, State, getContexts } from './contexts'
 
 // guessing if it's react experimental channel
 const isReactExperimental =
