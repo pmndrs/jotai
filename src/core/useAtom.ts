@@ -6,7 +6,9 @@ import { Atom, WritableAtom, AnyWritableAtom } from './types'
 
 function assertContextValue<T extends object>(x: T | null): asserts x is T {
   if (!x) {
-    throw new Error('Please use <Provider>')
+    throw new Error(
+      'Please use <Provider> or if you have scoped atoms, use <Provder scope={yourAtomScope}>'
+    )
   }
 }
 
