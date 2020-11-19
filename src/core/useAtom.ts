@@ -4,7 +4,7 @@ import { useContext, useContextSelector } from 'use-context-selector'
 import { getContexts } from './contexts'
 import { Atom, WritableAtom, AnyWritableAtom } from './types'
 
-function assertContextValue<T extends object>(x: T | null): asserts x is T {
+function assertContextValue<T extends object>(x: T | null, scope?: unknown): asserts x is T {
   if (!x) {
     throw new Error(
       'Please use <Provider> or if you have scoped atoms, use <Provider scope={yourAtomScope}>'
