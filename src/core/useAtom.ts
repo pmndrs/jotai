@@ -9,7 +9,9 @@ function assertContextValue<T extends object>(
   scope?: Scope
 ): asserts x is T {
   if (!x) {
-    throw new Error(`Please use <Provider${scope ? ` scope=${scope}` : ''}>`)
+    throw new Error(
+      `Please use <Provider${scope ? ` scope=${String(scope)}` : ''}>`
+    )
   }
 }
 
