@@ -309,7 +309,7 @@ it('async get and useEffect on parent', async () => {
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
     if (!count) return 'none'
-    return await new Promise((resolve) => resolve('resolved'))
+    return 'resolved'
   })
 
   const AsyncComponent: React.FC = () => {
@@ -354,12 +354,12 @@ it('async get with another dep and useEffect on parent', async () => {
   const asyncAtom = atom(async (get) => {
     const count = get(derivedAtom)
     if (!count) return 'none'
-    return await new Promise((resolve) => resolve('resolved'))
+    return count
   })
 
   const AsyncComponent: React.FC = () => {
-    const [text] = useAtom(asyncAtom)
-    return <div>text: {text}</div>
+    const [count] = useAtom(asyncAtom)
+    return <div>async: {count}</div>
   }
 
   const Parent: React.FC = () => {
@@ -389,6 +389,12 @@ it('async get with another dep and useEffect on parent', async () => {
   await findByText('loading')
   await waitFor(() => {
     getByText('count: 1')
-    getByText('text: resolved')
+    getByText('async: 1')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('async: 2')
   })
 })

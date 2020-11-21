@@ -140,8 +140,6 @@ const addDependency = (
       ...atomState,
       deps: newDeps,
     })
-  } else if (process.env.NODE_ENV !== 'production') {
-    warnAtomStateNotFound('addDependency.setState', atom)
   }
   return nextState
 }
@@ -318,9 +316,9 @@ const updateDependentsState = <Value>(
 ) => {
   const dependents = dependentsMap.get(atom)
   if (!dependents) {
-    if (process.env.NODE_ENV !== 'production') {
-      warnAtomStateNotFound('updateDependentsState', atom)
-    }
+    // no dependents found
+    // this may happen if async function is resolved before commit.
+    // not certain this is going to be an issue in some cases.
     return prevState
   }
   let nextState = prevState
