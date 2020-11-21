@@ -48,6 +48,24 @@ const TestRoot = () => (
 )
 ```
 
+A Provider accepts an optional prop `scope` which you can use for scoped atoms.
+It works only for atoms with the same scope.
+The recommendation for the scope value is a unique symbol.
+The use case of scope is for library usage.
+
+```js
+const myScope = Symbol()
+
+const anAtom = atom('')
+anAtom.scope = myScope
+
+const LibraryRoot = () => (
+  <Provider scope={myScope}>
+    <Component />
+  </Provider>
+)
+```
+
 ## useAtom
 
 The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it is unmounted, and the atom config no longer exists, the value is removed from the Provider.

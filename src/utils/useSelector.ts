@@ -7,12 +7,14 @@ export function useSelector<Value, Slice>(
   equalityFn: (a: Slice, b: Slice) => boolean = Object.is
 ): Slice {
   const sliceAtom = useMemo(() => {
+    let initialized = false
     let prevSlice: Slice
     const derivedAtom = atom((get) => {
       const slice = selector(get(anAtom))
-      if (equalityFn(prevSlice, slice)) {
+      if (initialized && equalityFn(prevSlice, slice)) {
         return prevSlice
       }
+      initialized = true
       prevSlice = slice // self contained mutation?
       return slice
     })
