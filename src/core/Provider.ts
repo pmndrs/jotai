@@ -201,7 +201,8 @@ const readAtomState = <Value>(
     const promiseOrValue = atom.read(((a: AnyAtom) => {
       if (dependencies) {
         dependencies.add(a)
-      } else {
+      }
+      if (!isSync) {
         setState((prev) => addDependency(prev, atom, a))
       }
       if (a !== atom) {
@@ -297,6 +298,11 @@ const readAtomState = <Value>(
   if (flushDependencies) {
     nextState = replaceDependencies(nextState, atom, dependencies)
     dependencies = null
+  } else {
+    // add dependency temporarily
+    dependencies.forEach((dependency) => {
+      nextState = addDependency(nextState, atom, dependency)
+    })
   }
   const atomState = mGet(nextState, atom) as AtomState<Value>
   isSync = false
