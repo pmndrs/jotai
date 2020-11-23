@@ -37,8 +37,8 @@ export const focusAtom: FocusAtom = <S, A>(
   | PrimitiveAtom<A> => {
   const focus = callback(O.optic<S>())
   return atom<A, SetStateAction<A>>(
-    (atomGetter) => {
-      const newValue = getValueUsingOptic(focus, atomGetter(baseAtom))
+    (get) => {
+      const newValue = getValueUsingOptic(focus, get(baseAtom))
       return newValue
     },
     (_, set, update) => {
