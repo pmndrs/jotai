@@ -1,7 +1,7 @@
 import { atom, Provider, useAtom } from 'jotai'
 import React from 'react'
 import * as rtl from '@testing-library/react'
-import { focusAtom } from 'src/optics'
+import { focusAtom } from '../../src/optics'
 
 it('updates prisms', async () => {
   const bigAtom = atom<{ a?: number }>({ a: 5 })
