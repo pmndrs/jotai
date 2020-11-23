@@ -1,7 +1,7 @@
 {
-  "name": "jotai-demo",
+  "name": "hacker_news",
   "version": "1.0.0",
-  "description": "An async-read demo with Jotai",
+  "description": "Demonstrate a news articles with jotai, hit next to see more articles.",
   "keywords": [],
   "main": "src/index.js",
   "dependencies": {
