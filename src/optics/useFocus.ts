@@ -1,6 +1,6 @@
 import * as O from 'optics-ts'
-import React from 'react'
-import { PrimitiveAtom } from '../core/types'
+import React, { SetStateAction } from 'react'
+import { PrimitiveAtom, WritableAtom } from '../core/types'
 import { FocusAtom, focusAtom } from './focusAtom'
 
 export const useFocus: FocusAtom = <S, A>(
@@ -13,7 +13,10 @@ export const useFocus: FocusAtom = <S, A>(
     | O.Iso<S, any, A>
     | O.Prism<S, any, A>
     | O.Traversal<S, any, A>
-): any => {
+):
+  | WritableAtom<A | undefined, SetStateAction<A>>
+  | WritableAtom<Array<A>, SetStateAction<A>>
+  | PrimitiveAtom<A> => {
   return React.useMemo(() => {
     return focusAtom(
       baseAtom,

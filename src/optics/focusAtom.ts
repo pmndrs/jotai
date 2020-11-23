@@ -31,7 +31,10 @@ export const focusAtom: FocusAtom = <S, A>(
     | O.Iso<S, any, A>
     | O.Prism<S, any, A>
     | O.Traversal<S, any, A>
-): any => {
+):
+  | WritableAtom<A | undefined, SetStateAction<A>>
+  | WritableAtom<Array<A>, SetStateAction<A>>
+  | PrimitiveAtom<A> => {
   const focus = callback(O.optic<S>())
   return atom<A, SetStateAction<A>>(
     (atomGetter) => {
