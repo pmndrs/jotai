@@ -1,2 +1,2 @@
-export * from './optics/useFocus'
-export * from './optics/focusAtom'
+export { useFocus } from './optics/useFocus'
+export { focusAtom } from './optics/focusAtom'
