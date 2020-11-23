@@ -1,13 +1,13 @@
 import { atom, Provider, useAtom } from 'jotai'
 import React from 'react'
 import * as rtl from '@testing-library/react'
-import { useFocus } from '../../src/optics/useFocus'
+import { focusAtom } from 'src/optics'
 
 it('updates prisms', async () => {
   const bigAtom = atom<{ a?: number }>({ a: 5 })
 
   const Counter: React.FC = () => {
-    const aAtom = useFocus(bigAtom, (optic) => optic.prop('a').optional())
+    const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a').optional())
     const [count, setCount] = useAtom(aAtom)
     const [bigAtomValue] = useAtom(bigAtom)
     return (
@@ -37,7 +37,7 @@ it('atoms that focus on no values are not updated', async () => {
   const bigAtom = atom<{ a?: number }>({})
 
   const Counter: React.FC = () => {
-    const aAtom = useFocus(bigAtom, (optic) => optic.prop('a').optional())
+    const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a').optional())
     const [count, setCount] = useAtom(aAtom)
     const [bigAtomValue] = useAtom(bigAtom)
     return (

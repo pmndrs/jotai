@@ -1,7 +1,6 @@
 import { atom, Provider, useAtom } from 'jotai'
 import React from 'react'
 import * as rtl from '@testing-library/react'
-import { useFocus } from '../../src/optics/useFocus'
 import { focusAtom } from '../../src/optics/focusAtom'
 
 const succ = (input: number) => input + 1
@@ -49,7 +48,7 @@ it('focus on an atom works', async () => {
   const bigAtom = atom({ a: 0 })
 
   const Counter: React.FC = () => {
-    const aAtom = useFocus(bigAtom, (optic) => optic.prop('a'))
+    const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a'))
     const [count, setCount] = useAtom(aAtom)
     const [bigAtomValue] = useAtom(bigAtom)
     return (
@@ -80,8 +79,8 @@ it('double-focus on an atom works', async () => {
 
   const Counter: React.FC = () => {
     const [bigAtomValue, setBigAtom] = useAtom(bigAtom)
-    const atomA = useFocus(bigAtom, (optic) => optic.prop('a'))
-    const atomB = useFocus(atomA, (optic) => optic.prop('b'))
+    const atomA = focusAtom(bigAtom, (optic) => optic.prop('a'))
+    const atomB = focusAtom(atomA, (optic) => optic.prop('b'))
     const [atomAValue, setAtomA] = useAtom(atomA)
     const [atomBValue, setAtomB] = useAtom(atomB)
     return (
