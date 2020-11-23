@@ -1,6 +1,6 @@
 import { atom } from 'jotai'
 import * as O from 'optics-ts'
-import { PrimitiveAtom, SetStateAction, WritableAtom } from '../core/types'
+import type { PrimitiveAtom, SetStateAction, WritableAtom } from '../core/types'
 
 export type FocusAtom = {
   <S, A>(

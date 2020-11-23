@@ -1,6 +1,6 @@
 import * as O from 'optics-ts'
 import React, { SetStateAction } from 'react'
-import { PrimitiveAtom, WritableAtom } from '../core/types'
+import type { PrimitiveAtom, WritableAtom } from '../core/types'
 import { FocusAtom, focusAtom } from './focusAtom'
 
 export const useFocus: FocusAtom = <S, A>(
