@@ -36,9 +36,39 @@ const Root = () => (
 )
 ```
 
+A Provider accepts an optional prop `initialValues` which you can specify
+some initial atom values.
+The use cases of this are testing and server side rendering.
+
+```js
+const TestRoot = () => (
+  <Provider initialValues=[[atom1, 1], [atom2, 'b']]>
+    <Component />
+  </Provider>
+)
+```
+
+A Provider accepts an optional prop `scope` which you can use for scoped atoms.
+It works only for atoms with the same scope.
+The recommendation for the scope value is a unique symbol.
+The use case of scope is for library usage.
+
+```js
+const myScope = Symbol()
+
+const anAtom = atom('')
+anAtom.scope = myScope
+
+const LibraryRoot = () => (
+  <Provider scope={myScope}>
+    <Component />
+  </Provider>
+)
+```
+
 ## useAtom
 
-The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning the component using it is unmounted, the value is removed from the Provider.
+The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it is unmounted, and the atom config no longer exists, the value is removed from the Provider.
 
 ```js
 const [value, updateValue] = useAtom(anAtom)
@@ -79,6 +109,25 @@ The read function is the first parameter of the atom.
 The dependency will initially be empty. On first use, we run the read function and know that uppercaseAtom depends on textAtom. textAtom is the dependency of uppercaseAtom. So, add uppercaseAtom to the dependents of textAtom.
 When we re-run the read function (because its dependency (=textAtom) is updated),
 the dependency is built again, which is the same in this case. We then remove stale dependents and replace with the latest one.
+
+# Atoms can be created on demand
+
+Basic examples in readme only show defining atoms globally outside components.
+There is no restrictions about when we create an atom.
+As long as we know atoms are identified by their object referential identity,
+it's okay to create them at anytime.
+
+If you create atoms in render functions, you would typically want to use
+some hooks like `useRef` or `useMemo`.
+
+You can create an atom and store it wth `useState` or even in another atom.
+See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
+
+You can cache atoms somewhere globally.
+See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or 
+[that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
+
+Check [atomFamily](https://github.com/pmndrs/jotai/blob/master/docs/utils.md#atomfamily) in utils too.
 
 # Some more notes about atoms
 

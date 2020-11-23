@@ -1,10 +1,12 @@
 import { atom, Atom, WritableAtom, PrimitiveAtom } from 'jotai'
-
 import type { Getter, Setter } from '../core/types'
+
+type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
 type AtomFamily<Param, AtomType> = {
   (param: Param): AtomType
   remove(param: Param): void
+  setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
 }
 
 // writable derived atom
@@ -58,29 +60,63 @@ export function atomFamily<Param, Value, Update extends never = never>(
 export function atomFamily<Param, Value, Update>(
   initializeRead: (param: Param) => any,
   initializeWrite?: null | ((param: Param) => any),
-  areEqual: (a: Param, b: Param) => boolean = Object.is
+  areEqual?: (a: Param, b: Param) => boolean
 ) {
   type AtomType = WritableAtom<Value, Update>
-  const atoms: [Param, AtomType][] = []
+  type CreatedAt = number // in milliseconds
+  let shouldRemove: ShouldRemove<Param> | null = null
+  const atoms: Map<Param, [AtomType, CreatedAt]> = new Map()
   const createAtom = (param: Param) => {
-    const found = atoms.find((x) => areEqual(x[0], param))
-    if (found) {
-      return found[1]
+    let item: [AtomType, CreatedAt] | undefined
+    if (areEqual === undefined) {
+      item = atoms.get(param)
+    } else {
+      // Custom comparator, iterate over all elements
+      for (let [key, value] of atoms) {
+        if (areEqual(key, param)) {
+          item = value
+          break
+        }
+      }
     }
+
+    if (item !== undefined) {
+      if (shouldRemove?.(item[1], param)) {
+        atoms.delete(param)
+      } else {
+        return item[0]
+      }
+    }
+
     const newAtom = atom(
       initializeRead(param),
       initializeWrite && initializeWrite(param)
     ) as AtomType
-    atoms.unshift([param, newAtom])
+    atoms.set(param, [newAtom, Date.now()])
     return newAtom
   }
-  createAtom.remove = (p: Param) => {
-    const index = atoms.findIndex((x) => x[0] === p)
-    if (index >= 0) {
-      atoms.splice(index, 1)
+
+  createAtom.remove = (param: Param) => {
+    if (areEqual === undefined) {
+      atoms.delete(param)
+    } else {
+      for (let [key] of atoms) {
+        if (areEqual(key, param)) {
+          atoms.delete(key)
+          break
+        }
+      }
+    }
+  }
+
+  createAtom.setShouldRemove = (fn: ShouldRemove<Param> | null) => {
+    shouldRemove = fn
+    if (!shouldRemove) return
+    for (let [key, value] of atoms) {
+      if (shouldRemove(value[1], key)) {
+        atoms.delete(key)
+      }
     }
   }
   return createAtom
 }
-
-// -----------------------------------------------------------------------

@@ -174,3 +174,133 @@ const todoFamily = atomFamily(
 ### Codesandbox
 
 https://codesandbox.io/s/react-typescript-forked-8zfrn
+
+## useSelector
+
+Ref: https://github.com/pmndrs/jotai/issues/36
+
+### Usage
+
+```js
+useSelector(anAtom, selector, equalityFn)
+```
+
+Selector and equalityFn must be stable (should be wrapped with useCallback).
+The equalityFn is optional.
+
+### Examples
+
+```js
+import { Provider } from "jotai";
+import { useSelector, atomWithReducer, useUpdateAtom } from "jotai/utils";
+
+const initialState = {
+  count: 0,
+  text: "hello"
+};
+
+const reducer = (state, action) => {
+  if (action.type === "INC") {
+    return { ...state, count: state.count + 1 };
+  } else if (action.type === "SET_TEXT") {
+    return { ...state, text: action.text };
+  } else {
+    throw Error("no such action");
+  }
+};
+
+const stateAtom = atomWithReducer(initialState, reducer);
+
+const selectCount = (state: State) => state.count;
+
+const Counter = () => {
+  const dispatch = useUpdateAtom(stateAtom);
+  const count = useSelector(stateAtom, selectCount);
+  return (
+    <div>
+      {count} <button onClick={() => dispatch({ type: "INC" })}>+1</button>
+    </div>
+  );
+};
+
+const selectText = (state: State) => state.text;
+
+const TextBox = () => {
+  const dispatch = useUpdateAtom(stateAtom);
+  const text = useSelector(stateAtom, selectText);
+  return (
+    <div>
+      {text}{" "}
+      <input
+        value={text}
+        onChange={(e) => dispatch({ type: "SET_TEXT", text: e.target.value })}
+      />
+    </div>
+  );
+};
+```
+
+### Codesandbox
+
+https://codesandbox.io/s/react-typescript-forked-i4880
+
+## useAtomCallback
+
+Ref: https://github.com/pmndrs/jotai/issues/60
+
+### Usage
+
+```js
+useAtomCallback(
+  callback: (get: Getter, set: Setter, arg: Arg) => Result
+): (arg: Arg) => Promise<Result>
+```
+
+This hook allows to interact with atoms imperatively.
+It takes a callback function that works like atom write function,
+and returns a function that returns a promise.
+
+The callback to pass in the hook must be stable (should be wrapped with useCallback).
+
+### Examples
+
+```js
+import { useEffect, useState, useCallback } from "react";
+import { Provider, atom, useAtom } from "jotai";
+import { useAtomCallback } from "jotai/utils";
+
+const countAtom = atom(0);
+
+const Counter = () => {
+  const [count, setCount] = useAtom(countAtom);
+  return (
+    <>
+      {count} <button onClick={() => setCount((c) => c + 1)}>+1</button>
+    </>
+  );
+};
+
+const Monitor = () => {
+  const [count, setCount] = useState(0);
+  const readCount = useAtomCallback(
+    useCallback((get) => {
+      const currCount = get(countAtom);
+      setCount(currCount);
+      return currCount;
+    }, [])
+  );
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      console.log(await readCount());
+    }, 1000);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [readCount]);
+  return <div>current count: {count}</div>;
+};
+```
+
+### Codesandbox
+
+https://codesandbox.io/s/react-typescript-forked-6ur43

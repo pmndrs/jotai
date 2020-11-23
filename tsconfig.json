@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "declaration": true,
     "strict": true,
     "jsx": "preserve",
     "allowSyntheticDefaultImports": true,
@@ -9,7 +8,9 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "jotai": ["./src/index.ts"]
+      "jotai": [
+        "./src/index.ts"
+      ]
     }
   },
   "include": [

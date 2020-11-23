@@ -1,6 +1,6 @@
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, useAtom, atom } from '../../src/index'
+import { Provider, atom } from '../../src/index'
 import { useReducerAtom } from '../../src/utils'
 
 it('useReducerAtom with no action argument', async () => {

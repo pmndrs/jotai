@@ -5,7 +5,7 @@ import type { SetStateAction } from '../core/types'
 
 const RESET = Symbol()
 
-export const atomWithReset = <Value>(initialValue: Value) => {
+export function atomWithReset<Value>(initialValue: Value) {
   type Update = SetStateAction<Value> | typeof RESET
   const anAtom: any = atom<Value, Update>(initialValue, (get, set, update) => {
     if (update === RESET) {
@@ -22,9 +22,7 @@ export const atomWithReset = <Value>(initialValue: Value) => {
   return anAtom as WritableAtom<Value, Update>
 }
 
-export const useResetAtom = <Value>(
-  anAtom: WritableAtom<Value, typeof RESET>
-) => {
+export function useResetAtom<Value>(anAtom: WritableAtom<Value, typeof RESET>) {
   const writeOnlyAtom = useMemo(
     () => atom(null, (_get, set, _update) => set(anAtom, RESET)),
     [anAtom]

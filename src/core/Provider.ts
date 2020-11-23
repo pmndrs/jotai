@@ -4,6 +4,7 @@ import React, {
   MutableRefObject,
   ReactElement,
   createElement,
+  useCallback,
   useMemo,
   useState,
   useRef,
@@ -12,10 +13,9 @@ import React, {
 } from 'react'
 import {
   unstable_UserBlockingPriority as UserBlockingPriority,
-  unstable_NormalPriority as NormalPriority,
   unstable_runWithPriority as runWithPriority,
 } from 'scheduler'
-import { createContext, useContextUpdate } from 'use-context-selector'
+import { useContextUpdate } from 'use-context-selector'
 
 import {
   Atom,
@@ -24,150 +24,191 @@ import {
   AnyWritableAtom,
   Getter,
   Setter,
+  Scope,
 } from './types'
 import { useIsoLayoutEffect } from './useIsoLayoutEffect'
 import {
-  ImmutableMap,
   mCreate,
   mGet,
   mSet,
   mDel,
-  mKeys,
   mMerge,
+  mForEach,
   mToPrintable,
 } from './immutableMap'
+import { AtomState, State, getContexts } from './contexts'
 
-const warningObject = new Proxy(
-  {},
-  {
-    get() {
-      throw new Error('Please use <Provider>')
-    },
-    apply() {
-      throw new Error('Please use <Provider>')
-    },
+// guessing if it's react experimental channel
+const isReactExperimental =
+  !!process.env.IS_REACT_EXPERIMENTAL ||
+  !!(React as any).unstable_useMutableSource
+
+const useWeakMapRef = <T extends WeakMap<object, unknown>>() => {
+  const ref = useRef<T>()
+  if (!ref.current) {
+    ref.current = new WeakMap() as T
   }
-)
-
-// dependents for read operation
-type DependentsMap = Map<AnyAtom, Set<AnyAtom | symbol>> // symbol is id from useAtom
-
-const addDependent = (
-  dependentsMap: DependentsMap,
-  atom: AnyAtom,
-  dependent: AnyAtom | symbol
-) => {
-  let dependents = dependentsMap.get(atom)
-  if (!dependents) {
-    dependents = new Set<AnyAtom | symbol>()
-    dependentsMap.set(atom, dependents)
-  }
-  dependents.add(dependent)
+  return ref.current
 }
 
-const deleteDependent = (
-  dependentsMap: DependentsMap,
-  dependent: AnyAtom | symbol
-) => {
-  dependentsMap.forEach((dependents) => {
-    dependents.delete(dependent)
-  })
+const warnAtomStateNotFound = (info: string, atom: AnyAtom) => {
+  console.warn(
+    '[Bug] Atom state not found. Please file an issue with repro: ' + info,
+    atom
+  )
 }
 
-const setDependencies = (
-  dependentsMap: DependentsMap,
-  atom: AnyAtom,
-  dependencies: Set<AnyAtom>
-) => {
-  deleteDependent(dependentsMap, atom)
-  dependencies.forEach((dependency) => {
-    addDependent(dependentsMap, dependency, atom)
-  })
-}
+type DependentsMap = WeakMap<AnyAtom, Set<AnyAtom | symbol>> // symbol is id from useAtom
 
-const listDependents = (
-  dependentsMap: DependentsMap,
-  atom: AnyAtom,
-  excludeSelf: boolean
-) => {
-  const dependents = new Set(dependentsMap.get(atom))
-  if (excludeSelf) {
-    dependents.delete(atom)
-  }
-  return dependents
-}
+// we store last atom state before deleting from provider state
+// and reuse it as long as it's not gc'd
+type AtomStateCache = WeakMap<AnyAtom, AtomState>
 
-export type AtomState<Value = unknown> = {
-  readE?: Error // read error
-  readP?: Promise<void> // read promise
-  writeP?: Promise<void> // write promise
-  value?: Value
-}
-
-type State = ImmutableMap<AnyAtom, AtomState>
-
-// pending state for adding a new atom
-type ReadPendingMap = WeakMap<State, State> // the value is next state
+// pending state for adding a new atom and write batching
+type PendingStateMap = WeakMap<State, State> // the value is next state
 
 type ContextUpdate = (t: () => void) => void
 
 type WriteThunk = (lastState: State) => State // returns next state
 
-export type Actions = {
-  add: <Value>(id: symbol, atom: Atom<Value>) => void
-  del: (id: symbol) => void
-  read: <Value>(state: State, atom: Atom<Value>) => AtomState<Value>
-  write: <Value, Update>(
-    atom: WritableAtom<Value, Update>,
-    update: Update
-  ) => void | Promise<void>
+const updateAtomState = <Value>(
+  prevState: State,
+  atom: Atom<Value>,
+  partial: Partial<AtomState<Value>>,
+  prevPromise?: Promise<void>,
+  isNew?: boolean
+): State => {
+  let atomState = mGet(prevState, atom) as AtomState<Value> | undefined
+  if (!atomState) {
+    if (!isNew && process.env.NODE_ENV !== 'production') {
+      warnAtomStateNotFound('updateAtomState', atom)
+    }
+    atomState = { rev: 0, deps: new Map() }
+  }
+  if (prevPromise && prevPromise !== atomState.readP) {
+    return prevState
+  }
+  return mSet(prevState, atom, {
+    ...atomState,
+    ...partial,
+    rev: atomState.rev + 1,
+  })
 }
 
-const initialState: State = mCreate()
+const updateDependentsMap = (
+  prevState: State,
+  state: State,
+  dependentsMap: DependentsMap
+) => {
+  mForEach(state, (atomState, atom) => {
+    const prevDeps = mGet(prevState, atom)?.deps
+    if (prevDeps === atomState.deps) {
+      return
+    }
+    const dependencies = new Set(atomState.deps.keys())
+    if (prevDeps) {
+      prevDeps.forEach((_, a) => {
+        const aDependents = dependentsMap.get(a)
+        if (dependencies.has(a)) {
+          // not changed
+          dependencies.delete(a)
+        } else {
+          const newDependents = new Set(aDependents)
+          dependentsMap.set(a, newDependents)
+        }
+      })
+    }
+    dependencies.forEach((a) => {
+      const aDependents = dependentsMap.get(a)
+      const newDependents = new Set(aDependents).add(atom)
+      dependentsMap.set(a, newDependents)
+    })
+  })
+}
 
-const getAtomStateValue = (atom: AnyAtom, state: State) => {
-  const atomState = mGet(state, atom)
-  if (!atomState) {
-    console.warn(
-      'Atom state not found. Possibly a bug. Please file an issue with repro.'
-    )
-    return atom.init
+const addDependency = (
+  prevState: State,
+  atom: AnyAtom,
+  dependency: AnyAtom
+): State => {
+  let nextState = prevState
+  const atomState = mGet(nextState, atom)
+  const dependencyState = mGet(nextState, dependency)
+  if (atomState && dependencyState) {
+    const newDeps = new Map(atomState.deps).set(dependency, dependencyState.rev)
+    nextState = mSet(nextState, atom, {
+      ...atomState,
+      deps: newDeps,
+    })
   }
-  return atomState.value
+  return nextState
+}
+
+const replaceDependencies = (
+  prevState: State,
+  atom: AnyAtom,
+  dependencies: Set<AnyAtom>
+): State => {
+  let nextState = prevState
+  const atomState = mGet(nextState, atom)
+  if (!atomState) {
+    if (process.env.NODE_ENV !== 'production') {
+      warnAtomStateNotFound('replaceDependencies.atomState', atom)
+    }
+    return prevState
+  }
+  nextState = mSet(nextState, atom, {
+    ...atomState,
+    deps: new Map(
+      [...dependencies].map((a) => [a, mGet(nextState, a)?.rev ?? 0])
+    ),
+  })
+  return nextState
 }
 
 const readAtomState = <Value>(
-  atom: Atom<Value>,
   prevState: State,
+  atom: Atom<Value>,
   setState: Dispatch<(prev: State) => State>,
-  dependentsMap: DependentsMap,
+  atomStateCache: AtomStateCache,
   force?: boolean
-) => {
+): readonly [AtomState<Value>, State] => {
   if (!force) {
-    const atomState = mGet(prevState, atom) as AtomState<Value> | undefined
+    let atomState = mGet(prevState, atom) as AtomState<Value> | undefined
     if (atomState) {
-      return [atomState, prevState] as const
+      return [atomState, prevState]
+    }
+    atomState = atomStateCache.get(atom) as AtomState<Value> | undefined
+    if (
+      atomState &&
+      [...atomState.deps.entries()].every(
+        ([a, r]) => mGet(prevState, a)?.rev === r
+      )
+    ) {
+      return [atomState, mSet(prevState, atom, atomState)]
     }
   }
+  let isSync = true
   let nextState = prevState
   let error: Error | undefined = undefined
   let promise: Promise<void> | undefined = undefined
   let value: Value | undefined = undefined
   let dependencies: Set<AnyAtom> | null = new Set()
-  let isSync = true
+  let flushDependencies = false
   try {
     const promiseOrValue = atom.read(((a: AnyAtom) => {
       if (dependencies) {
         dependencies.add(a)
-      } else {
-        addDependent(dependentsMap, a, atom)
+      }
+      if (!isSync) {
+        setState((prev) => addDependency(prev, atom, a))
       }
       if (a !== atom) {
         const [aState, nextNextState] = readAtomState(
-          a,
           nextState,
+          a,
           setState,
-          dependentsMap
+          atomStateCache
         )
         if (isSync) {
           nextState = nextNextState
@@ -184,7 +225,7 @@ const readAtomState = <Value>(
         return aState.value
       }
       // a === atom
-      const aState = mGet(nextState, a)
+      const aState = mGet(nextState, a) || atomStateCache.get(a)
       if (aState) {
         if (aState.readP) {
           throw aState.readP
@@ -196,82 +237,127 @@ const readAtomState = <Value>(
     if (promiseOrValue instanceof Promise) {
       promise = promiseOrValue
         .then((value) => {
-          setDependencies(dependentsMap, atom, dependencies as Set<AnyAtom>)
+          const dependenciesToReplace = dependencies as Set<AnyAtom>
           dependencies = null
-          setState((prev) => {
-            const prevPromise = mGet(prev, atom)?.readP
-            if (prevPromise && prevPromise !== promise) {
-              return prev
-            }
-            return mSet(prev, atom, { value })
-          })
+          setState((prev) =>
+            updateAtomState(
+              replaceDependencies(prev, atom, dependenciesToReplace),
+              atom,
+              { readE: undefined, readP: undefined, value },
+              promise
+            )
+          )
         })
         .catch((e) => {
-          setState((prev) => {
-            const prevPromise = mGet(prev, atom)?.readP
-            if (prevPromise && prevPromise !== promise) {
-              return prev
-            }
-            return mSet(prev, atom, {
-              value: getAtomStateValue(atom, prev),
-              readE: e instanceof Error ? e : new Error(e),
-            })
-          })
+          const dependenciesToReplace = dependencies as Set<AnyAtom>
+          dependencies = null
+          setState((prev) =>
+            updateAtomState(
+              replaceDependencies(prev, atom, dependenciesToReplace),
+              atom,
+              {
+                readE: e instanceof Error ? e : new Error(e),
+                readP: undefined,
+              },
+              promise
+            )
+          )
         })
     } else {
-      setDependencies(dependentsMap, atom, dependencies)
-      dependencies = null
       value = promiseOrValue
+      flushDependencies = true
     }
   } catch (errorOrPromise) {
     if (errorOrPromise instanceof Promise) {
-      promise = errorOrPromise
+      promise = errorOrPromise.then(() => {
+        setState(
+          (prev) =>
+            readAtomState(mDel(prev, atom), atom, setState, atomStateCache)[1]
+        )
+      })
     } else if (errorOrPromise instanceof Error) {
       error = errorOrPromise
     } else {
       error = new Error(errorOrPromise)
     }
+    flushDependencies = true
   }
-  const nextAtomState: AtomState<Value> = {
-    readE: error,
-    readP: promise,
-    value: promise ? atom.init : value,
+  nextState = updateAtomState(
+    nextState,
+    atom,
+    {
+      readE: error,
+      readP: promise,
+      value: promise ? atom.init : value,
+    },
+    undefined,
+    true
+  )
+  if (flushDependencies) {
+    nextState = replaceDependencies(nextState, atom, dependencies)
+    dependencies = null
+  } else {
+    // add dependency temporarily
+    dependencies.forEach((dependency) => {
+      nextState = addDependency(nextState, atom, dependency)
+    })
   }
-  nextState = mSet(nextState, atom, nextAtomState)
+  const atomState = mGet(nextState, atom) as AtomState<Value>
   isSync = false
-  return [nextAtomState, nextState] as const
+  return [atomState, nextState] as const
 }
 
 const updateDependentsState = <Value>(
-  atom: Atom<Value>,
   prevState: State,
+  atom: Atom<Value>,
   setState: Dispatch<(prev: State) => State>,
-  dependentsMap: DependentsMap
+  dependentsMap: DependentsMap,
+  atomStateCache: AtomStateCache
 ) => {
+  const dependents = dependentsMap.get(atom)
+  if (!dependents) {
+    // no dependents found
+    // this may happen if async function is resolved before commit.
+    // not certain this is going to be an issue in some cases.
+    return prevState
+  }
   let nextState = prevState
-  listDependents(dependentsMap, atom, true).forEach((dependent) => {
-    if (typeof dependent === 'symbol') return
+  dependents.forEach((dependent) => {
+    if (
+      dependent === atom ||
+      typeof dependent === 'symbol' ||
+      !mGet(nextState, dependent)
+    ) {
+      return
+    }
     const [dependentState, nextNextState] = readAtomState(
-      dependent,
       nextState,
+      dependent,
       setState,
-      dependentsMap,
+      atomStateCache,
       true
     )
     const promise = dependentState.readP
     if (promise) {
       promise.then(() => {
         setState((prev) =>
-          updateDependentsState(dependent, prev, setState, dependentsMap)
+          updateDependentsState(
+            prev,
+            dependent,
+            setState,
+            dependentsMap,
+            atomStateCache
+          )
         )
       })
       nextState = nextNextState
     } else {
       nextState = updateDependentsState(
-        dependent,
         nextNextState,
+        dependent,
         setState,
-        dependentsMap
+        dependentsMap,
+        atomStateCache
       )
     }
   })
@@ -281,61 +367,68 @@ const updateDependentsState = <Value>(
 const readAtom = <Value>(
   state: State,
   readingAtom: Atom<Value>,
-  setState: Dispatch<(prev: State) => State>,
-  dependentsMap: DependentsMap,
-  readPendingMap: ReadPendingMap
+  setState: Dispatch<SetStateAction<State>>,
+  pendingStateMap: PendingStateMap,
+  atomStateCache: AtomStateCache
 ) => {
-  let prevState = readPendingMap.get(state) || state
+  const prevState = pendingStateMap.get(state) || state
   const [atomState, nextState] = readAtomState(
-    readingAtom,
     prevState,
+    readingAtom,
     setState,
-    dependentsMap
+    atomStateCache
   )
   if (nextState !== prevState) {
-    readPendingMap.set(state, nextState)
+    pendingStateMap.set(state, nextState)
   }
   return atomState
 }
 
 const addAtom = <Value>(
   id: symbol,
-  atom: Atom<Value>,
+  addingAtom: Atom<Value>,
   dependentsMap: DependentsMap
 ) => {
-  addDependent(dependentsMap, atom, id)
+  const dependents = dependentsMap.get(addingAtom)
+  const newDependents = new Set(dependents).add(id)
+  dependentsMap.set(addingAtom, newDependents)
 }
 
-const delAtom = (
+const delAtom = <Value>(
   id: symbol,
-  setGcCount: Dispatch<SetStateAction<number>>,
-  dependentsMap: DependentsMap
+  deletingAtom: Atom<Value>,
+  dependentsMap: DependentsMap,
+  atomStateCache: AtomStateCache,
+  addWriteThunk: (thunk: WriteThunk) => void
 ) => {
-  deleteDependent(dependentsMap, id)
-  setGcCount((c) => c + 1) // trigger re-render for gc
-}
-
-const gcAtom = (
-  state: State,
-  setState: Dispatch<State>,
-  dependentsMap: DependentsMap
-) => {
-  let nextState = state
-  let deleted: boolean
-  do {
-    deleted = false
-    mKeys(nextState).forEach((atom) => {
-      const isEmpty = dependentsMap.get(atom)?.size === 0
-      if (isEmpty) {
-        nextState = mDel(nextState, atom)
+  addWriteThunk((prev) => {
+    let nextState = prev
+    const del = (atom: AnyAtom, dependent: AnyAtom | symbol) => {
+      const dependents = dependentsMap.get(atom)
+      const newDependents = new Set(dependents)
+      newDependents.delete(dependent)
+      if (!newDependents.size) {
         dependentsMap.delete(atom)
-        deleted = true
+        const atomState = mGet(nextState, atom)
+        if (atomState) {
+          if (atomState.readP && process.env.NODE_ENV !== 'production') {
+            console.warn('[Bug] saving atomState with read promise', atom)
+          }
+          atomStateCache.set(atom, atomState)
+          nextState = mDel(nextState, atom)
+          atomState.deps.forEach((_, a) => {
+            del(a, atom)
+          })
+        } else if (process.env.NODE_ENV !== 'production') {
+          warnAtomStateNotFound('delAtom', atom)
+        }
+      } else {
+        dependentsMap.set(atom, newDependents)
       }
-    })
-  } while (deleted)
-  if (nextState !== state) {
-    setState(nextState)
-  }
+    }
+    del(deletingAtom, id)
+    return nextState
+  })
 }
 
 const writeAtom = <Value, Update>(
@@ -343,6 +436,7 @@ const writeAtom = <Value, Update>(
   update: Update,
   setState: Dispatch<(prev: State) => State>,
   dependentsMap: DependentsMap,
+  atomStateCache: AtomStateCache,
   addWriteThunk: (thunk: WriteThunk) => void
 ) => {
   const pendingPromises: Promise<void>[] = []
@@ -365,36 +459,45 @@ const writeAtom = <Value, Update>(
     try {
       const promiseOrVoid = atom.write(
         ((a: AnyAtom) => {
-          if (process.env.NODE_ENV !== 'production') {
-            const s = mGet(nextState, a)
-            if (s && s.readP) {
-              // TODO will try to detect this
-              console.warn(
-                'Reading pending atom state in write operation. We need to detect this and fallback. Please file an issue for repro.',
-                a
-              )
+          const aState = mGet(nextState, a) || atomStateCache.get(a)
+          if (!aState) {
+            if (process.env.NODE_ENV !== 'production') {
+              warnAtomStateNotFound('writeAtomState', a)
             }
+            return a.init
           }
-          return getAtomStateValue(a, nextState)
+          if (aState.readP && process.env.NODE_ENV !== 'production') {
+            // TODO will try to detect this
+            console.warn(
+              'Reading pending atom state in write operation. We need to detect this and fallback. Please file an issue with repro.',
+              a
+            )
+          }
+          return aState.value
         }) as Getter,
         ((a: AnyWritableAtom, v: unknown) => {
           if (a === atom) {
-            const nextAtomState: AtomState = { value: v }
+            const partialAtomState = {
+              readE: undefined,
+              readP: undefined,
+              value: v,
+            }
             if (isSync) {
-              nextState = mSet(nextState, a, nextAtomState)
               nextState = updateDependentsState(
+                updateAtomState(nextState, a, partialAtomState),
                 a,
-                nextState,
                 setState,
-                dependentsMap
+                dependentsMap,
+                atomStateCache
               )
             } else {
               setState((prev) =>
                 updateDependentsState(
+                  updateAtomState(prev, a, partialAtomState),
                   a,
-                  mSet(prev, a, nextAtomState),
                   setState,
-                  dependentsMap
+                  dependentsMap,
+                  atomStateCache
                 )
               )
             }
@@ -410,18 +513,13 @@ const writeAtom = <Value, Update>(
       )
       if (promiseOrVoid instanceof Promise) {
         pendingPromises.push(promiseOrVoid)
-        const nextAtomState: AtomState = {
-          ...mGet(nextState, atom),
+        nextState = updateAtomState(nextState, atom, {
           writeP: promiseOrVoid.then(() => {
             addWriteThunk((prev) =>
-              mSet(prev, atom, {
-                ...mGet(prev, atom),
-                writeP: undefined,
-              })
+              updateAtomState(prev, atom, { writeP: undefined })
             )
           }),
-        }
-        nextState = mSet(nextState, atom, nextAtomState)
+        })
       }
     } catch (e) {
       if (pendingPromises.length) {
@@ -438,7 +536,23 @@ const writeAtom = <Value, Update>(
     return nextState
   }
 
-  addWriteThunk((prevState) => writeAtomState(prevState, writingAtom, update))
+  let isSync = true
+  let writeResolve: () => void
+  const writePromise = new Promise<void>((resolve) => {
+    writeResolve = resolve
+  })
+  pendingPromises.unshift(writePromise)
+  addWriteThunk((prevState) => {
+    if (isSync) {
+      pendingPromises.shift()
+    }
+    const nextState = writeAtomState(prevState, writingAtom, update)
+    if (!isSync) {
+      writeResolve()
+    }
+    return nextState
+  })
+  isSync = false
 
   if (pendingPromises.length) {
     return new Promise<void>((resolve, reject) => {
@@ -461,32 +575,29 @@ const writeAtom = <Value, Update>(
 }
 
 const runWriteThunk = (
-  lastStateRef: MutableRefObject<State | null>,
-  pendingStateRef: MutableRefObject<State | null>,
+  lastStateRef: MutableRefObject<State>,
+  isLastStateValidRef: MutableRefObject<boolean>,
+  pendingStateMap: PendingStateMap,
   setState: Dispatch<State>,
   contextUpdate: ContextUpdate,
   writeThunkQueue: WriteThunk[]
 ) => {
   while (true) {
-    if (!lastStateRef.current) {
-      return
-    }
-    if (writeThunkQueue.length === 0) {
+    if (!isLastStateValidRef.current || !writeThunkQueue.length) {
       return
     }
     const thunk = writeThunkQueue.shift() as WriteThunk
-    const prevState = pendingStateRef.current || lastStateRef.current
+    const prevState =
+      pendingStateMap.get(lastStateRef.current) || lastStateRef.current
     const nextState = thunk(prevState)
     if (nextState !== prevState) {
-      pendingStateRef.current = nextState
-      runWithPriority(NormalPriority, () => {
-        const pendingState = pendingStateRef.current
+      pendingStateMap.set(lastStateRef.current, nextState)
+      Promise.resolve().then(() => {
+        const pendingState = pendingStateMap.get(lastStateRef.current)
         if (pendingState) {
-          pendingStateRef.current = null
+          pendingStateMap.delete(lastStateRef.current)
           contextUpdate(() => {
-            runWithPriority(UserBlockingPriority, () => {
-              setState(pendingState)
-            })
+            setState(pendingState)
           })
         }
       })
@@ -494,85 +605,116 @@ const runWriteThunk = (
   }
 }
 
-export const ActionsContext = createContext(warningObject as Actions)
-export const StateContext = createContext(warningObject as State)
-
 const InnerProvider: React.FC<{
   r: MutableRefObject<ContextUpdate | undefined>
-}> = ({ r, children }) => {
-  const contextUpdate = useContextUpdate(StateContext)
-  if (!r.current) {
-    r.current = contextUpdate
-  }
+  c: ReturnType<typeof getContexts>[1]
+}> = ({ r, c, children }) => {
+  const contextUpdate = useContextUpdate(c)
+  useIsoLayoutEffect(() => {
+    if (isReactExperimental) {
+      r.current = (f) => {
+        contextUpdate(() => {
+          runWithPriority(UserBlockingPriority, f)
+        })
+      }
+    } else {
+      r.current = (f) => {
+        f()
+      }
+    }
+  }, [contextUpdate])
   return children as ReactElement
 }
 
-export const Provider: React.FC = ({ children }) => {
+export const Provider: React.FC<{
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+  scope?: Scope
+}> = ({ initialValues, scope, children }) => {
   const contextUpdateRef = useRef<ContextUpdate>()
 
-  const dependentsMapRef = useRef<DependentsMap>()
-  if (!dependentsMapRef.current) {
-    dependentsMapRef.current = new Map()
-  }
+  const pendingStateMap = useWeakMapRef<PendingStateMap>()
 
-  const readPendingMapRef = useRef<ReadPendingMap>()
-  if (!readPendingMapRef.current) {
-    readPendingMapRef.current = new WeakMap()
-  }
+  const atomStateCache = useWeakMapRef<AtomStateCache>()
 
-  const [state, setStateOrig] = useState(initialState)
-  const lastStateRef = useRef<State | null>(null)
-  const pendingStateRef = useRef<State | null>(null)
-  const setState = (setStateAction: SetStateAction<State>) => {
-    lastStateRef.current = null
-    const pendingState = pendingStateRef.current
-    if (pendingState) {
-      pendingStateRef.current = null
-      setStateOrig(pendingState)
+  const dependentsMap = useWeakMapRef<DependentsMap>()
+
+  const [state, setStateOrig] = useState(() => {
+    let initialState: State = mCreate()
+    if (initialValues) {
+      for (const [atom, value] of initialValues) {
+        initialState = mSet(initialState, atom, {
+          value,
+          rev: 0,
+          deps: new Map(),
+        })
+      }
     }
-    setStateOrig(setStateAction)
-  }
+    return initialState
+  })
+  const lastStateRef = useRef<State>(state)
+  const isLastStateValidRef = useRef(false)
+  const setState = useCallback(
+    (setStateAction: SetStateAction<State>) => {
+      const pendingState = pendingStateMap.get(lastStateRef.current)
+      if (pendingState) {
+        if (
+          typeof setStateAction !== 'function' &&
+          process.env.NODE_ENV !== 'production'
+        ) {
+          console.warn(
+            '[Bug] pendingState can only be applied with function update'
+          )
+        }
+        setStateOrig(pendingState)
+      }
+      isLastStateValidRef.current = false
+      setStateOrig(setStateAction)
+    },
+    [pendingStateMap]
+  )
 
   useIsoLayoutEffect(() => {
-    const readPendingMap = readPendingMapRef.current as ReadPendingMap
-    const pendingState = readPendingMap.get(state)
+    const pendingState = pendingStateMap.get(state)
     if (pendingState) {
+      pendingStateMap.delete(state)
       setState(pendingState)
       return
     }
+    updateDependentsMap(lastStateRef.current, state, dependentsMap)
     lastStateRef.current = state
+    isLastStateValidRef.current = true
   })
-
-  const [gcCount, setGcCount] = useState(0) // to trigger gc
-  useEffect(() => {
-    gcAtom(state, setState, dependentsMapRef.current as DependentsMap)
-  }, [state, gcCount])
 
   const writeThunkQueueRef = useRef<WriteThunk[]>([])
   useEffect(() => {
     runWriteThunk(
       lastStateRef,
-      pendingStateRef,
+      isLastStateValidRef,
+      pendingStateMap,
       setState,
       contextUpdateRef.current as ContextUpdate,
       writeThunkQueueRef.current
     )
-  }, [state])
+  }, [state, setState, pendingStateMap])
 
   const actions = useMemo(
     () => ({
-      add: <Value>(id: symbol, atom: Atom<Value>) =>
-        addAtom(id, atom, dependentsMapRef.current as DependentsMap),
-      del: (id: symbol) =>
-        delAtom(id, setGcCount, dependentsMapRef.current as DependentsMap),
-      read: <Value>(state: State, atom: Atom<Value>) =>
-        readAtom(
-          state,
+      add: <Value>(id: symbol, atom: Atom<Value>) => {
+        addAtom(id, atom, dependentsMap)
+      },
+      del: <Value>(id: symbol, atom: Atom<Value>) => {
+        delAtom(
+          id,
           atom,
-          setState,
-          dependentsMapRef.current as DependentsMap,
-          readPendingMapRef.current as ReadPendingMap
-        ),
+          dependentsMap,
+          atomStateCache,
+          (thunk: WriteThunk) => {
+            writeThunkQueueRef.current.push(thunk)
+          }
+        )
+      },
+      read: <Value>(state: State, atom: Atom<Value>) =>
+        readAtom(state, atom, setState, pendingStateMap, atomStateCache),
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,
         update: Update
@@ -581,13 +723,15 @@ export const Provider: React.FC = ({ children }) => {
           atom,
           update,
           setState,
-          dependentsMapRef.current as DependentsMap,
+          dependentsMap,
+          atomStateCache,
           (thunk: WriteThunk) => {
             writeThunkQueueRef.current.push(thunk)
-            if (lastStateRef.current) {
+            if (isLastStateValidRef.current) {
               runWriteThunk(
                 lastStateRef,
-                pendingStateRef,
+                isLastStateValidRef,
+                pendingStateMap,
                 setState,
                 contextUpdateRef.current as ContextUpdate,
                 writeThunkQueueRef.current
@@ -599,29 +743,38 @@ export const Provider: React.FC = ({ children }) => {
           }
         ),
     }),
-    []
+    [pendingStateMap, dependentsMap, atomStateCache, setState]
   )
   if (process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(state)
   }
+  const [ActionsContext, StateContext] = getContexts(scope)
   return createElement(
     ActionsContext.Provider,
     { value: actions },
     createElement(
       StateContext.Provider,
       { value: state },
-      createElement(InnerProvider, { r: contextUpdateRef }, children)
+      createElement(
+        InnerProvider,
+        { r: contextUpdateRef, c: StateContext },
+        children
+      )
     )
   )
 }
 
-const useDebugState = (state: State) => {
-  useDebugValue(state, (s: State) =>
-    mToPrintable(
-      s,
-      (k) => `${k.key}:${k.debugLabel ?? '<no debugLabel>'}`,
-      (v) => v.readE || v.readP || v.writeP || v.value
-    )
+const atomToPrintable = (atom: AnyAtom) =>
+  `${atom.key}:${atom.debugLabel ?? '<no debugLabel>'}`
+
+const stateToPrintable = (state: State) =>
+  mToPrintable(
+    state,
+    atomToPrintable,
+    (v) => v.readE || v.readP || v.writeP || v.value
   )
+
+const useDebugState = (state: State) => {
+  useDebugValue(state, stateToPrintable)
 }

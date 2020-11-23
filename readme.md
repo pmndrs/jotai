@@ -164,6 +164,20 @@ function Controls() {
 
 ----
 
+## Installation notes
+
+This package requires some peer dependencies, which you need to install by yourself.
+
+```bash
+yarn add jotai react scheduler react-dom
+```
+
+For React Native users:
+
+```bash
+yarn add jotai react scheduler react-native
+```
+
 ## More information
 
 We will be organizing some more information later. Meanwhile, please see WIP materials.
@@ -173,6 +187,7 @@ We will be organizing some more information later. Meanwhile, please see WIP mat
   - [How is jotai different from recoil?](./docs/comparison.md#how-is-jotai-different-from-recoil)
 - [Core Doc](./docs/core.md)
 - [Async Doc](./docs/async.md)
+- [Debugging Doc](./docs/debugging.md)
 - [Utils Doc](./docs/utils.md)
 - [Immer Doc](./docs/immer.md)
 - [TypeScript Doc](./docs/typescript.md)

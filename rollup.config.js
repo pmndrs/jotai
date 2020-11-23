@@ -1,8 +1,8 @@
 import path from 'path'
-import babel from 'rollup-plugin-babel'
-import resolve from 'rollup-plugin-node-resolve'
+import babel from '@rollup/plugin-babel'
+import resolve from '@rollup/plugin-node-resolve'
+import typescript from '@rollup/plugin-typescript'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
-import typescript from 'rollup-plugin-typescript2'
 
 const createBabelConfig = require('./babel.config')
 
@@ -14,16 +14,27 @@ const getBabelOptions = (targets) => ({
   extensions,
 })
 
+function createDeclarationConfig(input, output) {
+  return {
+    input,
+    output: {
+      dir: output,
+    },
+    external,
+    plugins: [typescript({ declaration: true, outDir: output })],
+  }
+}
+
 function createESMConfig(input, output) {
   return {
     input,
     output: { file: output, format: 'esm' },
     external,
     plugins: [
+      resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ node: 8 })),
       sizeSnapshot(),
-      resolve({ extensions }),
     ],
   }
 }
@@ -34,10 +45,10 @@ function createCommonJSConfig(input, output) {
     output: { file: output, format: 'cjs', exports: 'named' },
     external,
     plugins: [
+      resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ ie: 11 })),
       sizeSnapshot(),
-      resolve({ extensions }),
     ],
   }
 }
@@ -56,20 +67,23 @@ function createIIFEConfig(input, output, globalName) {
     },
     external,
     plugins: [
+      resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ ie: 11 })),
       sizeSnapshot(),
-      resolve({ extensions }),
     ],
   }
 }
 
 export default [
+  createDeclarationConfig('src/index.ts', 'dist'),
   createESMConfig('src/index.ts', 'dist/index.js'),
   createCommonJSConfig('src/index.ts', 'dist/index.cjs.js'),
   createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'jotai'),
   createESMConfig('src/utils.ts', 'dist/utils.js'),
   createCommonJSConfig('src/utils.ts', 'dist/utils.cjs.js'),
+  createESMConfig('src/devtools.ts', 'dist/devtools.js'),
+  createCommonJSConfig('src/devtools.ts', 'dist/devtools.cjs.js'),
   createESMConfig('src/immer.ts', 'dist/immer.js'),
   createCommonJSConfig('src/immer.ts', 'dist/immer.cjs.js'),
 ]
