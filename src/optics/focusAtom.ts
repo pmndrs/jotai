@@ -47,10 +47,7 @@ export const focusAtom: FocusAtom = <S, A>(
           ? O.modify(focus)(update)
           : O.set(focus)(update)
 
-      set(baseAtom, (oldBaseValue) => {
-        const newBaseValue = newValueProducer(oldBaseValue)
-        return newBaseValue
-      })
+      set(baseAtom, newValueProducer)
     }
   )
 }
