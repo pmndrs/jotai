@@ -34,7 +34,7 @@ function createESMConfig(input, output) {
       resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ node: 8 })),
-      sizeSnapshot(),
+      // sizeSnapshot(),
     ],
   }
 }
@@ -48,7 +48,7 @@ function createCommonJSConfig(input, output) {
       resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ ie: 11 })),
-      sizeSnapshot(),
+      // sizeSnapshot(),
     ],
   }
 }
@@ -70,7 +70,7 @@ function createIIFEConfig(input, output, globalName) {
       resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ ie: 11 })),
-      sizeSnapshot(),
+      // sizeSnapshot(),
     ],
   }
 }
