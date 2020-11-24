@@ -34,7 +34,7 @@ function createESMConfig(input, output) {
       resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ node: 8 })),
-      // sizeSnapshot(),
+      sizeSnapshot(),
     ],
   }
 }
@@ -48,7 +48,7 @@ function createCommonJSConfig(input, output) {
       resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ ie: 11 })),
-      // sizeSnapshot(),
+      sizeSnapshot(),
     ],
   }
 }
@@ -70,22 +70,26 @@ function createIIFEConfig(input, output, globalName) {
       resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ ie: 11 })),
-      // sizeSnapshot(),
+      sizeSnapshot(),
     ],
   }
 }
 
-export default [
-  createDeclarationConfig('src/index.ts', 'dist'),
-  createESMConfig('src/index.ts', 'dist/index.js'),
-  createCommonJSConfig('src/index.ts', 'dist/index.cjs.js'),
-  createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'jotai'),
-  createESMConfig('src/utils.ts', 'dist/utils.js'),
-  createCommonJSConfig('src/utils.ts', 'dist/utils.cjs.js'),
-  createESMConfig('src/devtools.ts', 'dist/devtools.js'),
-  createCommonJSConfig('src/devtools.ts', 'dist/devtools.cjs.js'),
-  createESMConfig('src/immer.ts', 'dist/immer.js'),
-  createCommonJSConfig('src/immer.ts', 'dist/immer.cjs.js'),
-  createESMConfig('src/optics.ts', 'dist/optics.js'),
-  createCommonJSConfig('src/optics.ts', 'dist/optics.cjs.js'),
-]
+export default (args) =>
+  args['config-cjs']
+    ? [
+        createCommonJSConfig('src/index.ts', 'dist/index.cjs.js'),
+        createCommonJSConfig('src/utils.ts', 'dist/utils.cjs.js'),
+        createCommonJSConfig('src/devtools.ts', 'dist/devtools.cjs.js'),
+        createCommonJSConfig('src/immer.ts', 'dist/immer.cjs.js'),
+        createCommonJSConfig('src/optics.ts', 'dist/optics.cjs.js'),
+      ]
+    : [
+        createDeclarationConfig('src/index.ts', 'dist'),
+        createESMConfig('src/index.ts', 'dist/index.js'),
+        createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'jotai'),
+        createESMConfig('src/utils.ts', 'dist/utils.js'),
+        createESMConfig('src/devtools.ts', 'dist/devtools.js'),
+        createESMConfig('src/immer.ts', 'dist/immer.js'),
+        createESMConfig('src/optics.ts', 'dist/optics.js'),
+      ]
