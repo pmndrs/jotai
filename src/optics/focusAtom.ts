@@ -64,7 +64,8 @@ const getValueUsingOptic = <S, A>(
   if (focus._tag === 'Traversal') {
     const values = O.collect(focus)(bigValue)
     return values
-  } else if (focus._tag === 'Prism') {
+  }
+  if (focus._tag === 'Prism') {
     const value = O.preview(focus)(bigValue)
     return value
   } else {
