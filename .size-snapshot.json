@@ -81,22 +81,22 @@
     "gzipped": 310
   },
   "optics.js": {
-    "bundled": 1202,
-    "minified": 489,
-    "gzipped": 289,
+    "bundled": 797,
+    "minified": 398,
+    "gzipped": 251,
     "treeshaked": {
       "rollup": {
-        "code": 46,
-        "import_statements": 46
+        "code": 32,
+        "import_statements": 32
       },
       "webpack": {
-        "code": 1096
+        "code": 1049
       }
     }
   },
   "optics.cjs.js": {
-    "bundled": 1550,
-    "minified": 780,
-    "gzipped": 410
+    "bundled": 885,
+    "minified": 464,
+    "gzipped": 292
   }
 }

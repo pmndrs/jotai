@@ -2,26 +2,24 @@ import { atom } from 'jotai'
 import * as O from 'optics-ts'
 import type { PrimitiveAtom, SetStateAction, WritableAtom } from '../core/types'
 
-export type FocusAtom = {
-  <S, A>(
-    atom: PrimitiveAtom<S>,
-    callback: (optic: O.OpticFor<S>) => O.Prism<S, any, A>
-  ): WritableAtom<A | undefined, SetStateAction<A>>
+export function focusAtom<S, A>(
+  atom: PrimitiveAtom<S>,
+  callback: (optic: O.OpticFor<S>) => O.Prism<S, any, A>
+): WritableAtom<A | undefined, SetStateAction<A>>
 
-  <S, A>(
-    atom: PrimitiveAtom<S>,
-    callback: (optic: O.OpticFor<S>) => O.Traversal<S, any, A>
-  ): WritableAtom<Array<A>, SetStateAction<A>>
+export function focusAtom<S, A>(
+  atom: PrimitiveAtom<S>,
+  callback: (optic: O.OpticFor<S>) => O.Traversal<S, any, A>
+): WritableAtom<Array<A>, SetStateAction<A>>
 
-  <S, A>(
-    atom: PrimitiveAtom<S>,
-    callback: (
-      optic: O.OpticFor<S>
-    ) => O.Lens<S, any, A> | O.Equivalence<S, any, A> | O.Iso<S, any, A>
-  ): PrimitiveAtom<A>
-}
+export function focusAtom<S, A>(
+  atom: PrimitiveAtom<S>,
+  callback: (
+    optic: O.OpticFor<S>
+  ) => O.Lens<S, any, A> | O.Equivalence<S, any, A> | O.Iso<S, any, A>
+): PrimitiveAtom<A>
 
-export const focusAtom: FocusAtom = <S, A>(
+export function focusAtom<S, A>(
   baseAtom: PrimitiveAtom<S>,
   callback: (
     optic: O.OpticFor<S>
@@ -34,7 +32,7 @@ export const focusAtom: FocusAtom = <S, A>(
 ):
   | WritableAtom<A | undefined, SetStateAction<A>>
   | WritableAtom<Array<A>, SetStateAction<A>>
-  | PrimitiveAtom<A> => {
+  | PrimitiveAtom<A> {
   const focus = callback(O.optic<S>())
   return atom<A, SetStateAction<A>>(
     (get) => {
