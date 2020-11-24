@@ -76,11 +76,11 @@ it('focus on an atom works', async () => {
 
 it('double-focus on an atom works', async () => {
   const bigAtom = atom({ a: { b: 0 } })
+  const atomA = focusAtom(bigAtom, (optic) => optic.prop('a'))
+  const atomB = focusAtom(atomA, (optic) => optic.prop('b'))
 
   const Counter: React.FC = () => {
     const [bigAtomValue, setBigAtom] = useAtom(bigAtom)
-    const atomA = focusAtom(bigAtom, (optic) => optic.prop('a'))
-    const atomB = focusAtom(atomA, (optic) => optic.prop('b'))
     const [atomAValue, setAtomA] = useAtom(atomA)
     const [atomBValue, setAtomB] = useAtom(atomB)
     return (
