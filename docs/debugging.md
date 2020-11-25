@@ -87,7 +87,7 @@ to mutate objects which can lead to unexpected behavior.
 ## atomFrozenInDev
 
 ```js
-import { atomFrozenInDev as atom } from 'jotai/utilis'
+import { atomFrozenInDev as atom } from 'jotai/utils'
 
 const countAtom = atom(0)
 ```
