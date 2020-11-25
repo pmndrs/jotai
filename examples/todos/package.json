@@ -1,7 +1,7 @@
 {
-  "name": "jotai-demo",
+  "name": "todos",
   "version": "1.0.0",
-  "description": "A todo demo with jotai",
+  "description": "Record your todo list by typing them into this app, check them if you have completed the task, and switch between Completed and Incompleted to see the status of your task",
   "keywords": [],
   "main": "src/index.tsx",
   "dependencies": {

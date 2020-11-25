@@ -1,7 +1,7 @@
 {
-  "name": "jotai-demo",
+  "name": "text_length",
   "version": "1.0.0",
-  "description": "A basic demo with Jotai",
+  "description": "Count the length and show the uppercase of any text",
   "keywords": [],
   "main": "src/index.js",
   "scripts": {

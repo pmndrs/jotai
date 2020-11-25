@@ -42,6 +42,25 @@
     "minified": 3776,
     "gzipped": 1457
   },
+  "devtools.js": {
+    "bundled": 2289,
+    "minified": 1076,
+    "gzipped": 618,
+    "treeshaked": {
+      "rollup": {
+        "code": 28,
+        "import_statements": 28
+      },
+      "webpack": {
+        "code": 1045
+      }
+    }
+  },
+  "devtools.cjs.js": {
+    "bundled": 2462,
+    "minified": 1206,
+    "gzipped": 660
+  },
   "immer.js": {
     "bundled": 797,
     "minified": 400,
@@ -61,23 +80,23 @@
     "minified": 673,
     "gzipped": 310
   },
-  "devtools.js": {
-    "bundled": 2289,
-    "minified": 1076,
-    "gzipped": 618,
+  "optics.js": {
+    "bundled": 797,
+    "minified": 398,
+    "gzipped": 251,
     "treeshaked": {
       "rollup": {
-        "code": 28,
-        "import_statements": 28
+        "code": 32,
+        "import_statements": 32
       },
       "webpack": {
-        "code": 1045
+        "code": 1049
       }
     }
   },
-  "devtools.cjs.js": {
-    "bundled": 2462,
-    "minified": 1206,
-    "gzipped": 660
+  "optics.cjs.js": {
+    "bundled": 885,
+    "minified": 464,
+    "gzipped": 292
   }
 }

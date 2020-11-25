@@ -5314,6 +5314,11 @@ opencollective-postinstall@^2.0.2:
   resolved "https://registry.yarnpkg.com/opencollective-postinstall/-/opencollective-postinstall-2.0.3.tgz#7a0fff978f6dbfa4d006238fbac98ed4198c3259"
   integrity sha512-8AV/sCtuzUeTo8gQK5qDZzARrulB3egtLzFgteqB2tcT4Mw7B8Kt7JcDHmltjz6FOAHsvTevk70gZEbhM4ZS9Q==
 
+optics-ts@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/optics-ts/-/optics-ts-1.2.0.tgz#d8db012c4bb01be0504f9515ee6ee3df62329620"
+  integrity sha512-YItI8h9IPjO3gWzcWlakJhrtzSQu0MJmkWTap89l45dVjaxHDqpJcfJX8VUNrRVoIXEt1Dx2WckdWoU2GYtnvg==
+
 optionator@^0.8.1:
   version "0.8.3"
   resolved "https://registry.yarnpkg.com/optionator/-/optionator-0.8.3.tgz#84fa1d036fe9d3c7e21d99884b601167ec8fb495"

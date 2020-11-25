@@ -1,7 +1,7 @@
 {
-  "name": "react-typescript",
+  "name": "todos_with_atomFamily",
   "version": "1.0.0",
-  "description": "React and TypeScript example starter project",
+  "description": "Implement a todo list using atomFamily and localStorage, you can store your todo list to localStorage by click Save to localStorage, then remove your todo list and restore them by click Load from localStorage",
   "keywords": [
     "typescript",
     "react",
