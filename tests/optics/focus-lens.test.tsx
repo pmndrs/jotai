@@ -46,9 +46,9 @@ it('basic derivation using focus works', async () => {
 
 it('focus on an atom works', async () => {
   const bigAtom = atom({ a: 0 })
+  const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a'))
 
   const Counter: React.FC = () => {
-    const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a'))
     const [count, setCount] = useAtom(aAtom)
     const [bigAtomValue] = useAtom(bigAtom)
     return (

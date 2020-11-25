@@ -5,9 +5,9 @@ import { focusAtom } from '../../src/optics'
 
 it('updates prisms', async () => {
   const bigAtom = atom<{ a?: number }>({ a: 5 })
+  const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a').optional())
 
   const Counter: React.FC = () => {
-    const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a').optional())
     const [count, setCount] = useAtom(aAtom)
     const [bigAtomValue] = useAtom(bigAtom)
     return (
@@ -35,9 +35,9 @@ it('updates prisms', async () => {
 
 it('atoms that focus on no values are not updated', async () => {
   const bigAtom = atom<{ a?: number }>({})
+  const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a').optional())
 
   const Counter: React.FC = () => {
-    const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a').optional())
     const [count, setCount] = useAtom(aAtom)
     const [bigAtomValue] = useAtom(bigAtom)
     return (

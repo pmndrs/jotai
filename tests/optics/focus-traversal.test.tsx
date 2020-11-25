@@ -5,11 +5,11 @@ import { focusAtom } from '../../src/optics/focusAtom'
 
 it('updates traversals', async () => {
   const bigAtom = atom<{ a?: number }[]>([{ a: 5 }, {}, { a: 6 }])
+  const aAtom = focusAtom(bigAtom, (optic) =>
+    optic.elems().prop('a').optional()
+  )
 
   const Counter: React.FC = () => {
-    const aAtom = focusAtom(bigAtom, (optic) =>
-      optic.elems().prop('a').optional()
-    )
     const [count, setCount] = useAtom(aAtom)
     const [bigAtomValue] = useAtom(bigAtom)
     return (
