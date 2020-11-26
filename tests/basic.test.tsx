@@ -1,4 +1,4 @@
-import React, { StrictMode, Suspense, useEffect, useRef } from 'react'
+import React, { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import {
   Provider,
@@ -734,6 +734,45 @@ it('updates two atoms in child useEffect', async () => {
 
   await findByText('countA: 1')
   await findByText('countB: 2')
+})
+
+it('set atom right after useEffect (#208)', async () => {
+  const countAtom = atom(0)
+  const effectFn = jest.fn()
+
+  const Child: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [, setState] = useState(null)
+    // rAF does not repro, so schedule update intentionally in render
+    if (count === 1) {
+      Promise.resolve().then(() => {
+        setCount(2)
+      })
+    }
+    useEffect(() => {
+      effectFn(count)
+      setState(null) // this is important to repro
+    }, [count, setState])
+    return <div>count: {count}</div>
+  }
+
+  const Parent: React.FC = () => {
+    const [, setCount] = useAtom(countAtom)
+    useEffect(() => {
+      setCount(1)
+      // requestAnimationFrame(() => setCount(2))
+    }, [setCount])
+    return <Child />
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Parent />
+    </Provider>
+  )
+
+  await findByText('count: 2')
+  expect(effectFn).lastCalledWith(2)
 })
 
 it('works with Brige', async () => {
