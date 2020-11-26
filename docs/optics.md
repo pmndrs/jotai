@@ -35,16 +35,11 @@ To see more advanced optics, please see the example at: https://github.com/akher
 
 ```js
 import { atom } from 'jotai'
-import { useFocus } from 'jotai/optics'
+import { focusAtom } from 'jotai/optics'
 
 const objectAtom = atom({a: 5, b: 10})
 const aAtom = focusAtom(objectAtom, optic => optic.prop('a'))
 const bAtom = focusAtom(objectAtom, optic => optic.prop('b'))
-
-const Counter = () => {
-  const [count] = useAtom(countAtom)
-  return <div>count: {count}</div>
-}
 
 const Controls = () => {
   const [a, setA] = useAtom(aAtom)
