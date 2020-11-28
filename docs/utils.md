@@ -34,8 +34,7 @@ import { useAtomValue } from "jotai/utils"
 const countAtom = atom(0)
 
 const Counter = () => {
-  const [, setCount] = useAtom(countAtom) 
-  // const setCount = useUpdateAtom(countAtom)
+  const setCount = useUpdateAtom(countAtom)
   const count = useAtomValue(countAtom)
   return (
     <>
