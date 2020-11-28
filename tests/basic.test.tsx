@@ -751,7 +751,7 @@ it('set atom right after useEffect (#208)', async () => {
     }
     useEffect(() => {
       effectFn(count)
-      setState(null) // this is important to repro
+      setState(null) // this is important to repro (set something stable)
     }, [count, setState])
     return <div>count: {count}</div>
   }
