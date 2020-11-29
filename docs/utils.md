@@ -23,6 +23,29 @@ const Controls = () => {
 ```
 
 https://codesandbox.io/s/react-typescript-forked-3q11k
+## useAtomValue
+
+Ref: https://github.com/pmndrs/jotai/issues/212
+
+```js
+import { atom, Provider, useAtom } from "jotai"
+import { useAtomValue } from "jotai/utils"
+
+const countAtom = atom(0)
+
+const Counter = () => {
+  const setCount = useUpdateAtom(countAtom)
+  const count = useAtomValue(countAtom)
+  return (
+    <>
+      <div>count: {count}</div>
+      <button onClick={() => setCount(count + 1)}>+1</button>
+    </>
+  )
+}
+```
+
+https://codesandbox.io/s/react-typescript-forked-1x90m
 
 ## atomWithReset / useResetAtom
 
