@@ -1,5 +1,5 @@
 import React, { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
   Provider,
   atom,
@@ -826,4 +826,64 @@ it('works with Brige', async () => {
   fireEvent.click(getByText('child'))
   await findByText('count: 2')
   await findByText('child: 2')
+})
+
+it('only relevant render function called (#156)', async () => {
+  if (process.env.IS_REACT_EXPERIMENTAL) {
+    return // skip this test
+  }
+  const count1Atom = atom(0)
+  const count2Atom = atom(0)
+
+  const Counter1: React.FC = () => {
+    const [count, setCount] = useAtom(count1Atom)
+    const renderCount = useRef(0)
+    ++renderCount.current
+    return (
+      <>
+        <div>
+          count1: {count} ({renderCount.current})
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button1</button>
+      </>
+    )
+  }
+
+  const Counter2: React.FC = () => {
+    const [count, setCount] = useAtom(count2Atom)
+    const renderCount = useRef(0)
+    ++renderCount.current
+    return (
+      <>
+        <div>
+          count2: {count} ({renderCount.current})
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button2</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Counter1 />
+      <Counter2 />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count1: 0 (1)')
+    getByText('count2: 0 (1)')
+  })
+
+  fireEvent.click(getByText('button1'))
+  await waitFor(() => {
+    getByText('count1: 1 (3)')
+    getByText('count2: 0 (1)')
+  })
+
+  fireEvent.click(getByText('button2'))
+  await waitFor(() => {
+    getByText('count1: 1 (3)')
+    getByText('count2: 1 (3)')
+  })
 })
