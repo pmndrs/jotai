@@ -877,7 +877,7 @@ it('only relevant render function called (#156)', async () => {
 
   fireEvent.click(getByText('button1'))
   await waitFor(() => {
-    getByText('count1: 1 (3)')
+    getByText('count1: 1 (3)') // use-context-selector v1.2 triggers double renders
     getByText('count2: 0 (1)')
   })
 
