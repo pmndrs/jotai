@@ -1,6 +1,6 @@
-import React, { StrictMode, useEffect, useRef } from 'react'
-import { fireEvent, render } from '@testing-library/react'
-import { Provider, atom, useAtom, WritableAtom } from '../../src/index'
+import React, { useEffect, useRef } from 'react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
+import { Provider, atom, useAtom } from '../../src/index'
 import { useUpdateAtom } from '../../src/utils'
 
 const useRerenderCount = () => {
@@ -46,24 +46,29 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  const { getByText } = render(
     <Provider>
       <Parent />
     </Provider>
   )
 
-  await findByText('count: 0, rerenders: 0')
-  await findByText('updater rerenders: 0')
-
+  await waitFor(() => {
+    getByText('count: 0, rerenders: 0')
+    getByText('updater rerenders: 0')
+  })
   fireEvent.click(getByText('increment'))
-  await findByText('count: 1, rerenders: 1')
-  await findByText('updater rerenders: 0')
-
+  await waitFor(() => {
+    getByText('count: 1, rerenders: 1')
+    getByText('updater rerenders: 0')
+  })
   fireEvent.click(getByText('increment'))
-  await findByText('count: 2, rerenders: 2')
-  await findByText('updater rerenders: 0')
-
+  await waitFor(() => {
+    getByText('count: 2, rerenders: 2')
+    getByText('updater rerenders: 0')
+  })
   fireEvent.click(getByText('increment'))
-  await findByText('count: 3, rerenders: 3')
-  await findByText('updater rerenders: 0')
+  await waitFor(() => {
+    getByText('count: 3, rerenders: 3')
+    getByText('updater rerenders: 0')
+  })
 })
