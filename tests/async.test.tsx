@@ -213,7 +213,7 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
   const countAtom = atom(0)
   const asyncCountAtom = atom(
     async (get) => get(countAtom),
-    async (get, set) => set(countAtom, (get(countAtom) as number) + 1)
+    async (get, set) => set(countAtom, get(countAtom) + 1)
   )
 
   const Counter: React.FC = () => {
@@ -263,7 +263,7 @@ it('updates an async atom in child useEffect on remount', async () => {
     },
     async (get, set) => {
       await new Promise((r) => setTimeout(r, 10))
-      set(countAtom, (get(countAtom) as number) + 1)
+      set(countAtom, get(countAtom) + 1)
     }
   )
 
