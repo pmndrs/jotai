@@ -1,6 +1,6 @@
 export { useUpdateAtom } from './utils/useUpdateAtom'
 export { useAtomValue } from './utils/useAtomValue'
-export { atomWithReset, useResetAtom } from './utils/useResetAtom'
+export { atomWithReset, useResetAtom, RESET } from './utils/useResetAtom'
 export { useReducerAtom } from './utils/useReducerAtom'
 export { atomWithReducer } from './utils/atomWithReducer'
 export { atomFamily } from './utils/atomFamily'
