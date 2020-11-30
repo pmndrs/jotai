@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import { useUpdateAtom } from '../../src/utils'
@@ -47,9 +47,11 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
