@@ -48,14 +48,18 @@ it('does not show async stale result', async () => {
   )
 
   await findByText('loading')
-  await findByText('count: 0')
-  await findByText('delayedCount: 0')
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('delayedCount: 0')
+  })
   expect(committed).toEqual([0])
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  await findByText('count: 2')
-  await findByText('delayedCount: 2')
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('delayedCount: 2')
+  })
   expect(committed).toEqual([0, 2])
 })
 
@@ -95,13 +99,16 @@ it('works with async get with extra deps', async () => {
   )
 
   await findByText('loading')
-  await findByText('count: 0')
-  await findByText('delayedCount: 0')
-
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('delayedCount: 0')
+  })
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  await findByText('count: 1')
-  await findByText('delayedCount: 1')
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('delayedCount: 1')
+  })
 })
 
 it('reuses promises on initial read', async () => {
