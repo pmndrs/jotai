@@ -40,7 +40,7 @@ import { AtomState, State, getContexts } from './contexts'
 
 // guessing if it's react experimental channel
 const isReactExperimental =
-  !!process.env.IS_REACT_EXPERIMENTAL ||
+  !!(typeof process === 'object' && process.env.IS_REACT_EXPERIMENTAL) ||
   !!(React as any).unstable_useMutableSource
 
 const useWeakMapRef = <T extends WeakMap<object, unknown>>() => {
@@ -80,7 +80,11 @@ const updateAtomState = <Value>(
 ): State => {
   let atomState = mGet(prevState, atom) as AtomState<Value> | undefined
   if (!atomState) {
-    if (!isNew && process.env.NODE_ENV !== 'production') {
+    if (
+      !isNew &&
+      typeof process === 'object' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
       warnAtomStateNotFound('updateAtomState', atom)
     }
     atomState = { rev: 0, deps: new Map() }
@@ -152,7 +156,7 @@ const replaceDependencies = (
   let nextState = prevState
   const atomState = mGet(nextState, atom)
   if (!atomState) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
       warnAtomStateNotFound('replaceDependencies.atomState', atom)
     }
     return prevState
@@ -411,7 +415,11 @@ const delAtom = <Value>(
         dependentsMap.delete(atom)
         const atomState = mGet(nextState, atom)
         if (atomState) {
-          if (atomState.readP && process.env.NODE_ENV !== 'production') {
+          if (
+            atomState.readP &&
+            typeof process === 'object' &&
+            process.env.NODE_ENV !== 'production'
+          ) {
             console.warn('[Bug] saving atomState with read promise', atom)
           }
           atomStateCache.set(atom, atomState)
@@ -419,7 +427,10 @@ const delAtom = <Value>(
           atomState.deps.forEach((_, a) => {
             del(a, atom)
           })
-        } else if (process.env.NODE_ENV !== 'production') {
+        } else if (
+          typeof process === 'object' &&
+          process.env.NODE_ENV !== 'production'
+        ) {
           warnAtomStateNotFound('delAtom', atom)
         }
       } else {
@@ -461,12 +472,19 @@ const writeAtom = <Value, Update>(
         ((a: AnyAtom) => {
           const aState = mGet(nextState, a) || atomStateCache.get(a)
           if (!aState) {
-            if (process.env.NODE_ENV !== 'production') {
+            if (
+              typeof process === 'object' &&
+              process.env.NODE_ENV !== 'production'
+            ) {
               warnAtomStateNotFound('writeAtomState', a)
             }
             return a.init
           }
-          if (aState.readP && process.env.NODE_ENV !== 'production') {
+          if (
+            aState.readP &&
+            typeof process === 'object' &&
+            process.env.NODE_ENV !== 'production'
+          ) {
             // TODO will try to detect this
             console.warn(
               'Reading pending atom state in write operation. We need to detect this and fallback. Please file an issue with repro.',
@@ -659,6 +677,7 @@ export const Provider: React.FC<{
       if (pendingState) {
         if (
           typeof setStateAction !== 'function' &&
+          typeof process === 'object' &&
           process.env.NODE_ENV !== 'production'
         ) {
           console.warn(
@@ -745,7 +764,7 @@ export const Provider: React.FC<{
     }),
     [pendingStateMap, dependentsMap, atomStateCache, setState]
   )
-  if (process.env.NODE_ENV !== 'production') {
+  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(state)
   }

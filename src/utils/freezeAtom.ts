@@ -29,4 +29,6 @@ const atomFrozen: typeof atom = ((read: any, write: any) => {
 }) as any
 
 export const atomFrozenInDev =
-  process.env.NODE_ENV === 'development' ? atomFrozen : atom
+  typeof process === 'object' && process.env.NODE_ENV === 'development'
+    ? atomFrozen
+    : atom

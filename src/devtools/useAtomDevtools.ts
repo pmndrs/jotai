@@ -39,6 +39,7 @@ export function useAtomDevtools<Value>(
   } catch {}
   if (!extension) {
     if (
+      typeof process === 'object' &&
       process.env.NODE_ENV === 'development' &&
       typeof window !== 'undefined'
     ) {
