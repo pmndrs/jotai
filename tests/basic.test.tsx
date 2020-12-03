@@ -100,18 +100,21 @@ it('uses a read-only derived atom', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
-  await findByText('count: 0')
-  await findByText('doubledCount: 0')
-
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('doubledCount: 0')
+  })
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  await findByText('doubledCount: 2')
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('doubledCount: 2')
+  })
 })
 
 it('uses a read-write derived atom', async () => {
@@ -133,18 +136,21 @@ it('uses a read-write derived atom', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
-  await findByText('count: 0')
-  await findByText('doubledCount: 0')
-
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('doubledCount: 0')
+  })
   fireEvent.click(getByText('button'))
-  await findByText('count: 2')
-  await findByText('doubledCount: 4')
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('doubledCount: 4')
+  })
 })
 
 it('uses a write-only derived atom', async () => {
@@ -213,7 +219,7 @@ it('only re-renders if value has changed', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter countAtom={count1Atom} name="count1" />
       <Counter countAtom={count2Atom} name="count2" />
@@ -221,19 +227,23 @@ it('only re-renders if value has changed', async () => {
     </Provider>
   )
 
-  await findByText('commits: 1, count1: 0')
-  await findByText('commits: 1, count2: 0')
-  await findByText('commits: 1, product: 0')
-
+  await waitFor(() => {
+    getByText('commits: 1, count1: 0')
+    getByText('commits: 1, count2: 0')
+    getByText('commits: 1, product: 0')
+  })
   fireEvent.click(getByText('button-count1'))
-  await findByText('commits: 2, count1: 1')
-  await findByText('commits: 1, count2: 0')
-  await findByText('commits: 1, product: 0')
-
+  await waitFor(() => {
+    getByText('commits: 2, count1: 1')
+    getByText('commits: 1, count2: 0')
+    getByText('commits: 1, product: 0')
+  })
   fireEvent.click(getByText('button-count2'))
-  await findByText('commits: 2, count1: 1')
-  await findByText('commits: 2, count2: 1')
-  await findByText('commits: 2, product: 1')
+  await waitFor(() => {
+    getByText('commits: 2, count1: 1')
+    getByText('commits: 2, count2: 1')
+    getByText('commits: 2, product: 1')
+  })
 })
 
 it('works with async get', async () => {
@@ -726,14 +736,16 @@ it('updates two atoms in child useEffect', async () => {
     )
   }
 
-  const { findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
-  await findByText('countA: 1')
-  await findByText('countB: 2')
+  await waitFor(() => {
+    getByText('countA: 1')
+    getByText('countB: 2')
+  })
 })
 
 it('set atom right after useEffect (#208)', async () => {
@@ -816,16 +828,22 @@ it('works with Brige', async () => {
     </Provider>
   )
 
-  await findByText('count: 0')
-  await findByText('child: 0')
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('child: 0')
+  })
 
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  await findByText('child: 1')
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('child: 1')
+  })
 
   fireEvent.click(getByText('child'))
-  await findByText('count: 2')
-  await findByText('child: 2')
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('child: 2')
+  })
 })
 
 it('only relevant render function called (#156)', async () => {
