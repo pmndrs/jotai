@@ -48,52 +48,91 @@ const Counter = () => {
 
 https://codesandbox.io/s/react-typescript-forked-1x90m
 
-## atomWithReset / useResetAtom
+## atomWithReset
 
 Ref: https://github.com/react-spring/jotai/issues/41
 
+```ts
+function atomWithReset<Value>(
+  initialValue: Value
+): WritableAtom<Value, SetStateAction<Value> | typeof RESET>
+```
+
+Creates an atom that could be reset to its `initialValue` with
+[`useResetAtom`](./utils.md#useResetAtom) hook. It works exactly the same
+way as primitive atom would, but you are also able to set it to a special value
+[`RESET`](./utils.md#RESET). See examples in [Resettable atoms](../guides/resettable.md).
+
+### Example
+
 ```js
-import { useAtom } from 'jotai'
-import { atomWithReset, useResetAtom } from 'jotai/utils'
+import { atomWithReset } from 'jotai/utils'
 
+const dollarsAtom = atomWithReset(0)
 const todoListAtom = atomWithReset([
-  {
-    description: 'Add a todo',
-    checked: false,
-  },
+  { description: 'Add a todo', checked: false },
 ])
+```
 
-const TodoList = () => {
-  const [todoList, setTodoList] = useAtom(todoListAtom)
+## useResetAtom
+
+```ts
+function useResetAtom<Value>(
+  anAtom: WritableAtom<Value, typeof RESET>
+): () => void | Promise<void>
+```
+
+Resets a [Resettable atom](../guides/resettable.md) to its initial value.
+
+### Example
+
+```js
+import { useResetAtom } from 'jotai/utils'
+import { todoListAtom } from './store'
+
+const TodoResetButton = () => {
   const resetTodoList = useResetAtom(todoListAtom)
+  return <button onClick={resetTodoList}>Reset</button>
+}
+```
+
+## RESET
+
+Ref: https://github.com/react-spring/jotai/issues/217
+
+```ts
+const RESET: unique symbol
+```
+
+Special value that is accepted by [Resettable atoms](../guides/resettable.md)
+created with [`atomWithReset`](./utils.md#atomWithReset) or writable atom created
+with `atom` if it accepts `RESET` symbol.
+
+### Example
+
+```js
+import { atom } from 'jotai'
+import { atomWithReset, useResetAtom, RESET } from 'jotai/utils'
+
+const dollarsAtom = atomWithReset(0)
+const centsAtom = atom(
+  (get) => get(dollarsAtom) * 100,
+  (get, set, newValue: number | typeof RESET) =>
+    set(dollarsAtom, newValue === RESET ? newValue : newValue / 100)
+)
+
+const ResetExample: React.FC = () => {
+  const setDollars = useUpdateAtom(dollarsAtom)
+  const resetCents = useResetAtom(centsAtom)
 
   return (
     <>
-      <ul>
-        {todoList.map((todo) => (
-          <li>{todo.description}</li>
-        ))}
-      </ul>
-
-      <button
-        onClick={() =>
-          setTodoList((l) => [
-            ...l,
-            {
-              description: `New todo ${new Date().toDateString()}`,
-              checked: false,
-            },
-          ])
-        }>
-        Add todo
-      </button>
-      <button onClick={resetTodoList}>Reset</button>
+      <button onClick={() => setDollars(RESET)}>Reset dollars</button>
+      <button onClick={resetCents}>Reset cents</button>
     </>
   )
 }
 ```
-
-https://codesandbox.io/s/react-typescript-forked-w91cq
 
 ## useReducerAtom
 
