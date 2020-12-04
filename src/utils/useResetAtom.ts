@@ -3,7 +3,7 @@ import { atom, useAtom, WritableAtom } from 'jotai'
 
 import type { SetStateAction } from '../core/types'
 
-const RESET = Symbol()
+export const RESET = Symbol()
 
 export function atomWithReset<Value>(initialValue: Value) {
   type Update = SetStateAction<Value> | typeof RESET
