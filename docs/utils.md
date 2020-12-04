@@ -17,19 +17,20 @@ const Counter = () => {
 
 const Controls = () => {
   const setCount = useUpdateAtom(countAtom)
-  const inc = () => setCount(c => c + 1)
+  const inc = () => setCount((c) => c + 1)
   return <button onClick={inc}>+1</button>
 }
 ```
 
 https://codesandbox.io/s/react-typescript-forked-3q11k
+
 ## useAtomValue
 
 Ref: https://github.com/pmndrs/jotai/issues/212
 
 ```js
-import { atom, Provider, useAtom } from "jotai"
-import { useAtomValue } from "jotai/utils"
+import { atom, Provider, useAtom } from 'jotai'
+import { useAtomValue } from 'jotai/utils'
 
 const countAtom = atom(0)
 
@@ -55,10 +56,12 @@ Ref: https://github.com/react-spring/jotai/issues/41
 import { useAtom } from 'jotai'
 import { atomWithReset, useResetAtom } from 'jotai/utils'
 
-const todoListAtom = atomWithReset([{
-  description: "Add a todo",
-  checked: false
-}])
+const todoListAtom = atomWithReset([
+  {
+    description: 'Add a todo',
+    checked: false,
+  },
+])
 
 const TodoList = () => {
   const [todoList, setTodoList] = useAtom(todoListAtom)
@@ -73,11 +76,15 @@ const TodoList = () => {
       </ul>
 
       <button
-        onClick={() => setTodoList((l) => [ ...l, {
-          description: `New todo ${new Date().toDateString()}`,
-          checked: false
-        }])}
-      >
+        onClick={() =>
+          setTodoList((l) => [
+            ...l,
+            {
+              description: `New todo ${new Date().toDateString()}`,
+              checked: false,
+            },
+          ])
+        }>
         Add todo
       </button>
       <button onClick={resetTodoList}>Reset</button>
@@ -103,15 +110,15 @@ const countReducer = (prev, action) => {
 const countAtom = atom(0)
 
 const Counter = () => {
-  const [count, dispatch] = useReducerAtom(countAtom, countReducer);
+  const [count, dispatch] = useReducerAtom(countAtom, countReducer)
   return (
     <div>
       {count}
-      <button onClick={() => dispatch({ type: "inc" })}>+1</button>
-      <button onClick={() => dispatch({ type: "dec" })}>-1</button>
+      <button onClick={() => dispatch({ type: 'inc' })}>+1</button>
+      <button onClick={() => dispatch({ type: 'dec' })}>-1</button>
     </div>
-  );
-};
+  )
+}
 ```
 
 https://codesandbox.io/s/react-typescript-forked-eg0mw
@@ -168,8 +175,8 @@ import { atomFamily } from 'jotai/utils'
 
 const todoFamily = atomFamily((name) => name)
 
-  todoFamily('foo')
-  // this will create a new atom('foo'), or return the one if already created
+todoFamily('foo')
+// this will create a new atom('foo'), or return the one if already created
 ```
 
 ```js
@@ -214,53 +221,53 @@ The equalityFn is optional.
 ### Examples
 
 ```js
-import { Provider } from "jotai";
-import { useSelector, atomWithReducer, useUpdateAtom } from "jotai/utils";
+import { Provider } from 'jotai'
+import { useSelector, atomWithReducer, useUpdateAtom } from 'jotai/utils'
 
 const initialState = {
   count: 0,
-  text: "hello"
-};
+  text: 'hello',
+}
 
 const reducer = (state, action) => {
-  if (action.type === "INC") {
-    return { ...state, count: state.count + 1 };
-  } else if (action.type === "SET_TEXT") {
-    return { ...state, text: action.text };
+  if (action.type === 'INC') {
+    return { ...state, count: state.count + 1 }
+  } else if (action.type === 'SET_TEXT') {
+    return { ...state, text: action.text }
   } else {
-    throw Error("no such action");
+    throw Error('no such action')
   }
-};
+}
 
-const stateAtom = atomWithReducer(initialState, reducer);
+const stateAtom = atomWithReducer(initialState, reducer)
 
-const selectCount = (state: State) => state.count;
+const selectCount = (state: State) => state.count
 
 const Counter = () => {
-  const dispatch = useUpdateAtom(stateAtom);
-  const count = useSelector(stateAtom, selectCount);
+  const dispatch = useUpdateAtom(stateAtom)
+  const count = useSelector(stateAtom, selectCount)
   return (
     <div>
-      {count} <button onClick={() => dispatch({ type: "INC" })}>+1</button>
+      {count} <button onClick={() => dispatch({ type: 'INC' })}>+1</button>
     </div>
-  );
-};
+  )
+}
 
-const selectText = (state: State) => state.text;
+const selectText = (state: State) => state.text
 
 const TextBox = () => {
-  const dispatch = useUpdateAtom(stateAtom);
-  const text = useSelector(stateAtom, selectText);
+  const dispatch = useUpdateAtom(stateAtom)
+  const text = useSelector(stateAtom, selectText)
   return (
     <div>
-      {text}{" "}
+      {text}{' '}
       <input
         value={text}
-        onChange={(e) => dispatch({ type: "SET_TEXT", text: e.target.value })}
+        onChange={(e) => dispatch({ type: 'SET_TEXT', text: e.target.value })}
       />
     </div>
-  );
-};
+  )
+}
 ```
 
 ### Codesandbox
@@ -288,40 +295,40 @@ The callback to pass in the hook must be stable (should be wrapped with useCallb
 ### Examples
 
 ```js
-import { useEffect, useState, useCallback } from "react";
-import { Provider, atom, useAtom } from "jotai";
-import { useAtomCallback } from "jotai/utils";
+import { useEffect, useState, useCallback } from 'react'
+import { Provider, atom, useAtom } from 'jotai'
+import { useAtomCallback } from 'jotai/utils'
 
-const countAtom = atom(0);
+const countAtom = atom(0)
 
 const Counter = () => {
-  const [count, setCount] = useAtom(countAtom);
+  const [count, setCount] = useAtom(countAtom)
   return (
     <>
       {count} <button onClick={() => setCount((c) => c + 1)}>+1</button>
     </>
-  );
-};
+  )
+}
 
 const Monitor = () => {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(0)
   const readCount = useAtomCallback(
     useCallback((get) => {
-      const currCount = get(countAtom);
-      setCount(currCount);
-      return currCount;
+      const currCount = get(countAtom)
+      setCount(currCount)
+      return currCount
     }, [])
-  );
+  )
   useEffect(() => {
     const timer = setInterval(async () => {
-      console.log(await readCount());
-    }, 1000);
+      console.log(await readCount())
+    }, 1000)
     return () => {
-      clearInterval(timer);
-    };
-  }, [readCount]);
-  return <div>current count: {count}</div>;
-};
+      clearInterval(timer)
+    }
+  }, [readCount])
+  return <div>current count: {count}</div>
+}
 ```
 
 ### Codesandbox
