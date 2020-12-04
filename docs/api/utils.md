@@ -1,4 +1,4 @@
-This doc describes about `jotai/utils` bundle.
+This doc describes `jotai/utils` bundle.
 
 ## useUpdateAtom
 
