@@ -87,9 +87,7 @@ const Component = ({ children }) => {
   const brigeValue = useBridge()
   return (
     <AnotherRerender>
-      <Bridge value={bridgeValue}>
-        {children}
-      </Bridge>
+      <Bridge value={bridgeValue}>{children}</Bridge>
     </AnotherRerender>
   )
 }
@@ -102,7 +100,7 @@ A working example: https://codesandbox.io/s/jotai-r3f-fri9d
 To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh dependencies. For example, If A depends on B, it means that B is a dependency of A, and A is a dependent of B.
 
 ```js
-const uppercaseAtom = atom(get => get(textAtom).toUpperCase())
+const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
 ```
 
 The read function is the first parameter of the atom.
@@ -124,7 +122,7 @@ You can create an atom and store it wth `useState` or even in another atom.
 See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
 
 You can cache atoms somewhere globally.
-See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or 
+See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or
 [that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
 
 Check [atomFamily](https://github.com/pmndrs/jotai/blob/master/docs/utils.md#atomfamily) in utils too.

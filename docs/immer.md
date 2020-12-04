@@ -1,4 +1,4 @@
-This doc describes `jotai/immer` bundle. 
+This doc describes `jotai/immer` bundle.
 
 ## Install
 
@@ -6,14 +6,14 @@ You have to install `immer` to access this bundle and its functions.
 
 ```
 npm install immer
-# or 
+# or
 yarn add immer
 ```
 
 ## atomWithImmer
 
-`atomWithImmer` creates a new atom similar to the regular [atom](https://github.com/pmndrs/jotai/blob/master/docs/core.md#atom) with a different `writeFunction`. In this bundle, we don't have read-only atoms, because the point of these functions is the immer produce(mutability) function. 
-The signature of writeFunction is `(get, set, update: (draft: Draft<Value>) => void) => void`. 
+`atomWithImmer` creates a new atom similar to the regular [atom](https://github.com/pmndrs/jotai/blob/master/docs/core.md#atom) with a different `writeFunction`. In this bundle, we don't have read-only atoms, because the point of these functions is the immer produce(mutability) function.
+The signature of writeFunction is `(get, set, update: (draft: Draft<Value>) => void) => void`.
 
 ```js
 import { useAtom } from 'jotai'
@@ -29,7 +29,7 @@ const Counter = () => {
 const Controls = () => {
   const [, setCount] = useAtom(setCountAtom)
   // setCount === update : (draft: Draft<Value>) => void
-  const inc = () => setCount(c => (c = c + 1))
+  const inc = () => setCount((c) => (c = c + 1))
   return <button onClick={inc}>+1</button>
 }
 ```
@@ -59,7 +59,7 @@ const Counter = () => {
 const Controls = () => {
   const [, setCount] = useAtom(setCountAtom)
   // setCount === update : (draft: Draft<Value>) => void
-  const inc = () => setCount(c => (c = c + 1))
+  const inc = () => setCount((c) => (c = c + 1))
   return <button onClick={inc}>+1</button>
 }
 ```
@@ -69,12 +69,10 @@ const Controls = () => {
 This hook takes an atom and replaces the atom's `writeFunction` with the new immer-like `writeFunction` like the previous helpers.
 
 ```jsx
-
 import { useAtom } from 'jotai'
 import { useImmerAtom } from 'jotai/immer'
 
 const primitiveAtom = atom(0)
-
 
 const Counter = () => {
   const [count] = useImmerAtom(primitiveAtom)
@@ -84,7 +82,7 @@ const Counter = () => {
 const Controls = () => {
   const [, setCount] = useImmerAtom(primitiveAtom)
   // setCount === update : (draft: Draft<Value>) => void
-  const inc = () => setCount(c => (c = c + 1))
+  const inc = () => setCount((c) => (c = c + 1))
   return <button onClick={inc}>+1</button>
 }
 ```
