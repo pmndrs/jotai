@@ -599,8 +599,37 @@ export const writeAtom = <Value, Update>(
   }
 }
 
+const updateDependentsMap = (state: State): void => {
+  state.w.forEach((atomState, atom) => {
+    const prevDependencies = state.a.get(atom)?.d
+    if (prevDependencies === atomState.d) {
+      return
+    }
+    const dependencies = new Set(atomState.d.keys())
+    if (prevDependencies) {
+      prevDependencies.forEach((_, a) => {
+        const aDependents = state.m.get(a)
+        if (dependencies.has(a)) {
+          // not changed
+          dependencies.delete(a)
+        } else {
+          const newDependents = new Set(aDependents)
+          newDependents.delete(atom)
+          state.m.set(a, newDependents)
+        }
+      })
+    }
+    dependencies.forEach((a) => {
+      const aDependents = state.m.get(a)
+      const newDependents = new Set(aDependents).add(atom)
+      state.m.set(a, newDependents)
+    })
+  })
+}
+
 export const commitState = (state: State) => {
   if (state.w.size) {
+    updateDependentsMap(state)
     state.w.forEach((atomState, atom) => {
       if (
         typeof process === 'object' &&
