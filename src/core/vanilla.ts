@@ -34,18 +34,15 @@ export type State = {
   a: AtomStateMap
   m: DependentsMap
   w: WorkInProgress
-  s: SetState
 }
 
 export const createState = (
-  setState: SetState,
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ): State => {
   const state: State = {
     a: new WeakMap(),
     m: new Map(),
     w: new Map(),
-    s: setState,
   }
   if (initialValues) {
     for (const [atom, value] of initialValues) {
@@ -204,6 +201,7 @@ const setAtomWritePromise = <Value>(
 
 const readAtomState = <Value>(
   state: State,
+  setState: SetState,
   atom: Atom<Value>,
   force?: boolean
 ): readonly [AtomState<Value>, State] => {
@@ -233,18 +231,22 @@ const readAtomState = <Value>(
       if (!isSync) {
         const nextNextState = addDependency(copyState(state), atom, a)
         if (nextNextState.w.size) {
-          state.s(nextNextState)
+          setState(nextNextState)
         }
       }
       if (a !== atom) {
         let aState: AtomState
         if (isSync) {
-          ;[aState, nextState] = readAtomState(nextState, a)
+          ;[aState, nextState] = readAtomState(nextState, setState, a)
         } else {
-          const [aaState, nextNextState] = readAtomState(copyState(state), a)
+          const [aaState, nextNextState] = readAtomState(
+            copyState(state),
+            setState,
+            a
+          )
           aState = aaState
           if (nextNextState.w.size) {
-            state.s(nextNextState)
+            setState(nextNextState)
           }
         }
         if (aState.re) {
@@ -284,7 +286,7 @@ const readAtomState = <Value>(
           )
           dependencies = null
           if (nextNextState.w.size) {
-            state.s(nextNextState)
+            setState(nextNextState)
           }
         })
         .catch((e) => {
@@ -297,7 +299,7 @@ const readAtomState = <Value>(
           )
           dependencies = null
           if (nextNextState.w.size) {
-            state.s(nextNextState)
+            setState(nextNextState)
           }
         })
     } else {
@@ -307,9 +309,14 @@ const readAtomState = <Value>(
   } catch (errorOrPromise) {
     if (errorOrPromise instanceof Promise) {
       promise = errorOrPromise.then(() => {
-        const [, nextNextState] = readAtomState(copyState(state), atom, true)
+        const [, nextNextState] = readAtomState(
+          copyState(state),
+          setState,
+          atom,
+          true
+        )
         if (nextNextState.w.size) {
-          state.s(nextNextState)
+          setState(nextNextState)
         }
       })
     } else if (errorOrPromise instanceof Error) {
@@ -355,9 +362,10 @@ const readAtomState = <Value>(
 
 export const readAtom = <Value>(
   state: State,
+  setState: SetState,
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
-  const [atomState] = readAtomState(state, readingAtom)
+  const [atomState] = readAtomState(state, setState, readingAtom)
   return atomState
 }
 
@@ -416,7 +424,11 @@ export const delAtom = (
   del(deletingAtom, useId)
 }
 
-const updateDependentsState = <Value>(state: State, atom: Atom<Value>) => {
+const updateDependentsState = <Value>(
+  state: State,
+  setState: SetState,
+  atom: Atom<Value>
+) => {
   const dependents = state.m.get(atom)
   if (!dependents) {
     // no dependents found
@@ -435,6 +447,7 @@ const updateDependentsState = <Value>(state: State, atom: Atom<Value>) => {
     }
     const [dependentState, nextNextState] = readAtomState(
       nextState,
+      setState,
       dependent,
       true
     )
@@ -443,15 +456,16 @@ const updateDependentsState = <Value>(state: State, atom: Atom<Value>) => {
       promise.then(() => {
         const nextNextNextState = updateDependentsState(
           copyState(state),
+          setState,
           dependent
         )
         if (nextNextNextState.w.size) {
-          state.s(nextNextNextState)
+          setState(nextNextNextState)
         }
       })
       nextState = nextNextState
     } else {
-      nextState = updateDependentsState(nextNextState, dependent)
+      nextState = updateDependentsState(nextNextState, setState, dependent)
     }
   })
   return nextState
@@ -459,6 +473,7 @@ const updateDependentsState = <Value>(state: State, atom: Atom<Value>) => {
 
 const writeAtomState = <Value, Update>(
   state: State,
+  setState: SetState,
   atom: WritableAtom<Value, Update>,
   update: Update,
   pendingPromises?: Promise<void>[]
@@ -466,9 +481,9 @@ const writeAtomState = <Value, Update>(
   const atomState = getAtomState(state, atom)
   if (atomState && atomState.wp) {
     const promise = atomState.wp.then(() => {
-      const nextState = writeAtomState(copyState(state), atom, update)
+      const nextState = writeAtomState(copyState(state), setState, atom, update)
       if (nextState.w.size) {
-        state.s(nextState)
+        setState(nextState)
       }
     })
     if (pendingPromises) {
@@ -509,24 +524,31 @@ const writeAtomState = <Value, Update>(
           if (isSync) {
             nextState = updateDependentsState(
               setAtomValue(nextState, a, v, false),
+              setState,
               a
             )
           } else {
             const nextNextState = updateDependentsState(
               setAtomValue(copyState(state), a, v, false),
+              setState,
               a
             )
             if (nextNextState.w.size) {
-              state.s(nextNextState)
+              setState(nextNextState)
             }
           }
         } else {
           if (isSync) {
-            nextState = writeAtomState(nextState, a, v)
+            nextState = writeAtomState(nextState, setState, a, v)
           } else {
-            const nextNextState = writeAtomState(copyState(state), a, v)
+            const nextNextState = writeAtomState(
+              copyState(state),
+              setState,
+              a,
+              v
+            )
             if (nextNextState.w.size) {
-              state.s(nextNextState)
+              setState(nextNextState)
             }
           }
         }
@@ -543,7 +565,7 @@ const writeAtomState = <Value, Update>(
         promiseOrVoid.then(() => {
           const nextNextState = setAtomWritePromise(copyState(state), atom)
           if (nextNextState.w.size) {
-            state.s(nextNextState)
+            setState(nextNextState)
           }
         })
       )
@@ -565,18 +587,20 @@ const writeAtomState = <Value, Update>(
 
 export const writeAtom = <Value, Update>(
   state: State,
+  setState: SetState,
   writingAtom: WritableAtom<Value, Update>,
   update: Update
 ): void | Promise<void> => {
   const pendingPromises: Promise<void>[] = []
   const nextState = writeAtomState(
     copyState(state),
+    setState,
     writingAtom,
     update,
     pendingPromises
   )
   if (nextState.w.size) {
-    state.s(nextState)
+    setState(nextState)
   }
 
   if (pendingPromises.length) {
