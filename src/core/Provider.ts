@@ -1,5 +1,4 @@
 import React, {
-  SetStateAction,
   MutableRefObject,
   ReactElement,
   createElement,
@@ -36,20 +35,7 @@ const isReactExperimental =
   !!(React as any).unstable_useMutableSource
 
 type ContextUpdate = (t: () => void) => void
-type WriteThunk = () => void
-
-const runWriteThunk = (
-  isLastStateValidRef: MutableRefObject<boolean>,
-  writeThunkQueue: WriteThunk[]
-) => {
-  while (true) {
-    if (!isLastStateValidRef.current || !writeThunkQueue.length) {
-      return
-    }
-    const thunk = writeThunkQueue.shift() as WriteThunk
-    thunk()
-  }
-}
+type Updater = (prev: State) => State
 
 const InnerProvider: React.FC<{
   r: MutableRefObject<ContextUpdate | undefined>
@@ -77,24 +63,42 @@ export const Provider: React.FC<{
   scope?: Scope
 }> = ({ initialValues, scope, children }) => {
   const contextUpdateRef = useRef<ContextUpdate>()
+  const updaterQueueRef = useRef<Updater[]>([])
 
-  const [state, setStateOrig] = useState(() => createState(initialValues))
+  const [state, setState] = useState(() => createState(initialValues))
   const lastStateRef = useRef<State>(state)
   const isLastStateValidRef = useRef(false)
-  const setState = useCallback((setStateAction: SetStateAction<State>) => {
-    isLastStateValidRef.current = false
-    setStateOrig(setStateAction)
-  }, [])
-
   useIsoLayoutEffect(() => {
     commitState(state)
     lastStateRef.current = state
     isLastStateValidRef.current = true
   })
 
-  const writeThunkQueueRef = useRef<WriteThunk[]>([])
+  const flushUpdaterQueue = useCallback(() => {
+    if (isLastStateValidRef.current && updaterQueueRef.current.length) {
+      let nextState = lastStateRef.current
+      while (updaterQueueRef.current.length) {
+        const updater = updaterQueueRef.current.shift() as Updater
+        nextState = updater(nextState)
+        commitState(lastStateRef.current)
+      }
+      if (nextState !== lastStateRef.current) {
+        isLastStateValidRef.current = false
+        setState(nextState)
+      }
+    }
+  }, [])
+
+  const updateState = useCallback(
+    (updater: (prev: State) => State) => {
+      updaterQueueRef.current.push(updater)
+      Promise.resolve().then(flushUpdaterQueue)
+    },
+    [flushUpdaterQueue]
+  )
+
   useEffect(() => {
-    runWriteThunk(isLastStateValidRef, writeThunkQueueRef.current)
+    flushUpdaterQueue()
   })
 
   const actions = useMemo(
@@ -106,25 +110,13 @@ export const Provider: React.FC<{
         delAtom(lastStateRef.current, atom, id)
       },
       read: <Value>(state: State, atom: Atom<Value>) =>
-        readAtom(state, setState, atom),
+        readAtom(state, updateState, atom),
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,
         update: Update
-      ) => {
-        if (isLastStateValidRef.current) {
-          return writeAtom(lastStateRef.current, setState, atom, update)
-        }
-        const promise = new Promise<void>((resolve, reject) => {
-          writeThunkQueueRef.current.push(() => {
-            Promise.resolve(
-              writeAtom(lastStateRef.current, setState, atom, update)
-            ).then(resolve, reject)
-          })
-        })
-        return promise
-      },
+      ) => writeAtom(updateState, atom, update),
     }),
-    [setState]
+    [updateState]
   )
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
