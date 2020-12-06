@@ -61,7 +61,7 @@ export const createState = (
 
 const copyState = (state: State): State => {
   if (
-    !state.w.size &&
+    state.w.size &&
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production'
   ) {
@@ -177,9 +177,6 @@ const setAtomReadPromise = <Value>(
   const [atomState, nextState] = wipAtomState(state, atom)
   atomState.rp = promise
   atomState.r++
-  if (INIT in atom) {
-    atomState.v = atom.init
-  }
   replaceDependencies(nextState, atomState, dependencies)
   return nextState
 }
@@ -369,7 +366,10 @@ export const readAtom = <Value>(
   updateState: UpdateState,
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
-  const [atomState] = readAtomState(state, updateState, readingAtom)
+  const [atomState, nextState] = readAtomState(state, updateState, readingAtom)
+  nextState.w.forEach((atomState, atom) => {
+    state.w.set(atom, atomState)
+  })
   return atomState
 }
 
@@ -432,7 +432,7 @@ const updateDependentsState = <Value>(
   state: State,
   updateState: UpdateState,
   atom: Atom<Value>
-) => {
+): State => {
   const dependents = state.m.get(atom)
   if (!dependents) {
     // no dependents found
@@ -577,51 +577,40 @@ export const writeAtom = <Value, Update>(
   updateState: UpdateState,
   writingAtom: WritableAtom<Value, Update>,
   update: Update
-): void | Promise<void> => {
+): Promise<void> => {
   const pendingPromises: Promise<void>[] = []
 
-  let isSync = true
-  let writeResolve: () => void
   const writePromise = new Promise<void>((resolve) => {
-    writeResolve = resolve
+    updateState((prev) => {
+      const nextState = writeAtomState(
+        copyState(prev),
+        updateState,
+        writingAtom,
+        update,
+        pendingPromises
+      )
+      resolve()
+      return nextState
+    })
   })
   pendingPromises.unshift(writePromise)
-  updateState((prev) => {
-    if (isSync) {
-      pendingPromises.shift()
-    }
-    const nextState = writeAtomState(
-      copyState(prev),
-      updateState,
-      writingAtom,
-      update,
-      pendingPromises
-    )
-    if (!isSync) {
-      writeResolve()
-    }
-    return nextState
-  })
-  isSync = false
 
-  if (pendingPromises.length) {
-    return new Promise<void>((resolve, reject) => {
-      const loop = () => {
-        const len = pendingPromises.length
-        if (len === 0) {
-          resolve()
-        } else {
-          Promise.all(pendingPromises)
-            .then(() => {
-              pendingPromises.splice(0, len)
-              loop()
-            })
-            .catch(reject)
-        }
+  return new Promise<void>((resolve, reject) => {
+    const loop = () => {
+      const len = pendingPromises.length
+      if (len === 0) {
+        resolve()
+      } else {
+        Promise.all(pendingPromises)
+          .then(() => {
+            pendingPromises.splice(0, len)
+            loop()
+          })
+          .catch(reject)
       }
-      loop()
-    })
-  }
+    }
+    loop()
+  })
 }
 
 const updateDependentsMap = (state: State): void => {

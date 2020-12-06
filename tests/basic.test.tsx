@@ -822,7 +822,7 @@ it('works with Brige', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Parent />
     </Provider>

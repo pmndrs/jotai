@@ -37,6 +37,8 @@ const isReactExperimental =
 type ContextUpdate = (t: () => void) => void
 type Updater = (prev: State) => State
 
+const defaultContextUpdate: ContextUpdate = (f) => f()
+
 const InnerProvider: React.FC<{
   r: MutableRefObject<ContextUpdate | undefined>
   c: ReturnType<typeof getContexts>[1]
@@ -49,10 +51,6 @@ const InnerProvider: React.FC<{
           runWithPriority(UserBlockingPriority, f)
         })
       }
-    } else {
-      r.current = (f) => {
-        f()
-      }
     }
   }, [contextUpdate])
   return children as ReactElement
@@ -62,7 +60,7 @@ export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
   scope?: Scope
 }> = ({ initialValues, scope, children }) => {
-  const contextUpdateRef = useRef<ContextUpdate>()
+  const contextUpdateRef = useRef<ContextUpdate>(defaultContextUpdate)
   const updaterQueueRef = useRef<Updater[]>([])
 
   const [state, setState] = useState(() => createState(initialValues))
@@ -75,17 +73,20 @@ export const Provider: React.FC<{
   })
 
   const flushUpdaterQueue = useCallback(() => {
-    if (isLastStateValidRef.current && updaterQueueRef.current.length) {
-      let nextState = lastStateRef.current
-      while (updaterQueueRef.current.length) {
-        const updater = updaterQueueRef.current.shift() as Updater
-        nextState = updater(nextState)
-        commitState(lastStateRef.current)
-      }
-      if (nextState !== lastStateRef.current) {
-        isLastStateValidRef.current = false
+    if (!isLastStateValidRef.current) {
+      return
+    }
+    let nextState = lastStateRef.current
+    while (updaterQueueRef.current.length) {
+      const updater = updaterQueueRef.current.shift() as Updater
+      nextState = updater(nextState)
+      commitState(nextState)
+    }
+    if (nextState !== lastStateRef.current) {
+      isLastStateValidRef.current = false
+      contextUpdateRef.current(() => {
         setState(nextState)
-      }
+      })
     }
   }, [])
 
@@ -114,9 +115,13 @@ export const Provider: React.FC<{
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,
         update: Update
-      ) => writeAtom(updateState, atom, update),
+      ) => {
+        const promise = writeAtom(updateState, atom, update)
+        flushUpdaterQueue()
+        return promise
+      },
     }),
-    [updateState]
+    [updateState, flushUpdaterQueue]
   )
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
