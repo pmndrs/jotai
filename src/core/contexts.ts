@@ -1,20 +1,7 @@
 import { createContext } from 'use-context-selector'
 
-import { Atom, WritableAtom, AnyAtom, Scope } from './types'
-import { ImmutableMap } from './immutableMap'
-
-type Revision = number
-
-export type AtomState<Value = unknown> = {
-  readE?: Error // read error
-  readP?: Promise<void> // read promise
-  writeP?: Promise<void> // write promise
-  value?: Value
-  rev: Revision
-  deps: Map<AnyAtom, Revision> // read dependencies
-}
-
-export type State = ImmutableMap<AnyAtom, AtomState>
+import { Atom, WritableAtom, Scope } from './types'
+import { AtomState, State } from './vanilla'
 
 export type Actions = {
   add: <Value>(id: symbol, atom: Atom<Value>) => void

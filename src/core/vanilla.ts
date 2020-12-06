@@ -663,6 +663,6 @@ export const commitState = (state: State) => {
       }
       state.a.set(atom, atomState)
     })
-    state.w = new Map()
+    state.w.clear()
   }
 }
