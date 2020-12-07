@@ -1,8 +1,11 @@
 import React, { Suspense, useState, useEffect } from 'react'
-import { fireEvent, cleanup, render, act } from '@testing-library/react'
+import { fireEvent, cleanup, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
 const consoleError = console.error
+beforeEach(() => {
+  console.error = jest.fn()
+})
 afterEach(() => {
   cleanup()
   console.error = consoleError
@@ -29,8 +32,6 @@ class ErrorBoundary extends React.Component<
 }
 
 it('can throw an initial error in read function', async () => {
-  console.error = jest.fn()
-
   const errorAtom = atom(() => {
     throw new Error()
   })
@@ -56,8 +57,6 @@ it('can throw an initial error in read function', async () => {
 })
 
 it('can throw an error in read function', async () => {
-  console.error = jest.fn()
-
   const countAtom = atom(0)
   const errorAtom = atom((get) => {
     if (get(countAtom) === 0) {
@@ -93,8 +92,6 @@ it('can throw an error in read function', async () => {
 })
 
 it('can throw an initial chained error in read function', async () => {
-  console.error = jest.fn()
-
   const errorAtom = atom(() => {
     throw new Error()
   })
@@ -121,8 +118,6 @@ it('can throw an initial chained error in read function', async () => {
 })
 
 it('can throw a chained error in read function', async () => {
-  console.error = jest.fn()
-
   const countAtom = atom(0)
   const errorAtom = atom((get) => {
     if (get(countAtom) === 0) {
@@ -159,8 +154,6 @@ it('can throw a chained error in read function', async () => {
 })
 
 it('can throw an initial error in async read function', async () => {
-  console.error = jest.fn()
-
   const errorAtom = atom(async () => {
     throw new Error()
   })
@@ -188,8 +181,6 @@ it('can throw an initial error in async read function', async () => {
 })
 
 it('can throw an error in async read function', async () => {
-  console.error = jest.fn()
-
   const countAtom = atom(0)
   const errorAtom = atom(async (get) => {
     if (get(countAtom) === 0) {
@@ -227,8 +218,6 @@ it('can throw an error in async read function', async () => {
 })
 
 it('can throw an error in write function', async () => {
-  console.error = jest.fn()
-
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
@@ -263,16 +252,13 @@ it('can throw an error in write function', async () => {
 
   await findByText('no error')
 
-  await act(async () => {
-    fireEvent.click(getByText('button'))
-    await new Promise((r) => setTimeout(r, 10))
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    expect(console.error).toHaveBeenCalledTimes(1)
   })
-  expect(console.error).toHaveBeenCalledTimes(1)
 })
 
 it('can throw an error in async write function', async () => {
-  console.error = jest.fn()
-
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
@@ -309,16 +295,13 @@ it('can throw an error in async write function', async () => {
 
   await findByText('no error')
 
-  await act(async () => {
-    fireEvent.click(getByText('button'))
-    await new Promise((r) => setTimeout(r, 10))
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    expect(console.error).toHaveBeenCalledTimes(1)
   })
-  expect(console.error).toHaveBeenCalledTimes(1)
 })
 
 it('can throw a chained error in write function', async () => {
-  console.error = jest.fn()
-
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
@@ -359,16 +342,13 @@ it('can throw a chained error in write function', async () => {
 
   await findByText('no error')
 
-  await act(async () => {
-    fireEvent.click(getByText('button'))
-    await new Promise((r) => setTimeout(r, 10))
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    expect(console.error).toHaveBeenCalledTimes(1)
   })
-  expect(console.error).toHaveBeenCalledTimes(1)
 })
 
 it('throws an error while updating in effect', async () => {
-  console.error = jest.fn()
-
   const countAtom = atom(0)
 
   const Counter: React.FC = () => {
@@ -439,8 +419,6 @@ describe.skip('throws an error while updating in effect cleanup', () => {
   }
 
   it('single setCount', async () => {
-    console.error = jest.fn()
-
     const { getByText, findByText } = render(
       <Provider>
         <ErrorBoundary>
@@ -453,11 +431,12 @@ describe.skip('throws an error while updating in effect cleanup', () => {
     expect(console.error).toHaveBeenCalledTimes(0)
 
     fireEvent.click(getByText('close'))
-    expect(console.error).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(console.error).toHaveBeenCalledTimes(1)
+    })
   })
 
   it('dobule setCount', async () => {
-    console.error = jest.fn()
     doubleSetCount = true
 
     const { getByText, findByText } = render(
@@ -472,6 +451,8 @@ describe.skip('throws an error while updating in effect cleanup', () => {
     expect(console.error).toHaveBeenCalledTimes(0)
 
     fireEvent.click(getByText('close'))
-    expect(console.error).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(console.error).toHaveBeenCalledTimes(1)
+    })
   })
 })
