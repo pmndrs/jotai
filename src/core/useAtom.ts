@@ -49,7 +49,7 @@ export function useAtom<Value, Update>(
         if (atomState.rp) {
           throw atomState.rp // read promise
         }
-        if (atomState.rp) {
+        if (atomState.wp) {
           throw atomState.wp // write promise
         }
         if ('v' in atomState) {
