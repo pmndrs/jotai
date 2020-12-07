@@ -31,9 +31,9 @@ type WorkInProgress = Map<AnyAtom, AtomState>
 type UpdateState = (updater: (prev: State) => State) => void
 
 export type State = {
-  a: AtomStateMap
-  m: DependentsMap
-  w: WorkInProgress
+  a: AtomStateMap // mutable state
+  m: DependentsMap // mutable state
+  w: WorkInProgress // immutable state (mutable within the same render)
 }
 
 export const createState = (
@@ -226,7 +226,7 @@ const readAtomState = <Value>(
         dependencies.add(a)
       }
       if (!isSync) {
-        updateState((prev) => addDependency(copyState(prev), atom, a))
+        updateState((prev) => addDependency(prev, atom, a))
       }
       if (a !== atom) {
         let aState: AtomState
@@ -234,7 +234,7 @@ const readAtomState = <Value>(
           ;[aState, nextState] = readAtomState(nextState, updateState, a)
         } else {
           const [aaState, nextNextState] = readAtomState(
-            copyState(state),
+            copyState(state), // XXX we need clean wip
             updateState,
             a
           )
@@ -279,7 +279,7 @@ const readAtomState = <Value>(
           dependencies = null
           updateState((prev) =>
             setAtomValue(
-              copyState(prev),
+              prev,
               atom,
               value,
               dependenciesToReplace,
@@ -292,7 +292,7 @@ const readAtomState = <Value>(
           dependencies = null
           updateState((prev) =>
             setAtomReadError(
-              copyState(prev),
+              prev,
               atom,
               e instanceof Error ? e : new Error(e),
               dependenciesToReplace,
@@ -308,12 +308,7 @@ const readAtomState = <Value>(
     if (errorOrPromise instanceof Promise) {
       promise = errorOrPromise.then(() => {
         updateState((prev) => {
-          const [, nextNextState] = readAtomState(
-            copyState(prev),
-            updateState,
-            atom,
-            true
-          )
+          const [, nextNextState] = readAtomState(prev, updateState, atom, true)
           if (nextNextState.w.size) {
             return nextNextState
           }
@@ -459,7 +454,7 @@ const updateDependentsState = <Value>(
     if (promise) {
       promise.then(() => {
         updateState((prev) =>
-          updateDependentsState(copyState(prev), updateState, dependent)
+          updateDependentsState(prev, updateState, dependent)
         )
       })
       nextState = nextNextState
@@ -480,9 +475,7 @@ const writeAtomState = <Value, Update>(
   const atomState = getAtomState(state, atom)
   if (atomState && atomState.wp) {
     const promise = atomState.wp.then(() => {
-      updateState((prev) =>
-        writeAtomState(copyState(prev), updateState, atom, update)
-      )
+      updateState((prev) => writeAtomState(prev, updateState, atom, update))
     })
     if (pendingPromises) {
       pendingPromises.push(promise)
@@ -528,7 +521,7 @@ const writeAtomState = <Value, Update>(
           } else {
             updateState((prev) =>
               updateDependentsState(
-                setAtomValue(copyState(prev), a, v, false),
+                setAtomValue(prev, a, v, false),
                 updateState,
                 a
               )
@@ -538,9 +531,7 @@ const writeAtomState = <Value, Update>(
           if (isSync) {
             nextState = writeAtomState(nextState, updateState, a, v)
           } else {
-            updateState((prev) =>
-              writeAtomState(copyState(prev), updateState, a, v)
-            )
+            updateState((prev) => writeAtomState(prev, updateState, a, v))
           }
         }
       }) as Setter,
@@ -554,7 +545,7 @@ const writeAtomState = <Value, Update>(
         nextState,
         atom,
         promiseOrVoid.then(() => {
-          updateState((prev) => setAtomWritePromise(copyState(prev), atom))
+          updateState((prev) => setAtomWritePromise(prev, atom))
         })
       )
     }
@@ -583,7 +574,7 @@ export const writeAtom = <Value, Update>(
   const writePromise = new Promise<void>((resolve) => {
     updateState((prev) => {
       const nextState = writeAtomState(
-        copyState(prev),
+        prev,
         updateState,
         writingAtom,
         update,
