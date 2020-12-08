@@ -103,18 +103,21 @@ const addDependency = <Value>(
 ): State => {
   const [atomState, nextState] = wipAtomState(state, atom)
   const dependencyState = getAtomState(state, dependency)
-  if (atomState && dependencyState) {
-    if (atomState.d.get(dependency) === dependencyState.r) {
+  if (atomState) {
+    if (dependencyState && atomState.d.get(dependency) === dependencyState.r) {
       return state
     } else {
-      atomState.d = new Map(atomState.d).set(dependency, dependencyState.r)
+      atomState.d = new Map(atomState.d).set(
+        dependency,
+        dependencyState?.r ?? 0
+      )
       atomState.r++
     }
   } else if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production'
   ) {
-    console.warn('[Bug] add dependency failed', atom, dependency)
+    console.warn('[Bug] add dependency failed', atom)
   }
   return nextState
 }
