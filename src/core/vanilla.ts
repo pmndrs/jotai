@@ -59,20 +59,6 @@ export const createState = (
   return state
 }
 
-const copyState = (state: State): State => {
-  if (
-    state.w.size &&
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production'
-  ) {
-    console.warn('[Bug] wip not empty')
-  }
-  return {
-    ...state,
-    w: new Map(),
-  }
-}
-
 const getAtomState = <Value>(state: State, atom: Atom<Value>) =>
   (state.w.get(atom) || state.a.get(atom)) as AtomState<Value> | undefined
 
@@ -233,18 +219,14 @@ const readAtomState = <Value>(
         if (isSync) {
           ;[aState, nextState] = readAtomState(nextState, updateState, a)
         } else {
-          const [aaState, nextNextState] = readAtomState(
-            copyState(state), // XXX we need clean wip
+          const [aaState, wipState] = readAtomState(
+            { ...state, w: new Map() }, // empty wip
             updateState,
             a
           )
           aState = aaState
-          if (nextNextState.w.size) {
-            // XXX is there a better way?
-            updateState((prev) => ({
-              ...prev,
-              w: nextNextState.w,
-            }))
+          if (wipState.w.size) {
+            updateState((prev) => ({ ...prev, w: wipState.w }))
           }
         }
         if (aState.re) {
