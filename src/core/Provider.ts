@@ -79,12 +79,13 @@ export const Provider: React.FC<{
     let nextState = lastStateRef.current
     while (updaterQueueRef.current.length) {
       const updater = updaterQueueRef.current.shift() as Updater
-      nextState = updater(nextState)
       commitState(nextState)
+      nextState = updater(nextState)
     }
     if (nextState !== lastStateRef.current) {
       isLastStateValidRef.current = false
       contextUpdateRef.current(() => {
+        commitState(nextState)
         setState(nextState)
       })
     }

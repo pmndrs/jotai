@@ -62,6 +62,20 @@ export const createState = (
 const getAtomState = <Value>(state: State, atom: Atom<Value>) =>
   (state.w.get(atom) || state.a.get(atom)) as AtomState<Value> | undefined
 
+const copyWip = (state: State, copyingState: State): State => {
+  if (
+    state.w.size &&
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production'
+  ) {
+    console.warn('[Bug] wip not empty')
+  }
+  return {
+    ...state,
+    w: copyingState.w,
+  }
+}
+
 const wipAtomState = <Value>(
   state: State,
   atom: Atom<Value>
@@ -199,6 +213,7 @@ const readAtomState = <Value>(
       return [atomState, state] as const
     }
   }
+  let asyncState = { ...state, w: new Map() } // empty wip
   let isSync = true
   let nextState = state
   let error: Error | undefined
@@ -219,15 +234,7 @@ const readAtomState = <Value>(
         if (isSync) {
           ;[aState, nextState] = readAtomState(nextState, updateState, a)
         } else {
-          const [aaState, wipState] = readAtomState(
-            { ...state, w: new Map() }, // empty wip
-            updateState,
-            a
-          )
-          aState = aaState
-          if (wipState.w.size) {
-            updateState((prev) => ({ ...prev, w: wipState.w }))
-          }
+          ;[aState, asyncState] = readAtomState(asyncState, updateState, a)
         }
         if (aState.re) {
           throw aState.re // read error
@@ -261,7 +268,7 @@ const readAtomState = <Value>(
           dependencies = null
           updateState((prev) =>
             setAtomValue(
-              prev,
+              copyWip(prev, asyncState),
               atom,
               value,
               dependenciesToReplace,
@@ -274,7 +281,7 @@ const readAtomState = <Value>(
           dependencies = null
           updateState((prev) =>
             setAtomReadError(
-              prev,
+              copyWip(prev, asyncState),
               atom,
               e instanceof Error ? e : new Error(e),
               dependenciesToReplace,
