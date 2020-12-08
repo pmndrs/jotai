@@ -1,12 +1,6 @@
 import React from 'react'
-import { fireEvent, cleanup, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom, PrimitiveAtom } from '../src/index'
-
-const consoleError = console.error
-afterEach(() => {
-  cleanup()
-  console.error = consoleError
-})
 
 it('remove an item, then add another', async () => {
   type Item = {

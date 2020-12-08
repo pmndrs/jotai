@@ -381,18 +381,12 @@ export const delAtom = (
   const del = (atom: AnyAtom, dependent: AnyAtom | symbol) => {
     const dependents = state.m.get(atom)
     if (!dependents) {
-      if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        console.warn('[Bug] dependents not defined', atom)
-      }
       return
     }
     dependents.delete(dependent)
     if (!dependents.size) {
       state.m.delete(atom)
-      const atomState = state.a.get(atom)
+      const atomState = getAtomState(state, atom)
       if (atomState) {
         if (
           atomState.rp &&
