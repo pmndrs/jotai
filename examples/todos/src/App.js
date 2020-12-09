@@ -1,26 +1,34 @@
-import * as React from "react"
-import { Provider, atom, useAtom } from "jotai"
-import { Radio } from "antd"
-import { CloseOutlined } from "@ant-design/icons"
-import { a, useTransition } from "@react-spring/web"
+import * as React from 'react'
+import { Provider, atom, useAtom } from 'jotai'
+import { Radio } from 'antd'
+import { CloseOutlined } from '@ant-design/icons'
+import { a, useTransition } from '@react-spring/web'
 
-const filterAtom = atom("all")
+const filterAtom = atom('all')
 const todosAtom = atom([])
 const filteredAtom = atom((get) => {
   const filter = get(filterAtom)
   const todos = get(todosAtom)
-  if (filter === "all") return todos
-  else if (filter === "completed") return todos.filter((atom) => get(atom).completed)
+  if (filter === 'all') return todos
+  else if (filter === 'completed')
+    return todos.filter((atom) => get(atom).completed)
   else return todos.filter((atom) => !get(atom).completed)
 })
 
 const TodoItem = ({ atom, remove }) => {
   const [item, setItem] = useAtom(atom)
-  const toggleCompleted = () => setItem((props) => ({ ...props, completed: !props.completed }))
+  const toggleCompleted = () =>
+    setItem((props) => ({ ...props, completed: !props.completed }))
   return (
     <>
-      <input type="checkbox" checked={item.completed} onChange={toggleCompleted} />
-      <span style={{ textDecoration: item.completed ? "line-through" : "" }}>{item.title}</span>
+      <input
+        type="checkbox"
+        checked={item.completed}
+        onChange={toggleCompleted}
+      />
+      <span style={{ textDecoration: item.completed ? 'line-through' : '' }}>
+        {item.title}
+      </span>
       <CloseOutlined onClick={() => remove(atom)} />
     </>
   )
@@ -54,11 +62,12 @@ function Filtered(props) {
 
 const TodoList = () => {
   const [, setTodos] = useAtom(todosAtom)
-  const remove = (todo) => setTodos((prev) => prev.filter((item) => item !== todo))
+  const remove = (todo) =>
+    setTodos((prev) => prev.filter((item) => item !== todo))
   const add = (e) => {
     e.preventDefault()
     const title = e.currentTarget.inputTitle.value
-    e.currentTarget.inputTitle.value = ""
+    e.currentTarget.inputTitle.value = ''
     setTodos((prev) => [...prev, atom({ title, completed: false })])
   }
   return (

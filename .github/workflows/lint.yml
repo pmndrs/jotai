@@ -13,7 +13,6 @@ jobs:
       - uses: actions/checkout@v2
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
-      - run: cd examples && yarn install --frozen-lockfile --check-files
       - run: yarn build
       - uses: actions/cache@v1
         id: cache-build

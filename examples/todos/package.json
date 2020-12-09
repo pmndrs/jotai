@@ -1,33 +1,31 @@
 {
-  "name": "jotai-demo",
+  "name": "todos",
   "version": "1.0.0",
-  "description": "A todo demo with jotai",
+  "description": "Record your todo list by typing them into this app, check them if you have completed the task, and switch between Completed and Incompleted to see the status of your task",
   "keywords": [],
   "main": "src/index.tsx",
   "dependencies": {
-    "@babel/runtime": "7.11.2",
     "@react-spring/web": "9.0.0-rc.3",
-    "antd": "4.6.4",
-    "jotai": "0.5.2",
-    "react": "16.13.1",
-    "react-dom": "16.13.1",
-    "react-scripts": "3.4.3"
+    "antd": "4.9.1",
+    "jotai": "0.11.2",
+    "react": "17.0.1",
+    "react-dom": "17.0.1",
+    "react-scripts": "4.0.1"
   },
   "devDependencies": {
-    "customize-cra": "^1.0.0",
-    "customize-cra-react-refresh": "^1.1.0",
-    "raw-loader": "^4.0.1",
-    "react-app-rewired": "^2.1.6",
-    "@types/react": "16.9.19",
-    "@types/react-dom": "16.9.5",
-    "typescript": "3.7.5",
-    "serve": "^11.3.2"
+    "customize-cra": "1.0.0",
+    "react-app-rewired": "2.1.6",
+    "serve": "11.3.2"
+  },
+  "resolutions": {
+    "webpack": "~4.43.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test --env=jsdom",
+    "eject": "react-app-rewired eject",
+    "serve": "serve -s build"
   },
   "browserslist": {
     "production": [

@@ -9,7 +9,7 @@ There are some patterns for persistence depending on requirements.
 const strAtom = atom(localStorage.getItem('myKey') ?? 'foo')
 
 const strAtomWithPersistence = atom(
-  get => get(strAtom),
+  (get) => get(strAtom),
   (get, set, newStr) => {
     set(strAtom, newStr)
     localStorage.setItem('myKey', newStr)
@@ -23,7 +23,7 @@ const strAtomWithPersistence = atom(
 const langAtom = atom(
   localStorage.getItem('lang') || 'es',
   (get, set, newLang) => {
-    localStorage.setItem('lang', newLang);
+    localStorage.setItem('lang', newLang)
     set(langAtom, newLang)
   }
 )
@@ -85,47 +85,47 @@ const createPersistAtom = (anAtom, key, serialize, deserialize) => atom(
 ```tsx
 const serializeAtom = atom<
   null,
-  | { type: "serialize"; callback: (value: string) => void }
-  | { type: "deserialize"; value: string }
+  | { type: 'serialize'; callback: (value: string) => void }
+  | { type: 'deserialize'; value: string }
 >(null, (get, set, action) => {
-  if (action.type === "serialize") {
+  if (action.type === 'serialize') {
     const obj = {
-      todos: get(todosAtom).map(get)
-    };
-    action.callback(JSON.stringify(obj));
-  } else if (action.type === "deserialize") {
-    const obj = JSON.parse(action.value);
+      todos: get(todosAtom).map(get),
+    }
+    action.callback(JSON.stringify(obj))
+  } else if (action.type === 'deserialize') {
+    const obj = JSON.parse(action.value)
     // needs error handling and type checking
     set(
       todosAtom,
       obj.todos.map((todo: Todo) => atom(todo))
-    );
+    )
   }
-});
+})
 
 const Persist: React.FC = () => {
-  const [, dispatch] = useAtom(serializeAtom);
+  const [, dispatch] = useAtom(serializeAtom)
   const save = () => {
     dispatch({
-      type: "serialize",
+      type: 'serialize',
       callback: (value) => {
-        localStorage.setItem("serializedTodos", value);
-      }
-    });
-  };
+        localStorage.setItem('serializedTodos', value)
+      },
+    })
+  }
   const load = () => {
-    const value = localStorage.getItem("serializedTodos");
+    const value = localStorage.getItem('serializedTodos')
     if (value) {
-      dispatch({ type: "deserialize", value });
+      dispatch({ type: 'deserialize', value })
     }
-  };
+  }
   return (
     <div>
       <button onClick={save}>Save to localStorage</button>
       <button onClick={load}>Load from localStorage</button>
     </div>
-  );
-};
+  )
+}
 ```
 
 ### Examples
@@ -137,56 +137,56 @@ https://codesandbox.io/s/jotai-todos-ijyxm
 ```tsx
 const serializeAtom = atom<
   null,
-  | { type: "serialize"; callback: (value: string) => void }
-  | { type: "deserialize"; value: string }
+  | { type: 'serialize'; callback: (value: string) => void }
+  | { type: 'deserialize'; value: string }
 >(null, (get, set, action) => {
-  if (action.type === "serialize") {
-    const todos = get(todosAtom);
-    const todoMap: Record<string, { title: string; completed: boolean }> = {};
+  if (action.type === 'serialize') {
+    const todos = get(todosAtom)
+    const todoMap: Record<string, { title: string; completed: boolean }> = {}
     todos.forEach((id) => {
-      todoMap[id] = get(todoAtomFamily({ id }));
-    });
+      todoMap[id] = get(todoAtomFamily({ id }))
+    })
     const obj = {
       todos,
       todoMap,
-      filter: get(filterAtom)
-    };
-    action.callback(JSON.stringify(obj));
-  } else if (action.type === "deserialize") {
-    const obj = JSON.parse(action.value);
+      filter: get(filterAtom),
+    }
+    action.callback(JSON.stringify(obj))
+  } else if (action.type === 'deserialize') {
+    const obj = JSON.parse(action.value)
     // needs error handling and type checking
-    set(filterAtom, obj.filter);
+    set(filterAtom, obj.filter)
     obj.todos.forEach((id: string) => {
-      const todo = obj.todoMap[id];
-      set(todoAtomFamily({ id, ...todo }), todo);
-    });
-    set(todosAtom, obj.todos);
+      const todo = obj.todoMap[id]
+      set(todoAtomFamily({ id, ...todo }), todo)
+    })
+    set(todosAtom, obj.todos)
   }
-});
+})
 
 const Persist: React.FC = () => {
-  const [, dispatch] = useAtom(serializeAtom);
+  const [, dispatch] = useAtom(serializeAtom)
   const save = () => {
     dispatch({
-      type: "serialize",
+      type: 'serialize',
       callback: (value) => {
-        localStorage.setItem("serializedTodos", value);
-      }
-    });
-  };
+        localStorage.setItem('serializedTodos', value)
+      },
+    })
+  }
   const load = () => {
-    const value = localStorage.getItem("serializedTodos");
+    const value = localStorage.getItem('serializedTodos')
     if (value) {
-      dispatch({ type: "deserialize", value });
+      dispatch({ type: 'deserialize', value })
     }
-  };
+  }
   return (
     <div>
       <button onClick={save}>Save to localStorage</button>
       <button onClick={load}>Load from localStorage</button>
     </div>
-  );
-};
+  )
+}
 ```
 
 ### Examples

@@ -35,7 +35,7 @@ function PostTitle() {
       <h6>{new Date(time * 1000).toLocaleDateString('en-US')}</h6>
       {title && <h4>{title}</h4>}
       <a href={url}>{url}</a>
-      <p>{Parser(text)}</p>
+      {text && <div>{Parser(text)}</div>}
     </>
   )
 }

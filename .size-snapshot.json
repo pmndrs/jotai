@@ -1,46 +1,65 @@
 {
   "index.js": {
-    "bundled": 19645,
-    "minified": 8810,
-    "gzipped": 3270,
+    "bundled": 21757,
+    "minified": 9424,
+    "gzipped": 3436,
     "treeshaked": {
       "rollup": {
-        "code": 274,
-        "import_statements": 92
+        "code": 262,
+        "import_statements": 68
       },
       "webpack": {
-        "code": 1407
+        "code": 1349
       }
     }
   },
   "index.cjs.js": {
-    "bundled": 23683,
-    "minified": 11054,
-    "gzipped": 3832
+    "bundled": 26032,
+    "minified": 11716,
+    "gzipped": 4045
   },
   "index.iife.js": {
-    "bundled": 25150,
-    "minified": 9054,
-    "gzipped": 3508
+    "bundled": 27587,
+    "minified": 9790,
+    "gzipped": 3706
   },
   "utils.js": {
-    "bundled": 3196,
-    "minified": 1461,
-    "gzipped": 660,
+    "bundled": 4304,
+    "minified": 2000,
+    "gzipped": 861,
     "treeshaked": {
       "rollup": {
         "code": 28,
         "import_statements": 28
       },
       "webpack": {
-        "code": 1054
+        "code": 1067
       }
     }
   },
   "utils.cjs.js": {
-    "bundled": 4100,
-    "minified": 2054,
-    "gzipped": 772
+    "bundled": 7256,
+    "minified": 3908,
+    "gzipped": 1488
+  },
+  "devtools.js": {
+    "bundled": 2320,
+    "minified": 1102,
+    "gzipped": 628,
+    "treeshaked": {
+      "rollup": {
+        "code": 28,
+        "import_statements": 28
+      },
+      "webpack": {
+        "code": 1045
+      }
+    }
+  },
+  "devtools.cjs.js": {
+    "bundled": 2493,
+    "minified": 1232,
+    "gzipped": 670
   },
   "immer.js": {
     "bundled": 797,
@@ -60,5 +79,24 @@
     "bundled": 1170,
     "minified": 673,
     "gzipped": 310
+  },
+  "optics.js": {
+    "bundled": 797,
+    "minified": 398,
+    "gzipped": 251,
+    "treeshaked": {
+      "rollup": {
+        "code": 32,
+        "import_statements": 32
+      },
+      "webpack": {
+        "code": 1049
+      }
+    }
+  },
+  "optics.cjs.js": {
+    "bundled": 885,
+    "minified": 464,
+    "gzipped": 292
   }
 }

@@ -7,9 +7,12 @@ export type Setter = <Value, Update>(
   update: Update
 ) => void
 
+export type Scope = symbol | string | number
+
 export type Atom<Value> = {
   key: string | number
   debugLabel?: string
+  scope?: Scope
   init?: Value
   read: (get: Getter) => Value | Promise<Value>
 }
