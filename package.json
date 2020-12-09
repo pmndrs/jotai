@@ -10,17 +10,26 @@
     ".": {
       "import": "./index.js",
       "require": "./index.cjs.js",
-      "node": "./index.cjs.js"
+      "node": "./index.cjs.js",
+      "types": "./index.d.ts"
     },
     "./utils": {
       "import": "./utils.js",
       "require": "./utils.cjs.js",
-      "node": "./utils.cjs.js"
+      "node": "./utils.cjs.js",
+      "types": "./utils.d.ts"
     },
     "./immer": {
       "import": "./immer.js",
       "require": "./immer.cjs.js",
-      "node": "./immer.cjs.js"
+      "node": "./immer.cjs.js",
+      "types": "./immer.d.ts"
+    },
+    "./optics": {
+      "import": "./optics.js",
+      "require": "./optics.cjs.js",
+      "node": "./optics.cjs.js",
+      "types": "./optics.d.ts"
     }
   },
   "files": [
