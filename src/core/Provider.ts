@@ -6,7 +6,6 @@ import React, {
   useMemo,
   useState,
   useRef,
-  useEffect,
   useDebugValue,
 } from 'react'
 import {
@@ -35,7 +34,6 @@ const isReactExperimental =
   !!(React as any).unstable_useMutableSource
 
 type ContextUpdate = (t: () => void) => void
-type Updater = (prev: State) => State
 
 const defaultContextUpdate: ContextUpdate = (f) => f()
 
@@ -61,47 +59,22 @@ export const Provider: React.FC<{
   scope?: Scope
 }> = ({ initialValues, scope, children }) => {
   const contextUpdateRef = useRef<ContextUpdate>(defaultContextUpdate)
-  const updaterQueueRef = useRef<Updater[]>([])
 
   const [state, setState] = useState(() => createState(initialValues))
   const lastStateRef = useRef<State>(state)
-  const isLastStateValidRef = useRef(false)
   useIsoLayoutEffect(() => {
     commitState(state)
     lastStateRef.current = state
-    isLastStateValidRef.current = true
   })
 
-  const flushUpdaterQueue = useCallback(() => {
-    if (!isLastStateValidRef.current) {
-      return
-    }
-    let nextState = lastStateRef.current
-    while (updaterQueueRef.current.length) {
-      const updater = updaterQueueRef.current.shift() as Updater
-      commitState(nextState)
-      nextState = updater(nextState)
-    }
-    if (nextState !== lastStateRef.current) {
-      isLastStateValidRef.current = false
-      contextUpdateRef.current(() => {
-        commitState(nextState)
-        setState(nextState)
-      })
-    }
+  const updateState = useCallback((updater: (prev: State) => State) => {
+    commitState(lastStateRef.current)
+    lastStateRef.current = updater(lastStateRef.current)
+    contextUpdateRef.current(() => {
+      commitState(lastStateRef.current)
+      setState(lastStateRef.current)
+    })
   }, [])
-
-  const updateState = useCallback(
-    (updater: (prev: State) => State) => {
-      updaterQueueRef.current.push(updater)
-      Promise.resolve().then(flushUpdaterQueue)
-    },
-    [flushUpdaterQueue]
-  )
-
-  useEffect(() => {
-    flushUpdaterQueue()
-  })
 
   const actions = useMemo(
     () => ({
@@ -118,11 +91,10 @@ export const Provider: React.FC<{
         update: Update
       ) => {
         const promise = writeAtom(updateState, atom, update)
-        flushUpdaterQueue()
         return promise
       },
     }),
-    [updateState, flushUpdaterQueue]
+    [updateState]
   )
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
