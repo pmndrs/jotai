@@ -3,6 +3,7 @@ import React, {
   ReactElement,
   createElement,
   useCallback,
+  useEffect,
   useMemo,
   useState,
   useRef,
@@ -15,7 +16,6 @@ import {
 import { useContextUpdate } from 'use-context-selector'
 
 import { Atom, WritableAtom, AnyAtom, Scope } from './types'
-import { useIsoLayoutEffect } from './useIsoLayoutEffect'
 import {
   AtomState,
   State,
@@ -42,15 +42,13 @@ const InnerProvider: React.FC<{
   c: ReturnType<typeof getContexts>[1]
 }> = ({ r, c, children }) => {
   const contextUpdate = useContextUpdate(c)
-  useIsoLayoutEffect(() => {
-    if (isReactExperimental) {
-      r.current = (f) => {
-        contextUpdate(() => {
-          runWithPriority(UserBlockingPriority, f)
-        })
-      }
+  if (isReactExperimental && r.current === defaultContextUpdate) {
+    r.current = (f) => {
+      contextUpdate(() => {
+        runWithPriority(UserBlockingPriority, f)
+      })
     }
-  }, [contextUpdate])
+  }
   return children as ReactElement
 }
 
@@ -62,7 +60,7 @@ export const Provider: React.FC<{
 
   const [state, setState] = useState(() => createState(initialValues))
   const lastStateRef = useRef<State>(state)
-  useIsoLayoutEffect(() => {
+  useEffect(() => {
     commitState(state)
     lastStateRef.current = state
   })
