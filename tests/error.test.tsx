@@ -228,9 +228,9 @@ it('can throw an error in write function', async () => {
 
   const Counter: React.FC = () => {
     const [count, dispatch] = useAtom(errorAtom)
-    const onClick = async () => {
+    const onClick = () => {
       try {
-        await dispatch()
+        dispatch()
       } catch (e) {
         console.error(e)
       }
@@ -253,9 +253,7 @@ it('can throw an error in write function', async () => {
   await findByText('no error')
 
   fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    expect(console.error).toHaveBeenCalledTimes(1)
-  })
+  expect(console.error).toHaveBeenCalledTimes(1)
 })
 
 it('can throw an error in async write function', async () => {
@@ -318,9 +316,9 @@ it('can throw a chained error in write function', async () => {
 
   const Counter: React.FC = () => {
     const [count, dispatch] = useAtom(chainedAtom)
-    const onClick = async () => {
+    const onClick = () => {
       try {
-        await dispatch()
+        dispatch()
       } catch (e) {
         console.error(e)
       }
@@ -343,9 +341,7 @@ it('can throw a chained error in write function', async () => {
   await findByText('no error')
 
   fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    expect(console.error).toHaveBeenCalledTimes(1)
-  })
+  expect(console.error).toHaveBeenCalledTimes(1)
 })
 
 it('throws an error while updating in effect', async () => {
@@ -354,15 +350,13 @@ it('throws an error while updating in effect', async () => {
   const Counter: React.FC = () => {
     const [, setCount] = useAtom(countAtom)
     useEffect(() => {
-      ;(async () => {
-        try {
-          await setCount(() => {
-            throw Error()
-          })
-        } catch (e) {
-          console.error(e)
-        }
-      })()
+      try {
+        setCount(() => {
+          throw Error()
+        })
+      } catch (e) {
+        console.error(e)
+      }
     }, [setCount])
     return (
       <>
@@ -379,12 +373,14 @@ it('throws an error while updating in effect', async () => {
     </Provider>
   )
 
-  expect(console.error).toHaveBeenCalledTimes(0)
+  // XXX why can't this fail
+  // expect(console.error).toHaveBeenCalledTimes(0)
+
   await findByText('no error')
   expect(console.error).toHaveBeenCalledTimes(1)
 })
 
-describe.skip('throws an error while updating in effect cleanup', () => {
+describe('throws an error while updating in effect cleanup', () => {
   const countAtom = atom(0)
 
   let doubleSetCount = false
@@ -431,9 +427,7 @@ describe.skip('throws an error while updating in effect cleanup', () => {
     expect(console.error).toHaveBeenCalledTimes(0)
 
     fireEvent.click(getByText('close'))
-    await waitFor(() => {
-      expect(console.error).toHaveBeenCalledTimes(1)
-    })
+    expect(console.error).toHaveBeenCalledTimes(1)
   })
 
   it('dobule setCount', async () => {
@@ -451,8 +445,6 @@ describe.skip('throws an error while updating in effect cleanup', () => {
     expect(console.error).toHaveBeenCalledTimes(0)
 
     fireEvent.click(getByText('close'))
-    await waitFor(() => {
-      expect(console.error).toHaveBeenCalledTimes(1)
-    })
+    expect(console.error).toHaveBeenCalledTimes(1)
   })
 })

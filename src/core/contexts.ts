@@ -10,7 +10,7 @@ export type Actions = {
   write: <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
-  ) => Promise<void>
+  ) => void | Promise<void>
 }
 
 // dummy function for typing

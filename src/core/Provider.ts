@@ -89,10 +89,7 @@ export const Provider: React.FC<{
       write: <Value, Update>(
         atom: WritableAtom<Value, Update>,
         update: Update
-      ) => {
-        const promise = writeAtom(updateState, atom, update)
-        return promise
-      },
+      ) => writeAtom(updateState, atom, update),
     }),
     [updateState]
   )

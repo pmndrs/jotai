@@ -554,40 +554,38 @@ export const writeAtom = <Value, Update>(
   updateState: UpdateState,
   writingAtom: WritableAtom<Value, Update>,
   update: Update
-): Promise<void> => {
+): void | Promise<void> => {
   const pendingPromises: Promise<void>[] = []
 
-  const writePromise = new Promise<void>((resolve) => {
-    updateState((prev) => {
-      const nextState = writeAtomState(
-        prev,
-        updateState,
-        writingAtom,
-        update,
-        pendingPromises
-      )
-      resolve()
-      return nextState
-    })
+  updateState((prev) => {
+    const nextState = writeAtomState(
+      prev,
+      updateState,
+      writingAtom,
+      update,
+      pendingPromises
+    )
+    return nextState
   })
-  pendingPromises.unshift(writePromise)
 
-  return new Promise<void>((resolve, reject) => {
-    const loop = () => {
-      const len = pendingPromises.length
-      if (len === 0) {
-        resolve()
-      } else {
-        Promise.all(pendingPromises)
-          .then(() => {
-            pendingPromises.splice(0, len)
-            loop()
-          })
-          .catch(reject)
+  if (pendingPromises.length) {
+    return new Promise<void>((resolve, reject) => {
+      const loop = () => {
+        const len = pendingPromises.length
+        if (len === 0) {
+          resolve()
+        } else {
+          Promise.all(pendingPromises)
+            .then(() => {
+              pendingPromises.splice(0, len)
+              loop()
+            })
+            .catch(reject)
+        }
       }
-    }
-    loop()
-  })
+      loop()
+    })
+  }
 }
 
 const updateDependentsMap = (state: State): void => {
