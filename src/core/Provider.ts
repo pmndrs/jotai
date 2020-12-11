@@ -9,10 +9,6 @@ import React, {
   useRef,
   useDebugValue,
 } from 'react'
-import {
-  unstable_UserBlockingPriority as UserBlockingPriority,
-  unstable_runWithPriority as runWithPriority,
-} from 'scheduler'
 import { useContextUpdate } from 'use-context-selector'
 
 import { Atom, WritableAtom, AnyAtom, Scope } from './types'
@@ -43,11 +39,7 @@ const InnerProvider: React.FC<{
 }> = ({ r, c, children }) => {
   const contextUpdate = useContextUpdate(c)
   if (isReactExperimental && r.current === defaultContextUpdate) {
-    r.current = (f) => {
-      contextUpdate(() => {
-        runWithPriority(UserBlockingPriority, f)
-      })
-    }
+    r.current = (f) => contextUpdate(f)
   }
   return children as ReactElement
 }

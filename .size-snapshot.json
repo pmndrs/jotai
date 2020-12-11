@@ -1,27 +1,27 @@
 {
   "index.js": {
-    "bundled": 18975,
-    "minified": 8442,
-    "gzipped": 2942,
+    "bundled": 18727,
+    "minified": 8277,
+    "gzipped": 2870,
     "treeshaked": {
       "rollup": {
-        "code": 161,
-        "import_statements": 68
+        "code": 143,
+        "import_statements": 50
       },
       "webpack": {
-        "code": 1229
+        "code": 1178
       }
     }
   },
   "index.cjs.js": {
-    "bundled": 23478,
-    "minified": 10696,
-    "gzipped": 3621
+    "bundled": 23319,
+    "minified": 10584,
+    "gzipped": 3564
   },
   "index.iife.js": {
-    "bundled": 24901,
-    "minified": 8812,
-    "gzipped": 3298
+    "bundled": 24758,
+    "minified": 8735,
+    "gzipped": 3237
   },
   "utils.js": {
     "bundled": 4304,
@@ -43,9 +43,9 @@
     "gzipped": 1488
   },
   "devtools.js": {
-    "bundled": 2320,
-    "minified": 1102,
-    "gzipped": 628,
+    "bundled": 2223,
+    "minified": 1066,
+    "gzipped": 602,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -57,9 +57,9 @@
     }
   },
   "devtools.cjs.js": {
-    "bundled": 2493,
-    "minified": 1232,
-    "gzipped": 670
+    "bundled": 2394,
+    "minified": 1202,
+    "gzipped": 651
   },
   "immer.js": {
     "bundled": 797,
