@@ -10,7 +10,7 @@ export type Setter = <Value, Update>(
 export type Scope = symbol | string | number
 
 export type Atom<Value> = {
-  key: string | number
+  toString: () => string
   debugLabel?: string
   scope?: Scope
   init?: Value

@@ -373,9 +373,6 @@ it('throws an error while updating in effect', async () => {
     </Provider>
   )
 
-  // XXX why can't this fail
-  // expect(console.error).toHaveBeenCalledTimes(0)
-
   await findByText('no error')
   expect(console.error).toHaveBeenCalledTimes(1)
 })

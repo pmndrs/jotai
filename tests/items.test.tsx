@@ -43,7 +43,7 @@ it('remove an item, then add another', async () => {
       <ul>
         {items.map((itemAtom) => (
           <ListItem
-            key={itemAtom.key}
+            key={`${itemAtom}`}
             itemAtom={itemAtom}
             remove={() => removeItem(itemAtom)}
           />
@@ -142,7 +142,7 @@ it('add an item with filtered list', async () => {
       <ul>
         {items.map((itemAtom) => (
           <ListItem
-            key={itemAtom.key}
+            key={`${itemAtom}`}
             itemAtom={itemAtom}
             remove={() => removeItem(itemAtom)}
           />

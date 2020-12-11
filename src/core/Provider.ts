@@ -111,8 +111,7 @@ export const Provider: React.FC<{
   )
 }
 
-const atomToPrintable = (atom: AnyAtom) =>
-  `${atom.key}:${atom.debugLabel ?? '<no debugLabel>'}`
+const atomToPrintable = (atom: AnyAtom) => atom.debugLabel || atom.toString()
 
 const isAtom = (x: AnyAtom | symbol): x is AnyAtom => typeof x !== 'symbol'
 
