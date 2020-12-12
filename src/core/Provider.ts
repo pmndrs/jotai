@@ -51,7 +51,7 @@ export const Provider: React.FC<{
   const contextUpdateRef = useRef<ContextUpdate>(defaultContextUpdate)
 
   const [state, setState] = useState(() => createState(initialValues))
-  const lastStateRef = useRef<State>(state)
+  const lastStateRef = useRef(state)
   useEffect(() => {
     commitState(state)
     lastStateRef.current = state

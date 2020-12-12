@@ -30,10 +30,12 @@ type WorkInProgress = Map<AnyAtom, AtomState>
 
 type UpdateState = (updater: (prev: State) => State) => void
 
+// The state consists of mutable parts and wip part
+// Mutable parts can only be modified with addAtom/delAtom/commitState in React commit phase
 export type State = {
   a: AtomStateMap // mutable state
   m: DependentsMap // mutable state
-  w: WorkInProgress // immutable state (mutable within the same render)
+  w: WorkInProgress // wip state (mutable only within the same render)
 }
 
 export const createState = (
@@ -354,6 +356,7 @@ export const readAtom = <Value>(
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
   const [atomState, nextState] = readAtomState(state, updateState, readingAtom)
+  // merge back wip
   nextState.w.forEach((atomState, atom) => {
     state.w.set(atom, atomState)
   })
@@ -616,6 +619,7 @@ const updateDependentsMap = (state: State): void => {
   })
 }
 
+// commit wip
 export const commitState = (state: State) => {
   if (state.w.size) {
     updateDependentsMap(state)
