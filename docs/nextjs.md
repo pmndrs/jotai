@@ -2,7 +2,7 @@
 
 ## Notes
 
-### When you use 'jotai/utils', you need to use the csj bundle
+### When you use 'jotai/utils', you need to use the cjs bundle
 
 ```js
 import { useUpdateAtom } from 'jotai/utils.cjs'
