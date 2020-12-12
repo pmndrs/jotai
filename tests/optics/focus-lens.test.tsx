@@ -1,5 +1,5 @@
 import { atom, Provider, useAtom } from 'jotai'
-import React from 'react'
+import React, { Suspense } from 'react'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
 
@@ -123,4 +123,62 @@ it('double-focus on an atom works', async () => {
   await findByText('bigAtom: {"a":{"b":6}}')
   await findByText('atomA: {"b":6}')
   await findByText('atomB: 6')
+})
+
+it('focus on async atom works', async () => {
+  const baseAtom = atom({ count: 0 })
+  const asyncAtom: typeof baseAtom = atom(
+    (get) => Promise.resolve(get(baseAtom)),
+    (_get, set, param) => {
+      set(baseAtom, param)
+    }
+  )
+  const focusedAtom = focusAtom(asyncAtom, (optic) => optic.prop('count'))
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(focusedAtom)
+    const [asyncValue, setAsync] = useAtom(asyncAtom)
+    const [baseValue, setBase] = useAtom(baseAtom)
+    return (
+      <>
+        <div>baseAtom: {JSON.stringify(baseValue)}</div>
+        <div>asyncAtom: {JSON.stringify(asyncValue)}</div>
+        <div>count: {count}</div>
+        <button onClick={() => setCount(succ)}>incr count</button>
+        <button onClick={() => setAsync((v) => ({ count: v.count + 1 }))}>
+          incr async
+        </button>
+        <button onClick={() => setBase((v) => ({ count: v.count + 1 }))}>
+          incr base
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = rtl.render(
+    <Provider>
+      <Suspense fallback={<div>Loading...</div>}>
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('baseAtom: {"count":0}')
+  await findByText('asyncAtom: {"count":0}')
+  await findByText('count: 0')
+
+  rtl.fireEvent.click(getByText('incr count'))
+  await findByText('baseAtom: {"count":1}')
+  await findByText('asyncAtom: {"count":1}')
+  await findByText('count: 1')
+
+  rtl.fireEvent.click(getByText('incr async'))
+  await findByText('baseAtom: {"count":2}')
+  await findByText('asyncAtom: {"count":2}')
+  await findByText('count: 2')
+
+  rtl.fireEvent.click(getByText('incr base'))
+  await findByText('baseAtom: {"count":3}')
+  await findByText('asyncAtom: {"count":3}')
+  await findByText('count: 3')
 })
