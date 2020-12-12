@@ -1,4 +1,11 @@
-import { Getter, Setter, Atom, WritableAtom, PrimitiveAtom } from './types'
+import {
+  Getter,
+  Setter,
+  Atom,
+  WritableAtom,
+  WithInitialValue,
+  PrimitiveAtom,
+} from './types'
 
 let keyCount = 0 // global key count for all atoms
 
@@ -18,7 +25,7 @@ export function atom<Value, Update>(
 export function atom<Value, Update>(
   read: Value,
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value, Update>
+): WritableAtom<Value, Update> & WithInitialValue<Value>
 
 // read-only derived atom
 export function atom<Value, Update extends never = never>(

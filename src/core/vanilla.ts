@@ -1,7 +1,6 @@
 import {
   Atom,
   WritableAtom,
-  PrimitiveAtom,
   AnyAtom,
   AnyWritableAtom,
   Getter,
@@ -89,7 +88,7 @@ const wipAtomState = <Value>(
   } else {
     atomState = { r: 0, d: new Map() }
     if (INIT in atom) {
-      atomState.v = (atom as PrimitiveAtom<Value>).init
+      atomState.v = (atom as { init?: Value }).init
     }
   }
   const nextState = {
@@ -259,7 +258,7 @@ const readAtomState = <Value>(
         return aState.v // value
       }
       if (INIT in a) {
-        return (a as PrimitiveAtom<unknown>).init
+        return (a as { init?: unknown }).init
       }
       throw new Error('no atom init')
     }) as Getter)
