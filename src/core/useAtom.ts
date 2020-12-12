@@ -63,9 +63,9 @@ export function useAtom<Value, Update>(
 
   useEffect(() => {
     const id = Symbol()
-    actions.add(id, atom)
+    actions.add(atom, id)
     return () => {
-      actions.del(id, atom)
+      actions.del(atom, id)
     }
   }, [actions, atom])
 

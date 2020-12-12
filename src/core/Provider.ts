@@ -68,10 +68,10 @@ export const Provider: React.FC<{
 
   const actions = useMemo(
     () => ({
-      add: <Value>(id: symbol, atom: Atom<Value>) => {
+      add: <Value>(atom: Atom<Value>, id: symbol) => {
         addAtom(lastStateRef.current, atom, id)
       },
-      del: <Value>(id: symbol, atom: Atom<Value>) => {
+      del: <Value>(atom: Atom<Value>, id: symbol) => {
         delAtom(lastStateRef.current, atom, id)
       },
       read: <Value>(state: State, atom: Atom<Value>) =>
@@ -85,7 +85,7 @@ export const Provider: React.FC<{
   )
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(state)
+    useDebugValue(state, stateToPrintable)
   }
   const [ActionsContext, StateContext] = getContexts(scope)
   return createElement(
@@ -120,7 +120,3 @@ const stateToPrintable = (state: State) =>
       ]
     })
   )
-
-const useDebugState = (state: State) => {
-  useDebugValue(state, stateToPrintable)
-}

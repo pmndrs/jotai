@@ -4,8 +4,8 @@ import { Atom, WritableAtom, Scope } from './types'
 import { AtomState, State } from './vanilla'
 
 export type Actions = {
-  add: <Value>(id: symbol, atom: Atom<Value>) => void
-  del: <Value>(id: symbol, atom: Atom<Value>) => void
+  add: <Value>(atom: Atom<Value>, id: symbol) => void
+  del: <Value>(atom: Atom<Value>, id: symbol) => void
   read: <Value>(state: State, atom: Atom<Value>) => AtomState<Value>
   write: <Value, Update>(
     atom: WritableAtom<Value, Update>,
