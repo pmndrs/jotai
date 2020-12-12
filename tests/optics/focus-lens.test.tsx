@@ -1,7 +1,8 @@
-import { atom, Provider, useAtom } from 'jotai'
+import { atom, Provider, useAtom, WritableAtom } from 'jotai'
 import React, { Suspense } from 'react'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
+import type { SetStateAction } from '../../src/core/types'
 
 const succ = (input: number) => input + 1
 
@@ -127,9 +128,9 @@ it('double-focus on an atom works', async () => {
 
 it('focus on async atom works', async () => {
   const baseAtom = atom({ count: 0 })
-  const asyncAtom: typeof baseAtom = atom(
+  const asyncAtom = atom(
     (get) => Promise.resolve(get(baseAtom)),
-    (_get, set, param) => {
+    (_get, set, param: SetStateAction<{ count: number }>) => {
       set(baseAtom, param)
     }
   )
