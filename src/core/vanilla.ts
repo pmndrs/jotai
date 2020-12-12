@@ -1,6 +1,7 @@
 import {
   Atom,
   WritableAtom,
+  PrimitiveAtom,
   AnyAtom,
   AnyWritableAtom,
   Getter,
@@ -88,7 +89,7 @@ const wipAtomState = <Value>(
   } else {
     atomState = { r: 0, d: new Map() }
     if (INIT in atom) {
-      atomState.v = atom.init
+      atomState.v = (atom as PrimitiveAtom<Value>).init
     }
   }
   const nextState = {
@@ -257,14 +258,10 @@ const readAtomState = <Value>(
         }
         return aState.v // value
       }
-      if (
-        !(INIT in a) &&
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        console.warn('[Bug] init is not defined')
+      if (INIT in a) {
+        return (a as PrimitiveAtom<unknown>).init
       }
-      return a.init
+      throw new Error('no atom init')
     }) as Getter)
     if (promiseOrValue instanceof Promise) {
       promise = promiseOrValue
@@ -484,7 +481,7 @@ const writeAtomState = <Value, Update>(
           ) {
             console.warn('[Bug] writeAtomState no state', a)
           }
-          return a.init
+          return (a as { init?: unknown }).init
         }
         if (
           aState.rp &&

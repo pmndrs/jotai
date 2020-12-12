@@ -40,7 +40,7 @@ export function atom<Value, Update>(
   const key = `atom${++keyCount}`
   const config = {
     toString: () => key,
-  } as WritableAtom<Value, Update>
+  } as WritableAtom<Value, Update> & { init?: Value }
   if (typeof read === 'function') {
     config.read = read as (get: Getter) => Value | Promise<Value>
   } else {

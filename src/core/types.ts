@@ -13,7 +13,6 @@ export type Atom<Value> = {
   toString: () => string
   debugLabel?: string
   scope?: Scope
-  init?: Value
   read: (get: Getter) => Value | Promise<Value>
 }
 
@@ -21,7 +20,12 @@ export type WritableAtom<Value, Update> = Atom<Value> & {
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
 }
 
-export type PrimitiveAtom<Value> = WritableAtom<Value, SetStateAction<Value>>
+export type PrimitiveAtom<Value> = WritableAtom<
+  Value,
+  SetStateAction<Value>
+> & {
+  init: Value
+}
 
 export type AnyAtom = Atom<unknown>
 export type AnyWritableAtom = WritableAtom<unknown, unknown>
