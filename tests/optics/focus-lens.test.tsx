@@ -1,4 +1,4 @@
-import { atom, Provider, useAtom, WritableAtom } from 'jotai'
+import { atom, Provider, useAtom } from 'jotai'
 import React, { Suspense } from 'react'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
