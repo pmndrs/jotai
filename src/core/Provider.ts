@@ -85,7 +85,7 @@ export const Provider: React.FC<{
   )
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugValue(state, stateToPrintable)
+    useDebugState(state)
   }
   const [ActionsContext, StateContext] = getContexts(scope)
   return createElement(
@@ -120,3 +120,7 @@ const stateToPrintable = (state: State) =>
       ]
     })
   )
+
+const useDebugState = (state: State) => {
+  useDebugValue(state, stateToPrintable)
+}
