@@ -1,12 +1,6 @@
 import React from 'react'
-import { fireEvent, cleanup, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom, PrimitiveAtom } from '../src/index'
-
-const consoleError = console.error
-afterEach(() => {
-  cleanup()
-  console.error = consoleError
-})
 
 it('remove an item, then add another', async () => {
   type Item = {
@@ -49,7 +43,7 @@ it('remove an item, then add another', async () => {
       <ul>
         {items.map((itemAtom) => (
           <ListItem
-            key={itemAtom.key}
+            key={`${itemAtom}`}
             itemAtom={itemAtom}
             remove={() => removeItem(itemAtom)}
           />
@@ -148,7 +142,7 @@ it('add an item with filtered list', async () => {
       <ul>
         {items.map((itemAtom) => (
           <ListItem
-            key={itemAtom.key}
+            key={`${itemAtom}`}
             itemAtom={itemAtom}
             remove={() => removeItem(itemAtom)}
           />

@@ -43,16 +43,19 @@ export function useAtom<Value, Update>(
       (state) => {
         assertContextValue(state)
         const atomState = actions.read(state, atom)
-        if (atomState.readE) {
-          throw atomState.readE // read error
+        if (atomState.re) {
+          throw atomState.re // read error
         }
-        if (atomState.readP) {
-          throw atomState.readP // read promise
+        if (atomState.rp) {
+          throw atomState.rp // read promise
         }
-        if (atomState.writeP) {
-          throw atomState.writeP // write promise
+        if (atomState.wp) {
+          throw atomState.wp // write promise
         }
-        return atomState.value as Value
+        if ('v' in atomState) {
+          return atomState.v as Value
+        }
+        throw new Error('no atom value')
       },
       [atom, actions]
     )
@@ -60,9 +63,9 @@ export function useAtom<Value, Update>(
 
   useEffect(() => {
     const id = Symbol()
-    actions.add(id, atom)
+    actions.add(atom, id)
     return () => {
-      actions.del(id, atom)
+      actions.del(atom, id)
     }
   }, [actions, atom])
 

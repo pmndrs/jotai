@@ -36,23 +36,23 @@ it('creates atoms', () => {
     Object {
       "countAtom": Object {
         "init": 0,
-        "key": 1,
         "read": [Function],
+        "toString": [Function],
         "write": [Function],
       },
       "decrementCountAtom": Object {
         "init": null,
-        "key": 5,
         "read": [Function],
+        "toString": [Function],
         "write": [Function],
       },
       "doubledCountAtom": Object {
-        "key": 3,
         "read": [Function],
+        "toString": [Function],
       },
       "sumCountAtom": Object {
-        "key": 4,
         "read": [Function],
+        "toString": [Function],
         "write": [Function],
       },
     }
@@ -822,7 +822,7 @@ it('works with Brige', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Parent />
     </Provider>

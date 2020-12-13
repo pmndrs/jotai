@@ -52,8 +52,7 @@ export function useAtomDevtools<Value>(
   const isTimeTraveling = useRef(false)
   const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
 
-  const atomName =
-    name || `${anAtom.key}:${anAtom.debugLabel ?? '<no debugLabel>'}`
+  const atomName = name || anAtom.debugLabel || anAtom.toString()
 
   useEffect(() => {
     if (extension) {
