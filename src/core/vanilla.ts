@@ -1,13 +1,18 @@
 import {
   Atom,
   WritableAtom,
+  WithInitialValue,
   AnyAtom,
   AnyWritableAtom,
   Getter,
   Setter,
 } from './types'
 
-const INIT = 'init'
+const hasInitialValue = <T extends Atom<unknown>>(
+  atom: T
+): atom is T &
+  (T extends Atom<infer Value> ? WithInitialValue<Value> : never) =>
+  'init' in atom
 
 type Revision = number
 type ReadDependencies = Map<AnyAtom, Revision>
@@ -87,8 +92,8 @@ const wipAtomState = <Value>(
     atomState = { ...atomState } // copy
   } else {
     atomState = { r: 0, d: new Map() }
-    if (INIT in atom) {
-      atomState.v = (atom as { init?: Value }).init
+    if (hasInitialValue(atom)) {
+      atomState.v = atom.init
     }
   }
   const nextState = {
@@ -257,8 +262,8 @@ const readAtomState = <Value>(
         }
         return aState.v // value
       }
-      if (INIT in a) {
-        return (a as { init?: unknown }).init
+      if (hasInitialValue(a)) {
+        return a.init
       }
       throw new Error('no atom init')
     }) as Getter)

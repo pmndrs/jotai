@@ -38,7 +38,7 @@ export function atom<Value, Update>(read: Function): never
 // primitive atom
 export function atom<Value, Update extends never = never>(
   initialValue: Value
-): PrimitiveAtom<Value>
+): PrimitiveAtom<Value> & WithInitialValue<Value>
 
 export function atom<Value, Update>(
   read: Value | ((get: Getter) => Value | Promise<Value>),
