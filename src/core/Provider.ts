@@ -109,13 +109,15 @@ const isAtom = (x: AnyAtom | symbol): x is AnyAtom => typeof x !== 'symbol'
 
 const stateToPrintable = (state: State) =>
   Object.fromEntries(
-    [...state.m.entries()].map(([atom, dependents]) => {
+    Array.from(state.m.entries()).map(([atom, dependents]) => {
       const atomState = state.a.get(atom) || ({} as AtomState)
       return [
         atomToPrintable(atom),
         {
           value: atomState.re || atomState.rp || atomState.wp || atomState.v,
-          dependents: [...dependents].filter(isAtom).map(atomToPrintable),
+          dependents: Array.from(dependents)
+            .filter(isAtom)
+            .map(atomToPrintable),
         },
       ]
     })

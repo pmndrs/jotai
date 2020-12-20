@@ -136,7 +136,7 @@ const replaceDependencies = (
 ): void => {
   if (dependencies) {
     atomState.d = new Map(
-      [...dependencies].map((a) => [a, getAtomState(state, a)?.r ?? 0])
+      Array.from(dependencies).map((a) => [a, getAtomState(state, a)?.r ?? 0])
     )
   }
 }
@@ -216,7 +216,7 @@ const readAtomState = <Value>(
     const atomState = getAtomState(state, atom)
     if (
       atomState &&
-      [...atomState.d.entries()].every(
+      Array.from(atomState.d.entries()).every(
         ([a, r]) => getAtomState(state, a)?.r === r
       )
     ) {
