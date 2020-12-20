@@ -2,7 +2,6 @@ import React, {
   MutableRefObject,
   ReactElement,
   createElement,
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -57,17 +56,17 @@ export const Provider: React.FC<{
     lastStateRef.current = state
   })
 
-  const updateState = useCallback((updater: (prev: State) => State) => {
-    commitState(lastStateRef.current)
-    lastStateRef.current = updater(lastStateRef.current)
-    contextUpdateRef.current(() => {
+  const actions = useMemo(() => {
+    const updateState = (updater: (prev: State) => State) => {
       commitState(lastStateRef.current)
-      setState(lastStateRef.current)
-    })
-  }, [])
+      lastStateRef.current = updater(lastStateRef.current)
+      contextUpdateRef.current(() => {
+        commitState(lastStateRef.current)
+        setState(lastStateRef.current)
+      })
+    }
 
-  const actions = useMemo(
-    () => ({
+    return {
       add: <Value>(atom: Atom<Value>, id: symbol) => {
         addAtom(lastStateRef.current, atom, id)
       },
@@ -80,9 +79,8 @@ export const Provider: React.FC<{
         atom: WritableAtom<Value, Update>,
         update: Update
       ) => writeAtom(updateState, atom, update),
-    }),
-    [updateState]
-  )
+    }
+  }, [])
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(state)
