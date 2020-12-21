@@ -1,6 +1,15 @@
-import React from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import React, { useState } from 'react'
+import { fireEvent, cleanup, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
+
+const consoleError = console.error
+beforeEach(() => {
+  console.error = jest.fn()
+})
+afterEach(() => {
+  cleanup()
+  console.error = consoleError
+})
 
 it('simple scoped provider with scoped atom', async () => {
   const scope = Symbol()
@@ -26,6 +35,31 @@ it('simple scoped provider with scoped atom', async () => {
   await findByText('count: 0')
   fireEvent.click(getByText('dispatch'))
   await findByText('count: 1')
+})
+
+it('throws error if no scoped provider exists for scoped atom', async () => {
+  const scope = Symbol()
+  const countAtom = atom(0)
+  countAtom.scope = scope
+
+  const Display: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+
+    return (
+      <>
+        <p>count: {count}</p>
+        <button onClick={() => setCount((c) => c + 1)}>dispatch</button>
+      </>
+    )
+  }
+
+  expect(() =>
+    render(
+      <Provider>
+        <Display />
+      </Provider>
+    )
+  ).toThrow()
 })
 
 it('default provider and atom with scoped provider and scoped atom', async () => {
@@ -72,12 +106,61 @@ it('default provider and atom with scoped provider and scoped atom', async () =>
   })
 })
 
+it('keeps scoped atom value when default provider is removed', async () => {
+  const scope = Symbol()
+
+  const scopedCountAtom = atom(0)
+  scopedCountAtom.scope = scope
+
+  const Display: React.FC = () => {
+    const [scopedCount, setScopedCount] = useAtom(scopedCountAtom)
+
+    return (
+      <>
+        <p>scopedCount: {scopedCount}</p>
+        <button
+          onClick={() => {
+            setScopedCount((c) => c + 1)
+          }}>
+          dispatch
+        </button>
+      </>
+    )
+  }
+
+  const App = () => {
+    const [hide, setHide] = useState(false)
+    if (hide) {
+      return (
+        <Provider scope={scope}>
+          <Display />
+        </Provider>
+      )
+    }
+    return (
+      <Provider scope={scope}>
+        <Provider>
+          <button onClick={() => setHide(true)}>hide</button>
+          <Display />
+        </Provider>
+      </Provider>
+    )
+  }
+
+  const { getByText, findByText } = render(<App />)
+  await findByText('scopedCount: 0')
+  fireEvent.click(getByText('dispatch'))
+  await findByText('scopedCount: 1')
+  fireEvent.click(getByText('hide'))
+  await findByText('scopedCount: 1')
+})
+
 it('two different scoped providers and scoped atoms', async () => {
   const scope = Symbol()
   const secondScope = Symbol()
 
   const scopedCountAtom = atom(0)
-  const secondScopedCountAtom = atom(0)
+  const secondScopedCountAtom = atom(10)
 
   scopedCountAtom.scope = scope
   secondScopedCountAtom.scope = secondScope
@@ -95,7 +178,7 @@ it('two different scoped providers and scoped atoms', async () => {
         <button
           onClick={() => {
             setScopedCount((c) => c + 1)
-            setSecondScopedCount((c) => c + 1)
+            setSecondScopedCount((c) => c + 2)
           }}>
           dispatch
         </button>
@@ -112,11 +195,11 @@ it('two different scoped providers and scoped atoms', async () => {
   )
   await waitFor(() => {
     getByText('scopedCount: 0')
-    getByText('secondScopedCount: 0')
+    getByText('secondScopedCount: 10')
   })
   fireEvent.click(getByText('dispatch'))
   await waitFor(() => {
     getByText('scopedCount: 1')
-    getByText('secondScopedCount: 1')
+    getByText('secondScopedCount: 12')
   })
 })
