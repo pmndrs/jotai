@@ -1,30 +1,28 @@
 {
-  "name": "jotai-demo",
+  "name": "hacker_news",
   "version": "1.0.0",
-  "description": "An async-read demo with Jotai",
+  "description": "Demonstrate a news articles with jotai, hit next to see more articles.",
   "keywords": [],
   "main": "src/index.js",
   "dependencies": {
     "@react-spring/web": "9.0.0-rc.3",
-    "html-react-parser": "^0.14.0",
-    "jotai": "0.4.1",
-    "react": "16.13.1",
-    "react-dom": "16.13.1",
-    "react-scripts": "3.0.1"
+    "html-react-parser": "0.14.2",
+    "jotai": "0.11.2",
+    "react": "17.0.1",
+    "react-dom": "17.0.1",
+    "react-scripts": "4.0.1"
   },
   "devDependencies": {
-    "customize-cra": "^1.0.0",
-    "customize-cra-react-refresh": "^1.1.0",
-    "raw-loader": "^4.0.1",
-    "react-app-rewired": "^2.1.6",
-    "serve": "^11.3.2",
-    "typescript": "3.8.3"
+    "customize-cra": "1.0.0",
+    "react-app-rewired": "2.1.6",
+    "serve": "11.3.2"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test --env=jsdom",
+    "eject": "react-app-rewired eject",
+    "serve": "serve -s build"
   },
   "browserslist": {
     "production": [

@@ -37,7 +37,7 @@ Zustand is an external store and the hook is to connect the external world to th
 - If you want to make use of Suspense, jotai is the one.
 - If you need a global store to bridge between two react reconcilers, zustand will only work.
 
-----
+---
 
 # How is jotai different from recoil?
 

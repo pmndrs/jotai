@@ -2,11 +2,16 @@ import { useEffect, useCallback, useDebugValue } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
 import { getContexts } from './contexts'
-import { Atom, WritableAtom, AnyWritableAtom } from './types'
+import { Atom, WritableAtom, AnyWritableAtom, Scope } from './types'
 
-function assertContextValue<T extends object>(x: T | null): asserts x is T {
+function assertContextValue<T extends object>(
+  x: T | null,
+  scope?: Scope
+): asserts x is T {
   if (!x) {
-    throw new Error('Please use <Provider>')
+    throw new Error(
+      `Please use <Provider${scope ? ` scope=${String(scope)}` : ''}>`
+    )
   }
 }
 
@@ -30,7 +35,7 @@ export function useAtom<Value, Update>(
 ) {
   const [ActionsContext, StateContext] = getContexts(atom.scope)
   const actions = useContext(ActionsContext)
-  assertContextValue(actions)
+  assertContextValue(actions, atom.scope)
 
   const value = useContextSelector(
     StateContext,
@@ -38,16 +43,19 @@ export function useAtom<Value, Update>(
       (state) => {
         assertContextValue(state)
         const atomState = actions.read(state, atom)
-        if (atomState.readE) {
-          throw atomState.readE // read error
+        if (atomState.re) {
+          throw atomState.re // read error
         }
-        if (atomState.readP) {
-          throw atomState.readP // read promise
+        if (atomState.rp) {
+          throw atomState.rp // read promise
         }
-        if (atomState.writeP) {
-          throw atomState.writeP // write promise
+        if (atomState.wp) {
+          throw atomState.wp // write promise
         }
-        return atomState.value as Value
+        if ('v' in atomState) {
+          return atomState.v as Value
+        }
+        throw new Error('no atom value')
       },
       [atom, actions]
     )
@@ -55,9 +63,9 @@ export function useAtom<Value, Update>(
 
   useEffect(() => {
     const id = Symbol()
-    actions.add(id, atom)
+    actions.add(atom, id)
     return () => {
-      actions.del(id, atom)
+      actions.del(atom, id)
     }
   }, [actions, atom])
 

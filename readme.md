@@ -10,6 +10,7 @@
 [![Version](https://img.shields.io/npm/v/jotai?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
 [![Downloads](https://img.shields.io/npm/dt/jotai.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
 [![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=ffffff)](https://discord.gg/ZZjjNvJ)
+[![Open Collective](https://img.shields.io/opencollective/all/jotai?style=flat&colorA=000000&colorB=000000)](https://opencollective.com/jotai)
 
 Jotai is pronounced "joe-tie" and means "state" in Japanese.
 
@@ -17,9 +18,9 @@ You can try live demos in the following: [Demo 1](https://codesandbox.io/s/jotai
 
 #### How does Jotai differ from Recoil?
 
-* Minimalistic API
-* No string keys
-* TypeScript oriented
+- Minimalistic API
+- No string keys
+- TypeScript oriented
 
 <a id="firstcreateaprimitiveatom" href="#firstcreateaprimitiveatom"><img src="img/doc.01.svg" alt="First create a primitive atom" /></a>
 
@@ -29,9 +30,9 @@ An atom represents a piece of state. All you need is to specify an initial value
 import { atom } from 'jotai'
 
 const countAtom = atom(0)
-const countryAtom = atom("Japan")
-const citiesAtom = atom(["Tokyo", "Kyoto", "Osaka"])
-const mangaAtom = atom({ "Dragon Ball": 1984, "One Piece": 1997, "Naruto": 1999 })
+const countryAtom = atom('Japan')
+const citiesAtom = atom(['Tokyo', 'Kyoto', 'Osaka'])
+const mangaAtom = atom({ 'Dragon Ball': 1984, 'One Piece': 1997, Naruto: 1999 })
 ```
 
 <a id="wrapyourcomponenttree" href="#wrapyourcomponenttree"><img src="img/doc.02.svg" alt="Wrap your component tree with Jotai's Provider" /></a>
@@ -86,14 +87,14 @@ const count1 = atom(1)
 const count2 = atom(2)
 const count3 = atom(3)
 
-const sum = atom(get => get(count1) + get(count2) + get(count3))
+const sum = atom((get) => get(count1) + get(count2) + get(count3))
 ```
 
-Or if you like fp patterns ... 
+Or if you like fp patterns ...
 
 ```jsx
 const atoms = [count1, count2, count3, ...otherAtoms]
-const sum = atom(get => atoms.map(get).reduce((acc, count) => acc + count))
+const sum = atom((get) => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
 <a id="derivedasyncatoms" href="#derivedasyncatoms"><img src="img/rec.02.svg" alt="Derived async atoms (needs suspense)" /></a>
@@ -162,7 +163,7 @@ function Controls() {
   return <button onClick={() => compute("http://count.host.com")}>compute</button>
 ```
 
-----
+---
 
 ## Installation notes
 

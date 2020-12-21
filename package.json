@@ -1,22 +1,47 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.11.0",
+  "version": "0.12.1",
   "description": "👻 Next gen state management that will spook you",
   "main": "index.cjs.js",
   "module": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs.js",
+      "node": "./index.cjs.js",
+      "types": "./index.d.ts"
+    },
+    "./utils": {
+      "import": "./utils.js",
+      "require": "./utils.cjs.js",
+      "node": "./utils.cjs.js",
+      "types": "./utils.d.ts"
+    },
+    "./immer": {
+      "import": "./immer.js",
+      "require": "./immer.cjs.js",
+      "node": "./immer.cjs.js",
+      "types": "./immer.d.ts"
+    },
+    "./optics": {
+      "import": "./optics.js",
+      "require": "./optics.cjs.js",
+      "node": "./optics.cjs.js",
+      "types": "./optics.d.ts"
+    }
+  },
   "files": [
     "**"
   ],
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "rollup -c",
+    "build": "rollup -c --config-esm && rollup -c --config-cjs",
     "postbuild": "yarn copy",
-    "eslint": "eslint --fix 'src/**/*.{js,ts,jsx,tsx}'",
-    "eslint-examples": "eslint --fix 'examples/src/**/*.{js,ts,jsx,tsx}'",
-    "eslint:ci": "eslint '{src,examples/src}/**/*.{js,ts,jsx,tsx}'",
+    "eslint": "eslint --fix '{src,tests}/**/*.{js,ts,jsx,tsx}'",
+    "eslint:ci": "eslint '{src,tests}/**/*.{js,ts,jsx,tsx}'",
     "prepare": "yarn build",
     "pretest": "tsc --noEmit",
     "test": "jest && jest --setupFiles ./tests/setReactExperimental.ts",
@@ -38,7 +63,7 @@
     "printWidth": 80
   },
   "lint-staged": {
-    "*.{js,ts,tsx}": [
+    "*.{js,ts,tsx,md}": [
       "prettier --write"
     ]
   },
@@ -84,45 +109,44 @@
     ]
   },
   "dependencies": {
-    "use-context-selector": "1.2.11"
+    "use-context-selector": "1.3.4"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.3",
-    "@babel/plugin-transform-react-jsx": "^7.12.5",
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-transform-react-jsx": "^7.12.11",
     "@babel/plugin-transform-typescript": "^7.12.1",
-    "@babel/preset-env": "^7.12.1",
-    "@rollup/plugin-babel": "^5.2.1",
-    "@rollup/plugin-node-resolve": "^10.0.0",
-    "@rollup/plugin-typescript": "^6.1.0",
-    "@testing-library/react": "^11.1.2",
-    "@types/jest": "^26.0.15",
-    "@types/react": "^16.9.56",
-    "@types/react-dom": "^16.9.9",
-    "@types/scheduler": "^0.16.1",
-    "@typescript-eslint/eslint-plugin": "^4.7.0",
-    "@typescript-eslint/parser": "^4.7.0",
-    "copyfiles": "^2.4.0",
-    "eslint": "^7.13.0",
-    "eslint-config-prettier": "^6.15.0",
+    "@babel/preset-env": "^7.12.11",
+    "@rollup/plugin-babel": "^5.2.2",
+    "@rollup/plugin-node-resolve": "^11.0.1",
+    "@rollup/plugin-typescript": "^8.1.0",
+    "@testing-library/react": "^11.2.2",
+    "@types/jest": "^26.0.19",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.10.0",
+    "@typescript-eslint/parser": "^4.10.0",
+    "copyfiles": "^2.4.1",
+    "eslint": "^7.15.0",
+    "eslint-config-prettier": "^7.0.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jest": "^24.1.3",
-    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-prettier": "^3.3.0",
     "eslint-plugin-react": "^7.21.5",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "husky": "^4.3.0",
-    "immer": "^7.0.14",
+    "husky": "^4.3.6",
+    "immer": "^8.0.0",
     "jest": "^26.6.3",
     "json": "^10.0.0",
-    "lint-staged": "^10.5.1",
-    "prettier": "^2.1.2",
+    "lint-staged": "^10.5.3",
+    "optics-ts": "^2.0.0",
+    "prettier": "^2.2.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "rollup": "^2.33.2",
+    "rollup": "^2.35.1",
     "rollup-plugin-size-snapshot": "^0.12.0",
-    "scheduler": "^0.19.1",
     "shx": "^0.3.3",
-    "typescript": "^4.0.5"
+    "typescript": "^4.1.3"
   },
   "peerDependencies": {
     "react": ">=16.8",

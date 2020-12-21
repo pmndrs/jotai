@@ -39,6 +39,7 @@ export function useAtomDevtools<Value>(
   } catch {}
   if (!extension) {
     if (
+      typeof process === 'object' &&
       process.env.NODE_ENV === 'development' &&
       typeof window !== 'undefined'
     ) {
@@ -51,8 +52,7 @@ export function useAtomDevtools<Value>(
   const isTimeTraveling = useRef(false)
   const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
 
-  const atomName =
-    name || `${anAtom.key}:${anAtom.debugLabel ?? '<no debugLabel>'}`
+  const atomName = name || anAtom.debugLabel || anAtom.toString()
 
   useEffect(() => {
     if (extension) {

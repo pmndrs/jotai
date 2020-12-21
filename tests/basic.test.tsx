@@ -1,5 +1,5 @@
-import React, { StrictMode, Suspense, useEffect, useRef } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import React, { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
   Provider,
   atom,
@@ -36,23 +36,23 @@ it('creates atoms', () => {
     Object {
       "countAtom": Object {
         "init": 0,
-        "key": 1,
         "read": [Function],
+        "toString": [Function],
         "write": [Function],
       },
       "decrementCountAtom": Object {
         "init": null,
-        "key": 5,
         "read": [Function],
+        "toString": [Function],
         "write": [Function],
       },
       "doubledCountAtom": Object {
-        "key": 3,
         "read": [Function],
+        "toString": [Function],
       },
       "sumCountAtom": Object {
-        "key": 4,
         "read": [Function],
+        "toString": [Function],
         "write": [Function],
       },
     }
@@ -100,18 +100,21 @@ it('uses a read-only derived atom', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
-  await findByText('count: 0')
-  await findByText('doubledCount: 0')
-
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('doubledCount: 0')
+  })
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  await findByText('doubledCount: 2')
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('doubledCount: 2')
+  })
 })
 
 it('uses a read-write derived atom', async () => {
@@ -133,18 +136,21 @@ it('uses a read-write derived atom', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
-  await findByText('count: 0')
-  await findByText('doubledCount: 0')
-
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('doubledCount: 0')
+  })
   fireEvent.click(getByText('button'))
-  await findByText('count: 2')
-  await findByText('doubledCount: 4')
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('doubledCount: 4')
+  })
 })
 
 it('uses a write-only derived atom', async () => {
@@ -213,7 +219,7 @@ it('only re-renders if value has changed', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter countAtom={count1Atom} name="count1" />
       <Counter countAtom={count2Atom} name="count2" />
@@ -221,19 +227,23 @@ it('only re-renders if value has changed', async () => {
     </Provider>
   )
 
-  await findByText('commits: 1, count1: 0')
-  await findByText('commits: 1, count2: 0')
-  await findByText('commits: 1, product: 0')
-
+  await waitFor(() => {
+    getByText('commits: 1, count1: 0')
+    getByText('commits: 1, count2: 0')
+    getByText('commits: 1, product: 0')
+  })
   fireEvent.click(getByText('button-count1'))
-  await findByText('commits: 2, count1: 1')
-  await findByText('commits: 1, count2: 0')
-  await findByText('commits: 1, product: 0')
-
+  await waitFor(() => {
+    getByText('commits: 2, count1: 1')
+    getByText('commits: 1, count2: 0')
+    getByText('commits: 1, product: 0')
+  })
   fireEvent.click(getByText('button-count2'))
-  await findByText('commits: 2, count1: 1')
-  await findByText('commits: 2, count2: 1')
-  await findByText('commits: 2, product: 1')
+  await waitFor(() => {
+    getByText('commits: 2, count1: 1')
+    getByText('commits: 2, count2: 1')
+    getByText('commits: 2, product: 1')
+  })
 })
 
 it('works with async get', async () => {
@@ -726,14 +736,55 @@ it('updates two atoms in child useEffect', async () => {
     )
   }
 
-  const { findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
-  await findByText('countA: 1')
-  await findByText('countB: 2')
+  await waitFor(() => {
+    getByText('countA: 1')
+    getByText('countB: 2')
+  })
+})
+
+it('set atom right after useEffect (#208)', async () => {
+  const countAtom = atom(0)
+  const effectFn = jest.fn()
+
+  const Child: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [, setState] = useState(null)
+    // rAF does not repro, so schedule update intentionally in render
+    if (count === 1) {
+      Promise.resolve().then(() => {
+        setCount(2)
+      })
+    }
+    useEffect(() => {
+      effectFn(count)
+      setState(null) // this is important to repro (set something stable)
+    }, [count, setState])
+    return <div>count: {count}</div>
+  }
+
+  const Parent: React.FC = () => {
+    const [, setCount] = useAtom(countAtom)
+    useEffect(() => {
+      setCount(1)
+      // requestAnimationFrame(() => setCount(2))
+    }, [setCount])
+    return <Child />
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Parent />
+    </Provider>
+  )
+
+  await findByText('count: 2')
+  expect(effectFn).lastCalledWith(2)
 })
 
 it('works with Brige', async () => {
@@ -771,20 +822,86 @@ it('works with Brige', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Parent />
     </Provider>
   )
 
-  await findByText('count: 0')
-  await findByText('child: 0')
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('child: 0')
+  })
 
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  await findByText('child: 1')
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('child: 1')
+  })
 
   fireEvent.click(getByText('child'))
-  await findByText('count: 2')
-  await findByText('child: 2')
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('child: 2')
+  })
+})
+
+it('only relevant render function called (#156)', async () => {
+  if (process.env.IS_REACT_EXPERIMENTAL) {
+    return // skip this test
+  }
+  const count1Atom = atom(0)
+  const count2Atom = atom(0)
+
+  const Counter1: React.FC = () => {
+    const [count, setCount] = useAtom(count1Atom)
+    const renderCount = useRef(0)
+    ++renderCount.current
+    return (
+      <>
+        <div>
+          count1: {count} ({renderCount.current})
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button1</button>
+      </>
+    )
+  }
+
+  const Counter2: React.FC = () => {
+    const [count, setCount] = useAtom(count2Atom)
+    const renderCount = useRef(0)
+    ++renderCount.current
+    return (
+      <>
+        <div>
+          count2: {count} ({renderCount.current})
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button2</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Counter1 />
+      <Counter2 />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count1: 0 (1)')
+    getByText('count2: 0 (1)')
+  })
+
+  fireEvent.click(getByText('button1'))
+  await waitFor(() => {
+    getByText('count1: 1 (2)')
+    getByText('count2: 0 (1)')
+  })
+
+  fireEvent.click(getByText('button2'))
+  await waitFor(() => {
+    getByText('count1: 1 (2)')
+    getByText('count2: 1 (2)')
+  })
 })

@@ -2,7 +2,7 @@
 
 ## Notes
 
-### When you use 'jotai/utils', you need to use the csj bundle
+### When you use 'jotai/utils', you need to use the cjs bundle
 
 ```js
 import { useUpdateAtom } from 'jotai/utils.cjs'
@@ -14,7 +14,7 @@ import { useUpdateAtom } from 'jotai/utils.cjs'
 const postData = atom((get) => {
   const id = get(postId)
   if (isSSR || prefetchedPostData[id]) {
-    return prefetchedPostData[id] || EMPTY_POST_DATA;
+    return prefetchedPostData[id] || EMPTY_POST_DATA
   }
   return fetchData(id) // returns a promise
 })

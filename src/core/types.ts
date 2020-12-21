@@ -10,15 +10,19 @@ export type Setter = <Value, Update>(
 export type Scope = symbol | string | number
 
 export type Atom<Value> = {
-  key: string | number
+  toString: () => string
   debugLabel?: string
   scope?: Scope
-  init?: Value
   read: (get: Getter) => Value | Promise<Value>
 }
 
 export type WritableAtom<Value, Update> = Atom<Value> & {
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+}
+
+// This is an internal type and subjects to change.
+export type WithInitialValue<Value> = {
+  init: Value
 }
 
 export type PrimitiveAtom<Value> = WritableAtom<Value, SetStateAction<Value>>

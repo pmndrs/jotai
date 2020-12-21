@@ -2,7 +2,7 @@ import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import { atomFamily } from '../../src/utils'
-import { SetStateAction, PrimitiveAtom } from '../../src/core/types'
+import { SetStateAction, WritableAtom } from '../../src/core/types'
 
 it('atomFamily returns same reference for same parameters', async () => {
   const arrayAtom = atom([0])
@@ -63,7 +63,7 @@ it('atomFamily functionality as usual', async () => {
     countAtom,
   }: {
     index: number
-    countAtom: PrimitiveAtom<number>
+    countAtom: WritableAtom<number, SetStateAction<number>>
   }) => {
     const [count, setCount] = useAtom(countAtom)
     return (

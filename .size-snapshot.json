@@ -1,46 +1,65 @@
 {
   "index.js": {
-    "bundled": 21316,
-    "minified": 9285,
-    "gzipped": 3395,
+    "bundled": 18750,
+    "minified": 8270,
+    "gzipped": 2866,
     "treeshaked": {
       "rollup": {
-        "code": 234,
-        "import_statements": 68
+        "code": 143,
+        "import_statements": 50
       },
       "webpack": {
-        "code": 1321
+        "code": 1178
       }
     }
   },
   "index.cjs.js": {
-    "bundled": 25576,
-    "minified": 11564,
-    "gzipped": 4002
+    "bundled": 23355,
+    "minified": 10569,
+    "gzipped": 3554
   },
   "index.iife.js": {
-    "bundled": 27123,
-    "minified": 9606,
-    "gzipped": 3666
+    "bundled": 24798,
+    "minified": 8689,
+    "gzipped": 3226
   },
   "utils.js": {
-    "bundled": 3483,
-    "minified": 1490,
-    "gzipped": 664,
+    "bundled": 4304,
+    "minified": 2000,
+    "gzipped": 861,
     "treeshaked": {
       "rollup": {
         "code": 28,
         "import_statements": 28
       },
       "webpack": {
-        "code": 1054
+        "code": 1067
       }
     }
   },
   "utils.cjs.js": {
-    "bundled": 6131,
-    "minified": 3216,
-    "gzipped": 1276
+    "bundled": 7256,
+    "minified": 3908,
+    "gzipped": 1488
+  },
+  "devtools.js": {
+    "bundled": 2223,
+    "minified": 1066,
+    "gzipped": 602,
+    "treeshaked": {
+      "rollup": {
+        "code": 28,
+        "import_statements": 28
+      },
+      "webpack": {
+        "code": 1045
+      }
+    }
+  },
+  "devtools.cjs.js": {
+    "bundled": 2394,
+    "minified": 1202,
+    "gzipped": 651
   },
   "immer.js": {
     "bundled": 797,
@@ -61,23 +80,23 @@
     "minified": 673,
     "gzipped": 310
   },
-  "devtools.js": {
-    "bundled": 2289,
-    "minified": 1076,
-    "gzipped": 618,
+  "optics.js": {
+    "bundled": 797,
+    "minified": 398,
+    "gzipped": 251,
     "treeshaked": {
       "rollup": {
-        "code": 28,
-        "import_statements": 28
+        "code": 32,
+        "import_statements": 32
       },
       "webpack": {
-        "code": 1045
+        "code": 1049
       }
     }
   },
-  "devtools.cjs.js": {
-    "bundled": 2462,
-    "minified": 1206,
-    "gzipped": 660
+  "optics.cjs.js": {
+    "bundled": 885,
+    "minified": 464,
+    "gzipped": 292
   }
 }

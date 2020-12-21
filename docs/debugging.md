@@ -24,7 +24,6 @@ if (process.env.NODE_ENV !== 'production') {
 
 `useAtomDevtools` is a React hook that manages ReduxDevTools integration for a particular atom.
 
-
 ### Call Signature:
 
 ```typescript
@@ -44,8 +43,8 @@ import { useAtomDevtools } from 'jotai/devtools'
 
 // The interface for the type stored in the atom.
 export interface Task {
-    label: string
-    complete: boolean
+  label: string
+  complete: boolean
 }
 
 // The atom to debug.
@@ -55,15 +54,42 @@ export const tasksAtom = atom<Task[]>([])
 tasksAtom.debugLabel = 'Tasks'
 
 export const useTasksDevtools = () => {
+  // The hook can be called simply by passing an atom for debugging.
+  useAtomDevtools(tasksAtom)
 
-    // The hook can be called simply by passing an atom for debugging.
-    useAtomDevtools(tasksAtom)
+  // Specify a custom type parameter
+  useAtomDevtools<Task[]>(tasksAtom)
 
-    // Specify a custom type parameter
-    useAtomDevtools<Task[]>(tasksAtom)
-
-    // You can attach two devtools instances to the same atom and differentiate them with custom names.
-    useAtomDevtools(tasksAtom, 'Tasks (Instance 1)')
-    useAtomDevtools(tasksAtom, 'Tasks (Instance 2)')
+  // You can attach two devtools instances to the same atom and differentiate them with custom names.
+  useAtomDevtools(tasksAtom, 'Tasks (Instance 1)')
+  useAtomDevtools(tasksAtom, 'Tasks (Instance 2)')
 }
 ```
+
+## freezeAtom
+
+```js
+import { atom } from 'jotai'
+import { freezeAtom } from 'jotai/utils'
+
+const countAtom = freezeAtom(atom(0))
+```
+
+`freezeAtom` take an existing atom and return a new derived atom.
+The returned atom is "frozen" which means when you use the atom
+with `useAtom` in components or `get` in other atoms,
+the atom value will be deeply freezed with Object.freeze.
+It would be useful to find bugs where you accidentally tried
+to mutate objects which can lead to unexpected behavior.
+
+## atomFrozenInDev
+
+```js
+import { atomFrozenInDev as atom } from 'jotai/utils'
+
+const countAtom = atom(0)
+```
+
+`atomFrozenInDev` is another function to create a frozen atom.
+The atom is frozen only in the development mode.
+In production, it works as the normal `atom`.

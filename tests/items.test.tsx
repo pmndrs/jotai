@@ -1,12 +1,6 @@
 import React from 'react'
-import { fireEvent, cleanup, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom, PrimitiveAtom } from '../src/index'
-
-const consoleError = console.error
-afterEach(() => {
-  cleanup()
-  console.error = consoleError
-})
 
 it('remove an item, then add another', async () => {
   type Item = {
@@ -49,7 +43,7 @@ it('remove an item, then add another', async () => {
       <ul>
         {items.map((itemAtom) => (
           <ListItem
-            key={itemAtom.key}
+            key={`${itemAtom}`}
             itemAtom={itemAtom}
             remove={() => removeItem(itemAtom)}
           />
@@ -71,19 +65,25 @@ it('remove an item, then add another', async () => {
   await findByText('item1 checked: no')
 
   fireEvent.click(getByText('Add'))
-  await findByText('item1 checked: no')
-  await findByText('item2 checked: no')
+  await waitFor(() => {
+    getByText('item1 checked: no')
+    getByText('item2 checked: no')
+  })
 
   fireEvent.click(getByText('Check item2'))
-  await findByText('item1 checked: no')
-  await findByText('item2 checked: yes')
+  await waitFor(() => {
+    getByText('item1 checked: no')
+    getByText('item2 checked: yes')
+  })
 
   fireEvent.click(getByText('Remove item1'))
   await findByText('item2 checked: yes')
 
   fireEvent.click(getByText('Add'))
-  await findByText('item2 checked: yes')
-  await findByText('item3 checked: no')
+  await waitFor(() => {
+    getByText('item2 checked: yes')
+    getByText('item3 checked: no')
+  })
 })
 
 it('add an item with filtered list', async () => {
@@ -142,7 +142,7 @@ it('add an item with filtered list', async () => {
       <ul>
         {items.map((itemAtom) => (
           <ListItem
-            key={itemAtom.key}
+            key={`${itemAtom}`}
             itemAtom={itemAtom}
             remove={() => removeItem(itemAtom)}
           />
