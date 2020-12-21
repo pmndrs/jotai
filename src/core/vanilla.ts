@@ -103,32 +103,6 @@ const wipAtomState = <Value>(
   return [atomState, nextState] as const
 }
 
-const addDependency = <Value>(
-  state: State,
-  atom: Atom<Value>,
-  dependency: AnyAtom
-): State => {
-  const [atomState, nextState] = wipAtomState(state, atom)
-  const dependencyState = getAtomState(state, dependency)
-  if (atomState) {
-    if (dependencyState && atomState.d.get(dependency) === dependencyState.r) {
-      return state
-    } else {
-      atomState.d = new Map(atomState.d).set(
-        dependency,
-        dependencyState?.r ?? 0
-      )
-      atomState.r++
-    }
-  } else if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production'
-  ) {
-    console.warn('[Bug] add dependency failed', atom)
-  }
-  return nextState
-}
-
 const replaceDependencies = (
   state: State,
   atomState: AtomState,
@@ -187,9 +161,7 @@ const setAtomReadPromise = <Value>(
   let [atomState, nextState] = wipAtomState(state, atom)
   atomState.rp = promise
   atomState.r++
-  dependencies.forEach((dependency) => {
-    nextState = addDependency(nextState, atom, dependency)
-  })
+  replaceDependencies(nextState, atomState, dependencies)
   return nextState
 }
 
@@ -231,15 +203,10 @@ const readAtomState = <Value>(
   let error: Error | undefined
   let promise: Promise<void> | undefined
   let value: Value | undefined
-  let dependencies: Set<AnyAtom> | null = new Set()
+  const dependencies = new Set<AnyAtom>()
   try {
     const promiseOrValue = atom.read(((a: AnyAtom) => {
-      if (dependencies) {
-        dependencies.add(a)
-      }
-      if (!isSync) {
-        updateState((prev) => addDependency(prev, atom, a))
-      }
+      dependencies.add(a)
       if (a !== atom) {
         let aState: AtomState
         if (isSync) {
@@ -271,27 +238,23 @@ const readAtomState = <Value>(
     if (promiseOrValue instanceof Promise) {
       promise = promiseOrValue
         .then((value) => {
-          const dependenciesToReplace = dependencies as Set<AnyAtom>
-          dependencies = null
           updateState((prev) =>
             setAtomValue(
               copyWip(prev, asyncState),
               atom,
               value,
-              dependenciesToReplace,
+              dependencies,
               promise as Promise<void>
             )
           )
         })
         .catch((e) => {
-          const dependenciesToReplace = dependencies as Set<AnyAtom>
-          dependencies = null
           updateState((prev) =>
             setAtomReadError(
               copyWip(prev, asyncState),
               atom,
               e instanceof Error ? e : new Error(e),
-              dependenciesToReplace,
+              dependencies,
               promise as Promise<void>
             )
           )
@@ -318,12 +281,10 @@ const readAtomState = <Value>(
   }
   if (error) {
     nextState = setAtomReadError(nextState, atom, error, dependencies)
-    dependencies = null
   } else if (promise) {
     nextState = setAtomReadPromise(nextState, atom, promise, dependencies)
   } else {
     nextState = setAtomValue(nextState, atom, value, dependencies)
-    dependencies = null
   }
   isSync = false
   return [getAtomState(nextState, atom) as AtomState<Value>, nextState] as const
