@@ -132,7 +132,7 @@ const addDependency = <Value>(
 const replaceDependencies = (
   state: State,
   atomState: AtomState,
-  dependencies: Set<AnyAtom> | false
+  dependencies?: Set<AnyAtom>
 ): void => {
   if (dependencies) {
     atomState.d = new Map(
@@ -145,7 +145,7 @@ const setAtomValue = <Value>(
   state: State,
   atom: Atom<Value>,
   value: Value,
-  dependencies: Set<AnyAtom> | false,
+  dependencies?: Set<AnyAtom>,
   promise?: Promise<void>
 ): State => {
   const [atomState, nextState] = wipAtomState(state, atom)
@@ -164,7 +164,7 @@ const setAtomReadError = <Value>(
   state: State,
   atom: Atom<Value>,
   error: Error,
-  dependencies: Set<AnyAtom> | false,
+  dependencies: Set<AnyAtom>,
   promise?: Promise<void>
 ): State => {
   const [atomState, nextState] = wipAtomState(state, atom)
@@ -182,12 +182,14 @@ const setAtomReadPromise = <Value>(
   state: State,
   atom: Atom<Value>,
   promise: Promise<void>,
-  dependencies: Set<AnyAtom> | false
+  dependencies: Set<AnyAtom>
 ): State => {
-  const [atomState, nextState] = wipAtomState(state, atom)
+  let [atomState, nextState] = wipAtomState(state, atom)
   atomState.rp = promise
   atomState.r++
-  replaceDependencies(nextState, atomState, dependencies)
+  dependencies.forEach((dependency) => {
+    nextState = addDependency(nextState, atom, dependency)
+  })
   return nextState
 }
 
@@ -230,7 +232,6 @@ const readAtomState = <Value>(
   let promise: Promise<void> | undefined
   let value: Value | undefined
   let dependencies: Set<AnyAtom> | null = new Set()
-  let flushDependencies = false
   try {
     const promiseOrValue = atom.read(((a: AnyAtom) => {
       if (dependencies) {
@@ -297,7 +298,6 @@ const readAtomState = <Value>(
         })
     } else {
       value = promiseOrValue
-      flushDependencies = true
     }
   } catch (errorOrPromise) {
     if (errorOrPromise instanceof Promise) {
@@ -315,37 +315,15 @@ const readAtomState = <Value>(
     } else {
       error = new Error(errorOrPromise)
     }
-    flushDependencies = true
   }
   if (error) {
-    nextState = setAtomReadError(
-      nextState,
-      atom,
-      error,
-      flushDependencies && dependencies
-    )
-  } else if (promise) {
-    nextState = setAtomReadPromise(
-      nextState,
-      atom,
-      promise,
-      flushDependencies && dependencies
-    )
-  } else {
-    nextState = setAtomValue(
-      nextState,
-      atom,
-      value,
-      flushDependencies && dependencies
-    )
-  }
-  if (flushDependencies) {
+    nextState = setAtomReadError(nextState, atom, error, dependencies)
     dependencies = null
+  } else if (promise) {
+    nextState = setAtomReadPromise(nextState, atom, promise, dependencies)
   } else {
-    // add dependency temporarily
-    dependencies.forEach((dependency) => {
-      nextState = addDependency(nextState, atom, dependency)
-    })
+    nextState = setAtomValue(nextState, atom, value, dependencies)
+    dependencies = null
   }
   isSync = false
   return [getAtomState(nextState, atom) as AtomState<Value>, nextState] as const
@@ -504,17 +482,13 @@ const writeAtomState = <Value, Update>(
         if (a === atom) {
           if (isSync) {
             nextState = updateDependentsState(
-              setAtomValue(nextState, a, v, false),
+              setAtomValue(nextState, a, v),
               updateState,
               a
             )
           } else {
             updateState((prev) =>
-              updateDependentsState(
-                setAtomValue(prev, a, v, false),
-                updateState,
-                a
-              )
+              updateDependentsState(setAtomValue(prev, a, v), updateState, a)
             )
           }
         } else {
