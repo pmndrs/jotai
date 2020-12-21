@@ -158,7 +158,7 @@ const setAtomReadPromise = <Value>(
   promise: Promise<void>,
   dependencies: Set<AnyAtom>
 ): State => {
-  let [atomState, nextState] = wipAtomState(state, atom)
+  const [atomState, nextState] = wipAtomState(state, atom)
   atomState.rp = promise
   atomState.r++
   replaceDependencies(nextState, atomState, dependencies)
