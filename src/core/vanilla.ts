@@ -422,7 +422,10 @@ const writeAtomState = <Value, Update>(
             typeof process === 'object' &&
             process.env.NODE_ENV !== 'production'
           ) {
-            console.warn('[Bug] writeAtomState no state', a)
+            console.warn(
+              'Trying to read an atom value that is never used. This may not behave as expected.',
+              a
+            )
           }
           return (a as { init?: unknown }).init
         }
