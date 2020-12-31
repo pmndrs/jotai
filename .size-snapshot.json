@@ -98,5 +98,24 @@
     "bundled": 885,
     "minified": 464,
     "gzipped": 292
+  },
+  "query.js": {
+    "bundled": 1046,
+    "minified": 544,
+    "gzipped": 315,
+    "treeshaked": {
+      "rollup": {
+        "code": 84,
+        "import_statements": 71
+      },
+      "webpack": {
+        "code": 1097
+      }
+    }
+  },
+  "query.cjs.js": {
+    "bundled": 1269,
+    "minified": 725,
+    "gzipped": 363
   }
 }
