@@ -191,6 +191,7 @@ We will be organizing some more information later. Meanwhile, please see WIP mat
 - [Debugging Doc](./docs/debugging.md)
 - [Utils Doc](./docs/utils.md)
 - [Immer Doc](./docs/immer.md)
+- [Optics Doc](./docs/optics.md)
 - [TypeScript Doc](./docs/typescript.md)
 - [Persistence Doc](./docs/persistence.md)
 - [Next.js Doc](./docs/nextjs.md)
