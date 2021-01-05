@@ -42,7 +42,7 @@ The use cases of this are testing and server side rendering.
 
 ```js
 const TestRoot = () => (
-  <Provider initialValues=[[atom1, 1], [atom2, 'b']]>
+  <Provider initialValues={[[atom1, 1], [atom2, 'b']]}>
     <Component />
   </Provider>
 )
