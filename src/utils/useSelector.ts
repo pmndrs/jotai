@@ -18,6 +18,7 @@ export function useSelector<Value, Slice>(
       prevSlice = slice // self contained mutation?
       return slice
     })
+    derivedAtom.scope = anAtom.scope
     return derivedAtom
   }, [anAtom, selector, equalityFn])
   return useAtom(sliceAtom)[0]

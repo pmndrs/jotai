@@ -8,5 +8,6 @@ export function useUpdateAtom<Value, Update>(
     () => atom(null, (_get, set, update: Update) => set(anAtom, update)),
     [anAtom]
   )
+  writeOnlyAtom.scope = anAtom.scope
   return useAtom(writeOnlyAtom)[1]
 }
