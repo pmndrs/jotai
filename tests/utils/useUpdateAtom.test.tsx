@@ -74,3 +74,46 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
     getByText('updater rerenders: 0')
   })
 })
+
+it('useUpdateAtom with scope', async () => {
+  const scope = Symbol()
+  const countAtom = atom(0)
+  countAtom.scope = scope
+
+  const Displayer: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  const Updater: React.FC = () => {
+    const setCount = useUpdateAtom(countAtom)
+    return (
+      <button onClick={() => setCount((value) => value + 1)}>increment</button>
+    )
+  }
+
+  const Parent: React.FC = () => {
+    return (
+      <>
+        <Displayer />
+        <Updater />
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <StrictMode>
+      <Provider scope={scope}>
+        <Parent />
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+  })
+  fireEvent.click(getByText('increment'))
+  await waitFor(() => {
+    getByText('count: 1')
+  })
+})

@@ -7,5 +7,6 @@ export function useResetAtom<Value>(anAtom: WritableAtom<Value, typeof RESET>) {
     () => atom(null, (_get, set, _update) => set(anAtom, RESET)),
     [anAtom]
   )
+  writeOnlyAtom.scope = anAtom.scope
   return useAtom(writeOnlyAtom)[1]
 }

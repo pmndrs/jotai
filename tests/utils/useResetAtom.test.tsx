@@ -131,3 +131,37 @@ it('useResetAtom with custom atom', async () => {
   fireEvent.click(getByText('reset'))
   await findByText('count: 0')
 })
+
+it('useResetAtom with scope', async () => {
+  const scope = Symbol()
+  const countAtom = atomWithReset(0)
+  countAtom.scope = scope
+
+  const Parent: React.FC = () => {
+    const [count, setValue] = useAtom(countAtom)
+    const resetAtom = useResetAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={resetAtom}>reset</button>
+        <button onClick={() => setValue((oldValue) => oldValue + 1)}>
+          increment
+        </button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider scope={scope}>
+      <Parent />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('increment'))
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('reset'))
+  await findByText('count: 0')
+})
