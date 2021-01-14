@@ -1,5 +1,4 @@
 import React, {
-  Fragment,
   MutableRefObject,
   ReactElement,
   createElement,
@@ -41,7 +40,7 @@ const InnerProvider: React.FC<{
   if (isReactExperimental && r.current === defaultContextUpdate) {
     r.current = (f) => contextUpdate(f)
   }
-  return createElement(Fragment, {}, children)
+  return (children as ReactElement) ?? null
 }
 
 export const Provider: React.FC<{
