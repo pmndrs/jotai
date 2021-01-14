@@ -7,6 +7,7 @@
   "module": "index.js",
   "types": "index.d.ts",
   "exports": {
+    "./package.json": "./package.json",
     ".": {
       "import": "./index.js",
       "require": "./index.cjs.js",
