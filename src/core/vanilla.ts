@@ -128,8 +128,10 @@ const setAtomValue = <Value>(
   }
   delete atomState.re
   delete atomState.rp
-  atomState.v = value
-  atomState.r++
+  if (!('v' in atomState) || !Object.is(atomState.v, value)) {
+    atomState.v = value
+    atomState.r++
+  }
   replaceDependencies(nextState, atomState, dependencies)
   return nextState
 }
@@ -147,7 +149,6 @@ const setAtomReadError = <Value>(
   }
   delete atomState.rp
   atomState.re = error
-  atomState.r++
   replaceDependencies(nextState, atomState, dependencies)
   return nextState
 }
@@ -160,7 +161,6 @@ const setAtomReadPromise = <Value>(
 ): State => {
   const [atomState, nextState] = wipAtomState(state, atom)
   atomState.rp = promise
-  atomState.r++
   replaceDependencies(nextState, atomState, dependencies)
   return nextState
 }
@@ -176,7 +176,6 @@ const setAtomWritePromise = <Value>(
   } else {
     delete atomState.wp
   }
-  atomState.r++
   return nextState
 }
 
@@ -190,9 +189,10 @@ const readAtomState = <Value>(
     const atomState = getAtomState(state, atom)
     if (
       atomState &&
-      Array.from(atomState.d.entries()).every(
-        ([a, r]) => getAtomState(state, a)?.r === r
-      )
+      Array.from(atomState.d.entries()).every(([a, r]) => {
+        const aState = getAtomState(state, a)
+        return aState && !aState.re && !aState.rp && aState.r === r
+      })
     ) {
       return [atomState, state] as const
     }
@@ -355,8 +355,12 @@ export const delAtom = (
 const updateDependentsState = <Value>(
   state: State,
   updateState: UpdateState,
-  atom: Atom<Value>
+  atom: Atom<Value>,
+  prevAtomState?: AtomState<Value>
 ): State => {
+  if (!prevAtomState || prevAtomState.r === getAtomState(state, atom)?.r) {
+    return state // bail out
+  }
   const dependents = state.m.get(atom)
   if (!dependents) {
     // no dependents found
@@ -366,29 +370,31 @@ const updateDependentsState = <Value>(
   }
   let nextState = state
   dependents.forEach((dependent) => {
-    if (
-      dependent === atom ||
-      typeof dependent === 'symbol' ||
-      !getAtomState(nextState, dependent)
-    ) {
+    if (dependent === atom || typeof dependent === 'symbol') {
       return
     }
-    const [dependentState, nextNextState] = readAtomState(
+    const dependentState = getAtomState(nextState, dependent)
+    const [nextDependentState, nextNextState] = readAtomState(
       nextState,
       updateState,
       dependent,
       true
     )
-    const promise = dependentState.rp
+    const promise = nextDependentState.rp
     if (promise) {
       promise.then(() => {
         updateState((prev) =>
-          updateDependentsState(prev, updateState, dependent)
+          updateDependentsState(prev, updateState, dependent, dependentState)
         )
       })
       nextState = nextNextState
     } else {
-      nextState = updateDependentsState(nextNextState, updateState, dependent)
+      nextState = updateDependentsState(
+        nextNextState,
+        updateState,
+        dependent,
+        dependentState
+      )
     }
   })
   return nextState
@@ -447,15 +453,22 @@ const writeAtomState = <Value, Update>(
       }) as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
         if (a === atom) {
+          const aState = getAtomState(nextState, a)
           if (isSync) {
             nextState = updateDependentsState(
               setAtomValue(nextState, a, v),
               updateState,
-              a
+              a,
+              aState
             )
           } else {
             updateState((prev) =>
-              updateDependentsState(setAtomValue(prev, a, v), updateState, a)
+              updateDependentsState(
+                setAtomValue(prev, a, v),
+                updateState,
+                a,
+                aState
+              )
             )
           }
         } else {
