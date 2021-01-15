@@ -183,3 +183,35 @@ it('focus on async atom works', async () => {
   await findByText('asyncAtom: {"count":3}')
   await findByText('count: 3')
 })
+
+it('basic derivation using focus with scope works', async () => {
+  const scope = Symbol()
+  const bigAtom = atom({ a: 0 })
+  bigAtom.scope = scope
+  const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a'))
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(aAtom)
+    const [bigAtomValue] = useAtom(bigAtom)
+    return (
+      <>
+        <div>bigAtom: {JSON.stringify(bigAtomValue)}</div>
+        <div>count: {count}</div>
+        <button onClick={() => setCount(succ)}>incr</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = rtl.render(
+    <Provider scope={scope}>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+  await findByText('bigAtom: {"a":0}')
+
+  rtl.fireEvent.click(getByText('incr'))
+  await findByText('count: 1')
+  await findByText('bigAtom: {"a":1}')
+})

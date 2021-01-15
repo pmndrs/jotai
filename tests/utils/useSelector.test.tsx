@@ -129,3 +129,47 @@ it('do not update unless equality function says value has changed', async () => 
   await findByText('value: {"a":3}')
   await findByText('commits: 3')
 })
+
+it('useSelector with scope', async () => {
+  const scope = Symbol()
+  const bigAtom = atom({ a: 0, b: 'othervalue' })
+  bigAtom.scope = scope
+
+  const Parent = () => {
+    const setValue = useUpdateAtom(bigAtom)
+    return (
+      <>
+        <button
+          onClick={() =>
+            setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
+          }>
+          increment
+        </button>
+      </>
+    )
+  }
+
+  const Selector = () => {
+    const a = useSelector(
+      bigAtom,
+      useCallback((value) => value.a, [])
+    )
+    return (
+      <>
+        <div>a: {a}</div>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider scope={scope}>
+      <Parent />
+      <Selector />
+    </Provider>
+  )
+
+  await findByText('a: 0')
+
+  fireEvent.click(getByText('increment'))
+  await findByText('a: 1')
+})

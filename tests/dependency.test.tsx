@@ -205,3 +205,103 @@ it('should keep a dependent atom value even if unmounted', async () => {
   await findByText('derived: 1')
   expect(derivedFn).toHaveReturnedTimes(2)
 })
+
+it('should bail out updating if not changed', async () => {
+  const countAtom = atom(0)
+  const derivedFn = jest.fn().mockImplementation((get) => get(countAtom))
+  const derivedAtom = atom(derivedFn)
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount(0)}>button</button>
+      </>
+    )
+  }
+
+  const DerivedCounter: React.FC = () => {
+    const [derived] = useAtom(derivedAtom)
+    return <div>derived: {derived}</div>
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Counter />
+      <DerivedCounter />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('derived: 0')
+  })
+  expect(derivedFn).toHaveReturnedTimes(1)
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('derived: 0')
+  })
+  expect(derivedFn).toHaveReturnedTimes(1)
+})
+
+it('should bail out updating if not changed, 2 level', async () => {
+  const dataAtom = atom({ count: 1, obj: { anotherCount: 10 } })
+  const getDataCountFn = jest
+    .fn()
+    .mockImplementation((get) => get(dataAtom).count)
+  const countAtom = atom(getDataCountFn)
+  const getDataObjFn = jest.fn().mockImplementation((get) => get(dataAtom).obj)
+  const objAtom = atom(getDataObjFn)
+  const getAnotherCountFn = jest
+    .fn()
+    .mockImplementation((get) => get(objAtom).anotherCount)
+  const anotherCountAtom = atom(getAnotherCountFn)
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    const [, setData] = useAtom(dataAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button
+          onClick={() =>
+            setData((prev) => ({ ...prev, count: prev.count + 1 }))
+          }>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const DerivedCounter: React.FC = () => {
+    const [anotherCount] = useAtom(anotherCountAtom)
+    return <div>anotherCount: {anotherCount}</div>
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Counter />
+      <DerivedCounter />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('anotherCount: 10')
+  })
+  expect(getDataCountFn).toHaveReturnedTimes(1)
+  expect(getDataObjFn).toHaveReturnedTimes(1)
+  expect(getAnotherCountFn).toHaveReturnedTimes(1)
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('anotherCount: 10')
+  })
+  expect(getDataCountFn).toHaveReturnedTimes(2)
+  expect(getDataObjFn).toHaveReturnedTimes(2)
+  expect(getAnotherCountFn).toHaveReturnedTimes(1)
+})

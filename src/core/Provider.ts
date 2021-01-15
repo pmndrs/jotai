@@ -40,7 +40,7 @@ const InnerProvider: React.FC<{
   if (isReactExperimental && r.current === defaultContextUpdate) {
     r.current = (f) => contextUpdate(f)
   }
-  return children as ReactElement
+  return (children as ReactElement) ?? null
 }
 
 export const Provider: React.FC<{

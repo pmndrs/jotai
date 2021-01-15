@@ -61,3 +61,7 @@ it('only uses initial value from provider for specific atom', async () => {
     getByText('pet: dog')
   })
 })
+
+it('renders correctly without children', () => {
+  render(<Provider />)
+})
