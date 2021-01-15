@@ -418,16 +418,19 @@ const writeAtomState = <Value, Update>(
       ((a: AnyAtom) => {
         const aState = getAtomState(nextState, a)
         if (!aState) {
+          if (hasInitialValue(a)) {
+            return a.init
+          }
           if (
             typeof process === 'object' &&
             process.env.NODE_ENV !== 'production'
           ) {
             console.warn(
-              'Trying to read an atom value that is never used. This may not behave as expected.',
+              'Unable to read the atom without initial value in write function. Please useAtom in advance.',
               a
             )
           }
-          return (a as { init?: unknown }).init
+          throw new Error('uninitialized atom')
         }
         if (
           aState.rp &&
