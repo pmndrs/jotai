@@ -34,7 +34,7 @@ export function focusAtom<S, A>(
   | WritableAtom<Array<A>, SetStateAction<A>>
   | PrimitiveAtom<S> {
   const focus = callback(O.optic<S>())
-  return atom<A, SetStateAction<A>>(
+  const derivedAtom: any = atom<A, SetStateAction<A>>(
     (get) => {
       const newValue = getValueUsingOptic(focus, get(baseAtom))
       return newValue
@@ -48,6 +48,8 @@ export function focusAtom<S, A>(
       set(baseAtom, newValueProducer)
     }
   )
+  derivedAtom.scope = baseAtom.scope
+  return derivedAtom
 }
 
 const getValueUsingOptic = <S, A>(

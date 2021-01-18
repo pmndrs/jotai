@@ -18,6 +18,7 @@ export function freezeAtom<T extends Atom<any>>(anAtom: T) {
     (get) => deepFreeze(get(anAtom)),
     (_get, set, arg) => set(anAtom as any, arg)
   )
+  frozenAtom.scope = anAtom.scope
   return frozenAtom as T
 }
 
