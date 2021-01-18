@@ -4,14 +4,15 @@ import type { SetStateAction } from '../core/types'
 
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
-export const sliceAtom = <Item>(
+export const sliceAtom = <Item, Key = unknown>(
   arrAtom: WritableAtom<Item[], Item[]>,
-  keyExtractor: (item: Item, index: number) => unknown = (_, i) => i
+  keyExtractor: (item: Item, index: number) => Key = (_, i) => i as any
 ) => {
-  // FIXME potential memory leak
-  const indexCache = new Map<unknown, number>()
-  const itemCache = new Map<unknown, Item>()
-  const atomCache = new Map<unknown, PrimitiveAtom<Item>>()
+  // XXX potential memory leak when removing an item from upstream
+  const indexCache = new Map<Key, number>()
+  const itemCache = new Map<Key, Item>()
+  const atomCache = new Map<Key, PrimitiveAtom<Item>>()
+  const atomToKey = new WeakMap<PrimitiveAtom<Item>, Key>()
   let prevSliced: PrimitiveAtom<Item>[] | undefined
   const slicedAtom = atom(
     (get) => {
@@ -24,13 +25,14 @@ export const sliceAtom = <Item>(
           changed = true
         }
         itemCache.set(key, item)
-        if (atomCache.has(key)) {
-          nextSliced[index] = atomCache.get(key) as PrimitiveAtom<Item>
+        const cachedAtom = atomCache.get(key)
+        if (cachedAtom) {
+          nextSliced[index] = cachedAtom
           return
         }
         const itemAtom = atom(
           (get) => {
-            get(arrAtom)
+            get(arrAtom) // XXX this is hacky, better idea?
             return itemCache.get(key) as Item
           },
           (get, set, update: SetStateAction<Item>) => {
@@ -44,6 +46,7 @@ export const sliceAtom = <Item>(
           }
         )
         atomCache.set(key, itemAtom)
+        atomToKey.set(itemAtom, key)
         nextSliced[index] = itemAtom
       })
       if (prevSliced && !changed) {
@@ -55,10 +58,7 @@ export const sliceAtom = <Item>(
     (get, set, atomToRemove: PrimitiveAtom<Item>) => {
       const index = get(slicedAtom).indexOf(atomToRemove)
       if (index >= 0) {
-        // XXX this is slow
-        const key = [...atomCache.entries()].find(
-          ([_i, a]) => a === atomToRemove
-        )?.[0]
+        const key = atomToKey.get(atomToRemove) as Key
         indexCache.delete(key)
         itemCache.delete(key)
         atomCache.delete(key)
