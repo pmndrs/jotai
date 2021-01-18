@@ -1,6 +1,6 @@
 import { atom, Provider, useAtom, PrimitiveAtom } from 'jotai'
 import React, { useEffect, useRef } from 'react'
-import * as rtl from '@testing-library/react'
+import { render, fireEvent, waitFor } from '@testing-library/react'
 import { useAtomSlice } from '../../src/utils'
 
 type TodoItem = { task: string; checked?: boolean }
@@ -54,15 +54,17 @@ it('no unneccesary updates when updating atoms', async () => {
     )
   }
 
-  const { findByTestId, findByText } = rtl.render(
+  const { findByTestId, getByText } = render(
     <Provider>
       <TaskList atom={todosAtom} />
     </Provider>
   )
 
-  await findByText('get cat food updates: 0')
-  await findByText('get dragon food updates: 0')
-  await findByText('TaskListUpdates: 0')
+  await waitFor(() => {
+    getByText('get cat food updates: 0')
+    getByText('get dragon food updates: 0')
+    getByText('TaskListUpdates: 0')
+  })
 
   const catBox = (await findByTestId(
     'get cat food-checkbox'
@@ -74,20 +76,24 @@ it('no unneccesary updates when updating atoms', async () => {
   expect(catBox.checked).toBe(false)
   expect(dragonBox.checked).toBe(false)
 
-  rtl.fireEvent.click(catBox)
+  fireEvent.click(catBox)
 
-  await findByText('get cat food updates: 1')
-  await findByText('get dragon food updates: 0')
-  await findByText('TaskListUpdates: 0')
+  await waitFor(() => {
+    getByText('get cat food updates: 1')
+    getByText('get dragon food updates: 0')
+    getByText('TaskListUpdates: 0')
+  })
 
   expect(catBox.checked).toBe(true)
   expect(dragonBox.checked).toBe(false)
 
-  rtl.fireEvent.click(dragonBox)
+  fireEvent.click(dragonBox)
 
-  await findByText('get cat food updates: 1')
-  await findByText('get dragon food updates: 1')
-  await findByText('TaskListUpdates: 0')
+  await waitFor(() => {
+    getByText('get cat food updates: 1')
+    getByText('get dragon food updates: 1')
+    getByText('TaskListUpdates: 0')
+  })
 
   expect(catBox.checked).toBe(true)
   expect(dragonBox.checked).toBe(true)
