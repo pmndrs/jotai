@@ -1,7 +1,16 @@
-import { atom, Provider, useAtom, PrimitiveAtom } from 'jotai'
-import React, { useEffect, useRef } from 'react'
+import { atom, Provider, useAtom, WritableAtom, PrimitiveAtom } from 'jotai'
+import React, { useMemo, useEffect, useRef } from 'react'
 import { render, fireEvent, waitFor } from '@testing-library/react'
-import { useAtomSlice } from '../../src/utils'
+
+import { sliceAtom } from '../../src/utils/sliceAtom'
+
+const useAtomSlice = <Item,>(arrAtom: WritableAtom<Item[], Item[]>) => {
+  const [atoms, remove] = useAtom(useMemo(() => sliceAtom(arrAtom), [arrAtom]))
+  return useMemo(
+    () => atoms.map((itemAtom) => [itemAtom, () => remove(itemAtom)] as const),
+    [atoms, remove]
+  )
+}
 
 type TodoItem = { task: string; checked?: boolean }
 
