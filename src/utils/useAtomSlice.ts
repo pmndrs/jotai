@@ -1,39 +1,35 @@
 import { useCallback, useMemo } from 'react'
-import { PrimitiveAtom } from 'jotai'
+import { WritableAtom } from 'jotai'
 
-// TODO can't use utils
-import { atomFamily, useAtomCallback, useSelector } from '../utils'
+import { atomFamily, useAtomCallback, useSelector } from '.'
 
 import type { SetStateAction } from '../core/types'
 
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
-export const useAtomSlice = <Item>(atom: PrimitiveAtom<Array<Item>>) => {
+export const useAtomSlice = <Item>(atom: WritableAtom<Item[], Item[]>) => {
   const atomFamilyGetter = useMemo(() => {
     return atomFamily<number, Item, SetStateAction<Item>>(
       (index) => (get) => {
         // Kindly coercing this from `Item | undefined` to `Item`
         return get(atom)[index]
       },
-      (index) => (_, set, update) => {
-        set(atom, (superState) => {
-          return [
-            ...superState.slice(0, index),
-            isFunction(update) ? update(superState[index]) : update,
-            ...superState.slice(index + 1),
-          ]
-        })
+      (index) => (get, set, update) => {
+        const prev = get(atom)
+        set(atom, [
+          ...prev.slice(0, index),
+          isFunction(update) ? update(prev[index]) : update,
+          ...prev.slice(index + 1),
+        ])
       }
     )
   }, [atom])
 
   const removeItem = useAtomCallback<void, number>(
     useCallback(
-      (_get, set, index) => {
-        set(atom, (oldArr) => [
-          ...oldArr.slice(0, index),
-          ...oldArr.slice(index + 1),
-        ])
+      (get, set, index) => {
+        const prev = get(atom)
+        set(atom, [...prev.slice(0, index), ...prev.slice(index + 1)])
       },
       [atom]
     )
