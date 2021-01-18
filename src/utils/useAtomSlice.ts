@@ -6,18 +6,20 @@ import { atomFamily, useAtomCallback, useSelector } from '../utils'
 
 import type { SetStateAction } from '../core/types'
 
-export const useAtomSlice = <Element>(atom: PrimitiveAtom<Array<Element>>) => {
+const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
+
+export const useAtomSlice = <Item>(atom: PrimitiveAtom<Array<Item>>) => {
   const atomFamilyGetter = useMemo(() => {
-    return atomFamily<number, Element, SetStateAction<Element>>(
+    return atomFamily<number, Item, SetStateAction<Item>>(
       (index) => (get) => {
-        // Kindly coercing this from `Element | undefined` to `Element`
+        // Kindly coercing this from `Item | undefined` to `Item`
         return get(atom)[index]
       },
       (index) => (_, set, update) => {
         set(atom, (superState) => {
           return [
             ...superState.slice(0, index),
-            update instanceof Function ? update(superState[index]) : update,
+            isFunction(update) ? update(superState[index]) : update,
             ...superState.slice(index + 1),
           ]
         })
