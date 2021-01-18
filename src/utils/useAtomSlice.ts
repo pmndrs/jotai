@@ -1,10 +1,13 @@
+import { useCallback, useMemo } from 'react'
 import { PrimitiveAtom } from 'jotai'
-import React from 'react'
-import { SetStateAction } from '../core/types'
+
+// TODO can't use utils
 import { atomFamily, useAtomCallback, useSelector } from '../utils'
 
+import type { SetStateAction } from '../core/types'
+
 export const useAtomSlice = <Element>(atom: PrimitiveAtom<Array<Element>>) => {
-  const atomFamilyGetter = React.useMemo(() => {
+  const atomFamilyGetter = useMemo(() => {
     return atomFamily<number, Element, SetStateAction<Element>>(
       (index) => (get) => {
         // Kindly coercing this from `Element | undefined` to `Element`
@@ -23,7 +26,7 @@ export const useAtomSlice = <Element>(atom: PrimitiveAtom<Array<Element>>) => {
   }, [atom])
 
   const removeItem = useAtomCallback<void, number>(
-    React.useCallback(
+    useCallback(
       (_get, set, index) => {
         set(atom, (oldArr) => [
           ...oldArr.slice(0, index),
@@ -36,7 +39,7 @@ export const useAtomSlice = <Element>(atom: PrimitiveAtom<Array<Element>>) => {
 
   return useSelector(
     atom,
-    React.useMemo(() => {
+    useMemo(() => {
       return (elements) => {
         const length = elements.length
         return Array.from(new Array(length)).map(
