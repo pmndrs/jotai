@@ -2,6 +2,7 @@ import React, {
   MutableRefObject,
   ReactElement,
   createElement,
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -19,7 +20,8 @@ import {
   delAtom,
   readAtom,
   writeAtom,
-  commitState,
+  applyWip,
+  commit,
 } from './vanilla'
 import { getContexts } from './contexts'
 
@@ -51,22 +53,22 @@ export const Provider: React.FC<{
 
   const [state, setState] = useState(() => createState(initialValues))
   const lastStateRef = useRef(state)
+  const updateState = useCallback((updater: (prev: State) => State) => {
+    applyWip(lastStateRef.current)
+    lastStateRef.current = updater(lastStateRef.current)
+    contextUpdateRef.current(() => {
+      setState(lastStateRef.current)
+    })
+  }, [])
+
   useEffect(() => {
-    commitState(state)
+    applyWip(state)
     lastStateRef.current = state
+    commit(state, updateState)
   })
 
-  const actions = useMemo(() => {
-    const updateState = (updater: (prev: State) => State) => {
-      commitState(lastStateRef.current)
-      lastStateRef.current = updater(lastStateRef.current)
-      contextUpdateRef.current(() => {
-        commitState(lastStateRef.current)
-        setState(lastStateRef.current)
-      })
-    }
-
-    return {
+  const actions = useMemo(
+    () => ({
       add: <Value>(atom: Atom<Value>, id: symbol) => {
         addAtom(lastStateRef.current, atom, id)
       },
@@ -79,8 +81,9 @@ export const Provider: React.FC<{
         atom: WritableAtom<Value, Update>,
         update: Update
       ) => writeAtom(updateState, atom, update),
-    }
-  }, [])
+    }),
+    [updateState]
+  )
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(state)
@@ -107,7 +110,7 @@ const isAtom = (x: AnyAtom | symbol): x is AnyAtom => typeof x !== 'symbol'
 
 const stateToPrintable = (state: State) =>
   Object.fromEntries(
-    Array.from(state.m.entries()).map(([atom, dependents]) => {
+    Array.from(state.m.entries()).map(([atom, [dependents]]) => {
       const atomState = state.a.get(atom) || ({} as AtomState)
       return [
         atomToPrintable(atom),

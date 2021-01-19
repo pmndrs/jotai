@@ -9,11 +9,15 @@ export type Setter = <Value, Update>(
 
 export type Scope = symbol | string | number
 
+export type Cleanup = () => void
+export type Effect = (get: Getter, set: Setter) => Cleanup | void
+
 export type Atom<Value> = {
   toString: () => string
   debugLabel?: string
   scope?: Scope
   read: (get: Getter) => Value | Promise<Value>
+  effects?: Effect[]
 }
 
 export type WritableAtom<Value, Update> = Atom<Value> & {
