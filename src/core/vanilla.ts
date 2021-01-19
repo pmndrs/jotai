@@ -338,7 +338,7 @@ export const delAtom = (
     const [dependents] = mounted
     dependents.delete(useId)
     if (!dependents.size) {
-      state.c.add(deletingAtom)
+      cleanupAtom(state, deletingAtom)
     }
   }
 }
@@ -595,39 +595,42 @@ export const applyWip = (state: State) => {
   }
 }
 
-// commit (mount and effects)
-export const commit = (state: State, updateState: UpdateState) => {
-  // process cleanup pending
-  const del = (atom: AnyAtom) => {
-    const atomState = getAtomState(state, atom)
-    if (atomState) {
-      if (
-        atomState.rp &&
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        console.warn('[Bug] deleting atomState with read promise', atom)
-      }
-      atomState.d.forEach((_, a) => {
-        const dependents = state.m.get(a)?.[0]
-        if (dependents) {
-          dependents.delete(atom)
-          if (!dependents.size) {
-            del(a)
-          }
-        }
-      })
-    } else if (
+const cleanupAtom = (state: State, atom: AnyAtom) => {
+  const atomState = getAtomState(state, atom)
+  if (atomState) {
+    if (
+      atomState.rp &&
       typeof process === 'object' &&
       process.env.NODE_ENV !== 'production'
     ) {
-      console.warn('[Bug] could not find atom state to delete', atom)
+      console.warn('[Bug] deleting atomState with read promise', atom)
     }
-    const cleanups = state.m.get(atom)?.[1]
-    cleanups?.forEach((cleanup) => cleanup())
-    state.m.delete(atom)
+    atomState.d.forEach((_, a) => {
+      const dependents = state.m.get(a)?.[0]
+      if (dependents) {
+        dependents.delete(atom)
+        if (!dependents.size) {
+          cleanupAtom(state, a)
+        }
+      }
+    })
+  } else if (
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production'
+  ) {
+    console.warn('[Bug] could not find atom state to delete', atom)
   }
-  state.c.forEach(del)
+  const cleanups = state.m.get(atom)?.[1]
+  cleanups?.forEach((cleanup) => cleanup())
+  state.m.delete(atom)
+}
+
+// commit (mount and effects)
+export const commit = (state: State, updateState: UpdateState) => {
+  // process cleanup pending
+  state.c.forEach((atom) => {
+    cleanupAtom(state, atom)
+  })
   state.c.clear()
 
   // process handle effect pending
