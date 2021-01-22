@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import { atomFamily } from '../../src/utils'
@@ -42,7 +42,49 @@ it('removed atom creates a new reference', async () => {
   expect(myFamily(0)).toEqual(newReference)
 })
 
-it('atomFamily functionality as usual', async () => {
+it('primitive atomFamily initialized with props', async () => {
+  const myFamily = atomFamily<number, number>((param) => param)
+
+  const Displayer: React.FC<{ index: number }> = ({ index }) => {
+    const [count, setCount] = useAtom(myFamily(index))
+    return (
+      <div>
+        count: {count}
+        <button onClick={() => setCount((c) => c + 10)}>button</button>
+      </div>
+    )
+  }
+
+  const Parent: React.FC = () => {
+    const [index, setIndex] = useState(1)
+
+    return (
+      <div>
+        <button onClick={() => setIndex((i) => i + 1)}>increment</button>
+        <Displayer index={index} />
+      </div>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Parent />
+    </Provider>
+  )
+
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 11')
+
+  fireEvent.click(getByText('increment'))
+  await findByText('count: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 12')
+})
+
+it('derived atomFamily functionality as usual', async () => {
   const arrayAtom = atom([0, 0, 0])
 
   const myFamily = atomFamily<number, number, SetStateAction<number>>(
