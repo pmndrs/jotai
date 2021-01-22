@@ -1,10 +1,17 @@
-import React from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import React, { useState } from 'react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import { atomFamily } from '../../src/utils'
 import { SetStateAction, WritableAtom } from '../../src/core/types'
 
-it('atomFamily returns same reference for same parameters', async () => {
+it('primitive atomFamily returns same reference for same parameters', async () => {
+  const myFamily = atomFamily<number, { num: number }>((num) => ({ num }))
+  expect(myFamily(0)).toEqual(myFamily(0))
+  expect(myFamily(0)).not.toEqual(myFamily(1))
+  expect(myFamily(1)).not.toEqual(myFamily(0))
+})
+
+it('read-only derived atomFamily returns same reference for same parameters', async () => {
   const arrayAtom = atom([0])
   const myFamily = atomFamily<number, number>((num) => (get) =>
     get(arrayAtom)[num]
@@ -35,7 +42,49 @@ it('removed atom creates a new reference', async () => {
   expect(myFamily(0)).toEqual(newReference)
 })
 
-it('atomFamily functionality as usual', async () => {
+it('primitive atomFamily initialized with props', async () => {
+  const myFamily = atomFamily<number, number>((param) => param)
+
+  const Displayer: React.FC<{ index: number }> = ({ index }) => {
+    const [count, setCount] = useAtom(myFamily(index))
+    return (
+      <div>
+        count: {count}
+        <button onClick={() => setCount((c) => c + 10)}>button</button>
+      </div>
+    )
+  }
+
+  const Parent: React.FC = () => {
+    const [index, setIndex] = useState(1)
+
+    return (
+      <div>
+        <button onClick={() => setIndex((i) => i + 1)}>increment</button>
+        <Displayer index={index} />
+      </div>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Parent />
+    </Provider>
+  )
+
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 11')
+
+  fireEvent.click(getByText('increment'))
+  await findByText('count: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 12')
+})
+
+it('derived atomFamily functionality as usual', async () => {
   const arrayAtom = atom([0, 0, 0])
 
   const myFamily = atomFamily<number, number, SetStateAction<number>>(
@@ -58,13 +107,10 @@ it('atomFamily functionality as usual', async () => {
     }
   )
 
-  const Displayer = ({
-    index,
-    countAtom,
-  }: {
+  const Displayer: React.FC<{
     index: number
     countAtom: WritableAtom<number, SetStateAction<number>>
-  }) => {
+  }> = ({ index, countAtom }) => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <div>
@@ -90,30 +136,38 @@ it('atomFamily functionality as usual', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  const { getByText } = render(
     <Provider>
       <Parent />
     </Provider>
   )
 
-  await findByText('index: 0, count: 0')
-  await findByText('index: 1, count: 0')
-  await findByText('index: 2, count: 0')
+  await waitFor(() => {
+    getByText('index: 0, count: 0')
+    getByText('index: 1, count: 0')
+    getByText('index: 2, count: 0')
+  })
 
   fireEvent.click(getByText('increment #1'))
-  await findByText('index: 0, count: 0')
-  await findByText('index: 1, count: 1')
-  await findByText('index: 2, count: 0')
+  await waitFor(() => {
+    getByText('index: 0, count: 0')
+    getByText('index: 1, count: 1')
+    getByText('index: 2, count: 0')
+  })
 
   fireEvent.click(getByText('increment #0'))
-  await findByText('index: 0, count: 1')
-  await findByText('index: 1, count: 1')
-  await findByText('index: 2, count: 0')
+  await waitFor(() => {
+    getByText('index: 0, count: 1')
+    getByText('index: 1, count: 1')
+    getByText('index: 2, count: 0')
+  })
 
   fireEvent.click(getByText('increment #2'))
-  await findByText('index: 0, count: 1')
-  await findByText('index: 1, count: 1')
-  await findByText('index: 2, count: 1')
+  await waitFor(() => {
+    getByText('index: 0, count: 1')
+    getByText('index: 1, count: 1')
+    getByText('index: 2, count: 1')
+  })
 })
 
 it('custom equality function work', async () => {

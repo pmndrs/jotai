@@ -1,4 +1,11 @@
-import React, { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
+import React, {
+  StrictMode,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
   Provider,
@@ -904,4 +911,43 @@ it('only relevant render function called (#156)', async () => {
     getByText('count1: 1 (2)')
     getByText('count2: 1 (2)')
   })
+})
+
+it('changes atom from parent (#273)', async () => {
+  const atomA = atom({ id: 'a' })
+  const atomB = atom({ id: 'b' })
+
+  const Item: React.FC<{ id: string }> = ({ id }) => {
+    const a = useMemo(() => (id === 'a' ? atomA : atomB), [id])
+    const [atomValue] = useAtom(a)
+    return <div>id: {atomValue.id}</div>
+  }
+
+  const App: React.FC = () => {
+    const [id, setId] = useState('a')
+    return (
+      <div>
+        <button onClick={() => setId('a')}>atom a</button>
+        <button onClick={() => setId('b')}>atom b</button>
+        <Item id={id} />
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  await findByText('id: a')
+
+  fireEvent.click(getByText('atom a'))
+  await findByText('id: a')
+
+  fireEvent.click(getByText('atom b'))
+  await findByText('id: b')
+
+  fireEvent.click(getByText('atom a'))
+  await findByText('id: a')
 })
