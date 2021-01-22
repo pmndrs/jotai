@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import { atomFamily } from '../../src/utils'
 import { SetStateAction, WritableAtom } from '../../src/core/types'
@@ -107,13 +107,10 @@ it('derived atomFamily functionality as usual', async () => {
     }
   )
 
-  const Displayer = ({
-    index,
-    countAtom,
-  }: {
+  const Displayer: React.FC<{
     index: number
     countAtom: WritableAtom<number, SetStateAction<number>>
-  }) => {
+  }> = ({ index, countAtom }) => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <div>
@@ -139,30 +136,38 @@ it('derived atomFamily functionality as usual', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  const { getByText } = render(
     <Provider>
       <Parent />
     </Provider>
   )
 
-  await findByText('index: 0, count: 0')
-  await findByText('index: 1, count: 0')
-  await findByText('index: 2, count: 0')
+  await waitFor(() => {
+    getByText('index: 0, count: 0')
+    getByText('index: 1, count: 0')
+    getByText('index: 2, count: 0')
+  })
 
   fireEvent.click(getByText('increment #1'))
-  await findByText('index: 0, count: 0')
-  await findByText('index: 1, count: 1')
-  await findByText('index: 2, count: 0')
+  await waitFor(() => {
+    getByText('index: 0, count: 0')
+    getByText('index: 1, count: 1')
+    getByText('index: 2, count: 0')
+  })
 
   fireEvent.click(getByText('increment #0'))
-  await findByText('index: 0, count: 1')
-  await findByText('index: 1, count: 1')
-  await findByText('index: 2, count: 0')
+  await waitFor(() => {
+    getByText('index: 0, count: 1')
+    getByText('index: 1, count: 1')
+    getByText('index: 2, count: 0')
+  })
 
   fireEvent.click(getByText('increment #2'))
-  await findByText('index: 0, count: 1')
-  await findByText('index: 1, count: 1')
-  await findByText('index: 2, count: 1')
+  await waitFor(() => {
+    getByText('index: 0, count: 1')
+    getByText('index: 1, count: 1')
+    getByText('index: 2, count: 1')
+  })
 })
 
 it('custom equality function work', async () => {
