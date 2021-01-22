@@ -4,7 +4,14 @@ import { Provider, atom, useAtom } from '../../src/index'
 import { atomFamily } from '../../src/utils'
 import { SetStateAction, WritableAtom } from '../../src/core/types'
 
-it('atomFamily returns same reference for same parameters', async () => {
+it('primitive atomFamily returns same reference for same parameters', async () => {
+  const myFamily = atomFamily<number, { num: number }>((num) => ({ num }))
+  expect(myFamily(0)).toEqual(myFamily(0))
+  expect(myFamily(0)).not.toEqual(myFamily(1))
+  expect(myFamily(1)).not.toEqual(myFamily(0))
+})
+
+it('read-only derived atomFamily returns same reference for same parameters', async () => {
   const arrayAtom = atom([0])
   const myFamily = atomFamily<number, number>((num) => (get) =>
     get(arrayAtom)[num]
