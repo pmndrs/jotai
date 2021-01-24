@@ -61,7 +61,6 @@ export const Provider: React.FC<{
       commitState(lastStateRef.current)
       lastStateRef.current = updater(lastStateRef.current)
       contextUpdateRef.current(() => {
-        commitState(lastStateRef.current)
         setState(lastStateRef.current)
       })
     }
