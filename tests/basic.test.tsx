@@ -720,7 +720,7 @@ it('updates a derived atom in useEffect with two primitive atoms', async () => {
 
 it('updates two atoms in child useEffect', async () => {
   const countAAtom = atom(0)
-  const countBAtom = atom(1)
+  const countBAtom = atom(10)
 
   const Child: React.FC = () => {
     const [countB, setCountB] = useAtom(countBAtom)
@@ -751,7 +751,7 @@ it('updates two atoms in child useEffect', async () => {
 
   await waitFor(() => {
     getByText('countA: 1')
-    getByText('countB: 2')
+    getByText('countB: 11')
   })
 })
 
@@ -913,14 +913,22 @@ it('only relevant render function called (#156)', async () => {
   })
 })
 
-it('changes atom from parent (#273)', async () => {
+it('changes atom from parent (#273, #275)', async () => {
   const atomA = atom({ id: 'a' })
   const atomB = atom({ id: 'b' })
 
   const Item: React.FC<{ id: string }> = ({ id }) => {
     const a = useMemo(() => (id === 'a' ? atomA : atomB), [id])
     const [atomValue] = useAtom(a)
-    return <div>id: {atomValue.id}</div>
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
+    return (
+      <div>
+        commits: {commits.current}, id: {atomValue.id}
+      </div>
+    )
   }
 
   const App: React.FC = () => {
@@ -940,14 +948,14 @@ it('changes atom from parent (#273)', async () => {
     </Provider>
   )
 
-  await findByText('id: a')
+  await findByText('commits: 1, id: a')
 
   fireEvent.click(getByText('atom a'))
-  await findByText('id: a')
+  await findByText('commits: 1, id: a')
 
   fireEvent.click(getByText('atom b'))
-  await findByText('id: b')
+  await findByText('commits: 2, id: b')
 
   fireEvent.click(getByText('atom a'))
-  await findByText('id: a')
+  await findByText('commits: 3, id: a')
 })
