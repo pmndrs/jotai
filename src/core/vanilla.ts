@@ -6,7 +6,7 @@ import {
   AnyWritableAtom,
   Getter,
   Setter,
-  Cleanup,
+  OnUnmount,
 } from './types'
 
 const hasInitialValue = <T extends Atom<unknown>>(
@@ -31,10 +31,9 @@ type AtomStateMap = WeakMap<AnyAtom, AtomState>
 
 type UseAtomSymbol = symbol
 type Dependents = Set<AnyAtom | UseAtomSymbol>
-type Cleanups = Set<Cleanup>
-type MountedMap = Map<AnyAtom, [Dependents] | [Dependents, Cleanups]>
-type EffectPendingSet = Set<AnyAtom> // after mount
-type CleanupPendingSet = Set<AnyAtom> // before unmount
+type MountedMap = Map<AnyAtom, [Dependents] | [Dependents, OnUnmount | void]>
+type MountPendingSet = Set<AnyAtom> // after mount
+type UnmountPendingSet = Set<AnyAtom> // before unmount
 
 type WorkInProgress = Map<AnyAtom, AtomState>
 
@@ -46,8 +45,8 @@ type UpdateState = (updater: (prev: State) => State) => void
 export type State = {
   a: AtomStateMap // mutable state
   m: MountedMap // mutable state
-  e: EffectPendingSet // mutable state
-  c: CleanupPendingSet // mutable state
+  p: MountPendingSet // mutable state
+  u: UnmountPendingSet // mutable state
   w: WorkInProgress // wip state (mutable only within the same render)
 }
 
@@ -57,8 +56,8 @@ export const createState = (
   const state: State = {
     a: new WeakMap(),
     m: new Map(),
-    e: new Set(),
-    c: new Set(),
+    p: new Set(),
+    u: new Set(),
     w: new Map(),
   }
   if (initialValues) {
@@ -324,7 +323,7 @@ export const addAtom = (
     dependents.add(useId)
   } else {
     state.m.set(addingAtom, [new Set([useId])])
-    state.e.add(addingAtom)
+    state.p.add(addingAtom)
   }
 }
 
@@ -338,7 +337,7 @@ export const delAtom = (
     const [dependents] = mounted
     dependents.delete(useId)
     if (!dependents.size) {
-      cleanupAtom(state, deletingAtom)
+      unmountAtom(state, deletingAtom)
     }
   }
 }
@@ -555,7 +554,7 @@ const updateDependentsMap = (state: State): void => {
           const [dependents] = mounted
           dependents.delete(atom)
           if (!dependents.size) {
-            state.c.add(a)
+            state.u.add(a)
           }
         } else if (
           typeof process === 'object' &&
@@ -572,7 +571,7 @@ const updateDependentsMap = (state: State): void => {
         dependents.add(atom)
       } else {
         state.m.set(a, [new Set([atom])])
-        state.e.add(a)
+        state.p.add(a)
       }
     })
   })
@@ -595,7 +594,7 @@ export const applyWip = (state: State) => {
   }
 }
 
-const cleanupAtom = (state: State, atom: AnyAtom) => {
+const unmountAtom = (state: State, atom: AnyAtom) => {
   const atomState = getAtomState(state, atom)
   if (atomState) {
     if (
@@ -609,8 +608,8 @@ const cleanupAtom = (state: State, atom: AnyAtom) => {
       const dependents = state.m.get(a)?.[0]
       if (dependents) {
         dependents.delete(atom)
-        if (!dependents.size) {
-          cleanupAtom(state, a)
+        if (!dependents.size && a !== atom) {
+          unmountAtom(state, a)
         }
       }
     })
@@ -620,20 +619,22 @@ const cleanupAtom = (state: State, atom: AnyAtom) => {
   ) {
     console.warn('[Bug] could not find atom state to delete', atom)
   }
-  const cleanups = state.m.get(atom)?.[1]
-  cleanups?.forEach((cleanup) => cleanup())
+  const onUnmount = state.m.get(atom)?.[1]
+  if (onUnmount) {
+    onUnmount()
+  }
   state.m.delete(atom)
 }
 
-// commit (mount and effects)
+// commit (mount atoms)
 export const commit = (state: State, updateState: UpdateState) => {
-  // process cleanup pending
-  state.c.forEach((atom) => {
-    cleanupAtom(state, atom)
+  // process unmoumnt pending
+  state.u.forEach((atom) => {
+    unmountAtom(state, atom)
   })
-  state.c.clear()
+  state.u.clear()
 
-  // process handle effect pending
+  // process handle mount pending
   const getter = ((a: AnyAtom) => {
     const aState = getAtomState(state, a)
     if (aState) {
@@ -653,21 +654,18 @@ export const commit = (state: State, updateState: UpdateState) => {
   const setter = ((a: AnyWritableAtom, v: unknown) => {
     updateState((prev) => writeAtomState(prev, updateState, a, v))
   }) as Setter
-  state.e.forEach((atom) => {
+  state.p.forEach((atom) => {
     const mounted = state.m.get(atom)
     if (mounted) {
-      const [, cleanups] = mounted
-      if (!cleanups) {
-        const nextCleanups = new Set<Cleanup>()
-        atom.effects?.forEach((effect) => {
-          const cleanup = effect(getter, setter)
-          if (cleanup) {
-            nextCleanups.add(cleanup)
-          }
-        })
-        mounted[1] = nextCleanups
+      if (
+        mounted.length !== 1 &&
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        console.warn('[Bug] mounting already mounted atom', atom)
       }
+      mounted[1] = atom.onMount?.(getter, setter)
     }
   })
-  state.e.clear()
+  state.p.clear()
 }
