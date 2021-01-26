@@ -1,6 +1,7 @@
 import React from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
+import { useAtomValue } from '../src/utils'
 
 it('one atom, one effect', async () => {
   const countAtom = atom(1)
@@ -79,7 +80,48 @@ it('two atoms, one each', async () => {
   expect(onMountFn).toBeCalledTimes(1)
   expect(onMountFn2).toBeCalledTimes(1)
 })
-it('one derived atom, one onMount', () => {})
+it('one derived atom, one onMount', async () => {
+  const countAtom = atom(1)
+  const countAtom2 = atom((get) => get(countAtom))
+  const onMountFn = jest.fn()
+  countAtom2.onMount = onMountFn
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const count2 = useAtomValue(countAtom2)
+    return (
+      <>
+        <div>count: {count}</div>
+        <div>count2: {count2}</div>
+        <button
+          onClick={() => {
+            setCount((c) => c + 1)
+          }}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('count2: 1')
+  })
+  expect(onMountFn).toBeCalledTimes(1)
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('count2: 2')
+  })
+  expect(onMountFn).toBeCalledTimes(1)
+})
 // derive chain test
 // mount/unmount test: const [show, setShow] = useState(false)
 // onMount/onUnmount order test with component tree
