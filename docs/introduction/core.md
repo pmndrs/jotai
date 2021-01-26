@@ -129,7 +129,7 @@ You can cache atoms somewhere globally.
 See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or
 [that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
 
-Check [atomFamily](https://github.com/pmndrs/jotai/blob/master/docs/utils.md#atomfamily) in utils too.
+Check [`atomFamily`](../api/utils.md#atomfamily) in utils too.
 
 # Some more notes about atoms
 
