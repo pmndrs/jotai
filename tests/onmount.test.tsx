@@ -84,42 +84,24 @@ it('one derived atom, one onMount', async () => {
   const countAtom = atom(1)
   const countAtom2 = atom((get) => get(countAtom))
   const onMountFn = jest.fn()
-  countAtom2.onMount = onMountFn
+  countAtom.onMount = onMountFn
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(countAtom)
-    const count2 = useAtomValue(countAtom2)
+    const [count] = useAtom(countAtom2)
     return (
       <>
         <div>count: {count}</div>
-        <div>count2: {count2}</div>
-        <button
-          onClick={() => {
-            setCount((c) => c + 1)
-          }}>
-          button
-        </button>
       </>
     )
   }
 
-  const { getByText, findByText } = render(
+  const { findByText } = render(
     <Provider>
       <Counter />
     </Provider>
   )
 
-  await waitFor(() => {
-    getByText('count: 1')
-    getByText('count2: 1')
-  })
-  expect(onMountFn).toBeCalledTimes(1)
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('count: 2')
-    getByText('count2: 2')
-  })
+  await findByText('count: 1')
   expect(onMountFn).toBeCalledTimes(1)
 })
 // derive chain test
