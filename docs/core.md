@@ -84,7 +84,7 @@ and pass it to `Bridge` in the inner component.
 
 ```jsx
 const Component = ({ children }) => {
-  const brigeValue = useBridge()
+  const bridgeValue = useBridge()
   return (
     <AnotherRerender>
       <Bridge value={bridgeValue}>{children}</Bridge>
