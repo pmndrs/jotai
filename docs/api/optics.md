@@ -32,7 +32,7 @@ To see more advanced optics, please see the example at: https://github.com/akher
 
 ### Example
 
-```js
+```jsx
 import { atom } from 'jotai'
 import { focusAtom } from 'jotai/optics'
 
