@@ -627,7 +627,6 @@ const unmountAtom = (state: State, atom: AnyAtom) => {
 // commit (mount atoms)
 export const commit = (state: State, updateState: UpdateState) => {
   // process unmoumnt pending
-  console.log(state)
   state.u.forEach((atom) => {
     unmountAtom(state, atom)
   })
