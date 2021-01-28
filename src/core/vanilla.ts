@@ -336,9 +336,7 @@ export const delAtom = (
   if (mounted) {
     const [dependents] = mounted
     dependents.delete(useId)
-    if (!dependents.size) {
-      unmountAtom(state, deletingAtom)
-    }
+    unmountAtom(state, deletingAtom)
   }
 }
 
@@ -629,6 +627,7 @@ const unmountAtom = (state: State, atom: AnyAtom) => {
 // commit (mount atoms)
 export const commit = (state: State, updateState: UpdateState) => {
   // process unmoumnt pending
+  console.log(state)
   state.u.forEach((atom) => {
     unmountAtom(state, atom)
   })
