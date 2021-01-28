@@ -179,21 +179,22 @@ For React Native users:
 yarn add jotai react scheduler react-native
 ```
 
-## More information
+## More documents
 
-We will be organizing some more information later. Meanwhile, please see WIP materials.
-
-- Comparison
-  - [How is jotai different from zustand?](./docs/introduction/comparison.md#how-is-jotai-different-from-zustand)
-  - [How is jotai different from recoil?](./docs/introduction/comparison.md#how-is-jotai-different-from-recoil)
-- [Core Doc](./docs/introduction/core.md)
-- [Async Doc](./docs/introduction/async.md)
-- [Debugging Doc](./docs/guides/debugging.md)
-- [Utils Doc](./docs/api/utils.md)
-- [Immer Doc](./docs/api/immer.md)
-- [Optics Doc](./docs/api/optics.md)
-- [TypeScript Doc](./docs/guides/typescript.md)
-- [Persistence Doc](./docs/guides/persistence.md)
-- [Next.js Doc](./docs/guides/nextjs.md)
-- [Showcase](./docs/introduction/showcase.md)
-- [Example code snippets](https://github.com/react-spring/jotai/labels/has%20snippet)
+- Introduction
+  - [Comparison](./docs/introduction/comparison.md)
+  - [Basics](./docs/introduction/basics.md)
+  - [Async](./docs/introduction/async.md)
+  - [Showcase](./docs/introduction/showcase.md)
+- Guides
+  - [TypeScript](./docs/guides/typescript.md)
+  - [Debugging](./docs/guides/debugging.md)
+  - [Persistence](./docs/guides/persistence.md)
+  - [Next.js](./docs/guides/nextjs.md)
+  - [Resettable](./docs/guides/resettable.md)
+- API
+  - [Core](./docs/api/core.md)
+  - [Utils](./docs/api/utils.md)
+  - [Devtools](./docs/api/devtools.md)
+  - [Immer](./docs/api/immer.md)
+  - [Optics](./docs/api/optics.md)

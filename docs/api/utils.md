@@ -4,7 +4,7 @@ This doc describes `jotai/utils` bundle.
 
 Ref: https://github.com/react-spring/jotai/issues/26
 
-```js
+```jsx
 import { atom, useAtom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 
@@ -28,7 +28,7 @@ https://codesandbox.io/s/react-typescript-forked-3q11k
 
 Ref: https://github.com/pmndrs/jotai/issues/212
 
-```js
+```jsx
 import { atom, Provider, useAtom } from 'jotai'
 import { useAtomValue } from 'jotai/utils'
 
@@ -86,7 +86,7 @@ Resets a [Resettable atom](../guides/resettable.md) to its initial value.
 
 ### Example
 
-```js
+```jsx
 import { useResetAtom } from 'jotai/utils'
 import { todoListAtom } from './store'
 
@@ -110,7 +110,7 @@ with `atom` if it accepts `RESET` symbol.
 
 ### Example
 
-```js
+```jsx
 import { atom } from 'jotai'
 import { atomWithReset, useResetAtom, RESET } from 'jotai/utils'
 
@@ -136,7 +136,7 @@ const ResetExample: React.FC = () => {
 
 ## useReducerAtom
 
-```js
+```jsx
 import { atom } from 'jotai'
 import { useReducerAtom } from 'jotai/utils'
 
@@ -259,7 +259,7 @@ The equalityFn is optional.
 
 ### Examples
 
-```js
+```jsx
 import { Provider } from 'jotai'
 import { useSelector, atomWithReducer, useUpdateAtom } from 'jotai/utils'
 
@@ -333,7 +333,7 @@ The callback to pass in the hook must be stable (should be wrapped with useCallb
 
 ### Examples
 
-```js
+```jsx
 import { useEffect, useState, useCallback } from 'react'
 import { Provider, atom, useAtom } from 'jotai'
 import { useAtomCallback } from 'jotai/utils'

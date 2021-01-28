@@ -52,7 +52,7 @@ const Provider: React.FC<{
 
 Atom configs don't hold values. Atom values are stored in a Provider. A Provider can be used like React context provider. Usually, we place one Provider at the root of the app, however you could use multiple Providers, each storing different atom values for its component tree.
 
-```js
+```jsx
 const Root = () => (
   <Provider>
     <App />
@@ -64,7 +64,7 @@ A Provider accepts an optional prop `initialValues` which you can specify
 some initial atom values.
 The use cases of this are testing and server side rendering.
 
-```js
+```jsx
 const TestRoot = () => (
   <Provider initialValues=[[atom1, 1], [atom2, 'b']]>
     <Component />
@@ -79,7 +79,7 @@ The use case of scope is for library usage.
 
 ### Example
 
-```js
+```jsx
 const myScope = Symbol()
 
 const anAtom = atom('')

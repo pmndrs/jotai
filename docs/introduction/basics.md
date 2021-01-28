@@ -1,11 +1,18 @@
-This doc describes about jotai core behavior.
+This doc describes about jotai basic behavior.
 For async behavior, refer [./async.md](async.md).
 
-# API
+# Three basic functions
+
+There are only three basic functions (except for bridge functions).
+All other functions like in utils are
+built with there three functions.
 
 ## atom
 
-`atom` is a function to create an atom config. It's an object and the object identity is important. It can be created from anywhere and once created, you shouldn't modify the object. (Note: There might be an advanced use case to mutate atom configs after creation. At the moment, it's not officially supported though.)
+`atom` is a function to create an atom config.
+The atom config is an object and the object identity is important.
+It can be created from anywhere.
+You shouldn't modify the object, after the initialization.
 
 ```js
 const primitiveAtom = atom(initialValue)
@@ -15,7 +22,8 @@ const derivedAtomWithWriteOnly = atom(null, writeFunction)
 ```
 
 There are two kinds of atoms: a writable atom and a read-only atom.
-Primitive atoms are always writable. Derived atoms are writable if `writeFunction` is specified.
+Primitive atoms are always writable.
+Derived atoms are writable if `writeFunction` is specified.
 The `writeFunction` of primitive atoms is equivalent to the setState of React.useState.
 
 The signature of `readFunction` is `(get) => Value | Promise<Value>`, and `get` is a function that takes an atom config and returns its value stored in Provider described below.
@@ -28,44 +36,10 @@ The signature of writeFunction is `(get, set, update) => void | Promise<void>`.
 
 Atom configs don't hold values. Atom values are stored in a Provider. A Provider can be used like React context provider. Usually, we place one Provider at the root of the app, however you could use multiple Providers, each storing different atom values for its component tree.
 
-```js
+```jsx
 const Root = () => (
   <Provider>
     <App />
-  </Provider>
-)
-```
-
-A Provider accepts an optional prop `initialValues` which you can specify
-some initial atom values.
-The use cases of this are testing and server side rendering.
-
-```js
-const TestRoot = () => (
-  <Provider
-    initialValues={[
-      [atom1, 1],
-      [atom2, 'b'],
-    ]}>
-    <Component />
-  </Provider>
-)
-```
-
-A Provider accepts an optional prop `scope` which you can use for scoped atoms.
-It works only for atoms with the same scope.
-The recommendation for the scope value is a unique symbol.
-The use case of scope is for library usage.
-
-```js
-const myScope = Symbol()
-
-const anAtom = atom('')
-anAtom.scope = myScope
-
-const LibraryRoot = () => (
-  <Provider scope={myScope}>
-    <Component />
   </Provider>
 )
 ```
@@ -79,25 +53,6 @@ const [value, updateValue] = useAtom(anAtom)
 ```
 
 The `updateValue` takes just one argument, which will be passed to the third argument of writeFunction of the atom. The behavior totally depends on how the writeFunction is implemented.
-
-## useBridge/Bridge
-
-This will allow using accross multiple roots.
-You get a bridge value with `useBridge` in the outer component
-and pass it to `Bridge` in the inner component.
-
-```jsx
-const Component = ({ children }) => {
-  const bridgeValue = useBridge()
-  return (
-    <AnotherRerender>
-      <Bridge value={bridgeValue}>{children}</Bridge>
-    </AnotherRerender>
-  )
-}
-```
-
-A working example: https://codesandbox.io/s/jotai-r3f-fri9d
 
 # How atom dependency works
 

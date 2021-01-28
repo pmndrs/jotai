@@ -5,7 +5,7 @@ But you can create those with helper functions from `jotai/utils`.
 
 ## Primitive resettable atom with [`atomWithReset`](../api/utils.md#atomWithReset) / [`useResetAtom`](../api/utils.md#useResetAtom)
 
-```js
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithReset, useResetAtom } from 'jotai/utils'
 
@@ -49,7 +49,7 @@ https://codesandbox.io/s/react-typescript-forked-w91cq
 
 ## Derived atom with [`RESET`](../api/utils.md#RESET) symbol
 
-```js
+```jsx
 import { atom, useAtom } from 'jotai'
 import { atomWithReset, useResetAtom, RESET } from 'jotai/utils'
 
