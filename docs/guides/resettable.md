@@ -1,0 +1,81 @@
+# How to use resettable atoms
+
+The jotai core doesn't support resettable atoms.
+But you can create those with helper functions from `jotai/utils`.
+
+## Primitive resettable atom with [`atomWithReset`](../api/utils.md#atomWithReset) / [`useResetAtom`](../api/utils.md#useResetAtom)
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithReset, useResetAtom } from 'jotai/utils'
+
+const todoListAtom = atomWithReset([
+  { description: 'Add a todo', checked: false },
+])
+
+const TodoList = () => {
+  const [todoList, setTodoList] = useAtom(todoListAtom)
+  const resetTodoList = useResetAtom(todoListAtom)
+
+  return (
+    <>
+      <ul>
+        {todoList.map((todo) => (
+          <li>{todo.description}</li>
+        ))}
+      </ul>
+
+      <button
+        onClick={() =>
+          setTodoList((l) => [
+            ...l,
+            {
+              description: `New todo ${new Date().toDateString()}`,
+              checked: false,
+            },
+          ])
+        }>
+        Add todo
+      </button>
+      <button onClick={resetTodoList}>Reset</button>
+    </>
+  )
+}
+```
+
+### Examples
+
+https://codesandbox.io/s/react-typescript-forked-w91cq
+
+## Derived atom with [`RESET`](../api/utils.md#RESET) symbol
+
+```jsx
+import { atom, useAtom } from 'jotai'
+import { atomWithReset, useResetAtom, RESET } from 'jotai/utils'
+
+const dollarsAtom = atomWithReset(0)
+const centsAtom = atom(
+  (get) => get(dollarsAtom) * 100,
+  (get, set, newValue: number | typeof RESET) =>
+    set(dollarsAtom, newValue === RESET ? newValue : newValue / 100)
+)
+
+const ResetExample: React.FC = () => {
+  const [dollars] = useAtom(dollarsAtom)
+  const setCents = useUpdateAtom(centsAtom)
+  const resetCents = useResetAtom(centsAtom)
+
+  return (
+    <>
+      <h3>Current balance ${dollars}</h3>
+      <button onClick={() => setCents(100)}>Set $1</button>
+      <button onClick={() => setCents(200)}>Set $2</button>
+      <button onClick={resetCents}>Reset</button>
+    </>
+  )
+}
+```
+
+### Examples
+
+https://codesandbox.io/s/react-typescript-forked-41c0s
