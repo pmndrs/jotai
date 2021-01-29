@@ -59,7 +59,7 @@ it('atomWithReset through read-write atom', async () => {
   const primitiveAtom = atomWithReset(0)
   const countAtom = atom(
     (get) => get(primitiveAtom),
-    (get, set, newValue: number | typeof RESET) => set(primitiveAtom, newValue)
+    (_get, set, newValue: number | typeof RESET) => set(primitiveAtom, newValue)
   )
 
   const Parent: React.FC = () => {

@@ -9,7 +9,10 @@ export type Setter = <Value, Update>(
 
 export type Scope = symbol | string | number
 
-type SetAtom<Update> = (update: Update) => void | Promise<void>
+export type SetAtom<Update> = undefined extends Update
+  ? (update?: Update) => void | Promise<void>
+  : (update: Update) => void | Promise<void>
+
 export type OnUnmount = () => void
 export type OnMount<Update> = (setAtom: SetAtom<Update>) => OnUnmount | void
 

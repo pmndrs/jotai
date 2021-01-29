@@ -2,7 +2,7 @@ import { useEffect, useCallback, useDebugValue } from 'react'
 import { useContext, useContextSelector } from 'use-context-selector'
 
 import { getContexts } from './contexts'
-import { Atom, WritableAtom, AnyWritableAtom, Scope } from './types'
+import { Atom, WritableAtom, AnyWritableAtom, Scope, SetAtom } from './types'
 
 function assertContextValue<T extends object>(
   x: T | null,
@@ -19,10 +19,6 @@ const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ): atom is WritableAtom<Value, Update> =>
   !!(atom as WritableAtom<Value, Update>).write
-
-type SetAtom<Update> = undefined extends Update
-  ? (update?: Update) => void | Promise<void>
-  : (update: Update) => void | Promise<void>
 
 export function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>
