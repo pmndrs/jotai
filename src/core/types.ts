@@ -9,19 +9,20 @@ export type Setter = <Value, Update>(
 
 export type Scope = symbol | string | number
 
+type SetAtom<Update> = (update: Update) => void | Promise<void>
 export type OnUnmount = () => void
-export type OnMount = (get: Getter, set: Setter) => OnUnmount | void
+export type OnMount<Update> = (setAtom: SetAtom<Update>) => OnUnmount | void
 
 export type Atom<Value> = {
   toString: () => string
   debugLabel?: string
   scope?: Scope
   read: (get: Getter) => Value | Promise<Value>
-  onMount?: OnMount
 }
 
 export type WritableAtom<Value, Update> = Atom<Value> & {
   write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+  onMount?: OnMount<Update>
 }
 
 // This is an internal type and subjects to change.

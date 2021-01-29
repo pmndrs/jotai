@@ -1,7 +1,6 @@
 import React from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
-import { useAtomValue } from '../src/utils'
 
 it('one atom, one effect', async () => {
   const countAtom = atom(1)
@@ -58,7 +57,7 @@ it('two atoms, one each', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter />
     </Provider>
@@ -80,6 +79,7 @@ it('two atoms, one each', async () => {
   expect(onMountFn).toBeCalledTimes(1)
   expect(onMountFn2).toBeCalledTimes(1)
 })
+
 it('one derived atom, one onMount', async () => {
   const countAtom = atom(1)
   const countAtom2 = atom((get) => get(countAtom))
@@ -104,6 +104,7 @@ it('one derived atom, one onMount', async () => {
   await findByText('count: 1')
   expect(onMountFn).toBeCalledTimes(1)
 })
+
 it('mount/unmount test', async () => {
   const countAtom = atom(1)
 
@@ -142,9 +143,10 @@ it('mount/unmount test', async () => {
   expect(onMountFn).toBeCalledTimes(1)
   expect(onUnMountFn).toBeCalledTimes(1)
 })
+
 // derive chain test
 // mount/unmount test: const [show, setShow] = useState(false)
 // onMount/onUnmount order test with component tree
 // async test
+// use onMount
 // subscription usage test
-// ...

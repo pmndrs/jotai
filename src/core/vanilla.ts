@@ -327,6 +327,9 @@ export const addAtom = (
   }
 }
 
+const canUnmountAtom = (atom: AnyAtom, dependents: Dependents) =>
+  !dependents.size || (dependents.size === 1 && dependents.has(atom))
+
 export const delAtom = (
   state: State,
   deletingAtom: AnyAtom,
@@ -336,7 +339,9 @@ export const delAtom = (
   if (mounted) {
     const [dependents] = mounted
     dependents.delete(useId)
-    unmountAtom(state, deletingAtom)
+    if (canUnmountAtom(deletingAtom, dependents)) {
+      unmountAtom(state, deletingAtom)
+    }
   }
 }
 
@@ -603,11 +608,13 @@ const unmountAtom = (state: State, atom: AnyAtom) => {
       console.warn('[Bug] deleting atomState with read promise', atom)
     }
     atomState.d.forEach((_, a) => {
-      const dependents = state.m.get(a)?.[0]
-      if (dependents) {
-        dependents.delete(atom)
-        if (!dependents.size && a !== atom) {
-          unmountAtom(state, a)
+      if (a !== atom) {
+        const dependents = state.m.get(a)?.[0]
+        if (dependents) {
+          dependents.delete(atom)
+          if (canUnmountAtom(a, dependents)) {
+            unmountAtom(state, a)
+          }
         }
       }
     })
@@ -624,6 +631,9 @@ const unmountAtom = (state: State, atom: AnyAtom) => {
   state.m.delete(atom)
 }
 
+const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
+  !!(atom as AnyWritableAtom).write
+
 // commit (mount atoms)
 export const commit = (state: State, updateState: UpdateState) => {
   // process unmoumnt pending
@@ -633,25 +643,6 @@ export const commit = (state: State, updateState: UpdateState) => {
   state.u.clear()
 
   // process handle mount pending
-  const getter = ((a: AnyAtom) => {
-    const aState = getAtomState(state, a)
-    if (aState) {
-      if (aState.re) {
-        throw aState.re // read error
-      }
-      if (aState.rp) {
-        throw aState.rp // read promise
-      }
-      return aState.v // value
-    }
-    if (hasInitialValue(a)) {
-      return a.init
-    }
-    throw new Error('no atom init')
-  }) as Getter
-  const setter = ((a: AnyWritableAtom, v: unknown) => {
-    updateState((prev) => writeAtomState(prev, updateState, a, v))
-  }) as Setter
   state.p.forEach((atom) => {
     const mounted = state.m.get(atom)
     if (mounted) {
@@ -662,7 +653,13 @@ export const commit = (state: State, updateState: UpdateState) => {
       ) {
         console.warn('[Bug] mounting already mounted atom', atom)
       }
-      mounted[1] = atom.onMount?.(getter, setter)
+      if (isActuallyWritableAtom(atom) && atom.onMount) {
+        const setAtom = (update: unknown) =>
+          writeAtom(updateState, atom, update)
+        mounted[1] = atom.onMount(setAtom)
+      } else {
+        mounted[1] = undefined
+      }
     }
   })
   state.p.clear()
