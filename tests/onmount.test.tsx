@@ -144,6 +144,57 @@ it('mount/unmount test', async () => {
   expect(onUnMountFn).toBeCalledTimes(1)
 })
 
+it('one derived atom, one onMount for the derived one, and one for the regular atom + onUnMount', async () => {
+  const countAtom = atom(1)
+  const derivedAtom = atom(
+    (get) => get(countAtom),
+    (get, set, update: number) => {
+      set(countAtom, update)
+      set(derivedAtom, update)
+    }
+  )
+  const onUnMountFn = jest.fn()
+  const onMountFn = jest.fn(() => onUnMountFn)
+  countAtom.onMount = onMountFn
+  const derivedOnUnMountFn = jest.fn()
+  const derivedOnMountFn = jest.fn(() => derivedOnUnMountFn)
+  derivedAtom.onMount = derivedOnMountFn
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(derivedAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
+
+  const Display: React.FC = () => {
+    const [display, setDisplay] = React.useState(true)
+    return (
+      <>
+        {display ? <Counter /> : null}
+        <button onClick={() => setDisplay((c) => !c)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Display />
+    </Provider>
+  )
+  expect(derivedOnMountFn).toBeCalledTimes(1)
+  expect(derivedOnUnMountFn).toBeCalledTimes(0)
+  expect(onMountFn).toBeCalledTimes(1)
+  expect(onUnMountFn).toBeCalledTimes(0)
+  fireEvent.click(getByText('button'))
+  expect(derivedOnMountFn).toBeCalledTimes(1)
+  expect(derivedOnUnMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toBeCalledTimes(1)
+  expect(onUnMountFn).toBeCalledTimes(1)
+})
+
 // derive chain test
 // mount/unmount test: const [show, setShow] = useState(false)
 // onMount/onUnmount order test with component tree
