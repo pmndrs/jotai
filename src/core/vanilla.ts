@@ -596,6 +596,30 @@ export const applyWip = (state: State) => {
   }
 }
 
+const mountAtom = (state: State, updateState: UpdateState, atom: AnyAtom) => {
+  const mounted = state.m.get(atom)
+  if (mounted) {
+    if (
+      mounted.length !== 1 &&
+      typeof process === 'object' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      console.warn('[Bug] mounting already mounted atom', atom)
+    }
+    if (isActuallyWritableAtom(atom) && atom.onMount) {
+      const setAtom = (update: unknown) => writeAtom(updateState, atom, update)
+      mounted[1] = atom.onMount(setAtom)
+    } else {
+      mounted[1] = undefined
+    }
+  } else if (
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production'
+  ) {
+    console.warn('[Bug] mounting not mounted atom', atom)
+  }
+}
+
 const unmountAtom = (state: State, atom: AnyAtom) => {
   const atomState = getAtomState(state, atom)
   if (atomState) {
@@ -643,23 +667,7 @@ export const commit = (state: State, updateState: UpdateState) => {
 
   // process handle mount pending
   state.p.forEach((atom) => {
-    const mounted = state.m.get(atom)
-    if (mounted) {
-      if (
-        mounted.length !== 1 &&
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        console.warn('[Bug] mounting already mounted atom', atom)
-      }
-      if (isActuallyWritableAtom(atom) && atom.onMount) {
-        const setAtom = (update: unknown) =>
-          writeAtom(updateState, atom, update)
-        mounted[1] = atom.onMount(setAtom)
-      } else {
-        mounted[1] = undefined
-      }
-    }
+    mountAtom(state, updateState, atom)
   })
   state.p.clear()
 }
