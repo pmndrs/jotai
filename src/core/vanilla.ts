@@ -31,7 +31,7 @@ type AtomStateMap = WeakMap<AnyAtom, AtomState>
 
 type UseAtomSymbol = symbol
 type Dependents = Set<AnyAtom | UseAtomSymbol>
-type MountedMap = Map<AnyAtom, [Dependents] | [Dependents, OnUnmount | void]>
+type MountedMap = Map<AnyAtom, [Dependents, OnUnmount | void]>
 
 type WorkInProgress = Map<AnyAtom, AtomState>
 
@@ -538,45 +538,6 @@ export const writeAtom = <Value, Update>(
   }
 }
 
-const applyWip = (state: State, updateState: UpdateState): void => {
-  state.w.forEach((atomState, atom) => {
-    const prevDependencies = state.a.get(atom)?.d
-    if (prevDependencies === atomState.d) {
-      return
-    }
-    const dependencies = new Set(atomState.d.keys())
-    if (prevDependencies) {
-      prevDependencies.forEach((_, a) => {
-        const mounted = state.m.get(a)
-        if (dependencies.has(a)) {
-          // not changed
-          dependencies.delete(a)
-        } else if (mounted) {
-          const [dependents] = mounted
-          dependents.delete(atom)
-          if (canUnmountAtom(a, dependents)) {
-            unmountAtom(state, a)
-          }
-        } else if (
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
-        ) {
-          console.warn('[Bug] a dependency is not mounted')
-        }
-      })
-    }
-    dependencies.forEach((a) => {
-      const mounted = state.m.get(a)
-      if (mounted) {
-        const [dependents] = mounted
-        dependents.add(atom)
-      } else {
-        mountAtom(state, updateState, a, atom)
-      }
-    })
-  })
-}
-
 const mountAtom = (
   state: State,
   updateState: UpdateState,
@@ -629,9 +590,45 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
 export const commitState = (state: State, updateState: UpdateState) => {
-  // apply wip
   if (state.w.size) {
-    applyWip(state, updateState)
+    // apply wip to MountedMap
+    state.w.forEach((atomState, atom) => {
+      const prevDependencies = state.a.get(atom)?.d
+      if (prevDependencies === atomState.d) {
+        return
+      }
+      const dependencies = new Set(atomState.d.keys())
+      if (prevDependencies) {
+        prevDependencies.forEach((_, a) => {
+          const mounted = state.m.get(a)
+          if (dependencies.has(a)) {
+            // not changed
+            dependencies.delete(a)
+          } else if (mounted) {
+            const [dependents] = mounted
+            dependents.delete(atom)
+            if (canUnmountAtom(a, dependents)) {
+              unmountAtom(state, a)
+            }
+          } else if (
+            typeof process === 'object' &&
+            process.env.NODE_ENV !== 'production'
+          ) {
+            console.warn('[Bug] a dependency is not mounted')
+          }
+        })
+      }
+      dependencies.forEach((a) => {
+        const mounted = state.m.get(a)
+        if (mounted) {
+          const [dependents] = mounted
+          dependents.add(atom)
+        } else {
+          mountAtom(state, updateState, a, atom)
+        }
+      })
+    })
+    // copy wip to AtomStateMap
     state.w.forEach((atomState, atom) => {
       if (
         typeof process === 'object' &&
@@ -641,6 +638,7 @@ export const commitState = (state: State, updateState: UpdateState) => {
       }
       state.a.set(atom, atomState)
     })
+    // empty wip
     state.w.clear()
   }
 }
