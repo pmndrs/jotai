@@ -72,17 +72,10 @@ export const createState = (
 const getAtomState = <Value>(state: State, atom: Atom<Value>) =>
   (state.w.get(atom) || state.a.get(atom)) as AtomState<Value> | undefined
 
-const copyWip = (state: State, copyingState: State): State => {
-  const nextWip: WorkInProgress = new Map(state.w)
-  // merge wip
-  copyingState.w.forEach((atomState, atom) => {
-    nextWip.set(atom, atomState)
-  })
-  return {
-    ...state,
-    w: nextWip,
-  }
-}
+const copyWip = (state: State, copyingState: State): State => ({
+  ...state,
+  w: new Map([...state.w, ...copyingState.w]),
+})
 
 const wipAtomState = <Value>(
   state: State,
@@ -319,7 +312,7 @@ export const addAtom = (
   }
 }
 
-// XXX doesn't it work with mutally dependent atoms
+// XXX doesn't work with mutally dependent atoms
 const canUnmountAtom = (atom: AnyAtom, dependents: Dependents) =>
   !dependents.size || (dependents.size === 1 && dependents.has(atom))
 
