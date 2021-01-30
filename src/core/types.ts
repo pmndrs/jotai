@@ -14,7 +14,9 @@ export type SetAtom<Update> = undefined extends Update
   : (update: Update) => void | Promise<void>
 
 export type OnUnmount = () => void
-export type OnMount<Update> = (setAtom: SetAtom<Update>) => OnUnmount | void
+export type OnMount<Update> = <S extends SetAtom<Update>>(
+  setAtom: S
+) => OnUnmount | void
 
 export type Atom<Value> = {
   toString: () => string
