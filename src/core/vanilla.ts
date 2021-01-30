@@ -79,16 +79,14 @@ const getAtomState = <Value>(state: State, atom: Atom<Value>) =>
   (state.w.get(atom) || state.a.get(atom)) as AtomState<Value> | undefined
 
 const copyWip = (state: State, copyingState: State): State => {
-  if (
-    state.w.size &&
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production'
-  ) {
-    console.warn('[Bug] wip not empty')
-  }
+  const nextWip: WorkInProgress = new Map(state.w)
+  // merge wip
+  copyingState.w.forEach((atomState, atom) => {
+    nextWip.set(atom, atomState)
+  })
   return {
     ...state,
-    w: copyingState.w,
+    w: nextWip,
   }
 }
 
@@ -345,6 +343,18 @@ export const delAtom = (
   }
 }
 
+const getDependents = (state: State, atom: AnyAtom): Dependents => {
+  const mounted = state.m.get(atom)
+  const dependents: Dependents = new Set(mounted?.[0])
+  // collecting from wip
+  state.w.forEach((aState, a) => {
+    if (aState.d.has(atom)) {
+      dependents.add(a)
+    }
+  })
+  return dependents
+}
+
 const updateDependentsState = <Value>(
   state: State,
   updateState: UpdateState,
@@ -354,14 +364,8 @@ const updateDependentsState = <Value>(
   if (!prevAtomState || prevAtomState.r === getAtomState(state, atom)?.r) {
     return state // bail out
   }
-  const mounted = state.m.get(atom)
-  if (!mounted) {
-    // this may happen if async function is resolved before commit.
-    // not certain this is going to be an issue in some cases.
-    return state
-  }
+  const dependents = getDependents(state, atom)
   let nextState = state
-  const [dependents] = mounted
   dependents.forEach((dependent) => {
     if (dependent === atom || typeof dependent === 'symbol') {
       return
@@ -539,7 +543,7 @@ export const writeAtom = <Value, Update>(
   }
 }
 
-const updateDependentsMap = (state: State): void => {
+const applyWipToDependentsMap = (state: State): void => {
   state.w.forEach((atomState, atom) => {
     const prevDependencies = state.a.get(atom)?.d
     if (prevDependencies === atomState.d) {
@@ -579,10 +583,9 @@ const updateDependentsMap = (state: State): void => {
   })
 }
 
-// apply wip
-export const applyWip = (state: State) => {
+const applyWip = (state: State) => {
   if (state.w.size) {
-    updateDependentsMap(state)
+    applyWipToDependentsMap(state)
     state.w.forEach((atomState, atom) => {
       if (
         typeof process === 'object' &&
@@ -657,8 +660,9 @@ const unmountAtom = (state: State, atom: AnyAtom) => {
 const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
-// commit (mount atoms)
-export const commit = (state: State, updateState: UpdateState) => {
+export const commitState = (state: State, updateState: UpdateState) => {
+  applyWip(state)
+
   // process unmoumnt pending
   state.u.forEach((atom) => {
     unmountAtom(state, atom)

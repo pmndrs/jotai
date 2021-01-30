@@ -20,8 +20,7 @@ import {
   delAtom,
   readAtom,
   writeAtom,
-  applyWip,
-  commit,
+  commitState,
 } from './vanilla'
 import { getContexts } from './contexts'
 
@@ -54,7 +53,6 @@ export const Provider: React.FC<{
   const [state, setState] = useState(() => createState(initialValues))
   const lastStateRef = useRef(state)
   const updateState = useCallback((updater: (prev: State) => State) => {
-    applyWip(lastStateRef.current)
     lastStateRef.current = updater(lastStateRef.current)
     contextUpdateRef.current(() => {
       setState(lastStateRef.current)
@@ -62,9 +60,8 @@ export const Provider: React.FC<{
   }, [])
 
   useEffect(() => {
-    applyWip(state)
+    commitState(state, updateState)
     lastStateRef.current = state
-    commit(state, updateState)
   })
 
   const actions = useMemo(
