@@ -32,7 +32,6 @@ type AtomStateMap = WeakMap<AnyAtom, AtomState>
 type UseAtomSymbol = symbol
 type Dependents = Set<AnyAtom | UseAtomSymbol>
 type MountedMap = Map<AnyAtom, [Dependents] | [Dependents, OnUnmount | void]>
-type MountPendingSet = Set<AnyAtom> // after mount
 type UnmountPendingSet = Set<AnyAtom> // before unmount
 
 type WorkInProgress = Map<AnyAtom, AtomState>
@@ -45,7 +44,6 @@ type UpdateState = (updater: (prev: State) => State) => void
 export type State = {
   a: AtomStateMap // mutable state
   m: MountedMap // mutable state
-  p: MountPendingSet // mutable state
   u: UnmountPendingSet // mutable state
   w: WorkInProgress // wip state (mutable only within the same render)
 }
@@ -56,7 +54,6 @@ export const createState = (
   const state: State = {
     a: new WeakMap(),
     m: new Map(),
-    p: new Set(),
     u: new Set(),
     w: new Map(),
   }
@@ -312,6 +309,7 @@ export const readAtom = <Value>(
 
 export const addAtom = (
   state: State,
+  updateState: UpdateState,
   addingAtom: AnyAtom,
   useId: symbol
 ): void => {
@@ -320,11 +318,11 @@ export const addAtom = (
     const [dependents] = mounted
     dependents.add(useId)
   } else {
-    state.m.set(addingAtom, [new Set([useId])])
-    state.p.add(addingAtom)
+    mountAtom(state, updateState, addingAtom, useId)
   }
 }
 
+// XXX doesn't it work with mutally dependent atoms
 const canUnmountAtom = (atom: AnyAtom, dependents: Dependents) =>
   !dependents.size || (dependents.size === 1 && dependents.has(atom))
 
@@ -543,7 +541,7 @@ export const writeAtom = <Value, Update>(
   }
 }
 
-const commitDependentsMap = (state: State): void => {
+const applyWip = (state: State, updateState: UpdateState): void => {
   state.w.forEach((atomState, atom) => {
     const prevDependencies = state.a.get(atom)?.d
     if (prevDependencies === atomState.d) {
@@ -576,35 +574,24 @@ const commitDependentsMap = (state: State): void => {
         const [dependents] = mounted
         dependents.add(atom)
       } else {
-        state.m.set(a, [new Set([atom])])
-        state.p.add(a)
+        mountAtom(state, updateState, a, atom)
       }
     })
   })
 }
 
-const mountAtom = (state: State, updateState: UpdateState, atom: AnyAtom) => {
-  const mounted = state.m.get(atom)
-  if (mounted) {
-    if (
-      mounted.length !== 1 &&
-      typeof process === 'object' &&
-      process.env.NODE_ENV !== 'production'
-    ) {
-      console.warn('[Bug] mounting already mounted atom', atom)
-    }
-    if (isActuallyWritableAtom(atom) && atom.onMount) {
-      const setAtom = (update: unknown) => writeAtom(updateState, atom, update)
-      mounted[1] = atom.onMount(setAtom)
-    } else {
-      mounted[1] = undefined
-    }
-  } else if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production'
-  ) {
-    console.warn('[Bug] mounting not mounted atom', atom)
+const mountAtom = (
+  state: State,
+  updateState: UpdateState,
+  atom: AnyAtom,
+  initialDependent: AnyAtom | symbol
+) => {
+  let onUmount: OnUnmount | void
+  if (isActuallyWritableAtom(atom) && atom.onMount) {
+    const setAtom = (update: unknown) => writeAtom(updateState, atom, update)
+    onUmount = atom.onMount(setAtom)
   }
+  state.m.set(atom, [new Set([initialDependent]), onUmount])
 }
 
 const unmountAtom = (state: State, atom: AnyAtom) => {
@@ -653,7 +640,7 @@ export const commitState = (state: State, updateState: UpdateState) => {
 
   // apply wip
   if (state.w.size) {
-    commitDependentsMap(state)
+    applyWip(state, updateState)
     state.w.forEach((atomState, atom) => {
       if (
         typeof process === 'object' &&
@@ -665,10 +652,4 @@ export const commitState = (state: State, updateState: UpdateState) => {
     })
     state.w.clear()
   }
-
-  // process handle mount pending
-  state.p.forEach((atom) => {
-    mountAtom(state, updateState, atom)
-  })
-  state.p.clear()
 }

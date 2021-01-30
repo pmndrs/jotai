@@ -67,7 +67,7 @@ export const Provider: React.FC<{
   const actions = useMemo(
     () => ({
       add: <Value>(atom: Atom<Value>, id: symbol) => {
-        addAtom(lastStateRef.current, atom, id)
+        addAtom(lastStateRef.current, updateState, atom, id)
       },
       del: <Value>(atom: Atom<Value>, id: symbol) => {
         delAtom(lastStateRef.current, atom, id)
