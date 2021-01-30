@@ -356,7 +356,6 @@ const updateDependentsState = <Value>(
   }
   const mounted = state.m.get(atom)
   if (!mounted) {
-    // not mounted
     // this may happen if async function is resolved before commit.
     // not certain this is going to be an issue in some cases.
     return state
@@ -556,7 +555,7 @@ const updateDependentsMap = (state: State): void => {
         } else if (mounted) {
           const [dependents] = mounted
           dependents.delete(atom)
-          if (!dependents.size) {
+          if (canUnmountAtom(a, dependents)) {
             state.u.add(a)
           }
         } else if (
