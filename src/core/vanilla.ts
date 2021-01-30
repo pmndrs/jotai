@@ -32,7 +32,6 @@ type AtomStateMap = WeakMap<AnyAtom, AtomState>
 type UseAtomSymbol = symbol
 type Dependents = Set<AnyAtom | UseAtomSymbol>
 type MountedMap = Map<AnyAtom, [Dependents] | [Dependents, OnUnmount | void]>
-type UnmountPendingSet = Set<AnyAtom> // before unmount
 
 type WorkInProgress = Map<AnyAtom, AtomState>
 
@@ -44,7 +43,6 @@ type UpdateState = (updater: (prev: State) => State) => void
 export type State = {
   a: AtomStateMap // mutable state
   m: MountedMap // mutable state
-  u: UnmountPendingSet // mutable state
   w: WorkInProgress // wip state (mutable only within the same render)
 }
 
@@ -54,7 +52,6 @@ export const createState = (
   const state: State = {
     a: new WeakMap(),
     m: new Map(),
-    u: new Set(),
     w: new Map(),
   }
   if (initialValues) {
@@ -558,7 +555,7 @@ const applyWip = (state: State, updateState: UpdateState): void => {
           const [dependents] = mounted
           dependents.delete(atom)
           if (canUnmountAtom(a, dependents)) {
-            state.u.add(a)
+            unmountAtom(state, a)
           }
         } else if (
           typeof process === 'object' &&
@@ -632,12 +629,6 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
 export const commitState = (state: State, updateState: UpdateState) => {
-  // process unmoumnt pending
-  state.u.forEach((atom) => {
-    unmountAtom(state, atom)
-  })
-  state.u.clear()
-
   // apply wip
   if (state.w.size) {
     applyWip(state, updateState)
