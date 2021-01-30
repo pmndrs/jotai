@@ -531,6 +531,9 @@ export const writeAtom = <Value, Update>(
   }
 }
 
+const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
+  !!(atom as AnyWritableAtom).write
+
 const mountAtom = (
   state: State,
   updateState: UpdateState,
@@ -599,9 +602,6 @@ const unmountAtom = (state: State, atom: AnyAtom) => {
   }
 }
 
-const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
-  !!(atom as AnyWritableAtom).write
-
 export const commitState = (state: State, updateState: UpdateState) => {
   if (state.w.size) {
     // apply wip to MountedMap
@@ -627,7 +627,7 @@ export const commitState = (state: State, updateState: UpdateState) => {
             typeof process === 'object' &&
             process.env.NODE_ENV !== 'production'
           ) {
-            console.warn('[Bug] a dependency is not mounted')
+            console.warn('[Bug] a dependency is not mounted', a)
           }
         })
       }
