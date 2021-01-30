@@ -28,15 +28,15 @@ export function atom<Value, Update>(
 ): WritableAtom<Value, Update> & WithInitialValue<Value>
 
 // read-only derived atom
-export function atom<Value, Update extends never = never>(
+export function atom<Value>(
   read: (get: Getter) => Value | Promise<Value>
 ): Atom<Value>
 
 // invalid read-only derived atom
-export function atom<Value, Update>(read: Function): never
+export function atom<Value>(read: Function): never
 
 // primitive atom
-export function atom<Value, Update extends never = never>(
+export function atom<Value>(
   initialValue: Value
 ): PrimitiveAtom<Value> & WithInitialValue<Value>
 
