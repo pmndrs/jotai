@@ -544,6 +544,24 @@ const mountAtom = (
   atom: AnyAtom,
   initialDependent: AnyAtom | symbol
 ) => {
+  // mount dependencies beforehand
+  const atomState = getAtomState(state, atom)
+  if (atomState) {
+    atomState.d.forEach((_, a) => {
+      if (a !== atom) {
+        // check if not mounted
+        if (!state.m.has(a)) {
+          mountAtom(state, updateState, a, atom)
+        }
+      }
+    })
+  } else if (
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production'
+  ) {
+    console.warn('[Bug] could not find atom state to mount', atom)
+  }
+  // mount self
   let onUmount: OnUnmount | void
   if (isActuallyWritableAtom(atom) && atom.onMount) {
     const setAtom = (update: unknown) => writeAtom(updateState, atom, update)
@@ -553,6 +571,13 @@ const mountAtom = (
 }
 
 const unmountAtom = (state: State, atom: AnyAtom) => {
+  // unmount self
+  const onUnmount = state.m.get(atom)?.[1]
+  if (onUnmount) {
+    onUnmount()
+  }
+  state.m.delete(atom)
+  // unmount dependencies afterward
   const atomState = getAtomState(state, atom)
   if (atomState) {
     if (
@@ -577,13 +602,8 @@ const unmountAtom = (state: State, atom: AnyAtom) => {
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production'
   ) {
-    console.warn('[Bug] could not find atom state to delete', atom)
+    console.warn('[Bug] could not find atom state to unmount', atom)
   }
-  const onUnmount = state.m.get(atom)?.[1]
-  if (onUnmount) {
-    onUnmount()
-  }
-  state.m.delete(atom)
 }
 
 const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
