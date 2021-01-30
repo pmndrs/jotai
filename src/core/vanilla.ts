@@ -41,7 +41,7 @@ type UpdateState = (updater: (prev: State) => State) => void
 
 // The state consists of mutable parts and wip part
 // Mutable parts can only be modified with
-// addAtom/delAtom/applyWip/commit in React commit phase
+// addAtom/delAtom/commitState in React commit phase
 export type State = {
   a: AtomStateMap // mutable state
   m: MountedMap // mutable state
@@ -543,7 +543,7 @@ export const writeAtom = <Value, Update>(
   }
 }
 
-const applyWipToDependentsMap = (state: State): void => {
+const commitDependentsMap = (state: State): void => {
   state.w.forEach((atomState, atom) => {
     const prevDependencies = state.a.get(atom)?.d
     if (prevDependencies === atomState.d) {
@@ -581,22 +581,6 @@ const applyWipToDependentsMap = (state: State): void => {
       }
     })
   })
-}
-
-const applyWip = (state: State) => {
-  if (state.w.size) {
-    applyWipToDependentsMap(state)
-    state.w.forEach((atomState, atom) => {
-      if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        Object.freeze(atomState)
-      }
-      state.a.set(atom, atomState)
-    })
-    state.w.clear()
-  }
 }
 
 const mountAtom = (state: State, updateState: UpdateState, atom: AnyAtom) => {
@@ -661,13 +645,26 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
 export const commitState = (state: State, updateState: UpdateState) => {
-  applyWip(state)
-
   // process unmoumnt pending
   state.u.forEach((atom) => {
     unmountAtom(state, atom)
   })
   state.u.clear()
+
+  // apply wip
+  if (state.w.size) {
+    commitDependentsMap(state)
+    state.w.forEach((atomState, atom) => {
+      if (
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        Object.freeze(atomState)
+      }
+      state.a.set(atom, atomState)
+    })
+    state.w.clear()
+  }
 
   // process handle mount pending
   state.p.forEach((atom) => {
