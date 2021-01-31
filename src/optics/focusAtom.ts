@@ -37,7 +37,7 @@ export function focusAtom<S, A>(
   const derivedAtom: any = atom<A, SetStateAction<A>>(
     (get) => {
       const newValue = getValueUsingOptic(focus, get(baseAtom))
-      return newValue
+      return newValue as any
     },
     (_, set, update) => {
       const newValueProducer =

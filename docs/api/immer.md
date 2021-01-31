@@ -12,7 +12,7 @@ yarn add immer
 
 ## atomWithImmer
 
-`atomWithImmer` creates a new atom similar to the regular [atom](https://github.com/pmndrs/jotai/blob/master/docs/core.md#atom) with a different `writeFunction`. In this bundle, we don't have read-only atoms, because the point of these functions is the immer produce(mutability) function.
+`atomWithImmer` creates a new atom similar to the regular [`atom`](../api/core.md#atom) [atom] with a different `writeFunction`. In this bundle, we don't have read-only atoms, because the point of these functions is the immer produce(mutability) function.
 The signature of writeFunction is `(get, set, update: (draft: Draft<Value>) => void) => void`.
 
 ```js

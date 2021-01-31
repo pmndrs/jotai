@@ -1,11 +1,16 @@
 {
-  "index.js": {
-    "bundled": 17908,
-    "minified": 8090,
-    "gzipped": 2827,
+  "index.iife.js": {
+    "bundled": 25840,
+    "minified": 9112,
+    "gzipped": 3382
+  },
+  "index.mjs": {
+    "bundled": 19712,
+    "minified": 8864,
+    "gzipped": 3071,
     "treeshaked": {
       "rollup": {
-        "code": 143,
+        "code": 139,
         "import_statements": 50
       },
       "webpack": {
@@ -13,17 +18,7 @@
       }
     }
   },
-  "index.cjs.js": {
-    "bundled": 22355,
-    "minified": 10323,
-    "gzipped": 3494
-  },
-  "index.iife.js": {
-    "bundled": 23734,
-    "minified": 8469,
-    "gzipped": 3178
-  },
-  "utils.js": {
+  "utils.mjs": {
     "bundled": 4484,
     "minified": 2101,
     "gzipped": 885,
@@ -37,12 +32,7 @@
       }
     }
   },
-  "utils.cjs.js": {
-    "bundled": 7436,
-    "minified": 4000,
-    "gzipped": 1516
-  },
-  "devtools.js": {
+  "devtools.mjs": {
     "bundled": 2223,
     "minified": 1066,
     "gzipped": 602,
@@ -56,12 +46,7 @@
       }
     }
   },
-  "devtools.cjs.js": {
-    "bundled": 2394,
-    "minified": 1202,
-    "gzipped": 651
-  },
-  "immer.js": {
+  "immer.mjs": {
     "bundled": 868,
     "minified": 426,
     "gzipped": 235,
@@ -75,12 +60,7 @@
       }
     }
   },
-  "immer.cjs.js": {
-    "bundled": 1239,
-    "minified": 697,
-    "gzipped": 316
-  },
-  "optics.js": {
+  "optics.mjs": {
     "bundled": 870,
     "minified": 418,
     "gzipped": 260,
@@ -94,7 +74,27 @@
       }
     }
   },
-  "optics.cjs.js": {
+  "index.js": {
+    "bundled": 24357,
+    "minified": 11113,
+    "gzipped": 3723
+  },
+  "utils.js": {
+    "bundled": 7436,
+    "minified": 4000,
+    "gzipped": 1516
+  },
+  "devtools.js": {
+    "bundled": 2394,
+    "minified": 1202,
+    "gzipped": 651
+  },
+  "immer.js": {
+    "bundled": 1239,
+    "minified": 697,
+    "gzipped": 316
+  },
+  "optics.js": {
     "bundled": 956,
     "minified": 484,
     "gzipped": 304

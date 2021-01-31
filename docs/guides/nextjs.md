@@ -1,13 +1,5 @@
 # How to use jotai with next.js
 
-## Notes
-
-### When you use 'jotai/utils', you need to use the cjs bundle
-
-```js
-import { useUpdateAtom } from 'jotai/utils.cjs'
-```
-
 ### You can't return promises in server side rendering
 
 ```js
