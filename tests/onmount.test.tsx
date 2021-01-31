@@ -144,7 +144,7 @@ it('mount/unmount test', async () => {
   expect(onUnMountFn).toBeCalledTimes(1)
 })
 
-it('one derived atom, one onMount for the derived one, and one for the regular atom + onUnMount', async () => {
+it('derive chain', async () => {
   const countAtom = atom(1)
   const derivedAtom = atom(
     (get) => get(countAtom),
@@ -195,7 +195,6 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   expect(onUnMountFn).toBeCalledTimes(1)
 })
 
-// derive chain test
 // onMount/onUnmount order test with component tree
 // async test
 // subscription usage test
