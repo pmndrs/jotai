@@ -1,35 +1,31 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.12.7",
+  "version": "0.13.0",
   "description": "👻 Next gen state management that will spook you",
-  "main": "index.cjs.js",
-  "module": "index.js",
+  "main": "index.js",
+  "module": "index.mjs",
   "types": "index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./index.js",
-      "require": "./index.cjs.js",
-      "node": "./index.cjs.js",
+      "import": "./index.mjs",
+      "require": "./index.js",
       "types": "./index.d.ts"
     },
     "./utils": {
-      "import": "./utils.js",
-      "require": "./utils.cjs.js",
-      "node": "./utils.cjs.js",
+      "import": "./utils.mjs",
+      "require": "./utils.js",
       "types": "./utils.d.ts"
     },
     "./immer": {
-      "import": "./immer.js",
-      "require": "./immer.cjs.js",
-      "node": "./immer.cjs.js",
+      "import": "./immer.mjs",
+      "require": "./immer.js",
       "types": "./immer.d.ts"
     },
     "./optics": {
-      "import": "./optics.js",
-      "require": "./optics.cjs.js",
-      "node": "./optics.cjs.js",
+      "import": "./optics.mjs",
+      "require": "./optics.js",
       "types": "./optics.d.ts"
     }
   },
@@ -48,7 +44,7 @@
     "test": "jest && jest --setupFiles ./tests/setReactExperimental.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/utils.d.ts dist/utils.cjs.d.ts && shx cp dist/devtools.d.ts dist/devtools.cjs.d.ts && shx cp dist/immer.d.ts dist/immer.cjs.d.ts && shx cp dist/optics.d.ts dist/optics.cjs.d.ts && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {
@@ -117,17 +113,17 @@
     "@babel/plugin-transform-react-jsx": "^7.12.12",
     "@babel/plugin-transform-typescript": "^7.12.1",
     "@babel/preset-env": "^7.12.11",
-    "@rollup/plugin-babel": "^5.2.2",
-    "@rollup/plugin-node-resolve": "^11.1.0",
-    "@rollup/plugin-typescript": "^8.1.0",
+    "@rollup/plugin-babel": "^5.2.3",
+    "@rollup/plugin-node-resolve": "^11.1.1",
+    "@rollup/plugin-typescript": "^8.1.1",
     "@testing-library/react": "^11.2.3",
     "@types/jest": "^26.0.20",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.14.0",
-    "@typescript-eslint/parser": "^4.14.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.1",
+    "@typescript-eslint/parser": "^4.14.1",
     "copyfiles": "^2.4.1",
-    "eslint": "^7.18.0",
+    "eslint": "^7.19.0",
     "eslint-config-prettier": "^7.2.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.22.1",
@@ -144,7 +140,7 @@
     "prettier": "^2.2.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "rollup": "^2.38.0",
+    "rollup": "^2.38.2",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "shx": "^0.3.3",
     "typescript": "^4.1.3"

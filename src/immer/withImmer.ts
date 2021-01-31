@@ -2,6 +2,10 @@
 import { produce, Draft } from 'immer'
 import { atom, WritableAtom } from 'jotai'
 
+export function withImmer<Value, Update extends Value>(
+  anAtom: WritableAtom<Value, Update>
+): WritableAtom<Value, (draft: Draft<Value>) => void>
+
 export function withImmer<Value>(anAtom: WritableAtom<Value, Value>) {
   const derivedAtom = atom(
     (get) => get(anAtom),
