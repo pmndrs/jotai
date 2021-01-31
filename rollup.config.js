@@ -77,18 +77,18 @@ function createIIFEConfig(input, output, globalName) {
 export default (args) =>
   args['config-cjs']
     ? [
-        createCommonJSConfig('src/index.ts', 'dist/index.cjs.js'),
-        createCommonJSConfig('src/utils.ts', 'dist/utils.cjs.js'),
-        createCommonJSConfig('src/devtools.ts', 'dist/devtools.cjs.js'),
-        createCommonJSConfig('src/immer.ts', 'dist/immer.cjs.js'),
-        createCommonJSConfig('src/optics.ts', 'dist/optics.cjs.js'),
+        createDeclarationConfig('src/index.ts', 'dist'),
+        createCommonJSConfig('src/index.ts', 'dist/index.js'),
+        createCommonJSConfig('src/utils.ts', 'dist/utils.js'),
+        createCommonJSConfig('src/devtools.ts', 'dist/devtools.js'),
+        createCommonJSConfig('src/immer.ts', 'dist/immer.js'),
+        createCommonJSConfig('src/optics.ts', 'dist/optics.js'),
       ]
     : [
-        createDeclarationConfig('src/index.ts', 'dist'),
-        createESMConfig('src/index.ts', 'dist/index.js'),
         createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'jotai'),
-        createESMConfig('src/utils.ts', 'dist/utils.js'),
-        createESMConfig('src/devtools.ts', 'dist/devtools.js'),
-        createESMConfig('src/immer.ts', 'dist/immer.js'),
-        createESMConfig('src/optics.ts', 'dist/optics.js'),
+        createESMConfig('src/index.ts', 'dist/index.mjs'),
+        createESMConfig('src/utils.ts', 'dist/utils.mjs'),
+        createESMConfig('src/devtools.ts', 'dist/devtools.mjs'),
+        createESMConfig('src/immer.ts', 'dist/immer.mjs'),
+        createESMConfig('src/optics.ts', 'dist/optics.mjs'),
       ]

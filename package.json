@@ -3,33 +3,29 @@
   "private": true,
   "version": "0.12.7",
   "description": "👻 Next gen state management that will spook you",
-  "main": "index.cjs.js",
-  "module": "index.js",
+  "main": "index.js",
+  "module": "index.mjs",
   "types": "index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./index.js",
-      "require": "./index.cjs.js",
-      "node": "./index.cjs.js",
+      "import": "./index.mjs",
+      "require": "./index.js",
       "types": "./index.d.ts"
     },
     "./utils": {
-      "import": "./utils.js",
-      "require": "./utils.cjs.js",
-      "node": "./utils.cjs.js",
+      "import": "./utils.mjs",
+      "require": "./utils.js",
       "types": "./utils.d.ts"
     },
     "./immer": {
-      "import": "./immer.js",
-      "require": "./immer.cjs.js",
-      "node": "./immer.cjs.js",
+      "import": "./immer.mjs",
+      "require": "./immer.js",
       "types": "./immer.d.ts"
     },
     "./optics": {
-      "import": "./optics.js",
-      "require": "./optics.cjs.js",
-      "node": "./optics.cjs.js",
+      "import": "./optics.mjs",
+      "require": "./optics.js",
       "types": "./optics.d.ts"
     }
   },
@@ -48,7 +44,7 @@
     "test": "jest && jest --setupFiles ./tests/setReactExperimental.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/utils.d.ts dist/utils.cjs.d.ts && shx cp dist/devtools.d.ts dist/devtools.cjs.d.ts && shx cp dist/immer.d.ts dist/immer.cjs.d.ts && shx cp dist/optics.d.ts dist/optics.cjs.d.ts && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {
