@@ -144,7 +144,7 @@ it('mount/unmount test', async () => {
   expect(onUnMountFn).toBeCalledTimes(1)
 })
 
-it('derive chain', async () => {
+it('one derived atom, one onMount for the derived one, and one for the regular atom + onUnMount', async () => {
   const countAtom = atom(1)
   const derivedAtom = atom(
     (get) => get(countAtom),
@@ -195,6 +195,78 @@ it('derive chain', async () => {
   expect(onUnMountFn).toBeCalledTimes(1)
 })
 
-// onMount/onUnmount order test with component tree
+it('mount/unMount order', async () => {
+  const committed: number[] = [0, 0]
+  const countAtom = atom(1)
+  const derivedAtom = atom(
+    (get) => get(countAtom),
+    (_get, set, update: number) => {
+      set(countAtom, update)
+      set(derivedAtom, update)
+    }
+  )
+  const onUnMountFn = jest.fn(() => {
+    committed[0] = 0
+  })
+  const onMountFn = jest.fn(() => {
+    committed[0] = 1
+    return onUnMountFn
+  })
+  countAtom.onMount = onMountFn
+  const derivedOnUnMountFn = jest.fn(() => {
+    committed[1] = 0
+  })
+  const derivedOnMountFn = jest.fn(() => {
+    committed[1] = 1
+    return derivedOnUnMountFn
+  })
+  derivedAtom.onMount = derivedOnMountFn
+
+  const Counter2: React.FC = () => {
+    const [count] = useAtom(derivedAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
+  const Counter: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    const [display, setDisplay] = React.useState(false)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setDisplay((c) => !c)}>derived atom</button>
+        {display ? <Counter2 /> : null}
+      </>
+    )
+  }
+
+  const Display: React.FC = () => {
+    const [display, setDisplay] = React.useState(false)
+    return (
+      <>
+        {display ? <Counter /> : null}
+        <button onClick={() => setDisplay((c) => !c)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Display />
+    </Provider>
+  )
+  expect(committed).toEqual([0, 0])
+  fireEvent.click(getByText('button'))
+  expect(committed).toEqual([1, 0])
+  fireEvent.click(getByText('derived atom'))
+  expect(committed).toEqual([1, 1])
+  fireEvent.click(getByText('derived atom'))
+  expect(committed).toEqual([1, 0])
+  fireEvent.click(getByText('button'))
+  expect(committed).toEqual([0, 0])
+})
+
 // async test
 // subscription usage test
