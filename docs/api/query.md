@@ -16,17 +16,15 @@ yarn add react-query
 import { useAtom } from 'jotai'
 import { atomWithQuery } from 'jotai/query'
 
-const queryAtom = atomWithQuery("repoData", async () => {
-  const response = await fetch("https://api.github.com/repos/tannerlinsley/react-query")
+const queryAtom = atomWithQuery('repoData', async () => {
+  const response = await fetch(
+    'https://api.github.com/repos/tannerlinsley/react-query'
+  )
   return response.json()
 })
 
 const RepoData = () => {
-  const [data, dispatch] = useAtom(queryAtom)
-  useEffect(() => {
-    dispatch({ type: 'initialize' })
-    () => dispatch({ type: 'cleanup' })
-  }, [dispatch])
+  const [data] = useAtom(queryAtom)
   return <div>{JSON.stringify(data)}</div>
 }
 ```
