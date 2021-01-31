@@ -54,6 +54,11 @@ However, it's generally recommended to make them distinguishable.
 
 The created atom config can have an optional property `onMount`.
 `onMount` is a function which takes a function `setAtom`
+and returns `onUnmount` function optionally.
+
+The `onMount` function will be invoked when the atom is first used
+in a provider, and `onUnmount` will be invoked when it's not used.
+In some edge cases, an atom can be unmounted and then mounted immediately.
 
 ```js
 const anAtom = atom(1)
