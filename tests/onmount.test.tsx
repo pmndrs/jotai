@@ -268,5 +268,54 @@ it('mount/unMount order', async () => {
   expect(committed).toEqual([0, 0])
 })
 
-// async test
+it('mount/unmount test with async atom', async () => {
+  const countAtom = atom(
+    async () => {
+      await new Promise((r) => setTimeout(r, 100))
+      return 0
+    },
+    () => {}
+  )
+
+  const onUnMountFn = jest.fn()
+  const onMountFn = jest.fn(() => onUnMountFn)
+  countAtom.onMount = onMountFn
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
+
+  const Display: React.FC = () => {
+    const [display, setDisplay] = React.useState(true)
+    return (
+      <>
+        {display ? <Counter /> : null}
+        <button onClick={() => setDisplay((c) => !c)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <React.Suspense fallback="loading">
+        <Display />
+      </React.Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await waitFor(() => {
+    getByText('count: 0')
+  })
+  expect(onMountFn).toBeCalledTimes(1)
+  expect(onUnMountFn).toBeCalledTimes(0)
+  fireEvent.click(getByText('button'))
+  expect(onMountFn).toBeCalledTimes(1)
+  expect(onUnMountFn).toBeCalledTimes(1)
+})
 // subscription usage test
