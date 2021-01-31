@@ -41,6 +41,54 @@ Dependency is tracked, so if `get` is used for an atom at least once, the readFu
 The signature of writeFunction is `(get, set, update) => void | Promise<void>`.
 `get` is similar to the one described above, but it doesn't track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `update` is an arbitrary value that we receive from the updating function returned by `useAtom` described below.
 
+### debugLabel
+
+The created atom config can have an optional property `debugLabel`.
+The debug label will be used to display the atom in debugging.
+See [Debugging guide](../guides/debugging.md) for more information.
+
+Note: Technically, the debug labels don't have to be unique.
+However, it's generally recommended to make them distinguishable.
+
+### onMount
+
+The created atom config can have an optional property `onMount`.
+`onMount` is a function which takes a function `setAtom`
+and returns `onUnmount` function optionally.
+
+The `onMount` function will be invoked when the atom is first used
+in a provider, and `onUnmount` will be invoked when it's not used.
+In some edge cases, an atom can be unmounted and then mounted immediately.
+
+```js
+const anAtom = atom(1)
+anAtom.onMount = (setAtom) => {
+  console.log('atom is mounted in provider')
+  setAtom(c => c + 1) // increment count on mount
+  return () => { ... } // return optional onUnmount function
+}
+```
+
+Invoking `setAtom` function will invoke the atom's `writeFunction`.
+Customizing `writeFunction` allows changing the behavior.
+
+```js
+const countAtom = atom(1)
+const derivedAtom = atom(
+  (get) => get(countAtom),
+  (get, set, action) => {
+    if (action.type === 'init') {
+      set(countAtom, 10)
+    } else if (action.type === 'inc') {
+      set(countAtom, (c) => c + 1)
+    }
+  }
+)
+derivedAtom.onMount = (setAtom) => {
+  setAtom({ type: 'init' })
+}
+```
+
 ## Provider
 
 ```ts
