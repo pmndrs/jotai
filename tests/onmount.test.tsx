@@ -148,7 +148,7 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   const countAtom = atom(1)
   const derivedAtom = atom(
     (get) => get(countAtom),
-    (get, set, update: number) => {
+    (_get, set, update: number) => {
       set(countAtom, update)
       set(derivedAtom, update)
     }
@@ -196,8 +196,6 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
 })
 
 // derive chain test
-// mount/unmount test: const [show, setShow] = useState(false)
 // onMount/onUnmount order test with component tree
 // async test
-// use onMount
 // subscription usage test
