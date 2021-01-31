@@ -6,11 +6,10 @@ const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
 export const sliceAtom = <Item, Key = unknown>(
   arrAtom: WritableAtom<Item[], Item[]>,
-  keyExtractor: (item: Item, index: number) => Key = (_, i) => i as any
+  keyExtractor?: (item: Item) => Key
 ) => {
   // XXX potential memory leak when removing an item from upstream
   const indexCache = new Map<Key, number>()
-  const itemCache = new Map<Key, Item>()
   const atomCache = new Map<Key, PrimitiveAtom<Item>>()
   const atomToKey = new WeakMap<PrimitiveAtom<Item>, Key>()
   let prevSliced: PrimitiveAtom<Item>[] | undefined
@@ -19,28 +18,29 @@ export const sliceAtom = <Item, Key = unknown>(
       let nextSliced: PrimitiveAtom<Item>[] = []
       let changed = false
       get(arrAtom).forEach((item, index) => {
-        const key = keyExtractor(item, index)
+        const key = keyExtractor
+          ? keyExtractor(item)
+          : ((index as unknown) as Key)
         if (indexCache.get(key) !== index) {
           indexCache.set(key, index)
           changed = true
         }
-        itemCache.set(key, item)
         const cachedAtom = atomCache.get(key)
-        if (cachedAtom) {
+        // XXX if it's changed from upstream atom will be re-created
+        if (cachedAtom && Object.is(get(cachedAtom), item)) {
           nextSliced[index] = cachedAtom
           return
         }
         const itemAtom = atom(
-          (get) => {
-            get(arrAtom) // XXX this is hacky, better idea?
-            return itemCache.get(key) as Item
-          },
+          item,
           (get, set, update: SetStateAction<Item>) => {
             const index = indexCache.get(key) as number
             const prev = get(arrAtom)
+            const nextItem = isFunction(update) ? update(prev[index]) : update
+            set(itemAtom, nextItem)
             set(arrAtom, [
               ...prev.slice(0, index),
-              isFunction(update) ? update(prev[index]) : update,
+              nextItem,
               ...prev.slice(index + 1),
             ])
           }
@@ -60,7 +60,6 @@ export const sliceAtom = <Item, Key = unknown>(
       if (index >= 0) {
         const key = atomToKey.get(atomToRemove) as Key
         indexCache.delete(key)
-        itemCache.delete(key)
         atomCache.delete(key)
         const prev = get(arrAtom)
         set(arrAtom, [...prev.slice(0, index), ...prev.slice(index + 1)])
