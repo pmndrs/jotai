@@ -1,5 +1,5 @@
 import React from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
 it('one atom, one effect', async () => {
@@ -318,4 +318,75 @@ it('mount/unmount test with async atom', async () => {
   expect(onMountFn).toBeCalledTimes(1)
   expect(onUnMountFn).toBeCalledTimes(1)
 })
-// subscription usage test
+
+it('subscription usage test', async () => {
+  const store = {
+    count: 10,
+    listeners: new Set<() => void>(),
+    inc: () => {
+      store.count += 1
+      store.listeners.forEach((listener) => listener())
+    },
+  }
+
+  const countAtom = atom(1)
+  countAtom.onMount = (setCount) => {
+    const callback = () => {
+      setCount(store.count)
+    }
+    store.listeners.add(callback)
+    callback()
+    return () => store.listeners.delete(callback)
+  }
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
+
+  const Display: React.FC = () => {
+    const [display, setDisplay] = React.useState(true)
+    return (
+      <>
+        {display ? <Counter /> : 'N/A'}
+        <button onClick={() => setDisplay((c) => !c)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <React.Suspense fallback="loading">
+        <Display />
+      </React.Suspense>
+    </Provider>
+  )
+
+  await findByText('count: 10')
+
+  act(() => {
+    store.inc()
+  })
+  await findByText('count: 11')
+
+  fireEvent.click(getByText('button'))
+  await findByText('N/A')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 11')
+
+  fireEvent.click(getByText('button'))
+  await findByText('N/A')
+
+  act(() => {
+    store.inc()
+  })
+  await findByText('N/A')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 12')
+})
