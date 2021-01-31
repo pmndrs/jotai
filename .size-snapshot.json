@@ -100,6 +100,16 @@
     "gzipped": 304
   },
   "query.js": {
+    "bundled": 1269,
+    "minified": 725,
+    "gzipped": 363
+  },
+  "query.cjs.js": {
+    "bundled": 1269,
+    "minified": 725,
+    "gzipped": 363
+  },
+  "query.mjs": {
     "bundled": 1046,
     "minified": 544,
     "gzipped": 315,
@@ -112,10 +122,5 @@
         "code": 1097
       }
     }
-  },
-  "query.cjs.js": {
-    "bundled": 1269,
-    "minified": 725,
-    "gzipped": 363
   }
 }
