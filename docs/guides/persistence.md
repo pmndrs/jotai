@@ -1,7 +1,7 @@
 # How to persist atoms
 
 The core itself doesn't support persistence.
-There are some patterns for persistence depending on requirements.
+There are several patterns for persistence depending on requirements.
 
 ## A simple pattern with localStorage
 
@@ -33,6 +33,8 @@ However, the above is not typescript friendly.
 We could use a util for typescript.
 
 ```ts
+import { atomWithReducer } from 'jotai/utils'
+
 const langAtom = atomWithReducer(
   localStorage.getItem('lang') || 'es',
   (_prev, newLang: string) => {
@@ -42,42 +44,27 @@ const langAtom = atomWithReducer(
 )
 ```
 
-## A useEffect pattern
+## Atom onMount
 
 ```js
 const strAtom = atom('foo')
 
-const Component = () => {
-  const [str, setStr] = useAtom(strAtom)
-  useEffect(() => {
-    if (forTheFirstTimeOrWeWantToRefresh) {
-      const savedStr = localStorage.getItem('myKey')
-      if (savedStr !== null) {
-        setStr(savedStr)
-      }
-    }
-    if (weWantToSaveItForThisTime) {
-      localStorage.setItem('myKey', str)
-    }
-  })
-)
-```
-
-## A write-only atom pattern
-
-```js
-const createPersistAtom = (anAtom, key, serialize, deserialize) => atom(
-  null,
+const persistAtom = atom(
+  (get) => get(strAtom),
   async (get, set, action) => {
     if (action.type === 'init') {
       const str = await AsyncStorage.getItem(key)
-      set(anAtom, deserialize(str)
+      set(strAtom, str)
     } else if (action.type === 'set') {
-      const str = serialize(get(anAtom))
+      const str = action.value
+      set(strAtom, str)
       await AsyncStorage.setItem(key, str)
     }
   }
 )
+persistAtom.onMount = (dispatch) => {
+  dispatch({ type: 'init' })
+}
 ```
 
 ## A serialize atom pattern
