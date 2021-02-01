@@ -2,6 +2,8 @@ import { atom } from 'jotai'
 import * as O from 'optics-ts'
 import type { WritableAtom, SetStateAction, PrimitiveAtom } from '../core/types'
 
+const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
+
 export function focusAtom<S, A>(
   atom: PrimitiveAtom<S>,
   callback: (optic: O.OpticFor<S>) => O.Prism<S, any, A>
@@ -40,10 +42,9 @@ export function focusAtom<S, A>(
       return newValue as any
     },
     (_, set, update) => {
-      const newValueProducer =
-        update instanceof Function
-          ? O.modify(focus)(update)
-          : O.set(focus)(update)
+      const newValueProducer = isFunction(update)
+        ? O.modify(focus)(update)
+        : O.set(focus)(update)
 
       set(baseAtom, newValueProducer)
     }

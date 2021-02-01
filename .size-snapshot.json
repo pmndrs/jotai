@@ -61,9 +61,9 @@
     }
   },
   "optics.mjs": {
-    "bundled": 870,
-    "minified": 418,
-    "gzipped": 260,
+    "bundled": 912,
+    "minified": 458,
+    "gzipped": 271,
     "treeshaked": {
       "rollup": {
         "code": 32,
@@ -95,32 +95,27 @@
     "gzipped": 316
   },
   "optics.js": {
-    "bundled": 956,
-    "minified": 484,
-    "gzipped": 304
-  },
-  "query.js": {
-    "bundled": 1269,
-    "minified": 725,
-    "gzipped": 363
-  },
-  "query.cjs.js": {
-    "bundled": 1269,
-    "minified": 725,
-    "gzipped": 363
+    "bundled": 1028,
+    "minified": 527,
+    "gzipped": 317
   },
   "query.mjs": {
-    "bundled": 1046,
-    "minified": 544,
-    "gzipped": 315,
+    "bundled": 2587,
+    "minified": 1231,
+    "gzipped": 651,
     "treeshaked": {
       "rollup": {
-        "code": 84,
-        "import_statements": 71
+        "code": 57,
+        "import_statements": 49
       },
       "webpack": {
-        "code": 1097
+        "code": 1078
       }
     }
+  },
+  "query.js": {
+    "bundled": 4328,
+    "minified": 2088,
+    "gzipped": 945
   }
 }

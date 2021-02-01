@@ -53,27 +53,6 @@ function createCommonJSConfig(input, output) {
   }
 }
 
-function createIIFEConfig(input, output, globalName) {
-  return {
-    input,
-    output: {
-      file: output,
-      format: 'iife',
-      exports: 'named',
-      name: globalName,
-      globals: {
-        react: 'React',
-      },
-    },
-    external,
-    plugins: [
-      resolve({ extensions }),
-      typescript(),
-      babel(getBabelOptions({ ie: 11 })),
-      sizeSnapshot(),
-    ],
-  }
-}
 export default (args) =>
   args['config-cjs']
     ? [
@@ -86,11 +65,11 @@ export default (args) =>
         createCommonJSConfig('src/query.ts', 'dist/query.js'),
       ]
     : [
-        createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'jotai'),
-        createESMConfig('src/index.ts', 'dist/index.mjs'),
-        createESMConfig('src/utils.ts', 'dist/utils.mjs'),
-        createESMConfig('src/devtools.ts', 'dist/devtools.mjs'),
-        createESMConfig('src/immer.ts', 'dist/immer.mjs'),
-        createESMConfig('src/optics.ts', 'dist/optics.mjs'),
-        createESMConfig('src/query.ts', 'dist/query.mjs'),
+        createDeclarationConfig('src/index.ts', 'dist/modules'),
+        createESMConfig('src/index.ts', 'dist/modules/index.mjs'),
+        createESMConfig('src/utils.ts', 'dist/modules/utils.mjs'),
+        createESMConfig('src/devtools.ts', 'dist/modules/devtools.mjs'),
+        createESMConfig('src/immer.ts', 'dist/modules/immer.mjs'),
+        createESMConfig('src/optics.ts', 'dist/modules/optics.mjs'),
+        createESMConfig('src/query.ts', 'dist/modules/query.mjs'),
       ]
