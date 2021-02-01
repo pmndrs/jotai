@@ -3,28 +3,29 @@
   "private": true,
   "version": "0.13.0",
   "description": "👻 Next gen state management that will spook you",
+  "type": "commonjs",
   "main": "index.js",
-  "module": "index.mjs",
+  "module": "modules/index.mjs",
   "types": "index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./index.mjs",
+      "import": "./modules/index.mjs",
       "require": "./index.js",
       "types": "./index.d.ts"
     },
     "./utils": {
-      "import": "./utils.mjs",
+      "import": "./modules/utils.mjs",
       "require": "./utils.js",
       "types": "./utils.d.ts"
     },
     "./immer": {
-      "import": "./immer.mjs",
+      "import": "./modules/immer.mjs",
       "require": "./immer.js",
       "types": "./immer.d.ts"
     },
     "./optics": {
-      "import": "./optics.mjs",
+      "import": "./modules/optics.mjs",
       "require": "./optics.js",
       "types": "./optics.d.ts"
     }
@@ -44,7 +45,7 @@
     "test": "jest && jest --setupFiles ./tests/setReactExperimental.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx mv dist/modules/src/* dist/modules && shx rm -rf dist/modules/{src,tests} && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {
