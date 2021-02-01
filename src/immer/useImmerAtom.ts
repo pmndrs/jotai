@@ -3,13 +3,21 @@ import { useCallback } from 'react'
 import { produce, Draft } from 'immer'
 import { WritableAtom, useAtom } from 'jotai'
 
-export function useImmerAtom<Value, Update>(
-  anAtom: WritableAtom<Value, Update>
-): [Value, (fn: (draft: Draft<Value>) => void) => void] {
-  const [state, setState] = useAtom<Value, any>(anAtom)
+export function useImmerAtom<Value>(
+  anAtom: WritableAtom<Value, (draft: Draft<Value>) => void>
+): [Value, (fn: (draft: Draft<Value>) => void) => void]
+
+export function useImmerAtom<Value>(
+  anAtom: WritableAtom<Value, (value: Value) => Value>
+): [Value, (fn: (draft: Draft<Value>) => void) => void]
+
+export function useImmerAtom<Value>(
+  anAtom: WritableAtom<Value, (value: Value) => Value>
+) {
+  const [state, setState] = useAtom(anAtom)
   const setStateWithImmer = useCallback(
     (fn) => {
-      setState(produce((draft) => fn(draft)))
+      setState(produce((draft) => fn(draft)) as (value: Value) => Value)
     },
     [setState]
   )
