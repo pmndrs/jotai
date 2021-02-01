@@ -27,7 +27,7 @@ export function useAtomCallback<Result, Arg>(
           [arg, resolve, reject]: [
             Arg,
             (result: Result) => void,
-            (reason: any) => void
+            (reason: unknown) => void
           ]
         ) => {
           try {

@@ -1,9 +1,13 @@
 /* eslint-disable import/named */
 import { produce, Draft } from 'immer'
-import { atom, WritableAtom } from 'jotai'
+import { PrimitiveAtom, WritableAtom, atom } from 'jotai'
 
-export function withImmer<Value, Update extends Value>(
-  anAtom: WritableAtom<Value, Update>
+export function withImmer<Value>(
+  anAtom: PrimitiveAtom<Value>
+): WritableAtom<Value, (draft: Draft<Value>) => void>
+
+export function withImmer<Value>(
+  anAtom: WritableAtom<Value, Value>
 ): WritableAtom<Value, (draft: Draft<Value>) => void>
 
 export function withImmer<Value>(anAtom: WritableAtom<Value, Value>) {
