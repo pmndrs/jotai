@@ -1,6 +1,8 @@
 import { atom, Atom, WritableAtom, PrimitiveAtom } from 'jotai'
 import type { Getter, Setter } from '../core/types'
 
+type AnyFunction = (...args: any[]) => any
+
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
 type AtomFamily<Param, AtomType> = {
@@ -18,15 +20,6 @@ export function atomFamily<Param, Value, Update>(
   areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, WritableAtom<Value, Update>>
 
-// invalid writable derived atom
-export function atomFamily<Param, Value, Update>(
-  initializeRead: (param: Param) => Function,
-  initializeWrite: (
-    param: Param
-  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>,
-  areEqual?: (a: Param, b: Param) => boolean
-): never
-
 // write-only derived atom
 export function atomFamily<Param, Value, Update>(
   initializeRead: (param: Param) => Value,
@@ -34,7 +27,9 @@ export function atomFamily<Param, Value, Update>(
     param: Param
   ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>,
   areEqual?: (a: Param, b: Param) => boolean
-): AtomFamily<Param, WritableAtom<Value, Update>>
+): Value extends AnyFunction
+  ? never
+  : AtomFamily<Param, WritableAtom<Value, Update>>
 
 // read-only derived atom
 export function atomFamily<Param, Value, Update extends never = never>(
@@ -44,14 +39,14 @@ export function atomFamily<Param, Value, Update extends never = never>(
 ): AtomFamily<Param, Atom<Value>>
 
 // invalid read-only derived atom
-export function atomFamily<Param, Value, Update>(
-  initializeRead: (param: Param) => Function,
+export function atomFamily<Param, Value>(
+  initializeRead: (param: Param) => AnyFunction,
   initializeWrite?: null,
   areEqual?: (a: Param, b: Param) => boolean
 ): never
 
 // primitive atom
-export function atomFamily<Param, Value, Update extends never = never>(
+export function atomFamily<Param, Value>(
   initializeRead: (param: Param) => Value,
   initializeWrite?: null,
   areEqual?: (a: Param, b: Param) => boolean
