@@ -61,9 +61,9 @@
     }
   },
   "optics.mjs": {
-    "bundled": 870,
-    "minified": 418,
-    "gzipped": 260,
+    "bundled": 912,
+    "minified": 458,
+    "gzipped": 271,
     "treeshaked": {
       "rollup": {
         "code": 32,
@@ -95,8 +95,8 @@
     "gzipped": 316
   },
   "optics.js": {
-    "bundled": 956,
-    "minified": 484,
-    "gzipped": 304
+    "bundled": 1028,
+    "minified": 527,
+    "gzipped": 317
   }
 }
