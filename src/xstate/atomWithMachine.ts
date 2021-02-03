@@ -37,7 +37,7 @@ export function atomWithMachine<
   const machineStateAtom = atom(machineWithConfig.initialState)
   machineStateAtom.onMount = (setState) => {
     service.onTransition(setState)
-    service.init()
+    service.start()
     return () => {
       service.stop()
     }
@@ -45,7 +45,10 @@ export function atomWithMachine<
   const machineStateWithServiceAtom = atom(
     (get) => get(machineStateAtom),
     (_get, _set, event: Parameters<typeof service.send>[0]) => {
-      service.send(event)
+      Promise.resolve().then(() => {
+        // XXX invoking async (this might be a bug in jotai core)
+        service.send(event)
+      })
     }
   )
   return machineStateWithServiceAtom
