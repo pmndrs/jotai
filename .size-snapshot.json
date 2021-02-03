@@ -1,10 +1,5 @@
 {
-  "index.iife.js": {
-    "bundled": 25840,
-    "minified": 9112,
-    "gzipped": 3382
-  },
-  "index.mjs": {
+  "index.module.js": {
     "bundled": 19712,
     "minified": 8864,
     "gzipped": 3071,
@@ -18,7 +13,7 @@
       }
     }
   },
-  "utils.mjs": {
+  "utils.module.js": {
     "bundled": 4484,
     "minified": 2101,
     "gzipped": 885,
@@ -32,7 +27,7 @@
       }
     }
   },
-  "devtools.mjs": {
+  "devtools.module.js": {
     "bundled": 2223,
     "minified": 1066,
     "gzipped": 602,
@@ -46,7 +41,7 @@
       }
     }
   },
-  "immer.mjs": {
+  "immer.module.js": {
     "bundled": 868,
     "minified": 426,
     "gzipped": 235,
@@ -60,7 +55,7 @@
       }
     }
   },
-  "optics.mjs": {
+  "optics.module.js": {
     "bundled": 912,
     "minified": 458,
     "gzipped": 271,
