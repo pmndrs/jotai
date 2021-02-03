@@ -65,11 +65,10 @@ export default (args) =>
         createCommonJSConfig('src/query.ts', 'dist/query.js'),
       ]
     : [
-        createDeclarationConfig('src/index.ts', 'dist/modules'),
-        createESMConfig('src/index.ts', 'dist/modules/index.mjs'),
-        createESMConfig('src/utils.ts', 'dist/modules/utils.mjs'),
-        createESMConfig('src/devtools.ts', 'dist/modules/devtools.mjs'),
-        createESMConfig('src/immer.ts', 'dist/modules/immer.mjs'),
-        createESMConfig('src/optics.ts', 'dist/modules/optics.mjs'),
-        createESMConfig('src/query.ts', 'dist/modules/query.mjs'),
+        createESMConfig('src/index.ts', 'dist/index.module.js'),
+        createESMConfig('src/utils.ts', 'dist/utils.module.js'),
+        createESMConfig('src/devtools.ts', 'dist/devtools.module.js'),
+        createESMConfig('src/immer.ts', 'dist/immer.module.js'),
+        createESMConfig('src/optics.ts', 'dist/optics.module.js'),
+        createESMConfig('src/query.ts', 'dist/query.module.js'),
       ]

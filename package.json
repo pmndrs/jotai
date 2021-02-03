@@ -1,31 +1,35 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "👻 Next gen state management that will spook you",
-  "type": "commonjs",
   "main": "index.js",
-  "module": "modules/index.mjs",
+  "module": "index.module.js",
   "types": "index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./modules/index.mjs",
+      "import": "./index.module.js",
       "require": "./index.js",
       "types": "./index.d.ts"
     },
     "./utils": {
-      "import": "./modules/utils.mjs",
+      "import": "./utils.module.js",
       "require": "./utils.js",
       "types": "./utils.d.ts"
     },
+    "./devtools": {
+      "import": "./devtools.module.js",
+      "require": "./devtools.js",
+      "types": "./devtools.d.ts"
+    },
     "./immer": {
-      "import": "./modules/immer.mjs",
+      "import": "./immer.module.js",
       "require": "./immer.js",
       "types": "./immer.d.ts"
     },
     "./optics": {
-      "import": "./modules/optics.mjs",
+      "import": "./optics.module.js",
       "require": "./optics.js",
       "types": "./optics.d.ts"
     },
@@ -50,7 +54,7 @@
     "test": "jest && jest --setupFiles ./tests/setReactExperimental.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx mv dist/modules/src/* dist/modules && shx rm -rf dist/modules/{src,tests} && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/index.d.ts dist/index.module.d.ts && shx cp dist/utils.d.ts dist/utils.module.d.ts && shx cp dist/devtools.d.ts dist/devtools.module.d.ts && shx cp dist/immer.d.ts dist/immer.module.d.ts && shx cp dist/optics.d.ts dist/optics.module.d.ts && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {
