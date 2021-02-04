@@ -45,10 +45,7 @@ export function atomWithMachine<
   const machineStateWithServiceAtom = atom(
     (get) => get(machineStateAtom),
     (_get, _set, event: Parameters<typeof service.send>[0]) => {
-      Promise.resolve().then(() => {
-        // XXX invoking async (this might be a bug in jotai core)
-        service.send(event)
-      })
+      service.send(event)
     }
   )
   return machineStateWithServiceAtom
