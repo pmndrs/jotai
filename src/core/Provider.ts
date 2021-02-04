@@ -2,7 +2,6 @@ import React, {
   MutableRefObject,
   ReactElement,
   createElement,
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -52,11 +51,22 @@ export const Provider: React.FC<{
 
   const [state, setState] = useState(() => createState(initialValues))
   const lastStateRef = useRef(state)
-  const updateState = useCallback((updater: (prev: State) => State) => {
-    lastStateRef.current = updater(lastStateRef.current)
-    contextUpdateRef.current(() => {
-      setState(lastStateRef.current)
-    })
+  const updateState = useMemo(() => {
+    type Updater = (prev: State) => State
+    const queue: Updater[] = []
+    return (updater: Updater) => {
+      queue.push(updater)
+      if (queue.length > 1) {
+        return
+      }
+      while (queue.length) {
+        lastStateRef.current = queue[0](lastStateRef.current)
+        queue.shift()
+      }
+      contextUpdateRef.current(() => {
+        setState(lastStateRef.current)
+      })
+    }
   }, [])
 
   useEffect(() => {
