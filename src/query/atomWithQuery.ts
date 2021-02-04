@@ -75,18 +75,19 @@ export function atomWithQuery<
 ) {
   const parsedOptions = parseQueryArgs(arg1, arg2, arg3)
   const pendingAtom = atom(() => {
-    let resolve = () => {}
-    const promise = new Promise<void>((r) => {
+    let resolve: (data: TData) => void = () => {
+      throw new Error('resolve not initialized')
+    }
+    const promise = new Promise<TData>((r) => {
       resolve = r
     })
     return { promise, resolve }
   })
   const dataAtom = atom<TData | undefined>(undefined)
-  const queryAtom = atom(async (get) => {
-    await get(pendingAtom).promise
+  const queryAtom = atom((get) => {
     const data = get(dataAtom)
-    if (data == undefined) {
-      throw new Error('data is undefined')
+    if (data === undefined) {
+      return get(pendingAtom).promise
     }
     return data
   })
@@ -108,7 +109,7 @@ export function atomWithQuery<
         action.intializer(queryClient)
       } else if (action.type === 'data') {
         set(dataAtom, action.data)
-        get(pendingAtom).resolve()
+        get(pendingAtom).resolve(action.data)
       }
     }
   )
