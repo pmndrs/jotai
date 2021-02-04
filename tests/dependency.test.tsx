@@ -305,3 +305,43 @@ it('should bail out updating if not changed, 2 level', async () => {
   expect(getDataObjFn).toHaveReturnedTimes(2)
   expect(getAnotherCountFn).toHaveReturnedTimes(1)
 })
+
+it('derived atom to update base atom in callback', async () => {
+  const countAtom = atom(1)
+  const doubledAtom = atom(
+    (get) => get(countAtom) * 2,
+    (_get, _set, callback: () => void) => {
+      callback()
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [doubledCount, dispatch] = useAtom(doubledAtom)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
+    return (
+      <>
+        <div>
+          commits: {commits.current}, count: {count}, doubled: {doubledCount}
+        </div>
+        <button onClick={() => dispatch(() => setCount((c) => c + 1))}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('commits: 1, count: 1, doubled: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('commits: 2, count: 2, doubled: 4')
+})
