@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, Atom, Provider } from '../../src/index'
+import { atom, Provider } from '../../src/index'
 import { selectAtom, useAtomValue, useUpdateAtom } from '../../src/utils'
 
 it('selectAtom works as expected', async () => {
@@ -147,10 +147,7 @@ it('useSelector with scope', async () => {
 
   const Selector = () => {
     const a = useAtomValue(
-      selectAtom(
-        bigAtom,
-        useCallback((value) => value.a, [])
-      )
+      useMemo(() => selectAtom(bigAtom, (value) => value.a), [])
     )
     return (
       <>

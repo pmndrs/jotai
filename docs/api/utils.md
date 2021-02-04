@@ -275,18 +275,22 @@ const defaultPerson = {
     year: 2000,
     month: 'Jan',
     day: 1,
+    time: {
+      hour: number,
+      minute: number,
+    },
   },
 }
 
 // Original atom.
-const person = atom(defaultPerson)
+const personAtom = atom(defaultPerson)
 
 // Tracks person.name; updated when person.name gets a new reference
-const name = selectAtom(defaultPerson, (person) => person.name)
+const nameAtom = selectAtom(defaultPerson, (person) => person.name)
 
-// Tracks person.birth; updated when year, month, or day change
+// Tracks person.birth; updated when year, month, day, hour, or minute change
 import deepEqual from 'fast-deep-equal'
-const age = selectAtom(defaultPerson, (person) => person.birth, deeqEqual)
+const birthAtom = selectAtom(defaultPerson, (person) => person.birth, deeqEqual)
 ```
 
 ## useAtomCallback
