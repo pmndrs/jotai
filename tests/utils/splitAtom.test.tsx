@@ -2,10 +2,10 @@ import { atom, Provider, useAtom, WritableAtom, PrimitiveAtom } from 'jotai'
 import React, { useMemo, useEffect, useRef } from 'react'
 import { render, fireEvent, waitFor } from '@testing-library/react'
 
-import { sliceAtom } from '../../src/utils/sliceAtom'
+import { splitAtom } from '../../src/utils/splitAtom'
 
 const useAtomSlice = <Item,>(arrAtom: WritableAtom<Item[], Item[]>) => {
-  const [atoms, remove] = useAtom(useMemo(() => sliceAtom(arrAtom), [arrAtom]))
+  const [atoms, remove] = useAtom(useMemo(() => splitAtom(arrAtom), [arrAtom]))
   return useMemo(
     () => atoms.map((itemAtom) => [itemAtom, () => remove(itemAtom)] as const),
     [atoms, remove]

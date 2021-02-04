@@ -4,7 +4,7 @@ import type { SetStateAction } from '../core/types'
 
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
-export const sliceAtom = <Item, Key = unknown>(
+export const splitAtom = <Item, Key = unknown>(
   arrAtom: WritableAtom<Item[], Item[]>,
   keyExtractor?: (item: Item) => Key
 ) => {
@@ -13,7 +13,7 @@ export const sliceAtom = <Item, Key = unknown>(
   const atomCache = new Map<Key, PrimitiveAtom<Item>>()
   const atomToKey = new WeakMap<PrimitiveAtom<Item>, Key>()
   let prevSliced: PrimitiveAtom<Item>[] | undefined
-  const slicedAtom = atom(
+  const splittedAtom = atom(
     (get) => {
       let nextSliced: PrimitiveAtom<Item>[] = []
       let changed = false
@@ -56,7 +56,7 @@ export const sliceAtom = <Item, Key = unknown>(
       return nextSliced
     },
     (get, set, atomToRemove: PrimitiveAtom<Item>) => {
-      const index = get(slicedAtom).indexOf(atomToRemove)
+      const index = get(splittedAtom).indexOf(atomToRemove)
       if (index >= 0) {
         const key = atomToKey.get(atomToRemove) as Key
         indexCache.delete(key)
@@ -66,5 +66,5 @@ export const sliceAtom = <Item, Key = unknown>(
       }
     }
   )
-  return slicedAtom
+  return splittedAtom
 }
