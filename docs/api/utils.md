@@ -285,13 +285,18 @@ const defaultPerson = {
 // Original atom.
 const personAtom = atom(defaultPerson)
 
-// Tracks person.name; updated when person.name gets a new reference
-const nameAtom = selectAtom(defaultPerson, (person) => person.name)
+// Tracks person.name. Updated when person.name object changes, even
+// if neither name.first nor name.last actually change.
+const nameAtom = selectAtom(personAtom, (person) => person.name)
 
-// Tracks person.birth; updated when year, month, day, hour, or minute change
-import deepEqual from 'fast-deep-equal'
-const birthAtom = selectAtom(defaultPerson, (person) => person.birth, deeqEqual)
+// Tracks person.birth. Updated when year, month, day, hour, or minute changes.
+// Use of deepEquals means that this atom doesn't update if birth field is
+// replaced with a new object containing the same data. E.g., if person is re-read
+// from a database.
+const birthAtom = selectAtom(personAtom, (person) => person.birth, deepEquals)
 ```
+
+Ref: https://codesandbox.io/s/react-typescript-forked-8czek
 
 ## useAtomCallback
 
