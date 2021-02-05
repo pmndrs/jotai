@@ -244,74 +244,59 @@ const todoFamily = atomFamily(
 
 https://codesandbox.io/s/react-typescript-forked-8zfrn
 
-## useSelector
+## selectAtom
 
 Ref: https://github.com/pmndrs/jotai/issues/36
 
-### Usage
-
 ```js
-useSelector(anAtom, selector, equalityFn)
+function selectAtom<Value, Slice>(
+  anAtom: Atom<Value>,
+  selector: (v: Value) => Slice,
+  equalityFn: (a: Slice, b: Slice) => boolean = Object.is
+): Atom<Slice>
 ```
 
-Selector and equalityFn must be stable (should be wrapped with useCallback).
-The equalityFn is optional.
+This function creates a derived atom whose value is a function of the original atom's value,
+determined by `selector.`
+The selector function runs whenever the original atom changes; it updates the derived atom
+only if `equalityFn` reports that the derived value has changed.
+By default, `equalityFn` is reference equality, but you can supply your favorite deep-equals
+function to stabilize the derived value where necessary.
 
 ### Examples
 
-```jsx
-import { Provider } from 'jotai'
-import { useSelector, atomWithReducer, useUpdateAtom } from 'jotai/utils'
-
-const initialState = {
-  count: 0,
-  text: 'hello',
+```js
+const defaultPerson = {
+  name: {
+    first: 'Jane',
+    last: 'Doe',
+  },
+  birth: {
+    year: 2000,
+    month: 'Jan',
+    day: 1,
+    time: {
+      hour: number,
+      minute: number,
+    },
+  },
 }
 
-const reducer = (state, action) => {
-  if (action.type === 'INC') {
-    return { ...state, count: state.count + 1 }
-  } else if (action.type === 'SET_TEXT') {
-    return { ...state, text: action.text }
-  } else {
-    throw Error('no such action')
-  }
-}
+// Original atom.
+const personAtom = atom(defaultPerson)
 
-const stateAtom = atomWithReducer(initialState, reducer)
+// Tracks person.name. Updated when person.name object changes, even
+// if neither name.first nor name.last actually change.
+const nameAtom = selectAtom(personAtom, (person) => person.name)
 
-const selectCount = (state: State) => state.count
-
-const Counter = () => {
-  const dispatch = useUpdateAtom(stateAtom)
-  const count = useSelector(stateAtom, selectCount)
-  return (
-    <div>
-      {count} <button onClick={() => dispatch({ type: 'INC' })}>+1</button>
-    </div>
-  )
-}
-
-const selectText = (state: State) => state.text
-
-const TextBox = () => {
-  const dispatch = useUpdateAtom(stateAtom)
-  const text = useSelector(stateAtom, selectText)
-  return (
-    <div>
-      {text}{' '}
-      <input
-        value={text}
-        onChange={(e) => dispatch({ type: 'SET_TEXT', text: e.target.value })}
-      />
-    </div>
-  )
-}
+// Tracks person.birth. Updated when year, month, day, hour, or minute changes.
+// Use of deepEquals means that this atom doesn't update if birth field is
+// replaced with a new object containing the same data. E.g., if person is re-read
+// from a database.
+const birthAtom = selectAtom(personAtom, (person) => person.birth, deepEquals)
 ```
 
-### Codesandbox
-
-https://codesandbox.io/s/react-typescript-forked-i4880
+Ref: https://codesandbox.io/s/react-typescript-forked-8czek
 
 ## useAtomCallback
 
