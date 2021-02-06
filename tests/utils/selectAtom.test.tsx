@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, atom } from '../../src/index'
-import { useSelector, useUpdateAtom } from '../../src/utils'
+import { atom, Provider } from '../../src/index'
+import { selectAtom, useAtomValue, useUpdateAtom } from '../../src/utils'
 
-it('useSelector works as expected', async () => {
+it('selectAtom works as expected', async () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })
+  const littleAtom = selectAtom(bigAtom, (v) => v.a)
 
   const Parent = () => {
     const setValue = useUpdateAtom(bigAtom)
@@ -21,10 +22,7 @@ it('useSelector works as expected', async () => {
   }
 
   const Selector = () => {
-    const a = useSelector(
-      bigAtom,
-      useCallback((value) => value.a, [])
-    )
+    const a = useAtomValue(littleAtom)
     return (
       <>
         <div>a: {a}</div>
@@ -51,6 +49,11 @@ it('useSelector works as expected', async () => {
 
 it('do not update unless equality function says value has changed', async () => {
   const bigAtom = atom({ a: 0 })
+  const littleAtom = selectAtom(
+    bigAtom,
+    (value) => value,
+    (left, right) => JSON.stringify(left) === JSON.stringify(right)
+  )
 
   const useCommitCount = () => {
     const rerenderCountRef = useRef(0)
@@ -78,14 +81,7 @@ it('do not update unless equality function says value has changed', async () => 
   }
 
   const Selector = () => {
-    const value = useSelector(
-      bigAtom,
-      useCallback((value) => value, []),
-      useCallback(
-        (left, right) => JSON.stringify(left) === JSON.stringify(right),
-        []
-      )
-    )
+    const value = useAtomValue(littleAtom)
     const commits = useCommitCount()
     return (
       <>
@@ -150,9 +146,8 @@ it('useSelector with scope', async () => {
   }
 
   const Selector = () => {
-    const a = useSelector(
-      bigAtom,
-      useCallback((value) => value.a, [])
+    const a = useAtomValue(
+      useMemo(() => selectAtom(bigAtom, (value) => value.a), [])
     )
     return (
       <>
