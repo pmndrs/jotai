@@ -162,6 +162,11 @@ The `updateValue` takes just one argument, which will be passed to the third arg
 
 ## useBridge/Bridge
 
+Libraries such as react-three-fiber use custom renderer/reconciler a.k.a multiple roots.
+Contexts don't go beyond different renderer, so it requires a workaround.
+Bridge is a known technique for the escape hatch.
+See [this](https://github.com/pmndrs/react-three-fiber/issues/43) for more information.
+
 ```ts
 const useBridge = (scope?: Scope) => [Actions, State]
 ```
