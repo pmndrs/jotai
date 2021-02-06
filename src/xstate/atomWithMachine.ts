@@ -91,16 +91,9 @@ export function atomWithMachine<
   }
   const machineStateWithServiceAtom = atom(
     (get) => get(machineStateAtom),
-    (
-      get,
-      _set,
-      eventWithPayload: {
-        type: Parameters<Service['send']>[0]
-      } & Parameters<Service['send']>[1]
-    ) => {
+    (get, _set, event: Parameters<Service['send']>[0]) => {
       const { service } = get(machineAtom)
-      const { type, ...payload } = eventWithPayload
-      service.send(type, payload)
+      service.send(event)
     }
   )
   return machineStateWithServiceAtom
