@@ -107,3 +107,87 @@ it('no unneccesary updates when updating atoms', async () => {
   expect(catBox.checked).toBe(true)
   expect(dragonBox.checked).toBe(true)
 })
+
+it('no unneccesary updates when updating atoms', async () => {
+  const todosAtom = atom<Array<TodoItem>>([
+    { task: 'get cat food', checked: false },
+    { task: 'get dragon food', checked: false },
+    { task: 'help nana', checked: false },
+  ])
+
+  const TaskList = ({ atom }: { atom: typeof todosAtom }) => {
+    const atoms = useAtomSlice(atom)
+    return (
+      <>
+        {atoms.map(([atom, remove], index) => (
+          <TaskItem key={index} onRemove={remove} atom={atom} />
+        ))}
+      </>
+    )
+  }
+
+  const TaskItem = ({
+    atom,
+    onRemove,
+  }: {
+    atom: PrimitiveAtom<TodoItem>
+    onRemove: () => void
+  }) => {
+    const [value, onChange] = useAtom(atom)
+    const toggle = () =>
+      onChange((value) => ({ ...value, checked: !value.checked }))
+    return (
+      <li>
+        <div>{value.task}</div>
+        <button data-testid={`${value.task}-removebutton`} onClick={onRemove}>
+          X
+        </button>
+      </li>
+    )
+  }
+
+  const { findByTestId, queryByText } = render(
+    <Provider>
+      <TaskList atom={todosAtom} />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    expect(queryByText('get cat food')).toBeTruthy()
+    expect(queryByText('get dragon food')).toBeTruthy()
+    expect(queryByText('help nana')).toBeTruthy()
+  })
+
+  const removeCatFood = (await findByTestId(
+    'get cat food-removebutton'
+  )) as HTMLButtonElement
+  fireEvent.click(removeCatFood)
+
+  await waitFor(() => {
+    expect(queryByText('get cat food')).toBeFalsy()
+    expect(queryByText('get dragon food')).toBeTruthy()
+    expect(queryByText('help nana')).toBeTruthy()
+  })
+
+  const removeDragonFood = (await findByTestId(
+    'get dragon food-removebutton'
+  )) as HTMLButtonElement
+  fireEvent.click(removeDragonFood)
+
+  await waitFor(() => {
+    expect(queryByText('get cat food')).toBeFalsy()
+    expect(queryByText('get dragon food')).toBeFalsy()
+    expect(queryByText('help nana')).toBeTruthy()
+  })
+
+  const removeHelpNana = (await findByTestId(
+    'help nana-removebutton'
+  )) as HTMLButtonElement
+  fireEvent.click(removeHelpNana)
+
+  await waitFor(() => {
+    expect(queryByText('get cat food')).toBeFalsy()
+    expect(queryByText('get dragon food')).toBeFalsy()
+    expect(queryByText('help nana')).toBeFalsy()
+  })
+})
