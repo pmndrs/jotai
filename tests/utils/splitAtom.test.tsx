@@ -1,16 +1,8 @@
-import { atom, Provider, useAtom, WritableAtom, PrimitiveAtom } from 'jotai'
+import { atom, Provider, useAtom, PrimitiveAtom } from 'jotai'
 import React, { useMemo, useEffect, useRef } from 'react'
 import { render, fireEvent, waitFor } from '@testing-library/react'
 
 import { splitAtom } from '../../src/utils/splitAtom'
-
-const useAtomSlice = <Item,>(arrAtom: WritableAtom<Item[], Item[]>) => {
-  const [atoms, remove] = useAtom(useMemo(() => splitAtom(arrAtom), [arrAtom]))
-  return useMemo(
-    () => atoms.map((itemAtom) => [itemAtom, () => remove(itemAtom)] as const),
-    [atoms, remove]
-  )
-}
 
 type TodoItem = { task: string; checked?: boolean }
 
@@ -27,26 +19,32 @@ it('no unneccesary updates when updating atoms', async () => {
     { task: 'get dragon food', checked: false },
   ])
 
-  const TaskList = ({ atom }: { atom: typeof todosAtom }) => {
-    const atoms = useAtomSlice(atom)
+  const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
+    const [atoms, remove] = useAtom(
+      useMemo(() => splitAtom(listAtom), [listAtom])
+    )
     const updates = useCommitCount()
     return (
       <>
         TaskListUpdates: {updates}
-        {atoms.map(([atom, remove], index) => (
-          <TaskItem key={index} onRemove={remove} atom={atom} />
+        {atoms.map((anAtom, index) => (
+          <TaskItem
+            key={index}
+            onRemove={() => remove(anAtom)}
+            itemAtom={anAtom}
+          />
         ))}
       </>
     )
   }
 
   const TaskItem = ({
-    atom,
+    itemAtom,
   }: {
-    atom: PrimitiveAtom<TodoItem>
+    itemAtom: PrimitiveAtom<TodoItem>
     onRemove: () => void
   }) => {
-    const [value, onChange] = useAtom(atom)
+    const [value, onChange] = useAtom(itemAtom)
     const toggle = () =>
       onChange((value) => ({ ...value, checked: !value.checked }))
     const updates = useCommitCount()
@@ -65,7 +63,7 @@ it('no unneccesary updates when updating atoms', async () => {
 
   const { findByTestId, getByText } = render(
     <Provider>
-      <TaskList atom={todosAtom} />
+      <TaskList listAtom={todosAtom} />
     </Provider>
   )
 
@@ -115,25 +113,31 @@ it('removing atoms', async () => {
     { task: 'help nana', checked: false },
   ])
 
-  const TaskList = ({ atom }: { atom: typeof todosAtom }) => {
-    const atoms = useAtomSlice(atom)
+  const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
+    const [atoms, remove] = useAtom(
+      useMemo(() => splitAtom(listAtom), [listAtom])
+    )
     return (
       <>
-        {atoms.map(([atom, remove], index) => (
-          <TaskItem key={index} onRemove={remove} atom={atom} />
+        {atoms.map((anAtom, index) => (
+          <TaskItem
+            key={index}
+            onRemove={() => remove(anAtom)}
+            itemAtom={anAtom}
+          />
         ))}
       </>
     )
   }
 
   const TaskItem = ({
-    atom,
+    itemAtom,
     onRemove,
   }: {
-    atom: PrimitiveAtom<TodoItem>
+    itemAtom: PrimitiveAtom<TodoItem>
     onRemove: () => void
   }) => {
-    const [value] = useAtom(atom)
+    const [value] = useAtom(itemAtom)
     return (
       <li>
         <div>{value.task}</div>
@@ -146,7 +150,7 @@ it('removing atoms', async () => {
 
   const { findByTestId, queryByText } = render(
     <Provider>
-      <TaskList atom={todosAtom} />
+      <TaskList listAtom={todosAtom} />
     </Provider>
   )
 
