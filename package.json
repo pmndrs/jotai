@@ -1,13 +1,17 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.13.3",
+  "version": "0.14.0",
   "description": "👻 Next gen state management that will spook you",
   "main": "index.js",
   "module": "index.module.js",
   "types": "index.d.ts",
   "typesVersions": {
-    "<4.0": { "*": ["ts3.4/*"] }
+    "<4.0": {
+      "*": [
+        "ts3.4/*"
+      ]
+    }
   },
   "exports": {
     "./package.json": "./package.json",
