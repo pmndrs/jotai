@@ -108,7 +108,7 @@ it('no unneccesary updates when updating atoms', async () => {
   expect(dragonBox.checked).toBe(true)
 })
 
-it('no unneccesary updates when updating atoms', async () => {
+it('removing atoms', async () => {
   const todosAtom = atom<Array<TodoItem>>([
     { task: 'get cat food', checked: false },
     { task: 'get dragon food', checked: false },
@@ -133,9 +133,7 @@ it('no unneccesary updates when updating atoms', async () => {
     atom: PrimitiveAtom<TodoItem>
     onRemove: () => void
   }) => {
-    const [value, onChange] = useAtom(atom)
-    const toggle = () =>
-      onChange((value) => ({ ...value, checked: !value.checked }))
+    const [value] = useAtom(atom)
     return (
       <li>
         <div>{value.task}</div>

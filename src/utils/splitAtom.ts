@@ -49,7 +49,7 @@ export const splitAtom = <Item, Key = unknown>(
         atomToKey.set(itemAtom, key)
         nextSliced[index] = itemAtom
       })
-      if (prevSliced && !changed) {
+      if (prevSliced && !changed && prevSliced.length === nextSliced.length) {
         return prevSliced
       }
       prevSliced = nextSliced
