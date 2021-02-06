@@ -83,7 +83,7 @@ export function atomWithQuery<
     })
     return { promise, resolve, fullfilled: false }
   })
-  const dataAtom = atom<TData | undefined>(undefined)
+  const dataAtom = atom<TData | null>(null)
   const observerAtom = atom(
     null,
     (
@@ -142,11 +142,8 @@ export function atomWithQuery<
     if (!pending.fullfilled) {
       return pending.promise
     }
-    const data = get(dataAtom)
-    if (data === undefined) {
-      throw new Error('data is undefined')
-    }
-    return data
+    // we are sure that dataAtom is updated
+    return get(dataAtom) as TData
   })
   return queryAtom
 }
