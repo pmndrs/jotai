@@ -81,7 +81,7 @@ export function atomWithQuery<
     const promise = new Promise<TData>((r) => {
       resolve = r
     })
-    return { promise, resolve, fullfilled: false }
+    return { promise, resolve, fulfilled: false }
   })
   const dataAtom = atom<TData | null>(null)
   const observerAtom = atom(
@@ -103,9 +103,9 @@ export function atomWithQuery<
       } else if (action.type === 'data') {
         set(dataAtom, action.data)
         const pending = get(pendingAtom)
-        if (!pending.fullfilled) {
+        if (!pending.fulfilled) {
           pending.resolve(action.data)
-          pending.fullfilled = true
+          pending.fulfilled = true
         }
       }
     }
@@ -139,7 +139,7 @@ export function atomWithQuery<
   const queryAtom = atom((get) => {
     get(observerAtom)
     const pending = get(pendingAtom)
-    if (!pending.fullfilled) {
+    if (!pending.fulfilled) {
       return pending.promise
     }
     // we are sure that dataAtom is updated
