@@ -345,3 +345,36 @@ it('derived atom to update base atom in callback', async () => {
   fireEvent.click(getByText('button'))
   await findByText('commits: 2, count: 2, doubled: 4')
 })
+
+it('can read sync derived atom in write without initializing', async () => {
+  const countAtom = atom(1)
+  const doubledAtom = atom((get) => get(countAtom) * 2)
+  const addAtom = atom(null, (get, set, num: number) => {
+    set(countAtom, get(doubledAtom) / 2 + num)
+  })
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    const [, add] = useAtom(addAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => add(1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 3')
+})
