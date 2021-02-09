@@ -407,34 +407,37 @@ const writeAtomState = <Value, Update>(
   try {
     const promiseOrVoid = atom.write(
       ((a: AnyAtom) => {
-        const aState = getAtomState(nextState, a)
-        if (!aState) {
-          if (hasInitialValue(a)) {
-            return a.init
-          }
+        // We pass dummy updateState and throw away nextState.
+        // There might be a better implementation.
+        const [aState] = readAtomState(nextState, () => {}, a)
+        if (aState.re) {
+          throw aState.re // read error
+        }
+        if (aState.rp) {
           if (
             typeof process === 'object' &&
             process.env.NODE_ENV !== 'production'
           ) {
             console.warn(
-              'Unable to read an atom without initial value in write function. Please useAtom in advance.',
+              'Reading pending atom state in write operation. We throw a promise for now.',
               a
             )
           }
-          throw new Error('uninitialized atom')
+          throw aState.rp // read promise
+        }
+        if ('v' in aState) {
+          return aState.v
         }
         if (
-          aState.rp &&
           typeof process === 'object' &&
           process.env.NODE_ENV !== 'production'
         ) {
-          // TODO will try to detect this
           console.warn(
-            'Reading pending atom state in write operation. We need to detect this and fallback. Please file an issue with repro.',
+            '[Bug] no value found while reading atom in write operation. This probably a bug.',
             a
           )
         }
-        return aState.v
+        throw new Error('no value found')
       }) as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
         if (a === atom) {
