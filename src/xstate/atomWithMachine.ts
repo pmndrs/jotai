@@ -16,7 +16,9 @@ export function atomWithMachine<
   TEvent extends EventObject,
   TTypestate extends Typestate<TContext> = { value: any; context: TContext }
 >(
-  getMachine: (get: Getter) => StateMachine<TContext, any, TEvent, TTypestate>,
+  getMachine:
+    | StateMachine<TContext, any, TEvent, TTypestate>
+    | ((get: Getter) => StateMachine<TContext, any, TEvent, TTypestate>),
   options: Partial<InterpreterOptions> &
     Partial<MachineOptions<TContext, TEvent>> = {}
 ) {
@@ -43,7 +45,8 @@ export function atomWithMachine<
   )
   const machineAtom = atom(
     (get) => {
-      const machine = getMachine(get)
+      const machine =
+        typeof getMachine === 'function' ? getMachine(get) : getMachine
       const machineWithConfig = machine.withConfig(
         machineConfig,
         machine.context

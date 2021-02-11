@@ -95,9 +95,9 @@
     "gzipped": 317
   },
   "xstate.module.js": {
-    "bundled": 2256,
-    "minified": 937,
-    "gzipped": 497,
+    "bundled": 2304,
+    "minified": 960,
+    "gzipped": 510,
     "treeshaked": {
       "rollup": {
         "code": 29,
@@ -109,8 +109,8 @@
     }
   },
   "xstate.js": {
-    "bundled": 2711,
-    "minified": 1176,
-    "gzipped": 578
+    "bundled": 2759,
+    "minified": 1199,
+    "gzipped": 591
   }
 }
