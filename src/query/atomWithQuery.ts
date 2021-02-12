@@ -131,7 +131,7 @@ export function atomWithQuery<
         set(pendingAtom, { type: 'reset' })
         const pending = get(pendingAtom)
         if (!pending.fulfilled) {
-          pending.promise.then()
+          pending.promise
         }
         queryClient.refetchQueries()
       }
