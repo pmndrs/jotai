@@ -1,3 +1,4 @@
+import { WritableAtom } from './../core/types'
 import { Atom, atom } from 'jotai'
 import {
   QueryKey,
@@ -7,6 +8,7 @@ import {
   QueryObserverOptions,
 } from 'react-query'
 
+type ResultActions = { type: 'refetch' }
 const queryClientAtom = atom<QueryClient | null>(null)
 
 const isQueryKey = (value: any): value is QueryKey => {
@@ -36,7 +38,7 @@ export function atomWithQuery<
   TQueryData = TQueryFnData
 >(
   options: QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
-): Atom<TData>
+): WritableAtom<TData, ResultActions>
 
 export function atomWithQuery<
   TQueryFnData = unknown,
@@ -46,7 +48,7 @@ export function atomWithQuery<
 >(
   queryKey: QueryKey,
   options?: QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
-): Atom<TData>
+): WritableAtom<TData, ResultActions>
 
 export function atomWithQuery<
   TQueryFnData = unknown,
@@ -57,7 +59,7 @@ export function atomWithQuery<
   queryKey: QueryKey,
   queryFn: QueryFunction<TQueryFnData>,
   options?: QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
-): Atom<TData>
+): WritableAtom<TData, ResultActions>
 
 export function atomWithQuery<
   TQueryFnData,
@@ -74,15 +76,28 @@ export function atomWithQuery<
   arg3?: QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
 ) {
   const parsedOptions = parseQueryArgs(arg1, arg2, arg3)
-  const pendingAtom = atom(() => {
-    let resolve: (data: TData) => void = () => {
-      throw new Error('uninitialized resolve')
+  const pendingAtom = atom(
+    () => {
+      let resolve: (data: TData) => void = () => {
+        throw new Error('uninitialized resolve')
+      }
+      let promise = new Promise<TData>((r) => {
+        resolve = r
+      })
+      return { promise, resolve, fulfilled: false }
+    },
+    (get, set, action: { type: 'reset' }) => {
+      if (action.type === 'reset') {
+        let resolve: (data: TData) => void = () => {
+          throw new Error('uninitialized resolve')
+        }
+        let promise = new Promise<TData>((r) => {
+          resolve = r
+        })
+        set(pendingAtom, { promise, resolve, fulfilled: false })
+      }
     }
-    const promise = new Promise<TData>((r) => {
-      resolve = r
-    })
-    return { promise, resolve, fulfilled: false }
-  })
+  )
   const dataAtom = atom<TData | null>(null)
   const observerAtom = atom(
     null,
@@ -92,6 +107,7 @@ export function atomWithQuery<
       action:
         | { type: 'init'; intializer: (queryClient: QueryClient) => void }
         | { type: 'data'; data: TData }
+        | ResultActions
     ) => {
       if (action.type === 'init') {
         let queryClient = get(queryClientAtom)
@@ -107,6 +123,17 @@ export function atomWithQuery<
           pending.resolve(action.data)
           pending.fulfilled = true
         }
+      } else if (action.type === 'refetch') {
+        const queryClient = get(queryClientAtom)
+        if (queryClient === null) {
+          throw new Error('uninitialized query atom')
+        }
+        set(pendingAtom, { type: 'reset' })
+        const pending = get(pendingAtom)
+        if (!pending.fulfilled) {
+          pending.promise.then()
+        }
+        queryClient.refetchQueries()
       }
     }
   )
@@ -136,14 +163,21 @@ export function atomWithQuery<
       unsub = false
     }
   }
-  const queryAtom = atom((get) => {
-    get(observerAtom)
-    const pending = get(pendingAtom)
-    if (!pending.fulfilled) {
-      return pending.promise
+  const queryAtom = atom(
+    (get) => {
+      get(observerAtom)
+      const pending = get(pendingAtom)
+      if (!pending.fulfilled) {
+        return pending.promise
+      }
+      // we are sure that dataAtom is updated
+      return get(dataAtom) as TData
+    },
+    (_, set, action: ResultActions) => {
+      if (action.type === 'refetch') {
+        set(observerAtom, { type: 'refetch' })
+      }
     }
-    // we are sure that dataAtom is updated
-    return get(dataAtom) as TData
-  })
+  )
   return queryAtom
 }
