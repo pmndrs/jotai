@@ -169,6 +169,7 @@
     "react": ">=16.8",
     "react-dom": "*",
     "react-native": "*",
+    "react-query": "*",
     "scheduler": ">=0.19"
   },
   "peerDependenciesMeta": {
@@ -182,6 +183,9 @@
       "optional": true
     },
     "react-native": {
+      "optional": true
+    },
+    "react-query": {
       "optional": true
     }
   }
