@@ -48,7 +48,10 @@ export function atomWithQuery<
   const pendingAtom = atom(createPending<TData>())
   const dataAtom = atom<TData | null>(null)
   const queryAtom = atom<
-    QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>,
+    [
+      QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>,
+      WritableAtom<null, any>
+    ],
     ResultActions
   >(
     (get) => {
@@ -99,11 +102,11 @@ export function atomWithQuery<
           unsub = false
         }
       }
-      return options
+      return [options, observerAtom]
     },
     async (get, set, action) => {
       if (action.type === 'refetch') {
-        const options = get(queryAtom)
+        const [options] = get(queryAtom)
         set(pendingAtom, createPending<TData>()) // reset pending
         await getQueryClient(get, set).refetchQueries([options.queryKey])
       }
@@ -111,7 +114,8 @@ export function atomWithQuery<
   )
   const queryDataAtom = atom<TData, ResultActions>(
     (get) => {
-      get(queryAtom)
+      const [, observerAtom] = get(queryAtom)
+      get(observerAtom) // use it here
       const data = get(dataAtom)
       const pending = get(pendingAtom)
       if (!pending.fulfilled) {
