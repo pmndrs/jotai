@@ -146,13 +146,13 @@ export function atomWithQuery<
   const queryAtom = atom(
     (get) => {
       get(observerAtom)
-      get(dataAtom)
+      const data = get(dataAtom)
       const pending = get(pendingAtom)
       if (!pending.fulfilled) {
         return pending.promise
       }
-      // we are sure that dataAtom is updated
-      return get(dataAtom) as TData
+      // we are sure that data is not null
+      return data as TData
     },
     (get, set, action: ResultActions) => {
       if (action.type === 'refetch') {
