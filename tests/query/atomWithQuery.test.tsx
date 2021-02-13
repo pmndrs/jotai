@@ -1,5 +1,5 @@
 import React from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { Provider, useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
@@ -70,7 +70,5 @@ it('query refetch', async () => {
   fireEvent.click(getByText('refetch'))
   expect(mockFetch).toBeCalledTimes(2)
   await findByText('loading')
-  await waitFor(() => {
-    getByText('count: 1')
-  })
+  await findByText('count: 1')
 })
