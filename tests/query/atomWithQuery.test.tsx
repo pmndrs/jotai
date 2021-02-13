@@ -5,9 +5,12 @@ import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
 
 it('query basic test', async () => {
-  const countAtom = atomWithQuery('count', async () => {
-    return await fakeFetch({ count: 0 })
-  })
+  const countAtom = atomWithQuery(() => ({
+    queryKey: 'count',
+    queryFn: async () => {
+      return await fakeFetch({ count: 0 })
+    },
+  }))
   const Counter: React.FC = () => {
     const [
       {
@@ -36,11 +39,14 @@ it('query basic test', async () => {
 it('query refetch', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
-  const countAtom = atomWithQuery('count', async () => {
-    const response = await mockFetch({ count })
-    count++
-    return response
-  })
+  const countAtom = atomWithQuery(() => ({
+    queryKey: 'count',
+    queryFn: async () => {
+      const response = await mockFetch({ count })
+      count++
+      return response
+    },
+  }))
   const Counter: React.FC = () => {
     const [
       {
