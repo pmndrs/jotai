@@ -146,6 +146,7 @@ export function atomWithQuery<
   const queryAtom = atom(
     (get) => {
       get(observerAtom)
+      get(dataAtom)
       const pending = get(pendingAtom)
       if (!pending.fulfilled) {
         return pending.promise
