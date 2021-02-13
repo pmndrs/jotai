@@ -164,12 +164,20 @@
     "xstate": "^4.16.0"
   },
   "peerDependencies": {
+    "immer": "*",
+    "optics-ts": "*",
     "react": ">=16.8",
     "react-dom": "*",
     "react-native": "*",
     "scheduler": ">=0.19"
   },
   "peerDependenciesMeta": {
+    "immer": {
+      "optional": true
+    },
+    "optics-ts": {
+      "optional": true
+    },
     "react-dom": {
       "optional": true
     },
