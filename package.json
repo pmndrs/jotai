@@ -169,7 +169,8 @@
     "react": ">=16.8",
     "react-dom": "*",
     "react-native": "*",
-    "scheduler": ">=0.19"
+    "scheduler": ">=0.19",
+    "xstate": "*"
   },
   "peerDependenciesMeta": {
     "immer": {
@@ -182,6 +183,9 @@
       "optional": true
     },
     "react-native": {
+      "optional": true
+    },
+    "xstate": {
       "optional": true
     }
   }
