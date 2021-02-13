@@ -161,10 +161,10 @@ export function atomWithQuery<
       // we are sure that data is not null
       return data as TData
     },
-    (get, set, action: ResultActions) => {
+    async (get, set, action: ResultActions) => {
       if (action.type === 'refetch') {
         set(pendingAtom, createPending<TData>()) // reset pending
-        getQueryClient(get, set).refetchQueries([parsedOptions.queryKey])
+        await getQueryClient(get, set).refetchQueries([parsedOptions.queryKey])
       }
     }
   )
