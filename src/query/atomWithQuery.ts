@@ -23,18 +23,22 @@ const getQueryClient = (get: Getter, set: Setter) => {
 const createPending = <T>() => {
   const pending: {
     fulfilled: boolean
-    promise: Promise<T>
-    resolve: (data: T) => void
+    promise?: Promise<T>
+    resolve?: (data: T) => void
   } = {
     fulfilled: false,
-  } as any
+  }
   pending.promise = new Promise<T>((resolve) => {
     pending.resolve = (data: T) => {
       resolve(data)
       pending.fulfilled = true
     }
   })
-  return pending
+  return pending as {
+    fulfilled: boolean
+    promise: Promise<T>
+    resolve: (data: T) => void
+  }
 }
 
 const isQueryKey = (value: any): value is QueryKey => {
