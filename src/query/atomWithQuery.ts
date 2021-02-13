@@ -20,6 +20,23 @@ const getQueryClient = (get: Getter, set: Setter) => {
   return queryClient
 }
 
+const createPending = <T>() => {
+  const pending: {
+    fulfilled: boolean
+    promise: Promise<T>
+    resolve: (data: T) => void
+  } = {
+    fulfilled: false,
+  } as any
+  pending.promise = new Promise<T>((resolve) => {
+    pending.resolve = (data: T) => {
+      resolve(data)
+      pending.fulfilled = true
+    }
+  })
+  return pending
+}
+
 const isQueryKey = (value: any): value is QueryKey => {
   return typeof value === 'string' || Array.isArray(value)
 }
@@ -85,16 +102,7 @@ export function atomWithQuery<
   arg3?: QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
 ) {
   const parsedOptions = parseQueryArgs(arg1, arg2, arg3)
-  const createPromise = () => {
-    let resolve: (data: TData) => void = () => {
-      throw new Error('uninitialized resolve')
-    }
-    let promise = new Promise<TData>((r) => {
-      resolve = r
-    })
-    return { promise, resolve, fulfilled: false }
-  }
-  const pendingAtom = atom(createPromise())
+  const pendingAtom = atom(createPending<TData>())
   const dataAtom = atom<TData | null>(null)
   const observerAtom = atom(
     null,
@@ -112,7 +120,6 @@ export function atomWithQuery<
         const pending = get(pendingAtom)
         if (!pending.fulfilled) {
           pending.resolve(action.data)
-          pending.fulfilled = true
         }
       }
     }
@@ -156,7 +163,7 @@ export function atomWithQuery<
     },
     (get, set, action: ResultActions) => {
       if (action.type === 'refetch') {
-        set(pendingAtom, createPromise()) // reset promise
+        set(pendingAtom, createPending<TData>()) // reset pending
         getQueryClient(get, set).refetchQueries([parsedOptions.queryKey])
       }
     }
