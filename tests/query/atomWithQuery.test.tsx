@@ -1,6 +1,6 @@
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, useAtom } from '../../src/'
+import { Provider, atom, useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
 
@@ -87,21 +87,29 @@ it('query loading', async () => {
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 1000)
       count++
-      return await response
+      return response
     },
   }))
+  const derivedAtom = atom((get) => get(countAtom))
+  const dispatchAtom = atom(null, (_get, set, action: any) =>
+    set(countAtom, action)
+  )
   const Counter: React.FC = () => {
     const [
       {
         response: { count },
       },
-      dispatch,
-    ] = useAtom(countAtom)
+    ] = useAtom(derivedAtom)
     return (
       <>
         <div>count: {count}</div>
-        <button onClick={() => dispatch({ type: 'refetch' })}>refetch</button>
       </>
+    )
+  }
+  const RefreshButton: React.FC = () => {
+    const [, dispatch] = useAtom(dispatchAtom)
+    return (
+      <button onClick={() => dispatch({ type: 'refetch' })}>refetch</button>
     )
   }
 
@@ -110,6 +118,7 @@ it('query loading', async () => {
       <React.Suspense fallback="loading">
         <Counter />
       </React.Suspense>
+      <RefreshButton />
     </Provider>
   )
 
