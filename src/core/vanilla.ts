@@ -258,15 +258,16 @@ const readAtomState = <Value>(
     }
   } catch (errorOrPromise) {
     if (errorOrPromise instanceof Promise) {
-      promise = errorOrPromise.then(() => {
+      errorOrPromise.then(() => {
         updateState((prev) => {
           const [, nextNextState] = readAtomState(prev, updateState, atom, true)
           if (nextNextState.w.size) {
-            return nextNextState
+            return copyWip(prev, nextNextState)
           }
           return prev
         })
       })
+      promise = errorOrPromise
     } else if (errorOrPromise instanceof Error) {
       error = errorOrPromise
     } else {
