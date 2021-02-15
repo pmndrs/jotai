@@ -405,3 +405,47 @@ it('async get with another dep and useEffect on parent', async () => {
     getByText('async: 2')
   })
 })
+
+it('set promise atom value on write (#304)', async () => {
+  const countAtom = atom<any>(Promise.resolve(0))
+  countAtom.debugLabel = 'countAtom'
+  const asyncAtom = atom(null, (get, set, _arg) => {
+    set(
+      countAtom,
+      Promise.resolve(get(countAtom)).then((c) => c + 1)
+    )
+  })
+  asyncAtom.debugLabel = 'asyncAtom'
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  const Parent: React.FC = () => {
+    const [, dispatch] = useAtom(asyncAtom)
+    return (
+      <>
+        <Counter />
+        <button onClick={dispatch}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Parent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('count: 1')
+})
