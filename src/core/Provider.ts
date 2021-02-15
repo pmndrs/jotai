@@ -10,18 +10,15 @@ import React, {
 } from 'react'
 import { useContextUpdate } from 'use-context-selector'
 
-import { Atom, WritableAtom, AnyAtom, Scope } from './types'
+import { AnyAtom, Scope } from './types'
 import {
   AtomState,
   State,
+  UpdateState,
   createState,
-  addAtom,
-  delAtom,
-  readAtom,
-  writeAtom,
   commitState,
 } from './vanilla'
-import { getContexts } from './contexts'
+import { getStoreContext } from './contexts'
 
 // guessing if it's react experimental channel
 const isReactExperimental =
@@ -34,7 +31,7 @@ const defaultContextUpdate: ContextUpdate = (f) => f()
 
 const InnerProvider: React.FC<{
   r: MutableRefObject<ContextUpdate | undefined>
-  c: ReturnType<typeof getContexts>[1]
+  c: ReturnType<typeof getStoreContext>
 }> = ({ r, c, children }) => {
   const contextUpdate = useContextUpdate(c)
   if (isReactExperimental && r.current === defaultContextUpdate) {
@@ -52,7 +49,7 @@ export const Provider: React.FC<{
   const [state, setState] = useState(() => createState(initialValues))
   const lastStateRef = useRef(state)
   const updateState = useMemo(() => {
-    type Updater = (prev: State) => State
+    type Updater = Parameters<UpdateState>[0]
     const queue: Updater[] = []
     return (updater: Updater) => {
       queue.push(updater)
@@ -68,45 +65,22 @@ export const Provider: React.FC<{
       })
     }
   }, [])
-
   useEffect(() => {
     commitState(state, updateState)
-    lastStateRef.current = state
   })
 
-  const actions = useMemo(
-    () => ({
-      add: <Value>(atom: Atom<Value>, id: symbol) => {
-        addAtom(lastStateRef.current, updateState, atom, id)
-      },
-      del: <Value>(atom: Atom<Value>, id: symbol) => {
-        delAtom(lastStateRef.current, atom, id)
-      },
-      read: <Value>(state: State, atom: Atom<Value>) =>
-        readAtom(state, updateState, atom),
-      write: <Value, Update>(
-        atom: WritableAtom<Value, Update>,
-        update: Update
-      ) => writeAtom(updateState, atom, update),
-    }),
-    [updateState]
-  )
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(state)
   }
-  const [ActionsContext, StateContext] = getContexts(scope)
+  const StoreContext = getStoreContext(scope)
   return createElement(
-    ActionsContext.Provider,
-    { value: actions },
+    StoreContext.Provider,
+    { value: [state, updateState] },
     createElement(
-      StateContext.Provider,
-      { value: state },
-      createElement(
-        InnerProvider,
-        { r: contextUpdateRef, c: StateContext },
-        children
-      )
+      InnerProvider,
+      { r: contextUpdateRef, c: StoreContext },
+      children
     )
   )
 }

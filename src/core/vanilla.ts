@@ -35,7 +35,7 @@ type MountedMap = Map<AnyAtom, [Dependents, OnUnmount | void]>
 
 type WorkInProgress = Map<AnyAtom, AtomState>
 
-type UpdateState = (updater: (prev: State) => State) => void
+export type UpdateState = (updater: (prev: State) => State) => void
 
 // The state consists of mutable parts and wip part
 // Mutable parts can only be modified with
@@ -298,18 +298,20 @@ export const readAtom = <Value>(
 }
 
 export const addAtom = (
-  state: State,
   updateState: UpdateState,
   addingAtom: AnyAtom,
   useId: symbol
 ): void => {
-  const mounted = state.m.get(addingAtom)
-  if (mounted) {
-    const [dependents] = mounted
-    dependents.add(useId)
-  } else {
-    mountAtom(state, updateState, addingAtom, useId)
-  }
+  updateState((prev) => {
+    const mounted = prev.m.get(addingAtom)
+    if (mounted) {
+      const [dependents] = mounted
+      dependents.add(useId)
+    } else {
+      mountAtom(prev, updateState, addingAtom, useId)
+    }
+    return prev
+  })
 }
 
 // XXX doesn't work with mutally dependent atoms
@@ -317,18 +319,21 @@ const canUnmountAtom = (atom: AnyAtom, dependents: Dependents) =>
   !dependents.size || (dependents.size === 1 && dependents.has(atom))
 
 export const delAtom = (
-  state: State,
+  updateState: UpdateState,
   deletingAtom: AnyAtom,
   useId: symbol
 ): void => {
-  const mounted = state.m.get(deletingAtom)
-  if (mounted) {
-    const [dependents] = mounted
-    dependents.delete(useId)
-    if (canUnmountAtom(deletingAtom, dependents)) {
-      unmountAtom(state, deletingAtom)
+  updateState((prev) => {
+    const mounted = prev.m.get(deletingAtom)
+    if (mounted) {
+      const [dependents] = mounted
+      dependents.delete(useId)
+      if (canUnmountAtom(deletingAtom, dependents)) {
+        unmountAtom(prev, deletingAtom)
+      }
     }
-  }
+    return prev
+  })
 }
 
 const getDependents = (state: State, atom: AnyAtom): Dependents => {
