@@ -1,35 +1,19 @@
 import { createContext } from 'use-context-selector'
 
-import { Atom, WritableAtom, Scope } from './types'
-import { AtomState, State } from './vanilla'
+import { Scope } from './types'
+import { State, UpdateState } from './vanilla'
 
-export type Actions = {
-  add: <Value>(atom: Atom<Value>, id: symbol) => void
-  del: <Value>(atom: Atom<Value>, id: symbol) => void
-  read: <Value>(state: State, atom: Atom<Value>) => AtomState<Value>
-  write: <Value, Update>(
-    atom: WritableAtom<Value, Update>,
-    update: Update
-  ) => void | Promise<void>
-}
+export type Store = readonly [State, UpdateState]
 
-// dummy function for typing
-const createContexts = () =>
-  [
-    createContext<Actions | null>(null),
-    createContext<State | null>(null),
-  ] as const
+const createStoreContext = () => createContext<Store | null>(null)
 
-type Contexts = ReturnType<typeof createContexts>
+type StoreContext = ReturnType<typeof createStoreContext>
 
-const ContextsMap = new Map<Scope | undefined, Contexts>()
+const StoreContextMap = new Map<Scope | undefined, StoreContext>()
 
-export const getContexts = (scope?: Scope) => {
-  if (!ContextsMap.has(scope)) {
-    ContextsMap.set(scope, [
-      createContext<Actions | null>(null),
-      createContext<State | null>(null),
-    ])
+export const getStoreContext = (scope?: Scope) => {
+  if (!StoreContextMap.has(scope)) {
+    StoreContextMap.set(scope, createStoreContext())
   }
-  return ContextsMap.get(scope) as Contexts
+  return StoreContextMap.get(scope) as StoreContext
 }

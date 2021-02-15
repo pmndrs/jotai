@@ -1,7 +1,8 @@
 import { useEffect, useCallback, useDebugValue } from 'react'
-import { useContext, useContextSelector } from 'use-context-selector'
+import { useContextSelector } from 'use-context-selector'
 
-import { getContexts } from './contexts'
+import { getStoreContext } from './contexts'
+import { addAtom, delAtom, readAtom, writeAtom } from './vanilla'
 import { Atom, WritableAtom, AnyWritableAtom, Scope, SetAtom } from './types'
 
 function assertContextValue<T extends object>(
@@ -29,16 +30,25 @@ export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
-  const [ActionsContext, StateContext] = getContexts(atom.scope)
-  const actions = useContext(ActionsContext)
-  assertContextValue(actions, atom.scope)
+  const StoreContext = getStoreContext(atom.scope)
+  const updateState = useContextSelector(
+    StoreContext,
+    useCallback(
+      (store) => {
+        assertContextValue(store, atom.scope)
+        return store[1]
+      },
+      [atom]
+    )
+  )
 
   const value = useContextSelector(
-    StateContext,
+    StoreContext,
     useCallback(
-      (state) => {
-        assertContextValue(state)
-        const atomState = actions.read(state, atom)
+      (store) => {
+        assertContextValue(store, atom.scope)
+        const [state, updateState] = store
+        const atomState = readAtom(state, updateState, atom)
         if (atomState.re) {
           throw atomState.re // read error
         }
@@ -53,27 +63,27 @@ export function useAtom<Value, Update>(
         }
         throw new Error('no atom value')
       },
-      [atom, actions]
+      [atom]
     )
   )
 
   useEffect(() => {
     const id = Symbol()
-    actions.add(atom, id)
+    addAtom(updateState, atom, id)
     return () => {
-      actions.del(atom, id)
+      delAtom(updateState, atom, id)
     }
-  }, [actions, atom])
+  }, [updateState, atom])
 
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        return actions.write(atom as AnyWritableAtom, update)
+        return writeAtom(updateState, atom as AnyWritableAtom, update)
       } else {
         throw new Error('not writable atom')
       }
     },
-    [atom, actions]
+    [updateState, atom]
   )
 
   useDebugValue(value)

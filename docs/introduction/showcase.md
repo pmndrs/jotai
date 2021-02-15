@@ -21,3 +21,7 @@
 - Clock with Next.js [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://codesandbox.io/s/nextjs-with-jotai-5ylrj)
 
   An UTC time eletronic clock implement using Next.js and jotai.
+
+- Tic Tac Toe game [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://codesandbox.io/s/jotai-tic-tac-6cg3h)
+
+  A game of tic tac toe implemented with jotai.
