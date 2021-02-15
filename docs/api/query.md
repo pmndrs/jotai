@@ -10,18 +10,20 @@ yarn add react-query
 
 ## atomWithQuery
 
-`atomWithQuery` creates a new atom with React Query.
+`atomWithQuery` creates a new atom with React Query. This function helps you use both atoms features and `useQuery` features in a single atom.
 
 ```js
 import { useAtom } from 'jotai'
 import { atomWithQuery } from 'jotai/query'
 
-const queryAtom = atomWithQuery('repoData', async () => {
-  const response = await fetch(
-    'https://api.github.com/repos/tannerlinsley/react-query'
-  )
-  return response.json()
-})
+const idAtom = atom(1)
+const queryAtom = atomWithQuery((get) => ({
+  queryKey: ['users', get(idAtom)],
+  queryFn: async ({ queryKey: [, id] }) => {
+    const res = await fetch(`https://jsonplaceholder.typicode.com/users/${id}`)
+    return res.json()
+  },
+}))
 
 const RepoData = () => {
   const [data] = useAtom(queryAtom)
@@ -31,4 +33,6 @@ const RepoData = () => {
 
 ### Examples
 
-TODO
+Basic demo: [codesandbox](https://codesandbox.io/s/jotai-query-demo-ij2sd)
+
+Hackernews: [codesandbox](https://codesandbox.io/s/jotai-query-hacker-news-u4sli)
