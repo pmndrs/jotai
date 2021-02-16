@@ -1,18 +1,28 @@
-import { useEffect, useCallback, useDebugValue } from 'react'
+import { useEffect, useCallback, useMemo, useDebugValue } from 'react'
 import { useContextSelector } from 'use-context-selector'
 
-import { getStoreContext } from './contexts'
-import { addAtom, delAtom, readAtom, writeAtom } from './vanilla'
-import { Atom, WritableAtom, AnyWritableAtom, Scope, SetAtom } from './types'
+import { getStoreContext, MutableSource } from './contexts'
+import {
+  State,
+  UpdateState,
+  addAtom,
+  delAtom,
+  readAtom,
+  writeAtom,
+  commitState,
+} from './vanilla'
+import { Atom, WritableAtom, AnyWritableAtom, SetAtom } from './types'
+import { useMutableSource } from './useMutableSource'
 
-function assertContextValue<T extends object>(
-  x: T | null,
-  scope?: Scope
-): asserts x is T {
-  if (!x) {
-    throw new Error(
-      `Please use <Provider${scope ? ` scope=${String(scope)}` : ''}>`
-    )
+const subscribe = (source: { l?: Set<() => void> }, callback: () => void) => {
+  const { l: listeners } = source
+  if (listeners) {
+    listeners.add(callback)
+  }
+  return () => {
+    if (listeners) {
+      listeners.delete(callback)
+    }
   }
 }
 
@@ -30,42 +40,80 @@ export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
-  const StoreContext = getStoreContext(atom.scope)
-  const updateState = useContextSelector(
-    StoreContext,
-    useCallback(
-      (store) => {
-        assertContextValue(store, atom.scope)
-        return store[1]
-      },
-      [atom]
-    )
+  const getAtomValue = useCallback(
+    (state: State, updateState: UpdateState) => {
+      const atomState = readAtom(state, updateState, atom)
+      if (atomState.re) {
+        throw atomState.re // read error
+      }
+      if (atomState.rp) {
+        throw atomState.rp // read promise
+      }
+      if (atomState.wp) {
+        throw atomState.wp // write promise
+      }
+      if ('v' in atomState) {
+        return atomState.v as Value
+      }
+      throw new Error('no atom value')
+    },
+    [atom]
   )
 
-  const value = useContextSelector(
+  const StoreContext = getStoreContext(atom.scope)
+  type SelectedFromContext = {
+    v?: Value
+    u: UpdateState
+    m: MutableSource
+  }
+  const selectedFromContext: SelectedFromContext = useContextSelector(
     StoreContext,
-    useCallback(
-      (store) => {
-        assertContextValue(store, atom.scope)
-        const [state, updateState] = store
-        const atomState = readAtom(state, updateState, atom)
-        if (atomState.re) {
-          throw atomState.re // read error
+    useMemo(() => {
+      let prev: SelectedFromContext | null = null
+      return (store) => {
+        const { s: state, u: updateState, m: mutableSource } = store
+        if (!state) {
+          // provider-less mode
+          return store
         }
-        if (atomState.rp) {
-          throw atomState.rp // read promise
+        const v = getAtomValue(state, updateState)
+        if (!prev || !Object.is(prev.v, v)) {
+          prev = { v, u: updateState, m: mutableSource }
         }
-        if (atomState.wp) {
-          throw atomState.wp // write promise
-        }
-        if ('v' in atomState) {
-          return atomState.v as Value
-        }
-        throw new Error('no atom value')
-      },
-      [atom]
-    )
+        return prev
+      }
+    }, [getAtomValue])
   )
+
+  const { u: updateState, m: mutableSource } = selectedFromContext
+
+  type SelectedFromMutableSource = {
+    v: Value
+    s: State
+  } | null
+  const selectedFromMutableSource: SelectedFromMutableSource = useMutableSource(
+    mutableSource,
+    useMemo(() => {
+      let prev: SelectedFromMutableSource = null
+      return (source: { s?: State }) => {
+        const { s: state } = source
+        if (state) {
+          const v = getAtomValue(state, updateState)
+          if (!prev || !Object.is(prev.v, v)) {
+            prev = { v, s: state }
+          }
+          return prev
+        }
+        return null
+      }
+    }, [getAtomValue, updateState]),
+    subscribe
+  )
+
+  const value =
+    'v' in selectedFromContext
+      ? (selectedFromContext.v as Value)
+      : (selectedFromMutableSource as { v: Value }).v
 
   useEffect(() => {
     const id = Symbol()
@@ -74,6 +122,12 @@ export function useAtom<Value, Update>(
       delAtom(updateState, atom, id)
     }
   }, [updateState, atom])
+
+  useEffect(() => {
+    if (selectedFromMutableSource) {
+      commitState(selectedFromMutableSource.s, updateState)
+    }
+  })
 
   const setAtom = useCallback(
     (update: Update) => {
