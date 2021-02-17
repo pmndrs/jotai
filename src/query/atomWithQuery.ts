@@ -41,9 +41,11 @@ export function atomWithQuery<
   TData = TQueryFnData,
   TQueryData = TQueryFnData
 >(
-  createQuery: (
-    get: Getter
-  ) => QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
+  createQuery:
+    | QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
+    | ((
+        get: Getter
+      ) => QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>)
 ): WritableAtom<TData, ResultActions> {
   const pendingAtom = atom(createPending<TData>())
   const dataAtom = atom<TData | null>(null)
@@ -55,7 +57,8 @@ export function atomWithQuery<
     ResultActions
   >(
     (get) => {
-      const options = createQuery(get)
+      const options =
+        typeof createQuery === 'function' ? createQuery(get) : createQuery
       const observerAtom = atom(
         null,
         (
