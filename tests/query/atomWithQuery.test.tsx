@@ -131,3 +131,47 @@ it('query loading', async () => {
   await findByText('loading')
   await findByText('count: 2')
 })
+
+it('query loading 2', async () => {
+  let count = 0
+  const mockFetch = jest.fn(fakeFetch)
+  const countAtom = atomWithQuery(() => ({
+    queryKey: 'count',
+    queryFn: async () => {
+      const response = await mockFetch({ count }, false, 1000)
+      count++
+      return response
+    },
+  }))
+
+  const Counter: React.FC = () => {
+    const [
+      {
+        response: { count },
+      },
+      dispatch,
+    ] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => dispatch({ type: 'refetch' })}>refetch</button>
+      </>
+    )
+  }
+  const { findByText, getByText } = render(
+    <Provider>
+      <React.Suspense fallback="loading">
+        <Counter />
+      </React.Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0')
+  fireEvent.click(getByText('refetch'))
+  await findByText('loading')
+  await findByText('count: 1')
+  fireEvent.click(getByText('refetch'))
+  await findByText('loading')
+  await findByText('count: 2')
+})
