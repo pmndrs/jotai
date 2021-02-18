@@ -1,4 +1,5 @@
 import React, {
+  Fragment,
   StrictMode,
   Suspense,
   useEffect,
@@ -8,13 +9,15 @@ import React, {
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
-  Provider,
+  Provider as ProviderOrig,
   atom,
   useAtom,
   WritableAtom,
   useBridge,
   Bridge,
 } from '../src/index'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('creates atoms', () => {
   // primitive atom
