@@ -1,8 +1,21 @@
-import { QueryClient, QueryObserver, QueryObserverOptions } from 'react-query'
+import {
+  QueryClient,
+  QueryKey,
+  QueryObserver,
+  QueryObserverOptions,
+} from 'react-query'
 import { atom } from 'jotai'
 import { WritableAtom, Getter, Setter } from './../core/types'
 
 type ResultActions = { type: 'refetch' }
+type AtomQueryObserverOptions<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryData
+> = QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
+  queryKey: QueryKey
+}
 
 const queryClientAtom = atom<QueryClient | null>(null)
 const getQueryClient = (get: Getter, set: Setter): QueryClient => {
@@ -42,16 +55,16 @@ export function atomWithQuery<
   TQueryData = TQueryFnData
 >(
   createQuery:
-    | QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
+    | AtomQueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
     | ((
         get: Getter
-      ) => QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>)
+      ) => AtomQueryObserverOptions<TQueryFnData, TError, TData, TQueryData>)
 ): WritableAtom<TData, ResultActions> {
   const pendingAtom = atom(createPending<TData>())
   const dataAtom = atom<TData | null>(null)
   const queryAtom = atom<
     [
-      QueryObserverOptions<TQueryFnData, TError, TData, TQueryData>,
+      AtomQueryObserverOptions<TQueryFnData, TError, TData, TQueryData>,
       WritableAtom<null, any>
     ],
     ResultActions
@@ -111,11 +124,8 @@ export function atomWithQuery<
       if (action.type === 'refetch') {
         const [options] = get(queryAtom)
         set(pendingAtom, createPending<TData>()) // reset pending
-        getQueryClient(get, set)
-          .getQueryCache()
-          .getAll()
-          .forEach((query) => query.reset())
-        await getQueryClient(get, set).refetchQueries([options.queryKey])
+        getQueryClient(get, set).getQueryCache().find(options.queryKey)?.reset()
+        await getQueryClient(get, set).refetchQueries(options.queryKey)
       }
     }
   )
