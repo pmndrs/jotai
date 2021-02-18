@@ -111,6 +111,10 @@ export function atomWithQuery<
       if (action.type === 'refetch') {
         const [options] = get(queryAtom)
         set(pendingAtom, createPending<TData>()) // reset pending
+        getQueryClient(get, set)
+          .getQueryCache()
+          .getAll()
+          .forEach((query) => query.reset())
         await getQueryClient(get, set).refetchQueries([options.queryKey])
       }
     }
