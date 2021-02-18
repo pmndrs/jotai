@@ -8,7 +8,7 @@ import { atom } from 'jotai'
 import { WritableAtom, Getter, Setter } from './../core/types'
 
 type ResultActions = { type: 'refetch' }
-type AtomQueryObserverOptions<
+type AtomQueryOptions<
   TQueryFnData,
   TError,
   TData,
@@ -55,16 +55,16 @@ export function atomWithQuery<
   TQueryData = TQueryFnData
 >(
   createQuery:
-    | AtomQueryObserverOptions<TQueryFnData, TError, TData, TQueryData>
+    | AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>
     | ((
         get: Getter
-      ) => AtomQueryObserverOptions<TQueryFnData, TError, TData, TQueryData>)
+      ) => AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>)
 ): WritableAtom<TData, ResultActions> {
   const pendingAtom = atom(createPending<TData>())
   const dataAtom = atom<TData | null>(null)
   const queryAtom = atom<
     [
-      AtomQueryObserverOptions<TQueryFnData, TError, TData, TQueryData>,
+      AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>,
       WritableAtom<null, any>
     ],
     ResultActions
