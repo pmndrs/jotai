@@ -82,6 +82,10 @@ export function atomWithQuery<
             | { type: 'data'; data: TData }
         ) => {
           if (action.type === 'init') {
+            const pending = get(pendingAtom)
+            if (pending.fulfilled) {
+              set(pendingAtom, createPending<TData>()) // new fetch
+            }
             action.intializer(getQueryClient(get, set))
           } else if (action.type === 'data') {
             set(dataAtom, action.data)
