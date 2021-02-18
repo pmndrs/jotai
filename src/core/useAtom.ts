@@ -1,7 +1,12 @@
-import { useEffect, useCallback, useMemo, useDebugValue } from 'react'
-import { useContextSelector } from 'use-context-selector'
+import {
+  useContext,
+  useEffect,
+  useCallback,
+  useMemo,
+  useDebugValue,
+} from 'react'
 
-import { getStoreContext, MutableSource } from './contexts'
+import { Store, getStoreContext, subscribeToStore } from './contexts'
 import {
   State,
   UpdateState,
@@ -11,21 +16,7 @@ import {
   writeAtom,
 } from './vanilla'
 import { Atom, WritableAtom, AnyWritableAtom, SetAtom } from './types'
-import { createMutableSource, useMutableSource } from './useMutableSource'
-
-const dummyMutableSource = createMutableSource({}, () => -1)
-
-const subscribe = (source: { l?: Set<() => void> }, callback: () => void) => {
-  const { l: listeners } = source
-  if (listeners) {
-    listeners.add(callback)
-  }
-  return () => {
-    if (listeners) {
-      listeners.delete(callback)
-    }
-  }
-}
+import { useMutableSource } from './useMutableSource'
 
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
@@ -62,51 +53,25 @@ export function useAtom<Value, Update>(
   )
 
   const StoreContext = getStoreContext(atom.scope)
-  type SelectedFromContext = {
-    v?: Value
+  type Selected = {
+    v: Value
     u: UpdateState
-    m?: MutableSource
   }
-  const selectedFromContext: SelectedFromContext = useContextSelector(
-    StoreContext,
+  const { v: value, u: updateState }: Selected = useMutableSource(
+    useContext(StoreContext),
     useMemo(() => {
-      let prev: SelectedFromContext | null = null
-      return (store) => {
-        if (!('s' in store)) {
-          // provider-less mode
-          return store
-        }
+      let selected: Selected | null = null
+      return (store: Store) => {
         const { s: state, u: updateState } = store
         const v = getAtomValue(state, updateState)
-        if (!prev || !Object.is(prev.v, v)) {
-          prev = { v, u: updateState }
+        if (!selected || !Object.is(selected.v, v)) {
+          selected = { v, u: updateState }
         }
-        return prev
+        return selected
       }
-    }, [getAtomValue])
+    }, [getAtomValue]),
+    subscribeToStore
   )
-
-  const { u: updateState, m: mutableSource } = selectedFromContext
-
-  const valueFromMutableSource: Value | null = useMutableSource(
-    mutableSource || dummyMutableSource,
-    useCallback(
-      (source: { s?: State }) => {
-        const { s: state } = source
-        if (state) {
-          return getAtomValue(state, updateState)
-        }
-        return null
-      },
-      [getAtomValue, updateState]
-    ),
-    subscribe
-  )
-
-  const value =
-    'v' in selectedFromContext
-      ? (selectedFromContext.v as Value)
-      : (valueFromMutableSource as Value)
 
   useEffect(() => {
     const id = Symbol()
