@@ -5,7 +5,7 @@ import { WritableAtom, Getter, Setter } from './../core/types'
 type ResultActions = { type: 'refetch' }
 
 const queryClientAtom = atom<QueryClient | null>(null)
-const getQueryClient = (get: Getter, set: Setter) => {
+const getQueryClient = (get: Getter, set: Setter): QueryClient => {
   let queryClient = get(queryClientAtom)
   if (queryClient === null) {
     queryClient = new QueryClient()
