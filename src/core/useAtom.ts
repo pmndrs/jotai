@@ -72,11 +72,11 @@ export function useAtom<Value, Update>(
     useMemo(() => {
       let prev: SelectedFromContext | null = null
       return (store) => {
-        const { s: state, u: updateState } = store
-        if (!state) {
+        if (!('s' in store)) {
           // provider-less mode
           return store
         }
+        const { s: state, u: updateState } = store
         const v = getAtomValue(state, updateState)
         if (!prev || !Object.is(prev.v, v)) {
           prev = { v, u: updateState }
@@ -88,32 +88,25 @@ export function useAtom<Value, Update>(
 
   const { u: updateState, m: mutableSource } = selectedFromContext
 
-  type SelectedFromMutableSource = {
-    v: Value
-  } | null
-  const selectedFromMutableSource: SelectedFromMutableSource = useMutableSource(
+  const valueFromMutableSource: Value | null = useMutableSource(
     mutableSource || dummyMutableSource,
-    useMemo(() => {
-      let prev: SelectedFromMutableSource = null
-      return (source: { s?: State }) => {
+    useCallback(
+      (source: { s?: State }) => {
         const { s: state } = source
         if (state) {
-          const v = getAtomValue(state, updateState)
-          if (!prev || !Object.is(prev.v, v)) {
-            prev = { v }
-          }
-          return prev
+          return getAtomValue(state, updateState)
         }
         return null
-      }
-    }, [getAtomValue, updateState]),
+      },
+      [getAtomValue, updateState]
+    ),
     subscribe
   )
 
   const value =
     'v' in selectedFromContext
       ? (selectedFromContext.v as Value)
-      : (selectedFromMutableSource as { v: Value }).v
+      : (valueFromMutableSource as Value)
 
   useEffect(() => {
     const id = Symbol()

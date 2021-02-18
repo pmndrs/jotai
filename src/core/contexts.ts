@@ -6,11 +6,15 @@ import { createMutableSource } from './useMutableSource'
 
 export type MutableSource = ReturnType<typeof createMutableSource>
 
-export type Store = {
-  /* provider state */ s?: State
-  /* updateState    */ u: UpdateState
-  /* mutable source */ m?: MutableSource
-}
+export type Store =
+  | {
+      /* provider state */ s: State
+      /* updateState    */ u: UpdateState
+    }
+  | {
+      /* mutable source */ m: MutableSource
+      /* updateState    */ u: UpdateState
+    }
 
 const createStoreContext = () => {
   const source = {
