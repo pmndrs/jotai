@@ -37,31 +37,6 @@ it('simple scoped provider with scoped atom', async () => {
   await findByText('count: 1')
 })
 
-it('throws error if no scoped provider exists for scoped atom', async () => {
-  const scope = Symbol()
-  const countAtom = atom(0)
-  countAtom.scope = scope
-
-  const Display: React.FC = () => {
-    const [count, setCount] = useAtom(countAtom)
-
-    return (
-      <>
-        <p>count: {count}</p>
-        <button onClick={() => setCount((c) => c + 1)}>dispatch</button>
-      </>
-    )
-  }
-
-  expect(() =>
-    render(
-      <Provider>
-        <Display />
-      </Provider>
-    )
-  ).toThrow()
-})
-
 it('default provider and atom with scoped provider and scoped atom', async () => {
   const scope = Symbol()
 

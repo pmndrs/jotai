@@ -9,10 +9,11 @@ import {
   delAtom,
   readAtom,
   writeAtom,
-  commitState,
 } from './vanilla'
 import { Atom, WritableAtom, AnyWritableAtom, SetAtom } from './types'
-import { useMutableSource } from './useMutableSource'
+import { createMutableSource, useMutableSource } from './useMutableSource'
+
+const dummyMutableSource = createMutableSource({}, () => -1)
 
 const subscribe = (source: { l?: Set<() => void> }, callback: () => void) => {
   const { l: listeners } = source
@@ -64,21 +65,21 @@ export function useAtom<Value, Update>(
   type SelectedFromContext = {
     v?: Value
     u: UpdateState
-    m: MutableSource
+    m?: MutableSource
   }
   const selectedFromContext: SelectedFromContext = useContextSelector(
     StoreContext,
     useMemo(() => {
       let prev: SelectedFromContext | null = null
       return (store) => {
-        const { s: state, u: updateState, m: mutableSource } = store
+        const { s: state, u: updateState } = store
         if (!state) {
           // provider-less mode
           return store
         }
         const v = getAtomValue(state, updateState)
         if (!prev || !Object.is(prev.v, v)) {
-          prev = { v, u: updateState, m: mutableSource }
+          prev = { v, u: updateState }
         }
         return prev
       }
@@ -89,10 +90,9 @@ export function useAtom<Value, Update>(
 
   type SelectedFromMutableSource = {
     v: Value
-    s: State
   } | null
   const selectedFromMutableSource: SelectedFromMutableSource = useMutableSource(
-    mutableSource,
+    mutableSource || dummyMutableSource,
     useMemo(() => {
       let prev: SelectedFromMutableSource = null
       return (source: { s?: State }) => {
@@ -100,7 +100,7 @@ export function useAtom<Value, Update>(
         if (state) {
           const v = getAtomValue(state, updateState)
           if (!prev || !Object.is(prev.v, v)) {
-            prev = { v, s: state }
+            prev = { v }
           }
           return prev
         }
@@ -122,12 +122,6 @@ export function useAtom<Value, Update>(
       delAtom(updateState, atom, id)
     }
   }, [updateState, atom])
-
-  useEffect(() => {
-    if (selectedFromMutableSource) {
-      commitState(selectedFromMutableSource.s, updateState)
-    }
-  })
 
   const setAtom = useCallback(
     (update: Update) => {

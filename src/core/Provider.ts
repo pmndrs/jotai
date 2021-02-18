@@ -19,9 +19,6 @@ import {
   commitState,
 } from './vanilla'
 import { getStoreContext } from './contexts'
-import { createMutableSource } from './useMutableSource'
-
-const dummyMutableSource = createMutableSource({}, () => -1)
 
 // guessing if it's react experimental channel
 const isReactExperimental =
@@ -79,7 +76,7 @@ export const Provider: React.FC<{
   const StoreContext = getStoreContext(scope)
   return createElement(
     StoreContext.Provider,
-    { value: { s: state, u: updateState, m: dummyMutableSource } },
+    { value: { s: state, u: updateState } },
     createElement(
       InnerProvider,
       { r: contextUpdateRef, c: StoreContext },

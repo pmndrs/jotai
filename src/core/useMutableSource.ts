@@ -56,28 +56,33 @@ export const useMutableSource = (
       if (didUnsubscribe) {
         return
       }
-      const nextVersion = source[GET_VERSION](source[TARGET])
-      lastVersion.current = nextVersion
-      const nextSnapshot = getSnapshot(source[TARGET])
-      setState((prev) => {
-        if (
-          prev[0] !== source ||
-          prev[1] !== getSnapshot ||
-          prev[2] !== subscribe
-        ) {
-          return prev
-        }
-        if (prev[4] === nextSnapshot) {
-          return prev
-        }
-        return [
-          /* [0] */ prev[0],
-          /* [1] */ prev[1],
-          /* [2] */ prev[2],
-          /* [3] */ nextVersion,
-          /* [4] */ nextSnapshot,
-        ]
-      })
+      try {
+        const nextSnapshot = getSnapshot(source[TARGET])
+        const nextVersion = source[GET_VERSION](source[TARGET])
+        lastVersion.current = nextVersion
+        setState((prev) => {
+          if (
+            prev[0] !== source ||
+            prev[1] !== getSnapshot ||
+            prev[2] !== subscribe
+          ) {
+            return prev
+          }
+          if (prev[4] === nextSnapshot) {
+            return prev
+          }
+          return [
+            /* [0] */ prev[0],
+            /* [1] */ prev[1],
+            /* [2] */ prev[2],
+            /* [3] */ nextVersion,
+            /* [4] */ nextSnapshot,
+          ]
+        })
+      } catch (e) {
+        // schedule update
+        setState((prev) => [...prev])
+      }
     }
     const unsubscribe = subscribe(source[TARGET], checkForUpdates)
     checkForUpdates()

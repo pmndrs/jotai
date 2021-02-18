@@ -9,7 +9,7 @@ export type MutableSource = ReturnType<typeof createMutableSource>
 export type Store = {
   /* provider state */ s?: State
   /* updateState    */ u: UpdateState
-  /* mutable source */ m: MutableSource
+  /* mutable source */ m?: MutableSource
 }
 
 const createStoreContext = () => {
