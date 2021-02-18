@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import React, { Fragment, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../../src/index'
+import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
 import { atomFamily } from '../../src/utils'
 import { SetStateAction, WritableAtom } from '../../src/core/types'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('primitive atomFamily returns same reference for same parameters', async () => {
   const myFamily = atomFamily<number, { num: number }>((num) => ({ num }))

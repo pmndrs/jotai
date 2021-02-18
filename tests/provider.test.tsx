@@ -2,6 +2,8 @@ import React from 'react'
 import { render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
+// No PROVIDER_LESS_MODE test for this file, obviously.
+
 it('uses initial values from provider', async () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')

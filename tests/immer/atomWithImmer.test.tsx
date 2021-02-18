@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { Fragment } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, useAtom } from '../../src/index'
+import { Provider as ProviderOrig, useAtom } from '../../src/index'
 import { atomWithImmer } from '../../src/immer'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('atomWithImmer with useAtom', async () => {
   const countAtom = atomWithImmer(0)

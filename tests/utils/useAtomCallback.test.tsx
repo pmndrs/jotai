@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { Fragment, useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider, useAtom, atom } from '../../src/index'
+import { Provider as ProviderOrig, useAtom, atom } from '../../src/index'
 import { useAtomCallback } from '../../src/utils'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('useAtomCallback with get', async () => {
   const countAtom = atom(0)

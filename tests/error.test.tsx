@@ -1,6 +1,8 @@
-import React, { Suspense, useState, useEffect } from 'react'
+import React, { Fragment, Suspense, useState, useEffect } from 'react'
 import { fireEvent, cleanup, render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
+import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 const consoleError = console.error
 beforeEach(() => {
