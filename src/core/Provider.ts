@@ -18,18 +18,22 @@ export const Provider: React.FC<{
 }> = ({ initialValues, scope, children }) => {
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
   if (storeRef.current == null) {
-    // lazy initializatiom
+    // lazy initialization
     storeRef.current = createStore(initialValues)
   }
-  const store = storeRef.current as ReturnType<typeof createStore>
+  const mutableSource = storeRef.current as ReturnType<typeof createStore>
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(useMutableSource(store, getState, subscribeToStore))
+    useDebugState(useMutableSource(mutableSource, getState, subscribeToStore))
   }
 
   const StoreContext = getStoreContext(scope)
-  return createElement(StoreContext.Provider, { value: store }, children)
+  return createElement(
+    StoreContext.Provider,
+    { value: mutableSource },
+    children
+  )
 }
 
 const atomToPrintable = (atom: AnyAtom) => atom.debugLabel || atom.toString()
