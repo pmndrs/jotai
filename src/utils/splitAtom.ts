@@ -12,10 +12,10 @@ export const splitAtom = <Item, Key = unknown>(
   const indexCache = new Map<Key, number>()
   const atomCache = new Map<Key, PrimitiveAtom<Item>>()
   const atomToKey = new WeakMap<PrimitiveAtom<Item>, Key>()
-  let prevSliced: PrimitiveAtom<Item>[] | undefined
+  let prevSplitted: PrimitiveAtom<Item>[] | undefined
   const splittedAtom = atom(
     (get) => {
-      let nextSliced: PrimitiveAtom<Item>[] = []
+      let nextSplitted: PrimitiveAtom<Item>[] = []
       let changed = false
       get(arrAtom).forEach((item, index) => {
         const key = keyExtractor
@@ -28,7 +28,7 @@ export const splitAtom = <Item, Key = unknown>(
         const cachedAtom = atomCache.get(key)
         // XXX if it's changed from upstream atom will be re-created
         if (cachedAtom && Object.is(get(cachedAtom), item)) {
-          nextSliced[index] = cachedAtom
+          nextSplitted[index] = cachedAtom
           return
         }
         const itemAtom = atom(
@@ -47,13 +47,16 @@ export const splitAtom = <Item, Key = unknown>(
         )
         atomCache.set(key, itemAtom)
         atomToKey.set(itemAtom, key)
-        nextSliced[index] = itemAtom
+        nextSplitted[index] = itemAtom
       })
-      if (prevSliced && !changed && prevSliced.length === nextSliced.length) {
-        return prevSliced
+      if (
+        !changed &&
+        prevSplitted &&
+        prevSplitted.length === nextSplitted.length
+      ) {
+        return prevSplitted
       }
-      prevSliced = nextSliced
-      return nextSliced
+      return (prevSplitted = nextSplitted)
     },
     (get, set, atomToRemove: PrimitiveAtom<Item>) => {
       const index = get(splittedAtom).indexOf(atomToRemove)
