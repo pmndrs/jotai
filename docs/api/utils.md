@@ -396,7 +396,7 @@ which itself contains a list of atoms, each corresponding to the respective item
 A simplified type signature would be:
 
 ```ts
-type SplitAtom = <Element>(arrayAtom: PrimitiveAtom<Array<Elmement>>): Atom<Array<PrimitiveAtom<Element>>>
+type SplitAtom = <Item>(arrayAtom: PrimitiveAtom<Array<Item>>): Atom<Array<PrimitiveAtom<Item>>>
 ```
 
 Additionally, the atom returned by `splitAtom` contains a removal function in the `write` direction,
