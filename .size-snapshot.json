@@ -69,6 +69,20 @@
       }
     }
   },
+  "query.module.js": {
+    "bundled": 3006,
+    "minified": 1208,
+    "gzipped": 579,
+    "treeshaked": {
+      "rollup": {
+        "code": 57,
+        "import_statements": 49
+      },
+      "webpack": {
+        "code": 1078
+      }
+    }
+  },
   "index.js": {
     "bundled": 23931,
     "minified": 10862,
@@ -93,5 +107,10 @@
     "bundled": 1028,
     "minified": 527,
     "gzipped": 317
+  },
+  "query.js": {
+    "bundled": 4729,
+    "minified": 2085,
+    "gzipped": 914
   }
 }
