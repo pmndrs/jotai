@@ -173,6 +173,22 @@ const setAtomWritePromise = <Value>(
   return nextState
 }
 
+const scheduleReadAtomState = <Value>(
+  updateState: UpdateState,
+  atom: Atom<Value>,
+  promise: Promise<unknown>
+) => {
+  promise.then(() => {
+    updateState((prev) => {
+      const [, nextNextState] = readAtomState(prev, updateState, atom, true)
+      if (nextNextState.w.size) {
+        return copyWip(prev, nextNextState)
+      }
+      return prev
+    })
+  })
+}
+
 const readAtomState = <Value>(
   state: State,
   updateState: UpdateState,
@@ -243,6 +259,10 @@ const readAtomState = <Value>(
           )
         })
         .catch((e) => {
+          if (e instanceof Promise) {
+            scheduleReadAtomState(updateState, atom, e)
+            return e
+          }
           updateState((prev) =>
             setAtomReadError(
               copyWip(prev, asyncState),
@@ -258,15 +278,7 @@ const readAtomState = <Value>(
     }
   } catch (errorOrPromise) {
     if (errorOrPromise instanceof Promise) {
-      errorOrPromise.then(() => {
-        updateState((prev) => {
-          const [, nextNextState] = readAtomState(prev, updateState, atom, true)
-          if (nextNextState.w.size) {
-            return copyWip(prev, nextNextState)
-          }
-          return prev
-        })
-      })
+      scheduleReadAtomState(updateState, atom, errorOrPromise)
       promise = errorOrPromise
     } else if (errorOrPromise instanceof Error) {
       error = errorOrPromise
