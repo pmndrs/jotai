@@ -5753,10 +5753,10 @@ react-is@^17.0.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.1.tgz#5b3531bd76a645a4c9fb6e693ed36419e3301339"
   integrity sha512-NAnt2iGDXohE5LI7uBnLnqvLQMtzhkiAOLXTmv+qnF9Ky7xAPcX8Up/xWIhxvLVGJvuLiNc4xQLtuqDRzb4fSA==
 
-react-query@^3.6.0:
-  version "3.7.1"
-  resolved "https://registry.yarnpkg.com/react-query/-/react-query-3.7.1.tgz#cbd15d84507431e8c3b248a1069401cb0feda396"
-  integrity sha512-n9Ld5UUzCWqqDDPvdRN45tvTYSBjuWHex2ninxIu+tD20pwfHR8QzPnntYPkc/h/wW4Q48m68FgXVi/co/1CKg==
+react-query@^3.9.8:
+  version "3.9.8"
+  resolved "https://registry.yarnpkg.com/react-query/-/react-query-3.9.8.tgz#b6345af86f81b342eb228b11d2415a7a04ca5ada"
+  integrity sha512-cO3DdlHFSE/FDeIhrYVfYaUPm7ElmMW/3sp1QaMSP/aiGfsM62a2gRwd34YVA4dBchNk22L9yu2fZ657A6cdvA==
   dependencies:
     "@babel/runtime" "^7.5.5"
     match-sorter "^6.0.2"
