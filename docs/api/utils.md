@@ -390,7 +390,19 @@ In production, it works as the normal `atom`.
 ## splitAtom
 
 The `splitAtom` utility is useful for when you want to get an atom for each element in a list.
-It works for read/write atoms that contain a list.
+It works for read/write atoms that contain a list. When used on such an atom, it returns an atom
+which itself contains a list of atoms, each corresponding to the respective item in the original list.
+
+A simplified type signature would be:
+
+```ts
+type SplitAtom = <Element>(arrayAtom: PrimitiveAtom<Array<Elmement>>): Atom<Array<PrimitiveAtom<Element>>>
+```
+
+Additionally, the atom returned by `splitAtom` contains a removal function in the `write` direction,
+this is useful for when you want a simple way to remove each element in the original atom.
+
+See the below example for usage.
 
 ### codesandbox
 
