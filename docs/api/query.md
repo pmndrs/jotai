@@ -17,7 +17,7 @@ import { useAtom } from 'jotai'
 import { atomWithQuery } from 'jotai/query'
 
 const idAtom = atom(1)
-const queryAtom = atomWithQuery((get) => ({
+const userAtom = atomWithQuery((get) => ({
   queryKey: ['users', get(idAtom)],
   queryFn: async ({ queryKey: [, id] }) => {
     const res = await fetch(`https://jsonplaceholder.typicode.com/users/${id}`)
@@ -25,8 +25,8 @@ const queryAtom = atomWithQuery((get) => ({
   },
 }))
 
-const RepoData = () => {
-  const [data] = useAtom(queryAtom)
+const UserData = () => {
+  const [data] = useAtom(userAtom)
   return <div>{JSON.stringify(data)}</div>
 }
 ```

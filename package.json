@@ -41,7 +41,7 @@
       "types": "./optics.d.ts"
     },
     "./query": {
-      "import": "./modules/query.mjs",
+      "import": "./query.module.mjs",
       "require": "./query.js",
       "types": "./query.d.ts"
     }
