@@ -45,7 +45,8 @@ export const subscribeToStore = (store: Store, callback: () => void) => {
 
 type StoreContext = Context<ReturnType<typeof createStore>>
 
-const StoreContextMap = new Map<Scope | undefined, StoreContext>()
+// export only for tests/error.test.tsx
+export const StoreContextMap = new Map<Scope | undefined, StoreContext>()
 
 export const getStoreContext = (scope?: Scope) => {
   if (!StoreContextMap.has(scope)) {

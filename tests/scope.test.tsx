@@ -1,5 +1,5 @@
 import React, { Fragment, useState } from 'react'
-import { fireEvent, cleanup, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
@@ -9,7 +9,6 @@ beforeEach(() => {
   console.error = jest.fn()
 })
 afterEach(() => {
-  cleanup()
   console.error = consoleError
 })
 
