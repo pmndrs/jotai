@@ -49,14 +49,17 @@ export function atomWithMachine<
       if (cachedMachine) {
         return cachedMachine
       }
-      let getForLazyInitialization = get
+      let initializing = true
       const machine =
         typeof getMachine === 'function'
-          ? getMachine(getForLazyInitialization)
+          ? getMachine((a) => {
+              if (initializing) {
+                return get(a)
+              }
+              throw new Error('get not allowed after initialization')
+            })
           : getMachine
-      getForLazyInitialization = () => {
-        throw new Error('get can only be used for machine lazy initialization')
-      }
+      initializing = false
       const machineWithConfig = machine.withConfig(
         machineConfig,
         machine.context
