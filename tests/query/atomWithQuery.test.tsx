@@ -35,6 +35,7 @@ it('query basic test', async () => {
   await findByText('loading')
   await findByText('count: 0')
 })
+
 it('query basic test with object instead of function', async () => {
   const countAtom = atomWithQuery({
     queryKey: 'count',
@@ -66,6 +67,7 @@ it('query basic test with object instead of function', async () => {
   await findByText('loading')
   await findByText('count: 0')
 })
+
 it('query refetch', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)

@@ -179,13 +179,7 @@ const scheduleReadAtomState = <Value>(
   promise: Promise<unknown>
 ) => {
   promise.then(() => {
-    updateState((prev) => {
-      const [, nextNextState] = readAtomState(prev, updateState, atom, true)
-      if (nextNextState.w.size) {
-        return copyWip(prev, nextNextState)
-      }
-      return prev
-    })
+    updateState((prev) => readAtomState(prev, updateState, atom, true)[1])
   })
 }
 
@@ -307,6 +301,13 @@ export const readAtom = <Value>(
   nextState.w.forEach((atomState, atom) => {
     state.w.set(atom, atomState)
   })
+  Promise.resolve().then(() => {
+    // schedule commit
+    updateState((prev) => {
+      commitState(prev, updateState)
+      return prev
+    })
+  })
   return atomState
 }
 
@@ -323,6 +324,7 @@ export const addAtom = (
     } else {
       mountAtom(prev, updateState, addingAtom, useId)
     }
+    commitState(prev, updateState)
     return prev
   })
 }
@@ -345,6 +347,7 @@ export const delAtom = (
         unmountAtom(prev, deletingAtom)
       }
     }
+    commitState(prev, updateState)
     return prev
   })
 }
@@ -495,7 +498,11 @@ const writeAtomState = <Value, Update>(
         nextState,
         atom,
         promiseOrVoid.then(() => {
-          updateState((prev) => setAtomWritePromise(prev, atom))
+          updateState((prev) => {
+            const next = setAtomWritePromise(prev, atom)
+            commitState(next, updateState)
+            return next
+          })
         })
       )
     }
@@ -522,14 +529,15 @@ export const writeAtom = <Value, Update>(
   const pendingPromises: Promise<void>[] = []
 
   updateState((prev) => {
-    const nextState = writeAtomState(
+    const next = writeAtomState(
       prev,
       updateState,
       writingAtom,
       update,
       pendingPromises
     )
-    return nextState
+    commitState(next, updateState)
+    return next
   })
 
   if (pendingPromises.length) {
@@ -623,7 +631,7 @@ const unmountAtom = (state: State, atom: AnyAtom) => {
   }
 }
 
-export const commitState = (state: State, updateState: UpdateState) => {
+const commitState = (state: State, updateState: UpdateState) => {
   if (state.w.size) {
     // apply wip to MountedMap
     state.w.forEach((atomState, atom) => {

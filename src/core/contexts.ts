@@ -1,7 +1,7 @@
 import { Context, createContext } from 'react'
 
 import { AnyAtom, Scope } from './types'
-import { State, UpdateState, createState, commitState } from './vanilla'
+import { State, UpdateState, createState } from './vanilla'
 import { createMutableSource } from './useMutableSource'
 
 export type Store = {
@@ -25,12 +25,15 @@ export const createStore = (
     if (queue.length > 1) {
       return
     }
+    let nextState = store.s
     while (queue.length) {
-      store.s = queue[0](store.s)
+      nextState = queue[0](nextState)
       queue.shift()
     }
-    commitState(store.s, updateState)
-    store.l.forEach((listener) => listener())
+    if (nextState !== store.s) {
+      store.s = nextState
+      store.l.forEach((listener) => listener())
+    }
   }
   store.u = updateState
   return createMutableSource(store, () => store.s)
