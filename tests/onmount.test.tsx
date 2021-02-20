@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
@@ -302,9 +302,9 @@ it('mount/unmount test with async atom', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Display />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -440,7 +440,7 @@ it('subscription in base atom test', async () => {
   await findByText('count: 12')
 })
 
-it('create atom with onMount in get', async () => {
+it('create atom with onMount in async get', async () => {
   const store = {
     count: 10,
     listeners: new Set<() => void>(),
@@ -450,7 +450,7 @@ it('create atom with onMount in get', async () => {
     },
   }
 
-  const holderAtom = atom(() => {
+  const holderAtom = atom(async () => {
     const countAtom = atom(1)
     countAtom.onMount = (setCount) => {
       const callback = () => {
@@ -481,7 +481,9 @@ it('create atom with onMount in get', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <Counter />
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </Provider>
   )
 
