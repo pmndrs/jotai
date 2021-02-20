@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.14.3",
   "description": "👻 Next gen state management that will spook you",
-  "main": "index.js",
   "module": "index.module.js",
+  "main": "index.js",
   "types": "index.d.ts",
   "typesVersions": {
     "<4.0": {
@@ -16,32 +16,32 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./index.module.js",
+      "module": "./index.module.js",
       "require": "./index.js",
       "types": "./index.d.ts"
     },
     "./utils": {
-      "import": "./utils.module.js",
+      "module": "./utils.module.js",
       "require": "./utils.js",
       "types": "./utils.d.ts"
     },
     "./devtools": {
-      "import": "./devtools.module.js",
+      "module": "./devtools.module.js",
       "require": "./devtools.js",
       "types": "./devtools.d.ts"
     },
     "./immer": {
-      "import": "./immer.module.js",
+      "module": "./immer.module.js",
       "require": "./immer.js",
       "types": "./immer.d.ts"
     },
     "./optics": {
-      "import": "./optics.module.js",
+      "module": "./optics.module.js",
       "require": "./optics.js",
       "types": "./optics.d.ts"
     },
     "./query": {
-      "import": "./query.module.mjs",
+      "module": "./query.module.mjs",
       "require": "./query.js",
       "types": "./query.d.ts"
     }
