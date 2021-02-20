@@ -386,3 +386,93 @@ const countAtom = atom(0)
 `atomFrozenInDev` is another function to create a frozen atom.
 The atom is frozen only in the development mode.
 In production, it works as the normal `atom`.
+
+## splitAtom
+
+The `splitAtom` utility is useful for when you want to get an atom for each element in a list.
+It works for read/write atoms that contain a list. When used on such an atom, it returns an atom
+which itself contains a list of atoms, each corresponding to the respective item in the original list.
+
+A simplified type signature would be:
+
+```ts
+type SplitAtom = <Item>(arrayAtom: PrimitiveAtom<Array<Item>>): Atom<Array<PrimitiveAtom<Item>>>
+```
+
+Additionally, the atom returned by `splitAtom` contains a removal function in the `write` direction,
+this is useful for when you want a simple way to remove each element in the original atom.
+
+See the below example for usage.
+
+### codesandbox
+
+https://codesandbox.io/s/react-typescript-forked-8cv79?file=/src/App.tsx
+
+```tsx
+import * as React from 'react'
+import { Provider, atom, useAtom, PrimitiveAtom } from 'jotai'
+import { splitAtom } from 'jotai/utils'
+import './styles.css'
+
+const initialState = [
+  {
+    task: 'help the town',
+    done: false,
+  },
+  {
+    task: 'feed the dragon',
+    done: false,
+  },
+]
+
+const todosAtom = atom(initialState)
+
+const TodoList = () => {
+  const [todoAtoms, removeTodoAtom] = useAtom(splitAtom(todosAtom))
+  return (
+    <ul>
+      {todoAtoms.map((todoAtom) => (
+        <TodoItem todoAtom={todoAtom} remove={() => removeTodoAtom(todoAtom)} />
+      ))}
+    </ul>
+  )
+}
+
+type TodoType = typeof initialState[number]
+
+const TodoItem = ({
+  todoAtom,
+  remove,
+}: {
+  todoAtom: PrimitiveAtom<TodoType>
+  remove: () => void
+}) => {
+  const [todo, setTodo] = useAtom(todoAtom)
+  return (
+    <div>
+      <input
+        value={todo.task}
+        onChange={(e) => {
+          setTodo((oldValue) => ({ ...oldValue, task: e.target.value }))
+        }}
+      />
+      <input
+        type="checkbox"
+        checked={todo.done}
+        onChange={() => {
+          setTodo((oldValue) => ({ ...oldValue, done: !oldValue.done }))
+        }}
+      />
+      <button onClick={remove}>remove</button>
+    </div>
+  )
+}
+
+const App = () => (
+  <Provider>
+    <TodoList />
+  </Provider>
+)
+
+export default App
+```

@@ -62,6 +62,7 @@ export default (args) =>
         createCommonJSConfig('src/devtools.ts', 'dist/devtools.js'),
         createCommonJSConfig('src/immer.ts', 'dist/immer.js'),
         createCommonJSConfig('src/optics.ts', 'dist/optics.js'),
+        createCommonJSConfig('src/query.ts', 'dist/query.js'),
         createCommonJSConfig('src/xstate.ts', 'dist/xstate.js'),
       ]
     : [
@@ -70,5 +71,6 @@ export default (args) =>
         createESMConfig('src/devtools.ts', 'dist/devtools.module.js'),
         createESMConfig('src/immer.ts', 'dist/immer.module.js'),
         createESMConfig('src/optics.ts', 'dist/optics.module.js'),
+        createESMConfig('src/query.ts', 'dist/query.module.js'),
         createESMConfig('src/xstate.ts', 'dist/xstate.module.js'),
       ]

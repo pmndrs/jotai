@@ -1,10 +1,10 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.14.1",
+  "version": "0.14.3",
   "description": "👻 Next gen state management that will spook you",
-  "main": "index.js",
   "module": "index.module.js",
+  "main": "index.js",
   "types": "index.d.ts",
   "typesVersions": {
     "<4.0": {
@@ -16,32 +16,37 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./index.module.js",
+      "module": "./index.module.js",
       "require": "./index.js",
       "types": "./index.d.ts"
     },
     "./utils": {
-      "import": "./utils.module.js",
+      "module": "./utils.module.js",
       "require": "./utils.js",
       "types": "./utils.d.ts"
     },
     "./devtools": {
-      "import": "./devtools.module.js",
+      "module": "./devtools.module.js",
       "require": "./devtools.js",
       "types": "./devtools.d.ts"
     },
     "./immer": {
-      "import": "./immer.module.js",
+      "module": "./immer.module.js",
       "require": "./immer.js",
       "types": "./immer.d.ts"
     },
     "./optics": {
-      "import": "./optics.module.js",
+      "module": "./optics.module.js",
       "require": "./optics.js",
       "types": "./optics.d.ts"
     },
+    "./query": {
+      "module": "./query.module.mjs",
+      "require": "./query.js",
+      "types": "./query.d.ts"
+    },
     "./xstate": {
-      "import": "./xstate.module.js",
+      "module": "./xstate.module.js",
       "require": "./xstate.js",
       "types": "./xstate.d.ts"
     }
@@ -61,7 +66,7 @@
     "test": "jest && jest --setupFiles ./tests/setReactExperimental.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/index.d.ts dist/index.module.d.ts && shx cp dist/utils.d.ts dist/utils.module.d.ts && shx cp dist/devtools.d.ts dist/devtools.module.d.ts && shx cp dist/immer.d.ts dist/immer.module.d.ts && shx cp dist/optics.d.ts dist/optics.module.d.ts && shx cp dist/xstate.d.ts dist/xstate.module.d.ts && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/index.d.ts dist/index.module.d.ts && shx cp dist/utils.d.ts dist/utils.module.d.ts && shx cp dist/devtools.d.ts dist/devtools.module.d.ts && shx cp dist/immer.d.ts dist/immer.module.d.ts && shx cp dist/optics.d.ts dist/optics.module.d.ts && shx cp dist/query.d.ts dist/query.module.d.ts && shx cp dist/xstate.d.ts dist/xstate.module.d.ts && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {
@@ -157,6 +162,7 @@
     "prettier": "^2.2.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "react-query": "^3.9.8",
     "rollup": "^2.39.0",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "shx": "^0.3.3",
@@ -170,6 +176,7 @@
     "react-dom": "*",
     "react-native": "*",
     "scheduler": ">=0.19",
+    "react-query": "*",
     "xstate": "*"
   },
   "peerDependenciesMeta": {
@@ -183,6 +190,9 @@
       "optional": true
     },
     "react-native": {
+      "optional": true
+    },
+    "react-query": {
       "optional": true
     },
     "xstate": {
