@@ -200,3 +200,4 @@ yarn add jotai react
   - [Devtools](./docs/api/devtools.md)
   - [Immer](./docs/api/immer.md)
   - [Optics](./docs/api/optics.md)
+  - [Query](./docs/api/query.md)
