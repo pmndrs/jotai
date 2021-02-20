@@ -100,4 +100,4 @@ const Toggle: React.FC = () => {
 
 Check examples with atomWithMachine:
 
-- https://codesandbox.io/s/react-typescript-forked-jsnm8
+- https://codesandbox.io/s/react-typescript-forked-gxwnx
