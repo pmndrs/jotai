@@ -58,6 +58,7 @@ const createEditableMachine = (value: string) =>
 
 const defaultTextAtom = atom('edit me')
 const editableMachineAtom = atomWithMachine((get) =>
+  // `get` is available only for initializing a machine
   createEditableMachine(get(defaultTextAtom))
 )
 
@@ -99,4 +100,4 @@ const Toggle: React.FC = () => {
 
 Check examples with atomWithMachine:
 
-- https://codesandbox.io/s/react-typescript-forked-kjmk8
+- https://codesandbox.io/s/react-typescript-forked-jsnm8
