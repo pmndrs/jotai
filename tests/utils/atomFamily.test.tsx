@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../../src/index'
+import { Provider, atom, useAtom, WritableAtom } from '../../src/index'
 import { atomFamily } from '../../src/utils'
-import { SetStateAction, WritableAtom } from '../../src/core/types'
+import type { SetStateAction } from '../../src/core/types'
 
 it('primitive atomFamily returns same reference for same parameters', async () => {
   const myFamily = atomFamily<number, { num: number }>((num) => ({ num }))
