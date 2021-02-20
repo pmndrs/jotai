@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../src/index'
 
@@ -302,9 +302,9 @@ it('mount/unmount test with async atom', async () => {
 
   const { getByText, findByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Display />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -428,6 +428,62 @@ it('subscription in base atom test', async () => {
   const { getByText, findByText } = render(
     <Provider>
       <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 10')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 11')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 12')
+})
+
+it('create atom with onMount in async get', async () => {
+  const store = {
+    count: 10,
+    listeners: new Set<() => void>(),
+    add: (n: number) => {
+      store.count += n
+      store.listeners.forEach((listener) => listener())
+    },
+  }
+
+  const holderAtom = atom(async () => {
+    const countAtom = atom(1)
+    countAtom.onMount = (setCount) => {
+      const callback = () => {
+        setCount(store.count)
+      }
+      store.listeners.add(callback)
+      callback()
+      return () => store.listeners.delete(callback)
+    }
+    return countAtom
+  })
+  const derivedAtom = atom(
+    (get) => get(get(holderAtom)),
+    (_get, _set, n: number) => {
+      store.add(n)
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count, add] = useAtom(derivedAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => add(1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </Provider>
   )
 

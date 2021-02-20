@@ -78,7 +78,7 @@ export function atomWithQuery<
           get,
           set,
           action:
-            | { type: 'init'; intializer: (queryClient: QueryClient) => void }
+            | { type: 'init'; initializer: (queryClient: QueryClient) => void }
             | { type: 'data'; data: TData }
         ) => {
           if (action.type === 'init') {
@@ -86,7 +86,7 @@ export function atomWithQuery<
             if (pending.fulfilled) {
               set(pendingAtom, createPending<TData>()) // new fetch
             }
-            action.intializer(getQueryClient(get, set))
+            action.initializer(getQueryClient(get, set))
           } else if (action.type === 'data') {
             set(dataAtom, action.data)
             const pending = get(pendingAtom)
@@ -98,7 +98,7 @@ export function atomWithQuery<
       )
       observerAtom.onMount = (dispatch) => {
         let unsub: (() => void) | undefined | false
-        const intializer = (queryClient: QueryClient) => {
+        const initializer = (queryClient: QueryClient) => {
           const observer = new QueryObserver(queryClient, options)
           observer.subscribe((result) => {
             // TODO error handling
@@ -114,7 +114,7 @@ export function atomWithQuery<
             }
           }
         }
-        dispatch({ type: 'init', intializer })
+        dispatch({ type: 'init', initializer })
         return () => {
           if (unsub) {
             unsub()
