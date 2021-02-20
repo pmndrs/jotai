@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 const TARGET = Symbol()
 const GET_VERSION = Symbol()
 
-export const createMutableSource = (target: any, getVersion: any) => ({
+export const createMutableSource = (target: any, getVersion: any): any => ({
   [TARGET]: target,
   [GET_VERSION]: getVersion,
 })
