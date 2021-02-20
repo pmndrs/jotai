@@ -45,8 +45,18 @@ export function atomWithMachine<
   )
   const machineAtom = atom(
     (get) => {
+      const cachedMachine = get(cachedMachineAtom)
+      if (cachedMachine) {
+        return cachedMachine
+      }
+      let getForLazyInitialization = get
       const machine =
-        typeof getMachine === 'function' ? getMachine(get) : getMachine
+        typeof getMachine === 'function'
+          ? getMachine(getForLazyInitialization)
+          : getMachine
+      getForLazyInitialization = () => {
+        throw new Error('get can only be used for machine lazy initialization')
+      }
       const machineWithConfig = machine.withConfig(
         machineConfig,
         machine.context
