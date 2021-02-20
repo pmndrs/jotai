@@ -451,3 +451,44 @@ it('set promise atom value on write (#304)', async () => {
   await findByText('loading')
   await findByText('count: 1')
 })
+
+it('uses async atom double chain (#306)', async () => {
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 10))
+    return get(countAtom)
+  })
+  const delayedCountAtom = atom(async (get) => {
+    return get(asyncCountAtom)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [delayedCount] = useAtom(delayedCountAtom)
+    return (
+      <>
+        <div>
+          count: {count}, delayed: {delayedCount}
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0, delayed: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('count: 1, delayed: 1')
+})
