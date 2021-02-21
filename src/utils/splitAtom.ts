@@ -46,19 +46,22 @@ export function splitAtom<Item, Key = unknown>(
         nextSplitted[index] = cachedAtom
         return
       }
-      const itemAtom = isWritable(arrAtom)
-        ? atom(item, (get, set, update: SetStateAction<Item>) => {
-            const index = indexCache.get(key) as number
-            const prev = get(arrAtom)
-            const nextItem = isFunction(update) ? update(prev[index]) : update
-            set(itemAtom as PrimitiveAtom<Item>, nextItem)
-            set(arrAtom, [
-              ...prev.slice(0, index),
-              nextItem,
-              ...prev.slice(index + 1),
-            ])
-          })
-        : atom(() => item)
+      const read = (get: Getter) => get(arrAtom)[indexCache.get(key) as number]
+      const write = (
+        get: Getter,
+        set: Setter,
+        update: SetStateAction<Item>
+      ) => {
+        const index = indexCache.get(key) as number
+        const prev = get(arrAtom)
+        const nextItem = isFunction(update) ? update(prev[index]) : update
+        set(arrAtom as WritableAtom<Item[], Item[]>, [
+          ...prev.slice(0, index),
+          nextItem,
+          ...prev.slice(index + 1),
+        ])
+      }
+      const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
       atomCache.set(key, itemAtom)
       atomToKey.set(itemAtom, key)
       nextSplitted[index] = itemAtom
