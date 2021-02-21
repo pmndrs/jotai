@@ -62,7 +62,7 @@ function as the first argument. `get` allows you to fetch the contextual value
 of any atom.
 
 ```jsx
-const doubledCountAtom = atom(get => get(countAtom) * 2)
+const doubledCountAtom = atom((get) => get(countAtom) * 2)
 
 function DoubleCounter() {
   const [doubledCount] = useAtom(doubledCountAtom)
@@ -97,7 +97,7 @@ You can make the read function an async function too.
 ```jsx
 const urlAtom = atom("https://json.host.com")
 const fetchUrlAtom = atom(
-  async get => {
+  async (get) => {
     const response = await fetch(get(urlAtom))
     return await response.json()
   }
@@ -115,7 +115,7 @@ value of an atom. `set` will update an atoms value.
 
 ```jsx
 const decrementCountAtom = atom(
-  get => get(countAtom),
+  (get) => get(countAtom),
   (get, set, _arg) => set(countAtom, get(countAtom) - 1),
 )
 
@@ -145,7 +145,7 @@ Just make the write function an async function and call `set` when you're ready.
 
 ```jsx
 const fetchCountAtom = atom(
-  get => get(countAtom),
+  (get) => get(countAtom),
   async (_get, set, url) => {
     const response = await fetch(url)
     set(countAtom, (await response.json()).count)
