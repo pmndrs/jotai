@@ -24,32 +24,44 @@ export function splitAtom<Item, Key>(
   keyExtractor?: (item: Item) => Key
 ) {
   type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
-  // XXX potential memory leak when removing an item from upstream
-  const indexCache = new Map<Key, number>()
-  const atomCache = new Map<Key, ItemAtom>()
-  const atomToKey = new WeakMap<ItemAtom, Key>()
-  let prevSplitted: ItemAtom[] | undefined
+  let currentAtomList: ItemAtom[] | undefined
+  let currentKeyList: Key[] | undefined
+  const keyToAtom = (key: Key) => {
+    const index = currentKeyList?.indexOf(key)
+    if (index === undefined || index === -1) {
+      return undefined
+    }
+    return currentAtomList?.[index]
+  }
   const read = (get: Getter) => {
-    let nextSplitted: Atom<Item>[] = []
+    let nextAtomList: Atom<Item>[] = []
+    let nextKeyList: Key[] = []
     get(arrAtom).forEach((item, index) => {
       const key = keyExtractor
         ? keyExtractor(item)
         : ((index as unknown) as Key)
-      if (indexCache.get(key) !== index) {
-        indexCache.set(key, index)
-      }
-      const cachedAtom = atomCache.get(key)
+      nextKeyList[index] = key
+      const cachedAtom = keyToAtom(key)
       if (cachedAtom) {
-        nextSplitted[index] = cachedAtom
+        nextAtomList[index] = cachedAtom
         return
       }
-      const read = (get: Getter) => get(arrAtom)[indexCache.get(key) as number]
+      const read = (get: Getter) => {
+        const index = currentKeyList?.indexOf(key)
+        if (index === undefined || index === -1) {
+          throw new Error('index not found')
+        }
+        return get(arrAtom)[index]
+      }
       const write = (
         get: Getter,
         set: Setter,
         update: SetStateAction<Item>
       ) => {
-        const index = indexCache.get(key) as number
+        const index = currentKeyList?.indexOf(key)
+        if (index === undefined || index === -1) {
+          throw new Error('index not found')
+        }
         const prev = get(arrAtom)
         const nextItem = isFunction(update) ? update(prev[index]) : update
         set(arrAtom as WritableAtom<Item[], Item[]>, [
@@ -59,25 +71,21 @@ export function splitAtom<Item, Key>(
         ])
       }
       const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
-      atomCache.set(key, itemAtom)
-      atomToKey.set(itemAtom, key)
-      nextSplitted[index] = itemAtom
+      nextAtomList[index] = itemAtom
     })
+    currentKeyList = nextKeyList
     if (
-      prevSplitted &&
-      prevSplitted.length === nextSplitted.length &&
-      prevSplitted.every((x, i) => x === nextSplitted[i])
+      currentAtomList &&
+      currentAtomList.length === nextAtomList.length &&
+      currentAtomList.every((x, i) => x === nextAtomList[i])
     ) {
-      return prevSplitted
+      return currentAtomList
     }
-    return (prevSplitted = nextSplitted)
+    return (currentAtomList = nextAtomList)
   }
   const write = (get: Getter, set: Setter, atomToRemove: ItemAtom) => {
     const index = get(splittedAtom).indexOf(atomToRemove)
     if (index >= 0) {
-      const key = atomToKey.get(atomToRemove) as Key
-      indexCache.delete(key)
-      atomCache.delete(key)
       const prev = get(arrAtom)
       set(arrAtom as WritableAtom<Item[], Item[]>, [
         ...prev.slice(0, index),
