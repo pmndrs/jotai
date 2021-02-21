@@ -192,3 +192,4 @@ yarn add jotai react scheduler react-native
   - [Immer](./docs/api/immer.md)
   - [Optics](./docs/api/optics.md)
   - [Query](./docs/api/query.md)
+  - [XState](./docs/api/xstate.md)

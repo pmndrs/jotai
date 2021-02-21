@@ -112,5 +112,24 @@
     "bundled": 4734,
     "minified": 2087,
     "gzipped": 917
+  },
+  "xstate.module.js": {
+    "bundled": 2600,
+    "minified": 1083,
+    "gzipped": 575,
+    "treeshaked": {
+      "rollup": {
+        "code": 29,
+        "import_statements": 29
+      },
+      "webpack": {
+        "code": 1046
+      }
+    }
+  },
+  "xstate.js": {
+    "bundled": 3061,
+    "minified": 1324,
+    "gzipped": 651
   }
 }

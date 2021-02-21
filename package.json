@@ -1,7 +1,7 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.14.3",
+  "version": "0.14.4",
   "description": "👻 Next gen state management that will spook you",
   "module": "index.module.js",
   "main": "index.js",
@@ -44,6 +44,11 @@
       "module": "./query.module.mjs",
       "require": "./query.js",
       "types": "./query.d.ts"
+    },
+    "./xstate": {
+      "module": "./xstate.module.js",
+      "require": "./xstate.js",
+      "types": "./xstate.d.ts"
     }
   },
   "files": [
@@ -61,7 +66,7 @@
     "test": "jest && jest --setupFiles ./tests/setReactExperimental.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/index.d.ts dist/index.module.d.ts && shx cp dist/utils.d.ts dist/utils.module.d.ts && shx cp dist/devtools.d.ts dist/devtools.module.d.ts && shx cp dist/immer.d.ts dist/immer.module.d.ts && shx cp dist/optics.d.ts dist/optics.module.d.ts && shx cp dist/query.d.ts dist/query.module.d.ts && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/index.d.ts dist/index.module.d.ts && shx cp dist/utils.d.ts dist/utils.module.d.ts && shx cp dist/devtools.d.ts dist/devtools.module.d.ts && shx cp dist/immer.d.ts dist/immer.module.d.ts && shx cp dist/optics.d.ts dist/optics.module.d.ts && shx cp dist/query.d.ts dist/query.module.d.ts && shx cp dist/xstate.d.ts dist/xstate.module.d.ts && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {
@@ -161,7 +166,8 @@
     "rollup": "^2.39.0",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "shx": "^0.3.3",
-    "typescript": "^4.1.5"
+    "typescript": "^4.1.5",
+    "xstate": "^4.16.2"
   },
   "peerDependencies": {
     "immer": "*",
@@ -169,8 +175,9 @@
     "react": ">=16.8",
     "react-dom": "*",
     "react-native": "*",
+    "scheduler": ">=0.19",
     "react-query": "*",
-    "scheduler": ">=0.19"
+    "xstate": "*"
   },
   "peerDependenciesMeta": {
     "immer": {
@@ -186,6 +193,9 @@
       "optional": true
     },
     "react-query": {
+      "optional": true
+    },
+    "xstate": {
       "optional": true
     }
   }
