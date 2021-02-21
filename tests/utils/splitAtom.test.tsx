@@ -14,7 +14,7 @@ it('no unneccesary updates when updating atoms', async () => {
     })
     return rerenderCountRef.current
   }
-  const todosAtom = atom<Array<TodoItem>>([
+  const todosAtom = atom<TodoItem[]>([
     { task: 'get cat food', checked: false },
     { task: 'get dragon food', checked: false },
   ])
@@ -107,7 +107,7 @@ it('no unneccesary updates when updating atoms', async () => {
 })
 
 it('removing atoms', async () => {
-  const todosAtom = atom<Array<TodoItem>>([
+  const todosAtom = atom<TodoItem[]>([
     { task: 'get cat food', checked: false },
     { task: 'get dragon food', checked: false },
     { task: 'help nana', checked: false },
