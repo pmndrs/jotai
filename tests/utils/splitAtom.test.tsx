@@ -1,5 +1,5 @@
-import { atom, Provider, useAtom, PrimitiveAtom } from 'jotai'
 import React, { useMemo, useEffect, useRef } from 'react'
+import { atom, Provider, useAtom, Atom, PrimitiveAtom } from 'jotai'
 import { render, fireEvent, waitFor } from '@testing-library/react'
 
 import { splitAtom } from '../../src/utils/splitAtom'
@@ -19,7 +19,7 @@ it('no unneccesary updates when updating atoms', async () => {
     { task: 'get dragon food', checked: false },
   ])
 
-  const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
+  const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
     const [atoms, remove] = useAtom(
       useMemo(() => splitAtom(listAtom), [listAtom])
     )
@@ -38,12 +38,10 @@ it('no unneccesary updates when updating atoms', async () => {
     )
   }
 
-  const TaskItem = ({
-    itemAtom,
-  }: {
+  const TaskItem: React.FC<{
     itemAtom: PrimitiveAtom<TodoItem>
     onRemove: () => void
-  }) => {
+  }> = ({ itemAtom }) => {
     const [value, onChange] = useAtom(itemAtom)
     const toggle = () =>
       onChange((value) => ({ ...value, checked: !value.checked }))
@@ -113,7 +111,7 @@ it('removing atoms', async () => {
     { task: 'help nana', checked: false },
   ])
 
-  const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
+  const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
     const [atoms, remove] = useAtom(
       useMemo(() => splitAtom(listAtom), [listAtom])
     )
@@ -130,13 +128,10 @@ it('removing atoms', async () => {
     )
   }
 
-  const TaskItem = ({
-    itemAtom,
-    onRemove,
-  }: {
+  const TaskItem: React.FC<{
     itemAtom: PrimitiveAtom<TodoItem>
     onRemove: () => void
-  }) => {
+  }> = ({ itemAtom, onRemove }) => {
     const [value] = useAtom(itemAtom)
     return (
       <li>
@@ -192,4 +187,52 @@ it('removing atoms', async () => {
     expect(queryByText('get dragon food')).toBeFalsy()
     expect(queryByText('help nana')).toBeFalsy()
   })
+})
+
+it('read-only array atom', async () => {
+  const todosAtom = atom<TodoItem[]>(() => [
+    { task: 'get cat food', checked: false },
+    { task: 'get dragon food', checked: false },
+  ])
+
+  const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
+    const [atoms] = useAtom(useMemo(() => splitAtom(listAtom), [listAtom]))
+    return (
+      <>
+        {atoms.map((anAtom, index) => (
+          <TaskItem key={index} itemAtom={anAtom} />
+        ))}
+      </>
+    )
+  }
+
+  const TaskItem: React.FC<{ itemAtom: Atom<TodoItem> }> = ({ itemAtom }) => {
+    const [value] = useAtom(itemAtom)
+    return (
+      <li>
+        <input
+          data-testid={`${value.task}-checkbox`}
+          type="checkbox"
+          checked={value.checked || false}
+          readOnly
+        />
+      </li>
+    )
+  }
+
+  const { findByTestId } = render(
+    <Provider>
+      <TaskList listAtom={todosAtom} />
+    </Provider>
+  )
+
+  const catBox = (await findByTestId(
+    'get cat food-checkbox'
+  )) as HTMLInputElement
+  const dragonBox = (await findByTestId(
+    'get dragon food-checkbox'
+  )) as HTMLInputElement
+
+  expect(catBox.checked).toBe(false)
+  expect(dragonBox.checked).toBe(false)
 })
