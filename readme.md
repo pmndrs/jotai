@@ -25,7 +25,7 @@ You can try live demos in the following:
 - No string keys
 - TypeScript oriented
 
-### 01 First create a primitive atom
+### First create a primitive atom
 
 An atom represents a piece of state. All you need is to specify an initial
 value, which can be primitive values like strings and numbers, objects and
@@ -40,7 +40,7 @@ const citiesAtom = atom(['Tokyo', 'Kyoto', 'Osaka'])
 const mangaAtom = atom({ 'Dragon Ball': 1984, 'One Piece': 1997, Naruto: 1999 })
 ```
 
-### 02 Use the atom in your components
+### Use the atom in your components
 
 It can be used like `React.useState`:
 
@@ -55,7 +55,7 @@ function Counter() {
       <button onClick={() => setCount(c => c + 1)}>one up</button>
 ```
 
-### 03 Create derived atoms with computed values
+### Create derived atoms with computed values
 
 A new read-only atom can be created from existing atoms by passing a read
 function as the first argument. `get` allows you to fetch the contextual value
@@ -71,7 +71,7 @@ function DoubleCounter() {
 
 ## Recipes
 
-### 04 Creating an atom from multiple atoms
+### Creating an atom from multiple atoms
 
 You can combine multiple atoms to create a derived atom.
 
@@ -90,7 +90,7 @@ const atoms = [count1, count2, count3, ...otherAtoms]
 const sum = atom((get) => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
-### 05 Derived async atoms <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
+### Derived async atoms <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
 
 You can make the read function an async function too.
 
@@ -108,7 +108,7 @@ function Status() {
   const [json] = useAtom(fetchUrlAtom)
 ```
 
-### 06 You can create a writable derived atom
+### You can create a writable derived atom
 
 Specify a write function at the second argument. `get` will return the current
 value of an atom. `set` will update an atoms value.
@@ -127,7 +127,7 @@ function Counter() {
       <button onClick={decrement}>Decrease</button>
 ```
 
-### 07 Write only atoms
+### Write only atoms
 
 Just do not define a read function.
 
@@ -139,7 +139,7 @@ function Controls() {
   return <button onClick={() => multiply(3)}>triple</button>
 ```
 
-### 08 Async actions <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
+### Async actions <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
 
 Just make the write function an async function and call `set` when you're ready.
 
