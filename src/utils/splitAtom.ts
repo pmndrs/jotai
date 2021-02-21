@@ -9,17 +9,17 @@ const isWritable = <Value, Update>(
 
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
-export function splitAtom<Item, Key = unknown>(
+export function splitAtom<Item, Key>(
+  arrAtom: Atom<Item[]> & { write: undefined },
+  keyExtractor?: (item: Item) => Key
+): Atom<Atom<Item>[]>
+
+export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], Item[]>,
   keyExtractor?: (item: Item) => Key
 ): WritableAtom<PrimitiveAtom<Item>[], PrimitiveAtom<Item>>
 
-export function splitAtom<Item, Key = unknown>(
-  arrAtom: Atom<Item[]>,
-  keyExtractor?: (item: Item) => Key
-): Atom<Atom<Item>[]>
-
-export function splitAtom<Item, Key = unknown>(
+export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], Item[]> | Atom<Item[]>,
   keyExtractor?: (item: Item) => Key
 ) {
@@ -31,18 +31,15 @@ export function splitAtom<Item, Key = unknown>(
   let prevSplitted: ItemAtom[] | undefined
   const read = (get: Getter) => {
     let nextSplitted: Atom<Item>[] = []
-    let changed = false
     get(arrAtom).forEach((item, index) => {
       const key = keyExtractor
         ? keyExtractor(item)
         : ((index as unknown) as Key)
       if (indexCache.get(key) !== index) {
         indexCache.set(key, index)
-        changed = true
       }
       const cachedAtom = atomCache.get(key)
-      // XXX if it's changed from upstream atom will be re-created
-      if (cachedAtom && Object.is(get(cachedAtom), item)) {
+      if (cachedAtom) {
         nextSplitted[index] = cachedAtom
         return
       }
@@ -67,9 +64,9 @@ export function splitAtom<Item, Key = unknown>(
       nextSplitted[index] = itemAtom
     })
     if (
-      !changed &&
       prevSplitted &&
-      prevSplitted.length === nextSplitted.length
+      prevSplitted.length === nextSplitted.length &&
+      prevSplitted.every((x, i) => x === nextSplitted[i])
     ) {
       return prevSplitted
     }
