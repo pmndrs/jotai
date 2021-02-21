@@ -1,8 +1,13 @@
 import React, { Fragment, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
+import {
+  Provider as ProviderOrig,
+  atom,
+  useAtom,
+  WritableAtom,
+} from '../../src/index'
 import { atomFamily } from '../../src/utils'
-import { SetStateAction, WritableAtom } from '../../src/core/types'
+import type { SetStateAction } from '../../src/core/types'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
