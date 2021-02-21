@@ -10,7 +10,7 @@ const isWritable = <Value, Update>(
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
 export function splitAtom<Item, Key>(
-  arrAtom: Atom<Item[]> & { write: undefined },
+  arrAtom: Atom<Item[]> & { write: never },
   keyExtractor?: (item: Item) => Key
 ): Atom<Atom<Item>[]>
 
