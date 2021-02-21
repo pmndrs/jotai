@@ -426,9 +426,10 @@ const initialState = [
 ]
 
 const todosAtom = atom(initialState)
+const todoAtomsAtom = splitAtom(todosAtom)
 
 const TodoList = () => {
-  const [todoAtoms, removeTodoAtom] = useAtom(splitAtom(todosAtom))
+  const [todoAtoms, removeTodoAtom] = useAtom(todoAtomsAtom)
   return (
     <ul>
       {todoAtoms.map((todoAtom) => (
