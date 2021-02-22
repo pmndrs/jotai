@@ -406,7 +406,7 @@ See the below example for usage.
 
 ### codesandbox
 
-https://codesandbox.io/s/react-typescript-forked-8cv79?file=/src/App.tsx
+https://codesandbox.io/s/react-typescript-forked-7nir9?file=/src/App.tsx
 
 ```tsx
 import * as React from 'react'
@@ -426,9 +426,10 @@ const initialState = [
 ]
 
 const todosAtom = atom(initialState)
+const todoAtomsAtom = splitAtom(todosAtom)
 
 const TodoList = () => {
-  const [todoAtoms, removeTodoAtom] = useAtom(splitAtom(todosAtom))
+  const [todoAtoms, removeTodoAtom] = useAtom(todoAtomsAtom)
   return (
     <ul>
       {todoAtoms.map((todoAtom) => (
