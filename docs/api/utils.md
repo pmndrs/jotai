@@ -2,7 +2,7 @@ This doc describes `jotai/utils` bundle.
 
 ## useUpdateAtom
 
-Ref: https://github.com/react-spring/jotai/issues/26
+Ref: https://github.com/pmndrs/jotai/issues/26
 
 ```jsx
 import { atom, useAtom } from 'jotai'
@@ -50,7 +50,7 @@ https://codesandbox.io/s/react-typescript-forked-1x90m
 
 ## atomWithReset
 
-Ref: https://github.com/react-spring/jotai/issues/41
+Ref: https://github.com/pmndrs/jotai/issues/41
 
 ```ts
 function atomWithReset<Value>(
@@ -98,7 +98,7 @@ const TodoResetButton = () => {
 
 ## RESET
 
-Ref: https://github.com/react-spring/jotai/issues/217
+Ref: https://github.com/pmndrs/jotai/issues/217
 
 ```ts
 const RESET: unique symbol
@@ -164,7 +164,7 @@ https://codesandbox.io/s/react-typescript-forked-eg0mw
 
 ## atomWithReducer
 
-Ref: https://github.com/react-spring/jotai/issues/38
+Ref: https://github.com/pmndrs/jotai/issues/38
 
 ```js
 import { atomWithReducer } from 'jotai/utils'
