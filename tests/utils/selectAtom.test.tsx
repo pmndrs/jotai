@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { Fragment, useEffect, useMemo, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, Provider } from '../../src/index'
+import { Provider as ProviderOrig, atom } from '../../src/index'
 import { selectAtom, useAtomValue, useUpdateAtom } from '../../src/utils'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('selectAtom works as expected', async () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })

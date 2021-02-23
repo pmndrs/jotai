@@ -1,6 +1,8 @@
-import React, { Suspense } from 'react'
+import React, { Fragment, Suspense } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
+import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('one atom, one effect', async () => {
   const countAtom = atom(1)

@@ -1,13 +1,14 @@
-import React, { useState } from 'react'
-import { fireEvent, cleanup, render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
+import React, { Fragment, useState } from 'react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
+import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 const consoleError = console.error
 beforeEach(() => {
   console.error = jest.fn()
 })
 afterEach(() => {
-  cleanup()
   console.error = consoleError
 })
 
@@ -35,31 +36,6 @@ it('simple scoped provider with scoped atom', async () => {
   await findByText('count: 0')
   fireEvent.click(getByText('dispatch'))
   await findByText('count: 1')
-})
-
-it('throws error if no scoped provider exists for scoped atom', async () => {
-  const scope = Symbol()
-  const countAtom = atom(0)
-  countAtom.scope = scope
-
-  const Display: React.FC = () => {
-    const [count, setCount] = useAtom(countAtom)
-
-    return (
-      <>
-        <p>count: {count}</p>
-        <button onClick={() => setCount((c) => c + 1)}>dispatch</button>
-      </>
-    )
-  }
-
-  expect(() =>
-    render(
-      <Provider>
-        <Display />
-      </Provider>
-    )
-  ).toThrow()
 })
 
 it('default provider and atom with scoped provider and scoped atom', async () => {

@@ -1,87 +1,38 @@
-import React, {
-  MutableRefObject,
-  ReactElement,
-  createElement,
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  useDebugValue,
-} from 'react'
-import { useContextUpdate } from 'use-context-selector'
+import React, { createElement, useRef, useDebugValue } from 'react'
 
 import { AnyAtom, Scope } from './types'
+import { AtomState, State } from './vanilla'
 import {
-  AtomState,
-  State,
-  UpdateState,
-  createState,
-  commitState,
-} from './vanilla'
-import { getStoreContext } from './contexts'
+  Store,
+  createStore,
+  subscribeToStore,
+  getStoreContext,
+} from './contexts'
+import { useMutableSource } from './useMutableSource'
 
-// guessing if it's react experimental channel
-const isReactExperimental =
-  !!(typeof process === 'object' && process.env.IS_REACT_EXPERIMENTAL) ||
-  !!(React as any).unstable_useMutableSource
-
-type ContextUpdate = (t: () => void) => void
-
-const defaultContextUpdate: ContextUpdate = (f) => f()
-
-const InnerProvider: React.FC<{
-  r: MutableRefObject<ContextUpdate | undefined>
-  c: ReturnType<typeof getStoreContext>
-}> = ({ r, c, children }) => {
-  const contextUpdate = useContextUpdate(c)
-  if (isReactExperimental && r.current === defaultContextUpdate) {
-    r.current = (f) => contextUpdate(f)
-  }
-  return (children as ReactElement) ?? null
-}
+const getState = (store: Store) => store.s
 
 export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
   scope?: Scope
 }> = ({ initialValues, scope, children }) => {
-  const contextUpdateRef = useRef<ContextUpdate>(defaultContextUpdate)
-
-  const [state, setState] = useState(() => createState(initialValues))
-  const lastStateRef = useRef(state)
-  const updateState = useMemo(() => {
-    type Updater = Parameters<UpdateState>[0]
-    const queue: Updater[] = []
-    return (updater: Updater) => {
-      queue.push(updater)
-      if (queue.length > 1) {
-        return
-      }
-      while (queue.length) {
-        lastStateRef.current = queue[0](lastStateRef.current)
-        queue.shift()
-      }
-      contextUpdateRef.current(() => {
-        setState(lastStateRef.current)
-      })
-    }
-  }, [])
-  useEffect(() => {
-    commitState(state, updateState)
-  })
+  const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
+  if (storeRef.current == null) {
+    // lazy initialization
+    storeRef.current = createStore(initialValues)
+  }
+  const mutableSource = storeRef.current as ReturnType<typeof createStore>
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(state)
+    useDebugState(useMutableSource(mutableSource, getState, subscribeToStore))
   }
+
   const StoreContext = getStoreContext(scope)
   return createElement(
     StoreContext.Provider,
-    { value: [state, updateState] },
-    createElement(
-      InnerProvider,
-      { r: contextUpdateRef, c: StoreContext },
-      children
-    )
+    { value: mutableSource },
+    children
   )
 }
 

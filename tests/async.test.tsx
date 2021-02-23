@@ -1,6 +1,8 @@
-import React, { StrictMode, Suspense, useEffect } from 'react'
+import React, { Fragment, StrictMode, Suspense, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
+import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('does not show async stale result', async () => {
   const countAtom = atom(0)

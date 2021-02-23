@@ -1,14 +1,17 @@
-import React, { Suspense, useState, useEffect } from 'react'
-import { fireEvent, cleanup, render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
+import React, { Fragment, Suspense, useState, useEffect } from 'react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
+import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
+import { StoreContextMap } from '../src/core/contexts'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 const consoleError = console.error
 beforeEach(() => {
   console.error = jest.fn()
 })
 afterEach(() => {
-  cleanup()
   console.error = consoleError
+  StoreContextMap.clear()
 })
 
 class ErrorBoundary extends React.Component<

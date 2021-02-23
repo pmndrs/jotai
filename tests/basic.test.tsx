@@ -1,4 +1,5 @@
 import React, {
+  Fragment,
   StrictMode,
   Suspense,
   useEffect,
@@ -8,13 +9,13 @@ import React, {
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
-  Provider,
+  Provider as ProviderOrig,
   atom,
   useAtom,
   WritableAtom,
-  useBridge,
-  Bridge,
 } from '../src/index'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('creates atoms', () => {
   // primitive atom
@@ -792,65 +793,6 @@ it('set atom right after useEffect (#208)', async () => {
 
   await findByText('count: 2')
   expect(effectFn).lastCalledWith(2)
-})
-
-it('works with Brige', async () => {
-  const countAtom = atom(0)
-
-  const Child: React.FC = () => {
-    const [count, setCount] = useAtom(countAtom)
-    return (
-      <>
-        <div>child: {count}</div>
-        <button onClick={() => setCount((c) => c + 1)}>child</button>
-      </>
-    )
-  }
-
-  const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(countAtom)
-    return (
-      <>
-        <div>count: {count}</div>
-        <button onClick={() => setCount((c) => c + 1)}>button</button>
-      </>
-    )
-  }
-
-  const Parent: React.FC = () => {
-    const valueToBridge = useBridge()
-    return (
-      <>
-        <Counter />
-        <Bridge value={valueToBridge}>
-          <Child />
-        </Bridge>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
-  )
-
-  await waitFor(() => {
-    getByText('count: 0')
-    getByText('child: 0')
-  })
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('count: 1')
-    getByText('child: 1')
-  })
-
-  fireEvent.click(getByText('child'))
-  await waitFor(() => {
-    getByText('count: 2')
-    getByText('child: 2')
-  })
 })
 
 it('only relevant render function called (#156)', async () => {

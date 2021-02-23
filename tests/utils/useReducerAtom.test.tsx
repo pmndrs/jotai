@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { Fragment } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, atom } from '../../src/index'
+import { Provider as ProviderOrig, atom } from '../../src/index'
 import { useReducerAtom } from '../../src/utils'
+
+const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('useReducerAtom with no action argument', async () => {
   const countAtom = atom(0)
