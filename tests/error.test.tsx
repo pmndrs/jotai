@@ -1,7 +1,6 @@
 import React, { Fragment, Suspense, useState, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
-import { StoreContextMap } from '../src/core/contexts'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
@@ -11,7 +10,6 @@ beforeEach(() => {
 })
 afterEach(() => {
   console.error = consoleError
-  StoreContextMap.clear()
 })
 
 class ErrorBoundary extends React.Component<
