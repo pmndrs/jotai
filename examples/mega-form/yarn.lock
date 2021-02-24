@@ -2987,9 +2987,10 @@ isstream@~0.1.2:
   resolved "https://registry.yarnpkg.com/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
   integrity sha1-R+Y/evVa+m+S4VAOaQ64uFKcCZo=
 
-"jotai@https://pkg.csb.dev/pmndrs/jotai/commit/eb2283a7/jotai":
-  version "0.14.0"
-  resolved "https://pkg.csb.dev/pmndrs/jotai/commit/eb2283a7/jotai#5955be0670f8afd4881083b8fe67d4387f1e8f27"
+jotai@^0.14.0:
+  version "0.14.5"
+  resolved "https://registry.yarnpkg.com/jotai/-/jotai-0.14.5.tgz#8699b8dbbc417ad2ea4a486da34219546e350233"
+  integrity sha512-8WjJYxLKv79ZF3gRERcYqXkwRWtDQq01hQXdg+qcKE0MtQcwGyReM/WHFGRUhqHW51O8fsjk+9s7U6AJ+p9uLQ==
   dependencies:
     use-context-selector "1.3.7"
 
