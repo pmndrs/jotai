@@ -1,12 +1,6 @@
-import {
-  useContext,
-  useEffect,
-  useCallback,
-  useMemo,
-  useDebugValue,
-} from 'react'
+import { useContext, useEffect, useCallback, useDebugValue } from 'react'
 
-import { Store, getStoreContext, subscribeToStore } from './contexts'
+import { getStoreContext, subscribeToStore } from './contexts'
 import {
   State,
   UpdateState,
@@ -53,23 +47,16 @@ export function useAtom<Value, Update>(
   )
 
   const StoreContext = getStoreContext(atom.scope)
-  type Selected = {
-    v: Value
-    u: UpdateState
-  }
-  const { v: value, u: updateState }: Selected = useMutableSource(
-    useContext(StoreContext),
-    useMemo(() => {
-      let selected: Selected | null = null
-      return (store: Store) => {
-        const { s: state, u: updateState } = store
-        const v = getAtomValue(state, updateState)
-        if (!selected || !Object.is(selected.v, v)) {
-          selected = { v, u: updateState }
-        }
-        return selected
-      }
-    }, [getAtomValue]),
+  const [mutableSource, updateState] = useContext(StoreContext)
+  const value: Value = useMutableSource(
+    mutableSource,
+    useCallback(
+      (store: any) => {
+        const state = store.s()
+        return getAtomValue(state, updateState)
+      },
+      [getAtomValue, updateState]
+    ),
     subscribeToStore
   )
 

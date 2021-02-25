@@ -2,15 +2,10 @@ import React, { createElement, useRef, useDebugValue } from 'react'
 
 import { AnyAtom, Scope } from './types'
 import { AtomState, State } from './vanilla'
-import {
-  Store,
-  createStore,
-  subscribeToStore,
-  getStoreContext,
-} from './contexts'
+import { createStore, subscribeToStore, getStoreContext } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
-const getState = (store: Store) => store.s
+const getState = (store: any) => store.s()
 
 export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
@@ -21,19 +16,15 @@ export const Provider: React.FC<{
     // lazy initialization
     storeRef.current = createStore(initialValues)
   }
-  const mutableSource = storeRef.current as ReturnType<typeof createStore>
+  const store = storeRef.current as ReturnType<typeof createStore>
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(useMutableSource(mutableSource, getState, subscribeToStore))
+    useDebugState(useMutableSource(store[0], getState, subscribeToStore))
   }
 
   const StoreContext = getStoreContext(scope)
-  return createElement(
-    StoreContext.Provider,
-    { value: mutableSource },
-    children
-  )
+  return createElement(StoreContext.Provider, { value: store }, children)
 }
 
 const atomToPrintable = (atom: AnyAtom) => atom.debugLabel || atom.toString()
