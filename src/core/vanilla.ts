@@ -60,11 +60,7 @@ export const createState = (
   }
   if (initialValues) {
     for (const [atom, value] of initialValues) {
-      const atomState: AtomState = {
-        v: value,
-        r: 0,
-        d: new Map(),
-      }
+      const atomState: AtomState = { v: value, r: 0, d: new Map() }
       if (
         typeof process === 'object' &&
         process.env.NODE_ENV !== 'production'
@@ -91,55 +87,6 @@ const wipAtomState = <Value>(
     }
   }
   return atomState as AtomState<Value>
-}
-
-const commitAtomState = <Value>(
-  state: State,
-  atom: Atom<Value>,
-  atomState: AtomState<Value>
-): void => {
-  const prevDependencies = state.a.get(atom)?.d
-  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
-    Object.freeze(atomState)
-  }
-  state.a.set(atom, atomState)
-
-  if (prevDependencies !== atomState.d) {
-    const dependencies = new Set(atomState.d.keys())
-    if (prevDependencies) {
-      prevDependencies.forEach((_, a) => {
-        const mounted = state.m.get(a)
-        if (dependencies.has(a)) {
-          // not changed
-          dependencies.delete(a)
-        } else if (mounted) {
-          const dependents = mounted.d
-          dependents.delete(atom)
-          if (canUnmountAtom(a, dependents)) {
-            unmountAtom(state, a)
-          }
-        } else if (
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
-        ) {
-          console.warn('[Bug] a dependency is not mounted', a)
-        }
-      })
-    }
-    dependencies.forEach((a) => {
-      const mounted = state.m.get(a)
-      if (mounted) {
-        const dependents = mounted.d
-        dependents.add(atom)
-      } else {
-        mountAtom(state, a, atom)
-      }
-    })
-  }
-
-  const mounted = state.m.get(atom)
-  ++state.v
-  mounted?.l.forEach((listener) => listener())
 }
 
 const replaceDependencies = (
@@ -245,7 +192,6 @@ const readAtomState = <Value>(
       return atomState
     }
   }
-  let nextState = state
   let error: Error | undefined
   let promise: Promise<void> | undefined
   let value: Value | undefined
@@ -314,11 +260,11 @@ const readAtomState = <Value>(
     }
   }
   if (error) {
-    setAtomReadError(nextState, atom, error, dependencies)
+    setAtomReadError(state, atom, error, dependencies)
   } else if (promise) {
-    setAtomReadPromise(nextState, atom, promise, dependencies)
+    setAtomReadPromise(state, atom, promise, dependencies)
   } else {
-    setAtomValue(nextState, atom, value, dependencies)
+    setAtomValue(state, atom, value, dependencies)
   }
   return state.a.get(atom) as AtomState<Value>
 }
@@ -576,6 +522,55 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
   ) {
     console.warn('[Bug] could not find atom state to unmount', atom)
   }
+}
+
+const commitAtomState = <Value>(
+  state: State,
+  atom: Atom<Value>,
+  atomState: AtomState<Value>
+): void => {
+  const prevDependencies = state.a.get(atom)?.d
+  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+    Object.freeze(atomState)
+  }
+  state.a.set(atom, atomState)
+
+  if (prevDependencies !== atomState.d) {
+    const dependencies = new Set(atomState.d.keys())
+    if (prevDependencies) {
+      prevDependencies.forEach((_, a) => {
+        const mounted = state.m.get(a)
+        if (dependencies.has(a)) {
+          // not changed
+          dependencies.delete(a)
+        } else if (mounted) {
+          const dependents = mounted.d
+          dependents.delete(atom)
+          if (canUnmountAtom(a, dependents)) {
+            unmountAtom(state, a)
+          }
+        } else if (
+          typeof process === 'object' &&
+          process.env.NODE_ENV !== 'production'
+        ) {
+          console.warn('[Bug] a dependency is not mounted', a)
+        }
+      })
+    }
+    dependencies.forEach((a) => {
+      const mounted = state.m.get(a)
+      if (mounted) {
+        const dependents = mounted.d
+        dependents.add(atom)
+      } else {
+        mountAtom(state, a, atom)
+      }
+    })
+  }
+
+  const mounted = state.m.get(atom)
+  ++state.v
+  mounted?.l.forEach((listener) => listener())
 }
 
 export const subscribeAtom = (
