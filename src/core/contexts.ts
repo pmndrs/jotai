@@ -2,16 +2,20 @@ import { createContext } from 'react'
 import type { Context } from 'react'
 
 import type { AnyAtom, Scope } from './types'
-import { UpdateState, createState } from './vanilla'
+import { State, UpdateState, createState } from './vanilla'
 import { createMutableSource } from './useMutableSource'
 
 type MutableSource = ReturnType<typeof createMutableSource>
 
-export type Store = [mutableSource: MutableSource, updateState: UpdateState]
+export type Store = [
+  mutableSource: MutableSource,
+  updateState: UpdateState,
+  getState: () => State
+]
 
 export const createStore = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
-) => {
+): Store => {
   let state = createState(initialValues)
   const listeners = new Set<() => void>()
   type Updater = Parameters<UpdateState>[0]
@@ -31,11 +35,12 @@ export const createStore = (
       listeners.forEach((listener) => listener())
     }
   }
+  const getState = () => state
   const mutableSource = createMutableSource(
-    { s: () => state, l: listeners },
+    { s: getState, l: listeners },
     () => state
   )
-  return [mutableSource, updateState]
+  return [mutableSource, updateState, getState]
 }
 
 export const subscribeToStore = (source: any, callback: () => void) => {

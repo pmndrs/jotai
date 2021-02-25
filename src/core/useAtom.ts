@@ -41,7 +41,7 @@ export function useAtom<Value, Update>(
   )
 
   const StoreContext = getStoreContext(atom.scope)
-  const [mutableSource, updateState] = useContext(StoreContext)
+  const [mutableSource, updateState, getState] = useContext(StoreContext)
   const value: Value = useMutableSource(
     mutableSource,
     useCallback(
@@ -56,11 +56,11 @@ export function useAtom<Value, Update>(
 
   useEffect(() => {
     const id = Symbol()
-    addAtom(updateState, atom, id)
+    addAtom(getState(), updateState, atom, id)
     return () => {
-      delAtom(updateState, atom, id)
+      delAtom(getState(), updateState, atom, id)
     }
-  }, [updateState, atom])
+  }, [getState, updateState, atom])
 
   const setAtom = useCallback(
     (update: Update) => {

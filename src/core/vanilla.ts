@@ -322,21 +322,20 @@ export const readAtom = <Value>(
 }
 
 export const addAtom = (
+  state: State,
   updateState: UpdateState,
   addingAtom: AnyAtom,
   useId: symbol
-): void => {
-  updateState((prev) => {
-    const mounted = prev.m.get(addingAtom)
-    if (mounted) {
-      const dependents = mounted.d
-      dependents.add(useId)
-    } else {
-      mountAtom(prev, updateState, addingAtom, useId)
-    }
-    commitState(prev, updateState)
-    return prev
-  })
+): Mounted => {
+  let mounted = state.m.get(addingAtom)
+  if (mounted) {
+    const dependents = mounted.d
+    dependents.add(useId)
+  } else {
+    mounted = mountAtom(state, updateState, addingAtom, useId)
+  }
+  commitState(state, updateState)
+  return mounted
 }
 
 // XXX doesn't work with mutally dependent atoms
@@ -344,22 +343,20 @@ const canUnmountAtom = (atom: AnyAtom, dependents: Dependents) =>
   !dependents.size || (dependents.size === 1 && dependents.has(atom))
 
 export const delAtom = (
+  state: State,
   updateState: UpdateState,
   deletingAtom: AnyAtom,
   useId: symbol
 ): void => {
-  updateState((prev) => {
-    const mounted = prev.m.get(deletingAtom)
-    if (mounted) {
-      const dependents = mounted.d
-      dependents.delete(useId)
-      if (canUnmountAtom(deletingAtom, dependents)) {
-        unmountAtom(prev, deletingAtom)
-      }
+  const mounted = state.m.get(deletingAtom)
+  if (mounted) {
+    const dependents = mounted.d
+    dependents.delete(useId)
+    if (canUnmountAtom(deletingAtom, dependents)) {
+      unmountAtom(state, deletingAtom)
     }
-    commitState(prev, updateState)
-    return prev
-  })
+  }
+  commitState(state, updateState)
 }
 
 const getDependents = (state: State, atom: AnyAtom): Dependents => {
