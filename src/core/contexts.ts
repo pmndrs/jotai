@@ -1,6 +1,7 @@
-import { Context, createContext } from 'react'
+import { createContext } from 'react'
+import type { Context } from 'react'
 
-import { AnyAtom, Scope } from './types'
+import type { AnyAtom, Scope } from './types'
 import { UpdateState, createState } from './vanilla'
 import { createMutableSource } from './useMutableSource'
 

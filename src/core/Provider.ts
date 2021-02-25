@@ -1,7 +1,7 @@
 import React, { createElement, useRef, useDebugValue } from 'react'
 
-import { AnyAtom, Scope } from './types'
-import { AtomState, State } from './vanilla'
+import type { AnyAtom, Scope } from './types'
+import type { AtomState, State } from './vanilla'
 import { createStore, subscribeToStore, getStoreContext } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
@@ -33,12 +33,13 @@ const isAtom = (x: AnyAtom | symbol): x is AnyAtom => typeof x !== 'symbol'
 
 const stateToPrintable = (state: State) =>
   Object.fromEntries(
-    Array.from(state.m.entries()).map(([atom, [dependents]]) => {
+    Array.from(state.m.entries()).map(([atom, mounted]) => {
+      const dependents = mounted.d
       const atomState = state.a.get(atom) || ({} as AtomState)
       return [
         atomToPrintable(atom),
         {
-          value: atomState.re || atomState.rp || atomState.wp || atomState.v,
+          value: atomState.e || atomState.p || atomState.w || atomState.v,
           dependents: Array.from(dependents)
             .filter(isAtom)
             .map(atomToPrintable),

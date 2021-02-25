@@ -1,15 +1,9 @@
 import { useContext, useEffect, useCallback, useDebugValue } from 'react'
 
 import { getStoreContext, subscribeToStore } from './contexts'
-import {
-  State,
-  UpdateState,
-  addAtom,
-  delAtom,
-  readAtom,
-  writeAtom,
-} from './vanilla'
-import { Atom, WritableAtom, AnyWritableAtom, SetAtom } from './types'
+import { addAtom, delAtom, readAtom, writeAtom } from './vanilla'
+import type { State, UpdateState } from './vanilla'
+import type { Atom, WritableAtom, AnyWritableAtom, SetAtom } from './types'
 import { useMutableSource } from './useMutableSource'
 
 const isWritable = <Value, Update>(
@@ -29,14 +23,14 @@ export function useAtom<Value, Update>(
   const getAtomValue = useCallback(
     (state: State, updateState: UpdateState) => {
       const atomState = readAtom(state, updateState, atom)
-      if (atomState.re) {
-        throw atomState.re // read error
+      if (atomState.e) {
+        throw atomState.e // read error
       }
-      if (atomState.rp) {
-        throw atomState.rp // read promise
+      if (atomState.p) {
+        throw atomState.p // read promise
       }
-      if (atomState.wp) {
-        throw atomState.wp // write promise
+      if (atomState.w) {
+        throw atomState.w // write promise
       }
       if ('v' in atomState) {
         return atomState.v as Value
