@@ -147,7 +147,6 @@ const replaceDependencies = (
   atomState: AtomState,
   dependencies?: Set<AnyAtom>
 ): void => {
-  // TODO we may need to mount/unmount
   if (dependencies) {
     atomState.d = new Map(
       Array.from(dependencies).map((a) => [a, state.a.get(a)?.r ?? 0])
