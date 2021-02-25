@@ -43,11 +43,14 @@ type MountedMap = Map<AnyAtom, Mounted>
 
 type StateVersion = number
 
+type WorkInProgress = Map<AnyAtom, AtomState>
+
 // mutable state
 export type State = {
   v: StateVersion
   a: AtomStateMap
   m: MountedMap
+  w: WorkInProgress
 }
 
 export const createState = (
@@ -57,6 +60,7 @@ export const createState = (
     v: 0,
     a: new WeakMap(),
     m: new Map(),
+    w: new Map(),
   }
   if (initialValues) {
     for (const [atom, value] of initialValues) {
@@ -73,11 +77,14 @@ export const createState = (
   return state
 }
 
+const getAtomState = <Value>(state: State, atom: Atom<Value>) =>
+  (state.w.get(atom) || state.a.get(atom)) as AtomState<Value> | undefined
+
 const wipAtomState = <Value>(
   state: State,
   atom: Atom<Value>
 ): AtomState<Value> => {
-  let atomState = state.a.get(atom)
+  let atomState = getAtomState(state, atom)
   if (atomState) {
     atomState = { ...atomState } // copy
   } else {
@@ -86,7 +93,8 @@ const wipAtomState = <Value>(
       atomState.v = atom.init
     }
   }
-  return atomState as AtomState<Value>
+  state.w.set(atom, atomState)
+  return atomState
 }
 
 const replaceDependencies = (
@@ -96,7 +104,7 @@ const replaceDependencies = (
 ): void => {
   if (dependencies) {
     atomState.d = new Map(
-      Array.from(dependencies).map((a) => [a, state.a.get(a)?.r ?? 0])
+      Array.from(dependencies).map((a) => [a, getAtomState(state, a)?.r ?? 0])
     )
   }
 }
@@ -119,7 +127,6 @@ const setAtomValue = <Value>(
     ++atomState.r
   }
   replaceDependencies(state, atomState, dependencies)
-  commitAtomState(state, atom, atomState)
 }
 
 const setAtomReadError = <Value>(
@@ -136,7 +143,6 @@ const setAtomReadError = <Value>(
   delete atomState.p
   atomState.e = error
   replaceDependencies(state, atomState, dependencies)
-  commitAtomState(state, atom, atomState)
 }
 
 const setAtomReadPromise = <Value>(
@@ -148,7 +154,6 @@ const setAtomReadPromise = <Value>(
   const atomState = wipAtomState(state, atom)
   atomState.p = promise
   replaceDependencies(state, atomState, dependencies)
-  commitAtomState(state, atom, atomState)
 }
 
 const setAtomWritePromise = <Value>(
@@ -162,7 +167,6 @@ const setAtomWritePromise = <Value>(
   } else {
     delete atomState.w
   }
-  commitAtomState(state, atom, atomState)
 }
 
 const scheduleReadAtomState = <Value>(
@@ -172,6 +176,7 @@ const scheduleReadAtomState = <Value>(
 ): void => {
   promise.then(() => {
     readAtomState(state, atom, true)
+    commitState(state)
   })
 }
 
@@ -181,11 +186,11 @@ const readAtomState = <Value>(
   force?: boolean
 ): AtomState<Value> => {
   if (!force) {
-    const atomState = state.a.get(atom) as AtomState<Value> | undefined
+    const atomState = getAtomState(state, atom)
     if (
       atomState &&
       Array.from(atomState.d.entries()).every(([a, r]) => {
-        const aState = state.a.get(a)
+        const aState = getAtomState(state, a)
         return aState && !aState.e && !aState.p && aState.r === r
       })
     ) {
@@ -210,7 +215,7 @@ const readAtomState = <Value>(
         return aState.v // value
       }
       // a === atom
-      const aState = state.a.get(a)
+      const aState = getAtomState(state, a)
       if (aState) {
         if (aState.p) {
           throw aState.p // read promise
@@ -266,7 +271,7 @@ const readAtomState = <Value>(
   } else {
     setAtomValue(state, atom, value, dependencies)
   }
-  return state.a.get(atom) as AtomState<Value>
+  return getAtomState(state, atom) as AtomState<Value>
 }
 
 export const readAtom = <Value>(
@@ -278,13 +283,14 @@ export const readAtom = <Value>(
 }
 
 const addAtom = (state: State, addingAtom: AnyAtom, useId: symbol): Mounted => {
-  const mounted = state.m.get(addingAtom)
+  let mounted = state.m.get(addingAtom)
   if (mounted) {
     const dependents = mounted.d
     dependents.add(useId)
-    return mounted
+  } else {
+    mounted = mountAtom(state, addingAtom, useId)
   }
-  return mountAtom(state, addingAtom, useId)
+  return mounted
 }
 
 // XXX doesn't work with mutally dependent atoms
@@ -305,6 +311,12 @@ const delAtom = (state: State, deletingAtom: AnyAtom, useId: symbol): void => {
 const getDependents = (state: State, atom: AnyAtom): Dependents => {
   const mounted = state.m.get(atom)
   const dependents: Dependents = new Set(mounted?.d)
+  // collecting from wip
+  state.w.forEach((aState, a) => {
+    if (aState.d.has(atom)) {
+      dependents.add(a)
+    }
+  })
   return dependents
 }
 
@@ -313,7 +325,7 @@ const updateDependentsState = <Value>(
   atom: Atom<Value>,
   prevAtomState?: AtomState<Value>
 ): void => {
-  if (!prevAtomState || prevAtomState.r === state.a.get(atom)?.r) {
+  if (!prevAtomState || prevAtomState.r === getAtomState(state, atom)?.r) {
     return // bail out
   }
   const dependents = getDependents(state, atom)
@@ -321,7 +333,7 @@ const updateDependentsState = <Value>(
     if (dependent === atom || typeof dependent === 'symbol') {
       return
     }
-    const dependentState = state.a.get(dependent)
+    const dependentState = getAtomState(state, dependent)
     const nextDependentState = readAtomState(state, dependent, true)
     const promise = nextDependentState.p
     if (promise) {
@@ -340,10 +352,11 @@ const writeAtomState = <Value, Update>(
   update: Update,
   pendingPromises?: Promise<void>[]
 ): void => {
-  const atomState = state.a.get(atom) as AtomState<Value> | undefined
+  const atomState = getAtomState(state, atom)
   if (atomState && atomState.w) {
     const promise = atomState.w.then(() => {
       writeAtomState(state, atom, update)
+      commitState(state)
     })
     if (pendingPromises) {
       pendingPromises.push(promise)
@@ -385,7 +398,7 @@ const writeAtomState = <Value, Update>(
       }) as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
         if (a === atom) {
-          const aState = state.a.get(a)
+          const aState = getAtomState(state, a)
           setAtomValue(state, a, v)
           updateDependentsState(state, a, aState)
         } else {
@@ -403,6 +416,7 @@ const writeAtomState = <Value, Update>(
         atom,
         promiseOrVoid.then(() => {
           setAtomWritePromise(state, atom)
+          commitState(state)
         })
       )
     }
@@ -427,6 +441,7 @@ export const writeAtom = <Value, Update>(
   const pendingPromises: Promise<void>[] = []
 
   writeAtomState(state, writingAtom, update, pendingPromises)
+  commitState(state)
 
   if (pendingPromises.length) {
     return new Promise<void>((resolve, reject) => {
@@ -457,7 +472,7 @@ const mountAtom = (
   initialDependent: AnyAtom | symbol
 ): Mounted => {
   // mount dependencies beforehand
-  const atomState = state.a.get(atom)
+  const atomState = getAtomState(state, atom)
   if (atomState) {
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
@@ -496,7 +511,7 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
   }
   state.m.delete(atom)
   // unmount dependencies afterward
-  const atomState = state.a.get(atom)
+  const atomState = getAtomState(state, atom)
   if (atomState) {
     if (
       atomState.p &&
@@ -524,53 +539,66 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
   }
 }
 
-const commitAtomState = <Value>(
-  state: State,
-  atom: Atom<Value>,
-  atomState: AtomState<Value>
-): void => {
-  const prevDependencies = state.a.get(atom)?.d
-  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
-    Object.freeze(atomState)
-  }
-  state.a.set(atom, atomState)
-
-  if (prevDependencies !== atomState.d) {
-    const dependencies = new Set(atomState.d.keys())
-    if (prevDependencies) {
-      prevDependencies.forEach((_, a) => {
-        const mounted = state.m.get(a)
-        if (dependencies.has(a)) {
-          // not changed
-          dependencies.delete(a)
-        } else if (mounted) {
-          const dependents = mounted.d
-          dependents.delete(atom)
-          if (canUnmountAtom(a, dependents)) {
-            unmountAtom(state, a)
+const commitState = (state: State) => {
+  if (state.w.size) {
+    // apply wip to MountedMap
+    state.w.forEach((atomState, atom) => {
+      const prevDependencies = state.a.get(atom)?.d
+      if (prevDependencies === atomState.d) {
+        return
+      }
+      const dependencies = new Set(atomState.d.keys())
+      if (prevDependencies) {
+        prevDependencies.forEach((_, a) => {
+          const mounted = state.m.get(a)
+          if (dependencies.has(a)) {
+            // not changed
+            dependencies.delete(a)
+          } else if (mounted) {
+            const dependents = mounted.d
+            dependents.delete(atom)
+            if (canUnmountAtom(a, dependents)) {
+              unmountAtom(state, a)
+            }
+          } else if (
+            typeof process === 'object' &&
+            process.env.NODE_ENV !== 'production'
+          ) {
+            console.warn('[Bug] a dependency is not mounted', a)
           }
-        } else if (
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
-        ) {
-          console.warn('[Bug] a dependency is not mounted', a)
+        })
+      }
+      dependencies.forEach((a) => {
+        const mounted = state.m.get(a)
+        if (mounted) {
+          const dependents = mounted.d
+          dependents.add(atom)
+        } else {
+          mountAtom(state, a, atom)
         }
       })
-    }
-    dependencies.forEach((a) => {
-      const mounted = state.m.get(a)
-      if (mounted) {
-        const dependents = mounted.d
-        dependents.add(atom)
-      } else {
-        mountAtom(state, a, atom)
+    })
+    // copy wip to AtomStateMap
+    const updatedAtoms = new Set<AnyAtom>()
+    state.w.forEach((atomState, atom) => {
+      if (
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        Object.freeze(atomState)
       }
+      state.a.set(atom, atomState)
+      updatedAtoms.add(atom)
+    })
+    // empty wip
+    state.w.clear()
+    // notify listeners
+    ++state.v
+    updatedAtoms.forEach((updatedAtom) => {
+      const mounted = state.m.get(updatedAtom)
+      mounted?.l.forEach((listener) => listener())
     })
   }
-
-  const mounted = state.m.get(atom)
-  ++state.v
-  mounted?.l.forEach((listener) => listener())
 }
 
 export const subscribeAtom = (
@@ -582,6 +610,7 @@ export const subscribeAtom = (
   const mounted = addAtom(state, atom, id)
   const listeners = mounted.l
   listeners.add(callback)
+  commitState(state)
   return () => {
     listeners.delete(callback)
     delAtom(state, atom, id)
