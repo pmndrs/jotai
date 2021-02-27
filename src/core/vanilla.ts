@@ -311,12 +311,10 @@ export const readAtom = <Value>(
   nextState.w.forEach((atomState, atom) => {
     state.w.set(atom, atomState)
   })
-  Promise.resolve().then(() => {
-    // schedule commit
-    updateState((prev) => {
-      commitState(prev, updateState)
-      return prev
-    })
+  // schedule commit
+  updateState((prev) => {
+    commitState(prev, updateState)
+    return prev
   })
   return atomState
 }
