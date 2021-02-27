@@ -213,7 +213,7 @@ const scheduleReadAtomState = <Value>(
   state: State,
   atom: Atom<Value>,
   promise: Promise<unknown>
-) => {
+): void => {
   promise.then(() => {
     state.u((wip) => readAtomState(state, wip, atom, true)[1])
   })
@@ -380,12 +380,6 @@ const delAtom = (state: State, deletingAtom: AnyAtom, useId: symbol): void => {
 const getDependents = (state: State, atom: AnyAtom): Dependents => {
   const mounted = state.m.get(atom)
   const dependents: Dependents = new Set(mounted?.d)
-  // collecting from wip
-  state.w.forEach((aState, a) => {
-    if (aState.d.has(atom)) {
-      dependents.add(a)
-    }
-  })
   return dependents
 }
 

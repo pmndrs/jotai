@@ -27,7 +27,7 @@ export const createStore = (
   return [mutableSource, updateAtom]
 }
 
-type StoreContext = Context<ReturnType<typeof createStore>>
+type StoreContext = Context<Store>
 
 // export only for tests/error.test.tsx
 export const StoreContextMap = new Map<Scope | undefined, StoreContext>()
