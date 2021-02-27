@@ -45,7 +45,7 @@ type StateVersion = number
 
 type WorkInProgress = Map<AnyAtom, AtomState>
 
-type UpdateState = (updater: (prev: State) => State) => void
+type UpdateWip = (updater: (prev: WorkInProgress) => WorkInProgress) => void
 
 // mutable state
 export type State = {
@@ -53,7 +53,7 @@ export type State = {
   a: AtomStateMap
   m: MountedMap
   w: WorkInProgress
-  u: UpdateState
+  u: UpdateWip
 }
 
 export const createState = (
@@ -66,20 +66,20 @@ export const createState = (
     w: new Map(),
     u: () => {},
   }
-  type Updater = Parameters<UpdateState>[0]
+  type Updater = Parameters<UpdateWip>[0]
   const queue: Updater[] = []
   state.u = (updater: Updater) => {
     queue.push(updater)
     if (queue.length > 1) {
       return
     }
-    let nextState = state
+    let nextWip = state.w
     while (queue.length) {
-      nextState = queue[0](nextState)
+      nextWip = queue[0](nextWip)
       queue.shift()
     }
-    if (nextState !== state) {
-      state.w = nextState.w
+    if (nextWip !== state.w) {
+      state.w = nextWip
       ++state.v
       state.m.forEach((mounted) => {
         mounted.l.forEach((listener) => listener())
@@ -101,19 +101,18 @@ export const createState = (
   return state
 }
 
-const getAtomState = <Value>(state: State, atom: Atom<Value>) =>
-  (state.w.get(atom) || state.a.get(atom)) as AtomState<Value> | undefined
-
-const copyWip = (state: State, copyingState: State): State => ({
-  ...state,
-  w: new Map([...state.w, ...copyingState.w]),
-})
+const getAtomState = <Value>(
+  state: State,
+  wip: WorkInProgress,
+  atom: Atom<Value>
+) => (wip.get(atom) || state.a.get(atom)) as AtomState<Value> | undefined
 
 const wipAtomState = <Value>(
   state: State,
+  wip: WorkInProgress,
   atom: Atom<Value>
-): readonly [AtomState<Value>, State] => {
-  let atomState = getAtomState(state, atom)
+): readonly [AtomState<Value>, WorkInProgress] => {
+  let atomState = getAtomState(state, wip, atom)
   if (atomState) {
     atomState = { ...atomState } // copy
   } else {
@@ -122,35 +121,37 @@ const wipAtomState = <Value>(
       atomState.v = atom.init
     }
   }
-  const nextState = {
-    ...state,
-    w: new Map(state.w).set(atom, atomState), // copy
-  }
-  return [atomState, nextState] as const
+  const nextWip = new Map(wip).set(atom, atomState) // copy
+  return [atomState, nextWip] as const
 }
 
 const replaceDependencies = (
   state: State,
+  wip: WorkInProgress,
   atomState: AtomState,
   dependencies?: Set<AnyAtom>
 ): void => {
   if (dependencies) {
     atomState.d = new Map(
-      Array.from(dependencies).map((a) => [a, getAtomState(state, a)?.r ?? 0])
+      Array.from(dependencies).map((a) => [
+        a,
+        getAtomState(state, wip, a)?.r ?? 0,
+      ])
     )
   }
 }
 
 const setAtomValue = <Value>(
   state: State,
+  wip: WorkInProgress,
   atom: Atom<Value>,
   value: Value,
   dependencies?: Set<AnyAtom>,
   promise?: Promise<void>
-): State => {
-  const [atomState, nextState] = wipAtomState(state, atom)
+): WorkInProgress => {
+  const [atomState, nextWip] = wipAtomState(state, wip, atom)
   if (promise && promise !== atomState.p) {
-    return state
+    return wip
   }
   delete atomState.e
   delete atomState.p
@@ -158,51 +159,54 @@ const setAtomValue = <Value>(
     atomState.v = value
     ++atomState.r
   }
-  replaceDependencies(nextState, atomState, dependencies)
-  return nextState
+  replaceDependencies(state, nextWip, atomState, dependencies)
+  return nextWip
 }
 
 const setAtomReadError = <Value>(
   state: State,
+  wip: WorkInProgress,
   atom: Atom<Value>,
   error: Error,
   dependencies: Set<AnyAtom>,
   promise?: Promise<void>
-): State => {
-  const [atomState, nextState] = wipAtomState(state, atom)
+): WorkInProgress => {
+  const [atomState, nextWip] = wipAtomState(state, wip, atom)
   if (promise && promise !== atomState.p) {
-    return state
+    return wip
   }
   delete atomState.p
   atomState.e = error
-  replaceDependencies(nextState, atomState, dependencies)
-  return nextState
+  replaceDependencies(state, nextWip, atomState, dependencies)
+  return nextWip
 }
 
 const setAtomReadPromise = <Value>(
   state: State,
+  wip: WorkInProgress,
   atom: Atom<Value>,
   promise: Promise<void>,
   dependencies: Set<AnyAtom>
-): State => {
-  const [atomState, nextState] = wipAtomState(state, atom)
+): WorkInProgress => {
+  const [atomState, nextWip] = wipAtomState(state, wip, atom)
   atomState.p = promise
-  replaceDependencies(nextState, atomState, dependencies)
-  return nextState
+  replaceDependencies(state, nextWip, atomState, dependencies)
+  return nextWip
 }
 
 const setAtomWritePromise = <Value>(
   state: State,
+  wip: WorkInProgress,
   atom: Atom<Value>,
   promise?: Promise<void>
-): State => {
-  const [atomState, nextState] = wipAtomState(state, atom)
+): WorkInProgress => {
+  const [atomState, nextWip] = wipAtomState(state, wip, atom)
   if (promise) {
     atomState.w = promise
   } else {
     delete atomState.w
   }
-  return nextState
+  return nextWip
 }
 
 const scheduleReadAtomState = <Value>(
@@ -211,30 +215,31 @@ const scheduleReadAtomState = <Value>(
   promise: Promise<unknown>
 ) => {
   promise.then(() => {
-    state.u((prev) => readAtomState(prev, atom, true)[1])
+    state.u((wip) => readAtomState(state, wip, atom, true)[1])
   })
 }
 
 const readAtomState = <Value>(
   state: State,
+  wip: WorkInProgress,
   atom: Atom<Value>,
   force?: boolean
-): readonly [AtomState<Value>, State] => {
+): readonly [AtomState<Value>, WorkInProgress] => {
   if (!force) {
-    const atomState = getAtomState(state, atom)
+    const atomState = getAtomState(state, wip, atom)
     if (
       atomState &&
       Array.from(atomState.d.entries()).every(([a, r]) => {
-        const aState = getAtomState(state, a)
+        const aState = getAtomState(state, wip, a)
         return aState && !aState.e && !aState.p && aState.r === r
       })
     ) {
-      return [atomState, state] as const
+      return [atomState, wip] as const
     }
   }
-  let asyncState = { ...state, w: new Map() } // empty wip
+  let asyncWip: WorkInProgress = new Map() // empty wip
   let isSync = true
-  let nextState = state
+  let nextWip = wip
   let error: Error | undefined
   let promise: Promise<void> | undefined
   let value: Value | undefined
@@ -245,9 +250,9 @@ const readAtomState = <Value>(
       if (a !== atom) {
         let aState: AtomState
         if (isSync) {
-          ;[aState, nextState] = readAtomState(nextState, a)
+          ;[aState, nextWip] = readAtomState(state, nextWip, a)
         } else {
-          ;[aState, asyncState] = readAtomState(asyncState, a)
+          ;[aState, asyncWip] = readAtomState(state, asyncWip, a)
         }
         if (aState.e) {
           throw aState.e // read error
@@ -258,7 +263,7 @@ const readAtomState = <Value>(
         return aState.v // value
       }
       // a === atom
-      const aState = getAtomState(nextState, a)
+      const aState = getAtomState(state, nextWip, a)
       if (aState) {
         if (aState.p) {
           throw aState.p // read promise
@@ -275,7 +280,8 @@ const readAtomState = <Value>(
         .then((value) => {
           state.u((prev) =>
             setAtomValue(
-              copyWip(prev, asyncState),
+              state,
+              new Map([...prev, ...asyncWip]),
               atom,
               value,
               dependencies,
@@ -290,7 +296,8 @@ const readAtomState = <Value>(
           }
           state.u((prev) =>
             setAtomReadError(
-              copyWip(prev, asyncState),
+              state,
+              new Map([...prev, ...asyncWip]),
               atom,
               e instanceof Error ? e : new Error(e),
               dependencies,
@@ -312,28 +319,31 @@ const readAtomState = <Value>(
     }
   }
   if (error) {
-    nextState = setAtomReadError(nextState, atom, error, dependencies)
+    nextWip = setAtomReadError(state, nextWip, atom, error, dependencies)
   } else if (promise) {
-    nextState = setAtomReadPromise(nextState, atom, promise, dependencies)
+    nextWip = setAtomReadPromise(state, nextWip, atom, promise, dependencies)
   } else {
-    nextState = setAtomValue(nextState, atom, value, dependencies)
+    nextWip = setAtomValue(state, nextWip, atom, value, dependencies)
   }
   isSync = false
-  return [getAtomState(nextState, atom) as AtomState<Value>, nextState] as const
+  return [
+    getAtomState(state, nextWip, atom) as AtomState<Value>,
+    nextWip,
+  ] as const
 }
 
 export const readAtom = <Value>(
   state: State,
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
-  const [atomState, nextState] = readAtomState(state, readingAtom)
+  const [atomState, nextWip] = readAtomState(state, state.w, readingAtom)
   // merge back wip
-  nextState.w.forEach((atomState, atom) => {
+  nextWip.forEach((atomState, atom) => {
     state.w.set(atom, atomState)
   })
   // schedule commit
   state.u((prev) => {
-    commitState(prev)
+    commitState(state)
     return prev
   })
   return atomState
@@ -381,21 +391,23 @@ const getDependents = (state: State, atom: AnyAtom): Dependents => {
 
 const updateDependentsState = <Value>(
   state: State,
+  wip: WorkInProgress,
   atom: Atom<Value>,
   prevAtomState?: AtomState<Value>
-): State => {
-  if (!prevAtomState || prevAtomState.r === getAtomState(state, atom)?.r) {
-    return state // bail out
+): WorkInProgress => {
+  if (!prevAtomState || prevAtomState.r === getAtomState(state, wip, atom)?.r) {
+    return wip // bail out
   }
   const dependents = getDependents(state, atom)
-  let nextState = state
+  let nextWip = wip
   dependents.forEach((dependent) => {
     if (dependent === atom || typeof dependent === 'symbol') {
       return
     }
-    const dependentState = getAtomState(nextState, dependent)
-    const [nextDependentState, nextNextState] = readAtomState(
-      nextState,
+    const dependentState = getAtomState(state, nextWip, dependent)
+    const [nextDependentState, nextNextWip] = readAtomState(
+      state,
+      nextWip,
       dependent,
       true
     )
@@ -403,43 +415,45 @@ const updateDependentsState = <Value>(
     if (promise) {
       promise.then(() => {
         state.u((prev) =>
-          updateDependentsState(prev, dependent, dependentState)
+          updateDependentsState(state, prev, dependent, dependentState)
         )
       })
-      nextState = nextNextState
+      nextWip = nextNextWip
     } else {
-      nextState = updateDependentsState(
-        nextNextState,
+      nextWip = updateDependentsState(
+        state,
+        nextNextWip,
         dependent,
         dependentState
       )
     }
   })
-  return nextState
+  return nextWip
 }
 
 const writeAtomState = <Value, Update>(
   state: State,
+  wip: WorkInProgress,
   atom: WritableAtom<Value, Update>,
   update: Update,
   pendingPromises?: Promise<void>[]
-): State => {
-  const atomState = getAtomState(state, atom)
+): WorkInProgress => {
+  const atomState = getAtomState(state, wip, atom)
   if (atomState && atomState.w) {
     const promise = atomState.w.then(() => {
-      state.u((prev) => writeAtomState(prev, atom, update))
+      state.u((prev) => writeAtomState(state, prev, atom, update))
     })
     if (pendingPromises) {
       pendingPromises.push(promise)
     }
-    return state
+    return wip
   }
-  let nextState = state
+  let nextWip = wip
   let isSync = true
   try {
     const promiseOrVoid = atom.write(
       ((a: AnyAtom) => {
-        const [aState] = readAtomState(nextState, a)
+        const [aState] = readAtomState(state, nextWip, a)
         if (aState.e) {
           throw aState.e // read error
         }
@@ -471,23 +485,29 @@ const writeAtomState = <Value, Update>(
       }) as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
         if (a === atom) {
-          const aState = getAtomState(nextState, a)
+          const aState = getAtomState(state, nextWip, a)
           if (isSync) {
-            nextState = updateDependentsState(
-              setAtomValue(nextState, a, v),
+            nextWip = updateDependentsState(
+              state,
+              setAtomValue(state, nextWip, a, v),
               a,
               aState
             )
           } else {
             state.u((prev) =>
-              updateDependentsState(setAtomValue(prev, a, v), a, aState)
+              updateDependentsState(
+                state,
+                setAtomValue(state, prev, a, v),
+                a,
+                aState
+              )
             )
           }
         } else {
           if (isSync) {
-            nextState = writeAtomState(nextState, a, v)
+            nextWip = writeAtomState(state, nextWip, a, v)
           } else {
-            state.u((prev) => writeAtomState(prev, a, v))
+            state.u((prev) => writeAtomState(state, prev, a, v))
           }
         }
       }) as Setter,
@@ -497,14 +517,15 @@ const writeAtomState = <Value, Update>(
       if (pendingPromises) {
         pendingPromises.push(promiseOrVoid)
       }
-      nextState = setAtomWritePromise(
-        nextState,
+      nextWip = setAtomWritePromise(
+        state,
+        nextWip,
         atom,
         promiseOrVoid.then(() => {
           state.u((prev) => {
-            const next = setAtomWritePromise(prev, atom)
-            commitState(next)
-            return next
+            state.w = setAtomWritePromise(state, state.w, atom)
+            commitState(state)
+            return prev
           })
         })
       )
@@ -521,7 +542,7 @@ const writeAtomState = <Value, Update>(
     }
   }
   isSync = false
-  return nextState
+  return nextWip
 }
 
 export const writeAtom = <Value, Update>(
@@ -532,9 +553,15 @@ export const writeAtom = <Value, Update>(
   const pendingPromises: Promise<void>[] = []
 
   state.u((prev) => {
-    const next = writeAtomState(prev, writingAtom, update, pendingPromises)
-    commitState(next)
-    return next
+    state.w = writeAtomState(
+      state,
+      state.w,
+      writingAtom,
+      update,
+      pendingPromises
+    )
+    commitState(state)
+    return prev
   })
 
   if (pendingPromises.length) {
@@ -566,7 +593,7 @@ const mountAtom = (
   initialDependent: AnyAtom | symbol
 ): Mounted => {
   // mount dependencies beforehand
-  const atomState = getAtomState(state, atom)
+  const atomState = getAtomState(state, state.w, atom)
   if (atomState) {
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
@@ -605,7 +632,7 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
   }
   state.m.delete(atom)
   // unmount dependencies afterward
-  const atomState = getAtomState(state, atom)
+  const atomState = getAtomState(state, state.w, atom)
   if (atomState) {
     if (
       atomState.p &&
