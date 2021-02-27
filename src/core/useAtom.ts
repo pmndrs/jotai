@@ -1,7 +1,7 @@
 import { useContext, useCallback, useDebugValue } from 'react'
 
-import { getStoreContext, subscribeToStore } from './contexts'
-import { addAtom, delAtom, readAtom, writeAtom } from './vanilla'
+import { getStoreContext } from './contexts'
+import { readAtom, writeAtom, subscribeAtom } from './vanilla'
 import type { State, UpdateState } from './vanilla'
 import type { Atom, WritableAtom, AnyWritableAtom, SetAtom } from './types'
 import { useMutableSource } from './useMutableSource'
@@ -41,19 +41,12 @@ export function useAtom<Value, Update>(
   )
 
   const StoreContext = getStoreContext(atom.scope)
-  const [mutableSource, updateState, getState] = useContext(StoreContext)
+  const [mutableSource, updateState] = useContext(StoreContext)
 
   const subscribe = useCallback(
-    (store: any, callback: () => void) => {
-      const unsub = subscribeToStore(store, callback)
-      const id = Symbol()
-      addAtom(getState(), updateState, atom, id)
-      return () => {
-        delAtom(getState(), updateState, atom, id)
-        unsub()
-      }
-    },
-    [getState, updateState, atom]
+    (store: any, callback: () => void) =>
+      subscribeAtom(store.s(), updateState, atom, callback),
+    [updateState, atom]
   )
 
   const value: Value = useMutableSource(

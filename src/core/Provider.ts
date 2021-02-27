@@ -2,10 +2,11 @@ import React, { createElement, useRef, useDebugValue } from 'react'
 
 import type { AnyAtom, Scope } from './types'
 import type { AtomState, State } from './vanilla'
-import { createStore, subscribeToStore, getStoreContext } from './contexts'
+import { createStore, getStoreContext } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 const getState = (store: any) => store.s()
+const subscribe = (_store: any, _callback: () => void) => () => {}
 
 export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
@@ -20,7 +21,7 @@ export const Provider: React.FC<{
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(useMutableSource(store[0], getState, subscribeToStore))
+    useDebugState(useMutableSource(store[0], getState, subscribe))
   }
 
   const StoreContext = getStoreContext(scope)

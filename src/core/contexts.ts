@@ -17,7 +17,6 @@ export const createStore = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ): Store => {
   let state = createState(initialValues)
-  const listeners = new Set<() => void>()
   type Updater = Parameters<UpdateState>[0]
   const queue: Updater[] = []
   const updateState = (updater: Updater) => {
@@ -32,22 +31,14 @@ export const createStore = (
     }
     if (nextState !== state) {
       state = nextState
-      listeners.forEach((listener) => listener())
+      state.m.forEach((mounted) => {
+        mounted.l.forEach((listener) => listener())
+      })
     }
   }
   const getState = () => state
-  const mutableSource = createMutableSource(
-    { s: getState, l: listeners },
-    () => state
-  )
+  const mutableSource = createMutableSource({ s: getState }, () => state)
   return [mutableSource, updateState, getState]
-}
-
-export const subscribeToStore = (source: any, callback: () => void) => {
-  source.l.add(callback)
-  return () => {
-    source.l.delete(callback)
-  }
 }
 
 type StoreContext = Context<ReturnType<typeof createStore>>

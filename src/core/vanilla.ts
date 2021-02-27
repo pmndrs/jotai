@@ -695,3 +695,19 @@ const commitState = (state: State, updateState: UpdateState) => {
     state.w.clear()
   }
 }
+
+export const subscribeAtom = (
+  state: State,
+  updateState: UpdateState,
+  atom: AnyAtom,
+  callback: () => void
+) => {
+  const id = Symbol()
+  const mounted = addAtom(state, updateState, atom, id)
+  const listeners = mounted.l
+  listeners.add(callback)
+  return () => {
+    listeners.delete(callback)
+    delAtom(state, updateState, atom, id)
+  }
+}
