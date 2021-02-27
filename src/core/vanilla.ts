@@ -18,7 +18,7 @@ const hasInitialValue = <T extends Atom<unknown>>(
 type Revision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 
-// immutable state
+// immutable atom state
 export type AtomState<Value = unknown> = {
   e?: Error // read error
   p?: Promise<void> // read promise
@@ -45,7 +45,7 @@ type StateVersion = number
 
 type WorkInProgress = Map<AnyAtom, AtomState>
 
-export type UpdateState = (updater: (prev: State) => State) => void
+type UpdateState = (updater: (prev: State) => State) => void
 
 // mutable state
 export type State = {
@@ -325,23 +325,22 @@ const readAtomState = <Value>(
 
 export const readAtom = <Value>(
   state: State,
-  updateState: UpdateState,
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
-  const [atomState, nextState] = readAtomState(state, updateState, readingAtom)
+  const [atomState, nextState] = readAtomState(state, state.u, readingAtom)
   // merge back wip
   nextState.w.forEach((atomState, atom) => {
     state.w.set(atom, atomState)
   })
   // schedule commit
-  updateState((prev) => {
-    commitState(prev, updateState)
+  state.u((prev) => {
+    commitState(prev, state.u)
     return prev
   })
   return atomState
 }
 
-export const addAtom = (
+const addAtom = (
   state: State,
   updateState: UpdateState,
   addingAtom: AnyAtom,
@@ -362,7 +361,7 @@ export const addAtom = (
 const canUnmountAtom = (atom: AnyAtom, dependents: Dependents) =>
   !dependents.size || (dependents.size === 1 && dependents.has(atom))
 
-export const delAtom = (
+const delAtom = (
   state: State,
   updateState: UpdateState,
   deletingAtom: AnyAtom,
@@ -549,21 +548,21 @@ const writeAtomState = <Value, Update>(
 }
 
 export const writeAtom = <Value, Update>(
-  updateState: UpdateState,
+  state: State,
   writingAtom: WritableAtom<Value, Update>,
   update: Update
 ): void | Promise<void> => {
   const pendingPromises: Promise<void>[] = []
 
-  updateState((prev) => {
+  state.u((prev) => {
     const next = writeAtomState(
       prev,
-      updateState,
+      state.u,
       writingAtom,
       update,
       pendingPromises
     )
-    commitState(next, updateState)
+    commitState(next, state.u)
     return next
   })
 
@@ -616,7 +615,7 @@ const mountAtom = (
   // mount self
   let onUmount: OnUnmount | void
   if (isActuallyWritableAtom(atom) && atom.onMount) {
-    const setAtom = (update: unknown) => writeAtom(updateState, atom, update)
+    const setAtom = (update: unknown) => writeAtom(state, atom, update)
     onUmount = atom.onMount(setAtom)
   }
   const mounted: Mounted = {
@@ -720,16 +719,15 @@ const commitState = (state: State, updateState: UpdateState) => {
 
 export const subscribeAtom = (
   state: State,
-  updateState: UpdateState,
   atom: AnyAtom,
   callback: () => void
 ) => {
   const id = Symbol()
-  const mounted = addAtom(state, updateState, atom, id)
+  const mounted = addAtom(state, state.u, atom, id)
   const listeners = mounted.l
   listeners.add(callback)
   return () => {
     listeners.delete(callback)
-    delAtom(state, updateState, atom, id)
+    delAtom(state, state.u, atom, id)
   }
 }
