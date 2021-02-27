@@ -5,8 +5,8 @@ import type { AtomState, State } from './vanilla'
 import { createStore, getStoreContext } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
-const getState = (store: any) => store.s()
-const subscribe = (_store: any, _callback: () => void) => () => {}
+const getState = (state: State) => state
+const subscribe = (_state: State, _callback: () => void) => () => {}
 
 export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>

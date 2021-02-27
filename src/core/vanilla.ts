@@ -53,6 +53,7 @@ export type State = {
   a: AtomStateMap
   m: MountedMap
   w: WorkInProgress
+  u: UpdateState
 }
 
 export const createState = (
@@ -63,6 +64,27 @@ export const createState = (
     a: new WeakMap(),
     m: new Map(),
     w: new Map(),
+    u: () => {},
+  }
+  type Updater = Parameters<UpdateState>[0]
+  const queue: Updater[] = []
+  state.u = (updater: Updater) => {
+    queue.push(updater)
+    if (queue.length > 1) {
+      return
+    }
+    let nextState = state
+    while (queue.length) {
+      nextState = queue[0](nextState)
+      queue.shift()
+    }
+    if (nextState !== state) {
+      state.w = nextState.w
+      ++state.v
+      state.m.forEach((mounted) => {
+        mounted.l.forEach((listener) => listener())
+      })
+    }
   }
   if (initialValues) {
     for (const [atom, value] of initialValues) {
@@ -134,7 +156,7 @@ const setAtomValue = <Value>(
   delete atomState.p
   if (!('v' in atomState) || !Object.is(atomState.v, value)) {
     atomState.v = value
-    atomState.r++
+    ++atomState.r
   }
   replaceDependencies(nextState, atomState, dependencies)
   return nextState
