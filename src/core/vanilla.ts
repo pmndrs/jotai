@@ -343,7 +343,7 @@ export const readAtom = <Value>(
   })
   // schedule commit
   state.u((prev) => {
-    commitState(state)
+    commitState(state, state.w)
     return prev
   })
   return atomState
@@ -355,9 +355,9 @@ const addAtom = (state: State, addingAtom: AnyAtom, useId: symbol): Mounted => {
     const dependents = mounted.d
     dependents.add(useId)
   } else {
-    mounted = mountAtom(state, addingAtom, useId)
+    mounted = mountAtom(state, state.w, addingAtom, useId)
   }
-  commitState(state)
+  commitState(state, state.w)
   return mounted
 }
 
@@ -371,10 +371,10 @@ const delAtom = (state: State, deletingAtom: AnyAtom, useId: symbol): void => {
     const dependents = mounted.d
     dependents.delete(useId)
     if (canUnmountAtom(deletingAtom, dependents)) {
-      unmountAtom(state, deletingAtom)
+      unmountAtom(state, state.w, deletingAtom)
     }
   }
-  commitState(state)
+  commitState(state, state.w)
 }
 
 const getDependents = (state: State, atom: AnyAtom): Dependents => {
@@ -518,7 +518,7 @@ const writeAtomState = <Value, Update>(
         promiseOrVoid.then(() => {
           state.u((prev) => {
             state.w = setAtomWritePromise(state, state.w, atom)
-            commitState(state)
+            commitState(state, state.w)
             return prev
           })
         })
@@ -554,7 +554,7 @@ export const writeAtom = <Value, Update>(
       update,
       pendingPromises
     )
-    commitState(state)
+    commitState(state, state.w)
     return prev
   })
 
@@ -583,17 +583,18 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
 
 const mountAtom = (
   state: State,
+  wip: WorkInProgress,
   atom: AnyAtom,
   initialDependent: AnyAtom | symbol
 ): Mounted => {
   // mount dependencies beforehand
-  const atomState = getAtomState(state, state.w, atom)
+  const atomState = getAtomState(state, wip, atom)
   if (atomState) {
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
         // check if not mounted
         if (!state.m.has(a)) {
-          mountAtom(state, a, atom)
+          mountAtom(state, wip, a, atom)
         }
       }
     })
@@ -618,7 +619,11 @@ const mountAtom = (
   return mounted
 }
 
-const unmountAtom = (state: State, atom: AnyAtom): void => {
+const unmountAtom = (
+  state: State,
+  wip: WorkInProgress,
+  atom: AnyAtom
+): void => {
   // unmount self
   const onUnmount = state.m.get(atom)?.u
   if (onUnmount) {
@@ -626,7 +631,7 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
   }
   state.m.delete(atom)
   // unmount dependencies afterward
-  const atomState = getAtomState(state, state.w, atom)
+  const atomState = getAtomState(state, wip, atom)
   if (atomState) {
     if (
       atomState.p &&
@@ -641,7 +646,7 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
         if (dependents) {
           dependents.delete(atom)
           if (canUnmountAtom(a, dependents)) {
-            unmountAtom(state, a)
+            unmountAtom(state, wip, a)
           }
         }
       }
@@ -654,10 +659,10 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
   }
 }
 
-const commitState = (state: State) => {
-  if (state.w.size) {
+const commitState = (state: State, wip: WorkInProgress) => {
+  if (wip.size) {
     // apply wip to MountedMap
-    state.w.forEach((atomState, atom) => {
+    wip.forEach((atomState, atom) => {
       const prevDependencies = state.a.get(atom)?.d
       if (prevDependencies === atomState.d) {
         return
@@ -673,7 +678,7 @@ const commitState = (state: State) => {
             const dependents = mounted.d
             dependents.delete(atom)
             if (canUnmountAtom(a, dependents)) {
-              unmountAtom(state, a)
+              unmountAtom(state, wip, a)
             }
           } else if (
             typeof process === 'object' &&
@@ -689,12 +694,12 @@ const commitState = (state: State) => {
           const dependents = mounted.d
           dependents.add(atom)
         } else {
-          mountAtom(state, a, atom)
+          mountAtom(state, wip, a, atom)
         }
       })
     })
     // copy wip to AtomStateMap
-    state.w.forEach((atomState, atom) => {
+    wip.forEach((atomState, atom) => {
       if (
         typeof process === 'object' &&
         process.env.NODE_ENV !== 'production'
@@ -704,7 +709,7 @@ const commitState = (state: State) => {
       state.a.set(atom, atomState)
     })
     // empty wip
-    state.w.clear()
+    wip.clear()
   }
 }
 
