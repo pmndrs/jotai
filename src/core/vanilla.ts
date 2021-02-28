@@ -52,7 +52,6 @@ export type State = {
   v: StateVersion
   a: AtomStateMap
   m: MountedMap
-  w: WorkInProgress
   u: UpdateWip
 }
 
@@ -63,24 +62,24 @@ export const createState = (
     v: 0,
     a: new WeakMap(),
     m: new Map(),
-    w: new Map(),
     u: () => {},
   }
   type Updater = Parameters<UpdateWip>[0]
+  let currWip: WorkInProgress = new Map()
   const queue: Updater[] = []
   state.u = (updater: Updater) => {
     queue.push(updater)
     if (queue.length > 1) {
       return
     }
-    let nextWip = state.w
+    let nextWip = currWip
     while (queue.length) {
       nextWip = queue[0](nextWip)
       queue.shift()
     }
-    if (nextWip !== state.w) {
-      state.w = nextWip
-      commitState(state, state.w)
+    if (nextWip !== currWip) {
+      currWip = nextWip
+      commitState(state, currWip)
       ++state.v
       state.m.forEach((mounted) => {
         mounted.l.forEach((listener) => listener())
@@ -347,13 +346,12 @@ export const readAtom = <Value>(
 }
 
 const addAtom = (state: State, addingAtom: AnyAtom, useId: symbol): Mounted => {
-  if (state.w.size) throw new Error('oops')
   let mounted = state.m.get(addingAtom)
   if (mounted) {
     const dependents = mounted.d
     dependents.add(useId)
   } else {
-    mounted = mountAtom(state, state.w, addingAtom, useId)
+    mounted = mountAtom(state, new Map(), addingAtom, useId)
   }
   return mounted
 }
@@ -363,13 +361,12 @@ const canUnmountAtom = (atom: AnyAtom, dependents: Dependents) =>
   !dependents.size || (dependents.size === 1 && dependents.has(atom))
 
 const delAtom = (state: State, deletingAtom: AnyAtom, useId: symbol): void => {
-  if (state.w.size) throw new Error('oops')
   const mounted = state.m.get(deletingAtom)
   if (mounted) {
     const dependents = mounted.d
     dependents.delete(useId)
     if (canUnmountAtom(deletingAtom, dependents)) {
-      unmountAtom(state, state.w, deletingAtom)
+      unmountAtom(state, new Map(), deletingAtom)
     }
   }
 }
@@ -600,7 +597,7 @@ const mountAtom = (
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const setAtom = (update: unknown) => writeAtom(state, atom, update)
       mounted.u = atom.onMount(setAtom)
-      commitState(state, state.w)
+      commitState(state, prev)
     }
     return prev
   })
