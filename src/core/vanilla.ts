@@ -80,6 +80,7 @@ export const createState = (
     }
     if (nextWip !== state.w) {
       state.w = nextWip
+      commitState(state, state.w)
       ++state.v
       state.m.forEach((mounted) => {
         mounted.l.forEach((listener) => listener())
@@ -336,6 +337,7 @@ export const readAtom = <Value>(
   state: State,
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
+  if (state.w.size) throw new Error('oops')
   const [atomState, nextWip] = readAtomState(state, state.w, readingAtom)
   // merge back wip
   nextWip.forEach((atomState, atom) => {
@@ -350,6 +352,7 @@ export const readAtom = <Value>(
 }
 
 const addAtom = (state: State, addingAtom: AnyAtom, useId: symbol): Mounted => {
+  if (state.w.size) throw new Error('oops')
   let mounted = state.m.get(addingAtom)
   if (mounted) {
     const dependents = mounted.d
@@ -366,6 +369,7 @@ const canUnmountAtom = (atom: AnyAtom, dependents: Dependents) =>
   !dependents.size || (dependents.size === 1 && dependents.has(atom))
 
 const delAtom = (state: State, deletingAtom: AnyAtom, useId: symbol): void => {
+  if (state.w.size) throw new Error('oops')
   const mounted = state.m.get(deletingAtom)
   if (mounted) {
     const dependents = mounted.d
@@ -516,11 +520,7 @@ const writeAtomState = <Value, Update>(
         nextWip,
         atom,
         promiseOrVoid.then(() => {
-          state.u((prev) => {
-            state.w = setAtomWritePromise(state, state.w, atom)
-            commitState(state, state.w)
-            return prev
-          })
+          state.u((prev) => setAtomWritePromise(state, prev, atom))
         })
       )
     }
@@ -546,17 +546,9 @@ export const writeAtom = <Value, Update>(
 ): void | Promise<void> => {
   const pendingPromises: Promise<void>[] = []
 
-  state.u((prev) => {
-    state.w = writeAtomState(
-      state,
-      state.w,
-      writingAtom,
-      update,
-      pendingPromises
-    )
-    commitState(state, state.w)
-    return prev
-  })
+  state.u((prev) =>
+    writeAtomState(state, prev, writingAtom, update, pendingPromises)
+  )
 
   if (pendingPromises.length) {
     return new Promise<void>((resolve, reject) => {
@@ -605,17 +597,20 @@ const mountAtom = (
     console.warn('[Bug] could not find atom state to mount', atom)
   }
   // mount self
-  let onUmount: OnUnmount | void
-  if (isActuallyWritableAtom(atom) && atom.onMount) {
-    const setAtom = (update: unknown) => writeAtom(state, atom, update)
-    onUmount = atom.onMount(setAtom)
-  }
   const mounted: Mounted = {
     d: new Set([initialDependent]),
     l: new Set(),
-    u: onUmount,
+    u: undefined,
   }
   state.m.set(atom, mounted)
+  state.u((prev) => {
+    if (isActuallyWritableAtom(atom) && atom.onMount) {
+      const setAtom = (update: unknown) => writeAtom(state, atom, update)
+      mounted.u = atom.onMount(setAtom)
+      commitState(state, state.w)
+    }
+    return prev
+  })
   return mounted
 }
 
