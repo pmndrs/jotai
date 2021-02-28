@@ -337,15 +337,10 @@ export const readAtom = <Value>(
   state: State,
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
-  if (state.w.size) throw new Error('oops')
-  const [atomState, nextWip] = readAtomState(state, state.w, readingAtom)
-  // merge back wip
-  nextWip.forEach((atomState, atom) => {
-    state.w.set(atom, atomState)
-  })
+  const [atomState, wip] = readAtomState(state, new Map(), readingAtom)
   // schedule commit
   state.u((prev) => {
-    commitState(state, state.w)
+    commitState(state, wip)
     return prev
   })
   return atomState
@@ -360,7 +355,6 @@ const addAtom = (state: State, addingAtom: AnyAtom, useId: symbol): Mounted => {
   } else {
     mounted = mountAtom(state, state.w, addingAtom, useId)
   }
-  commitState(state, state.w)
   return mounted
 }
 
@@ -378,7 +372,6 @@ const delAtom = (state: State, deletingAtom: AnyAtom, useId: symbol): void => {
       unmountAtom(state, state.w, deletingAtom)
     }
   }
-  commitState(state, state.w)
 }
 
 const getDependents = (state: State, atom: AnyAtom): Dependents => {
