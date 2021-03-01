@@ -73,11 +73,13 @@ export const createState = (
     }
     if (nextWip !== currWip) {
       currWip = nextWip
-      commitState(state, currWip)
-      ++state.v
-      state.m.forEach((mounted) => {
-        mounted.l.forEach((listener) => listener())
-      })
+      if (currWip.size) {
+        commitState(state, currWip)
+        ++state.v
+        state.m.forEach((mounted) => {
+          mounted.l.forEach((listener) => listener())
+        })
+      }
     }
   }
   const state: State = {
@@ -338,10 +340,12 @@ export const readAtom = <Value>(
 ): AtomState<Value> => {
   const [atomState, wip] = readAtomState(state, new Map(), readingAtom)
   // schedule commit
-  state.u((prev) => {
-    commitState(state, wip)
-    return prev
-  })
+  if (wip.size) {
+    state.u((prev) => {
+      commitState(state, wip)
+      return prev
+    })
+  }
   return atomState
 }
 
@@ -597,7 +601,9 @@ const mountAtom = (
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const setAtom = (update: unknown) => writeAtom(state, atom, update)
       mounted.u = atom.onMount(setAtom)
-      commitState(state, prev)
+      if (prev.size) {
+        commitState(state, prev)
+      }
     }
     return prev
   })
@@ -645,57 +651,52 @@ const unmountAtom = (
 }
 
 const commitState = (state: State, wip: WorkInProgress) => {
-  if (wip.size) {
-    // apply wip to MountedMap
-    wip.forEach((atomState, atom) => {
-      const prevDependencies = state.a.get(atom)?.d
-      if (prevDependencies === atomState.d) {
-        return
-      }
-      const dependencies = new Set(atomState.d.keys())
-      if (prevDependencies) {
-        prevDependencies.forEach((_, a) => {
-          const mounted = state.m.get(a)
-          if (dependencies.has(a)) {
-            // not changed
-            dependencies.delete(a)
-          } else if (mounted) {
-            const dependents = mounted.d
-            dependents.delete(atom)
-            if (canUnmountAtom(a, dependents)) {
-              unmountAtom(state, wip, a)
-            }
-          } else if (
-            typeof process === 'object' &&
-            process.env.NODE_ENV !== 'production'
-          ) {
-            console.warn('[Bug] a dependency is not mounted', a)
-          }
-        })
-      }
-      dependencies.forEach((a) => {
+  // apply wip to MountedMap
+  wip.forEach((atomState, atom) => {
+    const prevDependencies = state.a.get(atom)?.d
+    if (prevDependencies === atomState.d) {
+      return
+    }
+    const dependencies = new Set(atomState.d.keys())
+    if (prevDependencies) {
+      prevDependencies.forEach((_, a) => {
         const mounted = state.m.get(a)
-        if (mounted) {
+        if (dependencies.has(a)) {
+          // not changed
+          dependencies.delete(a)
+        } else if (mounted) {
           const dependents = mounted.d
-          dependents.add(atom)
-        } else {
-          mountAtom(state, wip, a, atom)
+          dependents.delete(atom)
+          if (canUnmountAtom(a, dependents)) {
+            unmountAtom(state, wip, a)
+          }
+        } else if (
+          typeof process === 'object' &&
+          process.env.NODE_ENV !== 'production'
+        ) {
+          console.warn('[Bug] a dependency is not mounted', a)
         }
       })
-    })
-    // copy wip to AtomStateMap
-    wip.forEach((atomState, atom) => {
-      if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        Object.freeze(atomState)
+    }
+    dependencies.forEach((a) => {
+      const mounted = state.m.get(a)
+      if (mounted) {
+        const dependents = mounted.d
+        dependents.add(atom)
+      } else {
+        mountAtom(state, wip, a, atom)
       }
-      state.a.set(atom, atomState)
     })
-    // empty wip
-    wip.clear()
-  }
+  })
+  // copy wip to AtomStateMap
+  wip.forEach((atomState, atom) => {
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+      Object.freeze(atomState)
+    }
+    state.a.set(atom, atomState)
+  })
+  // empty wip
+  wip.clear()
 }
 
 export const subscribeAtom = (
