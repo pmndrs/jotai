@@ -58,16 +58,10 @@ export type State = {
 export const createState = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ): State => {
-  const state: State = {
-    v: 0,
-    a: new WeakMap(),
-    m: new Map(),
-    u: () => {},
-  }
   type Updater = Parameters<UpdateWip>[0]
   let currWip: WorkInProgress = new Map()
   const queue: Updater[] = []
-  state.u = (updater: Updater) => {
+  const updateState = (updater: Updater) => {
     queue.push(updater)
     if (queue.length > 1) {
       return
@@ -85,6 +79,12 @@ export const createState = (
         mounted.l.forEach((listener) => listener())
       })
     }
+  }
+  const state: State = {
+    v: 0,
+    a: new WeakMap(),
+    m: new Map(),
+    u: updateState,
   }
   if (initialValues) {
     for (const [atom, value] of initialValues) {
