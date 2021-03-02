@@ -45,20 +45,20 @@ type StateVersion = number
 
 type WorkInProgress = Map<AnyAtom, AtomState>
 
-type UpdateWip = (updater: (prev: WorkInProgress) => WorkInProgress) => void
+type UpdateState = (updater: (prev: WorkInProgress) => WorkInProgress) => void
 
 // mutable state
 export type State = {
   v: StateVersion
   a: AtomStateMap
   m: MountedMap
-  u: UpdateWip
+  u: UpdateState
 }
 
 export const createState = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ): State => {
-  type Updater = Parameters<UpdateWip>[0]
+  type Updater = Parameters<UpdateState>[0]
   let currWip: WorkInProgress = new Map()
   const queue: Updater[] = []
   const updateState = (updater: Updater) => {
@@ -650,8 +650,7 @@ const unmountAtom = (
   }
 }
 
-const commitState = (state: State, wip: WorkInProgress) => {
-  // apply wip to MountedMap
+const mountDependencies = (state: State, wip: WorkInProgress) => {
   wip.forEach((atomState, atom) => {
     const prevDependencies = state.a.get(atom)?.d
     if (prevDependencies === atomState.d) {
@@ -688,6 +687,11 @@ const commitState = (state: State, wip: WorkInProgress) => {
       }
     })
   })
+}
+
+const commitState = (state: State, wip: WorkInProgress) => {
+  // apply wip to MountedMap
+  mountDependencies(state, wip)
   // copy wip to AtomStateMap
   wip.forEach((atomState, atom) => {
     if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
