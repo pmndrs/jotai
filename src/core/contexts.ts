@@ -29,7 +29,7 @@ export const createStore = (
 
 type StoreContext = Context<Store>
 
-// export only for tests/error.test.tsx
+// export only for tests/error.test.tsx, FIXME why do we need this?
 export const StoreContextMap = new Map<Scope | undefined, StoreContext>()
 
 export const getStoreContext = (scope?: Scope) => {
