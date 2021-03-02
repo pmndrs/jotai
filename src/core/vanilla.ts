@@ -287,17 +287,9 @@ const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
 
 const delAtom = (state: State, deletingAtom: AnyAtom): void => {
   const mounted = state.m.get(deletingAtom)
-  if (mounted) {
-    if (canUnmountAtom(deletingAtom, mounted)) {
-      unmountAtom(state, deletingAtom)
-    }
+  if (mounted && canUnmountAtom(deletingAtom, mounted)) {
+    unmountAtom(state, deletingAtom)
   }
-}
-
-const getDependents = (state: State, atom: AnyAtom): Dependents => {
-  const mounted = state.m.get(atom)
-  const dependents: Dependents = new Set(mounted?.d)
-  return dependents
 }
 
 const updateDependentsState = <Value>(
@@ -313,8 +305,8 @@ const updateDependentsState = <Value>(
   ) {
     return // bail out
   }
-  const dependents = getDependents(state, atom)
-  dependents.forEach((dependent) => {
+  const mounted = state.m.get(atom)
+  mounted?.d.forEach((dependent) => {
     if (dependent === atom) {
       return
     }
