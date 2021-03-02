@@ -115,35 +115,32 @@ const getAtomState = <Value>(
 const wipAtomState = <Value>(
   state: State,
   wip: WorkInProgress,
-  atom: Atom<Value>
-): readonly [AtomState<Value>, WorkInProgress] => {
-  let atomState = getAtomState(state, wip, atom)
-  if (atomState) {
-    atomState = { ...atomState } // copy
-  } else {
-    atomState = { r: 0, d: new Map() }
-    if (hasInitialValue(atom)) {
-      atomState.v = atom.init
-    }
+  atom: Atom<Value>,
+  dependencies?: Set<AnyAtom>,
+  promise?: Promise<void>
+): AtomState<Value> | null => {
+  const atomState = getAtomState(state, wip, atom)
+  if (promise && promise !== atomState?.p) {
+    return null
   }
-  const nextWip = new Map(wip).set(atom, atomState) // copy
-  return [atomState, nextWip] as const
-}
-
-const replaceDependencies = (
-  state: State,
-  wip: WorkInProgress,
-  atomState: AtomState,
-  dependencies?: Set<AnyAtom>
-): void => {
-  if (dependencies) {
-    atomState.d = new Map(
-      Array.from(dependencies).map((a) => [
-        a,
-        getAtomState(state, wip, a)?.r ?? 0,
-      ])
-    )
+  const nextAtomState = {
+    r: 0,
+    ...atomState,
+    d: dependencies
+      ? new Map(
+          Array.from(dependencies).map((a) => [
+            a,
+            getAtomState(state, wip, a)?.r ?? 0,
+          ])
+        )
+      : atomState
+      ? atomState.d
+      : new Map(),
   }
+  if (!atomState && hasInitialValue(atom)) {
+    nextAtomState.v = atom.init
+  }
+  return nextAtomState
 }
 
 const setAtomValue = <Value>(
@@ -154,8 +151,8 @@ const setAtomValue = <Value>(
   dependencies?: Set<AnyAtom>,
   promise?: Promise<void>
 ): WorkInProgress => {
-  const [atomState, nextWip] = wipAtomState(state, wip, atom)
-  if (promise && promise !== atomState.p) {
+  const atomState = wipAtomState(state, wip, atom, dependencies, promise)
+  if (!atomState) {
     return wip
   }
   delete atomState.e
@@ -164,8 +161,7 @@ const setAtomValue = <Value>(
     atomState.v = value
     ++atomState.r
   }
-  replaceDependencies(state, nextWip, atomState, dependencies)
-  return nextWip
+  return new Map(wip).set(atom, atomState)
 }
 
 const setAtomReadError = <Value>(
@@ -176,14 +172,13 @@ const setAtomReadError = <Value>(
   dependencies: Set<AnyAtom>,
   promise?: Promise<void>
 ): WorkInProgress => {
-  const [atomState, nextWip] = wipAtomState(state, wip, atom)
-  if (promise && promise !== atomState.p) {
+  const atomState = wipAtomState(state, wip, atom, dependencies, promise)
+  if (!atomState) {
     return wip
   }
   delete atomState.p
   atomState.e = error
-  replaceDependencies(state, nextWip, atomState, dependencies)
-  return nextWip
+  return new Map(wip).set(atom, atomState)
 }
 
 const setAtomReadPromise = <Value>(
@@ -193,10 +188,14 @@ const setAtomReadPromise = <Value>(
   promise: Promise<void>,
   dependencies: Set<AnyAtom>
 ): WorkInProgress => {
-  const [atomState, nextWip] = wipAtomState(state, wip, atom)
+  const atomState = wipAtomState(
+    state,
+    wip,
+    atom,
+    dependencies
+  ) as AtomState<Value>
   atomState.p = promise
-  replaceDependencies(state, nextWip, atomState, dependencies)
-  return nextWip
+  return new Map(wip).set(atom, atomState)
 }
 
 const setAtomWritePromise = <Value>(
@@ -205,13 +204,13 @@ const setAtomWritePromise = <Value>(
   atom: Atom<Value>,
   promise?: Promise<void>
 ): WorkInProgress => {
-  const [atomState, nextWip] = wipAtomState(state, wip, atom)
+  const atomState = wipAtomState(state, wip, atom) as AtomState<Value>
   if (promise) {
     atomState.w = promise
   } else {
     delete atomState.w
   }
-  return nextWip
+  return new Map(wip).set(atom, atomState)
 }
 
 const scheduleReadAtomState = <Value>(
