@@ -121,6 +121,7 @@ const wipAtomState = <Value>(
 ): AtomState<Value> | null => {
   const atomState = getAtomState(state, wip, atom)
   if (promise && promise !== atomState?.p) {
+    // newer async read is running, not updating
     return null
   }
   const nextAtomState = {
@@ -335,6 +336,7 @@ export const readAtom = <Value>(
   // schedule commit
   if (wip.size) {
     state.u((prev) => {
+      // XXX this is very tricky, any idea to improve?
       mountDependencies(state, wip)
       commitState(state, wip)
       return prev
@@ -358,17 +360,9 @@ const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
 
 const delAtom = (state: State, deletingAtom: AnyAtom): void => {
   const mounted = state.m.get(deletingAtom)
-  if (mounted) {
-    if (canUnmountAtom(deletingAtom, mounted)) {
-      unmountAtom(state, new Map(), deletingAtom)
-    }
+  if (mounted && canUnmountAtom(deletingAtom, mounted)) {
+    unmountAtom(state, new Map(), deletingAtom)
   }
-}
-
-const getDependents = (state: State, atom: AnyAtom): Dependents => {
-  const mounted = state.m.get(atom)
-  const dependents: Dependents = new Set(mounted?.d)
-  return dependents
 }
 
 const updateDependentsState = <Value>(
@@ -385,8 +379,8 @@ const updateDependentsState = <Value>(
   ) {
     return wip // bail out
   }
-  const dependents = getDependents(state, atom)
-  dependents.forEach((dependent) => {
+  const mounted = state.m.get(atom)
+  mounted?.d.forEach((dependent) => {
     if (dependent === atom) {
       return
     }
