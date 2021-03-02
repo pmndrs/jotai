@@ -31,8 +31,7 @@ export type AtomState<Value = unknown> = {
 type AtomStateMap = WeakMap<AnyAtom, AtomState>
 
 type Listeners = Set<() => void>
-type UseAtomSymbol = symbol
-type Dependents = Set<AnyAtom | UseAtomSymbol>
+type Dependents = Set<AnyAtom>
 type Mounted = {
   l: Listeners
   d: Dependents
@@ -277,26 +276,23 @@ export const readAtom = <Value>(
   return atomState
 }
 
-const addAtom = (state: State, addingAtom: AnyAtom, useId: symbol): Mounted => {
+const addAtom = (state: State, addingAtom: AnyAtom): Mounted => {
   const mounted = state.m.get(addingAtom)
   if (mounted) {
-    const dependents = mounted.d
-    dependents.add(useId)
     return mounted
   }
-  return mountAtom(state, addingAtom, useId)
+  return mountAtom(state, addingAtom)
 }
 
 // XXX doesn't work with mutally dependent atoms
-const canUnmountAtom = (atom: AnyAtom, dependents: Dependents) =>
-  !dependents.size || (dependents.size === 1 && dependents.has(atom))
+const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
+  !mounted.l.size &&
+  (!mounted.d.size || (mounted.d.size === 1 && mounted.d.has(atom)))
 
-const delAtom = (state: State, deletingAtom: AnyAtom, useId: symbol): void => {
+const delAtom = (state: State, deletingAtom: AnyAtom): void => {
   const mounted = state.m.get(deletingAtom)
   if (mounted) {
-    const dependents = mounted.d
-    dependents.delete(useId)
-    if (canUnmountAtom(deletingAtom, dependents)) {
+    if (canUnmountAtom(deletingAtom, mounted)) {
       unmountAtom(state, deletingAtom)
     }
   }
@@ -323,7 +319,7 @@ const updateDependentsState = <Value>(
   }
   const dependents = getDependents(state, atom)
   dependents.forEach((dependent) => {
-    if (dependent === atom || typeof dependent === 'symbol') {
+    if (dependent === atom) {
       return
     }
     const dependentState = state.a.get(dependent)
@@ -459,7 +455,7 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
 const mountAtom = (
   state: State,
   atom: AnyAtom,
-  initialDependent: AnyAtom | symbol
+  initialDependent?: AnyAtom
 ): Mounted => {
   // mount dependencies beforehand
   const atomState = state.a.get(atom)
@@ -485,7 +481,7 @@ const mountAtom = (
     onUmount = atom.onMount(setAtom)
   }
   const mounted: Mounted = {
-    d: new Set([initialDependent]),
+    d: new Set(initialDependent && [initialDependent]),
     l: new Set(),
     u: onUmount,
   }
@@ -512,10 +508,10 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
     }
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
-        const dependents = state.m.get(a)?.d
-        if (dependents) {
-          dependents.delete(atom)
-          if (canUnmountAtom(a, dependents)) {
+        const mounted = state.m.get(a)
+        if (mounted) {
+          mounted.d.delete(atom)
+          if (canUnmountAtom(a, mounted)) {
             unmountAtom(state, a)
           }
         }
@@ -549,9 +545,8 @@ const commitAtomState = <Value>(
           // not changed
           dependencies.delete(a)
         } else if (mounted) {
-          const dependents = mounted.d
-          dependents.delete(atom)
-          if (canUnmountAtom(a, dependents)) {
+          mounted.d.delete(atom)
+          if (canUnmountAtom(a, mounted)) {
             unmountAtom(state, a)
           }
         } else if (
@@ -583,12 +578,11 @@ export const subscribeAtom = (
   atom: AnyAtom,
   callback: () => void
 ) => {
-  const id = Symbol()
-  const mounted = addAtom(state, atom, id)
+  const mounted = addAtom(state, atom)
   const listeners = mounted.l
   listeners.add(callback)
   return () => {
     listeners.delete(callback)
-    delAtom(state, atom, id)
+    delAtom(state, atom)
   }
 }

@@ -30,8 +30,6 @@ export const Provider: React.FC<{
 
 const atomToPrintable = (atom: AnyAtom) => atom.debugLabel || atom.toString()
 
-const isAtom = (x: AnyAtom | symbol): x is AnyAtom => typeof x !== 'symbol'
-
 const stateToPrintable = (state: State) =>
   Object.fromEntries(
     Array.from(state.m.entries()).map(([atom, mounted]) => {
@@ -41,9 +39,7 @@ const stateToPrintable = (state: State) =>
         atomToPrintable(atom),
         {
           value: atomState.e || atomState.p || atomState.w || atomState.v,
-          dependents: Array.from(dependents)
-            .filter(isAtom)
-            .map(atomToPrintable),
+          dependents: Array.from(dependents).map(atomToPrintable),
         },
       ]
     })
