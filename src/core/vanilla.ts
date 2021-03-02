@@ -313,7 +313,12 @@ const updateDependentsState = <Value>(
   atom: Atom<Value>,
   prevAtomState?: AtomState<Value>
 ): void => {
-  if (!prevAtomState || prevAtomState.r === state.a.get(atom)?.r) {
+  if (
+    prevAtomState &&
+    !prevAtomState.e &&
+    !prevAtomState.p &&
+    prevAtomState.r === state.a.get(atom)?.r
+  ) {
     return // bail out
   }
   const dependents = getDependents(state, atom)
