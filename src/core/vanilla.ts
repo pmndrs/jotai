@@ -74,30 +74,29 @@ export const createState = (
 
 const wipAtomState = <Value>(
   state: State,
-  atom: Atom<Value>
-): AtomState<Value> => {
-  let atomState = state.a.get(atom)
-  if (atomState) {
-    atomState = { ...atomState } // copy
-  } else {
-    atomState = { r: 0, d: new Map() }
-    if (hasInitialValue(atom)) {
-      atomState.v = atom.init
-    }
+  atom: Atom<Value>,
+  dependencies?: Set<AnyAtom>,
+  promise?: Promise<void>
+): AtomState<Value> | null => {
+  const atomState = state.a.get(atom) as AtomState<Value> | undefined
+  if (promise && promise !== atomState?.p) {
+    return null
   }
-  return atomState as AtomState<Value>
-}
-
-const replaceDependencies = (
-  state: State,
-  atomState: AtomState,
-  dependencies?: Set<AnyAtom>
-): void => {
-  if (dependencies) {
-    atomState.d = new Map(
-      Array.from(dependencies).map((a) => [a, state.a.get(a)?.r ?? 0])
-    )
+  const nextAtomState = {
+    r: 0,
+    ...atomState,
+    d: dependencies
+      ? new Map(
+          Array.from(dependencies).map((a) => [a, state.a.get(a)?.r ?? 0])
+        )
+      : atomState
+      ? atomState.d
+      : new Map(),
   }
+  if (!atomState && hasInitialValue(atom)) {
+    nextAtomState.v = atom.init
+  }
+  return nextAtomState
 }
 
 const setAtomValue = <Value>(
@@ -107,8 +106,8 @@ const setAtomValue = <Value>(
   dependencies?: Set<AnyAtom>,
   promise?: Promise<void>
 ): void => {
-  const atomState = wipAtomState(state, atom)
-  if (promise && promise !== atomState.p) {
+  const atomState = wipAtomState(state, atom, dependencies, promise)
+  if (!atomState) {
     return
   }
   delete atomState.e
@@ -117,7 +116,6 @@ const setAtomValue = <Value>(
     atomState.v = value
     ++atomState.r
   }
-  replaceDependencies(state, atomState, dependencies)
   commitAtomState(state, atom, atomState)
 }
 
@@ -128,13 +126,12 @@ const setAtomReadError = <Value>(
   dependencies: Set<AnyAtom>,
   promise?: Promise<void>
 ): void => {
-  const atomState = wipAtomState(state, atom)
-  if (promise && promise !== atomState.p) {
+  const atomState = wipAtomState(state, atom, dependencies, promise)
+  if (!atomState) {
     return
   }
   delete atomState.p
   atomState.e = error
-  replaceDependencies(state, atomState, dependencies)
   commitAtomState(state, atom, atomState)
 }
 
@@ -144,9 +141,8 @@ const setAtomReadPromise = <Value>(
   promise: Promise<void>,
   dependencies: Set<AnyAtom>
 ): void => {
-  const atomState = wipAtomState(state, atom)
+  const atomState = wipAtomState(state, atom, dependencies) as AtomState<Value>
   atomState.p = promise
-  replaceDependencies(state, atomState, dependencies)
   commitAtomState(state, atom, atomState)
 }
 
@@ -155,7 +151,7 @@ const setAtomWritePromise = <Value>(
   atom: Atom<Value>,
   promise?: Promise<void>
 ): void => {
-  const atomState = wipAtomState(state, atom)
+  const atomState = wipAtomState(state, atom) as AtomState<Value>
   if (promise) {
     atomState.w = promise
   } else {
