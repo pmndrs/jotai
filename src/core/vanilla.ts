@@ -75,6 +75,7 @@ export const createState = (
       currWip = nextWip
       if (currWip.size) {
         const atomsToNotify = new Set(currWip.keys())
+        mountDependencies(state, currWip)
         commitState(state, currWip)
         ++state.v
         atomsToNotify.forEach((atom) => {
@@ -344,6 +345,7 @@ export const readAtom = <Value>(
   // schedule commit
   if (wip.size) {
     state.u((prev) => {
+      mountDependencies(state, wip)
       commitState(state, wip)
       return prev
     })
@@ -601,9 +603,6 @@ const mountAtom = (
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const setAtom = (update: unknown) => writeAtom(state, atom, update)
       mounted.u = atom.onMount(setAtom)
-      if (prev.size) {
-        commitState(state, prev)
-      }
     }
     return prev
   })
@@ -690,8 +689,6 @@ const mountDependencies = (state: State, wip: WorkInProgress) => {
 }
 
 const commitState = (state: State, wip: WorkInProgress) => {
-  // apply wip to MountedMap
-  mountDependencies(state, wip)
   // copy wip to AtomStateMap
   wip.forEach((atomState, atom) => {
     if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
