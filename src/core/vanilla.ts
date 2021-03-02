@@ -74,10 +74,12 @@ export const createState = (
     if (nextWip !== currWip) {
       currWip = nextWip
       if (currWip.size) {
+        const atomsToNotify = new Set(currWip.keys())
         commitState(state, currWip)
         ++state.v
-        state.m.forEach((mounted) => {
-          mounted.l.forEach((listener) => listener())
+        atomsToNotify.forEach((atom) => {
+          const mounted = state.m.get(atom)
+          mounted?.l.forEach((listener) => listener())
         })
       }
     }
@@ -387,7 +389,12 @@ const updateDependentsState = <Value>(
   atom: Atom<Value>,
   prevAtomState?: AtomState<Value>
 ): WorkInProgress => {
-  if (!prevAtomState || prevAtomState.r === getAtomState(state, wip, atom)?.r) {
+  if (
+    prevAtomState &&
+    !prevAtomState.e &&
+    !prevAtomState.p &&
+    prevAtomState.r === getAtomState(state, wip, atom)?.r
+  ) {
     return wip // bail out
   }
   const dependents = getDependents(state, atom)
@@ -403,22 +410,15 @@ const updateDependentsState = <Value>(
       dependent,
       true
     )
-    const promise = nextDependentState.p
-    if (promise) {
-      promise.then(() => {
-        state.u((prev) =>
-          updateDependentsState(state, prev, dependent, dependentState)
-        )
-      })
-      nextWip = nextNextWip
-    } else {
-      nextWip = updateDependentsState(
-        state,
-        nextNextWip,
-        dependent,
-        dependentState
-      )
-    }
+    nextDependentState.p?.then(() => {
+      state.u((prev) => updateDependentsState(state, prev, dependent))
+    })
+    nextWip = updateDependentsState(
+      state,
+      nextNextWip,
+      dependent,
+      dependentState
+    )
   })
   return nextWip
 }
