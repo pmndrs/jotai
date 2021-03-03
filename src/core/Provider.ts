@@ -6,6 +6,7 @@ import { createStore, getStoreContext } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 const getState = (state: State) => state
+// TODO this doesn't trigger re-render so useDebugState can be stale.
 const subscribe = (_state: State, _callback: () => void) => () => {}
 
 export const Provider: React.FC<{
