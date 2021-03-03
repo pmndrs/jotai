@@ -69,7 +69,7 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
     })
   )
 
-const getState = (state: State) => state
+const getState = (state: State) => ({ ...state }) // shallow copy
 
 const useDebugState = (store: Store, atoms: AnyAtom[]) => {
   const subscribe = useCallback(
