@@ -20,7 +20,7 @@ export const Provider: React.FC<{
   ) {
     /* eslint-disable react-hooks/rules-of-hooks */
     const atomsRef = useRef<AnyAtom[]>([])
-    if (storeRef.current == null) {
+    if (storeRef.current === null) {
       // lazy initialization
       storeRef.current = createStore(initialValues, (newAtom) => {
         atomsRef.current.push(newAtom)
@@ -32,7 +32,7 @@ export const Provider: React.FC<{
     )
     /* eslint-enable react-hooks/rules-of-hooks */
   } else {
-    if (storeRef.current == null) {
+    if (storeRef.current === null) {
       // lazy initialization
       storeRef.current = createStore(initialValues)
     }
@@ -71,12 +71,12 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
 
 const getState = (state: State) => ({ ...state }) // shallow copy
 
-// This hook makes sure that we keep a reference to the atoms in dev mode, 
+// We keep a reference to the atoms in Provider's atomsRef in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (store: Store, atoms: AnyAtom[]) => {
   const subscribe = useCallback(
     (state: State, callback: () => void) => {
-      // FIXME we don't need to resubscribe, we just need to subscribe for new one
+      // FIXME we don't need to resubscribe, just need to subscribe for new one
       const unsubs = atoms.map((atom) => subscribeAtom(state, atom, callback))
       return () => {
         unsubs.forEach((unsub) => unsub())
