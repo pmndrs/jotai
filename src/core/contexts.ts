@@ -3,6 +3,7 @@ import type { Context } from 'react'
 
 import type { AnyAtom, WritableAtom, Scope } from './types'
 import { createState, writeAtom } from './vanilla'
+import type { NewAtomReceiver } from './vanilla'
 import { createMutableSource } from './useMutableSource'
 
 type MutableSource = ReturnType<typeof createMutableSource>
@@ -16,9 +17,10 @@ export type Store = [
 ]
 
 export const createStore = (
-  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>,
+  newAtomReceiver?: NewAtomReceiver
 ): Store => {
-  const state = createState(initialValues)
+  const state = createState(initialValues, newAtomReceiver)
   const mutableSource = createMutableSource(state, () => state.v)
   const updateAtom = <Value, Update>(
     atom: WritableAtom<Value, Update>,

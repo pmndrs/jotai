@@ -38,7 +38,9 @@ type Mounted = {
   u: OnUnmount | void
 }
 
-type MountedMap = Map<AnyAtom, Mounted>
+type MountedMap = WeakMap<AnyAtom, Mounted>
+
+export type NewAtomReceiver = (newAtom: AnyAtom) => void
 
 type StateVersion = number
 
@@ -52,6 +54,7 @@ type UpdateState = (updater: (prev: WorkInProgress) => WorkInProgress) => void
 
 // mutable state
 export type State = {
+  n?: NewAtomReceiver
   v: StateVersion
   a: AtomStateMap
   m: MountedMap
@@ -59,7 +62,8 @@ export type State = {
 }
 
 export const createState = (
-  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>,
+  newAtomReceiver?: NewAtomReceiver
 ): State => {
   type Updater = Parameters<UpdateState>[0]
   let currWip: WorkInProgress = new Map()
@@ -89,9 +93,10 @@ export const createState = (
     }
   }
   const state: State = {
+    n: newAtomReceiver,
     v: 0,
     a: new WeakMap(),
-    m: new Map(),
+    m: new WeakMap(),
     u: updateState,
   }
   if (initialValues) {
@@ -665,7 +670,11 @@ const commitState = (state: State, wip: WorkInProgress) => {
     if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
       Object.freeze(atomState)
     }
+    const isNewAtom = state.n && !state.a.has(atom)
     state.a.set(atom, atomState)
+    if (isNewAtom) {
+      ;(state.n as NewAtomReceiver)(atom)
+    }
   })
   // empty wip
   wip.clear()
