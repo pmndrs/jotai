@@ -71,6 +71,8 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
 
 const getState = (state: State) => ({ ...state }) // shallow copy
 
+// This hook makes sure that we keep a reference to the atoms in dev mode, 
+// so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (store: Store, atoms: AnyAtom[]) => {
   const subscribe = useCallback(
     (state: State, callback: () => void) => {
