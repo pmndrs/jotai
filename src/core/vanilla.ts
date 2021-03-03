@@ -43,6 +43,9 @@ type MountedMap = Map<AnyAtom, Mounted>
 type StateVersion = number
 
 // immutable map
+// This is a partial map of AtomStateMap
+// It will be used to run updates in a batch with UpdateState
+// TODO it would be nice to avoid this completely if possible
 type WorkInProgress = Map<AnyAtom, AtomState>
 
 type UpdateState = (updater: (prev: WorkInProgress) => WorkInProgress) => void
