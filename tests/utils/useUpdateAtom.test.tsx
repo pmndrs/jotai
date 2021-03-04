@@ -120,7 +120,7 @@ it('useUpdateAtom with scope', async () => {
   })
 })
 
-it('useUpdateAtom with write-only atom', async () => {
+it('useUpdateAtom with write without an argument', async () => {
   const countAtom = atom(0)
   const incrementCountAtom = atom(null, (get, set) =>
     set(countAtom, get(countAtom) + 1)
