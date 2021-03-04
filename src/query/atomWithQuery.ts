@@ -6,9 +6,11 @@ import {
 } from 'react-query'
 import { WritableAtom, atom } from 'jotai'
 import type { Getter } from '../core/types'
-import { getQueryClient, createPending } from './shared'
+import { getQueryClient } from './queryClientAtom'
+import { createPending } from './shared'
 
 type ResultActions = { type: 'refetch' }
+
 type AtomQueryOptions<
   TQueryFnData,
   TError,
