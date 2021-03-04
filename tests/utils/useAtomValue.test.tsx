@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider as ProviderOrig, atom } from '../../src/index'
-import { useAtomValue, useUpdateAtom } from '../../src/utils'
+import { Provider as ProviderOrig, atom, useUpdateAtom } from '../../src/index'
+import { useAtomValue } from '../../src/utils'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 

@@ -1,4 +1,3 @@
-export { useUpdateAtom } from './utils/useUpdateAtom'
 export { useAtomValue } from './utils/useAtomValue'
 export { atomWithReset, RESET } from './utils/atomWithReset'
 export { useResetAtom } from './utils/useResetAtom'

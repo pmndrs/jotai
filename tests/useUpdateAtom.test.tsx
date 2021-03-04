@@ -1,7 +1,11 @@
 import React, { Fragment, StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
-import { useUpdateAtom } from '../../src/utils'
+import {
+  Provider as ProviderOrig,
+  atom,
+  useAtom,
+  useUpdateAtom,
+} from '../src/index'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
