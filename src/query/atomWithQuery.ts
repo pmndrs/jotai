@@ -124,13 +124,16 @@ export function atomWithQuery<
       }
       return [options, observerAtom]
     },
-    async (get, set, action) => {
+    (get, set, action) => {
       if (action.type === 'refetch') {
         const [options] = get(queryAtom)
         set(pendingAtom, createPending<TData>()) // reset pending
-        getQueryClient(get, set).getQueryCache().find(options.queryKey)?.reset()
-        await getQueryClient(get, set).refetchQueries(options.queryKey)
+        const queryClient = getQueryClient(get, set)
+        queryClient.getQueryCache().find(options.queryKey)?.reset()
+        const p: Promise<void> = queryClient.refetchQueries(options.queryKey)
+        return p
       }
+      return
     }
   )
   const queryDataAtom = atom<TData, ResultActions>(
