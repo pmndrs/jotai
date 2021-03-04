@@ -119,3 +119,48 @@ it('useUpdateAtom with scope', async () => {
     getByText('count: 1')
   })
 })
+
+it('useUpdateAtom with write-only atom', async () => {
+  const countAtom = atom(0)
+  const incrementCountAtom = atom(null, (get, set) =>
+    set(countAtom, get(countAtom) + 1)
+  )
+
+  const Button: React.FC<{ cb: () => void }> = ({ cb, children }) => (
+    <button onClick={cb}>{children}</button>
+  )
+
+  const Displayer: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  const Updater: React.FC = () => {
+    const setCount = useUpdateAtom(incrementCountAtom)
+    return <Button cb={setCount}>increment</Button>
+  }
+
+  const Parent: React.FC = () => {
+    return (
+      <>
+        <Displayer />
+        <Updater />
+      </>
+    )
+  }
+  const { getByText } = render(
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+  })
+  fireEvent.click(getByText('increment'))
+  await waitFor(() => {
+    getByText('count: 1')
+  })
+})
