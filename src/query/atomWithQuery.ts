@@ -5,9 +5,12 @@ import {
   QueryObserverOptions,
 } from 'react-query'
 import { WritableAtom, atom } from 'jotai'
-import type { Getter, Setter } from '../core/types'
+import type { Getter } from '../core/types'
+import { getQueryClient } from './queryClientAtom'
+import { createPending } from './shared'
 
 type ResultActions = { type: 'refetch' }
+
 type AtomQueryOptions<
   TQueryFnData,
   TError,
@@ -15,37 +18,6 @@ type AtomQueryOptions<
   TQueryData
 > = QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
   queryKey: QueryKey
-}
-
-const queryClientAtom = atom<QueryClient | null>(null)
-const getQueryClient = (get: Getter, set: Setter): QueryClient => {
-  let queryClient = get(queryClientAtom)
-  if (queryClient === null) {
-    queryClient = new QueryClient()
-    set(queryClientAtom, queryClient)
-  }
-  return queryClient
-}
-
-const createPending = <T>() => {
-  const pending: {
-    fulfilled: boolean
-    promise?: Promise<T>
-    resolve?: (data: T) => void
-  } = {
-    fulfilled: false,
-  }
-  pending.promise = new Promise<T>((resolve) => {
-    pending.resolve = (data: T) => {
-      resolve(data)
-      pending.fulfilled = true
-    }
-  })
-  return pending as {
-    fulfilled: boolean
-    promise: Promise<T>
-    resolve: (data: T) => void
-  }
 }
 
 export function atomWithQuery<
