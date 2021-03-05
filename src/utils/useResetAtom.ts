@@ -6,8 +6,7 @@ import { RESET } from './atomWithReset'
 export function useResetAtom<Value>(anAtom: WritableAtom<Value, typeof RESET>) {
   const StoreContext = getStoreContext(anAtom.scope)
   const [, updateAtom] = useContext(StoreContext)
-  // FIXME Remove _update before v1, stays to not introduce breaking change
-  const setAtom = useCallback((_update) => updateAtom(anAtom, RESET), [
+  const setAtom = useCallback(() => updateAtom(anAtom, RESET), [
     updateAtom,
     anAtom,
   ])
