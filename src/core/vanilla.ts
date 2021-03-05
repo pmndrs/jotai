@@ -312,7 +312,7 @@ const readAtomState = <Value>(
           state.u((prev) =>
             setAtomReadError(
               state,
-              new Map([...prev, ...wip]),
+              concatMap(prev, wip),
               atom,
               e instanceof Error ? e : new Error(e),
               dependencies,
