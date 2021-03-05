@@ -1,6 +1,7 @@
 import { useCallback, useContext } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
 import type { WritableAtom } from 'jotai'
+import type { SetAtom } from '../core/types'
 
 export function useUpdateAtom<Value, Update>(
   anAtom: WritableAtom<Value, Update>
@@ -11,5 +12,5 @@ export function useUpdateAtom<Value, Update>(
     updateAtom,
     anAtom,
   ])
-  return setAtom
+  return setAtom as SetAtom<Update>
 }
