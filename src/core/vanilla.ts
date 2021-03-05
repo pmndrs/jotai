@@ -74,7 +74,7 @@ const getAtomState = <Value>(state: State, atom: Atom<Value>) =>
 
 const copyWip = (state: State, copyingState: State): State => ({
   ...state,
-  w: new Map([...state.w, ...copyingState.w]),
+  w: new Map([...state.w].concat([...copyingState.w])),
 })
 
 const wipAtomState = <Value>(
