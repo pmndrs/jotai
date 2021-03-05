@@ -15,6 +15,15 @@ const hasInitialValue = <T extends Atom<unknown>>(
   (T extends Atom<infer Value> ? WithInitialValue<Value> : never) =>
   'init' in atom
 
+const concatMap = <K, V>(m1: Map<K, V>, m2: Map<K, V>): Map<K, V> => {
+  // Map([...m1, ...m2]) alternative
+  const newMap = new Map(m1)
+  m2.forEach((value, key) => {
+    newMap.set(key, value)
+  })
+  return newMap
+}
+
 type Revision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 
@@ -287,7 +296,7 @@ const readAtomState = <Value>(
           state.u((prev) =>
             setAtomValue(
               state,
-              new Map([...prev, ...wip]),
+              concatMap(prev, wip),
               atom,
               value,
               dependencies,
@@ -303,7 +312,7 @@ const readAtomState = <Value>(
           state.u((prev) =>
             setAtomReadError(
               state,
-              new Map([...prev, ...wip]),
+              concatMap(prev, wip),
               atom,
               e instanceof Error ? e : new Error(e),
               dependencies,
