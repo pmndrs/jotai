@@ -23,6 +23,7 @@ const concatMap = <K, V>(m1: Map<K, V>, m2: Map<K, V>): Map<K, V> => {
   })
   return newMap
 }
+
 type Revision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 
