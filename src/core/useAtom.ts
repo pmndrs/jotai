@@ -1,21 +1,9 @@
-import {
-  useContext,
-  useEffect,
-  useCallback,
-  useMemo,
-  useDebugValue,
-} from 'react'
+import { useContext, useCallback, useDebugValue } from 'react'
 
-import { Store, getStoreContext, subscribeToStore } from './contexts'
-import {
-  State,
-  UpdateState,
-  addAtom,
-  delAtom,
-  readAtom,
-  writeAtom,
-} from './vanilla'
-import { Atom, WritableAtom, AnyWritableAtom, SetAtom } from './types'
+import { getStoreContext } from './contexts'
+import { readAtom, subscribeAtom } from './vanilla'
+import type { State } from './vanilla'
+import type { Atom, WritableAtom, SetAtom } from './types'
 import { useMutableSource } from './useMutableSource'
 
 const isWritable = <Value, Update>(
@@ -33,16 +21,16 @@ export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
 ) {
   const getAtomValue = useCallback(
-    (state: State, updateState: UpdateState) => {
-      const atomState = readAtom(state, updateState, atom)
-      if (atomState.re) {
-        throw atomState.re // read error
+    (state: State) => {
+      const atomState = readAtom(state, atom)
+      if (atomState.e) {
+        throw atomState.e // read error
       }
-      if (atomState.rp) {
-        throw atomState.rp // read promise
+      if (atomState.p) {
+        throw atomState.p // read promise
       }
-      if (atomState.wp) {
-        throw atomState.wp // write promise
+      if (atomState.w) {
+        throw atomState.w // write promise
       }
       if ('v' in atomState) {
         return atomState.v as Value
@@ -52,44 +40,25 @@ export function useAtom<Value, Update>(
     [atom]
   )
 
-  const StoreContext = getStoreContext(atom.scope)
-  type Selected = {
-    v: Value
-    u: UpdateState
-  }
-  const { v: value, u: updateState }: Selected = useMutableSource(
-    useContext(StoreContext),
-    useMemo(() => {
-      let selected: Selected | null = null
-      return (store: Store) => {
-        const { s: state, u: updateState } = store
-        const v = getAtomValue(state, updateState)
-        if (!selected || !Object.is(selected.v, v)) {
-          selected = { v, u: updateState }
-        }
-        return selected
-      }
-    }, [getAtomValue]),
-    subscribeToStore
+  const subscribe = useCallback(
+    (state: State, callback: () => void) =>
+      subscribeAtom(state, atom, callback),
+    [atom]
   )
 
-  useEffect(() => {
-    const id = Symbol()
-    addAtom(updateState, atom, id)
-    return () => {
-      delAtom(updateState, atom, id)
-    }
-  }, [updateState, atom])
+  const StoreContext = getStoreContext(atom.scope)
+  const [mutableSource, updateAtom] = useContext(StoreContext)
+  const value: Value = useMutableSource(mutableSource, getAtomValue, subscribe)
 
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        return writeAtom(updateState, atom as AnyWritableAtom, update)
+        return updateAtom(atom, update)
       } else {
         throw new Error('not writable atom')
       }
     },
-    [updateState, atom]
+    [updateAtom, atom]
   )
 
   useDebugValue(value)
