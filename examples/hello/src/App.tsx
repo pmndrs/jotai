@@ -1,4 +1,4 @@
-import React from 'react'
+import { Fragment } from 'react'
 import { Provider, atom, useAtom } from 'jotai'
 
 import PrismCode from 'react-prism'
@@ -20,17 +20,12 @@ const Input = () => {
   )
 }
 
-const CharCount = () => {
-  const [len] = useAtom(textLenAtom)
-  return <div>Length: {len}</div>
-}
-
 const Uppercase = () => {
   const [uppercase] = useAtom(uppercaseAtom)
-  return uppercase
+  return <Fragment>{uppercase}</Fragment>
 }
 
-const code = `import { Provider, atom, useAtom } from 'jotai'
+const code = `import { atom, useAtom } from 'jotai'
 
 // Create your atoms and derivatives
 const textAtom = atom('hello')
@@ -47,12 +42,12 @@ const Uppercase = () => {
   return <div>Uppercase: {uppercase}</div>
 }
 
-// Wrap your components in the Jotai provider
+// Now you have the components
 const MyApp = () => (
-  <Provider>
+  <div>
     <Input />
     <Uppercase />
-  </Provider>
+  </div>
 )
 `
 
