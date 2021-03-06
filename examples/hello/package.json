@@ -11,15 +11,15 @@
     "react-scripts": "4.0.1"
   },
   "devDependencies": {
-    "customize-cra": "1.0.0",
-    "react-app-rewired": "2.1.6",
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.1",
     "serve": "11.3.2"
   },
   "scripts": {
-    "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "react-app-rewired test",
-    "eject": "react-app-rewired eject",
+    "start": "SKIP_PREFLIGHT_CHECK=true react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
     "serve": "serve -s build"
   },
   "browserslist": {
