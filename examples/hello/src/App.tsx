@@ -6,7 +6,6 @@ import 'prismjs'
 import 'prismjs/components/prism-jsx.min'
 
 const textAtom = atom<string>('hello')
-const textLenAtom = atom((get) => get(textAtom).length)
 const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
 
 const Input = () => {
