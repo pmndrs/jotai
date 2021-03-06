@@ -53,26 +53,18 @@ function createCommonJSConfig(input, output) {
   }
 }
 
-export default (args) =>
-  args['config-cjs']
-    ? [
-        createDeclarationConfig('src/index.ts', 'dist'),
-        createCommonJSConfig('src/index.ts', 'dist/index.js'),
-        createCommonJSConfig('src/utils.ts', 'dist/utils.js'),
-        createCommonJSConfig('src/devtools.ts', 'dist/devtools.js'),
-        createCommonJSConfig('src/immer.ts', 'dist/immer.js'),
-        createCommonJSConfig('src/optics.ts', 'dist/optics.js'),
-        createCommonJSConfig('src/query.ts', 'dist/query.js'),
-        createCommonJSConfig('src/xstate.ts', 'dist/xstate.js'),
-        createCommonJSConfig('src/rxjs.ts', 'dist/rxjs.js'),
-      ]
-    : [
-        createESMConfig('src/index.ts', 'dist/index.module.js'),
-        createESMConfig('src/utils.ts', 'dist/utils.module.js'),
-        createESMConfig('src/devtools.ts', 'dist/devtools.module.js'),
-        createESMConfig('src/immer.ts', 'dist/immer.module.js'),
-        createESMConfig('src/optics.ts', 'dist/optics.module.js'),
-        createESMConfig('src/query.ts', 'dist/query.module.js'),
-        createESMConfig('src/xstate.ts', 'dist/xstate.module.js'),
-        createESMConfig('src/rxjs.ts', 'dist/rxjs.module.js'),
-      ]
+export default (args) => {
+  let c = Object.keys(args).find((key) => key.startsWith('config-'))
+  if (c) {
+    c = c.slice('config-'.length)
+    return [
+      createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
+      createESMConfig(`src/${c}.ts`, `dist/${c}.module.js`),
+    ]
+  }
+  return [
+    createDeclarationConfig('src/index.ts', 'dist'),
+    createCommonJSConfig('src/index.ts', 'dist/index.js'),
+    createESMConfig('src/index.ts', 'dist/index.module.js'),
+  ]
+}
