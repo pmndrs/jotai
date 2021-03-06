@@ -1,5 +1,4 @@
-import { Fragment } from 'react'
-import { Provider, atom, useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 
 import PrismCode from 'react-prism'
 import 'prismjs'
@@ -21,7 +20,7 @@ const Input = () => {
 
 const Uppercase = () => {
   const [uppercase] = useAtom(uppercaseAtom)
-  return <Fragment>{uppercase}</Fragment>
+  return <>{uppercase}</>
 }
 
 const code = `import { atom, useAtom } from 'jotai'
