@@ -57,7 +57,7 @@
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "rollup -c --config-esm && rollup -c --config-cjs",
+    "build": "rollup -c && rollup -c --config-utils && rollup -c --config-devtools && rollup -c --config-immer && rollup -c --config-optics && rollup -c --config-query && rollup -c --config-xstate",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '{src,tests}/**/*.{js,ts,jsx,tsx}'",
     "eslint:ci": "eslint '{src,tests}/**/*.{js,ts,jsx,tsx}'",
