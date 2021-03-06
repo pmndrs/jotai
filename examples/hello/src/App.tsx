@@ -54,14 +54,12 @@ const App = () => (
     <p>A simple example:</p>
     <div>
       <div className="py-8 text-sm">
-        <Provider>
-          <div className="relative">
-            <Input />
-            <div className="absolute top-0 right-0 h-full flex items-center mr-4 font-bold">
-              <Uppercase />
-            </div>
+        <div className="relative">
+          <Input />
+          <div className="absolute top-0 right-0 h-full flex items-center mr-4 font-bold">
+            <Uppercase />
           </div>
-        </Provider>
+        </div>
       </div>
       <div>
         <PrismCode component="pre" className="language-jsx" children={code} />
