@@ -3,16 +3,16 @@
  * Inspired by Visual Studio syntax coloring
  */
 
-code[class*="language-"],
-pre[class*="language-"] {
+code[class*='language-'],
+pre[class*='language-'] {
 	color: #393a34;
-	font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+	font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
 	direction: ltr;
 	text-align: left;
 	white-space: pre;
 	word-spacing: normal;
 	word-break: normal;
-	font-size: .9em;
+	font-size: 0.9em;
 	line-height: 1.2em;
 
 	-moz-tab-size: 4;
@@ -25,36 +25,36 @@ pre[class*="language-"] {
 	hyphens: none;
 }
 
-pre > code[class*="language-"] {
+pre > code[class*='language-'] {
 	font-size: 1em;
 }
 
-pre[class*="language-"]::-moz-selection,
-pre[class*="language-"] ::-moz-selection,
-code[class*="language-"]::-moz-selection,
-code[class*="language-"] ::-moz-selection {
+pre[class*='language-']::-moz-selection,
+pre[class*='language-'] ::-moz-selection,
+code[class*='language-']::-moz-selection,
+code[class*='language-'] ::-moz-selection {
 	background: #c1def1;
 }
 
-pre[class*="language-"]::selection,
-pre[class*="language-"] ::selection,
-code[class*="language-"]::selection,
-code[class*="language-"] ::selection {
+pre[class*='language-']::selection,
+pre[class*='language-'] ::selection,
+code[class*='language-']::selection,
+code[class*='language-'] ::selection {
 	background: #c1def1;
 }
 
 /* Code blocks */
-pre[class*="language-"] {
+pre[class*='language-'] {
 	padding: 1em;
-	margin: .5em 0;
+	margin: 0.5em 0;
 	overflow: auto;
 	border: 1px solid #dddddd;
 	background-color: white;
 }
 
 /* Inline code */
-:not(pre) > code[class*="language-"] {
-	padding: .2em;
+:not(pre) > code[class*='language-'] {
+	padding: 0.2em;
 	padding-top: 1px;
 	padding-bottom: 1px;
 	background: #f8f8f8;
@@ -70,7 +70,7 @@ pre[class*="language-"] {
 }
 
 .token.namespace {
-	opacity: .7;
+	opacity: 0.7;
 }
 
 .token.string {
@@ -98,7 +98,7 @@ pre[class*="language-"] {
 .language-autohotkey .token.selector,
 .language-json .token.boolean,
 .language-json .token.number,
-code[class*="language-css"] {
+code[class*='language-css'] {
 	color: #9494ab;
 }
 
