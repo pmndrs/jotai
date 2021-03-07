@@ -12,10 +12,16 @@ const Field = ({
   fieldAtom: PrimitiveAtom<{ name: string; value: string }>
   removeField: () => void
 }) => {
-  const [name, setName] = useAtom(focusAtom(fieldAtom, (o) => o.prop('name')))
-  const [value, setValue] = useAtom(
-    focusAtom(fieldAtom, (o) => o.prop('value'))
+  const nameAtom = React.useMemo(
+    () => focusAtom(fieldAtom, (o) => o.prop('name')),
+    [fieldAtom]
   )
+  const valueAtom = React.useMemo(
+    () => focusAtom(fieldAtom, (o) => o.prop('value')),
+    [fieldAtom]
+  )
+  const [name, setName] = useAtom(nameAtom)
+  const [value, setValue] = useAtom(valueAtom)
   return (
     <div>
       <input
@@ -42,29 +48,38 @@ const Form = ({
   nameAtom: PrimitiveAtom<string>
   remove: () => void
 }) => {
-  const objectsAtom = focusAtom(formAtom, (o) =>
-    o.iso(
-      (bigObject) =>
-        Object.entries(bigObject).map(([name, value]) => ({
-          name,
-          value,
-        })),
-      (arrayOfObjects) =>
-        Object.fromEntries(
-          arrayOfObjects.map(({ name, value }) => [name, value])
+  const objectsAtom = React.useMemo(
+    () =>
+      focusAtom(formAtom, (o) =>
+        o.iso(
+          (bigObject) =>
+            Object.entries(bigObject).map(([name, value]) => ({
+              name,
+              value,
+            })),
+          (arrayOfObjects) =>
+            Object.fromEntries(
+              arrayOfObjects.map(({ name, value }) => [name, value])
+            )
         )
-    )
+      ),
+    [formAtom]
   )
+
   const fieldAtoms = useAtomSlice(objectsAtom)
   const [name, setName] = useAtom(nameAtom)
-
-  const addField = useAtomCallback((get, set) => {
-    const id = Math.floor(Math.random() * 1000)
-    set(objectsAtom, (oldValue) => [
-      ...oldValue,
-      { name: `new field ${id}`, value: '' },
-    ])
-  })
+  const addField = useAtomCallback(
+    React.useCallback(
+      (get, set) => {
+        const id = Math.floor(Math.random() * 1000)
+        set(objectsAtom, (oldValue) => [
+          ...oldValue,
+          { name: `new field ${id}`, value: '' },
+        ])
+      },
+      [objectsAtom]
+    )
+  )
 
   return (
     <div>
@@ -74,8 +89,8 @@ const Form = ({
       </div>
 
       <ul>
-        {fieldAtoms.map(([fieldAtom, remove]) => (
-          <li>
+        {fieldAtoms.map(([fieldAtom, remove], index) => (
+          <li key={index}>
             <Field fieldAtom={fieldAtom} removeField={remove} />
           </li>
         ))}
@@ -90,28 +105,40 @@ const FormList = ({
 }: {
   formListAtom: PrimitiveAtom<Record<string, Record<string, string>>>
 }) => {
-  const entriesAtom = focusAtom(formListAtom, (o) =>
-    o.iso(
-      (obj) => Object.entries(obj),
-      (array) => Object.fromEntries(array)
-    )
+  const entriesAtom = React.useMemo(
+    () =>
+      focusAtom(formListAtom, (o) =>
+        o.iso(
+          (obj) => Object.entries(obj),
+          (array) => Object.fromEntries(array)
+        )
+      ),
+    [formListAtom]
   )
   const formAtoms = useAtomSlice(entriesAtom)
 
-  const addForm = useAtomCallback((get, set) => {
-    const id = Math.floor(Math.random() * 1000)
-    set(entriesAtom, (oldValue) => [...oldValue, [`new form ${id}`, {}]])
-  })
+  const addForm = useAtomCallback(
+    React.useCallback(
+      (get, set) => {
+        const id = Math.floor(Math.random() * 1000)
+        set(entriesAtom, (oldValue) => [...oldValue, [`new form ${id}`, {}]])
+      },
+      [entriesAtom]
+    )
+  )
 
+  const formValues = React.useMemo(() => {
+    return formAtoms.map(([formEntryAtom, remove]) => ({
+      nameAtom: focusAtom(formEntryAtom, (o) => o.nth(0)),
+      formAtom: focusAtom(formEntryAtom, (o) => o.nth(1)),
+      remove,
+    }))
+  }, [formAtoms])
   return (
     <ul>
-      {formAtoms.map(([formEntryAtom, remove]) => (
-        <li>
-          <Form
-            nameAtom={focusAtom(formEntryAtom, (o) => o.nth(0))}
-            formAtom={focusAtom(formEntryAtom, (o) => o.nth(1))}
-            remove={remove}
-          />
+      {formValues.map(({ nameAtom, formAtom, remove }, index) => (
+        <li key={index}>
+          <Form nameAtom={nameAtom} formAtom={formAtom} remove={remove} />
         </li>
       ))}
 
