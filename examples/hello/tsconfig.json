@@ -1,5 +1,4 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -16,6 +15,12 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
-    "jsx": "react-jsx"
-  }
+    "jsx": "react-jsx",
+    "target": "es5",
+    "esModuleInterop": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "src"
+  ]
 }
