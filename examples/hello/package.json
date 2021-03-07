@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "jotai": "^0.15.2",
-    "prismjs": "1.22.0",
+    "prismjs": "^1.23.0",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-prism": "4.3.2",
