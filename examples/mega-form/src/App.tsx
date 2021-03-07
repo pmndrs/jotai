@@ -90,7 +90,7 @@ const Form = ({
 
       <ul>
         {fieldAtoms.map(([fieldAtom, remove], index) => (
-          <li key={index}>
+          <li key={fieldAtom.toString()}>
             <Field fieldAtom={fieldAtom} removeField={remove} />
           </li>
         ))}
@@ -137,7 +137,7 @@ const FormList = ({
   return (
     <ul>
       {formValues.map(({ nameAtom, formAtom, remove }, index) => (
-        <li key={index}>
+        <li key={nameAtom.toString()}>
           <Form nameAtom={nameAtom} formAtom={formAtom} remove={remove} />
         </li>
       ))}
