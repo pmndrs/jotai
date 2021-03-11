@@ -266,7 +266,7 @@ const readAtomState = <Value>(
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
         const aState = getAtomState(state, wip, a)
-        if (aState && aState.r === aState.i) {
+        if (aState && !aState.e && !aState.p && aState.r === aState.i) {
           wip = readAtomState(state, wip, a)[1]
         }
       }
