@@ -4,23 +4,37 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "parcel index.html",
-    "build": "parcel build index.html"
+    "start": "SKIP_PREFLIGHT_CHECK=true react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
   },
   "dependencies": {
-    "fp-ts": "^2.9.1",
-    "io-ts": "^2.2.13",
-    "jotai": "^0.14.0",
+    "fp-ts": "^2.9.5",
+    "io-ts": "^2.2.15",
+    "jotai": "^0.15.2",
     "optics-ts": "^2.0.0",
     "react": "^17.0.1",
     "react-app-polyfill": "^1.0.0",
     "react-dom": "^17.0.1",
-    "todomvc-app-css": "^2.3.0"
+    "todomvc-app-css": "^2.3.0",
+    "react-scripts": "^4.0.3"
   },
   "devDependencies": {
-    "@types/react": "^16.9.11",
-    "@types/react-dom": "^16.8.4",
-    "parcel": "^1.12.3",
-    "typescript": "^3.4.5"
+    "@types/react": "^16.14.4",
+    "@types/react-dom": "^16.9.11",
+    "typescript": "^3.9.9"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

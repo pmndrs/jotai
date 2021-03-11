@@ -1,13 +1,16 @@
-import { useMemo } from 'react'
-import { atom, useAtom, WritableAtom } from 'jotai'
+import { useCallback, useContext } from 'react'
+import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
+import type { WritableAtom } from 'jotai'
+import type { SetAtom } from '../core/types'
 
 export function useUpdateAtom<Value, Update>(
   anAtom: WritableAtom<Value, Update>
 ) {
-  const writeOnlyAtom = useMemo(
-    () => atom(null, (_get, set, update: Update) => set(anAtom, update)),
-    [anAtom]
-  )
-  writeOnlyAtom.scope = anAtom.scope
-  return useAtom(writeOnlyAtom)[1]
+  const StoreContext = getStoreContext(anAtom.scope)
+  const [, updateAtom] = useContext(StoreContext)
+  const setAtom = useCallback((update: Update) => updateAtom(anAtom, update), [
+    updateAtom,
+    anAtom,
+  ])
+  return setAtom as SetAtom<Update>
 }

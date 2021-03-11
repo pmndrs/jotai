@@ -16,6 +16,7 @@ const hasInitialValue = <T extends Atom<unknown>>(
   'init' in atom
 
 type Revision = number
+type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 
 // immutable atom state
@@ -25,6 +26,7 @@ export type AtomState<Value = unknown> = {
   w?: Promise<void> // write promise
   v?: Value
   r: Revision
+  i?: InvalidatedRevision
   d: ReadDependencies
 }
 
@@ -38,24 +40,29 @@ type Mounted = {
   u: OnUnmount | void
 }
 
-type MountedMap = Map<AnyAtom, Mounted>
+type MountedMap = WeakMap<AnyAtom, Mounted>
+
+export type NewAtomReceiver = (newAtom: AnyAtom) => void
 
 type StateVersion = number
 
 // mutable state
 export type State = {
+  n?: NewAtomReceiver
   v: StateVersion
   a: AtomStateMap
   m: MountedMap
 }
 
 export const createState = (
-  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>,
+  newAtomReceiver?: NewAtomReceiver
 ): State => {
   const state: State = {
+    n: newAtomReceiver,
     v: 0,
     a: new WeakMap(),
-    m: new Map(),
+    m: new WeakMap(),
   }
   if (initialValues) {
     for (const [atom, value] of initialValues) {
@@ -112,6 +119,7 @@ const setAtomValue = <Value>(
   }
   delete atomState.e
   delete atomState.p
+  delete atomState.i
   if (!('v' in atomState) || !Object.is(atomState.v, value)) {
     atomState.v = value
     ++atomState.r
@@ -131,6 +139,7 @@ const setAtomReadError = <Value>(
     return
   }
   delete atomState.p
+  delete atomState.i
   atomState.e = error
   commitAtomState(state, atom, atomState)
 }
@@ -143,6 +152,12 @@ const setAtomReadPromise = <Value>(
 ): void => {
   const atomState = wipAtomState(state, atom, dependencies) as AtomState<Value>
   atomState.p = promise
+  commitAtomState(state, atom, atomState)
+}
+
+const setAtomInvalidated = <Value>(state: State, atom: Atom<Value>) => {
+  const atomState = wipAtomState(state, atom) as AtomState<Value>
+  atomState.i = atomState.r
   commitAtomState(state, atom, atomState)
 }
 
@@ -166,22 +181,34 @@ const scheduleReadAtomState = <Value>(
   promise: Promise<unknown>
 ): void => {
   promise.then(() => {
-    readAtomState(state, atom, true)
+    readAtomState(state, atom)
   })
 }
 
 const readAtomState = <Value>(
   state: State,
-  atom: Atom<Value>,
-  force?: boolean
+  atom: Atom<Value>
 ): AtomState<Value> => {
-  if (!force) {
-    const atomState = state.a.get(atom) as AtomState<Value> | undefined
+  const atomState = state.a.get(atom) as AtomState<Value> | undefined
+  if (atomState) {
+    atomState.d.forEach((_, a) => {
+      if (a !== atom) {
+        const aState = state.a.get(a)
+        if (aState && !aState.e && !aState.p && aState.r === aState.i) {
+          readAtomState(state, a)
+        }
+      }
+    })
     if (
-      atomState &&
       Array.from(atomState.d.entries()).every(([a, r]) => {
         const aState = state.a.get(a)
-        return aState && !aState.e && !aState.p && aState.r === r
+        return (
+          aState &&
+          !aState.e &&
+          !aState.p &&
+          aState.r !== aState.i &&
+          aState.r === r
+        )
       })
     ) {
       return atomState
@@ -292,34 +319,14 @@ const delAtom = (state: State, deletingAtom: AnyAtom): void => {
   }
 }
 
-const updateDependentsState = <Value>(
-  state: State,
-  atom: Atom<Value>,
-  prevAtomState?: AtomState<Value>
-): void => {
-  if (
-    prevAtomState &&
-    !prevAtomState.e &&
-    !prevAtomState.p &&
-    prevAtomState.r === state.a.get(atom)?.r
-  ) {
-    return // bail out
-  }
+const invalidateDependents = <Value>(state: State, atom: Atom<Value>): void => {
   const mounted = state.m.get(atom)
   mounted?.d.forEach((dependent) => {
     if (dependent === atom) {
       return
     }
-    const dependentState = state.a.get(dependent)
-    const nextDependentState = readAtomState(state, dependent, true)
-    const promise = nextDependentState.p
-    if (promise) {
-      promise.then(() => {
-        updateDependentsState(state, dependent, dependentState)
-      })
-    } else {
-      updateDependentsState(state, dependent, dependentState)
-    }
+    setAtomInvalidated(state, dependent)
+    invalidateDependents(state, dependent)
   })
 }
 
@@ -374,9 +381,8 @@ const writeAtomState = <Value, Update>(
       }) as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
         if (a === atom) {
-          const aState = state.a.get(a)
           setAtomValue(state, a, v)
-          updateDependentsState(state, a, aState)
+          invalidateDependents(state, a)
         } else {
           writeAtomState(state, a, v)
         }
