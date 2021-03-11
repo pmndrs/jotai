@@ -221,7 +221,7 @@ const setAtomReadPromise = <Value>(
   return new Map(wip).set(atom, atomState)
 }
 
-const setAtomInvalidatetd = <Value>(
+const setAtomInvalidated = <Value>(
   state: State,
   wip: WorkInProgress,
   atom: Atom<Value>
@@ -419,7 +419,7 @@ const invalidateDependents = <Value>(
     if (dependent === atom) {
       return
     }
-    wip = setAtomInvalidatetd(state, wip, dependent)
+    wip = setAtomInvalidated(state, wip, dependent)
     wip = invalidateDependents(state, wip, dependent)
   })
   return wip
