@@ -87,6 +87,7 @@ const wipAtomState = <Value>(
 ): AtomState<Value> | null => {
   const atomState = state.a.get(atom) as AtomState<Value> | undefined
   if (promise && promise !== atomState?.p) {
+    // newer async read is running, not updating
     return null
   }
   const nextAtomState = {
