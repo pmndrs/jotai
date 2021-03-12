@@ -470,17 +470,16 @@ const mountAtom = (
     console.warn('[Bug] could not find atom state to mount', atom)
   }
   // mount self
-  let onUmount: OnUnmount | void
-  if (isActuallyWritableAtom(atom) && atom.onMount) {
-    const setAtom = (update: unknown) => writeAtom(state, atom, update)
-    onUmount = atom.onMount(setAtom)
-  }
   const mounted: Mounted = {
     d: new Set(initialDependent && [initialDependent]),
     l: new Set(),
-    u: onUmount,
+    u: undefined,
   }
   state.m.set(atom, mounted)
+  if (isActuallyWritableAtom(atom) && atom.onMount) {
+    const setAtom = (update: unknown) => writeAtom(state, atom, update)
+    mounted.u = atom.onMount(setAtom)
+  }
   return mounted
 }
 
@@ -520,10 +519,10 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
   }
 }
 
-const commitAtomState = <Value>(
+const commitAtomState = (
   state: State,
-  atom: Atom<Value>,
-  atomState: AtomState<Value>
+  atom: AnyAtom,
+  atomState: AtomState
 ): void => {
   const prevDependencies = state.a.get(atom)?.d
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
