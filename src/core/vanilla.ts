@@ -301,11 +301,11 @@ export const readAtom = <Value>(
 }
 
 const addAtom = (state: State, addingAtom: AnyAtom): Mounted => {
-  const mounted = state.m.get(addingAtom)
-  if (mounted) {
-    return mounted
+  let mounted = state.m.get(addingAtom)
+  if (!mounted) {
+    mounted = mountAtom(state, addingAtom)
   }
-  return mountAtom(state, addingAtom)
+  return mounted
 }
 
 // XXX doesn't work with mutally dependent atoms
