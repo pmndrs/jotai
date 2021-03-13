@@ -192,38 +192,41 @@ const scheduleReadAtomState = <Value>(
   promise: Promise<unknown>
 ): void => {
   promise.then(() => {
-    readAtomState(state, atom)
+    readAtomState(state, atom, true)
     flushPending(state)
   })
 }
 
 const readAtomState = <Value>(
   state: State,
-  atom: Atom<Value>
+  atom: Atom<Value>,
+  force?: boolean
 ): AtomState<Value> => {
-  const atomState = getAtomState(state, atom)
-  if (atomState) {
-    atomState.d.forEach((_, a) => {
-      if (a !== atom) {
-        const aState = getAtomState(state, a)
-        if (aState && !aState.e && !aState.p && aState.r === aState.i) {
-          readAtomState(state, a)
+  if (!force) {
+    const atomState = getAtomState(state, atom)
+    if (atomState) {
+      atomState.d.forEach((_, a) => {
+        if (a !== atom) {
+          const aState = getAtomState(state, a)
+          if (aState && !aState.e && !aState.p && aState.r === aState.i) {
+            readAtomState(state, a)
+          }
         }
-      }
-    })
-    if (
-      Array.from(atomState.d.entries()).every(([a, r]) => {
-        const aState = getAtomState(state, a)
-        return (
-          aState &&
-          !aState.e &&
-          !aState.p &&
-          aState.r !== aState.i &&
-          aState.r === r
-        )
       })
-    ) {
-      return atomState
+      if (
+        Array.from(atomState.d.entries()).every(([a, r]) => {
+          const aState = getAtomState(state, a)
+          return (
+            aState &&
+            !aState.e &&
+            !aState.p &&
+            aState.r !== aState.i &&
+            aState.r === r
+          )
+        })
+      ) {
+        return atomState
+      }
     }
   }
   let error: Error | undefined
