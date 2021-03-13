@@ -46,7 +46,7 @@ export type NewAtomReceiver = (newAtom: AnyAtom) => void
 
 type StateVersion = number
 
-type PendingAtoms = Map<AnyAtom, AtomState>
+type PendingAtoms = Set<AnyAtom>
 
 // mutable state
 export type State = {
@@ -66,7 +66,7 @@ export const createState = (
     v: 0,
     a: new WeakMap(),
     m: new WeakMap(),
-    p: new Map(),
+    p: new Set(),
   }
   if (initialValues) {
     for (const [atom, value] of initialValues) {
@@ -84,7 +84,7 @@ export const createState = (
 }
 
 const getAtomState = <Value>(state: State, atom: Atom<Value>) =>
-  (state.p.get(atom) || state.a.get(atom)) as AtomState<Value> | undefined
+  state.a.get(atom) as AtomState<Value> | undefined
 
 const wipAtomState = <Value>(
   state: State,
@@ -131,7 +131,7 @@ const setAtomValue = <Value>(
     atomState.v = value
     ++atomState.r
   }
-  state.p.set(atom, atomState)
+  commitAtomState(state, atom, atomState)
   mountDependencies(state, atom, atomState, prevDependencies)
 }
 
@@ -150,7 +150,7 @@ const setAtomReadError = <Value>(
   delete atomState.p
   delete atomState.i
   atomState.e = error
-  state.p.set(atom, atomState)
+  commitAtomState(state, atom, atomState)
   mountDependencies(state, atom, atomState, prevDependencies)
 }
 
@@ -162,14 +162,14 @@ const setAtomReadPromise = <Value>(
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
   atomState.p = promise
-  state.p.set(atom, atomState)
+  commitAtomState(state, atom, atomState)
   mountDependencies(state, atom, atomState, prevDependencies)
 }
 
 const setAtomInvalidated = <Value>(state: State, atom: Atom<Value>) => {
   const [atomState] = wipAtomState(state, atom)
   atomState.i = atomState.r
-  state.p.set(atom, atomState)
+  commitAtomState(state, atom, atomState)
 }
 
 const setAtomWritePromise = <Value>(
@@ -183,7 +183,7 @@ const setAtomWritePromise = <Value>(
   } else {
     delete atomState.w
   }
-  state.p.set(atom, atomState)
+  commitAtomState(state, atom, atomState)
 }
 
 const scheduleReadAtomState = <Value>(
@@ -309,6 +309,8 @@ export const readAtom = <Value>(
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
   const atomState = readAtomState(state, readingAtom)
+  state.p.delete(readingAtom)
+  flushPending(state)
   return atomState
 }
 
@@ -575,24 +577,24 @@ const mountDependencies = (
   }
 }
 
+const commitAtomState = (state: State, atom: AnyAtom, atomState: AtomState) => {
+  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+    Object.freeze(atomState)
+  }
+  ++state.v
+  state.a.set(atom, atomState)
+  state.p.add(atom)
+}
+
 const flushPending = (state: State) => {
   if (!state.p.size) {
     return
   }
-  ++state.v
-  const atomsToNotify = new Set<AnyAtom>()
-  state.p.forEach((atomState, atom) => {
-    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
-      Object.freeze(atomState)
-    }
-    state.a.set(atom, atomState)
-    atomsToNotify.add(atom)
-  })
-  state.p.clear()
-  atomsToNotify.forEach((atom) => {
+  state.p.forEach((atom) => {
     const mounted = state.m.get(atom)
     mounted?.l.forEach((listener) => listener())
   })
+  state.p.clear()
 }
 
 export const subscribeAtom = (
