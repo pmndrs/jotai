@@ -309,7 +309,6 @@ export const readAtom = <Value>(
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
   const atomState = readAtomState(state, readingAtom)
-  flushPending(state)
   return atomState
 }
 
