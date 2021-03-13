@@ -586,8 +586,12 @@ const commitAtomState = <Value>(
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     Object.freeze(atomState)
   }
-  ++state.v
+  const isNewAtom = state.n && !state.a.has(atom)
   state.a.set(atom, atomState)
+  if (isNewAtom) {
+    ;(state.n as NewAtomReceiver)(atom)
+  }
+  ++state.v
   state.p.add(atom)
 }
 
