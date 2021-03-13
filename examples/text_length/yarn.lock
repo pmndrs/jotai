@@ -4037,13 +4037,6 @@ cssstyle@^2.2.0:
   dependencies:
     cssom "~0.3.6"
 
-customize-cra@1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/customize-cra/-/customize-cra-1.0.0.tgz#73286563631aa08127ad4d30a2e3c89cf4e93c8d"
-  integrity sha512-DbtaLuy59224U+xCiukkxSq8clq++MOtJ1Et7LED1fLszWe88EoblEYFBJ895sB1mC6B4uu3xPT/IjClELhMbA==
-  dependencies:
-    lodash.flow "^3.5.0"
-
 cyclist@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-1.0.1.tgz#596e9698fd0c80e12038c2b82d6eb1b35b6224d9"
@@ -6866,12 +6859,10 @@ jest@26.6.0:
     import-local "^3.0.2"
     jest-cli "^26.6.0"
 
-jotai@0.11.2:
-  version "0.11.2"
-  resolved "https://registry.yarnpkg.com/jotai/-/jotai-0.11.2.tgz#14ea5990fa07f1beaf628bcd92ca72585eaa41f2"
-  integrity sha512-aeScYWMKRu4DEuoXbwWJ9L7kHtWjKomfcMy/XAESQ4Dj6ifZw4I7aYWcD8dx3J+nYdWr8MDXWj4AQ7w2BcJkug==
-  dependencies:
-    use-context-selector "1.2.11"
+jotai@^0.15.2:
+  version "0.15.2"
+  resolved "https://registry.yarnpkg.com/jotai/-/jotai-0.15.2.tgz#983d66c3830c2ee7b351e12456963645b9b349f6"
+  integrity sha512-26MxXA3PR2cN3hUfA0wYMBpoOK4UGZPdXAuFzMRRBD4ITgDdyQaGEVUFAz7B+53zFOggcOGY0G0WuClVgW7W4A==
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
@@ -7165,11 +7156,6 @@ lodash._reinterpolate@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/lodash._reinterpolate/-/lodash._reinterpolate-3.0.0.tgz#0ccf2d89166af03b3663c796538b75ac6e114d9d"
   integrity sha1-DM8tiRZq8Ds2Y8eWU4t1rG4RTZ0=
-
-lodash.flow@^3.5.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/lodash.flow/-/lodash.flow-3.5.0.tgz#87bf40292b8cf83e4e8ce1a3ae4209e20071675a"
-  integrity sha1-h79AKSuM+D5OjOGjrkIJ4gBxZ1o=
 
 lodash.memoize@^4.1.2:
   version "4.1.2"
@@ -9255,13 +9241,6 @@ react-app-polyfill@^2.0.0:
     regenerator-runtime "^0.13.7"
     whatwg-fetch "^3.4.1"
 
-react-app-rewired@2.1.6:
-  version "2.1.6"
-  resolved "https://registry.yarnpkg.com/react-app-rewired/-/react-app-rewired-2.1.6.tgz#33ee3076a7f34d6a7c94e649cac67e7c8c580de8"
-  integrity sha512-06flj0kK5tf/RN4naRv/sn6j3sQd7rsURoRLKLpffXDzJeNiAaTNic+0I8Basojy5WDwREkTqrMLewSAjcb13w==
-  dependencies:
-    semver "^5.6.0"
-
 react-dev-utils@^11.0.1:
   version "11.0.1"
   resolved "https://registry.yarnpkg.com/react-dev-utils/-/react-dev-utils-11.0.1.tgz#30106c2055acfd6b047d2dc478a85c356e66fe45"
@@ -11179,11 +11158,6 @@ url@^0.11.0:
   dependencies:
     punycode "1.3.2"
     querystring "0.2.0"
-
-use-context-selector@1.2.11:
-  version "1.2.11"
-  resolved "https://registry.yarnpkg.com/use-context-selector/-/use-context-selector-1.2.11.tgz#2b7dd6ed045e4594c1936134f1465d46d01267e7"
-  integrity sha512-roElSNplrQSxUV3dM4ouCVC8xnLAIvh4ulF16Wgsyb+b7Gd23rUughZKkL0DvH48FI4mewwmwqVCU+z5PUEfAg==
 
 use@^3.1.0:
   version "3.1.1"

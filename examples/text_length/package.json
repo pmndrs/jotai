@@ -5,21 +5,19 @@
   "keywords": [],
   "main": "src/index.js",
   "scripts": {
-    "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "react-app-rewired test --env=jsdom",
-    "eject": "react-app-rewired eject",
+    "start": "SKIP_PREFLIGHT_CHECK=true react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
     "serve": "serve -s build"
   },
   "dependencies": {
-    "jotai": "0.11.2",
+    "jotai": "^0.15.2",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-scripts": "4.0.1"
   },
   "devDependencies": {
-    "customize-cra": "1.0.0",
-    "react-app-rewired": "2.1.6",
     "serve": "11.3.2"
   },
   "browserslist": {
