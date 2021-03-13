@@ -492,3 +492,32 @@ it('uses async atom double chain (#306)', async () => {
   await findByText('loading')
   await findByText('count: 1, delayed: 1')
 })
+
+it('uses an async atom that depends on another async atom (#351)', async () => {
+  const asyncAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 10))
+    get(anotherAsyncAtom)
+    return 1
+  })
+  const anotherAsyncAtom = atom(async () => {
+    return 2
+  })
+
+  const Counter: React.FC = () => {
+    const [num] = useAtom(asyncAtom)
+    return <div>num: {num}</div>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('num: 1')
+})
