@@ -280,6 +280,7 @@ const readAtomState = <Value>(
             dependencies,
             promise as Promise<void>
           )
+          flushPending(state)
         })
     } else {
       value = promiseOrValue
@@ -591,9 +592,6 @@ const commitAtomState = <Value>(
 }
 
 const flushPending = (state: State): void => {
-  if (!state.p.size) {
-    return
-  }
   state.p.forEach((atom) => {
     const mounted = state.m.get(atom)
     mounted?.l.forEach((listener) => listener())
