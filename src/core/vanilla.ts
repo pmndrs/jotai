@@ -166,7 +166,7 @@ const setAtomReadPromise = <Value>(
   mountDependencies(state, atom, atomState, prevDependencies)
 }
 
-const setAtomInvalidated = <Value>(state: State, atom: Atom<Value>) => {
+const setAtomInvalidated = <Value>(state: State, atom: Atom<Value>): void => {
   const [atomState] = wipAtomState(state, atom)
   atomState.i = atomState.r
   commitAtomState(state, atom, atomState)
@@ -466,9 +466,9 @@ export const writeAtom = <Value, Update>(
 const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
-const mountAtom = (
+const mountAtom = <Value>(
   state: State,
-  atom: AnyAtom,
+  atom: Atom<Value>,
   initialDependent?: AnyAtom
 ): Mounted => {
   // mount dependencies beforehand
@@ -502,7 +502,7 @@ const mountAtom = (
   return mounted
 }
 
-const unmountAtom = (state: State, atom: AnyAtom): void => {
+const unmountAtom = <Value>(state: State, atom: Atom<Value>): void => {
   // unmount self
   const onUnmount = state.m.get(atom)?.u
   if (onUnmount) {
@@ -538,10 +538,10 @@ const unmountAtom = (state: State, atom: AnyAtom): void => {
   }
 }
 
-const mountDependencies = (
+const mountDependencies = <Value>(
   state: State,
-  atom: AnyAtom,
-  atomState: AtomState,
+  atom: Atom<Value>,
+  atomState: AtomState<Value>,
   prevDependencies?: ReadDependencies
 ): void => {
   if (prevDependencies !== atomState.d) {
@@ -577,7 +577,11 @@ const mountDependencies = (
   }
 }
 
-const commitAtomState = (state: State, atom: AnyAtom, atomState: AtomState) => {
+const commitAtomState = <Value>(
+  state: State,
+  atom: Atom<Value>,
+  atomState: AtomState<Value>
+): void => {
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     Object.freeze(atomState)
   }
@@ -586,7 +590,7 @@ const commitAtomState = (state: State, atom: AnyAtom, atomState: AtomState) => {
   state.p.add(atom)
 }
 
-const flushPending = (state: State) => {
+const flushPending = (state: State): void => {
   if (!state.p.size) {
     return
   }
