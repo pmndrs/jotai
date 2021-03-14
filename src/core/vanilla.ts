@@ -193,7 +193,6 @@ const scheduleReadAtomState = <Value>(
 ): void => {
   promise.then(() => {
     readAtomState(state, atom, true)
-    flushPending(state)
   })
 }
 

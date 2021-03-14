@@ -572,4 +572,8 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 12, commits: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('derived: 13, commits: 3')
 })
