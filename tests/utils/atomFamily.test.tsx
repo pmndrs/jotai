@@ -1,4 +1,11 @@
-import React, { Fragment, useState } from 'react'
+import React, {
+  Fragment,
+  useState,
+  useRef,
+  useEffect,
+  StrictMode,
+  Suspense,
+} from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
   Provider as ProviderOrig,
@@ -7,7 +14,7 @@ import {
   WritableAtom,
 } from '../../src/index'
 import { atomFamily } from '../../src/utils'
-import type { SetStateAction } from '../../src/core/types'
+import type { Atom, SetStateAction } from '../../src/core/types'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
@@ -195,4 +202,51 @@ it('custom equality function work', async () => {
 
   expect(goodFamily({ index: 0 })).toEqual(goodFamily({ index: 0 }))
   expect(goodFamily({ index: 0 })).not.toEqual(goodFamily({ index: 1 }))
+})
+
+it('a derived atom from an async atomFamily (#351)', async () => {
+  const countAtom = atom(1)
+  const getAsyncAtom = atomFamily((n: number) => async () => {
+    await new Promise((r) => setTimeout(r, 1))
+    return n + 10
+  })
+  const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
+
+  const Counter: React.FC = () => {
+    const [, setCount] = useAtom(countAtom)
+    const [derived] = useAtom(derivedAtom)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
+    return (
+      <>
+        <div>
+          derived: {derived}, commits: {commits.current}
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('derived: 11, commits: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('derived: 12, commits: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('derived: 13, commits: 3')
 })
