@@ -16,39 +16,46 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "types": "./index.d.ts",
       "module": "./index.module.js",
-      "require": "./index.js",
-      "types": "./index.d.ts"
+      "import": "./index.module.js",
+      "default": "./index.js"
     },
     "./utils": {
+      "types": "./utils.d.ts",
       "module": "./utils.module.js",
-      "require": "./utils.js",
-      "types": "./utils.d.ts"
+      "import": "./utils.module.js",
+      "default": "./utils.js"
     },
     "./devtools": {
+      "types": "./devtools.d.ts",
       "module": "./devtools.module.js",
-      "require": "./devtools.js",
-      "types": "./devtools.d.ts"
+      "import": "./devtools.module.js",
+      "default": "./devtools.js"
     },
     "./immer": {
+      "types": "./immer.d.ts",
       "module": "./immer.module.js",
-      "require": "./immer.js",
-      "types": "./immer.d.ts"
+      "import": "./immer.module.js",
+      "default": "./immer.js"
     },
     "./optics": {
+      "types": "./optics.d.ts",
       "module": "./optics.module.js",
-      "require": "./optics.js",
-      "types": "./optics.d.ts"
+      "import": "./optics.module.js",
+      "default": "./optics.js"
     },
     "./query": {
-      "module": "./query.module.mjs",
-      "require": "./query.js",
-      "types": "./query.d.ts"
+      "types": "./query.d.ts",
+      "module": "./query.module.js",
+      "import": "./query.module.js",
+      "default": "./query.js"
     },
     "./xstate": {
+      "types": "./xstate.d.ts",
       "module": "./xstate.module.js",
-      "require": "./xstate.js",
-      "types": "./xstate.d.ts"
+      "import": "./xstate.module.js",
+      "default": "./xstate.js"
     }
   },
   "files": [
