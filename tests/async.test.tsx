@@ -1,6 +1,6 @@
-import React, { Fragment, StrictMode, Suspense, useEffect } from 'react'
+import React, { Fragment, StrictMode, Suspense, useRef, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
+import { Provider as ProviderOrig, atom, useAtom, Atom } from '../src/index'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
@@ -491,4 +491,89 @@ it('uses async atom double chain (#306)', async () => {
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('count: 1, delayed: 1')
+})
+
+it('uses an async atom that depends on another async atom', async () => {
+  const asyncAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 10))
+    get(anotherAsyncAtom)
+    return 1
+  })
+  const anotherAsyncAtom = atom(async () => {
+    return 2
+  })
+
+  const Counter: React.FC = () => {
+    const [num] = useAtom(asyncAtom)
+    return <div>num: {num}</div>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('num: 1')
+})
+
+it('a derived atom from a newly created async atom (#351)', async () => {
+  const countAtom = atom(1)
+  const atomCache = new Map<number, Atom<number>>()
+  const getAsyncAtom = (n: number) => {
+    if (!atomCache.has(n)) {
+      atomCache.set(
+        n,
+        atom(async () => {
+          await new Promise((r) => setTimeout(r, 10))
+          return n + 10
+        })
+      )
+    }
+    return atomCache.get(n) as Atom<number>
+  }
+  const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
+
+  const Counter: React.FC = () => {
+    const [, setCount] = useAtom(countAtom)
+    const [derived] = useAtom(derivedAtom)
+    const commits = useRef(1)
+    useEffect(() => {
+      ++commits.current
+    })
+    return (
+      <>
+        <div>
+          derived: {derived}, commits: {commits.current}
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('derived: 11, commits: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('derived: 12, commits: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('derived: 13, commits: 3')
 })
