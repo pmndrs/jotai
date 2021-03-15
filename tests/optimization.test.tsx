@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../src/index'
 
-it('useless re-renders with static atoms', async () => {
+it('only relevant render function called (#156)', async () => {
   // check out https://codesandbox.io/s/setatom-bail-failure-forked-m82r5?file=/src/App.tsx to see the expected re-renders
   const countAtom = atom(0)
   const unrelatedAtom = atom(0)
