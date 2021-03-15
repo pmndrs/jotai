@@ -18,43 +18,36 @@
     ".": {
       "types": "./index.d.ts",
       "module": "./index.module.js",
-      "import": "./index.module.js",
       "default": "./index.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
       "module": "./utils.module.js",
-      "import": "./utils.module.js",
       "default": "./utils.js"
     },
     "./devtools": {
       "types": "./devtools.d.ts",
       "module": "./devtools.module.js",
-      "import": "./devtools.module.js",
       "default": "./devtools.js"
     },
     "./immer": {
       "types": "./immer.d.ts",
       "module": "./immer.module.js",
-      "import": "./immer.module.js",
       "default": "./immer.js"
     },
     "./optics": {
       "types": "./optics.d.ts",
       "module": "./optics.module.js",
-      "import": "./optics.module.js",
       "default": "./optics.js"
     },
     "./query": {
       "types": "./query.d.ts",
       "module": "./query.module.js",
-      "import": "./query.module.js",
       "default": "./query.js"
     },
     "./xstate": {
       "types": "./xstate.d.ts",
       "module": "./xstate.module.js",
-      "import": "./xstate.module.js",
       "default": "./xstate.js"
     }
   },
