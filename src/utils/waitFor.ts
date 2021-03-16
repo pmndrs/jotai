@@ -1,29 +1,31 @@
 import { Atom, Getter } from '../core/types'
 import { atomFamily } from './atomFamily'
 
-export const waitForAll = atomFamily(
-  (dependencies: ReadonlyArray<Atom<unknown>>) => (get) => {
-    const [results, exceptions] = concurrentRequests(get, dependencies)
+export const waitForAll = atomFamily((atoms: WaitForAtoms) => (get) => {
+  const unwrappedAtoms = unwrapAtoms(atoms)
+  const [results, exceptions] = concurrentRequests(get, unwrappedAtoms)
 
-    if (exceptions.every((exception) => exception == null)) {
-      return results
-    }
+  if (exceptions.every((exception) => exception == null)) {
+    return wrapResults(atoms, results)
+  }
 
-    const error = exceptions.find(
-      (exception) => exception != null && !(exception instanceof Promise)
-    )
+  const error = exceptions.find(
+    (exception) => exception != null && !(exception instanceof Promise)
+  )
 
-    if (error != null) {
-      throw error
-    }
+  if (error != null) {
+    throw error
+  }
 
-    return Promise.all(exceptions).then((exceptionResults) =>
+  return Promise.all(exceptions).then((exceptionResults) =>
+    wrapResults(
+      atoms,
       exceptionResults.map((r, index) => {
         r === undefined ? results[index] : r
       })
     )
-  }
-)
+  )
+})
 
 function concurrentRequests(
   get: Getter,
@@ -44,3 +46,25 @@ function concurrentRequests(
   }
   return [results, exceptions]
 }
+
+function unwrapAtoms(atoms: WaitForAtoms): ReadonlyArray<Atom<unknown>> {
+  return Array.isArray(atoms)
+    ? atoms
+    : Object.getOwnPropertyNames(atoms).map(
+        (key) => (atoms as Record<string, Atom<unknown>>)[key]
+      )
+}
+
+function wrapResults(
+  dependencies: WaitForAtoms,
+  results: unknown[]
+): unknown[] | Record<string, unknown> {
+  return Array.isArray(dependencies)
+    ? results
+    : Object.getOwnPropertyNames(dependencies).reduce(
+        (out, key, idx) => ({ ...out, [key]: results[idx] }),
+        {}
+      )
+}
+
+type WaitForAtoms = ReadonlyArray<Atom<unknown>> | Record<string, Atom<unknown>>
