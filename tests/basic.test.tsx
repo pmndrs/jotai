@@ -796,9 +796,6 @@ it('set atom right after useEffect (#208)', async () => {
 })
 
 it('only relevant render function called (#156)', async () => {
-  if (process.env.IS_REACT_EXPERIMENTAL) {
-    return // skip this test
-  }
   const count1Atom = atom(0)
   const count2Atom = atom(0)
 
