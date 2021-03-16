@@ -14,9 +14,17 @@ import {
   WritableAtom,
 } from '../../src/index'
 import { atomFamily } from '../../src/utils'
-import type { Atom, SetStateAction } from '../../src/core/types'
+import type { SetStateAction } from '../../src/core/types'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  return commitCountRef.current
+}
 
 it('primitive atomFamily returns same reference for same parameters', async () => {
   const myFamily = atomFamily<number, { num: number }>((num) => ({ num }))
@@ -215,14 +223,10 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   const Counter: React.FC = () => {
     const [, setCount] = useAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          derived: {derived}, commits: {commits.current}
+          derived: {derived}, commits: {useCommitCount()}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
