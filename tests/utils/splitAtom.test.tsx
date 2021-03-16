@@ -6,14 +6,15 @@ import { splitAtom } from '../../src/utils/splitAtom'
 
 type TodoItem = { task: string; checked?: boolean }
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  return commitCountRef.current
+}
+
 it('no unneccesary updates when updating atoms', async () => {
-  const useCommitCount = () => {
-    const rerenderCountRef = useRef(0)
-    useEffect(() => {
-      rerenderCountRef.current += 1
-    })
-    return rerenderCountRef.current
-  }
   const todosAtom = atom<TodoItem[]>([
     { task: 'get cat food', checked: false },
     { task: 'get dragon food', checked: false },
@@ -23,10 +24,9 @@ it('no unneccesary updates when updating atoms', async () => {
     const [atoms, remove] = useAtom(
       useMemo(() => splitAtom(listAtom), [listAtom])
     )
-    const updates = useCommitCount()
     return (
       <>
-        TaskListUpdates: {updates}
+        TaskListUpdates: {useCommitCount()}
         {atoms.map((anAtom, index) => (
           <TaskItem
             key={index}
@@ -45,10 +45,9 @@ it('no unneccesary updates when updating atoms', async () => {
     const [value, onChange] = useAtom(itemAtom)
     const toggle = () =>
       onChange((value) => ({ ...value, checked: !value.checked }))
-    const updates = useCommitCount()
     return (
       <li>
-        {value.task} updates: {updates}
+        {value.task} commits: {useCommitCount()}
         <input
           data-testid={`${value.task}-checkbox`}
           type="checkbox"
@@ -66,9 +65,9 @@ it('no unneccesary updates when updating atoms', async () => {
   )
 
   await waitFor(() => {
-    getByText('get cat food updates: 0')
-    getByText('get dragon food updates: 0')
-    getByText('TaskListUpdates: 0')
+    getByText('get cat food commits: 1')
+    getByText('get dragon food commits: 1')
+    getByText('TaskListUpdates: 1')
   })
 
   const catBox = (await findByTestId(
@@ -84,9 +83,9 @@ it('no unneccesary updates when updating atoms', async () => {
   fireEvent.click(catBox)
 
   await waitFor(() => {
-    getByText('get cat food updates: 1')
-    getByText('get dragon food updates: 0')
-    getByText('TaskListUpdates: 0')
+    getByText('get cat food commits: 2')
+    getByText('get dragon food commits: 1')
+    getByText('TaskListUpdates: 1')
   })
 
   expect(catBox.checked).toBe(true)
@@ -95,9 +94,9 @@ it('no unneccesary updates when updating atoms', async () => {
   fireEvent.click(dragonBox)
 
   await waitFor(() => {
-    getByText('get cat food updates: 1')
-    getByText('get dragon food updates: 1')
-    getByText('TaskListUpdates: 0')
+    getByText('get cat food commits: 2')
+    getByText('get dragon food commits: 2')
+    getByText('TaskListUpdates: 1')
   })
 
   expect(catBox.checked).toBe(true)

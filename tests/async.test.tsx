@@ -4,6 +4,14 @@ import { Provider as ProviderOrig, atom, useAtom, Atom } from '../src/index'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  return commitCountRef.current
+}
+
 it('does not show async stale result', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
@@ -542,14 +550,10 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   const Counter: React.FC = () => {
     const [, setCount] = useAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          derived: {derived}, commits: {commits.current}
+          derived: {derived}, commits: {useCommitCount()}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
