@@ -84,7 +84,11 @@ it('useless re-renders with static atoms', async () => {
     )
   }
 
-  const { getByText, findByText } = render(<Counter />)
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
 
   await findByText('count: 0 (1)')
   fireEvent.click(getByText('button'))
