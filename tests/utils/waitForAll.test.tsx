@@ -28,10 +28,9 @@ it('waits for two async atoms', async () => {
     })
     return 2
   })
-  const numbersAtom = atom(waitForAll([asyncAtom, anotherAsyncAtom]))
 
   const Counter: React.FC = () => {
-    const [[num1, num2]] = useAtom(numbersAtom)
+    const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
     return (
       <>
         <div>num1: {num1}</div>

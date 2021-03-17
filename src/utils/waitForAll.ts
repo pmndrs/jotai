@@ -1,10 +1,18 @@
-import { Atom } from '../index'
-import type { Getter } from '../core/types'
+import { Atom, atom } from 'jotai'
+
+import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
+
+const waitForAllCache = new WeakMap()
 
 export function waitForAll<Values extends unknown[]>(
   atoms: { [K in keyof Values]: Atom<Values[K]> }
 ) {
-  return (get: Getter) => {
+  const deps: object[] = atoms
+  const cachedAtom = getWeakCacheItem(waitForAllCache, deps)
+  if (cachedAtom) {
+    return cachedAtom as Atom<Values>
+  }
+  const derivedAtom = atom((get) => {
     const promises: Promise<unknown>[] = []
     const values = atoms.map((anAtom) => {
       try {
@@ -21,5 +29,7 @@ export function waitForAll<Values extends unknown[]>(
       throw Promise.all(promises)
     }
     return values as Values
-  }
+  })
+  setWeakCacheItem(waitForAllCache, deps, derivedAtom)
+  return derivedAtom
 }
