@@ -26,11 +26,73 @@ it('waits for two async atoms', async () => {
         resolve(true)
       }, 10)
     })
-    return 2
+    return '2'
   })
 
   const Counter: React.FC = () => {
     const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
+    return (
+      <>
+        <div>num1: {num1}</div>
+        <div>num2: {num2}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  expect(isAsyncAtomRunning).toBe(true)
+  expect(isAnotherAsyncAtomRunning).toBe(true)
+  await findByText('num1: 1')
+  await findByText('num2: 2')
+  expect(isAsyncAtomRunning).toBe(false)
+  expect(isAnotherAsyncAtomRunning).toBe(false)
+})
+
+it('can use named atoms', async () => {
+  let isAsyncAtomRunning = false
+  let isAnotherAsyncAtomRunning = false
+  const asyncAtom = atom(async () => {
+    isAsyncAtomRunning = true
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        isAsyncAtomRunning = false
+        resolve(true)
+      }, 10)
+    })
+    return 1
+  })
+  const anotherAsyncAtom = atom(async () => {
+    isAnotherAsyncAtomRunning = true
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        isAnotherAsyncAtomRunning = false
+        resolve(true)
+      }, 10)
+    })
+    return '2'
+  })
+
+  const combinedWaitingAtom = atom((get) => {
+    return get(
+      waitForAll({
+        num1: asyncAtom,
+        num2: anotherAsyncAtom,
+      })
+    )
+  })
+
+  const Counter: React.FC = () => {
+    const [{ num1, num2 }] = useAtom(combinedWaitingAtom)
     return (
       <>
         <div>num1: {num1}</div>
