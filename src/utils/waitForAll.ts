@@ -4,21 +4,19 @@ import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 
 const waitForAllCache = new WeakMap()
 
-export function waitForAll<Values extends Record<string, Atom<unknown>>>(
-  atoms: Values
+export function waitForAll<Values extends Record<string, unknown>>(
+  atoms: { [K in keyof Values]: Atom<Values[K]> }
 ): Atom<Values>
 
 export function waitForAll<Values extends unknown[]>(
   atoms: { [K in keyof Values]: Atom<Values[K]> }
 ): Atom<Values>
 
-export function waitForAll<Values extends unknown[]>(
-  atoms: WaitForAtoms<Values>
-): Atom<Values> | Atom<Record<string, Atom<unknown>>> {
+export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
+  atoms: { [K in keyof Values]: Atom<Values[K]> }
+) {
   const unwrappedAtoms = unwrapAtoms(atoms)
-
-  const deps: object[] = unwrappedAtoms
-  const cachedAtom = getWeakCacheItem(waitForAllCache, deps)
+  const cachedAtom = getWeakCacheItem(waitForAllCache, unwrappedAtoms)
   if (cachedAtom) {
     return cachedAtom as Atom<Values>
   }
@@ -38,34 +36,28 @@ export function waitForAll<Values extends unknown[]>(
     if (promises.length) {
       throw Promise.all(promises)
     }
-    return wrapResults(atoms, values) as Values
+    return wrapResults(atoms, values)
   })
-  setWeakCacheItem(waitForAllCache, deps, derivedAtom)
+  setWeakCacheItem(waitForAllCache, unwrappedAtoms, derivedAtom)
   return derivedAtom
 }
 
-function unwrapAtoms<Values extends unknown[]>(
-  atoms: WaitForAtoms<Values>
-): Atom<unknown>[] {
-  return Array.isArray(atoms)
+const unwrapAtoms = <Values extends Record<string, unknown> | unknown[]>(
+  atoms: { [K in keyof Values]: Atom<Values[K]> }
+): Atom<unknown>[] =>
+  Array.isArray(atoms)
     ? atoms
     : Object.getOwnPropertyNames(atoms).map(
         (key) => (atoms as Record<string, Atom<unknown>>)[key]
       )
-}
 
-function wrapResults<Values extends unknown[]>(
-  atoms: WaitForAtoms<Values>,
+const wrapResults = <Values extends Record<string, unknown> | unknown[]>(
+  atoms: { [K in keyof Values]: Atom<Values[K]> },
   results: unknown[]
-): Atom<unknown>[] | Record<string, Atom<unknown>> {
-  return Array.isArray(atoms)
+): unknown[] | Record<string, unknown> =>
+  Array.isArray(atoms)
     ? results
     : Object.getOwnPropertyNames(atoms).reduce(
         (out, key, idx) => ({ ...out, [key]: results[idx] }),
         {}
       )
-}
-
-type WaitForAtoms<Values extends unknown[]> =
-  | { [K in keyof Values]: Atom<Values[K]> }
-  | Record<string, Atom<unknown>>
