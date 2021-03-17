@@ -1,7 +1,7 @@
 import React, { Fragment, StrictMode, Suspense } from 'react'
 import { render } from '@testing-library/react'
-import { Provider as ProviderOrig, atom } from '../../src/index'
-import { useAtomValue, waitForAll } from '../../src/utils'
+import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
+import { waitForAll } from '../../src/utils'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
@@ -28,9 +28,10 @@ it('waits for two async atoms', async () => {
     })
     return 2
   })
+  const numbersAtom = atom(waitForAll([asyncAtom, anotherAsyncAtom]))
 
   const Counter: React.FC = () => {
-    const [num1, num2] = useAtomValue(waitForAll([asyncAtom, anotherAsyncAtom]))
+    const [[num1, num2]] = useAtom(numbersAtom)
     return (
       <>
         <div>num1: {num1}</div>
