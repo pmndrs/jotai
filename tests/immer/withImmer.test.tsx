@@ -7,10 +7,9 @@ const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('withImmer derived atom with useAtom', async () => {
   const regularCountAtom = atom(0)
-  const countAtom = withImmer(regularCountAtom)
 
   const Parent: React.FC = () => {
-    const [count, setCount] = useAtom(countAtom)
+    const [count, setCount] = useAtom(withImmer(regularCountAtom))
     return (
       <>
         <div>count: {count}</div>
@@ -44,11 +43,9 @@ it('withImmer derived atom with useAtom + scope', async () => {
   const regularCountAtom = atom(0)
   regularCountAtom.scope = scope
 
-  const countAtom = withImmer(regularCountAtom)
-
   const Parent: React.FC = () => {
     const [regularCount] = useAtom(regularCountAtom)
-    const [count, setCount] = useAtom(countAtom)
+    const [count, setCount] = useAtom(withImmer(regularCountAtom))
     return (
       <>
         <div>

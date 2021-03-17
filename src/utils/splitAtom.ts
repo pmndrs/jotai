@@ -1,6 +1,9 @@
 import { atom, Atom, WritableAtom, PrimitiveAtom } from 'jotai'
 
+import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 import type { Getter, Setter, SetStateAction } from '../core/types'
+
+const splitAtomCache = new WeakMap()
 
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
@@ -23,6 +26,11 @@ export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], Item[]> | Atom<Item[]>,
   keyExtractor?: (item: Item) => Key
 ) {
+  const deps: object[] = keyExtractor ? [arrAtom, keyExtractor] : [arrAtom]
+  const cachedAtom = getWeakCacheItem(splitAtomCache, deps)
+  if (cachedAtom) {
+    return cachedAtom
+  }
   type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
   let currentAtomList: ItemAtom[] | undefined
   let currentKeyList: Key[] | undefined
@@ -94,5 +102,6 @@ export function splitAtom<Item, Key>(
     }
   }
   const splittedAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
+  setWeakCacheItem(splitAtomCache, deps, splittedAtom)
   return splittedAtom
 }
