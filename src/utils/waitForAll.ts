@@ -13,9 +13,7 @@ export function waitForAll<Values extends unknown[]>(
 ): Atom<Values>
 
 export function waitForAll<Values extends unknown[]>(
-  atoms:
-    | { [K in keyof Values]: Atom<Values[K]> }
-    | Record<string, Atom<unknown>>
+  atoms: WaitForAtoms<Values>
 ): Atom<Values> | Atom<Record<string, Atom<unknown>>> {
   const unwrappedAtoms = unwrapAtoms(atoms)
 
@@ -47,9 +45,7 @@ export function waitForAll<Values extends unknown[]>(
 }
 
 function unwrapAtoms<Values extends unknown[]>(
-  atoms:
-    | { [K in keyof Values]: Atom<Values[K]> }
-    | Record<string, Atom<unknown>>
+  atoms: WaitForAtoms<Values>
 ): Atom<unknown>[] {
   return Array.isArray(atoms)
     ? atoms
@@ -59,9 +55,7 @@ function unwrapAtoms<Values extends unknown[]>(
 }
 
 function wrapResults<Values extends unknown[]>(
-  atoms:
-    | { [K in keyof Values]: Atom<Values[K]> }
-    | Record<string, Atom<unknown>>,
+  atoms: WaitForAtoms<Values>,
   results: unknown[]
 ): Atom<unknown>[] | Record<string, Atom<unknown>> {
   return Array.isArray(atoms)
@@ -71,3 +65,7 @@ function wrapResults<Values extends unknown[]>(
         {}
       )
 }
+
+type WaitForAtoms<Values extends unknown[]> =
+  | { [K in keyof Values]: Atom<Values[K]> }
+  | Record<string, Atom<unknown>>
