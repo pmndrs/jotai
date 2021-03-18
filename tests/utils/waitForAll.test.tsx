@@ -58,64 +58,6 @@ it('waits for two async atoms', async () => {
   expect(isAnotherAsyncAtomRunning).toBe(false)
 })
 
-it('can use named atoms', async () => {
-  let isAsyncAtomRunning = false
-  let isAnotherAsyncAtomRunning = false
-  const asyncAtom = atom(async () => {
-    isAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        isAsyncAtomRunning = false
-        resolve(true)
-      }, 10)
-    })
-    return 1
-  })
-  const anotherAsyncAtom = atom(async () => {
-    isAnotherAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        isAnotherAsyncAtomRunning = false
-        resolve(true)
-      }, 10)
-    })
-    return 'a'
-  })
-
-  const Counter: React.FC = () => {
-    const [{ num, str }] = useAtom(
-      waitForAll({
-        num: asyncAtom,
-        str: anotherAsyncAtom,
-      })
-    )
-    return (
-      <>
-        <div>num: {num}</div>
-        <div>str: {str}</div>
-      </>
-    )
-  }
-
-  const { findByText } = render(
-    <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
-    </StrictMode>
-  )
-
-  await findByText('loading')
-  expect(isAsyncAtomRunning).toBe(true)
-  expect(isAnotherAsyncAtomRunning).toBe(true)
-  await findByText('num: 1')
-  await findByText('str: a')
-  expect(isAsyncAtomRunning).toBe(false)
-  expect(isAnotherAsyncAtomRunning).toBe(false)
-})
-
 it('can use named atoms in derived atom', async () => {
   let isAsyncAtomRunning = false
   let isAnotherAsyncAtomRunning = false

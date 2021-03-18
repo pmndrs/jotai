@@ -15,22 +15,22 @@ export function waitForAll<Values extends unknown[]>(
 export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
   atoms: { [K in keyof Values]: Atom<Values[K]> }
 ) {
-  const unwrappedAtoms = unwrapAtoms(atoms)
-  const cachedAtom = getWeakCacheItem(waitForAllCache, unwrappedAtoms)
+  const cachedAtom =
+    Array.isArray(atoms) && getWeakCacheItem(waitForAllCache, atoms)
   if (cachedAtom) {
     return cachedAtom as Atom<Values>
   }
   const derivedAtom = atom((get) => {
     const promises: Promise<unknown>[] = []
-    const values = unwrappedAtoms.map((anAtom) => {
+    const values = unwrapAtoms(atoms).map((anAtom, index) => {
       try {
         return get(anAtom)
       } catch (e) {
         if (e instanceof Promise) {
-          promises.push(e)
-          return undefined
+          promises[index] = e
+        } else {
+          throw e
         }
-        throw e
       }
     })
     if (promises.length) {
@@ -38,7 +38,9 @@ export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
     }
     return wrapResults(atoms, values)
   })
-  setWeakCacheItem(waitForAllCache, unwrappedAtoms, derivedAtom)
+  if (Array.isArray(atoms)) {
+    setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
+  }
   return derivedAtom
 }
 
