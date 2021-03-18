@@ -1,8 +1,8 @@
-type Cache<T> = WeakMap<object, [Cache<T>] | [Cache<T>, T | undefined]>
+export type Cache<T> = WeakMap<object, [Cache<T>] | [Cache<T>, T | undefined]>
 
 export const getWeakCacheItem = <T>(
   cache: Cache<T>,
-  deps: object[]
+  deps: readonly object[]
 ): T | undefined => {
   const [dep, ...rest] = deps
   const entry = cache.get(dep)
@@ -18,7 +18,7 @@ export const getWeakCacheItem = <T>(
 
 export const setWeakCacheItem = <T>(
   cache: Cache<T>,
-  deps: object[],
+  deps: readonly object[],
   item: T
 ): void => {
   const [dep, ...rest] = deps

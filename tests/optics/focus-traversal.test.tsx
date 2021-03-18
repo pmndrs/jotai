@@ -8,11 +8,11 @@ const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('updates traversals', async () => {
   const bigAtom = atom<{ a?: number }[]>([{ a: 5 }, {}, { a: 6 }])
-  const elemsPropAOptional = (optic: O.OpticFor<{ a?: number }[]>) =>
+  const focusFunction = (optic: O.OpticFor<{ a?: number }[]>) =>
     optic.elems().prop('a').optional()
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(focusAtom(bigAtom, elemsPropAOptional))
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>

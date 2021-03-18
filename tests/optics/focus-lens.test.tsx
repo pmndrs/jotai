@@ -11,10 +11,10 @@ const succ = (input: number) => input + 1
 
 it('basic derivation using focus works', async () => {
   const bigAtom = atom({ a: 0 })
-  const propA = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
+  const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(focusAtom(bigAtom, propA))
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>
@@ -50,10 +50,10 @@ it('basic derivation using focus works', async () => {
 
 it('focus on an atom works', async () => {
   const bigAtom = atom({ a: 0 })
-  const propA = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
+  const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(focusAtom(bigAtom, propA))
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>
@@ -137,11 +137,11 @@ it('focus on async atom works', async () => {
       set(baseAtom, param)
     }
   )
-  const propCount = (optic: O.OpticFor<{ count: number }>) =>
+  const focusFunction = (optic: O.OpticFor<{ count: number }>) =>
     optic.prop('count')
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(focusAtom(asyncAtom, propCount))
+    const [count, setCount] = useAtom(focusAtom(asyncAtom, focusFunction))
     const [asyncValue, setAsync] = useAtom(asyncAtom)
     const [baseValue, setBase] = useAtom(baseAtom)
     return (
@@ -192,10 +192,10 @@ it('basic derivation using focus with scope works', async () => {
   const scope = Symbol()
   const bigAtom = atom({ a: 0 })
   bigAtom.scope = scope
-  const propA = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
+  const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(focusAtom(bigAtom, propA))
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>
