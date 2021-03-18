@@ -1,9 +1,13 @@
 import { atom } from 'jotai'
 import * as O from 'optics-ts'
-import { getWeakCacheItem, setWeakCacheItem, Cache } from '../utils/weakCache'
+import {
+  getWeakCacheItem,
+  setWeakCacheItem,
+  WeakCache,
+} from '../utils/weakCache'
 import type { WritableAtom, SetStateAction, PrimitiveAtom } from '../core/types'
 
-const focusAtomCache: Cache<WritableAtom<any, any>> = new WeakMap()
+const focusAtomCache: WeakCache<WritableAtom<any, any>> = new WeakMap()
 
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 

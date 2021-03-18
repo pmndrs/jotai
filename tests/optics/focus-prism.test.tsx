@@ -8,11 +8,11 @@ const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('updates prisms', async () => {
   const bigAtom = atom<{ a?: number }>({ a: 5 })
-  const propAOptional = (optic: O.OpticFor<{ a?: number }>) =>
+  const focusFunction = (optic: O.OpticFor<{ a?: number }>) =>
     optic.prop('a').optional()
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(focusAtom(bigAtom, propAOptional))
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>
@@ -39,11 +39,11 @@ it('updates prisms', async () => {
 
 it('atoms that focus on no values are not updated', async () => {
   const bigAtom = atom<{ a?: number }>({})
-  const propAOptional = (optic: O.OpticFor<{ a?: number }>) =>
+  const focusFunction = (optic: O.OpticFor<{ a?: number }>) =>
     optic.prop('a').optional()
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(focusAtom(bigAtom, propAOptional))
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>
