@@ -2,8 +2,29 @@ import React, { Fragment, StrictMode, Suspense } from 'react'
 import { render } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
 import { waitForAll } from '../../src/utils'
+import { resolveStop } from 'xstate/lib/actions'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+
+class ErrorBoundary extends React.Component<
+  { message?: string },
+  { hasError: boolean }
+> {
+  constructor(props: { message?: string }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  render() {
+    return this.state.hasError ? (
+      <div>{this.props.message || 'errored'}</div>
+    ) : (
+      this.props.children
+    )
+  }
+}
 
 it('waits for two async atoms', async () => {
   let isAsyncAtomRunning = false
@@ -119,4 +140,67 @@ it('can use named atoms in derived atom', async () => {
   await findByText('str: A')
   expect(isAsyncAtomRunning).toBe(false)
   expect(isAnotherAsyncAtomRunning).toBe(false)
+})
+
+it('can handle errors', async () => {
+  let isAsyncAtomRunning = false
+  let isErrorAtomRunning = false
+  const asyncAtom = atom(async () => {
+    isAsyncAtomRunning = true
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        isAsyncAtomRunning = false
+        resolve(true)
+      }, 10)
+    })
+    return 1
+  })
+  const errorAtom = atom(async () => {
+    isErrorAtomRunning = true
+    await new Promise(() => {
+      setTimeout(() => {
+        isErrorAtomRunning = false
+        throw new Error()
+      }, 10)
+    })
+    return 'a'
+  })
+
+  const combinedWaitingAtom = atom((get) => {
+    return get(
+      waitForAll({
+        num: asyncAtom,
+        error: errorAtom,
+      })
+    )
+  })
+
+  const Counter: React.FC = () => {
+    const [{ num, error }] = useAtom(combinedWaitingAtom)
+    return (
+      <>
+        <div>num: {num}</div>
+        <div>str: {error}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <ErrorBoundary>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  expect(isAsyncAtomRunning).toBe(true)
+  expect(isErrorAtomRunning).toBe(true)
+  await findByText('errored')
+  expect(isAsyncAtomRunning).toBe(false)
+  expect(isErrorAtomRunning).toBe(false)
 })
