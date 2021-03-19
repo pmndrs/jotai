@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react'
 import { Provider as ProviderOrig, atom, useAtom } from 'jotai'
+import * as O from 'optics-ts'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
 
@@ -7,12 +8,11 @@ const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('updates traversals', async () => {
   const bigAtom = atom<{ a?: number }[]>([{ a: 5 }, {}, { a: 6 }])
-  const aAtom = focusAtom(bigAtom, (optic) =>
+  const focusFunction = (optic: O.OpticFor<{ a?: number }[]>) =>
     optic.elems().prop('a').optional()
-  )
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(aAtom)
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>

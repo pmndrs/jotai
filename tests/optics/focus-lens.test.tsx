@@ -1,5 +1,6 @@
 import React, { Fragment, Suspense } from 'react'
 import { Provider as ProviderOrig, atom, useAtom } from 'jotai'
+import * as O from 'optics-ts'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
 import type { SetStateAction } from '../../src/core/types'
@@ -10,10 +11,10 @@ const succ = (input: number) => input + 1
 
 it('basic derivation using focus works', async () => {
   const bigAtom = atom({ a: 0 })
-  const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a'))
+  const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(aAtom)
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>
@@ -49,10 +50,10 @@ it('basic derivation using focus works', async () => {
 
 it('focus on an atom works', async () => {
   const bigAtom = atom({ a: 0 })
-  const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a'))
+  const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(aAtom)
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>
@@ -136,10 +137,11 @@ it('focus on async atom works', async () => {
       set(baseAtom, param)
     }
   )
-  const focusedAtom = focusAtom(asyncAtom, (optic) => optic.prop('count'))
+  const focusFunction = (optic: O.OpticFor<{ count: number }>) =>
+    optic.prop('count')
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(focusedAtom)
+    const [count, setCount] = useAtom(focusAtom(asyncAtom, focusFunction))
     const [asyncValue, setAsync] = useAtom(asyncAtom)
     const [baseValue, setBase] = useAtom(baseAtom)
     return (
@@ -190,10 +192,10 @@ it('basic derivation using focus with scope works', async () => {
   const scope = Symbol()
   const bigAtom = atom({ a: 0 })
   bigAtom.scope = scope
-  const aAtom = focusAtom(bigAtom, (optic) => optic.prop('a'))
+  const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
   const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(aAtom)
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
       <>

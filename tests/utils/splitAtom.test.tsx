@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { atom, Provider, useAtom, Atom, PrimitiveAtom } from 'jotai'
 import { render, fireEvent, waitFor } from '@testing-library/react'
 
@@ -21,9 +21,7 @@ it('no unneccesary updates when updating atoms', async () => {
   ])
 
   const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
-    const [atoms, remove] = useAtom(
-      useMemo(() => splitAtom(listAtom), [listAtom])
-    )
+    const [atoms, remove] = useAtom(splitAtom(listAtom))
     return (
       <>
         TaskListUpdates: {useCommitCount()}
@@ -111,9 +109,7 @@ it('removing atoms', async () => {
   ])
 
   const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
-    const [atoms, remove] = useAtom(
-      useMemo(() => splitAtom(listAtom), [listAtom])
-    )
+    const [atoms, remove] = useAtom(splitAtom(listAtom))
     return (
       <>
         {atoms.map((anAtom, index) => (
@@ -195,7 +191,7 @@ it('read-only array atom', async () => {
   ])
 
   const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
-    const [atoms] = useAtom(useMemo(() => splitAtom(listAtom), [listAtom]))
+    const [atoms] = useAtom(splitAtom(listAtom))
     return (
       <>
         {atoms.map((anAtom, index) => (
