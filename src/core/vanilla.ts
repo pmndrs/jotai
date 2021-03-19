@@ -124,12 +124,12 @@ const setAtomValue = <Value>(
     // newer async read is running, not updating
     return
   }
-  delete atomState.e
-  delete atomState.p
-  delete atomState.i
+  delete atomState.e // read error
+  delete atomState.p // read promise
+  delete atomState.i // invalidated revision
   if (!('v' in atomState) || !Object.is(atomState.v, value)) {
     atomState.v = value
-    ++atomState.r
+    ++atomState.r // increment revision
   }
   commitAtomState(state, atom, atomState)
   mountDependencies(state, atom, atomState, prevDependencies)
@@ -147,9 +147,9 @@ const setAtomReadError = <Value>(
     // newer async read is running, not updating
     return
   }
-  delete atomState.p
-  delete atomState.i
-  atomState.e = error
+  delete atomState.p // read promise
+  delete atomState.i // invalidated revision
+  atomState.e = error // read error
   commitAtomState(state, atom, atomState)
   mountDependencies(state, atom, atomState, prevDependencies)
 }
@@ -161,14 +161,14 @@ const setAtomReadPromise = <Value>(
   dependencies: Set<AnyAtom>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
-  atomState.p = promise
+  atomState.p = promise // read promise
   commitAtomState(state, atom, atomState)
   mountDependencies(state, atom, atomState, prevDependencies)
 }
 
 const setAtomInvalidated = <Value>(state: State, atom: Atom<Value>): void => {
   const [atomState] = wipAtomState(state, atom)
-  atomState.i = atomState.r
+  atomState.i = atomState.r // invalidated revision
   commitAtomState(state, atom, atomState)
 }
 
@@ -181,7 +181,7 @@ const setAtomWritePromise = <Value>(
   if (promise) {
     atomState.w = promise
   } else {
-    delete atomState.w
+    delete atomState.w // write promise
   }
   commitAtomState(state, atom, atomState)
 }
@@ -207,7 +207,12 @@ const readAtomState = <Value>(
       atomState.d.forEach((_, a) => {
         if (a !== atom) {
           const aState = getAtomState(state, a)
-          if (aState && !aState.e && !aState.p && aState.r === aState.i) {
+          if (
+            aState &&
+            !aState.e && // no read error
+            !aState.p && // no read promise
+            aState.r === aState.i // revision is invalidated
+          ) {
             readAtomState(state, a)
           }
         }
@@ -217,10 +222,10 @@ const readAtomState = <Value>(
           const aState = getAtomState(state, a)
           return (
             aState &&
-            !aState.e &&
-            !aState.p &&
-            aState.r !== aState.i &&
-            aState.r === r
+            !aState.e && // no read error
+            !aState.p && // no read promise
+            aState.r !== aState.i && // revision is not invalidated
+            aState.r === r // revision is equal to the last one
           )
         })
       ) {
@@ -357,7 +362,10 @@ const writeAtomState = <Value, Update>(
   pendingPromises?: Promise<void>[]
 ): void => {
   const atomState = getAtomState(state, atom)
-  if (atomState && atomState.w) {
+  if (
+    atomState &&
+    atomState.w // write promise
+  ) {
     const promise = atomState.w.then(() => {
       writeAtomState(state, atom, update)
       flushPending(state)
@@ -387,7 +395,7 @@ const writeAtomState = <Value, Update>(
           throw aState.p // read promise
         }
         if ('v' in aState) {
-          return aState.v
+          return aState.v // value
         }
         if (
           typeof process === 'object' &&
@@ -516,7 +524,7 @@ const unmountAtom = <Value>(state: State, atom: Atom<Value>): void => {
   const atomState = getAtomState(state, atom)
   if (atomState) {
     if (
-      atomState.p &&
+      atomState.p && // read promise
       typeof process === 'object' &&
       process.env.NODE_ENV !== 'production'
     ) {

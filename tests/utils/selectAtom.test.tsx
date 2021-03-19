@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useMemo, useRef } from 'react'
+import React, { Fragment, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider as ProviderOrig, atom } from '../../src/index'
 import { selectAtom, useAtomValue, useUpdateAtom } from '../../src/utils'
@@ -147,10 +147,9 @@ it('useSelector with scope', async () => {
     )
   }
 
+  const selectA = (value: { a: number }) => value.a
   const Selector = () => {
-    const a = useAtomValue(
-      useMemo(() => selectAtom(bigAtom, (value) => value.a), [])
-    )
+    const a = useAtomValue(selectAtom(bigAtom, selectA))
     return (
       <>
         <div>a: {a}</div>

@@ -1,6 +1,13 @@
 import { atom } from 'jotai'
 import * as O from 'optics-ts'
+import {
+  getWeakCacheItem,
+  setWeakCacheItem,
+  WeakCache,
+} from '../utils/weakCache'
 import type { WritableAtom, SetStateAction, PrimitiveAtom } from '../core/types'
+
+const focusAtomCache: WeakCache<WritableAtom<any, any>> = new WeakMap()
 
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
@@ -35,8 +42,13 @@ export function focusAtom<S, A>(
   | WritableAtom<A | undefined, SetStateAction<A>>
   | WritableAtom<Array<A>, SetStateAction<A>>
   | PrimitiveAtom<S> {
+  const deps = [baseAtom, callback] as const
+  const cachedAtom = getWeakCacheItem(focusAtomCache, deps)
+  if (cachedAtom) {
+    return cachedAtom
+  }
   const focus = callback(O.optic<S>())
-  const derivedAtom: any = atom<A, SetStateAction<A>>(
+  const derivedAtom = atom<A, SetStateAction<A>>(
     (get) => {
       const newValue = getValueUsingOptic(focus, get(baseAtom))
       return newValue as any
@@ -50,6 +62,7 @@ export function focusAtom<S, A>(
     }
   )
   derivedAtom.scope = baseAtom.scope
+  setWeakCacheItem(focusAtomCache, deps, derivedAtom)
   return derivedAtom
 }
 
