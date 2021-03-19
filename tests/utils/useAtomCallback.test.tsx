@@ -72,7 +72,7 @@ it('useAtomCallback with set and update', async () => {
 
   const Monitor: React.FC = () => {
     const [changeableCount] = useAtom(changeableAtom)
-    const chagneCount = useAtomCallback(
+    const changeCount = useAtomCallback(
       useCallback((get, set) => {
         const currentCount = get(countAtom)
         set(changeableAtom, currentCount)
@@ -81,12 +81,12 @@ it('useAtomCallback with set and update', async () => {
     )
     useEffect(() => {
       const timer = setInterval(async () => {
-        await chagneCount()
+        await changeCount()
       }, 10)
       return () => {
         clearInterval(timer)
       }
-    }, [chagneCount])
+    }, [changeCount])
     return (
       <>
         <div>changeable count: {changeableCount}</div>
