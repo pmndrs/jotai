@@ -1,11 +1,17 @@
 export type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
 export type Getter = <Value>(atom: Atom<Value>) => Value
+export type Read<Value> = (get: Getter) => Value | Promise<Value>
 
 export type Setter = <Value, Update>(
   atom: WritableAtom<Value, Update>,
   update: Update
 ) => void
+export type Write<Update> = (
+  get: Getter,
+  set: Setter,
+  update: Update
+) => void | Promise<void>
 
 export type Scope = symbol | string | number
 
@@ -22,11 +28,11 @@ export type Atom<Value> = {
   toString: () => string
   debugLabel?: string
   scope?: Scope
-  read: (get: Getter) => Value | Promise<Value>
+  read: Read<Value>
 }
 
 export type WritableAtom<Value, Update> = Atom<Value> & {
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+  write: Write<Update>
   onMount?: OnMount<Update>
 }
 
