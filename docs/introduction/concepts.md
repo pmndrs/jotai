@@ -1,0 +1,29 @@
+# Concepts
+
+Jotai was born to solve extra re-render issue in React.
+Extra re-render is a render process that produces the same UI result,
+with which users won't see any differences.
+
+To tackle this issue naively with React context (useContext + useState),
+one would probably require many contexts and face some issues.
+
+- Provider hell: It's likely that your root component has many context providers, which is technically okay, and sometimes desirable to provide context in different subtree.
+- Dynamic addition/deletion: Adding a new context at runtime is not very nice, because you need to add a new provider and its children will be re-mounted.
+
+Traditionally, a top-down solution to this is to use selector interface.
+The [use-context-selector](https://github.com/dai-shi/use-context-selector) library is one example.
+The issue with this approach is the selector function needs to return
+referentially equal values to prevent re-renders and often requires some memoization technique.
+
+Jotai takes a bottom-up approach with atomic model, inspired by [Recoil](https://recoiljs.org/).
+One can build state combining atoms and renders are optimized based on atom dependency.
+This avoids requiring the memoization technique.
+
+Jotai has two principles.
+
+- Primitive: Its basic interface is pretty much like `useState`.
+- Flexible: Derived atoms can combine other atoma and also allow `useReducer` style with side effects.
+
+Jotai's core API is minimalistic and allows building various utils based on it.
+
+Check out [comparison doc](./comparison.md) to see some differences with other libraries.
