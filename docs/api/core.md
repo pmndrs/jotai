@@ -2,7 +2,7 @@ This doc describes core `jotai` bundle.
 
 ## atom
 
-`atom` is an object where we save data there. It's immutable and shouldn't get mutated/changed directly.
+`atom` is a function to create an atom config. The atom config is an immutable object. The atom config itself doesn't hold an atom value. The atom value is stored in a Provider state.
 
 ```tsx
 // primitive atom
