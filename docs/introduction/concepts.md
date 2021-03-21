@@ -22,7 +22,7 @@ This avoids requiring the memoization technique.
 Jotai has two principles.
 
 - Primitive: Its basic interface is pretty much like `useState`.
-- Flexible: Derived atoms can combine other atoma and also allow `useReducer` style with side effects.
+- Flexible: Derived atoms can combine other atoms and also allow `useReducer` style with side effects.
 
 Jotai's core API is minimalistic and allows building various utils based on it.
 
