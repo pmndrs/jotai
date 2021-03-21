@@ -58,7 +58,7 @@ anAtom.onMount = (setAtom) => {
 }
 ```
 
-Invoking `setAtom` function will invoke the atom’s `writeFunction`. Customizing `writeFunction` allows changing the behavior.
+Invoking `setAtom` function will invoke the atom’s `write`. Customizing `write` allows changing the behavior.
 
 ```tsx
 const countAtom = atom(1)
