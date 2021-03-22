@@ -6,6 +6,16 @@ import { resolveStop } from 'xstate/lib/actions'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
+const consoleError = console.error
+beforeEach(() => {
+  console.error = jest.fn()
+})
+afterEach(() => {
+  console.error = consoleError
+})
+
+jest.useFakeTimers()
+
 class ErrorBoundary extends React.Component<
   { message?: string },
   { hasError: boolean }
@@ -73,6 +83,9 @@ it('waits for two async atoms', async () => {
   await findByText('loading')
   expect(isAsyncAtomRunning).toBe(true)
   expect(isAnotherAsyncAtomRunning).toBe(true)
+
+  jest.runOnlyPendingTimers()
+
   await findByText('num1: 1')
   await findByText('num2: 2')
   expect(isAsyncAtomRunning).toBe(false)
@@ -136,6 +149,9 @@ it('can use named atoms in derived atom', async () => {
   await findByText('loading')
   expect(isAsyncAtomRunning).toBe(true)
   expect(isAnotherAsyncAtomRunning).toBe(true)
+
+  jest.runOnlyPendingTimers()
+
   await findByText('num: 2')
   await findByText('str: A')
   expect(isAsyncAtomRunning).toBe(false)
@@ -157,10 +173,10 @@ it('can handle errors', async () => {
   })
   const errorAtom = atom(async () => {
     isErrorAtomRunning = true
-    await new Promise(() => {
+    await new Promise((_, reject) => {
       setTimeout(() => {
         isErrorAtomRunning = false
-        throw new Error()
+        reject('Charlotte')
       }, 10)
     })
     return 'a'
@@ -200,6 +216,9 @@ it('can handle errors', async () => {
   await findByText('loading')
   expect(isAsyncAtomRunning).toBe(true)
   expect(isErrorAtomRunning).toBe(true)
+
+  jest.runOnlyPendingTimers()
+
   await findByText('errored')
   expect(isAsyncAtomRunning).toBe(false)
   expect(isErrorAtomRunning).toBe(false)
