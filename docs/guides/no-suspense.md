@@ -7,7 +7,7 @@ As you may know, sometimes we need to wrap our components in suspense to use asy
 - Derived async atoms (async `read` function)
 - Asynchronous actions (async `write`)
 
-But sometimes we're not allowed to wrap our components in Suspense, So we're going to do some hacks below and and make our async atoms syncronous.
+But sometimes we're not allowed to wrap our components in Suspense, So we're going to do some hacks below and and make our async atoms synchronous.
 
 ## Async `read`
 
