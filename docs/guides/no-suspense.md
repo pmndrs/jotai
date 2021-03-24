@@ -2,7 +2,7 @@
 
 > The content of this page would be easier if you have taken a look on the _introduction/async_ part of the docs.
 
-As you may know, sometimes we need to wrap our components in suspense to use asynchronous atoms. Two kinds of atoms need Suspense.
+Sometimes we need to wrap our components in suspense to use asynchronous atoms. Two kinds of atoms need Suspense.
 
 - Derived async atoms (async `read` function)
 - Asynchronous actions (async `write`)
