@@ -581,3 +581,47 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   await findByText('loading')
   await findByText('derived: 13, commits: 3')
 })
+
+it('(#375)', async () => {
+  const loadingAtom = atom(false)
+  const documentAtom = atom<string | undefined>(undefined)
+  const loadDocumentAtom = atom(null, (_get, set) => {
+    const fetch = async () => {
+      set(loadingAtom, true)
+      const response = await new Promise<string>((resolve) =>
+        setTimeout(() => resolve('great document'), 10)
+      )
+      set(documentAtom, response)
+      set(loadingAtom, false)
+    }
+    fetch()
+  })
+
+  const ListDocuments: React.FC = () => {
+    const [loading] = useAtom(loadingAtom)
+    const [document] = useAtom(documentAtom)
+    const [, loadDocument] = useAtom(loadDocumentAtom)
+
+    useEffect(() => {
+      loadDocument()
+    }, [loadDocument])
+
+    return (
+      <>
+        {loading && <div>loading</div>}
+        {!loading && <div>{document}</div>}
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <ListDocuments />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('great document')
+})
