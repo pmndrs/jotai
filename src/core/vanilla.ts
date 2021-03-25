@@ -414,6 +414,7 @@ const writeAtomState = <Value, Update>(
           invalidateDependents(state, a)
         } else {
           writeAtomState(state, a, v)
+          flushPending(state)
         }
       }) as Setter,
       update
