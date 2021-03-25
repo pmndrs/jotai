@@ -1,6 +1,6 @@
 # No Suspense
 
-> The content of this page would be easier if you have taken a look on the _introduction/async_ part of the docs.
+> The content of this page would be easier if you have taken a look on the [introduction/async](../introduction/async.md) part of the docs.
 
 Sometimes we need to wrap our components in suspense to use asynchronous atoms. Two kinds of atoms need Suspense.
 
@@ -29,28 +29,30 @@ Here's the new code.
 
 ```tsx
 const fetchResultAtom = atom({ loading: true, error: null, data: null })
-const runFetchAtom = atom(null, (_get, set, url) => {
-  const fetchData = async () => {
-    set(fetchResultAtom, (prev) => ({ ...prev, loading: true }))
-    try {
-      const response = await fetch(url)
-      const data = await response.json()
-      set(fetchResultAtom, { loading: false, error: null, data })
-    } catch (error) {
-      set(fetchResultAtom, { loading: false, error, data: null })
+const runFetchAtom = atom(
+  (get) => get(fetchResultAtom),
+  (_get, set, url) => {
+    const fetchData = async () => {
+      set(fetchResultAtom, (prev) => ({ ...prev, loading: true }))
+      try {
+        const response = await fetch(url)
+        const data = await response.json()
+        set(fetchResultAtom, { loading: false, error: null, data })
+      } catch (error) {
+        set(fetchResultAtom, { loading: false, error, data: null })
+      }
     }
+    fetchData()
   }
-  fetchData()
-})
+)
 runFetchAtom.onMount = (runFetch) => {
   runFetch('https://json.host.com')
 }
 
 const Component = () => {
-  const [data] = useAtom(fetchResultAtom)
-  useAtom(runFetchAtom) // run the onMount function on the first render
+  const [result] = useAtom(runFetchAtom)
 
-  console.log(data) // { loading: ..., error: ..., data: ... }
+  console.log(result) // { loading: ..., error: ..., data: ... }
   return <div>...</div>
 }
 ```
