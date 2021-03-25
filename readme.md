@@ -180,6 +180,7 @@ yarn add jotai react
   - [Persistence](./docs/guides/persistence.md)
   - [Next.js](./docs/guides/nextjs.md)
   - [Resettable](./docs/guides/resettable.md)
+  - [No Suspense](./docs/guides/no-suspense.md)
 - API
   - [Core](./docs/api/core.md)
   - [Utils](./docs/api/utils.md)

@@ -213,7 +213,7 @@ const readAtomState = <Value>(
             !aState.p && // no read promise
             aState.r === aState.i // revision is invalidated
           ) {
-            readAtomState(state, a)
+            readAtomState(state, a, true)
           }
         }
       })
