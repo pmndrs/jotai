@@ -582,7 +582,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   await findByText('derived: 13, commits: 3')
 })
 
-it('(#375)', async () => {
+it('Handles synchronously invoked async set (#375)', async () => {
   const loadingAtom = atom(false)
   const documentAtom = atom<string | undefined>(undefined)
   const loadDocumentAtom = atom(null, (_get, set) => {
