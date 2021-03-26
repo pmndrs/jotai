@@ -2,7 +2,6 @@ import React, { Fragment, StrictMode, Suspense } from 'react'
 import { render } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
 import { waitForAll } from '../../src/utils'
-import { resolveStop } from 'xstate/lib/actions'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
