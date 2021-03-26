@@ -169,9 +169,10 @@ yarn add jotai react
 ## More documents
 
 - Introduction
-  - [Comparison](./docs/introduction/comparison.md)
-  - [Basics](./docs/introduction/basics.md)
+  - [Concepts](./docs/introduction/concepts.md)
+  - [Getting Started](./docs/introduction/getting-started.md)
   - [Async](./docs/introduction/async.md)
+  - [Comparison](./docs/introduction/comparison.md)
   - [Showcase](./docs/introduction/showcase.md)
 - Guides
   - [TypeScript](./docs/guides/typescript.md)
@@ -179,6 +180,7 @@ yarn add jotai react
   - [Persistence](./docs/guides/persistence.md)
   - [Next.js](./docs/guides/nextjs.md)
   - [Resettable](./docs/guides/resettable.md)
+  - [No Suspense](./docs/guides/no-suspense.md)
 - API
   - [Core](./docs/api/core.md)
   - [Utils](./docs/api/utils.md)
