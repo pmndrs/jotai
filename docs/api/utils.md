@@ -478,7 +478,7 @@ const App = () => (
 export default App
 ```
 
-# waitFor
+# waitForAll
 
 Sometimes you have multiple async atoms in your components:
 
