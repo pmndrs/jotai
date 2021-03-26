@@ -177,25 +177,40 @@ it('uses a write-only derived atom', async () => {
 
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
-    return <div>count: {count}</div>
+    return (
+      <div>
+        commits: {useCommitCount()}, count: {count}
+      </div>
+    )
   }
 
   const Control: React.FC = () => {
     const [, increment] = useAtom(incrementCountAtom)
-    return <button onClick={() => increment()}>button</button>
+    return (
+      <>
+        <div>button commits: {useCommitCount()}</div>
+        <button onClick={() => increment()}>button</button>
+      </>
+    )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter />
       <Control />
     </Provider>
   )
 
-  await findByText('count: 0')
+  await waitFor(() => {
+    getByText('commits: 1, count: 0')
+    getByText('button commits: 1')
+  })
 
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
+  await waitFor(() => {
+    getByText('commits: 2, count: 1')
+    getByText('button commits: 1')
+  })
 })
 
 it('only re-renders if value has changed', async () => {
@@ -816,4 +831,37 @@ it('changes atom from parent (#273, #275)', async () => {
 
   fireEvent.click(getByText('atom a'))
   await findByText('commits: 3, id: a')
+})
+
+it('should be able to use a double derived atom twice and useEffect (#373)', async () => {
+  const countAtom = atom(0)
+  const doubleAtom = atom((get) => get(countAtom) * 2)
+  const fourfoldAtom = atom((get) => get(doubleAtom) * 2)
+
+  const App: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [fourfold] = useAtom(fourfoldAtom)
+    const [fourfold2] = useAtom(fourfoldAtom)
+
+    useEffect(() => {
+      setCount(count)
+    }, [count, setCount])
+
+    return (
+      <div>
+        count: {count},{fourfold},{fourfold2}
+        <button onClick={() => setCount((c) => c + 1)}>one up</button>
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  await findByText('count: 0,0,0')
+  fireEvent.click(getByText('one up'))
+  await findByText('count: 1,4,4')
 })
