@@ -30,7 +30,8 @@ export function atomWithQuery<
     | AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>
     | ((
         get: Getter
-      ) => AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>)
+      ) => AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>),
+  equalityFn: (a: TData, b: TData) => boolean = Object.is
 ): WritableAtom<TData, ResultActions> {
   const pendingAtom = atom(createPending<TData>())
   const dataAtom = atom<TData | null>(null)
@@ -60,7 +61,10 @@ export function atomWithQuery<
             }
             action.initializer(getQueryClient(get, set))
           } else if (action.type === 'data') {
-            set(dataAtom, action.data)
+            const data = get(dataAtom)
+            if (!data || !equalityFn(data, action.data)) {
+              set(dataAtom, action.data)
+            }
             const pending = get(pendingAtom)
             if (!pending.fulfilled) {
               pending.resolve(action.data)
