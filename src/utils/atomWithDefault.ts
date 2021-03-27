@@ -4,23 +4,23 @@ import type { Read } from '../core/types'
 export function atomWithDefault<Value>(
   getDefault: Read<Value>
 ): PrimitiveAtom<Value> {
-  const overwrittenAtom = atom(false)
+  const EMPTY = Symbol()
+  const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
   const anAtom: PrimitiveAtom<Value> = atom(
     (get) => {
-      if (get(overwrittenAtom)) {
-        return get(anAtom)
+      const overwritten = get(overwrittenAtom)
+      if (overwritten !== EMPTY) {
+        return overwritten
       }
       return getDefault(get)
     },
-    (get, set, update) => {
-      set(overwrittenAtom, true)
+    (get, set, update) =>
       set(
-        anAtom,
+        overwrittenAtom,
         typeof update === 'function'
           ? (update as (prev: Value) => Value)(get(anAtom))
           : update
       )
-    }
   )
   return anAtom
 }
