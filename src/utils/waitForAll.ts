@@ -34,13 +34,13 @@ export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
       }
     })
     if (promises.length) {
-      throw Promise.all(promises)
+      return Promise.all(promises)
+    }
+    if (Array.isArray(atoms)) {
+      setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
     }
     return wrapResults(atoms, values)
   })
-  if (Array.isArray(atoms)) {
-    setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
-  }
   return derivedAtom
 }
 
