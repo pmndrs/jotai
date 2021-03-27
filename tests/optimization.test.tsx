@@ -61,42 +61,6 @@ it('only relevant render function called (#156)', async () => {
   })
 })
 
-it('useless re-renders with static atoms', async () => {
-  // check out https://codesandbox.io/s/setatom-bail-failure-forked-m82r5?file=/src/App.tsx to see the expected re-renders
-  const countAtom = atom(0)
-  const unrelatedAtom = atom(0)
-
-  const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(countAtom)
-    useAtom(unrelatedAtom)
-    const renderCount = useRef(0)
-    ++renderCount.current
-
-    return (
-      <>
-        <div>
-          <p>
-            count: {count} ({renderCount.current})
-          </p>
-        </div>
-        <button onClick={() => setCount((c) => c + 1)}>button</button>
-      </>
-    )
-  }
-
-  const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
-  )
-
-  await findByText('count: 0 (1)')
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1 (2)')
-  fireEvent.click(getByText('button'))
-  await findByText('count: 2 (3)')
-})
-
 it('only render once using atoms with write-only atom', async () => {
   const count1Atom = atom(0)
   const count2Atom = atom(0)
@@ -136,4 +100,40 @@ it('only render once using atoms with write-only atom', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('count1: 2, count2: 2 (3)')
+})
+
+it('useless re-renders with static atoms (#355)', async () => {
+  // check out https://codesandbox.io/s/m82r5 to see the expected re-renders
+  const countAtom = atom(0)
+  const unrelatedAtom = atom(0)
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    useAtom(unrelatedAtom)
+    const renderCount = useRef(0)
+    ++renderCount.current
+
+    return (
+      <>
+        <div>
+          <p>
+            count: {count} ({renderCount.current})
+          </p>
+        </div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 0 (1)')
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1 (2)')
+  fireEvent.click(getByText('button'))
+  await findByText('count: 2 (3)')
 })
