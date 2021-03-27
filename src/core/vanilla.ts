@@ -359,18 +359,21 @@ const writeAtomState = <Value, Update>(
   state: State,
   atom: WritableAtom<Value, Update>,
   update: Update,
-  pendingPromises?: Promise<void>[]
+  pendingPromises: Promise<void>[]
 ): void => {
+  const isPendingPromisesExpired = !pendingPromises.length
   const atomState = getAtomState(state, atom)
   if (
     atomState &&
     atomState.w // write promise
   ) {
     const promise = atomState.w.then(() => {
-      writeAtomState(state, atom, update)
-      flushPending(state)
+      writeAtomState(state, atom, update, pendingPromises)
+      if (isPendingPromisesExpired) {
+        flushPending(state)
+      }
     })
-    if (pendingPromises) {
+    if (!isPendingPromisesExpired) {
       pendingPromises.push(promise)
     }
     return
@@ -413,33 +416,39 @@ const writeAtomState = <Value, Update>(
           setAtomValue(state, a, v)
           invalidateDependents(state, a)
         } else {
-          writeAtomState(state, a, v)
+          const isPendingPromisesExpired = !pendingPromises.length
+          writeAtomState(state, a, v, pendingPromises)
+          if (isPendingPromisesExpired) {
+            flushPending(state)
+          }
         }
       }) as Setter,
       update
     )
     if (promiseOrVoid instanceof Promise) {
-      if (pendingPromises) {
-        pendingPromises.push(promiseOrVoid)
-      }
-      setAtomWritePromise(
-        state,
-        atom,
-        promiseOrVoid.then(() => {
-          setAtomWritePromise(state, atom)
+      const promise = promiseOrVoid.then(() => {
+        setAtomWritePromise(state, atom)
+        if (isPendingPromisesExpired) {
           flushPending(state)
-        })
-      )
+        }
+      })
+      if (!isPendingPromisesExpired) {
+        pendingPromises.push(promise)
+      }
+      setAtomWritePromise(state, atom, promise)
     }
   } catch (e) {
-    if (pendingPromises && pendingPromises.length) {
+    if (pendingPromises.length === 1) {
+      // still in sync, throw it right away
+      throw e
+    } else if (!isPendingPromisesExpired) {
       pendingPromises.push(
         new Promise((_resolve, reject) => {
           reject(e)
         })
       )
     } else {
-      throw e
+      console.error('Uncaught exception: Use promise to catch error', e)
     }
   }
 }
@@ -449,21 +458,24 @@ export const writeAtom = <Value, Update>(
   writingAtom: WritableAtom<Value, Update>,
   update: Update
 ): void | Promise<void> => {
-  const pendingPromises: Promise<void>[] = []
+  const pendingPromises: Promise<void>[] = [Promise.resolve()]
 
   writeAtomState(state, writingAtom, update, pendingPromises)
   flushPending(state)
 
-  if (pendingPromises.length) {
+  if (pendingPromises.length <= 1) {
+    pendingPromises.splice(0)
+  } else {
     return new Promise<void>((resolve, reject) => {
       const loop = () => {
-        const len = pendingPromises.length
-        if (len === 0) {
+        if (pendingPromises.length <= 1) {
+          pendingPromises.splice(0)
           resolve()
         } else {
           Promise.all(pendingPromises)
             .then(() => {
-              pendingPromises.splice(0, len)
+              pendingPromises.splice(1)
+              flushPending(state)
               loop()
             })
             .catch(reject)
