@@ -180,6 +180,22 @@ const countReducerAtom = atomWithReducer(0, countReducer)
 
 https://codesandbox.io/s/react-typescript-forked-g3tsx
 
+## atomWithDefault
+
+Ref: https://github.com/pmndrs/jotai/issues/352
+
+This is a function to create a primitive atom.
+Its default value can be specified with a read function instead of a static initial value.
+
+```js
+import { atomWithDefault } from 'jotai/utils'
+
+const count1Atom = atom(1)
+const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
+```
+
+https://codesandbox.io/s/react-typescript-forked-unfro
+
 ## atomFamily
 
 Ref: https://github.com/pmndrs/jotai/issues/23
