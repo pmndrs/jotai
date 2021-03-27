@@ -1,21 +1,11 @@
 import { atom, PrimitiveAtom } from 'jotai'
-import type { Read, Write, WritableAtom } from '../core/types'
+import type { Read } from '../core/types'
 
 export function atomWithDefault<Value>(
   getDefault: Read<Value>
-): PrimitiveAtom<Value>
-
-export function atomWithDefault<Value, Update>(
-  getDefault: Read<Value>,
-  write: Write<Update>
-): WritableAtom<Value, Update>
-
-export function atomWithDefault<Value, Update>(
-  getDefault: Read<Value>,
-  write?: Write<Update>
-): WritableAtom<Value, Update> {
+): PrimitiveAtom<Value> {
   const overwrittenAtom = atom(false)
-  const anAtom: any = atom<Value, Update>(
+  const anAtom: PrimitiveAtom<Value> = atom(
     (get) => {
       if (get(overwrittenAtom)) {
         return get(anAtom)
@@ -26,10 +16,8 @@ export function atomWithDefault<Value, Update>(
       set(overwrittenAtom, true)
       set(
         anAtom,
-        write
-          ? write(get, set, update)
-          : typeof update === 'function'
-          ? update(get(anAtom))
+        typeof update === 'function'
+          ? (update as (prev: Value) => Value)(get(anAtom))
           : update
       )
     }
