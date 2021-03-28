@@ -1,9 +1,5 @@
 import { Atom, atom } from 'jotai'
 
-import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
-
-const waitForAllCache = new WeakMap()
-
 export function waitForAll<Values extends Record<string, unknown>>(
   atoms: { [K in keyof Values]: Atom<Values[K]> }
 ): Atom<Values>
@@ -15,11 +11,6 @@ export function waitForAll<Values extends unknown[]>(
 export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
   atoms: { [K in keyof Values]: Atom<Values[K]> }
 ) {
-  const cachedAtom =
-    Array.isArray(atoms) && getWeakCacheItem(waitForAllCache, atoms)
-  if (cachedAtom) {
-    return cachedAtom as Atom<Values>
-  }
   const derivedAtom = atom((get) => {
     const promises: Promise<unknown>[] = []
     const values = unwrapAtoms(atoms).map((anAtom, index) => {
@@ -35,9 +26,6 @@ export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
     })
     if (promises.length) {
       return Promise.all(promises)
-    }
-    if (Array.isArray(atoms)) {
-      setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
     }
     return wrapResults(atoms, values)
   })
