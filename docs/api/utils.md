@@ -494,7 +494,7 @@ const App = () => (
 export default App
 ```
 
-# waitForAll
+## waitForAll
 
 Sometimes you have multiple async atoms in your components:
 
@@ -565,3 +565,7 @@ const App = () => {
   // ...
 }
 ```
+
+### Codesandbox
+
+https://codesandbox.io/s/react-typescript-forked-krwsv?file=/src/App.tsx
