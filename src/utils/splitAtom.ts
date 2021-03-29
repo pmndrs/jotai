@@ -79,6 +79,7 @@ export function splitAtom<Item, Key>(
         ])
       }
       const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
+      itemAtom.scope = arrAtom.scope
       nextAtomList[index] = itemAtom
     })
     currentKeyList = nextKeyList
@@ -102,6 +103,7 @@ export function splitAtom<Item, Key>(
     }
   }
   const splittedAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
+  splittedAtom.scope = arrAtom.scope
   setWeakCacheItem(splitAtomCache, deps, splittedAtom)
   return splittedAtom
 }
