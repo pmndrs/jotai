@@ -660,7 +660,7 @@ it('async write self atom', async () => {
   await findByText('count: -1')
 })
 
-it('Non suspense async write self atom with setTimeout (#389)', async () => {
+it('non suspense async write self atom with setTimeout (#389)', async () => {
   const countAtom = atom(0, (get, set, _arg) => {
     set(countAtom, get(countAtom) + 1)
     setTimeout(() => {
