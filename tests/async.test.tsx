@@ -626,6 +626,40 @@ it('Handles synchronously invoked async set (#375)', async () => {
   await findByText('great document')
 })
 
+it('async write self atom', async () => {
+  const countAtom = atom(0, async (get, set, _arg) => {
+    set(countAtom, get(countAtom) + 1)
+    await new Promise((r) => setTimeout(r, 100))
+    set(countAtom, -1)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, inc] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={inc}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading') // write pending
+  await findByText('count: -1')
+})
+
 it('Non suspense async write self atom with setTimeout (#389)', async () => {
   const countAtom = atom(0, (get, set, _arg) => {
     set(countAtom, get(countAtom) + 1)
