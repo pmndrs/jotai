@@ -117,8 +117,9 @@ it('waits for two async atoms with write', async () => {
   })
 
   const Counter: React.FC = () => {
-    const [result] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom] as const))
-    const [num1, num2] = result
+    const [[num1, num2]] = useAtom(
+      waitForAll([asyncAtom, anotherAsyncAtom] as const)
+    )
     const [, setCount] = useAtom(countAtom)
     return (
       <>
