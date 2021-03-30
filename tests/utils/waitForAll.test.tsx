@@ -91,6 +91,47 @@ it('waits for two async atoms', async () => {
   expect(isAnotherAsyncAtomRunning).toBe(false)
 })
 
+it('waits for two async atoms with derived', async () => {
+  const baseAtom = atom(1)
+  const asyncAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 10))
+    return get(baseAtom)
+  })
+  const anotherAsyncAtom = atom(async () => {
+    await new Promise((r) => setTimeout(r, 10))
+    return '2'
+  })
+
+  const Counter: React.FC = () => {
+    const [[num1, num2]] = useAtom(
+      waitForAll([asyncAtom, anotherAsyncAtom] as const)
+    )
+    return (
+      <>
+        <div>num1: {num1}</div>
+        <div>num2: {num2}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+
+  jest.runOnlyPendingTimers()
+
+  await findByText('num1: 1')
+  await findByText('num2: 2')
+})
+
 it('can use named atoms in derived atom', async () => {
   let isAsyncAtomRunning = false
   let isAnotherAsyncAtomRunning = false
