@@ -412,15 +412,15 @@ const writeAtomState = <Value, Update>(
         throw new Error('no value found')
       }) as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
+        const isPendingPromisesExpired = !pendingPromises.length
         if (a === atom) {
           setAtomValue(state, a, v)
           invalidateDependents(state, a)
         } else {
-          const isPendingPromisesExpired = !pendingPromises.length
           writeAtomState(state, a, v, pendingPromises)
-          if (isPendingPromisesExpired) {
-            flushPending(state)
-          }
+        }
+        if (isPendingPromisesExpired) {
+          flushPending(state)
         }
       }) as Setter,
       update
