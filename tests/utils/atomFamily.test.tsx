@@ -26,6 +26,22 @@ const useCommitCount = () => {
   return commitCountRef.current
 }
 
+it('new atomFamily impl', async () => {
+  const myFamily = atomFamily((param) => atom(param))
+
+  const Displayer: React.FC<{ index: string }> = ({ index }) => {
+    const [count] = useAtom(myFamily(index))
+    return <div>count: {count}</div>
+  }
+  const { findByText } = render(
+    <Provider>
+      <Displayer index={'a'} />
+    </Provider>
+  )
+
+  await findByText('count: a')
+})
+
 it('primitive atomFamily returns same reference for same parameters', async () => {
   const myFamily = atomFamily<number, { num: number }>((num) => ({ num }))
   expect(myFamily(0)).toEqual(myFamily(0))
