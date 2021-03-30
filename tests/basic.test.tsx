@@ -865,3 +865,32 @@ it('should be able to use a double derived atom twice and useEffect (#373)', asy
   fireEvent.click(getByText('one up'))
   await findByText('count: 1,4,4')
 })
+
+it('write self atom (undocumented usage)', async () => {
+  const countAtom = atom(0, (get, set, _arg) => {
+    set(countAtom, get(countAtom) + 1)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, inc] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={inc}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
+})
