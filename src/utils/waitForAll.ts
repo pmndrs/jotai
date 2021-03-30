@@ -36,13 +36,12 @@ export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
     if (promises.length) {
       return Promise.all(promises)
     }
+    derivedAtom.scope = unwrappedAtoms[0].scope
+    if (Array.isArray(atoms)) {
+      setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
+    }
     return wrapResults(atoms, values)
   })
-  derivedAtom.scope = unwrappedAtoms[0].scope
-  if (Array.isArray(atoms)) {
-    setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
-  }
-
   return derivedAtom
 }
 
