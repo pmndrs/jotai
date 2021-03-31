@@ -18,7 +18,7 @@ export function atomFamily<Param, Value>(
   areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, Atom<Value>>
 
-export function atomFamily<Param, Value, Update>(
+export function atomFamily<Param, Value>(
   initializeAtom: (param: Param) => Atom<Value>,
   areEqual?: (a: Param, b: Param) => boolean
 ) {
@@ -47,7 +47,7 @@ export function atomFamily<Param, Value, Update>(
       }
     }
 
-    const newAtom = initializeAtom(param) as Atom<Value>
+    const newAtom = initializeAtom(param)
     atoms.set(param, [newAtom, Date.now()])
     return newAtom
   }
