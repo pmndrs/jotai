@@ -1,5 +1,5 @@
 import React, { Fragment, StrictMode, Suspense } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
 import { waitForAll } from '../../src/utils'
 
@@ -56,16 +56,16 @@ it('waits for two async atoms', async () => {
         resolve(true)
       }, 10)
     })
-    return '2'
+    return 'a'
   })
 
   const Counter: React.FC = () => {
-    const [[num1, num2]] = useAtom(
+    const [[num, str]] = useAtom(
       waitForAll([asyncAtom, anotherAsyncAtom] as const)
     )
     return (
       <div>
-        num1: {num1}, num2: {num2}
+        num: {num * 2}, str: {str.toUpperCase()}
       </div>
     )
   }
@@ -86,76 +86,9 @@ it('waits for two async atoms', async () => {
 
   jest.runOnlyPendingTimers()
 
-  await findByText('num1: 1, num2: 2')
+  await findByText('num: 2, str: A')
   expect(isAsyncAtomRunning).toBe(false)
   expect(isAnotherAsyncAtomRunning).toBe(false)
-})
-
-it('waits for two async atoms with write', async () => {
-  const countAtom = atom(1)
-  let isAsyncAtomRunning = false
-  let isAnotherAsyncAtomRunning = false
-  const asyncAtom = atom(async (get) => {
-    isAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        isAsyncAtomRunning = false
-        resolve(true)
-      }, 10)
-    })
-    return get(countAtom)
-  })
-  const anotherAsyncAtom = atom(async () => {
-    isAnotherAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        isAnotherAsyncAtomRunning = false
-        resolve(true)
-      }, 10)
-    })
-    return '2'
-  })
-
-  const Counter: React.FC = () => {
-    const [[num1, num2]] = useAtom(
-      waitForAll([asyncAtom, anotherAsyncAtom] as const)
-    )
-    const [, setCount] = useAtom(countAtom)
-    return (
-      <>
-        <div>
-          num1: {num1}, num2: {num2}
-        </div>
-        <button onClick={() => setCount((c) => c + 1)}>button</button>
-      </>
-    )
-  }
-
-  const { getByText, findByText } = render(
-    <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
-    </StrictMode>
-  )
-
-  await findByText('loading')
-  expect(isAsyncAtomRunning).toBe(true)
-  expect(isAnotherAsyncAtomRunning).toBe(true)
-
-  jest.runOnlyPendingTimers()
-  await findByText('num1: 1, num2: 2')
-  expect(isAsyncAtomRunning).toBe(false)
-  expect(isAnotherAsyncAtomRunning).toBe(false)
-
-  fireEvent.click(getByText('button'))
-  await findByText('loading')
-  expect(isAsyncAtomRunning).toBe(true)
-  jest.runOnlyPendingTimers()
-  await findByText('num1: 2, num2: 2')
-  expect(isAsyncAtomRunning).toBe(false)
 })
 
 it('can use named atoms in derived atom', async () => {

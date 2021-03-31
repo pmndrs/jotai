@@ -19,10 +19,9 @@ export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
   if (cachedAtom) {
     return cachedAtom as Atom<Values>
   }
-  const unwrappedAtoms = unwrapAtoms(atoms)
   const derivedAtom = atom((get) => {
     const promises: Promise<unknown>[] = []
-    const values = unwrappedAtoms.map((anAtom, index) => {
+    const values = unwrapAtoms(atoms).map((anAtom, index) => {
       try {
         return get(anAtom)
       } catch (e) {
