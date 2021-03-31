@@ -5,11 +5,14 @@ import { waitForAll } from '../../src/utils'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
+const consoleWarn = console.warn
 const consoleError = console.error
 beforeEach(() => {
+  console.warn = jest.fn()
   console.error = jest.fn()
 })
 afterEach(() => {
+  console.warn = consoleWarn
   console.error = consoleError
 })
 
@@ -256,8 +259,9 @@ it('handles scope', async () => {
     const [, setValue] = useAtom(valueAtom)
     return (
       <>
-        <div>num1: {num1}</div>
-        <div>num2: {num2}</div>
+        <div>
+          num1: {num1}, num2: {num2}
+        </div>
         <button onClick={() => setValue((v) => v + 1)}>increment</button>
       </>
     )
@@ -276,22 +280,62 @@ it('handles scope', async () => {
   await findByText('loading')
   expect(isAsyncAtomRunning).toBe(true)
   expect(isAnotherAsyncAtomRunning).toBe(true)
-
   jest.runOnlyPendingTimers()
 
-  await findByText('num1: 1')
-  await findByText('num2: 2')
+  await findByText('num1: 1, num2: 2')
   expect(isAsyncAtomRunning).toBe(false)
   expect(isAnotherAsyncAtomRunning).toBe(false)
 
   fireEvent.click(getByText('increment'))
-
   jest.runOnlyPendingTimers()
 
   await findByText('loading')
-
   jest.runOnlyPendingTimers()
 
-  await findByText('num1: 2')
-  await findByText('num2: 2')
+  await findByText('num1: 2, num2: 2')
+})
+
+it('warns on different scopes', async () => {
+  const scope = Symbol()
+  const anotherScope = Symbol()
+  const asyncAtom = atom(async (get) => {
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true)
+      }, 10)
+    })
+    return 1
+  })
+  asyncAtom.scope = scope
+
+  const anotherAsyncAtom = atom(async () => {
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true)
+      }, 10)
+    })
+    return '2'
+  })
+  anotherAsyncAtom.scope = anotherScope
+
+  const Counter: React.FC = () => {
+    const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
+    return (
+      <div>
+        num1: {num1}, num2: {num2}
+      </div>
+    )
+  }
+
+  render(
+    <StrictMode>
+      <Provider scope={scope}>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  expect(console.warn).toHaveBeenCalledTimes(1)
 })
