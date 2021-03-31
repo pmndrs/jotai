@@ -56,16 +56,17 @@ it('waits for two async atoms', async () => {
         resolve(true)
       }, 10)
     })
-    return '2'
+    return 'a'
   })
 
   const Counter: React.FC = () => {
-    const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
+    const [[num, str]] = useAtom(
+      waitForAll([asyncAtom, anotherAsyncAtom] as const)
+    )
     return (
-      <>
-        <div>num1: {num1}</div>
-        <div>num2: {num2}</div>
-      </>
+      <div>
+        num: {num * 2}, str: {str.toUpperCase()}
+      </div>
     )
   }
 
@@ -85,8 +86,7 @@ it('waits for two async atoms', async () => {
 
   jest.runOnlyPendingTimers()
 
-  await findByText('num1: 1')
-  await findByText('num2: 2')
+  await findByText('num: 2, str: A')
   expect(isAsyncAtomRunning).toBe(false)
   expect(isAnotherAsyncAtomRunning).toBe(false)
 })
@@ -128,10 +128,9 @@ it('can use named atoms in derived atom', async () => {
   const Counter: React.FC = () => {
     const [{ num, str }] = useAtom(combinedWaitingAtom)
     return (
-      <>
-        <div>num: {num}</div>
-        <div>str: {str}</div>
-      </>
+      <div>
+        num: {num}, str: {str}
+      </div>
     )
   }
 
@@ -151,8 +150,7 @@ it('can use named atoms in derived atom', async () => {
 
   jest.runOnlyPendingTimers()
 
-  await findByText('num: 2')
-  await findByText('str: A')
+  await findByText('num: 2, str: A')
   expect(isAsyncAtomRunning).toBe(false)
   expect(isAnotherAsyncAtomRunning).toBe(false)
 })

@@ -1,5 +1,5 @@
 import { Atom, atom } from 'jotai'
-import { getWeakCacheItem, setWeakCacheItem } from '../utils/weakCache'
+import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 
 const waitForAllCache = new WeakMap()
 
@@ -7,13 +7,13 @@ export function waitForAll<Values extends Record<string, unknown>>(
   atoms: { [K in keyof Values]: Atom<Values[K]> }
 ): Atom<Values>
 
-export function waitForAll<Values extends unknown[]>(
+export function waitForAll<Values extends readonly unknown[]>(
   atoms: { [K in keyof Values]: Atom<Values[K]> }
 ): Atom<Values>
 
-export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
-  atoms: { [K in keyof Values]: Atom<Values[K]> }
-) {
+export function waitForAll<
+  Values extends Record<string, unknown> | readonly unknown[]
+>(atoms: { [K in keyof Values]: Atom<Values[K]> }) {
   const cachedAtom =
     Array.isArray(atoms) && getWeakCacheItem(waitForAllCache, atoms)
   if (cachedAtom) {
@@ -34,14 +34,14 @@ export function waitForAll<Values extends Record<string, unknown> | unknown[]>(
       }
     })
     if (promises.length) {
-      return Promise.all(promises)
-    }
-    derivedAtom.scope = unwrappedAtoms[0].scope
-    if (Array.isArray(atoms)) {
-      setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
+      throw Promise.all(promises)
     }
     return wrapResults(atoms, values)
   })
+  derivedAtom.scope = unwrappedAtoms[0].scope
+  if (Array.isArray(atoms)) {
+    setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
+  }
   return derivedAtom
 }
 
