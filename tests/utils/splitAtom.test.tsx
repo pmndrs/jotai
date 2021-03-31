@@ -231,3 +231,63 @@ it('read-only array atom', async () => {
   expect(catBox.checked).toBe(false)
   expect(dragonBox.checked).toBe(false)
 })
+
+it('handles scope', async () => {
+  const scope = Symbol()
+  const todosAtom = atom<TodoItem[]>([
+    { task: 'get cat food', checked: false },
+    { task: 'get dragon food', checked: false },
+  ])
+  todosAtom.scope = scope
+
+  const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
+    const [atoms] = useAtom(splitAtom(listAtom))
+    return (
+      <>
+        {atoms.map((anAtom, index) => (
+          <TaskItem key={index} itemAtom={anAtom} />
+        ))}
+      </>
+    )
+  }
+
+  const TaskItem: React.FC<{
+    itemAtom: PrimitiveAtom<TodoItem>
+  }> = ({ itemAtom }) => {
+    const [value, onChange] = useAtom(itemAtom)
+    itemAtom.scope = scope
+    const toggle = () =>
+      onChange((value) => ({ ...value, checked: !value.checked }))
+    return (
+      <li>
+        <input
+          data-testid={`${value.task}-checkbox`}
+          type="checkbox"
+          checked={value.checked ?? false}
+          onChange={toggle}
+        />
+      </li>
+    )
+  }
+
+  const { findByTestId } = render(
+    <Provider scope={scope}>
+      <TaskList listAtom={todosAtom} />
+    </Provider>
+  )
+
+  const catBox = (await findByTestId(
+    'get cat food-checkbox'
+  )) as HTMLInputElement
+  const dragonBox = (await findByTestId(
+    'get dragon food-checkbox'
+  )) as HTMLInputElement
+
+  expect(catBox.checked).toBe(false)
+  expect(dragonBox.checked).toBe(false)
+
+  fireEvent.click(catBox)
+
+  expect(catBox.checked).toBe(true)
+  expect(dragonBox.checked).toBe(false)
+})
