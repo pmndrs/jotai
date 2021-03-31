@@ -81,7 +81,7 @@ it('removed atom creates a new reference', async () => {
 })
 
 it('primitive atomFamily initialized with props', async () => {
-  const myFamily = atomFamily<number, number>((param) => atom(param))
+  const myFamily = atomFamily((param: number) => atom(param))
 
   const Displayer: React.FC<{ index: number }> = ({ index }) => {
     const [count, setCount] = useAtom(myFamily(index))
