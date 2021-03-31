@@ -7,7 +7,6 @@ type AtomFamily<Param, AtomType> = {
   remove(param: Param): void
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
 }
-type AnyAtomType<Value, Update> = Atom<Value> | WritableAtom<Value, Update>
 
 export function atomFamily<Param, Value, Update>(
   initializeAtom: (param: Param) => WritableAtom<Value, Update>,
@@ -23,12 +22,11 @@ export function atomFamily<Param, Value, Update>(
   initializeAtom: (param: Param) => Atom<Value>,
   areEqual?: (a: Param, b: Param) => boolean
 ) {
-  type AtomType = AnyAtomType<Value, Update>
   type CreatedAt = number // in milliseconds
   let shouldRemove: ShouldRemove<Param> | null = null
-  const atoms: Map<Param, [AtomType, CreatedAt]> = new Map()
+  const atoms: Map<Param, [Atom<Value>, CreatedAt]> = new Map()
   const createAtom = (param: Param) => {
-    let item: [AtomType, CreatedAt] | undefined
+    let item: [Atom<Value>, CreatedAt] | undefined
     if (areEqual === undefined) {
       item = atoms.get(param)
     } else {
@@ -49,7 +47,7 @@ export function atomFamily<Param, Value, Update>(
       }
     }
 
-    const newAtom = initializeAtom(param) as AtomType
+    const newAtom = initializeAtom(param) as Atom<Value>
     atoms.set(param, [newAtom, Date.now()])
     return newAtom
   }
