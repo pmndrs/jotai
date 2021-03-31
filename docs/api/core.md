@@ -2,7 +2,9 @@ This doc describes core `jotai` bundle.
 
 ## atom
 
-```ts
+`atom` is a function to create an atom config. The atom config is an immutable object. The atom config itself doesn't hold an atom value. The atom value is stored in a Provider state.
+
+```tsx
 // primitive atom
 function atom<Value>(initialValue: Value): PrimitiveAtom<Value>
 
@@ -22,45 +24,32 @@ function atom<Value, Update>(
 ): WritableAtom<Value, Update>
 ```
 
-`atom` is a function to create an atom config. It's an object and the object identity is important. It can be created from anywhere and once created, you shouldn't modify the object. (Note: There might be an advanced use case to mutate atom configs after creation. At the moment, it's not officially supported though.)
+- `initialValue`: as the name says, it's an initial value which is the atom's going to return unless its value doesn't get changed.
+- `read`: a function that's going to get called on every re-render. The signature of `read` is `(get) => Value | Promise<Value>`, and `get` is a function that takes an atom config and returns its value stored in Provider described below. Dependency is tracked, so if `get` is used for an atom at least once, the `read` will be reevaluated whenever the atom value is changed.
+- `write`: a function mostly used for mutating atom's values, for a better description; it gets called whenever we call the second returned value of `useAtom`, the `useAtom()[1]`. The default value of this function in the primitive atom will change the value of that atom. The signature of `write` is `(get, set, update) => void | Promise<void>`. `get` is similar to the one described above, but it doesn’t track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `update` is an arbitrary value that we receive from the updating function returned by `useAtom` described below.
 
-```js
+```tsx
 const primitiveAtom = atom(initialValue)
-const derivedAtomWithRead = atom(readFunction)
-const derivedAtomWithReadWrite = atom(readFunction, writeFunction)
-const derivedAtomWithWriteOnly = atom(null, writeFunction)
+const derivedAtomWithRead = atom(read)
+const derivedAtomWithReadWrite = atom(read, write)
+const derivedAtomWithWriteOnly = atom(null, write)
 ```
 
-There are two kinds of atoms: a writable atom and a read-only atom.
-Primitive atoms are always writable. Derived atoms are writable if `writeFunction` is specified.
-The `writeFunction` of primitive atoms is equivalent to the setState of React.useState.
-
-The signature of `readFunction` is `(get) => Value | Promise<Value>`, and `get` is a function that takes an atom config and returns its value stored in Provider described below.
-Dependency is tracked, so if `get` is used for an atom at least once, the readFunction will be reevaluated whenever the atom value is changed.
-
-The signature of writeFunction is `(get, set, update) => void | Promise<void>`.
-`get` is similar to the one described above, but it doesn't track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `update` is an arbitrary value that we receive from the updating function returned by `useAtom` described below.
+There are two kinds of atoms: a writable atom and a read-only atom. Primitive atoms are always writable. Derived atoms are writable if the `write` is specified. The `write` of primitive atoms is equivalent to the `setState` of `React.useState`.
 
 ### debugLabel
 
-The created atom config can have an optional property `debugLabel`.
-The debug label will be used to display the atom in debugging.
-See [Debugging guide](../guides/debugging.md) for more information.
+The created atom config can have an optional property `debugLabel`. The debug label will be used to display the atom in debugging. See [Debugging guide](../guides/debugging.md) for more information.
 
-Note: Technically, the debug labels don't have to be unique.
-However, it's generally recommended to make them distinguishable.
+Note: Technically, the debug labels don’t have to be unique. However, it’s generally recommended to make them distinguishable.
 
 ### onMount
 
-The created atom config can have an optional property `onMount`.
-`onMount` is a function which takes a function `setAtom`
-and returns `onUnmount` function optionally.
+The created atom config can have an optional property `onMount`. `onMount` is a function which takes a function `setAtom` and returns `onUnmount` function optionally.
 
-The `onMount` function will be invoked when the atom is first used
-in a provider, and `onUnmount` will be invoked when it's not used.
-In some edge cases, an atom can be unmounted and then mounted immediately.
+The `onMount` function will be invoked when the atom is first used in a provider, and `onUnmount` will be invoked when it’s not used. In some edge cases, an atom can be unmounted and then mounted immediately.
 
-```js
+```tsx
 const anAtom = atom(1)
 anAtom.onMount = (setAtom) => {
   console.log('atom is mounted in provider')
@@ -69,10 +58,9 @@ anAtom.onMount = (setAtom) => {
 }
 ```
 
-Invoking `setAtom` function will invoke the atom's `writeFunction`.
-Customizing `writeFunction` allows changing the behavior.
+Invoking `setAtom` function will invoke the atom’s `write`. Customizing `write` allows changing the behavior.
 
-```js
+```tsx
 const countAtom = atom(1)
 const derivedAtom = atom(
   (get) => get(countAtom),

@@ -17,6 +17,14 @@ import {
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  return commitCountRef.current
+}
+
 it('creates atoms', () => {
   // primitive atom
   const countAtom = atom(0)
@@ -169,25 +177,40 @@ it('uses a write-only derived atom', async () => {
 
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
-    return <div>count: {count}</div>
+    return (
+      <div>
+        commits: {useCommitCount()}, count: {count}
+      </div>
+    )
   }
 
   const Control: React.FC = () => {
     const [, increment] = useAtom(incrementCountAtom)
-    return <button onClick={() => increment()}>button</button>
+    return (
+      <>
+        <div>button commits: {useCommitCount()}</div>
+        <button onClick={() => increment()}>button</button>
+      </>
+    )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <Counter />
       <Control />
     </Provider>
   )
 
-  await findByText('count: 0')
+  await waitFor(() => {
+    getByText('commits: 1, count: 0')
+    getByText('button commits: 1')
+  })
 
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
+  await waitFor(() => {
+    getByText('commits: 2, count: 1')
+    getByText('button commits: 1')
+  })
 })
 
 it('only re-renders if value has changed', async () => {
@@ -198,14 +221,10 @@ it('only re-renders if value has changed', async () => {
   type Props = { countAtom: typeof count1Atom; name: string }
   const Counter: React.FC<Props> = ({ countAtom, name }) => {
     const [count, setCount] = useAtom(countAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          commits: {commits.current}, {name}: {count}
+          commits: {useCommitCount()}, {name}: {count}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button-{name}</button>
       </>
@@ -214,14 +233,10 @@ it('only re-renders if value has changed', async () => {
 
   const Product: React.FC = () => {
     const [product] = useAtom(productAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div data-testid="product">
-          commits: {commits.current}, product: {product}
+          commits: {useCommitCount()}, product: {product}
         </div>
       </>
     )
@@ -264,14 +279,10 @@ it('works with async get', async () => {
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [delayedCount] = useAtom(asyncCountAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          commits: {commits.current}, count: {count}, delayedCount:{' '}
+          commits: {useCommitCount()}, count: {count}, delayedCount:{' '}
           {delayedCount}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
@@ -348,14 +359,10 @@ it('shows loading with async set', async () => {
 
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(asyncCountAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          commits: {commits.current}, count: {count}
+          commits: {useCommitCount()}, count: {count}
         </div>
         <button onClick={() => setCount(count + 1)}>button</button>
       </>
@@ -392,14 +399,10 @@ it('uses atoms with tree dependencies', async () => {
   const Counter: React.FC = () => {
     const [count] = useAtom(leftAtom)
     const [, setCount] = useAtom(rightAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          commits: {commits.current}, count: {count}
+          commits: {useCommitCount()}, count: {count}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
@@ -475,14 +478,10 @@ it('uses an async write-only atom', async () => {
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
     const [, setCount] = useAtom(asyncCountAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          commits: {commits.current}, count: {count}
+          commits: {useCommitCount()}, count: {count}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
@@ -604,14 +603,10 @@ it('only invoke read function on use atom', async () => {
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledCountAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          commits: {commits.current}, count: {count}, readCount: {readCount},
+          commits: {useCommitCount()}, count: {count}, readCount: {readCount},
           doubled: {doubledCount}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
@@ -795,66 +790,6 @@ it('set atom right after useEffect (#208)', async () => {
   expect(effectFn).lastCalledWith(2)
 })
 
-it('only relevant render function called (#156)', async () => {
-  if (process.env.IS_REACT_EXPERIMENTAL) {
-    return // skip this test
-  }
-  const count1Atom = atom(0)
-  const count2Atom = atom(0)
-
-  const Counter1: React.FC = () => {
-    const [count, setCount] = useAtom(count1Atom)
-    const renderCount = useRef(0)
-    ++renderCount.current
-    return (
-      <>
-        <div>
-          count1: {count} ({renderCount.current})
-        </div>
-        <button onClick={() => setCount((c) => c + 1)}>button1</button>
-      </>
-    )
-  }
-
-  const Counter2: React.FC = () => {
-    const [count, setCount] = useAtom(count2Atom)
-    const renderCount = useRef(0)
-    ++renderCount.current
-    return (
-      <>
-        <div>
-          count2: {count} ({renderCount.current})
-        </div>
-        <button onClick={() => setCount((c) => c + 1)}>button2</button>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <Provider>
-      <Counter1 />
-      <Counter2 />
-    </Provider>
-  )
-
-  await waitFor(() => {
-    getByText('count1: 0 (1)')
-    getByText('count2: 0 (1)')
-  })
-
-  fireEvent.click(getByText('button1'))
-  await waitFor(() => {
-    getByText('count1: 1 (2)')
-    getByText('count2: 0 (1)')
-  })
-
-  fireEvent.click(getByText('button2'))
-  await waitFor(() => {
-    getByText('count1: 1 (2)')
-    getByText('count2: 1 (2)')
-  })
-})
-
 it('changes atom from parent (#273, #275)', async () => {
   const atomA = atom({ id: 'a' })
   const atomB = atom({ id: 'b' })
@@ -862,13 +797,9 @@ it('changes atom from parent (#273, #275)', async () => {
   const Item: React.FC<{ id: string }> = ({ id }) => {
     const a = useMemo(() => (id === 'a' ? atomA : atomB), [id])
     const [atomValue] = useAtom(a)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <div>
-        commits: {commits.current}, id: {atomValue.id}
+        commits: {useCommitCount()}, id: {atomValue.id}
       </div>
     )
   }
@@ -900,4 +831,66 @@ it('changes atom from parent (#273, #275)', async () => {
 
   fireEvent.click(getByText('atom a'))
   await findByText('commits: 3, id: a')
+})
+
+it('should be able to use a double derived atom twice and useEffect (#373)', async () => {
+  const countAtom = atom(0)
+  const doubleAtom = atom((get) => get(countAtom) * 2)
+  const fourfoldAtom = atom((get) => get(doubleAtom) * 2)
+
+  const App: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [fourfold] = useAtom(fourfoldAtom)
+    const [fourfold2] = useAtom(fourfoldAtom)
+
+    useEffect(() => {
+      setCount(count)
+    }, [count, setCount])
+
+    return (
+      <div>
+        count: {count},{fourfold},{fourfold2}
+        <button onClick={() => setCount((c) => c + 1)}>one up</button>
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  await findByText('count: 0,0,0')
+  fireEvent.click(getByText('one up'))
+  await findByText('count: 1,4,4')
+})
+
+it('write self atom (undocumented usage)', async () => {
+  const countAtom = atom(0, (get, set, _arg) => {
+    set(countAtom, get(countAtom) + 1)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, inc] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={inc}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
 })

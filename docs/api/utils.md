@@ -180,6 +180,22 @@ const countReducerAtom = atomWithReducer(0, countReducer)
 
 https://codesandbox.io/s/react-typescript-forked-g3tsx
 
+## atomWithDefault
+
+Ref: https://github.com/pmndrs/jotai/issues/352
+
+This is a function to create a primitive atom.
+Its default value can be specified with a read function instead of a static initial value.
+
+```js
+import { atomWithDefault } from 'jotai/utils'
+
+const count1Atom = atom(1)
+const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
+```
+
+https://codesandbox.io/s/react-typescript-forked-unfro
+
 ## atomFamily
 
 Ref: https://github.com/pmndrs/jotai/issues/23
@@ -187,55 +203,58 @@ Ref: https://github.com/pmndrs/jotai/issues/23
 ### Usage
 
 ```js
-atomFamily(initializeRead, initializeWrite, areEqual): (param) => Atom
+atomFamily(initializeAtom, areEqual): (param) => Atom
 ```
 
 This will create a function that takes `param` and returns an atom.
 If it's already created, it will return it from the cache.
-`initializeRead` and `initializeWrite` are functions and return
-`read` and `write` respectively that are fed into `atom()`.
-Note that `initializeWrite` is optional.
-The third argument `areEqual` is also optional, which tell
-if two params are equal (defaults to `Object.is`.)
+`initializeAtom` is function that can return any kind of atom (`atom()`, `atomWithDefault()`, ...).
+Note that `areEqual` is optional, which tell
+if two params are equal (defaults to `Object.is`).
 
 To reproduce the similar behavior to [Recoil's atomFamily/selectorFamily](https://recoiljs.org/docs/api-reference/utils/atomFamily),
 specify a deepEqual function to `areEqual`. For example:
 
 ```js
+import { atom } from 'jotai'
 import deepEqual from 'fast-deep-equal'
 
-const fooFamily = atomFamily((param) => param, null, deepEqual)
+const fooFamily = atomFamily((param) => atom(param), deepEqual)
 ```
 
 ### Examples
 
 ```js
+import { atom } from 'jotai'
 import { atomFamily } from 'jotai/utils'
 
-const todoFamily = atomFamily((name) => name)
+const todoFamily = atomFamily((name) => atom(name))
 
 todoFamily('foo')
 // this will create a new atom('foo'), or return the one if already created
 ```
 
 ```js
+import { atom } from 'jotai'
 import { atomFamily } from 'jotai/utils'
 
-const todoFamily = atomFamily(
-  (name) => (get) => get(todosAtom)[name],
-  (name) => (get, set, arg) => {
-    const prev = get(todosAtom)
-    return { ...prev, [name]: { ...prev[name], ...arg } }
-  }
+const todoFamily = atomFamily((name) =>
+  atom(
+    (get) => get(todosAtom)[name],
+    (get, set, arg) => {
+      const prev = get(todosAtom)
+      return { ...prev, [name]: { ...prev[name], ...arg } }
+    }
+  )
 )
 ```
 
 ```js
+import { atom } from 'jotai'
 import { atomFamily } from 'jotai/utils'
 
 const todoFamily = atomFamily(
-  ({ id, name }) => ({ name }),
-  null,
+  ({ id, name }) => atom({ name }),
   (a, b) => a.id === b.id
 )
 ```
@@ -477,3 +496,79 @@ const App = () => (
 
 export default App
 ```
+
+## waitForAll
+
+Sometimes you have multiple async atoms in your components:
+
+```tsx
+const dogsAtom = atom(async (get) => {
+  const response = await fetch('/dogs')
+  return await response.json()
+})
+const catsAtom = atom(async (get) => {
+  const response = await fetch('/cats')
+  return await response.json()
+})
+
+const App = () => {
+  const [dogs] = useAtom(dogsAtom)
+  const [cats] = useAtom(catsAtom)
+  // ...
+}
+```
+
+However, this will start fetching one at the time, which is not optimal - It would be better if we can start fetching both as soon as possible.
+
+The `waitForAll` utility is a concurrency helper, which allows us to evaluate multiple async atoms:
+
+```tsx
+const dogsAtom = atom(async (get) => {
+  const response = await fetch('/dogs')
+  return await response.json()
+})
+const catsAtom = atom(async (get) => {
+  const response = await fetch('/cats')
+  return await response.json()
+})
+
+const App = () => {
+  const [[dogs, cats]] = useAtom(waitForAll([dogsAtom, catsAtom]))
+  // or ...
+  const [dogs, cats] = useAtomValue(waitForAll([dogsAtom, catsAtom]))
+  // ...
+}
+```
+
+You can also use `waitForAll` inside an atom - It's also possible to name them for readability:
+
+```tsx
+const dogsAtom = atom(async (get) => {
+  const response = await fetch('/dogs')
+  return await response.json()
+})
+const catsAtom = atom(async (get) => {
+  const response = await fetch('/cats')
+  return await response.json()
+})
+
+const animalsAtom = atom((get) => {
+  return get(
+    waitForAll({
+      dogs: dogsAtom,
+      cats: catsAtom,
+    })
+  )
+})
+
+const App = () => {
+  const [{ dogs, cats }] = useAtom(animalsAtom)
+  // or ...
+  const { dogs, cats } = useAtomValue(animalsAtom)
+  // ...
+}
+```
+
+### Codesandbox
+
+https://codesandbox.io/s/react-typescript-forked-krwsv?file=/src/App.tsx

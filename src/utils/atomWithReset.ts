@@ -6,7 +6,7 @@ export const RESET = Symbol()
 
 export function atomWithReset<Value>(initialValue: Value) {
   type Update = SetStateAction<Value> | typeof RESET
-  const anAtom: any = atom<Value, Update>(initialValue, (get, set, update) => {
+  const anAtom = atom<Value, Update>(initialValue, (get, set, update) => {
     if (update === RESET) {
       set(anAtom, initialValue)
     } else {

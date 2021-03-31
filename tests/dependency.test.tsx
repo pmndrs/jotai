@@ -4,6 +4,14 @@ import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  return commitCountRef.current
+}
+
 const consoleError = console.error
 afterEach(() => {
   console.error = consoleError
@@ -18,14 +26,10 @@ it('works with 2 level dependencies', async () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledAtom)
     const [tripledCount] = useAtom(tripledAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          commits: {commits.current}, count: {count}, doubled: {doubledCount},
+          commits: {useCommitCount()}, count: {count}, doubled: {doubledCount},
           tripled: {tripledCount}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
@@ -319,14 +323,10 @@ it('derived atom to update base atom in callback', async () => {
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount, dispatch] = useAtom(doubledAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          commits: {commits.current}, count: {count}, doubled: {doubledCount}
+          commits: {useCommitCount()}, count: {count}, doubled: {doubledCount}
         </div>
         <button onClick={() => dispatch(() => setCount((c) => c + 1))}>
           button

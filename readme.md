@@ -169,9 +169,10 @@ yarn add jotai react
 ## More documents
 
 - Introduction
-  - [Comparison](./docs/introduction/comparison.md)
-  - [Basics](./docs/introduction/basics.md)
+  - [Concepts](./docs/introduction/concepts.md)
+  - [Getting Started](./docs/introduction/getting-started.md)
   - [Async](./docs/introduction/async.md)
+  - [Comparison](./docs/introduction/comparison.md)
   - [Showcase](./docs/introduction/showcase.md)
 - Guides
   - [TypeScript](./docs/guides/typescript.md)
@@ -179,11 +180,12 @@ yarn add jotai react
   - [Persistence](./docs/guides/persistence.md)
   - [Next.js](./docs/guides/nextjs.md)
   - [Resettable](./docs/guides/resettable.md)
+  - [No Suspense](./docs/guides/no-suspense.md)
 - API
   - [Core](./docs/api/core.md)
   - [Utils](./docs/api/utils.md)
   - [Devtools](./docs/api/devtools.md)
-  - [Immer](./docs/api/immer.md)
-  - [Optics](./docs/api/optics.md)
-  - [Query](./docs/api/query.md)
-  - [XState](./docs/api/xstate.md)
+  - [Immer](./docs/api/immer.md) ([immer](https://github.com/immerjs/immer) integration)
+  - [Optics](./docs/api/optics.md) ([optics-ts](https://github.com/akheron/optics-ts) integration)
+  - [Query](./docs/api/query.md) ([react-query](https://github.com/tannerlinsley/react-query) integration)
+  - [XState](./docs/api/xstate.md) ([xstate](https://github.com/davidkpiano/xstate) integration)

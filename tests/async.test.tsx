@@ -4,6 +4,14 @@ import { Provider as ProviderOrig, atom, useAtom, Atom } from '../src/index'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  return commitCountRef.current
+}
+
 it('does not show async stale result', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
@@ -542,14 +550,10 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   const Counter: React.FC = () => {
     const [, setCount] = useAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
-    const commits = useRef(1)
-    useEffect(() => {
-      ++commits.current
-    })
     return (
       <>
         <div>
-          derived: {derived}, commits: {commits.current}
+          derived: {derived}, commits: {useCommitCount()}
         </div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
@@ -576,4 +580,115 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 13, commits: 3')
+})
+
+it('Handles synchronously invoked async set (#375)', async () => {
+  const loadingAtom = atom(false)
+  const documentAtom = atom<string | undefined>(undefined)
+  const loadDocumentAtom = atom(null, (_get, set) => {
+    const fetch = async () => {
+      set(loadingAtom, true)
+      const response = await new Promise<string>((resolve) =>
+        setTimeout(() => resolve('great document'), 10)
+      )
+      set(documentAtom, response)
+      set(loadingAtom, false)
+    }
+    fetch()
+  })
+
+  const ListDocuments: React.FC = () => {
+    const [loading] = useAtom(loadingAtom)
+    const [document] = useAtom(documentAtom)
+    const [, loadDocument] = useAtom(loadDocumentAtom)
+
+    useEffect(() => {
+      loadDocument()
+    }, [loadDocument])
+
+    return (
+      <>
+        {loading && <div>loading</div>}
+        {!loading && <div>{document}</div>}
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <ListDocuments />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('great document')
+})
+
+it('async write self atom', async () => {
+  const countAtom = atom(0, async (get, set, _arg) => {
+    set(countAtom, get(countAtom) + 1)
+    await new Promise((r) => setTimeout(r, 100))
+    set(countAtom, -1)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, inc] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={inc}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading') // write pending
+  await findByText('count: -1')
+})
+
+it('non suspense async write self atom with setTimeout (#389)', async () => {
+  const countAtom = atom(0, (get, set, _arg) => {
+    set(countAtom, get(countAtom) + 1)
+    setTimeout(() => {
+      set(countAtom, -1)
+    }, 0)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, inc] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={inc}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
+  await findByText('count: -1')
 })
