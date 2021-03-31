@@ -62,12 +62,12 @@ export function atomWithQuery<
             action.initializer(getQueryClient(get, set))
           } else if (action.type === 'data') {
             const data = get(dataAtom)
-            if (!data || !equalityFn(data, action.data)) {
+            if (data === null || !equalityFn(data, action.data)) {
               set(dataAtom, action.data)
-            }
-            const pending = get(pendingAtom)
-            if (!pending.fulfilled) {
-              pending.resolve(action.data)
+              const pending = get(pendingAtom)
+              if (!pending.fulfilled) {
+                pending.resolve(action.data)
+              }
             }
           }
         }
