@@ -10,7 +10,7 @@ type UntypedArgError = {
 export function useAtomCallback<Result, Arg = UntypedArgError>(
   callback: (get: Getter, set: Setter, arg: Arg) => Result,
   scope?: Scope
-): Arg extends UntypedArgError
+): [Arg] extends [UntypedArgError]
   ? () => Promise<Result>
   : (arg: Arg) => Promise<Result>
 
