@@ -57,9 +57,9 @@ For async behavior, please refer [./async.md](async.md).
 `set` in the write function is to write atom value.
 It will invoke the write function of the target atom.
 
-Atom configs can be created anywhere, but referential equality important.
+Atom configs can be created anywhere, but referential equality is important.
 They can be created dynamically too.
-To create an atom in render function, you need to `useMemo` to get a stable reference.
+To create an atom in render function, `useMemo` is required to get a stable reference.
 
 ```jsx
 const Component = ({ value }) => {
@@ -70,22 +70,47 @@ const Component = ({ value }) => {
 
 ## useAtom
 
-The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it is unmounted, and the atom config no longer exists, the value is removed from the Provider.
+The `useAtom` hook is to read an atom value in the state.
+The state can be seen as a WeakMap of atom configs and atom values.
+
+The `useAtom` function returns the atom value and an updating function as a tuple,
+just like React's `useState`.
+It takes an atom config created with `atom()`.
+
+Initially, there is no value stored in the state.
+The first time the atom is used via `useAtom`,
+the initial value is stored in the state.
+If the atom is a derived atom, the read function is executed to compute an initial value.
+When an atom is no longer used, meaning all the components using it is unmounted,
+and the atom config no longer exists, the value in the state is garbage collected.
 
 ```js
 const [value, updateValue] = useAtom(anAtom)
 ```
 
-The `updateValue` takes just one argument, which will be passed to the third argument of writeFunction of the atom. The behavior totally depends on how the writeFunction is implemented.
+The `updateValue` takes just one argument, which will be passed
+to the third argument of write function of the atom.
+The behavior totally depends on how the write function is implemented.
 
 ## Provider
 
-Atom configs don't hold values. Atom values are stored in a Provider. A Provider can be used like React context provider. Usually, we place one Provider at the root of the app, however you could use multiple Providers, each storing different atom values for its component tree.
+Provider is to provide a state for component sub tree.
+Multiple Providers can be used for multilple sub trees, even nested.
+This works just like the normal React Context.
+
+If an atom is used in a tree which no Providers exist,
+it will use the default state. This is so-called provider-less mode.
+
+Providers are usefule for some reasons.
+
+1. It can provide a different state for each sub tree.
+2. Provider can hold some debug information.
+3. Provider can accept initial values of atoms.
 
 ```jsx
-const Root = () => (
+const SubTree = () => (
   <Provider>
-    <App />
+    <Child />
   </Provider>
 )
 ```
