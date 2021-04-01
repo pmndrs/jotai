@@ -3,15 +3,16 @@ import { atom, useAtom } from 'jotai'
 
 import type { Getter, Setter, Scope } from '../core/types'
 
-export function useAtomCallback<Result>(
-  callback: (get: Getter, set: Setter) => Result,
-  scope?: Scope
-): () => Promise<Result>
+type UntypedArgError = {
+  error: 'you must manually assign type to the Arg argument'
+}
 
-export function useAtomCallback<Result, Arg>(
+export function useAtomCallback<Result, Arg = UntypedArgError>(
   callback: (get: Getter, set: Setter, arg: Arg) => Result,
   scope?: Scope
-): (arg: Arg) => Promise<Result>
+): Arg extends UntypedArgError
+  ? () => Promise<Result>
+  : (arg: Arg) => Promise<Result>
 
 export function useAtomCallback<Result, Arg>(
   callback: (get: Getter, set: Setter, arg: Arg) => Result,
