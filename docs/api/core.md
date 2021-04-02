@@ -171,7 +171,7 @@ As long as we know atoms are identified by their object referential identity,
 it's okay to create them at anytime.
 
 If you create atoms in render functions, you would typically want to use
-some hooks like `useRef` or `useMemo`.
+a hook like `useRef` or `useMemo` for memoization. If not, the atom would be created everytime the component renders.
 
 You can create an atom and store it wth `useState` or even in another atom.
 See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
