@@ -95,7 +95,7 @@ The behavior totally depends on how the write function is implemented.
 ## Provider
 
 Provider is to provide a state for component sub tree.
-Multiple Providers can be used for multilple sub trees, even nested.
+Multiple Providers can be used for multiple subtrees, even nested.
 This works just like the normal React Context.
 
 If an atom is used in a tree which no Providers exist,
