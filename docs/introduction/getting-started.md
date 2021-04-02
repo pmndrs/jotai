@@ -47,7 +47,7 @@ const readWriteAtom = atom(
 )
 ```
 
-`get` in the read function is to read atom value.
+`get` in the read function is to read the atom value.
 It's reactive and read dependencies are tracked.
 
 `get` in the write function is also to read atom value, and it's not tracked.
