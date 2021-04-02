@@ -59,7 +59,7 @@ It will invoke the write function of the target atom.
 
 Atom configs can be created anywhere, but referential equality is important.
 They can be created dynamically too.
-To create an atom in render function, `useMemo` is required to get a stable reference.
+To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memorization, use `useMemo`.
 
 ```jsx
 const Component = ({ value }) => {
