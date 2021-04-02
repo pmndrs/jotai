@@ -131,5 +131,24 @@
         "code": 1266
       }
     }
+  },
+  "valtio.js": {
+    "bundled": 1350,
+    "minified": 746,
+    "gzipped": 386
+  },
+  "valtio.module.js": {
+    "bundled": 1111,
+    "minified": 555,
+    "gzipped": 320,
+    "treeshaked": {
+      "rollup": {
+        "code": 37,
+        "import_statements": 37
+      },
+      "webpack": {
+        "code": 1054
+      }
+    }
   }
 }
