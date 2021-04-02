@@ -159,7 +159,7 @@ const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
 ```
 
 The read function is the first parameter of the atom.
-The dependency will initially be empty. On first use, we run the read function and know that uppercaseAtom depends on textAtom. textAtom is the dependency of uppercaseAtom. So, add uppercaseAtom to the dependents of textAtom.
+The dependency will initially be empty. On first use, we run the read function and know that `uppercaseAtom` depends on `textAtom`. `textAtom` has a dependency on `uppercaseAtom`. So, add `uppercaseAtom` to the dependents of `textAtom`.
 When we re-run the read function (because its dependency (=textAtom) is updated),
 the dependency is built again, which is the same in this case. We then remove stale dependents and replace with the latest one.
 
