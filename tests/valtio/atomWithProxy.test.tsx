@@ -33,11 +33,11 @@ it('count state', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
-  expect(snapshot(proxyState)).toMatchObject({ count: 1 })
+  expect(proxyState.count).toBe(1)
 
   ++proxyState.count
   await findByText('count: 2')
-  expect(snapshot(proxyState)).toMatchObject({ count: 2 })
+  expect(proxyState.count).toBe(2)
 })
 
 it('nested count state', async () => {
@@ -73,11 +73,11 @@ it('nested count state', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
-  expect(snapshot(proxyState)).toMatchObject({ nested: { count: 1 } })
+  expect(proxyState.nested.count).toBe(1)
   expect(otherSnap === snapshot(proxyState.other)).toBe(true)
 
   ++proxyState.nested.count
   await findByText('count: 2')
-  expect(snapshot(proxyState)).toMatchObject({ nested: { count: 2 } })
+  expect(proxyState.nested.count).toBe(2)
   expect(otherSnap === snapshot(proxyState.other)).toBe(true)
 })
