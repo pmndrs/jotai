@@ -26,7 +26,7 @@ function atom<Value, Update>(
 
 - `initialValue`: as the name says, it's an initial value which is the atom's going to return unless its value doesn't get changed.
 - `read`: a function that's going to get called on every re-render. The signature of `read` is `(get) => Value | Promise<Value>`, and `get` is a function that takes an atom config and returns its value stored in Provider described below. Dependency is tracked, so if `get` is used for an atom at least once, the `read` will be reevaluated whenever the atom value is changed.
-- `write`: a function mostly used for mutating atom's values, for a better description; it gets called whenever we call the second returned value of `useAtom`, the `useAtom()[1]`. The default value of this function in the primitive atom will change the value of that atom. The signature of `write` is `(get, set, update) => void | Promise<void>`. `get` is similar to the one described above, but it doesn’t track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `update` is an arbitrary value that we receive from the updating function returned by `useAtom` described below.
+- `write`: a function mostly used for mutating atom's values, for a better description; it gets called whenever we call the second value of the returned pair of `useAtom`, the `useAtom()[1]`. The default value of this function in the primitive atom will change the value of that atom. The signature of `write` is `(get, set, update) => void | Promise<void>`. `get` is similar to the one described above, but it doesn't track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `update` is an arbitrary value that we receive from the updating function returned by `useAtom` described below.
 
 ```tsx
 const primitiveAtom = atom(initialValue)
@@ -147,3 +147,46 @@ const [value, updateValue] = useAtom(anAtom)
 ```
 
 The `updateValue` takes just one argument, which will be passed to the third argument of writeFunction of the atom. The behavior totally depends on how the writeFunction is implemented.
+
+---
+
+# How atom dependency works
+
+To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh the dependencies and dependents. For example, If A depends on B, it means that B has a dependency on A, and A is a dependent of B.
+
+```js
+const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
+```
+
+The read function is the first parameter of the atom.
+The dependency will initially be empty. On first use, we run the read function and know that `uppercaseAtom` depends on `textAtom`. `textAtom` has a dependency on `uppercaseAtom`. So, add `uppercaseAtom` to the dependents of `textAtom`.
+When we re-run the read function (because its dependency (=textAtom) is updated),
+the dependency is built again, which is the same in this case. We then remove stale dependents and replace with the latest one.
+
+# Atoms can be created on demand
+
+Basic examples in readme only show defining atoms globally outside components.
+There is no restrictions about when we create an atom.
+As long as we know atoms are identified by their object referential identity,
+it's okay to create them at anytime.
+
+If you create atoms in render functions, you would typically want to use
+a hook like `useRef` or `useMemo` for memoization. If not, the atom would be created everytime the component renders.
+
+You can create an atom and store it wth `useState` or even in another atom.
+See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
+
+You can cache atoms somewhere globally.
+See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or
+[that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
+
+Check [`atomFamily`](../api/utils.md#atomfamily) in utils for parameterized atoms.
+
+# Some more notes about atoms
+
+- If you create a primitive atom, it will use predefined read/write functions to emulate `useState` behavior.
+- If you create an atom with read/write functions, they can provide any behavior with some restrictions as follows.
+- `read` function will be invoked during React render phase, so the function has to be pure. What is pure in React is described [here](https://gist.github.com/sebmarkbage/75f0838967cd003cd7f9ab938eb1958f).
+- `write` function will be invoked where you called initially and in useEffect for following invocations. So, you shouldn't call `write` in render.
+- When an atom is initially used with `useAtom`, it will invoke `read` function to get the initial value, this is recursive process. If an atom value exists in Provider, it will be used instead of invoking `read` function.
+- Once an atom is used (and stored in Provider), it's value is only updated if its dependencies are updated (including updating directly with useAtom).
