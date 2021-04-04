@@ -1,0 +1,27 @@
+diff --git a/node_modules/nextra/dist/nextra.js b/node_modules/nextra/dist/nextra.js
+index 3a4c085..c2528d6 100644
+--- a/node_modules/nextra/dist/nextra.js
++++ b/node_modules/nextra/dist/nextra.js
+@@ -120,13 +120,15 @@ var index = ((...args) => (nextConfig = {}) => {
+         }]
+       });
+       if (!config.plugins) config.plugins = [];
+-      config.plugins.push({
+-        apply: compiler => {
+-          compiler.hooks.done.tap('buildStorkIndex', () => {
+-            buildStorkIndex(STORK_PATH, locales);
+-          });
+-        }
+-      });
++      if(nextraConfig.stork) {
++        config.plugins.push({
++          apply: compiler => {
++            compiler.hooks.done.tap('buildStorkIndex', () => {
++              buildStorkIndex(STORK_PATH, locales);
++            });
++          }
++        });
++      }
+ 
+       if (typeof nextConfig.webpack === 'function') {
+         return nextConfig.webpack(config, options);

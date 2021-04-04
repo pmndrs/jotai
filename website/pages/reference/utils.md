@@ -59,9 +59,9 @@ function atomWithReset<Value>(
 ```
 
 Creates an atom that could be reset to its `initialValue` with
-[`useResetAtom`](./utils.md#useResetAtom) hook. It works exactly the same
+[`useResetAtom`](utils.md#useResetAtom) hook. It works exactly the same
 way as primitive atom would, but you are also able to set it to a special value
-[`RESET`](./utils.md#RESET). See examples in [Resettable atoms](../guides/resettable.md).
+[`RESET`](utils.md#RESET). See examples in [Resettable atoms](../guides/resettable.md).
 
 ### Example
 
@@ -105,7 +105,7 @@ const RESET: unique symbol
 ```
 
 Special value that is accepted by [Resettable atoms](../guides/resettable.md)
-created with [`atomWithReset`](./utils.md#atomWithReset) or writable atom created
+created with [`atomWithReset`](utils.md#atomWithReset) or writable atom created
 with `atom` if it accepts `RESET` symbol.
 
 ### Example

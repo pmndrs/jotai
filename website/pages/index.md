@@ -1,17 +1,12 @@
 <p align="center">
-  <img src="img/title.svg" alt="jotai" />
+  <img src="/title.svg" alt="jotai" />
 </p>
+
+# Jotai
 
 Primitive and flexible state management for React
 
 `npm i jotai`
-
-[![Build Status](https://img.shields.io/github/workflow/status/pmndrs/jotai/Lint?style=flat&colorA=000000&colorB=000000)](https://github.com/pmndrs/jotai/actions?query=workflow%3ALint)
-[![Build Size](https://img.shields.io/bundlephobia/min/jotai?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=jotai)
-[![Version](https://img.shields.io/npm/v/jotai?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
-[![Downloads](https://img.shields.io/npm/dt/jotai.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/jotai)
-[![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=ffffff)](https://discord.gg/poimandres)
-[![Open Collective](https://img.shields.io/opencollective/all/jotai?style=flat&colorA=000000&colorB=000000)](https://opencollective.com/jotai)
 
 Jotai is pronounced "joe-tie" and means "state" in Japanese.
 
@@ -169,23 +164,23 @@ yarn add jotai react
 ## More documents
 
 - Introduction
-  - [Concepts](website/pages/introduction/concepts.md)
-  - [Getting Started](website/pages/introduction/getting-started.md)
-  - [Async](website/pages/introduction/async.md)
-  - [Comparison](website/pages/introduction/comparison.md)
-  - [Showcase](website/pages/introduction/showcase.md)
+  - [Concepts](ion/concepts.md)
+  - [Getting Started](ion/getting-started.md)
+  - [Async](ion/async.md)
+  - [Comparison](ion/comparison.md)
+  - [Showcase](ion/showcase.md)
 - Guides
-  - [TypeScript](website/pages/guides/typescript.md)
-  - [Debugging](website/pages/guides/debugging.md)
-  - [Persistence](website/pages/guides/persistence.md)
-  - [Next.js](website/pages/guides/nextjs.md)
-  - [Resettable](website/pages/guides/resettable.md)
-  - [No Suspense](website/pages/guides/no-suspense.md)
+  - [TypeScript](pescript.md)
+  - [Debugging](bugging.md)
+  - [Persistence](rsistence.md)
+  - [Next.js](xtjs.md)
+  - [Resettable](settable.md)
+  - [No Suspense](-suspense.md)
 - API
-  - [Core](website/pages/api/core.md)
-  - [Utils](website/pages/api/utils.md)
-  - [Devtools](website/pages/api/devtools.md)
-  - [Immer](website/pages/api/immer.md) ([immer](https://github.com/immerjs/immer) integration)
-  - [Optics](website/pages/api/optics.md) ([optics-ts](https://github.com/akheron/optics-ts) integration)
-  - [Query](website/pages/api/query.md) ([react-query](https://github.com/tannerlinsley/react-query) integration)
-  - [XState](website/pages/api/xstate.md) ([xstate](https://github.com/davidkpiano/xstate) integration)
+  - [Core](md)
+  - [Utils](.md)
+  - [Devtools](ols.md)
+  - [Immer](.md) ([immer](https://github.com/immerjs/immer) integration)
+  - [Optics](s.md) ([optics-ts](https://github.com/akheron/optics-ts) integration)
+  - [Query](.md) ([react-query](https://github.com/tannerlinsley/react-query) integration)
+  - [XState](e.md) ([xstate](https://github.com/davidkpiano/xstate) integration)

@@ -26,4 +26,4 @@ Jotai has two principles.
 
 Jotai's core API is minimalistic and allows building various utils based on it.
 
-Check out [comparison doc](./comparison.md) to see some differences with other libraries.
+Check out [comparison doc](comparison.md) to see some differences with other libraries.
