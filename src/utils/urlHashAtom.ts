@@ -1,19 +1,17 @@
-import { atom, PrimitiveAtom } from 'jotai'
-
-import type { SetStateAction } from '../core/types'
+import { atom, WritableAtom } from 'jotai'
 
 export function urlHashAtom<Value>(
   key: string,
-  anAtom: PrimitiveAtom<Value>,
+  anAtom: WritableAtom<Value, Value>,
   serialize: (val: Value) => string = JSON.stringify,
   deserialize: (str: string) => Value = JSON.parse
-): PrimitiveAtom<Value> {
+): WritableAtom<Value, Value> {
   const derivedAtom = atom(
     (get) => get(anAtom),
-    (get, set, update: SetStateAction<Value>) => {
-      set(anAtom, update)
+    (_get, set, newValue: Value) => {
+      set(anAtom, newValue)
       const searchParams = new URLSearchParams(location.hash.slice(1))
-      searchParams.set(key, serialize(get(anAtom)))
+      searchParams.set(key, serialize(newValue))
     }
   )
   derivedAtom.onMount = (setAtom) => {
