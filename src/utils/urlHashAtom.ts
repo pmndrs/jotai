@@ -12,6 +12,7 @@ export function urlHashAtom<Value>(
       set(anAtom, newValue)
       const searchParams = new URLSearchParams(location.hash.slice(1))
       searchParams.set(key, serialize(newValue))
+      location.hash = searchParams.toString()
     }
   )
   derivedAtom.onMount = (setAtom) => {
