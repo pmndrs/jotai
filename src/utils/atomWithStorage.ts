@@ -21,7 +21,9 @@ export function atomWithStorage<Value>(key: string, initialValue: Value) {
 
   const anAtom = atom<Value, Update>(
     (get) => get(baseAtom),
-    (get, set, newValue: any) => {
+    (get, set, update: any) => {
+      const newValue =
+        typeof update === 'function' ? update(get(baseAtom)) : update
       set(baseAtom, newValue)
       window.localStorage.setItem(key, JSON.stringify(newValue))
     }
