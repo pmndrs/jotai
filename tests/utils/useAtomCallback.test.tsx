@@ -108,3 +108,36 @@ it('useAtomCallback with set and update', async () => {
     getByText('changeable count: 1')
   })
 })
+
+it('useAtomCallback with set and update and arg', async () => {
+  const countAtom = atom(0)
+
+  const App = () => {
+    const [count] = useAtom(countAtom)
+    const setCount = useAtomCallback(
+      useCallback((get, set, arg: number) => {
+        set(countAtom, arg)
+        return arg
+      }, [])
+    )
+
+    return (
+      <div>
+        <p>count: {count}</p>
+        <button onClick={() => setCount(42)}>dispatch</button>
+      </div>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+  fireEvent.click(getByText('dispatch'))
+  await waitFor(() => {
+    getByText('count: 42')
+  })
+})

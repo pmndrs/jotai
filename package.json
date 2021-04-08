@@ -3,11 +3,14 @@
   "private": true,
   "version": "0.16.0",
   "description": "👻 Next gen state management that will spook you",
-  "module": "index.module.js",
   "main": "index.js",
+  "module": "esm/index.js",
   "types": "index.d.ts",
   "typesVersions": {
     "<4.0": {
+      "esm/*": [
+        "ts3.4/*"
+      ],
       "*": [
         "ts3.4/*"
       ]
@@ -17,37 +20,37 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./index.d.ts",
-      "module": "./index.module.js",
+      "module": "./esm/index.js",
       "default": "./index.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
-      "module": "./utils.module.js",
+      "module": "./esm/utils.js",
       "default": "./utils.js"
     },
     "./devtools": {
       "types": "./devtools.d.ts",
-      "module": "./devtools.module.js",
+      "module": "./esm/devtools.js",
       "default": "./devtools.js"
     },
     "./immer": {
       "types": "./immer.d.ts",
-      "module": "./immer.module.js",
+      "module": "./esm/immer.js",
       "default": "./immer.js"
     },
     "./optics": {
       "types": "./optics.d.ts",
-      "module": "./optics.module.js",
+      "module": "./esm/optics.js",
       "default": "./optics.js"
     },
     "./query": {
       "types": "./query.d.ts",
-      "module": "./query.module.js",
+      "module": "./esm/query.js",
       "default": "./query.js"
     },
     "./xstate": {
       "types": "./xstate.d.ts",
-      "module": "./xstate.module.js",
+      "module": "./esm/xstate.js",
       "default": "./xstate.js"
     }
   },
@@ -73,7 +76,7 @@
     "test": "jest && jest --setupFiles ./tests/setProviderLessMode.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/index.d.ts dist/index.module.d.ts && shx cp dist/utils.d.ts dist/utils.module.d.ts && shx cp dist/devtools.d.ts dist/devtools.module.d.ts && shx cp dist/immer.d.ts dist/immer.module.d.ts && shx cp dist/optics.d.ts dist/optics.module.d.ts && shx cp dist/query.d.ts dist/query.module.d.ts && shx cp dist/xstate.d.ts dist/xstate.module.d.ts && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {

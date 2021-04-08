@@ -5,9 +5,8 @@ import {
   WritableAtom,
   WithInitialValue,
   PrimitiveAtom,
+  NonFunction,
 } from './types'
-
-type AnyFunction = (...args: any[]) => any
 
 let keyCount = 0 // global key count for all atoms
 
@@ -19,21 +18,16 @@ export function atom<Value, Update>(
 
 // write-only derived atom
 export function atom<Value, Update>(
-  read: Value,
+  read: NonFunction<Value>,
   write: Write<Update>
-): Value extends AnyFunction
-  ? never
-  : WritableAtom<Value, Update> & WithInitialValue<Value>
+): WritableAtom<Value, Update> & WithInitialValue<Value>
 
 // read-only derived atom
 export function atom<Value>(read: Read<Value>): Atom<Value>
 
-// invalid read-only derived atom
-export function atom(read: AnyFunction): never
-
 // primitive atom
 export function atom<Value>(
-  initialValue: Value
+  initialValue: NonFunction<Value>
 ): PrimitiveAtom<Value> & WithInitialValue<Value>
 
 export function atom<Value, Update>(

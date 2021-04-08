@@ -3,15 +3,14 @@ import { atom, useAtom } from 'jotai'
 
 import type { Getter, Setter, Scope } from '../core/types'
 
-export function useAtomCallback<Result>(
-  callback: (get: Getter, set: Setter) => Result,
-  scope?: Scope
-): () => Promise<Result>
+type Callback<Result, Arg> = undefined extends Arg
+  ? (arg?: Arg) => Promise<Result>
+  : (arg: Arg) => Promise<Result>
 
 export function useAtomCallback<Result, Arg>(
   callback: (get: Getter, set: Setter, arg: Arg) => Result,
   scope?: Scope
-): (arg: Arg) => Promise<Result>
+): Callback<Result, Arg>
 
 export function useAtomCallback<Result, Arg>(
   callback: (get: Getter, set: Setter, arg: Arg) => Result,
