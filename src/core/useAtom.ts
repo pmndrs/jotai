@@ -3,7 +3,14 @@ import { useContext, useCallback, useDebugValue } from 'react'
 import { getStoreContext } from './contexts'
 import { readAtom, subscribeAtom } from './vanilla'
 import type { State } from './vanilla'
-import type { Atom, WritableAtom, SetAtom } from './types'
+import type {
+  Atom,
+  WritableAtom,
+  SyncWritableAtom,
+  AsyncWritableAtom,
+  SyncSetAtom,
+  AsyncSetAtom,
+} from './types'
 import { useMutableSource } from './useMutableSource'
 
 const isWritable = <Value, Update>(
@@ -12,8 +19,12 @@ const isWritable = <Value, Update>(
   !!(atom as WritableAtom<Value, Update>).write
 
 export function useAtom<Value, Update>(
-  atom: WritableAtom<Value, Update>
-): [Value, SetAtom<Update>]
+  atom: SyncWritableAtom<Value, Update>
+): [Value, SyncSetAtom<Update>]
+
+export function useAtom<Value, Update>(
+  atom: AsyncWritableAtom<Value, Update>
+): [Value, AsyncSetAtom<Update>]
 
 export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 

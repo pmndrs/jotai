@@ -11,17 +11,27 @@ export type Setter = <Value, Update>(
   atom: WritableAtom<Value, Update>,
   update: Update
 ) => void
-export type Write<Update> = (
+export type SyncWrite<Update> = (
   get: Getter,
   set: Setter,
   update: Update
-) => void | Promise<void>
+) => void
+export type AsyncWrite<Update> = (
+  get: Getter,
+  set: Setter,
+  update: Update
+) => Promise<void>
+export type Write<Update> = SyncWrite<Update> | AsyncWrite<Update>
 
 export type Scope = symbol | string | number
 
-export type SetAtom<Update> = undefined extends Update
-  ? (update?: Update) => void | Promise<void>
-  : (update: Update) => void | Promise<void>
+export type SyncSetAtom<Update> = undefined extends Update
+  ? (update?: Update) => void
+  : (update: Update) => void
+export type AsyncSetAtom<Update> = undefined extends Update
+  ? (update?: Update) => Promise<void>
+  : (update: Update) => Promise<void>
+export type SetAtom<Update> = SyncSetAtom<Update> | AsyncSetAtom<Update>
 
 export type OnUnmount = () => void
 export type OnMount<Update> = <S extends SetAtom<Update>>(
@@ -35,10 +45,17 @@ export type Atom<Value> = {
   read: Read<Value>
 }
 
-export type WritableAtom<Value, Update> = Atom<Value> & {
-  write: Write<Update>
+export type SyncWritableAtom<Value, Update> = Atom<Value> & {
+  write: SyncWrite<Update>
   onMount?: OnMount<Update>
 }
+export type AsyncWritableAtom<Value, Update> = Atom<Value> & {
+  write: AsyncWrite<Update>
+  onMount?: OnMount<Update>
+}
+export type WritableAtom<Value, Update> =
+  | SyncWritableAtom<Value, Update>
+  | AsyncWritableAtom<Value, Update>
 
 // This is an internal type and subjects to change.
 export type WithInitialValue<Value> = {
