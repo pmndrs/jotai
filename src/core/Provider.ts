@@ -1,17 +1,28 @@
-import React, { createElement, useCallback, useRef, useDebugValue } from 'react'
+import React, {
+  createElement,
+  useCallback,
+  useRef,
+  useDebugValue,
+  createContext,
+} from 'react'
 
 import type { AnyAtom, Scope } from './types'
 import { subscribeAtom } from './vanilla'
 import type { AtomState, State } from './vanilla'
-import { createStore, getStoreContext } from './contexts'
+import {
+  createStore,
+  getStoreContext,
+  RegisteredAtomsContext,
+} from './contexts'
 import type { Store } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
   scope?: Scope
-}> = ({ initialValues, scope, children }) => {
+}> = ({ initialValues, scope, children: baseChildren }) => {
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
+  let children = baseChildren
 
   if (
     typeof process === 'object' &&
@@ -29,6 +40,11 @@ export const Provider: React.FC<{
     useDebugState(
       storeRef.current as ReturnType<typeof createStore>,
       atomsRef.current
+    )
+    children = createElement(
+      RegisteredAtomsContext.Provider,
+      { value: atomsRef.current },
+      baseChildren
     )
     /* eslint-enable react-hooks/rules-of-hooks */
   } else {
