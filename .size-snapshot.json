@@ -13,6 +13,34 @@
       }
     }
   },
+  "rxjs.js": {
+    "bundled": 1233,
+    "minified": 504,
+    "gzipped": 281,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
+  },
+  "valtio.js": {
+    "bundled": 1111,
+    "minified": 555,
+    "gzipped": 320,
+    "treeshaked": {
+      "rollup": {
+        "code": 37,
+        "import_statements": 37
+      },
+      "webpack": {
+        "code": 1054
+      }
+    }
+  },
   "immer.js": {
     "bundled": 1526,
     "minified": 797,
@@ -24,20 +52,6 @@
       },
       "webpack": {
         "code": 1104
-      }
-    }
-  },
-  "query.js": {
-    "bundled": 2957,
-    "minified": 1267,
-    "gzipped": 612,
-    "treeshaked": {
-      "rollup": {
-        "code": 57,
-        "import_statements": 49
-      },
-      "webpack": {
-        "code": 1078
       }
     }
   },
@@ -55,49 +69,7 @@
       }
     }
   },
-  "xstate.js": {
-    "bundled": 2799,
-    "minified": 1268,
-    "gzipped": 629,
-    "treeshaked": {
-      "rollup": {
-        "code": 29,
-        "import_statements": 29
-      },
-      "webpack": {
-        "code": 1145
-      }
-    }
-  },
-  "devtools.module.js": {
-    "bundled": 1989,
-    "minified": 1051,
-    "gzipped": 594,
-    "treeshaked": {
-      "rollup": {
-        "code": 28,
-        "import_statements": 28
-      },
-      "webpack": {
-        "code": 1045
-      }
-    }
-  },
-  "immer.module.js": {
-    "bundled": 1526,
-    "minified": 797,
-    "gzipped": 388,
-    "treeshaked": {
-      "rollup": {
-        "code": 42,
-        "import_statements": 42
-      },
-      "webpack": {
-        "code": 1104
-      }
-    }
-  },
-  "query.module.js": {
+  "query.js": {
     "bundled": 2957,
     "minified": 1267,
     "gzipped": 612,
@@ -111,21 +83,7 @@
       }
     }
   },
-  "optics.module.js": {
-    "bundled": 1645,
-    "minified": 805,
-    "gzipped": 422,
-    "treeshaked": {
-      "rollup": {
-        "code": 32,
-        "import_statements": 32
-      },
-      "webpack": {
-        "code": 1061
-      }
-    }
-  },
-  "xstate.module.js": {
+  "xstate.js": {
     "bundled": 2799,
     "minified": 1268,
     "gzipped": 629,
@@ -153,24 +111,10 @@
       }
     }
   },
-  "utils.module.js": {
-    "bundled": 10423,
-    "minified": 5036,
-    "gzipped": 1949,
-    "treeshaked": {
-      "rollup": {
-        "code": 28,
-        "import_statements": 28
-      },
-      "webpack": {
-        "code": 1224
-      }
-    }
-  },
   "index.js": {
-    "bundled": 20148,
-    "minified": 9586,
-    "gzipped": 3050,
+    "bundled": 19924,
+    "minified": 9413,
+    "gzipped": 3031,
     "treeshaked": {
       "rollup": {
         "code": 14,
@@ -178,34 +122,6 @@
       },
       "webpack": {
         "code": 1266
-      }
-    }
-  },
-  "index.module.js": {
-    "bundled": 19921,
-    "minified": 9410,
-    "gzipped": 3026,
-    "treeshaked": {
-      "rollup": {
-        "code": 14,
-        "import_statements": 14
-      },
-      "webpack": {
-        "code": 1266
-      }
-    }
-  },
-  "rxjs.js": {
-    "bundled": 1233,
-    "minified": 504,
-    "gzipped": 281,
-    "treeshaked": {
-      "rollup": {
-        "code": 14,
-        "import_statements": 14
-      },
-      "webpack": {
-        "code": 998
       }
     }
   }

@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.16.0",
   "description": "👻 Next gen state management that will spook you",
-  "module": "esm/index.js",
   "main": "index.js",
+  "module": "esm/index.js",
   "types": "index.d.ts",
   "typesVersions": {
     "<4.0": {
@@ -53,6 +53,11 @@
       "module": "./esm/xstate.js",
       "default": "./xstate.js"
     },
+    "./valtio": {
+      "types": "./valtio.d.ts",
+      "module": "./esm/valtio.js",
+      "default": "./valtio.js"
+    },
     "./rxjs": {
       "types": "./rxjs.d.ts",
       "module": "./esm/rxjs.js",
@@ -73,6 +78,7 @@
     "build:optics": "rollup -c --config-optics",
     "build:query": "rollup -c --config-query",
     "build:xstate": "rollup -c --config-xstate",
+    "build:valtio": "rollup -c --config-valtio",
     "build:rxjs": "rollup -c --config-rxjs",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '{src,tests}/**/*.{js,ts,jsx,tsx}'",
@@ -188,6 +194,7 @@
     "shx": "^0.3.3",
     "tslib": "^2.1.0",
     "typescript": "^4.2.3",
+    "valtio": "^1.0.3",
     "xstate": "^4.17.1"
   },
   "peerDependencies": {
@@ -196,6 +203,7 @@
     "react": ">=16.8",
     "react-query": "*",
     "rxjs": "*",
+    "valtio": "*",
     "xstate": "*"
   },
   "peerDependenciesMeta": {
@@ -209,6 +217,9 @@
       "optional": true
     },
     "rxjs": {
+      "optional": true
+    },
+    "valtio": {
       "optional": true
     },
     "xstate": {

@@ -6,8 +6,8 @@ import esbuild from 'rollup-plugin-esbuild'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 
 const createBabelConfig = require('./babel.config')
-const { root } = path.parse(process.cwd())
 const extensions = ['.js', '.ts', '.tsx']
+const { root } = path.parse(process.cwd())
 
 function external(id) {
   return !id.startsWith('.') && !id.startsWith(root)
