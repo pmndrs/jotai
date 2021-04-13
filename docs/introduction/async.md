@@ -2,7 +2,7 @@
 
 Async support is first class in jotai. It fully leverages React Suppense.
 
-> Technically Suspense usage other than React.lazy is still unsupported / undocumented in React 17. If this is blocking, check out [guides/no-suspense](../guides/no-suspense.md).
+> Technically, Suspense usage other than React.lazy is still unsupported / undocumented in React 17. If this is blocking, check out [guides/no-suspense](../guides/no-suspense.md).
 
 ## Suspense
 
@@ -26,7 +26,7 @@ Having more `<Suspense>`s in the component tree is possible.
 The `read` function of an atom can return a promise.
 It will suspend and re-render when the promise is fulfilled.
 
-Most importantly, useAtom only returns resolved value.
+Most importantly, useAtom only returns a resolved value.
 
 ```js
 const countAtom = atom(1)
@@ -59,7 +59,7 @@ regardless of its value. (The atom value can be just `null`.)
 const countAtom = atom(1)
 const asyncIncrementAtom = atom(null, async (get, set) => {
   // await something
-  set(countAtom, get(countAtom) * 2)
+  set(countAtom, get(countAtom) + 1)
 })
 
 const Component = () => {
