@@ -187,7 +187,7 @@
     "shx": "^0.3.3",
     "tslib": "^2.1.0",
     "typescript": "^4.2.3",
-    "valtio": "^1.0.2",
+    "valtio": "^1.0.3",
     "xstate": "^4.17.1"
   },
   "peerDependencies": {
