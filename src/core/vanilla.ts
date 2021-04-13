@@ -397,16 +397,6 @@ const writeAtomState = <Value, Update>(
           }
           throw aState.p // read promise
         }
-        if (
-          aState.r === aState.i &&
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
-        ) {
-          console.warn(
-            'Reading invalidated atom state in write operation. We return a stale value for now.',
-            a
-          )
-        }
         if ('v' in aState) {
           return aState.v // value
         }
@@ -436,7 +426,7 @@ const writeAtomState = <Value, Update>(
       update
     )
     if (promiseOrVoid instanceof Promise) {
-      const promise = promiseOrVoid.then(() => {
+      const promise = promiseOrVoid.finally(() => {
         setAtomWritePromise(state, atom)
         if (isPendingPromisesExpired) {
           flushPending(state)
