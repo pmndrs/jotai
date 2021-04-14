@@ -1,4 +1,4 @@
-# Big Atoms
+# Large objects
 
 Sometimes we have big data we need to keep into atoms, we may need to change that data in some levels, or we need to use part of that data, but we can't listen to all these changes or use all that data for just a specific part.
 
