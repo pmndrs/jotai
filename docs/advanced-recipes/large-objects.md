@@ -61,7 +61,7 @@ If we change the `film` property of the above data example, the `peopleAtom` won
 We use this utility for atoms that return arrays as their values, for example the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array.
 
 ```jsx
-const peopleAtom = focusAtom(dataAtom, (optic) => optic.prop('people'))
+const peopleAtomsAtom = splitAtom(peopleAtom)
 ```
 
 And that's how we use it in components.
