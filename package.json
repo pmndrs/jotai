@@ -52,6 +52,11 @@
       "types": "./xstate.d.ts",
       "module": "./esm/xstate.js",
       "default": "./xstate.js"
+    },
+    "./valtio": {
+      "types": "./valtio.d.ts",
+      "module": "./esm/valtio.js",
+      "default": "./valtio.js"
     }
   },
   "files": [
@@ -68,6 +73,7 @@
     "build:optics": "rollup -c --config-optics",
     "build:query": "rollup -c --config-query",
     "build:xstate": "rollup -c --config-xstate",
+    "build:valtio": "rollup -c --config-valtio",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '{src,tests}/**/*.{js,ts,jsx,tsx}'",
     "eslint:ci": "eslint '{src,tests}/**/*.{js,ts,jsx,tsx}'",
@@ -181,6 +187,7 @@
     "shx": "^0.3.3",
     "tslib": "^2.1.0",
     "typescript": "^4.2.3",
+    "valtio": "^1.0.3",
     "xstate": "^4.17.1"
   },
   "peerDependencies": {
@@ -188,6 +195,7 @@
     "optics-ts": "*",
     "react": ">=16.8",
     "react-query": "*",
+    "valtio": "*",
     "xstate": "*"
   },
   "peerDependenciesMeta": {
@@ -198,6 +206,9 @@
       "optional": true
     },
     "react-query": {
+      "optional": true
+    },
+    "valtio": {
       "optional": true
     },
     "xstate": {
