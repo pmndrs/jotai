@@ -19,7 +19,7 @@ export function useAtomsSnapshot() {
     },
     [atoms]
   )
-  const state = useMutableSource(mutableSource, getState, subscribe)
+  const state: State = useMutableSource(mutableSource, getState, subscribe)
 
   // todo: make this a map and type the state
   return [atoms, state]
