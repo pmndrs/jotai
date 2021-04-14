@@ -15,7 +15,7 @@ export function atomWithStore<T extends State>(store: StoreApi<T>) {
         typeof update === 'function'
           ? (update as (prev: T) => T)(get(baseAtom))
           : update
-      store.setState(newState, true)
+      store.setState(newState, true /* replace */)
     }
   )
   return derivedAtom
