@@ -1,32 +1,4 @@
 {
-  "valtio.js": {
-    "bundled": 1111,
-    "minified": 555,
-    "gzipped": 320,
-    "treeshaked": {
-      "rollup": {
-        "code": 37,
-        "import_statements": 37
-      },
-      "webpack": {
-        "code": 1054
-      }
-    }
-  },
-  "immer.js": {
-    "bundled": 1526,
-    "minified": 797,
-    "gzipped": 388,
-    "treeshaked": {
-      "rollup": {
-        "code": 42,
-        "import_statements": 42
-      },
-      "webpack": {
-        "code": 1104
-      }
-    }
-  },
   "devtools.js": {
     "bundled": 1989,
     "minified": 1051,
@@ -52,6 +24,34 @@
       },
       "webpack": {
         "code": 1061
+      }
+    }
+  },
+  "immer.js": {
+    "bundled": 1526,
+    "minified": 797,
+    "gzipped": 388,
+    "treeshaked": {
+      "rollup": {
+        "code": 42,
+        "import_statements": 42
+      },
+      "webpack": {
+        "code": 1104
+      }
+    }
+  },
+  "valtio.js": {
+    "bundled": 1111,
+    "minified": 555,
+    "gzipped": 320,
+    "treeshaked": {
+      "rollup": {
+        "code": 37,
+        "import_statements": 37
+      },
+      "webpack": {
+        "code": 1054
       }
     }
   },
