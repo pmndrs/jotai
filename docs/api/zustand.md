@@ -1,33 +1,33 @@
-This doc describes `jotai/valtio` bundle.
+This doc describes `jotai/zustand` bundle.
 
 Jotai's state resides in React, but sometimes it would be nice
 to intract with the world outside React.
-Valtio provides a proxy interface that can be used to store some values
+Zustand provides a store interface that can be used to hold some values
 and sync with atoms in jotai.
-This only uses the vanilla api of valtio.
+This only uses the vanilla api of zustand.
 
 ## Install
 
-You have to install `valtio` to access this bundle and its functions.
+You have to install `zustand` to access this bundle and its functions.
 
 ```
-npm install valtio
+npm install zustand
 # or
-yarn add valtio
+yarn add zustand
 ```
 
-## atomWithProxy
+## atomWithStore
 
-`atomWithProxy` creates a new atom with valtio proxy.
+`atomWithStore` creates a new atom with zustand store.
 It's two-way binding and you can change the value from both ends.
 
 ```js
 import { useAtom } from 'jotai'
-import { atomWithProxy } from 'jotai/valtio'
-import { proxy } from 'valtio/vanilla'
+import { atomWithStore } from 'jotai/zustand'
+import create from 'zustand/vanilla'
 
-const proxyState = proxy({ count: 0 })
-const stateAtom = atomWithProxy(proxyState)
+const store = create(() => ({ count: 0 }))
+const stateAtom = atomWithStore(store)
 const Counter: React.FC = () => {
   const [state, setState] = useAtom(stateAtom)
 
@@ -47,4 +47,4 @@ const Counter: React.FC = () => {
 
 ### Examples
 
-https://codesandbox.io/s/react-typescript-forked-f5u4l
+TODO
