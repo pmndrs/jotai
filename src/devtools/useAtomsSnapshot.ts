@@ -4,6 +4,8 @@ import { State, subscribeAtom } from '../core/vanilla'
 import { RegisteredAtomsContext } from '../core/contexts'
 import { useMutableSource } from '../core/useMutableSource'
 
+// This is not done at all, slowing iterating on the API.
+
 export function useAtomsSnapshot() {
   const StoreContext = getStoreContext()
   const [mutableSource] = useContext(StoreContext)
@@ -21,8 +23,8 @@ export function useAtomsSnapshot() {
   )
   const state: State = useMutableSource(mutableSource, getState, subscribe)
 
-  // todo: make this a map and type the state
-  return [atoms, state]
+  // TODO: Make this a map and type the state
+  return [atoms, state] as const
 }
 
 const getState = (state: State) => ({ ...state }) // shallow copy
