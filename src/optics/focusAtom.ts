@@ -5,31 +5,31 @@ import {
   setWeakCacheItem,
   WeakCache,
 } from '../utils/weakCache'
-import type { WritableAtom, SetStateAction, PrimitiveAtom } from '../core/types'
+import type { WritableAtom, SetStateAction, NonFunction } from '../core/types'
 
 const focusAtomCache: WeakCache<WritableAtom<any, any>> = new WeakMap()
 
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
 export function focusAtom<S, A>(
-  atom: PrimitiveAtom<S>,
+  baseAtom: WritableAtom<S, NonFunction<S>>,
   callback: (optic: O.OpticFor<S>) => O.Prism<S, any, A>
 ): WritableAtom<A | undefined, SetStateAction<A>>
 
 export function focusAtom<S, A>(
-  atom: PrimitiveAtom<S>,
+  baseAtom: WritableAtom<S, NonFunction<S>>,
   callback: (optic: O.OpticFor<S>) => O.Traversal<S, any, A>
-): WritableAtom<Array<A>, SetStateAction<A>>
+): WritableAtom<A[], SetStateAction<A>>
 
 export function focusAtom<S, A>(
-  atom: PrimitiveAtom<S>,
+  baseAtom: WritableAtom<S, NonFunction<S>>,
   callback: (
     optic: O.OpticFor<S>
   ) => O.Lens<S, any, A> | O.Equivalence<S, any, A> | O.Iso<S, any, A>
 ): WritableAtom<A, SetStateAction<A>>
 
 export function focusAtom<S, A>(
-  baseAtom: PrimitiveAtom<S>,
+  baseAtom: WritableAtom<S, NonFunction<S>>,
   callback: (
     optic: O.OpticFor<S>
   ) =>
@@ -38,27 +38,20 @@ export function focusAtom<S, A>(
     | O.Iso<S, any, A>
     | O.Prism<S, any, A>
     | O.Traversal<S, any, A>
-):
-  | WritableAtom<A | undefined, SetStateAction<A>>
-  | WritableAtom<Array<A>, SetStateAction<A>>
-  | PrimitiveAtom<S> {
+) {
   const deps = [baseAtom, callback] as const
   const cachedAtom = getWeakCacheItem(focusAtomCache, deps)
   if (cachedAtom) {
     return cachedAtom
   }
   const focus = callback(O.optic<S>())
-  const derivedAtom = atom<A, SetStateAction<A>>(
-    (get) => {
-      const newValue = getValueUsingOptic(focus, get(baseAtom))
-      return newValue as any
-    },
-    (_, set, update) => {
+  const derivedAtom = atom(
+    (get) => getValueUsingOptic(focus, get(baseAtom)),
+    (get, set, update: SetStateAction<A>) => {
       const newValueProducer = isFunction(update)
         ? O.modify(focus)(update)
         : O.set(focus)(update)
-
-      set(baseAtom, newValueProducer)
+      set(baseAtom, newValueProducer(get(baseAtom)) as NonFunction<S>)
     }
   )
   derivedAtom.scope = baseAtom.scope
