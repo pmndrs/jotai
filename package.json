@@ -57,6 +57,11 @@
       "types": "./valtio.d.ts",
       "module": "./esm/valtio.js",
       "default": "./valtio.js"
+    },
+    "./redux": {
+      "types": "./redux.d.ts",
+      "module": "./esm/redux.js",
+      "default": "./redux.js"
     }
   },
   "files": [
@@ -74,6 +79,7 @@
     "build:query": "rollup -c --config-query",
     "build:xstate": "rollup -c --config-xstate",
     "build:valtio": "rollup -c --config-valtio",
+    "build:redux": "rollup -c --config-redux",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '{src,tests}/**/*.{js,ts,jsx,tsx}'",
     "eslint:ci": "eslint '{src,tests}/**/*.{js,ts,jsx,tsx}'",
