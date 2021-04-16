@@ -1,4 +1,46 @@
 {
+  "redux.js": {
+    "bundled": 364,
+    "minified": 193,
+    "gzipped": 154,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
+  },
+  "valtio.js": {
+    "bundled": 1111,
+    "minified": 555,
+    "gzipped": 320,
+    "treeshaked": {
+      "rollup": {
+        "code": 37,
+        "import_statements": 37
+      },
+      "webpack": {
+        "code": 1054
+      }
+    }
+  },
+  "zustand.js": {
+    "bundled": 455,
+    "minified": 235,
+    "gzipped": 176,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
+  },
   "devtools.js": {
     "bundled": 1989,
     "minified": 1051,
@@ -10,20 +52,6 @@
       },
       "webpack": {
         "code": 1045
-      }
-    }
-  },
-  "optics.js": {
-    "bundled": 1645,
-    "minified": 805,
-    "gzipped": 422,
-    "treeshaked": {
-      "rollup": {
-        "code": 32,
-        "import_statements": 32
-      },
-      "webpack": {
-        "code": 1061
       }
     }
   },
@@ -41,17 +69,17 @@
       }
     }
   },
-  "valtio.js": {
-    "bundled": 1111,
-    "minified": 555,
-    "gzipped": 320,
+  "optics.js": {
+    "bundled": 1613,
+    "minified": 811,
+    "gzipped": 426,
     "treeshaked": {
       "rollup": {
-        "code": 37,
-        "import_statements": 37
+        "code": 32,
+        "import_statements": 32
       },
       "webpack": {
-        "code": 1054
+        "code": 1061
       }
     }
   },
@@ -70,9 +98,9 @@
     }
   },
   "xstate.js": {
-    "bundled": 2799,
-    "minified": 1268,
-    "gzipped": 629,
+    "bundled": 2812,
+    "minified": 1279,
+    "gzipped": 634,
     "treeshaked": {
       "rollup": {
         "code": 29,
@@ -84,9 +112,9 @@
     }
   },
   "utils.js": {
-    "bundled": 10423,
-    "minified": 5036,
-    "gzipped": 1949,
+    "bundled": 10432,
+    "minified": 5045,
+    "gzipped": 1953,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -98,9 +126,9 @@
     }
   },
   "index.js": {
-    "bundled": 19924,
-    "minified": 9413,
-    "gzipped": 3031,
+    "bundled": 19939,
+    "minified": 9428,
+    "gzipped": 3032,
     "treeshaked": {
       "rollup": {
         "code": 14,

@@ -62,6 +62,11 @@
       "types": "./zustand.d.ts",
       "module": "./esm/zustand.js",
       "default": "./zustand.js"
+    },
+    "./redux": {
+      "types": "./redux.d.ts",
+      "module": "./esm/redux.js",
+      "default": "./redux.js"
     }
   },
   "files": [
@@ -80,6 +85,7 @@
     "build:xstate": "rollup -c --config-xstate",
     "build:valtio": "rollup -c --config-valtio",
     "build:zustand": "rollup -c --config-zustand",
+    "build:redux": "rollup -c --config-redux",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '{src,tests}/**/*.{js,ts,jsx,tsx}'",
     "eslint:ci": "eslint '{src,tests}/**/*.{js,ts,jsx,tsx}'",
@@ -187,6 +193,7 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-query": "^3.13.2",
+    "redux": "^4.0.5",
     "rollup": "^2.44.0",
     "rollup-plugin-esbuild": "^3.0.2",
     "rollup-plugin-size-snapshot": "^0.12.0",
