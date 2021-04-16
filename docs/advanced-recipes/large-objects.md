@@ -56,7 +56,7 @@ If we change the `film` property of the above data example, the `peopleAtom` won
 
 > The `splitAtom` utility is useful, when you want to get an atom for each element in a list. [jotai/utils](https://github.com/pmndrs/jotai/blob/master/docs/api/utils.md#splitatom)
 
-We use this utility for atoms that return arrays as their values, for example the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array.
+We use this utility for atoms that return arrays as their values, for example the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array. If the array atom is writable, `splitAtom` returned atoms are going to be writable, if the array atom is read-only, items atoms are going to be read-only too.
 
 ```jsx
 const peopleAtomsAtom = splitAtom(peopleAtom)
