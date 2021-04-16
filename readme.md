@@ -189,3 +189,7 @@ yarn add jotai react
   - [Optics](./docs/api/optics.md) ([optics-ts](https://github.com/akheron/optics-ts) integration)
   - [Query](./docs/api/query.md) ([react-query](https://github.com/tannerlinsley/react-query) integration)
   - [XState](./docs/api/xstate.md) ([xstate](https://github.com/davidkpiano/xstate) integration)
+- API (Experimental)
+  - [Valtio](./docs/api/valtio.md) ([valtio](https://github.com/pmndrs/valtio) integration)
+  - [Zustand](./docs/api/zustand.md) ([zustand](https://github.com/pmndrs/zustand) integration)
+  - [Redux](./docs/api/redux.md) ([redux](https://github.com/reduxjs/redux) integration)
