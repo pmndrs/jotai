@@ -1,5 +1,7 @@
 # Large objects
 
+> All of the examples and descriptions below are based on this [codesandbox](https://codesandbox.io/s/zealous-sun-f2qnl?file=/src/App.tsx), so it will give you a better understanding if you check it out along these examples.
+
 Sometimes we have big data we need to keep into atoms, we may need to change that data in some levels, or we need to use part of that data, but we can't listen to all these changes or use all that data for just a specific part.
 
 consider this example.
@@ -17,26 +19,22 @@ const initialData = {
       information: { height: 167 },
       siblings: ['John Doe', 'Doe John'],
     },
-    // ... n more
   ],
   films: [
     {
       title: 'A New Hope',
-      id: 4,
-      planets: [{ name: 'Tatooine' }, { name: 'Alderaan' }],
+      planets: ['Tatooine', 'Alderaan'],
     },
     {
       title: 'The Empire Strikes Back',
-      id: 5,
-      planets: [{ name: 'Hoth' }],
+      planets: ['Hoth'],
     },
-    // ... n more
   ],
-  // ... n more specific fields
+  info: {
+    tags: ['People', 'Films', 'Planets', 'Titles'],
+  },
 }
 ```
-
-[codesandbox](https://codesandbox.io/s/zealous-sun-f2qnl?file=/src/App.tsx)
 
 ## `focusAtom`
 
@@ -73,6 +71,36 @@ const People = () => {
     <div>
       {peopleAtoms.map((personAtom) => (
         <Person personAtom={personAtom} key={`${personAtom}`} />
+      ))}
+    </div>
+  )
+}
+```
+
+## `selectAtom`
+
+> This function creates a derived atom whose value is a function of the original atom's value. [jotai/utils](https://github.com/pmndrs/jotai/blob/master/docs/api/utils.md#selectatom)
+
+This utility is similar to `focusAtom`, but we use it when we have a read-only atom to select part of it, and it always returns a read-only atom.
+
+Assume we want to consume the info data, and its data is always unchangeable, so we can make a read-only atom from it and select that created atom.
+
+```jsx
+// first we create a read-only atom based on initialData.info
+const readOnlyInfoAtom = atom((get) => get(dataAtom).info)
+```
+
+Then we're going to consume it in our component like that.
+
+```jsx
+const Tags: React.FC = () => {
+  const tagsAtom = selectAtom(readOnlyInfoAtom, (s) => s.tags)
+  const tagsAtomsAtom = splitAtom(tagsAtom)
+  const [tagAtoms] = useAtom(tagsAtomsAtom)
+  return (
+    <div>
+      {tagAtoms.map((tagAtom) => (
+        <Tag key={`${tagAtom}`} tagAtom={tagAtom} />
       ))}
     </div>
   )
