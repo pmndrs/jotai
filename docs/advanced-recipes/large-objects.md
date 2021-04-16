@@ -79,7 +79,7 @@ const People = () => {
 
 ## `selectAtom`
 
-> This function creates a derived atom whose value is a function of the original atom's value. [jotai/utils](https://github.com/pmndrs/jotai/blob/master/docs/api/utils.md#selectatom)
+> This function creates a derived atom whose value is a function of the original atom's value. [jotai/utils](../api/utils.md#selectatom)
 
 This utility is similar to `focusAtom`, but we use it when we have a read-only atom to select part of it, and it always returns a read-only atom.
 
