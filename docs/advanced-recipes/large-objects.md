@@ -90,7 +90,7 @@ Assume we want to consume the info data, and its data is always unchangeable, so
 const readOnlyInfoAtom = atom((get) => get(dataAtom).info)
 ```
 
-Then we're going to consume it in our component like that.
+Then we can going to consume it in our component:
 
 ```jsx
 const Tags: React.FC = () => {
