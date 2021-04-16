@@ -15,7 +15,7 @@ npm install redux
 yarn add redux
 ```
 
-## atomWithProxy
+## atomWithStore
 
 `atomWithStore` creates a new atom with redux store.
 It's two-way binding and you can change the value from both ends.
