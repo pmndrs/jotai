@@ -38,7 +38,7 @@ const initialData = {
 
 ## `focusAtom`
 
-> `focusAtom` creates a new atom, based on the focus that you pass to it. [jotai/optics](https://github.com/pmndrs/jotai/blob/master/docs/api/optics.md#focusatom)
+> `focusAtom` creates a new atom, based on the focus that you pass to it. [jotai/optics](../api/optics.md#focusatom)
 
 We use this utility to focus an atom and create an atom of a specific part of the data. For example we may need to consume the people property of the above data, Here's how we do it.
 
