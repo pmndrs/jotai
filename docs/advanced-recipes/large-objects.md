@@ -54,7 +54,7 @@ If we change the `film` property of the above data example, the `peopleAtom` won
 
 ## `splitAtom`
 
-> The `splitAtom` utility is useful for when you want to get an atom for each element in a list. [jotai/utils](https://github.com/pmndrs/jotai/blob/master/docs/api/utils.md#splitatom)
+> The `splitAtom` utility is useful, when you want to get an atom for each element in a list. [jotai/utils](https://github.com/pmndrs/jotai/blob/master/docs/api/utils.md#splitatom)
 
 We use this utility for atoms that return arrays as their values, for example the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array.
 
