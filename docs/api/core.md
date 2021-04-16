@@ -86,7 +86,7 @@ const Provider: React.FC<{
 }>
 ```
 
-Atom configs don't hold values. Atom values are stored in a Provider. A Provider can be used like React context provider. Usually, we place one Provider at the root of the app, however you could use multiple Providers, each storing different atom values for its component tree.
+Atom configs don't hold values. Atom values reside in separate stores. A Provider is a component that contains a store and provides atom values under the component tree. A Provider works just like React context provider. If you don't use a Provider, it works as provider-less mode with a default store. A Provider will be necessary if we need to hold different atom values for different component trees. Provider also has some capabilities described below, which doesn't exist in the provider-less mode.
 
 ```jsx
 const Root = () => (
@@ -96,9 +96,13 @@ const Root = () => (
 )
 ```
 
+### `initialValues` prop
+
 A Provider accepts an optional prop `initialValues` which you can specify
 some initial atom values.
 The use cases of this are testing and server side rendering.
+
+#### Example
 
 ```jsx
 const TestRoot = () => (
@@ -108,12 +112,30 @@ const TestRoot = () => (
 )
 ```
 
+#### TypeScript
+
+The `initialValues` prop is not type friendly.
+We can mitigate it by using a helper function.
+
+```ts
+const createInitialValues = () => {
+  const initialValues: (readonly [Atom<unknown>, unknonw])[] = []
+  const get = () => initialValues
+  const set = <Value>(anAtom: Atom<Value>, value: Value) => {
+    initialValues.push([anAtom, value])
+  }
+  return { get, set }
+}
+```
+
+### `scope` prop
+
 A Provider accepts an optional prop `scope` which you can use for scoped atoms.
 It works only for atoms with the same scope.
 The recommendation for the scope value is a unique symbol.
 The use case of scope is for library usage.
 
-### Example
+#### Example
 
 ```jsx
 const myScope = Symbol()
@@ -150,7 +172,9 @@ The `updateValue` takes just one argument, which will be passed to the third arg
 
 ---
 
-# How atom dependency works
+## Notes
+
+### How atom dependency works
 
 To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh the dependencies and dependents. For example, If A depends on B, it means that B has a dependency on A, and A is a dependent of B.
 
@@ -163,7 +187,7 @@ The dependency will initially be empty. On first use, we run the read function a
 When we re-run the read function (because its dependency (=textAtom) is updated),
 the dependency is built again, which is the same in this case. We then remove stale dependents and replace with the latest one.
 
-# Atoms can be created on demand
+### Atoms can be created on demand
 
 Basic examples in readme only show defining atoms globally outside components.
 There is no restrictions about when we create an atom.
@@ -182,7 +206,7 @@ See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or
 
 Check [`atomFamily`](../api/utils.md#atomfamily) in utils for parameterized atoms.
 
-# Some more notes about atoms
+### Some more notes about atoms
 
 - If you create a primitive atom, it will use predefined read/write functions to emulate `useState` behavior.
 - If you create an atom with read/write functions, they can provide any behavior with some restrictions as follows.
