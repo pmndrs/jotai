@@ -1,4 +1,4 @@
-# Large objects
+# Large Objects
 
 > All of the examples and descriptions below are based on this [codesandbox](https://codesandbox.io/s/zealous-sun-f2qnl?file=/src/App.tsx), so it will give you a better understanding if you check it out along these examples.
 
@@ -43,8 +43,8 @@ const initialData = {
 We use this utility to focus an atom and create an atom of a specific part of the data. For example we may need to consume the people property of the above data, Here's how we do it.
 
 ```jsx
-import { atom } from "jotai";
-import { focusAtom } from "jotai/optics";
+import { atom } from 'jotai'
+import { focusAtom } from 'jotai/optics'
 
 const dataAtom = atom(initialData)
 
@@ -62,7 +62,7 @@ If we change the `film` property of the above data example, the `peopleAtom` won
 We use this utility for atoms that return arrays as their values, for example the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array. If the array atom is writable, `splitAtom` returned atoms are going to be writable, if the array atom is read-only, items atoms are going to be read-only too.
 
 ```jsx
-import { splitAtom } from "jotai/utils";
+import { splitAtom } from 'jotai/utils'
 
 const peopleAtomsAtom = splitAtom(peopleAtom)
 ```
@@ -98,8 +98,8 @@ const readOnlyInfoAtom = atom((get) => get(dataAtom).info)
 Then we can going to consume it in our component:
 
 ```jsx
-import { atom, useAtom } from "jotai";
-import { selectAtom, splitAtom } from "jotai/utils";
+import { atom, useAtom } from 'jotai'
+import { selectAtom, splitAtom } from 'jotai/utils'
 
 const Tags: React.FC = () => {
   const tagsAtom = selectAtom(readOnlyInfoAtom, (s) => s.tags)
