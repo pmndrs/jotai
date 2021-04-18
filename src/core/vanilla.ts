@@ -15,6 +15,31 @@ const hasInitialValue = <T extends Atom<unknown>>(
   (T extends Atom<infer Value> ? WithInitialValue<Value> : never) =>
   'init' in atom
 
+const ORIGINAL_PROMISE = Symbol()
+const INTERRUPT_PROMISE = Symbol()
+type InterruptablePromise = Promise<void> & {
+  [ORIGINAL_PROMISE]: Promise<void>
+  [INTERRUPT_PROMISE]: () => void
+}
+
+const isInterruptablePromise = (
+  promise: Promise<void>
+): promise is InterruptablePromise =>
+  !!(promise as InterruptablePromise)[ORIGINAL_PROMISE]
+
+const createInterruptablePromise = (
+  promise: Promise<void>
+): InterruptablePromise => {
+  let interrupt: (() => void) | undefined
+  const interruptablePromise = new Promise<void>((resolve, reject) => {
+    interrupt = resolve
+    promise.then(resolve, reject)
+  }) as InterruptablePromise
+  interruptablePromise[ORIGINAL_PROMISE] = promise
+  interruptablePromise[INTERRUPT_PROMISE] = interrupt as () => void
+  return interruptablePromise
+}
+
 type Revision = number
 type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
@@ -22,7 +47,8 @@ type ReadDependencies = Map<AnyAtom, Revision>
 // immutable atom state
 export type AtomState<Value = unknown> = {
   e?: Error // read error
-  p?: Promise<void> // read promise
+  p?: InterruptablePromise // read promise
+  c?: () => void // cancel read promise
   w?: Promise<void> // write promise
   v?: Value
   r: Revision
@@ -120,12 +146,17 @@ const setAtomValue = <Value>(
   promise?: Promise<void>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
-  if (promise && promise !== atomState?.p) {
+  if (
+    promise &&
+    promise !== atomState.p &&
+    promise !== atomState.p?.[ORIGINAL_PROMISE]
+  ) {
     // newer async read is running, not updating
     return
   }
   delete atomState.e // read error
   delete atomState.p // read promise
+  delete atomState.c // cancel read promise
   delete atomState.i // invalidated revision
   if (!('v' in atomState) || !Object.is(atomState.v, value)) {
     atomState.v = value
@@ -143,11 +174,16 @@ const setAtomReadError = <Value>(
   promise?: Promise<void>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
-  if (promise && promise !== atomState?.p) {
+  if (
+    promise &&
+    promise !== atomState.p &&
+    promise !== atomState.p?.[ORIGINAL_PROMISE]
+  ) {
     // newer async read is running, not updating
     return
   }
   delete atomState.p // read promise
+  delete atomState.c // cancel read promise
   delete atomState.i // invalidated revision
   atomState.e = error // read error
   commitAtomState(state, atom, atomState)
@@ -161,7 +197,15 @@ const setAtomReadPromise = <Value>(
   dependencies: Set<AnyAtom>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
-  atomState.p = promise // read promise
+  atomState.c?.() // cancel read promise
+  if (isInterruptablePromise(promise)) {
+    atomState.p = promise // read promise
+    delete atomState.c // this promise is from another atom state, shouldn't be canceled here
+  } else {
+    const interruptablePromise = createInterruptablePromise(promise)
+    atomState.p = interruptablePromise // read promise
+    atomState.c = interruptablePromise[INTERRUPT_PROMISE]
+  }
   commitAtomState(state, atom, atomState)
   mountDependencies(state, atom, atomState, prevDependencies)
 }
