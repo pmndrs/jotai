@@ -126,9 +126,9 @@
     }
   },
   "index.js": {
-    "bundled": 20898,
-    "minified": 9908,
-    "gzipped": 3176,
+    "bundled": 21026,
+    "minified": 9962,
+    "gzipped": 3186,
     "treeshaked": {
       "rollup": {
         "code": 14,

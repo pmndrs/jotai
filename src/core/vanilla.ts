@@ -154,6 +154,7 @@ const setAtomValue = <Value>(
     // newer async read is running, not updating
     return
   }
+  atomState.c?.() // cancel read promise
   delete atomState.e // read error
   delete atomState.p // read promise
   delete atomState.c // cancel read promise
@@ -182,6 +183,7 @@ const setAtomReadError = <Value>(
     // newer async read is running, not updating
     return
   }
+  atomState.c?.() // cancel read promise
   delete atomState.p // read promise
   delete atomState.c // cancel read promise
   delete atomState.i // invalidated revision
