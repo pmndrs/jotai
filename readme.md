@@ -193,3 +193,5 @@ yarn add jotai react
   - [Valtio](./docs/api/valtio.md) ([valtio](https://github.com/pmndrs/valtio) integration)
   - [Zustand](./docs/api/zustand.md) ([zustand](https://github.com/pmndrs/zustand) integration)
   - [Redux](./docs/api/redux.md) ([redux](https://github.com/reduxjs/redux) integration)
+- Advanced Recipes
+  - [Large Objects](./docs/advanced-recipes/large-objects.md)
