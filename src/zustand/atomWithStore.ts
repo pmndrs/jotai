@@ -4,10 +4,14 @@ import type { SetStateAction, NonFunction } from '../core/types'
 
 export function atomWithStore<T extends State>(store: StoreApi<T>) {
   const baseAtom = atom(store.getState() as NonFunction<T>)
-  baseAtom.onMount = (setValue) =>
-    store.subscribe(() => {
+  baseAtom.onMount = (setValue) => {
+    const callback = () => {
       setValue(store.getState())
-    })
+    }
+    const unsub = store.subscribe(callback)
+    callback()
+    return unsub
+  }
   const derivedAtom = atom(
     (get) => get(baseAtom),
     (get, _set, update: SetStateAction<T>) => {

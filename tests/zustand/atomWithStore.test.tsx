@@ -7,6 +7,8 @@ import { atomWithStore } from '../../src/zustand'
 it('count state', async () => {
   const store = create(() => ({ count: 0 }))
   const stateAtom = atomWithStore(store)
+  store.setState((prev) => ({ count: prev.count + 1 }))
+
   const Counter: React.FC = () => {
     const [state, setState] = useAtom(stateAtom)
 
@@ -29,15 +31,15 @@ it('count state', async () => {
     </Provider>
   )
 
-  await findByText('count: 0')
+  await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  expect(store.getState().count).toBe(1)
+  await findByText('count: 2')
+  expect(store.getState().count).toBe(2)
 
   act(() => {
     store.setState((prev) => ({ count: prev.count + 1 }))
   })
-  await findByText('count: 2')
-  expect(store.getState().count).toBe(2)
+  await findByText('count: 3')
+  expect(store.getState().count).toBe(3)
 })

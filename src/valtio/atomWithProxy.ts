@@ -26,10 +26,14 @@ const applyChanges = <T extends object>(proxyObject: T, prev: T, next: T) => {
 
 export function atomWithProxy<Value extends object>(proxyObject: Value) {
   const baseAtom = atom(snapshot(proxyObject) as NonFunction<Value>)
-  baseAtom.onMount = (setValue) =>
-    subscribe(proxyObject, () => {
+  baseAtom.onMount = (setValue) => {
+    const callback = () => {
       setValue(snapshot(proxyObject) as Value)
-    })
+    }
+    const unsub = subscribe(proxyObject, callback)
+    callback()
+    return unsub
+  }
   const derivedAtom = atom(
     (get) => get(baseAtom),
     (get, _set, update: SetStateAction<Value>) => {
