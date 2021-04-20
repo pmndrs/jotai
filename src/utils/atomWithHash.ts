@@ -10,9 +10,9 @@ export function atomWithHash<Value>(
     initialValue as any,
     (get, set, update) => {
       const newValue =
-        typeof typeof update === 'function'
-          ? (update as (prev: Value) => Value)(get(anAtom))
-          : (update as Value)
+        typeof update === 'function'
+          ? (update as Function)(get(anAtom))
+          : update
       set(anAtom, newValue)
       const searchParams = new URLSearchParams(location.hash.slice(1))
       searchParams.set(key, serialize(newValue))
