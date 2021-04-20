@@ -1,100 +1,116 @@
 # Getting Started
 
-(TODO: rewrite)
-
-This doc describes about jotai basic behavior.
-For async behavior, refer [./async.md](async.md).
-
-# Three basic functions
-
-There are only three basic functions (except for bridge functions).
-All other functions like in utils are
-built with there three functions.
+State in jotai is a set of atoms.
+An atom is a piece of state.
+Unlike useState in React, atoms are not tied to specific components.
+Let's see how to define and use atoms.
 
 ## atom
 
-`atom` is a function to create an atom config.
-The atom config is an object and the object identity is important.
-It can be created from anywhere.
-You shouldn't modify the object, after the initialization.
+There's an exported function called `atom`, which is to create
+an atom config. We call it "config" as it's just a definition
+and it doesn't hold a value. We may just call it "atom" if the context is clear.
+
+To create a primitive atom (config), all you need is pass an initial value.
 
 ```js
-const primitiveAtom = atom(initialValue)
-const derivedAtomWithRead = atom(readFunction)
-const derivedAtomWithReadWrite = atom(readFunction, writeFunction)
-const derivedAtomWithWriteOnly = atom(null, writeFunction)
+import { atom } from 'jotai'
+
+const priceAtom = atom(10)
+const messageAtom = atom('hello')
+const productAtom = atom({ id: 12, name: 'good stuff' })
 ```
 
-There are two kinds of atoms: a writable atom and a read-only atom.
-Primitive atoms are always writable.
-Derived atoms are writable if `writeFunction` is specified.
-The `writeFunction` of primitive atoms is equivalent to the setState of React.useState.
+You can also create derived atoms. We have three patterns.
 
-The signature of `readFunction` is `(get) => Value | Promise<Value>`, and `get` is a function that takes an atom config and returns its value stored in Provider described below.
-Dependency is tracked, so if `get` is used for an atom at least once, the readFunction will be reevaluated whenever the atom value is changed.
+- Read-only atom
+- Write-only atom
+- Read-Write atom
 
-The signature of writeFunction is `(get, set, update) => void | Promise<void>`.
-`get` is similar to the one described above, but it doesn't track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `update` is an arbitrary value that we receive from the updating function returned by `useAtom` described below.
+To create derived atoms, we pass a read function and an optional write function.
 
-## Provider
+```js
+const readOnlyAtom = atom((get) => get(priceAtom) * 2)
+const writeOnlyAtom = atom(
+  null, // it's a convention to pass `null` for the first argument
+  (get, set, update) => {
+    // `update` is any single value we receive for updating this atom
+    set(priceAtom, get(priceAtom) - update.discount)
+  }
+)
+const readWriteAtom = atom(
+  (get) => get(priceAtom) * 2,
+  (get, set, newPrice) => {
+    set(priceAtom, newPrice / 2)
+    // you can set as many atoms as you want at the same time
+  }
+)
+```
 
-Atom configs don't hold values. Atom values are stored in a Provider. A Provider can be used like React context provider. Usually, we place one Provider at the root of the app, however you could use multiple Providers, each storing different atom values for its component tree.
+`get` in the read function is to read the atom value.
+It's reactive and read dependencies are tracked.
+
+`get` in the write function is also to read atom value, and it's not tracked.
+Furthermore, it can't read unresolved async values.
+For async behavior, please refer [./async.md](async.md).
+
+`set` in the write function is to write atom value.
+It will invoke the write function of the target atom.
+
+Atom configs can be created anywhere, but referential equality is important.
+They can be created dynamically too.
+To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memorization, use `useMemo`.
 
 ```jsx
-const Root = () => (
-  <Provider>
-    <App />
-  </Provider>
-)
+const Component = ({ value }) => {
+  const valueAtom = useMemo(() => atom({ value }), [value])
+  // ...
+}
 ```
 
 ## useAtom
 
-The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it is unmounted, and the atom config no longer exists, the value is removed from the Provider.
+The `useAtom` hook is to read an atom value in the state.
+The state can be seen as a WeakMap of atom configs and atom values.
+
+The `useAtom` function returns the atom value and an updating function as a tuple,
+just like React's `useState`.
+It takes an atom config created with `atom()`.
+
+Initially, there is no value stored in the state.
+The first time the atom is used via `useAtom`,
+the initial value is stored in the state.
+If the atom is a derived atom, the read function is executed to compute an initial value.
+When an atom is no longer used, meaning all the components using it is unmounted,
+and the atom config no longer exists, the value in the state is garbage collected.
 
 ```js
 const [value, updateValue] = useAtom(anAtom)
 ```
 
-The `updateValue` takes just one argument, which will be passed to the third argument of writeFunction of the atom. The behavior totally depends on how the writeFunction is implemented.
+The `updateValue` takes just one argument, which will be passed
+to the third argument of write function of the atom.
+The behavior totally depends on how the write function is implemented.
 
-# How atom dependency works
+## Provider
 
-To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh dependencies. For example, If A depends on B, it means that B is a dependency of A, and A is a dependent of B.
+Provider is to provide a state for component sub tree.
+Multiple Providers can be used for multiple subtrees, even nested.
+This works just like the normal React Context.
 
-```js
-const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
+If an atom is used in a tree which no Providers exist,
+it will use the default state. This is so-called provider-less mode.
+
+Providers are usefule for some reasons.
+
+1. It can provide a different state for each sub tree.
+2. Provider can hold some debug information.
+3. Provider can accept initial values of atoms.
+
+```jsx
+const SubTree = () => (
+  <Provider>
+    <Child />
+  </Provider>
+)
 ```
-
-The read function is the first parameter of the atom.
-The dependency will initially be empty. On first use, we run the read function and know that uppercaseAtom depends on textAtom. textAtom is the dependency of uppercaseAtom. So, add uppercaseAtom to the dependents of textAtom.
-When we re-run the read function (because its dependency (=textAtom) is updated),
-the dependency is built again, which is the same in this case. We then remove stale dependents and replace with the latest one.
-
-# Atoms can be created on demand
-
-Basic examples in readme only show defining atoms globally outside components.
-There is no restrictions about when we create an atom.
-As long as we know atoms are identified by their object referential identity,
-it's okay to create them at anytime.
-
-If you create atoms in render functions, you would typically want to use
-some hooks like `useRef` or `useMemo`.
-
-You can create an atom and store it wth `useState` or even in another atom.
-See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
-
-You can cache atoms somewhere globally.
-See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or
-[that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
-
-Check [`atomFamily`](../api/utils.md#atomfamily) in utils too.
-
-# Some more notes about atoms
-
-- If you create a primitive atom, it will use predefined read/write functions to emulate `useState` behavior.
-- If you create an atom with read/write functions, they can provide any behavior with some restrictions as follows.
-- `read` function will be invoked during React render phase, so the function has to be pure. What is pure in React is described [here](https://gist.github.com/sebmarkbage/75f0838967cd003cd7f9ab938eb1958f).
-- `write` function will be invoked where you called initially and in useEffect for following invocations. So, you shouldn't call `write` in render.
-- When an atom is initially used with `useAtom`, it will invoke `read` function to get the initial value, this is recursive process. If an atom value exists in Provider, it will be used instead of invoking `read` function.
-- Once an atom is used (and stored in Provider), it's value is only updated if its dependencies are updated (including updating directly with useAtom).

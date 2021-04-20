@@ -17,55 +17,60 @@ const strAtomWithPersistence = atom(
 )
 ```
 
-## Combined into a single atom
+## A helper function with localStorage and JSON parse
 
 ```js
-const langAtom = atom(
-  localStorage.getItem('lang') || 'es',
-  (get, set, newLang) => {
-    localStorage.setItem('lang', newLang)
-    set(langAtom, newLang)
-  }
-)
-```
-
-However, the above is not typescript friendly.
-We could use a util for typescript.
-
-```ts
-import { atomWithReducer } from 'jotai/utils'
-
-const langAtom = atomWithReducer(
-  localStorage.getItem('lang') || 'es',
-  (_prev, newLang: string) => {
-    localStorage.setItem('lang', newLang)
-    return newLang
-  }
-)
-```
-
-## Atom onMount
-
-```js
-const strAtom = atom('foo')
-
-const persistAtom = atom(
-  (get) => get(strAtom),
-  async (get, set, action) => {
-    if (action.type === 'init') {
-      const str = await AsyncStorage.getItem(key)
-      set(strAtom, str)
-    } else if (action.type === 'set') {
-      const str = action.value
-      set(strAtom, str)
-      await AsyncStorage.setItem(key, str)
+const atomWithLocalStorage = (key, initialValue) => {
+  const getInitialValue = () => {
+    const item = localStorage.getItem(key)
+    if (item !== null) {
+      return JSON.parse(item)
     }
+    return initialValue
   }
-)
-persistAtom.onMount = (dispatch) => {
-  dispatch({ type: 'init' })
+  const baseAtom = atom(getInitialValue())
+  const derivedAtom = atom(
+    (get) => get(baseAtom),
+    (get, set, update) => {
+      const nextValue =
+        typeof update === 'function' ? update(get(baseAtom)) : update
+      set(baseAtom, nextValue)
+      localStorage.setItem(key, JSON.stringify(nextValue))
+    }
+  )
+  return derivedAtom
 }
 ```
+
+(Error handling should be added.)
+
+## A helper function with AsyncStorage and JSON parse
+
+This requires [onMount](../api/core.js#onmount).
+
+```js
+const atomWithAsyncStorage = (key, initialValue) => {
+  const baseAtom = atom(initialValue)
+  baseAtom.onMount = (setValue) => {
+    ;(async () => {
+      const item = await AsyncStorage.getItem(key)
+      setValue(JSON.parse(item))
+    })()
+  }
+  const derivedAtom = atom(
+    (get) => get(baseAtom),
+    (get, set, update) => {
+      const nextValue =
+        typeof update === 'function' ? update(get(baseAtom)) : update
+      set(baseAtom, nextValue)
+      AsyncStorage.setItem(key, JSON.stringify(nextValue))
+    }
+  )
+  return derivedAtom
+}
+```
+
+---
 
 ## A serialize atom pattern
 

@@ -426,7 +426,7 @@ const writeAtomState = <Value, Update>(
       update
     )
     if (promiseOrVoid instanceof Promise) {
-      const promise = promiseOrVoid.then(() => {
+      const promise = promiseOrVoid.finally(() => {
         setAtomWritePromise(state, atom)
         if (isPendingPromisesExpired) {
           flushPending(state)

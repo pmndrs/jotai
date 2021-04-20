@@ -6,8 +6,8 @@ import esbuild from 'rollup-plugin-esbuild'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 
 const createBabelConfig = require('./babel.config')
-const { root } = path.parse(process.cwd())
 const extensions = ['.js', '.ts', '.tsx']
+const { root } = path.parse(process.cwd())
 
 function external(id) {
   return !id.startsWith('.') && !id.startsWith(root)
@@ -69,12 +69,12 @@ export default function (args) {
     c = c.slice('config-'.length)
     return [
       createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
-      createESMConfig(`src/${c}.ts`, `dist/${c}.module.js`),
+      createESMConfig(`src/${c}.ts`, `dist/esm/${c}.js`),
     ]
   }
   return [
     createDeclarationConfig('src/index.ts', 'dist'),
     createCommonJSConfig('src/index.ts', 'dist/index.js'),
-    createESMConfig('src/index.ts', 'dist/index.module.js'),
+    createESMConfig('src/index.ts', 'dist/esm/index.js'),
   ]
 }
