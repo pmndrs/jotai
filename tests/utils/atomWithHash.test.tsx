@@ -6,7 +6,7 @@ import { atomWithHash } from '../../src/utils'
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
 it('simple count', async () => {
-  const countAtom = atomWithHash('count', 1)
+  const countAtom = atomWithHash(1, 'count')
 
   const Counter: React.FC = () => {
     const [count, setCount] = useAtom(countAtom)
