@@ -1,6 +1,6 @@
 import { subscribe, snapshot } from 'valtio/vanilla'
 import { atom } from 'jotai'
-import type { SetStateAction, NonFunction } from '../core/types'
+import type { SetStateAction } from '../core/types'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -25,17 +25,17 @@ const applyChanges = <T extends object>(proxyObject: T, prev: T, next: T) => {
 }
 
 export function atomWithProxy<Value extends object>(proxyObject: Value) {
-  const baseAtom = atom(snapshot(proxyObject) as NonFunction<Value>)
+  const baseAtom = atom(snapshot(proxyObject) as Value)
   baseAtom.onMount = (setValue) =>
     subscribe(proxyObject, () => {
       setValue(snapshot(proxyObject) as Value)
     })
   const derivedAtom = atom(
-    (get) => get(baseAtom),
+    (get) => get(baseAtom) as Value,
     (get, _set, update: SetStateAction<Value>) => {
       const newValue =
         typeof update === 'function'
-          ? (update as (prev: Value) => Value)(get(baseAtom))
+          ? (update as (prev: Value) => Value)(get(baseAtom) as Value)
           : update
       applyChanges(proxyObject, snapshot(proxyObject) as Value, newValue)
     }

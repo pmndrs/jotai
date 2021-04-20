@@ -5,11 +5,13 @@ import {
   setWeakCacheItem,
   WeakCache,
 } from '../utils/weakCache'
-import type { WritableAtom, SetStateAction, NonFunction } from '../core/types'
+import type { WritableAtom, SetStateAction } from '../core/types'
 
 const focusAtomCache: WeakCache<WritableAtom<any, any>> = new WeakMap()
 
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
+
+type NonFunction<T> = [T] extends [Function] ? never : T
 
 export function focusAtom<S, A>(
   baseAtom: WritableAtom<S, NonFunction<S>>,
