@@ -572,3 +572,40 @@ const App = () => {
 ### Codesandbox
 
 https://codesandbox.io/s/react-typescript-forked-krwsv?file=/src/App.tsx
+
+## atomWithHash
+
+### Usage
+
+```js
+atomWithHash(key, initialValue): PrimitiveAtom
+```
+
+This creats a new atom that is connected with URL hash.
+The hash must be in the URLSearchParams format.
+It's two-way binding: changing atom value will change the hash and
+changing the hash will change the atom value.
+This function works only with DOM.
+
+### Examples
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithHash } from 'jotai/utils'
+
+const countAtom = atomWithHash('count', 1)
+
+const Counter: React.FC = () => {
+  const [count, setCount] = useAtom(countAtom)
+  return (
+    <>
+      <div>count: {count}</div>
+      <button onClick={() => setCount((c) => c + 1)}>button</button>
+    </>
+  )
+}
+```
+
+### Codesandbox
+
+TODO
