@@ -15,17 +15,17 @@ const hasInitialValue = <T extends Atom<unknown>>(
   (T extends Atom<infer Value> ? WithInitialValue<Value> : never) =>
   'init' in atom
 
-const ORIGINAL_PROMISE = Symbol()
+const IS_EQUAL_PROMISE = Symbol()
 const INTERRUPT_PROMISE = Symbol()
 type InterruptablePromise = Promise<void> & {
-  [ORIGINAL_PROMISE]: Promise<void>
+  [IS_EQUAL_PROMISE]: (p: Promise<void>) => boolean
   [INTERRUPT_PROMISE]: () => void
 }
 
 const isInterruptablePromise = (
   promise: Promise<void>
 ): promise is InterruptablePromise =>
-  !!(promise as InterruptablePromise)[ORIGINAL_PROMISE]
+  !!(promise as InterruptablePromise)[INTERRUPT_PROMISE]
 
 const createInterruptablePromise = (
   promise: Promise<void>
@@ -35,7 +35,8 @@ const createInterruptablePromise = (
     interrupt = resolve
     promise.then(resolve, reject)
   }) as InterruptablePromise
-  interruptablePromise[ORIGINAL_PROMISE] = promise
+  interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>) =>
+    p === interruptablePromise || p === promise
   interruptablePromise[INTERRUPT_PROMISE] = interrupt as () => void
   return interruptablePromise
 }
@@ -146,11 +147,7 @@ const setAtomValue = <Value>(
   promise?: Promise<void>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
-  if (
-    promise &&
-    promise !== atomState.p &&
-    promise !== atomState.p?.[ORIGINAL_PROMISE]
-  ) {
+  if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
     // newer async read is running, not updating
     return
   }
@@ -175,11 +172,7 @@ const setAtomReadError = <Value>(
   promise?: Promise<void>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
-  if (
-    promise &&
-    promise !== atomState.p &&
-    promise !== atomState.p?.[ORIGINAL_PROMISE]
-  ) {
+  if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
     // newer async read is running, not updating
     return
   }
