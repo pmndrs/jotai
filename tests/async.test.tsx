@@ -740,13 +740,9 @@ it('should override promise returned by async read (#434)', async () => {
 })
 
 it('should override promise as atom value (#430)', async () => {
-  const countAtom = atom<number>(
-    (new Promise((r) =>
-      setTimeout(r, 3600 * 1000)
-    ) as unknown) as number /* FIXME*/
-  )
+  const countAtom = atom(new Promise((r) => setTimeout(r, 3600 * 1000)))
   const setCountAtom = atom(null, (_get, set, arg: number) => {
-    set(countAtom, (Promise.resolve(arg) as unknown) as number /* FIXME */)
+    set(countAtom, Promise.resolve(arg))
   })
 
   const Counter: React.FC = () => {
