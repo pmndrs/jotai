@@ -11,7 +11,7 @@ export function atomWithHash<Value>(
     (get, set, update) => {
       const newValue =
         typeof update === 'function'
-          ? (update as Function)(get(anAtom))
+          ? (update as (prev: Value) => Value)(get(anAtom))
           : update
       set(anAtom, newValue)
       const searchParams = new URLSearchParams(location.hash.slice(1))
@@ -23,7 +23,7 @@ export function atomWithHash<Value>(
     const callback = () => {
       const searchParams = new URLSearchParams(location.hash.slice(1))
       const str = searchParams.get(key)
-      if (str) {
+      if (str !== null) {
         setAtom(deserialize(str))
       }
     }
