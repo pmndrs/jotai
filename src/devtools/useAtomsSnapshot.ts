@@ -1,8 +1,9 @@
-import { useCallback, useContext } from 'react'
+import { useCallback, useContext, useMemo } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
-import { State, subscribeAtom } from '../core/vanilla'
+import { AtomState, State, subscribeAtom } from '../core/vanilla'
 import { RegisteredAtomsContext } from '../core/contexts'
 import { useMutableSource } from '../core/useMutableSource'
+import { AnyAtom } from '../core/types'
 
 // This is not done at all, slowing iterating on the API.
 
@@ -23,8 +24,15 @@ export function useAtomsSnapshot() {
   )
   const state: State = useMutableSource(mutableSource, getState, subscribe)
 
-  // TODO: Make this a map and type the state
-  return [atoms, state] as const
+  return useMemo(() => {
+    const atomToAtomStateTuples = atoms
+      .filter((atom) => !!state.m.get(atom))
+      .map<[AnyAtom, unknown]>((atom) => {
+        const atomState = state.a.get(atom) ?? ({} as AtomState)
+        return [atom, atomState.e || atomState.p || atomState.w || atomState.v]
+      })
+    return new Map(atomToAtomStateTuples)
+  }, [atoms, state])
 }
 
 const getState = (state: State) => ({ ...state }) // shallow copy
