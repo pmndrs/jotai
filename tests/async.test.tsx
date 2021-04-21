@@ -417,7 +417,7 @@ it('async get with another dep and useEffect on parent', async () => {
 })
 
 it('set promise atom value on write (#304)', async () => {
-  const countAtom = atom<any>(Promise.resolve(0))
+  const countAtom = atom(Promise.resolve(0))
   countAtom.debugLabel = 'countAtom'
   const asyncAtom = atom(null, (get, set, _arg) => {
     set(
@@ -429,7 +429,7 @@ it('set promise atom value on write (#304)', async () => {
 
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
-    return <div>count: {count}</div>
+    return <div>count: {count * 1}</div>
   }
 
   const Parent: React.FC = () => {
@@ -691,4 +691,87 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
   await findByText('count: -1')
+})
+
+it('should override promise returned by async read (#434)', async () => {
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(async (get) => {
+    const count = get(countAtom)
+    await new Promise((r) => setTimeout(r, count ? 100 : 3600 * 1000))
+    return count * 10
+  })
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const DelayedCounter: React.FC = () => {
+    const [delayedCount] = useAtom(asyncCountAtom)
+    return <div>delayedCount: {delayedCount}</div>
+  }
+
+  const { getByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+        <Suspense fallback="loading">
+          <DelayedCounter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('loading')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('delayedCount: 10')
+  })
+})
+
+it('should override promise as atom value (#430)', async () => {
+  const countAtom = atom(new Promise((r) => setTimeout(r, 3600 * 1000)))
+  const setCountAtom = atom(null, (_get, set, arg: number) => {
+    set(countAtom, Promise.resolve(arg))
+  })
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  const Control: React.FC = () => {
+    const [, setCount] = useAtom(setCountAtom)
+    return <button onClick={() => setCount(1)}>button</button>
+  }
+
+  const { getByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Control />
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('loading')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 1')
+  })
 })
