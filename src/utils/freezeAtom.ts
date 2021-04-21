@@ -13,23 +13,22 @@ const deepFreeze = (obj: any) => {
   return obj
 }
 
-export function freezeAtom<T extends Atom<any>>(anAtom: T) {
+export function freezeAtom<T extends Atom<any>>(anAtom: T): T {
   const frozenAtom: any = atom(
     (get) => deepFreeze(get(anAtom)),
     (_get, set, arg) => set(anAtom as any, arg)
   )
   frozenAtom.scope = anAtom.scope
-  return frozenAtom as T
+  return frozenAtom
 }
 
-const atomFrozen: typeof atom = ((read: any, write: any) => {
-  const anAtom = atom(read, write)
-  const origRead = anAtom.read
-  anAtom.read = (get: Getter) => deepFreeze(origRead(get))
-  return anAtom
-}) as any
-
-export const atomFrozenInDev =
-  typeof process === 'object' && process.env.NODE_ENV === 'development'
-    ? atomFrozen
-    : atom
+export function createFrozenAtom<A extends (...params: any[]) => Atom<any>>(
+  createAtom: A
+): A {
+  return ((...params: any[]) => {
+    const anAtom = (createAtom as any)(...params)
+    const origRead = anAtom.read
+    anAtom.read = (get: Getter) => deepFreeze(origRead(get))
+    return anAtom
+  }) as any
+}
