@@ -11,8 +11,16 @@ const applyChanges = <T extends object>(proxyObject: T, prev: T, next: T) => {
       delete proxyObject[key]
     } else if (Object.is(prev[key], next[key])) {
       // unchanged
-    } else if (isObject(prev[key]) && isObject(next[key])) {
-      applyChanges(proxyObject[key] as any, prev[key], next[key])
+    } else if (
+      isObject(proxyObject[key]) &&
+      isObject(prev[key]) &&
+      isObject(next[key])
+    ) {
+      applyChanges(
+        (proxyObject[key] as unknown) as object,
+        (prev[key] as unknown) as object,
+        (next[key] as unknown) as object
+      )
     } else {
       proxyObject[key] = next[key]
     }
@@ -28,18 +36,22 @@ const applyChanges = <T extends object>(proxyObject: T, prev: T, next: T) => {
 // Should we type it precisely?
 export function atomWithProxy<Value extends object>(proxyObject: Value) {
   const baseAtom = atom(snapshot(proxyObject))
-  baseAtom.onMount = (setValue) =>
-    subscribe(proxyObject, () => {
+  baseAtom.onMount = (setValue) => {
+    const callback = () => {
       setValue(snapshot(proxyObject))
-    })
+    }
+    const unsub = subscribe(proxyObject, callback)
+    callback()
+    return unsub
+  }
   const derivedAtom = atom(
     (get) => get(baseAtom) as Value,
     (get, _set, update: SetStateAction<Value>) => {
       const newValue =
         typeof update === 'function'
-          ? (update as Function)(get(baseAtom))
+          ? (update as (prev: Value) => Value)(get(baseAtom) as Value)
           : update
-      applyChanges(proxyObject, snapshot(proxyObject), newValue)
+      applyChanges(proxyObject, snapshot(proxyObject) as Value, newValue)
     }
   )
   return derivedAtom

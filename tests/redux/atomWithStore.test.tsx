@@ -14,6 +14,8 @@ it('count state', async () => {
   }
   const store = createStore(reducer)
   const storeAtom = atomWithStore(store)
+  store.dispatch({ type: 'INC' })
+
   const Counter: React.FC = () => {
     const [state, dispatch] = useAtom(storeAtom)
 
@@ -31,15 +33,15 @@ it('count state', async () => {
     </Provider>
   )
 
-  await findByText('count: 0')
+  await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  expect(store.getState().count).toBe(1)
+  await findByText('count: 2')
+  expect(store.getState().count).toBe(2)
 
   act(() => {
     store.dispatch({ type: 'INC' })
   })
-  await findByText('count: 2')
-  expect(store.getState().count).toBe(2)
+  await findByText('count: 3')
+  expect(store.getState().count).toBe(3)
 })

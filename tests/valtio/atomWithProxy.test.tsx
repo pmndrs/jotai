@@ -7,6 +7,8 @@ import { atomWithProxy } from '../../src/valtio'
 it('count state', async () => {
   const proxyState = proxy({ count: 0 })
   const stateAtom = atomWithProxy(proxyState)
+  ++proxyState.count
+
   const Counter: React.FC = () => {
     const [state, setState] = useAtom(stateAtom)
 
@@ -29,15 +31,15 @@ it('count state', async () => {
     </Provider>
   )
 
-  await findByText('count: 0')
+  await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  expect(proxyState.count).toBe(1)
-
-  ++proxyState.count
   await findByText('count: 2')
   expect(proxyState.count).toBe(2)
+
+  ++proxyState.count
+  await findByText('count: 3')
+  expect(proxyState.count).toBe(3)
 })
 
 it('nested count state', async () => {
