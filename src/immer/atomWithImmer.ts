@@ -2,10 +2,8 @@
 import { produce, Draft } from 'immer'
 import { atom, WritableAtom } from 'jotai'
 
-import type { NonFunction } from '../core/types'
-
 export function atomWithImmer<Value>(
-  initialValue: NonFunction<Value>
+  initialValue: Value
 ): WritableAtom<Value, (draft: Draft<Value>) => void> {
   const anAtom: any = atom(
     initialValue,
