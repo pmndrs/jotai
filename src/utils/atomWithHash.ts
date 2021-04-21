@@ -1,8 +1,8 @@
 import { atom, PrimitiveAtom } from 'jotai'
 
 export function atomWithHash<Value>(
-  initialValue: Value,
   key: string,
+  initialValue: Value,
   serialize: (val: Value) => string = JSON.stringify,
   deserialize: (str: string) => Value = JSON.parse
 ): PrimitiveAtom<Value> {

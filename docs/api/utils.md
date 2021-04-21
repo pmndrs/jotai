@@ -578,7 +578,7 @@ https://codesandbox.io/s/react-typescript-forked-krwsv?file=/src/App.tsx
 ### Usage
 
 ```js
-atomWithHash(initialValue, key): PrimitiveAtom
+atomWithHash(key, initialValue): PrimitiveAtom
 ```
 
 This creats a new atom that is connected with URL hash.
@@ -593,7 +593,7 @@ This function works only with DOM.
 import { useAtom } from 'jotai'
 import { atomWithHash } from 'jotai/utils'
 
-const countAtom = atomWithHash(1, 'count')
+const countAtom = atomWithHash('count', 1)
 
 const Counter: React.FC = () => {
   const [count, setCount] = useAtom(countAtom)
