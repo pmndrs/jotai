@@ -417,7 +417,7 @@ it('async get with another dep and useEffect on parent', async () => {
 })
 
 it('set promise atom value on write (#304)', async () => {
-  const countAtom = atom<any>(Promise.resolve(0))
+  const countAtom = atom(Promise.resolve(0))
   countAtom.debugLabel = 'countAtom'
   const asyncAtom = atom(null, (get, set, _arg) => {
     set(
@@ -429,7 +429,7 @@ it('set promise atom value on write (#304)', async () => {
 
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
-    return <div>count: {count}</div>
+    return <div>count: {(count as /* FIXME */ any) * 1}</div>
   }
 
   const Parent: React.FC = () => {
