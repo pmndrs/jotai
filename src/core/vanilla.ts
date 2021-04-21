@@ -127,7 +127,18 @@ const setAtomValue = <Value>(
   delete atomState.e // read error
   delete atomState.p // read promise
   delete atomState.i // invalidated revision
-  if (!('v' in atomState) || !Object.is(atomState.v, value)) {
+  let areEqual: boolean
+  // @ts-ignore
+  if (atom.equalityFn != null) {
+    // @ts-ignore
+    let equalityFn = atom.equalityFn as any
+    areEqual =
+      'v' in atomState &&
+      (Object.is(atomState.v, value) || equalityFn(atomState.v, value))
+  } else {
+    areEqual = 'v' in atomState && Object.is(atomState.v, value)
+  }
+  if (!areEqual) {
     atomState.v = value
     ++atomState.r // increment revision
   }

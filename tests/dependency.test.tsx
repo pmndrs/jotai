@@ -252,6 +252,129 @@ it('should bail out updating if not changed', async () => {
   expect(derivedFn).toHaveReturnedTimes(1)
 })
 
+it('should bail out updating if not changed (custom equalityFn)', async () => {
+  let commits: Record<string, number> = {}
+
+  const useCommitCount = (key: string) => {
+    useEffect(() => {
+      commits[key] = (commits[key] ?? 0) + 1
+    })
+  }
+
+  type V = { value: number }
+
+  const countAtom = atom<V>({ value: 0 })
+  const derivedFn = jest.fn().mockImplementation((get) => get(countAtom))
+  const derivedAtom = atom(derivedFn)
+  // @ts-ignore
+  derivedAtom.equalityFn = (a: V, b: V) => {
+    return a.value === b.value
+  }
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    useCommitCount('Counter')
+    return (
+      <>
+        <div>count: {count.value}</div>
+        <button onClick={() => setCount((c) => ({ value: 0 }))}>button</button>
+      </>
+    )
+  }
+
+  const DerivedCounter: React.FC = () => {
+    const [derived] = useAtom(derivedAtom)
+    useCommitCount('DerivedCounter')
+    return <div>derived: {derived.value}</div>
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Counter />
+      <DerivedCounter />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('derived: 0')
+  })
+  expect(commits.Counter).toEqual(1)
+  expect(commits.DerivedCounter).toEqual(1)
+  expect(derivedFn).toHaveReturnedTimes(1)
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('derived: 0')
+  })
+  expect(commits.Counter).toEqual(2)
+  expect(commits.DerivedCounter).toEqual(1)
+  expect(derivedFn).toHaveReturnedTimes(2)
+})
+
+it('should bail out updating if not changed (custom equalityFn) 2', async () => {
+  let commits: Record<string, number> = {}
+
+  const useCommitCount = (key: string) => {
+    useEffect(() => {
+      commits[key] = (commits[key] ?? 0) + 1
+    })
+  }
+
+  type V = { value: number }
+
+  const countAtom = atom<V>({ value: 0 })
+  // @ts-ignore
+  countAtom.equalityFn = (a: V, b: V) => {
+    return a.value === b.value
+  }
+
+  const derivedFn = jest.fn().mockImplementation((get) => get(countAtom))
+  const derivedAtom = atom(derivedFn)
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    useCommitCount('Counter')
+    return (
+      <>
+        <div>count: {count.value}</div>
+        <button onClick={() => setCount((c) => ({ value: 0 }))}>button</button>
+      </>
+    )
+  }
+
+  const DerivedCounter: React.FC = () => {
+    const [derived] = useAtom(derivedAtom)
+    useCommitCount('DerivedCounter')
+    return <div>derived: {derived.value}</div>
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Counter />
+      <DerivedCounter />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('derived: 0')
+  })
+  expect(commits.Counter).toEqual(1)
+  expect(commits.DerivedCounter).toEqual(1)
+  expect(derivedFn).toHaveReturnedTimes(1)
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('derived: 0')
+  })
+  expect(commits.Counter).toEqual(1)
+  expect(commits.DerivedCounter).toEqual(1)
+  expect(derivedFn).toHaveReturnedTimes(1)
+})
+
 it('should bail out updating if not changed, 2 level', async () => {
   const dataAtom = atom({ count: 1, obj: { anotherCount: 10 } })
   const getDataCountFn = jest

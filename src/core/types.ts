@@ -28,8 +28,12 @@ export type OnMount<Update> = <S extends SetAtom<Update>>(
   setAtom: S
 ) => OnUnmount | void
 
+export type EqualityFn<Value> = (a: Value, b: Value) => boolean
+
 export type Atom<Value> = {
   toString: () => string
+  // This crashes TypeScript compiler...
+  //equalityFn?: EqualityFn<Value>
   debugLabel?: string
   scope?: Scope
   read: Read<Value>
