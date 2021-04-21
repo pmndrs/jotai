@@ -429,7 +429,7 @@ it('set promise atom value on write (#304)', async () => {
 
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
-    return <div>count: {(count as /* FIXME */ any) * 1}</div>
+    return <div>count: {count * 1}</div>
   }
 
   const Parent: React.FC = () => {

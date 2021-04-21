@@ -7,6 +7,7 @@ import type {
   Getter,
   Setter,
   OnUnmount,
+  NonPromise,
 } from './types'
 
 const hasInitialValue = <T extends Atom<unknown>>(
@@ -51,7 +52,7 @@ export type AtomState<Value = unknown> = {
   p?: InterruptablePromise // read promise
   c?: () => void // cancel read promise
   w?: Promise<void> // write promise
-  v?: Value
+  v?: NonPromise<Value>
   r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
@@ -133,16 +134,13 @@ const wipAtomState = <Value>(
       ? atomState.d
       : new Map(),
   }
-  if (!atomState && hasInitialValue(atom)) {
-    nextAtomState.v = atom.init
-  }
   return [nextAtomState, atomState?.d]
 }
 
 const setAtomValue = <Value>(
   state: State,
   atom: Atom<Value>,
-  value: Value,
+  value: NonPromise<Value>,
   dependencies?: Set<AnyAtom>,
   promise?: Promise<void>
 ): void => {
@@ -277,7 +275,7 @@ const readAtomState = <Value>(
   }
   let error: Error | undefined
   let promise: Promise<void> | undefined
-  let value: Value | undefined
+  let value: NonPromise<Value> | undefined
   const dependencies = new Set<AnyAtom>()
   try {
     const promiseOrValue = atom.read(((a: AnyAtom) => {
@@ -311,7 +309,7 @@ const readAtomState = <Value>(
           setAtomValue(
             state,
             atom,
-            value,
+            value as NonPromise<Value>,
             dependencies,
             promise as Promise<void>
           )
@@ -332,7 +330,7 @@ const readAtomState = <Value>(
           flushPending(state)
         })
     } else {
-      value = promiseOrValue
+      value = promiseOrValue as NonPromise<Value>
     }
   } catch (errorOrPromise) {
     if (errorOrPromise instanceof Promise) {
@@ -349,7 +347,7 @@ const readAtomState = <Value>(
   } else if (promise) {
     setAtomReadPromise(state, atom, promise, dependencies)
   } else {
-    setAtomValue(state, atom, value, dependencies)
+    setAtomValue(state, atom, value as NonPromise<Value>, dependencies)
   }
   return getAtomState(state, atom) as AtomState<Value>
 }
