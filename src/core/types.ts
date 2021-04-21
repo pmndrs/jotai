@@ -1,9 +1,5 @@
 export type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
-export type NonFunction<Value> = Value extends (...args: any[]) => any
-  ? never
-  : Value
-
 export type Getter = <Value>(atom: Atom<Value>) => Value
 export type Read<Value> = (get: Getter) => Value | Promise<Value>
 
