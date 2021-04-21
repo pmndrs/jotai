@@ -33,7 +33,7 @@ export function useAtom<Value, Update>(
         throw atomState.w // write promise
       }
       if ('v' in atomState) {
-        return atomState.v as Value
+        return atomState.v as NonPromise<Value>
       }
       throw new Error('no atom value')
     },
@@ -48,7 +48,11 @@ export function useAtom<Value, Update>(
 
   const StoreContext = getStoreContext(atom.scope)
   const [mutableSource, updateAtom] = useContext(StoreContext)
-  const value: Value = useMutableSource(mutableSource, getAtomValue, subscribe)
+  const value: NonPromise<Value> = useMutableSource(
+    mutableSource,
+    getAtomValue,
+    subscribe
+  )
 
   const setAtom = useCallback(
     (update: Update) => {
