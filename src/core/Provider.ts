@@ -3,7 +3,8 @@ import React, {
   useCallback,
   useRef,
   useDebugValue,
-  createContext,
+  useReducer,
+  useEffect,
 } from 'react'
 
 import type { AnyAtom, Scope } from './types'
@@ -31,10 +32,12 @@ export const Provider: React.FC<{
   ) {
     /* eslint-disable react-hooks/rules-of-hooks */
     const atomsRef = useRef<AnyAtom[]>([])
+    const [, forceUpdate] = useReducer(() => ({}), {})
     if (storeRef.current === null) {
       // lazy initialization
       storeRef.current = createStore(initialValues, (newAtom) => {
         atomsRef.current.push(newAtom)
+        forceUpdate()
       })
     }
     useDebugState(

@@ -3,6 +3,14 @@ import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import { useAtomsSnapshot } from '../../src/devtools'
 
+beforeEach(() => {
+  process.env.NODE_ENV = 'development'
+})
+
+afterEach(() => {
+  process.env.NODE_ENV = 'test'
+})
+
 it('should register newly added atoms', async () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
@@ -26,9 +34,9 @@ it('should register newly added atoms', async () => {
   }
 
   const RegisteredAtomsCount: React.FC = () => {
-    const [atoms] = useAtomsSnapshot()
+    const atoms = useAtomsSnapshot()
 
-    return <p>atom count: {atoms.length}</p>
+    return <p>atom count: {atoms.size}</p>
   }
 
   const { findByText, getByText } = render(
@@ -39,6 +47,6 @@ it('should register newly added atoms', async () => {
   )
 
   await findByText('atom count: 1')
-  fireEvent.click(getByText('button'))
+  fireEvent.click(getByText('click'))
   await findByText('atom count: 2')
 })
