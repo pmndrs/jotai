@@ -13,7 +13,9 @@ const deepFreeze = (obj: any) => {
   return obj
 }
 
-export function freezeAtom<T extends Atom<any>>(anAtom: T): T {
+export function freezeAtom<AtomType extends Atom<any>>(
+  anAtom: AtomType
+): AtomType {
   const frozenAtom: any = atom(
     (get) => deepFreeze(get(anAtom)),
     (_get, set, arg) => set(anAtom as any, arg)
@@ -22,11 +24,11 @@ export function freezeAtom<T extends Atom<any>>(anAtom: T): T {
   return frozenAtom
 }
 
-export function createFrozenAtom<A extends (...params: any[]) => Atom<any>>(
-  createAtom: A
-): A {
+export function createFrozenAtom<
+  CreateAtom extends (...params: any[]) => Atom<any>
+>(createAtom: CreateAtom): CreateAtom {
   return ((...params: any[]) => {
-    const anAtom = (createAtom as any)(...params)
+    const anAtom = createAtom(...params)
     const origRead = anAtom.read
     anAtom.read = (get: Getter) => deepFreeze(origRead(get))
     return anAtom
