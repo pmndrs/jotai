@@ -1,6 +1,9 @@
 import { atom, Atom } from 'jotai'
 
 import type { Getter } from '../core/types'
+import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
+
+const freezeAtomCache = new WeakMap()
 
 const deepFreeze = (obj: any) => {
   if (typeof obj !== 'object' || obj === null) return
@@ -16,15 +19,21 @@ const deepFreeze = (obj: any) => {
 export function freezeAtom<AtomType extends Atom<any>>(
   anAtom: AtomType
 ): AtomType {
+  const deps: object[] = [anAtom]
+  const cachedAtom = getWeakCacheItem(freezeAtomCache, deps)
+  if (cachedAtom) {
+    return cachedAtom as AtomType
+  }
   const frozenAtom: any = atom(
     (get) => deepFreeze(get(anAtom)),
     (_get, set, arg) => set(anAtom as any, arg)
   )
   frozenAtom.scope = anAtom.scope
+  setWeakCacheItem(freezeAtomCache, deps, frozenAtom)
   return frozenAtom
 }
 
-export function createFrozenAtom<
+export function freezeAtomCreator<
   CreateAtom extends (...params: any[]) => Atom<any>
 >(createAtom: CreateAtom): CreateAtom {
   return ((...params: any[]) => {
