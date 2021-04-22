@@ -138,5 +138,19 @@
         "code": 1284
       }
     }
+  },
+  "rxjs.js": {
+    "bundled": 1233,
+    "minified": 504,
+    "gzipped": 281,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
   }
 }

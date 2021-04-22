@@ -198,7 +198,7 @@
     "rollup": "^2.45.2",
     "rollup-plugin-esbuild": "^4.0.1",
     "rollup-plugin-size-snapshot": "^0.12.0",
-    "rxjs": "^6.6.6",
+    "rxjs": "^6.6.7",
     "shx": "^0.3.3",
     "tslib": "^2.2.0",
     "typescript": "^4.2.4",
