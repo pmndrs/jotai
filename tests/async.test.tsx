@@ -740,14 +740,16 @@ it('should override promise returned by async read (#434)', async () => {
 })
 
 it('should override promise as atom value (#430)', async () => {
-  const countAtom = atom(new Promise((r) => setTimeout(r, 3600 * 1000)))
+  const countAtom = atom(
+    new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
+  )
   const setCountAtom = atom(null, (_get, set, arg: number) => {
     set(countAtom, Promise.resolve(arg))
   })
 
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
-    return <div>count: {count}</div>
+    return <div>count: {count * 1}</div>
   }
 
   const Control: React.FC = () => {
@@ -755,7 +757,7 @@ it('should override promise as atom value (#430)', async () => {
     return <button onClick={() => setCount(1)}>button</button>
   }
 
-  const { getByText } = render(
+  const { getByText, findByText } = render(
     <StrictMode>
       <Provider>
         <Suspense fallback="loading">
@@ -766,12 +768,46 @@ it('should override promise as atom value (#430)', async () => {
     </StrictMode>
   )
 
-  await waitFor(() => {
-    getByText('loading')
-  })
+  await findByText('loading')
 
   fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('count: 1')
-  })
+  await findByText('count: 1')
+})
+
+it.skip('combine two promise atom values (#442)', async () => {
+  const countAtom = atom(
+    new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
+  )
+  countAtom.onMount = (setValue) => {
+    setTimeout(() => {
+      setValue(Promise.resolve(1))
+    }, 100)
+  }
+  const count2Atom = atom(
+    new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
+  )
+  count2Atom.onMount = (setValue) => {
+    setTimeout(() => {
+      setValue(Promise.resolve(2))
+    }, 100)
+  }
+  const derivedAtom = atom((get) => get(countAtom) + get(count2Atom))
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(derivedAtom)
+    return <div>count: {count}</div>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('count: 3')
 })

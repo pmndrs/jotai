@@ -7,8 +7,9 @@ import type {
   Getter,
   Setter,
   OnUnmount,
-  NonPromise,
 } from './types'
+
+type NonPromise<T> = T extends Promise<infer V> ? V : T
 
 const hasInitialValue = <T extends Atom<unknown>>(
   atom: T
