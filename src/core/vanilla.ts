@@ -191,6 +191,10 @@ const setAtomReadPromise = <Value>(
   dependencies: Set<AnyAtom>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
+  if (atomState.p?.[IS_EQUAL_PROMISE](promise)) {
+    // the same promise, not updating
+    return
+  }
   atomState.c?.() // cancel read promise
   if (isInterruptablePromise(promise)) {
     atomState.p = promise // read promise
@@ -232,7 +236,7 @@ const scheduleReadAtomState = <Value>(
   atom: Atom<Value>,
   promise: Promise<unknown>
 ): void => {
-  promise.then(() => {
+  promise.finally(() => {
     readAtomState(state, atom, true)
   })
 }

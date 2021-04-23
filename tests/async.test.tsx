@@ -774,7 +774,7 @@ it('should override promise as atom value (#430)', async () => {
   await findByText('count: 1')
 })
 
-it.skip('combine two promise atom values (#442)', async () => {
+it('combine two promise atom values (#442)', async () => {
   const countAtom = atom(
     new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
   )
