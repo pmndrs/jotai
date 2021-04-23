@@ -50,3 +50,38 @@ it('should register newly added atoms', async () => {
   fireEvent.click(getByText('click'))
   await findByText('atom count: 2')
 })
+
+it('should let you access atoms and their state', async () => {
+  const countAtom = atom(1)
+  countAtom.debugLabel = 'countAtom'
+  const petAtom = atom('cat')
+  petAtom.debugLabel = 'petAtom'
+
+  const Displayer: React.FC = () => {
+    useAtom(countAtom)
+    useAtom(petAtom)
+    return null
+  }
+
+  const SimpleDevtools: React.FC = () => {
+    const atoms = useAtomsSnapshot()
+
+    return (
+      <div>
+        {Array.from(atoms).map(([atom, atomState]) => (
+          <p>{`${atom.debugLabel}: ${atomState}`}</p>
+        ))}
+      </div>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Displayer />
+      <SimpleDevtools />
+    </Provider>
+  )
+
+  await findByText('countAtom: 1')
+  await findByText('petAtom: cat')
+})

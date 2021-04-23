@@ -5,9 +5,9 @@ import { RegisteredAtomsContext } from '../core/contexts'
 import { useMutableSource } from '../core/useMutableSource'
 import { AnyAtom } from '../core/types'
 
-// This is not done at all, slowing iterating on the API.
+type AtomsSnapshot = Map<AnyAtom, unknown>
 
-export function useAtomsSnapshot() {
+export function useAtomsSnapshot(): AtomsSnapshot {
   const StoreContext = getStoreContext()
   const [mutableSource] = useContext(StoreContext)
   const atoms = useContext(RegisteredAtomsContext)

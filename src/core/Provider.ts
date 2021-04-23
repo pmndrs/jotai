@@ -5,6 +5,7 @@ import React, {
   useDebugValue,
   useReducer,
   useEffect,
+  useState,
 } from 'react'
 
 import type { AnyAtom, Scope } from './types'
@@ -31,22 +32,21 @@ export const Provider: React.FC<{
     process.env.NODE_ENV !== 'test'
   ) {
     /* eslint-disable react-hooks/rules-of-hooks */
-    const atomsRef = useRef<AnyAtom[]>([])
-    const [, forceUpdate] = useReducer(() => ({}), {})
+    const [registeredAtoms, setRegisteredAtoms] = useState<AnyAtom[]>([])
     if (storeRef.current === null) {
       // lazy initialization
       storeRef.current = createStore(initialValues, (newAtom) => {
-        atomsRef.current.push(newAtom)
-        forceUpdate()
+        // FIXME find a proper way to handle registered atoms
+        setTimeout(() => setRegisteredAtoms((atoms) => [...atoms, newAtom]))
       })
     }
     useDebugState(
       storeRef.current as ReturnType<typeof createStore>,
-      atomsRef.current
+      registeredAtoms
     )
     children = createElement(
       RegisteredAtomsContext.Provider,
-      { value: atomsRef.current },
+      { value: registeredAtoms },
       baseChildren
     )
     /* eslint-enable react-hooks/rules-of-hooks */
@@ -90,7 +90,7 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
 
 const getState = (state: State) => ({ ...state }) // shallow copy
 
-// We keep a reference to the atoms in Provider's atomsRef in dev mode,
+// We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (store: Store, atoms: AnyAtom[]) => {
   const subscribe = useCallback(
