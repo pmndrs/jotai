@@ -1,9 +1,11 @@
-import React, { Fragment, StrictMode, Suspense } from 'react'
+import React, { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
 import { waitForAll } from '../../src/utils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 const consoleWarn = console.warn
 const consoleError = console.error
@@ -298,7 +300,7 @@ it('handles scope', async () => {
 it('warns on different scopes', async () => {
   const scope = Symbol()
   const anotherScope = Symbol()
-  const asyncAtom = atom(async (get) => {
+  const asyncAtom = atom(async (_get) => {
     await new Promise((resolve) => {
       setTimeout(() => {
         resolve(true)

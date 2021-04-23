@@ -1,8 +1,12 @@
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { createMachine } from 'xstate'
-import { Provider, useAtom } from '../../src/index'
+import { Provider as ProviderOrig, useAtom } from '../../src/index'
 import { atomWithMachine } from '../../src/xstate'
+
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 it('toggle machine', async () => {
   const toggleMachine = createMachine({

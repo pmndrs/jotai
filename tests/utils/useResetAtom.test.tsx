@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
 import {
@@ -8,7 +8,9 @@ import {
   RESET,
 } from '../../src/utils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 it('atomWithReset resets to its first value', async () => {
   const countAtom = atomWithReset(0)

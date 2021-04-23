@@ -1,9 +1,11 @@
-import React, { Fragment, StrictMode, useEffect, useRef } from 'react'
+import React, { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
 import { useUpdateAtom } from '../../src/utils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 const useRerenderCount = () => {
   const rerenderCountRef = useRef(0)

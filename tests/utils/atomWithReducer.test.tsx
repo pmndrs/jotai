@@ -1,9 +1,11 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider as ProviderOrig, useAtom } from '../../src/index'
 import { atomWithReducer } from '../../src/utils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 it('atomWithReducer with optional action argument', async () => {
   const reducer = (state: number, action?: 'INCREASE' | 'DECREASE') => {

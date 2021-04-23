@@ -1,11 +1,4 @@
-import React, {
-  Fragment,
-  useState,
-  useRef,
-  useEffect,
-  StrictMode,
-  Suspense,
-} from 'react'
+import React, { useState, useRef, useEffect, StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
   Provider as ProviderOrig,
@@ -16,7 +9,9 @@ import {
 import { atomFamily } from '../../src/utils'
 import type { SetStateAction } from '../../src/core/types'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)

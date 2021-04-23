@@ -1,8 +1,12 @@
 import React from 'react'
 import { fireEvent, render, act } from '@testing-library/react'
 import create from 'zustand/vanilla'
-import { Provider, useAtom } from '../../src/index'
+import { Provider as ProviderOrig, useAtom } from '../../src/index'
 import { atomWithStore } from '../../src/zustand'
+
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 it('count state', async () => {
   const store = create(() => ({ count: 0 }))

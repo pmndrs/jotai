@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
   Provider as ProviderOrig,
@@ -7,7 +7,9 @@ import {
   PrimitiveAtom,
 } from '../src/index'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 it('remove an item, then add another', async () => {
   type Item = {

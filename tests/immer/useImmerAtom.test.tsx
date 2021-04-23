@@ -1,9 +1,11 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Provider as ProviderOrig, atom } from '../../src/index'
 import { atomWithImmer, useImmerAtom, withImmer } from '../../src/immer'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 it('useImmerAtom with regular atom', async () => {
   const countAtom = atom(0)

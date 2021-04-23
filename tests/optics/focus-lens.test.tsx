@@ -1,11 +1,13 @@
-import React, { Fragment, Suspense } from 'react'
+import React, { Suspense } from 'react'
 import { Provider as ProviderOrig, atom, useAtom } from 'jotai'
 import * as O from 'optics-ts'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
 import type { SetStateAction } from '../../src/core/types'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 const succ = (input: number) => input + 1
 

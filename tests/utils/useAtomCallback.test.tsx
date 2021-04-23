@@ -1,9 +1,11 @@
-import React, { Fragment, useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider as ProviderOrig, useAtom, atom } from '../../src/index'
 import { useAtomCallback } from '../../src/utils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 it('useAtomCallback with get', async () => {
   const countAtom = atom(0)
@@ -115,7 +117,7 @@ it('useAtomCallback with set and update and arg', async () => {
   const App = () => {
     const [count] = useAtom(countAtom)
     const setCount = useAtomCallback(
-      useCallback((get, set, arg: number) => {
+      useCallback((_get, set, arg: number) => {
         set(countAtom, arg)
         return arg
       }, [])

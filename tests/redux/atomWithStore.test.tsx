@@ -1,8 +1,12 @@
 import React from 'react'
 import { fireEvent, render, act } from '@testing-library/react'
 import { createStore } from 'redux'
-import { Provider, useAtom } from '../../src/index'
+import { Provider as ProviderOrig, useAtom } from '../../src/index'
 import { atomWithStore } from '../../src/redux'
+
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 it('count state', async () => {
   const initialState = { count: 0 }

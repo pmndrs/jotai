@@ -1,8 +1,10 @@
-import React, { Fragment, StrictMode, Suspense, useRef, useEffect } from 'react'
+import React, { StrictMode, Suspense, useRef, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom, Atom } from '../src/index'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = process.env.PROVIDER_LESS_MODE
+  ? (props: any) => props.children
+  : ProviderOrig
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
