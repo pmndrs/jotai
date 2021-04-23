@@ -40,4 +40,5 @@ export const getStoreContext = (scope?: Scope) => {
   return StoreContextMap.get(scope) as StoreContext
 }
 
+// only for DEV purpose
 export const RegisteredAtomsContext = createContext<AnyAtom[]>([])
