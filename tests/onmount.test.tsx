@@ -4,6 +4,15 @@ import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
 
 const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
 
+let savedNodeEnv: string | undefined
+beforeEach(() => {
+  savedNodeEnv = process.env.NODE_ENV
+  process.env.NODE_ENV = 'production'
+})
+afterEach(() => {
+  process.env.NODE_ENV = savedNodeEnv
+})
+
 it('one atom, one effect', async () => {
   const countAtom = atom(1)
   const onMountFn = jest.fn()
