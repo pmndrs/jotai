@@ -1,13 +1,16 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.15.5",
+  "version": "0.16.2",
   "description": "👻 Next gen state management that will spook you",
-  "module": "index.module.js",
   "main": "index.js",
+  "module": "esm/index.js",
   "types": "index.d.ts",
   "typesVersions": {
     "<4.0": {
+      "esm/*": [
+        "ts3.4/*"
+      ],
       "*": [
         "ts3.4/*"
       ]
@@ -17,38 +20,53 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./index.d.ts",
-      "module": "./index.module.js",
+      "module": "./esm/index.js",
       "default": "./index.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
-      "module": "./utils.module.js",
+      "module": "./esm/utils.js",
       "default": "./utils.js"
     },
     "./devtools": {
       "types": "./devtools.d.ts",
-      "module": "./devtools.module.js",
+      "module": "./esm/devtools.js",
       "default": "./devtools.js"
     },
     "./immer": {
       "types": "./immer.d.ts",
-      "module": "./immer.module.js",
+      "module": "./esm/immer.js",
       "default": "./immer.js"
     },
     "./optics": {
       "types": "./optics.d.ts",
-      "module": "./optics.module.js",
+      "module": "./esm/optics.js",
       "default": "./optics.js"
     },
     "./query": {
       "types": "./query.d.ts",
-      "module": "./query.module.js",
+      "module": "./esm/query.js",
       "default": "./query.js"
     },
     "./xstate": {
       "types": "./xstate.d.ts",
-      "module": "./xstate.module.js",
+      "module": "./esm/xstate.js",
       "default": "./xstate.js"
+    },
+    "./valtio": {
+      "types": "./valtio.d.ts",
+      "module": "./esm/valtio.js",
+      "default": "./valtio.js"
+    },
+    "./zustand": {
+      "types": "./zustand.d.ts",
+      "module": "./esm/zustand.js",
+      "default": "./zustand.js"
+    },
+    "./redux": {
+      "types": "./redux.d.ts",
+      "module": "./esm/redux.js",
+      "default": "./redux.js"
     }
   },
   "files": [
@@ -57,7 +75,17 @@
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "rollup -c && rollup -c --config-utils && rollup -c --config-devtools && rollup -c --config-immer && rollup -c --config-optics && rollup -c --config-query && rollup -c --config-xstate",
+    "build": "concurrently 'yarn:build:*'",
+    "build:base": "rollup -c",
+    "build:utils": "rollup -c --config-utils",
+    "build:devtools": "rollup -c --config-devtools",
+    "build:immer": "rollup -c --config-immer",
+    "build:optics": "rollup -c --config-optics",
+    "build:query": "rollup -c --config-query",
+    "build:xstate": "rollup -c --config-xstate",
+    "build:valtio": "rollup -c --config-valtio",
+    "build:zustand": "rollup -c --config-zustand",
+    "build:redux": "rollup -c --config-redux",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '{src,tests}/**/*.{js,ts,jsx,tsx}'",
     "eslint:ci": "eslint '{src,tests}/**/*.{js,ts,jsx,tsx}'",
@@ -66,12 +94,10 @@
     "test": "jest && jest --setupFiles ./tests/setProviderLessMode.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/index.d.ts dist/index.module.d.ts && shx cp dist/utils.d.ts dist/utils.module.d.ts && shx cp dist/devtools.d.ts dist/devtools.module.d.ts && shx cp dist/immer.d.ts dist/immer.module.d.ts && shx cp dist/optics.d.ts dist/optics.module.d.ts && shx cp dist/query.d.ts dist/query.module.d.ts && shx cp dist/xstate.d.ts dist/xstate.module.d.ts && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+  "engines": {
+    "node": ">=12"
   },
   "prettier": {
     "semi": false,
@@ -127,51 +153,58 @@
       "tests/**/*.{js,ts,tsx}"
     ]
   },
-  "dependencies": {},
   "devDependencies": {
-    "@babel/core": "^7.13.10",
-    "@babel/plugin-transform-react-jsx": "^7.12.17",
+    "@babel/core": "^7.13.15",
+    "@babel/plugin-transform-react-jsx": "^7.13.12",
     "@babel/plugin-transform-typescript": "^7.13.0",
-    "@babel/preset-env": "^7.13.10",
+    "@babel/preset-env": "^7.13.15",
     "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-node-resolve": "^11.2.0",
-    "@rollup/plugin-typescript": "^8.2.0",
-    "@testing-library/react": "^11.2.5",
-    "@types/jest": "^26.0.20",
+    "@rollup/plugin-node-resolve": "^11.2.1",
+    "@rollup/plugin-typescript": "^8.2.1",
+    "@testing-library/react": "^11.2.6",
+    "@types/jest": "^26.0.22",
     "@types/react": "^17.0.3",
-    "@types/react-dom": "^17.0.2",
-    "@typescript-eslint/eslint-plugin": "^4.17.0",
-    "@typescript-eslint/parser": "^4.17.0",
+    "@types/react-dom": "^17.0.3",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "concurrently": "^6.0.2",
     "downlevel-dts": "^0.7.0",
-    "eslint": "^7.22.0",
-    "eslint-config-prettier": "^8.1.0",
+    "esbuild": "^0.11.11",
+    "eslint": "^7.24.0",
+    "eslint-config-prettier": "^8.2.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jest": "^24.3.1",
-    "eslint-plugin-prettier": "^3.3.1",
-    "eslint-plugin-react": "^7.22.0",
+    "eslint-plugin-jest": "^24.3.5",
+    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-react": "^7.23.2",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "husky": "^4.3.8",
+    "husky": "^6.0.0",
     "immer": "^8.0.1",
     "jest": "^26.6.3",
     "json": "^10.0.0",
     "lint-staged": "^10.5.4",
-    "optics-ts": "^2.0.0",
+    "optics-ts": "^2.1.0",
     "prettier": "^2.2.1",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "react-query": "^3.9.8",
-    "rollup": "^2.41.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-query": "^3.13.2",
+    "redux": "^4.0.5",
+    "rollup": "^2.45.2",
+    "rollup-plugin-esbuild": "^4.0.1",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "shx": "^0.3.3",
-    "typescript": "^4.2.3",
-    "xstate": "^4.16.2"
+    "tslib": "^2.2.0",
+    "typescript": "^4.2.4",
+    "valtio": "^1.0.3",
+    "xstate": "^4.17.1",
+    "zustand": "^3.4.1"
   },
   "peerDependencies": {
     "immer": "*",
     "optics-ts": "*",
     "react": ">=16.8",
     "react-query": "*",
+    "valtio": "*",
     "xstate": "*"
   },
   "peerDependenciesMeta": {
@@ -182,6 +215,9 @@
       "optional": true
     },
     "react-query": {
+      "optional": true
+    },
+    "valtio": {
       "optional": true
     },
     "xstate": {

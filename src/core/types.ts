@@ -45,3 +45,5 @@ export type PrimitiveAtom<Value> = WritableAtom<Value, SetStateAction<Value>>
 
 export type AnyAtom = Atom<unknown>
 export type AnyWritableAtom = WritableAtom<unknown, unknown>
+
+export type NonPromise<T> = T extends Promise<infer V> ? V : T

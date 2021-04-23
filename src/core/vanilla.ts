@@ -7,6 +7,7 @@ import type {
   Getter,
   Setter,
   OnUnmount,
+  NonPromise,
 } from './types'
 
 const hasInitialValue = <T extends Atom<unknown>>(
@@ -15,6 +16,32 @@ const hasInitialValue = <T extends Atom<unknown>>(
   (T extends Atom<infer Value> ? WithInitialValue<Value> : never) =>
   'init' in atom
 
+const IS_EQUAL_PROMISE = Symbol()
+const INTERRUPT_PROMISE = Symbol()
+type InterruptablePromise = Promise<void> & {
+  [IS_EQUAL_PROMISE]: (p: Promise<void>) => boolean
+  [INTERRUPT_PROMISE]: () => void
+}
+
+const isInterruptablePromise = (
+  promise: Promise<void>
+): promise is InterruptablePromise =>
+  !!(promise as InterruptablePromise)[INTERRUPT_PROMISE]
+
+const createInterruptablePromise = (
+  promise: Promise<void>
+): InterruptablePromise => {
+  let interrupt: (() => void) | undefined
+  const interruptablePromise = new Promise<void>((resolve, reject) => {
+    interrupt = resolve
+    promise.then(resolve, reject)
+  }) as InterruptablePromise
+  interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>) =>
+    p === interruptablePromise || p === promise
+  interruptablePromise[INTERRUPT_PROMISE] = interrupt as () => void
+  return interruptablePromise
+}
+
 type Revision = number
 type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
@@ -22,9 +49,10 @@ type ReadDependencies = Map<AnyAtom, Revision>
 // immutable atom state
 export type AtomState<Value = unknown> = {
   e?: Error // read error
-  p?: Promise<void> // read promise
+  p?: InterruptablePromise // read promise
+  c?: () => void // cancel read promise
   w?: Promise<void> // write promise
-  v?: Value
+  v?: NonPromise<Value>
   r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
@@ -106,26 +134,25 @@ const wipAtomState = <Value>(
       ? atomState.d
       : new Map(),
   }
-  if (!atomState && hasInitialValue(atom)) {
-    nextAtomState.v = atom.init
-  }
   return [nextAtomState, atomState?.d]
 }
 
 const setAtomValue = <Value>(
   state: State,
   atom: Atom<Value>,
-  value: Value,
+  value: NonPromise<Value>,
   dependencies?: Set<AnyAtom>,
   promise?: Promise<void>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
-  if (promise && promise !== atomState?.p) {
+  if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
     // newer async read is running, not updating
     return
   }
+  atomState.c?.() // cancel read promise
   delete atomState.e // read error
   delete atomState.p // read promise
+  delete atomState.c // cancel read promise
   delete atomState.i // invalidated revision
   if (!('v' in atomState) || !Object.is(atomState.v, value)) {
     atomState.v = value
@@ -143,11 +170,13 @@ const setAtomReadError = <Value>(
   promise?: Promise<void>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
-  if (promise && promise !== atomState?.p) {
+  if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
     // newer async read is running, not updating
     return
   }
+  atomState.c?.() // cancel read promise
   delete atomState.p // read promise
+  delete atomState.c // cancel read promise
   delete atomState.i // invalidated revision
   atomState.e = error // read error
   commitAtomState(state, atom, atomState)
@@ -161,13 +190,24 @@ const setAtomReadPromise = <Value>(
   dependencies: Set<AnyAtom>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
-  atomState.p = promise // read promise
+  atomState.c?.() // cancel read promise
+  if (isInterruptablePromise(promise)) {
+    atomState.p = promise // read promise
+    delete atomState.c // this promise is from another atom state, shouldn't be canceled here
+  } else {
+    const interruptablePromise = createInterruptablePromise(promise)
+    atomState.p = interruptablePromise // read promise
+    atomState.c = interruptablePromise[INTERRUPT_PROMISE]
+  }
   commitAtomState(state, atom, atomState)
   mountDependencies(state, atom, atomState, prevDependencies)
 }
 
 const setAtomInvalidated = <Value>(state: State, atom: Atom<Value>): void => {
   const [atomState] = wipAtomState(state, atom)
+  atomState.c?.() // cancel read promise
+  delete atomState.p // read promise
+  delete atomState.c // cancel read promise
   atomState.i = atomState.r // invalidated revision
   commitAtomState(state, atom, atomState)
 }
@@ -235,7 +275,7 @@ const readAtomState = <Value>(
   }
   let error: Error | undefined
   let promise: Promise<void> | undefined
-  let value: Value | undefined
+  let value: NonPromise<Value> | undefined
   const dependencies = new Set<AnyAtom>()
   try {
     const promiseOrValue = atom.read(((a: AnyAtom) => {
@@ -269,7 +309,7 @@ const readAtomState = <Value>(
           setAtomValue(
             state,
             atom,
-            value,
+            value as NonPromise<Value>,
             dependencies,
             promise as Promise<void>
           )
@@ -290,7 +330,7 @@ const readAtomState = <Value>(
           flushPending(state)
         })
     } else {
-      value = promiseOrValue
+      value = promiseOrValue as NonPromise<Value>
     }
   } catch (errorOrPromise) {
     if (errorOrPromise instanceof Promise) {
@@ -307,7 +347,7 @@ const readAtomState = <Value>(
   } else if (promise) {
     setAtomReadPromise(state, atom, promise, dependencies)
   } else {
-    setAtomValue(state, atom, value, dependencies)
+    setAtomValue(state, atom, value as NonPromise<Value>, dependencies)
   }
   return getAtomState(state, atom) as AtomState<Value>
 }
@@ -412,21 +452,21 @@ const writeAtomState = <Value, Update>(
         throw new Error('no value found')
       }) as Getter,
       ((a: AnyWritableAtom, v: unknown) => {
+        const isPendingPromisesExpired = !pendingPromises.length
         if (a === atom) {
           setAtomValue(state, a, v)
           invalidateDependents(state, a)
         } else {
-          const isPendingPromisesExpired = !pendingPromises.length
           writeAtomState(state, a, v, pendingPromises)
-          if (isPendingPromisesExpired) {
-            flushPending(state)
-          }
+        }
+        if (isPendingPromisesExpired) {
+          flushPending(state)
         }
       }) as Setter,
       update
     )
     if (promiseOrVoid instanceof Promise) {
-      const promise = promiseOrVoid.then(() => {
+      const promise = promiseOrVoid.finally(() => {
         setAtomWritePromise(state, atom)
         if (isPendingPromisesExpired) {
           flushPending(state)
