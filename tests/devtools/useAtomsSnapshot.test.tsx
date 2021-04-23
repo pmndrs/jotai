@@ -69,7 +69,7 @@ it('should let you access atoms and their state', async () => {
     return (
       <div>
         {Array.from(atoms).map(([atom, atomState]) => (
-          <p>{`${atom.debugLabel}: ${atomState}`}</p>
+          <p key={atom.debugLabel}>{`${atom.debugLabel}: ${atomState}`}</p>
         ))}
       </div>
     )
