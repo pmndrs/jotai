@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react'
-import { atom, Provider, useAtom, Atom, PrimitiveAtom } from 'jotai'
+import { Atom, PrimitiveAtom, atom, useAtom } from 'jotai'
 import { render, fireEvent, waitFor } from '@testing-library/react'
-
+import { getTestProvider } from '../testUtils'
 import { splitAtom } from '../../src/utils/splitAtom'
+
+const Provider = getTestProvider()
 
 type TodoItem = { task: string; checked?: boolean }
 
