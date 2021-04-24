@@ -1,12 +1,11 @@
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider as ProviderOrig, atom, useAtom } from '../../src/'
+import { atom, useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
+import { getTestProvider } from '../testUtils'
 
-// FIXME Provider-less mode fails
-// const Provider = getTestProvider()
-const Provider = ProviderOrig
+const Provider = getTestProvider()
 
 it('query basic test', async () => {
   const countAtom = atomWithQuery(() => ({
