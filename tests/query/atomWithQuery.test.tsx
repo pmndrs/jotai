@@ -7,6 +7,7 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
+// FIXME the tests should also work on DEV
 let savedNodeEnv: string | undefined
 beforeEach(() => {
   savedNodeEnv = process.env.NODE_ENV
