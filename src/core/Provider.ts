@@ -31,7 +31,7 @@ export const Provider: React.FC<{
       // lazy initialization
       storeRef.current = createStore(initialValues, (newAtom) => {
         // FIXME find a proper way to handle registered atoms
-        setTimeout(() => setRegisteredAtoms((atoms) => [...atoms, newAtom]))
+        setTimeout(() => setRegisteredAtoms((atoms) => [...atoms, newAtom]), 0)
       })
     }
     useDebugState(

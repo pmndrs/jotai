@@ -3,10 +3,18 @@ import { fireEvent, render } from '@testing-library/react'
 import { Provider as ProviderOrig, atom, useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
+import { getTestProvider } from '../testUtils'
 
-// FIXME Provider-less mode fails
-// const Provider = getTestProvider()
-const Provider = ProviderOrig
+const Provider = getTestProvider()
+
+let savedNodeEnv: string | undefined
+beforeEach(() => {
+  savedNodeEnv = process.env.NODE_ENV
+  process.env.NODE_ENV = 'production'
+})
+afterEach(() => {
+  process.env.NODE_ENV = savedNodeEnv
+})
 
 it('query basic test', async () => {
   const countAtom = atomWithQuery(() => ({
