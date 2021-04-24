@@ -24,11 +24,7 @@ export const Provider: React.FC<{
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
   let children = baseChildren
 
-  if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production' &&
-    process.env.NODE_ENV !== 'test'
-  ) {
+  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     /* eslint-disable react-hooks/rules-of-hooks */
     const [registeredAtoms, setRegisteredAtoms] = useState<AnyAtom[]>([])
     if (storeRef.current === null) {
