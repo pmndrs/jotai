@@ -1,11 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider as ProviderOrig, atom } from '../../src/index'
+import { atom } from '../../src/index'
 import { selectAtom, useAtomValue, useUpdateAtom } from '../../src/utils'
+import { getTestProvider } from '../testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
+const Provider = getTestProvider()
 
 it('selectAtom works as expected', async () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })

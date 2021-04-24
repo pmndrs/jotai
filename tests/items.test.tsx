@@ -1,15 +1,9 @@
 import React from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import {
-  Provider as ProviderOrig,
-  atom,
-  useAtom,
-  PrimitiveAtom,
-} from '../src/index'
+import { atom, useAtom, PrimitiveAtom } from '../src/index'
+import { getTestProvider } from './testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
+const Provider = getTestProvider()
 
 it('remove an item, then add another', async () => {
   type Item = {

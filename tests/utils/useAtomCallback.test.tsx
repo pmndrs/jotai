@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider as ProviderOrig, useAtom, atom } from '../../src/index'
+import { useAtom, atom } from '../../src/index'
 import { useAtomCallback } from '../../src/utils'
+import { getTestProvider } from '../testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
+const Provider = getTestProvider()
 
 it('useAtomCallback with get', async () => {
   const countAtom = atom(0)

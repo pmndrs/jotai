@@ -1,11 +1,10 @@
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
+import { atom, useAtom } from '../../src/index'
 import { withImmer } from '../../src/immer'
+import { getTestProvider } from '../testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
+const Provider = getTestProvider()
 
 it('withImmer derived atom with useAtom', async () => {
   const regularCountAtom = atom(0)

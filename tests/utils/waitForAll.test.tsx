@@ -1,11 +1,10 @@
 import React, { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
+import { atom, useAtom } from '../../src/index'
 import { waitForAll } from '../../src/utils'
+import { getTestProvider } from '../testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
+const Provider = getTestProvider()
 
 const consoleWarn = console.warn
 const consoleError = console.error

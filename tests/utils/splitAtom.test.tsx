@@ -1,18 +1,10 @@
 import React, { useEffect, useRef } from 'react'
-import {
-  Atom,
-  PrimitiveAtom,
-  Provider as ProviderOrig,
-  atom,
-  useAtom,
-} from 'jotai'
+import { Atom, PrimitiveAtom, atom, useAtom } from 'jotai'
 import { render, fireEvent, waitFor } from '@testing-library/react'
-
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
-
+import { getTestProvider } from '../testUtils'
 import { splitAtom } from '../../src/utils/splitAtom'
+
+const Provider = getTestProvider()
 
 type TodoItem = { task: string; checked?: boolean }
 

@@ -7,16 +7,10 @@ import React, {
   useMemo,
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import {
-  Provider as ProviderOrig,
-  atom,
-  useAtom,
-  WritableAtom,
-} from '../src/index'
+import { atom, useAtom, WritableAtom } from '../src/index'
+import { getTestProvider } from './testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
+const Provider = getTestProvider()
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)

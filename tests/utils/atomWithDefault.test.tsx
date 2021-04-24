@@ -1,11 +1,10 @@
 import React, { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider as ProviderOrig, atom, useAtom } from '../../src/index'
+import { atom, useAtom } from '../../src/index'
 import { atomWithDefault } from '../../src/utils'
+import { getTestProvider } from '../testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
+const Provider = getTestProvider()
 
 it('simple sync get default', async () => {
   const count1Atom = atom(1)

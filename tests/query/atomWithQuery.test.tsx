@@ -5,9 +5,7 @@ import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
 
 // FIXME Provider-less mode fails
-// const Provider = process.env.PROVIDER_LESS_MODE
-//   ? (props: any) => props.children
-//   : ProviderOrig
+// const Provider = getTestProvider()
 const Provider = ProviderOrig
 
 it('query basic test', async () => {

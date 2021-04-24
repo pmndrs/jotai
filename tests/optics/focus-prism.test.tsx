@@ -1,12 +1,11 @@
 import React from 'react'
-import { Provider as ProviderOrig, atom, useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 import * as O from 'optics-ts'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics'
+import { getTestProvider } from '../testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
+const Provider = getTestProvider()
 
 it('updates prisms', async () => {
   const bigAtom = atom<{ a?: number }>({ a: 5 })

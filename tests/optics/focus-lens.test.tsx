@@ -1,13 +1,12 @@
 import React, { Suspense } from 'react'
-import { Provider as ProviderOrig, atom, useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 import * as O from 'optics-ts'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
 import type { SetStateAction } from '../../src/core/types'
+import { getTestProvider } from '../testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE
-  ? (props: any) => props.children
-  : ProviderOrig
+const Provider = getTestProvider()
 
 const succ = (input: number) => input + 1
 
