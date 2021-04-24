@@ -61,7 +61,7 @@ export function atomWithQuery<
             )
             action.initializer(getQueryClient(get, set))
           } else if (action.type === 'data') {
-            const data: TData = get(dataAtom)
+            const data = get(dataAtom)
             if (data === null || !equalityFn(data, action.data)) {
               set(dataAtom, action.data)
             }
