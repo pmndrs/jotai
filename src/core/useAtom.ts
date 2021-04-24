@@ -3,7 +3,7 @@ import { useContext, useCallback, useDebugValue } from 'react'
 import { getStoreContext } from './contexts'
 import { readAtom, subscribeAtom } from './vanilla'
 import type { State } from './vanilla'
-import type { Atom, WritableAtom, SetAtom, NonPromise } from './types'
+import type { Atom, WritableAtom, SetAtom } from './types'
 import { useMutableSource } from './useMutableSource'
 
 const isWritable = <Value, Update>(
@@ -12,10 +12,24 @@ const isWritable = <Value, Update>(
   !!(atom as WritableAtom<Value, Update>).write
 
 export function useAtom<Value, Update>(
-  atom: WritableAtom<Value, Update>
-): [NonPromise<Value>, SetAtom<Update>]
+  atom: WritableAtom<Value | Promise<Value>, Update>
+): [Value, SetAtom<Update>]
 
-export function useAtom<Value>(atom: Atom<Value>): [NonPromise<Value>, never]
+export function useAtom<Value, Update>(
+  atom: WritableAtom<Promise<Value>, Update>
+): [Value, SetAtom<Update>]
+
+export function useAtom<Value, Update>(
+  atom: WritableAtom<Value, Update>
+): [Value, SetAtom<Update>]
+
+export function useAtom<Value>(
+  atom: Atom<Value | Promise<Value>>
+): [Value, never]
+
+export function useAtom<Value>(atom: Atom<Promise<Value>>): [Value, never]
+
+export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 
 export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
@@ -33,7 +47,7 @@ export function useAtom<Value, Update>(
         throw atomState.w // write promise
       }
       if ('v' in atomState) {
-        return atomState.v as NonPromise<Value>
+        return atomState.v
       }
       throw new Error('no atom value')
     },
@@ -48,11 +62,7 @@ export function useAtom<Value, Update>(
 
   const StoreContext = getStoreContext(atom.scope)
   const [mutableSource, updateAtom] = useContext(StoreContext)
-  const value: NonPromise<Value> = useMutableSource(
-    mutableSource,
-    getAtomValue,
-    subscribe
-  )
+  const value: Value = useMutableSource(mutableSource, getAtomValue, subscribe)
 
   const setAtom = useCallback(
     (update: Update) => {

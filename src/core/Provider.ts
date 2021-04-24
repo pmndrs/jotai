@@ -13,11 +13,7 @@ export const Provider: React.FC<{
 }> = ({ initialValues, scope, children }) => {
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
 
-  if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production' &&
-    process.env.NODE_ENV !== 'test'
-  ) {
+  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     /* eslint-disable react-hooks/rules-of-hooks */
     const atomsRef = useRef<AnyAtom[]>([])
     if (storeRef.current === null) {

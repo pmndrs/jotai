@@ -1,8 +1,11 @@
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot } from 'valtio/vanilla'
-import { Provider, useAtom } from '../../src/index'
+import { useAtom } from '../../src/index'
 import { atomWithProxy } from '../../src/valtio'
+import { getTestProvider } from '../testUtils'
+
+const Provider = getTestProvider()
 
 it('count state', async () => {
   const proxyState = proxy({ count: 0 })
