@@ -6,7 +6,6 @@ import { useAtomsSnapshot } from '../../src/devtools'
 beforeEach(() => {
   process.env.NODE_ENV = 'development'
 })
-
 afterEach(() => {
   process.env.NODE_ENV = 'test'
 })
@@ -68,8 +67,8 @@ it('should let you access atoms and their state', async () => {
 
     return (
       <div>
-        {Array.from(atoms).map(([atom, atomState]) => (
-          <p key={atom.debugLabel}>{`${atom.debugLabel}: ${atomState}`}</p>
+        {Array.from(atoms).map(([atom, atomValue]) => (
+          <p key={atom.debugLabel}>{`${atom.debugLabel}: ${atomValue}`}</p>
         ))}
       </div>
     )

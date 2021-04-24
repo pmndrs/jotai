@@ -25,13 +25,13 @@ export function useAtomsSnapshot(): AtomsSnapshot {
   const state: State = useMutableSource(mutableSource, getState, subscribe)
 
   return useMemo(() => {
-    const atomToAtomStateTuples = atoms
+    const atomToAtomValueTuples = atoms
       .filter((atom) => !!state.m.get(atom))
       .map<[AnyAtom, unknown]>((atom) => {
         const atomState = state.a.get(atom) ?? ({} as AtomState)
         return [atom, atomState.e || atomState.p || atomState.w || atomState.v]
       })
-    return new Map(atomToAtomStateTuples)
+    return new Map(atomToAtomValueTuples)
   }, [atoms, state])
 }
 
