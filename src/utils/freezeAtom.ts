@@ -35,11 +35,11 @@ export function freezeAtom<AtomType extends Atom<any>>(
 
 export function freezeAtomCreator<
   CreateAtom extends (...params: any[]) => Atom<any>
->(createAtom: CreateAtom): CreateAtom {
+>(createAtom: CreateAtom) {
   return ((...params: any[]) => {
     const anAtom = createAtom(...params)
     const origRead = anAtom.read
     anAtom.read = (get: Getter) => deepFreeze(origRead(get))
     return anAtom
-  }) as any
+  }) as CreateAtom
 }
