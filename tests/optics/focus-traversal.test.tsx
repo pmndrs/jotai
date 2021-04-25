@@ -1,10 +1,11 @@
-import React, { Fragment } from 'react'
-import { Provider as ProviderOrig, atom, useAtom } from 'jotai'
+import React from 'react'
+import { atom, useAtom } from 'jotai'
 import * as O from 'optics-ts'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
+import { getTestProvider } from '../testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = getTestProvider()
 
 it('updates traversals', async () => {
   const bigAtom = atom<{ a?: number }[]>([{ a: 5 }, {}, { a: 6 }])

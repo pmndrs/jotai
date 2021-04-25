@@ -1,12 +1,25 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../../src/'
+import { atom, useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
+import { getTestProvider } from '../testUtils'
+
+const Provider = getTestProvider()
+
+// FIXME the tests should also work on DEV
+let savedNodeEnv: string | undefined
+beforeEach(() => {
+  savedNodeEnv = process.env.NODE_ENV
+  process.env.NODE_ENV = 'production'
+})
+afterEach(() => {
+  process.env.NODE_ENV = savedNodeEnv
+})
 
 it('query basic test', async () => {
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count',
+    queryKey: 'count1',
     queryFn: async () => {
       return await fakeFetch({ count: 0 })
     },
@@ -26,9 +39,9 @@ it('query basic test', async () => {
 
   const { findByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Counter />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -38,7 +51,7 @@ it('query basic test', async () => {
 
 it('query basic test with object instead of function', async () => {
   const countAtom = atomWithQuery({
-    queryKey: 'count',
+    queryKey: 'count2',
     queryFn: async () => {
       return await fakeFetch({ count: 0 })
     },
@@ -58,9 +71,9 @@ it('query basic test with object instead of function', async () => {
 
   const { findByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Counter />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -72,7 +85,7 @@ it('query refetch', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count',
+    queryKey: 'count3',
     queryFn: async () => {
       const response = await mockFetch({ count })
       count++
@@ -96,9 +109,9 @@ it('query refetch', async () => {
 
   const { findByText, getByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Counter />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 
@@ -115,7 +128,7 @@ it('query loading', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count',
+    queryKey: 'count4',
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 100)
       count++
@@ -147,9 +160,9 @@ it('query loading', async () => {
 
   const { findByText, getByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Counter />
-      </React.Suspense>
+      </Suspense>
       <RefreshButton />
     </Provider>
   )
@@ -192,9 +205,9 @@ it('query loading 2', async () => {
   }
   const { findByText, getByText } = render(
     <Provider>
-      <React.Suspense fallback="loading">
+      <Suspense fallback="loading">
         <Counter />
-      </React.Suspense>
+      </Suspense>
     </Provider>
   )
 

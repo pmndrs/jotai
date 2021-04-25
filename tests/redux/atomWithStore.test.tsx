@@ -1,8 +1,11 @@
 import React from 'react'
 import { fireEvent, render, act } from '@testing-library/react'
 import { createStore } from 'redux'
-import { Provider, useAtom } from '../../src/index'
+import { useAtom } from '../../src/index'
 import { atomWithStore } from '../../src/redux'
+import { getTestProvider } from '../testUtils'
+
+const Provider = getTestProvider()
 
 it('count state', async () => {
   const initialState = { count: 0 }
