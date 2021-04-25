@@ -1,8 +1,11 @@
 import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { createMachine } from 'xstate'
-import { Provider, useAtom } from '../../src/index'
+import { useAtom } from '../../src/index'
 import { atomWithMachine } from '../../src/xstate'
+import { getTestProvider } from '../testUtils'
+
+const Provider = getTestProvider()
 
 it('toggle machine', async () => {
   const toggleMachine = createMachine({
