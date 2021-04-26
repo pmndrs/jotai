@@ -71,6 +71,25 @@ export function useAtomDevtools<Value>(
           message.payload?.type === 'COMMIT'
         ) {
           devtools.current?.init(lastValue.current)
+        } else if (
+          message.type === 'DISPATCH' &&
+          message.payload?.type === 'IMPORT_STATE'
+        ) {
+          const actions = message.payload.nextLiftedState?.actionsById
+          const computedStates =
+            message.payload.nextLiftedState?.computedStates || []
+
+          computedStates.forEach(
+            ({ state }: { state: Value }, index: number) => {
+              const action = actions[index] || atomName
+
+              if (index === 0) {
+                devtools.current?.init(state)
+              } else {
+                setValue(state)
+              }
+            }
+          )
         }
       })
       devtools.current.shouldInit = true
