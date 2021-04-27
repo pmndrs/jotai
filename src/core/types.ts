@@ -1,3 +1,5 @@
+import React from 'react'
+
 export type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
 export type Getter = {
@@ -33,9 +35,15 @@ export type Atom<Value> = {
   debugLabel?: string
   scope?: Scope
   read: Read<Value>
+  Component(): React.ReactElement
+  Component(component: (value: Value) => React.ReactElement): React.ReactElement
 }
 
-export type WritableAtom<Value, Update> = Atom<Value> & {
+export type WritableAtom<Value, Update> = Omit<Atom<Value>, 'Component'> & {
+  Component(): React.ReactElement
+  Component(
+    component: (value: Value, set: SetAtom<Update>) => React.ReactElement
+  ): React.ReactElement
   write: Write<Update>
   onMount?: OnMount<Update>
 }

@@ -1,3 +1,5 @@
+import React from 'react'
+
 import {
   Read,
   Write,
@@ -5,7 +7,9 @@ import {
   WritableAtom,
   WithInitialValue,
   PrimitiveAtom,
+  SetAtom,
 } from './types'
+import { useAtom } from './useAtom'
 
 let keyCount = 0 // global key count for all atoms
 
@@ -37,9 +41,19 @@ export function atom<Value, Update>(
   read: Value | Read<Value>,
   write?: Write<Update>
 ) {
+  const Component = (
+    component: (value: Value, set: SetAtom<Update>) => React.ReactElement
+  ) => {
+    const readWrite = useAtom(config)
+    return component
+      ? component(readWrite[0], readWrite[1])
+      : React.createElement(React.Fragment, {}, readWrite[0])
+  }
+
   const key = `atom${++keyCount}`
   const config = {
     toString: () => key,
+    Component,
   } as WritableAtom<Value, Update> & { init?: Value }
   if (typeof read === 'function') {
     config.read = read as Read<Value>

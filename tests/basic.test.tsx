@@ -889,3 +889,19 @@ it('write self atom (undocumented usage)', async () => {
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
 })
+
+it('atom Component', async () => {
+  const input = atom('')
+
+  const Form = () => {
+    return (
+      <form>
+        {input.Component((value, set) => (
+          <input value={value} onChange={(e) => set(e.currentTarget.value)} />
+        ))}
+        <br />
+        Hello, <input.Component />!
+      </form>
+    )
+  }
+})
