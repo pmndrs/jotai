@@ -1,13 +1,32 @@
-import { atom, WritableAtom } from 'jotai'
+import { atom, PrimitiveAtom } from 'jotai'
 import type { SetStateAction } from '../core/types'
 
-export function atomWithStorage<Value>(key: string, initialValue: Value) {
-  type Update = SetStateAction<Value>
+type Storage<Value> = {
+  getItem: (key: string) => Value | Promise<Value>
+  setItem: (key: string, newValue: Value) => void | Promise<void>
+}
 
+const defaultStorage: Storage<unknown> = {
+  getItem: (key: string) => {
+    const storedValue = localStorage.getItem(key)
+    if (storedValue === null) {
+      throw new Error('no value stored')
+    }
+    return JSON.parse(storedValue)
+  },
+  setItem: (key, newValue: unknown) => {
+    localStorage.setItem(key, JSON.stringify(newValue))
+  },
+}
+
+export function atomWithStorage<Value>(
+  key: string,
+  initialValue: Value,
+  storage: Storage<Value> = defaultStorage as Storage<Value>
+): PrimitiveAtom<Value> {
   const getInitialValue = () => {
     try {
-      const storedValue = window.localStorage.getItem(key)
-      return storedValue !== null ? JSON.parse(storedValue) : initialValue
+      return storage.getItem(key)
     } catch {
       return initialValue
     }
@@ -16,18 +35,20 @@ export function atomWithStorage<Value>(key: string, initialValue: Value) {
   const baseAtom = atom(initialValue)
 
   baseAtom.onMount = (setAtom) => {
-    setAtom(getInitialValue())
+    Promise.resolve(getInitialValue()).then(setAtom)
   }
 
-  const anAtom = atom<Value, Update>(
+  const anAtom = atom(
     (get) => get(baseAtom),
-    (get, set, update: any) => {
+    (get, set, update: SetStateAction<Value>) => {
       const newValue =
-        typeof update === 'function' ? update(get(baseAtom)) : update
+        typeof update === 'function'
+          ? (update as (prev: Value) => Value)(get(baseAtom))
+          : update
       set(baseAtom, newValue)
-      window.localStorage.setItem(key, JSON.stringify(newValue))
+      storage.setItem(key, newValue)
     }
   )
 
-  return anAtom as WritableAtom<Value, Update>
+  return anAtom
 }
