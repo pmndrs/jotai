@@ -21,19 +21,12 @@ export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
   scope?: Scope
 }> = ({ initialValues, scope, children: baseChildren }) => {
-  const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
+  const storeRef = useRef(createStore(initialValues))
   let children = baseChildren
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     /* eslint-disable react-hooks/rules-of-hooks */
     const [registeredAtoms, setRegisteredAtoms] = useState<AnyAtom[]>([])
-    if (storeRef.current === null) {
-      // lazy initialization
-      storeRef.current = createStore(initialValues, (newAtom) => {
-        // FIXME find a proper way to handle registered atoms
-        setTimeout(() => setRegisteredAtoms((atoms) => [...atoms, newAtom]), 0)
-      })
-    }
     useDebugState(
       storeRef.current as ReturnType<typeof createStore>,
       registeredAtoms
@@ -44,11 +37,6 @@ export const Provider: React.FC<{
       baseChildren
     )
     /* eslint-enable react-hooks/rules-of-hooks */
-  } else {
-    if (storeRef.current === null) {
-      // lazy initialization
-      storeRef.current = createStore(initialValues)
-    }
   }
 
   const StoreContext = getStoreContext(scope)
