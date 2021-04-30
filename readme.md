@@ -168,12 +168,14 @@ yarn add jotai react
 
 ## More documents
 
-- Introduction
-  - [Concepts](https://docs.pmnd.rs/jotai/concepts)
-  - [Getting Started](https://docs.pmnd.rs/jotai/getting-started)
-  - [Async](https://docs.pmnd.rs/jotai/async)
-  - [Comparison](https://docs.pmnd.rs/jotai/comparison)
-  - [Showcase](https://docs.pmnd.rs/jotai/showcase)
+- Overview
+  - [Introduction](https://docs.pmnd.rs/jotai/introduction)
+- Basics
+  - [Concepts](https://docs.pmnd.rs/jotai/basics/concepts)
+  - [Primitives](https://docs.pmnd.rs/jotai/basics/primitives)
+  - [Async](https://docs.pmnd.rs/jotai/basics/async)
+  - [Comparison](https://docs.pmnd.rs/jotai/basics/comparison)
+  - [Showcase](https://docs.pmnd.rs/jotai/basics/showcase)
 - Guides
   - [TypeScript](https://docs.pmnd.rs/jotai/guides/typescript)
   - [Debugging](https://docs.pmnd.rs/jotai/guides/debugging)
