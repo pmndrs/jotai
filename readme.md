@@ -169,7 +169,7 @@ yarn add jotai react
 ## More documents
 
 - Overview
-  - [Introduction](https://docs.pmnd.rs/jotais)
+  - [Introduction](https://docs.pmnd.rs/jotai/introduction)
 - Basics
   - [Concepts](https://docs.pmnd.rs/jotai/basics/concepts)
   - [Primitives](https://docs.pmnd.rs/jotai/basics/primitives)
