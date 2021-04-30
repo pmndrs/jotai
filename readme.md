@@ -168,24 +168,31 @@ yarn add jotai react
 
 ## More documents
 
-- Introduction
-  - [Concepts](./docs/introduction/concepts.md)
-  - [Getting Started](./docs/introduction/getting-started.md)
-  - [Async](./docs/introduction/async.md)
-  - [Comparison](./docs/introduction/comparison.md)
-  - [Showcase](./docs/introduction/showcase.md)
+- Overview
+  - [Introduction](https://docs.pmnd.rs/jotais)
+- Basics
+  - [Concepts](https://docs.pmnd.rs/jotai/basics/concepts)
+  - [Getting Started](https://docs.pmnd.rs/jotai/basics/primitives)
+  - [Async](https://docs.pmnd.rs/jotai/basics/async)
+  - [Comparison](https://docs.pmnd.rs/jotai/basics/comparison)
+  - [Showcase](https://docs.pmnd.rs/jotai/basics/showcase)
 - Guides
-  - [TypeScript](./docs/guides/typescript.md)
-  - [Debugging](./docs/guides/debugging.md)
-  - [Persistence](./docs/guides/persistence.md)
-  - [Next.js](./docs/guides/nextjs.md)
-  - [Resettable](./docs/guides/resettable.md)
-  - [No Suspense](./docs/guides/no-suspense.md)
+  - [TypeScript](https://docs.pmnd.rs/jotai/guides/typescript)
+  - [Debugging](https://docs.pmnd.rs/jotai/guides/debugging)
+  - [Persistence](https://docs.pmnd.rs/jotai/guides/persistence)
+  - [Next.js](https://docs.pmnd.rs/jotai/guides/nextjs)
+  - [Resettable](https://docs.pmnd.rs/jotai/guides/resettable)
+  - [No Suspense](https://docs.pmnd.rs/jotai/guides/no-suspense)
 - API
-  - [Core](./docs/api/core.md)
-  - [Utils](./docs/api/utils.md)
-  - [Devtools](./docs/api/devtools.md)
-  - [Immer](./docs/api/immer.md)
-  - [Optics](./docs/api/optics.md)
-  - [Query](./docs/api/query.md)
-  - [XState](./docs/api/xstate.md)
+  - [Core](https://docs.pmnd.rs/jotai/api/core)
+  - [Utils](https://docs.pmnd.rs/jotai/api/utils)
+  - [Devtools](https://docs.pmnd.rs/jotai/api/devtools)
+  - [Immer](https://docs.pmnd.rs/jotai/api/immer) ([immer](https://github.com/immerjs/immer) integration)
+  - [Optics](https://docs.pmnd.rs/jotai/api/optics) ([optics-ts](https://github.com/akheron/optics-ts) integration)
+  - [Query](https://docs.pmnd.rs/jotai/api/query) ([react-query](https://github.com/tannerlinsley/react-query) integration)
+  - [XState](https://docs.pmnd.rs/jotai/api/xstate) ([xstate](https://github.com/davidkpiano/xstate) integration)
+  - [Valtio](https://docs.pmnd.rs/jotai/api/valtio) ([valtio](https://github.com/pmndrs/valtio) integration)
+  - [Zustand](https://docs.pmnd.rs/jotai/api/zustand) ([zustand](https://github.com/pmndrs/zustand) integration)
+  - [Redux](https://docs.pmnd.rs/jotai/api/redux) ([redux](https://github.com/reduxjs/redux) integration)
+- Advanced Recipes
+  - [Large Objects](https://docs.pmnd.rs/jotai/advanced-recipes/large-objects)
