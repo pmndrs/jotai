@@ -168,6 +168,7 @@ yarn add jotai react
 
 ## More documents
 
+- General
   - [Introduction](https://docs.pmnd.rs/jotais)
 - Basics
   - [Concepts](https://docs.pmnd.rs/jotai/basics/concepts)
