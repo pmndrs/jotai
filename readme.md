@@ -172,7 +172,7 @@ yarn add jotai react
   - [Introduction](https://docs.pmnd.rs/jotais)
 - Basics
   - [Concepts](https://docs.pmnd.rs/jotai/basics/concepts)
-  - [Getting Started](https://docs.pmnd.rs/jotai/basics/primitives)
+  - [Primitives](https://docs.pmnd.rs/jotai/basics/primitives)
   - [Async](https://docs.pmnd.rs/jotai/basics/async)
   - [Comparison](https://docs.pmnd.rs/jotai/basics/comparison)
   - [Showcase](https://docs.pmnd.rs/jotai/basics/showcase)
