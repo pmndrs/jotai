@@ -1,22 +1,11 @@
-import React, {
-  Fragment,
-  useState,
-  useRef,
-  useEffect,
-  StrictMode,
-  Suspense,
-} from 'react'
+import React, { useState, useRef, useEffect, StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import {
-  Provider as ProviderOrig,
-  atom,
-  useAtom,
-  WritableAtom,
-} from '../../src/index'
+import { atom, useAtom, WritableAtom } from '../../src/index'
 import { atomFamily } from '../../src/utils'
 import type { SetStateAction } from '../../src/core/types'
+import { getTestProvider } from '../testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = getTestProvider()
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -26,8 +15,24 @@ const useCommitCount = () => {
   return commitCountRef.current
 }
 
+it('new atomFamily impl', async () => {
+  const myFamily = atomFamily((param) => atom(param))
+
+  const Displayer: React.FC<{ index: string }> = ({ index }) => {
+    const [count] = useAtom(myFamily(index))
+    return <div>count: {count}</div>
+  }
+  const { findByText } = render(
+    <Provider>
+      <Displayer index={'a'} />
+    </Provider>
+  )
+
+  await findByText('count: a')
+})
+
 it('primitive atomFamily returns same reference for same parameters', async () => {
-  const myFamily = atomFamily<number, { num: number }>((num) => ({ num }))
+  const myFamily = atomFamily<number, { num: number }>((num) => atom({ num }))
   expect(myFamily(0)).toEqual(myFamily(0))
   expect(myFamily(0)).not.toEqual(myFamily(1))
   expect(myFamily(1)).not.toEqual(myFamily(0))
@@ -35,8 +40,8 @@ it('primitive atomFamily returns same reference for same parameters', async () =
 
 it('read-only derived atomFamily returns same reference for same parameters', async () => {
   const arrayAtom = atom([0])
-  const myFamily = atomFamily<number, number>((num) => (get) =>
-    get(arrayAtom)[num]
+  const myFamily = atomFamily<number, number>((num) =>
+    atom((get) => get(arrayAtom)[num])
   )
   expect(myFamily(0)).toEqual(myFamily(0))
   expect(myFamily(0)).not.toEqual(myFamily(1))
@@ -45,8 +50,8 @@ it('read-only derived atomFamily returns same reference for same parameters', as
 
 it('removed atom creates a new reference', async () => {
   const bigAtom = atom([0])
-  const myFamily = atomFamily<number, number>((num) => (get) =>
-    get(bigAtom)[num]
+  const myFamily = atomFamily<number, number>((num) =>
+    atom((get) => get(bigAtom)[num])
   )
 
   const savedReference = myFamily(0)
@@ -65,7 +70,7 @@ it('removed atom creates a new reference', async () => {
 })
 
 it('primitive atomFamily initialized with props', async () => {
-  const myFamily = atomFamily<number, number>((param) => param)
+  const myFamily = atomFamily((param: number) => atom(param))
 
   const Displayer: React.FC<{ index: number }> = ({ index }) => {
     const [count, setCount] = useAtom(myFamily(index))
@@ -109,24 +114,26 @@ it('primitive atomFamily initialized with props', async () => {
 it('derived atomFamily functionality as usual', async () => {
   const arrayAtom = atom([0, 0, 0])
 
-  const myFamily = atomFamily<number, number, SetStateAction<number>>(
-    (param) => (get) => get(arrayAtom)[param],
-    (param) => (_, set, update) => {
-      set(arrayAtom, (oldArray) => {
-        if (typeof oldArray[param] === 'undefined') return oldArray
+  const myFamily = atomFamily<number, number, SetStateAction<number>>((param) =>
+    atom(
+      (get) => get(arrayAtom)[param],
+      (_, set, update) => {
+        set(arrayAtom, (oldArray) => {
+          if (typeof oldArray[param] === 'undefined') return oldArray
 
-        const newValue =
-          typeof update === 'function' ? update(oldArray[param]) : update
+          const newValue =
+            typeof update === 'function' ? update(oldArray[param]) : update
 
-        const newArray = [
-          ...oldArray.slice(0, param),
-          newValue,
-          ...oldArray.slice(param + 1),
-        ]
+          const newArray = [
+            ...oldArray.slice(0, param),
+            newValue,
+            ...oldArray.slice(param + 1),
+          ]
 
-        return newArray
-      })
-    }
+          return newArray
+        })
+      }
+    )
   )
 
   const Displayer: React.FC<{
@@ -195,13 +202,12 @@ it('derived atomFamily functionality as usual', async () => {
 it('custom equality function work', async () => {
   const bigAtom = atom([0])
 
-  const badFamily = atomFamily<{ index: number }, number>((num) => (get) =>
-    get(bigAtom)[num.index]
+  const badFamily = atomFamily<{ index: number }, number>((num) =>
+    atom((get) => get(bigAtom)[num.index])
   )
 
   const goodFamily = atomFamily<{ index: number }, number>(
-    (num) => (get) => get(bigAtom)[num.index],
-    null,
+    (num) => atom((get) => get(bigAtom)[num.index]),
     (l, r) => l.index === r.index
   )
 
@@ -214,10 +220,12 @@ it('custom equality function work', async () => {
 
 it('a derived atom from an async atomFamily (#351)', async () => {
   const countAtom = atom(1)
-  const getAsyncAtom = atomFamily((n: number) => async () => {
-    await new Promise((r) => setTimeout(r, 1))
-    return n + 10
-  })
+  const getAsyncAtom = atomFamily((n: number) =>
+    atom(async () => {
+      await new Promise((r) => setTimeout(r, 1))
+      return n + 10
+    })
+  )
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
   const Counter: React.FC = () => {

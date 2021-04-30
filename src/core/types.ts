@@ -1,6 +1,10 @@
 export type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
-export type Getter = <Value>(atom: Atom<Value>) => Value
+export type Getter = {
+  <Value>(atom: Atom<Value | Promise<Value>>): Value
+  <Value>(atom: Atom<Promise<Value>>): Value
+  <Value>(atom: Atom<Value>): Value
+}
 export type Read<Value> = (get: Getter) => Value | Promise<Value>
 
 export type Setter = <Value, Update>(

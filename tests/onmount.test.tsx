@@ -1,8 +1,19 @@
-import React, { Fragment, Suspense } from 'react'
+import React, { Suspense } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider as ProviderOrig, atom, useAtom } from '../src/index'
+import { atom, useAtom } from '../src/index'
+import { getTestProvider } from './testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = getTestProvider()
+
+// FIXME the tests should also work on DEV
+let savedNodeEnv: string | undefined
+beforeEach(() => {
+  savedNodeEnv = process.env.NODE_ENV
+  process.env.NODE_ENV = 'production'
+})
+afterEach(() => {
+  process.env.NODE_ENV = savedNodeEnv
+})
 
 it('one atom, one effect', async () => {
   const countAtom = atom(1)

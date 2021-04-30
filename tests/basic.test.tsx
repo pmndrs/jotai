@@ -1,5 +1,4 @@
 import React, {
-  Fragment,
   StrictMode,
   Suspense,
   useEffect,
@@ -8,14 +7,10 @@ import React, {
   useMemo,
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import {
-  Provider as ProviderOrig,
-  atom,
-  useAtom,
-  WritableAtom,
-} from '../src/index'
+import { atom, useAtom, WritableAtom } from '../src/index'
+import { getTestProvider } from './testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = getTestProvider()
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -864,4 +859,33 @@ it('should be able to use a double derived atom twice and useEffect (#373)', asy
   await findByText('count: 0,0,0')
   fireEvent.click(getByText('one up'))
   await findByText('count: 1,4,4')
+})
+
+it('write self atom (undocumented usage)', async () => {
+  const countAtom = atom(0, (get, set, _arg) => {
+    set(countAtom, get(countAtom) + 1)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, inc] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={inc}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
 })

@@ -12,8 +12,22 @@ const isWritable = <Value, Update>(
   !!(atom as WritableAtom<Value, Update>).write
 
 export function useAtom<Value, Update>(
+  atom: WritableAtom<Value | Promise<Value>, Update>
+): [Value, SetAtom<Update>]
+
+export function useAtom<Value, Update>(
+  atom: WritableAtom<Promise<Value>, Update>
+): [Value, SetAtom<Update>]
+
+export function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>
 ): [Value, SetAtom<Update>]
+
+export function useAtom<Value>(
+  atom: Atom<Value | Promise<Value>>
+): [Value, never]
+
+export function useAtom<Value>(atom: Atom<Promise<Value>>): [Value, never]
 
 export function useAtom<Value>(atom: Atom<Value>): [Value, never]
 
@@ -33,7 +47,7 @@ export function useAtom<Value, Update>(
         throw atomState.w // write promise
       }
       if ('v' in atomState) {
-        return atomState.v as Value
+        return atomState.v
       }
       throw new Error('no atom value')
     },

@@ -1,7 +1,4 @@
-import { atom, Atom, WritableAtom, PrimitiveAtom } from 'jotai'
-import type { Getter, Setter } from '../core/types'
-
-type AnyFunction = (...args: any[]) => any
+import { Atom, WritableAtom } from 'jotai'
 
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
@@ -11,58 +8,25 @@ type AtomFamily<Param, AtomType> = {
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
 }
 
-// writable derived atom
 export function atomFamily<Param, Value, Update>(
-  initializeRead: (param: Param) => (get: Getter) => Value | Promise<Value>,
-  initializeWrite: (
-    param: Param
-  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>,
+  initializeAtom: (param: Param) => WritableAtom<Value, Update>,
   areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, WritableAtom<Value, Update>>
 
-// write-only derived atom
-export function atomFamily<Param, Value, Update>(
-  initializeRead: (param: Param) => Value,
-  initializeWrite: (
-    param: Param
-  ) => (get: Getter, set: Setter, update: Update) => void | Promise<void>,
-  areEqual?: (a: Param, b: Param) => boolean
-): Value extends AnyFunction
-  ? never
-  : AtomFamily<Param, WritableAtom<Value, Update>>
-
-// read-only derived atom
-export function atomFamily<Param, Value, Update extends never = never>(
-  initializeRead: (param: Param) => (get: Getter) => Value | Promise<Value>,
-  initializeWrite?: null,
+export function atomFamily<Param, Value>(
+  initializeAtom: (param: Param) => Atom<Value>,
   areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, Atom<Value>>
 
-// invalid read-only derived atom
 export function atomFamily<Param, Value>(
-  initializeRead: (param: Param) => AnyFunction,
-  initializeWrite?: null,
-  areEqual?: (a: Param, b: Param) => boolean
-): never
-
-// primitive atom
-export function atomFamily<Param, Value>(
-  initializeRead: (param: Param) => Value,
-  initializeWrite?: null,
-  areEqual?: (a: Param, b: Param) => boolean
-): AtomFamily<Param, PrimitiveAtom<Value>>
-
-export function atomFamily<Param, Value, Update>(
-  initializeRead: (param: Param) => any,
-  initializeWrite?: null | ((param: Param) => any),
+  initializeAtom: (param: Param) => Atom<Value>,
   areEqual?: (a: Param, b: Param) => boolean
 ) {
-  type AtomType = WritableAtom<Value, Update>
   type CreatedAt = number // in milliseconds
   let shouldRemove: ShouldRemove<Param> | null = null
-  const atoms: Map<Param, [AtomType, CreatedAt]> = new Map()
+  const atoms: Map<Param, [Atom<Value>, CreatedAt]> = new Map()
   const createAtom = (param: Param) => {
-    let item: [AtomType, CreatedAt] | undefined
+    let item: [Atom<Value>, CreatedAt] | undefined
     if (areEqual === undefined) {
       item = atoms.get(param)
     } else {
@@ -83,10 +47,7 @@ export function atomFamily<Param, Value, Update>(
       }
     }
 
-    const newAtom = atom(
-      initializeRead(param),
-      initializeWrite && initializeWrite(param)
-    ) as AtomType
+    const newAtom = initializeAtom(param)
     atoms.set(param, [newAtom, Date.now()])
     return newAtom
   }

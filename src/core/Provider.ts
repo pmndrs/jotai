@@ -1,34 +1,47 @@
-import React, { createElement, useCallback, useRef, useDebugValue } from 'react'
+import React, {
+  createElement,
+  useCallback,
+  useRef,
+  useDebugValue,
+  useState,
+} from 'react'
 
 import type { AnyAtom, Scope } from './types'
 import { subscribeAtom } from './vanilla'
 import type { AtomState, State } from './vanilla'
-import { createStore, getStoreContext } from './contexts'
+import {
+  createStore,
+  getStoreContext,
+  RegisteredAtomsContext,
+} from './contexts'
 import type { Store } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
   scope?: Scope
-}> = ({ initialValues, scope, children }) => {
+}> = ({ initialValues, scope, children: baseChildren }) => {
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
+  let children = baseChildren
 
-  if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production' &&
-    process.env.NODE_ENV !== 'test'
-  ) {
+  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     /* eslint-disable react-hooks/rules-of-hooks */
-    const atomsRef = useRef<AnyAtom[]>([])
+    const [registeredAtoms, setRegisteredAtoms] = useState<AnyAtom[]>([])
     if (storeRef.current === null) {
       // lazy initialization
       storeRef.current = createStore(initialValues, (newAtom) => {
-        atomsRef.current.push(newAtom)
+        // FIXME find a proper way to handle registered atoms
+        setTimeout(() => setRegisteredAtoms((atoms) => [...atoms, newAtom]), 0)
       })
     }
     useDebugState(
       storeRef.current as ReturnType<typeof createStore>,
-      atomsRef.current
+      registeredAtoms
+    )
+    children = createElement(
+      RegisteredAtomsContext.Provider,
+      { value: registeredAtoms },
+      baseChildren
     )
     /* eslint-enable react-hooks/rules-of-hooks */
   } else {
@@ -71,7 +84,7 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
 
 const getState = (state: State) => ({ ...state }) // shallow copy
 
-// We keep a reference to the atoms in Provider's atomsRef in dev mode,
+// We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (store: Store, atoms: AnyAtom[]) => {
   const subscribe = useCallback(

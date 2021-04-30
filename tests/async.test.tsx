@@ -1,8 +1,9 @@
-import React, { Fragment, StrictMode, Suspense, useRef, useEffect } from 'react'
+import React, { StrictMode, Suspense, useRef, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider as ProviderOrig, atom, useAtom, Atom } from '../src/index'
+import { atom, useAtom, Atom } from '../src/index'
+import { getTestProvider } from './testUtils'
 
-const Provider = process.env.PROVIDER_LESS_MODE ? Fragment : ProviderOrig
+const Provider = getTestProvider()
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -417,7 +418,7 @@ it('async get with another dep and useEffect on parent', async () => {
 })
 
 it('set promise atom value on write (#304)', async () => {
-  const countAtom = atom<any>(Promise.resolve(0))
+  const countAtom = atom(Promise.resolve(0))
   countAtom.debugLabel = 'countAtom'
   const asyncAtom = atom(null, (get, set, _arg) => {
     set(
@@ -429,7 +430,7 @@ it('set promise atom value on write (#304)', async () => {
 
   const Counter: React.FC = () => {
     const [count] = useAtom(countAtom)
-    return <div>count: {count}</div>
+    return <div>count: {count * 1}</div>
   }
 
   const Parent: React.FC = () => {
@@ -614,7 +615,7 @@ it('Handles synchronously invoked async set (#375)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { findByText } = render(
     <StrictMode>
       <Provider>
         <ListDocuments />
@@ -624,4 +625,190 @@ it('Handles synchronously invoked async set (#375)', async () => {
 
   await findByText('loading')
   await findByText('great document')
+})
+
+it('async write self atom', async () => {
+  const countAtom = atom(0, async (get, set, _arg) => {
+    set(countAtom, get(countAtom) + 1)
+    await new Promise((r) => setTimeout(r, 100))
+    set(countAtom, -1)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, inc] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={inc}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading') // write pending
+  await findByText('count: -1')
+})
+
+it('non suspense async write self atom with setTimeout (#389)', async () => {
+  const countAtom = atom(0, (get, set, _arg) => {
+    set(countAtom, get(countAtom) + 1)
+    setTimeout(() => {
+      set(countAtom, -1)
+    }, 0)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, inc] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={inc}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
+  await findByText('count: -1')
+})
+
+it('should override promise returned by async read (#434)', async () => {
+  const countAtom = atom(0)
+  const asyncCountAtom = atom(async (get) => {
+    const count = get(countAtom)
+    await new Promise((r) => setTimeout(r, count ? 100 : 3600 * 1000))
+    return count * 10
+  })
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const DelayedCounter: React.FC = () => {
+    const [delayedCount] = useAtom(asyncCountAtom)
+    return <div>delayedCount: {delayedCount}</div>
+  }
+
+  const { getByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+        <Suspense fallback="loading">
+          <DelayedCounter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('loading')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('delayedCount: 10')
+  })
+})
+
+it('should override promise as atom value (#430)', async () => {
+  const countAtom = atom(
+    new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
+  )
+  const setCountAtom = atom(null, (_get, set, arg: number) => {
+    set(countAtom, Promise.resolve(arg))
+  })
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(countAtom)
+    return <div>count: {count * 1}</div>
+  }
+
+  const Control: React.FC = () => {
+    const [, setCount] = useAtom(setCountAtom)
+    return <button onClick={() => setCount(1)}>button</button>
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Control />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
+})
+
+it('combine two promise atom values (#442)', async () => {
+  const countAtom = atom(
+    new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
+  )
+  countAtom.onMount = (setValue) => {
+    setTimeout(() => {
+      setValue(Promise.resolve(1))
+    }, 100)
+  }
+  const count2Atom = atom(
+    new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
+  )
+  count2Atom.onMount = (setValue) => {
+    setTimeout(() => {
+      setValue(Promise.resolve(2))
+    }, 100)
+  }
+  const derivedAtom = atom((get) => get(countAtom) + get(count2Atom))
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(derivedAtom)
+    return <div>count: {count}</div>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('count: 3')
 })
