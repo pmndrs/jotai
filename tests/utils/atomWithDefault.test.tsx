@@ -84,3 +84,42 @@ it('simple async get default', async () => {
   fireEvent.click(getByText('button1'))
   await findByText('count1: 3, count2: 5')
 })
+
+it('async chain for get default (#443)', async () => {
+  const num1Atom = atom(async () => {
+    await new Promise((r) => setTimeout(r, 10))
+    return 1
+  })
+  const num2Atom = atom(async () => {
+    await new Promise((r) => setTimeout(r, 10))
+    return 2
+  })
+
+  // "async" is required to reproduce the issue
+  const sumAtom = atom(async (get) => get(num1Atom) + get(num2Atom))
+  const countAtom = atomWithDefault((get) => get(sumAtom))
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 3')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 4')
+})
