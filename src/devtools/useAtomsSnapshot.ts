@@ -1,7 +1,6 @@
 import { useCallback, useContext, useMemo } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
 import { AtomState, State, subscribeAtom } from '../core/vanilla'
-import { RegisteredAtomsContext } from '../core/contexts'
 import { useMutableSource } from '../core/useMutableSource'
 import { AnyAtom } from '../core/types'
 
@@ -10,7 +9,6 @@ type AtomsSnapshot = Map<AnyAtom, unknown>
 export function useAtomsSnapshot(): AtomsSnapshot {
   const StoreContext = getStoreContext()
   const [mutableSource] = useContext(StoreContext)
-  const atoms = useContext(RegisteredAtomsContext)
 
   const subscribe = useCallback(
     (state: State, callback: () => void) => {

@@ -17,7 +17,7 @@ type StoreForProduction = [
   updateAtom: UpdateAtom
 ]
 
-type StoreForDevelopment = [
+export type StoreForDevelopment = [
   stateMutableSource: MutableSource<State>,
   updateAtom: UpdateAtom,
   atomsMutableSource: MutableSource<AnyAtom[]>,
@@ -81,6 +81,3 @@ export const getStoreContext = (scope?: Scope) => {
   }
   return StoreContextMap.get(scope) as StoreContext
 }
-
-// only for DEV purpose
-export const RegisteredAtomsContext = createContext<AnyAtom[]>([])

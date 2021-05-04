@@ -9,33 +9,23 @@ import React, {
 import type { AnyAtom, Scope } from './types'
 import { subscribeAtom } from './vanilla'
 import type { AtomState, State } from './vanilla'
-import {
-  createStore,
-  getStoreContext,
-  RegisteredAtomsContext,
-} from './contexts'
+import { createStore, getStoreContext, StoreForDevelopment } from './contexts'
 import type { Store } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
   scope?: Scope
-}> = ({ initialValues, scope, children: baseChildren }) => {
+}> = ({ initialValues, scope, children }) => {
   const storeRef = useRef(createStore(initialValues))
-  let children = baseChildren
 
-  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+  if (
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production' &&
+    isDevStore(storeRef.current)
+  ) {
     /* eslint-disable react-hooks/rules-of-hooks */
-    const [registeredAtoms, setRegisteredAtoms] = useState<AnyAtom[]>([])
-    useDebugState(
-      storeRef.current as ReturnType<typeof createStore>,
-      registeredAtoms
-    )
-    children = createElement(
-      RegisteredAtomsContext.Provider,
-      { value: registeredAtoms },
-      baseChildren
-    )
+    useDebugState(storeRef.current)
     /* eslint-enable react-hooks/rules-of-hooks */
   }
 
@@ -74,7 +64,13 @@ const getState = (state: State) => ({ ...state }) // shallow copy
 
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
-const useDebugState = (store: Store, atoms: AnyAtom[]) => {
+const useDebugState = (store: StoreForDevelopment) => {
+  const [stateMutableSource, , atomsMutableSource, subscribeAtoms] = store
+  const atoms: AnyAtom[] = useMutableSource(
+    atomsMutableSource,
+    (atoms: AnyAtom[]) => atoms,
+    subscribeAtoms
+  )
   const subscribe = useCallback(
     (state: State, callback: () => void) => {
       // FIXME we don't need to resubscribe, just need to subscribe for new one
@@ -85,6 +81,10 @@ const useDebugState = (store: Store, atoms: AnyAtom[]) => {
     },
     [atoms]
   )
-  const state = useMutableSource(store[0], getState, subscribe)
+  const state = useMutableSource(stateMutableSource, getState, subscribe)
   useDebugValue([state, atoms], stateToPrintable)
+}
+
+function isDevStore(store: Store): store is StoreForDevelopment {
+  return store.length > 2
 }
