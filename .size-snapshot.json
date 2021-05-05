@@ -1,8 +1,8 @@
 {
   "devtools.js": {
-    "bundled": 19585,
-    "minified": 9255,
-    "gzipped": 3131,
+    "bundled": 20241,
+    "minified": 9563,
+    "gzipped": 3238,
     "treeshaked": {
       "rollup": {
         "code": 58,
