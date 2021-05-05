@@ -8,8 +8,8 @@ import { a, useTransition } from '@react-spring/web'
 
 type Param = { id: string; title?: string }
 const todoAtomFamily = atomFamily(
-  (param: Param) => ({ title: param.title || 'No title', completed: false }),
-  null,
+  (param: Param) =>
+    atom({ title: param.title || 'No title', completed: false }),
   (a: Param, b: Param) => a.id === b.id
 )
 
