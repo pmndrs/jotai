@@ -5,33 +5,37 @@ import {
   TypedDocumentNode,
   OperationContext,
   OperationResult,
-  Operation,
+  RequestPolicy,
 } from '@urql/core'
 import { WritableAtom, atom } from 'jotai'
 import type { Getter } from '../core/types'
 import { getClient } from './clientAtom'
 
-type ResultActions = { type: 'reexecute' }
+type ResultActions = {
+  type: 'execute'
+  opts?: Partial<OperationContext>
+}
 
-type AtomQueryArgs<Data, Variables extends object> = {
+type QueryArgs<Data, Variables extends object> = {
   query: string | DocumentNode | TypedDocumentNode<Data, Variables>
   variables?: Variables
+  requestPolicy?: RequestPolicy
   context?: Partial<OperationContext>
+  pause?: boolean
 }
 
 export function atomWithQuery<Data, Variables extends object>(
-  createQuery:
-    | AtomQueryArgs<Data, Variables>
-    | ((get: Getter) => AtomQueryArgs<Data, Variables>)
+  createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>
 ): WritableAtom<Data, ResultActions> {
   const dataAtom = atom<Data | Promise<Data>>(
     new Promise<Data>(() => {}) // infinite pending
   )
-  const operationAtom = atom<Operation | null>(null)
-  const queryAtom = atom<WritableAtom<null, any>, ResultActions>(
+  const queryAtom = atom<
+    [QueryArgs<Data, Variables>, WritableAtom<null, any>],
+    ResultActions
+  >(
     (get) => {
-      const args =
-        typeof createQuery === 'function' ? createQuery(get) : createQuery
+      const args = createQueryArgs(get)
       const observerAtom = atom(
         null,
         (
@@ -46,9 +50,10 @@ export function atomWithQuery<Data, Variables extends object>(
               dataAtom,
               new Promise<Data>(() => {}) // new fetch
             )
-            action.initializer(getClient(get, set))
+            if (!args.pause) {
+              action.initializer(getClient(get, set))
+            }
           } else if (action.type === 'result') {
-            set(operationAtom, action.result.operation)
             const data = get(dataAtom)
             if (data === null && action.result.data !== undefined) {
               set(dataAtom, action.result.data)
@@ -60,7 +65,10 @@ export function atomWithQuery<Data, Variables extends object>(
         let unsub: (() => void) | undefined | false
         const initializer = (client: Client) => {
           const subscription = pipe(
-            client.query(args.query, args.variables, args.context),
+            client.query(args.query, args.variables, {
+              requestPolicy: args.requestPolicy,
+              ...args.context,
+            }),
             subscribe((result) => {
               dispatch({ type: 'result', result })
             })
@@ -81,27 +89,28 @@ export function atomWithQuery<Data, Variables extends object>(
           unsub = false
         }
       }
-      return observerAtom
+      return [args, observerAtom]
     },
     (get, set, action) => {
-      if (action.type === 'reexecute') {
-        const operation = get(operationAtom)
-        if (operation === null) {
-          throw new Error('no operation')
-        }
-        set(
-          dataAtom,
-          new Promise<Data>(() => {}) // reset fetch
-        )
+      if (action.type === 'execute') {
+        const [args, observerAtom] = get(queryAtom)
         const client = getClient(get, set)
-        client.reexecuteOperation(operation)
+        client
+          .query(args.query, args.variables, {
+            requestPolicy: args.requestPolicy,
+            ...args.context,
+            ...action.opts,
+          })
+          .toPromise()
+          .then((result) => {
+            set(observerAtom, { type: 'result', result })
+          })
       }
-      return
     }
   )
   const queryDataAtom = atom<Data, ResultActions>(
     (get) => {
-      const observerAtom = get(queryAtom)
+      const [, observerAtom] = get(queryAtom)
       get(observerAtom) // use it here
       return get(dataAtom)
     },
