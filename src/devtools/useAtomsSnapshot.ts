@@ -8,7 +8,19 @@ type AtomsSnapshot = Map<AnyAtom, unknown>
 
 export function useAtomsSnapshot(): AtomsSnapshot {
   const StoreContext = getStoreContext()
-  const [mutableSource] = useContext(StoreContext)
+  const [mutableSource, , atomsMutableSource, subscribeAtoms] = useContext(
+    StoreContext
+  )
+
+  if (atomsMutableSource === undefined && subscribeAtoms === undefined) {
+    throw Error('useAtomsSnapshot can only be used in dev mode.')
+  }
+
+  const atoms: AnyAtom[] = useMutableSource(
+    atomsMutableSource,
+    (atoms: AnyAtom[]) => atoms,
+    subscribeAtoms
+  )
 
   const subscribe = useCallback(
     (state: State, callback: () => void) => {
