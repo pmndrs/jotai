@@ -204,7 +204,6 @@
     "tslib": "^2.2.0",
     "typescript": "^4.2.4",
     "valtio": "^1.0.3",
-    "wonka": "^4.0.15",
     "xstate": "^4.17.1",
     "zustand": "^3.4.1"
   },
@@ -216,7 +215,6 @@
     "react": ">=16.8",
     "react-query": "*",
     "valtio": "*",
-    "wonka": "*",
     "xstate": "*"
   },
   "peerDependenciesMeta": {
@@ -236,9 +234,6 @@
       "optional": true
     },
     "valtio": {
-      "optional": true
-    },
-    "wonka": {
       "optional": true
     },
     "xstate": {

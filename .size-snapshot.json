@@ -140,16 +140,16 @@
     }
   },
   "urql.js": {
-    "bundled": 2291,
-    "minified": 1046,
-    "gzipped": 518,
+    "bundled": 2364,
+    "minified": 1342,
+    "gzipped": 616,
     "treeshaked": {
       "rollup": {
-        "code": 70,
-        "import_statements": 62
+        "code": 56,
+        "import_statements": 48
       },
       "webpack": {
-        "code": 1124
+        "code": 1198
       }
     }
   }
