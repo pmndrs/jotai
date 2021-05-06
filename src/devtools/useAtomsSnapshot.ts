@@ -12,13 +12,13 @@ export function useAtomsSnapshot(): AtomsSnapshot {
     StoreContext
   )
 
-  if (atomsMutableSource === undefined && subscribeAtoms === undefined) {
+  if (atomsMutableSource === undefined || subscribeAtoms === undefined) {
     throw Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
   const atoms: AnyAtom[] = useMutableSource(
     atomsMutableSource,
-    (atoms: AnyAtom[]) => atoms,
+    getAtoms,
     subscribeAtoms
   )
 
@@ -46,3 +46,4 @@ export function useAtomsSnapshot(): AtomsSnapshot {
 }
 
 const getState = (state: State) => ({ ...state }) // shallow copy
+const getAtoms = (atoms: AnyAtom[]) => atoms

@@ -61,6 +61,7 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
   )
 
 const getState = (state: State) => ({ ...state }) // shallow copy
+const getAtoms = (atoms: AnyAtom[]) => atoms
 
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
@@ -68,7 +69,7 @@ const useDebugState = (store: StoreForDevelopment) => {
   const [stateMutableSource, , atomsMutableSource, subscribeAtoms] = store
   const atoms: AnyAtom[] = useMutableSource(
     atomsMutableSource,
-    (atoms: AnyAtom[]) => atoms,
+    getAtoms,
     subscribeAtoms
   )
   const subscribe = useCallback(
