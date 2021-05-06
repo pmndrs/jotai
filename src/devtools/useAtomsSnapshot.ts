@@ -3,6 +3,7 @@ import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
 import { AtomState, State, subscribeAtom } from '../core/vanilla'
 import { useMutableSource } from '../core/useMutableSource'
 import { AnyAtom } from '../core/types'
+import { getState, getAtoms, subscribeAtoms } from '../core/Provider'
 
 type AtomsSnapshot = Map<AnyAtom, unknown>
 
@@ -41,14 +42,4 @@ export function useAtomsSnapshot(): AtomsSnapshot {
       })
     return new Map(atomToAtomValueTuples)
   }, [atoms, state])
-}
-
-const getState = (state: State) => ({ ...state }) // shallow copy
-const getAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
-const subscribeAtoms = (
-  { listeners }: { listeners: Set<() => void> },
-  callback: () => void
-) => {
-  listeners.add(callback)
-  return () => listeners.delete(callback)
 }

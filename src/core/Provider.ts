@@ -54,9 +54,9 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
     })
   )
 
-const getState = (state: State) => ({ ...state }) // shallow copy
-const getAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
-const subscribeAtoms = (
+export const getState = (state: State) => ({ ...state }) // shallow copy
+export const getAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
+export const subscribeAtoms = (
   { listeners }: { listeners: Set<() => void> },
   callback: () => void
 ) => {
