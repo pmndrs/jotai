@@ -20,8 +20,10 @@ type StoreForProduction = [
 export type StoreForDevelopment = [
   stateMutableSource: MutableSource<State>,
   updateAtom: UpdateAtom,
-  atomsMutableSource: MutableSource<AnyAtom[]>,
-  subscribeAtoms: (callback: () => void) => () => void
+  atomsMutableSource: MutableSource<{
+    atoms: AnyAtom[]
+    listeners: Set<() => void>
+  }>
 ]
 
 export type Store = StoreForProduction | StoreForDevelopment
@@ -41,25 +43,26 @@ const createStoreForProduction = (
 const createStoreForDevelopment = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ): StoreForDevelopment => {
-  let atoms: AnyAtom[] = []
-  const atomsListeners = new Set<() => void>()
+  const atomsStore = {
+    atoms: [] as AnyAtom[],
+    listeners: new Set<() => void>(),
+  }
   const state = createState(initialValues, (newAtom) => {
-    atoms = [...atoms, newAtom]
+    atomsStore.atoms = [...atomsStore.atoms, newAtom]
     // FIXME memory leak
     // we should probably remove unmounted atoms
-    atomsListeners.forEach((listener) => listener())
+    atomsStore.listeners.forEach((listener) => listener())
   })
   const stateMutableSource = createMutableSource(state, () => state.v)
   const updateAtom = <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => writeAtom(state, atom, update)
-  const atomsMutableSource = createMutableSource(atoms, () => atoms)
-  const subscribeAtoms = (callback: () => void) => {
-    atomsListeners.add(callback)
-    return () => atomsListeners.delete(callback)
-  }
-  return [stateMutableSource, updateAtom, atomsMutableSource, subscribeAtoms]
+  const atomsMutableSource = createMutableSource(
+    atomsStore,
+    () => atomsStore.atoms
+  )
+  return [stateMutableSource, updateAtom, atomsMutableSource]
 }
 
 type CreateStore = (

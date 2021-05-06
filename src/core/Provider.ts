@@ -1,10 +1,4 @@
-import React, {
-  createElement,
-  useCallback,
-  useRef,
-  useDebugValue,
-  useState,
-} from 'react'
+import React, { createElement, useCallback, useRef, useDebugValue } from 'react'
 
 import type { AnyAtom, Scope } from './types'
 import { subscribeAtom } from './vanilla'
@@ -61,12 +55,19 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
   )
 
 const getState = (state: State) => ({ ...state }) // shallow copy
-const getAtoms = (atoms: AnyAtom[]) => atoms
+const getAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
+const subscribeAtoms = (
+  { listeners }: { listeners: Set<() => void> },
+  callback: () => void
+) => {
+  listeners.add(callback)
+  return () => listeners.delete(callback)
+}
 
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (store: StoreForDevelopment) => {
-  const [stateMutableSource, , atomsMutableSource, subscribeAtoms] = store
+  const [stateMutableSource, , atomsMutableSource] = store
   const atoms: AnyAtom[] = useMutableSource(
     atomsMutableSource,
     getAtoms,

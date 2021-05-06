@@ -8,11 +8,9 @@ type AtomsSnapshot = Map<AnyAtom, unknown>
 
 export function useAtomsSnapshot(): AtomsSnapshot {
   const StoreContext = getStoreContext()
-  const [mutableSource, , atomsMutableSource, subscribeAtoms] = useContext(
-    StoreContext
-  )
+  const [mutableSource, , atomsMutableSource] = useContext(StoreContext)
 
-  if (atomsMutableSource === undefined || subscribeAtoms === undefined) {
+  if (atomsMutableSource === undefined) {
     throw Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
@@ -46,4 +44,11 @@ export function useAtomsSnapshot(): AtomsSnapshot {
 }
 
 const getState = (state: State) => ({ ...state }) // shallow copy
-const getAtoms = (atoms: AnyAtom[]) => atoms
+const getAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
+const subscribeAtoms = (
+  { listeners }: { listeners: Set<() => void> },
+  callback: () => void
+) => {
+  listeners.add(callback)
+  return () => listeners.delete(callback)
+}
