@@ -3,7 +3,7 @@ import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
 import type { AnyAtom } from '../core/types'
 import type { AtomState, State } from '../core/vanilla'
 
-// FIXME across bundles, may or may not work
+// XXX across bundles, this is actually copying code
 import { subscribeAtom } from '../core/vanilla'
 import { useMutableSource } from '../core/useMutableSource'
 import { getDevState, getDevAtoms, subscribeDevAtoms } from '../core/Provider'
