@@ -71,7 +71,7 @@ type Mounted = {
 
 type MountedMap = WeakMap<AnyAtom, Mounted>
 
-export type NewAtomReceiver = (newAtom: AnyAtom) => void
+type NewAtomReceiver = (newAtom: AnyAtom) => void
 
 type StateVersion = number
 
