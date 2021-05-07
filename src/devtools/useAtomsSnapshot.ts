@@ -1,9 +1,12 @@
 import { useCallback, useContext, useMemo } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
-import { AtomState, State, subscribeAtom } from '../core/vanilla'
+import type { AnyAtom } from '../core/types'
+import type { AtomState, State } from '../core/vanilla'
+
+// FIXME across bundles, may or may not work
+import { subscribeAtom } from '../core/vanilla'
 import { useMutableSource } from '../core/useMutableSource'
-import { AnyAtom } from '../core/types'
-import { getState, getAtoms, subscribeAtoms } from '../core/Provider'
+import { getDevState, getDevAtoms, subscribeDevAtoms } from '../core/Provider'
 
 type AtomsSnapshot = Map<AnyAtom, unknown>
 
@@ -17,8 +20,8 @@ export function useAtomsSnapshot(): AtomsSnapshot {
 
   const atoms: AnyAtom[] = useMutableSource(
     atomsMutableSource,
-    getAtoms,
-    subscribeAtoms
+    getDevAtoms,
+    subscribeDevAtoms
   )
 
   const subscribe = useCallback(
@@ -31,7 +34,7 @@ export function useAtomsSnapshot(): AtomsSnapshot {
     },
     [atoms]
   )
-  const state: State = useMutableSource(mutableSource, getState, subscribe)
+  const state: State = useMutableSource(mutableSource, getDevState, subscribe)
 
   return useMemo(() => {
     const atomToAtomValueTuples = atoms

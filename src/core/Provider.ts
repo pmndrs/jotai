@@ -11,16 +11,19 @@ export const Provider: React.FC<{
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
   scope?: Scope
 }> = ({ initialValues, scope, children }) => {
-  const storeRef = useRef(createStore(initialValues))
+  const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
+  if (storeRef.current === null) {
+    // lazy initialization
+    storeRef.current = createStore(initialValues)
+  }
 
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
     isDevStore(storeRef.current)
   ) {
-    /* eslint-disable react-hooks/rules-of-hooks */
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(storeRef.current)
-    /* eslint-enable react-hooks/rules-of-hooks */
   }
 
   const StoreContext = getStoreContext(scope)
@@ -54,9 +57,12 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
     })
   )
 
-export const getState = (state: State) => ({ ...state }) // shallow copy
-export const getAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
-export const subscribeAtoms = (
+const isDevStore = (store: Store): store is StoreForDevelopment => {
+  return store.length > 2
+}
+export const getDevState = (state: State) => ({ ...state }) // shallow copy XXX might be better ways
+export const getDevAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
+export const subscribeDevAtoms = (
   { listeners }: { listeners: Set<() => void> },
   callback: () => void
 ) => {
@@ -70,8 +76,8 @@ const useDebugState = (store: StoreForDevelopment) => {
   const [stateMutableSource, , atomsMutableSource] = store
   const atoms: AnyAtom[] = useMutableSource(
     atomsMutableSource,
-    getAtoms,
-    subscribeAtoms
+    getDevAtoms,
+    subscribeDevAtoms
   )
   const subscribe = useCallback(
     (state: State, callback: () => void) => {
@@ -83,10 +89,6 @@ const useDebugState = (store: StoreForDevelopment) => {
     },
     [atoms]
   )
-  const state = useMutableSource(stateMutableSource, getState, subscribe)
+  const state = useMutableSource(stateMutableSource, getDevState, subscribe)
   useDebugValue([state, atoms], stateToPrintable)
-}
-
-function isDevStore(store: Store): store is StoreForDevelopment {
-  return store.length > 2
 }
