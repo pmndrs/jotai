@@ -3,7 +3,7 @@ import React, { createElement, useCallback, useRef, useDebugValue } from 'react'
 import type { AnyAtom, Scope } from './types'
 import { subscribeAtom } from './vanilla'
 import type { AtomState, State } from './vanilla'
-import { createStore, getStoreContext } from './contexts'
+import { createStore, getStoreContext, StoreForDevelopment } from './contexts'
 import type { Store } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
@@ -12,26 +12,18 @@ export const Provider: React.FC<{
   scope?: Scope
 }> = ({ initialValues, scope, children }) => {
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
+  if (storeRef.current === null) {
+    // lazy initialization
+    storeRef.current = createStore(initialValues)
+  }
 
-  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
-    /* eslint-disable react-hooks/rules-of-hooks */
-    const atomsRef = useRef<AnyAtom[]>([])
-    if (storeRef.current === null) {
-      // lazy initialization
-      storeRef.current = createStore(initialValues, (newAtom) => {
-        atomsRef.current.push(newAtom)
-      })
-    }
-    useDebugState(
-      storeRef.current as ReturnType<typeof createStore>,
-      atomsRef.current
-    )
-    /* eslint-enable react-hooks/rules-of-hooks */
-  } else {
-    if (storeRef.current === null) {
-      // lazy initialization
-      storeRef.current = createStore(initialValues)
-    }
+  if (
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production' &&
+    isDevStore(storeRef.current)
+  ) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useDebugState(storeRef.current)
   }
 
   const StoreContext = getStoreContext(scope)
@@ -65,11 +57,28 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
     })
   )
 
-const getState = (state: State) => ({ ...state }) // shallow copy
+const isDevStore = (store: Store): store is StoreForDevelopment => {
+  return store.length > 2
+}
+export const getDevState = (state: State) => ({ ...state }) // shallow copy XXX might be better ways
+export const getDevAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
+export const subscribeDevAtoms = (
+  { listeners }: { listeners: Set<() => void> },
+  callback: () => void
+) => {
+  listeners.add(callback)
+  return () => listeners.delete(callback)
+}
 
-// We keep a reference to the atoms in Provider's atomsRef in dev mode,
+// We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
-const useDebugState = (store: Store, atoms: AnyAtom[]) => {
+const useDebugState = (store: StoreForDevelopment) => {
+  const [stateMutableSource, , atomsMutableSource] = store
+  const atoms: AnyAtom[] = useMutableSource(
+    atomsMutableSource,
+    getDevAtoms,
+    subscribeDevAtoms
+  )
   const subscribe = useCallback(
     (state: State, callback: () => void) => {
       // FIXME we don't need to resubscribe, just need to subscribe for new one
@@ -80,6 +89,6 @@ const useDebugState = (store: Store, atoms: AnyAtom[]) => {
     },
     [atoms]
   )
-  const state = useMutableSource(store[0], getState, subscribe)
+  const state = useMutableSource(stateMutableSource, getDevState, subscribe)
   useDebugValue([state, atoms], stateToPrintable)
 }

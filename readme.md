@@ -168,12 +168,14 @@ yarn add jotai react
 
 ## More documents
 
-- Introduction
-  - [Concepts](https://docs.pmnd.rs/jotai/concepts)
-  - [Getting Started](https://docs.pmnd.rs/jotai/getting-started)
-  - [Async](https://docs.pmnd.rs/jotai/async)
-  - [Comparison](https://docs.pmnd.rs/jotai/comparison)
-  - [Showcase](https://docs.pmnd.rs/jotai/showcase)
+- Overview
+  - [Introduction](https://docs.pmnd.rs/jotai/introduction)
+- Basics
+  - [Concepts](https://docs.pmnd.rs/jotai/basics/concepts)
+  - [Primitives](https://docs.pmnd.rs/jotai/basics/primitives)
+  - [Async](https://docs.pmnd.rs/jotai/basics/async)
+  - [Comparison](https://docs.pmnd.rs/jotai/basics/comparison)
+  - [Showcase](https://docs.pmnd.rs/jotai/basics/showcase)
 - Guides
   - [TypeScript](https://docs.pmnd.rs/jotai/guides/typescript)
   - [Debugging](https://docs.pmnd.rs/jotai/guides/debugging)
@@ -185,12 +187,12 @@ yarn add jotai react
   - [Core](https://docs.pmnd.rs/jotai/api/core)
   - [Utils](https://docs.pmnd.rs/jotai/api/utils)
   - [Devtools](https://docs.pmnd.rs/jotai/api/devtools)
-  - [Immer](https://docs.pmnd.rs/jotai/api/immer) ([immer](https://github.com/immerjs/immer) integration)
-  - [Optics](https://docs.pmnd.rs/jotai/api/optics) ([optics-ts](https://github.com/akheron/optics-ts) integration)
-  - [Query](https://docs.pmnd.rs/jotai/api/query) ([react-query](https://github.com/tannerlinsley/react-query) integration)
-  - [XState](https://docs.pmnd.rs/jotai/api/xstate) ([xstate](https://github.com/davidkpiano/xstate) integration)
-  - [Valtio](https://docs.pmnd.rs/jotai/api/valtio) ([valtio](https://github.com/pmndrs/valtio) integration)
-  - [Zustand](https://docs.pmnd.rs/jotai/api/zustand) ([zustand](https://github.com/pmndrs/zustand) integration)
-  - [Redux](https://docs.pmnd.rs/jotai/api/redux) ([redux](https://github.com/reduxjs/redux) integration)
+  - [Immer](https://docs.pmnd.rs/jotai/integrations/immer) ([immer](https://github.com/immerjs/immer) integration)
+  - [Optics](https://docs.pmnd.rs/jotai/integrations/optics) ([optics-ts](https://github.com/akheron/optics-ts) integration)
+  - [Query](https://docs.pmnd.rs/jotai/integrations/query) ([react-query](https://github.com/tannerlinsley/react-query) integration)
+  - [XState](https://docs.pmnd.rs/jotai/integrations/xstate) ([xstate](https://github.com/davidkpiano/xstate) integration)
+  - [Valtio](https://docs.pmnd.rs/jotai/integrations/valtio) ([valtio](https://github.com/pmndrs/valtio) integration)
+  - [Zustand](https://docs.pmnd.rs/jotai/integrations/zustand) ([zustand](https://github.com/pmndrs/zustand) integration)
+  - [Redux](https://docs.pmnd.rs/jotai/integrations/redux) ([redux](https://github.com/reduxjs/redux) integration)
 - Advanced Recipes
   - [Large Objects](https://docs.pmnd.rs/jotai/advanced-recipes/large-objects)
