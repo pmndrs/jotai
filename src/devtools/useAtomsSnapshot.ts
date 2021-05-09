@@ -1,16 +1,28 @@
 import { useCallback, useContext, useMemo } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
-import { AtomState, State, subscribeAtom } from '../core/vanilla'
-import { RegisteredAtomsContext } from '../core/contexts'
+import type { AnyAtom } from '../core/types'
+import type { AtomState, State } from '../core/vanilla'
+
+// XXX across bundles, this is actually copying code
+import { subscribeAtom } from '../core/vanilla'
 import { useMutableSource } from '../core/useMutableSource'
-import { AnyAtom } from '../core/types'
+import { getDevState, getDevAtoms, subscribeDevAtoms } from '../core/Provider'
 
 type AtomsSnapshot = Map<AnyAtom, unknown>
 
 export function useAtomsSnapshot(): AtomsSnapshot {
   const StoreContext = getStoreContext()
-  const [mutableSource] = useContext(StoreContext)
-  const atoms = useContext(RegisteredAtomsContext)
+  const [mutableSource, , atomsMutableSource] = useContext(StoreContext)
+
+  if (atomsMutableSource === undefined) {
+    throw Error('useAtomsSnapshot can only be used in dev mode.')
+  }
+
+  const atoms: AnyAtom[] = useMutableSource(
+    atomsMutableSource,
+    getDevAtoms,
+    subscribeDevAtoms
+  )
 
   const subscribe = useCallback(
     (state: State, callback: () => void) => {
@@ -22,7 +34,7 @@ export function useAtomsSnapshot(): AtomsSnapshot {
     },
     [atoms]
   )
-  const state: State = useMutableSource(mutableSource, getState, subscribe)
+  const state: State = useMutableSource(mutableSource, getDevState, subscribe)
 
   return useMemo(() => {
     const atomToAtomValueTuples = atoms
@@ -34,5 +46,3 @@ export function useAtomsSnapshot(): AtomsSnapshot {
     return new Map(atomToAtomValueTuples)
   }, [atoms, state])
 }
-
-const getState = (state: State) => ({ ...state }) // shallow copy

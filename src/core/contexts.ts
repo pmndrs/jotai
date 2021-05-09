@@ -2,32 +2,77 @@ import { createContext } from 'react'
 import type { Context } from 'react'
 
 import type { AnyAtom, WritableAtom, Scope } from './types'
-import { createState, writeAtom } from './vanilla'
-import type { NewAtomReceiver } from './vanilla'
+import { State, createState, writeAtom } from './vanilla'
 import { createMutableSource } from './useMutableSource'
 
-type MutableSource = ReturnType<typeof createMutableSource>
+type MutableSource<_Target> = ReturnType<typeof createMutableSource>
 
-export type Store = [
-  mutableSource: MutableSource,
-  updateAtom: <Value, Update>(
-    atom: WritableAtom<Value, Update>,
-    update: Update
-  ) => void | Promise<void>
+type UpdateAtom = <Value, Update>(
+  atom: WritableAtom<Value, Update>,
+  update: Update
+) => void | Promise<void>
+
+type StoreForProduction = [
+  stateMutableSource: MutableSource<State>,
+  updateAtom: UpdateAtom
 ]
 
-export const createStore = (
-  initialValues?: Iterable<readonly [AnyAtom, unknown]>,
-  newAtomReceiver?: NewAtomReceiver
-): Store => {
-  const state = createState(initialValues, newAtomReceiver)
-  const mutableSource = createMutableSource(state, () => state.v)
+export type StoreForDevelopment = [
+  stateMutableSource: MutableSource<State>,
+  updateAtom: UpdateAtom,
+  atomsMutableSource: MutableSource<{
+    atoms: AnyAtom[]
+    listeners: Set<() => void>
+  }>
+]
+
+export type Store = StoreForProduction | StoreForDevelopment
+
+const createStoreForProduction = (
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+): StoreForProduction => {
+  const state = createState(initialValues)
+  const stateMutableSource = createMutableSource(state, () => state.v)
   const updateAtom = <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => writeAtom(state, atom, update)
-  return [mutableSource, updateAtom]
+  return [stateMutableSource, updateAtom]
 }
+
+const createStoreForDevelopment = (
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+): StoreForDevelopment => {
+  const atomsStore = {
+    atoms: [] as AnyAtom[],
+    listeners: new Set<() => void>(),
+  }
+  const state = createState(initialValues, (newAtom) => {
+    atomsStore.atoms = [...atomsStore.atoms, newAtom]
+    // FIXME memory leak
+    // we should probably remove unmounted atoms
+    atomsStore.listeners.forEach((listener) => listener())
+  })
+  const stateMutableSource = createMutableSource(state, () => state.v)
+  const updateAtom = <Value, Update>(
+    atom: WritableAtom<Value, Update>,
+    update: Update
+  ) => writeAtom(state, atom, update)
+  const atomsMutableSource = createMutableSource(
+    atomsStore,
+    () => atomsStore.atoms
+  )
+  return [stateMutableSource, updateAtom, atomsMutableSource]
+}
+
+type CreateStore = (
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+) => Store
+
+export const createStore: CreateStore =
+  typeof process === 'object' && process.env.NODE_ENV !== 'production'
+    ? createStoreForDevelopment
+    : createStoreForProduction
 
 type StoreContext = Context<Store>
 
@@ -39,6 +84,3 @@ export const getStoreContext = (scope?: Scope) => {
   }
   return StoreContextMap.get(scope) as StoreContext
 }
-
-// only for DEV purpose
-export const RegisteredAtomsContext = createContext<AnyAtom[]>([])
