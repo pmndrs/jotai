@@ -140,9 +140,9 @@
     }
   },
   "urql.js": {
-    "bundled": 3092,
-    "minified": 1562,
-    "gzipped": 736,
+    "bundled": 2224,
+    "minified": 1176,
+    "gzipped": 577,
     "treeshaked": {
       "rollup": {
         "code": 70,
