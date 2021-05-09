@@ -17,6 +17,9 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "eslintConfig": {
+    "root": true
+  },
   "browserslist": {
     "production": [
       ">0.2%",
