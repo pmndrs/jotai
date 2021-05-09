@@ -214,7 +214,7 @@
     "react": ">=16.8",
     "react-query": "*",
     "valtio": "*",
-    "wokna": "*",
+    "wonka": "*",
     "xstate": "*"
   },
   "peerDependenciesMeta": {
