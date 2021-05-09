@@ -339,7 +339,6 @@ const readAtomState = <Value>(
     }
   } catch (errorOrPromise) {
     if (errorOrPromise instanceof Promise) {
-      scheduleReadAtomState(state, atom, errorOrPromise)
       promise = errorOrPromise
     } else if (errorOrPromise instanceof Error) {
       error = errorOrPromise
