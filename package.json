@@ -185,7 +185,6 @@
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-react": "^7.23.2",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "graphql": "^15.5.0",
     "husky": "^6.0.0",
     "immer": "^8.0.1",
     "jest": "^26.6.3",
@@ -204,24 +203,22 @@
     "tslib": "^2.2.0",
     "typescript": "^4.2.4",
     "valtio": "^1.0.3",
+    "wonka": "^4.0.15",
     "xstate": "^4.17.1",
     "zustand": "^3.4.1"
   },
   "peerDependencies": {
     "@urql/core": "*",
-    "graphql": "*",
     "immer": "*",
     "optics-ts": "*",
     "react": ">=16.8",
     "react-query": "*",
     "valtio": "*",
+    "wokna": "*",
     "xstate": "*"
   },
   "peerDependenciesMeta": {
     "@urql/core": {
-      "optional": true
-    },
-    "graphql": {
       "optional": true
     },
     "immer": {
@@ -234,6 +231,9 @@
       "optional": true
     },
     "valtio": {
+      "optional": true
+    },
+    "wonka": {
       "optional": true
     },
     "xstate": {
