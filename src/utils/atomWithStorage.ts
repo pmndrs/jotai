@@ -7,14 +7,14 @@ type Storage<Value> = {
 }
 
 const defaultStorage: Storage<unknown> = {
-  getItem: (key: string) => {
+  getItem: (key) => {
     const storedValue = localStorage.getItem(key)
     if (storedValue === null) {
       throw new Error('no value stored')
     }
     return JSON.parse(storedValue)
   },
-  setItem: (key, newValue: unknown) => {
+  setItem: (key, newValue) => {
     localStorage.setItem(key, JSON.stringify(newValue))
   },
 }
