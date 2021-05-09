@@ -27,7 +27,7 @@ type QueryArgs<Data, Variables extends object> = {
 
 export function atomWithQuery<Data, Variables extends object>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>
-): WritableAtom<[Data, GraphQLExtensions], ResultActions> {
+): WritableAtom<{ data: Data; extensions: GraphQLExtensions }, ResultActions> {
   const operationResultAtom = atom<
     OperationResult<Data, Variables> | Promise<OperationResult<Data, Variables>>
   >(
@@ -112,7 +112,10 @@ export function atomWithQuery<Data, Variables extends object>(
       }
     }
   )
-  const queryDataAtom = atom<[Data, GraphQLExtensions], ResultActions>(
+  const queryDataAtom = atom<
+    { data: Data; extensions: GraphQLExtensions },
+    ResultActions
+  >(
     (get) => {
       const [, initAtom] = get(queryAtom)
       get(initAtom) // use it here
@@ -124,7 +127,10 @@ export function atomWithQuery<Data, Variables extends object>(
         // XXX can this happen?
         throw new Error('no data in operation result')
       }
-      return [operationResult.data, operationResult.extensions]
+      return {
+        data: operationResult.data,
+        extensions: operationResult.extensions,
+      }
     },
     (_get, set, action) => set(queryAtom, action) // delegate action
   )
