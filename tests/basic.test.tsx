@@ -889,3 +889,45 @@ it('write self atom (undocumented usage)', async () => {
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
 })
+it('async chain for multiple sync and async atoms (#443)', async () => {
+  const num1Atom = atom(async () => {
+    await new Promise((r) => setTimeout(r, 10))
+    return 1
+  })
+  num1Atom.debugLabel = 'num1Atom'
+  const num2Atom = atom(async () => {
+    await new Promise((r) => setTimeout(r, 10))
+    return 2
+  })
+
+  num2Atom.debugLabel = 'num2Atom'
+  // "async" is required to reproduce the issue
+  const sumAtom = atom(async (get) => {
+    return get(num1Atom) + get(num2Atom)
+  })
+  sumAtom.debugLabel = 'sumAtom'
+  const countAtom = atom((get) => {
+    return get(sumAtom)
+  })
+  countAtom.debugLabel = 'countAtom'
+  // const countAtom = atom((get) => get(sumAtom))
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 3')
+})
