@@ -1,6 +1,5 @@
 import { pipe, subscribe } from 'wonka'
 import {
-  Client,
   TypedDocumentNode,
   OperationContext,
   OperationResult,
@@ -41,54 +40,43 @@ export function atomWithQuery<Data, Variables extends object>(
       const args = createQueryArgs(get)
       const initAtom = atom(
         null,
-        (
-          get,
-          set,
-          action:
-            | { type: 'init'; initializer: (client: Client) => void }
-            | { type: 'result'; result: OperationResult<Data, Variables> }
-        ) => {
-          if (action.type === 'init') {
-            set(
-              operationResultAtom,
-              new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch
+        (get, set, cleanup: (callback: () => void) => void) => {
+          set(
+            operationResultAtom,
+            new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch
+          )
+          if (!args.pause) {
+            const client = getClient(get, set)
+            const subscription = pipe(
+              client.query(args.query, args.variables, {
+                requestPolicy: args.requestPolicy,
+                ...args.context,
+              }),
+              subscribe((result) => {
+                if (!result.stale) {
+                  set(operationResultAtom, result)
+                }
+              })
             )
-            if (!args.pause) {
-              action.initializer(getClient(get, set))
-            }
-          } else if (action.type === 'result') {
-            if (!action.result.stale) {
-              set(operationResultAtom, action.result)
-            }
+            cleanup(subscription.unsubscribe)
           }
         }
       )
-      initAtom.onMount = (dispatch) => {
-        let unsub: (() => void) | undefined | false
-        const initializer = (client: Client) => {
-          const subscription = pipe(
-            client.query(args.query, args.variables, {
-              requestPolicy: args.requestPolicy,
-              ...args.context,
-            }),
-            subscribe((result) => {
-              dispatch({ type: 'result', result })
-            })
-          )
-          if (unsub === false) {
-            subscription.unsubscribe()
+      initAtom.onMount = (init) => {
+        let destroy: (() => void) | undefined | false
+        const cleanup = (callback: () => void) => {
+          if (destroy === false) {
+            callback()
           } else {
-            unsub = () => {
-              subscription.unsubscribe()
-            }
+            destroy = callback
           }
         }
-        dispatch({ type: 'init', initializer })
+        init(cleanup)
         return () => {
-          if (unsub) {
-            unsub()
+          if (destroy) {
+            destroy()
           }
-          unsub = false
+          destroy = false
         }
       }
       return [args, initAtom]
