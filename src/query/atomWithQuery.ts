@@ -1,9 +1,4 @@
-import {
-  QueryClient,
-  QueryKey,
-  QueryObserver,
-  QueryObserverOptions,
-} from 'react-query'
+import { QueryKey, QueryObserver, QueryObserverOptions } from 'react-query'
 import { WritableAtom, atom } from 'jotai'
 import type { Getter } from '../core/types'
 import { getQueryClient } from './queryClientAtom'
@@ -45,56 +40,46 @@ export function atomWithQuery<
     (get) => {
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
-      const observerAtom = atom(
+      const initAtom = atom(
         null,
-        (
-          get,
-          set,
-          action:
-            | { type: 'init'; initializer: (queryClient: QueryClient) => void }
-            | { type: 'data'; data: TData }
-        ) => {
-          if (action.type === 'init') {
-            set(
-              dataAtom,
-              new Promise<TData>(() => {}) // new fetch
-            )
-            action.initializer(getQueryClient(get, set))
-          } else if (action.type === 'data') {
-            const data = get(dataAtom)
-            if (data === null || !equalityFn(data, action.data)) {
-              set(dataAtom, action.data)
-            }
-          }
-        }
-      )
-      observerAtom.onMount = (dispatch) => {
-        let unsub: (() => void) | undefined | false
-        const initializer = (queryClient: QueryClient) => {
+        (get, set, cleanup: (callback: () => void) => void) => {
+          set(
+            dataAtom,
+            new Promise<TData>(() => {}) // new fetch
+          )
+          const queryClient = getQueryClient(get, set)
           const observer = new QueryObserver(queryClient, options)
+          let hasData = false
           observer.subscribe((result) => {
             // TODO error handling
             if (result.data !== undefined) {
-              dispatch({ type: 'data', data: result.data })
+              if (!hasData || !equalityFn(get(dataAtom), result.data)) {
+                hasData = true
+                set(dataAtom, result.data)
+              }
             }
           })
-          if (unsub === false) {
-            observer.destroy()
+          cleanup(observer.destroy)
+        }
+      )
+      initAtom.onMount = (init) => {
+        let destroy: (() => void) | undefined | false
+        const cleanup = (callback: () => void) => {
+          if (destroy === false) {
+            callback()
           } else {
-            unsub = () => {
-              observer.destroy()
-            }
+            destroy = callback
           }
         }
-        dispatch({ type: 'init', initializer })
+        init(cleanup)
         return () => {
-          if (unsub) {
-            unsub()
+          if (destroy) {
+            destroy()
           }
-          unsub = false
+          destroy = false
         }
       }
-      return [options, observerAtom]
+      return [options, initAtom]
     },
     (get, set, action) => {
       if (action.type === 'refetch') {
@@ -113,8 +98,8 @@ export function atomWithQuery<
   )
   const queryDataAtom = atom<TData, ResultActions>(
     (get) => {
-      const [, observerAtom] = get(queryAtom)
-      get(observerAtom) // use it here
+      const [, initAtom] = get(queryAtom)
+      get(initAtom) // use it here
       return get(dataAtom)
     },
     (_get, set, action) => set(queryAtom, action) // delegate action
