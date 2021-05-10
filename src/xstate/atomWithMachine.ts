@@ -40,9 +40,8 @@ export function atomWithMachine<
   type Machine = StateMachine<TContext, any, TEvent, TTypestate>
   type Service = Interpreter<TContext, any, TEvent, TTypestate>
   type MachineState = State<TContext, TEvent, any, TTypestate>
-  const cachedMachineAtom = atom<{ machine: Machine; service: Service } | null>(
-    null
-  )
+  const cachedMachineAtom =
+    atom<{ machine: Machine; service: Service } | null>(null)
   const machineAtom = atom(
     (get) => {
       const cachedMachine = get(cachedMachineAtom)

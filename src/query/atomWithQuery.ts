@@ -10,14 +10,10 @@ import { getQueryClient } from './queryClientAtom'
 
 type ResultActions = { type: 'refetch' }
 
-type AtomQueryOptions<
-  TQueryFnData,
-  TError,
-  TData,
-  TQueryData
-> = QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
-  queryKey: QueryKey
-}
+type AtomQueryOptions<TQueryFnData, TError, TData, TQueryData> =
+  QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
+    queryKey: QueryKey
+  }
 
 export function atomWithQuery<
   TQueryFnData,
