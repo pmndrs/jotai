@@ -8,9 +8,9 @@ export function useUpdateAtom<Value, Update>(
 ) {
   const StoreContext = getStoreContext(anAtom.scope)
   const [, updateAtom] = useContext(StoreContext)
-  const setAtom = useCallback((update: Update) => updateAtom(anAtom, update), [
-    updateAtom,
-    anAtom,
-  ])
+  const setAtom = useCallback(
+    (update: Update) => updateAtom(anAtom, update),
+    [updateAtom, anAtom]
+  )
   return setAtom as SetAtom<Update>
 }
