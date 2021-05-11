@@ -579,13 +579,6 @@ const unmountAtom = <Value>(state: State, atom: Atom<Value>): void => {
   // unmount dependencies afterward
   const atomState = getAtomState(state, atom)
   if (atomState) {
-    if (
-      atomState.p && // read promise
-      typeof process === 'object' &&
-      process.env.NODE_ENV !== 'production'
-    ) {
-      console.warn('[Bug] deleting atomState with read promise', atom)
-    }
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
         const mounted = state.m.get(a)
