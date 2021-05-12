@@ -35,7 +35,12 @@ export function atomWithStorage<Value>(
   const baseAtom = atom(initialValue)
 
   baseAtom.onMount = (setAtom) => {
-    Promise.resolve(getInitialValue()).then(setAtom)
+    const value = getInitialValue()
+    if (value instanceof Promise) {
+      value.then(setAtom)
+    } else {
+      setAtom(value)
+    }
   }
 
   const anAtom = atom(
