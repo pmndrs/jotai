@@ -7,16 +7,6 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
-// FIXME the tests should also work on DEV
-let savedNodeEnv: string | undefined
-beforeEach(() => {
-  savedNodeEnv = process.env.NODE_ENV
-  process.env.NODE_ENV = 'production'
-})
-afterEach(() => {
-  process.env.NODE_ENV = savedNodeEnv
-})
-
 it('query basic test', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count1',
