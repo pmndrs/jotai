@@ -87,3 +87,7 @@ export const getStoreContext = (scope?: Scope) => {
   }
   return StoreContextMap.get(scope) as StoreContext
 }
+
+export const isDevStore = (store: Store): store is StoreForDevelopment => {
+  return store.length > 2
+}

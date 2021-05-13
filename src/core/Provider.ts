@@ -3,8 +3,12 @@ import React, { createElement, useCallback, useRef, useDebugValue } from 'react'
 import type { AnyAtom, Scope } from './types'
 import { subscribeAtom } from './vanilla'
 import type { AtomState, State } from './vanilla'
-import { createStore, getStoreContext, StoreForDevelopment } from './contexts'
-import type { Store } from './contexts'
+import {
+  createStore,
+  getStoreContext,
+  isDevStore,
+  StoreForDevelopment,
+} from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 export const Provider: React.FC<{
@@ -57,9 +61,6 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
     })
   )
 
-export const isDevStore = (store: Store): store is StoreForDevelopment => {
-  return store.length > 2
-}
 export const getDevState = (state: State) => ({ ...state }) // shallow copy XXX might be better ways
 export const getDevAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
 export const subscribeDevAtoms = (
