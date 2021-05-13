@@ -112,7 +112,7 @@
     }
   },
   "utils.js": {
-    "bundled": 12385,
+    "bundled": 12361,
     "minified": 6014,
     "gzipped": 2264,
     "treeshaked": {

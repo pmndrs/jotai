@@ -57,7 +57,7 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
     })
   )
 
-const isDevStore = (store: Store): store is StoreForDevelopment => {
+export const isDevStore = (store: Store): store is StoreForDevelopment => {
   return store.length > 2
 }
 export const getDevState = (state: State) => ({ ...state }) // shallow copy XXX might be better ways

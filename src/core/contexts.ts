@@ -2,7 +2,7 @@ import { createContext } from 'react'
 import type { Context } from 'react'
 
 import type { AnyAtom, WritableAtom, Scope } from './types'
-import { State, createState, writeAtom } from './vanilla'
+import { State, createState, writeAtom, restoreAtoms } from './vanilla'
 import { createMutableSource } from './useMutableSource'
 
 type MutableSource<_Target> = ReturnType<typeof createMutableSource>
@@ -23,7 +23,8 @@ export type StoreForDevelopment = [
   atomsMutableSource: MutableSource<{
     atoms: AnyAtom[]
     listeners: Set<() => void>
-  }>
+  }>,
+  restoreAtoms: (values: Iterable<readonly [AnyAtom, unknown]>) => void
 ]
 
 export type Store = StoreForProduction | StoreForDevelopment
@@ -62,7 +63,9 @@ const createStoreForDevelopment = (
     atomsStore,
     () => atomsStore.atoms
   )
-  return [stateMutableSource, updateAtom, atomsMutableSource]
+  const restore = (values: Iterable<readonly [AnyAtom, unknown]>) =>
+    restoreAtoms(state, values)
+  return [stateMutableSource, updateAtom, atomsMutableSource, restore]
 }
 
 type CreateStore = (
