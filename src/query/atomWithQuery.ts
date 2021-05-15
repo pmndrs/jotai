@@ -5,10 +5,14 @@ import { getQueryClient } from './queryClientAtom'
 
 type ResultActions = { type: 'refetch' }
 
-type AtomQueryOptions<TQueryFnData, TError, TData, TQueryData> =
-  QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
-    queryKey: QueryKey
-  }
+type AtomQueryOptions<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryData
+> = QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
+  queryKey: QueryKey
+}
 
 export function atomWithQuery<
   TQueryFnData,
@@ -38,7 +42,14 @@ export function atomWithQuery<
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       const initAtom = atom(
         null,
-        (get, set, cleanup: (callback: () => void) => void) => {
+        (
+          get,
+          set,
+          cleanup: (
+            callback: () => void,
+            bindObserver: QueryObserver<any, any, any, any>
+          ) => void
+        ) => {
           set(
             dataAtom,
             new Promise<TData>(() => {}) // new fetch
@@ -55,16 +66,19 @@ export function atomWithQuery<
               }
             }
           })
-          cleanup(observer.destroy)
+          cleanup(observer.destroy, observer)
         }
       )
       initAtom.onMount = (init) => {
         let destroy: (() => void) | undefined | false
-        const cleanup = (callback: () => void) => {
+        const cleanup = (
+          callback: () => void,
+          bindObserver: QueryObserver<any, any, any, any>
+        ) => {
           if (destroy === false) {
-            callback()
+            callback.call(bindObserver)
           } else {
-            destroy = callback
+            destroy = callback.bind(bindObserver)
           }
         }
         init(cleanup)
