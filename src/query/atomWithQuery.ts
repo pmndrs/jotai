@@ -38,14 +38,7 @@ export function atomWithQuery<
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       const initAtom = atom(
         null,
-        (
-          get,
-          set,
-          cleanup: (
-            callback: () => void,
-            bindObserver: QueryObserver<any, any, any, any>
-          ) => void
-        ) => {
+        (get, set, cleanup: (callback: () => void) => void) => {
           set(
             dataAtom,
             new Promise<TData>(() => {}) // new fetch
@@ -62,19 +55,16 @@ export function atomWithQuery<
               }
             }
           })
-          cleanup(observer.destroy, observer)
+          cleanup(() => observer.destroy())
         }
       )
       initAtom.onMount = (init) => {
         let destroy: (() => void) | undefined | false
-        const cleanup = (
-          callback: () => void,
-          bindObserver: QueryObserver<any, any, any, any>
-        ) => {
+        const cleanup = (callback: () => void) => {
           if (destroy === false) {
-            callback.call(bindObserver)
+            callback()
           } else {
-            destroy = callback.bind(bindObserver)
+            destroy = callback
           }
         }
         init(cleanup)
