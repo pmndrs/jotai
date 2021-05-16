@@ -1,6 +1,9 @@
 import { atom, Atom } from 'jotai'
 
 import type { Getter } from '../core/types'
+import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
+
+const freezeAtomCache = new WeakMap()
 
 const deepFreeze = (obj: any) => {
   if (typeof obj !== 'object' || obj === null) return
@@ -13,23 +16,30 @@ const deepFreeze = (obj: any) => {
   return obj
 }
 
-export function freezeAtom<T extends Atom<any>>(anAtom: T) {
+export function freezeAtom<AtomType extends Atom<any>>(
+  anAtom: AtomType
+): AtomType {
+  const deps: object[] = [anAtom]
+  const cachedAtom = getWeakCacheItem(freezeAtomCache, deps)
+  if (cachedAtom) {
+    return cachedAtom as AtomType
+  }
   const frozenAtom: any = atom(
     (get) => deepFreeze(get(anAtom)),
     (_get, set, arg) => set(anAtom as any, arg)
   )
   frozenAtom.scope = anAtom.scope
-  return frozenAtom as T
+  setWeakCacheItem(freezeAtomCache, deps, frozenAtom)
+  return frozenAtom
 }
 
-const atomFrozen: typeof atom = ((read: any, write: any) => {
-  const anAtom = atom(read, write)
-  const origRead = anAtom.read
-  anAtom.read = (get: Getter) => deepFreeze(origRead(get))
-  return anAtom
-}) as any
-
-export const atomFrozenInDev =
-  typeof process === 'object' && process.env.NODE_ENV === 'development'
-    ? atomFrozen
-    : atom
+export function freezeAtomCreator<
+  CreateAtom extends (...params: any[]) => Atom<any>
+>(createAtom: CreateAtom) {
+  return ((...params: any[]) => {
+    const anAtom = createAtom(...params)
+    const origRead = anAtom.read
+    anAtom.read = (get: Getter) => deepFreeze(origRead(get))
+    return anAtom
+  }) as CreateAtom
+}

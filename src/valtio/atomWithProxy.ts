@@ -17,9 +17,9 @@ const applyChanges = <T extends object>(proxyObject: T, prev: T, next: T) => {
       isObject(next[key])
     ) {
       applyChanges(
-        (proxyObject[key] as unknown) as object,
-        (prev[key] as unknown) as object,
-        (next[key] as unknown) as object
+        proxyObject[key] as unknown as object,
+        prev[key] as unknown as object,
+        next[key] as unknown as object
       )
     } else {
       proxyObject[key] = next[key]
