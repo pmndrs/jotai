@@ -45,9 +45,7 @@ export function splitAtom<Item, Key>(
     let nextAtomList: Atom<Item>[] = []
     let nextKeyList: Key[] = []
     get(arrAtom).forEach((item, index) => {
-      const key = keyExtractor
-        ? keyExtractor(item)
-        : ((index as unknown) as Key)
+      const key = keyExtractor ? keyExtractor(item) : (index as unknown as Key)
       nextKeyList[index] = key
       const cachedAtom = keyToAtom(key)
       if (cachedAtom) {
