@@ -1,14 +1,9 @@
-import React, { createElement, useCallback, useRef, useDebugValue } from 'react'
+import React, { createElement, useRef, useDebugValue } from 'react'
 
 import type { AnyAtom, Scope } from './types'
-import { subscribeAtom } from './vanilla'
 import type { AtomState, State } from './vanilla'
-import {
-  createStore,
-  getStoreContext,
-  isDevStore,
-  StoreForDevelopment,
-} from './contexts'
+import type { StoreForDevelopment, Store } from './contexts'
+import { createStore, getStoreContext } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 export const Provider: React.FC<{
@@ -61,9 +56,17 @@ const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
     })
   )
 
-export const getDevState = (state: State) => ({ ...state }) // shallow copy XXX might be better ways
-export const getDevAtoms = ({ atoms }: { atoms: AnyAtom[] }) => atoms
-export const subscribeDevAtoms = (
+const isDevStore = (store: Store): store is StoreForDevelopment => {
+  return store.length > 2
+}
+export const getDebugStateAndAtoms = ({
+  atoms,
+  state,
+}: {
+  atoms: AnyAtom[]
+  state: State
+}) => [state, atoms]
+export const subscribeDebugStore = (
   { listeners }: { listeners: Set<() => void> },
   callback: () => void
 ) => {
@@ -74,22 +77,11 @@ export const subscribeDevAtoms = (
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (store: StoreForDevelopment) => {
-  const [stateMutableSource, , atomsMutableSource] = store
-  const atoms: AnyAtom[] = useMutableSource(
-    atomsMutableSource,
-    getDevAtoms,
-    subscribeDevAtoms
+  const [, , debugMutableSource] = store
+  const [state, atoms]: [State, AnyAtom[]] = useMutableSource(
+    debugMutableSource,
+    getDebugStateAndAtoms,
+    subscribeDebugStore
   )
-  const subscribe = useCallback(
-    (state: State, callback: () => void) => {
-      // FIXME we don't need to resubscribe, just need to subscribe for new one
-      const unsubs = atoms.map((atom) => subscribeAtom(state, atom, callback))
-      return () => {
-        unsubs.forEach((unsub) => unsub())
-      }
-    },
-    [atoms]
-  )
-  const state = useMutableSource(stateMutableSource, getDevState, subscribe)
   useDebugValue([state, atoms], stateToPrintable)
 }

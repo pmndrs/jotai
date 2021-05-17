@@ -2,7 +2,7 @@ import { createContext } from 'react'
 import type { Context } from 'react'
 
 import type { AnyAtom, WritableAtom, Scope } from './types'
-import { State, createState, writeAtom, restoreAtoms } from './vanilla'
+import { State, createState, writeAtom } from './vanilla'
 import { createMutableSource } from './useMutableSource'
 
 type MutableSource<_Target> = ReturnType<typeof createMutableSource>
@@ -20,11 +20,12 @@ type StoreForProduction = [
 export type StoreForDevelopment = [
   stateMutableSource: MutableSource<State>,
   updateAtom: UpdateAtom,
-  atomsMutableSource: MutableSource<{
+  debugMutableSource: MutableSource<{
+    version: number
     atoms: AnyAtom[]
+    state: State
     listeners: Set<() => void>
-  }>,
-  restoreAtoms: (values: Iterable<readonly [AnyAtom, unknown]>) => void
+  }>
 ]
 
 export type Store = StoreForProduction | StoreForDevelopment
@@ -44,28 +45,34 @@ const createStoreForProduction = (
 const createStoreForDevelopment = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ): StoreForDevelopment => {
-  const atomsStore = {
-    atoms: [] as AnyAtom[],
-    listeners: new Set<() => void>(),
+  const stateListener = (updatedAtom: AnyAtom, isNewAtom: boolean) => {
+    ++debugStore.version
+    if (isNewAtom) {
+      // FIXME memory leak
+      // we should probably remove unmounted atoms eventually
+      debugStore.atoms = [...debugStore.atoms, updatedAtom]
+    }
+    Promise.resolve().then(() => {
+      debugStore.listeners.forEach((listener) => listener())
+    })
   }
-  const state = createState(initialValues, (newAtom) => {
-    atomsStore.atoms = [...atomsStore.atoms, newAtom]
-    // FIXME memory leak
-    // we should probably remove unmounted atoms
-    atomsStore.listeners.forEach((listener) => listener())
-  })
+  const state = createState(initialValues, stateListener)
   const stateMutableSource = createMutableSource(state, () => state.v)
   const updateAtom = <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => writeAtom(state, atom, update)
-  const atomsMutableSource = createMutableSource(
-    atomsStore,
-    () => atomsStore.atoms
+  const debugStore = {
+    version: 0,
+    atoms: [] as AnyAtom[],
+    state,
+    listeners: new Set<() => void>(),
+  }
+  const debugMutableSource = createMutableSource(
+    debugStore,
+    () => debugStore.version
   )
-  const restore = (values: Iterable<readonly [AnyAtom, unknown]>) =>
-    restoreAtoms(state, values)
-  return [stateMutableSource, updateAtom, atomsMutableSource, restore]
+  return [stateMutableSource, updateAtom, debugMutableSource]
 }
 
 type CreateStore = (

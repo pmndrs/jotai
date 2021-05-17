@@ -71,7 +71,8 @@ type Mounted = {
 
 type MountedMap = WeakMap<AnyAtom, Mounted>
 
-type NewAtomReceiver = (newAtom: AnyAtom) => void
+// for debugging purpose only
+type StateListener = (updatedAtom: AnyAtom, isNewAtom: boolean) => void
 
 type StateVersion = number
 
@@ -79,7 +80,7 @@ type PendingAtoms = Set<AnyAtom>
 
 // mutable state
 export type State = {
-  n?: NewAtomReceiver
+  l?: StateListener
   v: StateVersion
   a: AtomStateMap
   m: MountedMap
@@ -88,10 +89,10 @@ export type State = {
 
 export const createState = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>,
-  newAtomReceiver?: NewAtomReceiver
+  stateListener?: StateListener
 ): State => {
   const state: State = {
-    n: newAtomReceiver,
+    l: stateListener,
     v: 0,
     a: new WeakMap(),
     m: new WeakMap(),
@@ -645,10 +646,10 @@ const commitAtomState = <Value>(
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     Object.freeze(atomState)
   }
-  const isNewAtom = state.n && !state.a.has(atom)
+  const isNewAtom = !state.a.has(atom)
   state.a.set(atom, atomState)
-  if (isNewAtom) {
-    ;(state.n as NewAtomReceiver)(atom)
+  if (state.l) {
+    state.l(atom, isNewAtom)
   }
   ++state.v
   state.p.add(atom)

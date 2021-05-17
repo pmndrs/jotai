@@ -55,7 +55,7 @@ export function atomWithQuery<
               }
             }
           })
-          cleanup(observer.destroy)
+          cleanup(() => observer.destroy())
         }
       )
       initAtom.onMount = (init) => {
