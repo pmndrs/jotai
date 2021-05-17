@@ -3,13 +3,6 @@ import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import { useAtomsSnapshot, useGoToAtomsSnapshot } from '../../src/devtools'
 
-beforeEach(() => {
-  process.env.NODE_ENV = 'development'
-})
-afterEach(() => {
-  process.env.NODE_ENV = 'test'
-})
-
 it('useGoToAtomsSnapshot should modify atoms snapshot', async () => {
   const petAtom = atom('cat')
 
