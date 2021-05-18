@@ -14,18 +14,9 @@
     }
   },
   "redux.js": {
-    "bundled": 458,
-    "minified": 220,
-    "gzipped": 167,
-    "treeshaked": {
-      "rollup": {
-        "code": 14,
-        "import_statements": 14
-      },
-      "webpack": {
-        "code": 998
-      }
-    }
+    "bundled": 607,
+    "minified": 354,
+    "gzipped": 229
   },
   "valtio.js": {
     "bundled": 1235,
@@ -112,9 +103,9 @@
     }
   },
   "utils.js": {
-    "bundled": 12623,
-    "minified": 6183,
-    "gzipped": 2303,
+    "bundled": 12979,
+    "minified": 6338,
+    "gzipped": 2356,
     "treeshaked": {
       "rollup": {
         "code": 28,

@@ -1,7 +1,7 @@
 import { atom, PrimitiveAtom } from 'jotai'
 import type { SetStateAction } from '../core/types'
 
-type Storage<Value> = {
+export type Storage<Value> = {
   getItem: (key: string) => Value | Promise<Value>
   setItem: (key: string, newValue: Value) => void | Promise<void>
 }
