@@ -19,7 +19,7 @@ it('useGoToAtomsSnapshot should modify atoms snapshot', async () => {
         onClick={() => {
           const newSnapshot = new Map(snapshot)
           newSnapshot.set(petAtom, 'dog')
-          goToSnapshot(snapshot)
+          goToSnapshot(newSnapshot)
         }}>
         click
       </button>
