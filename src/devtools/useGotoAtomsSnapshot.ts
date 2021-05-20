@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useCallback, useContext } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
 import type { Scope } from '../core/types'
 
@@ -9,8 +9,18 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
   const store = useContext(StoreContext)
 
   if (!isDevStore(store)) {
-    throw Error('useGotoAtomsSnapshot can only be used in dev mode.')
+    throw new Error('useGotoAtomsSnapshot can only be used in dev mode.')
   }
-  const restoreAtoms = store[3]
-  return restoreAtoms
+  const restore = store[3]
+  return useCallback(
+    (values: Parameters<typeof restore>[0]) => {
+      for (const [atom] of values) {
+        if (atom.scope !== scope) {
+          throw new Error('atom scope mismatch to restore')
+        }
+      }
+      restore(values)
+    },
+    [restore, scope]
+  )
 }

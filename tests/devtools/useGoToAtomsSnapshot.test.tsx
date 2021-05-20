@@ -1,5 +1,5 @@
 import React, { Suspense, useRef } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor, act } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import { useAtomsSnapshot, useGotoAtomsSnapshot } from '../../src/devtools'
 
@@ -204,4 +204,92 @@ it('useGotoAtomsSnapshot should work with original snapshot', async () => {
     getByText('price: 10')
     getByText('tax: 2')
   })
+})
+
+it('useGotoAtomsSnapshot should respect atom scope', async () => {
+  const scope = Symbol()
+  const petAtom = atom('cat')
+  petAtom.scope = scope
+
+  const DisplayAtoms: React.FC = () => {
+    const [pet] = useAtom(petAtom)
+    return <p>{pet}</p>
+  }
+
+  const UpdateSnapshot: React.FC = () => {
+    const snapshot = useAtomsSnapshot(scope)
+    const goToSnapshot = useGotoAtomsSnapshot(scope)
+    return (
+      <button
+        onClick={() => {
+          const newSnapshot = new Map(snapshot)
+          newSnapshot.set(petAtom, 'dog')
+          goToSnapshot(newSnapshot)
+        }}>
+        click
+      </button>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <DisplayAtoms />
+      <UpdateSnapshot />
+    </Provider>
+  )
+
+  await findByText('cat')
+  fireEvent.click(getByText('click'))
+  await findByText('dog')
+})
+
+it('useGotoAtomsSnapshot should error on scope mismatch', async () => {
+  const petScope = Symbol()
+  const colorScope = Symbol()
+  const petAtom = atom('cat')
+  petAtom.scope = petScope
+  const colorAtom = atom('blue')
+  colorAtom.scope = colorScope
+
+  const DisplayAtoms: React.FC = () => {
+    const [pet] = useAtom(petAtom)
+    const [color] = useAtom(colorAtom)
+    return (
+      <>
+        <p>{pet}</p>
+        <p>{color}</p>
+      </>
+    )
+  }
+
+  const UpdateSnapshot: React.FC = () => {
+    const snapshot = useAtomsSnapshot()
+    const goToSnapshot = useGotoAtomsSnapshot()
+    return (
+      <button
+        onClick={() => {
+          const newSnapshot = new Map(snapshot)
+          newSnapshot.set(petAtom, 'dog')
+          newSnapshot.set(colorAtom, 'green')
+          try {
+            goToSnapshot(newSnapshot)
+          } catch (e) {
+            expect(e.message).toBe('atom scope mismatch to restore')
+          }
+        }}>
+        click
+      </button>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider scope={colorScope}>
+      <DisplayAtoms />
+      <UpdateSnapshot />
+    </Provider>
+  )
+
+  await findByText('cat')
+  await findByText('blue')
+  fireEvent.click(getByText('click'))
 })
