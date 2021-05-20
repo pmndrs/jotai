@@ -4,12 +4,12 @@ import type { Scope } from '../core/types'
 
 import { isDevStore } from '../core/contexts'
 
-export function useGoToAtomsSnapshot(scope?: Scope) {
+export function useGotoAtomsSnapshot(scope?: Scope) {
   const StoreContext = getStoreContext(scope)
   const store = useContext(StoreContext)
 
   if (!isDevStore(store)) {
-    throw Error('useGoToAtomsSnapshot can only be used in dev mode.')
+    throw Error('useGotoAtomsSnapshot can only be used in dev mode.')
   }
   const restoreAtoms = store[3]
   return restoreAtoms

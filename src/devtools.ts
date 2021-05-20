@@ -1,3 +1,3 @@
 export { useAtomDevtools } from './devtools/useAtomDevtools'
 export { useAtomsSnapshot } from './devtools/useAtomsSnapshot'
-export { useGoToAtomsSnapshot } from './devtools/useGoToAtomsSnapshot'
+export { useGotoAtomsSnapshot } from './devtools/useGotoAtomsSnapshot'

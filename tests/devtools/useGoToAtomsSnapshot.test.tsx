@@ -1,9 +1,9 @@
 import React, { Suspense, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
-import { useAtomsSnapshot, useGoToAtomsSnapshot } from '../../src/devtools'
+import { useAtomsSnapshot, useGotoAtomsSnapshot } from '../../src/devtools'
 
-it('useGoToAtomsSnapshot should modify atoms snapshot', async () => {
+it('useGotoAtomsSnapshot should modify atoms snapshot', async () => {
   const petAtom = atom('cat')
   const colorAtom = atom('blue')
 
@@ -20,7 +20,7 @@ it('useGoToAtomsSnapshot should modify atoms snapshot', async () => {
 
   const UpdateSnapshot: React.FC = () => {
     const snapshot = useAtomsSnapshot()
-    const goToSnapshot = useGoToAtomsSnapshot()
+    const goToSnapshot = useGotoAtomsSnapshot()
     return (
       <button
         onClick={() => {
@@ -48,7 +48,7 @@ it('useGoToAtomsSnapshot should modify atoms snapshot', async () => {
   await findByText('green')
 })
 
-it('useGoToAtomsSnapshot should work with derived atoms', async () => {
+it('useGotoAtomsSnapshot should work with derived atoms', async () => {
   const priceAtom = atom(10)
   const taxAtom = atom((get) => get(priceAtom) * 0.2)
 
@@ -65,7 +65,7 @@ it('useGoToAtomsSnapshot should work with derived atoms', async () => {
 
   const UpdateSnapshot: React.FC = () => {
     const snapshot = useAtomsSnapshot()
-    const goToSnapshot = useGoToAtomsSnapshot()
+    const goToSnapshot = useGotoAtomsSnapshot()
     return (
       <button
         onClick={() => {
@@ -96,7 +96,7 @@ it('useGoToAtomsSnapshot should work with derived atoms', async () => {
   })
 })
 
-it('useGoToAtomsSnapshot should work with async derived atoms', async () => {
+it('useGotoAtomsSnapshot should work with async derived atoms', async () => {
   const priceAtom = atom(10)
   const taxAtom = atom(async (get) => {
     await new Promise((r) => setTimeout(r, 10))
@@ -116,7 +116,7 @@ it('useGoToAtomsSnapshot should work with async derived atoms', async () => {
 
   const UpdateSnapshot: React.FC = () => {
     const snapshot = useAtomsSnapshot()
-    const goToSnapshot = useGoToAtomsSnapshot()
+    const goToSnapshot = useGotoAtomsSnapshot()
     return (
       <button
         onClick={() => {
@@ -150,7 +150,7 @@ it('useGoToAtomsSnapshot should work with async derived atoms', async () => {
   })
 })
 
-it('useGoToAtomsSnapshot should work with original snapshot', async () => {
+it('useGotoAtomsSnapshot should work with original snapshot', async () => {
   const priceAtom = atom(10)
   const taxAtom = atom((get) => get(priceAtom) * 0.2)
 
@@ -171,7 +171,7 @@ it('useGoToAtomsSnapshot should work with original snapshot', async () => {
   const UpdateSnapshot: React.FC = () => {
     const snapshot = useAtomsSnapshot()
     const snapshotRef = useRef(snapshot)
-    const goToSnapshot = useGoToAtomsSnapshot()
+    const goToSnapshot = useGotoAtomsSnapshot()
     return (
       <button
         onClick={() => {
