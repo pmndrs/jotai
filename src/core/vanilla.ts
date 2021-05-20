@@ -676,3 +676,16 @@ export const subscribeAtom = (
     delAtom(state, atom)
   }
 }
+
+export const restoreAtoms = (
+  state: State,
+  values: Iterable<readonly [AnyAtom, unknown]>
+): void => {
+  for (const [atom, value] of values) {
+    if (hasInitialValue(atom)) {
+      setAtomValue(state, atom, value)
+      invalidateDependents(state, atom)
+    }
+  }
+  flushPending(state)
+}
