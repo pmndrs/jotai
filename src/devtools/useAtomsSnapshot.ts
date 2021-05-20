@@ -1,6 +1,6 @@
 import { useContext, useMemo } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
-import type { AnyAtom, Scope } from '../core/types'
+import type { AnyAtom } from '../core/types'
 import type { AtomState, State } from '../core/vanilla'
 
 // XXX across bundles, this is actually copying code
