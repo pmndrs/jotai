@@ -26,7 +26,7 @@ export type StoreForDevelopment = [
     state: State
     listeners: Set<() => void>
   }>,
-  restoreAtoms: (values: Iterable<readonly [AnyAtom, unknown]>) => void
+  restore: (values: Iterable<readonly [AnyAtom, unknown]>) => void
 ]
 
 export type Store = StoreForProduction | StoreForDevelopment
