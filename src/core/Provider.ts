@@ -2,8 +2,8 @@ import React, { createElement, useRef, useDebugValue } from 'react'
 
 import type { AnyAtom, Scope } from './types'
 import type { AtomState, State } from './vanilla'
-import { createStore, getStoreContext, StoreForDevelopment } from './contexts'
-import type { Store } from './contexts'
+import type { StoreForDevelopment, Store } from './contexts'
+import { createStore, getStoreContext } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 export const Provider: React.FC<{
