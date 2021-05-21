@@ -4,7 +4,7 @@ import { add, complete, cycle, save, suite } from 'benny'
 
 import { PrimitiveAtom } from '../src/core/types'
 import { atom } from '../src/core/atom'
-import { createState, readAtom } from '../src/core/vanilla'
+import { createState, writeAtom } from '../src/core/vanilla'
 
 const createStateWithAtoms = (n: number) => {
   let targetAtom: PrimitiveAtom<number> | undefined
@@ -26,21 +26,21 @@ const createStateWithAtoms = (n: number) => {
 const main = async () => {
   for (const n of [2, 3, 4, 5, 6]) {
     await suite(
-      `simple-read-${n}`,
+      `simple-write-${n}`,
       add(`atoms=${10 ** n}`, () => {
         const [state, targetAtom] = createStateWithAtoms(10 ** n)
-        return () => readAtom(state, targetAtom)
+        return () => writeAtom(state, targetAtom, (c) => c + 1)
       }),
       cycle(),
       complete(),
       save({
         folder: __dirname,
-        file: `simple-read-${n}`,
+        file: `simple-write-${n}`,
         format: 'json',
       }),
       save({
         folder: __dirname,
-        file: `simple-read-${n}`,
+        file: `simple-write-${n}`,
         format: 'chart.html',
       })
     )
