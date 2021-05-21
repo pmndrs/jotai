@@ -25,6 +25,3 @@ yarn-error.log*
 # misc
 .DS_Store
 .idea
-
-/benchmarks/*.json
-/benchmarks/*.html
