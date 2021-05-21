@@ -1,4 +1,4 @@
-// run with ts-node
+#!/usr/bin/env npx ts-node
 
 import { add, complete, cycle, save, suite } from 'benny'
 
