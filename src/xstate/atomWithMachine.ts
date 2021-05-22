@@ -9,7 +9,7 @@ import {
   Interpreter,
 } from 'xstate'
 import { atom } from 'jotai'
-import type { Getter, AnyAtom } from '../core/types'
+import type { Atom, Getter } from 'jotai'
 
 export function atomWithMachine<
   TContext,
@@ -51,7 +51,7 @@ export function atomWithMachine<
       let initializing = true
       const machine =
         typeof getMachine === 'function'
-          ? getMachine((a: AnyAtom) => {
+          ? getMachine((a: Atom<unknown>) => {
               if (initializing) {
                 return get(a)
               }

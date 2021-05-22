@@ -1,5 +1,5 @@
-import { atom, PrimitiveAtom } from 'jotai'
-import type { SetStateAction } from '../core/types'
+import { atom } from 'jotai'
+import type { PrimitiveAtom, SetStateAction } from 'jotai'
 
 type Storage<Value> = {
   getItem: (key: string) => Value | Promise<Value>
