@@ -2,7 +2,8 @@ import { createContext } from 'react'
 import type { Context } from 'react'
 
 import type { Atom, WritableAtom, Scope } from './atom'
-import { State, createState, writeAtom, restoreAtoms } from './vanilla'
+import { createState, writeAtom, restoreAtoms } from './vanilla'
+import type { State } from './vanilla'
 import { createMutableSource } from './useMutableSource'
 
 type MutableSource<_Target> = ReturnType<typeof createMutableSource>

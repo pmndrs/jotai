@@ -1,16 +1,14 @@
 import type { Atom, WritableAtom, PrimitiveAtom } from './atom'
 
-export type Read<Value> = Atom<Value>['read']
+export type ExtractAtomValue<AtomType> = AtomType extends Atom<infer Value>
+  ? Value
+  : never
 
-export type Write<Update> = WritableAtom<unknown, Update>['write']
-
-export type SetStateAction<Value> = PrimitiveAtom<Value> extends WritableAtom<
-  Value,
+export type ExtractAtomUpdate<AtomType> = AtomType extends WritableAtom<
+  unknown,
   infer Update
 >
   ? Update
   : never
 
-export type ExtractAtomValue<AtomType> = AtomType extends Atom<infer Value>
-  ? Value
-  : never
+export type SetStateAction<Value> = ExtractAtomUpdate<PrimitiveAtom<Value>>

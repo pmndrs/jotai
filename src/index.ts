@@ -8,7 +8,11 @@ export type {
   Getter,
   Setter,
 } from './core/atom'
-export type { SetStateAction, ExtractAtomValue } from './core/typeUtils'
+export type {
+  ExtractAtomValue,
+  ExtractAtomUpdate,
+  SetStateAction,
+} from './core/typeUtils'
 
 /**
  * This is exported for internal use only.

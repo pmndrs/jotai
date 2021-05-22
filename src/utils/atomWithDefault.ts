@@ -1,5 +1,7 @@
-import { atom, PrimitiveAtom } from 'jotai'
-import type { Read } from '../core/typeUtils'
+import { atom } from 'jotai'
+import type { Atom, PrimitiveAtom } from 'jotai'
+
+type Read<Value> = Atom<Value>['read']
 
 export function atomWithDefault<Value>(
   getDefault: Read<Value>
