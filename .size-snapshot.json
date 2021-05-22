@@ -96,5 +96,47 @@
         "code": 1220
       }
     }
+  },
+  "zustand.js": {
+    "bundled": 549,
+    "minified": 262,
+    "gzipped": 188,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
+  },
+  "immer.js": {
+    "bundled": 1526,
+    "minified": 797,
+    "gzipped": 388,
+    "treeshaked": {
+      "rollup": {
+        "code": 42,
+        "import_statements": 42
+      },
+      "webpack": {
+        "code": 1104
+      }
+    }
+  },
+  "query.js": {
+    "bundled": 2176,
+    "minified": 929,
+    "gzipped": 478,
+    "treeshaked": {
+      "rollup": {
+        "code": 57,
+        "import_statements": 49
+      },
+      "webpack": {
+        "code": 1078
+      }
+    }
   }
 }

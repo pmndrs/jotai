@@ -41,3 +41,4 @@ jobs:
           path: "."
           key: ${{ github.sha }}
       - run: yarn test
+      - run: yarn test:types
