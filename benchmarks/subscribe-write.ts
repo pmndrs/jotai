@@ -2,8 +2,8 @@
 
 import { add, complete, cycle, save, suite } from 'benny'
 
-import { PrimitiveAtom } from '../src/core/types'
 import { atom } from '../src/core/atom'
+import type { PrimitiveAtom } from '../src/core/atom'
 import {
   createState,
   readAtom,

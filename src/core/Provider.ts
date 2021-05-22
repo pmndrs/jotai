@@ -1,13 +1,13 @@
 import React, { createElement, useRef, useDebugValue } from 'react'
 
-import type { AnyAtom, Scope } from './types'
+import type { Atom, Scope } from './atom'
 import type { AtomState, State } from './vanilla'
 import type { StoreForDevelopment, Store } from './contexts'
 import { createStore, getStoreContext } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 export const Provider: React.FC<{
-  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+  initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
   scope?: Scope
 }> = ({ initialValues, scope, children }) => {
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
@@ -33,9 +33,10 @@ export const Provider: React.FC<{
   )
 }
 
-const atomToPrintable = (atom: AnyAtom) => atom.debugLabel || atom.toString()
+const atomToPrintable = (atom: Atom<unknown>) =>
+  atom.debugLabel || atom.toString()
 
-const stateToPrintable = ([state, atoms]: [State, AnyAtom[]]) =>
+const stateToPrintable = ([state, atoms]: [State, Atom<unknown>[]]) =>
   Object.fromEntries(
     atoms.flatMap((atom) => {
       const mounted = state.m.get(atom)
@@ -63,7 +64,7 @@ export const getDebugStateAndAtoms = ({
   atoms,
   state,
 }: {
-  atoms: AnyAtom[]
+  atoms: Atom<unknown>[]
   state: State
 }) => [state, atoms]
 export const subscribeDebugStore = (
@@ -78,7 +79,7 @@ export const subscribeDebugStore = (
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (store: StoreForDevelopment) => {
   const [, , debugMutableSource] = store
-  const [state, atoms]: [State, AnyAtom[]] = useMutableSource(
+  const [state, atoms]: [State, Atom<unknown>[]] = useMutableSource(
     debugMutableSource,
     getDebugStateAndAtoms,
     subscribeDebugStore

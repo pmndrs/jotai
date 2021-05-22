@@ -1,6 +1,5 @@
-import { atom, WritableAtom } from 'jotai'
-
-import type { SetStateAction } from '../core/types'
+import { atom } from 'jotai'
+import type { WritableAtom, SetStateAction } from 'jotai'
 
 export const RESET = Symbol()
 
