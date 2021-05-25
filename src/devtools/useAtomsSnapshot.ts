@@ -1,10 +1,11 @@
 import { useContext, useMemo } from 'react'
-import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
+import {
+  SECRET_INTERNAL_getStoreContext as getStoreContext,
+  SECRET_INTERNAL_useMutableSource as useMutableSource,
+} from 'jotai'
 import type { AnyAtom, Scope } from '../core/types'
 import type { AtomState, State } from '../core/vanilla'
 
-// XXX across bundles, this is actually copying code
-import { useMutableSource } from '../core/useMutableSource'
 import { getDebugStateAndAtoms, subscribeDebugStore } from '../core/Provider'
 
 type AtomsSnapshot = Map<AnyAtom, unknown>
