@@ -5,8 +5,9 @@ import type { Atom } from 'jotai'
 import type { Scope } from '../core/atom'
 import type { AtomState, State } from '../core/vanilla'
 
-// XXX across bundles, this is actually copying code
+// FIXME this does not work at all (requires SECRET_INTERNAL_useMutableSource)
 import { useMutableSource } from '../core/useMutableSource'
+// NOTE this is across bundles and actually copying code
 import { getDebugStateAndAtoms, subscribeDebugStore } from '../core/Provider'
 
 type AtomsSnapshot = Map<Atom<unknown>, unknown>
