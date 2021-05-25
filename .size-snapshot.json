@@ -13,17 +13,17 @@
       }
     }
   },
-  "valtio.js": {
-    "bundled": 1235,
-    "minified": 598,
-    "gzipped": 335,
+  "zustand.js": {
+    "bundled": 549,
+    "minified": 262,
+    "gzipped": 188,
     "treeshaked": {
       "rollup": {
-        "code": 37,
-        "import_statements": 37
+        "code": 14,
+        "import_statements": 14
       },
       "webpack": {
-        "code": 1054
+        "code": 998
       }
     }
   },
@@ -38,6 +38,48 @@
       },
       "webpack": {
         "code": 1061
+      }
+    }
+  },
+  "immer.js": {
+    "bundled": 1526,
+    "minified": 797,
+    "gzipped": 388,
+    "treeshaked": {
+      "rollup": {
+        "code": 42,
+        "import_statements": 42
+      },
+      "webpack": {
+        "code": 1104
+      }
+    }
+  },
+  "valtio.js": {
+    "bundled": 1235,
+    "minified": 598,
+    "gzipped": 335,
+    "treeshaked": {
+      "rollup": {
+        "code": 37,
+        "import_statements": 37
+      },
+      "webpack": {
+        "code": 1054
+      }
+    }
+  },
+  "query.js": {
+    "bundled": 2176,
+    "minified": 929,
+    "gzipped": 478,
+    "treeshaked": {
+      "rollup": {
+        "code": 57,
+        "import_statements": 49
+      },
+      "webpack": {
+        "code": 1078
       }
     }
   },
@@ -94,48 +136,6 @@
       },
       "webpack": {
         "code": 1220
-      }
-    }
-  },
-  "zustand.js": {
-    "bundled": 549,
-    "minified": 262,
-    "gzipped": 188,
-    "treeshaked": {
-      "rollup": {
-        "code": 14,
-        "import_statements": 14
-      },
-      "webpack": {
-        "code": 998
-      }
-    }
-  },
-  "immer.js": {
-    "bundled": 1526,
-    "minified": 797,
-    "gzipped": 388,
-    "treeshaked": {
-      "rollup": {
-        "code": 42,
-        "import_statements": 42
-      },
-      "webpack": {
-        "code": 1104
-      }
-    }
-  },
-  "query.js": {
-    "bundled": 2176,
-    "minified": 929,
-    "gzipped": 478,
-    "treeshaked": {
-      "rollup": {
-        "code": 57,
-        "import_statements": 49
-      },
-      "webpack": {
-        "code": 1078
       }
     }
   }
