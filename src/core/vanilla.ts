@@ -369,7 +369,7 @@ const addAtom = (state: State, addingAtom: AnyAtom): Mounted => {
   return mounted
 }
 
-// XXX doesn't work with mutally dependent atoms
+// FIXME doesn't work with mutally dependent atoms
 const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
   !mounted.l.size &&
   (!mounted.d.size || (mounted.d.size === 1 && mounted.d.has(atom)))
