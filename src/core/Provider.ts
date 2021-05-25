@@ -2,8 +2,8 @@ import React, { createElement, useRef, useDebugValue } from 'react'
 
 import type { Atom, Scope } from './atom'
 import type { AtomState, State } from './vanilla'
-import type { StoreForDevelopment, Store } from './contexts'
-import { createStore, getStoreContext } from './contexts'
+import type { StoreForDevelopment } from './contexts'
+import { createStore, getStoreContext, isDevStore } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
 export const Provider: React.FC<{
@@ -57,9 +57,6 @@ const stateToPrintable = ([state, atoms]: [State, Atom<unknown>[]]) =>
     })
   )
 
-const isDevStore = (store: Store): store is StoreForDevelopment => {
-  return store.length > 2
-}
 export const getDebugStateAndAtoms = ({
   atoms,
   state,
