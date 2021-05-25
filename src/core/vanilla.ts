@@ -1,20 +1,13 @@
-import type {
-  Atom,
-  WritableAtom,
-  WithInitialValue,
-  AnyAtom,
-  AnyWritableAtom,
-  Getter,
-  Setter,
-  OnUnmount,
-} from './types'
+import type { Atom, WritableAtom, Getter, Setter } from './atom'
 
+type AnyAtom = Atom<unknown>
+type AnyWritableAtom = WritableAtom<unknown, unknown>
+type OnUnmount = () => void
 type NonPromise<T> = T extends Promise<infer V> ? V : T
 
 const hasInitialValue = <T extends Atom<unknown>>(
   atom: T
-): atom is T &
-  (T extends Atom<infer Value> ? WithInitialValue<Value> : never) =>
+): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
 const IS_EQUAL_PROMISE = Symbol()

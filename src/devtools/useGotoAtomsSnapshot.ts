@@ -1,7 +1,7 @@
 import { useCallback, useContext } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
-import type { Scope } from '../core/types'
 
+import type { Scope } from '../core/atom'
 import { isDevStore } from '../core/contexts'
 
 export function useGotoAtomsSnapshot(scope?: Scope) {

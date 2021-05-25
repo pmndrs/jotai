@@ -1,11 +1,53 @@
-import {
-  Read,
-  Write,
-  Atom,
-  WritableAtom,
-  WithInitialValue,
-  PrimitiveAtom,
-} from './types'
+export type Getter = {
+  <Value>(atom: Atom<Value | Promise<Value>>): Value
+  <Value>(atom: Atom<Promise<Value>>): Value
+  <Value>(atom: Atom<Value>): Value
+}
+
+export type Setter = {
+  <Value>(atom: WritableAtom<Value, undefined>): void
+  <Value, Update>(atom: WritableAtom<Value, Update>, update: Update): void
+}
+
+type Read<Value> = (get: Getter) => Value | Promise<Value>
+
+type Write<Update> = (
+  get: Getter,
+  set: Setter,
+  update: Update
+) => void | Promise<void>
+
+type WithInitialValue<Value> = {
+  init: Value
+}
+
+export type Scope = symbol | string | number
+
+// Are there better typings?
+export type SetAtom<Update> = undefined extends Update
+  ? (update?: Update) => void | Promise<void>
+  : (update: Update) => void | Promise<void>
+
+type OnUnmount = () => void
+type OnMount<Update> = <S extends SetAtom<Update>>(
+  setAtom: S
+) => OnUnmount | void
+
+export type Atom<Value> = {
+  toString: () => string
+  debugLabel?: string
+  scope?: Scope
+  read: Read<Value>
+}
+
+export type WritableAtom<Value, Update> = Atom<Value> & {
+  write: Write<Update>
+  onMount?: OnMount<Update>
+}
+
+type SetStateAction<Value> = Value | ((prev: Value) => Value)
+
+export type PrimitiveAtom<Value> = WritableAtom<Value, SetStateAction<Value>>
 
 let keyCount = 0 // global key count for all atoms
 

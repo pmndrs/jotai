@@ -1,11 +1,17 @@
 import { useCallback, useMemo } from 'react'
 import { atom, useAtom } from 'jotai'
+import type { Getter, Setter } from 'jotai'
 
-import type { Getter, Setter, Scope } from '../core/types'
+import type { Scope } from '../core/atom'
 
 type Callback<Result, Arg> = undefined extends Arg
   ? (arg?: Arg) => Promise<Result>
   : (arg: Arg) => Promise<Result>
+
+export function useAtomCallback<Result, Arg>(
+  callback: (get: Getter, set: Setter, arg: Arg) => Promise<Result>,
+  scope?: Scope
+): Callback<Result, Arg>
 
 export function useAtomCallback<Result, Arg>(
   callback: (get: Getter, set: Setter, arg: Arg) => Result,

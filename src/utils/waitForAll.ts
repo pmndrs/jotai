@@ -1,5 +1,6 @@
-import { Atom, atom } from 'jotai'
-import type { Scope } from '../core/types'
+import { atom } from 'jotai'
+import type { Atom } from 'jotai'
+import type { Scope } from '../core/atom'
 import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 
 const waitForAllCache = new WeakMap()

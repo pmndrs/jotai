@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom, WritableAtom } from '../../src/index'
+import { atom, useAtom } from '../../src/index'
+import type { WritableAtom, SetStateAction } from '../../src/index'
 import { atomFamily } from '../../src/utils'
-import type { SetStateAction } from '../../src/core/types'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
