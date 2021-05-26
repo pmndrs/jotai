@@ -17,7 +17,7 @@ type Write<Update> = (
   update: Update
 ) => void | Promise<void>
 
-export type WithInitialValue<Value> = {
+type WithInitialValue<Value> = {
   init: Value
 }
 
