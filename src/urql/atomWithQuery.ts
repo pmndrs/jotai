@@ -5,8 +5,8 @@ import {
   OperationResult,
   RequestPolicy,
 } from '@urql/core'
-import { Atom, atom } from 'jotai'
-import type { Getter } from '../core/types'
+import { atom } from 'jotai'
+import type { Atom, Getter } from 'jotai'
 import { getClient } from './clientAtom'
 
 type QueryArgs<Data, Variables extends object> = {
