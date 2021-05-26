@@ -24,6 +24,10 @@ export function atomWithMutation<Data, Variables extends object>(
   const queryResultAtom = atom(
     (get) => get(operationResultAtom),
     (get, set, action: MutationAction<Data, Variables>) => {
+      set(
+        operationResultAtom,
+        new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch
+      )
       const client = getClient(get, set)
       const query = createQuery(get)
       client
