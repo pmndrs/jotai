@@ -3,7 +3,7 @@ import { useContext, useCallback, useDebugValue } from 'react'
 import { getStoreContext } from './contexts'
 import { readAtom, subscribeAtom } from './vanilla'
 import type { State } from './vanilla'
-import type { Atom, WritableAtom, SetAtom } from './types'
+import type { Atom, WritableAtom, SetAtom } from './atom'
 import { useMutableSource } from './useMutableSource'
 
 const isWritable = <Value, Update>(

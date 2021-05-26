@@ -1,6 +1,6 @@
 import { subscribe, snapshot } from 'valtio/vanilla'
 import { atom } from 'jotai'
-import type { SetStateAction } from '../core/types'
+import type { SetStateAction } from 'jotai'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null

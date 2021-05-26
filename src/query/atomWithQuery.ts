@@ -1,6 +1,6 @@
 import { QueryKey, QueryObserver, QueryObserverOptions } from 'react-query'
-import { WritableAtom, atom } from 'jotai'
-import type { Getter } from '../core/types'
+import { atom } from 'jotai'
+import type { WritableAtom, Getter } from 'jotai'
 import { getQueryClient } from './queryClientAtom'
 
 type ResultActions = { type: 'refetch' }

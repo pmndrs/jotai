@@ -1,6 +1,6 @@
 import { atom } from 'jotai'
+import type { Getter, Setter } from 'jotai'
 import { QueryClient } from 'react-query'
-import type { Getter, Setter } from '../core/types'
 
 export const queryClientAtom = atom<QueryClient | null>(null)
 

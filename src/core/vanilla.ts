@@ -1,20 +1,13 @@
-import type {
-  Atom,
-  WritableAtom,
-  WithInitialValue,
-  AnyAtom,
-  AnyWritableAtom,
-  Getter,
-  Setter,
-  OnUnmount,
-} from './types'
+import type { Atom, WritableAtom, Getter, Setter } from './atom'
 
+type AnyAtom = Atom<unknown>
+type AnyWritableAtom = WritableAtom<unknown, unknown>
+type OnUnmount = () => void
 type NonPromise<T> = T extends Promise<infer V> ? V : T
 
 const hasInitialValue = <T extends Atom<unknown>>(
   atom: T
-): atom is T &
-  (T extends Atom<infer Value> ? WithInitialValue<Value> : never) =>
+): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
 const IS_EQUAL_PROMISE = Symbol()
@@ -376,7 +369,7 @@ const addAtom = (state: State, addingAtom: AnyAtom): Mounted => {
   return mounted
 }
 
-// XXX doesn't work with mutally dependent atoms
+// FIXME doesn't work with mutally dependent atoms
 const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
   !mounted.l.size &&
   (!mounted.d.size || (mounted.d.size === 1 && mounted.d.has(atom)))
@@ -675,4 +668,17 @@ export const subscribeAtom = (
     listeners.delete(callback)
     delAtom(state, atom)
   }
+}
+
+export const restoreAtoms = (
+  state: State,
+  values: Iterable<readonly [AnyAtom, unknown]>
+): void => {
+  for (const [atom, value] of values) {
+    if (hasInitialValue(atom)) {
+      setAtomValue(state, atom, value)
+      invalidateDependents(state, atom)
+    }
+  }
+  flushPending(state)
 }

@@ -3,13 +3,6 @@ import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import { useAtomsSnapshot } from '../../src/devtools'
 
-beforeEach(() => {
-  process.env.NODE_ENV = 'development'
-})
-afterEach(() => {
-  process.env.NODE_ENV = 'test'
-})
-
 it('should register newly added atoms', async () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
