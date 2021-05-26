@@ -1,6 +1,6 @@
 import { atom } from 'jotai'
 import { Client, createClient } from '@urql/core'
-import type { Getter, Setter } from '../core/types'
+import type { Getter, Setter } from '../core/atom'
 
 export const clientAtom = atom<Client | null>(null)
 
