@@ -381,7 +381,7 @@ it('can read sync derived atom in write without initializing', async () => {
   await findByText('count: 3')
 })
 
-it('can unmount atoms with dependency (#490)', async () => {
+it('can remount atoms with dependency (#490)', async () => {
   const countAtom = atom(0)
   const derivedAtom = atom((get) => get(countAtom))
 

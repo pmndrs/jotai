@@ -537,8 +537,10 @@ const mountAtom = <Value>(
   if (atomState) {
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
-        // check if not mounted
-        if (!state.m.has(a)) {
+        const aMounted = state.m.get(a)
+        if (aMounted) {
+          aMounted.d.add(atom)
+        } else {
           mountAtom(state, a, atom)
         }
       }
