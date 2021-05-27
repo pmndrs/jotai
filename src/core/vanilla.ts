@@ -400,12 +400,9 @@ const writeAtomState = <Value, Update>(
   pendingPromises: Promise<void>[]
 ): void => {
   const isPendingPromisesExpired = !pendingPromises.length
-  const atomState = getAtomState(state, atom)
-  if (
-    atomState &&
-    atomState.w // write promise
-  ) {
-    const promise = atomState.w.then(() => {
+  const writePromise = getAtomState(state, atom)?.w
+  if (writePromise) {
+    const promise = writePromise.then(() => {
       writeAtomState(state, atom, update, pendingPromises)
       if (isPendingPromisesExpired) {
         flushPending(state)
@@ -480,11 +477,7 @@ const writeAtomState = <Value, Update>(
       // still in sync, throw it right away
       throw e
     } else if (!isPendingPromisesExpired) {
-      pendingPromises.push(
-        new Promise((_resolve, reject) => {
-          reject(e)
-        })
-      )
+      pendingPromises.push(Promise.reject(e))
     } else {
       console.error('Uncaught exception: Use promise to catch error', e)
     }
