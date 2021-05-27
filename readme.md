@@ -45,7 +45,9 @@ const mangaAtom = atom({ 'Dragon Ball': 1984, 'One Piece': 1997, Naruto: 1999 })
 It can be used like `React.useState`:
 
 ```jsx
-import { useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
+
+const countAtom = atom(0)
 
 function Counter() {
   const [count, setCount] = useAtom(countAtom)
