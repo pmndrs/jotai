@@ -532,14 +532,14 @@ const mountAtom = <Value>(
   atom: Atom<Value>,
   initialDependent?: AnyAtom
 ): Mounted => {
-  // mount dependencies beforehand
+  // mount read dependencies beforehand
   const atomState = getAtomState(state, atom)
   if (atomState) {
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
         const aMounted = state.m.get(a)
         if (aMounted) {
-          aMounted.d.add(atom)
+          aMounted.d.add(atom) // add dependent
         } else {
           mountAtom(state, a, atom)
         }
@@ -572,7 +572,7 @@ const unmountAtom = <Value>(state: State, atom: Atom<Value>): void => {
     onUnmount()
   }
   state.m.delete(atom)
-  // unmount dependencies afterward
+  // unmount read dependencies afterward
   const atomState = getAtomState(state, atom)
   if (atomState) {
     atomState.d.forEach((_, a) => {
