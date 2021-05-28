@@ -9,6 +9,11 @@ type Callback<Result, Arg> = undefined extends Arg
   : (arg: Arg) => Promise<Result>
 
 export function useAtomCallback<Result, Arg>(
+  callback: (get: Getter, set: Setter, arg: Arg) => Promise<Result>,
+  scope?: Scope
+): Callback<Result, Arg>
+
+export function useAtomCallback<Result, Arg>(
   callback: (get: Getter, set: Setter, arg: Arg) => Result,
   scope?: Scope
 ): Callback<Result, Arg>

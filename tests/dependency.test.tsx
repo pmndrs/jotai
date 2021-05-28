@@ -380,3 +380,74 @@ it('can read sync derived atom in write without initializing', async () => {
   fireEvent.click(getByText('button'))
   await findByText('count: 3')
 })
+
+it('can remount atoms with dependency (#490)', async () => {
+  const countAtom = atom(0)
+  const derivedAtom = atom((get) => get(countAtom))
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const DerivedCounter: React.FC = () => {
+    const [derived] = useAtom(derivedAtom)
+    return <div>derived: {derived}</div>
+  }
+
+  const Parent: React.FC = () => {
+    const [showChildren, setShowChildren] = useState(true)
+    return (
+      <div>
+        <button onClick={() => setShowChildren((x) => !x)}>toggle</button>
+        {showChildren ? (
+          <>
+            <Counter />
+            <DerivedCounter />
+          </>
+        ) : (
+          <div>hidden</div>
+        )}
+      </div>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Parent />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('derived: 0')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('derived: 1')
+  })
+
+  fireEvent.click(getByText('toggle'))
+  await waitFor(() => {
+    getByText('hidden')
+  })
+
+  fireEvent.click(getByText('toggle'))
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('derived: 1')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('derived: 2')
+  })
+})

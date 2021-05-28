@@ -144,7 +144,7 @@ it('mount/unmount test', async () => {
   expect(onUnMountFn).toBeCalledTimes(0)
 
   fireEvent.click(getByText('button'))
-  // XXX is there a better way?
+  // FIXME is there a better way?
   await waitFor(() => {})
 
   expect(onMountFn).toBeCalledTimes(1)
@@ -197,7 +197,7 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   expect(onUnMountFn).toBeCalledTimes(0)
 
   fireEvent.click(getByText('button'))
-  // XXX is there a better way?
+  // FIXME is there a better way?
   await waitFor(() => {})
 
   expect(derivedOnMountFn).toBeCalledTimes(1)
@@ -271,25 +271,25 @@ it('mount/unMount order', async () => {
   expect(committed).toEqual([0, 0])
 
   fireEvent.click(getByText('button'))
-  // XXX is there a better way?
+  // FIXME is there a better way?
   await waitFor(() => {})
 
   expect(committed).toEqual([1, 0])
 
   fireEvent.click(getByText('derived atom'))
-  // XXX is there a better way?
+  // FIXME is there a better way?
   await waitFor(() => {})
 
   expect(committed).toEqual([1, 1])
 
   fireEvent.click(getByText('derived atom'))
-  // XXX is there a better way?
+  // FIXME is there a better way?
   await waitFor(() => {})
 
   expect(committed).toEqual([1, 0])
 
   fireEvent.click(getByText('button'))
-  // XXX is there a better way?
+  // FIXME is there a better way?
   await waitFor(() => {})
 
   expect(committed).toEqual([0, 0])

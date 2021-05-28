@@ -369,7 +369,7 @@ const addAtom = (state: State, addingAtom: AnyAtom): Mounted => {
   return mounted
 }
 
-// XXX doesn't work with mutally dependent atoms
+// FIXME doesn't work with mutally dependent atoms
 const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
   !mounted.l.size &&
   (!mounted.d.size || (mounted.d.size === 1 && mounted.d.has(atom)))
@@ -400,12 +400,9 @@ const writeAtomState = <Value, Update>(
   pendingPromises: Promise<void>[]
 ): void => {
   const isPendingPromisesExpired = !pendingPromises.length
-  const atomState = getAtomState(state, atom)
-  if (
-    atomState &&
-    atomState.w // write promise
-  ) {
-    const promise = atomState.w.then(() => {
+  const writePromise = getAtomState(state, atom)?.w
+  if (writePromise) {
+    const promise = writePromise.then(() => {
       writeAtomState(state, atom, update, pendingPromises)
       if (isPendingPromisesExpired) {
         flushPending(state)
@@ -480,11 +477,7 @@ const writeAtomState = <Value, Update>(
       // still in sync, throw it right away
       throw e
     } else if (!isPendingPromisesExpired) {
-      pendingPromises.push(
-        new Promise((_resolve, reject) => {
-          reject(e)
-        })
-      )
+      pendingPromises.push(Promise.reject(e))
     } else {
       console.error('Uncaught exception: Use promise to catch error', e)
     }
@@ -532,13 +525,15 @@ const mountAtom = <Value>(
   atom: Atom<Value>,
   initialDependent?: AnyAtom
 ): Mounted => {
-  // mount dependencies beforehand
+  // mount read dependencies beforehand
   const atomState = getAtomState(state, atom)
   if (atomState) {
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
-        // check if not mounted
-        if (!state.m.has(a)) {
+        const aMounted = state.m.get(a)
+        if (aMounted) {
+          aMounted.d.add(atom) // add dependent
+        } else {
           mountAtom(state, a, atom)
         }
       }
@@ -570,7 +565,7 @@ const unmountAtom = <Value>(state: State, atom: Atom<Value>): void => {
     onUnmount()
   }
   state.m.delete(atom)
-  // unmount dependencies afterward
+  // unmount read dependencies afterward
   const atomState = getAtomState(state, atom)
   if (atomState) {
     atomState.d.forEach((_, a) => {
