@@ -449,13 +449,12 @@ const writeAtomState = <Value, Update>(
       ((a: AnyWritableAtom, v: unknown) => {
         const isPendingPromisesExpired = !pendingPromises.length
         if (a === atom) {
-          if (hasInitialValue(a)) {
-            setAtomValue(state, a, v)
-            invalidateDependents(state, a)
-          } else {
+          if (!hasInitialValue(a)) {
             // NOTE technically possible but restricted as it may cause bugs
             throw new Error('no atom init')
           }
+          setAtomValue(state, a, v)
+          invalidateDependents(state, a)
         } else {
           writeAtomState(state, a, v, pendingPromises)
         }
