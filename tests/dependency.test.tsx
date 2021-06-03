@@ -451,3 +451,91 @@ it('can remount atoms with dependency (#490)', async () => {
     getByText('derived: 2')
   })
 })
+
+it('can remount atoms with intermediate atom', async () => {
+  const countAtom = atom(1)
+
+  const resultAtom = atom(0)
+  const intermediateAtom = atom((get) => {
+    const count = get(countAtom)
+    const initAtom = atom(null, (_get, set) => {
+      set(resultAtom, count * 2)
+    })
+    initAtom.onMount = (init) => {
+      init()
+    }
+    return initAtom
+  })
+  const derivedAtom = atom((get) => {
+    const initAtom = get(intermediateAtom)
+    get(initAtom)
+    return get(resultAtom)
+  })
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const DerivedCounter: React.FC = () => {
+    const [derived] = useAtom(derivedAtom)
+    return <div>derived: {derived}</div>
+  }
+
+  const Parent: React.FC = () => {
+    const [showChildren, setShowChildren] = useState(true)
+    return (
+      <div>
+        <Counter />
+        <button onClick={() => setShowChildren((x) => !x)}>toggle</button>
+        {showChildren ? <DerivedCounter /> : <div>hidden</div>}
+      </div>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Parent />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('derived: 2')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('derived: 4')
+  })
+
+  fireEvent.click(getByText('toggle'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('hidden')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 3')
+    getByText('hidden')
+  })
+
+  fireEvent.click(getByText('toggle'))
+  await waitFor(() => {
+    getByText('count: 3')
+    getByText('derived: 6')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 4')
+    getByText('derived: 8')
+  })
+})

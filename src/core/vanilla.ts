@@ -529,25 +529,18 @@ const mountAtom = <Value>(
   atom: Atom<Value>,
   initialDependent?: AnyAtom
 ): Mounted => {
+  const atomState = readAtomState(state, atom)
   // mount read dependencies beforehand
-  const atomState = getAtomState(state, atom)
-  if (atomState) {
-    atomState.d.forEach((_, a) => {
-      if (a !== atom) {
-        const aMounted = state.m.get(a)
-        if (aMounted) {
-          aMounted.d.add(atom) // add dependent
-        } else {
-          mountAtom(state, a, atom)
-        }
+  atomState.d.forEach((_, a) => {
+    if (a !== atom) {
+      const aMounted = state.m.get(a)
+      if (aMounted) {
+        aMounted.d.add(atom) // add dependent
+      } else {
+        mountAtom(state, a, atom)
       }
-    })
-  } else if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production'
-  ) {
-    console.warn('[Bug] could not find atom state to mount', atom)
-  }
+    }
+  })
   // mount self
   const mounted: Mounted = {
     d: new Set(initialDependent && [initialDependent]),
