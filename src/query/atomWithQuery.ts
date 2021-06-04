@@ -66,8 +66,8 @@ export function atomWithQuery<
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       const state = get(stateAtom)
       const dataAtom = atom<TData | Promise<TData>>(
-        new Promise<TData>((r) => {
-          state.resolve = r
+        new Promise<TData>((resolve) => {
+          state.resolve = resolve
         })
       )
       state.prevData = null
@@ -95,8 +95,8 @@ export function atomWithQuery<
         const { dataAtom, options } = get(initAtom)
         set(
           dataAtom,
-          new Promise<TData>((r) => {
-            state.resolve = r
+          new Promise<TData>((resolve) => {
+            state.resolve = resolve
           })
         )
         const queryClient = get(queryClientAtom)
