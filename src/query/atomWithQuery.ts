@@ -81,28 +81,34 @@ export function atomWithQuery<
       return { dataAtom, options }
     },
     (get, set, action: Action | { type: 'mount' }) => {
-      if (action.type === 'mount') {
-        const state = get(stateAtom)
-        state.setData = (data) => {
-          const { dataAtom } = get(initAtom)
-          set(dataAtom, data)
+      switch (action.type) {
+        case 'mount': {
+          const state = get(stateAtom)
+          state.setData = (data) => {
+            const { dataAtom } = get(initAtom)
+            set(dataAtom, data)
+          }
+          return
         }
-      } else if (action.type === 'destroy') {
-        const { observer } = get(stateAtom)
-        observer?.destroy()
-      } else if (action.type === 'refetch') {
-        const state = get(stateAtom)
-        const { dataAtom, options } = get(initAtom)
-        set(
-          dataAtom,
-          new Promise<TData>((resolve) => {
-            state.resolve = resolve
-          })
-        )
-        const queryClient = get(queryClientAtom)
-        queryClient.getQueryCache().find(options.queryKey)?.reset()
-        const p: Promise<void> = queryClient.refetchQueries(options.queryKey)
-        return p
+        case 'destroy': {
+          const { observer } = get(stateAtom)
+          observer?.destroy()
+          return
+        }
+        case 'refetch': {
+          const state = get(stateAtom)
+          const { dataAtom, options } = get(initAtom)
+          set(
+            dataAtom,
+            new Promise<TData>((resolve) => {
+              state.resolve = resolve
+            })
+          )
+          const queryClient = get(queryClientAtom)
+          queryClient.getQueryCache().find(options.queryKey)?.reset()
+          const p: Promise<void> = queryClient.refetchQueries(options.queryKey)
+          return p
+        }
       }
     }
   )
