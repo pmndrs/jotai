@@ -8,7 +8,7 @@ import { atom } from 'jotai'
 import type { WritableAtom, Getter } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 
-type Action = { type: 'refetch' } | { type: 'destroy' }
+type Action = { type: 'refetch' } | { type: 'cleanup' }
 
 type AtomQueryOptions<TQueryFnData, TError, TData, TQueryData> =
   QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
@@ -33,12 +33,7 @@ export function atomWithQuery<
       resolve: null as ((data: TData) => void) | null,
       setData: null as ((data: TData) => void) | null,
       prevData: null as TData | null,
-      observer: null as QueryObserver<
-        TQueryFnData,
-        TError,
-        TData,
-        TQueryData
-      > | null,
+      unsubscribe: null as (() => void) | null,
       handle(result: QueryObserverResult<TData, TError>) {
         // TODO error handling
         if (
@@ -73,11 +68,10 @@ export function atomWithQuery<
       state.prevData = null
       const queryClient = get(queryClientAtom)
       const observer = new QueryObserver(queryClient, options)
-      state.observer?.destroy()
-      observer.subscribe((result) => {
+      state.unsubscribe?.()
+      state.unsubscribe = observer.subscribe((result) => {
         state.handle(result)
       })
-      state.observer = observer
       return { dataAtom, options }
     },
     (get, set, action: Action | { type: 'mount' }) => {
@@ -90,9 +84,9 @@ export function atomWithQuery<
           }
           return
         }
-        case 'destroy': {
-          const { observer } = get(stateAtom)
-          observer?.destroy()
+        case 'cleanup': {
+          const { unsubscribe } = get(stateAtom)
+          unsubscribe?.()
           return
         }
         case 'refetch': {
@@ -114,7 +108,7 @@ export function atomWithQuery<
   )
   initAtom.onMount = (dispatch) => {
     dispatch({ type: 'mount' })
-    return () => dispatch({ type: 'destroy' })
+    return () => dispatch({ type: 'cleanup' })
   }
   const queryAtom = atom<TData, Action>(
     (get) => {
