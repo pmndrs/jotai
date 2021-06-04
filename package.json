@@ -1,7 +1,7 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.16.8",
+  "version": "0.16.9",
   "description": "👻 Next gen state management that will spook you",
   "main": "index.js",
   "module": "esm/index.js",
