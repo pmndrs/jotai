@@ -13,7 +13,7 @@ type AtomsSnapshot = Map<Atom<unknown>, unknown>
 
 export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
   const StoreContext = getStoreContext(scope)
-  const [, , debugMutableSource] = useContext(StoreContext)
+  const debugMutableSource = useContext(StoreContext)[3]
 
   if (debugMutableSource === undefined) {
     throw Error('useAtomsSnapshot can only be used in dev mode.')

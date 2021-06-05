@@ -356,7 +356,6 @@ export const readAtom = <Value>(
 ): AtomState<Value> => {
   const atomState = readAtomState(state, readingAtom)
   state.p.delete(readingAtom)
-  flushPending(state)
   return atomState
 }
 
@@ -640,7 +639,7 @@ const commitAtomState = <Value>(
   state.p.add(atom)
 }
 
-const flushPending = (state: State): void => {
+export const flushPending = (state: State): void => {
   state.p.forEach((atom) => {
     const mounted = state.m.get(atom)
     mounted?.l.forEach((listener) => listener())
