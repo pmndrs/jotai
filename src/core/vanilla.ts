@@ -161,7 +161,7 @@ const setAtomReadError = <Value>(
   state: State,
   atom: Atom<Value>,
   error: Error,
-  dependencies: Set<AnyAtom>,
+  dependencies?: Set<AnyAtom>,
   promise?: Promise<void>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
@@ -182,7 +182,7 @@ const setAtomReadPromise = <Value>(
   state: State,
   atom: Atom<Value>,
   promise: Promise<void>,
-  dependencies: Set<AnyAtom>
+  dependencies?: Set<AnyAtom>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
   if (atomState.p?.[IS_EQUAL_PROMISE](promise)) {
@@ -453,7 +453,25 @@ const writeAtomState = <Value, Update>(
             // NOTE technically possible but restricted as it may cause bugs
             throw new Error('no atom init')
           }
-          setAtomValue(state, a, v)
+          if (v instanceof Promise) {
+            const promise = v
+              .then((vv) => {
+                setAtomValue(state, a, vv)
+                invalidateDependents(state, a)
+                flushPending(state)
+              })
+              .catch((e) => {
+                setAtomReadError(
+                  state,
+                  atom,
+                  e instanceof Error ? e : new Error(e)
+                )
+                flushPending(state)
+              })
+            setAtomReadPromise(state, atom, promise)
+          } else {
+            setAtomValue(state, a, v)
+          }
           invalidateDependents(state, a)
         } else {
           writeAtomState(state, a, v, pendingPromises)
