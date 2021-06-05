@@ -25,8 +25,8 @@ export type Scope = symbol | string | number
 
 // Are there better typings?
 export type SetAtom<Update> = undefined extends Update
-  ? (update?: Update) => void | Promise<void>
-  : (update: Update) => void | Promise<void>
+  ? (update?: Update) => void
+  : (update: Update) => void
 
 type OnUnmount = () => void
 type OnMount<Update> = <S extends SetAtom<Update>>(
