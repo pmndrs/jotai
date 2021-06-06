@@ -432,7 +432,7 @@ const writeAtomState = <Value, Update>(
         process.env.NODE_ENV !== 'production'
       ) {
         console.warn(
-          '[Bug] no value found while reading atom in write operation. This probably a bug.',
+          '[Bug] no value found while reading atom in write operation. This is probably a bug.',
           a
         )
       }
