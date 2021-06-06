@@ -396,147 +396,98 @@ const invalidateDependents = <Value>(state: State, atom: Atom<Value>): void => {
 const writeAtomState = <Value, Update>(
   state: State,
   atom: WritableAtom<Value, Update>,
-  update: Update,
-  pendingPromises: Promise<void>[]
+  update: Update
 ): void => {
-  const isPendingPromisesExpired = !pendingPromises.length
   const writePromise = getAtomState(state, atom)?.w
   if (writePromise) {
-    const promise = writePromise.then(() => {
-      writeAtomState(state, atom, update, pendingPromises)
-      if (isPendingPromisesExpired) {
-        flushPending(state)
-      }
+    writePromise.then(() => {
+      writeAtomState(state, atom, update)
+      flushPending(state)
     })
-    if (!isPendingPromisesExpired) {
-      pendingPromises.push(promise)
-    }
     return
   }
-  try {
-    const promiseOrVoid = atom.write(
-      ((a: AnyAtom) => {
-        const aState = readAtomState(state, a)
-        if (aState.e) {
-          throw aState.e // read error
-        }
-        if (aState.p) {
-          if (
-            typeof process === 'object' &&
-            process.env.NODE_ENV !== 'production'
-          ) {
-            console.warn(
-              'Reading pending atom state in write operation. We throw a promise for now.',
-              a
-            )
-          }
-          throw aState.p // read promise
-        }
-        if ('v' in aState) {
-          return aState.v // value
-        }
+  const promiseOrVoid = atom.write(
+    ((a: AnyAtom) => {
+      const aState = readAtomState(state, a)
+      if (aState.e) {
+        throw aState.e // read error
+      }
+      if (aState.p) {
         if (
           typeof process === 'object' &&
           process.env.NODE_ENV !== 'production'
         ) {
           console.warn(
-            '[Bug] no value found while reading atom in write operation. This probably a bug.',
+            'Reading pending atom state in write operation. We throw a promise for now.',
             a
           )
         }
-        throw new Error('no value found')
-      }) as Getter,
-      ((a: AnyWritableAtom, v: unknown) => {
-        const isPendingPromisesExpired = !pendingPromises.length
-        if (a === atom) {
-          if (!hasInitialValue(a)) {
-            // NOTE technically possible but restricted as it may cause bugs
-            throw new Error('no atom init')
-          }
-          if (v instanceof Promise) {
-            const promise = v
-              .then((resolvedValue) => {
-                setAtomValue(state, a, resolvedValue)
-                invalidateDependents(state, a)
-                flushPending(state)
-              })
-              .catch((e) => {
-                setAtomReadError(
-                  state,
-                  atom,
-                  e instanceof Error ? e : new Error(e)
-                )
-                flushPending(state)
-              })
-            setAtomReadPromise(state, atom, promise)
-          } else {
-            setAtomValue(state, a, v)
-          }
-          invalidateDependents(state, a)
-        } else {
-          writeAtomState(state, a, v, pendingPromises)
-        }
-        if (isPendingPromisesExpired) {
-          flushPending(state)
-        }
-      }) as Setter,
-      update
-    )
-    if (promiseOrVoid instanceof Promise) {
-      const promise = promiseOrVoid.finally(() => {
-        setAtomWritePromise(state, atom)
-        if (isPendingPromisesExpired) {
-          flushPending(state)
-        }
-      })
-      if (!isPendingPromisesExpired) {
-        pendingPromises.push(promise)
+        throw aState.p // read promise
       }
-      setAtomWritePromise(state, atom, promise)
-    }
-  } catch (e) {
-    if (pendingPromises.length === 1) {
-      // still in sync, throw it right away
-      throw e
-    } else if (!isPendingPromisesExpired) {
-      pendingPromises.push(Promise.reject(e))
-    } else {
-      console.error('Uncaught exception: Use promise to catch error', e)
-    }
+      if ('v' in aState) {
+        return aState.v // value
+      }
+      if (
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        console.warn(
+          '[Bug] no value found while reading atom in write operation. This is probably a bug.',
+          a
+        )
+      }
+      throw new Error('no value found')
+    }) as Getter,
+    ((a: AnyWritableAtom, v: unknown) => {
+      if (a === atom) {
+        if (!hasInitialValue(a)) {
+          // NOTE technically possible but restricted as it may cause bugs
+          throw new Error('no atom init')
+        }
+        if (v instanceof Promise) {
+          const promise = v
+            .then((resolvedValue) => {
+              setAtomValue(state, a, resolvedValue)
+              invalidateDependents(state, a)
+              flushPending(state)
+            })
+            .catch((e) => {
+              setAtomReadError(
+                state,
+                atom,
+                e instanceof Error ? e : new Error(e)
+              )
+              flushPending(state)
+            })
+          setAtomReadPromise(state, atom, promise)
+        } else {
+          setAtomValue(state, a, v)
+        }
+        invalidateDependents(state, a)
+      } else {
+        writeAtomState(state, a, v)
+      }
+      flushPending(state)
+    }) as Setter,
+    update
+  )
+  if (promiseOrVoid instanceof Promise) {
+    const promise = promiseOrVoid.finally(() => {
+      setAtomWritePromise(state, atom)
+      flushPending(state)
+    })
+    setAtomWritePromise(state, atom, promise)
   }
+  // TODO write error is not handled
 }
 
 export const writeAtom = <Value, Update>(
   state: State,
   writingAtom: WritableAtom<Value, Update>,
   update: Update
-): void | Promise<void> => {
-  const pendingPromises: Promise<void>[] = [Promise.resolve()]
-
-  writeAtomState(state, writingAtom, update, pendingPromises)
+): void => {
+  writeAtomState(state, writingAtom, update)
   flushPending(state)
-
-  if (pendingPromises.length <= 1) {
-    pendingPromises.splice(0)
-  } else {
-    return new Promise<void>((resolve, reject) => {
-      const loop = () => {
-        if (pendingPromises.length <= 1) {
-          pendingPromises.splice(0)
-          resolve()
-        } else {
-          Promise.all(pendingPromises)
-            .then(() => {
-              pendingPromises.splice(1)
-              flushPending(state)
-              loop()
-            })
-            .catch(reject)
-        }
-      }
-      loop()
-    })
-  }
 }
 
 const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
