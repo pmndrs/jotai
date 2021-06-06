@@ -199,10 +199,6 @@ const setAtomReadPromise = <Value>(
 
 const setAtomInvalidated = <Value>(state: State, atom: Atom<Value>): void => {
   const [atomState] = wipAtomState(state, atom)
-  // TODO is this okay to remove these three lines?
-  // atomState.c?.() // cancel read promise
-  // delete atomState.p // read promise
-  // delete atomState.c // cancel read promise
   atomState.i = atomState.r // invalidated revision
   commitAtomState(state, atom, atomState)
 }
