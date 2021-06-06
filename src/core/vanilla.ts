@@ -455,8 +455,8 @@ const writeAtomState = <Value, Update>(
           }
           if (v instanceof Promise) {
             const promise = v
-              .then((vv) => {
-                setAtomValue(state, a, vv)
+              .then((resolvedValue) => {
+                setAtomValue(state, a, resolvedValue)
                 invalidateDependents(state, a)
                 flushPending(state)
               })
