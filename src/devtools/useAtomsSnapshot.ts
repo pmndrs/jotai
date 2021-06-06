@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react'
+import { useContext } from 'react'
 import {
   SECRET_INTERNAL_getStoreContext as getStoreContext,
   SECRET_INTERNAL_useMutableSource as useMutableSource,
@@ -25,13 +25,11 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
     subscribeDebugStore
   )
 
-  return useMemo(() => {
-    const atomToAtomValueTuples = atoms
-      .filter((atom) => !!state.m.get(atom))
-      .map<[Atom<unknown>, unknown]>((atom) => {
-        const atomState = state.a.get(atom) ?? ({} as AtomState)
-        return [atom, atomState.e || atomState.p || atomState.w || atomState.v]
-      })
-    return new Map(atomToAtomValueTuples)
-  }, [atoms, state])
+  const atomToAtomValueTuples = atoms
+    .filter((atom) => !!state.m.get(atom))
+    .map<[Atom<unknown>, unknown]>((atom) => {
+      const atomState = state.a.get(atom) ?? ({} as AtomState)
+      return [atom, atomState.e || atomState.p || atomState.w || atomState.v]
+    })
+  return new Map(atomToAtomValueTuples)
 }
