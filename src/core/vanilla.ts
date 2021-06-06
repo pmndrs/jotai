@@ -347,7 +347,6 @@ export const readAtom = <Value>(
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
   const atomState = readAtomState(state, readingAtom)
-  state.p.delete(readingAtom)
   return atomState
 }
 
@@ -552,20 +551,17 @@ const mountDependencies = <Value>(
 ): void => {
   const dependencies = new Set(atomState.d.keys())
   prevDependencies.forEach((_, a) => {
-    const mounted = state.m.get(a)
     if (dependencies.has(a)) {
       // not changed
       dependencies.delete(a)
-    } else if (mounted) {
+      return
+    }
+    const mounted = state.m.get(a)
+    if (mounted) {
       mounted.d.delete(atom)
       if (canUnmountAtom(a, mounted)) {
         unmountAtom(state, a)
       }
-    } else if (
-      typeof process === 'object' &&
-      process.env.NODE_ENV !== 'production'
-    ) {
-      console.warn('[Bug] a dependency is not mounted', a)
     }
   })
   dependencies.forEach((a) => {
