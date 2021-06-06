@@ -11,7 +11,7 @@ type MutableSource<_Target> = ReturnType<typeof createMutableSource>
 type UpdateAtom = <Value, Update>(
   atom: WritableAtom<Value, Update>,
   update: Update
-) => void | Promise<void>
+) => void
 
 type StoreForProduction = [
   stateMutableSource: MutableSource<State>,

@@ -68,7 +68,7 @@ export function useAtom<Value, Update>(
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        return updateAtom(atom, update)
+        updateAtom(atom, update)
       } else {
         throw new Error('not writable atom')
       }
