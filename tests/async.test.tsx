@@ -694,7 +694,8 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
   await findByText('count: -1')
 })
 
-it('should override promise returned by async read (#434)', async () => {
+// TODO remove we can't support this
+it.skip('should override promise returned by async read (#434)', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
     const count = get(countAtom)
