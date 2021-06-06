@@ -1,6 +1,7 @@
-import React, { Suspense, useRef } from 'react'
-import { fireEvent, render, waitFor, act } from '@testing-library/react'
+import React, { Suspense, useRef, useEffect } from 'react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
+import type { Atom } from '../../src/index'
 import { useAtomsSnapshot, useGotoAtomsSnapshot } from '../../src/devtools'
 
 it('useGotoAtomsSnapshot should modify atoms snapshot', async () => {
@@ -170,11 +171,20 @@ it('useGotoAtomsSnapshot should work with original snapshot', async () => {
 
   const UpdateSnapshot: React.FC = () => {
     const snapshot = useAtomsSnapshot()
-    const snapshotRef = useRef(snapshot)
+    const snapshotRef = useRef<Map<Atom<unknown>, unknown>>()
+    useEffect(() => {
+      if (snapshot.size && !snapshotRef.current) {
+        // save first snapshot
+        snapshotRef.current = snapshot
+      }
+    })
     const goToSnapshot = useGotoAtomsSnapshot()
     return (
       <button
         onClick={() => {
+          if (!snapshotRef.current) {
+            throw new Error('snapshot is not ready yet')
+          }
           const newSnapshot = new Map(snapshotRef.current)
           goToSnapshot(newSnapshot)
         }}>
