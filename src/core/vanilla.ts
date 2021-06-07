@@ -69,7 +69,7 @@ type StateListener = (updatedAtom: AnyAtom, isNewAtom: boolean) => void
 
 type StateVersion = number
 
-type PendingAtoms = Set<AnyAtom>
+type PendingMap = Map<AnyAtom, ReadDependencies | undefined>
 
 // mutable state
 export type State = {
@@ -77,7 +77,7 @@ export type State = {
   v: StateVersion
   a: AtomStateMap
   m: MountedMap
-  p: PendingAtoms
+  p: PendingMap
 }
 
 export const createState = (
@@ -89,7 +89,7 @@ export const createState = (
     v: 0,
     a: new WeakMap(),
     m: new WeakMap(),
-    p: new Set(),
+    p: new Map(),
   }
   if (initialValues) {
     for (const [atom, value] of initialValues) {
@@ -113,7 +113,7 @@ const wipAtomState = <Value>(
   state: State,
   atom: Atom<Value>,
   dependencies?: Set<AnyAtom>
-): [AtomState<Value>, ReadDependencies | undefined] => {
+): [AtomState<Value>, ReadDependencies] => {
   const atomState = getAtomState(state, atom)
   const nextAtomState = {
     r: 0,
@@ -125,11 +125,9 @@ const wipAtomState = <Value>(
             getAtomState(state, a)?.r ?? 0,
           ])
         )
-      : atomState
-      ? atomState.d
-      : new Map(),
+      : atomState?.d || new Map(),
   }
-  return [nextAtomState, atomState?.d]
+  return [nextAtomState, atomState?.d || new Map()]
 }
 
 const setAtomValue = <Value>(
@@ -153,8 +151,7 @@ const setAtomValue = <Value>(
     atomState.v = value
     ++atomState.r // increment revision
   }
-  commitAtomState(state, atom, atomState)
-  mountDependencies(state, atom, atomState, prevDependencies)
+  commitAtomState(state, atom, atomState, dependencies && prevDependencies)
 }
 
 const setAtomReadError = <Value>(
@@ -174,8 +171,7 @@ const setAtomReadError = <Value>(
   delete atomState.c // cancel read promise
   delete atomState.i // invalidated revision
   atomState.e = error // read error
-  commitAtomState(state, atom, atomState)
-  mountDependencies(state, atom, atomState, prevDependencies)
+  commitAtomState(state, atom, atomState, prevDependencies)
 }
 
 const setAtomReadPromise = <Value>(
@@ -198,15 +194,11 @@ const setAtomReadPromise = <Value>(
     atomState.p = interruptablePromise // read promise
     atomState.c = interruptablePromise[INTERRUPT_PROMISE]
   }
-  commitAtomState(state, atom, atomState)
-  mountDependencies(state, atom, atomState, prevDependencies)
+  commitAtomState(state, atom, atomState, prevDependencies)
 }
 
 const setAtomInvalidated = <Value>(state: State, atom: Atom<Value>): void => {
   const [atomState] = wipAtomState(state, atom)
-  atomState.c?.() // cancel read promise
-  delete atomState.p // read promise
-  delete atomState.c // cancel read promise
   atomState.i = atomState.r // invalidated revision
   commitAtomState(state, atom, atomState)
 }
@@ -355,8 +347,6 @@ export const readAtom = <Value>(
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
   const atomState = readAtomState(state, readingAtom)
-  state.p.delete(readingAtom)
-  flushPending(state)
   return atomState
 }
 
@@ -557,45 +547,39 @@ const mountDependencies = <Value>(
   state: State,
   atom: Atom<Value>,
   atomState: AtomState<Value>,
-  prevDependencies?: ReadDependencies
+  prevDependencies: ReadDependencies
 ): void => {
-  if (prevDependencies !== atomState.d) {
-    const dependencies = new Set(atomState.d.keys())
-    if (prevDependencies) {
-      prevDependencies.forEach((_, a) => {
-        const mounted = state.m.get(a)
-        if (dependencies.has(a)) {
-          // not changed
-          dependencies.delete(a)
-        } else if (mounted) {
-          mounted.d.delete(atom)
-          if (canUnmountAtom(a, mounted)) {
-            unmountAtom(state, a)
-          }
-        } else if (
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
-        ) {
-          console.warn('[Bug] a dependency is not mounted', a)
-        }
-      })
+  const dependencies = new Set(atomState.d.keys())
+  prevDependencies.forEach((_, a) => {
+    if (dependencies.has(a)) {
+      // not changed
+      dependencies.delete(a)
+      return
     }
-    dependencies.forEach((a) => {
-      const mounted = state.m.get(a)
-      if (mounted) {
-        const dependents = mounted.d
-        dependents.add(atom)
-      } else {
-        mountAtom(state, a, atom)
+    const mounted = state.m.get(a)
+    if (mounted) {
+      mounted.d.delete(atom)
+      if (canUnmountAtom(a, mounted)) {
+        unmountAtom(state, a)
       }
-    })
-  }
+    }
+  })
+  dependencies.forEach((a) => {
+    const mounted = state.m.get(a)
+    if (mounted) {
+      const dependents = mounted.d
+      dependents.add(atom)
+    } else {
+      mountAtom(state, a, atom)
+    }
+  })
 }
 
 const commitAtomState = <Value>(
   state: State,
   atom: Atom<Value>,
-  atomState: AtomState<Value>
+  atomState: AtomState<Value>,
+  prevDependencies?: ReadDependencies
 ): void => {
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     Object.freeze(atomState)
@@ -606,11 +590,24 @@ const commitAtomState = <Value>(
     state.l(atom, isNewAtom)
   }
   ++state.v
-  state.p.add(atom)
+  if (!state.p.has(atom)) {
+    state.p.set(atom, prevDependencies)
+  }
 }
 
-const flushPending = (state: State): void => {
-  state.p.forEach((atom) => {
+export const flushPending = (state: State): void => {
+  state.p.forEach((prevDependencies, atom) => {
+    const atomState = getAtomState(state, atom)
+    if (atomState) {
+      if (prevDependencies) {
+        mountDependencies(state, atom, atomState, prevDependencies)
+      }
+    } else if (
+      typeof process === 'object' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      console.warn('[Bug] atom state not found in flush', atom)
+    }
     const mounted = state.m.get(atom)
     mounted?.l.forEach((listener) => listener())
   })

@@ -1,4 +1,4 @@
-import { useContext, useCallback, useDebugValue } from 'react'
+import { useContext, useEffect, useCallback, useDebugValue } from 'react'
 
 import { getStoreContext } from './contexts'
 import { readAtom, subscribeAtom } from './vanilla'
@@ -61,8 +61,11 @@ export function useAtom<Value, Update>(
   )
 
   const StoreContext = getStoreContext(atom.scope)
-  const [mutableSource, updateAtom] = useContext(StoreContext)
+  const [mutableSource, updateAtom, commitCallback] = useContext(StoreContext)
   const value: Value = useMutableSource(mutableSource, getAtomValue, subscribe)
+  useEffect(() => {
+    commitCallback()
+  })
 
   const setAtom = useCallback(
     (update: Update) => {
