@@ -61,9 +61,11 @@ export function useAtom<Value, Update>(
   )
 
   const StoreContext = getStoreContext(atom.scope)
-  const [mutableSource, updateAtom, commit] = useContext(StoreContext)
+  const [mutableSource, updateAtom, commitCallback] = useContext(StoreContext)
   const value: Value = useMutableSource(mutableSource, getAtomValue, subscribe)
-  useEffect(() => commit())
+  useEffect(() => {
+    commitCallback()
+  })
 
   const setAtom = useCallback(
     (update: Update) => {
