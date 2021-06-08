@@ -58,7 +58,7 @@ it('no unneccesary updates when updating atoms', async () => {
     )
   }
 
-  const { findByTestId, getByText } = render(
+  const { getByTestId, getByText } = render(
     <Provider>
       <TaskList listAtom={todosAtom} />
     </Provider>
@@ -70,12 +70,8 @@ it('no unneccesary updates when updating atoms', async () => {
     getByText('TaskListUpdates: 1')
   })
 
-  const catBox = (await findByTestId(
-    'get cat food-checkbox'
-  )) as HTMLInputElement
-  const dragonBox = (await findByTestId(
-    'get dragon food-checkbox'
-  )) as HTMLInputElement
+  const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
+  const dragonBox = getByTestId('get dragon food-checkbox') as HTMLInputElement
 
   expect(catBox.checked).toBe(false)
   expect(dragonBox.checked).toBe(false)
@@ -140,7 +136,7 @@ it('removing atoms', async () => {
     )
   }
 
-  const { findByTestId, queryByText } = render(
+  const { getByTestId, queryByText } = render(
     <Provider>
       <TaskList listAtom={todosAtom} />
     </Provider>
@@ -152,10 +148,7 @@ it('removing atoms', async () => {
     expect(queryByText('help nana')).toBeTruthy()
   })
 
-  const removeCatFood = (await findByTestId(
-    'get cat food-removebutton'
-  )) as HTMLButtonElement
-  fireEvent.click(removeCatFood)
+  fireEvent.click(getByTestId('get cat food-removebutton'))
 
   await waitFor(() => {
     expect(queryByText('get cat food')).toBeFalsy()
@@ -163,10 +156,7 @@ it('removing atoms', async () => {
     expect(queryByText('help nana')).toBeTruthy()
   })
 
-  const removeDragonFood = (await findByTestId(
-    'get dragon food-removebutton'
-  )) as HTMLButtonElement
-  fireEvent.click(removeDragonFood)
+  fireEvent.click(getByTestId('get dragon food-removebutton'))
 
   await waitFor(() => {
     expect(queryByText('get cat food')).toBeFalsy()
@@ -174,10 +164,7 @@ it('removing atoms', async () => {
     expect(queryByText('help nana')).toBeTruthy()
   })
 
-  const removeHelpNana = (await findByTestId(
-    'help nana-removebutton'
-  )) as HTMLButtonElement
-  fireEvent.click(removeHelpNana)
+  fireEvent.click(getByTestId('help nana-removebutton'))
 
   await waitFor(() => {
     expect(queryByText('get cat food')).toBeFalsy()
@@ -217,18 +204,17 @@ it('read-only array atom', async () => {
     )
   }
 
-  const { findByTestId } = render(
+  const { getByTestId } = render(
     <Provider>
       <TaskList listAtom={todosAtom} />
     </Provider>
   )
 
-  const catBox = (await findByTestId(
-    'get cat food-checkbox'
-  )) as HTMLInputElement
-  const dragonBox = (await findByTestId(
-    'get dragon food-checkbox'
-  )) as HTMLInputElement
+  const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
+  const dragonBox = getByTestId('get dragon food-checkbox') as HTMLInputElement
+
+  // FIXME is there a better way?
+  await waitFor(() => {})
 
   expect(catBox.checked).toBe(false)
   expect(dragonBox.checked).toBe(false)
@@ -257,7 +243,6 @@ it('handles scope', async () => {
     itemAtom: PrimitiveAtom<TodoItem>
   }> = ({ itemAtom }) => {
     const [value, onChange] = useAtom(itemAtom)
-    itemAtom.scope = scope
     const toggle = () =>
       onChange((value) => ({ ...value, checked: !value.checked }))
     return (
@@ -272,23 +257,22 @@ it('handles scope', async () => {
     )
   }
 
-  const { findByTestId } = render(
+  const { getByTestId } = render(
     <Provider scope={scope}>
       <TaskList listAtom={todosAtom} />
     </Provider>
   )
 
-  const catBox = (await findByTestId(
-    'get cat food-checkbox'
-  )) as HTMLInputElement
-  const dragonBox = (await findByTestId(
-    'get dragon food-checkbox'
-  )) as HTMLInputElement
+  const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
+  const dragonBox = getByTestId('get dragon food-checkbox') as HTMLInputElement
 
   expect(catBox.checked).toBe(false)
   expect(dragonBox.checked).toBe(false)
 
   fireEvent.click(catBox)
+
+  // FIXME is there a better way?
+  await waitFor(() => {})
 
   expect(catBox.checked).toBe(true)
   expect(dragonBox.checked).toBe(false)

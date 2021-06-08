@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
@@ -209,4 +209,62 @@ it('query loading 2', async () => {
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 2')
+})
+
+it('query with enabled (#500)', async () => {
+  const enabledAtom = atom(true)
+  const countAtom = atomWithQuery((get) => {
+    const enabled = get(enabledAtom)
+    return {
+      enabled,
+      queryKey: 'count',
+      queryFn: async () => {
+        return await fakeFetch({ count: 1 })
+      },
+    }
+  })
+
+  const Counter: React.FC = () => {
+    const [
+      {
+        response: { count },
+      },
+    ] = useAtom(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  const Parent: React.FC = () => {
+    const [showChildren, setShowChildren] = useState(true)
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setShowChildren((x) => !x)
+            setEnabled((x) => !x)
+          }}>
+          toggle
+        </button>
+        {showChildren ? <Counter /> : <div>hidden</div>}
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('toggle'))
+  await findByText('hidden')
+
+  fireEvent.click(getByText('toggle'))
+  await findByText('loading')
+  await findByText('count: 1')
 })

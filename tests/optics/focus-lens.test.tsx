@@ -1,9 +1,9 @@
 import React, { Suspense } from 'react'
 import { atom, useAtom } from 'jotai'
+import type { SetStateAction } from 'jotai'
 import * as O from 'optics-ts'
 import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
-import type { SetStateAction } from '../../src/core/types'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

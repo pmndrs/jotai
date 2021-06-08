@@ -17,7 +17,8 @@ afterEach(() => {
   console.error = consoleError
 })
 
-jest.useFakeTimers()
+// FIXME this seems to break in jest 27
+// jest.useFakeTimers()
 
 class ErrorBoundary extends React.Component<
   { message?: string },

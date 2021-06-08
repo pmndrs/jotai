@@ -183,6 +183,7 @@ yarn add jotai react
   - [Next.js](https://docs.pmnd.rs/jotai/guides/nextjs)
   - [Resettable](https://docs.pmnd.rs/jotai/guides/resettable)
   - [No Suspense](https://docs.pmnd.rs/jotai/guides/no-suspense)
+  - [Atoms in atom](https://docs.pmnd.rs/jotai/guides/atoms-in-atom)
 - API
   - [Core](https://docs.pmnd.rs/jotai/api/core)
   - [Utils](https://docs.pmnd.rs/jotai/api/utils)

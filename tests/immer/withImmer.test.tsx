@@ -76,3 +76,32 @@ it('withImmer derived atom with useAtom + scope', async () => {
   fireEvent.click(getByText('Decrease'))
   await findByText('count: 0 0')
 })
+
+it('withImmer derived atom with WritableAtom<Value, Value> signature', async () => {
+  const regularCountAtom = atom(0)
+
+  const Parent: React.FC = () => {
+    const [count, setCount] = useAtom(withImmer(regularCountAtom))
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount(count + 1)}>Increase</button>
+        <button onClick={() => setCount(count - 1)}>Decrease</button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Parent />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('Increase'))
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('Decrease'))
+  await findByText('count: 0')
+})
