@@ -140,9 +140,9 @@
     }
   },
   "rxjs.js": {
-    "bundled": 1233,
-    "minified": 504,
-    "gzipped": 281,
+    "bundled": 725,
+    "minified": 296,
+    "gzipped": 193,
     "treeshaked": {
       "rollup": {
         "code": 14,

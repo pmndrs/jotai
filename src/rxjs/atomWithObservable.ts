@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs'
 import { Atom, atom } from 'jotai'
-import type { Getter } from '../core/types'
+import type { Getter } from '../core/atom'
 
 export function atomWithObservable<TData>(
   createObservable: (get: Getter) => Observable<TData>
