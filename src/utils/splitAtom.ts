@@ -39,51 +39,73 @@ export function splitAtom<Item, Key>(
     return cachedAtom
   }
   type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
-  let lastAtomList: ItemAtom[] | undefined
-  let lastKeyList: Key[] | undefined
-  const keyToAtom = (key: Key) => {
-    const index = lastKeyList?.indexOf(key)
-    if (index === undefined || index === -1) {
-      return undefined
-    }
-    return lastAtomList?.[index]
-  }
+  type AtomList = ItemAtom[] // index to atom mapping
+  type KeyList = Key[] // index to key mapping
+  const mappingAtom = atom<[AtomList, KeyList] | []>([])
   const read = (get: Getter) => {
-    const currentAtomList: Atom<Item>[] = []
-    const currentKeyList: Key[] = []
-    const currentArr = get(arrAtom)
-    currentArr.forEach((item, index) => {
+    let currentAtomList: Atom<Item>[] = []
+    let currentKeyList: Key[] = []
+    const initMappingAtom = atom(
+      (get) => get(mappingAtom),
+      (_get, set) => {
+        set(mappingAtom, (prev) => {
+          if (prev[0] === currentAtomList && prev[1] === currentKeyList) {
+            return prev
+          }
+          return [currentAtomList, currentKeyList]
+        })
+      }
+    )
+    let mounted = false
+    initMappingAtom.onMount = (init) => {
+      init()
+      mounted = true
+    }
+    const [lastAtomList, lastKeyList] = get(initMappingAtom)
+    const keyToAtom = (key: Key) => {
+      const [lastAtomList, lastKeyList] = get(mappingAtom)
+      const index = lastKeyList?.indexOf(key)
+      if (index === undefined || index === -1) {
+        return undefined
+      }
+      return lastAtomList?.[index]
+    }
+    get(arrAtom).forEach((item, index) => {
       const key = keyExtractor ? keyExtractor(item) : (index as unknown as Key)
       currentKeyList[index] = key
       const cachedAtom = keyToAtom(key)
-      if (cachedAtom && get(cachedAtom) === currentArr[index]) {
+      if (cachedAtom) {
         currentAtomList[index] = cachedAtom
         return
       }
-      const read = (_get: Getter) => {
-        const index = currentKeyList.indexOf(key)
+      const read = (get: Getter) => {
+        const [, lastKeyList] = get(mappingAtom)
+        const index = (
+          mounted ? (lastKeyList as KeyList) : currentKeyList
+        ).indexOf(key)
         if (index === undefined || index === -1) {
           throw new Error('index not found')
         }
-        return currentArr[index]
+        return get(arrAtom)[index]
       }
       const write = (
         get: Getter,
         set: Setter,
         update: SetStateAction<Item>
       ) => {
-        const index = currentKeyList.indexOf(key)
+        const [, lastKeyList] = get(mappingAtom)
+        const index = (
+          mounted ? (lastKeyList as KeyList) : currentKeyList
+        ).indexOf(key)
         if (index === undefined || index === -1) {
           throw new Error('index not found')
         }
-        if (currentArr !== get(arrAtom)) {
-          throw new Error('arrary already modified')
-        }
-        const nextItem = isFunction(update) ? update(currentArr[index]) : update
+        const prev = get(arrAtom)
+        const nextItem = isFunction(update) ? update(prev[index]) : update
         set(arrAtom as WritableAtom<Item[], Item[]>, [
-          ...currentArr.slice(0, index),
+          ...prev.slice(0, index),
           nextItem,
-          ...currentArr.slice(index + 1),
+          ...prev.slice(index + 1),
         ])
       }
       const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
@@ -92,13 +114,15 @@ export function splitAtom<Item, Key>(
     })
     if (
       lastAtomList &&
+      lastKeyList &&
       lastAtomList.length === currentAtomList.length &&
       lastAtomList.every((x, i) => x === currentAtomList[i])
     ) {
+      currentAtomList = lastAtomList
+      currentKeyList = lastKeyList
       return lastAtomList
     }
-    lastKeyList = currentKeyList
-    return (lastAtomList = currentAtomList)
+    return currentAtomList
   }
   const write = (get: Getter, set: Setter, atomToRemove: ItemAtom) => {
     const index = get(splittedAtom).indexOf(atomToRemove)
