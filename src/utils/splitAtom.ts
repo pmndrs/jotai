@@ -56,7 +56,7 @@ export function splitAtom<Item, Key>(
       const key = keyExtractor ? keyExtractor(item) : (index as unknown as Key)
       currentKeyList[index] = key
       const cachedAtom = keyToAtom(key)
-      if (cachedAtom) {
+      if (cachedAtom && get(cachedAtom) === currentArr[index]) {
         currentAtomList[index] = cachedAtom
         return
       }
