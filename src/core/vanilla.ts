@@ -596,7 +596,9 @@ const commitAtomState = <Value>(
 }
 
 export const flushPending = (state: State): void => {
-  state.p.forEach((prevDependencies, atom) => {
+  const pending = [...state.p]
+  state.p.clear()
+  pending.forEach(([atom, prevDependencies]) => {
     const atomState = getAtomState(state, atom)
     if (atomState) {
       if (prevDependencies) {
@@ -611,7 +613,6 @@ export const flushPending = (state: State): void => {
     const mounted = state.m.get(atom)
     mounted?.l.forEach((listener) => listener())
   })
-  state.p.clear()
 }
 
 export const subscribeAtom = (
