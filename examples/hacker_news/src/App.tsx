@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
 import Parser from 'html-react-parser'
 import { Provider, atom, useAtom } from 'jotai'
 import { a, useSpring } from '@react-spring/web'

@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { FC, FormEvent } from 'react'
 import { Provider, atom, useAtom } from 'jotai'
 import { atomFamily } from 'jotai/utils'
 import { nanoid } from 'nanoid'
@@ -24,7 +24,7 @@ const filteredAtom = atom((get) => {
   else return todos.filter((id) => !get(todoAtomFamily({ id })).completed)
 })
 
-const TodoItem: React.FC<{
+const TodoItem: FC<{
   id: string
   remove: (id: string) => void
 }> = ({ id, remove }) => {
@@ -45,7 +45,7 @@ const TodoItem: React.FC<{
   )
 }
 
-const Filter: React.FC = () => {
+const Filter: FC = () => {
   const [filter, set] = useAtom(filterAtom)
   return (
     <Radio.Group onChange={(e) => set(e.target.value)} value={filter}>
@@ -56,7 +56,7 @@ const Filter: React.FC = () => {
   )
 }
 
-const Filtered: React.FC<{
+const Filtered: FC<{
   remove: (id: string) => void
 }> = ({ remove }) => {
   const [todos] = useAtom(filteredAtom)
@@ -79,7 +79,7 @@ const TodoList = () => {
     setTodos((prev) => prev.filter((item) => item !== id))
     todoAtomFamily.remove({ id })
   }
-  const add = (e: React.FormEvent<HTMLFormElement>) => {
+  const add = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const title = e.currentTarget.inputTitle.value
     e.currentTarget.inputTitle.value = ''
@@ -125,7 +125,7 @@ const serializeAtom = atom<
   }
 })
 
-const Persist: React.FC = () => {
+const Persist: FC = () => {
   const [, dispatch] = useAtom(serializeAtom)
   const save = () => {
     dispatch({
