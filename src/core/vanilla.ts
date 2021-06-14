@@ -596,7 +596,7 @@ const commitAtomState = <Value>(
 }
 
 export const flushPending = (state: State): void => {
-  const pending = [...state.p]
+  const pending = Array.from(state.p)
   state.p.clear()
   pending.forEach(([atom, prevDependencies]) => {
     const atomState = getAtomState(state, atom)
