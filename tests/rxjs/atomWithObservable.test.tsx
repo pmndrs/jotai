@@ -1,36 +1,35 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { fireEvent, render, act } from '@testing-library/react'
 import { getTestProvider } from '../testUtils'
+import { useAtom } from '../../src/index'
+import { atomWithObservable } from '../../src/rxjs'
+import { Observable } from 'rxjs'
 
 const Provider = getTestProvider()
 
 it('count state', async () => {
-  const Counter: React.FC = () => {
-    const [state, dispatch] = useAtom(storeAtom)
+  const observableAtom = atomWithObservable(
+    () =>
+      new Observable<number>((subscriber) => {
+        subscriber.next(1)
+        subscriber.next(2)
+        subscriber.next(3)
+      })
+  )
 
-    return (
-      <>
-        count: {state.count}
-        <button onClick={() => dispatch({ type: 'INC' })}>button</button>
-      </>
-    )
+  const Counter: React.FC = () => {
+    const [state$] = useAtom(observableAtom)
+
+    return <>count: {state$}</>
   }
 
-  const { findByText, getByText } = render(
+  const { findByText } = render(
     <Provider>
-      <Counter />
+      <Suspense fallback="loading...">
+        <Counter />
+      </Suspense>
     </Provider>
   )
 
   await findByText('count: 1')
-
-  fireEvent.click(getByText('button'))
-  await findByText('count: 2')
-  expect(store.getState().count).toBe(2)
-
-  act(() => {
-    store.dispatch({ type: 'INC' })
-  })
-  await findByText('count: 3')
-  expect(store.getState().count).toBe(3)
 })
