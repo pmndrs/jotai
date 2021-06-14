@@ -1,0 +1,19 @@
+{
+  "parser": "@babel/eslint-parser",
+  "extends": ["eslint:recommended", "plugin:react/recommended", "plugin:react-hooks/recommended"],
+  "rules": {
+    "react/prop-types": 0
+  },
+  "parserOptions": {
+    "ecmaVersion": 12
+  },
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}
