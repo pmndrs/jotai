@@ -99,6 +99,12 @@ export const createState = (
         process.env.NODE_ENV !== 'production'
       ) {
         Object.freeze(atomState)
+        if (!hasInitialValue(atom)) {
+          console.warn(
+            'Found initial value for derived atom which can cause unexpected behavior',
+            atom
+          )
+        }
       }
       state.a.set(atom, atomState)
     }
