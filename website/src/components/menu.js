@@ -13,7 +13,7 @@ export const Menu = () => {
       </span>
       <div className="pt-10 order-last xl:order-first">
         <img
-          src="/ghost.png"
+          src="/ghost_DRAFT.png"
           alt="Jotai mascot"
           className="w-full max-w-sm xl:max-w-full h-auto mx-auto object-contain"
         />
