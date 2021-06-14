@@ -3,8 +3,16 @@ import Parser from 'html-react-parser'
 import { Provider, atom, useAtom } from 'jotai'
 import { a, useSpring } from '@react-spring/web'
 
+type PostData = {
+  by: string
+  title?: string
+  url: string
+  text?: string
+  time: number
+}
+
 const postId = atom(9001)
-const postData = atom(async (get) => {
+const postData = atom<PostData>(async (get) => {
   const id = get(postId)
   const response = await fetch(
     `https://hacker-news.firebaseio.com/v0/item/${id}.json`
@@ -14,7 +22,7 @@ const postData = atom(async (get) => {
 
 function Id() {
   const [id] = useAtom(postId)
-  const props = useSpring({ from: { id: id }, id, reset: true })
+  const props = useSpring({ from: { id }, id, reset: true })
   return <a.h1>{props.id.to(Math.round)}</a.h1>
 }
 
