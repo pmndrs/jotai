@@ -1,4 +1,3 @@
-import React from 'react'
 import { Provider, atom, useAtom } from 'jotai'
 
 const textAtom = atom('hello')
