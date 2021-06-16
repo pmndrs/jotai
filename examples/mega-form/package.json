@@ -12,7 +12,7 @@
   "dependencies": {
     "fp-ts": "^2.9.5",
     "io-ts": "^2.2.15",
-    "jotai": "^0.16.11",
+    "jotai": "^1.0.0",
     "optics-ts": "^2.0.0",
     "react": "^17.0.2",
     "react-app-polyfill": "^1.0.0",
