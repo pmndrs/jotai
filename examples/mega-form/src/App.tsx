@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useMemo, useCallback } from 'react'
 import { Provider, atom, useAtom, PrimitiveAtom } from 'jotai'
 import { focusAtom } from 'jotai/optics'
 import { useAtomCallback } from 'jotai/utils'
@@ -12,11 +12,11 @@ const Field = ({
   fieldAtom: PrimitiveAtom<{ name: string; value: string }>
   removeField: () => void
 }) => {
-  const nameAtom = React.useMemo(
+  const nameAtom = useMemo(
     () => focusAtom(fieldAtom, (o) => o.prop('name')),
     [fieldAtom]
   )
-  const valueAtom = React.useMemo(
+  const valueAtom = useMemo(
     () => focusAtom(fieldAtom, (o) => o.prop('value')),
     [fieldAtom]
   )
@@ -48,7 +48,7 @@ const Form = ({
   nameAtom: PrimitiveAtom<string>
   remove: () => void
 }) => {
-  const objectsAtom = React.useMemo(
+  const objectsAtom = useMemo(
     () =>
       focusAtom(formAtom, (o) =>
         o.iso(
@@ -69,7 +69,7 @@ const Form = ({
   const fieldAtoms = useAtomSlice(objectsAtom)
   const [name, setName] = useAtom(nameAtom)
   const addField = useAtomCallback(
-    React.useCallback(
+    useCallback(
       (get, set) => {
         const id = Math.floor(Math.random() * 1000)
         set(objectsAtom, (oldValue) => [
@@ -105,7 +105,7 @@ const FormList = ({
 }: {
   formListAtom: PrimitiveAtom<Record<string, Record<string, string>>>
 }) => {
-  const entriesAtom = React.useMemo(
+  const entriesAtom = useMemo(
     () =>
       focusAtom(formListAtom, (o) =>
         o.iso(
@@ -118,7 +118,7 @@ const FormList = ({
   const formAtoms = useAtomSlice(entriesAtom)
 
   const addForm = useAtomCallback(
-    React.useCallback(
+    useCallback(
       (get, set) => {
         const id = Math.floor(Math.random() * 1000)
         set(entriesAtom, (oldValue) => [...oldValue, [`new form ${id}`, {}]])
@@ -127,7 +127,7 @@ const FormList = ({
     )
   )
 
-  const formValues = React.useMemo(() => {
+  const formValues = useMemo(() => {
     return formAtoms.map(([formEntryAtom, remove]) => ({
       nameAtom: focusAtom(formEntryAtom, (o) => o.nth(0)),
       formAtom: focusAtom(formEntryAtom, (o) => o.nth(1)),
