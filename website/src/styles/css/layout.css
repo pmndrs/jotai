@@ -1,0 +1,16 @@
+* {
+  font-family: 'Inter Var', 'Inter', sans-serif;
+}
+
+body {
+  overflow-x: hidden;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+}
+
+pre,
+code,
+pre span,
+code span {
+  font-family: 'Meslo', monospace !important;
+}

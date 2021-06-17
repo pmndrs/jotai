@@ -2,7 +2,7 @@ import { createContext } from 'react'
 import type { Context } from 'react'
 
 import type { Atom, WritableAtom, Scope } from './atom'
-import { createState, writeAtom, restoreAtoms } from './vanilla'
+import { createState, writeAtom, restoreAtoms, flushPending } from './vanilla'
 import type { State } from './vanilla'
 import { createMutableSource } from './useMutableSource'
 
@@ -11,16 +11,20 @@ type MutableSource<_Target> = ReturnType<typeof createMutableSource>
 type UpdateAtom = <Value, Update>(
   atom: WritableAtom<Value, Update>,
   update: Update
-) => void | Promise<void>
+) => void
+
+type CommitCallback = () => void
 
 type StoreForProduction = [
   stateMutableSource: MutableSource<State>,
-  updateAtom: UpdateAtom
+  updateAtom: UpdateAtom,
+  commitCallback: CommitCallback
 ]
 
 export type StoreForDevelopment = [
   stateMutableSource: MutableSource<State>,
   updateAtom: UpdateAtom,
+  commitCallback: CommitCallback,
   debugMutableSource: MutableSource<{
     version: number
     atoms: Atom<unknown>[]
@@ -37,11 +41,12 @@ const createStoreForProduction = (
 ): StoreForProduction => {
   const state = createState(initialValues)
   const stateMutableSource = createMutableSource(state, () => state.v)
+  const commitCallback = () => flushPending(state)
   const updateAtom = <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => writeAtom(state, atom, update)
-  return [stateMutableSource, updateAtom]
+  return [stateMutableSource, updateAtom, commitCallback]
 }
 
 const createStoreForDevelopment = (
@@ -60,6 +65,7 @@ const createStoreForDevelopment = (
   }
   const state = createState(initialValues, stateListener)
   const stateMutableSource = createMutableSource(state, () => state.v)
+  const commitCallback = () => flushPending(state)
   const updateAtom = <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
@@ -76,7 +82,13 @@ const createStoreForDevelopment = (
   )
   const restore = (values: Iterable<readonly [Atom<unknown>, unknown]>) =>
     restoreAtoms(state, values)
-  return [stateMutableSource, updateAtom, debugMutableSource, restore]
+  return [
+    stateMutableSource,
+    updateAtom,
+    commitCallback,
+    debugMutableSource,
+    restore,
+  ]
 }
 
 type CreateStore = (
@@ -100,5 +112,5 @@ export const getStoreContext = (scope?: Scope) => {
 }
 
 export const isDevStore = (store: Store): store is StoreForDevelopment => {
-  return store.length > 2
+  return store.length > 3
 }

@@ -694,52 +694,6 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
   await findByText('count: -1')
 })
 
-it('should override promise returned by async read (#434)', async () => {
-  const countAtom = atom(0)
-  const asyncCountAtom = atom(async (get) => {
-    const count = get(countAtom)
-    await new Promise((r) => setTimeout(r, count ? 100 : 3600 * 1000))
-    return count * 10
-  })
-
-  const Counter: React.FC = () => {
-    const [count, setCount] = useAtom(countAtom)
-    return (
-      <>
-        <div>count: {count}</div>
-        <button onClick={() => setCount((c) => c + 1)}>button</button>
-      </>
-    )
-  }
-
-  const DelayedCounter: React.FC = () => {
-    const [delayedCount] = useAtom(asyncCountAtom)
-    return <div>delayedCount: {delayedCount}</div>
-  }
-
-  const { getByText } = render(
-    <StrictMode>
-      <Provider>
-        <Counter />
-        <Suspense fallback="loading">
-          <DelayedCounter />
-        </Suspense>
-      </Provider>
-    </StrictMode>
-  )
-
-  await waitFor(() => {
-    getByText('count: 0')
-    getByText('loading')
-  })
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('count: 1')
-    getByText('delayedCount: 10')
-  })
-})
-
 it('should override promise as atom value (#430)', async () => {
   const countAtom = atom(
     new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
@@ -776,27 +730,33 @@ it('should override promise as atom value (#430)', async () => {
 })
 
 it('combine two promise atom values (#442)', async () => {
-  const countAtom = atom(
+  const count1Atom = atom(
     new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
   )
-  countAtom.onMount = (setValue) => {
-    setTimeout(() => {
-      setValue(Promise.resolve(1))
-    }, 100)
-  }
   const count2Atom = atom(
     new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
   )
-  count2Atom.onMount = (setValue) => {
+  const derivedAtom = atom((get) => get(count1Atom) + get(count2Atom))
+  const initAtom = atom(null, (_get, set) => {
     setTimeout(() => {
-      setValue(Promise.resolve(2))
+      set(count1Atom, Promise.resolve(1))
     }, 100)
+    setTimeout(() => {
+      set(count2Atom, Promise.resolve(2))
+    }, 100)
+  })
+  initAtom.onMount = (init) => {
+    init()
   }
-  const derivedAtom = atom((get) => get(countAtom) + get(count2Atom))
 
   const Counter: React.FC = () => {
     const [count] = useAtom(derivedAtom)
     return <div>count: {count}</div>
+  }
+
+  const Control: React.FC = () => {
+    useAtom(initAtom)
+    return null
   }
 
   const { findByText } = render(
@@ -805,10 +765,51 @@ it('combine two promise atom values (#442)', async () => {
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
+        <Control />
       </Provider>
     </StrictMode>
   )
 
   await findByText('loading')
+  await findByText('count: 3')
+})
+
+it('set two promise atoms at once', async () => {
+  const count1Atom = atom(
+    new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
+  )
+  const count2Atom = atom(
+    new Promise<number>((r) => setTimeout(() => r(-1), 3600 * 1000))
+  )
+  const derivedAtom = atom((get) => get(count1Atom) + get(count2Atom))
+  const setCountsAtom = atom(null, (_get, set) => {
+    set(count1Atom, Promise.resolve(1))
+    set(count2Atom, Promise.resolve(2))
+  })
+
+  const Counter: React.FC = () => {
+    const [count] = useAtom(derivedAtom)
+    return <div>count: {count}</div>
+  }
+
+  const Control: React.FC = () => {
+    const [, setCounts] = useAtom(setCountsAtom)
+    return <button onClick={() => setCounts()}>button</button>
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Control />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+
+  fireEvent.click(getByText('button'))
   await findByText('count: 3')
 })

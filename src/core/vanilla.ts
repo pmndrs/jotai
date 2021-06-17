@@ -69,7 +69,7 @@ type StateListener = (updatedAtom: AnyAtom, isNewAtom: boolean) => void
 
 type StateVersion = number
 
-type PendingAtoms = Set<AnyAtom>
+type PendingMap = Map<AnyAtom, ReadDependencies | undefined>
 
 // mutable state
 export type State = {
@@ -77,7 +77,7 @@ export type State = {
   v: StateVersion
   a: AtomStateMap
   m: MountedMap
-  p: PendingAtoms
+  p: PendingMap
 }
 
 export const createState = (
@@ -89,7 +89,7 @@ export const createState = (
     v: 0,
     a: new WeakMap(),
     m: new WeakMap(),
-    p: new Set(),
+    p: new Map(),
   }
   if (initialValues) {
     for (const [atom, value] of initialValues) {
@@ -99,6 +99,12 @@ export const createState = (
         process.env.NODE_ENV !== 'production'
       ) {
         Object.freeze(atomState)
+        if (!hasInitialValue(atom)) {
+          console.warn(
+            'Found initial value for derived atom which can cause unexpected behavior',
+            atom
+          )
+        }
       }
       state.a.set(atom, atomState)
     }
@@ -113,7 +119,7 @@ const wipAtomState = <Value>(
   state: State,
   atom: Atom<Value>,
   dependencies?: Set<AnyAtom>
-): [AtomState<Value>, ReadDependencies | undefined] => {
+): [AtomState<Value>, ReadDependencies] => {
   const atomState = getAtomState(state, atom)
   const nextAtomState = {
     r: 0,
@@ -125,11 +131,9 @@ const wipAtomState = <Value>(
             getAtomState(state, a)?.r ?? 0,
           ])
         )
-      : atomState
-      ? atomState.d
-      : new Map(),
+      : atomState?.d || new Map(),
   }
-  return [nextAtomState, atomState?.d]
+  return [nextAtomState, atomState?.d || new Map()]
 }
 
 const setAtomValue = <Value>(
@@ -153,15 +157,14 @@ const setAtomValue = <Value>(
     atomState.v = value
     ++atomState.r // increment revision
   }
-  commitAtomState(state, atom, atomState)
-  mountDependencies(state, atom, atomState, prevDependencies)
+  commitAtomState(state, atom, atomState, dependencies && prevDependencies)
 }
 
 const setAtomReadError = <Value>(
   state: State,
   atom: Atom<Value>,
   error: Error,
-  dependencies: Set<AnyAtom>,
+  dependencies?: Set<AnyAtom>,
   promise?: Promise<void>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
@@ -174,15 +177,14 @@ const setAtomReadError = <Value>(
   delete atomState.c // cancel read promise
   delete atomState.i // invalidated revision
   atomState.e = error // read error
-  commitAtomState(state, atom, atomState)
-  mountDependencies(state, atom, atomState, prevDependencies)
+  commitAtomState(state, atom, atomState, prevDependencies)
 }
 
 const setAtomReadPromise = <Value>(
   state: State,
   atom: Atom<Value>,
   promise: Promise<void>,
-  dependencies: Set<AnyAtom>
+  dependencies?: Set<AnyAtom>
 ): void => {
   const [atomState, prevDependencies] = wipAtomState(state, atom, dependencies)
   if (atomState.p?.[IS_EQUAL_PROMISE](promise)) {
@@ -198,15 +200,11 @@ const setAtomReadPromise = <Value>(
     atomState.p = interruptablePromise // read promise
     atomState.c = interruptablePromise[INTERRUPT_PROMISE]
   }
-  commitAtomState(state, atom, atomState)
-  mountDependencies(state, atom, atomState, prevDependencies)
+  commitAtomState(state, atom, atomState, prevDependencies)
 }
 
 const setAtomInvalidated = <Value>(state: State, atom: Atom<Value>): void => {
   const [atomState] = wipAtomState(state, atom)
-  atomState.c?.() // cancel read promise
-  delete atomState.p // read promise
-  delete atomState.c // cancel read promise
   atomState.i = atomState.r // invalidated revision
   commitAtomState(state, atom, atomState)
 }
@@ -355,8 +353,6 @@ export const readAtom = <Value>(
   readingAtom: Atom<Value>
 ): AtomState<Value> => {
   const atomState = readAtomState(state, readingAtom)
-  state.p.delete(readingAtom)
-  flushPending(state)
   return atomState
 }
 
@@ -396,132 +392,98 @@ const invalidateDependents = <Value>(state: State, atom: Atom<Value>): void => {
 const writeAtomState = <Value, Update>(
   state: State,
   atom: WritableAtom<Value, Update>,
-  update: Update,
-  pendingPromises: Promise<void>[]
+  update: Update
 ): void => {
-  const isPendingPromisesExpired = !pendingPromises.length
-  const atomState = getAtomState(state, atom)
-  if (
-    atomState &&
-    atomState.w // write promise
-  ) {
-    const promise = atomState.w.then(() => {
-      writeAtomState(state, atom, update, pendingPromises)
-      if (isPendingPromisesExpired) {
-        flushPending(state)
-      }
+  const writePromise = getAtomState(state, atom)?.w
+  if (writePromise) {
+    writePromise.then(() => {
+      writeAtomState(state, atom, update)
+      flushPending(state)
     })
-    if (!isPendingPromisesExpired) {
-      pendingPromises.push(promise)
-    }
     return
   }
-  try {
-    const promiseOrVoid = atom.write(
-      ((a: AnyAtom) => {
-        const aState = readAtomState(state, a)
-        if (aState.e) {
-          throw aState.e // read error
-        }
-        if (aState.p) {
-          if (
-            typeof process === 'object' &&
-            process.env.NODE_ENV !== 'production'
-          ) {
-            console.warn(
-              'Reading pending atom state in write operation. We throw a promise for now.',
-              a
-            )
-          }
-          throw aState.p // read promise
-        }
-        if ('v' in aState) {
-          return aState.v // value
-        }
+  const promiseOrVoid = atom.write(
+    ((a: AnyAtom) => {
+      const aState = readAtomState(state, a)
+      if (aState.e) {
+        throw aState.e // read error
+      }
+      if (aState.p) {
         if (
           typeof process === 'object' &&
           process.env.NODE_ENV !== 'production'
         ) {
           console.warn(
-            '[Bug] no value found while reading atom in write operation. This probably a bug.',
+            'Reading pending atom state in write operation. We throw a promise for now.',
             a
           )
         }
-        throw new Error('no value found')
-      }) as Getter,
-      ((a: AnyWritableAtom, v: unknown) => {
-        const isPendingPromisesExpired = !pendingPromises.length
-        if (a === atom) {
-          setAtomValue(state, a, v)
-          invalidateDependents(state, a)
-        } else {
-          writeAtomState(state, a, v, pendingPromises)
-        }
-        if (isPendingPromisesExpired) {
-          flushPending(state)
-        }
-      }) as Setter,
-      update
-    )
-    if (promiseOrVoid instanceof Promise) {
-      const promise = promiseOrVoid.finally(() => {
-        setAtomWritePromise(state, atom)
-        if (isPendingPromisesExpired) {
-          flushPending(state)
-        }
-      })
-      if (!isPendingPromisesExpired) {
-        pendingPromises.push(promise)
+        throw aState.p // read promise
       }
-      setAtomWritePromise(state, atom, promise)
-    }
-  } catch (e) {
-    if (pendingPromises.length === 1) {
-      // still in sync, throw it right away
-      throw e
-    } else if (!isPendingPromisesExpired) {
-      pendingPromises.push(
-        new Promise((_resolve, reject) => {
-          reject(e)
-        })
-      )
-    } else {
-      console.error('Uncaught exception: Use promise to catch error', e)
-    }
+      if ('v' in aState) {
+        return aState.v // value
+      }
+      if (
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        console.warn(
+          '[Bug] no value found while reading atom in write operation. This is probably a bug.',
+          a
+        )
+      }
+      throw new Error('no value found')
+    }) as Getter,
+    ((a: AnyWritableAtom, v: unknown) => {
+      if (a === atom) {
+        if (!hasInitialValue(a)) {
+          // NOTE technically possible but restricted as it may cause bugs
+          throw new Error('no atom init')
+        }
+        if (v instanceof Promise) {
+          const promise = v
+            .then((resolvedValue) => {
+              setAtomValue(state, a, resolvedValue)
+              invalidateDependents(state, a)
+              flushPending(state)
+            })
+            .catch((e) => {
+              setAtomReadError(
+                state,
+                atom,
+                e instanceof Error ? e : new Error(e)
+              )
+              flushPending(state)
+            })
+          setAtomReadPromise(state, atom, promise)
+        } else {
+          setAtomValue(state, a, v)
+        }
+        invalidateDependents(state, a)
+      } else {
+        writeAtomState(state, a, v)
+      }
+      flushPending(state)
+    }) as Setter,
+    update
+  )
+  if (promiseOrVoid instanceof Promise) {
+    const promise = promiseOrVoid.finally(() => {
+      setAtomWritePromise(state, atom)
+      flushPending(state)
+    })
+    setAtomWritePromise(state, atom, promise)
   }
+  // TODO write error is not handled
 }
 
 export const writeAtom = <Value, Update>(
   state: State,
   writingAtom: WritableAtom<Value, Update>,
   update: Update
-): void | Promise<void> => {
-  const pendingPromises: Promise<void>[] = [Promise.resolve()]
-
-  writeAtomState(state, writingAtom, update, pendingPromises)
+): void => {
+  writeAtomState(state, writingAtom, update)
   flushPending(state)
-
-  if (pendingPromises.length <= 1) {
-    pendingPromises.splice(0)
-  } else {
-    return new Promise<void>((resolve, reject) => {
-      const loop = () => {
-        if (pendingPromises.length <= 1) {
-          pendingPromises.splice(0)
-          resolve()
-        } else {
-          Promise.all(pendingPromises)
-            .then(() => {
-              pendingPromises.splice(1)
-              flushPending(state)
-              loop()
-            })
-            .catch(reject)
-        }
-      }
-      loop()
-    })
-  }
 }
 
 const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
@@ -532,23 +494,18 @@ const mountAtom = <Value>(
   atom: Atom<Value>,
   initialDependent?: AnyAtom
 ): Mounted => {
-  // mount dependencies beforehand
-  const atomState = getAtomState(state, atom)
-  if (atomState) {
-    atomState.d.forEach((_, a) => {
-      if (a !== atom) {
-        // check if not mounted
-        if (!state.m.has(a)) {
-          mountAtom(state, a, atom)
-        }
+  const atomState = readAtomState(state, atom)
+  // mount read dependencies beforehand
+  atomState.d.forEach((_, a) => {
+    if (a !== atom) {
+      const aMounted = state.m.get(a)
+      if (aMounted) {
+        aMounted.d.add(atom) // add dependent
+      } else {
+        mountAtom(state, a, atom)
       }
-    })
-  } else if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production'
-  ) {
-    console.warn('[Bug] could not find atom state to mount', atom)
-  }
+    }
+  })
   // mount self
   const mounted: Mounted = {
     d: new Set(initialDependent && [initialDependent]),
@@ -570,7 +527,7 @@ const unmountAtom = <Value>(state: State, atom: Atom<Value>): void => {
     onUnmount()
   }
   state.m.delete(atom)
-  // unmount dependencies afterward
+  // unmount read dependencies afterward
   const atomState = getAtomState(state, atom)
   if (atomState) {
     atomState.d.forEach((_, a) => {
@@ -596,45 +553,39 @@ const mountDependencies = <Value>(
   state: State,
   atom: Atom<Value>,
   atomState: AtomState<Value>,
-  prevDependencies?: ReadDependencies
+  prevDependencies: ReadDependencies
 ): void => {
-  if (prevDependencies !== atomState.d) {
-    const dependencies = new Set(atomState.d.keys())
-    if (prevDependencies) {
-      prevDependencies.forEach((_, a) => {
-        const mounted = state.m.get(a)
-        if (dependencies.has(a)) {
-          // not changed
-          dependencies.delete(a)
-        } else if (mounted) {
-          mounted.d.delete(atom)
-          if (canUnmountAtom(a, mounted)) {
-            unmountAtom(state, a)
-          }
-        } else if (
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
-        ) {
-          console.warn('[Bug] a dependency is not mounted', a)
-        }
-      })
+  const dependencies = new Set(atomState.d.keys())
+  prevDependencies.forEach((_, a) => {
+    if (dependencies.has(a)) {
+      // not changed
+      dependencies.delete(a)
+      return
     }
-    dependencies.forEach((a) => {
-      const mounted = state.m.get(a)
-      if (mounted) {
-        const dependents = mounted.d
-        dependents.add(atom)
-      } else {
-        mountAtom(state, a, atom)
+    const mounted = state.m.get(a)
+    if (mounted) {
+      mounted.d.delete(atom)
+      if (canUnmountAtom(a, mounted)) {
+        unmountAtom(state, a)
       }
-    })
-  }
+    }
+  })
+  dependencies.forEach((a) => {
+    const mounted = state.m.get(a)
+    if (mounted) {
+      const dependents = mounted.d
+      dependents.add(atom)
+    } else {
+      mountAtom(state, a, atom)
+    }
+  })
 }
 
 const commitAtomState = <Value>(
   state: State,
   atom: Atom<Value>,
-  atomState: AtomState<Value>
+  atomState: AtomState<Value>,
+  prevDependencies?: ReadDependencies
 ): void => {
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     Object.freeze(atomState)
@@ -645,15 +596,29 @@ const commitAtomState = <Value>(
     state.l(atom, isNewAtom)
   }
   ++state.v
-  state.p.add(atom)
+  if (!state.p.has(atom)) {
+    state.p.set(atom, prevDependencies)
+  }
 }
 
-const flushPending = (state: State): void => {
-  state.p.forEach((atom) => {
+export const flushPending = (state: State): void => {
+  const pending = Array.from(state.p)
+  state.p.clear()
+  pending.forEach(([atom, prevDependencies]) => {
+    const atomState = getAtomState(state, atom)
+    if (atomState) {
+      if (prevDependencies) {
+        mountDependencies(state, atom, atomState, prevDependencies)
+      }
+    } else if (
+      typeof process === 'object' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      console.warn('[Bug] atom state not found in flush', atom)
+    }
     const mounted = state.m.get(atom)
     mounted?.l.forEach((listener) => listener())
   })
-  state.p.clear()
 }
 
 export const subscribeAtom = (

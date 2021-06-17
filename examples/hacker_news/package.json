@@ -3,35 +3,30 @@
   "version": "1.0.0",
   "description": "Demonstrate a news articles with jotai, hit next to see more articles.",
   "keywords": [],
-  "main": "src/index.js",
+  "main": "src/index.tsx",
   "dependencies": {
-    "@react-spring/web": "9.0.0-rc.3",
-    "html-react-parser": "0.14.2",
-    "jotai": "^0.15.2",
-    "react": "17.0.1",
-    "react-dom": "17.0.1",
+    "@react-spring/web": "^9.2.3",
+    "html-react-parser": "^1.2.6",
+    "jotai": "^1.0.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
     "react-scripts": "^4.0.3"
   },
   "devDependencies": {
-    "serve": "11.3.2"
+    "@types/react": "^17.0.11",
+    "@types/react-dom": "^17.0.7",
+    "typescript": "^4.3.2"
   },
   "scripts": {
     "start": "SKIP_PREFLIGHT_CHECK=true react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject",
-    "serve": "serve -s build"
+    "eject": "react-scripts eject"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }

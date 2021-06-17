@@ -1,0 +1,116 @@
+/**
+ * Pmndrs theme for JavaScript, CSS and HTML
+ * Loosely based on https://marketplace.visualstudio.com/items?itemName=pmndrs.pmndrs
+ * @author Paul Henschel
+ */
+
+code[class*='language-'],
+pre[class*='language-'] {
+  color: #e4f0fb;
+  background: none;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+  font-family: 'Meslo', Menlo, Monaco, 'Courier New', monospace;
+  font-size: 0.95em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  tab-size: 2;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*='language-'] {
+  padding: 1.75em;
+  margin: 1.5em 0;
+  overflow: auto;
+  border-radius: 0.5rem;
+}
+
+:not(pre) > code[class*='language-'],
+pre[class*='language-'] {
+  background: #252b37;
+}
+
+/* Inline code */
+:not(pre) > code[class*='language-'] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #a6accd;
+}
+
+.token.punctuation {
+  color: #e4f0fb;
+}
+
+.token.namespace {
+  opacity: 0.7;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #e4f0fb;
+}
+
+.token.boolean,
+.token.number {
+  color: #5de4c7;
+}
+
+.token.selector,
+.token.attr-value,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #5de4c7;
+}
+
+.token.attr-name,
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  color: #add7ff;
+}
+
+.token.atrule,
+.token.function,
+.token.class-name {
+  color: #5de4c7;
+}
+
+.token.keyword {
+  color: #add7ff;
+}
+
+.token.regex,
+.token.important {
+  color: #fffac2;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
