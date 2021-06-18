@@ -4,7 +4,7 @@ import { Panel, Button } from '../components'
 
 export const Menu = () => {
   return (
-    <aside className="lg:sticky lg:top-0 flex flex-col lg:flex-shrink-0 lg:justify-between order-last lg:order-first lg:w-full lg:max-w-sm lg:min-h-full lg:max-h-screen lg:overflow-y-auto p-8 lg:p-16">
+    <aside className="lg:sticky lg:top-0 flex flex-col lg:flex-shrink-0 lg:justify-between order-last lg:order-first lg:w-full lg:max-w-sm lg:min-h-full lg:max-h-screen lg:overflow-y-auto p-8 lg:p-16 lg:pr-8">
       <span className="lg:hidden">
         <Panel headline="More resources" />
       </span>
