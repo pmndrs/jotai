@@ -5,7 +5,7 @@ import { Logo } from '../components'
 export const Intro = () => {
   return (
     <div>
-      <h1 className="flex items-center w-full max-w-xs mt-8 lg:mt-0 px-4 lg:px-0 text-gray-800">
+      <h1 className="flex items-center w-full max-w-xs mt-8 lg:mt-0 text-gray-800">
         <img
           src="/ghost_DRAFT.png"
           alt="Jotai mascot"
