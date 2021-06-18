@@ -433,14 +433,6 @@
     "@babel/helper-skip-transparent-expression-wrappers" "^7.14.5"
     "@babel/plugin-syntax-optional-chaining" "^7.8.3"
 
-"@babel/plugin-proposal-pipeline-operator@^7.14.5":
-  version "7.14.5"
-  resolved "https://registry.yarnpkg.com/@babel/plugin-proposal-pipeline-operator/-/plugin-proposal-pipeline-operator-7.14.5.tgz#1e1b24f0542387d0d6a9b8e08fe4db0d8c45bc28"
-  integrity sha512-JahWUHYn1mij/tYte6/wGElJFUIuLGu0Eqiz329QK2yl50aQfL0sRyqGy1GhM+w0R6KWSQ9V6FDewDF2ST/xRA==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.14.5"
-    "@babel/plugin-syntax-pipeline-operator" "^7.14.5"
-
 "@babel/plugin-proposal-private-methods@^7.14.5":
   version "7.14.5"
   resolved "https://registry.yarnpkg.com/@babel/plugin-proposal-private-methods/-/plugin-proposal-private-methods-7.14.5.tgz#37446495996b2945f30f5be5b60d5e2aa4f5792d"
@@ -564,13 +556,6 @@
   integrity sha512-KoK9ErH1MBlCPxV0VANkXW2/dw4vlbGDrFgz8bmUsBGYkFRcbRwMh6cIJubdPrkxRwuGdtCk0v/wPTKbQgBjkg==
   dependencies:
     "@babel/helper-plugin-utils" "^7.8.0"
-
-"@babel/plugin-syntax-pipeline-operator@^7.14.5":
-  version "7.14.5"
-  resolved "https://registry.yarnpkg.com/@babel/plugin-syntax-pipeline-operator/-/plugin-syntax-pipeline-operator-7.14.5.tgz#ad68f81f0de5685232faee35562836803be06aec"
-  integrity sha512-yyV4QIHExzKJwYoZ0yRorVLROdsZ96H6iamG60rvDghWyfo7BaSPjvoHWGRirebzUj+Vv5Ih6yhhMLx04Gnvyw==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.14.5"
 
 "@babel/plugin-syntax-private-property-in-object@^7.14.5":
   version "7.14.5"
