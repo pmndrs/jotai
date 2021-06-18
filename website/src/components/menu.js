@@ -7,15 +7,15 @@ import { Logo, Panel, Button } from '~components';
 
 export const Menu = () => {
   return (
-    <aside className="xl:sticky xl:top-0 flex flex-col justify-between order-last xl:order-first w-full max-w-4xl mx-auto xl:max-w-lg xl:h-screen p-8 xl:p-16">
-      <span className="xl:hidden mb-6">
+    <aside className="lg:sticky lg:top-0 flex flex-col flex-shrink-0 justify-between order-last lg:order-first w-full max-w-4xl mx-auto lg:max-w-sm lg:max-h-screen overflow-y-auto p-8 lg:p-16">
+      <span className="lg:hidden">
         <Panel headline="More Resources" />
       </span>
-      <div className="pt-10 order-last xl:order-first">
+      <div className="hidden lg:block">
         <img
           src="/ghost_DRAFT.png"
           alt="Jotai mascot"
-          className="w-full max-w-sm xl:max-w-full h-auto mx-auto object-contain"
+          className="w-full max-w-sm lg:max-w-full h-auto mx-auto object-contain"
         />
         <a
           href="https://jessiewaters.com"
@@ -26,7 +26,7 @@ export const Menu = () => {
           Artwork by Jessie Waters
         </a>
       </div>
-      <nav className="flex flex-col mt-6 space-y-6">
+      <nav className="flex flex-col mt-6 space-y-4">
         <Button to="https://docs.pmnd.rs/jotai" icon="book" external>
           Documentation
         </Button>
@@ -36,10 +36,25 @@ export const Menu = () => {
         <Button to="https://www.npmjs.com/package/jotai" icon="npm" external>
           Package
         </Button>
+        <Button
+          to="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
+          icon="cap"
+          external
+        >
+          Course
+        </Button>
         <Button to="https://twitter.com/dai_shi" icon="twitter" external>
           Updates
         </Button>
       </nav>
+      <a
+        href="https://jessiewaters.com"
+        target="_blank"
+        title="Jessie Waters"
+        className="block lg:hidden mt-6 text-xs text-gray-400 text-center tracking-widest uppercase"
+      >
+        Artwork by Jessie Waters
+      </a>
     </aside>
   );
 };
