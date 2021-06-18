@@ -6,7 +6,7 @@ import {
 } from '@urql/core'
 import { atom } from 'jotai'
 import type { Atom, Getter } from 'jotai'
-import { getClient } from './clientAtom'
+import { clientAtom } from './clientAtom'
 
 type SubscriptionArgs<Data, Variables extends object> = {
   query: TypedDocumentNode<Data, Variables>
@@ -17,53 +17,79 @@ type SubscriptionArgs<Data, Variables extends object> = {
 export function atomWithSubscription<Data, Variables extends object>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>
 ): Atom<OperationResult<Data, Variables>> {
-  const operationResultAtom = atom<
-    OperationResult<Data, Variables> | Promise<OperationResult<Data, Variables>>
-  >(
-    new Promise<OperationResult<Data, Variables>>(() => {}) // infinite pending
-  )
-  const queryAtom = atom((get) => {
-    const args = createSubscriptionArgs(get)
-    const initAtom = atom(
-      null,
-      (get, set, cleanup: (callback: () => void) => void) => {
-        set(
-          operationResultAtom,
-          new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch
-        )
-        const client = getClient(get, set)
-        const subscription = pipe(
-          client.subscription(args.query, args.variables, args.context),
-          subscribe((result) => {
-            set(operationResultAtom, result)
-          })
-        )
-        cleanup(subscription.unsubscribe)
-      }
-    )
-    initAtom.onMount = (init) => {
-      let destroy: (() => void) | undefined | false
-      const cleanup = (callback: () => void) => {
-        if (destroy === false) {
-          callback()
+  const stateAtom = atom(() => {
+    const state = {
+      resolve: null as
+        | ((result: OperationResult<Data, Variables>) => void)
+        | null,
+      setResult: null as
+        | ((result: OperationResult<Data, Variables>) => void)
+        | null,
+      prevResult: null as OperationResult<Data, Variables> | null,
+      unsubscribe: null as (() => void) | null,
+      handle(result: OperationResult<Data, Variables>) {
+        this.prevResult = result
+        if (this.resolve) {
+          this.resolve(result)
+          this.resolve = null
+        } else if (this.setResult) {
+          this.setResult(result)
         } else {
-          destroy = callback
+          throw new Error('setting result without mount')
         }
-      }
-      init(cleanup)
-      return () => {
-        if (destroy) {
-          destroy()
+      },
+    }
+    return state
+  })
+  const initAtom = atom(
+    (get) => {
+      const args = createSubscriptionArgs(get)
+      const state = get(stateAtom)
+      const resultAtom = atom<
+        | OperationResult<Data, Variables>
+        | Promise<OperationResult<Data, Variables>>
+      >(
+        new Promise<OperationResult<Data, Variables>>((resolve) => {
+          state.resolve = resolve
+        })
+      )
+      state.prevResult = null
+      const client = get(clientAtom)
+      state.unsubscribe?.()
+      const subscription = pipe(
+        client.subscription(args.query, args.variables, args.context),
+        subscribe((result) => {
+          state.handle(result)
+        })
+      )
+      state.unsubscribe = () => subscription.unsubscribe()
+      return { resultAtom, args }
+    },
+    (get, set, action: { type: 'mount' } | { type: 'cleanup' }) => {
+      switch (action.type) {
+        case 'mount': {
+          const state = get(stateAtom)
+          state.setResult = (result) => {
+            const { resultAtom } = get(initAtom)
+            set(resultAtom, result)
+          }
+          return
         }
-        destroy = false
+        case 'cleanup': {
+          const { unsubscribe } = get(stateAtom)
+          unsubscribe?.()
+          return
+        }
       }
     }
-    return initAtom
+  )
+  initAtom.onMount = (dispatch) => {
+    dispatch({ type: 'mount' })
+    return () => dispatch({ type: 'cleanup' })
+  }
+  const queryAtom = atom((get) => {
+    const { resultAtom } = get(initAtom)
+    return get(resultAtom)
   })
-  const queryResultAtom = atom((get) => {
-    const initAtom = get(queryAtom)
-    get(initAtom) // use it here
-    return get(operationResultAtom)
-  })
-  return queryResultAtom
+  return queryAtom
 }
