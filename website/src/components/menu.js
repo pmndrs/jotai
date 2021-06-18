@@ -7,7 +7,7 @@ import { Logo, Panel, Button } from '~components';
 
 export const Menu = () => {
   return (
-    <aside className="lg:sticky lg:top-0 flex flex-col justify-between order-last lg:order-first w-full max-w-4xl mx-auto lg:max-w-sm lg:max-h-screen overflow-y-auto p-8 lg:p-16">
+    <aside className="lg:sticky lg:top-0 flex flex-col flex-shrink-0 justify-between order-last lg:order-first w-full max-w-4xl mx-auto lg:max-w-sm lg:max-h-screen overflow-y-auto p-8 lg:p-16">
       <span className="lg:hidden">
         <Panel headline="More Resources" />
       </span>
