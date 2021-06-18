@@ -20,7 +20,7 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
       <title>{siteTitle}</title>
       <meta property="description" content={siteDescription} />
       <meta property="og:locale" content={lang} />
-      <meta property="og:site_name" content="Jotai" />
+      <meta property="og:site_name" content="👻 Jotai" />
       <meta property="og:title" content={siteTitle} />
       <meta property="og:description" content={siteDescription} />
       <meta property="og:type" content="website" />
