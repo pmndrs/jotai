@@ -21,7 +21,7 @@
     "gatsby-plugin-google-gtag": "^3.7.1",
     "gatsby-plugin-postcss": "^4.7.1",
     "gatsby-plugin-react-helmet": "^4.7.1",
-    "gatsby-plugin-sitemap": "^4.3.1",
+    "gatsby-plugin-sitemap": "^3.3.0",
     "gatsby-source-filesystem": "^3.7.1",
     "jotai": "^1.0.0",
     "prism-react-renderer": "^1.2.1",
