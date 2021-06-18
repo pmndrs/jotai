@@ -1,14 +1,13 @@
-import React from 'react';
-import { useAtom } from 'jotai';
-import { atomWithImmer } from 'jotai/immer';
+import React from 'react'
+import { useAtom } from 'jotai'
 
-import { countAtom } from '~atoms';
-import { Button, Code } from '~components';
+import { countAtom } from '../atoms'
+import { Button, Code } from '../components'
 
 export const IntegrationsDemo = () => {
-  const [count, setCount] = useAtom(countAtom);
+  const [count, setCount] = useAtom(countAtom)
 
-  const increment = () => setCount((c) => (c = c + 1));
+  const increment = () => setCount((c) => (c = c + 1))
 
   const code = `import { useAtom } from 'jotai'
 import { atomWithImmer } from 'jotai/immer'
@@ -26,15 +25,17 @@ const Controls = () => {
   const [, setCount] = useAtom(countAtom)
   const increment = () => setCount((c) => (c = c + 1))
   return <button onClick={increment}>+1</button>
-}`;
+}`
 
   return (
     <>
       <div className="flex items-center py-8 space-x-8">
         <Button onClick={increment}>Increment</Button>
-        <span className="font-bold text-3xl ordinal slashed-zero tabular-nums">{count}</span>
+        <span className="font-bold text-3xl ordinal slashed-zero tabular-nums">
+          {count}
+        </span>
       </div>
       <Code code={code} />
     </>
-  );
-};
+  )
+}

@@ -1,15 +1,12 @@
-import React from 'react';
-import cx from 'classnames';
-import { useAtom } from 'jotai';
+import React from 'react'
 
-import { menuAtom } from '~atoms';
-import { Logo, Panel, Button } from '~components';
+import { Panel, Button } from '../components'
 
 export const Menu = () => {
   return (
-    <aside className="lg:sticky lg:top-0 flex flex-col flex-shrink-0 justify-between order-last lg:order-first w-full max-w-4xl mx-auto lg:max-w-sm lg:max-h-screen overflow-y-auto p-8 lg:p-16">
+    <aside className="lg:sticky lg:top-0 flex flex-col lg:flex-shrink-0 lg:justify-between order-last lg:order-first lg:w-full lg:max-w-sm lg:min-h-full lg:max-h-screen lg:overflow-y-auto p-8 lg:p-16 lg:pr-8">
       <span className="lg:hidden">
-        <Panel headline="More Resources" />
+        <Panel headline="More resources" />
       </span>
       <div className="hidden lg:block">
         <img
@@ -21,8 +18,7 @@ export const Menu = () => {
           href="https://jessiewaters.com"
           target="_blank"
           title="Jessie Waters"
-          className="block mt-6 text-xs text-gray-400 text-center tracking-widest uppercase"
-        >
+          className="block mt-6 text-xs text-gray-400 text-center tracking-widest uppercase">
           Artwork by Jessie Waters
         </a>
       </div>
@@ -39,8 +35,7 @@ export const Menu = () => {
         <Button
           to="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
           icon="cap"
-          external
-        >
+          external>
           Course
         </Button>
         <Button to="https://twitter.com/dai_shi" icon="twitter" external>
@@ -51,10 +46,9 @@ export const Menu = () => {
         href="https://jessiewaters.com"
         target="_blank"
         title="Jessie Waters"
-        className="block lg:hidden mt-6 text-xs text-gray-400 text-center tracking-widest uppercase"
-      >
+        className="block lg:hidden mt-6 text-xs text-gray-400 text-center tracking-widest uppercase">
         Artwork by Jessie Waters
       </a>
     </aside>
-  );
-};
+  )
+}

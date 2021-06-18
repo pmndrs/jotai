@@ -1,15 +1,19 @@
-import React from 'react';
-import cx from 'classnames';
-import { useAtom } from 'jotai';
+import React from 'react'
+import cx from 'classnames'
+import { useAtom } from 'jotai'
 
-import { darkModeAtom } from '~atoms';
+import { darkModeAtom } from '../atoms'
 
 export const PageWrapper = ({ children }) => {
-  const [darkMode] = useAtom(darkModeAtom);
+  const [darkMode] = useAtom(darkModeAtom)
 
   return (
-    <div className={cx(darkMode && 'dark', 'relative flex flex-col lg:flex-row justify-around')}>
+    <div
+      className={cx(
+        darkMode && 'dark',
+        'relative flex flex-col lg:flex-row lg:justify-around'
+      )}>
       {children}
     </div>
-  );
-};
+  )
+}

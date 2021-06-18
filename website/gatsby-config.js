@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 module.exports = {
   siteMetadata: {
     title: `Jotai, primitive and flexible state management for React`,
@@ -25,4 +23,4 @@ module.exports = {
       },
     },
   ],
-};
+}

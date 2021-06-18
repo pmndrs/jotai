@@ -21,7 +21,7 @@
     "gatsby-plugin-google-gtag": "^3.7.1",
     "gatsby-plugin-postcss": "^4.7.1",
     "gatsby-plugin-react-helmet": "^4.7.1",
-    "gatsby-plugin-sitemap": "^4.3.1",
+    "gatsby-plugin-sitemap": "^3.3.0",
     "gatsby-source-filesystem": "^3.7.1",
     "jotai": "^1.0.0",
     "prism-react-renderer": "^1.2.1",
@@ -30,15 +30,12 @@
     "react-helmet": "^6.1.0"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-pipeline-operator": "^7.14.5",
     "@tailwindcss/forms": "^0.3.3",
     "autoprefixer": "^10.2.6",
     "babel-preset-gatsby": "^1.7.1",
     "postcss": "^8.3.5",
     "postcss-import": "^14.0.2",
     "postcss-loader": "^6.1.0",
-    "postcss-nested": "^5.0.5",
-    "prettier": "^2.3.1",
     "tailwindcss": "^2.2.0"
   },
   "private": true,
