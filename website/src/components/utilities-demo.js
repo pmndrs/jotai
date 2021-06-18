@@ -3,7 +3,7 @@ import cx from 'classnames'
 import { useAtom } from 'jotai'
 
 import { darkModeAtom } from '../atoms'
-import { ClientOnly, Code, InlineCode } from '../components'
+import { ClientOnly, Code } from '../components'
 
 export const UtilitiesDemo = () => {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom)

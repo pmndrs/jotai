@@ -11,7 +11,6 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
   }
 
   const siteTitle = gatsby.meta.title
-  const siteUrl = gatsby.meta.siteUrl
   const siteDescription = gatsby.meta.description
   const siteIcon = '/favicon.svg'
   const socialMediaCardImage = '/preview_DRAFT.png'

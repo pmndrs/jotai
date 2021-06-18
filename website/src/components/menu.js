@@ -1,9 +1,6 @@
 import React from 'react'
-import cx from 'classnames'
-import { useAtom } from 'jotai'
 
-import { menuAtom } from '../atoms'
-import { Logo, Panel, Button } from '../components'
+import { Panel, Button } from '../components'
 
 export const Menu = () => {
   return (

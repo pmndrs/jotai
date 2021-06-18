@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Logo, Button } from '../components'
+import { Logo } from '../components'
 
 export const Intro = () => {
   return (
