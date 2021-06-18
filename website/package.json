@@ -17,33 +17,29 @@
   },
   "dependencies": {
     "classnames": "^2.3.1",
-    "gatsby": "^3.7.1",
+    "gatsby": "^3.7.2",
     "gatsby-plugin-google-gtag": "^3.7.1",
     "gatsby-plugin-postcss": "^4.7.1",
     "gatsby-plugin-react-helmet": "^4.7.1",
     "gatsby-plugin-sitemap": "^4.3.1",
     "gatsby-source-filesystem": "^3.7.1",
-    "jotai": "^0.16.11",
+    "jotai": "^1.0.0",
     "prism-react-renderer": "^1.2.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-helmet": "^6.1.0"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.14.5",
     "@babel/plugin-proposal-pipeline-operator": "^7.14.5",
     "@tailwindcss/forms": "^0.3.3",
     "autoprefixer": "^10.2.6",
     "babel-preset-gatsby": "^1.7.1",
-    "eslint": "^7.28.0",
-    "eslint-plugin-react": "^7.24.0",
-    "eslint-plugin-react-hooks": "^4.2.0",
-    "postcss": "^8.3.2",
+    "postcss": "^8.3.5",
     "postcss-import": "^14.0.2",
     "postcss-loader": "^6.1.0",
     "postcss-nested": "^5.0.5",
     "prettier": "^2.3.1",
-    "tailwindcss": "^2.1.4"
+    "tailwindcss": "^2.2.0"
   },
   "private": true,
   "browserslist": [
