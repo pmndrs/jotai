@@ -5,7 +5,7 @@ export const Panel = ({ headline = null, body = null, demo = null }) => {
     <section className="space-y-2">
       {headline && <h2 className="font-bold text-3xl text-gray-300">{headline}</h2>}
       {body && (
-        <div className="font-normal text-base xl:text-lg leading-normal text-gray-600">{body}</div>
+        <div className="font-normal text-base lg:text-lg leading-normal text-gray-600">{body}</div>
       )}
       {demo}
     </section>

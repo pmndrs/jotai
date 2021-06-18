@@ -7,15 +7,15 @@ import { Logo, Panel, Button } from '~components';
 
 export const Menu = () => {
   return (
-    <aside className="xl:sticky xl:top-0 flex flex-col justify-between order-last xl:order-first w-full max-w-4xl mx-auto xl:max-w-lg xl:h-screen p-8 xl:p-16">
-      <span className="xl:hidden mb-6">
+    <aside className="lg:sticky lg:top-0 flex flex-col justify-between order-last lg:order-first w-full max-w-4xl mx-auto lg:max-w-lg lg:h-screen p-8 lg:p-16">
+      <span className="lg:hidden mb-6">
         <Panel headline="More Resources" />
       </span>
-      <div className="pt-10 order-last xl:order-first">
+      <div className="pt-10 order-last lg:order-first">
         <img
           src="/ghost_DRAFT.png"
           alt="Jotai mascot"
-          className="w-full max-w-sm xl:max-w-full h-auto mx-auto object-contain"
+          className="w-full max-w-sm lg:max-w-full h-auto mx-auto object-contain"
         />
         <a
           href="https://jessiewaters.com"
