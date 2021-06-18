@@ -37,8 +37,6 @@
     "postcss": "^8.3.5",
     "postcss-import": "^14.0.2",
     "postcss-loader": "^6.1.0",
-    "postcss-nested": "^5.0.5",
-    "prettier": "^2.3.1",
     "tailwindcss": "^2.2.0"
   },
   "private": true,

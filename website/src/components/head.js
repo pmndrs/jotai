@@ -1,20 +1,20 @@
-import React from 'react';
-import { useStaticQuery, graphql } from 'gatsby';
-import { Helmet } from 'react-helmet';
+import React from 'react'
+import { useStaticQuery, graphql } from 'gatsby'
+import { Helmet } from 'react-helmet'
 
 export const Head = ({ lang = 'en', title, description, uri }) => {
-  const data = useStaticQuery(staticQuery);
-  const { gatsby } = data;
+  const data = useStaticQuery(staticQuery)
+  const { gatsby } = data
 
   const htmlAttributes = {
     lang: lang,
-  };
+  }
 
-  const siteTitle = gatsby.meta.title;
-  const siteUrl = gatsby.meta.siteUrl;
-  const siteDescription = gatsby.meta.description;
-  const siteIcon = '/favicon.svg';
-  const socialMediaCardImage = '/preview_DRAFT.png';
+  const siteTitle = gatsby.meta.title
+  const siteUrl = gatsby.meta.siteUrl
+  const siteDescription = gatsby.meta.description
+  const siteIcon = '/favicon.svg'
+  const socialMediaCardImage = '/preview_DRAFT.png'
 
   return (
     <Helmet htmlAttributes={htmlAttributes} defer={false}>
@@ -33,8 +33,8 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
       <meta property="twitter:card" content="summary_large_image" />
       <link rel="icon" type="image/svg+xml" href={siteIcon} />
     </Helmet>
-  );
-};
+  )
+}
 
 const staticQuery = graphql`
   query {
@@ -46,4 +46,4 @@ const staticQuery = graphql`
       }
     }
   }
-`;
+`

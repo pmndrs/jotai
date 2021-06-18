@@ -1,4 +1,4 @@
-const colors = require('tailwindcss/colors');
+const colors = require('tailwindcss/colors')
 
 module.exports = {
   mode: 'jit',
@@ -25,11 +25,11 @@ module.exports = {
       '4xs': ['0.375rem'],
       '3xs': ['0.5rem'],
       '2xs': ['0.625rem'],
-      'xs': ['0.75rem'],
-      'sm': ['0.875rem'],
-      'base': ['1rem'],
-      'lg': ['1.125rem'],
-      'xl': ['1.25rem'],
+      xs: ['0.75rem'],
+      sm: ['0.875rem'],
+      base: ['1rem'],
+      lg: ['1.125rem'],
+      xl: ['1.25rem'],
       '2xl': ['1.5rem'],
       '3xl': ['1.875rem'],
       '4xl': ['2.25rem'],
@@ -42,4 +42,4 @@ module.exports = {
     },
   },
   plugins: [require('@tailwindcss/forms')],
-};
+}

@@ -1,5 +1,5 @@
-import React from 'react';
-import Highlight, { defaultProps } from 'prism-react-renderer';
+import React from 'react'
+import Highlight, { defaultProps } from 'prism-react-renderer'
 
 export const Code = ({ code }) => {
   return (
@@ -16,5 +16,5 @@ export const Code = ({ code }) => {
         </pre>
       )}
     </Highlight>
-  );
-};
+  )
+}

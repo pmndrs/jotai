@@ -1,3 +1,3 @@
-import './src/styles/app.css';
+import './src/styles/app.css'
 
-export { wrapRootElement } from './gatsby-ssr';
+export { wrapRootElement } from './gatsby-ssr'

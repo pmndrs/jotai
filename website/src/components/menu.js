@@ -1,9 +1,9 @@
-import React from 'react';
-import cx from 'classnames';
-import { useAtom } from 'jotai';
+import React from 'react'
+import cx from 'classnames'
+import { useAtom } from 'jotai'
 
-import { menuAtom } from '~atoms';
-import { Logo, Panel, Button } from '~components';
+import { menuAtom } from '../atoms'
+import { Logo, Panel, Button } from '../components'
 
 export const Menu = () => {
   return (
@@ -21,8 +21,7 @@ export const Menu = () => {
           href="https://jessiewaters.com"
           target="_blank"
           title="Jessie Waters"
-          className="block mt-6 text-xs text-gray-400 text-center tracking-widest uppercase"
-        >
+          className="block mt-6 text-xs text-gray-400 text-center tracking-widest uppercase">
           Artwork by Jessie Waters
         </a>
       </div>
@@ -39,8 +38,7 @@ export const Menu = () => {
         <Button
           to="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
           icon="cap"
-          external
-        >
+          external>
           Course
         </Button>
         <Button to="https://twitter.com/dai_shi" icon="twitter" external>
@@ -51,10 +49,9 @@ export const Menu = () => {
         href="https://jessiewaters.com"
         target="_blank"
         title="Jessie Waters"
-        className="block lg:hidden mt-6 text-xs text-gray-400 text-center tracking-widest uppercase"
-      >
+        className="block lg:hidden mt-6 text-xs text-gray-400 text-center tracking-widest uppercase">
         Artwork by Jessie Waters
       </a>
     </aside>
-  );
-};
+  )
+}
