@@ -1,7 +1,7 @@
 import React from 'react'
 import { StaticImage } from 'gatsby-plugin-image'
 
-import { Jotai, Menu } from '../components'
+import { Jotai } from '../components'
 
 export const Header = () => {
   return (
