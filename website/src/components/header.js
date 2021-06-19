@@ -9,7 +9,7 @@ export const Header = () => {
       <h1 className="flex items-center w-full max-w-xs mt-8 lg:mt-0 text-gray-800">
         <StaticImage
           src="../images/ghost_DRAFT.png"
-          className="lg:hidden w-1/3 pr-2"
+          className="lg:!hidden w-1/3 pr-2"
           imgStyle={{ objectFit: 'contain' }}
           placeholder="blurred"
           formats={['auto']}
