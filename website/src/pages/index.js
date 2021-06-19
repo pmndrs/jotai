@@ -12,6 +12,7 @@ import {
   UtilitiesDemo,
   IntegrationsDemo,
   Footer,
+  Menu,
 } from '../components'
 
 const HomePage = () => {
@@ -79,6 +80,7 @@ const HomePage = () => {
           <Footer />
         </Main>
       </PageWrapper>
+      <Menu />
     </>
   )
 }

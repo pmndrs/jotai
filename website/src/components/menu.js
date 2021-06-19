@@ -5,15 +5,20 @@ import { Button, Navigation } from '../components'
 
 export const Menu = () => {
   return (
-    <Popover className="relative">
-      <Popover.Button className="focus:outline-none">
-        <Button icon="menu" className="font-bold tracking-wider uppercase">
-          Menu
-        </Button>
-      </Popover.Button>
-      <Popover.Panel className="absolute z-10 mt-2">
-        <Navigation className="flex flex-col p-4 space-y-4 border border-gray-200 rounded-lg bg-white shadow-2xl" />
-      </Popover.Panel>
-    </Popover>
+    <div className="fixed bottom-0 right-0 lg:hidden p-4">
+      <Popover className="relative">
+        <Popover.Panel className="absolute bottom-0 right-0 z-10 mb-16">
+          <Navigation className="flex flex-col p-4 space-y-4 border border-gray-700 rounded-lg bg-gray-900 shadow-2xl" />
+        </Popover.Panel>
+        <Popover.Button className="focus:outline-none shadow-2xl">
+          <Button
+            icon="menu"
+            dark={true}
+            className="font-bold tracking-wider uppercase">
+            Menu
+          </Button>
+        </Popover.Button>
+      </Popover>
+    </div>
   )
 }

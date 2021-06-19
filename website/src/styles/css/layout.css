@@ -15,3 +15,18 @@ pre span,
 code span {
   font-family: 'Meslo', monospace !important;
 }
+
+.speech-bubble:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border: solid transparent;
+  border-width: 16px 24px 16px 0;
+  border-right-color: #f5f5f5;
+  border-left: 0;
+  margin-top: -16px;
+  margin-left: -24px;
+}
