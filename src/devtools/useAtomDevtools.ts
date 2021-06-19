@@ -75,14 +75,11 @@ export function useAtomDevtools<Value>(
           message.type === 'DISPATCH' &&
           message.payload?.type === 'IMPORT_STATE'
         ) {
-          const actions = message.payload.nextLiftedState?.actionsById
           const computedStates =
             message.payload.nextLiftedState?.computedStates || []
 
           computedStates.forEach(
             ({ state }: { state: Value }, index: number) => {
-              const action = actions[index] || atomName
-
               if (index === 0) {
                 devtools.current?.init(state)
               } else {
