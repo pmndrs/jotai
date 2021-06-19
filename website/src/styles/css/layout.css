@@ -6,6 +6,7 @@ body {
   overflow-x: hidden;
   font-size: 15px;
   text-rendering: optimizeLegibility;
+  line-height: 1;
 }
 
 pre,
