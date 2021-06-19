@@ -15,13 +15,13 @@ export const Button = ({
   children,
 }) => {
   const buttonClasses = cx(
-    'inline-flex items-center px-6 py-3 space-x-4 border border-gray-200 rounded-lg bg-gray-50 text-base focus:outline-none transition duration-300 ease-in-out',
+    'inline-flex items-center px-6 py-3 space-x-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 text-base text-gray-600 focus:outline-none transition duration-300 ease-in-out',
     !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
     'select-none',
     className
   )
 
-  const iconClasses = 'w-6 h-6 object-contain'
+  const iconClasses = 'w-6 h-6 object-contain fill-current text-gray-600'
 
   if (onClick && to) {
     return (

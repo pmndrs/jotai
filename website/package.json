@@ -16,6 +16,7 @@
     "postdeduplicate": "yarn install"
   },
   "dependencies": {
+    "@headlessui/react": "^1.2.0",
     "classnames": "^2.3.1",
     "gatsby": "^3.7.2",
     "gatsby-plugin-google-gtag": "^3.7.1",

@@ -3,14 +3,15 @@ import React from 'react'
 import {
   Head,
   PageWrapper,
-  Menu,
+  Sidebar,
   Main,
-  Intro,
+  Header,
   Panel,
   InlineCode,
   CoreDemo,
   UtilitiesDemo,
   IntegrationsDemo,
+  Footer,
 } from '../components'
 
 const HomePage = () => {
@@ -18,9 +19,9 @@ const HomePage = () => {
     <>
       <Head />
       <PageWrapper>
-        <Menu />
+        <Sidebar />
         <Main>
-          <Intro />
+          <Header />
           <Panel
             headline="Introduction"
             body={
@@ -52,10 +53,9 @@ const HomePage = () => {
               <>
                 The Jotai package also includes a{' '}
                 <InlineCode>jotai/utils</InlineCode> bundle. These functions add
-                support for persisting an atom’s state in localStorage,
-                persisting an atom’s state in the URL hash,creating an atom with
-                a set function with redux-like reducers and action types, and
-                more.
+                support for persisting an atom’s state in localStorage or a URL
+                hash, creating an atom with a set function with redux-like
+                reducers and action types, and more.
               </>
             }
             demo={<UtilitiesDemo />}
@@ -76,6 +76,7 @@ const HomePage = () => {
             }
             demo={<IntegrationsDemo />}
           />
+          <Footer />
         </Main>
       </PageWrapper>
     </>

@@ -7,9 +7,7 @@ export const Panel = ({ headline = null, body = null, demo = null }) => {
         <h2 className="font-bold text-3xl text-gray-300">{headline}</h2>
       )}
       {body && (
-        <div className="font-normal text-base lg:text-lg leading-normal text-gray-600">
-          {body}
-        </div>
+        <div className="lg:text-lg text-gray-600 leading-normal">{body}</div>
       )}
       {demo}
     </section>
