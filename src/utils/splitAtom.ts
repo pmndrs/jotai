@@ -39,6 +39,7 @@ export function splitAtom<Item, Key>(
     return cachedAtom
   }
   type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
+  let savedArr: Item[] | undefined
   let savedAtomList: ItemAtom[] | undefined
   let savedKeyList: Key[] | undefined
   const keyToAtom = (key: Key) => {
@@ -48,8 +49,10 @@ export function splitAtom<Item, Key>(
     }
     return savedAtomList?.[index]
   }
-  const read = (get: Getter) => {
-    const currentArr = get(arrAtom)
+  const updateAtomList = (currentArr: Item[]) => {
+    if (savedArr === currentArr) {
+      return
+    }
     const currentAtomList: Atom<Item>[] = []
     const currentKeyList: Key[] = []
     currentArr.forEach((item, index) => {
@@ -61,49 +64,49 @@ export function splitAtom<Item, Key>(
         return
       }
       const read = (get: Getter) => {
-        const latestArr = get(arrAtom)
-        const index = (
-          latestArr === currentArr ? currentKeyList : savedKeyList
-        )?.indexOf(key)
+        updateAtomList(get(arrAtom))
+        const index = savedKeyList?.indexOf(key)
         if (index === undefined || index === -1) {
           throw new Error('index not found')
         }
-        return latestArr[index]
+        return (savedArr as Item[])[index]
       }
       const write = (
         get: Getter,
         set: Setter,
         update: SetStateAction<Item>
       ) => {
-        const latestArr = get(arrAtom)
-        const index = (
-          latestArr === currentArr ? currentKeyList : savedKeyList
-        )?.indexOf(key)
+        updateAtomList(get(arrAtom))
+        const index = savedKeyList?.indexOf(key)
         if (index === undefined || index === -1) {
           throw new Error('index not found')
         }
         const currentItem = isFunction(update)
-          ? update(latestArr[index])
+          ? update((savedArr as Item[])[index])
           : update
         set(arrAtom as WritableAtom<Item[], Item[]>, [
-          ...latestArr.slice(0, index),
+          ...(savedArr as Item[]).slice(0, index),
           currentItem,
-          ...latestArr.slice(index + 1),
+          ...(savedArr as Item[]).slice(index + 1),
         ])
       }
       const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
       itemAtom.scope = arrAtom.scope
       currentAtomList[index] = itemAtom
     })
+    savedArr = currentArr
     savedKeyList = currentKeyList
     if (
-      savedAtomList &&
-      savedAtomList.length === currentAtomList.length &&
-      savedAtomList.every((x, i) => x === currentAtomList[i])
+      !savedAtomList ||
+      savedAtomList.length !== currentAtomList.length ||
+      savedAtomList.some((x, i) => x !== currentAtomList[i])
     ) {
-      return savedAtomList
+      savedAtomList = currentAtomList
     }
-    return (savedAtomList = currentAtomList)
+  }
+  const read = (get: Getter) => {
+    updateAtomList(get(arrAtom))
+    return savedAtomList as ItemAtom[]
   }
   const write = (get: Getter, set: Setter, atomToRemove: ItemAtom) => {
     const index = get(splittedAtom).indexOf(atomToRemove)
