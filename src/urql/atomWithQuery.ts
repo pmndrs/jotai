@@ -6,7 +6,7 @@ import {
   RequestPolicy,
 } from '@urql/core'
 import { atom } from 'jotai'
-import type { Atom, Getter } from 'jotai'
+import type { Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
 
 type QueryArgs<Data, Variables extends object> = {
@@ -18,7 +18,7 @@ type QueryArgs<Data, Variables extends object> = {
 
 export function atomWithQuery<Data, Variables extends object>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>
-): Atom<OperationResult<Data, Variables>> {
+) {
   const queryResultAtom = atom((get) => {
     const client = get(clientAtom)
     const args = createQueryArgs(get)

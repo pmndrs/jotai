@@ -4,7 +4,7 @@ import {
   OperationResult,
 } from '@urql/core'
 import { atom } from 'jotai'
-import type { Atom, Getter } from 'jotai'
+import type { Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
 
 type MutationAction<Data, Variables extends object> = {
@@ -15,7 +15,7 @@ type MutationAction<Data, Variables extends object> = {
 
 export function atomWithMutation<Data, Variables extends object>(
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables>
-): Atom<OperationResult<Data, Variables>> {
+) {
   const operationResultAtom = atom<
     OperationResult<Data, Variables> | Promise<OperationResult<Data, Variables>>
   >(

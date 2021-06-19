@@ -5,7 +5,7 @@ import {
   OperationResult,
 } from '@urql/core'
 import { atom } from 'jotai'
-import type { Atom, Getter } from 'jotai'
+import type { Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
 
 type SubscriptionArgs<Data, Variables extends object> = {
@@ -16,7 +16,7 @@ type SubscriptionArgs<Data, Variables extends object> = {
 
 export function atomWithSubscription<Data, Variables extends object>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>
-): Atom<OperationResult<Data, Variables>> {
+) {
   const queryResultAtom = atom((get) => {
     const client = get(clientAtom)
     const args = createSubscriptionArgs(get)
