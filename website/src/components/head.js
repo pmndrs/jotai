@@ -12,6 +12,7 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
 
   const siteTitle = gatsby.meta.title
   const siteDescription = gatsby.meta.description
+  const siteUrl = gatsby.meta.siteUrl
   const siteIcon = '/favicon.svg'
   const socialMediaCardImage = '/preview_DRAFT.png'
 
@@ -31,6 +32,7 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
       <meta property="og:image:height" content="630" />
       <meta property="twitter:card" content="summary_large_image" />
       <link rel="icon" type="image/svg+xml" href={siteIcon} />
+      <link rel="canonical" href={siteUrl} />
     </Helmet>
   )
 }
