@@ -40,7 +40,7 @@ export function atomWithQuery<
         })
       )
       let setData: (data: TData) => void = () => {
-        throw new Error('setting data without mount')
+        throw new Error('atomWithQuery: setting data without mount')
       }
       let prevData: TData | null = null
       const listener = (result: QueryObserverResult<TData, TError>) => {
