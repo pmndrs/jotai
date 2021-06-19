@@ -1,8 +1,8 @@
-import React from 'react';
-import { Link } from 'gatsby';
-import cx from 'classnames';
+import React from 'react'
+import { Link } from 'gatsby'
+import cx from 'classnames'
 
-import { Icon } from '~components';
+import { Icon } from '../components'
 
 export const Button = ({
   type = 'button',
@@ -15,13 +15,13 @@ export const Button = ({
   children,
 }) => {
   const buttonClasses = cx(
-    'inline-flex items-center px-6 py-3 space-x-6 border border-gray-200 hover:border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 text-lg focus:outline-none transition duration-300 ease-in-out',
+    'inline-flex items-center px-6 py-3 space-x-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 text-base text-gray-600 focus:outline-none transition duration-300 ease-in-out',
     !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
     'select-none',
-    className,
-  );
+    className
+  )
 
-  const iconClasses = 'w-8 h-8 object-contain';
+  const iconClasses = 'w-6 h-6 object-contain fill-current text-gray-600'
 
   if (onClick && to) {
     return (
@@ -29,35 +29,39 @@ export const Button = ({
         {icon && <Icon icon={icon} className={iconClasses} />}
         <span>{children}</span>
       </Link>
-    );
+    )
   } else if (onClick) {
     return (
-      <button type="button" onClick={onClick} disabled={disabled} className={buttonClasses}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={buttonClasses}>
         {icon && <Icon icon={icon} className={iconClasses} />}
         <span>{children}</span>
       </button>
-    );
+    )
   } else if (to && external) {
     return (
       <a href={to} target="_blank" rel="noopener" className={buttonClasses}>
         {icon && <Icon icon={icon} className={iconClasses} />}
         <span>{children}</span>
       </a>
-    );
+    )
   } else if (to) {
     return (
       <Link to={to} className={buttonClasses}>
         {icon && <Icon icon={icon} className={iconClasses} />}
         <span>{children}</span>
       </Link>
-    );
+    )
   } else if (type) {
     return (
       <button type={type} disabled={disabled} className={buttonClasses}>
         {icon && <Icon icon={icon} className={iconClasses} />}
         <span>{children}</span>
       </button>
-    );
+    )
   }
-  return null;
-};
+  return null
+}

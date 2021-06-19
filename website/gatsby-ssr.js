@@ -1,7 +1,7 @@
-import React from 'react';
-import { Provider } from 'jotai';
+import React from 'react'
+import { Provider } from 'jotai'
 
-import { menuAtom, textAtom, countAtom } from '~atoms';
+import { menuAtom, textAtom, countAtom } from './src/atoms'
 
 export const wrapRootElement = ({ element }) => (
   <Provider
@@ -9,8 +9,7 @@ export const wrapRootElement = ({ element }) => (
       [menuAtom, false],
       [textAtom, 'hello'],
       [countAtom, 0],
-    ]}
-  >
+    ]}>
     {element}
   </Provider>
-);
+)
