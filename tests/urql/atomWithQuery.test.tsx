@@ -8,7 +8,7 @@ import { getTestProvider } from '../testUtils'
 jest.mock('../../src/urql/clientAtom', () => {
   const { map, interval, pipe, take, toPromise } = require('wonka')
   const { atom } = require('../../src/')
-  function withPromise(source$: any) {
+  const withPromise = (source$: any) => {
     source$.toPromise = () => pipe(source$, take(1), toPromise)
     return source$
   }

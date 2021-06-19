@@ -41,19 +41,26 @@ export function atomWithSubscription<Data, Variables extends object>(
         setResult(result)
       }
     }
-    client
-      .query(args.query, args.variables, args.context) // FIXME we shouldn't use query here?
-      .toPromise()
-      .then(listener)
-      .catch(() => {
-        // TODO error handling
-      })
+    const subscriptionInRender = pipe(
+      client.subscription(args.query, args.variables, args.context),
+      subscribe(listener)
+    )
+    let timer: NodeJS.Timeout | null = setTimeout(() => {
+      timer = null
+      subscriptionInRender.unsubscribe()
+    }, 1000)
     resultAtom.onMount = (update) => {
       setResult = update
-      const subscription = pipe(
-        client.subscription(args.query, args.variables, args.context),
-        subscribe(listener)
-      )
+      let subscription: typeof subscriptionInRender
+      if (timer) {
+        clearTimeout(timer)
+        subscription = subscriptionInRender
+      } else {
+        subscription = pipe(
+          client.subscription(args.query, args.variables, args.context),
+          subscribe(listener)
+        )
+      }
       return () => subscription.unsubscribe()
     }
     return { resultAtom, args }
