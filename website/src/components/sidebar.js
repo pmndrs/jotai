@@ -1,15 +1,20 @@
 import React from 'react'
+import { StaticImage } from 'gatsby-plugin-image'
 
-import { Panel, Navigation } from '../components'
+import { Navigation } from '../components'
 
 export const Sidebar = () => {
   return (
     <aside className="sticky top-0 hidden lg:flex flex-col flex-shrink-0 justify-between w-full max-w-sm min-h-full max-h-screen overflow-y-auto p-16 pr-8">
       <div>
-        <img
-          src="/ghost_DRAFT.png"
+        <StaticImage
+          src="../images/ghost_DRAFT.png"
+          className="w-full max-w-full h-auto mx-auto"
+          imgStyle={{ objectFit: 'contain' }}
+          placeholder="blurred"
+          formats={['auto']}
+          quality="90"
           alt="Jotai mascot"
-          className="w-full max-w-full h-auto mx-auto object-contain"
         />
         <a
           href="https://jessiewaters.com"

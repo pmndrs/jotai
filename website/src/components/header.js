@@ -1,4 +1,5 @@
 import React from 'react'
+import { StaticImage } from 'gatsby-plugin-image'
 
 import { Logo, Menu } from '../components'
 
@@ -6,10 +7,14 @@ export const Header = () => {
   return (
     <header>
       <h1 className="flex items-center w-full max-w-xs mt-8 lg:mt-0 text-gray-800">
-        <img
-          src="/ghost_DRAFT.png"
-          alt="Jotai mascot"
+        <StaticImage
+          src="../images/ghost_DRAFT.png"
           className="lg:hidden w-1/3 pr-2"
+          imgStyle={{ objectFit: 'contain' }}
+          placeholder="blurred"
+          formats={['auto']}
+          quality="90"
+          alt="Jotai mascot"
         />
         <Logo className="w-2/3 lg:w-full pl-2 lg:pl-0" />
         <span className="sr-only">Jotai</span>
