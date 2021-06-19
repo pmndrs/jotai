@@ -17,78 +17,49 @@ type SubscriptionArgs<Data, Variables extends object> = {
 export function atomWithSubscription<Data, Variables extends object>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>
 ): Atom<OperationResult<Data, Variables>> {
-  const stateAtom = atom(() => {
-    const state = {
-      resolve: null as
-        | ((result: OperationResult<Data, Variables>) => void)
-        | null,
-      setResult: null as
-        | ((result: OperationResult<Data, Variables>) => void)
-        | null,
-      prevResult: null as OperationResult<Data, Variables> | null,
-      unsubscribe: null as (() => void) | null,
-      handle(result: OperationResult<Data, Variables>) {
-        this.prevResult = result
-        if (this.resolve) {
-          this.resolve(result)
-          this.resolve = null
-        } else if (this.setResult) {
-          this.setResult(result)
-        } else {
-          throw new Error('setting result without mount')
-        }
-      },
+  const queryResultAtom = atom((get) => {
+    const client = get(clientAtom)
+    const args = createSubscriptionArgs(get)
+    let resolve: ((result: OperationResult<Data, Variables>) => void) | null =
+      null
+    const resultAtom = atom<
+      | OperationResult<Data, Variables>
+      | Promise<OperationResult<Data, Variables>>
+    >(
+      new Promise<OperationResult<Data, Variables>>((r) => {
+        resolve = r
+      })
+    )
+    let setResult: (result: OperationResult<Data, Variables>) => void = () => {
+      throw new Error('setting result without mount')
     }
-    return state
-  })
-  const initAtom = atom(
-    (get) => {
-      const args = createSubscriptionArgs(get)
-      const state = get(stateAtom)
-      const resultAtom = atom<
-        | OperationResult<Data, Variables>
-        | Promise<OperationResult<Data, Variables>>
-      >(
-        new Promise<OperationResult<Data, Variables>>((resolve) => {
-          state.resolve = resolve
-        })
-      )
-      state.prevResult = null
-      const client = get(clientAtom)
-      state.unsubscribe?.()
-      const subscription = pipe(
-        client.subscription(args.query, args.variables, args.context),
-        subscribe((result) => {
-          state.handle(result)
-        })
-      )
-      state.unsubscribe = () => subscription.unsubscribe()
-      return { resultAtom, args }
-    },
-    (get, set, action: { type: 'mount' } | { type: 'cleanup' }) => {
-      switch (action.type) {
-        case 'mount': {
-          const state = get(stateAtom)
-          state.setResult = (result) => {
-            const { resultAtom } = get(initAtom)
-            set(resultAtom, result)
-          }
-          return
-        }
-        case 'cleanup': {
-          const { unsubscribe } = get(stateAtom)
-          unsubscribe?.()
-          return
-        }
+    const listener = (result: OperationResult<Data, Variables>) => {
+      if (resolve) {
+        resolve(result)
+        resolve = null
+      } else {
+        setResult(result)
       }
     }
-  )
-  initAtom.onMount = (dispatch) => {
-    dispatch({ type: 'mount' })
-    return () => dispatch({ type: 'cleanup' })
-  }
+    client
+      .query(args.query, args.variables, args.context) // FIXME we shouldn't use query here?
+      .toPromise()
+      .then(listener)
+      .catch(() => {
+        // TODO error handling
+      })
+    resultAtom.onMount = (update) => {
+      setResult = update
+      const subscription = pipe(
+        client.subscription(args.query, args.variables, args.context),
+        subscribe(listener)
+      )
+      return () => subscription.unsubscribe()
+    }
+    return { resultAtom, args }
+  })
   const queryAtom = atom((get) => {
-    const { resultAtom } = get(initAtom)
+    const { resultAtom } = get(queryResultAtom)
     return get(resultAtom)
   })
   return queryAtom

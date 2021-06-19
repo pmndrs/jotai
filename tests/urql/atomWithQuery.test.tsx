@@ -6,13 +6,19 @@ import { atomWithQuery } from '../../src/urql'
 import { getTestProvider } from '../testUtils'
 
 jest.mock('../../src/urql/clientAtom', () => {
-  const { map, interval, pipe } = require('wonka')
+  const { map, interval, pipe, take, toPromise } = require('wonka')
   const { atom } = require('../../src/')
+  function withPromise(source$: any) {
+    source$.toPromise = () => pipe(source$, take(1), toPromise)
+    return source$
+  }
   const mock = {
     query: () =>
-      pipe(
-        interval(10),
-        map((i: number) => ({ data: { count: i } }))
+      withPromise(
+        pipe(
+          interval(10),
+          map((i: number) => ({ data: { count: i } }))
+        )
       ),
   }
   return {
