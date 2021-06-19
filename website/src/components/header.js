@@ -14,23 +14,25 @@ export const Header = () => {
         <Logo className="w-2/3 lg:w-full pl-2 lg:pl-0" />
         <span className="sr-only">Jotai</span>
       </h1>
-      <h2 className="flex items-center mt-8 text-gray-400">
+      <div className="flex items-center mt-8 text-gray-400">
         <div className="lg:hidden">
           <Menu />
         </div>
         <div className="hidden lg:block lg:text-xl whitespace-nowrap">状態</div>
-        <div className="ml-8 text-sm lg:text-xl leading-snug">
+        <h2 className="ml-8 text-sm sm:text-base md:text-lg lg:text-xl leading-snug">
           Primitive and flexible state management for React
-        </div>
-      </h2>
-      <h3 className="mt-8 text-lg lg:text-3xl text-gray-600 leading-relaxed">
-        No extra re-renders, state resides within React, you get the full
-        benefits from suspense and concurrent features.
-        <br />
-        <br />
-        It’s scalable from a simple React.useState replacement to a large scale
-        application with complex requirements.
-      </h3>
+        </h2>
+      </div>
+      <div className="mt-8 space-y-4 text-lg lg:text-3xl text-gray-600 leading-relaxed">
+        <p>
+          No extra re-renders, state resides within React, you get the full
+          benefits from suspense and concurrent features.
+        </p>
+        <p>
+          It’s scalable from a simple React.useState replacement to a large
+          scale application with complex requirements.
+        </p>
+      </div>
     </header>
   )
 }
