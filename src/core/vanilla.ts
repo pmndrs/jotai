@@ -99,6 +99,12 @@ export const createState = (
         process.env.NODE_ENV !== 'production'
       ) {
         Object.freeze(atomState)
+        if (!hasInitialValue(atom)) {
+          console.warn(
+            'Found initial value for derived atom which can cause unexpected behavior',
+            atom
+          )
+        }
       }
       state.a.set(atom, atomState)
     }
@@ -596,7 +602,7 @@ const commitAtomState = <Value>(
 }
 
 export const flushPending = (state: State): void => {
-  const pending = [...state.p]
+  const pending = Array.from(state.p)
   state.p.clear()
   pending.forEach(([atom, prevDependencies]) => {
     const atomState = getAtomState(state, atom)

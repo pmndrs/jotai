@@ -3,33 +3,28 @@
   "version": "1.0.0",
   "description": "Count the length and show the uppercase of any text",
   "keywords": [],
-  "main": "src/index.js",
+  "main": "src/index.tsx",
   "scripts": {
     "start": "SKIP_PREFLIGHT_CHECK=true react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject",
-    "serve": "serve -s build"
+    "eject": "react-scripts eject"
   },
   "dependencies": {
-    "jotai": "^0.15.2",
-    "react": "17.0.1",
-    "react-dom": "17.0.1",
-    "react-scripts": "4.0.1"
+    "jotai": "^1.0.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "^4.0.3"
   },
   "devDependencies": {
-    "serve": "11.3.2"
+    "@types/react": "^17.0.11",
+    "@types/react-dom": "^17.0.7",
+    "typescript": "^4.3.2"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }
