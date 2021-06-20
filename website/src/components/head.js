@@ -13,8 +13,11 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
   const siteTitle = gatsby.meta.title
   const siteDescription = gatsby.meta.description
   const siteUrl = gatsby.meta.siteUrl
-  const siteIcon = '/favicon.svg'
-  const socialMediaCardImage = '/preview_DRAFT.png'
+  const siteIcon = `${siteUrl}/favicon.svg`
+  const socialMediaCardImage = `${siteUrl}/preview_DRAFT.png`
+
+  // @TODO remove console.info for socialMediaCardImage
+  console.info('socialMediaCardImage:', socialMediaCardImage)
 
   return (
     <Helmet htmlAttributes={htmlAttributes} defer={false}>
