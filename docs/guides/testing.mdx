@@ -1,0 +1,96 @@
+---
+title: Testing
+description: How to test your code using Jotai
+nav: 2.8
+---
+
+We echo the [guiding principles of Testing library](https://testing-library.com/docs/guiding-principles/):
+
+- "The more your tests resemble the way your software is used, the more confidence they can give you."
+
+We encourage you to write tests, like the user would interact with your atoms and components,
+therefore treating Jotai as an implementation detail.
+
+Here's an example using [React testing library](https://github.com/testing-library/react-testing-library):
+
+`Counter.tsx`:
+
+```tsx
+import { atom, useAtom } from 'jotai'
+
+const countAtom = atom(0)
+
+export function Counter() {
+  const [count, setCount] = useAtom(countAtom)
+  return (
+    <h1>
+      <p>{count}</p>
+      <button onClick={() => setCount((c) => c + 1)}>one up</button>
+    </h1>
+  )
+}
+```
+
+`Counter.test.tsx`:
+
+```tsx
+import React from 'react'
+import { render, screen } from '@testing-library/react'
+import { Counter } from './Counter'
+
+test('should increment counter', () => {
+  // Arrange
+  render(<Counter />)
+
+  const counter = screen.getByText('0')
+  const incrementButton = screen.getByText('one up')
+  // Act
+  fireEvent.click(incrementButton)
+  // Assert
+  expect(counter.textContent).toEqual('1')
+})
+```
+
+## Custom hooks
+
+If you have complex atoms, sometimes you want to test them in isolation.
+
+For that, you can use [React Hooks Testing Library](https://github.com/testing-library/react-hooks-testing-library).
+Here's an example below:
+
+`countAtom.ts`:
+
+```tsx
+import { useAtom } from 'jotai'
+import { atomWithReducer } from 'jotai/utils'
+
+const reducer = (state: number, action?: 'INCREASE' | 'DECREASE') => {
+  switch (action) {
+    case 'INCREASE':
+      return state + 1
+    case 'DECREASE':
+      return state - 1
+    case undefined:
+      return state
+  }
+}
+export const countAtom = atomWithReducer(0, reducer)
+```
+
+`countAtom.test.ts`:
+
+```tsx
+import { renderHook, act } from '@testing-library/react-hooks'
+import { useAtom } from 'jotai'
+import { countAtom } from './countAtom'
+
+test('should increment counter', () => {
+  const { result } = renderHook(() => useAtom(countAtom))
+
+  act(() => {
+    result.current[1]('INCREASE')
+  })
+
+  expect(result.current[0]).toBe(1)
+})
+```

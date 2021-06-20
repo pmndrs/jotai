@@ -1,0 +1,92 @@
+---
+title: Atom creators
+nav: 5.2
+---
+
+## `atomWithToggle`
+
+> `atomWithToggle` creates a new atom with a boolean as initial state & a setter function to toggle it.
+
+This avoids the boilerplate of having to setup another atom just to update the state of the first.
+
+```ts
+import { WritableAtom, atom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
+
+export function atomWithToggle(initialValue?: boolean): WritableAtom<boolean, boolean | undefined> {
+  const anAtom = atom(initialValue, (get, set, nextValue?: boolean) => {
+    const update = nextValue ?? !get(anAtom)
+    set(anAtom, update)
+  })
+
+  return anAtom
+}
+```
+
+An optional initial state can be provided as first argument.
+
+The setter function can have an optional arg to force a particular state (if you want to make a setActive function out of it for example).
+
+Here is how it's used.
+
+```ts
+import { atomWithToggle } from 'XXX'
+
+// will have an initial value set to true
+const isActiveAtom = atomWithToggle(true)
+```
+
+And in a component :
+
+```tsx
+const Toggle = () => {
+  const [isActive, toggle] = useAtom(isActiveAtom)
+
+  return (
+    <>
+      <button onClick={() => toggle()}>isActive: {isActive ? 'yes' : 'no'}</button>
+      <button onClick={() => toggle(true)}>force true</button>
+      <button onClick={() => toggle(false)}>force false</button>
+    </>
+  )
+}
+```
+
+## `atomWithToggleAndStorage`
+
+> `atomWithToggleAndStorage` does the same as [`atomWithToggle`](#atomWithToggle) but also persist the state anytime it changes in given storage using [`atomWithStorage`](/jotai/api/utils#atomWithStorage).
+
+Here is the source :
+
+```ts
+import { WritableAtom, atom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
+
+export function atomWithToggleAndStorage(
+  key: string,
+  initialValue?: boolean,
+  storage?: any
+): WritableAtom<boolean, boolean | undefined> {
+  const anAtom = atomWithStorage(key, initialValue, storage)
+  const derivedAtom = atom(
+    (get) => get(anAtom),
+    (get, set, nextValue?: boolean) => {
+      const update = nextValue ?? !get(anAtom)
+      set(anAtom, update)
+    }
+  )
+
+  return derivedAtom
+}
+```
+
+And how it's used :
+
+```ts
+import { atomWithToggleAndStorage } from 'XXX'
+
+// will have an initial value set to false & be stored in localStorage under the key "isActive"
+const isActiveAtom = atomWithToggleAndStorage('isActive')
+```
+
+The usage in a component is also the same as [`atomWithToggle`](#atomWithToggle).
