@@ -1,21 +1,13 @@
 import React from 'react'
-import { StaticImage } from 'gatsby-plugin-image'
 
-import { Navigation } from '../components'
+import { Jotai, Navigation } from '../components'
 
 export const Sidebar = () => {
   return (
-    <aside className="sticky top-0 hidden lg:flex flex-col flex-shrink-0 justify-between w-full max-w-sm min-h-full max-h-screen overflow-y-auto p-16 pr-8">
+    <aside className="sticky top-0 hidden lg:flex flex-col flex-shrink-0 justify-between w-full max-w-md min-h-full max-h-screen overflow-y-auto p-16 pr-8">
+      <Jotai />
       <div>
-        <StaticImage
-          src="../images/ghost_DRAFT.png"
-          className="w-full max-w-full h-auto mx-auto"
-          imgStyle={{ objectFit: 'contain' }}
-          placeholder="blurred"
-          formats={['auto']}
-          quality="90"
-          alt="Jotai mascot"
-        />
+        <Navigation className="flex flex-col mt-6 space-y-4" />
         <a
           href="https://jessiewaters.com"
           target="_blank"
@@ -24,7 +16,6 @@ export const Sidebar = () => {
           Artwork by Jessie Waters
         </a>
       </div>
-      <Navigation className="flex flex-col mt-6 space-y-4" />
     </aside>
   )
 }

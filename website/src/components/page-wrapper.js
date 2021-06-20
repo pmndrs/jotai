@@ -11,7 +11,7 @@ export const PageWrapper = ({ children }) => {
     <div
       className={cx(
         darkMode && 'dark',
-        'relative flex flex-col lg:flex-row lg:justify-around'
+        'relative flex flex-col lg:flex-row lg:justify-around lg:max-w-[1920px] lg:mx-auto'
       )}>
       {children}
     </div>

@@ -15,3 +15,19 @@ pre span,
 code span {
   font-family: 'Meslo', monospace !important;
 }
+
+/* @TODO replace with <div /> and Tailwind utility classes */
+.speech-bubble:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -24px;
+  margin-top: -16px;
+  border: solid transparent;
+  border-width: 16px 24px 16px 0;
+  border-right-color: #f5f5f5;
+  border-left: 0;
+}

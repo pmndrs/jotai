@@ -1,42 +1,32 @@
 import React from 'react'
 import { StaticImage } from 'gatsby-plugin-image'
 
-import { Logo, Menu } from '../components'
+import { Jotai } from '../components'
 
 export const Header = () => {
   return (
     <header>
-      <h1 className="flex items-center w-full max-w-xs mt-8 lg:mt-0 text-gray-800">
+      <Jotai className="lg:hidden max-w-xs" />
+      <div className="flex items-center mt-16 lg:mt-0 sm:px-16 lg:px-0 space-x-4 sm:space-x-8">
         <StaticImage
           src="../images/ghost_DRAFT.png"
-          className="lg:!hidden w-1/3 pr-2"
+          className="w-1/3 lg:w-1/4"
           imgStyle={{ objectFit: 'contain' }}
           placeholder="blurred"
           formats={['auto']}
           quality="90"
           alt="Jotai mascot"
         />
-        <Logo className="w-2/3 lg:w-full pl-2 lg:pl-0" />
-        <span className="sr-only">Jotai</span>
-      </h1>
-      <div className="flex items-center mt-8 text-gray-400">
-        <div className="lg:hidden">
-          <Menu />
+        <div className="relative w-2/3 lg:w-3/4 p-4 lg:p-8 space-y-4 bg-gray-100 rounded-xl text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed speech-bubble">
+          <p>
+            No extra re-renders, state resides within React, you get the full
+            benefits from suspense and concurrent features.
+          </p>
+          <p>
+            It’s scalable from a simple React.useState replacement to a large
+            scale application with complex requirements.
+          </p>
         </div>
-        <div className="hidden lg:block lg:text-xl whitespace-nowrap">状態</div>
-        <h2 className="ml-8 text-sm sm:text-base md:text-lg lg:text-xl leading-snug">
-          Primitive and flexible state management for React
-        </h2>
-      </div>
-      <div className="mt-8 space-y-4 text-lg lg:text-3xl text-gray-600 leading-relaxed">
-        <p>
-          No extra re-renders, state resides within React, you get the full
-          benefits from suspense and concurrent features.
-        </p>
-        <p>
-          It’s scalable from a simple React.useState replacement to a large
-          scale application with complex requirements.
-        </p>
       </div>
     </header>
   )
