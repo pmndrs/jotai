@@ -2,9 +2,6 @@ import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import { atomWithImmer } from 'jotai/immer'
 
-// Website state
-export const menuAtom = atom(false)
-
 // Core demo state
 export const textAtom = atom('hello')
 export const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())

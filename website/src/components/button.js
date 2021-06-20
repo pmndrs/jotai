@@ -12,16 +12,23 @@ export const Button = ({
   to,
   external = false,
   className = '',
+  dark = false,
   children,
 }) => {
   const buttonClasses = cx(
-    'inline-flex items-center px-6 py-3 space-x-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-gray-100 text-base text-gray-600 focus:outline-none transition duration-300 ease-in-out',
+    'inline-flex items-center px-6 py-3 space-x-4 border rounded-lg text-base focus:outline-none transition duration-300 ease-in-out',
+    !dark
+      ? 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-600'
+      : 'border-gray-700 bg-gray-900 text-gray-300',
     !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
     'select-none',
     className
   )
 
-  const iconClasses = 'w-6 h-6 object-contain fill-current text-gray-600'
+  const iconClasses = cx(
+    'w-6 h-6 object-contain fill-current',
+    !dark ? 'text-gray-600' : 'text-gray-300'
+  )
 
   if (onClick && to) {
     return (

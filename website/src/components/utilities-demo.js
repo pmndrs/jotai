@@ -46,7 +46,7 @@ const Page = () => {
                 />
               </button>
             </div>
-            <div className="text-sm lg:text-lg">
+            <div className="text-sm lg:text-lg leading-relaxed">
               This toggle will be persisted between user sessions via
               localStorage.
             </div>
