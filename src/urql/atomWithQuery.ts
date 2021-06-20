@@ -1,5 +1,6 @@
 import { pipe, subscribe } from 'wonka'
 import {
+  Client,
   TypedDocumentNode,
   OperationContext,
   OperationResult,
@@ -7,7 +8,6 @@ import {
 } from '@urql/core'
 import { atom } from 'jotai'
 import type { Getter } from 'jotai'
-import { clientAtom } from './clientAtom'
 
 type QueryArgs<Data, Variables extends object> = {
   query: TypedDocumentNode<Data, Variables>
@@ -17,10 +17,10 @@ type QueryArgs<Data, Variables extends object> = {
 }
 
 export function atomWithQuery<Data, Variables extends object>(
+  client: Client,
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>
 ) {
   const queryResultAtom = atom((get) => {
-    const client = get(clientAtom)
     const args = createQueryArgs(get)
     let resolve: ((result: OperationResult<Data, Variables>) => void) | null =
       null

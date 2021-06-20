@@ -1,30 +1,25 @@
 import React, { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { TypedDocumentNode } from '@urql/core'
+import { delay, fromValue, pipe, take, toPromise } from 'wonka'
+import { Client, TypedDocumentNode } from '@urql/core'
 import { atom, useAtom } from '../../src/'
 import { atomWithMutation } from '../../src/urql'
 import { getTestProvider } from '../testUtils'
 
-jest.mock('../../src/urql/clientAtom', () => {
-  const { delay, fromValue, pipe, take, toPromise } = require('wonka')
-  const { atom } = require('../../src/')
-  const withPromise = (source$: any) => {
-    source$.toPromise = () => pipe(source$, take(1), toPromise)
-    return source$
-  }
-  const mock = {
-    mutation: () =>
-      withPromise(pipe(fromValue({ data: { count: 1 } }), delay(10))),
-  }
-  return {
-    clientAtom: atom(() => mock),
-  }
-})
+const withPromise = (source$: any) => {
+  source$.toPromise = () => pipe(source$, take(1), toPromise)
+  return source$
+}
+const clientMock = {
+  mutation: () =>
+    withPromise(pipe(fromValue({ data: { count: 1 } }), delay(10))),
+} as unknown as Client
 
 const Provider = getTestProvider()
 
 it('mutation basic test', async () => {
   const countAtom = atomWithMutation(
+    clientMock,
     () =>
       'mutation Test { count }' as unknown as TypedDocumentNode<{
         count: number

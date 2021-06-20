@@ -1,35 +1,29 @@
 import React, { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { TypedDocumentNode } from '@urql/core'
+import { map, interval, pipe, take, toPromise } from 'wonka'
+import { Client, TypedDocumentNode } from '@urql/core'
 import { atom, useAtom } from '../../src/'
 import { atomWithQuery } from '../../src/urql'
 import { getTestProvider } from '../testUtils'
 
-jest.mock('../../src/urql/clientAtom', () => {
-  const { map, interval, pipe, take, toPromise } = require('wonka')
-  const { atom } = require('../../src/')
-  const withPromise = (source$: any) => {
-    source$.toPromise = () => pipe(source$, take(1), toPromise)
-    return source$
-  }
-  const mock = {
-    query: () =>
-      withPromise(
-        pipe(
-          interval(10),
-          map((i: number) => ({ data: { count: i } }))
-        )
-      ),
-  }
-  return {
-    clientAtom: atom(() => mock),
-  }
-})
+const withPromise = (source$: any) => {
+  source$.toPromise = () => pipe(source$, take(1), toPromise)
+  return source$
+}
+const clientMock = {
+  query: () =>
+    withPromise(
+      pipe(
+        interval(10),
+        map((i: number) => ({ data: { count: i } }))
+      )
+    ),
+} as unknown as Client
 
 const Provider = getTestProvider()
 
 it('query basic test', async () => {
-  const countAtom = atomWithQuery(() => ({
+  const countAtom = atomWithQuery(clientMock, () => ({
     query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
   }))
 
@@ -56,7 +50,7 @@ it('query basic test', async () => {
 
 it('query dependency test', async () => {
   const dummyAtom = atom(10)
-  const countAtom = atomWithQuery((get) => ({
+  const countAtom = atomWithQuery(clientMock, (get) => ({
     query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
     variables: {
       dummy: get(dummyAtom),
