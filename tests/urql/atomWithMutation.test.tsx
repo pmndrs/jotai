@@ -19,7 +19,7 @@ const Provider = getTestProvider()
 
 it('mutation basic test', async () => {
   const countAtom = atomWithMutation(
-    clientMock,
+    () => clientMock,
     () =>
       'mutation Test { count }' as unknown as TypedDocumentNode<{
         count: number

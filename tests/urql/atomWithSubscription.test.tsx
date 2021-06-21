@@ -23,9 +23,12 @@ const clientMock = {
 const Provider = getTestProvider()
 
 it('subscription basic test', async () => {
-  const countAtom = atomWithSubscription(clientMock, () => ({
-    query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
-  }))
+  const countAtom = atomWithSubscription(
+    () => clientMock,
+    () => ({
+      query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
+    })
+  )
 
   const Counter: React.FC = () => {
     const [{ data }] = useAtom(countAtom)

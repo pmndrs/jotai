@@ -23,9 +23,12 @@ const clientMock = {
 const Provider = getTestProvider()
 
 it('query basic test', async () => {
-  const countAtom = atomWithQuery(clientMock, () => ({
-    query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
-  }))
+  const countAtom = atomWithQuery(
+    () => clientMock,
+    () => ({
+      query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
+    })
+  )
 
   const Counter: React.FC = () => {
     const [{ data }] = useAtom(countAtom)
@@ -50,12 +53,15 @@ it('query basic test', async () => {
 
 it('query dependency test', async () => {
   const dummyAtom = atom(10)
-  const countAtom = atomWithQuery(clientMock, (get) => ({
-    query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
-    variables: {
-      dummy: get(dummyAtom),
-    },
-  }))
+  const countAtom = atomWithQuery(
+    () => clientMock,
+    (get) => ({
+      query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
+      variables: {
+        dummy: get(dummyAtom),
+      },
+    })
+  )
 
   const Counter: React.FC = () => {
     const [{ data }] = useAtom(countAtom)

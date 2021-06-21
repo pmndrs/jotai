@@ -14,7 +14,7 @@ type MutationAction<Data, Variables extends object> = {
 }
 
 export function atomWithMutation<Data, Variables extends object>(
-  client: Client,
+  getClient: (get: Getter) => Client,
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables>
 ) {
   const operationResultAtom = atom<
@@ -29,6 +29,7 @@ export function atomWithMutation<Data, Variables extends object>(
         operationResultAtom,
         new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch
       )
+      const client = getClient(get)
       const query = createQuery(get)
       client
         .mutation(query, action.variables, action.context)

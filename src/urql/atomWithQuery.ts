@@ -17,10 +17,11 @@ type QueryArgs<Data, Variables extends object> = {
 }
 
 export function atomWithQuery<Data, Variables extends object>(
-  client: Client,
+  getClient: (get: Getter) => Client,
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>
 ) {
   const queryResultAtom = atom((get) => {
+    const client = getClient(get)
     const args = createQueryArgs(get)
     let resolve: ((result: OperationResult<Data, Variables>) => void) | null =
       null

@@ -15,10 +15,11 @@ type SubscriptionArgs<Data, Variables extends object> = {
 }
 
 export function atomWithSubscription<Data, Variables extends object>(
-  client: Client,
+  getClient: (get: Getter) => Client,
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>
 ) {
   const queryResultAtom = atom((get) => {
+    const client = getClient(get)
     const args = createSubscriptionArgs(get)
     let resolve: ((result: OperationResult<Data, Variables>) => void) | null =
       null
