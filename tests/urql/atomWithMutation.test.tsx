@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { delay, fromValue, pipe, take, toPromise } from 'wonka'
-import { Client, TypedDocumentNode } from '@urql/core'
+import { Client } from '@urql/core'
 import { atom, useAtom } from '../../src/'
 import { atomWithMutation } from '../../src/urql'
 import { getTestProvider } from '../testUtils'
@@ -18,12 +18,9 @@ const clientMock = {
 const Provider = getTestProvider()
 
 it('mutation basic test', async () => {
-  const countAtom = atomWithMutation(
+  const countAtom = atomWithMutation<{ count: number }, {}>(
     () => clientMock,
-    () =>
-      'mutation Test { count }' as unknown as TypedDocumentNode<{
-        count: number
-      }>
+    () => 'mutation Test { count }'
   )
   const mutateAtom = atom(null, (_get, set) => {
     set(countAtom, {})

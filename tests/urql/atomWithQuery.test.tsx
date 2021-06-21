@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { map, interval, pipe, take, toPromise } from 'wonka'
-import { Client, TypedDocumentNode } from '@urql/core'
+import { Client } from '@urql/core'
 import { atom, useAtom } from '../../src/'
 import { atomWithQuery } from '../../src/urql'
 import { getTestProvider } from '../testUtils'
@@ -23,10 +23,10 @@ const clientMock = {
 const Provider = getTestProvider()
 
 it('query basic test', async () => {
-  const countAtom = atomWithQuery(
+  const countAtom = atomWithQuery<{ count: number }, {}>(
     () => clientMock,
     () => ({
-      query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
+      query: '{ count }',
     })
   )
 
@@ -53,10 +53,10 @@ it('query basic test', async () => {
 
 it('query dependency test', async () => {
   const dummyAtom = atom(10)
-  const countAtom = atomWithQuery(
+  const countAtom = atomWithQuery<{ count: number }, { dummy: number }>(
     () => clientMock,
     (get) => ({
-      query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
+      query: '{ count }',
       variables: {
         dummy: get(dummyAtom),
       },
