@@ -10,7 +10,7 @@ import { atom } from 'jotai'
 import type { Getter } from 'jotai'
 
 type QueryArgs<Data, Variables extends object> = {
-  query: TypedDocumentNode<Data, Variables>
+  query: TypedDocumentNode<Data, Variables> | string
   variables?: Variables
   requestPolicy?: RequestPolicy
   context?: Partial<OperationContext>

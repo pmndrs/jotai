@@ -9,7 +9,7 @@ import { atom } from 'jotai'
 import type { Getter } from 'jotai'
 
 type SubscriptionArgs<Data, Variables extends object> = {
-  query: TypedDocumentNode<Data, Variables>
+  query: TypedDocumentNode<Data, Variables> | string
   variables?: Variables
   context?: Partial<OperationContext>
 }
