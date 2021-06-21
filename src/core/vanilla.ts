@@ -1,4 +1,4 @@
-import type { Atom, WritableAtom, Getter, Setter } from './atom'
+import type { Atom, WritableAtom, Setter } from './atom'
 
 type AnyAtom = Atom<unknown>
 type AnyWritableAtom = WritableAtom<unknown, unknown>
@@ -275,7 +275,7 @@ const readAtomState = <Value>(
   let value: NonPromise<Value> | undefined
   const dependencies = new Set<AnyAtom>()
   try {
-    const promiseOrValue = atom.read(((a: AnyAtom) => {
+    const promiseOrValue = atom.read((a: AnyAtom) => {
       dependencies.add(a)
       if (a !== atom) {
         const aState = readAtomState(state, a)
@@ -299,7 +299,7 @@ const readAtomState = <Value>(
         return a.init
       }
       throw new Error('no atom init')
-    }) as Getter)
+    })
     if (promiseOrValue instanceof Promise) {
       promise = promiseOrValue
         .then((value) => {
@@ -403,7 +403,7 @@ const writeAtomState = <Value, Update>(
     return
   }
   const promiseOrVoid = atom.write(
-    ((a: AnyAtom) => {
+    (a: AnyAtom, unstable_promise?: boolean) => {
       const aState = readAtomState(state, a)
       if (aState.e) {
         throw aState.e // read error
@@ -413,10 +413,20 @@ const writeAtomState = <Value, Update>(
           typeof process === 'object' &&
           process.env.NODE_ENV !== 'production'
         ) {
-          console.warn(
-            'Reading pending atom state in write operation. We throw a promise for now.',
-            a
-          )
+          if (unstable_promise) {
+            console.info(
+              'promise option in getter is an experimental feature.',
+              a
+            )
+          } else {
+            console.warn(
+              'Reading pending atom state in write operation. We throw a promise for now.',
+              a
+            )
+          }
+        }
+        if (unstable_promise) {
+          return aState.p // read promise
         }
         throw aState.p // read promise
       }
@@ -433,7 +443,7 @@ const writeAtomState = <Value, Update>(
         )
       }
       throw new Error('no value found')
-    }) as Getter,
+    },
     ((a: AnyWritableAtom, v: unknown) => {
       if (a === atom) {
         if (!hasInitialValue(a)) {
