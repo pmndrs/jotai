@@ -310,7 +310,6 @@ it('no error on wrong atom configs (fix 510)', async () => {
     const [filter, set] = useAtom(filterAtom)
 
     const handlechange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      console.log(e.target.value)
       set(e.target.value)
     }
 
