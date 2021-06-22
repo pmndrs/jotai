@@ -286,7 +286,6 @@ it('no error on wrong atom configs (fix 510)', async () => {
   const filteredAtom = atom<number[]>((get) => {
     const filter = get(filterAtom)
     const nums = get(numsAtom)
-    console.log(nums)
     if (filter === 'even') return nums.filter((num) => num % 2 === 0)
     else return nums
   })
