@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 
-import { Atom, PrimitiveAtom, atom, useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
+import type { Atom, PrimitiveAtom } from 'jotai'
 import { render, fireEvent, waitFor } from '@testing-library/react'
 import { getTestProvider } from '../testUtils'
 import { splitAtom, useUpdateAtom } from '../../src/utils'
