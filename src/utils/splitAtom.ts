@@ -38,7 +38,7 @@ export function splitAtom<Item, Key>(
   if (cachedAtom) {
     return cachedAtom
   }
-  type ItemAtom = PrimitiveAtom<Item | undefined> | Atom<Item | undefined>
+  type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
   let currentAtomList: ItemAtom[] | undefined
   let currentKeyList: Key[] | undefined
   const keyToAtom = (key: Key) => {
@@ -49,7 +49,7 @@ export function splitAtom<Item, Key>(
     return currentAtomList?.[index]
   }
   const read = (get: Getter) => {
-    let nextAtomList: Atom<Item | undefined>[] = []
+    let nextAtomList: Atom<Item>[] = []
     let nextKeyList: Key[] = []
     get(arrAtom).forEach((item, index) => {
       const key = keyExtractor ? keyExtractor(item) : (index as unknown as Key)
@@ -60,18 +60,16 @@ export function splitAtom<Item, Key>(
         return
       }
       const read = (get: Getter) => {
-        const index = currentKeyList?.indexOf(key)
-        if (index === undefined || index === -1) {
-          if (
-            typeof process === 'object' &&
-            process.env.NODE_ENV !== 'production'
-          ) {
-            console.warn(
-              'splitAtom: array index out of bounds, returning undefined',
-              atom
-            )
-          }
-          return undefined
+        const index = currentKeyList?.indexOf(key) ?? -1
+        if (
+          (index === undefined || index === -1) &&
+          typeof process === 'object' &&
+          process.env.NODE_ENV !== 'production'
+        ) {
+          console.warn(
+            'splitAtom: array index out of bounds, returning undefined',
+            atom
+          )
         }
         return get(arrAtom)[index]
       }
@@ -80,18 +78,16 @@ export function splitAtom<Item, Key>(
         set: Setter,
         update: SetStateAction<Item>
       ) => {
-        const index = currentKeyList?.indexOf(key)
-        if (index === undefined || index === -1) {
-          if (
-            typeof process === 'object' &&
-            process.env.NODE_ENV !== 'production'
-          ) {
-            console.warn(
-              'splitAtom: array index out of bounds, returning undefined',
-              atom
-            )
-          }
-          return undefined
+        const index = currentKeyList?.indexOf(key) ?? -1
+        if (
+          (index === undefined || index === -1) &&
+          typeof process === 'object' &&
+          process.env.NODE_ENV !== 'production'
+        ) {
+          console.warn(
+            'splitAtom: array index out of bounds, returning undefined',
+            atom
+          )
         }
         const prev = get(arrAtom)
         const nextItem = isFunction(update) ? update(prev[index]) : update
