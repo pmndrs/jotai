@@ -80,9 +80,7 @@ export function splitAtom<Item, Key>(
       ) => {
         const index = currentKeyList?.indexOf(key) ?? -1
         if (index === -1) {
-          throw new Error(
-            'splitAtom: array index not found'
-          )
+          throw new Error('splitAtom: array index not found')
         }
         const prev = get(arrAtom)
         const nextItem = isFunction(update) ? update(prev[index]) : update
