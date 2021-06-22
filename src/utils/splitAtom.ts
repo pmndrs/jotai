@@ -79,14 +79,9 @@ export function splitAtom<Item, Key>(
         update: SetStateAction<Item>
       ) => {
         const index = currentKeyList?.indexOf(key) ?? -1
-        if (
-          (index === undefined || index === -1) &&
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
-        ) {
-          console.warn(
-            'splitAtom: array index out of bounds, returning undefined',
-            atom
+        if (index === -1) {
+          throw new Error(
+            'splitAtom: array index out of bounds, throwing error'
           )
         }
         const prev = get(arrAtom)
