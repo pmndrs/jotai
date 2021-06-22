@@ -60,9 +60,16 @@ export function splitAtom<Item, Key>(
         return
       }
       const read = (get: Getter) => {
-        const index = currentKeyList?.indexOf(key)
-        if (index === undefined || index === -1) {
-          throw new Error('index not found')
+        const index = currentKeyList?.indexOf(key) ?? -1
+        if (
+          index === -1 &&
+          typeof process === 'object' &&
+          process.env.NODE_ENV !== 'production'
+        ) {
+          console.warn(
+            'splitAtom: array index out of bounds, returning undefined',
+            atom
+          )
         }
         return get(arrAtom)[index]
       }
@@ -71,9 +78,9 @@ export function splitAtom<Item, Key>(
         set: Setter,
         update: SetStateAction<Item>
       ) => {
-        const index = currentKeyList?.indexOf(key)
-        if (index === undefined || index === -1) {
-          throw new Error('index not found')
+        const index = currentKeyList?.indexOf(key) ?? -1
+        if (index === -1) {
+          throw new Error('splitAtom: array index not found')
         }
         const prev = get(arrAtom)
         const nextItem = isFunction(update) ? update(prev[index]) : update
