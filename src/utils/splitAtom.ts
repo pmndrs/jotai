@@ -81,7 +81,7 @@ export function splitAtom<Item, Key>(
         const index = currentKeyList?.indexOf(key) ?? -1
         if (index === -1) {
           throw new Error(
-            'splitAtom: array index out of bounds, throwing error'
+            'splitAtom: array index not found'
           )
         }
         const prev = get(arrAtom)
