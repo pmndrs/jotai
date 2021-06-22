@@ -279,7 +279,7 @@ it('handles scope', async () => {
   expect(dragonBox.checked).toBe(false)
 })
 
-it('fix 510', async () => {
+it('no error on wrong atom configs', async () => {
   const filterAtom = atom('all')
   const numsAtom = atom<number[]>([0, 1])
   const filteredAtom = atom<number[]>((get) => {
