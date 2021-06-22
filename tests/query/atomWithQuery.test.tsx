@@ -171,7 +171,7 @@ it('query loading 2', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count',
+    queryKey: 'count5',
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 100)
       count++
@@ -217,7 +217,7 @@ it('query with enabled (#500)', async () => {
     const enabled = get(enabledAtom)
     return {
       enabled,
-      queryKey: 'count',
+      queryKey: 'count6',
       queryFn: async () => {
         return await fakeFetch({ count: 1 })
       },
