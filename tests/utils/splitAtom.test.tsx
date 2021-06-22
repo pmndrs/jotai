@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 
-import { Atom, PrimitiveAtom, atom, useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
+import type { Atom, PrimitiveAtom } from 'jotai'
 import { render, fireEvent, waitFor } from '@testing-library/react'
 import { getTestProvider } from '../testUtils'
 import { splitAtom, useUpdateAtom } from '../../src/utils'
@@ -309,7 +310,6 @@ it('no error on wrong atom configs (fix 510)', async () => {
     const [filter, set] = useAtom(filterAtom)
 
     const handlechange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      console.log(e.target.value)
       set(e.target.value)
     }
 
