@@ -39,6 +39,10 @@ export function atomWithStorage<Value>(
   const baseAtom = atom(storage.delayInit ? initialValue : getInitialValue())
 
   baseAtom.onMount = (setAtom) => {
+    let unsub: Unsubscribe | undefined
+    if (storage.subscribe) {
+      unsub = storage.subscribe(key, setAtom)
+    }
     if (storage.delayInit) {
       const value = getInitialValue()
       if (value instanceof Promise) {
@@ -47,9 +51,7 @@ export function atomWithStorage<Value>(
         setAtom(value)
       }
     }
-    if (storage.subscribe) {
-      return storage.subscribe(key, setAtom)
-    }
+    return unsub
   }
 
   const anAtom = atom(
