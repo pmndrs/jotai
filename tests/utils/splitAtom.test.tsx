@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react'
-import { Atom, PrimitiveAtom, atom, useAtom } from 'jotai'
+
+import { atom, useAtom } from 'jotai'
+import type { Atom, PrimitiveAtom } from 'jotai'
 import { render, fireEvent, waitFor } from '@testing-library/react'
 import { getTestProvider } from '../testUtils'
-import { splitAtom } from '../../src/utils/splitAtom'
+import { splitAtom, useUpdateAtom } from '../../src/utils'
 
 const Provider = getTestProvider()
 
@@ -276,4 +278,89 @@ it('handles scope', async () => {
 
   expect(catBox.checked).toBe(true)
   expect(dragonBox.checked).toBe(false)
+})
+
+it('no error on wrong atom configs (fix 510)', async () => {
+  const filterAtom = atom('all')
+  const numsAtom = atom<number[]>([0, 1])
+  const filteredAtom = atom<number[]>((get) => {
+    const filter = get(filterAtom)
+    const nums = get(numsAtom)
+    if (filter === 'even') return nums.filter((num) => num % 2 === 0)
+    else return nums
+  })
+  const filteredAtomsAtom = splitAtom(filteredAtom, (num) => num)
+
+  function useCachedAtoms<T>(atoms: T[]) {
+    const prevAtoms = React.useRef<T[]>(atoms)
+    return prevAtoms.current
+  }
+
+  type NumItemProps = {
+    atom: Atom<number>
+  }
+
+  const NumItem: React.FC<NumItemProps> = ({ atom }) => {
+    const [readOnlyItem] = useAtom(atom)
+    return <>{readOnlyItem}</>
+  }
+
+  function Filter() {
+    const [filter, set] = useAtom(filterAtom)
+
+    const handlechange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      set(e.target.value)
+    }
+
+    return (
+      <div>
+        <input
+          type="radio"
+          value="all"
+          checked={filter === 'all'}
+          onChange={handlechange}
+        />{' '}
+        all
+        <input
+          type="radio"
+          value="even"
+          checked={filter === 'even'}
+          data-testid={'even-checkbox'}
+          onChange={handlechange}
+        />{' '}
+        even
+      </div>
+    )
+  }
+
+  const Filtered: React.FC = () => {
+    const [todos] = useAtom(filteredAtomsAtom)
+    const cachedAtoms = useCachedAtoms(todos)
+
+    return (
+      <>
+        {cachedAtoms.map((atom) => (
+          <NumItem key={atom.toString()} atom={atom} />
+        ))}
+      </>
+    )
+  }
+
+  const { getByTestId } = render(
+    <Provider>
+      <Filter />
+      <div data-testid={`numbers`}>
+        <Filtered />
+      </div>
+    </Provider>
+  )
+
+  const numbersEl = getByTestId('numbers')
+  const evenCheckboxEl = getByTestId('even-checkbox')
+
+  expect(numbersEl.textContent).toBe('01')
+
+  fireEvent.click(evenCheckboxEl)
+
+  expect(numbersEl.textContent).toBe('0')
 })
