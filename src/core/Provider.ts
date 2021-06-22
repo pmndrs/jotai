@@ -19,6 +19,7 @@ export const Provider: React.FC<{
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
+    process.env.NODE_ENV !== 'test' &&
     isDevStore(storeRef.current)
   ) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
