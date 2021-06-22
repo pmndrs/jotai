@@ -62,7 +62,7 @@ export function splitAtom<Item, Key>(
       const read = (get: Getter) => {
         const index = currentKeyList?.indexOf(key) ?? -1
         if (
-          (index === -1) &&
+          index === -1 &&
           typeof process === 'object' &&
           process.env.NODE_ENV !== 'production'
         ) {
