@@ -7,6 +7,7 @@ import {
 import { atom } from 'jotai'
 import type { WritableAtom, Getter } from 'jotai'
 import { getQueryClientAtom } from './queryClientAtom'
+import { atomWithDefault } from '../utils'
 
 type Action = { type: 'refetch' }
 
@@ -34,11 +35,17 @@ export function atomWithQuery<
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       let resolve: ((data: TData) => void) | null = null
-      const dataAtom = atom<TData | Promise<TData>>(
-        new Promise<TData>((r) => {
+      const dataAtom = atomWithDefault<TData | Promise<TData>>(() => {
+        if (options.initialData) {
+          return typeof options.initialData !== 'function'
+            ? options.initialData
+            : // @ts-ignore TODO: fix type error, pass getter
+              options.initialData()
+        }
+        return new Promise<TData>((r) => {
           resolve = r
         })
-      )
+      })
       let setData: (data: TData) => void = () => {
         throw new Error('atomWithQuery: setting data without mount')
       }

@@ -1,9 +1,12 @@
 import React, { Suspense, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
+import { renderHook } from '@testing-library/react-hooks'
+
 import { atom, useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
 import { getTestProvider } from '../testUtils'
+import { useAtomValue } from '../../src/utils'
 
 const Provider = getTestProvider()
 
@@ -267,4 +270,25 @@ it('query with enabled (#500)', async () => {
   fireEvent.click(getByText('toggle'))
   await findByText('loading')
   await findByText('count: 1')
+})
+
+it('query with initialData test', async () => {
+  const countAtom = atomWithQuery(() => ({
+    queryKey: 'count1',
+    queryFn: async () => {
+      return await fakeFetch({ count: 1 }) // will run after "initialData"
+    },
+    initialData: { response: { count: 0 } },
+  }))
+
+  const { result, waitForNextUpdate } = renderHook(
+    () => useAtomValue(countAtom),
+    {
+      wrapper: Provider,
+    }
+  )
+  // if it were to suspend, this value would be `undefined` initially
+  expect(result.current?.response.count).toEqual(0)
+  await waitForNextUpdate()
+  expect(result.current?.response.count).toEqual(1)
 })
