@@ -70,16 +70,16 @@
     }
   },
   "query.js": {
-    "bundled": 2129,
-    "minified": 1020,
-    "gzipped": 539,
+    "bundled": 2201,
+    "minified": 1075,
+    "gzipped": 548,
     "treeshaked": {
       "rollup": {
-        "code": 84,
+        "code": 105,
         "import_statements": 71
       },
       "webpack": {
-        "code": 1097
+        "code": 1131
       }
     }
   },
