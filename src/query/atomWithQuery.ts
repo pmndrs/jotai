@@ -6,7 +6,7 @@ import {
 } from 'react-query'
 import { atom } from 'jotai'
 import type { WritableAtom, Getter } from 'jotai'
-import { queryClientAtom } from './queryClientAtom'
+import { getQueryClientAtom } from './queryClientAtom'
 
 type Action = { type: 'refetch' }
 
@@ -30,7 +30,7 @@ export function atomWithQuery<
 ): WritableAtom<TData, Action> {
   const queryDataAtom = atom(
     (get) => {
-      const queryClient = get(queryClientAtom)
+      const queryClient = get(getQueryClientAtom)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       let resolve: ((data: TData) => void) | null = null
@@ -82,7 +82,7 @@ export function atomWithQuery<
         case 'refetch': {
           const { dataAtom, options } = get(queryDataAtom)
           set(dataAtom, new Promise<TData>(() => {})) // infinite pending
-          const queryClient = get(queryClientAtom)
+          const queryClient = get(getQueryClientAtom)
           queryClient.getQueryCache().find(options.queryKey)?.reset()
           const p: Promise<void> = queryClient.refetchQueries(options.queryKey)
           return p
