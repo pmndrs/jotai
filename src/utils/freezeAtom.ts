@@ -1,6 +1,6 @@
-import { atom, Atom } from 'jotai'
+import { atom } from 'jotai'
+import type { Atom, Getter } from 'jotai'
 
-import type { Getter } from '../core/atom'
 import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 
 const freezeAtomCache = new WeakMap()
