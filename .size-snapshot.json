@@ -1,4 +1,18 @@
 {
+  "zustand.js": {
+    "bundled": 549,
+    "minified": 262,
+    "gzipped": 188,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
+  },
   "valtio.js": {
     "bundled": 1235,
     "minified": 598,
@@ -10,6 +24,20 @@
       },
       "webpack": {
         "code": 1054
+      }
+    }
+  },
+  "optics.js": {
+    "bundled": 1613,
+    "minified": 811,
+    "gzipped": 426,
+    "treeshaked": {
+      "rollup": {
+        "code": 32,
+        "import_statements": 32
+      },
+      "webpack": {
+        "code": 1061
       }
     }
   },
@@ -41,34 +69,6 @@
       }
     }
   },
-  "optics.js": {
-    "bundled": 1613,
-    "minified": 811,
-    "gzipped": 426,
-    "treeshaked": {
-      "rollup": {
-        "code": 32,
-        "import_statements": 32
-      },
-      "webpack": {
-        "code": 1061
-      }
-    }
-  },
-  "zustand.js": {
-    "bundled": 549,
-    "minified": 262,
-    "gzipped": 188,
-    "treeshaked": {
-      "rollup": {
-        "code": 14,
-        "import_statements": 14
-      },
-      "webpack": {
-        "code": 998
-      }
-    }
-  },
   "xstate.js": {
     "bundled": 2818,
     "minified": 1279,
@@ -80,20 +80,6 @@
       },
       "webpack": {
         "code": 1145
-      }
-    }
-  },
-  "devtools.js": {
-    "bundled": 18986,
-    "minified": 9482,
-    "gzipped": 3260,
-    "treeshaked": {
-      "rollup": {
-        "code": 28,
-        "import_statements": 28
-      },
-      "webpack": {
-        "code": 1259
       }
     }
   },
@@ -122,6 +108,20 @@
       },
       "webpack": {
         "code": 1289
+      }
+    }
+  },
+  "devtools.js": {
+    "bundled": 18986,
+    "minified": 9482,
+    "gzipped": 3260,
+    "treeshaked": {
+      "rollup": {
+        "code": 28,
+        "import_statements": 28
+      },
+      "webpack": {
+        "code": 1259
       }
     }
   },

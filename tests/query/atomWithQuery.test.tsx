@@ -1,12 +1,10 @@
 import React, { Suspense, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { renderHook } from '@testing-library/react-hooks'
 
 import { atom, useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
 import { getTestProvider } from '../testUtils'
-import { useAtomValue } from '../../src/utils'
 
 const Provider = getTestProvider()
 
@@ -276,19 +274,33 @@ it('query with initialData test', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count1',
     queryFn: async () => {
-      return await fakeFetch({ count: 1 }) // will run after "initialData"
+      return await fakeFetch({ count: 10 }) // will run after "initialData"
     },
     initialData: { response: { count: 0 } },
+    keepPreviousData: true, // to prevent suspense on refresh
+    refetchInterval: 0, // to immediately refresh (after mount) to count: 10
   }))
+  const Counter: React.FC = () => {
+    const [
+      {
+        response: { count },
+      },
+    ] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
 
-  const { result, waitForNextUpdate } = renderHook(
-    () => useAtomValue(countAtom),
-    {
-      wrapper: Provider,
-    }
+  const { findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
   )
-  // if it were to suspend, this value would be `undefined` initially
-  expect(result.current?.response.count).toEqual(0)
-  await waitForNextUpdate()
-  expect(result.current?.response.count).toEqual(1)
+  // note: "loading" is never found, thus the atom never suspends
+  await findByText('count: 0')
+  await findByText('count: 10')
 })
