@@ -1,10 +1,11 @@
-import type { Atom, WritableAtom, Setter } from './atom'
+import type { Atom, WritableAtom } from './atom'
 
 type AnyAtom = Atom<unknown>
 type AnyWritableAtom = WritableAtom<unknown, unknown>
 type OnUnmount = () => void
 type NonPromise<T> = T extends Promise<infer V> ? V : T
 type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
+type Setter = Parameters<WritableAtom<unknown, unknown>['write']>[1]
 
 const hasInitialValue = <T extends Atom<unknown>>(
   atom: T
