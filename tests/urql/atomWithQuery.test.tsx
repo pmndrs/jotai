@@ -24,10 +24,10 @@ const Provider = getTestProvider()
 
 it('query basic test', async () => {
   const countAtom = atomWithQuery<{ count: number }, {}>(
-    () => clientMock,
     () => ({
       query: '{ count }',
-    })
+    }),
+    () => clientMock
   )
 
   const Counter: React.FC = () => {
@@ -54,13 +54,13 @@ it('query basic test', async () => {
 it('query dependency test', async () => {
   const dummyAtom = atom(10)
   const countAtom = atomWithQuery<{ count: number }, { dummy: number }>(
-    () => clientMock,
     (get) => ({
       query: '{ count }',
       variables: {
         dummy: get(dummyAtom),
       },
-    })
+    }),
+    () => clientMock
   )
 
   const Counter: React.FC = () => {

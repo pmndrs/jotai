@@ -7,6 +7,7 @@ import {
 } from '@urql/core'
 import { atom } from 'jotai'
 import type { Getter } from 'jotai'
+import { getClientAtom } from './clientAtom'
 
 type SubscriptionArgs<Data, Variables extends object> = {
   query: TypedDocumentNode<Data, Variables> | string
@@ -15,8 +16,8 @@ type SubscriptionArgs<Data, Variables extends object> = {
 }
 
 export function atomWithSubscription<Data, Variables extends object>(
-  getClient: (get: Getter) => Client,
-  createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>
+  createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
+  getClient: (get: Getter) => Client = (get) => get(getClientAtom)
 ) {
   const queryResultAtom = atom((get) => {
     const client = getClient(get)
