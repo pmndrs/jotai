@@ -9,16 +9,16 @@ const Provider = getTestProvider()
 const consoleWarn = console.warn
 const consoleError = console.error
 beforeEach(() => {
+  jest.useFakeTimers()
   console.warn = jest.fn()
   console.error = jest.fn()
 })
 afterEach(() => {
+  jest.runOnlyPendingTimers()
+  jest.useRealTimers()
   console.warn = consoleWarn
   console.error = consoleError
 })
-
-// FIXME this seems to break in jest 27
-// jest.useFakeTimers()
 
 class ErrorBoundary extends React.Component<
   { message?: string },
