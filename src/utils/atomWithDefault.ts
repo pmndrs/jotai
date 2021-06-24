@@ -1,7 +1,7 @@
 import { atom } from 'jotai'
 import type { Atom, WritableAtom, SetStateAction } from 'jotai'
 
-import { RESET } from './useResetAtom'
+import { RESET } from './constants'
 
 type Read<Value> = Atom<Value>['read']
 

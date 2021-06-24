@@ -1,7 +1,7 @@
 import { atom } from 'jotai'
 import type { WritableAtom, SetStateAction } from 'jotai'
 
-import { RESET } from './useResetAtom'
+import { RESET } from './constants'
 
 export function atomWithReset<Value>(initialValue: Value) {
   type Update = SetStateAction<Value> | typeof RESET
