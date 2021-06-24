@@ -25,7 +25,9 @@ const Provider = getTestProvider()
 it('subscription basic test', async () => {
   const countAtom = atomWithSubscription(
     () => ({
-      query: '{ count }' as unknown as TypedDocumentNode<{ count: number }>,
+      query: 'subscription Test { count }' as unknown as TypedDocumentNode<{
+        count: number
+      }>,
     }),
     () => clientMock
   )

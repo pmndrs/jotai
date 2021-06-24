@@ -1,9 +1,11 @@
-import type { Atom, WritableAtom, Getter, Setter } from './atom'
+import type { Atom, WritableAtom } from './atom'
 
 type AnyAtom = Atom<unknown>
 type AnyWritableAtom = WritableAtom<unknown, unknown>
 type OnUnmount = () => void
 type NonPromise<T> = T extends Promise<infer V> ? V : T
+type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
+type Setter = Parameters<WritableAtom<unknown, unknown>['write']>[1]
 
 const hasInitialValue = <T extends Atom<unknown>>(
   atom: T
@@ -275,7 +277,7 @@ const readAtomState = <Value>(
   let value: NonPromise<Value> | undefined
   const dependencies = new Set<AnyAtom>()
   try {
-    const promiseOrValue = atom.read(((a: AnyAtom) => {
+    const promiseOrValue = atom.read((a: AnyAtom) => {
       dependencies.add(a)
       if (a !== atom) {
         const aState = readAtomState(state, a)
@@ -299,7 +301,7 @@ const readAtomState = <Value>(
         return a.init
       }
       throw new Error('no atom init')
-    }) as Getter)
+    })
     if (promiseOrValue instanceof Promise) {
       promise = promiseOrValue
         .then((value) => {
@@ -402,38 +404,46 @@ const writeAtomState = <Value, Update>(
     })
     return
   }
-  const promiseOrVoid = atom.write(
-    ((a: AnyAtom) => {
-      const aState = readAtomState(state, a)
-      if (aState.e) {
-        throw aState.e // read error
-      }
-      if (aState.p) {
-        if (
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
-        ) {
+  const writeGetter: WriteGetter = (a: AnyAtom, unstable_promise?: boolean) => {
+    const aState = readAtomState(state, a)
+    if (aState.e) {
+      throw aState.e // read error
+    }
+    if (aState.p) {
+      if (
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        if (unstable_promise) {
+          console.info(
+            'promise option in getter is an experimental feature.',
+            a
+          )
+        } else {
           console.warn(
             'Reading pending atom state in write operation. We throw a promise for now.',
             a
           )
         }
-        throw aState.p // read promise
       }
-      if ('v' in aState) {
-        return aState.v // value
+      if (unstable_promise) {
+        return aState.p.then(() => writeGetter(a, unstable_promise))
       }
-      if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        console.warn(
-          '[Bug] no value found while reading atom in write operation. This is probably a bug.',
-          a
-        )
-      }
-      throw new Error('no value found')
-    }) as Getter,
+      throw aState.p // read promise
+    }
+    if ('v' in aState) {
+      return aState.v // value
+    }
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+      console.warn(
+        '[Bug] no value found while reading atom in write operation. This is probably a bug.',
+        a
+      )
+    }
+    throw new Error('no value found')
+  }
+  const promiseOrVoid = atom.write(
+    writeGetter,
     ((a: AnyWritableAtom, v: unknown) => {
       if (a === atom) {
         if (!hasInitialValue(a)) {
