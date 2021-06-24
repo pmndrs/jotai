@@ -187,7 +187,7 @@
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-react": "^7.24.0",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "graphql": "^15.5.0",
+    "graphql": "^15.5.1",
     "husky": "^6.0.0",
     "immer": "^8.0.1",
     "jest": "^27.0.5",
