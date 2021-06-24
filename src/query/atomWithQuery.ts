@@ -3,11 +3,11 @@ import {
   QueryObserver,
   QueryObserverOptions,
   QueryObserverResult,
+  InitialDataFunction,
 } from 'react-query'
 import { atom } from 'jotai'
 import type { WritableAtom, Getter } from 'jotai'
 import { getQueryClientAtom } from './queryClientAtom'
-import { atomWithDefault } from '../utils'
 
 type Action = { type: 'refetch' }
 
@@ -28,24 +28,23 @@ export function atomWithQuery<
         get: Getter
       ) => AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>),
   equalityFn: (a: TData, b: TData) => boolean = Object.is
-): WritableAtom<TData, Action> {
+): WritableAtom<TData | TQueryData, Action> {
   const queryDataAtom = atom(
     (get) => {
       const queryClient = get(getQueryClientAtom)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       let resolve: ((data: TData) => void) | null = null
-      const dataAtom = atomWithDefault<TData | Promise<TData>>(() => {
-        if (options.initialData) {
-          return typeof options.initialData !== 'function'
-            ? options.initialData
-            : // @ts-ignore TODO: fix type error, pass getter
-              options.initialData()
-        }
-        return new Promise<TData>((r) => {
-          resolve = r
-        })
-      })
+      const getInitialData = () =>
+        typeof options.initialData === 'function'
+          ? (options.initialData as InitialDataFunction<TQueryData>)()
+          : options.initialData
+      const dataAtom = atom<TData | TQueryData | Promise<TData | TQueryData>>(
+        getInitialData() ||
+          new Promise<TData>((r) => {
+            resolve = r
+          })
+      )
       let setData: (data: TData) => void = () => {
         throw new Error('atomWithQuery: setting data without mount')
       }
@@ -97,7 +96,7 @@ export function atomWithQuery<
       }
     }
   )
-  const queryAtom = atom<TData, Action>(
+  const queryAtom = atom<TData | TQueryData, Action>(
     (get) => {
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)

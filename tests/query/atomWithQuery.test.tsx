@@ -295,12 +295,11 @@ it('query with initialData test', async () => {
 
   const { findByText } = render(
     <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
+      <Counter />
     </Provider>
   )
-  // note: "loading" is never found, thus the atom never suspends
+
+  // NOTE: the atom never suspends
   await findByText('count: 0')
   await findByText('count: 10')
 })
