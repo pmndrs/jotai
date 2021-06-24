@@ -1,12 +1,12 @@
 import { atom } from 'jotai'
 import type { Atom, WritableAtom, SetStateAction } from 'jotai'
 
+import { RESET } from './constants'
+
 type Read<Value> = Atom<Value>['read']
 
-export const REFRESH = Symbol()
-
 export function atomWithDefault<Value>(getDefault: Read<Value>) {
-  type Update = SetStateAction<Value> | typeof REFRESH
+  type Update = SetStateAction<Value> | typeof RESET
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
   const anAtom: WritableAtom<Value, Update> = atom(
@@ -18,7 +18,7 @@ export function atomWithDefault<Value>(getDefault: Read<Value>) {
       return getDefault(get)
     },
     (get, set, update) => {
-      if (update === REFRESH) {
+      if (update === RESET) {
         set(overwrittenAtom, EMPTY)
       } else {
         set(

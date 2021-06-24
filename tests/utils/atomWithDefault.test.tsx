@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
-import { atomWithDefault, REFRESH } from '../../src/utils'
+import { atomWithDefault, RESET } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -99,7 +99,7 @@ it('refresh sync atoms to default values', async () => {
         </div>
         <button onClick={() => setCount1((c) => c + 1)}>button1</button>
         <button onClick={() => setCount2((c) => c + 1)}>button2</button>
-        <button onClick={() => setCount2(REFRESH)}>Refresh count2</button>
+        <button onClick={() => setCount2(RESET)}>Refresh count2</button>
       </>
     )
   }
@@ -145,7 +145,7 @@ it('refresh async atoms to default values', async () => {
         </div>
         <button onClick={() => setCount1((c) => c + 1)}>button1</button>
         <button onClick={() => setCount2((c) => c + 1)}>button2</button>
-        <button onClick={() => setCount2(REFRESH)}>Refresh count2</button>
+        <button onClick={() => setCount2(RESET)}>Refresh count2</button>
       </>
     )
   }
