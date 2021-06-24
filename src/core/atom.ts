@@ -75,6 +75,14 @@ export function atom<Value, Update>(
   ? never
   : WritableAtom<Value, Update> & WithInitialValue<Value>
 
+// primitive atom, specifically handling null | undefined
+// to avoid misclassification as read-only derived atom
+export function atom<Value extends unknown>(
+  initialValue: null | undefined
+): [Value] extends [Function]
+  ? never
+  : PrimitiveAtom<Value> & WithInitialValue<Value>
+
 // read-only derived atom
 export function atom<Value>(read: Read<Value>): Atom<Value>
 
