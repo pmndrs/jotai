@@ -29,13 +29,13 @@ const Page = () => {
     <>
       <div className="py-8">
         <ClientOnly>
-          <div className="flex items-center p-4 lg:p-8 space-x-4 lg:space-x-8 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl transition duration-300 ease-in-out">
+          <div className="flex items-center p-4 lg:p-8 space-x-4 lg:space-x-8 focus-within:ring bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl transition duration-300 ease-in-out">
             <div>
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={cx(
                   darkMode ? 'bg-gray-700' : 'bg-gray-300',
-                  'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring'
+                  'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none'
                 )}>
                 <span
                   className={cx(
