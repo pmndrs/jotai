@@ -67,6 +67,11 @@
       "types": "./redux.d.ts",
       "module": "./esm/redux.js",
       "default": "./redux.js"
+    },
+    "./urql": {
+      "types": "./urql.d.ts",
+      "module": "./esm/urql.js",
+      "default": "./urql.js"
     }
   },
   "files": [
@@ -86,6 +91,7 @@
     "build:valtio": "rollup -c --config-valtio",
     "build:zustand": "rollup -c --config-zustand",
     "build:redux": "rollup -c --config-redux",
+    "build:urql": "rollup -c --config-urql",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '{src,tests,benchmarks}/**/*.{js,ts,jsx,tsx}'",
     "eslint:ci": "eslint '{src,tests,benchmarks}/**/*.{js,ts,jsx,tsx}'",
@@ -168,6 +174,7 @@
     "@types/react-dom": "^17.0.8",
     "@typescript-eslint/eslint-plugin": "^4.28.0",
     "@typescript-eslint/parser": "^4.28.0",
+    "@urql/core": "^2.0.0",
     "benny": "^3.6.15",
     "concurrently": "^6.2.0",
     "downlevel-dts": "^0.7.0",
@@ -180,6 +187,7 @@
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-react": "^7.24.0",
     "eslint-plugin-react-hooks": "^4.2.0",
+    "graphql": "^15.5.1",
     "husky": "^6.0.0",
     "immer": "^8.0.1",
     "jest": "^27.0.5",
@@ -200,18 +208,24 @@
     "tslib": "^2.3.0",
     "typescript": "^4.3.4",
     "valtio": "^1.0.3",
+    "wonka": "^4.0.15",
     "xstate": "^4.17.1",
     "zustand": "^3.5.4"
   },
   "peerDependencies": {
+    "@urql/core": "*",
     "immer": "*",
     "optics-ts": "*",
     "react": ">=16.8",
     "react-query": "*",
     "valtio": "*",
+    "wonka": "*",
     "xstate": "*"
   },
   "peerDependenciesMeta": {
+    "@urql/core": {
+      "optional": true
+    },
     "immer": {
       "optional": true
     },
@@ -222,6 +236,9 @@
       "optional": true
     },
     "valtio": {
+      "optional": true
+    },
+    "wonka": {
       "optional": true
     },
     "xstate": {
