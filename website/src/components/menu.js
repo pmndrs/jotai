@@ -10,7 +10,7 @@ export const Menu = () => {
         <Popover.Panel className="absolute bottom-0 right-0 z-10 mb-16">
           <Navigation className="flex flex-col p-4 space-y-4 border border-gray-700 rounded-lg bg-gray-900 shadow-2xl" />
         </Popover.Panel>
-        <Popover.Button className="focus:outline-none shadow-2xl">
+        <Popover.Button className="relative z-20 focus:outline-none shadow-2xl">
           <Button
             icon="menu"
             dark={true}
