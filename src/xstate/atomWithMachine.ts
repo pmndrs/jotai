@@ -19,24 +19,13 @@ export function atomWithMachine<
   getMachine:
     | StateMachine<TContext, any, TEvent, TTypestate>
     | ((get: Getter) => StateMachine<TContext, any, TEvent, TTypestate>),
-  options: Partial<InterpreterOptions> &
-    Partial<MachineOptions<TContext, TEvent>> = {}
+  getOptions?:
+    | (Partial<InterpreterOptions> & Partial<MachineOptions<TContext, TEvent>>)
+    | ((
+        get: Getter
+      ) => Partial<InterpreterOptions> &
+        Partial<MachineOptions<TContext, TEvent>>)
 ) {
-  const {
-    guards,
-    actions,
-    activities,
-    services,
-    delays,
-    ...interpreterOptions
-  } = options
-  const machineConfig = {
-    guards,
-    actions,
-    activities,
-    services,
-    delays,
-  }
   type Machine = StateMachine<TContext, any, TEvent, TTypestate>
   type Service = Interpreter<TContext, any, TEvent, TTypestate>
   type MachineState = State<TContext, TEvent, any, TTypestate>
@@ -50,16 +39,32 @@ export function atomWithMachine<
         return cachedMachine
       }
       let initializing = true
+      const safeGet = (a: Atom<unknown>) => {
+        if (initializing) {
+          return get(a)
+        }
+        throw new Error('get not allowed after initialization')
+      }
       const machine =
-        typeof getMachine === 'function'
-          ? getMachine((a: Atom<unknown>) => {
-              if (initializing) {
-                return get(a)
-              }
-              throw new Error('get not allowed after initialization')
-            })
-          : getMachine
+        typeof getMachine === 'function' ? getMachine(safeGet) : getMachine
+      const options =
+        typeof getOptions === 'function' ? getOptions(safeGet) : getOptions
       initializing = false
+      const {
+        guards,
+        actions,
+        activities,
+        services,
+        delays,
+        ...interpreterOptions
+      } = options || {}
+      const machineConfig = {
+        guards,
+        actions,
+        activities,
+        services,
+        delays,
+      }
       const machineWithConfig = machine.withConfig(
         machineConfig,
         machine.context
