@@ -138,5 +138,19 @@
         "code": 998
       }
     }
+  },
+  "urql.js": {
+    "bundled": 4312,
+    "minified": 2311,
+    "gzipped": 852,
+    "treeshaked": {
+      "rollup": {
+        "code": 199,
+        "import_statements": 85
+      },
+      "webpack": {
+        "code": 1387
+      }
+    }
   }
 }
