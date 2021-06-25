@@ -30,7 +30,7 @@ const Controls = () => {
   return (
     <>
       <div className="flex items-center py-8 space-x-8">
-        <Button onClick={increment} icon="plus">
+        <Button onClick={increment} icon="plus" className="focus:ring">
           Increment
         </Button>
         <span className="font-bold text-3xl ordinal slashed-zero tabular-nums">
