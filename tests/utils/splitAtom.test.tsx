@@ -4,9 +4,17 @@ import { atom, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
 import { render, fireEvent, waitFor } from '@testing-library/react'
 import { getTestProvider } from '../testUtils'
-import { splitAtom, useUpdateAtom } from '../../src/utils'
+import { splitAtom } from '../../src/utils'
 
 const Provider = getTestProvider()
+
+const consoleWarn = console.warn
+beforeEach(() => {
+  console.warn = jest.fn()
+})
+afterEach(() => {
+  console.warn = consoleWarn
+})
 
 type TodoItem = { task: string; checked?: boolean }
 
@@ -363,4 +371,5 @@ it('no error on wrong atom configs (fix 510)', async () => {
   fireEvent.click(evenCheckboxEl)
 
   expect(numbersEl.textContent).toBe('0')
+  expect(console.warn).toHaveBeenCalledTimes(1)
 })
