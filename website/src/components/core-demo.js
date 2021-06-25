@@ -53,7 +53,7 @@ const MyApp = () => {
   return (
     <>
       <div className="py-8 text-sm">
-        <div className="flex items-center px-4 py-2 focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg bg-white text-lg">
+        <div className="flex items-center px-4 py-2 focus-within:ring border border-gray-300 rounded-lg bg-white text-lg">
           <Input />
           <Uppercase />
         </div>

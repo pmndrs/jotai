@@ -12,7 +12,7 @@ export const Footer = () => {
         target="_blank"
         title="Jessie Waters"
         className="block mt-6 text-xs text-gray-400 tracking-widest uppercase">
-        Artwork by Jessie Waters
+        Art by Jessie Waters
       </a>
     </footer>
   )
