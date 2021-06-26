@@ -539,3 +539,62 @@ it('can remount atoms with intermediate atom', async () => {
     getByText('derived: 8')
   })
 })
+
+it('can update dependents with useEffect (#512)', async () => {
+  const enabledAtom = atom(false)
+  const countAtom = atom(1)
+
+  const derivedAtom = atom((get) => {
+    const enabled = get(enabledAtom)
+    if (!enabled) {
+      return 0
+    }
+    const count = get(countAtom)
+    return count * 2
+  })
+
+  const Counter: React.FC = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const DerivedCounter: React.FC = () => {
+    const [derived] = useAtom(derivedAtom)
+    return <div>derived: {derived}</div>
+  }
+
+  const Parent: React.FC = () => {
+    const [, setEnabled] = useAtom(enabledAtom)
+    useEffect(() => {
+      setEnabled(true)
+    }, [setEnabled])
+    return (
+      <div>
+        <Counter />
+        <DerivedCounter />
+      </div>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Parent />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('derived: 2')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('derived: 4')
+  })
+})

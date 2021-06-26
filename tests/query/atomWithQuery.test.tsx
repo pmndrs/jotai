@@ -1,5 +1,6 @@
 import React, { Suspense, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
+
 import { atom, useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
@@ -171,7 +172,7 @@ it('query loading 2', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count',
+    queryKey: 'count5',
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 100)
       count++
@@ -217,7 +218,7 @@ it('query with enabled (#500)', async () => {
     const enabled = get(enabledAtom)
     return {
       enabled,
-      queryKey: 'count',
+      queryKey: 'count6',
       queryFn: async () => {
         return await fakeFetch({ count: 1 })
       },
@@ -267,4 +268,38 @@ it('query with enabled (#500)', async () => {
   fireEvent.click(getByText('toggle'))
   await findByText('loading')
   await findByText('count: 1')
+})
+
+it('query with initialData test', async () => {
+  const countAtom = atomWithQuery(() => ({
+    queryKey: 'count1',
+    queryFn: async () => {
+      return await fakeFetch({ count: 10 }) // will run after "initialData"
+    },
+    initialData: { response: { count: 0 } },
+    keepPreviousData: true, // to prevent suspense on refresh
+    refetchInterval: 0, // to immediately refresh (after mount) to count: 10
+  }))
+  const Counter: React.FC = () => {
+    const [
+      {
+        response: { count },
+      },
+    ] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  // NOTE: the atom never suspends
+  await findByText('count: 0')
+  await findByText('count: 10')
 })

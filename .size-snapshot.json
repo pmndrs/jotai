@@ -1,8 +1,8 @@
 {
   "index.js": {
-    "bundled": 20591,
-    "minified": 9827,
-    "gzipped": 3196,
+    "bundled": 21126,
+    "minified": 10113,
+    "gzipped": 3334,
     "treeshaked": {
       "rollup": {
         "code": 14,
@@ -14,9 +14,9 @@
     }
   },
   "utils.js": {
-    "bundled": 12627,
-    "minified": 6183,
-    "gzipped": 2303,
+    "bundled": 13354,
+    "minified": 6528,
+    "gzipped": 2437,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -28,9 +28,9 @@
     }
   },
   "devtools.js": {
-    "bundled": 18630,
-    "minified": 9299,
-    "gzipped": 3163,
+    "bundled": 18986,
+    "minified": 9482,
+    "gzipped": 3260,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -70,23 +70,23 @@
     }
   },
   "query.js": {
-    "bundled": 2651,
-    "minified": 1311,
-    "gzipped": 616,
+    "bundled": 2343,
+    "minified": 1141,
+    "gzipped": 567,
     "treeshaked": {
       "rollup": {
-        "code": 84,
+        "code": 105,
         "import_statements": 71
       },
       "webpack": {
-        "code": 1097
+        "code": 1131
       }
     }
   },
   "xstate.js": {
-    "bundled": 2818,
-    "minified": 1279,
-    "gzipped": 633,
+    "bundled": 2977,
+    "minified": 1314,
+    "gzipped": 653,
     "treeshaked": {
       "rollup": {
         "code": 29,
@@ -136,6 +136,20 @@
       },
       "webpack": {
         "code": 998
+      }
+    }
+  },
+  "urql.js": {
+    "bundled": 4312,
+    "minified": 2311,
+    "gzipped": 852,
+    "treeshaked": {
+      "rollup": {
+        "code": 199,
+        "import_statements": 85
+      },
+      "webpack": {
+        "code": 1387
       }
     }
   },

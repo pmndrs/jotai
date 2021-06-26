@@ -3,12 +3,13 @@ import {
   QueryObserver,
   QueryObserverOptions,
   QueryObserverResult,
+  InitialDataFunction,
 } from 'react-query'
 import { atom } from 'jotai'
 import type { WritableAtom, Getter } from 'jotai'
-import { queryClientAtom } from './queryClientAtom'
+import { getQueryClientAtom } from './queryClientAtom'
 
-type Action = { type: 'refetch' } | { type: 'cleanup' }
+type Action = { type: 'refetch' }
 
 type AtomQueryOptions<TQueryFnData, TError, TData, TQueryData> =
   QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
@@ -27,78 +28,67 @@ export function atomWithQuery<
         get: Getter
       ) => AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>),
   equalityFn: (a: TData, b: TData) => boolean = Object.is
-): WritableAtom<TData, Action> {
-  const stateAtom = atom(() => {
-    const state = {
-      resolve: null as ((data: TData) => void) | null,
-      setData: null as ((data: TData) => void) | null,
-      prevData: null as TData | null,
-      unsubscribe: null as (() => void) | null,
-      handle(result: QueryObserverResult<TData, TError>) {
+): WritableAtom<TData | TQueryData, Action> {
+  const queryDataAtom = atom(
+    (get) => {
+      const queryClient = get(getQueryClientAtom)
+      const options =
+        typeof createQuery === 'function' ? createQuery(get) : createQuery
+      let resolve: ((data: TData) => void) | null = null
+      const getInitialData = () =>
+        typeof options.initialData === 'function'
+          ? (options.initialData as InitialDataFunction<TQueryData>)()
+          : options.initialData
+      const dataAtom = atom<TData | TQueryData | Promise<TData | TQueryData>>(
+        getInitialData() ||
+          new Promise<TData>((r) => {
+            resolve = r
+          })
+      )
+      let setData: (data: TData) => void = () => {
+        throw new Error('atomWithQuery: setting data without mount')
+      }
+      let prevData: TData | null = null
+      const listener = (result: QueryObserverResult<TData, TError>) => {
         // TODO error handling
         if (
           result.data === undefined ||
-          (this.prevData !== null && equalityFn(this.prevData, result.data))
+          (prevData !== null && equalityFn(prevData, result.data))
         ) {
           return
         }
-        this.prevData = result.data
-        if (this.resolve) {
-          this.resolve(result.data)
-          this.resolve = null
-        } else if (this.setData) {
-          this.setData(result.data)
+        prevData = result.data
+        if (resolve) {
+          resolve(result.data)
+          resolve = null
         } else {
-          throw new Error('setting data without mount')
+          setData(result.data)
         }
-      },
-    }
-    return state
-  })
-  const initAtom = atom(
-    (get) => {
-      const options =
-        typeof createQuery === 'function' ? createQuery(get) : createQuery
-      const state = get(stateAtom)
-      const dataAtom = atom<TData | Promise<TData>>(
-        new Promise<TData>((resolve) => {
-          state.resolve = resolve
+      }
+      const defaultedOptions = queryClient.defaultQueryObserverOptions(options)
+      if (typeof defaultedOptions.staleTime !== 'number') {
+        defaultedOptions.staleTime = 1000
+      }
+      const observer = new QueryObserver(queryClient, defaultedOptions)
+      observer
+        .fetchOptimistic(defaultedOptions)
+        .then(listener)
+        .catch(() => {
+          // TODO error handling
         })
-      )
-      state.prevData = null
-      const queryClient = get(queryClientAtom)
-      const observer = new QueryObserver(queryClient, options)
-      state.unsubscribe?.()
-      state.unsubscribe = observer.subscribe((result) => {
-        state.handle(result)
-      })
+      dataAtom.onMount = (update) => {
+        setData = update
+        const unsubscribe = observer.subscribe(listener)
+        return unsubscribe
+      }
       return { dataAtom, options }
     },
-    (get, set, action: Action | { type: 'mount' }) => {
+    (get, set, action: Action) => {
       switch (action.type) {
-        case 'mount': {
-          const state = get(stateAtom)
-          state.setData = (data) => {
-            const { dataAtom } = get(initAtom)
-            set(dataAtom, data)
-          }
-          return
-        }
-        case 'cleanup': {
-          const { unsubscribe } = get(stateAtom)
-          unsubscribe?.()
-          return
-        }
         case 'refetch': {
-          const state = get(stateAtom)
-          const { dataAtom, options } = get(initAtom)
-          set(
-            dataAtom,
-            new Promise<TData>((resolve) => {
-              state.resolve = resolve
-            })
-          )
-          const queryClient = get(queryClientAtom)
+          const { dataAtom, options } = get(queryDataAtom)
+          set(dataAtom, new Promise<TData>(() => {})) // infinite pending
+          const queryClient = get(getQueryClientAtom)
           queryClient.getQueryCache().find(options.queryKey)?.reset()
           const p: Promise<void> = queryClient.refetchQueries(options.queryKey)
           return p
@@ -106,16 +96,12 @@ export function atomWithQuery<
       }
     }
   )
-  initAtom.onMount = (dispatch) => {
-    dispatch({ type: 'mount' })
-    return () => dispatch({ type: 'cleanup' })
-  }
-  const queryAtom = atom<TData, Action>(
+  const queryAtom = atom<TData | TQueryData, Action>(
     (get) => {
-      const { dataAtom } = get(initAtom)
+      const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
     },
-    (_get, set, action) => set(initAtom, action) // delegate action
+    (_get, set, action) => set(queryDataAtom, action) // delegate action
   )
   return queryAtom
 }
