@@ -77,3 +77,42 @@ it('should let you access atoms and their state', async () => {
   await findByText('countAtom: 1')
   await findByText('petAtom: cat')
 })
+
+it('should contain initial values', async () => {
+  const countAtom = atom(1)
+  countAtom.debugLabel = 'countAtom'
+  const petAtom = atom('cat')
+  petAtom.debugLabel = 'petAtom'
+
+  const Displayer: React.FC = () => {
+    useAtom(countAtom)
+    useAtom(petAtom)
+    return null
+  }
+
+  const SimpleDevtools: React.FC = () => {
+    const atoms = useAtomsSnapshot()
+
+    return (
+      <div>
+        {Array.from(atoms).map(([atom, atomValue]) => (
+          <p key={atom.debugLabel}>{`${atom.debugLabel}: ${atomValue}`}</p>
+        ))}
+      </div>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider
+      initialValues={[
+        [countAtom, 42],
+        [petAtom, 'dog'],
+      ]}>
+      <Displayer />
+      <SimpleDevtools />
+    </Provider>
+  )
+
+  await findByText('countAtom: 42')
+  await findByText('petAtom: dog')
+})
