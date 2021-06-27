@@ -616,27 +616,25 @@ const commitAtomState = <Value>(
 }
 
 export const flushPending = (state: State): void => {
-  if (!state.p.size) {
-    return
-  }
-  const pending = Array.from(state.p)
-  state.p.clear()
-  pending.forEach(([atom, prevDependencies]) => {
-    const atomState = getAtomState(state, atom)
-    if (atomState) {
-      if (prevDependencies) {
-        mountDependencies(state, atom, atomState, prevDependencies)
+  while (state.p.size) {
+    const pending = Array.from(state.p)
+    state.p.clear()
+    pending.forEach(([atom, prevDependencies]) => {
+      const atomState = getAtomState(state, atom)
+      if (atomState) {
+        if (prevDependencies) {
+          mountDependencies(state, atom, atomState, prevDependencies)
+        }
+      } else if (
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        console.warn('[Bug] atom state not found in flush', atom)
       }
-    } else if (
-      typeof process === 'object' &&
-      process.env.NODE_ENV !== 'production'
-    ) {
-      console.warn('[Bug] atom state not found in flush', atom)
-    }
-    const mounted = state.m.get(atom)
-    mounted?.l.forEach((listener) => listener())
-  })
-  flushPending(state)
+      const mounted = state.m.get(atom)
+      mounted?.l.forEach((listener) => listener())
+    })
+  }
 }
 
 export const subscribeAtom = (
