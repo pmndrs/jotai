@@ -72,7 +72,7 @@ const createStoreForDevelopment = (
   ) => writeAtom(state, atom, update)
   const debugStore = {
     version: 0,
-    atoms: [] as Atom<unknown>[],
+    atoms: Array.from(initialValues ?? []).map(([a]) => a),
     state,
     listeners: new Set<() => void>(),
   }
