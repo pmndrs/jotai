@@ -404,6 +404,7 @@ const writeAtomState = <Value, Update>(
     })
     return
   }
+  let isSync = true
   const writeGetter: WriteGetter = (a: AnyAtom, unstable_promise?: boolean) => {
     const aState = readAtomState(state, a)
     if (aState.e) {
@@ -473,7 +474,9 @@ const writeAtomState = <Value, Update>(
       } else {
         writeAtomState(state, a, v)
       }
-      flushPending(state)
+      if (!isSync) {
+        flushPending(state)
+      }
     }) as Setter,
     update
   )
@@ -484,6 +487,7 @@ const writeAtomState = <Value, Update>(
     })
     setAtomWritePromise(state, atom, promise)
   }
+  isSync = false
   // TODO write error is not handled
 }
 
@@ -612,6 +616,9 @@ const commitAtomState = <Value>(
 }
 
 export const flushPending = (state: State): void => {
+  if (!state.p.size) {
+    return
+  }
   const pending = Array.from(state.p)
   state.p.clear()
   pending.forEach(([atom, prevDependencies]) => {
@@ -629,6 +636,7 @@ export const flushPending = (state: State): void => {
     const mounted = state.m.get(atom)
     mounted?.l.forEach((listener) => listener())
   })
+  flushPending(state)
 }
 
 export const subscribeAtom = (
