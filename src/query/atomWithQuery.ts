@@ -64,8 +64,8 @@ export function atomWithQuery<
           } else {
             setData(Promise.reject<TData>(result.error))
           }
+          return
         }
-        // TODO error handling
         if (
           result.data === undefined ||
           (prevData !== null && equalityFn(prevData, result.data))
