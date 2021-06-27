@@ -34,7 +34,7 @@ export function atomWithQuery<
       const queryClient = get(getQueryClientAtom)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
-      let resolvePromise: ((data: TData | null, err?: TError) => void) | null =
+      let settlePromise: ((data: TData | null, err?: TError) => void) | null =
         null
       const getInitialData = () =>
         typeof options.initialData === 'function'
@@ -43,7 +43,7 @@ export function atomWithQuery<
       const dataAtom = atom<TData | TQueryData | Promise<TData | TQueryData>>(
         getInitialData() ||
           new Promise<TData>((resolve, reject) => {
-            resolvePromise = (data, err) => {
+            settlePromise = (data, err) => {
               if (err) {
                 reject(err)
               } else {
@@ -56,11 +56,15 @@ export function atomWithQuery<
         throw new Error('atomWithQuery: setting data without mount')
       }
       let prevData: TData | null = null
-      const listener = (result: QueryObserverResult<TData, TError>) => {
+      const listener = (
+        result:
+          | QueryObserverResult<TData, TError>
+          | { data?: undefined; error: TError }
+      ) => {
         if (result.error) {
-          if (resolvePromise) {
-            resolvePromise(null, result.error)
-            resolvePromise = null
+          if (settlePromise) {
+            settlePromise(null, result.error)
+            settlePromise = null
           } else {
             setData(Promise.reject<TData>(result.error))
           }
@@ -73,9 +77,9 @@ export function atomWithQuery<
           return
         }
         prevData = result.data
-        if (resolvePromise) {
-          resolvePromise(result.data)
-          resolvePromise = null
+        if (settlePromise) {
+          settlePromise(result.data)
+          settlePromise = null
         } else {
           setData(result.data)
         }
@@ -85,7 +89,10 @@ export function atomWithQuery<
         defaultedOptions.staleTime = 1000
       }
       const observer = new QueryObserver(queryClient, defaultedOptions)
-      observer.fetchOptimistic(defaultedOptions).then(listener)
+      observer
+        .fetchOptimistic(defaultedOptions)
+        .then(listener)
+        .catch((error) => listener({ error }))
       dataAtom.onMount = (update) => {
         setData = update
         const unsubscribe = observer.subscribe(listener)
