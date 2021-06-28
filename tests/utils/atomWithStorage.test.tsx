@@ -1,10 +1,18 @@
 import React, { Suspense } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from '../../src/index'
 import { atomWithStorage, atomWithHash } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
+
+beforeEach(() => {
+  jest.useFakeTimers()
+})
+afterEach(() => {
+  jest.runOnlyPendingTimers()
+  jest.useRealTimers()
+})
 
 describe('atomWithStorage (sync)', () => {
   const storageData: Record<string, number> = {
@@ -93,8 +101,9 @@ describe('atomWithStorage (async)', () => {
 
     fireEvent.click(getByText('button'))
     await findByText('count: 11')
-    await new Promise((r) => setTimeout(r, 20))
-    expect(asyncStorageData.count).toBe(11)
+    waitFor(() => {
+      expect(asyncStorageData.count).toBe(11)
+    })
   })
 
   it('async new count', async () => {
@@ -123,8 +132,9 @@ describe('atomWithStorage (async)', () => {
 
     fireEvent.click(getByText('button'))
     await findByText('count: 21')
-    await new Promise((r) => setTimeout(r, 20))
-    expect(asyncStorageData.count2).toBe(21)
+    waitFor(() => {
+      expect(asyncStorageData.count2).toBe(21)
+    })
   })
 
   it('async new count with delayInit', async () => {
@@ -153,8 +163,9 @@ describe('atomWithStorage (async)', () => {
 
     fireEvent.click(getByText('button'))
     await findByText('count: 31')
-    await new Promise((r) => setTimeout(r, 20))
-    expect(asyncStorageData.count3).toBe(31)
+    waitFor(() => {
+      expect(asyncStorageData.count3).toBe(31)
+    })
   })
 })
 
