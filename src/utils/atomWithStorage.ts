@@ -10,18 +10,27 @@ type Storage<Value> = {
   subscribe?: (key: string, callback: (value: Value) => void) => Unsubscribe
 }
 
-const defaultStorage: Storage<unknown> = {
+type StringStorage = {
+  getItem: (key: string) => string | null | Promise<string | null>
+  setItem: (key: string, newValue: string) => void | Promise<void>
+}
+
+export const createJSONStorage = (
+  getStringStorage: () => StringStorage
+): Storage<unknown> => ({
   getItem: (key) => {
-    const storedValue = localStorage.getItem(key)
-    if (storedValue === null) {
-      throw new Error('no value stored')
+    const value = getStringStorage().getItem(key)
+    if (value instanceof Promise) {
+      return value.then((v) => JSON.parse(v || ''))
     }
-    return JSON.parse(storedValue)
+    return JSON.parse(value || '')
   },
   setItem: (key, newValue) => {
-    localStorage.setItem(key, JSON.stringify(newValue))
+    getStringStorage().setItem(key, JSON.stringify(newValue))
   },
-}
+})
+
+const defaultStorage = createJSONStorage(() => localStorage)
 
 export function atomWithStorage<Value>(
   key: string,
