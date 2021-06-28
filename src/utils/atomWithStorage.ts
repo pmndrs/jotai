@@ -30,7 +30,11 @@ export function atomWithStorage<Value>(
 ): PrimitiveAtom<Value> {
   const getInitialValue = () => {
     try {
-      return storage.getItem(key)
+      const value = storage.getItem(key)
+      if (value instanceof Promise) {
+        return value.catch(() => initialValue)
+      }
+      return value
     } catch {
       return initialValue
     }
