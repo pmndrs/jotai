@@ -6,7 +6,7 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
-describe('atomWithStorage', () => {
+describe('atomWithStorage (sync)', () => {
   const storageData: Record<string, number> = {
     count: 10,
   }
@@ -47,7 +47,9 @@ describe('atomWithStorage', () => {
     await findByText('count: 11')
     expect(storageData.count).toBe(11)
   })
+})
 
+describe('atomWithStorage (async)', () => {
   const asyncStorageData: Record<string, number> = {
     count: 10,
   }
@@ -86,11 +88,73 @@ describe('atomWithStorage', () => {
       </Provider>
     )
 
+    await findByText('loading')
     await findByText('count: 10')
 
     fireEvent.click(getByText('button'))
     await findByText('count: 11')
-    expect(storageData.count).toBe(11)
+    await new Promise((r) => setTimeout(r, 20))
+    expect(asyncStorageData.count).toBe(11)
+  })
+
+  it('async new count', async () => {
+    const countAtom = atomWithStorage('count2', 20, asyncDummyStorage)
+
+    const Counter: React.FC = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('count: 20')
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 21')
+    await new Promise((r) => setTimeout(r, 20))
+    expect(asyncStorageData.count2).toBe(21)
+  })
+
+  it('async new count with delayInit', async () => {
+    const countAtom = atomWithStorage('count3', 30, {
+      ...asyncDummyStorage,
+      delayInit: true,
+    })
+
+    const Counter: React.FC = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('count: 30')
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 31')
+    await new Promise((r) => setTimeout(r, 20))
+    expect(asyncStorageData.count3).toBe(31)
   })
 })
 
