@@ -292,6 +292,9 @@ const readAtomState = <Value>(
       // a === atom
       const aState = getAtomState(state, a)
       if (aState) {
+        if (aState.e) {
+          throw aState.e // read error
+        }
         if (aState.p) {
           throw aState.p // read promise
         }
