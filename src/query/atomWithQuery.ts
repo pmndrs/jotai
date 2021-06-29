@@ -9,9 +9,9 @@ import { atom } from 'jotai'
 import type { WritableAtom, Getter } from 'jotai'
 import { getQueryClientAtom } from './queryClientAtom'
 
-type Action = { type: 'refetch' }
+export type AtomWithQueryAction = { type: 'refetch' }
 
-type AtomQueryOptions<TQueryFnData, TError, TData, TQueryData> =
+export type AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData> =
   QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
     queryKey: QueryKey
   }
@@ -23,12 +23,12 @@ export function atomWithQuery<
   TQueryData = TQueryFnData
 >(
   createQuery:
-    | AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    | AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
     | ((
         get: Getter
-      ) => AtomQueryOptions<TQueryFnData, TError, TData, TQueryData>),
+      ) => AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>),
   equalityFn: (a: TData, b: TData) => boolean = Object.is
-): WritableAtom<TData | TQueryData, Action> {
+): WritableAtom<TData | TQueryData, AtomWithQueryAction> {
   const queryDataAtom = atom(
     (get) => {
       const queryClient = get(getQueryClientAtom)
@@ -100,7 +100,7 @@ export function atomWithQuery<
       }
       return { dataAtom, options }
     },
-    (get, set, action: Action) => {
+    (get, set, action: AtomWithQueryAction) => {
       switch (action.type) {
         case 'refetch': {
           const { dataAtom, options } = get(queryDataAtom)
@@ -113,7 +113,7 @@ export function atomWithQuery<
       }
     }
   )
-  const queryAtom = atom<TData | TQueryData, Action>(
+  const queryAtom = atom<TData | TQueryData, AtomWithQueryAction>(
     (get) => {
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
