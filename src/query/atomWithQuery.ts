@@ -98,16 +98,19 @@ export function atomWithQuery<
         const unsubscribe = observer.subscribe(listener)
         return unsubscribe
       }
-      return { dataAtom, options }
+      return {
+        dataAtom,
+        observer,
+      }
     },
     (get, set, action: AtomWithQueryAction) => {
       switch (action.type) {
         case 'refetch': {
-          const { dataAtom, options } = get(queryDataAtom)
+          const { dataAtom, observer } = get(queryDataAtom)
           set(dataAtom, new Promise<TData>(() => {})) // infinite pending
-          const queryClient = get(getQueryClientAtom)
-          queryClient.getQueryCache().find(options.queryKey)?.reset()
-          const p: Promise<void> = queryClient.refetchQueries(options.queryKey)
+          const p: Promise<void> = observer
+            .refetch({ cancelRefetch: true })
+            .then(() => {})
           return p
         }
       }
