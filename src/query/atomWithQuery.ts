@@ -6,7 +6,7 @@ import {
   InitialDataFunction,
 } from 'react-query'
 import { atom } from 'jotai'
-import type { WritableAtom, Getter } from 'jotai'
+import type { WritableAtom, PrimitiveAtom, Getter } from 'jotai'
 import { getQueryClientAtom } from './queryClientAtom'
 
 export type AtomWithQueryAction = { type: 'refetch' }
@@ -29,7 +29,13 @@ export function atomWithQuery<
       ) => AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>),
   equalityFn: (a: TData, b: TData) => boolean = Object.is
 ): WritableAtom<TData | TQueryData, AtomWithQueryAction> {
-  const queryDataAtom = atom(
+  const queryDataAtom: WritableAtom<
+    {
+      dataAtom: PrimitiveAtom<TData | TQueryData | Promise<TData | TQueryData>>
+      observer: QueryObserver<TQueryFnData, TError, TData, TQueryData>
+    },
+    AtomWithQueryAction
+  > = atom(
     (get) => {
       const queryClient = get(getQueryClientAtom)
       const options =
@@ -98,19 +104,14 @@ export function atomWithQuery<
         const unsubscribe = observer.subscribe(listener)
         return unsubscribe
       }
-      return {
-        dataAtom,
-        observer,
-      }
+      return { dataAtom, observer }
     },
     (get, set, action: AtomWithQueryAction) => {
       switch (action.type) {
         case 'refetch': {
           const { dataAtom, observer } = get(queryDataAtom)
           set(dataAtom, new Promise<TData>(() => {})) // infinite pending
-          const p: Promise<void> = observer
-            .refetch({ cancelRefetch: true })
-            .then(() => {})
+          const p = observer.refetch({ cancelRefetch: true }).then(() => {})
           return p
         }
       }
