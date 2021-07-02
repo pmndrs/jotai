@@ -14,15 +14,14 @@ export function selectAtom<Value, Slice>(
   if (cachedAtom) {
     return cachedAtom as Atom<Slice>
   }
-  let initialized = false
-  let prevSlice: Slice
+  const refAtom = atom(() => ({} as { prev?: Slice }))
   const derivedAtom = atom((get) => {
     const slice = selector(get(anAtom))
-    if (initialized && equalityFn(prevSlice, slice)) {
-      return prevSlice
+    const ref = get(refAtom)
+    if ('prev' in ref && equalityFn(ref.prev as Slice, slice)) {
+      return ref.prev as Slice
     }
-    initialized = true
-    prevSlice = slice
+    ref.prev = slice
     return slice
   })
   derivedAtom.scope = anAtom.scope
