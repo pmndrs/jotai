@@ -21,56 +21,67 @@
     ".": {
       "types": "./index.d.ts",
       "module": "./esm/index.js",
+      "import": "./esm/index.js",
       "default": "./index.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
       "module": "./esm/utils.js",
+      "import": "./esm/utils.js",
       "default": "./utils.js"
     },
     "./devtools": {
       "types": "./devtools.d.ts",
       "module": "./esm/devtools.js",
+      "import": "./esm/devtools.js",
       "default": "./devtools.js"
     },
     "./immer": {
       "types": "./immer.d.ts",
       "module": "./esm/immer.js",
+      "import": "./esm/immer.js",
       "default": "./immer.js"
     },
     "./optics": {
       "types": "./optics.d.ts",
       "module": "./esm/optics.js",
+      "import": "./esm/optics.js",
       "default": "./optics.js"
     },
     "./query": {
       "types": "./query.d.ts",
       "module": "./esm/query.js",
+      "import": "./esm/query.js",
       "default": "./query.js"
     },
     "./xstate": {
       "types": "./xstate.d.ts",
       "module": "./esm/xstate.js",
+      "import": "./esm/xstate.js",
       "default": "./xstate.js"
     },
     "./valtio": {
       "types": "./valtio.d.ts",
       "module": "./esm/valtio.js",
+      "import": "./esm/valtio.js",
       "default": "./valtio.js"
     },
     "./zustand": {
       "types": "./zustand.d.ts",
       "module": "./esm/zustand.js",
+      "import": "./esm/zustand.js",
       "default": "./zustand.js"
     },
     "./redux": {
       "types": "./redux.d.ts",
       "module": "./esm/redux.js",
+      "import": "./esm/redux.js",
       "default": "./redux.js"
     },
     "./urql": {
       "types": "./urql.d.ts",
       "module": "./esm/urql.js",
+      "import": "./esm/urql.js",
       "default": "./urql.js"
     }
   },
