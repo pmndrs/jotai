@@ -5,6 +5,7 @@ import {
   InfiniteData,
   InitialDataFunction,
   QueryObserverResult,
+  isCancelledError,
 } from 'react-query'
 import { atom } from 'jotai'
 import type { WritableAtom, Getter } from 'jotai'
@@ -87,7 +88,7 @@ export function atomWithInfiniteQuery<
           | QueryObserverResult<InfiniteData<TData>, TError>
           | { data?: undefined; error: TError }
       ) => {
-        if (result.error) {
+        if (result.error && !isCancelledError(result.error)) {
           if (settlePromise) {
             settlePromise(null, result.error)
             settlePromise = null
