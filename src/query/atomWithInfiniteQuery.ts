@@ -120,10 +120,12 @@ export function atomWithInfiniteQuery<
 
       const observer = new InfiniteQueryObserver(queryClient, defaultedOptions)
 
-      observer
-        .fetchOptimistic(defaultedOptions)
-        .then(listener)
-        .catch((error) => listener({ error }))
+      if (!defaultedOptions.initialData) {
+        observer
+          .fetchOptimistic(defaultedOptions)
+          .then(listener)
+          .catch((error) => listener({ error }))
+      }
 
       dataAtom.onMount = (update) => {
         setData = update

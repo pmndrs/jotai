@@ -95,10 +95,12 @@ export function atomWithQuery<
         defaultedOptions.staleTime = 1000
       }
       const observer = new QueryObserver(queryClient, defaultedOptions)
-      observer
-        .fetchOptimistic(defaultedOptions)
-        .then(listener)
-        .catch((error) => listener({ error }))
+      if (!defaultedOptions.initialData) {
+        observer
+          .fetchOptimistic(defaultedOptions)
+          .then(listener)
+          .catch((error) => listener({ error }))
+      }
       dataAtom.onMount = (update) => {
         setData = update
         const unsubscribe = observer.subscribe(listener)
