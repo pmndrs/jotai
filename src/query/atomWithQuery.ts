@@ -95,7 +95,7 @@ export function atomWithQuery<
         defaultedOptions.staleTime = 1000
       }
       const observer = new QueryObserver(queryClient, defaultedOptions)
-      if (!defaultedOptions.initialData) {
+      if (!getInitialData()) {
         observer
           .fetchOptimistic(defaultedOptions)
           .then(listener)

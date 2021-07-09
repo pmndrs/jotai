@@ -120,7 +120,7 @@ export function atomWithInfiniteQuery<
 
       const observer = new InfiniteQueryObserver(queryClient, defaultedOptions)
 
-      if (!defaultedOptions.initialData) {
+      if (!getInitialData()) {
         observer
           .fetchOptimistic(defaultedOptions)
           .then(listener)
