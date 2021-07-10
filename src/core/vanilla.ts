@@ -292,6 +292,9 @@ const readAtomState = <Value>(
       // a === atom
       const aState = getAtomState(state, a)
       if (aState) {
+        if (aState.e) {
+          throw aState.e // read error
+        }
         if (aState.p) {
           throw aState.p // read promise
         }
@@ -404,7 +407,10 @@ const writeAtomState = <Value, Update>(
     })
     return
   }
-  const writeGetter: WriteGetter = (a: AnyAtom, unstable_promise?: boolean) => {
+  const writeGetter: WriteGetter = (
+    a: AnyAtom,
+    unstable_promise: boolean = false
+  ) => {
     const aState = readAtomState(state, a)
     if (aState.e) {
       throw aState.e // read error

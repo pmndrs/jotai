@@ -39,28 +39,27 @@ export function splitAtom<Item, Key>(
     return cachedAtom
   }
   type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
-  let currentAtomList: ItemAtom[] | undefined
-  let currentKeyList: Key[] | undefined
-  const keyToAtom = (key: Key) => {
-    const index = currentKeyList?.indexOf(key)
-    if (index === undefined || index === -1) {
-      return undefined
-    }
-    return currentAtomList?.[index]
-  }
+  const refAtom = atom(
+    () =>
+      ({} as {
+        atomList?: ItemAtom[]
+        keyList?: Key[]
+      })
+  )
   const read = (get: Getter) => {
+    const ref = get(refAtom)
     let nextAtomList: Atom<Item>[] = []
     let nextKeyList: Key[] = []
     get(arrAtom).forEach((item, index) => {
       const key = keyExtractor ? keyExtractor(item) : (index as unknown as Key)
       nextKeyList[index] = key
-      const cachedAtom = keyToAtom(key)
+      const cachedAtom = ref.atomList?.[ref.keyList?.indexOf(key) ?? -1]
       if (cachedAtom) {
         nextAtomList[index] = cachedAtom
         return
       }
       const read = (get: Getter) => {
-        const index = currentKeyList?.indexOf(key) ?? -1
+        const index = ref.keyList?.indexOf(key) ?? -1
         if (
           index === -1 &&
           typeof process === 'object' &&
@@ -78,7 +77,7 @@ export function splitAtom<Item, Key>(
         set: Setter,
         update: SetStateAction<Item>
       ) => {
-        const index = currentKeyList?.indexOf(key) ?? -1
+        const index = ref.keyList?.indexOf(key) ?? -1
         if (index === -1) {
           throw new Error('splitAtom: array index not found')
         }
@@ -94,15 +93,15 @@ export function splitAtom<Item, Key>(
       itemAtom.scope = arrAtom.scope
       nextAtomList[index] = itemAtom
     })
-    currentKeyList = nextKeyList
+    ref.keyList = nextKeyList
     if (
-      currentAtomList &&
-      currentAtomList.length === nextAtomList.length &&
-      currentAtomList.every((x, i) => x === nextAtomList[i])
+      ref.atomList &&
+      ref.atomList.length === nextAtomList.length &&
+      ref.atomList.every((x, i) => x === nextAtomList[i])
     ) {
-      return currentAtomList
+      return ref.atomList
     }
-    return (currentAtomList = nextAtomList)
+    return (ref.atomList = nextAtomList)
   }
   const write = (get: Getter, set: Setter, atomToRemove: ItemAtom) => {
     const index = get(splittedAtom).indexOf(atomToRemove)
