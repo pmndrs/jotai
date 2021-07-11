@@ -1,4 +1,5 @@
 import {
+  QueryClient,
   QueryKey,
   QueryObserver,
   QueryObserverOptions,
@@ -7,7 +8,7 @@ import {
 } from 'react-query'
 import { atom } from 'jotai'
 import type { WritableAtom, PrimitiveAtom, Getter } from 'jotai'
-import { getQueryClientAtom } from './queryClientAtom'
+import { queryClientAtom } from './queryClientAtom'
 
 export type AtomWithQueryAction = { type: 'refetch' }
 
@@ -27,7 +28,8 @@ export function atomWithQuery<
     | ((
         get: Getter
       ) => AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>),
-  equalityFn: (a: TData, b: TData) => boolean = Object.is
+  equalityFn: (a: TData, b: TData) => boolean = Object.is,
+  getQueryClient: (get: Getter) => QueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | TQueryData, AtomWithQueryAction> {
   const queryDataAtom: WritableAtom<
     {
@@ -37,7 +39,7 @@ export function atomWithQuery<
     AtomWithQueryAction
   > = atom(
     (get) => {
-      const queryClient = get(getQueryClientAtom)
+      const queryClient = getQueryClient(get)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       let settlePromise: ((data: TData | null, err?: TError) => void) | null =
@@ -58,6 +60,7 @@ export function atomWithQuery<
             }
           })
       )
+      dataAtom.scope = queryAtom.scope
       let setData: (data: TData | Promise<TData>) => void = () => {
         throw new Error('atomWithQuery: setting data without mount')
       }
@@ -109,6 +112,7 @@ export function atomWithQuery<
     (get, set, action: AtomWithQueryAction) => {
       switch (action.type) {
         case 'refetch': {
+          queryDataAtom.scope = queryAtom.scope
           const { dataAtom, observer } = get(queryDataAtom)
           set(dataAtom, new Promise<TData>(() => {})) // infinite pending
           const p = observer.refetch({ cancelRefetch: true }).then(() => {})
@@ -119,10 +123,14 @@ export function atomWithQuery<
   )
   const queryAtom = atom<TData | TQueryData, AtomWithQueryAction>(
     (get) => {
+      queryDataAtom.scope = queryAtom.scope
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
     },
-    (_get, set, action) => set(queryDataAtom, action) // delegate action
+    (_get, set, action) => {
+      queryDataAtom.scope = queryAtom.scope
+      set(queryDataAtom, action) // delegate action
+    }
   )
   return queryAtom
 }

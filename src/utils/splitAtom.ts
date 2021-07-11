@@ -46,6 +46,7 @@ export function splitAtom<Item, Key>(
         keyList?: Key[]
       })
   )
+  refAtom.scope = arrAtom.scope
   const read = (get: Getter) => {
     const ref = get(refAtom)
     let nextAtomList: Atom<Item>[] = []
