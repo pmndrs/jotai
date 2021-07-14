@@ -46,8 +46,11 @@ export function atomWithQuery<
         typeof options.initialData === 'function'
           ? (options.initialData as InitialDataFunction<TQueryData>)()
           : options.initialData
+
+      const initialData = getInitialData()
+
       const dataAtom = atom<TData | TQueryData | Promise<TData | TQueryData>>(
-        getInitialData() ||
+        initialData ||
           new Promise<TData>((resolve, reject) => {
             settlePromise = (data, err) => {
               if (err) {
@@ -95,10 +98,12 @@ export function atomWithQuery<
         defaultedOptions.staleTime = 1000
       }
       const observer = new QueryObserver(queryClient, defaultedOptions)
-      observer
-        .fetchOptimistic(defaultedOptions)
-        .then(listener)
-        .catch((error) => listener({ error }))
+      if (!initialData) {
+        observer
+          .fetchOptimistic(defaultedOptions)
+          .then(listener)
+          .catch((error) => listener({ error }))
+      }
       dataAtom.onMount = (update) => {
         setData = update
         const unsubscribe = observer.subscribe(listener)

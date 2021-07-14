@@ -61,11 +61,14 @@ export function atomWithInfiniteQuery<
               >
             )()
           : options.initialData
+
+      const initialData = getInitialData()
+
       const dataAtom = atom<
         | InfiniteData<TData | TQueryData>
         | Promise<InfiniteData<TData | TQueryData>>
       >(
-        getInitialData() ||
+        initialData ||
           new Promise<InfiniteData<TData>>((resolve, reject) => {
             settlePromise = (data, err) => {
               if (err) {
@@ -120,10 +123,12 @@ export function atomWithInfiniteQuery<
 
       const observer = new InfiniteQueryObserver(queryClient, defaultedOptions)
 
-      observer
-        .fetchOptimistic(defaultedOptions)
-        .then(listener)
-        .catch((error) => listener({ error }))
+      if (!initialData) {
+        observer
+          .fetchOptimistic(defaultedOptions)
+          .then(listener)
+          .catch((error) => listener({ error }))
+      }
 
       dataAtom.onMount = (update) => {
         setData = update
