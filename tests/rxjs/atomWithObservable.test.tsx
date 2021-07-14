@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import { fireEvent, render, act } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { getTestProvider } from '../testUtils'
 import { useAtom } from '../../src/index'
 import { atomWithObservable } from '../../src/rxjs'
@@ -12,8 +12,6 @@ it('count state', async () => {
     () =>
       new Observable<number>((subscriber) => {
         subscriber.next(1)
-        subscriber.next(2)
-        subscriber.next(3)
       })
   )
 

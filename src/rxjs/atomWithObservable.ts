@@ -1,31 +1,56 @@
 import { Observable } from 'rxjs'
+import { first } from 'rxjs/operators'
 import { atom } from 'jotai'
 import type { Atom, Getter } from 'jotai'
 
 export function atomWithObservable<TData>(
   createObservable: (get: Getter) => Observable<TData>
 ): Atom<TData> {
-  const dataAtom = atom<TData | Promise<TData>>(
-    new Promise<TData>(() => {}) // infinite pending
-  )
-  const observableAtom = atom((get) => {
+  type Result = { data: TData } | { error: unknown }
+  const observableResultAtom = atom((get) => {
     const observable = createObservable(get)
-    const observerAtom = atom(null, (_get, set, data: TData) => {
-      set(dataAtom, data)
-    })
-    observerAtom.onMount = (dispatch) => {
-      const subscription = observable.subscribe(dispatch)
-      // XXX no error handling
-      return () => {
-        subscription.unsubscribe()
+    let resolve: ((result: Result) => void) | null = null
+    const resultAtom = atom<Result | Promise<Result>>(
+      new Promise<Result>((r) => {
+        resolve = r
+      })
+    )
+    resultAtom.scope = observableAtom.scope
+    let setResult: (result: Result) => void = () => {
+      throw new Error('setting data without mount')
+    }
+    const dataListener = (data: TData) => {
+      if (resolve) {
+        resolve({ data })
+        resolve = null
+      } else {
+        setResult({ data })
       }
     }
-    return observerAtom
+    const errorListener = (error: unknown) => {
+      if (resolve) {
+        resolve({ error })
+        resolve = null
+      } else {
+        setResult({ error })
+      }
+    }
+    observable.pipe(first()).toPromise().then(dataListener).catch(errorListener)
+    resultAtom.onMount = (update) => {
+      setResult = update
+      const subscription = observable.subscribe(dataListener, errorListener)
+      return () => subscription.unsubscribe()
+    }
+    return { resultAtom }
   })
-  const observableDataAtom = atom((get) => {
-    const observerAtom = get(observableAtom)
-    get(observerAtom) // use it here
-    return get(dataAtom)
+  const observableAtom = atom((get) => {
+    observableResultAtom.scope = observableAtom.scope
+    const { resultAtom } = get(observableResultAtom)
+    const result = get(resultAtom)
+    if ('error' in result) {
+      throw result.error
+    }
+    return result.data
   })
-  return observableDataAtom
+  return observableAtom
 }
