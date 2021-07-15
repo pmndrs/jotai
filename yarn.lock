@@ -1418,9 +1418,9 @@
   integrity sha512-YSBPTLTVm2e2OoQIDYx8HaeWJ5tTToLH67kXR7zYNGupXMEHa2++G8k+DczX2cFVgalypqtyZIcU19AFcmOpmg==
 
 "@types/node@*":
-  version "16.3.0"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.3.0.tgz#1836664e4fad13b51b07eb6e882a53925e6543c4"
-  integrity sha512-OydMCocGMGqw/1BnWbhtK+AtwyWTOigtrQlRe57OQmTNcI3HKlVI5FGlh+c4mSqInMPLynFrTlYjfajPu9O/eQ==
+  version "16.3.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.3.1.tgz#24691fa2b0c3ec8c0d34bfcfd495edac5593ebb4"
+  integrity sha512-N87VuQi7HEeRJkhzovao/JviiqKjDKMVKxKMfUvSKw+MbkbW8R0nA3fi/MQhhlxV2fQ+2ReM+/Nt4efdrJx3zA==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
@@ -2985,9 +2985,9 @@ duplexify@^3.4.2, duplexify@^3.6.0:
     stream-shift "^1.0.0"
 
 electron-to-chromium@^1.3.723:
-  version "1.3.771"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.771.tgz#c4aa601e6420e11926095f75fe803956a1b4bd81"
-  integrity sha512-zHMomTqkpnAD9W5rhXE1aiU3ogGFrqWzdvM4C6222SREiqsWQb2w0S7P2Ii44qCaGimmAP1z+OydllM438uJyA==
+  version "1.3.772"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.772.tgz#fd1ed39f9f3149f62f581734e4f026e600369479"
+  integrity sha512-X/6VRCXWALzdX+RjCtBU6cyg8WZgoxm9YA02COmDOiNJEZ59WkQggDbWZ4t/giHi/3GS+cvdrP6gbLISANAGYA==
 
 elliptic@^6.5.3:
   version "6.5.4"
@@ -5863,10 +5863,10 @@ prop-types@^15.7.2:
     object-assign "^4.1.1"
     react-is "^16.8.1"
 
-proxy-compare@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/proxy-compare/-/proxy-compare-2.0.0.tgz#36f41114a25fcf359037308d12529183a9dc182c"
-  integrity sha512-xhJF1+vPCnu93QYva3Weii5ho1AeX5dsR/P5O7pzy9QLxeOgMSQNC8zDo0bGg9vtn61Pu5Qn+5w/Y8OSU5k+8g==
+proxy-compare@2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/proxy-compare/-/proxy-compare-2.0.1.tgz#3ae19cf47f64e89bd60fe4f57afd124f733ef64f"
+  integrity sha512-uXj3TtWdR1S2SNwJKbgJB+1FJm9HM3sFzlVc8W6PZvU6ogt9mlkb1WwZQpuKFLkDS6LKY4+FBE18K6ZArphnHA==
 
 prr@~1.0.1:
   version "1.0.1"
@@ -6957,9 +6957,9 @@ ts-expect@^1.3.0:
   integrity sha512-e4g0EJtAjk64xgnFPD6kTBUtpnMVzDrMb12N1YZV0VvSlhnVT3SGxiYTLdGy8Q5cYHOIC/FAHmZ10eGrAguicQ==
 
 ts-node@^10.0.0:
-  version "10.0.0"
-  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-10.0.0.tgz#05f10b9a716b0b624129ad44f0ea05dac84ba3be"
-  integrity sha512-ROWeOIUvfFbPZkoDis0L/55Fk+6gFQNZwwKPLinacRl6tsxstTF1DbAcLKkovwnpKMVvOMHP1TIbnwXwtLg1gg==
+  version "10.1.0"
+  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-10.1.0.tgz#e656d8ad3b61106938a867f69c39a8ba6efc966e"
+  integrity sha512-6szn3+J9WyG2hE+5W8e0ruZrzyk1uFLYye6IGMBadnOzDh8aP7t8CbFpsfCiEx2+wMixAhjFt7lOZC4+l+WbEA==
   dependencies:
     "@tsconfig/node10" "^1.0.7"
     "@tsconfig/node12" "^1.0.7"
@@ -7209,11 +7209,11 @@ validate-npm-package-license@^3.0.1:
     spdx-expression-parse "^3.0.0"
 
 valtio@^1.0.3:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/valtio/-/valtio-1.0.6.tgz#b316deea5537d254a141e2e5af1692d9eae2f60f"
-  integrity sha512-ylCis9IkcE7b92XjMb3ebdJgLvJEFJ2NjfuD01QNr98pVOhRa5WsW4LSykFgbO4W7ftrZtO8jN4svZL0XlD77w==
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/valtio/-/valtio-1.0.7.tgz#bbcf1bdf722923d1a3b91452c05936c6ab127b21"
+  integrity sha512-zaaM+QiE6P0pBllFIyDnbjaRILEYsy1YYJf6F1D8dsADKxL2r+Fb3SupM8SHQn2tNx4cbSTu9aarOaoiH+X1dg==
   dependencies:
-    proxy-compare "2.0.0"
+    proxy-compare "2.0.1"
 
 vm-browserify@^1.0.1:
   version "1.1.2"
