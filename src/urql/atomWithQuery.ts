@@ -8,7 +8,7 @@ import {
 } from '@urql/core'
 import { atom } from 'jotai'
 import type { Getter } from 'jotai'
-import { getClientAtom } from './clientAtom'
+import { clientAtom } from './clientAtom'
 
 type QueryArgs<Data, Variables extends object> = {
   query: TypedDocumentNode<Data, Variables> | string
@@ -19,7 +19,7 @@ type QueryArgs<Data, Variables extends object> = {
 
 export function atomWithQuery<Data, Variables extends object>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
-  getClient: (get: Getter) => Client = (get) => get(getClientAtom)
+  getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
   const queryResultAtom = atom((get) => {
     const client = getClient(get)
@@ -34,6 +34,7 @@ export function atomWithQuery<Data, Variables extends object>(
         resolve = r
       })
     )
+    resultAtom.scope = queryAtom.scope
     let setResult: (result: OperationResult<Data, Variables>) => void = () => {
       throw new Error('setting result without mount')
     }
@@ -69,6 +70,7 @@ export function atomWithQuery<Data, Variables extends object>(
     return { resultAtom, args }
   })
   const queryAtom = atom((get) => {
+    queryResultAtom.scope = queryAtom.scope
     const { resultAtom } = get(queryResultAtom)
     return get(resultAtom)
   })

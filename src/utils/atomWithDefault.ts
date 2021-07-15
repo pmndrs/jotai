@@ -11,6 +11,7 @@ export function atomWithDefault<Value>(getDefault: Read<Value>) {
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
   const anAtom: WritableAtom<Value, Update> = atom(
     (get) => {
+      overwrittenAtom.scope = anAtom.scope
       const overwritten = get(overwrittenAtom)
       if (overwritten !== EMPTY) {
         return overwritten
@@ -18,6 +19,7 @@ export function atomWithDefault<Value>(getDefault: Read<Value>) {
       return getDefault(get)
     },
     (get, set, update) => {
+      overwrittenAtom.scope = anAtom.scope
       if (update === RESET) {
         set(overwrittenAtom, EMPTY)
       } else {

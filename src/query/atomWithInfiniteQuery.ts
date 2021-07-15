@@ -1,4 +1,5 @@
 import {
+  QueryClient,
   QueryKey,
   InfiniteQueryObserver,
   InfiniteQueryObserverOptions,
@@ -9,7 +10,7 @@ import {
 } from 'react-query'
 import { atom } from 'jotai'
 import type { WritableAtom, Getter } from 'jotai'
-import { getQueryClientAtom } from './queryClientAtom'
+import { queryClientAtom } from './queryClientAtom'
 
 export type AtomWithInfiniteQueryAction = {
   type: 'refetch' | 'fetchNextPage' | 'fetchPreviousPage'
@@ -39,11 +40,12 @@ export function atomWithInfiniteQuery<
         TError,
         TData,
         TQueryData
-      >)
+      >),
+  getQueryClient: (get: Getter) => QueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<InfiniteData<TData | TQueryData>, AtomWithInfiniteQueryAction> {
   const queryDataAtom = atom(
     (get) => {
-      const queryClient = get(getQueryClientAtom)
+      const queryClient = getQueryClient(get)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       let settlePromise:
@@ -75,6 +77,7 @@ export function atomWithInfiniteQuery<
             }
           })
       )
+      dataAtom.scope = queryAtom.scope
       let setData: (
         data: InfiniteData<TData> | Promise<InfiniteData<TData>>
       ) => void = () => {
@@ -128,6 +131,7 @@ export function atomWithInfiniteQuery<
       return { dataAtom, observer, options }
     },
     (get, _set, action: AtomWithInfiniteQueryAction) => {
+      queryDataAtom.scope = queryAtom.scope
       const { observer } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
@@ -151,10 +155,14 @@ export function atomWithInfiniteQuery<
     AtomWithInfiniteQueryAction
   >(
     (get) => {
+      queryDataAtom.scope = queryAtom.scope
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
     },
-    (_get, set, action) => set(queryDataAtom, action) // delegate action
+    (_get, set, action) => {
+      queryDataAtom.scope = queryAtom.scope
+      set(queryDataAtom, action) // delegate action
+    }
   )
   return queryAtom
 }

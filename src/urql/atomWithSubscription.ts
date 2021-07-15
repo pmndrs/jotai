@@ -7,7 +7,7 @@ import {
 } from '@urql/core'
 import { atom } from 'jotai'
 import type { Getter } from 'jotai'
-import { getClientAtom } from './clientAtom'
+import { clientAtom } from './clientAtom'
 
 type SubscriptionArgs<Data, Variables extends object> = {
   query: TypedDocumentNode<Data, Variables> | string
@@ -17,7 +17,7 @@ type SubscriptionArgs<Data, Variables extends object> = {
 
 export function atomWithSubscription<Data, Variables extends object>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
-  getClient: (get: Getter) => Client = (get) => get(getClientAtom)
+  getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
   const queryResultAtom = atom((get) => {
     const client = getClient(get)
@@ -32,6 +32,7 @@ export function atomWithSubscription<Data, Variables extends object>(
         resolve = r
       })
     )
+    resultAtom.scope = queryAtom.scope
     let setResult: (result: OperationResult<Data, Variables>) => void = () => {
       throw new Error('setting result without mount')
     }
@@ -68,6 +69,7 @@ export function atomWithSubscription<Data, Variables extends object>(
     return { resultAtom, args }
   })
   const queryAtom = atom((get) => {
+    queryResultAtom.scope = queryAtom.scope
     const { resultAtom } = get(queryResultAtom)
     return get(resultAtom)
   })
