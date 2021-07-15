@@ -14,9 +14,9 @@
     }
   },
   "utils.js": {
-    "bundled": 13479,
-    "minified": 6775,
-    "gzipped": 2544,
+    "bundled": 13716,
+    "minified": 6895,
+    "gzipped": 2574,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -70,23 +70,23 @@
     }
   },
   "query.js": {
-    "bundled": 5223,
-    "minified": 2285,
-    "gzipped": 714,
+    "bundled": 5444,
+    "minified": 2279,
+    "gzipped": 710,
     "treeshaked": {
       "rollup": {
-        "code": 105,
+        "code": 80,
         "import_statements": 71
       },
       "webpack": {
-        "code": 1131
+        "code": 1093
       }
     }
   },
   "xstate.js": {
-    "bundled": 2977,
-    "minified": 1314,
-    "gzipped": 653,
+    "bundled": 3565,
+    "minified": 1470,
+    "gzipped": 684,
     "treeshaked": {
       "rollup": {
         "code": 29,
@@ -98,9 +98,9 @@
     }
   },
   "valtio.js": {
-    "bundled": 1235,
-    "minified": 598,
-    "gzipped": 335,
+    "bundled": 1333,
+    "minified": 642,
+    "gzipped": 350,
     "treeshaked": {
       "rollup": {
         "code": 37,
@@ -112,9 +112,9 @@
     }
   },
   "zustand.js": {
-    "bundled": 549,
-    "minified": 262,
-    "gzipped": 188,
+    "bundled": 647,
+    "minified": 306,
+    "gzipped": 204,
     "treeshaked": {
       "rollup": {
         "code": 14,
@@ -126,9 +126,9 @@
     }
   },
   "redux.js": {
-    "bundled": 458,
-    "minified": 220,
-    "gzipped": 167,
+    "bundled": 516,
+    "minified": 248,
+    "gzipped": 180,
     "treeshaked": {
       "rollup": {
         "code": 14,
@@ -140,16 +140,16 @@
     }
   },
   "urql.js": {
-    "bundled": 4312,
-    "minified": 2311,
-    "gzipped": 852,
+    "bundled": 4539,
+    "minified": 2369,
+    "gzipped": 856,
     "treeshaked": {
       "rollup": {
-        "code": 199,
+        "code": 170,
         "import_statements": 85
       },
       "webpack": {
-        "code": 1387
+        "code": 1355
       }
     }
   }

@@ -41,10 +41,6 @@ export function atomWithInfiniteQuery<
         TData,
         TQueryData
       >),
-  equalityFn: (
-    a: InfiniteData<TData>,
-    b: InfiniteData<TData>
-  ) => boolean = Object.is,
   getQueryClient: (get: Getter) => QueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<InfiniteData<TData | TQueryData>, AtomWithInfiniteQueryAction> {
   const queryDataAtom = atom(
@@ -63,11 +59,14 @@ export function atomWithInfiniteQuery<
               >
             )()
           : options.initialData
+
+      const initialData = getInitialData()
+
       const dataAtom = atom<
         | InfiniteData<TData | TQueryData>
         | Promise<InfiniteData<TData | TQueryData>>
       >(
-        getInitialData() ||
+        initialData ||
           new Promise<InfiniteData<TData>>((resolve, reject) => {
             settlePromise = (data, err) => {
               if (err) {
@@ -84,8 +83,6 @@ export function atomWithInfiniteQuery<
       ) => void = () => {
         throw new Error('atomWithInfiniteQuery: setting data without mount')
       }
-      let prevData: InfiniteData<TData> | null = null
-
       const listener = (
         result:
           | QueryObserverResult<InfiniteData<TData>, TError>
@@ -100,13 +97,9 @@ export function atomWithInfiniteQuery<
           }
           return
         }
-        if (
-          result.data === undefined ||
-          (prevData !== null && equalityFn(prevData, result.data))
-        ) {
+        if (result.data === undefined) {
           return
         }
-        prevData = result.data
         if (settlePromise) {
           settlePromise(result.data)
           settlePromise = null
@@ -123,10 +116,12 @@ export function atomWithInfiniteQuery<
 
       const observer = new InfiniteQueryObserver(queryClient, defaultedOptions)
 
-      observer
-        .fetchOptimistic(defaultedOptions)
-        .then(listener)
-        .catch((error) => listener({ error }))
+      if (!initialData) {
+        observer
+          .fetchOptimistic(defaultedOptions)
+          .then(listener)
+          .catch((error) => listener({ error }))
+      }
 
       dataAtom.onMount = (update) => {
         setData = update

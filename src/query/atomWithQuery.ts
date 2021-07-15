@@ -28,7 +28,6 @@ export function atomWithQuery<
     | ((
         get: Getter
       ) => AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>),
-  equalityFn: (a: TData, b: TData) => boolean = Object.is,
   getQueryClient: (get: Getter) => QueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | TQueryData, AtomWithQueryAction> {
   const queryDataAtom: WritableAtom<
@@ -48,8 +47,11 @@ export function atomWithQuery<
         typeof options.initialData === 'function'
           ? (options.initialData as InitialDataFunction<TQueryData>)()
           : options.initialData
+
+      const initialData = getInitialData()
+
       const dataAtom = atom<TData | TQueryData | Promise<TData | TQueryData>>(
-        getInitialData() ||
+        initialData ||
           new Promise<TData>((resolve, reject) => {
             settlePromise = (data, err) => {
               if (err) {
@@ -64,7 +66,6 @@ export function atomWithQuery<
       let setData: (data: TData | Promise<TData>) => void = () => {
         throw new Error('atomWithQuery: setting data without mount')
       }
-      let prevData: TData | null = null
       const listener = (
         result:
           | QueryObserverResult<TData, TError>
@@ -79,13 +80,9 @@ export function atomWithQuery<
           }
           return
         }
-        if (
-          result.data === undefined ||
-          (prevData !== null && equalityFn(prevData, result.data))
-        ) {
+        if (result.data === undefined) {
           return
         }
-        prevData = result.data
         if (settlePromise) {
           settlePromise(result.data)
           settlePromise = null
@@ -98,10 +95,12 @@ export function atomWithQuery<
         defaultedOptions.staleTime = 1000
       }
       const observer = new QueryObserver(queryClient, defaultedOptions)
-      observer
-        .fetchOptimistic(defaultedOptions)
-        .then(listener)
-        .catch((error) => listener({ error }))
+      if (!initialData) {
+        observer
+          .fetchOptimistic(defaultedOptions)
+          .then(listener)
+          .catch((error) => listener({ error }))
+      }
       dataAtom.onMount = (update) => {
         setData = update
         const unsubscribe = observer.subscribe(listener)
