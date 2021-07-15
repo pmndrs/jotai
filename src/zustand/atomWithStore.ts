@@ -13,8 +13,12 @@ export function atomWithStore<T extends State>(store: StoreApi<T>) {
     return unsub
   }
   const derivedAtom = atom(
-    (get) => get(baseAtom),
+    (get) => {
+      baseAtom.scope = derivedAtom.scope
+      return get(baseAtom)
+    },
     (get, _set, update: SetStateAction<T>) => {
+      baseAtom.scope = derivedAtom.scope
       const newState =
         typeof update === 'function'
           ? (update as (prev: T) => T)(get(baseAtom))

@@ -15,6 +15,7 @@ export function selectAtom<Value, Slice>(
     return cachedAtom as Atom<Slice>
   }
   const refAtom = atom(() => ({} as { prev?: Slice }))
+  refAtom.scope = anAtom.scope
   const derivedAtom = atom((get) => {
     const slice = selector(get(anAtom))
     const ref = get(refAtom)

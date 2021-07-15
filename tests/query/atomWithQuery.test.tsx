@@ -271,14 +271,15 @@ it('query with enabled (#500)', async () => {
 })
 
 it('query with initialData test', async () => {
+  const mockFetch = jest.fn(fakeFetch)
+
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count1',
     queryFn: async () => {
-      return await fakeFetch({ count: 10 }) // will run after "initialData"
+      return await mockFetch({ count: 10 })
     },
     initialData: { response: { count: 0 } },
-    keepPreviousData: true, // to prevent suspense on refresh
-    refetchInterval: 0, // to immediately refresh (after mount) to count: 10
+    refetchInterval: 100,
   }))
   const Counter: React.FC = () => {
     const [
@@ -301,5 +302,7 @@ it('query with initialData test', async () => {
 
   // NOTE: the atom never suspends
   await findByText('count: 0')
+  expect(mockFetch).toHaveBeenCalledTimes(0)
   await findByText('count: 10')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
 })
