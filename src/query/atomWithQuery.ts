@@ -26,8 +26,7 @@ export function atomWithQuery<
     | AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
     | ((
         get: Getter
-      ) => AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>),
-  equalityFn: (a: TData, b: TData) => boolean = Object.is
+      ) => AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>)
 ): WritableAtom<TData | TQueryData, AtomWithQueryAction> {
   const queryDataAtom: WritableAtom<
     {
@@ -64,7 +63,6 @@ export function atomWithQuery<
       let setData: (data: TData | Promise<TData>) => void = () => {
         throw new Error('atomWithQuery: setting data without mount')
       }
-      let prevData: TData | null = null
       const listener = (
         result:
           | QueryObserverResult<TData, TError>
@@ -79,13 +77,9 @@ export function atomWithQuery<
           }
           return
         }
-        if (
-          result.data === undefined ||
-          (prevData !== null && equalityFn(prevData, result.data))
-        ) {
+        if (result.data === undefined) {
           return
         }
-        prevData = result.data
         if (settlePromise) {
           settlePromise(result.data)
           settlePromise = null

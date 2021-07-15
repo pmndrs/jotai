@@ -39,11 +39,7 @@ export function atomWithInfiniteQuery<
         TError,
         TData,
         TQueryData
-      >),
-  equalityFn: (
-    a: InfiniteData<TData>,
-    b: InfiniteData<TData>
-  ) => boolean = Object.is
+      >)
 ): WritableAtom<InfiniteData<TData | TQueryData>, AtomWithInfiniteQueryAction> {
   const queryDataAtom = atom(
     (get) => {
@@ -84,8 +80,6 @@ export function atomWithInfiniteQuery<
       ) => void = () => {
         throw new Error('atomWithInfiniteQuery: setting data without mount')
       }
-      let prevData: InfiniteData<TData> | null = null
-
       const listener = (
         result:
           | QueryObserverResult<InfiniteData<TData>, TError>
@@ -100,13 +94,9 @@ export function atomWithInfiniteQuery<
           }
           return
         }
-        if (
-          result.data === undefined ||
-          (prevData !== null && equalityFn(prevData, result.data))
-        ) {
+        if (result.data === undefined) {
           return
         }
-        prevData = result.data
         if (settlePromise) {
           settlePromise(result.data)
           settlePromise = null
@@ -137,7 +127,7 @@ export function atomWithInfiniteQuery<
       }
       return { dataAtom, observer, options }
     },
-    (get, set, action: AtomWithInfiniteQueryAction) => {
+    (get, _set, action: AtomWithInfiniteQueryAction) => {
       const { observer } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
