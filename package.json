@@ -237,7 +237,6 @@
     "optics-ts": "*",
     "react": ">=16.8",
     "react-query": "*",
-    "rxjs": "*",
     "valtio": "*",
     "wonka": "*",
     "xstate": "*"

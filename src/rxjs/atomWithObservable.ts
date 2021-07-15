@@ -1,23 +1,51 @@
-import { Observable, Subject } from 'rxjs'
-import { first } from 'rxjs/operators'
 import { atom } from 'jotai'
 import type { Atom, WritableAtom, Getter } from 'jotai'
 
+const observableSymbol: typeof Symbol.observable =
+  typeof Symbol === 'function'
+    ? Symbol.observable || ((Symbol as any).observable = Symbol('observable'))
+    : ('@@observable' as any)
+
+export interface Subscription {
+  unsubscribe(): void
+}
+
+export interface Observer<T> {
+  next(value: T): void
+  error(error: any): void
+  complete(): void
+}
+
+export interface ObservableLike<T> {
+  subscribe(observer: Observer<T>): Subscription
+  subscribe(
+    next: (value: T) => void,
+    error?: (error: any) => void,
+    complete?: () => void
+  ): Subscription
+  [Symbol.observable]?(): ObservableLike<T>
+}
+
+export type SubjectLike<T> = ObservableLike<T> & Observer<T>
+
 export function atomWithObservable<TData>(
-  createObservable: (get: Getter) => Subject<TData>
+  createObservable: (get: Getter) => ObservableLike<TData>
 ): WritableAtom<TData, TData>
 
 export function atomWithObservable<TData>(
-  createObservable: (get: Getter) => Observable<TData>
+  createObservable: (get: Getter) => SubjectLike<TData>
 ): Atom<TData>
 
 export function atomWithObservable<TData>(
-  createObservable: (get: Getter) => Observable<TData> | Subject<TData>
+  createObservable: (get: Getter) => ObservableLike<TData> | SubjectLike<TData>
 ) {
   type Result = { data: TData } | { error: unknown }
   const observableResultAtom = atom((get) => {
-    const observable = createObservable(get)
     let resolve: ((result: Result) => void) | null = null
+    let observable = createObservable(get)
+    if (observable[observableSymbol]) {
+      observable = observable[observableSymbol]!()
+    }
     const resultAtom = atom<Result | Promise<Result>>(
       new Promise<Result>((r) => {
         resolve = r
@@ -43,11 +71,23 @@ export function atomWithObservable<TData>(
         setResult({ error })
       }
     }
-    observable.pipe(first()).toPromise().then(dataListener).catch(errorListener)
+    let subscription: Subscription | null = null
+    subscription = observable.subscribe((data) => {
+      dataListener(data)
+      if (subscription && !setResult) {
+        subscription.unsubscribe()
+        subscription = null
+      }
+    }, errorListener)
+    if (!resolve) {
+      subscription.unsubscribe()
+      subscription = null
+    }
     resultAtom.onMount = (update) => {
       setResult = update
-      const subscription = observable.subscribe(dataListener, errorListener)
-      return () => subscription.unsubscribe()
+      if (!subscription)
+        subscription = observable.subscribe(dataListener, errorListener)
+      return () => subscription && subscription.unsubscribe()
     }
     return { resultAtom, observable }
   })
