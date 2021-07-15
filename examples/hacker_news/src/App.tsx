@@ -5,10 +5,16 @@ import { a, useSpring } from '@react-spring/web'
 
 type PostData = {
   by: string
-  title?: string
-  url: string
+  descendants?: number
+  id: number
+  kids?: number[]
+  parent: number
+  score?: number
   text?: string
   time: number
+  title?: string
+  type: "comment" | "story"
+  url?: string
 }
 
 const postId = atom(9001)
@@ -36,13 +42,13 @@ function Next() {
 }
 
 function PostTitle() {
-  const [{ by, title, url, text, time }] = useAtom(postData)
+  const [{ by, text, time, title, url }] = useAtom(postData)
   return (
     <>
       <h2>{by}</h2>
       <h6>{new Date(time * 1000).toLocaleDateString('en-US')}</h6>
       {title && <h4>{title}</h4>}
-      <a href={url}>{url}</a>
+      {url && <a href={url}>{url}</a>}
       {text && <div>{Parser(text)}</div>}
     </>
   )
