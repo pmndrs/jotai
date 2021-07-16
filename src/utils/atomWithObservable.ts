@@ -24,11 +24,11 @@ type ObservableLike<T> = {
 type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
 export function atomWithObservable<TData>(
-  createObservable: (get: Getter) => ObservableLike<TData>
+  createObservable: (get: Getter) => SubjectLike<TData>
 ): WritableAtom<TData, TData>
 
 export function atomWithObservable<TData>(
-  createObservable: (get: Getter) => SubjectLike<TData>
+  createObservable: (get: Getter) => ObservableLike<TData>
 ): Atom<TData>
 
 export function atomWithObservable<TData>(
