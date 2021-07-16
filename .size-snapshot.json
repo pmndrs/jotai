@@ -154,16 +154,16 @@
     }
   },
   "rxjs.js": {
-    "bundled": 1714,
-    "minified": 748,
-    "gzipped": 399,
+    "bundled": 2116,
+    "minified": 912,
+    "gzipped": 447,
     "treeshaked": {
       "rollup": {
-        "code": 37,
-        "import_statements": 37
+        "code": 103,
+        "import_statements": 14
       },
       "webpack": {
-        "code": 1054
+        "code": 1087
       }
     }
   }
