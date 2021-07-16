@@ -2,7 +2,7 @@ import React, { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { getTestProvider } from '../testUtils'
 import { useAtom } from '../../src/index'
-import { atomWithObservable } from '../../src/rxjs'
+import { atomWithObservable } from '../../src/utils'
 import { Observable, Subject } from 'rxjs'
 
 const Provider = getTestProvider()

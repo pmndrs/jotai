@@ -17,3 +17,4 @@ export {
   atomWithHash,
   createJSONStorage,
 } from './utils/atomWithStorage'
+export { atomWithObservable } from './utils/atomWithObservable'

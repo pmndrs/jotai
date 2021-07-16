@@ -1,32 +1,27 @@
 import { atom } from 'jotai'
 import type { Atom, WritableAtom, Getter } from 'jotai'
 
-const observableSymbol: typeof Symbol.observable =
-  typeof Symbol === 'function'
-    ? Symbol.observable || ((Symbol as any).observable = Symbol('observable'))
-    : ('@@observable' as any)
-
-export interface Subscription {
-  unsubscribe(): void
+type Subscription = {
+  unsubscribe: () => void
 }
 
-export interface Observer<T> {
-  next(value: T): void
-  error(error: any): void
-  complete(): void
+type Observer<T> = {
+  next: (value: T) => void
+  error: (error: unknown) => void
+  complete: () => void
 }
 
-export interface ObservableLike<T> {
+type ObservableLike<T> = {
   subscribe(observer: Observer<T>): Subscription
   subscribe(
     next: (value: T) => void,
-    error?: (error: any) => void,
+    error?: (error: unknown) => void,
     complete?: () => void
   ): Subscription
-  [Symbol.observable]?(): ObservableLike<T>
+  [Symbol.observable]?: () => ObservableLike<T>
 }
 
-export type SubjectLike<T> = ObservableLike<T> & Observer<T>
+type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
 export function atomWithObservable<TData>(
   createObservable: (get: Getter) => ObservableLike<TData>
@@ -43,8 +38,10 @@ export function atomWithObservable<TData>(
   const observableResultAtom = atom((get) => {
     let resolve: ((result: Result) => void) | null = null
     let observable = createObservable(get)
-    if (observable[observableSymbol]) {
-      observable = observable[observableSymbol]!()
+    if (observable[Symbol.observable]) {
+      observable = (
+        observable[Symbol.observable] as () => ObservableLike<TData>
+      )()
     }
     const resultAtom = atom<Result | Promise<Result>>(
       new Promise<Result>((r) => {

@@ -83,12 +83,6 @@
       "module": "./esm/urql.js",
       "import": "./esm/urql.js",
       "default": "./urql.js"
-    },
-    "./rxjs": {
-      "types": "./rxjs.d.ts",
-      "module": "./esm/rxjs.js",
-      "import": "./esm/rxjs.js",
-      "default": "./rxjs.js"
     }
   },
   "files": [
@@ -109,7 +103,6 @@
     "build:zustand": "rollup -c --config-zustand",
     "build:redux": "rollup -c --config-redux",
     "build:urql": "rollup -c --config-urql",
-    "build:rxjs": "rollup -c --config-rxjs",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '{src,tests,benchmarks}/**/*.{js,ts,jsx,tsx}'",
     "eslint:ci": "eslint '{src,tests,benchmarks}/**/*.{js,ts,jsx,tsx}'",
@@ -252,9 +245,6 @@
       "optional": true
     },
     "react-query": {
-      "optional": true
-    },
-    "rxjs": {
       "optional": true
     },
     "valtio": {
