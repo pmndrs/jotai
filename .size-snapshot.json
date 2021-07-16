@@ -14,9 +14,9 @@
     }
   },
   "utils.js": {
-    "bundled": 13716,
-    "minified": 6895,
-    "gzipped": 2574,
+    "bundled": 15731,
+    "minified": 7669,
+    "gzipped": 2831,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -150,20 +150,6 @@
       },
       "webpack": {
         "code": 1355
-      }
-    }
-  },
-  "rxjs.js": {
-    "bundled": 2116,
-    "minified": 912,
-    "gzipped": 447,
-    "treeshaked": {
-      "rollup": {
-        "code": 103,
-        "import_statements": 14
-      },
-      "webpack": {
-        "code": 1087
       }
     }
   }
