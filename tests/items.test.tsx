@@ -94,13 +94,18 @@ it('add an item with filtered list', async () => {
     text: string
     checked: boolean
   }
+  type ItemAtoms = PrimitiveAtom<Item>[]
+  type Update = (prev: ItemAtoms) => ItemAtoms
 
   let itemIndex = 0
-  const itemsAtom = atom<PrimitiveAtom<Item>[]>([])
+  const itemAtomsAtom = atom<ItemAtoms>([])
+  const setItemsAtom = atom<null, Update>(null, (_get, set, update) =>
+    set(itemAtomsAtom, update)
+  )
   const filterAtom = atom<'all' | 'checked' | 'not-checked'>('all')
   const filteredAtom = atom((get) => {
     const filter = get(filterAtom)
-    const items = get(itemsAtom)
+    const items = get(itemAtomsAtom)
     if (filter === 'all') return items
     else if (filter === 'checked')
       return items.filter((atom) => get(atom).checked)
@@ -155,7 +160,7 @@ it('add an item with filtered list', async () => {
   }
 
   const List: React.FC = () => {
-    const [, setItems] = useAtom(itemsAtom)
+    const [, setItems] = useAtom(setItemsAtom)
     const addItem = () => {
       setItems((prev) => [
         ...prev,

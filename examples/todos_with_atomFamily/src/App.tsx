@@ -1,6 +1,6 @@
 import { FC, FormEvent } from 'react'
 import { Provider, atom, useAtom } from 'jotai'
-import { atomFamily } from 'jotai/utils'
+import { atomFamily, useUpdateAtom } from 'jotai/utils'
 import { nanoid } from 'nanoid'
 import { Radio } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
@@ -74,7 +74,9 @@ const Filtered: FC<{
 }
 
 const TodoList = () => {
-  const [, setTodos] = useAtom(todosAtom)
+  // Use `useUpdateAtom` to avoid re-render
+  // const [, setTodos] = useAtom(todosAtom)
+  const setTodos = useUpdateAtom(todosAtom)
   const remove = (id: string) => {
     setTodos((prev) => prev.filter((item) => item !== id))
     todoAtomFamily.remove({ id })

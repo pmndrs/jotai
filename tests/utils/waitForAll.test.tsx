@@ -1,7 +1,7 @@
 import React, { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
-import { waitForAll } from '../../src/utils'
+import { waitForAll, useUpdateAtom } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -258,7 +258,7 @@ it('handles scope', async () => {
 
   const Counter: React.FC = () => {
     const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
-    const [, setValue] = useAtom(valueAtom)
+    const setValue = useUpdateAtom(valueAtom)
     return (
       <>
         <div>
