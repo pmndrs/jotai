@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
 import type { WritableAtom, SetStateAction } from '../../src/index'
-import { atomFamily } from '../../src/utils'
+import { atomFamily, useUpdateAtom } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -229,7 +229,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
   const Counter: React.FC = () => {
-    const [, setCount] = useAtom(countAtom)
+    const setCount = useUpdateAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
     return (
       <>

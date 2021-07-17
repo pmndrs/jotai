@@ -213,7 +213,11 @@ it('query loading 2', async () => {
 })
 
 it('query with enabled (#500)', async () => {
+  type Update = (prev: boolean) => boolean
   const enabledAtom = atom(true)
+  const setEnabledAtom = atom<null, Update>(null, (_get, set, update) =>
+    set(enabledAtom, update)
+  )
   const countAtom = atomWithQuery((get) => {
     const enabled = get(enabledAtom)
     return {
@@ -236,7 +240,7 @@ it('query with enabled (#500)', async () => {
 
   const Parent: React.FC = () => {
     const [showChildren, setShowChildren] = useState(true)
-    const [, setEnabled] = useAtom(enabledAtom)
+    const [, setEnabled] = useAtom(setEnabledAtom)
     return (
       <div>
         <button

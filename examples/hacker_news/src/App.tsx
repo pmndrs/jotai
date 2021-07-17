@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import Parser from 'html-react-parser'
 import { Provider, atom, useAtom } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
 import { a, useSpring } from '@react-spring/web'
 
 type PostData = {
@@ -13,7 +14,7 @@ type PostData = {
   text?: string
   time: number
   title?: string
-  type: "comment" | "story"
+  type: 'comment' | 'story'
   url?: string
 }
 
@@ -33,9 +34,11 @@ function Id() {
 }
 
 function Next() {
-  const [, set] = useAtom(postId)
+  // Use `useUpdateAtom` to avoid re-render
+  // const [, set] = useAtom(postId)
+  const setPostId = useUpdateAtom(postId)
   return (
-    <button onClick={() => set((x) => x + 1)}>
+    <button onClick={() => setPostId((id) => id + 1)}>
       <div>→</div>
     </button>
   )
