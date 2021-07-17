@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import { FC, Suspense } from 'react'
 import { atom, useAtom } from 'jotai'
 import type { SetStateAction } from 'jotai'
 import * as O from 'optics-ts'
@@ -14,7 +14,7 @@ it('basic derivation using focus works', async () => {
   const bigAtom = atom({ a: 0 })
   const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
@@ -53,7 +53,7 @@ it('focus on an atom works', async () => {
   const bigAtom = atom({ a: 0 })
   const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
@@ -84,7 +84,7 @@ it('double-focus on an atom works', async () => {
   const atomA = focusAtom(bigAtom, (optic) => optic.prop('a'))
   const atomB = focusAtom(atomA, (optic) => optic.prop('b'))
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [bigAtomValue, setBigAtom] = useAtom(bigAtom)
     const [atomAValue, setAtomA] = useAtom(atomA)
     const [atomBValue, setAtomB] = useAtom(atomB)
@@ -141,7 +141,7 @@ it('focus on async atom works', async () => {
   const focusFunction = (optic: O.OpticFor<{ count: number }>) =>
     optic.prop('count')
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(focusAtom(asyncAtom, focusFunction))
     const [asyncValue, setAsync] = useAtom(asyncAtom)
     const [baseValue, setBase] = useAtom(baseAtom)
@@ -195,7 +195,7 @@ it('basic derivation using focus with scope works', async () => {
   bigAtom.scope = scope
   const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (

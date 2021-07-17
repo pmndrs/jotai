@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
 import {
@@ -14,7 +14,7 @@ const Provider = getTestProvider()
 it('atomWithReset resets to its first value', async () => {
   const countAtom = atomWithReset(0)
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [count, setValue] = useAtom(countAtom)
     const resetAtom = useResetAtom(countAtom)
     return (
@@ -65,7 +65,7 @@ it('atomWithReset through read-write atom', async () => {
     (_get, set, newValue: number | typeof RESET) => set(primitiveAtom, newValue)
   )
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [count, setValue] = useAtom(countAtom)
     const resetAtom = useResetAtom(countAtom)
     return (
@@ -104,7 +104,7 @@ it('useResetAtom with custom atom', async () => {
 
   const countAtom = atomWithReducer(0, reducer)
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [count, dispatch] = useAtom(countAtom)
     const resetAtom = useResetAtom(countAtom)
     return (
@@ -140,7 +140,7 @@ it('useResetAtom with scope', async () => {
   const countAtom = atomWithReset(0)
   countAtom.scope = scope
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [count, setValue] = useAtom(countAtom)
     const resetAtom = useResetAtom(countAtom)
     return (

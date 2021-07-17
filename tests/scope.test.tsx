@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { FC, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
@@ -18,7 +18,7 @@ it('simple scoped provider with scoped atom', async () => {
   const countAtom = atom(0)
   countAtom.scope = scope
 
-  const Display: React.FC = () => {
+  const Display: FC = () => {
     const [count, setCount] = useAtom(countAtom)
 
     return (
@@ -46,7 +46,7 @@ it('default provider and atom with scoped provider and scoped atom', async () =>
   scopedCountAtom.scope = scope
   const countAtom = atom(0)
 
-  const Display: React.FC = () => {
+  const Display: FC = () => {
     const [scopedCount, setScopedCount] = useAtom(scopedCountAtom)
     const [count, setCount] = useAtom(countAtom)
 
@@ -89,7 +89,7 @@ it('keeps scoped atom value when default provider is removed', async () => {
   const scopedCountAtom = atom(0)
   scopedCountAtom.scope = scope
 
-  const Display: React.FC = () => {
+  const Display: FC = () => {
     const [scopedCount, setScopedCount] = useAtom(scopedCountAtom)
 
     return (
@@ -142,7 +142,7 @@ it('two different scoped providers and scoped atoms', async () => {
   scopedCountAtom.scope = scope
   secondScopedCountAtom.scope = secondScope
 
-  const Display: React.FC = () => {
+  const Display: FC = () => {
     const [scopedCount, setScopedCount] = useAtom(scopedCountAtom)
     const [secondScopedCount, setSecondScopedCount] = useAtom(
       secondScopedCountAtom

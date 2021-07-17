@@ -1,4 +1,4 @@
-import React, { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, Component, FC } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
@@ -13,7 +13,7 @@ afterEach(() => {
   console.error = consoleError
 })
 
-class ErrorBoundary extends React.Component<
+class ErrorBoundary extends Component<
   { message?: string },
   { hasError: boolean }
 > {
@@ -38,7 +38,7 @@ it('can throw an initial error in read function', async () => {
     throw new Error()
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     useAtom(errorAtom)
     return (
       <>
@@ -67,7 +67,7 @@ it('can throw an error in read function', async () => {
     throw new Error()
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [, setCount] = useAtom(countAtom)
     const [count] = useAtom(errorAtom)
     return (
@@ -99,7 +99,7 @@ it('can throw an initial chained error in read function', async () => {
   })
   const derivedAtom = atom((get) => get(errorAtom))
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     useAtom(derivedAtom)
     return (
       <>
@@ -129,7 +129,7 @@ it('can throw a chained error in read function', async () => {
   })
   const derivedAtom = atom((get) => get(errorAtom))
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [, setCount] = useAtom(countAtom)
     const [count] = useAtom(derivedAtom)
     return (
@@ -160,7 +160,7 @@ it('can throw an initial error in async read function', async () => {
     throw new Error()
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     useAtom(errorAtom)
     return (
       <>
@@ -191,7 +191,7 @@ it('can throw an error in async read function', async () => {
     throw new Error()
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [, setCount] = useAtom(countAtom)
     const [count] = useAtom(errorAtom)
     return (
@@ -228,7 +228,7 @@ it('can throw an error in write function', async () => {
     }
   )
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, dispatch] = useAtom(errorAtom)
     const onClick = () => {
       try {
@@ -273,7 +273,7 @@ it('can throw a chained error in write function', async () => {
     }
   )
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, dispatch] = useAtom(chainedAtom)
     const onClick = () => {
       try {
@@ -306,7 +306,7 @@ it('can throw a chained error in write function', async () => {
 it('throws an error while updating in effect', async () => {
   const countAtom = atom(0)
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [, setCount] = useAtom(countAtom)
     useEffect(() => {
       try {
@@ -341,7 +341,7 @@ describe('throws an error while updating in effect cleanup', () => {
 
   let doubleSetCount = false
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [, setCount] = useAtom(countAtom)
     useEffect(() => {
       return () => {
@@ -360,7 +360,7 @@ describe('throws an error while updating in effect cleanup', () => {
     )
   }
 
-  const Main: React.FC = () => {
+  const Main: FC = () => {
     const [hide, setHide] = useState(false)
     return (
       <>

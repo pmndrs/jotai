@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import { FC, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { getTestProvider } from '../testUtils'
 import { useAtom } from '../../src/index'
@@ -15,7 +15,7 @@ it('count state', async () => {
       })
   )
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [state$] = useAtom(observableAtom)
 
     return <>count: {state$}</>
@@ -45,7 +45,7 @@ it('writable count state', async () => {
     return subject
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [state$, dispatch] = useAtom(observableAtom)
 
     return (

@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef, useState } from 'react'
+import { FC, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
@@ -23,7 +23,7 @@ it('works with 2 level dependencies', async () => {
   const doubledAtom = atom((get) => get(countAtom) * 2)
   const tripledAtom = atom((get) => get(doubledAtom) * 3)
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledAtom)
     const [tripledCount] = useAtom(tripledAtom)
@@ -57,7 +57,7 @@ it('works a primitive atom and a dependent async atom', async () => {
     return get(countAtom) * 2
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledAtom)
     return (
@@ -95,7 +95,7 @@ it('should keep an atom value even if unmounted', async () => {
   const derivedFn = jest.fn().mockImplementation((get) => get(countAtom))
   const derivedAtom = atom(derivedFn)
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -105,12 +105,12 @@ it('should keep an atom value even if unmounted', async () => {
     )
   }
 
-  const DerivedCounter: React.FC = () => {
+  const DerivedCounter: FC = () => {
     const [derived] = useAtom(derivedAtom)
     return <div>derived: {derived}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [show, setShow] = useState(true)
     return (
       <div>
@@ -165,7 +165,7 @@ it('should keep a dependent atom value even if unmounted', async () => {
   const derivedFn = jest.fn().mockImplementation((get) => get(countAtom))
   const derivedAtom = atom(derivedFn)
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -175,12 +175,12 @@ it('should keep a dependent atom value even if unmounted', async () => {
     )
   }
 
-  const DerivedCounter: React.FC = () => {
+  const DerivedCounter: FC = () => {
     const [derived] = useAtom(derivedAtom)
     return <div>derived: {derived}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [showDerived, setShowDerived] = useState(true)
     return (
       <div>
@@ -217,7 +217,7 @@ it('should bail out updating if not changed', async () => {
   const derivedFn = jest.fn().mockImplementation((get) => get(countAtom))
   const derivedAtom = atom(derivedFn)
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -227,7 +227,7 @@ it('should bail out updating if not changed', async () => {
     )
   }
 
-  const DerivedCounter: React.FC = () => {
+  const DerivedCounter: FC = () => {
     const [derived] = useAtom(derivedAtom)
     return <div>derived: {derived}</div>
   }
@@ -266,7 +266,7 @@ it('should bail out updating if not changed, 2 level', async () => {
     .mockImplementation((get) => get(objAtom).anotherCount)
   const anotherCountAtom = atom(getAnotherCountFn)
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count] = useAtom(countAtom)
     const [, setData] = useAtom(dataAtom)
     return (
@@ -282,7 +282,7 @@ it('should bail out updating if not changed, 2 level', async () => {
     )
   }
 
-  const DerivedCounter: React.FC = () => {
+  const DerivedCounter: FC = () => {
     const [anotherCount] = useAtom(anotherCountAtom)
     return <div>anotherCount: {anotherCount}</div>
   }
@@ -321,7 +321,7 @@ it('derived atom to update base atom in callback', async () => {
     }
   )
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount, dispatch] = useAtom(doubledAtom)
     return (
@@ -355,7 +355,7 @@ it('can read sync derived atom in write without initializing', async () => {
     set(countAtom, get(doubledAtom) / 2 + num)
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count] = useAtom(countAtom)
     const [, add] = useAtom(addAtom)
     return (
@@ -385,7 +385,7 @@ it('can remount atoms with dependency (#490)', async () => {
   const countAtom = atom(0)
   const derivedAtom = atom((get) => get(countAtom))
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -395,12 +395,12 @@ it('can remount atoms with dependency (#490)', async () => {
     )
   }
 
-  const DerivedCounter: React.FC = () => {
+  const DerivedCounter: FC = () => {
     const [derived] = useAtom(derivedAtom)
     return <div>derived: {derived}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [showChildren, setShowChildren] = useState(true)
     return (
       <div>
@@ -472,7 +472,7 @@ it('can remount atoms with intermediate atom', async () => {
     return get(resultAtom)
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -482,12 +482,12 @@ it('can remount atoms with intermediate atom', async () => {
     )
   }
 
-  const DerivedCounter: React.FC = () => {
+  const DerivedCounter: FC = () => {
     const [derived] = useAtom(derivedAtom)
     return <div>derived: {derived}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [showChildren, setShowChildren] = useState(true)
     return (
       <div>
@@ -553,7 +553,7 @@ it('can update dependents with useEffect (#512)', async () => {
     return count * 2
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -563,12 +563,12 @@ it('can update dependents with useEffect (#512)', async () => {
     )
   }
 
-  const DerivedCounter: React.FC = () => {
+  const DerivedCounter: FC = () => {
     const [derived] = useAtom(derivedAtom)
     return <div>derived: {derived}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [, setEnabled] = useAtom(enabledAtom)
     useEffect(() => {
       setEnabled(true)

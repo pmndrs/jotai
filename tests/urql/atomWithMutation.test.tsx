@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import { FC, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { delay, fromValue, pipe, take, toPromise } from 'wonka'
 import { Client } from '@urql/core'
@@ -26,7 +26,7 @@ it('mutation basic test', async () => {
     set(countAtom, {})
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [{ data }] = useAtom(countAtom)
     return (
       <>
@@ -35,7 +35,7 @@ it('mutation basic test', async () => {
     )
   }
 
-  const Controls: React.FC = () => {
+  const Controls: FC = () => {
     const [, mutate] = useAtom(mutateAtom)
     return <button onClick={() => mutate()}>mutate</button>
   }

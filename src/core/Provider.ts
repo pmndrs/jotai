@@ -1,12 +1,11 @@
-import React, { createElement, useRef, useDebugValue } from 'react'
-
+import { createElement, useRef, useDebugValue, FC } from 'react'
 import type { Atom, Scope } from './atom'
 import type { AtomState, State } from './vanilla'
 import type { StoreForDevelopment } from './contexts'
 import { createStore, getStoreContext, isDevStore } from './contexts'
 import { useMutableSource } from './useMutableSource'
 
-export const Provider: React.FC<{
+export const Provider: FC<{
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
   scope?: Scope
 }> = ({ initialValues, scope, children }) => {

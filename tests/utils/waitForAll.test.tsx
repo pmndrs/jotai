@@ -1,4 +1,4 @@
-import React, { StrictMode, Suspense } from 'react'
+import { StrictMode, Suspense, Component, FC } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
 import { waitForAll, useUpdateAtom } from '../../src/utils'
@@ -20,7 +20,7 @@ afterEach(() => {
   console.error = consoleError
 })
 
-class ErrorBoundary extends React.Component<
+class ErrorBoundary extends Component<
   { message?: string },
   { hasError: boolean }
 > {
@@ -64,7 +64,7 @@ it('waits for two async atoms', async () => {
     return 'a'
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [[num, str]] = useAtom(
       waitForAll([asyncAtom, anotherAsyncAtom] as const)
     )
@@ -130,7 +130,7 @@ it('can use named atoms in derived atom', async () => {
     return { num: num * 2, str: str.toUpperCase() }
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [{ num, str }] = useAtom(combinedWaitingAtom)
     return (
       <div>
@@ -193,7 +193,7 @@ it('can handle errors', async () => {
     )
   })
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [{ num, error }] = useAtom(combinedWaitingAtom)
     return (
       <>
@@ -256,7 +256,7 @@ it('handles scope', async () => {
   })
   anotherAsyncAtom.scope = scope
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
     const setValue = useUpdateAtom(valueAtom)
     return (
@@ -320,7 +320,7 @@ it('warns on different scopes', async () => {
   })
   anotherAsyncAtom.scope = anotherScope
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
     return (
       <div>
