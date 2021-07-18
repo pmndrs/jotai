@@ -1,9 +1,9 @@
 import { FC, FormEvent } from 'react'
-import { Provider, atom, useAtom, PrimitiveAtom } from 'jotai'
-import { useUpdateAtom } from 'jotai/utils'
-import { Radio } from 'antd'
 import { CloseOutlined } from '@ant-design/icons'
 import { a, useTransition } from '@react-spring/web'
+import { Radio } from 'antd'
+import { PrimitiveAtom, Provider, atom, useAtom } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
 
 type Todo = {
   title: string

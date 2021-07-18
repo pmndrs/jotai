@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, StrictMode, Suspense, FC } from 'react'
+import { FC, StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
-import type { WritableAtom, SetStateAction } from '../../src/index'
+import type { SetStateAction, WritableAtom } from '../../src/index'
 import { atomFamily, useUpdateAtom } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 

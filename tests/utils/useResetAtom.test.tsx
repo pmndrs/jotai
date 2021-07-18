@@ -2,10 +2,10 @@ import { FC } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
 import {
-  useResetAtom,
+  RESET,
   atomWithReducer,
   atomWithReset,
-  RESET,
+  useResetAtom,
 } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 

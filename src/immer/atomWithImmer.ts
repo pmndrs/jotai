@@ -1,6 +1,6 @@
 /* eslint-disable import/named */
-import { produce, Draft } from 'immer'
-import { atom, WritableAtom } from 'jotai'
+import { Draft, produce } from 'immer'
+import { WritableAtom, atom } from 'jotai'
 
 export function atomWithImmer<Value>(
   initialValue: Value

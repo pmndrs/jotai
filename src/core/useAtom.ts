@@ -1,10 +1,9 @@
-import { useContext, useEffect, useCallback, useDebugValue } from 'react'
-
+import { useCallback, useContext, useDebugValue, useEffect } from 'react'
+import type { Atom, SetAtom, WritableAtom } from './atom'
 import { getStoreContext } from './contexts'
+import { useMutableSource } from './useMutableSource'
 import { readAtom, subscribeAtom } from './vanilla'
 import type { State } from './vanilla'
-import type { Atom, WritableAtom, SetAtom } from './atom'
-import { useMutableSource } from './useMutableSource'
 
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>

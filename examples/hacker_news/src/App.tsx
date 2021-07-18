@@ -1,8 +1,8 @@
 import { Suspense } from 'react'
+import { a, useSpring } from '@react-spring/web'
 import Parser from 'html-react-parser'
 import { Provider, atom, useAtom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
-import { a, useSpring } from '@react-spring/web'
 
 type PostData = {
   by: string

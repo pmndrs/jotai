@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { atom, useAtom } from 'jotai'
-import type { WritableAtom, Setter } from 'jotai'
-
+import type { Setter, WritableAtom } from 'jotai'
 import type { Scope } from '../core/atom'
 
 type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]

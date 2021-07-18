@@ -1,12 +1,12 @@
 import {
-  interpret,
   EventObject,
-  StateMachine,
+  Interpreter,
   InterpreterOptions,
   MachineOptions,
-  Typestate,
   State,
-  Interpreter,
+  StateMachine,
+  Typestate,
+  interpret,
 } from 'xstate'
 import { atom } from 'jotai'
 import type { Atom, Getter } from 'jotai'

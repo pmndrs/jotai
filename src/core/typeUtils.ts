@@ -1,4 +1,4 @@
-import type { Atom, WritableAtom, PrimitiveAtom } from './atom'
+import type { Atom, PrimitiveAtom, WritableAtom } from './atom'
 
 export type Getter = Parameters<Atom<unknown>['read']>[0]
 export type Setter = Parameters<WritableAtom<unknown, unknown>['write']>[1]

@@ -1,13 +1,12 @@
 import { atom } from 'jotai'
 import type {
   Atom,
-  WritableAtom,
-  PrimitiveAtom,
   Getter,
-  Setter,
+  PrimitiveAtom,
   SetStateAction,
+  Setter,
+  WritableAtom,
 } from 'jotai'
-
 import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 
 const splitAtomCache = new WeakMap()

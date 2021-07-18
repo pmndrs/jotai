@@ -1,14 +1,13 @@
 #!/usr/bin/env npx ts-node
 
 import { add, complete, cycle, save, suite } from 'benny'
-
 import { atom } from '../src/core/atom'
 import type { PrimitiveAtom } from '../src/core/atom'
 import {
   createState,
   readAtom,
-  writeAtom,
   subscribeAtom,
+  writeAtom,
 } from '../src/core/vanilla'
 
 const cleanupFns = new Set<() => void>()

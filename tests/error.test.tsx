@@ -1,4 +1,4 @@
-import { Suspense, useState, useEffect, Component, FC } from 'react'
+import { Component, FC, Suspense, useEffect, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'

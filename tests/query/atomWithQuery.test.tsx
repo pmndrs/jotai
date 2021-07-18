@@ -1,9 +1,9 @@
 import { FC, Suspense, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/'
-import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
 import { getTestProvider } from '../testUtils'
+import fakeFetch from './fakeFetch'
 
 const Provider = getTestProvider()
 

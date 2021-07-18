@@ -1,4 +1,4 @@
-import { subscribe, snapshot } from 'valtio/vanilla'
+import { snapshot, subscribe } from 'valtio/vanilla'
 import { atom } from 'jotai'
 import type { SetStateAction } from 'jotai'
 

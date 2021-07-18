@@ -1,6 +1,6 @@
 /* eslint-disable import/named */
 import { useCallback } from 'react'
-import { produce, Draft } from 'immer'
+import { Draft, produce } from 'immer'
 import { WritableAtom, useAtom } from 'jotai'
 
 export function useImmerAtom<Value>(

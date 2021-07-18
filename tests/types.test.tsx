@@ -1,6 +1,6 @@
 import { expectType } from 'ts-expect'
-import { atom, Atom, PrimitiveAtom, useAtom, WritableAtom } from '../src/index'
 import { SetAtom } from '../src/core/atom'
+import { Atom, PrimitiveAtom, WritableAtom, atom, useAtom } from '../src/index'
 
 it('atom() should return the correct types', () => {
   function Component() {

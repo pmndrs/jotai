@@ -1,8 +1,8 @@
-import { Suspense, useRef, useEffect, FC } from 'react'
+import { FC, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { useAtomsSnapshot, useGotoAtomsSnapshot } from '../../src/devtools'
 import { Provider, atom, useAtom } from '../../src/index'
 import type { Atom } from '../../src/index'
-import { useAtomsSnapshot, useGotoAtomsSnapshot } from '../../src/devtools'
 
 it('useGotoAtomsSnapshot should modify atoms snapshot', async () => {
   const petAtom = atom('cat')

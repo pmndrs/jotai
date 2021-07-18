@@ -1,6 +1,6 @@
-import { StrictMode, Suspense, useRef, useEffect, FC } from 'react'
+import { FC, StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom, Atom } from '../src/index'
+import { Atom, atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()

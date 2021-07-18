@@ -1,7 +1,7 @@
 import { FC } from 'react'
-import { atom, useAtom } from 'jotai'
-import * as O from 'optics-ts'
 import * as rtl from '@testing-library/react'
+import * as O from 'optics-ts'
+import { atom, useAtom } from 'jotai'
 import { focusAtom } from '../../src/optics/focusAtom'
 import { getTestProvider } from '../testUtils'
 
