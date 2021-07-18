@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtom } from '../../src/index'
 import { atomWithReducer } from '../../src/utils'
@@ -19,7 +19,7 @@ it('atomWithReducer with optional action argument', async () => {
   }
   const countAtom = atomWithReducer(0, reducer)
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [count, dispatch] = useAtom(countAtom)
     return (
       <>
@@ -60,7 +60,7 @@ it('atomWithReducer with non-optional action argument', async () => {
   }
   const countAtom = atomWithReducer(0, reducer)
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [count, dispatch] = useAtom(countAtom)
     return (
       <>

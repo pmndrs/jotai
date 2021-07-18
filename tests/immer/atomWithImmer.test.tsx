@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtom } from '../../src/index'
 import { atomWithImmer } from '../../src/immer'
@@ -9,7 +9,7 @@ const Provider = getTestProvider()
 it('atomWithImmer with useAtom', async () => {
   const countAtom = atomWithImmer(0)
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -42,7 +42,7 @@ it('atomWithImmer with useAtom', async () => {
 it('atomWithImmer with WritableAtom<Value, Value> signature', async () => {
   const countAtom = atomWithImmer(0)
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>

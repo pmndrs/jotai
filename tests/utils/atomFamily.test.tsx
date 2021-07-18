@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, StrictMode, Suspense } from 'react'
+import { useState, useRef, useEffect, StrictMode, Suspense, FC } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
 import type { WritableAtom, SetStateAction } from '../../src/index'
-import { atomFamily } from '../../src/utils'
+import { atomFamily, useUpdateAtom } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -18,7 +18,7 @@ const useCommitCount = () => {
 it('new atomFamily impl', async () => {
   const myFamily = atomFamily((param) => atom(param))
 
-  const Displayer: React.FC<{ index: string }> = ({ index }) => {
+  const Displayer: FC<{ index: string }> = ({ index }) => {
     const [count] = useAtom(myFamily(index))
     return <div>count: {count}</div>
   }
@@ -72,7 +72,7 @@ it('removed atom creates a new reference', async () => {
 it('primitive atomFamily initialized with props', async () => {
   const myFamily = atomFamily((param: number) => atom(param))
 
-  const Displayer: React.FC<{ index: number }> = ({ index }) => {
+  const Displayer: FC<{ index: number }> = ({ index }) => {
     const [count, setCount] = useAtom(myFamily(index))
     return (
       <div>
@@ -82,7 +82,7 @@ it('primitive atomFamily initialized with props', async () => {
     )
   }
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [index, setIndex] = useState(1)
 
     return (
@@ -136,7 +136,7 @@ it('derived atomFamily functionality as usual', async () => {
     )
   )
 
-  const Displayer: React.FC<{
+  const Displayer: FC<{
     index: number
     countAtom: WritableAtom<number, SetStateAction<number>>
   }> = ({ index, countAtom }) => {
@@ -153,7 +153,7 @@ it('derived atomFamily functionality as usual', async () => {
 
   const indicesAtom = atom((get) => [...new Array(get(arrayAtom).length)])
 
-  const Parent: React.FC = () => {
+  const Parent: FC = () => {
     const [indices] = useAtom(indicesAtom)
 
     return (
@@ -228,8 +228,8 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   )
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
-  const Counter: React.FC = () => {
-    const [, setCount] = useAtom(countAtom)
+  const Counter: FC = () => {
+    const setCount = useUpdateAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
     return (
       <>

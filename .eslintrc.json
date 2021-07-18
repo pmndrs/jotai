@@ -37,7 +37,9 @@
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-empty-interface": "off",
       "@typescript-eslint/no-explicit-any": "off",
-      "jest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }]
+      "jest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }],
+      "react/jsx-uses-react": "off",
+      "react/react-in-jsx-scope": "off"
     }
   },
   "settings": {

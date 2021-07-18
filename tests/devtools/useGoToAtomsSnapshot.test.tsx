@@ -1,4 +1,4 @@
-import React, { Suspense, useRef, useEffect } from 'react'
+import { Suspense, useRef, useEffect, FC } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from '../../src/index'
 import type { Atom } from '../../src/index'
@@ -8,7 +8,7 @@ it('useGotoAtomsSnapshot should modify atoms snapshot', async () => {
   const petAtom = atom('cat')
   const colorAtom = atom('blue')
 
-  const DisplayAtoms: React.FC = () => {
+  const DisplayAtoms: FC = () => {
     const [pet] = useAtom(petAtom)
     const [color] = useAtom(colorAtom)
     return (
@@ -19,7 +19,7 @@ it('useGotoAtomsSnapshot should modify atoms snapshot', async () => {
     )
   }
 
-  const UpdateSnapshot: React.FC = () => {
+  const UpdateSnapshot: FC = () => {
     const snapshot = useAtomsSnapshot()
     const goToSnapshot = useGotoAtomsSnapshot()
     return (
@@ -53,7 +53,7 @@ it('useGotoAtomsSnapshot should work with derived atoms', async () => {
   const priceAtom = atom(10)
   const taxAtom = atom((get) => get(priceAtom) * 0.2)
 
-  const DisplayPrice: React.FC = () => {
+  const DisplayPrice: FC = () => {
     const [price] = useAtom(priceAtom)
     const [tax] = useAtom(taxAtom)
     return (
@@ -64,7 +64,7 @@ it('useGotoAtomsSnapshot should work with derived atoms', async () => {
     )
   }
 
-  const UpdateSnapshot: React.FC = () => {
+  const UpdateSnapshot: FC = () => {
     const snapshot = useAtomsSnapshot()
     const goToSnapshot = useGotoAtomsSnapshot()
     return (
@@ -104,7 +104,7 @@ it('useGotoAtomsSnapshot should work with async derived atoms', async () => {
     return get(priceAtom) * 0.2
   })
 
-  const DisplayPrice: React.FC = () => {
+  const DisplayPrice: FC = () => {
     const [price] = useAtom(priceAtom)
     const [tax] = useAtom(taxAtom)
     return (
@@ -115,7 +115,7 @@ it('useGotoAtomsSnapshot should work with async derived atoms', async () => {
     )
   }
 
-  const UpdateSnapshot: React.FC = () => {
+  const UpdateSnapshot: FC = () => {
     const snapshot = useAtomsSnapshot()
     const goToSnapshot = useGotoAtomsSnapshot()
     return (
@@ -155,7 +155,7 @@ it('useGotoAtomsSnapshot should work with original snapshot', async () => {
   const priceAtom = atom(10)
   const taxAtom = atom((get) => get(priceAtom) * 0.2)
 
-  const DisplayPrice: React.FC = () => {
+  const DisplayPrice: FC = () => {
     const [price, setPrice] = useAtom(priceAtom)
     const [tax] = useAtom(taxAtom)
     return (
@@ -169,7 +169,7 @@ it('useGotoAtomsSnapshot should work with original snapshot', async () => {
     )
   }
 
-  const UpdateSnapshot: React.FC = () => {
+  const UpdateSnapshot: FC = () => {
     const snapshot = useAtomsSnapshot()
     const snapshotRef = useRef<Map<Atom<unknown>, unknown>>()
     useEffect(() => {
@@ -221,12 +221,12 @@ it('useGotoAtomsSnapshot should respect atom scope', async () => {
   const petAtom = atom('cat')
   petAtom.scope = scope
 
-  const DisplayAtoms: React.FC = () => {
+  const DisplayAtoms: FC = () => {
     const [pet] = useAtom(petAtom)
     return <p>{pet}</p>
   }
 
-  const UpdateSnapshot: React.FC = () => {
+  const UpdateSnapshot: FC = () => {
     const snapshot = useAtomsSnapshot(scope)
     const goToSnapshot = useGotoAtomsSnapshot(scope)
     return (
@@ -261,7 +261,7 @@ it('useGotoAtomsSnapshot should error on scope mismatch', async () => {
   const colorAtom = atom('blue')
   colorAtom.scope = colorScope
 
-  const DisplayAtoms: React.FC = () => {
+  const DisplayAtoms: FC = () => {
     const [pet] = useAtom(petAtom)
     const [color] = useAtom(colorAtom)
     return (
@@ -272,7 +272,7 @@ it('useGotoAtomsSnapshot should error on scope mismatch', async () => {
     )
   }
 
-  const UpdateSnapshot: React.FC = () => {
+  const UpdateSnapshot: FC = () => {
     const snapshot = useAtomsSnapshot()
     const goToSnapshot = useGotoAtomsSnapshot()
     return (

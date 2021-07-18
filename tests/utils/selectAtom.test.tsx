@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom } from '../../src/index'
 import { selectAtom, useAtomValue, useUpdateAtom } from '../../src/utils'

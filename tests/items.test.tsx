@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, PrimitiveAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
@@ -13,7 +13,7 @@ it('remove an item, then add another', async () => {
   let itemIndex = 0
   const itemsAtom = atom<PrimitiveAtom<Item>[]>([])
 
-  const ListItem: React.FC<{
+  const ListItem: FC<{
     itemAtom: PrimitiveAtom<Item>
     remove: () => void
   }> = ({ itemAtom, remove }) => {
@@ -31,7 +31,7 @@ it('remove an item, then add another', async () => {
     )
   }
 
-  const List: React.FC = () => {
+  const List: FC = () => {
     const [items, setItems] = useAtom(itemsAtom)
     const addItem = () => {
       setItems((prev) => [
@@ -94,20 +94,25 @@ it('add an item with filtered list', async () => {
     text: string
     checked: boolean
   }
+  type ItemAtoms = PrimitiveAtom<Item>[]
+  type Update = (prev: ItemAtoms) => ItemAtoms
 
   let itemIndex = 0
-  const itemsAtom = atom<PrimitiveAtom<Item>[]>([])
+  const itemAtomsAtom = atom<ItemAtoms>([])
+  const setItemsAtom = atom<null, Update>(null, (_get, set, update) =>
+    set(itemAtomsAtom, update)
+  )
   const filterAtom = atom<'all' | 'checked' | 'not-checked'>('all')
   const filteredAtom = atom((get) => {
     const filter = get(filterAtom)
-    const items = get(itemsAtom)
+    const items = get(itemAtomsAtom)
     if (filter === 'all') return items
     else if (filter === 'checked')
       return items.filter((atom) => get(atom).checked)
     else return items.filter((atom) => !get(atom).checked)
   })
 
-  const ListItem: React.FC<{
+  const ListItem: FC<{
     itemAtom: PrimitiveAtom<Item>
     remove: () => void
   }> = ({ itemAtom, remove }) => {
@@ -125,7 +130,7 @@ it('add an item with filtered list', async () => {
     )
   }
 
-  const Filter: React.FC = () => {
+  const Filter: FC = () => {
     const [filter, setFilter] = useAtom(filterAtom)
     return (
       <>
@@ -137,7 +142,7 @@ it('add an item with filtered list', async () => {
     )
   }
 
-  const FilteredList: React.FC<{
+  const FilteredList: FC<{
     removeItem: (itemAtom: PrimitiveAtom<Item>) => void
   }> = ({ removeItem }) => {
     const [items] = useAtom(filteredAtom)
@@ -154,8 +159,8 @@ it('add an item with filtered list', async () => {
     )
   }
 
-  const List: React.FC = () => {
-    const [, setItems] = useAtom(itemsAtom)
+  const List: FC = () => {
+    const [, setItems] = useAtom(setItemsAtom)
     const addItem = () => {
       setItems((prev) => [
         ...prev,

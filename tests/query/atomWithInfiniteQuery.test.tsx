@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import { FC, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtom } from '../../src/'
 import fakeFetch from './fakeFetch'
@@ -19,7 +19,7 @@ it('infinite query basic test', async () => {
     },
   }))
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [data] = useAtom(countAtom)
     return (
       <>
@@ -64,7 +64,7 @@ it('infinite query next page test', async () => {
       return (count - 1).toString()
     },
   }))
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [data, dispatch] = useAtom(countAtom)
 
     return (
