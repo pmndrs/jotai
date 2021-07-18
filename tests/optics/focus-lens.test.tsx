@@ -1,8 +1,8 @@
 import { FC, Suspense } from 'react'
+import * as rtl from '@testing-library/react'
+import * as O from 'optics-ts'
 import { atom, useAtom } from 'jotai'
 import type { SetStateAction } from 'jotai'
-import * as O from 'optics-ts'
-import * as rtl from '@testing-library/react'
 import { focusAtom } from '../../src/optics/focusAtom'
 import { getTestProvider } from '../testUtils'
 

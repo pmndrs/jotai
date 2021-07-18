@@ -1,15 +1,15 @@
 import {
-  QueryClient,
-  QueryKey,
+  InfiniteData,
   InfiniteQueryObserver,
   InfiniteQueryObserverOptions,
-  InfiniteData,
   InitialDataFunction,
+  QueryClient,
+  QueryKey,
   QueryObserverResult,
   isCancelledError,
 } from 'react-query'
 import { atom } from 'jotai'
-import type { WritableAtom, Getter } from 'jotai'
+import type { Getter, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 
 export type AtomWithInfiniteQueryAction = {

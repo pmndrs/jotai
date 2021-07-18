@@ -1,5 +1,4 @@
-import { atom, Atom } from 'jotai'
-
+import { Atom, atom } from 'jotai'
 import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 
 const selectAtomCache = new WeakMap()

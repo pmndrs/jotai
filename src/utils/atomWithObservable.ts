@@ -1,5 +1,5 @@
 import { atom } from 'jotai'
-import type { Atom, WritableAtom, Getter } from 'jotai'
+import type { Atom, Getter, WritableAtom } from 'jotai'
 
 type Subscription = {
   unsubscribe: () => void

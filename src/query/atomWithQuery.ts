@@ -1,13 +1,13 @@
 import {
+  InitialDataFunction,
   QueryClient,
   QueryKey,
   QueryObserver,
   QueryObserverOptions,
   QueryObserverResult,
-  InitialDataFunction,
 } from 'react-query'
 import { atom } from 'jotai'
-import type { WritableAtom, PrimitiveAtom, Getter } from 'jotai'
+import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 
 export type AtomWithQueryAction = { type: 'refetch' }

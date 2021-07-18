@@ -1,9 +1,9 @@
-import { FC, Suspense, Component } from 'react'
+import { Component, FC, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { getTestProvider } from '../testUtils'
+import { Observable, Subject } from 'rxjs'
 import { useAtom } from '../../src/index'
 import { atomWithObservable } from '../../src/utils'
-import { Observable, Subject } from 'rxjs'
+import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 

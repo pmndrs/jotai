@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { useAtom, atom } from '../../src/index'
+import { atom, useAtom } from '../../src/index'
 import { useAtomCallback } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 

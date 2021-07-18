@@ -1,6 +1,6 @@
 import { FC } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom, PrimitiveAtom } from '../src/index'
+import { PrimitiveAtom, atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()

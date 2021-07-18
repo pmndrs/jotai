@@ -3,11 +3,10 @@ import {
   SECRET_INTERNAL_getStoreContext as getStoreContext,
   SECRET_INTERNAL_useMutableSource as useMutableSource,
 } from 'jotai'
-
 import type { Atom, Scope } from '../core/atom'
+import { getDebugStateAndAtoms, subscribeDebugStore } from '../core/Provider'
 import type { AtomState, State } from '../core/vanilla'
 // NOTE this is across bundles and actually copying code
-import { getDebugStateAndAtoms, subscribeDebugStore } from '../core/Provider'
 
 type AtomsSnapshot = Map<Atom<unknown>, unknown>
 

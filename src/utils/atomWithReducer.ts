@@ -1,4 +1,4 @@
-import { atom, WritableAtom } from 'jotai'
+import { WritableAtom, atom } from 'jotai'
 
 export function atomWithReducer<Value, Action>(
   initialValue: Value,

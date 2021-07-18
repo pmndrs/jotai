@@ -1,7 +1,7 @@
 import { FC, Suspense } from 'react'
 import { render } from '@testing-library/react'
-import { map, interval, pipe, take, toPromise } from 'wonka'
 import { Client, TypedDocumentNode } from '@urql/core'
+import { interval, map, pipe, take, toPromise } from 'wonka'
 import { useAtom } from '../../src/'
 import { atomWithSubscription } from '../../src/urql'
 import { getTestProvider } from '../testUtils'

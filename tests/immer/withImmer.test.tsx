@@ -1,7 +1,7 @@
 import { FC } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from '../../src/index'
 import { withImmer } from '../../src/immer'
+import { atom, useAtom } from '../../src/index'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

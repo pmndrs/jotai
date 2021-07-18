@@ -1,7 +1,7 @@
-import { StrictMode, Suspense, Component, FC } from 'react'
+import { Component, FC, StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
-import { waitForAll, useUpdateAtom } from '../../src/utils'
+import { useUpdateAtom, waitForAll } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

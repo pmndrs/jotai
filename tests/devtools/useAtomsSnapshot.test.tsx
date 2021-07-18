@@ -1,7 +1,7 @@
 import { FC, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../../src/index'
 import { useAtomsSnapshot } from '../../src/devtools'
+import { Provider, atom, useAtom } from '../../src/index'
 
 it('should register newly added atoms', async () => {
   const countAtom = atom(1)

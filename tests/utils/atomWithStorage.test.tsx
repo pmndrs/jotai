@@ -1,7 +1,7 @@
 import { FC, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from '../../src/index'
-import { atomWithStorage, atomWithHash } from '../../src/utils'
+import { atomWithHash, atomWithStorage } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

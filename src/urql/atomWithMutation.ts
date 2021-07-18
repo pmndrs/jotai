@@ -1,8 +1,8 @@
 import {
   Client,
-  TypedDocumentNode,
   OperationContext,
   OperationResult,
+  TypedDocumentNode,
 } from '@urql/core'
 import { atom } from 'jotai'
 import type { Getter } from 'jotai'

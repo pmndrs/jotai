@@ -1,9 +1,9 @@
-import { useEffect, useRef, FC, ChangeEvent } from 'react'
+import { ChangeEvent, FC, useEffect, useRef } from 'react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
-import { render, fireEvent, waitFor } from '@testing-library/react'
-import { getTestProvider } from '../testUtils'
 import { splitAtom } from '../../src/utils'
+import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
