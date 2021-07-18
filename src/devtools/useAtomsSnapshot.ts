@@ -6,7 +6,7 @@ import {
 import type { Atom, Scope } from '../core/atom'
 import { getDebugStateAndAtoms, subscribeDebugStore } from '../core/Provider'
 import type { AtomState, State } from '../core/vanilla'
-// NOTE this is across bundles and actually copying code
+// NOTE importing from '../core/Provider' is across bundles and actually copying code
 
 type AtomsSnapshot = Map<Atom<unknown>, unknown>
 
