@@ -34,69 +34,73 @@ export function atomWithObservable<TData>(
 export function atomWithObservable<TData>(
   createObservable: (get: Getter) => ObservableLike<TData> | SubjectLike<TData>
 ) {
-  type Result = { data: TData } | { error: unknown }
   const observableResultAtom = atom((get) => {
-    let resolve: ((result: Result) => void) | null = null
+    let settlePromise: ((data: TData | null, err?: unknown) => void) | null =
+      null
     let observable = createObservable(get)
-    if (observable[Symbol.observable]) {
-      observable = (
-        observable[Symbol.observable] as () => ObservableLike<TData>
-      )()
+    const returnsItself = observable[Symbol.observable]
+    if (returnsItself) {
+      observable = returnsItself()
     }
-    const resultAtom = atom<Result | Promise<Result>>(
-      new Promise<Result>((r) => {
-        resolve = r
+    const dataAtom = atom<TData | Promise<TData>>(
+      new Promise<TData>((resolve, reject) => {
+        settlePromise = (data, err) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(data as TData)
+          }
+        }
       })
     )
-    resultAtom.scope = observableAtom.scope
-    let setResult: (result: Result) => void = () => {
+    dataAtom.scope = observableAtom.scope
+    let setData: (data: TData | Promise<TData>) => void = () => {
       throw new Error('setting data without mount')
     }
     const dataListener = (data: TData) => {
-      if (resolve) {
-        resolve({ data })
-        resolve = null
+      if (settlePromise) {
+        settlePromise(data)
+        settlePromise = null
+        if (subscription && !setData) {
+          subscription.unsubscribe()
+          subscription = null
+        }
       } else {
-        setResult({ data })
+        setData(data)
       }
     }
     const errorListener = (error: unknown) => {
-      if (resolve) {
-        resolve({ error })
-        resolve = null
+      if (settlePromise) {
+        settlePromise(null, error)
+        settlePromise = null
+        if (subscription && !setData) {
+          subscription.unsubscribe()
+          subscription = null
+        }
       } else {
-        setResult({ error })
+        setData(Promise.reject<TData>(error))
       }
     }
     let subscription: Subscription | null = null
-    subscription = observable.subscribe((data) => {
-      dataListener(data)
-      if (subscription && !setResult) {
-        subscription.unsubscribe()
-        subscription = null
-      }
-    }, errorListener)
-    if (!resolve) {
+    subscription = observable.subscribe(dataListener, errorListener)
+    if (!settlePromise) {
       subscription.unsubscribe()
       subscription = null
     }
-    resultAtom.onMount = (update) => {
-      setResult = update
-      if (!subscription)
+    dataAtom.onMount = (update) => {
+      setData = update
+      if (!subscription) {
         subscription = observable.subscribe(dataListener, errorListener)
-      return () => subscription && subscription.unsubscribe()
+      }
+      return () => subscription?.unsubscribe()
     }
-    return { resultAtom, observable }
+    return { dataAtom, observable }
   })
   const observableAtom = atom(
     (get) => {
       observableResultAtom.scope = observableAtom.scope
-      const { resultAtom } = get(observableResultAtom)
-      const result = get(resultAtom)
-      if ('error' in result) {
-        throw result.error
-      }
-      return result.data
+      const { dataAtom } = get(observableResultAtom)
+      return get(dataAtom)
     },
     (get, _set, data: TData) => {
       observableResultAtom.scope = observableAtom.scope
