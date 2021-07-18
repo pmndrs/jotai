@@ -1,4 +1,4 @@
-import React from 'react'
+import { FC } from 'react'
 import { atom, useAtom } from 'jotai'
 import * as O from 'optics-ts'
 import * as rtl from '@testing-library/react'
@@ -12,7 +12,7 @@ it('updates prisms', async () => {
   const focusFunction = (optic: O.OpticFor<{ a?: number }>) =>
     optic.prop('a').optional()
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
@@ -43,7 +43,7 @@ it('atoms that focus on no values are not updated', async () => {
   const focusFunction = (optic: O.OpticFor<{ a?: number }>) =>
     optic.prop('a').optional()
 
-  const Counter: React.FC = () => {
+  const Counter: FC = () => {
     const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (

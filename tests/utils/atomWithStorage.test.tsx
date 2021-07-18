@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import { FC, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from '../../src/index'
 import { atomWithStorage, atomWithHash } from '../../src/utils'
@@ -33,7 +33,7 @@ describe('atomWithStorage (sync)', () => {
   it('simple count', async () => {
     const countAtom = atomWithStorage('count', 1, dummyStorage)
 
-    const Counter: React.FC = () => {
+    const Counter: FC = () => {
       const [count, setCount] = useAtom(countAtom)
       return (
         <>
@@ -78,7 +78,7 @@ describe('atomWithStorage (async)', () => {
   it('async count', async () => {
     const countAtom = atomWithStorage('count', 1, asyncDummyStorage)
 
-    const Counter: React.FC = () => {
+    const Counter: FC = () => {
       const [count, setCount] = useAtom(countAtom)
       return (
         <>
@@ -109,7 +109,7 @@ describe('atomWithStorage (async)', () => {
   it('async new count', async () => {
     const countAtom = atomWithStorage('count2', 20, asyncDummyStorage)
 
-    const Counter: React.FC = () => {
+    const Counter: FC = () => {
       const [count, setCount] = useAtom(countAtom)
       return (
         <>
@@ -143,7 +143,7 @@ describe('atomWithStorage (async)', () => {
       delayInit: true,
     })
 
-    const Counter: React.FC = () => {
+    const Counter: FC = () => {
       const [count, setCount] = useAtom(countAtom)
       return (
         <>
@@ -173,7 +173,7 @@ describe('atomWithHash', () => {
   it('simple count', async () => {
     const countAtom = atomWithHash('count', 1)
 
-    const Counter: React.FC = () => {
+    const Counter: FC = () => {
       const [count, setCount] = useAtom(countAtom)
       return (
         <>
