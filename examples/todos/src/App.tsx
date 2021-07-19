@@ -1,4 +1,4 @@
-import { FC, FormEvent } from 'react'
+import { FormEvent } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { a, useTransition } from '@react-spring/web'
 import { Radio } from 'antd'
@@ -26,7 +26,7 @@ type TodoItemProps = {
   atom: PrimitiveAtom<Todo>
   remove: RemoveFn
 }
-const TodoItem: FC<TodoItemProps> = ({ atom, remove }) => {
+const TodoItem = ({ atom, remove }: TodoItemProps) => {
   const [item, setItem] = useAtom(atom)
   const toggleCompleted = () =>
     setItem((props) => ({ ...props, completed: !props.completed }))
@@ -59,7 +59,7 @@ const Filter = () => {
 type FilteredType = {
   remove: RemoveFn
 }
-const Filtered: FC<FilteredType> = (props) => {
+const Filtered = (props: FilteredType) => {
   const [todos] = useAtom(filteredAtom)
   const transitions = useTransition(todos, {
     keys: (todo) => todo.toString(),

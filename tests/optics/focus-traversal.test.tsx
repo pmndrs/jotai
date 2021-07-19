@@ -1,4 +1,3 @@
-import { FC } from 'react'
 import * as rtl from '@testing-library/react'
 import * as O from 'optics-ts'
 import { atom, useAtom } from 'jotai'
@@ -12,7 +11,7 @@ it('updates traversals', async () => {
   const focusFunction = (optic: O.OpticFor<{ a?: number }[]>) =>
     optic.elems().prop('a').optional()
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (

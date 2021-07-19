@@ -1,4 +1,3 @@
-import { FC } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot } from 'valtio/vanilla'
 import { useAtom } from '../../src/index'
@@ -12,7 +11,7 @@ it('count state', async () => {
   const stateAtom = atomWithProxy(proxyState)
   ++proxyState.count
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [state, setState] = useAtom(stateAtom)
 
     return (
@@ -49,7 +48,7 @@ it('nested count state', async () => {
   const proxyState = proxy({ nested: { count: 0 }, other: {} })
   const otherSnap = snapshot(proxyState.other)
   const stateAtom = atomWithProxy(proxyState)
-  const Counter: FC = () => {
+  const Counter = () => {
     const [state, setState] = useAtom(stateAtom)
 
     return (

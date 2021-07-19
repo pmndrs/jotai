@@ -1,4 +1,4 @@
-import { FC, StrictMode, Suspense, useEffect, useRef, useState } from 'react'
+import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
 import type { SetStateAction, WritableAtom } from '../../src/index'
@@ -18,7 +18,7 @@ const useCommitCount = () => {
 it('new atomFamily impl', async () => {
   const myFamily = atomFamily((param) => atom(param))
 
-  const Displayer: FC<{ index: string }> = ({ index }) => {
+  const Displayer = ({ index }: { index: string }) => {
     const [count] = useAtom(myFamily(index))
     return <div>count: {count}</div>
   }
@@ -72,7 +72,7 @@ it('removed atom creates a new reference', async () => {
 it('primitive atomFamily initialized with props', async () => {
   const myFamily = atomFamily((param: number) => atom(param))
 
-  const Displayer: FC<{ index: number }> = ({ index }) => {
+  const Displayer = ({ index }: { index: number }) => {
     const [count, setCount] = useAtom(myFamily(index))
     return (
       <div>
@@ -82,7 +82,7 @@ it('primitive atomFamily initialized with props', async () => {
     )
   }
 
-  const Parent: FC = () => {
+  const Parent = () => {
     const [index, setIndex] = useState(1)
 
     return (
@@ -136,10 +136,13 @@ it('derived atomFamily functionality as usual', async () => {
     )
   )
 
-  const Displayer: FC<{
+  const Displayer = ({
+    index,
+    countAtom,
+  }: {
     index: number
     countAtom: WritableAtom<number, SetStateAction<number>>
-  }> = ({ index, countAtom }) => {
+  }) => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <div>
@@ -153,7 +156,7 @@ it('derived atomFamily functionality as usual', async () => {
 
   const indicesAtom = atom((get) => [...new Array(get(arrayAtom).length)])
 
-  const Parent: FC = () => {
+  const Parent = () => {
     const [indices] = useAtom(indicesAtom)
 
     return (
@@ -228,7 +231,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   )
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const setCount = useUpdateAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
     return (

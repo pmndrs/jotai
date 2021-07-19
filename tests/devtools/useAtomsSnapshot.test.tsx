@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtomsSnapshot } from '../../src/devtools'
 import { Provider, atom, useAtom } from '../../src/index'
@@ -7,7 +7,7 @@ it('should register newly added atoms', async () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
 
-  const DisplayCount: FC = () => {
+  const DisplayCount = () => {
     const [clicked, setClicked] = useState(false)
     const [count] = useAtom(countAtom)
 
@@ -20,12 +20,12 @@ it('should register newly added atoms', async () => {
     )
   }
 
-  const DisplayPet: FC = () => {
+  const DisplayPet = () => {
     const [pet] = useAtom(petAtom)
     return <p>pet: {pet}</p>
   }
 
-  const RegisteredAtomsCount: FC = () => {
+  const RegisteredAtomsCount = () => {
     const atoms = useAtomsSnapshot()
 
     return <p>atom count: {atoms.size}</p>
@@ -49,13 +49,13 @@ it('should let you access atoms and their state', async () => {
   const petAtom = atom('cat')
   petAtom.debugLabel = 'petAtom'
 
-  const Displayer: FC = () => {
+  const Displayer = () => {
     useAtom(countAtom)
     useAtom(petAtom)
     return null
   }
 
-  const SimpleDevtools: FC = () => {
+  const SimpleDevtools = () => {
     const atoms = useAtomsSnapshot()
 
     return (
@@ -84,13 +84,13 @@ it('should contain initial values', async () => {
   const petAtom = atom('cat')
   petAtom.debugLabel = 'petAtom'
 
-  const Displayer: FC = () => {
+  const Displayer = () => {
     useAtom(countAtom)
     useAtom(petAtom)
     return null
   }
 
-  const SimpleDevtools: FC = () => {
+  const SimpleDevtools = () => {
     const atoms = useAtomsSnapshot()
 
     return (

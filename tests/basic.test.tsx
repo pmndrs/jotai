@@ -1,5 +1,4 @@
 import {
-  FC,
   StrictMode,
   Suspense,
   useEffect,
@@ -74,7 +73,7 @@ it('creates atoms', () => {
 it('uses a primitive atom', async () => {
   const countAtom = atom(0)
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -100,7 +99,7 @@ it('uses a read-only derived atom', async () => {
   const countAtom = atom(0)
   const doubledCountAtom = atom((get) => get(countAtom) * 2)
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledCountAtom)
     return (
@@ -136,7 +135,7 @@ it('uses a read-write derived atom', async () => {
     (get, set, update: number) => set(countAtom, get(countAtom) + update)
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
     const [doubledCount, increaseCount] = useAtom(doubledCountAtom)
     return (
@@ -171,7 +170,7 @@ it('uses a write-only derived atom', async () => {
     set(countAtom, get(countAtom) + 1)
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
     return (
       <div>
@@ -180,7 +179,7 @@ it('uses a write-only derived atom', async () => {
     )
   }
 
-  const Control: FC = () => {
+  const Control = () => {
     const [, increment] = useAtom(incrementCountAtom)
     return (
       <>
@@ -215,7 +214,7 @@ it('only re-renders if value has changed', async () => {
   const productAtom = atom((get) => get(count1Atom) * get(count2Atom))
 
   type Props = { countAtom: typeof count1Atom; name: string }
-  const Counter: FC<Props> = ({ countAtom, name }) => {
+  const Counter = ({ countAtom, name }: Props) => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -227,7 +226,7 @@ it('only re-renders if value has changed', async () => {
     )
   }
 
-  const Product: FC = () => {
+  const Product = () => {
     const [product] = useAtom(productAtom)
     return (
       <>
@@ -272,7 +271,7 @@ it('works with async get', async () => {
     return get(countAtom)
   })
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const [delayedCount] = useAtom(asyncCountAtom)
     return (
@@ -312,7 +311,7 @@ it('works with async get without setTimeout', async () => {
     return get(countAtom)
   })
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const [delayedCount] = useAtom(asyncCountAtom)
     return (
@@ -353,7 +352,7 @@ it('shows loading with async set', async () => {
     }
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(asyncCountAtom)
     return (
       <>
@@ -392,7 +391,7 @@ it('uses atoms with tree dependencies', async () => {
     }
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count] = useAtom(leftAtom)
     const [, setCount] = useAtom(rightAtom)
     return (
@@ -435,7 +434,7 @@ it('runs update only once in StrictMode', async () => {
     }
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(derivedAtom)
     return (
       <>
@@ -471,7 +470,7 @@ it('uses an async write-only atom', async () => {
     }
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
     const [, setCount] = useAtom(asyncCountAtom)
     return (
@@ -509,7 +508,7 @@ it('uses a writable atom without read function', async () => {
     }
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, addCount10Times] = useAtom(countAtom)
     return (
       <>
@@ -537,7 +536,7 @@ it('uses a writable atom without read function', async () => {
 it('can write an atom value on useEffect', async () => {
   const countAtom = atom(0)
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     useEffect(() => {
       setCount((c) => c + 1)
@@ -557,16 +556,18 @@ it('can write an atom value on useEffect', async () => {
 it('can write an atom value on useEffect in children', async () => {
   const countAtom = atom(0)
 
-  const Child: FC<{
+  const Child = ({
+    setCount,
+  }: {
     setCount: (f: (c: number) => number) => void
-  }> = ({ setCount }) => {
+  }) => {
     useEffect(() => {
       setCount((c) => c + 1)
     }, [setCount])
     return null
   }
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <div>
@@ -596,7 +597,7 @@ it('only invoke read function on use atom', async () => {
 
   expect(readCount).toBe(0) // do not invoke on atom()
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const [doubledCount] = useAtom(doubledCountAtom)
     return (
@@ -637,7 +638,7 @@ it('uses a read-write derived atom with two primitive atoms', async () => {
     set(countBAtom, get(countBAtom) + 1)
   })
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [countA, setCountA] = useAtom(countAAtom)
     const [countB, setCountB] = useAtom(countBAtom)
     const [sum, reset] = useAtom(sumAtom)
@@ -681,7 +682,7 @@ it('updates a derived atom in useEffect with two primitive atoms', async () => {
   const countBAtom = atom(1)
   const sumAtom = atom((get) => get(countAAtom) + get(countBAtom))
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [countA, setCountA] = useAtom(countAAtom)
     const [countB, setCountB] = useAtom(countBAtom)
     const [sum] = useAtom(sumAtom)
@@ -714,7 +715,7 @@ it('updates two atoms in child useEffect', async () => {
   const countAAtom = atom(0)
   const countBAtom = atom(10)
 
-  const Child: FC = () => {
+  const Child = () => {
     const [countB, setCountB] = useAtom(countBAtom)
     useEffect(() => {
       setCountB((c) => c + 1)
@@ -722,7 +723,7 @@ it('updates two atoms in child useEffect', async () => {
     return <div>countB: {countB}</div>
   }
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [countA, setCountA] = useAtom(countAAtom)
     useEffect(() => {
       setCountA((c) => c + 1)
@@ -751,7 +752,7 @@ it('set atom right after useEffect (#208)', async () => {
   const countAtom = atom(0)
   const effectFn = jest.fn()
 
-  const Child: FC = () => {
+  const Child = () => {
     const [count, setCount] = useAtom(countAtom)
     const [, setState] = useState(null)
     // rAF does not repro, so schedule update intentionally in render
@@ -767,7 +768,7 @@ it('set atom right after useEffect (#208)', async () => {
     return <div>count: {count}</div>
   }
 
-  const Parent: FC = () => {
+  const Parent = () => {
     const [, setCount] = useAtom(countAtom)
     useEffect(() => {
       setCount(1)
@@ -790,7 +791,7 @@ it('changes atom from parent (#273, #275)', async () => {
   const atomA = atom({ id: 'a' })
   const atomB = atom({ id: 'b' })
 
-  const Item: FC<{ id: string }> = ({ id }) => {
+  const Item = ({ id }: { id: string }) => {
     const a = useMemo(() => (id === 'a' ? atomA : atomB), [id])
     const [atomValue] = useAtom(a)
     return (
@@ -800,7 +801,7 @@ it('changes atom from parent (#273, #275)', async () => {
     )
   }
 
-  const App: FC = () => {
+  const App = () => {
     const [id, setId] = useState('a')
     return (
       <div>
@@ -834,7 +835,7 @@ it('should be able to use a double derived atom twice and useEffect (#373)', asy
   const doubleAtom = atom((get) => get(countAtom) * 2)
   const fourfoldAtom = atom((get) => get(doubleAtom) * 2)
 
-  const App: FC = () => {
+  const App = () => {
     const [count, setCount] = useAtom(countAtom)
     const [fourfold] = useAtom(fourfoldAtom)
     const [fourfold2] = useAtom(fourfoldAtom)
@@ -867,7 +868,7 @@ it('write self atom (undocumented usage)', async () => {
     set(countAtom, get(countAtom) + 1)
   })
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, inc] = useAtom(countAtom)
     return (
       <>
@@ -904,7 +905,7 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
   const sumAtom = atom(async (get) => get(num1Atom) + get(num2Atom))
   const countAtom = atom((get) => get(sumAtom))
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
     return (
       <>
