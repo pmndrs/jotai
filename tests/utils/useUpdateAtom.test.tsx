@@ -1,4 +1,4 @@
-import { FC, StrictMode, useEffect, useRef } from 'react'
+import { PropsWithChildren, StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
 import { useUpdateAtom } from '../../src/utils'
@@ -17,7 +17,7 @@ const useRerenderCount = () => {
 it('useUpdateAtom does not trigger rerender in component', async () => {
   const countAtom = atom(0)
 
-  const Displayer: FC = () => {
+  const Displayer = () => {
     const [count] = useAtom(countAtom)
     const rerenders = useRerenderCount()
     return (
@@ -27,7 +27,7 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
     )
   }
 
-  const Updater: FC = () => {
+  const Updater = () => {
     const setCount = useUpdateAtom(countAtom)
     const rerenders = useRerenderCount()
     return (
@@ -40,7 +40,7 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
     )
   }
 
-  const Parent: FC = () => {
+  const Parent = () => {
     return (
       <>
         <Displayer />
@@ -83,19 +83,19 @@ it('useUpdateAtom with scope', async () => {
   const countAtom = atom(0)
   countAtom.scope = scope
 
-  const Displayer: FC = () => {
+  const Displayer = () => {
     const [count] = useAtom(countAtom)
     return <div>count: {count}</div>
   }
 
-  const Updater: FC = () => {
+  const Updater = () => {
     const setCount = useUpdateAtom(countAtom)
     return (
       <button onClick={() => setCount((value) => value + 1)}>increment</button>
     )
   }
 
-  const Parent: FC = () => {
+  const Parent = () => {
     return (
       <>
         <Displayer />
@@ -127,21 +127,21 @@ it('useUpdateAtom with write without an argument', async () => {
     set(countAtom, get(countAtom) + 1)
   )
 
-  const Button: FC<{ cb: () => void }> = ({ cb, children }) => (
+  const Button = ({ cb, children }: PropsWithChildren<{ cb: () => void }>) => (
     <button onClick={cb}>{children}</button>
   )
 
-  const Displayer: FC = () => {
+  const Displayer = () => {
     const [count] = useAtom(countAtom)
     return <div>count: {count}</div>
   }
 
-  const Updater: FC = () => {
+  const Updater = () => {
     const setCount = useUpdateAtom(incrementCountAtom)
     return <Button cb={setCount}>increment</Button>
   }
 
-  const Parent: FC = () => {
+  const Parent = () => {
     return (
       <>
         <Displayer />

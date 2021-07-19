@@ -1,4 +1,4 @@
-import { FC, Suspense } from 'react'
+import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtom } from '../../src/'
 import { atomWithInfiniteQuery } from '../../src/query/atomWithInfiniteQuery'
@@ -19,7 +19,7 @@ it('infinite query basic test', async () => {
     },
   }))
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [data] = useAtom(countAtom)
     return (
       <>
@@ -64,7 +64,7 @@ it('infinite query next page test', async () => {
       return (count - 1).toString()
     },
   }))
-  const Counter: FC = () => {
+  const Counter = () => {
     const [data, dispatch] = useAtom(countAtom)
 
     return (

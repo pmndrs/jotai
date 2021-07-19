@@ -1,4 +1,4 @@
-import { FC, Suspense } from 'react'
+import { Suspense } from 'react'
 import * as rtl from '@testing-library/react'
 import * as O from 'optics-ts'
 import { atom, useAtom } from 'jotai'
@@ -14,7 +14,7 @@ it('basic derivation using focus works', async () => {
   const bigAtom = atom({ a: 0 })
   const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
@@ -53,7 +53,7 @@ it('focus on an atom works', async () => {
   const bigAtom = atom({ a: 0 })
   const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (
@@ -84,7 +84,7 @@ it('double-focus on an atom works', async () => {
   const atomA = focusAtom(bigAtom, (optic) => optic.prop('a'))
   const atomB = focusAtom(atomA, (optic) => optic.prop('b'))
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [bigAtomValue, setBigAtom] = useAtom(bigAtom)
     const [atomAValue, setAtomA] = useAtom(atomA)
     const [atomBValue, setAtomB] = useAtom(atomB)
@@ -141,7 +141,7 @@ it('focus on async atom works', async () => {
   const focusFunction = (optic: O.OpticFor<{ count: number }>) =>
     optic.prop('count')
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(focusAtom(asyncAtom, focusFunction))
     const [asyncValue, setAsync] = useAtom(asyncAtom)
     const [baseValue, setBase] = useAtom(baseAtom)
@@ -195,7 +195,7 @@ it('basic derivation using focus with scope works', async () => {
   bigAtom.scope = scope
   const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
     const [bigAtomValue] = useAtom(bigAtom)
     return (

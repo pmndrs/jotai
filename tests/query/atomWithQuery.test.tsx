@@ -1,4 +1,4 @@
-import { FC, Suspense, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/'
 import { atomWithQuery } from '../../src/query'
@@ -14,7 +14,7 @@ it('query basic test', async () => {
       return await fakeFetch({ count: 0 })
     },
   }))
-  const Counter: FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -46,7 +46,7 @@ it('query basic test with object instead of function', async () => {
       return await fakeFetch({ count: 0 })
     },
   })
-  const Counter: FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -82,7 +82,7 @@ it('query refetch', async () => {
       return response
     },
   }))
-  const Counter: FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -129,7 +129,7 @@ it('query loading', async () => {
   const dispatchAtom = atom(null, (_get, set, action: any) =>
     set(countAtom, action)
   )
-  const Counter: FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -141,7 +141,7 @@ it('query loading', async () => {
       </>
     )
   }
-  const RefreshButton: FC = () => {
+  const RefreshButton = () => {
     const [, dispatch] = useAtom(dispatchAtom)
     return (
       <button onClick={() => dispatch({ type: 'refetch' })}>refetch</button>
@@ -179,7 +179,7 @@ it('query loading 2', async () => {
     },
   }))
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -228,7 +228,7 @@ it('query with enabled (#500)', async () => {
     }
   })
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -237,7 +237,7 @@ it('query with enabled (#500)', async () => {
     return <div>count: {count}</div>
   }
 
-  const Parent: FC = () => {
+  const Parent = () => {
     const [showChildren, setShowChildren] = useState(true)
     const [, setEnabled] = useAtom(setEnabledAtom)
     return (
@@ -284,7 +284,7 @@ it('query with initialData test', async () => {
     initialData: { response: { count: 0 } },
     refetchInterval: 100,
   }))
-  const Counter: FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },

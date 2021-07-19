@@ -1,4 +1,4 @@
-import { FC, Suspense } from 'react'
+import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Client } from '@urql/core'
 import { interval, map, pipe, take, toPromise } from 'wonka'
@@ -30,7 +30,7 @@ it('query basic test', async () => {
     () => clientMock
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [{ data }] = useAtom(countAtom)
     return (
       <>
@@ -67,7 +67,7 @@ it('query dependency test', async () => {
     () => clientMock
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [{ data }] = useAtom(countAtom)
     return (
       <>
@@ -76,7 +76,7 @@ it('query dependency test', async () => {
     )
   }
 
-  const Controls: FC = () => {
+  const Controls = () => {
     const [, setDummy] = useAtom(setDummyAtom)
     return <button onClick={() => setDummy((c) => c + 1)}>dummy</button>
   }

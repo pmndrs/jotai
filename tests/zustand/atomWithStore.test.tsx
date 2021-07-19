@@ -1,4 +1,3 @@
-import { FC } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
 import create from 'zustand/vanilla'
 import { useAtom } from '../../src/index'
@@ -12,7 +11,7 @@ it('count state', async () => {
   const stateAtom = atomWithStore(store)
   store.setState((prev) => ({ count: prev.count + 1 }))
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [state, setState] = useAtom(stateAtom)
 
     return (

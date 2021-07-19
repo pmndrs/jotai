@@ -1,4 +1,4 @@
-import { FC, Suspense } from 'react'
+import { Suspense } from 'react'
 import { render } from '@testing-library/react'
 import { Client, TypedDocumentNode } from '@urql/core'
 import { interval, map, pipe, take, toPromise } from 'wonka'
@@ -32,7 +32,7 @@ it('subscription basic test', async () => {
     () => clientMock
   )
 
-  const Counter: FC = () => {
+  const Counter = () => {
     const [{ data }] = useAtom(countAtom)
     return (
       <>

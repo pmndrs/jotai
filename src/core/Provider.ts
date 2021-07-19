@@ -1,14 +1,18 @@
-import { FC, createElement, useDebugValue, useRef } from 'react'
+import { PropsWithChildren, createElement, useDebugValue, useRef } from 'react'
 import type { Atom, Scope } from './atom'
 import { createStore, getStoreContext, isDevStore } from './contexts'
 import type { StoreForDevelopment } from './contexts'
 import { useMutableSource } from './useMutableSource'
 import type { AtomState, State } from './vanilla'
 
-export const Provider: FC<{
+export const Provider = ({
+  initialValues,
+  scope,
+  children,
+}: PropsWithChildren<{
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
   scope?: Scope
-}> = ({ initialValues, scope, children }) => {
+}>) => {
   const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
   if (storeRef.current === null) {
     // lazy initialization

@@ -1,4 +1,3 @@
-import { FC } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { createMachine } from 'xstate'
 import { useAtom } from '../../src/index'
@@ -23,7 +22,7 @@ it('toggle machine', async () => {
 
   const toggleMachineAtom = atomWithMachine(() => toggleMachine)
 
-  const Toggler: FC = () => {
+  const Toggler = () => {
     const [state, send] = useAtom(toggleMachineAtom)
 
     return (

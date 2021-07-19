@@ -1,4 +1,3 @@
-import { FC } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { PrimitiveAtom, atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
@@ -13,10 +12,13 @@ it('remove an item, then add another', async () => {
   let itemIndex = 0
   const itemsAtom = atom<PrimitiveAtom<Item>[]>([])
 
-  const ListItem: FC<{
+  const ListItem = ({
+    itemAtom,
+    remove,
+  }: {
     itemAtom: PrimitiveAtom<Item>
     remove: () => void
-  }> = ({ itemAtom, remove }) => {
+  }) => {
     const [item, setItem] = useAtom(itemAtom)
     const toggle = () =>
       setItem((prev) => ({ ...prev, checked: !prev.checked }))
@@ -31,7 +33,7 @@ it('remove an item, then add another', async () => {
     )
   }
 
-  const List: FC = () => {
+  const List = () => {
     const [items, setItems] = useAtom(itemsAtom)
     const addItem = () => {
       setItems((prev) => [
@@ -112,10 +114,13 @@ it('add an item with filtered list', async () => {
     else return items.filter((atom) => !get(atom).checked)
   })
 
-  const ListItem: FC<{
+  const ListItem = ({
+    itemAtom,
+    remove,
+  }: {
     itemAtom: PrimitiveAtom<Item>
     remove: () => void
-  }> = ({ itemAtom, remove }) => {
+  }) => {
     const [item, setItem] = useAtom(itemAtom)
     const toggle = () =>
       setItem((prev) => ({ ...prev, checked: !prev.checked }))
@@ -130,7 +135,7 @@ it('add an item with filtered list', async () => {
     )
   }
 
-  const Filter: FC = () => {
+  const Filter = () => {
     const [filter, setFilter] = useAtom(filterAtom)
     return (
       <>
@@ -142,9 +147,11 @@ it('add an item with filtered list', async () => {
     )
   }
 
-  const FilteredList: FC<{
+  const FilteredList = ({
+    removeItem,
+  }: {
     removeItem: (itemAtom: PrimitiveAtom<Item>) => void
-  }> = ({ removeItem }) => {
+  }) => {
     const [items] = useAtom(filteredAtom)
     return (
       <ul>
@@ -159,7 +166,7 @@ it('add an item with filtered list', async () => {
     )
   }
 
-  const List: FC = () => {
+  const List = () => {
     const [, setItems] = useAtom(setItemsAtom)
     const addItem = () => {
       setItems((prev) => [
