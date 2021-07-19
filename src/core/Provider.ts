@@ -1,4 +1,5 @@
-import { PropsWithChildren, createElement, useDebugValue, useRef } from 'react'
+import { createElement, useDebugValue, useRef } from 'react'
+import type { PropsWithChildren } from 'react'
 import type { Atom, Scope } from './atom'
 import { createStore, getStoreContext, isDevStore } from './contexts'
 import type { StoreForDevelopment } from './contexts'

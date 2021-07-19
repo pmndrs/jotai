@@ -1,6 +1,8 @@
 /* eslint-disable import/named */
-import { Draft, produce } from 'immer'
-import { PrimitiveAtom, WritableAtom, atom } from 'jotai'
+import { produce } from 'immer'
+import type { Draft } from 'immer'
+import { atom } from 'jotai'
+import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { getWeakCacheItem, setWeakCacheItem } from '../utils/weakCache'
 
 const withImmerCache = new WeakMap()

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
-import { PrimitiveAtom, Provider, atom, useAtom } from 'jotai'
+import { Provider, atom, useAtom } from 'jotai'
+import type { PrimitiveAtom } from 'jotai'
 import { focusAtom } from 'jotai/optics'
 import { useAtomCallback } from 'jotai/utils'
 import initialValue from './initialValue'

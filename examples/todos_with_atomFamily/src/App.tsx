@@ -1,4 +1,4 @@
-import { FormEvent } from 'react'
+import type { FormEvent } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { a, useTransition } from '@react-spring/web'
 import { Radio } from 'antd'

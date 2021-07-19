@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { WritableAtom, useAtom } from 'jotai'
+import { useAtom } from 'jotai'
+import type { WritableAtom } from 'jotai'
 
 type Config = {
   instanceID?: number
