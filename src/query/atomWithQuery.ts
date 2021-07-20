@@ -1,8 +1,8 @@
-import {
+import { QueryObserver } from 'react-query'
+import type {
   InitialDataFunction,
   QueryClient,
   QueryKey,
-  QueryObserver,
   QueryObserverOptions,
   QueryObserverResult,
 } from 'react-query'

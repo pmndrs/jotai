@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
-import { PrimitiveAtom, useAtom } from 'jotai'
+import { useAtom } from 'jotai'
+import type { PrimitiveAtom } from 'jotai'
 
 /* this doesn't seem to work as expected in TS4.1
 export function useReducerAtom<Value, Action>(

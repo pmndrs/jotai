@@ -1,4 +1,5 @@
-import {
+import { interpret } from 'xstate'
+import type {
   EventObject,
   Interpreter,
   InterpreterOptions,
@@ -6,7 +7,6 @@ import {
   State,
   StateMachine,
   Typestate,
-  interpret,
 } from 'xstate'
 import { atom } from 'jotai'
 import type { Atom, Getter } from 'jotai'

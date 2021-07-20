@@ -1,6 +1,7 @@
 import { expectType } from 'ts-expect'
-import { SetAtom } from '../src/core/atom'
-import { Atom, PrimitiveAtom, WritableAtom, atom, useAtom } from '../src/index'
+import { atom, useAtom } from 'jotai'
+import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai'
+import type { SetAtom } from '../src/core/atom'
 
 it('atom() should return the correct types', () => {
   function Component() {

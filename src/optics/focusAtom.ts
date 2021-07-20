@@ -1,11 +1,8 @@
 import * as O from 'optics-ts'
 import { atom } from 'jotai'
 import type { SetStateAction, WritableAtom } from 'jotai'
-import {
-  WeakCache,
-  getWeakCacheItem,
-  setWeakCacheItem,
-} from '../utils/weakCache'
+import { getWeakCacheItem, setWeakCacheItem } from '../utils/weakCache'
+import type { WeakCache } from '../utils/weakCache'
 
 const focusAtomCache: WeakCache<WritableAtom<any, any>> = new WeakMap()
 

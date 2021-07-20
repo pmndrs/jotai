@@ -1,12 +1,11 @@
-import {
+import { InfiniteQueryObserver, isCancelledError } from 'react-query'
+import type {
   InfiniteData,
-  InfiniteQueryObserver,
   InfiniteQueryObserverOptions,
   InitialDataFunction,
   QueryClient,
   QueryKey,
   QueryObserverResult,
-  isCancelledError,
 } from 'react-query'
 import { atom } from 'jotai'
 import type { Getter, WritableAtom } from 'jotai'
