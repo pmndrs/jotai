@@ -1,8 +1,8 @@
 {
   "index.js": {
-    "bundled": 21262,
-    "minified": 10169,
-    "gzipped": 3353,
+    "bundled": 21268,
+    "minified": 10175,
+    "gzipped": 3361,
     "treeshaked": {
       "rollup": {
         "code": 14,
@@ -14,9 +14,9 @@
     }
   },
   "utils.js": {
-    "bundled": 15731,
-    "minified": 7669,
-    "gzipped": 2831,
+    "bundled": 15954,
+    "minified": 7668,
+    "gzipped": 2832,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -29,7 +29,7 @@
   },
   "devtools.js": {
     "bundled": 19122,
-    "minified": 9538,
+    "minified": 9544,
     "gzipped": 3281,
     "treeshaked": {
       "rollup": {
@@ -58,7 +58,7 @@
   "optics.js": {
     "bundled": 1613,
     "minified": 811,
-    "gzipped": 426,
+    "gzipped": 425,
     "treeshaked": {
       "rollup": {
         "code": 32,
