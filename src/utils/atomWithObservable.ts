@@ -1,6 +1,12 @@
 import { atom } from 'jotai'
 import type { Atom, Getter, WritableAtom } from 'jotai'
 
+declare global {
+  interface SymbolConstructor {
+    readonly observable: symbol
+  }
+}
+
 type Subscription = {
   unsubscribe: () => void
 }
