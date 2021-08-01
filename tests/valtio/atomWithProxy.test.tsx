@@ -88,15 +88,15 @@ it('nested count state', async () => {
 })
 
 it('state with a promise', async () => {
-  const promiseReturningFunction = () =>
+  const getAsyncStatus = (status: string) =>
     new Promise<string>((resolve) => {
       setTimeout(() => {
-        resolve('done')
+        resolve(status)
       }, 15)
     })
 
   const proxyState = proxy({
-    status: promiseReturningFunction(),
+    status: getAsyncStatus('done'),
   })
   const stateAtom = atomWithProxy(proxyState)
 
@@ -109,7 +109,7 @@ it('state with a promise', async () => {
           onClick={() =>
             setState((prev) => ({
               ...prev,
-              status: 'modified',
+              status: getAsyncStatus('modified'),
             }))
           }>
           button
@@ -127,6 +127,7 @@ it('state with a promise', async () => {
   )
 
   await findByText('status: done')
+  expect(proxyState.status).toBe('done')
   fireEvent.click(getByText('button'))
   await findByText('status: modified')
   expect(proxyState.status).toBe('modified')
