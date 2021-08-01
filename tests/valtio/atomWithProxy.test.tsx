@@ -127,8 +127,6 @@ it('state with a promise', async () => {
   )
 
   await findByText('status: done')
-  expect(proxyState.status).toBe('done')
   fireEvent.click(getByText('button'))
   await findByText('status: modified')
-  expect(proxyState.status).toBe('modified')
 })
