@@ -89,7 +89,7 @@ it('nested count state', async () => {
 
 it('state with a promise', async () => {
   const promiseReturningFunction = () =>
-    new Promise((resolve) => {
+    new Promise<string>((resolve) => {
       setTimeout(() => {
         resolve('done')
       }, 15)

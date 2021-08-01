@@ -32,8 +32,6 @@ const applyChanges = <T extends object>(proxyObject: T, prev: T, next: T) => {
   })
 }
 
-// No support for promises in proxy as it's not symmetric
-// Should we type it precisely?
 export function atomWithProxy<Value extends object>(proxyObject: Value) {
   const baseAtom = atom(snapshot(proxyObject))
   baseAtom.onMount = (setValue) => {
