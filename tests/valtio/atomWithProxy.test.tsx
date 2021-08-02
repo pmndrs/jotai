@@ -1,4 +1,5 @@
-import { fireEvent, render } from '@testing-library/react'
+import { Suspense } from 'react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, snapshot } from 'valtio/vanilla'
 import { useAtom } from '../../src/index'
 import { atomWithProxy } from '../../src/valtio'
@@ -84,4 +85,48 @@ it('nested count state', async () => {
   await findByText('count: 2')
   expect(proxyState.nested.count).toBe(2)
   expect(otherSnap === snapshot(proxyState.other)).toBe(true)
+})
+
+it('state with a promise', async () => {
+  const getAsyncStatus = (status: string) =>
+    new Promise<string>((resolve) => {
+      setTimeout(() => {
+        resolve(status)
+      }, 15)
+    })
+
+  const proxyState = proxy({
+    status: getAsyncStatus('done'),
+  })
+  const stateAtom = atomWithProxy(proxyState)
+
+  const Status = () => {
+    const [state, setState] = useAtom(stateAtom)
+    return (
+      <>
+        <span>status: {state.status}</span>
+        <button
+          onClick={() =>
+            setState((prev) => ({
+              ...prev,
+              status: getAsyncStatus('modified'),
+            }))
+          }>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback="loading...">
+        <Status />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('status: done')
+  fireEvent.click(getByText('button'))
+  await findByText('status: modified')
 })
