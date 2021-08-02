@@ -1,9 +1,6 @@
 export type WeakCache<T> = WeakMap<object, [WeakCache<T>] | [WeakCache<T>, T]>
 
-export const getWeakCacheItem = <T>(
-  cache: WeakCache<T>,
-  deps: readonly object[]
-): T | undefined => {
+const _getWeakCacheItem = <T>(cache: WeakCache<T>, deps: readonly object[]) => {
   const [dep, ...rest] = deps
   const entry = cache.get(dep)
   if (!entry) {
@@ -12,14 +9,14 @@ export const getWeakCacheItem = <T>(
   if (!rest.length) {
     return entry[1]
   }
-  return getWeakCacheItem(entry[0], rest)
+  return () => _getWeakCacheItem(entry[0], rest)
 }
 
-export const setWeakCacheItem = <T>(
+const _setWeakCacheItem = <T>(
   cache: WeakCache<T>,
   deps: readonly object[],
   item: T
-): void => {
+) => {
   const [dep, ...rest] = deps
   let entry = cache.get(dep)
   if (!entry) {
@@ -30,5 +27,22 @@ export const setWeakCacheItem = <T>(
     entry[1] = item
     return
   }
-  setWeakCacheItem(entry[0], rest, item)
+  return () => _setWeakCacheItem(entry![0], rest, item)
 }
+
+const trampoline =
+  <T extends Function>(fn: T) =>
+  (...args: unknown[]) => {
+    let res = fn(...args)
+    while (typeof res === 'function') {
+      res = res()
+    }
+    return res
+  }
+
+export const getWeakCacheItem: <T>(
+  ...args: Parameters<typeof _getWeakCacheItem>
+) => T | undefined = trampoline(_getWeakCacheItem)
+export const setWeakCacheItem: <T>(
+  ...args: Parameters<typeof _setWeakCacheItem>
+) => void | undefined = trampoline(_setWeakCacheItem)
