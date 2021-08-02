@@ -12,11 +12,13 @@ If you are here to suggest a feature, first create an issue if it does not alrea
 
 ## Development
 
-If you have been assigned to fix an issue or develop a new feature, please follow these steps to get started:
+If you would like to contribute by fixing an open issue or developing a new feature you can use this suggested workflow:
 
 - Fork this repository.
+- Create a new feature branch based off the `master` branch.
 - Install dependencies by running `$ yarn`.
-- Implement your changes and run test files or create new test files.
+- Create failing tests for your fix or new feature.
+- Implement your changes and confirm that all test are passing. You can run the tests continuously during development via the `$ yarn test:dev` command.
 - If you want to test it in a React project you can either use `$ yarn link` or `yalc` package.
 - Git stage your required changes and commit (see below commit guidelines).
 - Submit PR for review.
@@ -35,6 +37,8 @@ Must be one of the following:
 
 ## Pull requests
 
-Maintainers merge pull requests by squashing all commits and editing the commit message if necessary using the GitHub user interface.
+Please try to keep your pull request focused in scope and avoid including unrelated commits.
 
-Use an appropriate commit type. Be especially careful with breaking changes.
+After you have submitted your pull request, we'll try to get back to you as soon as possible. We may suggest some changes or improvements.
+
+Thank you for contributing!
