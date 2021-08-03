@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
-import { interval, map, pipe, take, toPromise } from 'wonka'
+import { fromValue, interval, map, pipe, take, toPromise } from 'wonka'
 import { atom, useAtom } from '../../src/'
 import { atomWithQuery } from '../../src/urql'
 import { getTestProvider } from '../testUtils'
@@ -19,6 +19,11 @@ const clientMock = {
       )
     ),
 } as unknown as Client
+
+const generateClient = (id: string) =>
+  ({
+    query: () => withPromise(fromValue({ data: { id } })),
+  } as unknown as Client)
 
 const Provider = getTestProvider()
 
@@ -96,4 +101,53 @@ it('query dependency test', async () => {
   fireEvent.click(getByText('dummy'))
   await findByText('loading')
   await findByText('count: 1')
+})
+
+it('query change client at runtime', async () => {
+  const firstClient = generateClient('first')
+  const secondClient = generateClient('second')
+  const clientAtom = atom(firstClient)
+  const idAtom = atomWithQuery<{ id: string }, {}>(
+    (get) => ({
+      query: '{ id }',
+    }),
+    (get) => get(clientAtom)
+  )
+
+  const Identifier = () => {
+    const [{ data }] = useAtom(idAtom)
+    return (
+      <>
+        <div>id: {data?.id}</div>
+      </>
+    )
+  }
+
+  const Controls = () => {
+    const [, setClient] = useAtom(clientAtom)
+    return (
+      <>
+        <button onClick={() => setClient(firstClient)}>first</button>
+        <button onClick={() => setClient(secondClient)}>second</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Identifier />
+      </Suspense>
+      <Controls />
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('id: first')
+  fireEvent.click(getByText('second'))
+  await findByText('loading')
+  await findByText('id: second')
+  fireEvent.click(getByText('first'))
+  await findByText('loading')
+  await findByText('id: first')
 })
