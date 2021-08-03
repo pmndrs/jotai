@@ -151,3 +151,58 @@ it('query change client at runtime', async () => {
   await findByText('loading')
   await findByText('id: first')
 })
+
+it('query null client suspense', async () => {
+  const client = generateClient('client is set')
+  const clientAtom = atom<Client | null>(null)
+  const idAtom = atomWithQuery<{ id: string }, {}>(
+    (get) => ({
+      query: '{ id }',
+    }),
+    (get) => get(clientAtom)
+  )
+  // Derived Atom to safe guard when client is null
+  const guardedIdAtom = atom((get): { data?: { id: string } } => {
+    const client = get(clientAtom)
+    if (client === null) return {}
+    return get(idAtom)
+  })
+
+  const Identifier = () => {
+    const [{ data }] = useAtom(guardedIdAtom)
+    return (
+      <>
+        <div>{data?.id ? data?.id : 'no data'}</div>
+      </>
+    )
+  }
+
+  const Controls = () => {
+    const [, setClient] = useAtom(clientAtom)
+    return (
+      <>
+        <button onClick={() => setClient(null)}>unset</button>
+        <button onClick={() => setClient(client)}>set</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Identifier />
+      </Suspense>
+      <Controls />
+    </Provider>
+  )
+
+  await findByText('no data')
+  fireEvent.click(getByText('set'))
+  await findByText('loading')
+  await findByText('client is set')
+  fireEvent.click(getByText('unset'))
+  await findByText('no data')
+  fireEvent.click(getByText('set'))
+  await findByText('loading')
+  await findByText('client is set')
+})
