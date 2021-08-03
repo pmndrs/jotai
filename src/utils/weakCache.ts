@@ -1,48 +1,36 @@
 export type WeakCache<T> = WeakMap<object, [WeakCache<T>] | [WeakCache<T>, T]>
 
-const _getWeakCacheItem = <T>(cache: WeakCache<T>, deps: readonly object[]) => {
-  const [dep, ...rest] = deps
-  const entry = cache.get(dep)
-  if (!entry) {
-    return
+export const getWeakCacheItem = <T>(
+  cache: WeakCache<T>,
+  deps: readonly object[]
+): T | undefined => {
+  for (const [index, dep] of deps.entries()) {
+    const entry = cache.get(dep)
+    if (!entry) {
+      return
+    }
+    const rest = deps.slice(index + 1)
+    if (!rest.length) {
+      return entry[1]
+    }
   }
-  if (!rest.length) {
-    return entry[1]
-  }
-  return () => _getWeakCacheItem(entry[0], rest)
 }
 
-const _setWeakCacheItem = <T>(
+export const setWeakCacheItem = <T>(
   cache: WeakCache<T>,
   deps: readonly object[],
   item: T
-) => {
-  const [dep, ...rest] = deps
-  let entry = cache.get(dep)
-  if (!entry) {
-    entry = [new WeakMap()]
-    cache.set(dep, entry)
-  }
-  if (!rest.length) {
-    entry[1] = item
-    return
-  }
-  return () => _setWeakCacheItem(entry![0], rest, item)
-}
-
-const trampoline =
-  <T extends Function>(fn: T) =>
-  (...args: unknown[]) => {
-    let res = fn(...args)
-    while (typeof res === 'function') {
-      res = res()
+): void => {
+  for (const [index, dep] of deps.entries()) {
+    let entry = cache.get(dep)
+    if (!entry) {
+      entry = [new WeakMap()]
+      cache.set(dep, entry)
     }
-    return res
+    const rest = deps.slice(index + 1)
+    if (!rest.length) {
+      entry[1] = item
+      return
+    }
   }
-
-export const getWeakCacheItem: <T>(
-  ...args: Parameters<typeof _getWeakCacheItem>
-) => T | undefined = trampoline(_getWeakCacheItem)
-export const setWeakCacheItem: <T>(
-  ...args: Parameters<typeof _setWeakCacheItem>
-) => void | undefined = trampoline(_setWeakCacheItem)
+}
