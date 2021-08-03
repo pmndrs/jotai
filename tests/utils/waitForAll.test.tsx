@@ -1,7 +1,7 @@
-import { Component, StrictMode, Suspense } from 'react'
+import { Component, StrictMode, Suspense, useEffect } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
-import { useUpdateAtom, waitForAll } from '../../src/utils'
+import { atomFamily, useUpdateAtom, waitForAll } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -340,4 +340,58 @@ it('warns on different scopes', async () => {
   )
 
   expect(console.warn).toHaveBeenCalledTimes(1)
+})
+
+it('large atom count', async () => {
+  const createArray = (n: number) =>
+    Array(n)
+      .fill(0)
+      .map((_, i) => i)
+
+  let result = null
+
+  const chunksFamily = atomFamily((i) => atom(i))
+
+  const selector = atomFamily((count: number) =>
+    atom((getter) => {
+      const data = createArray(count)
+      const atoms = data.map(chunksFamily)
+      const values = waitForAll(atoms)
+      return getter(values)
+    })
+  )
+
+  const Loader = ({ count }: { count: number }) => {
+    const [value, _] = useAtom(selector(count))
+
+    useEffect(() => {
+      result = value
+    }, [value])
+
+    return <div></div>
+  }
+
+  const passingCount = 500
+  render(
+    <StrictMode>
+      <Provider>
+        <Loader count={passingCount} />
+      </Provider>
+    </StrictMode>
+  )
+
+  expect(result).toEqual(createArray(passingCount))
+
+  jest.runOnlyPendingTimers()
+
+  const failingCount = 8000
+  render(
+    <StrictMode>
+      <Provider>
+        <Loader count={failingCount} />
+      </Provider>
+    </StrictMode>
+  )
+
+  expect(result).toEqual(createArray(failingCount))
 })
