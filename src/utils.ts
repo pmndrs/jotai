@@ -18,3 +18,4 @@ export {
   createJSONStorage,
 } from './utils/atomWithStorage'
 export { atomWithObservable } from './utils/atomWithObservable'
+export { useHydrateAtoms } from './utils/useHydrateAtoms'
