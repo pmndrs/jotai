@@ -137,11 +137,10 @@ it('useResetAtom with custom atom', async () => {
 it('useResetAtom with scope', async () => {
   const scope = Symbol()
   const countAtom = atomWithReset(0)
-  countAtom.scope = scope
 
   const Parent = () => {
-    const [count, setValue] = useAtom(countAtom)
-    const resetAtom = useResetAtom(countAtom)
+    const [count, setValue] = useAtom(countAtom, scope)
+    const resetAtom = useResetAtom(countAtom, scope)
     return (
       <>
         <div>count: {count}</div>
