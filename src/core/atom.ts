@@ -47,7 +47,7 @@ export type Atom<Value> = {
   toString: () => string
   debugLabel?: string
   /**
-   * @deprecated
+   * @deprecated Instead use `useAtom(atom, scope)`
    */
   scope?: Scope
   read: Read<Value>
