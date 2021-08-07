@@ -1,5 +1,5 @@
 import { useCallback, useContext, useDebugValue, useEffect } from 'react'
-import type { Atom, SetAtom, WritableAtom } from './atom'
+import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { getStoreContext } from './contexts'
 import { useMutableSource } from './useMutableSource'
 import { readAtom, subscribeAtom } from './vanilla'
@@ -11,27 +11,35 @@ const isWritable = <Value, Update>(
   !!(atom as WritableAtom<Value, Update>).write
 
 export function useAtom<Value, Update>(
-  atom: WritableAtom<Value | Promise<Value>, Update>
+  atom: WritableAtom<Value | Promise<Value>, Update>,
+  scope?: Scope
 ): [Value, SetAtom<Update>]
 
 export function useAtom<Value, Update>(
-  atom: WritableAtom<Promise<Value>, Update>
+  atom: WritableAtom<Promise<Value>, Update>,
+  scope?: Scope
 ): [Value, SetAtom<Update>]
 
 export function useAtom<Value, Update>(
-  atom: WritableAtom<Value, Update>
+  atom: WritableAtom<Value, Update>,
+  scope?: Scope
 ): [Value, SetAtom<Update>]
 
 export function useAtom<Value>(
-  atom: Atom<Value | Promise<Value>>
+  atom: Atom<Value | Promise<Value>>,
+  scope?: Scope
 ): [Value, never]
 
-export function useAtom<Value>(atom: Atom<Promise<Value>>): [Value, never]
+export function useAtom<Value>(
+  atom: Atom<Promise<Value>>,
+  scope?: Scope
+): [Value, never]
 
-export function useAtom<Value>(atom: Atom<Value>): [Value, never]
+export function useAtom<Value>(atom: Atom<Value>, scope?: Scope): [Value, never]
 
 export function useAtom<Value, Update>(
-  atom: Atom<Value> | WritableAtom<Value, Update>
+  atom: Atom<Value> | WritableAtom<Value, Update>,
+  scope?: Scope
 ) {
   const getAtomValue = useCallback(
     (state: State) => {
@@ -59,7 +67,14 @@ export function useAtom<Value, Update>(
     [atom]
   )
 
-  const StoreContext = getStoreContext(atom.scope)
+  if ('scope' in atom) {
+    console.warn(
+      'atom.scope is deprecated. Please do useAtom(atom, scope) instead.'
+    )
+    scope = atom.scope
+  }
+
+  const StoreContext = getStoreContext(scope)
   const [mutableSource, updateAtom, commitCallback] = useContext(StoreContext)
   const value: Value = useMutableSource(mutableSource, getAtomValue, subscribe)
   useEffect(() => {

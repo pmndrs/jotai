@@ -34,7 +34,6 @@ export function atomWithQuery<Data, Variables extends object>(
         resolve = r
       })
     )
-    resultAtom.scope = queryAtom.scope
     let setResult: (result: OperationResult<Data, Variables>) => void = () => {
       throw new Error('setting result without mount')
     }
@@ -70,7 +69,6 @@ export function atomWithQuery<Data, Variables extends object>(
     return { resultAtom, args }
   })
   const queryAtom = atom((get) => {
-    queryResultAtom.scope = queryAtom.scope
     const { resultAtom } = get(queryResultAtom)
     return get(resultAtom)
   })

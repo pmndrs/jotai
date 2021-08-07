@@ -41,11 +41,10 @@ it('withImmer derived atom with useAtom', async () => {
 it('withImmer derived atom with useAtom + scope', async () => {
   const scope = Symbol()
   const regularCountAtom = atom(0)
-  regularCountAtom.scope = scope
 
   const Parent = () => {
-    const [regularCount] = useAtom(regularCountAtom)
-    const [count, setCount] = useAtom(withImmer(regularCountAtom))
+    const [regularCount] = useAtom(regularCountAtom, scope)
+    const [count, setCount] = useAtom(withImmer(regularCountAtom), scope)
     return (
       <>
         <div>

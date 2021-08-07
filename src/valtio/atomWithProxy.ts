@@ -50,12 +50,8 @@ export function atomWithProxy<Value extends object>(proxyObject: Value) {
     return unsub
   }
   const derivedAtom = atom(
-    (get) => {
-      baseAtom.scope = derivedAtom.scope
-      return get(baseAtom) as Value
-    },
+    (get) => get(baseAtom) as Value,
     (get, _set, update: SetStateAction<Value>) => {
-      baseAtom.scope = derivedAtom.scope
       const newValue =
         typeof update === 'function'
           ? (update as (prev: Value) => Value)(get(baseAtom) as Value)

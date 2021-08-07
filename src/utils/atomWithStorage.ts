@@ -68,12 +68,8 @@ export function atomWithStorage<Value>(
   }
 
   const anAtom = atom(
-    (get) => {
-      baseAtom.scope = anAtom.scope
-      return get(baseAtom)
-    },
+    (get) => get(baseAtom),
     (get, set, update: SetStateAction<Value>) => {
-      baseAtom.scope = anAtom.scope
       const newValue =
         typeof update === 'function'
           ? (update as (prev: Value) => Value)(get(baseAtom))

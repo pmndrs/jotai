@@ -34,7 +34,6 @@ export function atomWithMachine<
   )
   const machineAtom = atom(
     (get) => {
-      cachedMachineAtom.scope = machineStateWithServiceAtom.scope
       const cachedMachine = get(cachedMachineAtom)
       if (cachedMachine) {
         return cachedMachine
@@ -74,8 +73,6 @@ export function atomWithMachine<
       return { machine: machineWithConfig, service }
     },
     (get, set, _arg) => {
-      cachedMachineAtom.scope = machineStateWithServiceAtom.scope
-      machineAtom.scope = machineStateWithServiceAtom.scope
       set(cachedMachineAtom, get(machineAtom))
     }
   )
@@ -84,16 +81,9 @@ export function atomWithMachine<
   }
   const cachedMachineStateAtom = atom<MachineState | null>(null)
   const machineStateAtom = atom(
-    (get) => {
-      cachedMachineStateAtom.scope = machineStateWithServiceAtom.scope
-      machineAtom.scope = machineStateWithServiceAtom.scope
-      return (
-        get(cachedMachineStateAtom) ?? get(machineAtom).machine.initialState
-      )
-    },
+    (get) =>
+      get(cachedMachineStateAtom) ?? get(machineAtom).machine.initialState,
     (get, set, registerCleanup: (cleanup: () => void) => void) => {
-      cachedMachineStateAtom.scope = machineStateWithServiceAtom.scope
-      machineAtom.scope = machineStateWithServiceAtom.scope
       const { service } = get(machineAtom)
       service.onTransition((nextState) => {
         set(cachedMachineStateAtom, nextState)
@@ -121,12 +111,8 @@ export function atomWithMachine<
     }
   }
   const machineStateWithServiceAtom = atom(
-    (get) => {
-      machineStateAtom.scope = machineStateWithServiceAtom.scope
-      return get(machineStateAtom)
-    },
+    (get) => get(machineStateAtom),
     (get, _set, event: Parameters<Service['send']>[0]) => {
-      machineAtom.scope = machineStateWithServiceAtom.scope
       const { service } = get(machineAtom)
       service.send(event)
     }
