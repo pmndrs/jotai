@@ -15,20 +15,22 @@ type UpdateAtom = <Value, Update>(
 type CommitCallback = () => void
 
 type StoreForProduction = [
-  MutableSource<State>, // stateMutableSource
-  UpdateAtom, // updateAtom
-  CommitCallback, // commitCallback
-  (values: Iterable<readonly [Atom<unknown>, unknown]>) => void // restore
+  stateMutableSource: MutableSource<State>,
+  updateAtom: UpdateAtom,
+  commitCallback: CommitCallback
 ]
 
 export type StoreForDevelopment = [
-  ...StoreForProduction,
-  MutableSource<{
+  stateMutableSource: MutableSource<State>,
+  updateAtom: UpdateAtom,
+  commitCallback: CommitCallback,
+  debugMutableSource: MutableSource<{
     version: number
     atoms: Atom<unknown>[]
     state: State
     listeners: Set<() => void>
-  }> // debugMutableSource
+  }>,
+  restore: (values: Iterable<readonly [Atom<unknown>, unknown]>) => void
 ]
 
 export type Store = StoreForProduction | StoreForDevelopment
@@ -43,9 +45,7 @@ const createStoreForProduction = (
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => writeAtom(state, atom, update)
-  const restore = (values: Iterable<readonly [Atom<unknown>, unknown]>) =>
-    restoreAtoms(state, values)
-  return [stateMutableSource, updateAtom, commitCallback, restore]
+  return [stateMutableSource, updateAtom, commitCallback]
 }
 
 const createStoreForDevelopment = (
@@ -85,8 +85,8 @@ const createStoreForDevelopment = (
     stateMutableSource,
     updateAtom,
     commitCallback,
-    restore,
     debugMutableSource,
+    restore,
   ]
 }
 

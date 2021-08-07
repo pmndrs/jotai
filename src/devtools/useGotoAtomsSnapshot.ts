@@ -11,7 +11,7 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
   if (!isDevStore(store)) {
     throw new Error('useGotoAtomsSnapshot can only be used in dev mode.')
   }
-  const restore = store[3]
+  const restore = store[4]
   return useCallback(
     (values: Parameters<typeof restore>[0]) => {
       for (const [atom] of values) {
