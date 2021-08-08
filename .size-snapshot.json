@@ -14,9 +14,9 @@
     }
   },
   "utils.js": {
-    "bundled": 15954,
-    "minified": 7668,
-    "gzipped": 2832,
+    "bundled": 16025,
+    "minified": 7685,
+    "gzipped": 2838,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -42,9 +42,9 @@
     }
   },
   "immer.js": {
-    "bundled": 1566,
-    "minified": 839,
-    "gzipped": 402,
+    "bundled": 1637,
+    "minified": 856,
+    "gzipped": 418,
     "treeshaked": {
       "rollup": {
         "code": 42,
@@ -56,9 +56,9 @@
     }
   },
   "optics.js": {
-    "bundled": 1613,
-    "minified": 811,
-    "gzipped": 425,
+    "bundled": 1684,
+    "minified": 828,
+    "gzipped": 440,
     "treeshaked": {
       "rollup": {
         "code": 32,
