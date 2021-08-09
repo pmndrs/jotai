@@ -1,4 +1,4 @@
-import { useContext, useRef } from 'react'
+import { useContext, useMemo } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
 
@@ -6,12 +6,20 @@ export function useHydrateAtoms(
   values: Iterable<readonly [Atom<unknown>, unknown]>,
   scope?: Scope
 ) {
-  const hasRestoredRef = useRef(false)
   const StoreContext = getStoreContext(scope)
   const restoreAtoms = useContext(StoreContext)[3]
 
-  if (!hasRestoredRef.current) {
-    hasRestoredRef.current = true
-    restoreAtoms(values)
-  }
+  useMemo(() => {
+    const tuplesToRestore = []
+    for (const tuple of values) {
+      const atom = tuple[0]
+      if ((atom as any).hydrated !== hydratedSymbol) {
+        tuplesToRestore.push(tuple)
+        ;(atom as any).hydrated = hydratedSymbol
+      }
+    }
+    restoreAtoms(tuplesToRestore)
+  }, [values, restoreAtoms])
 }
+
+const hydratedSymbol = Symbol()
