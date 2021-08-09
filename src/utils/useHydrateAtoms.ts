@@ -1,17 +1,17 @@
-import { useRef } from 'react'
-import type { Atom } from '../core/atom'
+import { useContext, useRef } from 'react'
+import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
+import type { Atom, Scope } from '../core/atom'
 
 export function useHydrateAtoms(
-  values: Iterable<readonly [Atom<unknown> & { init?: unknown }, unknown]>
+  values: Iterable<readonly [Atom<unknown>, unknown]>,
+  scope?: Scope
 ) {
   const hasRestoredRef = useRef(false)
+  const StoreContext = getStoreContext(scope)
+  const restoreAtoms = useContext(StoreContext)[3]
 
   if (!hasRestoredRef.current) {
     hasRestoredRef.current = true
-    for (const [atom, value] of values) {
-      if ('init' in atom) {
-        atom.init = value
-      }
-    }
+    restoreAtoms(values)
   }
 }
