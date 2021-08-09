@@ -68,7 +68,8 @@ export const getDebugStateAndAtoms = ({
 }: {
   atoms: Atom<unknown>[]
   state: State
-}) => [state, atoms]
+}) => [state, atoms] as const
+
 export const subscribeDebugStore = (
   { listeners }: { listeners: Set<() => void> },
   callback: () => void
@@ -81,7 +82,7 @@ export const subscribeDebugStore = (
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (store: StoreForDevelopment) => {
   const debugMutableSource = store[3]
-  const [state, atoms]: [State, Atom<unknown>[]] = useMutableSource(
+  const [state, atoms] = useMutableSource(
     debugMutableSource,
     getDebugStateAndAtoms,
     subscribeDebugStore
