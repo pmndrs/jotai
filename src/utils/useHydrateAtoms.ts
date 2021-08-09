@@ -3,7 +3,7 @@ import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
 
 export function useHydrateAtoms(
-  values: Iterable<readonly [Atom<unknown> & { hydrated: Symbol }, unknown]>,
+  values: Iterable<readonly [Atom<unknown> & { hydrated?: Symbol }, unknown]>,
   scope?: Scope
 ) {
   const StoreContext = getStoreContext(scope)
