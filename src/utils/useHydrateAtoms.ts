@@ -3,7 +3,7 @@ import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
 
 export function useHydrateAtoms(
-  values: Iterable<readonly [Atom<unknown>, unknown]>,
+  values: Iterable<readonly [Atom<unknown> & { hydrated: Symbol }, unknown]>,
   scope?: Scope
 ) {
   const StoreContext = getStoreContext(scope)
@@ -13,9 +13,9 @@ export function useHydrateAtoms(
     const tuplesToRestore = []
     for (const tuple of values) {
       const atom = tuple[0]
-      if ((atom as any).hydrated !== hydratedSymbol) {
+      if (atom.hydrated !== hydratedSymbol) {
         tuplesToRestore.push(tuple)
-        ;(atom as any).hydrated = hydratedSymbol
+        atom.hydrated = hydratedSymbol
       }
     }
     restoreAtoms(tuplesToRestore)
