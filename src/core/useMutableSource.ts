@@ -9,20 +9,28 @@ export {
 
 import { useEffect, useRef, useState } from 'react'
 
-const TARGET = Symbol()
-const GET_VERSION = Symbol()
+const TARGET = '_uMS_T'
+const GET_VERSION = '_uMS_V'
 
-export const createMutableSource = (target: any, getVersion: any): any => ({
+type MutableSource<T, V> = {
+  [TARGET]: T
+  [GET_VERSION]: (target: T) => V
+}
+
+export const createMutableSource = <T, V>(
+  target: T,
+  getVersion: (target: T) => V
+): MutableSource<T, V> => ({
   [TARGET]: target,
   [GET_VERSION]: getVersion,
 })
 
-export const useMutableSource = (
-  source: any,
-  getSnapshot: any,
-  subscribe: any
+export const useMutableSource = <T, V, S>(
+  source: MutableSource<T, V>,
+  getSnapshot: (target: T) => S,
+  subscribe: (target: T, callback: () => void) => () => void
 ) => {
-  const lastVersion = useRef(0)
+  const lastVersion = useRef<V>()
   const currentVersion = source[GET_VERSION](source[TARGET])
   const [state, setState] = useState(
     () =>

@@ -3,41 +3,10 @@ import type { Context } from 'react'
 import type { Atom, Scope, WritableAtom } from './atom'
 import { createMutableSource } from './useMutableSource'
 import { createState, flushPending, restoreAtoms, writeAtom } from './vanilla'
-import type { State } from './vanilla'
-
-type MutableSource<_Target> = ReturnType<typeof createMutableSource>
-
-type UpdateAtom = <Value, Update>(
-  atom: WritableAtom<Value, Update>,
-  update: Update
-) => void
-
-type CommitCallback = () => void
-
-type StoreForProduction = [
-  stateMutableSource: MutableSource<State>,
-  updateAtom: UpdateAtom,
-  commitCallback: CommitCallback
-]
-
-export type StoreForDevelopment = [
-  stateMutableSource: MutableSource<State>,
-  updateAtom: UpdateAtom,
-  commitCallback: CommitCallback,
-  debugMutableSource: MutableSource<{
-    version: number
-    atoms: Atom<unknown>[]
-    state: State
-    listeners: Set<() => void>
-  }>,
-  restore: (values: Iterable<readonly [Atom<unknown>, unknown]>) => void
-]
-
-export type Store = StoreForProduction | StoreForDevelopment
 
 const createStoreForProduction = (
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
-): StoreForProduction => {
+) => {
   const state = createState(initialValues)
   const stateMutableSource = createMutableSource(state, () => state.v)
   const commitCallback = () => flushPending(state)
@@ -45,12 +14,12 @@ const createStoreForProduction = (
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => writeAtom(state, atom, update)
-  return [stateMutableSource, updateAtom, commitCallback]
+  return [stateMutableSource, updateAtom, commitCallback] as const
 }
 
 const createStoreForDevelopment = (
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
-): StoreForDevelopment => {
+) => {
   const stateListener = (updatedAtom: Atom<unknown>, isNewAtom: boolean) => {
     ++debugStore.version
     if (isNewAtom) {
@@ -87,8 +56,12 @@ const createStoreForDevelopment = (
     commitCallback,
     debugMutableSource,
     restore,
-  ]
+  ] as const
 }
+
+type StoreForProduction = ReturnType<typeof createStoreForProduction>
+export type StoreForDevelopment = ReturnType<typeof createStoreForDevelopment>
+export type Store = StoreForProduction | StoreForDevelopment
 
 type CreateStore = (
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
