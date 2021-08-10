@@ -217,17 +217,29 @@ it('useHydrateAtoms should let you hydrate an atom once per scope', async () => 
 
   const Counter: FC<{ initialCount: number }> = ({ initialCount }) => {
     useHydrateAtoms([[countAtom, initialCount]])
-    const [countValue] = useAtom(countAtom)
+    const [countValue, setCount] = useAtom(countAtom)
 
-    return <div>count: {countValue}</div>
+    return (
+      <>
+        <div>count: {countValue}</div>
+        <button onClick={() => setCount((count) => count + 1)}>dispatch</button>
+      </>
+    )
   }
   const Counter2: FC<{ initialCount: number }> = ({ initialCount }) => {
     useHydrateAtoms([[countAtom, initialCount]], scope)
-    const [countValue] = useAtom(countAtom)
+    const [countValue, setCount] = useAtom(countAtom, scope)
 
-    return <div>count: {countValue}</div>
+    return (
+      <>
+        <div>count: {countValue}</div>
+        <button onClick={() => setCount((count) => count + 1)}>
+          dispatch2
+        </button>
+      </>
+    )
   }
-  const { findByText } = render(
+  const { findByText, getByText } = render(
     <>
       <Provider>
         <Counter initialCount={42} />
@@ -240,4 +252,8 @@ it('useHydrateAtoms should let you hydrate an atom once per scope', async () => 
 
   await findByText('count: 42')
   await findByText('count: 65')
+  fireEvent.click(getByText('dispatch'))
+  fireEvent.click(getByText('dispatch2'))
+  await findByText('count: 43')
+  await findByText('count: 66')
 })
