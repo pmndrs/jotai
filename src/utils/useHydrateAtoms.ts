@@ -2,8 +2,12 @@ import { useContext, useMemo } from 'react'
 import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
 
+const hydratedSymbol = Symbol()
+
 export function useHydrateAtoms(
-  values: Iterable<readonly [Atom<unknown> & { hydrated?: Symbol }, unknown]>,
+  values: Iterable<
+    readonly [Atom<unknown> & { [hydratedSymbol]?: boolean }, unknown]
+  >,
   scope?: Scope
 ) {
   const StoreContext = getStoreContext(scope)
@@ -13,13 +17,11 @@ export function useHydrateAtoms(
     const tuplesToRestore = []
     for (const tuple of values) {
       const atom = tuple[0]
-      if (atom.hydrated !== hydratedSymbol) {
+      if (atom[hydratedSymbol] !== true) {
         tuplesToRestore.push(tuple)
-        atom.hydrated = hydratedSymbol
+        atom[hydratedSymbol] = true
       }
     }
     restoreAtoms(tuplesToRestore)
   }, [values, restoreAtoms])
 }
-
-const hydratedSymbol = Symbol()
