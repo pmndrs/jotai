@@ -82,15 +82,14 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
 it('useUpdateAtom with scope', async () => {
   const scope = Symbol()
   const countAtom = atom(0)
-  countAtom.scope = scope
 
   const Displayer = () => {
-    const [count] = useAtom(countAtom)
+    const [count] = useAtom(countAtom, scope)
     return <div>count: {count}</div>
   }
 
   const Updater = () => {
-    const setCount = useUpdateAtom(countAtom)
+    const setCount = useUpdateAtom(countAtom, scope)
     return (
       <button onClick={() => setCount((value) => value + 1)}>increment</button>
     )

@@ -59,7 +59,6 @@ export function atomWithObservable<TData>(
         }
       })
     )
-    dataAtom.scope = observableAtom.scope
     let setData: (data: TData | Promise<TData>) => void = () => {
       throw new Error('setting data without mount')
     }
@@ -104,12 +103,10 @@ export function atomWithObservable<TData>(
   })
   const observableAtom = atom(
     (get) => {
-      observableResultAtom.scope = observableAtom.scope
       const { dataAtom } = get(observableResultAtom)
       return get(dataAtom)
     },
     (get, _set, data: TData) => {
-      observableResultAtom.scope = observableAtom.scope
       const { observable } = get(observableResultAtom)
       if ('next' in observable) {
         observable.next(data)

@@ -132,10 +132,9 @@ it('do not update unless equality function says value has changed', async () => 
 it('useSelector with scope', async () => {
   const scope = Symbol()
   const bigAtom = atom({ a: 0, b: 'othervalue' })
-  bigAtom.scope = scope
 
   const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom)
+    const setValue = useUpdateAtom(bigAtom, scope)
     return (
       <>
         <button
@@ -150,7 +149,7 @@ it('useSelector with scope', async () => {
 
   const selectA = (value: { a: number }) => value.a
   const Selector = () => {
-    const a = useAtomValue(selectAtom(bigAtom, selectA))
+    const a = useAtomValue(selectAtom(bigAtom, selectA), scope)
     return (
       <>
         <div>a: {a}</div>
