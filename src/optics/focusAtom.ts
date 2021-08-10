@@ -53,7 +53,6 @@ export function focusAtom<S, A>(
       set(baseAtom, newValueProducer(get(baseAtom)) as NonFunction<S>)
     }
   )
-  derivedAtom.scope = baseAtom.scope
   setWeakCacheItem(focusAtomCache, deps, derivedAtom)
   return derivedAtom
 }

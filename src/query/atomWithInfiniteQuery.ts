@@ -76,7 +76,6 @@ export function atomWithInfiniteQuery<
             }
           })
       )
-      dataAtom.scope = queryAtom.scope
       let setData: (
         data: InfiniteData<TData> | Promise<InfiniteData<TData>>
       ) => void = () => {
@@ -130,7 +129,6 @@ export function atomWithInfiniteQuery<
       return { dataAtom, observer, options }
     },
     (get, _set, action: AtomWithInfiniteQueryAction) => {
-      queryDataAtom.scope = queryAtom.scope
       const { observer } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
@@ -154,12 +152,10 @@ export function atomWithInfiniteQuery<
     AtomWithInfiniteQueryAction
   >(
     (get) => {
-      queryDataAtom.scope = queryAtom.scope
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
     },
     (_get, set, action) => {
-      queryDataAtom.scope = queryAtom.scope
       set(queryDataAtom, action) // delegate action
     }
   )

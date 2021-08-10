@@ -1,6 +1,5 @@
 import { atom } from 'jotai'
 import type { Atom } from 'jotai'
-import type { Scope } from '../core/atom'
 import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 
 const waitForAllCache = new WeakMap()
@@ -41,11 +40,6 @@ export function waitForAll<
     return wrapResults(atoms, values)
   })
 
-  const waitForAllScope = unwrappedAtoms[0].scope
-  derivedAtom.scope = waitForAllScope
-
-  validateAtomScopes(waitForAllScope, unwrappedAtoms)
-
   if (Array.isArray(atoms)) {
     setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
   }
@@ -71,11 +65,3 @@ const wrapResults = <Values extends Record<string, unknown> | unknown[]>(
         (out, key, idx) => ({ ...out, [key]: results[idx] }),
         {}
       )
-
-function validateAtomScopes(scope: Scope | undefined, atoms: Atom<unknown>[]) {
-  if (scope && !atoms.every((a) => a.scope === scope)) {
-    console.warn(
-      'Different scopes were found for atoms supplied to waitForAll. This is unsupported and will result in unexpected behavior.'
-    )
-  }
-}

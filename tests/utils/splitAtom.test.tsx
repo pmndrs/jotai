@@ -241,10 +241,9 @@ it('handles scope', async () => {
     { task: 'get cat food', checked: false },
     { task: 'get dragon food', checked: false },
   ])
-  todosAtom.scope = scope
 
   const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
-    const [atoms] = useAtom(splitAtom(listAtom))
+    const [atoms] = useAtom(splitAtom(listAtom), scope)
     return (
       <>
         {atoms.map((anAtom, index) => (
@@ -255,7 +254,7 @@ it('handles scope', async () => {
   }
 
   const TaskItem = ({ itemAtom }: { itemAtom: PrimitiveAtom<TodoItem> }) => {
-    const [value, onChange] = useAtom(itemAtom)
+    const [value, onChange] = useAtom(itemAtom, scope)
     const toggle = () =>
       onChange((value) => ({ ...value, checked: !value.checked }))
     return (

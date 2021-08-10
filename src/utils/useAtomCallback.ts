@@ -45,8 +45,7 @@ export function useAtomCallback<Result, Arg>(
       ),
     [callback]
   )
-  anAtom.scope = scope
-  const [, invoke] = useAtom(anAtom)
+  const [, invoke] = useAtom(anAtom, scope)
   return useCallback(
     (arg: Arg) =>
       new Promise<Result>((resolve, reject) => {

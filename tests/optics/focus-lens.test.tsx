@@ -192,12 +192,11 @@ it('focus on async atom works', async () => {
 it('basic derivation using focus with scope works', async () => {
   const scope = Symbol()
   const bigAtom = atom({ a: 0 })
-  bigAtom.scope = scope
   const focusFunction = (optic: O.OpticFor<{ a: number }>) => optic.prop('a')
 
   const Counter = () => {
-    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction))
-    const [bigAtomValue] = useAtom(bigAtom)
+    const [count, setCount] = useAtom(focusAtom(bigAtom, focusFunction), scope)
+    const [bigAtomValue] = useAtom(bigAtom, scope)
     return (
       <>
         <div>bigAtom: {JSON.stringify(bigAtomValue)}</div>

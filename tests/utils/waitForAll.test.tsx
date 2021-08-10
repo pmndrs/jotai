@@ -231,7 +231,6 @@ it('handles scope', async () => {
   let isAsyncAtomRunning = false
   let isAnotherAsyncAtomRunning = false
   const valueAtom = atom(1)
-  valueAtom.scope = scope
   const asyncAtom = atom(async (get) => {
     isAsyncAtomRunning = true
     await new Promise((resolve) => {
@@ -242,7 +241,6 @@ it('handles scope', async () => {
     })
     return get(valueAtom)
   })
-  asyncAtom.scope = scope
 
   const anotherAsyncAtom = atom(async () => {
     isAnotherAsyncAtomRunning = true
@@ -254,11 +252,13 @@ it('handles scope', async () => {
     })
     return '2'
   })
-  anotherAsyncAtom.scope = scope
 
   const Counter = () => {
-    const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
-    const setValue = useUpdateAtom(valueAtom)
+    const [[num1, num2]] = useAtom(
+      waitForAll([asyncAtom, anotherAsyncAtom]),
+      scope
+    )
+    const setValue = useUpdateAtom(valueAtom, scope)
     return (
       <>
         <div>
@@ -295,51 +295,6 @@ it('handles scope', async () => {
   jest.runOnlyPendingTimers()
 
   await findByText('num1: 2, num2: 2')
-})
-
-it('warns on different scopes', async () => {
-  const scope = Symbol()
-  const anotherScope = Symbol()
-  const asyncAtom = atom(async (_get) => {
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true)
-      }, 10)
-    })
-    return 1
-  })
-  asyncAtom.scope = scope
-
-  const anotherAsyncAtom = atom(async () => {
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true)
-      }, 10)
-    })
-    return '2'
-  })
-  anotherAsyncAtom.scope = anotherScope
-
-  const Counter = () => {
-    const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
-    return (
-      <div>
-        num1: {num1}, num2: {num2}
-      </div>
-    )
-  }
-
-  render(
-    <StrictMode>
-      <Provider scope={scope}>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
-    </StrictMode>
-  )
-
-  expect(console.warn).toHaveBeenCalledTimes(1)
 })
 
 it('large atom count', async () => {

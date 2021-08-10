@@ -62,7 +62,6 @@ export function atomWithQuery<
             }
           })
       )
-      dataAtom.scope = queryAtom.scope
       let setData: (data: TData | Promise<TData>) => void = () => {
         throw new Error('atomWithQuery: setting data without mount')
       }
@@ -111,7 +110,6 @@ export function atomWithQuery<
     (get, set, action: AtomWithQueryAction) => {
       switch (action.type) {
         case 'refetch': {
-          queryDataAtom.scope = queryAtom.scope
           const { dataAtom, observer } = get(queryDataAtom)
           set(dataAtom, new Promise<TData>(() => {})) // infinite pending
           const p = observer.refetch({ cancelRefetch: true }).then(() => {})
@@ -122,12 +120,10 @@ export function atomWithQuery<
   )
   const queryAtom = atom<TData | TQueryData, AtomWithQueryAction>(
     (get) => {
-      queryDataAtom.scope = queryAtom.scope
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
     },
     (_get, set, action) => {
-      queryDataAtom.scope = queryAtom.scope
       set(queryDataAtom, action) // delegate action
     }
   )
