@@ -24,12 +24,8 @@ export function atomWithMutation<Data, Variables extends object>(
     new Promise<OperationResult<Data, Variables>>(() => {}) // infinite pending
   )
   const queryResultAtom = atom(
-    (get) => {
-      operationResultAtom.scope = queryResultAtom.scope
-      return get(operationResultAtom)
-    },
+    (get) => get(operationResultAtom),
     (get, set, action: MutationAction<Data, Variables>) => {
-      operationResultAtom.scope = queryResultAtom.scope
       set(
         operationResultAtom,
         new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch

@@ -34,7 +34,6 @@ export function withImmer<Value>(anAtom: WritableAtom<Value, Value>) {
         )
       )
   )
-  derivedAtom.scope = anAtom.scope
   setWeakCacheItem(withImmerCache, deps, derivedAtom)
   return derivedAtom
 }

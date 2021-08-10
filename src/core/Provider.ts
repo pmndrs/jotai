@@ -81,7 +81,7 @@ export const subscribeDebugStore = (
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (store: StoreForDevelopment) => {
-  const debugMutableSource = store[3]
+  const debugMutableSource = store[4]
   const [state, atoms] = useMutableSource(
     debugMutableSource,
     getDebugStateAndAtoms,

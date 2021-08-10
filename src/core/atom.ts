@@ -46,6 +46,9 @@ type OnMount<Update> = <S extends SetAtom<Update>>(
 export type Atom<Value> = {
   toString: () => string
   debugLabel?: string
+  /**
+   * @deprecated Instead use `useAtom(atom, scope)`
+   */
   scope?: Scope
   read: Read<Value>
 }

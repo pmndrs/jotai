@@ -15,7 +15,6 @@ export function selectAtom<Value, Slice>(
     return cachedAtom as Atom<Slice>
   }
   const refAtom = atom(() => ({} as { prev?: Slice }))
-  refAtom.scope = anAtom.scope
   const derivedAtom = atom((get) => {
     const slice = selector(get(anAtom))
     const ref = get(refAtom)
@@ -25,7 +24,6 @@ export function selectAtom<Value, Slice>(
     ref.prev = slice
     return slice
   })
-  derivedAtom.scope = anAtom.scope
   setWeakCacheItem(selectAtomCache, deps, derivedAtom)
   return derivedAtom
 }
