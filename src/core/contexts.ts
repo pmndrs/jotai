@@ -14,7 +14,9 @@ const createStoreForProduction = (
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => writeAtom(state, atom, update)
-  return [stateMutableSource, updateAtom, commitCallback] as const
+  const restore = (values: Iterable<readonly [Atom<unknown>, unknown]>) =>
+    restoreAtoms(state, values)
+  return [stateMutableSource, updateAtom, commitCallback, restore] as const
 }
 
 const createStoreForDevelopment = (
@@ -54,8 +56,8 @@ const createStoreForDevelopment = (
     stateMutableSource,
     updateAtom,
     commitCallback,
-    debugMutableSource,
     restore,
+    debugMutableSource,
   ] as const
 }
 
@@ -84,5 +86,5 @@ export const getStoreContext = (scope?: Scope) => {
 }
 
 export const isDevStore = (store: Store): store is StoreForDevelopment => {
-  return store.length > 3
+  return store.length > 4
 }
