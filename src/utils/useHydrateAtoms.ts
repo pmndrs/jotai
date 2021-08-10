@@ -30,7 +30,7 @@ export function useHydrateAtoms(
 function getHydratedSet(store: Store) {
   let hydratedSet = hydratedMap.get(store)
   if (!hydratedSet) {
-    hydratedSet = new Set()
+    hydratedSet = new WeakSet()
     hydratedMap.set(store, hydratedSet)
   }
   return hydratedSet
