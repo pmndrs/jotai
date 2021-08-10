@@ -86,5 +86,5 @@ export const getStoreContext = (scope?: Scope) => {
 }
 
 export const isDevStore = (store: Store): store is StoreForDevelopment => {
-  return store.length > 3
+  return store.length > 4
 }
