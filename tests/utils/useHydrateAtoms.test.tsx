@@ -199,11 +199,7 @@ it('useHydrateAtoms should respect onMount', async () => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue] = useAtom(countAtom)
 
-    return (
-      <>
-        <div>count: {countValue}</div>
-      </>
-    )
+    return <div>count: {countValue}</div>
   }
   const { findByText } = render(
     <Provider>
@@ -213,4 +209,35 @@ it('useHydrateAtoms should respect onMount', async () => {
 
   await findByText('count: 42')
   expect(onMountFn).toBeCalledTimes(1)
+})
+
+it('useHydrateAtoms should let you hydrate an atom once per scope', async () => {
+  const scope = Symbol()
+  const countAtom = atom(0)
+
+  const Counter: FC<{ initialCount: number }> = ({ initialCount }) => {
+    useHydrateAtoms([[countAtom, initialCount]])
+    const [countValue] = useAtom(countAtom)
+
+    return <div>count: {countValue}</div>
+  }
+  const Counter2: FC<{ initialCount: number }> = ({ initialCount }) => {
+    useHydrateAtoms([[countAtom, initialCount]], scope)
+    const [countValue] = useAtom(countAtom)
+
+    return <div>count: {countValue}</div>
+  }
+  const { findByText } = render(
+    <>
+      <Provider>
+        <Counter initialCount={42} />
+      </Provider>
+      <Provider scope={scope}>
+        <Counter2 initialCount={65} />
+      </Provider>
+    </>
+  )
+
+  await findByText('count: 42')
+  await findByText('count: 65')
 })
