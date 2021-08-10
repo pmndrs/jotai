@@ -5,7 +5,7 @@ import {
 } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
 import { getDebugStateAndAtoms, subscribeDebugStore } from '../core/Provider'
-import type { AtomState, State } from '../core/vanilla'
+import type { AtomState } from '../core/vanilla'
 // NOTE importing from '../core/Provider' is across bundles and actually copying code
 
 type AtomsSnapshot = Map<Atom<unknown>, unknown>
@@ -18,7 +18,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
     throw Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
-  const [state, atoms]: [State, Atom<unknown>[]] = useMutableSource(
+  const [state, atoms] = useMutableSource(
     debugMutableSource,
     getDebugStateAndAtoms,
     subscribeDebugStore
