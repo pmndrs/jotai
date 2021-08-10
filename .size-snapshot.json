@@ -14,8 +14,8 @@
     }
   },
   "utils.js": {
-    "bundled": 15849,
-    "minified": 7524,
+    "bundled": 15855,
+    "minified": 7527,
     "gzipped": 2769,
     "treeshaked": {
       "rollup": {
