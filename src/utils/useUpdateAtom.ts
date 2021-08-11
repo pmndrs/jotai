@@ -1,5 +1,5 @@
 import { useCallback, useContext } from 'react'
-import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
+import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import type { Scope, SetAtom } from '../core/atom'
 
@@ -7,8 +7,8 @@ export function useUpdateAtom<Value, Update>(
   anAtom: WritableAtom<Value, Update>,
   scope?: Scope
 ) {
-  const StoreContext = getStoreContext(scope)
-  const [, updateAtom] = useContext(StoreContext)
+  const ScopeContext = getScopeContext(scope)
+  const [, updateAtom] = useContext(ScopeContext)
   const setAtom = useCallback(
     (update: Update) => updateAtom(anAtom, update),
     [updateAtom, anAtom]

@@ -1,19 +1,22 @@
 import { useContext } from 'react'
-import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
+import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
-import type { Store } from '../core/contexts'
+import type { ScopeContainer } from '../core/contexts'
 
-const hydratedMap: WeakMap<Store, WeakSet<Atom<unknown>>> = new WeakMap()
+const hydratedMap: WeakMap<
+  ScopeContainer,
+  WeakSet<Atom<unknown>>
+> = new WeakMap()
 
 export function useHydrateAtoms(
   values: Iterable<readonly [Atom<unknown>, unknown]>,
   scope?: Scope
 ) {
-  const StoreContext = getStoreContext(scope)
-  const store = useContext(StoreContext)
-  const restoreAtoms = store[3]
+  const ScopeContext = getScopeContext(scope)
+  const scopeContainer = useContext(ScopeContext)
+  const restoreAtoms = scopeContainer[3]
 
-  const hydratedSet = getHydratedSet(store)
+  const hydratedSet = getHydratedSet(scopeContainer)
   const tuplesToRestore = []
   for (const tuple of values) {
     const atom = tuple[0]
@@ -27,11 +30,11 @@ export function useHydrateAtoms(
   }
 }
 
-function getHydratedSet(store: Store) {
-  let hydratedSet = hydratedMap.get(store)
+function getHydratedSet(scopeContainer: ScopeContainer) {
+  let hydratedSet = hydratedMap.get(scopeContainer)
   if (!hydratedSet) {
     hydratedSet = new WeakSet()
-    hydratedMap.set(store, hydratedSet)
+    hydratedMap.set(scopeContainer, hydratedSet)
   }
   return hydratedSet
 }

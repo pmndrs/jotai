@@ -1,8 +1,12 @@
 import { createElement, useDebugValue, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
 import type { Atom, Scope } from './atom'
-import { createStore, getStoreContext, isDevStore } from './contexts'
-import type { StoreForDevelopment } from './contexts'
+import {
+  createScopeContainer,
+  getScopeContext,
+  isDevScopeContainer,
+} from './contexts'
+import type { ScopeContainerForDevelopment } from './contexts'
 import { useMutableSource } from './useMutableSource'
 import type { AtomState, State } from './vanilla'
 
@@ -14,26 +18,32 @@ export const Provider = ({
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
   scope?: Scope
 }>) => {
-  const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
-  if (storeRef.current === null) {
+  const scopeContainerRef = useRef<ReturnType<
+    typeof createScopeContainer
+  > | null>(null)
+  if (scopeContainerRef.current === null) {
     // lazy initialization
-    storeRef.current = createStore(initialValues)
+    scopeContainerRef.current = createScopeContainer(initialValues)
   }
 
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
     process.env.NODE_ENV !== 'test' &&
-    isDevStore(storeRef.current)
+    isDevScopeContainer(scopeContainerRef.current)
   ) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(storeRef.current)
+    useDebugState(scopeContainerRef.current)
   }
 
-  const StoreContext = getStoreContext(scope)
+  const ScopeContainerContext = getScopeContext(scope)
   return createElement(
-    StoreContext.Provider,
-    { value: storeRef.current as ReturnType<typeof createStore> },
+    ScopeContainerContext.Provider,
+    {
+      value: scopeContainerRef.current as ReturnType<
+        typeof createScopeContainer
+      >,
+    },
     children
   )
 }
@@ -70,7 +80,7 @@ export const getDebugStateAndAtoms = ({
   state: State
 }) => [state, atoms] as const
 
-export const subscribeDebugStore = (
+export const subscribeDebugScopeContainer = (
   { listeners }: { listeners: Set<() => void> },
   callback: () => void
 ) => {
@@ -80,12 +90,12 @@ export const subscribeDebugStore = (
 
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
-const useDebugState = (store: StoreForDevelopment) => {
-  const debugMutableSource = store[4]
+const useDebugState = (scopeContainer: ScopeContainerForDevelopment) => {
+  const debugMutableSource = scopeContainer[4]
   const [state, atoms] = useMutableSource(
     debugMutableSource,
     getDebugStateAndAtoms,
-    subscribeDebugStore
+    subscribeDebugScopeContainer
   )
   useDebugValue([state, atoms], stateToPrintable)
 }
