@@ -1,18 +1,21 @@
 import { useContext } from 'react'
 import {
-  SECRET_INTERNAL_getStoreContext as getStoreContext,
+  SECRET_INTERNAL_getScopeContext as getScopeContext,
   SECRET_INTERNAL_useMutableSource as useMutableSource,
 } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
-import { getDebugStateAndAtoms, subscribeDebugStore } from '../core/Provider'
+import {
+  getDebugStateAndAtoms,
+  subscribeDebugScopeContainer,
+} from '../core/Provider'
 import type { AtomState } from '../core/vanilla'
 // NOTE importing from '../core/Provider' is across bundles and actually copying code
 
 type AtomsSnapshot = Map<Atom<unknown>, unknown>
 
 export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
-  const StoreContext = getStoreContext(scope)
-  const debugMutableSource = useContext(StoreContext)[4]
+  const ScopeContext = getScopeContext(scope)
+  const debugMutableSource = useContext(ScopeContext)[4]
 
   if (debugMutableSource === undefined) {
     throw Error('useAtomsSnapshot can only be used in dev mode.')
@@ -21,7 +24,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
   const [state, atoms] = useMutableSource(
     debugMutableSource,
     getDebugStateAndAtoms,
-    subscribeDebugStore
+    subscribeDebugScopeContainer
   )
 
   const atomToAtomValueTuples = atoms

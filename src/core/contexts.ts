@@ -4,7 +4,7 @@ import type { Atom, Scope, WritableAtom } from './atom'
 import { createMutableSource } from './useMutableSource'
 import { createState, flushPending, restoreAtoms, writeAtom } from './vanilla'
 
-const createStoreForProduction = (
+const createScopeContainerForProduction = (
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
 ) => {
   const state = createState(initialValues)
@@ -19,18 +19,18 @@ const createStoreForProduction = (
   return [stateMutableSource, updateAtom, commitCallback, restore] as const
 }
 
-const createStoreForDevelopment = (
+const createScopeContainerForDevelopment = (
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
 ) => {
   const stateListener = (updatedAtom: Atom<unknown>, isNewAtom: boolean) => {
-    ++debugStore.version
+    ++debugContainer.version
     if (isNewAtom) {
       // FIXME memory leak
       // we should probably remove unmounted atoms eventually
-      debugStore.atoms = [...debugStore.atoms, updatedAtom]
+      debugContainer.atoms = [...debugContainer.atoms, updatedAtom]
     }
     Promise.resolve().then(() => {
-      debugStore.listeners.forEach((listener) => listener())
+      debugContainer.listeners.forEach((listener) => listener())
     })
   }
   const state = createState(initialValues, stateListener)
@@ -40,15 +40,15 @@ const createStoreForDevelopment = (
     atom: WritableAtom<Value, Update>,
     update: Update
   ) => writeAtom(state, atom, update)
-  const debugStore = {
+  const debugContainer = {
     version: 0,
     atoms: Array.from(initialValues ?? []).map(([a]) => a),
     state,
     listeners: new Set<() => void>(),
   }
   const debugMutableSource = createMutableSource(
-    debugStore,
-    () => debugStore.version
+    debugContainer,
+    () => debugContainer.version
   )
   const restore = (values: Iterable<readonly [Atom<unknown>, unknown]>) =>
     restoreAtoms(state, values)
@@ -61,30 +61,38 @@ const createStoreForDevelopment = (
   ] as const
 }
 
-type StoreForProduction = ReturnType<typeof createStoreForProduction>
-export type StoreForDevelopment = ReturnType<typeof createStoreForDevelopment>
-export type Store = StoreForProduction | StoreForDevelopment
+type ScopeContainerForProduction = ReturnType<
+  typeof createScopeContainerForProduction
+>
+export type ScopeContainerForDevelopment = ReturnType<
+  typeof createScopeContainerForDevelopment
+>
+export type ScopeContainer =
+  | ScopeContainerForProduction
+  | ScopeContainerForDevelopment
 
-type CreateStore = (
+type CreateScopeContainer = (
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
-) => Store
+) => ScopeContainer
 
-export const createStore: CreateStore =
+export const createScopeContainer: CreateScopeContainer =
   typeof process === 'object' && process.env.NODE_ENV !== 'production'
-    ? createStoreForDevelopment
-    : createStoreForProduction
+    ? createScopeContainerForDevelopment
+    : createScopeContainerForProduction
 
-type StoreContext = Context<Store>
+type ScopeContext = Context<ScopeContainer>
 
-const StoreContextMap = new Map<Scope | undefined, StoreContext>()
+const ScopeContextMap = new Map<Scope | undefined, ScopeContext>()
 
-export const getStoreContext = (scope?: Scope) => {
-  if (!StoreContextMap.has(scope)) {
-    StoreContextMap.set(scope, createContext(createStore()))
+export const getScopeContext = (scope?: Scope) => {
+  if (!ScopeContextMap.has(scope)) {
+    ScopeContextMap.set(scope, createContext(createScopeContainer()))
   }
-  return StoreContextMap.get(scope) as StoreContext
+  return ScopeContextMap.get(scope) as ScopeContext
 }
 
-export const isDevStore = (store: Store): store is StoreForDevelopment => {
+export const isDevScopeContainer = (
+  store: ScopeContainer
+): store is ScopeContainerForDevelopment => {
   return store.length > 4
 }
