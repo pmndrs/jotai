@@ -15,7 +15,7 @@ If you are here to suggest a feature, first create an issue if it does not alrea
 If you would like to contribute by fixing an open issue or developing a new feature you can use this suggested workflow:
 
 - Fork this repository.
-- Create a new feature branch based off the `master` branch.
+- Create a new feature branch based off the `main` branch.
 - Install dependencies by running `$ yarn`.
 - Create failing tests for your fix or new feature.
 - Implement your changes and confirm that all test are passing. You can run the tests continuously during development via the `$ yarn test:dev` command.
