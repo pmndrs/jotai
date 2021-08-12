@@ -3,7 +3,7 @@
 import { add, complete, cycle, save, suite } from 'benny'
 import { atom } from '../src/core/atom'
 import type { PrimitiveAtom } from '../src/core/atom'
-import { createState, readAtom } from '../src/core/vanilla'
+import { READ_ATOM, createStore } from '../src/core/store'
 
 const createStateWithAtoms = (n: number) => {
   let targetAtom: PrimitiveAtom<number> | undefined
@@ -15,11 +15,11 @@ const createStateWithAtoms = (n: number) => {
     }
     initialValues.set(a, i)
   }
-  const state = createState(initialValues)
+  const store = createStore(initialValues)
   if (!targetAtom) {
     throw new Error()
   }
-  return [state, targetAtom] as const
+  return [store, targetAtom] as const
 }
 
 const main = async () => {
@@ -27,8 +27,8 @@ const main = async () => {
     await suite(
       `simple-read-${n}`,
       add(`atoms=${10 ** n}`, () => {
-        const [state, targetAtom] = createStateWithAtoms(10 ** n)
-        return () => readAtom(state, targetAtom)
+        const [store, targetAtom] = createStateWithAtoms(10 ** n)
+        return () => store[READ_ATOM](targetAtom)
       }),
       cycle(),
       complete(),

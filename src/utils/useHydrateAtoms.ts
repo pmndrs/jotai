@@ -2,6 +2,7 @@ import { useContext } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
 import type { ScopeContainer } from '../core/contexts'
+import { RESTORE_ATOMS } from '../core/store'
 
 const hydratedMap: WeakMap<
   ScopeContainer,
@@ -14,7 +15,7 @@ export function useHydrateAtoms(
 ) {
   const ScopeContext = getScopeContext(scope)
   const scopeContainer = useContext(ScopeContext)
-  const restoreAtoms = scopeContainer[3]
+  const store = scopeContainer[0]
 
   const hydratedSet = getHydratedSet(scopeContainer)
   const tuplesToRestore = []
@@ -26,7 +27,7 @@ export function useHydrateAtoms(
     }
   }
   if (tuplesToRestore.length) {
-    restoreAtoms(tuplesToRestore)
+    store[RESTORE_ATOMS](tuplesToRestore)
   }
 }
 
