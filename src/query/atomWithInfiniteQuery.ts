@@ -50,14 +50,23 @@ export function atomWithInfiniteQuery<
       let settlePromise:
         | ((data: InfiniteData<TData> | null, err?: TError) => void)
         | null = null
-      const getInitialData = () =>
-        typeof options.initialData === 'function'
-          ? (
-              options.initialData as InitialDataFunction<
-                InfiniteData<TQueryData>
-              >
-            )()
-          : options.initialData
+
+      const getInitialData = () => {
+        let data: InfiniteData<TQueryData> | InfiniteData<TData> | undefined =
+          queryClient.getQueryData<InfiniteData<TData>>(options.queryKey)
+
+        if (!data && options.initialData)
+          data =
+            typeof options.initialData === 'function'
+              ? (
+                  options.initialData as InitialDataFunction<
+                    InfiniteData<TQueryData>
+                  >
+                )()
+              : options.initialData
+
+        return data
+      }
 
       const initialData = getInitialData()
 
@@ -114,7 +123,7 @@ export function atomWithInfiniteQuery<
 
       const observer = new InfiniteQueryObserver(queryClient, defaultedOptions)
 
-      if (!initialData) {
+      if (initialData === undefined) {
         observer
           .fetchOptimistic(defaultedOptions)
           .then(listener)

@@ -269,7 +269,6 @@ it('query with enabled (#500)', async () => {
   await findByText('hidden')
 
   fireEvent.click(getByText('toggle'))
-  await findByText('loading')
   await findByText('count: 1')
 })
 
@@ -277,7 +276,7 @@ it('query with initialData test', async () => {
   const mockFetch = jest.fn(fakeFetch)
 
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count1',
+    queryKey: 'initialData_count1',
     queryFn: async () => {
       return await mockFetch({ count: 10 })
     },

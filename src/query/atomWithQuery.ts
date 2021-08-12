@@ -43,10 +43,19 @@ export function atomWithQuery<
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       let settlePromise: ((data: TData | null, err?: TError) => void) | null =
         null
-      const getInitialData = () =>
-        typeof options.initialData === 'function'
-          ? (options.initialData as InitialDataFunction<TQueryData>)()
-          : options.initialData
+
+      const getInitialData = () => {
+        let data: TQueryData | TData | undefined =
+          queryClient.getQueryData<TData>(options.queryKey)
+
+        if (!data && options.initialData)
+          data =
+            typeof options.initialData === 'function'
+              ? (options.initialData as InitialDataFunction<TQueryData>)()
+              : options.initialData
+
+        return data
+      }
 
       const initialData = getInitialData()
 
@@ -94,7 +103,7 @@ export function atomWithQuery<
         defaultedOptions.staleTime = 1000
       }
       const observer = new QueryObserver(queryClient, defaultedOptions)
-      if (!initialData) {
+      if (initialData === undefined) {
         observer
           .fetchOptimistic(defaultedOptions)
           .then(listener)
