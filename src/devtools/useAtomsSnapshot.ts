@@ -32,7 +32,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
     .filter((atom) => !!store[DEV_GET_MOUNTED]?.(atom))
     .map<[Atom<unknown>, unknown]>((atom) => {
       const atomState = store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
-      return [atom, atomState.e || atomState.p || atomState.w || atomState.v]
+      return [atom, atomState.v]
     })
   return new Map(atomToAtomValueTuples)
 }
