@@ -1,8 +1,9 @@
 import { useCallback, useContext } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
-import type { Scope } from '../core/atom'
-import { isDevScopeContainer } from '../core/contexts'
+import type { Atom, Scope } from '../core/atom'
 // NOTE importing from '../core/contexts' is across bundles and actually copying code
+import { isDevScopeContainer } from '../core/contexts'
+import { RESTORE_ATOMS } from '../core/store'
 
 export function useGotoAtomsSnapshot(scope?: Scope) {
   const ScopeContext = getScopeContext(scope)
@@ -11,11 +12,12 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
   if (!isDevScopeContainer(scopeContainer)) {
     throw new Error('useGotoAtomsSnapshot can only be used in dev mode.')
   }
-  const restore = scopeContainer[3]
+
+  const store = scopeContainer[0]
   return useCallback(
-    (values: Parameters<typeof restore>[0]) => {
-      restore(values)
+    (values: Iterable<readonly [Atom<unknown>, unknown]>) => {
+      store[RESTORE_ATOMS](values)
     },
-    [restore]
+    [store]
   )
 }

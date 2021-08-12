@@ -1,9 +1,9 @@
 import { useCallback, useContext, useDebugValue, useEffect } from 'react'
 import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { getScopeContext } from './contexts'
+import { FLUSH_PENDING, READ_ATOM, SUBSCRIBE_ATOM, WRITE_ATOM } from './store'
+import type { Store } from './store'
 import { useMutableSource } from './useMutableSource'
-import { readAtom, subscribeAtom } from './vanilla'
-import type { State } from './vanilla'
 
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
@@ -42,8 +42,8 @@ export function useAtom<Value, Update>(
   scope?: Scope
 ) {
   const getAtomValue = useCallback(
-    (state: State) => {
-      const atomState = readAtom(state, atom)
+    (store: Store) => {
+      const atomState = store[READ_ATOM](atom)
       if (atomState.e) {
         throw atomState.e // read error
       }
@@ -62,8 +62,8 @@ export function useAtom<Value, Update>(
   )
 
   const subscribe = useCallback(
-    (state: State, callback: () => void) =>
-      subscribeAtom(state, atom, callback),
+    (store: Store, callback: () => void) =>
+      store[SUBSCRIBE_ATOM](atom, callback),
     [atom]
   )
 
@@ -75,21 +75,21 @@ export function useAtom<Value, Update>(
   }
 
   const ScopeContext = getScopeContext(scope)
-  const [mutableSource, updateAtom, commitCallback] = useContext(ScopeContext)
+  const [store, mutableSource] = useContext(ScopeContext)
   const value = useMutableSource(mutableSource, getAtomValue, subscribe)
   useEffect(() => {
-    commitCallback()
+    store[FLUSH_PENDING]()
   })
 
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        updateAtom(atom, update)
+        store[WRITE_ATOM](atom, update)
       } else {
         throw new Error('not writable atom')
       }
     },
-    [updateAtom, atom]
+    [store, atom]
   )
 
   useDebugValue(value)

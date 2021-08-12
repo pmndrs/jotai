@@ -2,6 +2,7 @@ import { useCallback, useContext } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import type { Scope } from '../core/atom'
+import { WRITE_ATOM } from '../core/store'
 import { RESET } from './constants'
 
 export function useResetAtom<Value>(
@@ -9,10 +10,10 @@ export function useResetAtom<Value>(
   scope?: Scope
 ) {
   const ScopeContext = getScopeContext(scope)
-  const [, updateAtom] = useContext(ScopeContext)
+  const store = useContext(ScopeContext)[0]
   const setAtom = useCallback(
-    () => updateAtom(anAtom, RESET),
-    [updateAtom, anAtom]
+    () => store[WRITE_ATOM](anAtom, RESET),
+    [store, anAtom]
   )
   return setAtom
 }
