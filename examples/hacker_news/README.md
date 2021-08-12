@@ -1,4 +1,4 @@
-# Hacker News [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/master/examples/hacker_news)
+# Hacker News [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/main/examples/hacker_news)
 
 ## Description
 
@@ -21,4 +21,4 @@ yarn start
 
 ## Set up on codesandbox
 
-Link: https://githubbox.com/pmndrs/jotai/tree/master/examples/hacker_news
+Link: https://githubbox.com/pmndrs/jotai/tree/main/examples/hacker_news
