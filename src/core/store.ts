@@ -258,18 +258,7 @@ export const createStore = (
     try {
       const promiseOrValue = atom.read((a: AnyAtom) => {
         dependencies.add(a)
-        if (a !== atom) {
-          const aState = readAtomState(a)
-          if (aState.e) {
-            throw aState.e // read error
-          }
-          if (aState.p) {
-            throw aState.p // read promise
-          }
-          return aState.v // value
-        }
-        // a === atom
-        const aState = getAtomState(a)
+        const aState = a === atom ? getAtomState(a) : readAtomState(a)
         if (aState) {
           if (aState.e) {
             throw aState.e // read error
@@ -282,6 +271,7 @@ export const createStore = (
         if (hasInitialValue(a)) {
           return a.init
         }
+        // NOTE invalid derived atoms can reach here
         throw new Error('no atom init')
       })
       if (promiseOrValue instanceof Promise) {
@@ -638,15 +628,14 @@ export const createStore = (
       [DEV_GET_ATOM_STATE]: (a: AnyAtom) => atomStateMap.get(a),
       [DEV_GET_MOUNTED]: (a: AnyAtom) => mountedMap.get(a),
     }
-  } else {
-    return {
-      [GET_VERSION]: () => version,
-      [READ_ATOM]: readAtom,
-      [WRITE_ATOM]: writeAtom,
-      [FLUSH_PENDING]: flushPending,
-      [SUBSCRIBE_ATOM]: subscribeAtom,
-      [RESTORE_ATOMS]: restoreAtoms,
-    }
+  }
+  return {
+    [GET_VERSION]: () => version,
+    [READ_ATOM]: readAtom,
+    [WRITE_ATOM]: writeAtom,
+    [FLUSH_PENDING]: flushPending,
+    [SUBSCRIBE_ATOM]: subscribeAtom,
+    [RESTORE_ATOMS]: restoreAtoms,
   }
 }
 
