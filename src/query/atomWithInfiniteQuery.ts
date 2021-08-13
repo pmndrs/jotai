@@ -55,7 +55,7 @@ export function atomWithInfiniteQuery<
         let data: InfiniteData<TQueryData> | InfiniteData<TData> | undefined =
           queryClient.getQueryData<InfiniteData<TData>>(options.queryKey)
 
-        if (!data && options.initialData)
+        if (data === undefined && options.initialData) {
           data =
             typeof options.initialData === 'function'
               ? (
@@ -64,6 +64,7 @@ export function atomWithInfiniteQuery<
                   >
                 )()
               : options.initialData
+        }
 
         return data
       }

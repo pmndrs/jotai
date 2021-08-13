@@ -48,12 +48,12 @@ export function atomWithQuery<
         let data: TQueryData | TData | undefined =
           queryClient.getQueryData<TData>(options.queryKey)
 
-        if (!data && options.initialData)
+        if (data === undefined && options.initialData) {
           data =
             typeof options.initialData === 'function'
               ? (options.initialData as InitialDataFunction<TQueryData>)()
               : options.initialData
-
+        }
         return data
       }
 
