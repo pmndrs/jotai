@@ -39,7 +39,7 @@ it('query basic test', async () => {
     const [{ data }] = useAtom(countAtom)
     return (
       <>
-        <div>count: {data?.count}</div>
+        <div>count: {data.count}</div>
       </>
     )
   }
@@ -76,7 +76,7 @@ it('query dependency test', async () => {
     const [{ data }] = useAtom(countAtom)
     return (
       <>
-        <div>count: {data?.count}</div>
+        <div>count: {data.count}</div>
       </>
     )
   }
@@ -108,7 +108,7 @@ it('query change client at runtime', async () => {
   const secondClient = generateClient('second')
   const clientAtom = atom(firstClient)
   const idAtom = atomWithQuery<{ id: string }, {}>(
-    (get) => ({
+    () => ({
       query: '{ id }',
     }),
     (get) => get(clientAtom)
@@ -118,7 +118,7 @@ it('query change client at runtime', async () => {
     const [{ data }] = useAtom(idAtom)
     return (
       <>
-        <div>id: {data?.id}</div>
+        <div>id: {data.id}</div>
       </>
     )
   }
@@ -150,4 +150,44 @@ it('query change client at runtime', async () => {
   fireEvent.click(getByText('first'))
   await findByText('loading')
   await findByText('id: first')
+})
+
+it('pause test', async () => {
+  const enabledAtom = atom(false)
+  const countAtom = atomWithQuery<{ count: number }, {}>(
+    (get) => ({
+      query: '{ count }',
+      pause: !get(enabledAtom),
+    }),
+    () => clientMock
+  )
+
+  const Counter = () => {
+    const [result] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {result ? result.data.count : 'paused'}</div>
+      </>
+    )
+  }
+
+  const Controls = () => {
+    const [, setEnabled] = useAtom(enabledAtom)
+    return <button onClick={() => setEnabled((x) => !x)}>toggle</button>
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+      <Controls />
+    </Provider>
+  )
+
+  await findByText('count: paused')
+
+  fireEvent.click(getByText('toggle'))
+  await findByText('loading')
+  await findByText('count: 0')
 })
