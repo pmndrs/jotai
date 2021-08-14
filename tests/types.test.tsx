@@ -28,6 +28,7 @@ it('atom() should return the correct types', () => {
     })
     expectType<WritableAtom<null, number>>(writeonlyDerivedAtom)
   }
+  Component
 })
 
 it('useAtom should return the correct types', () => {
@@ -55,4 +56,5 @@ it('useAtom should return the correct types', () => {
     })
     expectType<[null, SetAtom<number>]>(useAtom(writeonlyDerivedAtom))
   }
+  Component
 })

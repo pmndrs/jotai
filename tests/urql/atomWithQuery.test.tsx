@@ -108,7 +108,7 @@ it('query change client at runtime', async () => {
   const secondClient = generateClient('second')
   const clientAtom = atom(firstClient)
   const idAtom = atomWithQuery<{ id: string }, {}>(
-    (get) => ({
+    () => ({
       query: '{ id }',
     }),
     (get) => get(clientAtom)
