@@ -71,7 +71,7 @@ export function useAtom<Value, Update>(
     console.warn(
       'atom.scope is deprecated. Please do useAtom(atom, scope) instead.'
     )
-    scope = atom.scope
+    scope = (atom as { scope: Scope }).scope
   }
 
   const ScopeContext = getScopeContext(scope)

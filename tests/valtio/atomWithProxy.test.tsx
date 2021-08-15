@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot } from 'valtio/vanilla'
 import { useAtom } from '../../src/index'
 import { atomWithProxy } from '../../src/valtio'
