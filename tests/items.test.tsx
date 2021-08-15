@@ -109,10 +109,13 @@ it('add an item with filtered list', async () => {
   const filteredAtom = atom((get) => {
     const filter = get(filterAtom)
     const items = get(itemAtomsAtom)
-    if (filter === 'all') return items
-    else if (filter === 'checked')
+    if (filter === 'all') {
+      return items
+    }
+    if (filter === 'checked') {
       return items.filter((atom) => get(atom).checked)
-    else return items.filter((atom) => !get(atom).checked)
+    }
+    return items.filter((atom) => !get(atom).checked)
   })
 
   const ListItem = ({
