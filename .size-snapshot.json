@@ -1,5 +1,10 @@
 {
   "index.js": {
+    "bundled": 25119,
+    "minified": 11787,
+    "gzipped": 3859
+  },
+  "index.mjs": {
     "bundled": 21268,
     "minified": 10175,
     "gzipped": 3361,
@@ -14,6 +19,11 @@
     }
   },
   "utils.js": {
+    "bundled": 19891,
+    "minified": 9713,
+    "gzipped": 3353
+  },
+  "utils.mjs": {
     "bundled": 15954,
     "minified": 7668,
     "gzipped": 2832,
@@ -28,6 +38,11 @@
     }
   },
   "devtools.js": {
+    "bundled": 23190,
+    "minified": 10983,
+    "gzipped": 3731
+  },
+  "devtools.mjs": {
     "bundled": 19122,
     "minified": 9544,
     "gzipped": 3281,
@@ -42,6 +57,11 @@
     }
   },
   "immer.js": {
+    "bundled": 2003,
+    "minified": 1096,
+    "gzipped": 482
+  },
+  "immer.mjs": {
     "bundled": 1566,
     "minified": 839,
     "gzipped": 402,
@@ -56,6 +76,11 @@
     }
   },
   "optics.js": {
+    "bundled": 2437,
+    "minified": 1303,
+    "gzipped": 623
+  },
+  "optics.mjs": {
     "bundled": 1613,
     "minified": 811,
     "gzipped": 425,
@@ -70,6 +95,11 @@
     }
   },
   "query.js": {
+    "bundled": 6490,
+    "minified": 2650,
+    "gzipped": 769
+  },
+  "query.mjs": {
     "bundled": 5444,
     "minified": 2279,
     "gzipped": 710,
@@ -84,6 +114,11 @@
     }
   },
   "xstate.js": {
+    "bundled": 3742,
+    "minified": 1517,
+    "gzipped": 702
+  },
+  "xstate.mjs": {
     "bundled": 3565,
     "minified": 1470,
     "gzipped": 684,
@@ -98,6 +133,11 @@
     }
   },
   "valtio.js": {
+    "bundled": 1537,
+    "minified": 816,
+    "gzipped": 416
+  },
+  "valtio.mjs": {
     "bundled": 1333,
     "minified": 642,
     "gzipped": 350,
@@ -112,6 +152,11 @@
     }
   },
   "zustand.js": {
+    "bundled": 776,
+    "minified": 434,
+    "gzipped": 263
+  },
+  "zustand.mjs": {
     "bundled": 647,
     "minified": 306,
     "gzipped": 204,
@@ -126,6 +171,11 @@
     }
   },
   "redux.js": {
+    "bundled": 647,
+    "minified": 378,
+    "gzipped": 239
+  },
+  "redux.mjs": {
     "bundled": 516,
     "minified": 248,
     "gzipped": 180,
@@ -140,6 +190,11 @@
     }
   },
   "urql.js": {
+    "bundled": 5010,
+    "minified": 2541,
+    "gzipped": 840
+  },
+  "urql.mjs": {
     "bundled": 4539,
     "minified": 2369,
     "gzipped": 856,
