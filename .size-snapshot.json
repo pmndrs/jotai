@@ -1,5 +1,10 @@
 {
   "index.js": {
+    "bundled": 26044,
+    "minified": 10893,
+    "gzipped": 3839
+  },
+  "index.mjs": {
     "bundled": 22130,
     "minified": 8884,
     "gzipped": 3283,
@@ -14,6 +19,11 @@
     }
   },
   "utils.js": {
+    "bundled": 19964,
+    "minified": 9745,
+    "gzipped": 3377
+  },
+  "utils.mjs": {
     "bundled": 15954,
     "minified": 7566,
     "gzipped": 2795,
@@ -28,6 +38,11 @@
     }
   },
   "devtools.js": {
+    "bundled": 24507,
+    "minified": 10144,
+    "gzipped": 3664
+  },
+  "devtools.mjs": {
     "bundled": 20426,
     "minified": 8380,
     "gzipped": 3171,
@@ -42,6 +57,11 @@
     }
   },
   "immer.js": {
+    "bundled": 2109,
+    "minified": 1135,
+    "gzipped": 490
+  },
+  "immer.mjs": {
     "bundled": 1615,
     "minified": 844,
     "gzipped": 407,
@@ -56,6 +76,11 @@
     }
   },
   "optics.js": {
+    "bundled": 2527,
+    "minified": 1338,
+    "gzipped": 641
+  },
+  "optics.mjs": {
     "bundled": 1646,
     "minified": 812,
     "gzipped": 429,
@@ -70,20 +95,30 @@
     }
   },
   "query.js": {
-    "bundled": 5988,
-    "minified": 2530,
-    "gzipped": 786,
+    "bundled": 6466,
+    "minified": 2656,
+    "gzipped": 778
+  },
+  "query.mjs": {
+    "bundled": 5454,
+    "minified": 2327,
+    "gzipped": 728,
     "treeshaked": {
       "rollup": {
         "code": 80,
         "import_statements": 71
       },
       "webpack": {
-        "code": 1117
+        "code": 1093
       }
     }
   },
   "xstate.js": {
+    "bundled": 3170,
+    "minified": 1365,
+    "gzipped": 670
+  },
+  "xstate.mjs": {
     "bundled": 2977,
     "minified": 1314,
     "gzipped": 653,
@@ -98,6 +133,11 @@
     }
   },
   "valtio.js": {
+    "bundled": 1457,
+    "minified": 776,
+    "gzipped": 398
+  },
+  "valtio.mjs": {
     "bundled": 1235,
     "minified": 598,
     "gzipped": 335,
@@ -112,6 +152,11 @@
     }
   },
   "zustand.js": {
+    "bundled": 696,
+    "minified": 394,
+    "gzipped": 245
+  },
+  "zustand.mjs": {
     "bundled": 549,
     "minified": 262,
     "gzipped": 188,
@@ -126,6 +171,11 @@
     }
   },
   "redux.js": {
+    "bundled": 607,
+    "minified": 354,
+    "gzipped": 229
+  },
+  "redux.mjs": {
     "bundled": 458,
     "minified": 220,
     "gzipped": 167,
@@ -140,6 +190,11 @@
     }
   },
   "urql.js": {
+    "bundled": 4728,
+    "minified": 2425,
+    "gzipped": 819
+  },
+  "urql.mjs": {
     "bundled": 4241,
     "minified": 2259,
     "gzipped": 837,
