@@ -45,26 +45,30 @@ export function atomWithQuery<Data, Variables extends object>(
         setResult(result)
       }
     }
-    client
-      .query(args.query, args.variables, {
-        requestPolicy: args.requestPolicy,
-        ...args.context,
-      })
-      .toPromise()
-      .then(listener)
-      .catch(() => {
-        // TODO error handling
-      })
-    resultAtom.onMount = (update) => {
-      setResult = update
-      const subscription = pipe(
-        client.query(args.query, args.variables, {
+    if (client) {
+      client
+        .query(args.query, args.variables, {
           requestPolicy: args.requestPolicy,
           ...args.context,
-        }),
-        subscribe(listener)
-      )
-      return () => subscription.unsubscribe()
+        })
+        .toPromise()
+        .then(listener)
+        .catch(() => {
+          // TODO error handling
+        })
+    }
+    resultAtom.onMount = (update) => {
+      if (client) {
+        setResult = update
+        const subscription = pipe(
+          client.query(args.query, args.variables, {
+            requestPolicy: args.requestPolicy,
+            ...args.context,
+          }),
+          subscribe(listener)
+        )
+        return () => subscription.unsubscribe()
+      }
     }
     return { resultAtom, args }
   })
