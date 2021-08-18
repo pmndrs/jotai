@@ -11,12 +11,12 @@ import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 
 export type AtomWithQueryAction = { type: 'refetch' }
-
+export type CreateQueryOptions<Options> = Options | ((get: Getter) => Options)
+export type GetQueryClient = (get: Getter) => QueryClient
 export type AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData> =
   QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
     queryKey: QueryKey
   }
-
 export type AtomWithQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
@@ -35,17 +35,10 @@ export function atomWithQuery<
   TData = TQueryFnData,
   TQueryData = TQueryFnData
 >(
-  createQuery:
-    | AtomWithQueryOptionsWithEnabled<TQueryFnData, TError, TData, TQueryData>
-    | ((
-        get: Getter
-      ) => AtomWithQueryOptionsWithEnabled<
-        TQueryFnData,
-        TError,
-        TData,
-        TQueryData
-      >),
-  getQueryClient?: (get: Getter) => QueryClient
+  createQuery: CreateQueryOptions<
+    AtomWithQueryOptionsWithEnabled<TQueryFnData, TError, TData, TQueryData>
+  >,
+  getQueryClient?: GetQueryClient
 ): WritableAtom<TData | TQueryData | undefined, AtomWithQueryAction>
 export function atomWithQuery<
   TQueryFnData,
@@ -53,12 +46,10 @@ export function atomWithQuery<
   TData = TQueryFnData,
   TQueryData = TQueryFnData
 >(
-  createQuery:
-    | AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
-    | ((
-        get: Getter
-      ) => AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>),
-  getQueryClient?: (get: Getter) => QueryClient
+  createQuery: CreateQueryOptions<
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
+  >,
+  getQueryClient?: GetQueryClient
 ): WritableAtom<TData | TQueryData, AtomWithQueryAction>
 export function atomWithQuery<
   TQueryFnData,
@@ -66,12 +57,10 @@ export function atomWithQuery<
   TData = TQueryFnData,
   TQueryData = TQueryFnData
 >(
-  createQuery:
-    | AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
-    | ((
-        get: Getter
-      ) => AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>),
-  getQueryClient: (get: Getter) => QueryClient = (get) => get(queryClientAtom)
+  createQuery: CreateQueryOptions<
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
+  >,
+  getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | TQueryData | undefined, AtomWithQueryAction> {
   const queryDataAtom: WritableAtom<
     {
