@@ -333,7 +333,7 @@ it('query with enabled (#500)', async () => {
     const enabled = get(enabledAtom)
     return {
       enabled,
-      queryKey: 'count',
+      queryKey: 'count_500_issue',
       queryFn: async () => {
         return await fakeFetch({ count: 1 })
       },
