@@ -262,7 +262,6 @@ it('query with enabled', async () => {
 })
 
 it('query with enabled 2', async () => {
-  type Update = (prev: boolean) => boolean
   const enabledAtom = atom<boolean>(true)
   const slugAtom = atom<string | null>('first')
 
@@ -327,6 +326,63 @@ it('query with enabled 2', async () => {
   await findByText('slug: hello-first')
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
+})
+
+it('query with enabled (#500)', async () => {
+  const enabledAtom = atom(true)
+  const countAtom = atomWithQuery((get) => {
+    const enabled = get(enabledAtom)
+    return {
+      enabled,
+      queryKey: 'count',
+      queryFn: async () => {
+        return await fakeFetch({ count: 1 })
+      },
+    }
+  })
+
+  const Counter = () => {
+    const [value] = useAtom(countAtom)
+    if (!value) return null
+    const {
+      response: { count },
+    } = value
+    return <div>count: {count}</div>
+  }
+
+  const Parent = () => {
+    const [showChildren, setShowChildren] = useState(true)
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setShowChildren((x) => !x)
+            setEnabled((x) => !x)
+          }}>
+          toggle
+        </button>
+        {showChildren ? <Counter /> : <div>hidden</div>}
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('toggle'))
+  await findByText('hidden')
+
+  fireEvent.click(getByText('toggle'))
+  await findByText('count: 1')
 })
 
 it('query with initialData test', async () => {
