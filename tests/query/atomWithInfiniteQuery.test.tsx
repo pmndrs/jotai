@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { useAtom } from '../../src/'
+import { atom, useAtom } from '../../src/'
 import { atomWithInfiniteQuery } from '../../src/query/atomWithInfiniteQuery'
 import { getTestProvider } from '../testUtils'
 import fakeFetch from './fakeFetch'
@@ -97,4 +97,120 @@ it('infinite query next page test', async () => {
   fireEvent.click(getByText('prev'))
   expect(mockFetch).toBeCalledTimes(3)
   await findByText('page count: 3')
+})
+
+it('infinite query with enabled', async () => {
+  const slugAtom = atom<string | null>(null)
+
+  const slugQueryAtom = atomWithInfiniteQuery((get) => {
+    const slug = get(slugAtom)
+    return {
+      enabled: !!slug,
+      queryKey: ['disabled_until_value', slug],
+      queryFn: async () => {
+        return await fakeFetch({ slug: `hello-${slug}` })
+      },
+    }
+  })
+
+  const Slug = () => {
+    const [data] = useAtom(slugQueryAtom)
+    if (!data?.pages?.[0]?.response.slug) return <div>not enabled</div>
+    return <div>slug: {data?.pages?.[0]?.response?.slug}</div>
+  }
+
+  const Parent = () => {
+    const [, setSlug] = useAtom(slugAtom)
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setSlug('world')
+          }}>
+          set slug
+        </button>
+        <Slug />
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('not enabled')
+  fireEvent.click(getByText('set slug'))
+  await findByText('loading')
+  await findByText('slug: hello-world')
+})
+
+it('infinite query with enabled 2', async () => {
+  const enabledAtom = atom<boolean>(true)
+  const slugAtom = atom<string | null>('first')
+
+  const slugQueryAtom = atomWithInfiniteQuery((get) => {
+    const slug = get(slugAtom)
+    const isEnabled = get(enabledAtom)
+    return {
+      enabled: isEnabled,
+      queryKey: ['enabled_toggle'],
+      queryFn: async () => {
+        return await fakeFetch({ slug: `hello-${slug}` })
+      },
+    }
+  })
+
+  const Slug = () => {
+    const [data] = useAtom(slugQueryAtom)
+    if (!data?.pages?.[0]?.response?.slug) return <div>not enabled</div>
+    return <div>slug: {data?.pages?.[0]?.response?.slug}</div>
+  }
+
+  const Parent = () => {
+    const [, setSlug] = useAtom(slugAtom)
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setSlug('world')
+          }}>
+          set slug
+        </button>
+        <button
+          onClick={() => {
+            setEnabled(true)
+          }}>
+          set enabled
+        </button>
+        <button
+          onClick={() => {
+            setEnabled(false)
+          }}>
+          set disabled
+        </button>
+        <Slug />
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('slug: hello-first')
+  fireEvent.click(getByText('set disabled'))
+  fireEvent.click(getByText('set slug'))
+  await findByText('slug: hello-first')
+  fireEvent.click(getByText('set enabled'))
+  await findByText('slug: hello-world')
 })

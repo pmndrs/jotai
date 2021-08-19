@@ -212,7 +212,6 @@ it('query loading 2', async () => {
 })
 
 it('query with enabled', async () => {
-  type Update = (prev: boolean) => boolean
   const slugAtom = atom<string | null>(null)
 
   const slugQueryAtom = atomWithQuery((get) => {

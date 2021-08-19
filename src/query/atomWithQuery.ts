@@ -1,18 +1,16 @@
 import { QueryObserver } from 'react-query'
 import type {
   InitialDataFunction,
-  QueryClient,
   QueryKey,
   QueryObserverOptions,
   QueryObserverResult,
 } from 'react-query'
 import { atom } from 'jotai'
-import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
+import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
+import type { CreateQueryOptions, GetQueryClient } from './types'
 
 export type AtomWithQueryAction = { type: 'refetch' }
-export type CreateQueryOptions<Options> = Options | ((get: Getter) => Options)
-export type GetQueryClient = (get: Getter) => QueryClient
 export type AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData> =
   QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
     queryKey: QueryKey
