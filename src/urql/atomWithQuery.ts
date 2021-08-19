@@ -52,7 +52,7 @@ export function atomWithQuery<Data, Variables extends object>(
   const queryResultAtom = atom((get) => {
     const args = createQueryArgs(get)
     if ((args as { pause?: boolean }).pause) {
-      return null
+      return { args }
     }
     const client = getClient(get)
     let resolve:
@@ -102,11 +102,11 @@ export function atomWithQuery<Data, Variables extends object>(
       )
       return () => subscription.unsubscribe()
     }
-    return resultAtom
+    return { resultAtom, args }
   })
   const queryAtom = atom((get) => {
-    const resultAtom = get(queryResultAtom)
-    return resultAtom && get(resultAtom)
+    const { resultAtom } = get(queryResultAtom)
+    return resultAtom ? get(resultAtom) : null
   })
   return queryAtom
 }

@@ -52,7 +52,7 @@ export function atomWithSubscription<Data, Variables extends object>(
   const queryResultAtom = atom((get) => {
     const args = createSubscriptionArgs(get)
     if ((args as { pause?: boolean }).pause) {
-      return null
+      return { args }
     }
     const client = getClient(get)
     let resolve: ((result: OperationResult<Data, Variables>) => void) | null =
@@ -101,11 +101,11 @@ export function atomWithSubscription<Data, Variables extends object>(
       }
       return () => subscription.unsubscribe()
     }
-    return resultAtom
+    return { resultAtom, args }
   })
   const queryAtom = atom((get) => {
-    const resultAtom = get(queryResultAtom)
-    return resultAtom && get(resultAtom)
+    const { resultAtom } = get(queryResultAtom)
+    return resultAtom ? get(resultAtom) : null
   })
   return queryAtom
 }
