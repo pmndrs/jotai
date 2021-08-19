@@ -213,14 +213,14 @@ it('query loading 2', async () => {
 
 it('query with enabled', async () => {
   const slugAtom = atom<string | null>(null)
-
+  const mockFetch = jest.fn(fakeFetch)
   const slugQueryAtom = atomWithQuery((get) => {
     const slug = get(slugAtom)
     return {
       enabled: !!slug,
       queryKey: ['disabled_until_value', slug],
       queryFn: async () => {
-        return await fakeFetch({ slug: `hello-${slug}` })
+        return await mockFetch({ slug: `hello-${slug}` })
       },
     }
   })
@@ -255,12 +255,15 @@ it('query with enabled', async () => {
   )
 
   await findByText('not enabled')
+  expect(mockFetch).toHaveBeenCalledTimes(0)
   fireEvent.click(getByText('set slug'))
   await findByText('loading')
   await findByText('slug: hello-world')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
 })
 
 it('query with enabled 2', async () => {
+  const mockFetch = jest.fn(fakeFetch)
   const enabledAtom = atom<boolean>(true)
   const slugAtom = atom<string | null>('first')
 
@@ -271,7 +274,7 @@ it('query with enabled 2', async () => {
       enabled: isEnabled,
       queryKey: ['enabled_toggle'],
       queryFn: async () => {
-        return await fakeFetch({ slug: `hello-${slug}` })
+        return await mockFetch({ slug: `hello-${slug}` })
       },
     }
   })
@@ -317,14 +320,16 @@ it('query with enabled 2', async () => {
       </Suspense>
     </Provider>
   )
-
   await findByText('loading')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
   await findByText('slug: hello-first')
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
   await findByText('slug: hello-first')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
+  expect(mockFetch).toHaveBeenCalledTimes(2)
 })
 
 it('query with enabled (#500)', async () => {
