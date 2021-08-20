@@ -211,17 +211,134 @@ it('query loading 2', async () => {
   await findByText('count: 2')
 })
 
-it('query with enabled (#500)', async () => {
-  type Update = (prev: boolean) => boolean
-  const enabledAtom = atom(true)
-  const setEnabledAtom = atom<null, Update>(null, (_get, set, update) =>
-    set(enabledAtom, update)
+it('query with enabled', async () => {
+  const slugAtom = atom<string | null>(null)
+  const mockFetch = jest.fn(fakeFetch)
+  const slugQueryAtom = atomWithQuery((get) => {
+    const slug = get(slugAtom)
+    return {
+      enabled: !!slug,
+      queryKey: ['disabled_until_value', slug],
+      queryFn: async () => {
+        return await mockFetch({ slug: `hello-${slug}` })
+      },
+    }
+  })
+
+  const Slug = () => {
+    const [data] = useAtom(slugQueryAtom)
+    if (!data?.response?.slug) return <div>not enabled</div>
+    return <div>slug: {data?.response?.slug}</div>
+  }
+
+  const Parent = () => {
+    const [, setSlug] = useAtom(slugAtom)
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setSlug('world')
+          }}>
+          set slug
+        </button>
+        <Slug />
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
   )
+
+  await findByText('not enabled')
+  expect(mockFetch).toHaveBeenCalledTimes(0)
+  fireEvent.click(getByText('set slug'))
+  await findByText('loading')
+  await findByText('slug: hello-world')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+})
+
+it('query with enabled 2', async () => {
+  const mockFetch = jest.fn(fakeFetch)
+  const enabledAtom = atom<boolean>(true)
+  const slugAtom = atom<string | null>('first')
+
+  const slugQueryAtom = atomWithQuery((get) => {
+    const slug = get(slugAtom)
+    const isEnabled = get(enabledAtom)
+    return {
+      enabled: isEnabled,
+      queryKey: ['enabled_toggle'],
+      queryFn: async () => {
+        return await mockFetch({ slug: `hello-${slug}` })
+      },
+    }
+  })
+
+  const Slug = () => {
+    const [data] = useAtom(slugQueryAtom)
+    if (!data?.response?.slug) return <div>not enabled</div>
+    return <div>slug: {data?.response?.slug}</div>
+  }
+
+  const Parent = () => {
+    const [, setSlug] = useAtom(slugAtom)
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setSlug('world')
+          }}>
+          set slug
+        </button>
+        <button
+          onClick={() => {
+            setEnabled(true)
+          }}>
+          set enabled
+        </button>
+        <button
+          onClick={() => {
+            setEnabled(false)
+          }}>
+          set disabled
+        </button>
+        <Slug />
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
+  )
+  await findByText('loading')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  await findByText('slug: hello-first')
+  fireEvent.click(getByText('set disabled'))
+  fireEvent.click(getByText('set slug'))
+  await findByText('slug: hello-first')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  fireEvent.click(getByText('set enabled'))
+  await findByText('slug: hello-world')
+  expect(mockFetch).toHaveBeenCalledTimes(2)
+})
+
+it('query with enabled (#500)', async () => {
+  const enabledAtom = atom(true)
   const countAtom = atomWithQuery((get) => {
     const enabled = get(enabledAtom)
     return {
       enabled,
-      queryKey: 'count6',
+      queryKey: 'count_500_issue',
       queryFn: async () => {
         return await fakeFetch({ count: 1 })
       },
@@ -229,17 +346,17 @@ it('query with enabled (#500)', async () => {
   })
 
   const Counter = () => {
-    const [
-      {
-        response: { count },
-      },
-    ] = useAtom(countAtom)
+    const [value] = useAtom(countAtom)
+    if (!value) return null
+    const {
+      response: { count },
+    } = value
     return <div>count: {count}</div>
   }
 
   const Parent = () => {
     const [showChildren, setShowChildren] = useState(true)
-    const [, setEnabled] = useAtom(setEnabledAtom)
+    const [, setEnabled] = useAtom(enabledAtom)
     return (
       <div>
         <button
