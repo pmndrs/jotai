@@ -20,7 +20,7 @@ export interface AtomWithInfiniteQueryActionBase {
   type: 'refetch' | 'fetchNextPage' | 'fetchPreviousPage'
 }
 
-type AtomWithInfiniteQueryAction<TData> =
+export type AtomWithInfiniteQueryAction<TData> =
   | AtomWithInfiniteQueryActionBase
   | AtomWithInfiniteQueryRefetchPageAction<TData>
 
