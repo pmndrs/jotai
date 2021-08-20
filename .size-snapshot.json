@@ -70,9 +70,9 @@
     }
   },
   "query.js": {
-    "bundled": 5454,
-    "minified": 2327,
-    "gzipped": 728,
+    "bundled": 5842,
+    "minified": 2461,
+    "gzipped": 760,
     "treeshaked": {
       "rollup": {
         "code": 80,
