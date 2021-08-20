@@ -33,7 +33,7 @@ it('subscription basic test', async () => {
     const [{ data }] = useAtom(countAtom)
     return (
       <>
-        <div>count: {data?.count}</div>
+        <div>count: {data.count}</div>
       </>
     )
   }
@@ -69,7 +69,7 @@ it('subscription change client at runtime', async () => {
     return (
       <>
         <div>
-          {data?.id} count: {data?.count}
+          {data.id} count: {data.count}
         </div>
       </>
     )
@@ -112,4 +112,48 @@ it('subscription change client at runtime', async () => {
   await findByText('first count: 0')
   await findByText('first count: 1')
   await findByText('first count: 2')
+})
+
+it('pause test', async () => {
+  const enabledAtom = atom(false)
+  const countAtom = atomWithSubscription(
+    (get) => ({
+      query: 'subscription Test { count }' as unknown as TypedDocumentNode<{
+        count: number
+      }>,
+      pause: !get(enabledAtom),
+    }),
+    () => clientMock
+  )
+
+  const Counter = () => {
+    const [result] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {result ? result.data.count : 'paused'}</div>
+      </>
+    )
+  }
+
+  const Controls = () => {
+    const [, setEnabled] = useAtom(enabledAtom)
+    return <button onClick={() => setEnabled((x) => !x)}>toggle</button>
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+      <Controls />
+    </Provider>
+  )
+
+  await findByText('count: paused')
+
+  fireEvent.click(getByText('toggle'))
+  await findByText('loading')
+  await findByText('count: 0')
+  await findByText('count: 1')
+  await findByText('count: 2')
 })
