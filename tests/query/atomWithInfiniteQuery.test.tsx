@@ -1,23 +1,9 @@
 import React, { Suspense, useCallback } from 'react'
-import { act, fireEvent, render } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/'
 import { atomWithInfiniteQuery } from '../../src/query/atomWithInfiniteQuery'
 import { getTestProvider } from '../testUtils'
 import fakeFetch from './fakeFetch'
-
-export function sleep(timeout: number): Promise<void> {
-  return new Promise((resolve, _reject) => {
-    setTimeout(resolve, timeout)
-  })
-}
-
-export function setActTimeout(fn: () => void, ms?: number) {
-  setTimeout(() => {
-    act(() => {
-      fn()
-    })
-  }, ms)
-}
 
 const Provider = getTestProvider()
 
@@ -240,6 +226,7 @@ it('should be able to refetch only specific pages when refetchPages is provided'
       queryKey: key,
       queryFn: ({ pageParam = 10 }) => Number(pageParam) * multiplier,
       getNextPageParam: (lastPage) => lastPage + 1,
+      onSuccess: (data) => states.push(data),
     }
   })
 
@@ -252,30 +239,31 @@ it('should be able to refetch only specific pages when refetchPages is provided'
     )
 
     const refetchPage = useCallback(
-      (value: number) =>
+      (value: number) => {
+        multiplier = 2
         setState({
           type: 'refetchPage',
           payload: (_, index) => index === value,
-        }),
+        })
+      },
       [setState]
     )
 
     states.push(state)
 
-    React.useEffect(() => {
-      setActTimeout(() => {
-        act(() => fetchNextPage())
-      }, 10)
-      setActTimeout(() => {
-        multiplier = 2
-        act(() => refetchPage(0))
-      }, 20)
-    }, [fetchNextPage, refetchPage])
-
-    return null
+    return (
+      <>
+        <div>length: {state.pages.length}</div>
+        <div>page 1: {state.pages?.[0] || null}</div>
+        <div>page 2: {state.pages?.[1] || null}</div>
+        <div>page 3: {state.pages?.[2] || null}</div>
+        <button onClick={fetchNextPage}>fetch next page</button>
+        <button onClick={() => refetchPage(0)}>refetch page 1</button>
+      </>
+    )
   }
 
-  render(
+  const { getByText, findByText } = render(
     <Provider>
       <Suspense fallback="loading">
         <Page />
@@ -283,15 +271,16 @@ it('should be able to refetch only specific pages when refetchPages is provided'
     </Provider>
   )
 
-  await sleep(50)
-
-  expect(states.length).toBe(5)
-  // Initial fetch
-  expect(states[0]).toMatchObject({ pages: [10] })
-  // Fetch next page
-  expect(states[1]).toMatchObject({ pages: [10, 11] })
-  // Fetch next page done
-  expect(states[2]).toMatchObject({ pages: [10, 11] })
-  // Refetch first page
-  expect(states[4]).toMatchObject({ pages: [20, 11] })
+  await findByText('loading')
+  await findByText('length: 1')
+  await findByText('page 1: 10')
+  fireEvent.click(getByText('fetch next page'))
+  await findByText('length: 2')
+  await findByText('page 2: 11')
+  fireEvent.click(getByText('fetch next page'))
+  await findByText('length: 3')
+  await findByText('page 3: 12')
+  fireEvent.click(getByText('refetch page 1'))
+  await findByText('length: 3')
+  await findByText('page 1: 20')
 })
