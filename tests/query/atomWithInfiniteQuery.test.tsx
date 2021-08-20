@@ -1,9 +1,23 @@
-import { Suspense } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import React, { Suspense, useCallback } from 'react'
+import { act, fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/'
 import { atomWithInfiniteQuery } from '../../src/query/atomWithInfiniteQuery'
 import { getTestProvider } from '../testUtils'
 import fakeFetch from './fakeFetch'
+
+export function sleep(timeout: number): Promise<void> {
+  return new Promise((resolve, _reject) => {
+    setTimeout(resolve, timeout)
+  })
+}
+
+export function setActTimeout(fn: () => void, ms?: number) {
+  setTimeout(() => {
+    act(() => {
+      fn()
+    })
+  }, ms)
+}
 
 const Provider = getTestProvider()
 
@@ -213,4 +227,71 @@ it('infinite query with enabled 2', async () => {
   await findByText('slug: hello-first')
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
+})
+
+// adapted from https://github.com/tannerlinsley/react-query/commit/f9b23fcae9c5d45e3985df4519dd8f78a9fa364e#diff-121ad879f17e2b996ac2c01b4250996c79ffdb6b7efcb5f1ddf719ac00546d14R597
+it('should be able to refetch only specific pages when refetchPages is provided', async () => {
+  const key = 'refetch_given_page'
+  const states: any[] = []
+
+  let multiplier = 1
+  const anAtom = atomWithInfiniteQuery<number, void>(() => {
+    return {
+      queryKey: key,
+      queryFn: ({ pageParam = 10 }) => Number(pageParam) * multiplier,
+      getNextPageParam: (lastPage) => lastPage + 1,
+    }
+  })
+
+  function Page() {
+    const [state, setState] = useAtom(anAtom)
+
+    const fetchNextPage = useCallback(
+      () => setState({ type: 'fetchNextPage' }),
+      [setState]
+    )
+
+    const refetchPage = useCallback(
+      (value: number) =>
+        setState({
+          type: 'refetchPage',
+          payload: (_, index) => index === value,
+        }),
+      [setState]
+    )
+
+    states.push(state)
+
+    React.useEffect(() => {
+      setActTimeout(() => {
+        act(() => fetchNextPage())
+      }, 10)
+      setActTimeout(() => {
+        multiplier = 2
+        act(() => refetchPage(0))
+      }, 20)
+    }, [fetchNextPage, refetchPage])
+
+    return null
+  }
+
+  render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Page />
+      </Suspense>
+    </Provider>
+  )
+
+  await sleep(50)
+
+  expect(states.length).toBe(5)
+  // Initial fetch
+  expect(states[0]).toMatchObject({ pages: [10] })
+  // Fetch next page
+  expect(states[1]).toMatchObject({ pages: [10, 11] })
+  // Fetch next page done
+  expect(states[2]).toMatchObject({ pages: [10, 11] })
+  // Refetch first page
+  expect(states[4]).toMatchObject({ pages: [20, 11] })
 })

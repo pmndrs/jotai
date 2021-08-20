@@ -7,13 +7,22 @@ import type {
   QueryObserverResult,
 } from 'react-query'
 import { atom } from 'jotai'
-import type { Getter, WritableAtom } from 'jotai'
+import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
-export type AtomWithInfiniteQueryAction = {
+export interface AtomWithInfiniteQueryRefetchPageAction<TData> {
+  type: 'refetchPage'
+  payload: (page: TData, index: number, allPages: TData[]) => boolean
+}
+
+export interface AtomWithInfiniteQueryActionBase {
   type: 'refetch' | 'fetchNextPage' | 'fetchPreviousPage'
 }
+
+type AtomWithInfiniteQueryAction<TData> =
+  | AtomWithInfiniteQueryActionBase
+  | AtomWithInfiniteQueryRefetchPageAction<TData>
 
 export type AtomWithInfiniteQueryOptions<
   TQueryFnData,
@@ -52,7 +61,7 @@ export function atomWithInfiniteQuery<
   getQueryClient?: GetQueryClient
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction
+  AtomWithInfiniteQueryAction<TData>
 >
 export function atomWithInfiniteQuery<
   TQueryFnData,
@@ -64,7 +73,10 @@ export function atomWithInfiniteQuery<
     AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
   >,
   getQueryClient?: GetQueryClient
-): WritableAtom<InfiniteData<TData | TQueryData>, AtomWithInfiniteQueryAction>
+): WritableAtom<
+  InfiniteData<TData | TQueryData>,
+  AtomWithInfiniteQueryAction<TData>
+>
 export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
@@ -77,7 +89,7 @@ export function atomWithInfiniteQuery<
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction
+  AtomWithInfiniteQueryAction<TData>
 > {
   const queryDataAtom = atom(
     (get) => {
@@ -183,11 +195,15 @@ export function atomWithInfiniteQuery<
       }
       return { dataAtom, observer, options }
     },
-    (get, _set, action: AtomWithInfiniteQueryAction) => {
+    (get, _set, action: AtomWithInfiniteQueryAction<TData>) => {
       const { observer } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
           void observer.refetch()
+          break
+        }
+        case 'refetchPage': {
+          void observer.refetch({ refetchPage: action.payload as any })
           break
         }
         case 'fetchPreviousPage': {
@@ -204,7 +220,7 @@ export function atomWithInfiniteQuery<
 
   const queryAtom = atom<
     InfiniteData<TData | TQueryData> | undefined,
-    AtomWithInfiniteQueryAction
+    AtomWithInfiniteQueryAction<TData>
   >(
     (get) => {
       const { dataAtom } = get(queryDataAtom)
