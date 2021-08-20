@@ -5,24 +5,26 @@ import type {
   InitialDataFunction,
   QueryKey,
   QueryObserverResult,
+  RefetchOptions,
+  RefetchQueryFilters,
 } from 'react-query'
 import { atom } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
-export interface AtomWithInfiniteQueryRefetchPageAction<TData> {
-  type: 'refetchPage'
-  payload: (page: TData, index: number, allPages: TData[]) => boolean
+export interface AtomWithInfiniteQueryRefetchAction<TData>
+  extends Partial<RefetchOptions & RefetchQueryFilters<TData>> {
+  type: 'refetch'
 }
 
-export interface AtomWithInfiniteQueryActionBase {
-  type: 'refetch' | 'fetchNextPage' | 'fetchPreviousPage'
+export interface AtomWithInfiniteQueryPageActions {
+  type: 'fetchNextPage' | 'fetchPreviousPage'
 }
 
 export type AtomWithInfiniteQueryAction<TData> =
-  | AtomWithInfiniteQueryActionBase
-  | AtomWithInfiniteQueryRefetchPageAction<TData>
+  | AtomWithInfiniteQueryPageActions
+  | AtomWithInfiniteQueryRefetchAction<TData>
 
 export type AtomWithInfiniteQueryOptions<
   TQueryFnData,
@@ -197,13 +199,10 @@ export function atomWithInfiniteQuery<
     },
     (get, _set, action: AtomWithInfiniteQueryAction<TData>) => {
       const { observer } = get(queryDataAtom)
-      switch (action.type) {
+      const { type, ...options } = action
+      switch (type) {
         case 'refetch': {
-          void observer.refetch()
-          break
-        }
-        case 'refetchPage': {
-          void observer.refetch({ refetchPage: action.payload as any })
+          void observer.refetch(options as any)
           break
         }
         case 'fetchPreviousPage': {
