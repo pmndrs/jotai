@@ -13,18 +13,10 @@ import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
-export interface AtomWithInfiniteQueryRefetchAction<TData>
-  extends Partial<RefetchOptions & RefetchQueryFilters<TData>> {
-  type: 'refetch'
-}
-
-export interface AtomWithInfiniteQueryPageActions {
-  type: 'fetchNextPage' | 'fetchPreviousPage'
-}
-
 export type AtomWithInfiniteQueryAction<TData> =
-  | AtomWithInfiniteQueryPageActions
-  | AtomWithInfiniteQueryRefetchAction<TData>
+  | ({ type: 'refetch' } & Partial<RefetchOptions & RefetchQueryFilters<TData>>)
+  | { type: 'fetchNextPage' }
+  | { type: 'fetchPreviousPage' }
 
 export type AtomWithInfiniteQueryOptions<
   TQueryFnData,
@@ -199,10 +191,11 @@ export function atomWithInfiniteQuery<
     },
     (get, _set, action: AtomWithInfiniteQueryAction<TData>) => {
       const { observer } = get(queryDataAtom)
-      const { type, ...options } = action
-      switch (type) {
+      switch (action.type) {
         case 'refetch': {
-          void observer.refetch(options as any)
+          const { type: _type, ...options } =
+            action as AtomWithInfiniteQueryAction<InfiniteData<TData>>
+          void observer.refetch(options)
           break
         }
         case 'fetchPreviousPage': {
