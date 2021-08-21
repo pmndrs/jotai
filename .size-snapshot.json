@@ -95,14 +95,14 @@
     }
   },
   "query.js": {
-    "bundled": 6466,
-    "minified": 2656,
-    "gzipped": 778
+    "bundled": 6876,
+    "minified": 2786,
+    "gzipped": 807
   },
   "query.mjs": {
-    "bundled": 5454,
-    "minified": 2327,
-    "gzipped": 728,
+    "bundled": 5842,
+    "minified": 2461,
+    "gzipped": 760,
     "treeshaked": {
       "rollup": {
         "code": 80,
@@ -190,14 +190,14 @@
     }
   },
   "urql.js": {
-    "bundled": 4728,
-    "minified": 2425,
-    "gzipped": 819
+    "bundled": 5356,
+    "minified": 2779,
+    "gzipped": 907
   },
   "urql.mjs": {
-    "bundled": 4241,
-    "minified": 2259,
-    "gzipped": 837,
+    "bundled": 4735,
+    "minified": 2589,
+    "gzipped": 918,
     "treeshaked": {
       "rollup": {
         "code": 170,

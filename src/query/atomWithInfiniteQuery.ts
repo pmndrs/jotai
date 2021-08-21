@@ -3,13 +3,13 @@ import type {
   InfiniteData,
   InfiniteQueryObserverOptions,
   InitialDataFunction,
-  QueryClient,
   QueryKey,
   QueryObserverResult,
 } from 'react-query'
 import { atom } from 'jotai'
 import type { Getter, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
+import { CreateQueryOptions, GetQueryClient } from './types'
 
 export type AtomWithInfiniteQueryAction = {
   type: 'refetch' | 'fetchNextPage' | 'fetchPreviousPage'
@@ -23,6 +23,17 @@ export type AtomWithInfiniteQueryOptions<
 > = InfiniteQueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
   queryKey: QueryKey
 }
+export type AtomWithInfiniteQueryOptionsWithEnabled<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryData
+> = Omit<
+  AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>,
+  'enabled'
+> & {
+  enabled: boolean
+}
 
 export function atomWithInfiniteQuery<
   TQueryFnData,
@@ -30,25 +41,51 @@ export function atomWithInfiniteQuery<
   TData = TQueryFnData,
   TQueryData = TQueryFnData
 >(
-  createQuery:
-    | AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
-    | ((
-        get: Getter
-      ) => AtomWithInfiniteQueryOptions<
-        TQueryFnData,
-        TError,
-        TData,
-        TQueryData
-      >),
-  getQueryClient: (get: Getter) => QueryClient = (get) => get(queryClientAtom)
-): WritableAtom<InfiniteData<TData | TQueryData>, AtomWithInfiniteQueryAction> {
+  createQuery: CreateQueryOptions<
+    AtomWithInfiniteQueryOptionsWithEnabled<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData
+    >
+  >,
+  getQueryClient?: GetQueryClient
+): WritableAtom<
+  InfiniteData<TData | TQueryData> | undefined,
+  AtomWithInfiniteQueryAction
+>
+export function atomWithInfiniteQuery<
+  TQueryFnData,
+  TError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData
+>(
+  createQuery: CreateQueryOptions<
+    AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
+  >,
+  getQueryClient?: GetQueryClient
+): WritableAtom<InfiniteData<TData | TQueryData>, AtomWithInfiniteQueryAction>
+export function atomWithInfiniteQuery<
+  TQueryFnData,
+  TError,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData
+>(
+  createQuery: CreateQueryOptions<
+    AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
+  >,
+  getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
+): WritableAtom<
+  InfiniteData<TData | TQueryData> | undefined,
+  AtomWithInfiniteQueryAction
+> {
   const queryDataAtom = atom(
     (get) => {
       const queryClient = getQueryClient(get)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       let settlePromise:
-        | ((data: InfiniteData<TData> | null, err?: TError) => void)
+        | ((data: InfiniteData<TData> | undefined, err?: TError) => void)
         | null = null
 
       const getInitialData = () => {
@@ -74,6 +111,7 @@ export function atomWithInfiniteQuery<
       const dataAtom = atom<
         | InfiniteData<TData | TQueryData>
         | Promise<InfiniteData<TData | TQueryData>>
+        | undefined
       >(
         initialData ||
           new Promise<InfiniteData<TData>>((resolve, reject) => {
@@ -87,7 +125,7 @@ export function atomWithInfiniteQuery<
           })
       )
       let setData: (
-        data: InfiniteData<TData> | Promise<InfiniteData<TData>>
+        data: InfiniteData<TData> | Promise<InfiniteData<TData>> | undefined
       ) => void = () => {
         throw new Error('atomWithInfiniteQuery: setting data without mount')
       }
@@ -98,7 +136,7 @@ export function atomWithInfiniteQuery<
       ) => {
         if (result.error && !isCancelledError(result.error)) {
           if (settlePromise) {
-            settlePromise(null, result.error)
+            settlePromise(undefined, result.error)
             settlePromise = null
           } else {
             setData(Promise.reject<InfiniteData<TData>>(result.error))
@@ -124,7 +162,7 @@ export function atomWithInfiniteQuery<
 
       const observer = new InfiniteQueryObserver(queryClient, defaultedOptions)
 
-      if (initialData === undefined) {
+      if (initialData === undefined && options.enabled !== false) {
         observer
           .fetchOptimistic(defaultedOptions)
           .then(listener)
@@ -134,6 +172,13 @@ export function atomWithInfiniteQuery<
       dataAtom.onMount = (update) => {
         setData = update
         const unsubscribe = observer?.subscribe(listener)
+        if (options.enabled === false) {
+          if (settlePromise) {
+            settlePromise(undefined)
+          } else {
+            setData(undefined)
+          }
+        }
         return unsubscribe
       }
       return { dataAtom, observer, options }
@@ -158,7 +203,7 @@ export function atomWithInfiniteQuery<
   )
 
   const queryAtom = atom<
-    InfiniteData<TData | TQueryData>,
+    InfiniteData<TData | TQueryData> | undefined,
     AtomWithInfiniteQueryAction
   >(
     (get) => {

@@ -6,8 +6,19 @@ import type {
 } from '@urql/core'
 import { pipe, subscribe } from 'wonka'
 import { atom } from 'jotai'
-import type { Getter } from 'jotai'
+import type { Atom, Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
+
+type OperationResultWithData<Data, Variables> = OperationResult<
+  Data,
+  Variables
+> & {
+  data: Data
+}
+
+const isOperationResultWithData = <Data, Variables>(
+  result: OperationResult<Data, Variables>
+): result is OperationResultWithData<Data, Variables> => 'data' in result
 
 type SubscriptionArgs<Data, Variables extends object> = {
   query: TypedDocumentNode<Data, Variables> | string
@@ -15,13 +26,35 @@ type SubscriptionArgs<Data, Variables extends object> = {
   context?: Partial<OperationContext>
 }
 
+type SubscriptionArgsWithPause<
+  Data,
+  Variables extends object
+> = SubscriptionArgs<Data, Variables> & {
+  pause: boolean
+}
+
+export function atomWithSubscription<Data, Variables extends object>(
+  createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
+  getClient?: (get: Getter) => Client
+): Atom<OperationResultWithData<Data, Variables>>
+
+export function atomWithSubscription<Data, Variables extends object>(
+  createSubscriptionArgs: (
+    get: Getter
+  ) => SubscriptionArgsWithPause<Data, Variables>,
+  getClient?: (get: Getter) => Client
+): Atom<OperationResultWithData<Data, Variables> | null>
+
 export function atomWithSubscription<Data, Variables extends object>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
   const queryResultAtom = atom((get) => {
-    const client = getClient(get)
     const args = createSubscriptionArgs(get)
+    if ((args as { pause?: boolean }).pause) {
+      return { args }
+    }
+    const client = getClient(get)
     let resolve: ((result: OperationResult<Data, Variables>) => void) | null =
       null
     const resultAtom = atom<
@@ -36,6 +69,9 @@ export function atomWithSubscription<Data, Variables extends object>(
       throw new Error('setting result without mount')
     }
     const listener = (result: OperationResult<Data, Variables>) => {
+      if (!isOperationResultWithData(result)) {
+        throw new Error('result does not have data')
+      }
       if (resolve) {
         resolve(result)
         resolve = null
@@ -69,7 +105,7 @@ export function atomWithSubscription<Data, Variables extends object>(
   })
   const queryAtom = atom((get) => {
     const { resultAtom } = get(queryResultAtom)
-    return get(resultAtom)
+    return resultAtom ? get(resultAtom) : null
   })
   return queryAtom
 }
