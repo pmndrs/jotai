@@ -13,8 +13,10 @@ import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
-export type AtomWithInfiniteQueryAction<TData> =
-  | ({ type: 'refetch' } & Partial<RefetchOptions & RefetchQueryFilters<TData>>)
+export type AtomWithInfiniteQueryAction<TQueryFnData> =
+  | ({ type: 'refetch' } & Partial<
+      RefetchOptions & RefetchQueryFilters<TQueryFnData>
+    >)
   | { type: 'fetchNextPage' }
   | { type: 'fetchPreviousPage' }
 
@@ -56,7 +58,7 @@ export function atomWithInfiniteQuery<
   getQueryClient?: GetQueryClient
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction<InfiniteData<TData>>
+  AtomWithInfiniteQueryAction<TQueryFnData>
 >
 
 export function atomWithInfiniteQuery<
@@ -71,7 +73,7 @@ export function atomWithInfiniteQuery<
   getQueryClient?: GetQueryClient
 ): WritableAtom<
   InfiniteData<TData | TQueryData>,
-  AtomWithInfiniteQueryAction<InfiniteData<TData>>
+  AtomWithInfiniteQueryAction<TQueryFnData>
 >
 
 export function atomWithInfiniteQuery<
@@ -86,7 +88,7 @@ export function atomWithInfiniteQuery<
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction<InfiniteData<TData>>
+  AtomWithInfiniteQueryAction<TQueryFnData>
 > {
   const queryDataAtom = atom(
     (get) => {
@@ -192,7 +194,7 @@ export function atomWithInfiniteQuery<
       }
       return { dataAtom, observer, options }
     },
-    (get, _set, action: AtomWithInfiniteQueryAction<InfiniteData<TData>>) => {
+    (get, _set, action: AtomWithInfiniteQueryAction<TQueryFnData>) => {
       const { observer } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
@@ -214,7 +216,7 @@ export function atomWithInfiniteQuery<
 
   const queryAtom = atom<
     InfiniteData<TData | TQueryData> | undefined,
-    AtomWithInfiniteQueryAction<InfiniteData<TData>>
+    AtomWithInfiniteQueryAction<TQueryFnData>
   >(
     (get) => {
       const { dataAtom } = get(queryDataAtom)
