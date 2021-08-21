@@ -5,15 +5,20 @@ import type {
   InitialDataFunction,
   QueryKey,
   QueryObserverResult,
+  RefetchOptions,
+  RefetchQueryFilters,
 } from 'react-query'
 import { atom } from 'jotai'
-import type { Getter, WritableAtom } from 'jotai'
+import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
-export type AtomWithInfiniteQueryAction = {
-  type: 'refetch' | 'fetchNextPage' | 'fetchPreviousPage'
-}
+export type AtomWithInfiniteQueryAction<TQueryFnData> =
+  | ({ type: 'refetch' } & Partial<
+      RefetchOptions & RefetchQueryFilters<TQueryFnData>
+    >)
+  | { type: 'fetchNextPage' }
+  | { type: 'fetchPreviousPage' }
 
 export type AtomWithInfiniteQueryOptions<
   TQueryFnData,
@@ -23,6 +28,7 @@ export type AtomWithInfiniteQueryOptions<
 > = InfiniteQueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
   queryKey: QueryKey
 }
+
 export type AtomWithInfiniteQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
@@ -52,8 +58,9 @@ export function atomWithInfiniteQuery<
   getQueryClient?: GetQueryClient
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction
+  AtomWithInfiniteQueryAction<TQueryFnData>
 >
+
 export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
@@ -64,7 +71,11 @@ export function atomWithInfiniteQuery<
     AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
   >,
   getQueryClient?: GetQueryClient
-): WritableAtom<InfiniteData<TData | TQueryData>, AtomWithInfiniteQueryAction>
+): WritableAtom<
+  InfiniteData<TData | TQueryData>,
+  AtomWithInfiniteQueryAction<TQueryFnData>
+>
+
 export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
@@ -77,7 +88,7 @@ export function atomWithInfiniteQuery<
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction
+  AtomWithInfiniteQueryAction<TQueryFnData>
 > {
   const queryDataAtom = atom(
     (get) => {
@@ -89,7 +100,7 @@ export function atomWithInfiniteQuery<
         | null = null
 
       const getInitialData = () => {
-        let data: InfiniteData<TQueryData> | InfiniteData<TData> | undefined =
+        let data: InfiniteData<TQueryData | TData> | undefined =
           queryClient.getQueryData<InfiniteData<TData>>(options.queryKey)
 
         if (data === undefined && options.initialData) {
@@ -183,11 +194,17 @@ export function atomWithInfiniteQuery<
       }
       return { dataAtom, observer, options }
     },
-    (get, _set, action: AtomWithInfiniteQueryAction) => {
+    (get, _set, action: AtomWithInfiniteQueryAction<TQueryFnData>) => {
       const { observer } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
-          void observer.refetch()
+          const { type: _type, ...options } = action
+          void (
+            observer.refetch as (
+              // FIXME is this correct type assertion?
+              options?: RefetchOptions & RefetchQueryFilters<TQueryFnData>
+            ) => Promise<QueryObserverResult<TData, TError>>
+          )(options)
           break
         }
         case 'fetchPreviousPage': {
@@ -204,7 +221,7 @@ export function atomWithInfiniteQuery<
 
   const queryAtom = atom<
     InfiniteData<TData | TQueryData> | undefined,
-    AtomWithInfiniteQueryAction
+    AtomWithInfiniteQueryAction<TQueryFnData>
   >(
     (get) => {
       const { dataAtom } = get(queryDataAtom)
