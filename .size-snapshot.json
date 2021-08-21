@@ -95,21 +95,21 @@
     }
   },
   "query.js": {
-    "bundled": 6876,
-    "minified": 2786,
-    "gzipped": 807
+    "bundled": 7348,
+    "minified": 3028,
+    "gzipped": 935
   },
   "query.mjs": {
-    "bundled": 5842,
-    "minified": 2461,
-    "gzipped": 760,
+    "bundled": 6499,
+    "minified": 2866,
+    "gzipped": 936,
     "treeshaked": {
       "rollup": {
         "code": 80,
         "import_statements": 71
       },
       "webpack": {
-        "code": 1093
+        "code": 1192
       }
     }
   },
