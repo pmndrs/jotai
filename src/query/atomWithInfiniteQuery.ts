@@ -26,6 +26,7 @@ export type AtomWithInfiniteQueryOptions<
 > = InfiniteQueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
   queryKey: QueryKey
 }
+
 export type AtomWithInfiniteQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
@@ -55,8 +56,9 @@ export function atomWithInfiniteQuery<
   getQueryClient?: GetQueryClient
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction<TData>
+  AtomWithInfiniteQueryAction<InfiniteData<TData>>
 >
+
 export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
@@ -69,8 +71,9 @@ export function atomWithInfiniteQuery<
   getQueryClient?: GetQueryClient
 ): WritableAtom<
   InfiniteData<TData | TQueryData>,
-  AtomWithInfiniteQueryAction<TData>
+  AtomWithInfiniteQueryAction<InfiniteData<TData>>
 >
+
 export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
@@ -83,7 +86,7 @@ export function atomWithInfiniteQuery<
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction<TData>
+  AtomWithInfiniteQueryAction<InfiniteData<TData>>
 > {
   const queryDataAtom = atom(
     (get) => {
@@ -95,7 +98,7 @@ export function atomWithInfiniteQuery<
         | null = null
 
       const getInitialData = () => {
-        let data: InfiniteData<TQueryData> | InfiniteData<TData> | undefined =
+        let data: InfiniteData<TQueryData | TData> | undefined =
           queryClient.getQueryData<InfiniteData<TData>>(options.queryKey)
 
         if (data === undefined && options.initialData) {
@@ -189,12 +192,11 @@ export function atomWithInfiniteQuery<
       }
       return { dataAtom, observer, options }
     },
-    (get, _set, action: AtomWithInfiniteQueryAction<TData>) => {
+    (get, _set, action: AtomWithInfiniteQueryAction<InfiniteData<TData>>) => {
       const { observer } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
-          const { type: _type, ...options } =
-            action as AtomWithInfiniteQueryAction<InfiniteData<TData>>
+          const { type: _type, ...options } = action
           void observer.refetch(options)
           break
         }
@@ -212,7 +214,7 @@ export function atomWithInfiniteQuery<
 
   const queryAtom = atom<
     InfiniteData<TData | TQueryData> | undefined,
-    AtomWithInfiniteQueryAction<TData>
+    AtomWithInfiniteQueryAction<InfiniteData<TData>>
   >(
     (get) => {
       const { dataAtom } = get(queryDataAtom)
