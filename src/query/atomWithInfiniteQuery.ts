@@ -199,7 +199,12 @@ export function atomWithInfiniteQuery<
       switch (action.type) {
         case 'refetch': {
           const { type: _type, ...options } = action
-          void observer.refetch(options)
+          void (
+            observer.refetch as (
+              // FIXME is this correct type assertion?
+              options?: RefetchOptions & RefetchQueryFilters<TQueryFnData>
+            ) => Promise<QueryObserverResult<TData, TError>>
+          )(options)
           break
         }
         case 'fetchPreviousPage': {
