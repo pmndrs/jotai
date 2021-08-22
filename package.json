@@ -3,14 +3,10 @@
   "private": true,
   "version": "1.3.0",
   "description": "👻 Next gen state management that will spook you",
-  "main": "index.js",
-  "module": "esm/index.js",
-  "types": "index.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "typesVersions": {
     "<4.0": {
-      "esm/*": [
-        "ts3.4/*"
-      ],
       "*": [
         "ts3.4/*"
       ]
@@ -20,68 +16,68 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./index.d.ts",
-      "module": "./esm/index.js",
-      "import": "./esm/index.js",
+      "module": "./index.mjs",
+      "import": "./index.mjs",
       "default": "./index.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
-      "module": "./esm/utils.js",
-      "import": "./esm/utils.js",
+      "module": "./utils.mjs",
+      "import": "./utils.mjs",
       "default": "./utils.js"
     },
     "./devtools": {
       "types": "./devtools.d.ts",
-      "module": "./esm/devtools.js",
-      "import": "./esm/devtools.js",
+      "module": "./devtools.mjs",
+      "import": "./devtools.mjs",
       "default": "./devtools.js"
     },
     "./immer": {
       "types": "./immer.d.ts",
-      "module": "./esm/immer.js",
-      "import": "./esm/immer.js",
+      "module": "./immer.mjs",
+      "import": "./immer.mjs",
       "default": "./immer.js"
     },
     "./optics": {
       "types": "./optics.d.ts",
-      "module": "./esm/optics.js",
-      "import": "./esm/optics.js",
+      "module": "./optics.mjs",
+      "import": "./optics.mjs",
       "default": "./optics.js"
     },
     "./query": {
       "types": "./query.d.ts",
-      "module": "./esm/query.js",
-      "import": "./esm/query.js",
+      "module": "./query.mjs",
+      "import": "./query.mjs",
       "default": "./query.js"
     },
     "./xstate": {
       "types": "./xstate.d.ts",
-      "module": "./esm/xstate.js",
-      "import": "./esm/xstate.js",
+      "module": "./xstate.mjs",
+      "import": "./xstate.mjs",
       "default": "./xstate.js"
     },
     "./valtio": {
       "types": "./valtio.d.ts",
-      "module": "./esm/valtio.js",
-      "import": "./esm/valtio.js",
+      "module": "./valtio.mjs",
+      "import": "./valtio.mjs",
       "default": "./valtio.js"
     },
     "./zustand": {
       "types": "./zustand.d.ts",
-      "module": "./esm/zustand.js",
-      "import": "./esm/zustand.js",
+      "module": "./zustand.mjs",
+      "import": "./zustand.mjs",
       "default": "./zustand.js"
     },
     "./redux": {
       "types": "./redux.d.ts",
-      "module": "./esm/redux.js",
-      "import": "./esm/redux.js",
+      "module": "./redux.mjs",
+      "import": "./redux.mjs",
       "default": "./redux.js"
     },
     "./urql": {
       "types": "./urql.d.ts",
-      "module": "./esm/urql.js",
-      "import": "./esm/urql.js",
+      "module": "./urql.mjs",
+      "import": "./urql.mjs",
       "default": "./urql.js"
     }
   },
@@ -111,7 +107,7 @@
     "test": "jest && jest --setupFiles ./tests/setProviderLessMode.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "engines": {
     "node": ">=12"
