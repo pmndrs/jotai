@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { useAtom } from '../../src/index'
-import { atomWithHash, atomWithStorage } from '../../src/utils'
+import { atom, useAtom } from '../../src/index'
+import { atomWithHash, atomWithStorage, atomWithStorageAtom } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -197,5 +197,88 @@ describe('atomWithHash', () => {
 
     window.location.hash = 'count=3'
     await findByText('count: 3')
+  })
+})
+
+describe('atomWithStorageAtom (async)', () => {
+  const asyncStorageData: Record<string, number> = {
+    count: 10,
+  }
+  const asyncDummyStorage = {
+    getItem: async (key: string) => {
+      await new Promise((r) => setTimeout(r, 10))
+      if (!(key in asyncStorageData)) {
+        throw new Error('no value stored')
+      }
+      return asyncStorageData[key]
+    },
+    setItem: async (key: string, newValue: number) => {
+      await new Promise((r) => setTimeout(r, 10))
+      asyncStorageData[key] = newValue
+    },
+  }
+
+  const dummyStorageAtom = atom(asyncDummyStorage)
+
+  it('async count', async () => {
+    const countAtom = atomWithStorageAtom('count', (get) => 1, dummyStorageAtom)
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('count: 10')
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 11')
+    waitFor(() => {
+      expect(asyncStorageData.count).toBe(11)
+    })
+  })
+
+  it('async new count', async () => {
+    const countAtom = atomWithStorageAtom('count2', (get) => 20, dummyStorageAtom)
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('count: 20')
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 21')
+    waitFor(() => {
+      expect(asyncStorageData.count2).toBe(21)
+    })
   })
 })

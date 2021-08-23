@@ -1,7 +1,7 @@
 import { atom } from 'jotai'
 import type { PrimitiveAtom, SetStateAction } from 'jotai'
 import { atomWithDefault } from './atomWithDefault'
-import { Atom, Getter, Read } from 'src/core/atom'
+import { Atom, Getter, Read } from '../core/atom'
 
 type Unsubscribe = () => void
 
