@@ -1,5 +1,7 @@
 import { atom } from 'jotai'
 import type { PrimitiveAtom, SetStateAction } from 'jotai'
+import { atomWithDefault } from './atomWithDefault'
+import { Atom, Getter, Read } from 'src/core/atom'
 
 type Unsubscribe = () => void
 
@@ -119,4 +121,39 @@ export function atomWithHash<Value>(
   }
 
   return atomWithStorage(key, initialValue, hashStorage)
+}
+
+export function atomWithStorageAtom<Value>(
+  key: string,
+  initialValueAtom: Read<Value>,
+  storageAtom: Atom<Storage<Value>>
+): PrimitiveAtom<Value> {
+  const getInitialValue: Read<Value> = (get: Getter) => {
+    const storage = get(storageAtom)
+    try {
+      const value = storage.getItem(key)
+      if (value instanceof Promise) {
+        return value.catch(() => initialValueAtom(get))
+      }
+      return value
+    } catch {
+      return initialValueAtom(get)
+    }
+  }
+
+  const baseAtom = atomWithDefault(getInitialValue)
+
+  const anAtom = atom(
+    (get) => get(baseAtom),
+    (get, set, update: SetStateAction<Value>) => {
+      const newValue =
+        typeof update === 'function'
+          ? (update as (prev: Value) => Value)(get(baseAtom))
+          : update
+      set(baseAtom, newValue)
+      get(storageAtom).setItem(key, newValue)
+    }
+  )
+
+  return anAtom
 }

@@ -1,10 +1,10 @@
-type Getter = {
+export type Getter = {
   <Value>(atom: Atom<Value | Promise<Value>>): Value
   <Value>(atom: Atom<Promise<Value>>): Value
   <Value>(atom: Atom<Value>): Value
 }
 
-type WriteGetter = Getter & {
+export type WriteGetter = Getter & {
   <Value>(atom: Atom<Value | Promise<Value>>, unstable_promise: true):
     | Value
     | Promise<Value>
@@ -14,14 +14,14 @@ type WriteGetter = Getter & {
   <Value>(atom: Atom<Value>, unstable_promise: true): Value | Promise<Value>
 }
 
-type Setter = {
+export type Setter = {
   <Value>(atom: WritableAtom<Value, undefined>): void
   <Value, Update>(atom: WritableAtom<Value, Update>, update: Update): void
 }
 
-type Read<Value> = (get: Getter) => Value | Promise<Value>
+export type Read<Value> = (get: Getter) => Value | Promise<Value>
 
-type Write<Update> = (
+export type Write<Update> = (
   get: WriteGetter,
   set: Setter,
   update: Update
