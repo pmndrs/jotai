@@ -191,3 +191,37 @@ it('pause test', async () => {
   await findByText('loading')
   await findByText('count: 0')
 })
+
+it('reexecute test', async () => {
+  const countAtom = atomWithQuery<{ count: number }, {}>(
+    () => ({
+      query: '{ count }',
+    }),
+    () => clientMock
+  )
+
+  const Counter = () => {
+    const [{ data }, dispatch] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {data.count}</div>
+        <button onClick={() => dispatch({ type: 'reexecute' })}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('count: 1')
+})

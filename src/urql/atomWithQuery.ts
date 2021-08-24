@@ -7,8 +7,13 @@ import type {
 } from '@urql/core'
 import { pipe, subscribe } from 'wonka'
 import { atom } from 'jotai'
-import type { Atom, Getter } from 'jotai'
+import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
+
+type AtomWithQueryAction = {
+  type: 'reexecute'
+  opts?: Partial<OperationContext>
+}
 
 type OperationResultWithData<Data, Variables> = OperationResult<
   Data,
@@ -38,27 +43,33 @@ type QueryArgsWithPause<Data, Variables extends object> = QueryArgs<
 export function atomWithQuery<Data, Variables extends object>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient?: (get: Getter) => Client
-): Atom<OperationResultWithData<Data, Variables>>
+): WritableAtom<OperationResultWithData<Data, Variables>, AtomWithQueryAction>
 
 export function atomWithQuery<Data, Variables extends object>(
   createQueryArgs: (get: Getter) => QueryArgsWithPause<Data, Variables>,
   getClient?: (get: Getter) => Client
-): Atom<OperationResultWithData<Data, Variables> | null>
+): WritableAtom<
+  OperationResultWithData<Data, Variables> | null,
+  AtomWithQueryAction
+>
 
 export function atomWithQuery<Data, Variables extends object>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  const queryResultAtom = atom((get) => {
-    const args = createQueryArgs(get)
-    if ((args as { pause?: boolean }).pause) {
-      return { args }
-    }
-    const client = getClient(get)
+  type ResultAtom = PrimitiveAtom<
+    | OperationResultWithData<Data, Variables>
+    | Promise<OperationResultWithData<Data, Variables>>
+  >
+  const createResultAtom = (
+    client: Client,
+    args: QueryArgs<Data, Variables>,
+    opts?: Partial<OperationContext>
+  ) => {
     let resolve:
       | ((result: OperationResultWithData<Data, Variables>) => void)
       | null = null
-    const resultAtom = atom<
+    const resultAtom: ResultAtom = atom<
       | OperationResultWithData<Data, Variables>
       | Promise<OperationResultWithData<Data, Variables>>
     >(
@@ -85,6 +96,7 @@ export function atomWithQuery<Data, Variables extends object>(
       .query(args.query, args.variables, {
         requestPolicy: args.requestPolicy,
         ...args.context,
+        ...opts,
       })
       .toPromise()
       .then(listener)
@@ -102,11 +114,49 @@ export function atomWithQuery<Data, Variables extends object>(
       )
       return () => subscription.unsubscribe()
     }
-    return { resultAtom, args }
+    return resultAtom
+  }
+  const queryResultAtom = atom((get) => {
+    const args = createQueryArgs(get)
+    if ((args as { pause?: boolean }).pause) {
+      return null
+    }
+    const client = getClient(get)
+    const resultAtom = createResultAtom(client, args)
+    return { resultAtom, client, args }
   })
-  const queryAtom = atom((get) => {
-    const { resultAtom } = get(queryResultAtom)
-    return resultAtom ? get(resultAtom) : null
-  })
+  const overwrittenResultAtom = atom<{
+    oldResultAtom: ResultAtom
+    newResultAtom: ResultAtom
+  } | null>(null)
+  const queryAtom = atom(
+    (get) => {
+      const queryResult = get(queryResultAtom)
+      if (!queryResult) {
+        return null
+      }
+      let { resultAtom } = queryResult
+      const overwrittenResult = get(overwrittenResultAtom)
+      if (overwrittenResult && overwrittenResult.oldResultAtom === resultAtom) {
+        resultAtom = overwrittenResult.newResultAtom
+      }
+      return get(resultAtom)
+    },
+    (get, set, action: AtomWithQueryAction) => {
+      switch (action.type) {
+        case 'reexecute': {
+          const queryResult = get(queryResultAtom)
+          if (!queryResult) {
+            throw new Error('query is paused')
+          }
+          const { resultAtom, client, args } = queryResult
+          set(overwrittenResultAtom, {
+            oldResultAtom: resultAtom,
+            newResultAtom: createResultAtom(client, args, action.opts),
+          })
+        }
+      }
+    }
+  )
   return queryAtom
 }
