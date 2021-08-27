@@ -1,8 +1,17 @@
 {
   "index.js": {
-    "bundled": 26044,
-    "minified": 10893,
-    "gzipped": 3839
+    "bundled": 22130,
+    "minified": 8884,
+    "gzipped": 3283,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 1202
+      }
+    }
   },
   "index.mjs": {
     "bundled": 22130,
@@ -19,9 +28,18 @@
     }
   },
   "utils.js": {
-    "bundled": 19964,
-    "minified": 9745,
-    "gzipped": 3377
+    "bundled": 15954,
+    "minified": 7566,
+    "gzipped": 2795,
+    "treeshaked": {
+      "rollup": {
+        "code": 28,
+        "import_statements": 28
+      },
+      "webpack": {
+        "code": 1317
+      }
+    }
   },
   "utils.mjs": {
     "bundled": 15954,
@@ -38,9 +56,18 @@
     }
   },
   "devtools.js": {
-    "bundled": 24507,
-    "minified": 10144,
-    "gzipped": 3664
+    "bundled": 20426,
+    "minified": 8380,
+    "gzipped": 3171,
+    "treeshaked": {
+      "rollup": {
+        "code": 28,
+        "import_statements": 28
+      },
+      "webpack": {
+        "code": 1241
+      }
+    }
   },
   "devtools.mjs": {
     "bundled": 20426,
@@ -57,9 +84,18 @@
     }
   },
   "immer.js": {
-    "bundled": 2109,
-    "minified": 1135,
-    "gzipped": 490
+    "bundled": 1615,
+    "minified": 844,
+    "gzipped": 407,
+    "treeshaked": {
+      "rollup": {
+        "code": 42,
+        "import_statements": 42
+      },
+      "webpack": {
+        "code": 1104
+      }
+    }
   },
   "immer.mjs": {
     "bundled": 1615,
@@ -76,9 +112,18 @@
     }
   },
   "optics.js": {
-    "bundled": 2527,
-    "minified": 1338,
-    "gzipped": 641
+    "bundled": 1646,
+    "minified": 812,
+    "gzipped": 429,
+    "treeshaked": {
+      "rollup": {
+        "code": 32,
+        "import_statements": 32
+      },
+      "webpack": {
+        "code": 1061
+      }
+    }
   },
   "optics.mjs": {
     "bundled": 1646,
@@ -95,9 +140,18 @@
     }
   },
   "query.js": {
-    "bundled": 7348,
-    "minified": 3028,
-    "gzipped": 935
+    "bundled": 6499,
+    "minified": 2866,
+    "gzipped": 936,
+    "treeshaked": {
+      "rollup": {
+        "code": 80,
+        "import_statements": 71
+      },
+      "webpack": {
+        "code": 1192
+      }
+    }
   },
   "query.mjs": {
     "bundled": 6499,
@@ -114,9 +168,18 @@
     }
   },
   "xstate.js": {
-    "bundled": 3170,
-    "minified": 1365,
-    "gzipped": 670
+    "bundled": 2977,
+    "minified": 1314,
+    "gzipped": 653,
+    "treeshaked": {
+      "rollup": {
+        "code": 29,
+        "import_statements": 29
+      },
+      "webpack": {
+        "code": 1145
+      }
+    }
   },
   "xstate.mjs": {
     "bundled": 2977,
@@ -133,9 +196,18 @@
     }
   },
   "valtio.js": {
-    "bundled": 1457,
-    "minified": 776,
-    "gzipped": 398
+    "bundled": 1235,
+    "minified": 598,
+    "gzipped": 335,
+    "treeshaked": {
+      "rollup": {
+        "code": 37,
+        "import_statements": 37
+      },
+      "webpack": {
+        "code": 1054
+      }
+    }
   },
   "valtio.mjs": {
     "bundled": 1235,
@@ -152,9 +224,18 @@
     }
   },
   "zustand.js": {
-    "bundled": 696,
-    "minified": 394,
-    "gzipped": 245
+    "bundled": 549,
+    "minified": 262,
+    "gzipped": 188,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
   },
   "zustand.mjs": {
     "bundled": 549,
@@ -171,9 +252,18 @@
     }
   },
   "redux.js": {
-    "bundled": 607,
-    "minified": 354,
-    "gzipped": 229
+    "bundled": 458,
+    "minified": 220,
+    "gzipped": 167,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
   },
   "redux.mjs": {
     "bundled": 458,
@@ -190,9 +280,18 @@
     }
   },
   "urql.js": {
-    "bundled": 6352,
-    "minified": 3105,
-    "gzipped": 1116
+    "bundled": 5643,
+    "minified": 2916,
+    "gzipped": 1121,
+    "treeshaked": {
+      "rollup": {
+        "code": 170,
+        "import_statements": 85
+      },
+      "webpack": {
+        "code": 1355
+      }
+    }
   },
   "urql.mjs": {
     "bundled": 5643,
