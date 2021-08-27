@@ -69,7 +69,7 @@ export function splitAtom<Item, Key>(
             atom
           )
         }
-        return get(arrAtom)[index]
+        return get(arrAtom)[index] as Item
       }
       const write = (
         get: Getter,
@@ -81,7 +81,9 @@ export function splitAtom<Item, Key>(
           throw new Error('splitAtom: array index not found')
         }
         const prev = get(arrAtom)
-        const nextItem = isFunction(update) ? update(prev[index]) : update
+        const nextItem = isFunction(update)
+          ? update(prev[index] as Item)
+          : update
         set(arrAtom as WritableAtom<Item[], Item[]>, [
           ...prev.slice(0, index),
           nextItem,

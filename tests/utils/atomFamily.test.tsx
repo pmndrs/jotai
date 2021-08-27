@@ -41,7 +41,7 @@ it('primitive atomFamily returns same reference for same parameters', async () =
 it('read-only derived atomFamily returns same reference for same parameters', async () => {
   const arrayAtom = atom([0])
   const myFamily = atomFamily<number, number>((num) =>
-    atom((get) => get(arrayAtom)[num])
+    atom((get) => get(arrayAtom)[num] as number)
   )
   expect(myFamily(0)).toEqual(myFamily(0))
   expect(myFamily(0)).not.toEqual(myFamily(1))
@@ -51,7 +51,7 @@ it('read-only derived atomFamily returns same reference for same parameters', as
 it('removed atom creates a new reference', async () => {
   const bigAtom = atom([0])
   const myFamily = atomFamily<number, number>((num) =>
-    atom((get) => get(bigAtom)[num])
+    atom((get) => get(bigAtom)[num] as number)
   )
 
   const savedReference = myFamily(0)
@@ -116,13 +116,15 @@ it('derived atomFamily functionality as usual', async () => {
 
   const myFamily = atomFamily<number, number, SetStateAction<number>>((param) =>
     atom(
-      (get) => get(arrayAtom)[param],
+      (get) => get(arrayAtom)[param] as number,
       (_, set, update) => {
         set(arrayAtom, (oldArray) => {
           if (typeof oldArray[param] === 'undefined') return oldArray
 
           const newValue =
-            typeof update === 'function' ? update(oldArray[param]) : update
+            typeof update === 'function'
+              ? update(oldArray[param] as number)
+              : update
 
           const newArray = [
             ...oldArray.slice(0, param),
@@ -206,11 +208,11 @@ it('custom equality function work', async () => {
   const bigAtom = atom([0])
 
   const badFamily = atomFamily<{ index: number }, number>((num) =>
-    atom((get) => get(bigAtom)[num.index])
+    atom((get) => get(bigAtom)[num.index] as number)
   )
 
   const goodFamily = atomFamily<{ index: number }, number>(
-    (num) => atom((get) => get(bigAtom)[num.index]),
+    (num) => atom((get) => get(bigAtom)[num.index] as number),
     (l, r) => l.index === r.index
   )
 

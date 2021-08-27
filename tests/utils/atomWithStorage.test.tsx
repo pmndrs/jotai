@@ -23,7 +23,7 @@ describe('atomWithStorage (sync)', () => {
       if (!(key in storageData)) {
         throw new Error('no value stored')
       }
-      return storageData[key]
+      return storageData[key] as number
     },
     setItem: (key: string, newValue: number) => {
       storageData[key] = newValue
@@ -67,7 +67,7 @@ describe('atomWithStorage (async)', () => {
       if (!(key in asyncStorageData)) {
         throw new Error('no value stored')
       }
-      return asyncStorageData[key]
+      return asyncStorageData[key] as number
     },
     setItem: async (key: string, newValue: number) => {
       await new Promise((r) => setTimeout(r, 10))
