@@ -51,9 +51,7 @@ const unwrapAtoms = <Values extends Record<string, unknown> | unknown[]>(
 ): Atom<unknown>[] =>
   Array.isArray(atoms)
     ? atoms
-    : Object.getOwnPropertyNames(atoms).map(
-        (key) => (atoms as Record<string, Atom<unknown>>)[key]
-      )
+    : Object.getOwnPropertyNames(atoms).map((key) => atoms[key as keyof Values])
 
 const wrapResults = <Values extends Record<string, unknown> | unknown[]>(
   atoms: { [K in keyof Values]: Atom<Values[K]> },
