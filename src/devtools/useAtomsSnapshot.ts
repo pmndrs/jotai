@@ -1,8 +1,7 @@
 import { useCallback, useContext } from 'react'
-import {
-  SECRET_INTERNAL_getScopeContext as getScopeContext,
-  SECRET_INTERNAL_useMutableSource as useMutableSource,
-} from 'jotai'
+// @ts-ignore
+import { useSyncExternalStore } from 'use-sync-external-store'
+import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
 // NOTE importing from '../core/contexts' is across bundles and actually copying code
 import { isDevScopeContainer } from '../core/contexts'
@@ -19,13 +18,11 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
     throw Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
-  const [store, , devMutableSource, devSubscribe] = scopeContainer
+  const [store, devStore] = scopeContainer
 
-  const atoms = useMutableSource(
-    devMutableSource,
-    // FIXME HACK creating new reference to force re-render
-    useCallback((devContainer) => [...devContainer.atoms], []),
-    devSubscribe
+  const atoms: Atom<unknown>[] = useSyncExternalStore(
+    devStore.subscribe,
+    useCallback(() => devStore.atoms, [devStore])
   )
 
   const atomToAtomValueTuples = atoms

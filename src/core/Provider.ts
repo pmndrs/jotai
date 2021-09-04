@@ -1,5 +1,7 @@
 import { createElement, useCallback, useDebugValue, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
+// @ts-ignore
+import { useSyncExternalStore } from 'use-sync-external-store'
 import type { Atom, Scope } from './atom'
 import {
   ScopeContainer,
@@ -10,7 +12,6 @@ import {
 import type { ScopeContainerForDevelopment } from './contexts'
 import { DEV_GET_ATOM_STATE, DEV_GET_MOUNTED } from './store'
 import type { AtomState, Store } from './store'
-import { useMutableSource } from './useMutableSource'
 
 export const Provider = ({
   initialValues,
@@ -75,11 +76,10 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (scopeContainer: ScopeContainerForDevelopment) => {
-  const [store, , devMutableSource, devSubscribe] = scopeContainer
-  const atoms = useMutableSource(
-    devMutableSource,
-    useCallback((devContainer) => devContainer.atoms, []),
-    devSubscribe
+  const [store, devStore] = scopeContainer
+  const atoms = useSyncExternalStore(
+    devStore.subscribe,
+    useCallback(() => devStore.atoms, [devStore])
   )
   useDebugValue([store, atoms], stateToPrintable)
 }

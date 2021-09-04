@@ -1,9 +1,9 @@
 import { useCallback, useContext, useDebugValue, useEffect } from 'react'
+// @ts-ignore
+import { useSyncExternalStore } from 'use-sync-external-store'
 import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { getScopeContext } from './contexts'
 import { FLUSH_PENDING, READ_ATOM, SUBSCRIBE_ATOM, WRITE_ATOM } from './store'
-import type { Store } from './store'
-import { useMutableSource } from './useMutableSource'
 
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
@@ -41,32 +41,6 @@ export function useAtom<Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>,
   scope?: Scope
 ) {
-  const getAtomValue = useCallback(
-    (store: Store) => {
-      const atomState = store[READ_ATOM](atom)
-      if (atomState.e) {
-        throw atomState.e // read error
-      }
-      if (atomState.p) {
-        throw atomState.p // read promise
-      }
-      if (atomState.w) {
-        throw atomState.w // write promise
-      }
-      if ('v' in atomState) {
-        return atomState.v as Value
-      }
-      throw new Error('no atom value')
-    },
-    [atom]
-  )
-
-  const subscribe = useCallback(
-    (store: Store, callback: () => void) =>
-      store[SUBSCRIBE_ATOM](atom, callback),
-    [atom]
-  )
-
   if ('scope' in atom) {
     console.warn(
       'atom.scope is deprecated. Please do useAtom(atom, scope) instead.'
@@ -75,8 +49,31 @@ export function useAtom<Value, Update>(
   }
 
   const ScopeContext = getScopeContext(scope)
-  const [store, mutableSource] = useContext(ScopeContext)
-  const value = useMutableSource(mutableSource, getAtomValue, subscribe)
+  const [store] = useContext(ScopeContext)
+
+  const subscribe = useCallback(
+    (callback: () => void) => store[SUBSCRIBE_ATOM](atom, callback),
+    [store, atom]
+  )
+
+  const getAtomValue = useCallback(() => {
+    const atomState = store[READ_ATOM](atom)
+    if (atomState.e) {
+      throw atomState.e // read error
+    }
+    if (atomState.p) {
+      throw atomState.p // read promise
+    }
+    if (atomState.w) {
+      throw atomState.w // write promise
+    }
+    if ('v' in atomState) {
+      return atomState.v as Value
+    }
+    throw new Error('no atom value')
+  }, [store, atom])
+
+  const value = useSyncExternalStore(subscribe, getAtomValue)
   useEffect(() => {
     store[FLUSH_PENDING]()
   })

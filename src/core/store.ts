@@ -66,7 +66,6 @@ type Mounted = {
 type StateListener = (updatedAtom: AnyAtom, isNewAtom: boolean) => void
 
 // store methods
-export const GET_VERSION = 'v'
 export const READ_ATOM = 'r'
 export const WRITE_ATOM = 'w'
 export const FLUSH_PENDING = 'f'
@@ -79,7 +78,6 @@ export const createStore = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>,
   stateListener?: StateListener
 ) => {
-  let version = 0
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingMap = new Map<AnyAtom, ReadDependencies | undefined>()
@@ -569,7 +567,6 @@ export const createStore = (
     if (stateListener) {
       stateListener(atom, isNewAtom)
     }
-    ++version
     if (!pendingMap.has(atom)) {
       pendingMap.set(atom, prevDependencies)
     }
@@ -619,7 +616,6 @@ export const createStore = (
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     return {
-      [GET_VERSION]: () => version,
       [READ_ATOM]: readAtom,
       [WRITE_ATOM]: writeAtom,
       [FLUSH_PENDING]: flushPending,
@@ -630,7 +626,6 @@ export const createStore = (
     }
   }
   return {
-    [GET_VERSION]: () => version,
     [READ_ATOM]: readAtom,
     [WRITE_ATOM]: writeAtom,
     [FLUSH_PENDING]: flushPending,
