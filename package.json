@@ -170,9 +170,7 @@
       "tests/**/*.{js,ts,tsx}"
     ]
   },
-  "dependencies": {
-    "use-sync-external-store": "^0.0.0-experimental-1314299c7-20210901"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.15.0",
     "@babel/plugin-transform-react-jsx": "^7.14.9",

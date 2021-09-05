@@ -1,6 +1,4 @@
-import { useCallback, useContext } from 'react'
-// @ts-ignore
-import { useSyncExternalStore } from 'use-sync-external-store'
+import { useContext, useEffect, useState } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
 // NOTE importing from '../core/contexts' is across bundles and actually copying code
@@ -20,10 +18,13 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
 
   const [store, devStore] = scopeContainer
 
-  const atoms: Atom<unknown>[] = useSyncExternalStore(
-    devStore.subscribe,
-    useCallback(() => devStore.atoms, [devStore])
-  )
+  const [atoms, setAtoms] = useState(devStore.atoms)
+  useEffect(() => {
+    const callback = () => setAtoms(devStore.atoms)
+    const unsubscribe = devStore.subscribe(callback)
+    callback()
+    return unsubscribe
+  }, [devStore])
 
   const atomToAtomValueTuples = atoms
     .filter((atom) => !!store[DEV_GET_MOUNTED]?.(atom))

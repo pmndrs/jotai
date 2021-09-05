@@ -7222,11 +7222,6 @@ url@^0.11.0:
     punycode "1.3.2"
     querystring "0.2.0"
 
-use-sync-external-store@^0.0.0-experimental-1314299c7-20210901:
-  version "0.0.0-experimental-1314299c7-20210901"
-  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-0.0.0-experimental-1314299c7-20210901.tgz#813df01533d654913463becb4baf21d012630b41"
-  integrity sha512-Iu5x3XZTSw/ORhEu0AUvQc05cLBc7UV8tXiP1zuXJlxEF5dYV+Dmz3YFJHWcb8L+7aBTUIhCfat/qvQNf5LdKw==
-
 use@^3.1.0:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/use/-/use-3.1.1.tgz#d50c8cac79a19fbc20f2911f56eb973f4e10070f"

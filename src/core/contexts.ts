@@ -17,7 +17,9 @@ const createScopeContainerForDevelopment = (
     listeners: new Set<() => void>(),
     subscribe: (callback: () => void) => {
       devStore.listeners.add(callback)
-      return () => devStore.listeners.delete(callback)
+      return () => {
+        devStore.listeners.delete(callback)
+      }
     },
     atoms: Array.from(initialValues ?? []).map(([a]) => a),
   }

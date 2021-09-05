@@ -1,7 +1,11 @@
-import { createElement, useCallback, useDebugValue, useRef } from 'react'
+import {
+  createElement,
+  useDebugValue,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import type { PropsWithChildren } from 'react'
-// @ts-ignore
-import { useSyncExternalStore } from 'use-sync-external-store'
 import type { Atom, Scope } from './atom'
 import {
   ScopeContainer,
@@ -77,9 +81,12 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (scopeContainer: ScopeContainerForDevelopment) => {
   const [store, devStore] = scopeContainer
-  const atoms = useSyncExternalStore(
-    devStore.subscribe,
-    useCallback(() => devStore.atoms, [devStore])
-  )
+  const [atoms, setAtoms] = useState(devStore.atoms)
+  useEffect(() => {
+    const callback = () => setAtoms(devStore.atoms)
+    const unsubscribe = devStore.subscribe(callback)
+    callback()
+    return unsubscribe
+  }, [devStore])
   useDebugValue([store, atoms], stateToPrintable)
 }

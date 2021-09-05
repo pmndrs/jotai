@@ -1,6 +1,10 @@
-import { useCallback, useContext, useDebugValue, useEffect } from 'react'
-// @ts-ignore
-import { useSyncExternalStore } from 'use-sync-external-store'
+import {
+  useCallback,
+  useContext,
+  useDebugValue,
+  useEffect,
+  useReducer,
+} from 'react'
 import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { getScopeContext } from './contexts'
 import { FLUSH_PENDING, READ_ATOM, SUBSCRIBE_ATOM, WRITE_ATOM } from './store'
@@ -51,11 +55,6 @@ export function useAtom<Value, Update>(
   const ScopeContext = getScopeContext(scope)
   const [store] = useContext(ScopeContext)
 
-  const subscribe = useCallback(
-    (callback: () => void) => store[SUBSCRIBE_ATOM](atom, callback),
-    [store, atom]
-  )
-
   const getAtomValue = useCallback(() => {
     const atomState = store[READ_ATOM](atom)
     if (atomState.e) {
@@ -73,7 +72,14 @@ export function useAtom<Value, Update>(
     throw new Error('no atom value')
   }, [store, atom])
 
-  const value = useSyncExternalStore(subscribe, getAtomValue)
+  const [value, forceUpdate] = useReducer(getAtomValue, undefined, getAtomValue)
+
+  useEffect(() => {
+    const unsubscribe = store[SUBSCRIBE_ATOM](atom, forceUpdate)
+    forceUpdate()
+    return unsubscribe
+  }, [store, atom])
+
   useEffect(() => {
     store[FLUSH_PENDING]()
   })
