@@ -18,19 +18,23 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
 
   const [store, devStore] = scopeContainer
 
-  const [atoms, setAtoms] = useState(devStore.atoms)
+  const [atomsSnaphost, setAtomsSnaphost] = useState<AtomsSnapshot>(new Map())
   useEffect(() => {
-    const callback = () => setAtoms(devStore.atoms)
+    const callback = () => {
+      const { atoms } = devStore
+      const atomToAtomValueTuples = atoms
+        .filter((atom) => !!store[DEV_GET_MOUNTED]?.(atom))
+        .map<[Atom<unknown>, unknown]>((atom) => {
+          const atomState =
+            store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
+          return [atom, atomState.v]
+        })
+      setAtomsSnaphost(new Map(atomToAtomValueTuples))
+    }
     const unsubscribe = devStore.subscribe(callback)
     callback()
     return unsubscribe
-  }, [devStore])
+  }, [store, devStore])
 
-  const atomToAtomValueTuples = atoms
-    .filter((atom) => !!store[DEV_GET_MOUNTED]?.(atom))
-    .map<[Atom<unknown>, unknown]>((atom) => {
-      const atomState = store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
-      return [atom, atomState.v]
-    })
-  return new Map(atomToAtomValueTuples)
+  return atomsSnaphost
 }
