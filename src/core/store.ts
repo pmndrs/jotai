@@ -140,6 +140,9 @@ export const createStore = (
     if (!('v' in atomState) || !Object.is(atomState.v, value)) {
       atomState.v = value
       ++atomState.r // increment revision
+      if (atomState.d.has(atom)) {
+        atomState.d.set(atom, atomState.r)
+      }
     }
     commitAtomState(atom, atomState, dependencies && prevDependencies)
   }
