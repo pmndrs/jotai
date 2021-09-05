@@ -45,9 +45,7 @@ export const Provider = ({
   return createElement(
     ScopeContainerContext.Provider,
     {
-      value: scopeContainerRef.current as ReturnType<
-        typeof createScopeContainer
-      >,
+      value: scopeContainerRef.current,
     },
     children
   )
