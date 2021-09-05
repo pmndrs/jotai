@@ -83,7 +83,8 @@ const useDebugState = (scopeContainer: ScopeContainerForDevelopment) => {
   const [store, devStore] = scopeContainer
   const [atoms, setAtoms] = useState(devStore.atoms)
   useEffect(() => {
-    const callback = () => setAtoms(devStore.atoms)
+    // HACK creating a new reference for useDebugValue to update
+    const callback = () => setAtoms([...devStore.atoms])
     const unsubscribe = devStore.subscribe(callback)
     callback()
     return unsubscribe
