@@ -18,7 +18,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
 
   const [store, devStore] = scopeContainer
 
-  const [atomsSnaphost, setAtomsSnaphost] = useState<AtomsSnapshot>(new Map())
+  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(new Map())
   useEffect(() => {
     const callback = () => {
       const { atoms } = devStore
