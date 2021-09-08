@@ -36,5 +36,5 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
     return unsubscribe
   }, [store, devStore])
 
-  return atomsSnaphost
+  return atomsSnapshot
 }
