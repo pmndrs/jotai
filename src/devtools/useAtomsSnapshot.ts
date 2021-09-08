@@ -29,7 +29,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
             store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
           return [atom, atomState.v]
         })
-      setAtomsSnaphost(new Map(atomToAtomValueTuples))
+      setAtomsSnapshot(new Map(atomToAtomValueTuples))
     }
     const unsubscribe = devStore.subscribe(callback)
     callback()
