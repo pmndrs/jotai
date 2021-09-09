@@ -170,6 +170,7 @@
       "tests/**/*.{js,ts,tsx}"
     ]
   },
+  "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.15.0",
     "@babel/plugin-transform-react-jsx": "^7.14.9",
