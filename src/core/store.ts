@@ -66,7 +66,6 @@ type Mounted = {
 type StateListener = (updatedAtom: AnyAtom, isNewAtom: boolean) => void
 
 // store methods
-export const GET_VERSION = 'v'
 export const READ_ATOM = 'r'
 export const WRITE_ATOM = 'w'
 export const FLUSH_PENDING = 'f'
@@ -79,7 +78,6 @@ export const createStore = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>,
   stateListener?: StateListener
 ) => {
-  let version = 0
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingMap = new Map<AnyAtom, ReadDependencies | undefined>()
@@ -142,6 +140,9 @@ export const createStore = (
     if (!('v' in atomState) || !Object.is(atomState.v, value)) {
       atomState.v = value
       ++atomState.r // increment revision
+      if (atomState.d.has(atom)) {
+        atomState.d.set(atom, atomState.r)
+      }
     }
     commitAtomState(atom, atomState, dependencies && prevDependencies)
   }
@@ -361,7 +362,7 @@ export const createStore = (
   const writeAtomState = <Value, Update>(
     atom: WritableAtom<Value, Update>,
     update: Update
-  ): void => {
+  ): void | Promise<void> => {
     const writePromise = getAtomState(atom)?.w
     if (writePromise) {
       writePromise.then(() => {
@@ -414,37 +415,36 @@ export const createStore = (
       }
       throw new Error('no value found')
     }
-    const promiseOrVoid = atom.write(
-      writeGetter,
-      ((a: AnyWritableAtom, v: unknown) => {
-        if (a === atom) {
-          if (!hasInitialValue(a)) {
-            // NOTE technically possible but restricted as it may cause bugs
-            throw new Error('no atom init')
-          }
-          if (v instanceof Promise) {
-            const promise = v
-              .then((resolvedValue) => {
-                setAtomValue(a, resolvedValue)
-                invalidateDependents(a)
-                flushPending()
-              })
-              .catch((e) => {
-                setAtomReadError(atom, e instanceof Error ? e : new Error(e))
-                flushPending()
-              })
-            setAtomReadPromise(atom, promise)
-          } else {
-            setAtomValue(a, v)
-          }
-          invalidateDependents(a)
-        } else {
-          writeAtomState(a, v)
+    const setter: Setter = <V, U>(a: WritableAtom<V, U>, v?: V) => {
+      let promiseOrVoid: void | Promise<void>
+      if ((a as AnyWritableAtom) === atom) {
+        if (!hasInitialValue(a)) {
+          // NOTE technically possible but restricted as it may cause bugs
+          throw new Error('no atom init')
         }
-        flushPending()
-      }) as Setter,
-      update
-    )
+        if (v instanceof Promise) {
+          promiseOrVoid = v
+            .then((resolvedValue) => {
+              setAtomValue(a, resolvedValue)
+              invalidateDependents(a)
+              flushPending()
+            })
+            .catch((e) => {
+              setAtomReadError(atom, e instanceof Error ? e : new Error(e))
+              flushPending()
+            })
+          setAtomReadPromise(atom, promiseOrVoid)
+        } else {
+          setAtomValue(a, v as NonPromise<V>)
+        }
+        invalidateDependents(a)
+      } else {
+        promiseOrVoid = writeAtomState(a as AnyWritableAtom, v)
+      }
+      flushPending()
+      return promiseOrVoid
+    }
+    const promiseOrVoid = atom.write(writeGetter, setter, update)
     if (promiseOrVoid instanceof Promise) {
       const promise = promiseOrVoid.finally(() => {
         setAtomWritePromise(atom)
@@ -452,15 +452,16 @@ export const createStore = (
       })
       setAtomWritePromise(atom, promise)
     }
-    // TODO write error is not handled
+    return promiseOrVoid
   }
 
   const writeAtom = <Value, Update>(
     writingAtom: WritableAtom<Value, Update>,
     update: Update
-  ): void => {
-    writeAtomState(writingAtom, update)
+  ): void | Promise<void> => {
+    const promiseOrVoid = writeAtomState(writingAtom, update)
     flushPending()
+    return promiseOrVoid
   }
 
   const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
@@ -569,7 +570,6 @@ export const createStore = (
     if (stateListener) {
       stateListener(atom, isNewAtom)
     }
-    ++version
     if (!pendingMap.has(atom)) {
       pendingMap.set(atom, prevDependencies)
     }
@@ -619,7 +619,6 @@ export const createStore = (
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     return {
-      [GET_VERSION]: () => version,
       [READ_ATOM]: readAtom,
       [WRITE_ATOM]: writeAtom,
       [FLUSH_PENDING]: flushPending,
@@ -630,7 +629,6 @@ export const createStore = (
     }
   }
   return {
-    [GET_VERSION]: () => version,
     [READ_ATOM]: readAtom,
     [WRITE_ATOM]: writeAtom,
     [FLUSH_PENDING]: flushPending,

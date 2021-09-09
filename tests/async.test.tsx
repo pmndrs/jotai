@@ -814,3 +814,51 @@ it('set two promise atoms at once', async () => {
   fireEvent.click(getByText('button'))
   await findByText('count: 3')
 })
+
+it('async write chain', async () => {
+  const countAtom = atom(0)
+  const asyncWriteAtom = atom(null, async (_get, set, _arg) => {
+    await new Promise((r) => setTimeout(r, 20))
+    set(countAtom, 2)
+  })
+  const controlAtom = atom(null, async (_get, set, _arg) => {
+    set(countAtom, 1)
+    await set(asyncWriteAtom, null)
+    await new Promise((r) => setTimeout(r, 10))
+    set(countAtom, 3)
+  })
+
+  const Counter = () => {
+    const [count] = useAtom(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  const Control = () => {
+    const [, invoke] = useAtom(controlAtom)
+    return <button onClick={invoke}>button</button>
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+        <Suspense fallback="loading">
+          <Control />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('loading') // write pending
+  })
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('loading') // write pending
+  })
+  await findByText('count: 3')
+})

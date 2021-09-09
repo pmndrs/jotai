@@ -1,1 +1,1 @@
-export { debugLabelPlugin } from './babel/debugLabelPlugin'
+export { default } from './babel/debugLabelPlugin'

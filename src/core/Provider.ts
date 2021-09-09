@@ -1,4 +1,10 @@
-import { createElement, useCallback, useDebugValue, useRef } from 'react'
+import {
+  createElement,
+  useDebugValue,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import type { PropsWithChildren } from 'react'
 import type { Atom, Scope } from './atom'
 import {
@@ -10,7 +16,6 @@ import {
 import type { ScopeContainerForDevelopment } from './contexts'
 import { DEV_GET_ATOM_STATE, DEV_GET_MOUNTED } from './store'
 import type { AtomState, Store } from './store'
-import { useMutableSource } from './useMutableSource'
 
 export const Provider = ({
   initialValues,
@@ -40,9 +45,7 @@ export const Provider = ({
   return createElement(
     ScopeContainerContext.Provider,
     {
-      value: scopeContainerRef.current as ReturnType<
-        typeof createScopeContainer
-      >,
+      value: scopeContainerRef.current,
     },
     children
   )
@@ -75,11 +78,14 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (scopeContainer: ScopeContainerForDevelopment) => {
-  const [store, , devMutableSource, devSubscribe] = scopeContainer
-  const atoms = useMutableSource(
-    devMutableSource,
-    useCallback((devContainer) => devContainer.atoms, []),
-    devSubscribe
-  )
+  const [store, devStore] = scopeContainer
+  const [atoms, setAtoms] = useState(devStore.atoms)
+  useEffect(() => {
+    // HACK creating a new reference for useDebugValue to update
+    const callback = () => setAtoms([...devStore.atoms])
+    const unsubscribe = devStore.subscribe(callback)
+    callback()
+    return unsubscribe
+  }, [devStore])
   useDebugValue([store, atoms], stateToPrintable)
 }
