@@ -334,5 +334,33 @@
         "code": 1054
       }
     }
+  },
+  "babelPluginDefaultLabel.js": {
+    "bundled": 945,
+    "minified": 609,
+    "gzipped": 328,
+    "treeshaked": {
+      "rollup": {
+        "code": 0,
+        "import_statements": 0
+      },
+      "webpack": {
+        "code": 951
+      }
+    }
+  },
+  "babelPluginDefaultLabel.mjs": {
+    "bundled": 945,
+    "minified": 609,
+    "gzipped": 328,
+    "treeshaked": {
+      "rollup": {
+        "code": 0,
+        "import_statements": 0
+      },
+      "webpack": {
+        "code": 951
+      }
+    }
   }
 }

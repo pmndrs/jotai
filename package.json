@@ -83,11 +83,11 @@
       "import": "./esm/urql.mjs",
       "default": "./urql.js"
     },
-    "./babel": {
-      "types": "./babel.d.ts",
-      "module": "./esm/babel.js",
-      "import": "./esm/babel.mjs",
-      "default": "./babel.js"
+    "./babel-plugin/debug-label": {
+      "types": "./babelPluginDefaultLabel.d.ts",
+      "module": "./esm/babelPluginDefaultLabel.js",
+      "import": "./esm/babelPluginDefaultLabel.mjs",
+      "default": "./babelPluginDefaultLabel.js"
     }
   },
   "files": [
@@ -108,7 +108,7 @@
     "build:zustand": "rollup -c --config-zustand",
     "build:redux": "rollup -c --config-redux",
     "build:urql": "rollup -c --config-urql",
-    "build:babel": "rollup -c --config-babel",
+    "build:babel": "rollup -c --config-babelPluginDefaultLabel",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
     "eslint:ci": "eslint '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
