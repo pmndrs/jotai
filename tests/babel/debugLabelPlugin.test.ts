@@ -16,7 +16,7 @@ it('It should add a debugLabel to an atom', () => {
     const countAtom = atom(0)
     `)
   ).toMatchInlineSnapshot(`
-  const countAtom = atom(0)
-  countAtom.debugLabel = 'countAtom'
+    "const countAtom = atom(0);
+    countAtom.debugLabel = \\"countAtom\\";"
   `)
 })

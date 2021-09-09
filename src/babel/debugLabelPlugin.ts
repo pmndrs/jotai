@@ -1,6 +1,8 @@
 import babel, { PluginObj, types } from '@babel/core'
 
-export function debugLabelPlugin({ types: t }: typeof babel): PluginObj {
+export default function debugLabelPlugin({
+  types: t,
+}: typeof babel): PluginObj {
   return {
     visitor: {
       VariableDeclaration(path) {
