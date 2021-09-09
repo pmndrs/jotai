@@ -4,13 +4,13 @@ import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 
 const waitForAllCache = new WeakMap()
 
-export function waitForAll<Values extends Record<string, unknown>>(
-  atoms: { [K in keyof Values]: Atom<Values[K]> }
-): Atom<Values>
+export function waitForAll<Values extends Record<string, unknown>>(atoms: {
+  [K in keyof Values]: Atom<Values[K]>
+}): Atom<Values>
 
-export function waitForAll<Values extends readonly unknown[]>(
-  atoms: { [K in keyof Values]: Atom<Values[K]> }
-): Atom<Values>
+export function waitForAll<Values extends readonly unknown[]>(atoms: {
+  [K in keyof Values]: Atom<Values[K]>
+}): Atom<Values>
 
 export function waitForAll<
   Values extends Record<string, unknown> | readonly unknown[]
@@ -46,9 +46,9 @@ export function waitForAll<
   return derivedAtom
 }
 
-const unwrapAtoms = <Values extends Record<string, unknown> | unknown[]>(
-  atoms: { [K in keyof Values]: Atom<Values[K]> }
-): Atom<unknown>[] =>
+const unwrapAtoms = <
+  Values extends Record<string, unknown> | unknown[]
+>(atoms: { [K in keyof Values]: Atom<Values[K]> }): Atom<unknown>[] =>
   Array.isArray(atoms)
     ? atoms
     : Object.getOwnPropertyNames(atoms).map(
