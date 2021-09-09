@@ -1,5 +1,5 @@
 import { Component, Suspense, useEffect, useState } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
 
@@ -256,6 +256,49 @@ it('can throw an error in write function', async () => {
 
   fireEvent.click(getByText('button'))
   expect(console.error).toHaveBeenCalledTimes(1)
+})
+
+it('can throw an error in async write function', async () => {
+  const countAtom = atom(0)
+  const errorAtom = atom(
+    (get) => get(countAtom),
+    async () => {
+      throw new Error()
+    }
+  )
+
+  const Counter: React.FC = () => {
+    const [count, dispatch] = useAtom(errorAtom)
+    const onClick = async () => {
+      try {
+        await dispatch()
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    return (
+      <>
+        <div>count: {count}</div>
+        <div>no error</div>
+        <button onClick={onClick}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback={null}>
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('no error')
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    expect(console.error).toHaveBeenCalledTimes(1)
+  })
 })
 
 it('can throw a chained error in write function', async () => {
