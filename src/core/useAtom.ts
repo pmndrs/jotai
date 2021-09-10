@@ -3,7 +3,7 @@ import {
   useContext,
   useDebugValue,
   useEffect,
-  useReducer,
+  useState,
 } from 'react'
 import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { getScopeContext } from './contexts'
@@ -55,28 +55,43 @@ export function useAtom<Value, Update>(
   const ScopeContext = getScopeContext(scope)
   const [store] = useContext(ScopeContext)
 
-  const getAtomValue = useCallback(() => {
-    const atomState = store[READ_ATOM](atom)
-    if (atomState.e) {
-      throw atomState.e // read error
-    }
-    if (atomState.p) {
-      throw atomState.p // read promise
-    }
-    if (atomState.w) {
-      throw atomState.w // write promise
-    }
-    if ('v' in atomState) {
-      return atomState.v as Value
-    }
+  const [atomState, setAtomState] = useState(() => store[READ_ATOM](atom))
+  if (atomState.e) {
+    throw atomState.e // read error
+  }
+  if (atomState.p) {
+    throw atomState.p // read promise
+  }
+  if (atomState.w) {
+    throw atomState.w // write promise
+  }
+  if (!('v' in atomState)) {
     throw new Error('no atom value')
-  }, [store, atom])
-
-  const [value, forceUpdate] = useReducer(getAtomValue, undefined, getAtomValue)
+  }
+  const value = atomState.v as Value
 
   useEffect(() => {
-    const unsubscribe = store[SUBSCRIBE_ATOM](atom, forceUpdate)
-    forceUpdate()
+    const callback = () =>
+      setAtomState((prevAtomState) => {
+        const nextAtomState = store[READ_ATOM](atom)
+        if (
+          !prevAtomState.e && // no read error
+          !prevAtomState.p && // no read promise
+          !prevAtomState.w && // no write promise
+          'v' in prevAtomState &&
+          !nextAtomState.e && // no read error
+          !nextAtomState.p && // no read promise
+          !nextAtomState.w && // no write promise
+          'v' in nextAtomState &&
+          Object.is(prevAtomState.v, nextAtomState.v)
+        ) {
+          // bail out
+          return prevAtomState
+        }
+        return nextAtomState
+      })
+    const unsubscribe = store[SUBSCRIBE_ATOM](atom, callback)
+    callback()
     return unsubscribe
   }, [store, atom])
 
