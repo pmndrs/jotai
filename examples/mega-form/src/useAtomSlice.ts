@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { useAtom, PrimitiveAtom } from 'jotai'
+import { useAtom } from 'jotai'
+import type { PrimitiveAtom } from 'jotai'
 import { splitAtom } from 'jotai/utils'
 
 const useAtomSlice = <Item>(arrAtom: PrimitiveAtom<Item[]>) => {

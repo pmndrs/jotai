@@ -1,7 +1,8 @@
 /* eslint-disable import/named */
-import { produce, Draft } from 'immer'
-import { PrimitiveAtom, WritableAtom, atom } from 'jotai'
-
+import { produce } from 'immer'
+import type { Draft } from 'immer'
+import { atom } from 'jotai'
+import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { getWeakCacheItem, setWeakCacheItem } from '../utils/weakCache'
 
 const withImmerCache = new WeakMap()
@@ -33,7 +34,6 @@ export function withImmer<Value>(anAtom: WritableAtom<Value, Value>) {
         )
       )
   )
-  derivedAtom.scope = anAtom.scope
   setWeakCacheItem(withImmerCache, deps, derivedAtom)
   return derivedAtom
 }

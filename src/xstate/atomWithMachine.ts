@@ -1,12 +1,12 @@
-import {
-  interpret,
+import { interpret } from 'xstate'
+import type {
   EventObject,
-  StateMachine,
+  Interpreter,
   InterpreterOptions,
   MachineOptions,
-  Typestate,
   State,
-  Interpreter,
+  StateMachine,
+  Typestate,
 } from 'xstate'
 import { atom } from 'jotai'
 import type { Atom, Getter } from 'jotai'

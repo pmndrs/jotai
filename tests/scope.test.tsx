@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
@@ -16,10 +16,9 @@ afterEach(() => {
 it('simple scoped provider with scoped atom', async () => {
   const scope = Symbol()
   const countAtom = atom(0)
-  countAtom.scope = scope
 
-  const Display: React.FC = () => {
-    const [count, setCount] = useAtom(countAtom)
+  const Display = () => {
+    const [count, setCount] = useAtom(countAtom, scope)
 
     return (
       <>
@@ -43,11 +42,10 @@ it('default provider and atom with scoped provider and scoped atom', async () =>
   const scope = Symbol()
 
   const scopedCountAtom = atom(0)
-  scopedCountAtom.scope = scope
   const countAtom = atom(0)
 
-  const Display: React.FC = () => {
-    const [scopedCount, setScopedCount] = useAtom(scopedCountAtom)
+  const Display = () => {
+    const [scopedCount, setScopedCount] = useAtom(scopedCountAtom, scope)
     const [count, setCount] = useAtom(countAtom)
 
     return (
@@ -87,10 +85,9 @@ it('keeps scoped atom value when default provider is removed', async () => {
   const scope = Symbol()
 
   const scopedCountAtom = atom(0)
-  scopedCountAtom.scope = scope
 
-  const Display: React.FC = () => {
-    const [scopedCount, setScopedCount] = useAtom(scopedCountAtom)
+  const Display = () => {
+    const [scopedCount, setScopedCount] = useAtom(scopedCountAtom, scope)
 
     return (
       <>
@@ -139,13 +136,11 @@ it('two different scoped providers and scoped atoms', async () => {
   const scopedCountAtom = atom(0)
   const secondScopedCountAtom = atom(10)
 
-  scopedCountAtom.scope = scope
-  secondScopedCountAtom.scope = secondScope
-
-  const Display: React.FC = () => {
-    const [scopedCount, setScopedCount] = useAtom(scopedCountAtom)
+  const Display = () => {
+    const [scopedCount, setScopedCount] = useAtom(scopedCountAtom, scope)
     const [secondScopedCount, setSecondScopedCount] = useAtom(
-      secondScopedCountAtom
+      secondScopedCountAtom,
+      secondScope
     )
 
     return (

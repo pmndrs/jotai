@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { useAtom, WritableAtom } from 'jotai'
+import { useAtom } from 'jotai'
+import type { WritableAtom } from 'jotai'
+import type { Scope } from '../core/atom'
 
 type Config = {
   instanceID?: number
@@ -31,7 +33,8 @@ type Extension = {
 
 export function useAtomDevtools<Value>(
   anAtom: WritableAtom<Value, Value>,
-  name?: string
+  name?: string,
+  scope?: Scope
 ) {
   let extension: Extension | undefined
   try {
@@ -47,7 +50,7 @@ export function useAtomDevtools<Value>(
     }
   }
 
-  const [value, setValue] = useAtom(anAtom)
+  const [value, setValue] = useAtom(anAtom, scope)
   const lastValue = useRef(value)
   const isTimeTraveling = useRef(false)
   const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()

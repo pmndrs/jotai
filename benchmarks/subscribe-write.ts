@@ -1,15 +1,14 @@
 #!/usr/bin/env npx ts-node
 
 import { add, complete, cycle, save, suite } from 'benny'
-
 import { atom } from '../src/core/atom'
 import type { PrimitiveAtom } from '../src/core/atom'
 import {
-  createState,
-  readAtom,
-  writeAtom,
-  subscribeAtom,
-} from '../src/core/vanilla'
+  READ_ATOM,
+  SUBSCRIBE_ATOM,
+  WRITE_ATOM,
+  createStore,
+} from '../src/core/store'
 
 const cleanupFns = new Set<() => void>()
 const cleanup = () => {
@@ -19,22 +18,22 @@ const cleanup = () => {
 
 const createStateWithAtoms = (n: number) => {
   let targetAtom: PrimitiveAtom<number> | undefined
-  const state = createState()
+  const store = createStore()
   for (let i = 0; i < n; ++i) {
     const a = atom(i)
     if (!targetAtom) {
       targetAtom = a
     }
-    readAtom(state, a)
-    const unsub = subscribeAtom(state, a, () => {
-      readAtom(state, a)
+    store[READ_ATOM](a)
+    const unsub = store[SUBSCRIBE_ATOM](a, () => {
+      store[READ_ATOM](a)
     })
     cleanupFns.add(unsub)
   }
   if (!targetAtom) {
     throw new Error()
   }
-  return [state, targetAtom] as const
+  return [store, targetAtom] as const
 }
 
 const main = async () => {
@@ -43,8 +42,8 @@ const main = async () => {
       `subscribe-write-${n}`,
       add(`atoms=${10 ** n}`, () => {
         cleanup()
-        const [state, targetAtom] = createStateWithAtoms(10 ** n)
-        return () => writeAtom(state, targetAtom, (c) => c + 1)
+        const [store, targetAtom] = createStateWithAtoms(10 ** n)
+        return () => store[WRITE_ATOM](targetAtom, (c) => c + 1)
       }),
       cycle(),
       complete(),

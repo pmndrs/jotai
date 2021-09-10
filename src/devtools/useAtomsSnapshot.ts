@@ -1,35 +1,40 @@
-import { useContext } from 'react'
-import {
-  SECRET_INTERNAL_getStoreContext as getStoreContext,
-  SECRET_INTERNAL_useMutableSource as useMutableSource,
-} from 'jotai'
-
+import { useContext, useEffect, useState } from 'react'
+import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
-import type { AtomState, State } from '../core/vanilla'
-// NOTE this is across bundles and actually copying code
-import { getDebugStateAndAtoms, subscribeDebugStore } from '../core/Provider'
+// NOTE importing from '../core/contexts' is across bundles and actually copying code
+import { isDevScopeContainer } from '../core/contexts'
+import { DEV_GET_ATOM_STATE, DEV_GET_MOUNTED } from '../core/store'
+import type { AtomState } from '../core/store'
 
 type AtomsSnapshot = Map<Atom<unknown>, unknown>
 
 export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
-  const StoreContext = getStoreContext(scope)
-  const debugMutableSource = useContext(StoreContext)[3]
+  const ScopeContext = getScopeContext(scope)
+  const scopeContainer = useContext(ScopeContext)
 
-  if (debugMutableSource === undefined) {
+  if (!isDevScopeContainer(scopeContainer)) {
     throw Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
-  const [state, atoms]: [State, Atom<unknown>[]] = useMutableSource(
-    debugMutableSource,
-    getDebugStateAndAtoms,
-    subscribeDebugStore
-  )
+  const [store, devStore] = scopeContainer
 
-  const atomToAtomValueTuples = atoms
-    .filter((atom) => !!state.m.get(atom))
-    .map<[Atom<unknown>, unknown]>((atom) => {
-      const atomState = state.a.get(atom) ?? ({} as AtomState)
-      return [atom, atomState.e || atomState.p || atomState.w || atomState.v]
-    })
-  return new Map(atomToAtomValueTuples)
+  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(new Map())
+  useEffect(() => {
+    const callback = () => {
+      const { atoms } = devStore
+      const atomToAtomValueTuples = atoms
+        .filter((atom) => !!store[DEV_GET_MOUNTED]?.(atom))
+        .map<[Atom<unknown>, unknown]>((atom) => {
+          const atomState =
+            store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
+          return [atom, atomState.v]
+        })
+      setAtomsSnapshot(new Map(atomToAtomValueTuples))
+    }
+    const unsubscribe = devStore.subscribe(callback)
+    callback()
+    return unsubscribe
+  }, [store, devStore])
+
+  return atomsSnapshot
 }

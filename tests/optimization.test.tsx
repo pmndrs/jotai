@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
@@ -9,7 +9,7 @@ it('only relevant render function called (#156)', async () => {
   const count1Atom = atom(0)
   const count2Atom = atom(0)
 
-  const Counter1: React.FC = () => {
+  const Counter1 = () => {
     const [count, setCount] = useAtom(count1Atom)
     const renderCount = useRef(0)
     ++renderCount.current
@@ -23,7 +23,7 @@ it('only relevant render function called (#156)', async () => {
     )
   }
 
-  const Counter2: React.FC = () => {
+  const Counter2 = () => {
     const [count, setCount] = useAtom(count2Atom)
     const renderCount = useRef(0)
     ++renderCount.current
@@ -70,7 +70,7 @@ it('only render once using atoms with write-only atom', async () => {
     set(count2Atom, (c) => c + 1)
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count1] = useAtom(count1Atom)
     const [count2] = useAtom(count2Atom)
     const renderCount = useRef(0)
@@ -82,7 +82,7 @@ it('only render once using atoms with write-only atom', async () => {
     )
   }
 
-  const Control: React.FC = () => {
+  const Control = () => {
     const [, increment] = useAtom(incrementAtom)
     return <button onClick={increment}>button</button>
   }
@@ -108,7 +108,7 @@ it('useless re-renders with static atoms (#355)', async () => {
   const countAtom = atom(0)
   const unrelatedAtom = atom(0)
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     useAtom(unrelatedAtom)
     const renderCount = useRef(0)

@@ -1,4 +1,4 @@
-# Todos with atomFamily [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/master/examples/todos_with_atomFamily)
+# Todos with atomFamily [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/main/examples/todos_with_atomFamily)
 
 ## Description
 
@@ -21,4 +21,4 @@ yarn start
 
 ## Set up on codesandbox
 
-Link: https://githubbox.com/pmndrs/jotai/tree/master/examples/todos_with_atomFamily
+Link: https://githubbox.com/pmndrs/jotai/tree/main/examples/todos_with_atomFamily

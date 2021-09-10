@@ -1,6 +1,7 @@
-import React, { StrictMode, Suspense, useRef, useEffect } from 'react'
+import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom, Atom } from '../src/index'
+import { atom, useAtom } from 'jotai'
+import type { Atom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
@@ -22,7 +23,7 @@ it('does not show async stale result', async () => {
 
   const committed: number[] = []
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const onClick = async () => {
       setCount((c) => c + 1)
@@ -37,7 +38,7 @@ it('does not show async stale result', async () => {
     )
   }
 
-  const DelayedCounter: React.FC = () => {
+  const DelayedCounter = () => {
     const [delayedCount] = useAtom(asyncCountAtom)
     useEffect(() => {
       committed.push(delayedCount)
@@ -83,7 +84,7 @@ it('works with async get with extra deps', async () => {
     return get(countAtom)
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -93,7 +94,7 @@ it('works with async get with extra deps', async () => {
     )
   }
 
-  const DelayedCounter: React.FC = () => {
+  const DelayedCounter = () => {
     const [delayedCount] = useAtom(asyncCountAtom)
     return <div>delayedCount: {delayedCount}</div>
   }
@@ -130,7 +131,7 @@ it('reuses promises on initial read', async () => {
     return 'ready'
   })
 
-  const Child: React.FC = () => {
+  const Child = () => {
     const [str] = useAtom(asyncAtom)
     return <div>{str}</div>
   }
@@ -161,7 +162,7 @@ it('uses multiple async atoms at once', async () => {
     return 'ready2'
   })
 
-  const Component: React.FC = () => {
+  const Component = () => {
     const [some] = useAtom(someAtom)
     const [some2] = useAtom(someAtom2)
     return (
@@ -195,7 +196,7 @@ it('uses async atom in the middle of dependency chain', async () => {
   })
   const delayedCountAtom = atom((get) => get(asyncCountAtom))
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const [delayedCount] = useAtom(delayedCountAtom)
     return (
@@ -234,7 +235,7 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
     async (get, set) => set(countAtom, get(countAtom) + 1)
   )
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, incCount] = useAtom(asyncCountAtom)
     useEffect(() => {
       incCount()
@@ -242,7 +243,7 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
     return <div>count: {count}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [toggle, setToggle] = useAtom(toggleAtom)
     return (
       <>
@@ -285,7 +286,7 @@ it('updates an async atom in child useEffect on remount', async () => {
     }
   )
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, incCount] = useAtom(asyncCountAtom)
     useEffect(() => {
       incCount()
@@ -293,7 +294,7 @@ it('updates an async atom in child useEffect on remount', async () => {
     return <div>count: {count}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [toggle, setToggle] = useAtom(toggleAtom)
     return (
       <>
@@ -330,12 +331,12 @@ it('async get and useEffect on parent', async () => {
     return 'resolved'
   })
 
-  const AsyncComponent: React.FC = () => {
+  const AsyncComponent = () => {
     const [text] = useAtom(asyncAtom)
     return <div>text: {text}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [count, setCount] = useAtom(countAtom)
     useEffect(() => {
       setCount((c) => c + 1)
@@ -375,12 +376,12 @@ it('async get with another dep and useEffect on parent', async () => {
     return count
   })
 
-  const AsyncComponent: React.FC = () => {
+  const AsyncComponent = () => {
     const [count] = useAtom(asyncAtom)
     return <div>async: {count}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [count, setCount] = useAtom(countAtom)
     useEffect(() => {
       setCount((c) => c + 1)
@@ -428,12 +429,12 @@ it('set promise atom value on write (#304)', async () => {
   })
   asyncAtom.debugLabel = 'asyncAtom'
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
     return <div>count: {count * 1}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [, dispatch] = useAtom(asyncAtom)
     return (
       <>
@@ -471,7 +472,7 @@ it('uses async atom double chain (#306)', async () => {
     return get(asyncCountAtom)
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const [delayedCount] = useAtom(delayedCountAtom)
     return (
@@ -512,7 +513,7 @@ it('uses an async atom that depends on another async atom', async () => {
     return 2
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [num] = useAtom(asyncAtom)
     return <div>num: {num}</div>
   }
@@ -548,7 +549,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   }
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [, setCount] = useAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
     return (
@@ -598,7 +599,7 @@ it('Handles synchronously invoked async set (#375)', async () => {
     fetch()
   })
 
-  const ListDocuments: React.FC = () => {
+  const ListDocuments = () => {
     const [loading] = useAtom(loadingAtom)
     const [document] = useAtom(documentAtom)
     const [, loadDocument] = useAtom(loadDocumentAtom)
@@ -634,7 +635,7 @@ it('async write self atom', async () => {
     set(countAtom, -1)
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, inc] = useAtom(countAtom)
     return (
       <>
@@ -669,7 +670,7 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
     }, 0)
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, inc] = useAtom(countAtom)
     return (
       <>
@@ -702,12 +703,12 @@ it('should override promise as atom value (#430)', async () => {
     set(countAtom, Promise.resolve(arg))
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
     return <div>count: {count * 1}</div>
   }
 
-  const Control: React.FC = () => {
+  const Control = () => {
     const [, setCount] = useAtom(setCountAtom)
     return <button onClick={() => setCount(1)}>button</button>
   }
@@ -749,12 +750,12 @@ it('combine two promise atom values (#442)', async () => {
     init()
   }
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(derivedAtom)
     return <div>count: {count}</div>
   }
 
-  const Control: React.FC = () => {
+  const Control = () => {
     useAtom(initAtom)
     return null
   }
@@ -787,12 +788,12 @@ it('set two promise atoms at once', async () => {
     set(count2Atom, Promise.resolve(2))
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(derivedAtom)
     return <div>count: {count}</div>
   }
 
-  const Control: React.FC = () => {
+  const Control = () => {
     const [, setCounts] = useAtom(setCountsAtom)
     return <button onClick={() => setCounts()}>button</button>
   }
@@ -811,5 +812,53 @@ it('set two promise atoms at once', async () => {
   await findByText('loading')
 
   fireEvent.click(getByText('button'))
+  await findByText('count: 3')
+})
+
+it('async write chain', async () => {
+  const countAtom = atom(0)
+  const asyncWriteAtom = atom(null, async (_get, set, _arg) => {
+    await new Promise((r) => setTimeout(r, 20))
+    set(countAtom, 2)
+  })
+  const controlAtom = atom(null, async (_get, set, _arg) => {
+    set(countAtom, 1)
+    await set(asyncWriteAtom, null)
+    await new Promise((r) => setTimeout(r, 10))
+    set(countAtom, 3)
+  })
+
+  const Counter = () => {
+    const [count] = useAtom(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  const Control = () => {
+    const [, invoke] = useAtom(controlAtom)
+    return <button onClick={invoke}>button</button>
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+        <Suspense fallback="loading">
+          <Control />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('loading') // write pending
+  })
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('loading') // write pending
+  })
   await findByText('count: 3')
 })

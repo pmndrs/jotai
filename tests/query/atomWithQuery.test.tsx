@@ -1,10 +1,9 @@
-import React, { Suspense, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-
 import { atom, useAtom } from '../../src/'
-import fakeFetch from './fakeFetch'
 import { atomWithQuery } from '../../src/query'
 import { getTestProvider } from '../testUtils'
+import fakeFetch from './fakeFetch'
 
 const Provider = getTestProvider()
 
@@ -15,7 +14,7 @@ it('query basic test', async () => {
       return await fakeFetch({ count: 0 })
     },
   }))
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -47,7 +46,7 @@ it('query basic test with object instead of function', async () => {
       return await fakeFetch({ count: 0 })
     },
   })
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -83,7 +82,7 @@ it('query refetch', async () => {
       return response
     },
   }))
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -130,7 +129,7 @@ it('query loading', async () => {
   const dispatchAtom = atom(null, (_get, set, action: any) =>
     set(countAtom, action)
   )
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -142,7 +141,7 @@ it('query loading', async () => {
       </>
     )
   }
-  const RefreshButton: React.FC = () => {
+  const RefreshButton = () => {
     const [, dispatch] = useAtom(dispatchAtom)
     return (
       <button onClick={() => dispatch({ type: 'refetch' })}>refetch</button>
@@ -180,7 +179,7 @@ it('query loading 2', async () => {
     },
   }))
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -212,29 +211,150 @@ it('query loading 2', async () => {
   await findByText('count: 2')
 })
 
+it('query with enabled', async () => {
+  const slugAtom = atom<string | null>(null)
+  const mockFetch = jest.fn(fakeFetch)
+  const slugQueryAtom = atomWithQuery((get) => {
+    const slug = get(slugAtom)
+    return {
+      enabled: !!slug,
+      queryKey: ['disabled_until_value', slug],
+      queryFn: async () => {
+        return await mockFetch({ slug: `hello-${slug}` })
+      },
+    }
+  })
+
+  const Slug = () => {
+    const [data] = useAtom(slugQueryAtom)
+    if (!data?.response?.slug) return <div>not enabled</div>
+    return <div>slug: {data?.response?.slug}</div>
+  }
+
+  const Parent = () => {
+    const [, setSlug] = useAtom(slugAtom)
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setSlug('world')
+          }}>
+          set slug
+        </button>
+        <Slug />
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('not enabled')
+  expect(mockFetch).toHaveBeenCalledTimes(0)
+  fireEvent.click(getByText('set slug'))
+  await findByText('loading')
+  await findByText('slug: hello-world')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+})
+
+it('query with enabled 2', async () => {
+  const mockFetch = jest.fn(fakeFetch)
+  const enabledAtom = atom<boolean>(true)
+  const slugAtom = atom<string | null>('first')
+
+  const slugQueryAtom = atomWithQuery((get) => {
+    const slug = get(slugAtom)
+    const isEnabled = get(enabledAtom)
+    return {
+      enabled: isEnabled,
+      queryKey: ['enabled_toggle'],
+      queryFn: async () => {
+        return await mockFetch({ slug: `hello-${slug}` })
+      },
+    }
+  })
+
+  const Slug = () => {
+    const [data] = useAtom(slugQueryAtom)
+    if (!data?.response?.slug) return <div>not enabled</div>
+    return <div>slug: {data?.response?.slug}</div>
+  }
+
+  const Parent = () => {
+    const [, setSlug] = useAtom(slugAtom)
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setSlug('world')
+          }}>
+          set slug
+        </button>
+        <button
+          onClick={() => {
+            setEnabled(true)
+          }}>
+          set enabled
+        </button>
+        <button
+          onClick={() => {
+            setEnabled(false)
+          }}>
+          set disabled
+        </button>
+        <Slug />
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
+    </Provider>
+  )
+  await findByText('loading')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  await findByText('slug: hello-first')
+  fireEvent.click(getByText('set disabled'))
+  fireEvent.click(getByText('set slug'))
+  await findByText('slug: hello-first')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  fireEvent.click(getByText('set enabled'))
+  await findByText('slug: hello-world')
+  expect(mockFetch).toHaveBeenCalledTimes(2)
+})
+
 it('query with enabled (#500)', async () => {
   const enabledAtom = atom(true)
   const countAtom = atomWithQuery((get) => {
     const enabled = get(enabledAtom)
     return {
       enabled,
-      queryKey: 'count6',
+      queryKey: 'count_500_issue',
       queryFn: async () => {
         return await fakeFetch({ count: 1 })
       },
     }
   })
 
-  const Counter: React.FC = () => {
-    const [
-      {
-        response: { count },
-      },
-    ] = useAtom(countAtom)
+  const Counter = () => {
+    const [value] = useAtom(countAtom)
+    if (!value) return null
+    const {
+      response: { count },
+    } = value
     return <div>count: {count}</div>
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [showChildren, setShowChildren] = useState(true)
     const [, setEnabled] = useAtom(enabledAtom)
     return (
@@ -266,21 +386,21 @@ it('query with enabled (#500)', async () => {
   await findByText('hidden')
 
   fireEvent.click(getByText('toggle'))
-  await findByText('loading')
   await findByText('count: 1')
 })
 
 it('query with initialData test', async () => {
+  const mockFetch = jest.fn(fakeFetch)
+
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count1',
+    queryKey: 'initialData_count1',
     queryFn: async () => {
-      return await fakeFetch({ count: 10 }) // will run after "initialData"
+      return await mockFetch({ count: 10 })
     },
     initialData: { response: { count: 0 } },
-    keepPreviousData: true, // to prevent suspense on refresh
-    refetchInterval: 0, // to immediately refresh (after mount) to count: 10
+    refetchInterval: 100,
   }))
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [
       {
         response: { count },
@@ -301,5 +421,7 @@ it('query with initialData test', async () => {
 
   // NOTE: the atom never suspends
   await findByText('count: 0')
+  expect(mockFetch).toHaveBeenCalledTimes(0)
   await findByText('count: 10')
+  expect(mockFetch).toHaveBeenCalledTimes(1)
 })

@@ -1,5 +1,4 @@
-import React from 'react'
-import { fireEvent, render, act } from '@testing-library/react'
+import { act, fireEvent, render } from '@testing-library/react'
 import { createStore } from 'redux'
 import { useAtom } from '../../src/index'
 import { atomWithStore } from '../../src/redux'
@@ -19,7 +18,7 @@ it('count state', async () => {
   const storeAtom = atomWithStore(store)
   store.dispatch({ type: 'INC' })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [state, dispatch] = useAtom(storeAtom)
 
     return (

@@ -1,7 +1,7 @@
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
-import { atomWithDefault, RESET } from '../../src/utils'
+import { RESET, atomWithDefault } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -10,7 +10,7 @@ it('simple sync get default', async () => {
   const count1Atom = atom(1)
   const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count1, setCount1] = useAtom(count1Atom)
     const [count2, setCount2] = useAtom(count2Atom)
     return (
@@ -49,7 +49,7 @@ it('simple async get default', async () => {
     return get(count1Atom) * 2
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count1, setCount1] = useAtom(count1Atom)
     const [count2, setCount2] = useAtom(count2Atom)
     return (
@@ -89,7 +89,7 @@ it('refresh sync atoms to default values', async () => {
   const count1Atom = atom(1)
   const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count1, setCount1] = useAtom(count1Atom)
     const [count2, setCount2] = useAtom(count2Atom)
     return (
@@ -135,7 +135,7 @@ it('refresh async atoms to default values', async () => {
     return get(count1Atom) * 2
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count1, setCount1] = useAtom(count1Atom)
     const [count2, setCount2] = useAtom(count2Atom)
     return (

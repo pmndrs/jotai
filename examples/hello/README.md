@@ -1,4 +1,4 @@
-# Hello [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/master/examples/hello)
+# Hello [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/main/examples/hello)
 
 ```bash
 git clone https://github.com/pmndrs/jotai
@@ -15,4 +15,4 @@ yarn start
 
 ## Set up on codesandbox
 
-Link: https://githubbox.com/pmndrs/jotai/tree/master/examples/hello
+Link: https://githubbox.com/pmndrs/jotai/tree/main/examples/hello

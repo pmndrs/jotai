@@ -1,4 +1,4 @@
-import type { Store, Action, AnyAction } from 'redux'
+import type { Action, AnyAction, Store } from 'redux'
 import { atom } from 'jotai'
 
 export function atomWithStore<State, A extends Action = AnyAction>(

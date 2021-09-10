@@ -1,35 +1,52 @@
-import React, { createElement, useRef, useDebugValue } from 'react'
-
+import {
+  createElement,
+  useDebugValue,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+import type { PropsWithChildren } from 'react'
 import type { Atom, Scope } from './atom'
-import type { AtomState, State } from './vanilla'
-import type { StoreForDevelopment } from './contexts'
-import { createStore, getStoreContext, isDevStore } from './contexts'
-import { useMutableSource } from './useMutableSource'
+import {
+  ScopeContainer,
+  createScopeContainer,
+  getScopeContext,
+  isDevScopeContainer,
+} from './contexts'
+import type { ScopeContainerForDevelopment } from './contexts'
+import { DEV_GET_ATOM_STATE, DEV_GET_MOUNTED } from './store'
+import type { AtomState, Store } from './store'
 
-export const Provider: React.FC<{
+export const Provider = ({
+  initialValues,
+  scope,
+  children,
+}: PropsWithChildren<{
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
   scope?: Scope
-}> = ({ initialValues, scope, children }) => {
-  const storeRef = useRef<ReturnType<typeof createStore> | null>(null)
-  if (storeRef.current === null) {
+}>) => {
+  const scopeContainerRef = useRef<ScopeContainer>()
+  if (!scopeContainerRef.current) {
     // lazy initialization
-    storeRef.current = createStore(initialValues)
+    scopeContainerRef.current = createScopeContainer(initialValues)
   }
 
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
     process.env.NODE_ENV !== 'test' &&
-    isDevStore(storeRef.current)
+    isDevScopeContainer(scopeContainerRef.current)
   ) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(storeRef.current)
+    useDebugState(scopeContainerRef.current)
   }
 
-  const StoreContext = getStoreContext(scope)
+  const ScopeContainerContext = getScopeContext(scope)
   return createElement(
-    StoreContext.Provider,
-    { value: storeRef.current as ReturnType<typeof createStore> },
+    ScopeContainerContext.Provider,
+    {
+      value: scopeContainerRef.current,
+    },
     children
   )
 }
@@ -37,15 +54,15 @@ export const Provider: React.FC<{
 const atomToPrintable = (atom: Atom<unknown>) =>
   atom.debugLabel || atom.toString()
 
-const stateToPrintable = ([state, atoms]: [State, Atom<unknown>[]]) =>
+const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
   Object.fromEntries(
     atoms.flatMap((atom) => {
-      const mounted = state.m.get(atom)
+      const mounted = store[DEV_GET_MOUNTED]?.(atom)
       if (!mounted) {
         return []
       }
       const dependents = mounted.d
-      const atomState = state.a.get(atom) || ({} as AtomState)
+      const atomState = store[DEV_GET_ATOM_STATE]?.(atom) || ({} as AtomState)
       return [
         [
           atomToPrintable(atom),
@@ -58,29 +75,17 @@ const stateToPrintable = ([state, atoms]: [State, Atom<unknown>[]]) =>
     })
   )
 
-export const getDebugStateAndAtoms = ({
-  atoms,
-  state,
-}: {
-  atoms: Atom<unknown>[]
-  state: State
-}) => [state, atoms]
-export const subscribeDebugStore = (
-  { listeners }: { listeners: Set<() => void> },
-  callback: () => void
-) => {
-  listeners.add(callback)
-  return () => listeners.delete(callback)
-}
-
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
-const useDebugState = (store: StoreForDevelopment) => {
-  const debugMutableSource = store[3]
-  const [state, atoms]: [State, Atom<unknown>[]] = useMutableSource(
-    debugMutableSource,
-    getDebugStateAndAtoms,
-    subscribeDebugStore
-  )
-  useDebugValue([state, atoms], stateToPrintable)
+const useDebugState = (scopeContainer: ScopeContainerForDevelopment) => {
+  const [store, devStore] = scopeContainer
+  const [atoms, setAtoms] = useState(devStore.atoms)
+  useEffect(() => {
+    // HACK creating a new reference for useDebugValue to update
+    const callback = () => setAtoms([...devStore.atoms])
+    const unsubscribe = devStore.subscribe(callback)
+    callback()
+    return unsubscribe
+  }, [devStore])
+  useDebugValue([store, atoms], stateToPrintable)
 }

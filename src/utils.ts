@@ -12,4 +12,10 @@ export { freezeAtom, freezeAtomCreator } from './utils/freezeAtom'
 export { splitAtom } from './utils/splitAtom'
 export { atomWithDefault } from './utils/atomWithDefault'
 export { waitForAll } from './utils/waitForAll'
-export { atomWithStorage, atomWithHash } from './utils/atomWithStorage'
+export {
+  atomWithStorage,
+  atomWithHash,
+  createJSONStorage,
+} from './utils/atomWithStorage'
+export { atomWithObservable } from './utils/atomWithObservable'
+export { useHydrateAtoms } from './utils/useHydrateAtoms'

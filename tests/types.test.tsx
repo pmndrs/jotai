@@ -1,6 +1,7 @@
 import { expectType } from 'ts-expect'
-import { atom, Atom, PrimitiveAtom, useAtom, WritableAtom } from '../src/index'
-import { SetAtom } from '../src/core/atom'
+import { atom, useAtom } from 'jotai'
+import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai'
+import type { SetAtom } from '../src/core/atom'
 
 it('atom() should return the correct types', () => {
   function Component() {
@@ -27,6 +28,7 @@ it('atom() should return the correct types', () => {
     })
     expectType<WritableAtom<null, number>>(writeonlyDerivedAtom)
   }
+  Component
 })
 
 it('useAtom should return the correct types', () => {
@@ -54,4 +56,5 @@ it('useAtom should return the correct types', () => {
     })
     expectType<[null, SetAtom<number>]>(useAtom(writeonlyDerivedAtom))
   }
+  Component
 })

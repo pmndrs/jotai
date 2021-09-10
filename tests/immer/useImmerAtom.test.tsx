@@ -1,7 +1,6 @@
-import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom } from '../../src/index'
 import { atomWithImmer, useImmerAtom, withImmer } from '../../src/immer'
+import { atom } from '../../src/index'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -9,7 +8,7 @@ const Provider = getTestProvider()
 it('useImmerAtom with regular atom', async () => {
   const countAtom = atom(0)
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [count, setCount] = useImmerAtom(countAtom)
     return (
       <>
@@ -42,7 +41,7 @@ it('useImmerAtom with regular atom', async () => {
 it('useImmerAtom with immer atom', async () => {
   const countAtom = atomWithImmer(0)
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [count, setCount] = useImmerAtom(countAtom)
     return (
       <>
@@ -76,7 +75,7 @@ it('useImmerAtom with derived immer atom', async () => {
   const regularCountAtom = atom(0)
   const countAtom = withImmer(regularCountAtom)
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [count, setCount] = useImmerAtom(countAtom)
     return (
       <>

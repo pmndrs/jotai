@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { useAtom, atom } from '../../src/index'
+import { atom, useAtom } from '../../src/index'
 import { useAtomCallback } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
@@ -9,7 +9,7 @@ const Provider = getTestProvider()
 it('useAtomCallback with get', async () => {
   const countAtom = atom(0)
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -19,7 +19,7 @@ it('useAtomCallback with get', async () => {
     )
   }
 
-  const Monitor: React.FC = () => {
+  const Monitor = () => {
     const [count, setCount] = useState(0)
     const readCount = useAtomCallback(
       useCallback((get) => {
@@ -61,7 +61,7 @@ it('useAtomCallback with get', async () => {
 it('useAtomCallback with set and update', async () => {
   const countAtom = atom(0)
   const changeableAtom = atom(0)
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -71,7 +71,7 @@ it('useAtomCallback with set and update', async () => {
     )
   }
 
-  const Monitor: React.FC = () => {
+  const Monitor = () => {
     const [changeableCount] = useAtom(changeableAtom)
     const changeCount = useAtomCallback(
       useCallback((get, set) => {
