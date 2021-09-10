@@ -365,11 +365,10 @@ export const createStore = (
   ): void | Promise<void> => {
     const writePromise = getAtomState(atom)?.w
     if (writePromise) {
-      writePromise.then(() => {
+      return writePromise.then(() => {
         writeAtomState(atom, update)
         flushPending()
       })
-      return
     }
     let isSync = true
     const writeGetter: WriteGetter = (
