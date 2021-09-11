@@ -162,18 +162,10 @@ export function atomWithQuery<
     (get, set, action: AtomWithQueryAction) => {
       switch (action.type) {
         case 'refetch': {
-          const { dataAtom, observer } = get(queryDataAtom)
-          if (!observer?.options?.keepPreviousData) {
-            set(dataAtom, new Promise<TData>(() => {})) // infinite pending
-          }
+          const { observer } = get(queryDataAtom)
           const p = Promise.resolve()
             .then(() => observer.refetch({ cancelRefetch: true }))
-            .then((result) => {
-              if (result.error) {
-                return Promise.reject(result.error)
-              }
-              set(dataAtom, result.data)
-            })
+            .then(() => {})
           return p
         }
       }
