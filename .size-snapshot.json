@@ -336,30 +336,30 @@
     }
   },
   "babelPluginDefaultLabel.js": {
-    "bundled": 1359,
-    "minified": 868,
-    "gzipped": 441,
+    "bundled": 1683,
+    "minified": 1090,
+    "gzipped": 520,
     "treeshaked": {
       "rollup": {
-        "code": 13,
-        "import_statements": 13
+        "code": 37,
+        "import_statements": 37
       },
       "webpack": {
-        "code": 997
+        "code": 1054
       }
     }
   },
   "babelPluginDefaultLabel.mjs": {
-    "bundled": 1359,
-    "minified": 868,
-    "gzipped": 441,
+    "bundled": 1683,
+    "minified": 1090,
+    "gzipped": 520,
     "treeshaked": {
       "rollup": {
-        "code": 13,
-        "import_statements": 13
+        "code": 37,
+        "import_statements": 37
       },
       "webpack": {
-        "code": 997
+        "code": 1054
       }
     }
   }
