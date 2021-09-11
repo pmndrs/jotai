@@ -203,6 +203,7 @@ export const createStore = (
     if (promise) {
       atomState.w = promise
     } else if (atomState.w === prevPromise) {
+      // delete it only if it's not overwritten
       delete atomState.w // write promise
     }
     commitAtomState(atom, atomState)
