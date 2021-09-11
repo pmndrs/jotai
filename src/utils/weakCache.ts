@@ -6,7 +6,7 @@ export const getWeakCacheItem = <T>(
 ): T | undefined => {
   while (true) {
     const [dep, ...rest] = deps
-    const entry = cache.get(dep)
+    const entry = cache.get(dep as object)
     if (!entry) {
       return
     }
@@ -25,10 +25,10 @@ export const setWeakCacheItem = <T>(
 ): void => {
   while (true) {
     const [dep, ...rest] = deps
-    let entry = cache.get(dep)
+    let entry = cache.get(dep as object)
     if (!entry) {
       entry = [new WeakMap()]
-      cache.set(dep, entry)
+      cache.set(dep as object, entry)
     }
     if (!rest.length) {
       entry[1] = item
