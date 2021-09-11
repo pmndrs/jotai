@@ -196,12 +196,13 @@ export const createStore = (
 
   const setAtomWritePromise = <Value>(
     atom: Atom<Value>,
-    promise?: Promise<void>
+    promise: Promise<void> | null,
+    prevPromise?: Promise<void>
   ): void => {
     const [atomState] = wipAtomState(atom)
     if (promise) {
       atomState.w = promise
-    } else {
+    } else if (atomState.w === prevPromise) {
       delete atomState.w // write promise
     }
     commitAtomState(atom, atomState)
@@ -361,10 +362,6 @@ export const createStore = (
     atom: WritableAtom<Value, Update>,
     update: Update
   ): void | Promise<void> => {
-    const writePromise = getAtomState(atom)?.w
-    if (writePromise) {
-      return writePromise.then(() => writeAtomState(atom, update))
-    }
     const writeGetter: WriteGetter = (
       a: AnyAtom,
       unstable_promise: boolean = false
@@ -432,16 +429,16 @@ export const createStore = (
           setAtomValue(a, v as NonPromise<V>)
         }
         invalidateDependents(a)
+        flushPending()
       } else {
         promiseOrVoid = writeAtomState(a as AnyWritableAtom, v)
       }
-      flushPending()
       return promiseOrVoid
     }
     const promiseOrVoid = atom.write(writeGetter, setter, update)
     if (promiseOrVoid instanceof Promise) {
       const promise = promiseOrVoid.finally(() => {
-        setAtomWritePromise(atom)
+        setAtomWritePromise(atom, null, promise)
         flushPending()
       })
       setAtomWritePromise(atom, promise)
