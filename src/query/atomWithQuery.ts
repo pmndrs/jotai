@@ -164,7 +164,9 @@ export function atomWithQuery<
         case 'refetch': {
           const { dataAtom, observer } = get(queryDataAtom)
           set(dataAtom, new Promise<TData>(() => {})) // infinite pending
-          const p = observer.refetch({ cancelRefetch: true }).then(() => {})
+          const p = Promise.resolve()
+            .then(() => observer.refetch({ cancelRefetch: true }))
+            .then(() => {})
           return p
         }
       }
@@ -175,9 +177,7 @@ export function atomWithQuery<
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
     },
-    (_get, set, action) => {
-      set(queryDataAtom, action) // delegate action
-    }
+    (_get, set, action) => set(queryDataAtom, action) // delegate action
   )
   return queryAtom
 }

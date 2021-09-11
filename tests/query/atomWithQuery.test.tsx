@@ -109,9 +109,9 @@ it('query refetch', async () => {
   await findByText('count: 0')
   expect(mockFetch).toBeCalledTimes(1)
   fireEvent.click(getByText('refetch'))
-  expect(mockFetch).toBeCalledTimes(2)
   await findByText('loading')
   await findByText('count: 1')
+  expect(mockFetch).toBeCalledTimes(2)
 })
 
 it('query loading', async () => {
@@ -126,9 +126,9 @@ it('query loading', async () => {
     },
   }))
   const derivedAtom = atom((get) => get(countAtom))
-  const dispatchAtom = atom(null, (_get, set, action: any) =>
+  const dispatchAtom = atom(null, (_get, set, action: any) => {
     set(countAtom, action)
-  )
+  })
   const Counter = () => {
     const [
       {
