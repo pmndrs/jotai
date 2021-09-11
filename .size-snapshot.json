@@ -1,8 +1,8 @@
 {
   "index.js": {
-    "bundled": 20347,
-    "minified": 8342,
-    "gzipped": 3108,
+    "bundled": 20145,
+    "minified": 8275,
+    "gzipped": 3095,
     "treeshaked": {
       "rollup": {
         "code": 14,
@@ -14,9 +14,9 @@
     }
   },
   "index.mjs": {
-    "bundled": 20347,
-    "minified": 8342,
-    "gzipped": 3108,
+    "bundled": 20145,
+    "minified": 8275,
+    "gzipped": 3095,
     "treeshaked": {
       "rollup": {
         "code": 14,
@@ -56,9 +56,9 @@
     }
   },
   "devtools.js": {
-    "bundled": 20374,
-    "minified": 8280,
-    "gzipped": 3146,
+    "bundled": 20172,
+    "minified": 8213,
+    "gzipped": 3129,
     "treeshaked": {
       "rollup": {
         "code": 28,
@@ -70,9 +70,9 @@
     }
   },
   "devtools.mjs": {
-    "bundled": 20374,
-    "minified": 8280,
-    "gzipped": 3146,
+    "bundled": 20172,
+    "minified": 8213,
+    "gzipped": 3129,
     "treeshaked": {
       "rollup": {
         "code": 28,
