@@ -331,7 +331,6 @@ export const createStore = (
     if (!mounted) {
       mounted = mountAtom(addingAtom)
     }
-    flushPending()
     return mounted
   }
 
@@ -345,7 +344,6 @@ export const createStore = (
     if (mounted && canUnmountAtom(deletingAtom, mounted)) {
       unmountAtom(deletingAtom)
     }
-    flushPending()
   }
 
   const invalidateDependents = <Value>(atom: Atom<Value>): void => {
@@ -365,11 +363,7 @@ export const createStore = (
   ): void | Promise<void> => {
     const writePromise = getAtomState(atom)?.w
     if (writePromise) {
-      return writePromise.then(() => {
-        const promiseOrVoid = writeAtomState(atom, update)
-        flushPending()
-        return promiseOrVoid
-      })
+      return writePromise.then(() => writeAtomState(atom, update))
     }
     const writeGetter: WriteGetter = (
       a: AnyAtom,
@@ -452,6 +446,7 @@ export const createStore = (
       })
       setAtomWritePromise(atom, promise)
     }
+    flushPending()
     return promiseOrVoid
   }
 
@@ -460,7 +455,6 @@ export const createStore = (
     update: Update
   ): void | Promise<void> => {
     const promiseOrVoid = writeAtomState(writingAtom, update)
-    flushPending()
     return promiseOrVoid
   }
 
