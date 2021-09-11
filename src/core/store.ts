@@ -310,7 +310,7 @@ export const createStore = (
       } else if (errorOrPromise instanceof Error) {
         error = errorOrPromise
       } else {
-        error = new Error(errorOrPromise)
+        error = new Error(errorOrPromise as string)
       }
     }
     if (error) {
