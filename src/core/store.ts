@@ -365,11 +365,11 @@ export const createStore = (
   ): void | Promise<void> => {
     const writePromise = getAtomState(atom)?.w
     if (writePromise) {
-      writePromise.then(() => {
-        writeAtomState(atom, update)
+      return writePromise.then(() => {
+        const promiseOrVoid = writeAtomState(atom, update)
         flushPending()
+        return promiseOrVoid
       })
-      return
     }
     const writeGetter: WriteGetter = (
       a: AnyAtom,
