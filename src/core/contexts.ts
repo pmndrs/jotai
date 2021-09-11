@@ -1,50 +1,46 @@
 import { createContext } from 'react'
 import type { Context } from 'react'
 import type { Atom, Scope } from './atom'
-import { GET_VERSION, createStore } from './store'
-import { createMutableSource } from './useMutableSource'
+import { createStore } from './store'
 
 const createScopeContainerForProduction = (
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
 ) => {
   const store = createStore(initialValues)
-  const mutableSource = createMutableSource(store, store[GET_VERSION])
-  return [store, mutableSource] as const
+  return [store] as const
 }
 
 const createScopeContainerForDevelopment = (
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
 ) => {
-  let devVersion = 0
-  const devListeners = new Set<() => void>()
-  const devContainer = {
+  const devStore = {
+    listeners: new Set<() => void>(),
+    subscribe: (callback: () => void) => {
+      devStore.listeners.add(callback)
+      return () => {
+        devStore.listeners.delete(callback)
+      }
+    },
     atoms: Array.from(initialValues ?? []).map(([a]) => a),
   }
   const stateListener = (updatedAtom: Atom<unknown>, isNewAtom: boolean) => {
-    ++devVersion
     if (isNewAtom) {
       // FIXME memory leak
       // we should probably remove unmounted atoms eventually
-      devContainer.atoms = [...devContainer.atoms, updatedAtom]
+      devStore.atoms = [...devStore.atoms, updatedAtom]
     }
     Promise.resolve().then(() => {
-      devListeners.forEach((listener) => listener())
+      devStore.listeners.forEach((listener) => listener())
     })
   }
   const store = createStore(initialValues, stateListener)
-  const mutableSource = createMutableSource(store, store[GET_VERSION])
-  const devMutableSource = createMutableSource(devContainer, () => devVersion)
-  const devSubscribe = (_: unknown, callback: () => void) => {
-    devListeners.add(callback)
-    return () => devListeners.delete(callback)
-  }
-  return [store, mutableSource, devMutableSource, devSubscribe] as const
+  return [store, devStore] as const
 }
 
 export const isDevScopeContainer = (
   scopeContainer: ScopeContainer
 ): scopeContainer is ScopeContainerForDevelopment => {
-  return scopeContainer.length > 2
+  return scopeContainer.length > 1
 }
 
 type ScopeContainerForProduction = ReturnType<

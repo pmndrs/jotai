@@ -1,8 +1,5 @@
-import { useCallback, useContext } from 'react'
-import {
-  SECRET_INTERNAL_getScopeContext as getScopeContext,
-  SECRET_INTERNAL_useMutableSource as useMutableSource,
-} from 'jotai'
+import { useContext, useEffect, useState } from 'react'
+import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
 // NOTE importing from '../core/contexts' is across bundles and actually copying code
 import { isDevScopeContainer } from '../core/contexts'
@@ -19,20 +16,25 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
     throw Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
-  const [store, , devMutableSource, devSubscribe] = scopeContainer
+  const [store, devStore] = scopeContainer
 
-  const atoms = useMutableSource(
-    devMutableSource,
-    // FIXME HACK creating new reference to force re-render
-    useCallback((devContainer) => [...devContainer.atoms], []),
-    devSubscribe
-  )
+  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(new Map())
+  useEffect(() => {
+    const callback = () => {
+      const { atoms } = devStore
+      const atomToAtomValueTuples = atoms
+        .filter((atom) => !!store[DEV_GET_MOUNTED]?.(atom))
+        .map<[Atom<unknown>, unknown]>((atom) => {
+          const atomState =
+            store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
+          return [atom, atomState.v]
+        })
+      setAtomsSnapshot(new Map(atomToAtomValueTuples))
+    }
+    const unsubscribe = devStore.subscribe(callback)
+    callback()
+    return unsubscribe
+  }, [store, devStore])
 
-  const atomToAtomValueTuples = atoms
-    .filter((atom) => !!store[DEV_GET_MOUNTED]?.(atom))
-    .map<[Atom<unknown>, unknown]>((atom) => {
-      const atomState = store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
-      return [atom, atomState.v]
-    })
-  return new Map(atomToAtomValueTuples)
+  return atomsSnapshot
 }
