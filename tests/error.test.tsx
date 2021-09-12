@@ -26,7 +26,12 @@ class ErrorBoundary extends Component<
   }
   render() {
     return this.state.hasError ? (
-      <div>{this.props.message || 'errored'}</div>
+      <div>
+        {this.props.message || 'errored'}
+        <button onClick={() => this.setState({ hasError: false })}>
+          retry
+        </button>
+      </div>
     ) : (
       this.props.children
     )
@@ -445,5 +450,88 @@ describe('throws an error while updating in effect cleanup', () => {
 
     fireEvent.click(getByText('close'))
     expect(console.error).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('error recovery', () => {
+  const createCounter = () => {
+    const counterAtom = atom(0)
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(counterAtom)
+      return <button onClick={() => setCount(count + 1)}>increment</button>
+    }
+
+    return { Counter, counterAtom }
+  }
+
+  it('recovers from sync errors', async () => {
+    const { counterAtom, Counter } = createCounter()
+
+    const syncAtom = atom((get) => {
+      const value = get(counterAtom)
+
+      if (value === 0) {
+        throw new Error('An error occurred')
+      }
+
+      return value
+    })
+
+    const Display = () => {
+      return <div>Value: {useAtom(syncAtom)[0]}</div>
+    }
+
+    const { getByText, findByText } = render(
+      <Provider>
+        <Counter />
+        <ErrorBoundary>
+          <Display />
+        </ErrorBoundary>
+      </Provider>
+    )
+
+    await findByText('errored')
+
+    fireEvent.click(getByText('increment'))
+    fireEvent.click(getByText('retry'))
+    await findByText('Value: 1')
+  })
+
+  it('recovers from async errors', async () => {
+    const { counterAtom, Counter } = createCounter()
+    const asyncAtom = atom(async (get) => {
+      const value = get(counterAtom)
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50)
+      })
+
+      if (value === 0) {
+        throw new Error('An error occurred')
+      }
+
+      return value
+    })
+
+    const Display = () => {
+      return <div>Value: {useAtom(asyncAtom)[0]}</div>
+    }
+
+    const { getByText, findByText } = render(
+      <Provider>
+        <Counter />
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <Display />
+          </Suspense>
+        </ErrorBoundary>
+      </Provider>
+    )
+
+    await findByText('errored')
+
+    fireEvent.click(getByText('increment'))
+    fireEvent.click(getByText('retry'))
+    await findByText('Value: 1')
   })
 })

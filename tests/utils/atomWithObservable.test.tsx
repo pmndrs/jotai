@@ -1,4 +1,4 @@
-import { Component, Suspense } from 'react'
+import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Observable, Subject } from 'rxjs'
 import { useAtom } from '../../src/index'
@@ -6,31 +6,6 @@ import { atomWithObservable } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
-
-class ErrorBoundary extends Component<
-  { message?: string },
-  { hasError: boolean }
-> {
-  constructor(props: { message?: string }) {
-    super(props)
-    this.state = { hasError: false }
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-  render() {
-    return this.state.hasError ? (
-      <div>
-        <div>{this.props.message || 'errored'}</div>
-        <button onClick={() => this.setState({ hasError: false })}>
-          retry
-        </button>
-      </div>
-    ) : (
-      this.props.children
-    )
-  }
-}
 
 it('count state', async () => {
   const observableAtom = atomWithObservable(
@@ -94,33 +69,4 @@ it('writable count state', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('count: 9')
-})
-
-// FIXME we would like to support retry
-it.skip('count state with error', async () => {
-  const myObservable = new Observable<number>((subscriber) => {
-    subscriber.error('err1')
-    subscriber.next(1)
-  })
-  const observableAtom = atomWithObservable(() => myObservable)
-
-  const Counter = () => {
-    const [state] = useAtom(observableAtom)
-
-    return <div>count: {state}</div>
-  }
-
-  const { findByText, getByText } = render(
-    <Provider>
-      <ErrorBoundary>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </ErrorBoundary>
-    </Provider>
-  )
-
-  await findByText('errored')
-  fireEvent.click(getByText('retry'))
-  await findByText('count: 1')
 })
