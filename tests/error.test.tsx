@@ -492,7 +492,7 @@ describe('error recovery', () => {
     await findByText('Value: 1')
   })
 
-  it.only('recovers from async errors', async () => {
+  it('recovers from async errors', async () => {
     const asyncAtom = atom(async (get) => {
       const value = get(counter)
       await new Promise((resolve) => {
