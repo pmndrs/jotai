@@ -454,16 +454,22 @@ describe('throws an error while updating in effect cleanup', () => {
 })
 
 describe('error recovery', () => {
-  const counter = atom(0)
+  const createCounter = () => {
+    const counterAtom = atom(0)
 
-  const Counter = () => {
-    const [count, setCount] = useAtom(counter)
-    return <button onClick={() => setCount(count + 1)}>increment</button>
+    const Counter = () => {
+      const [count, setCount] = useAtom(counterAtom)
+      return <button onClick={() => setCount(count + 1)}>increment</button>
+    }
+
+    return { Counter, counterAtom }
   }
 
   it('recovers from sync errors', async () => {
+    const { counterAtom, Counter } = createCounter()
+
     const syncAtom = atom((get) => {
-      const value = get(counter)
+      const value = get(counterAtom)
 
       if (value === 0) {
         throw new Error('An error occurred')
@@ -493,8 +499,9 @@ describe('error recovery', () => {
   })
 
   it('recovers from async errors', async () => {
+    const { counterAtom, Counter } = createCounter()
     const asyncAtom = atom(async (get) => {
-      const value = get(counter)
+      const value = get(counterAtom)
       await new Promise((resolve) => {
         setTimeout(resolve, 50)
       })
