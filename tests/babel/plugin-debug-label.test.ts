@@ -1,7 +1,7 @@
 import path from 'path'
 import { transformSync } from '@babel/core'
 
-const plugin = path.join(__dirname, '../../src/babel/debugLabelPlugin')
+const plugin = path.join(__dirname, '../../src/babel/plugin-debug-label')
 
 const transform = (code: string, filename?: string) =>
   transformSync(code, {
