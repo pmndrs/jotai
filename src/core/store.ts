@@ -177,6 +177,7 @@ export const createStore = (
       return
     }
     atomState.c?.() // cancel read promise
+    delete atomState.e // read error
     if (isInterruptablePromise(promise)) {
       atomState.p = promise // read promise
       delete atomState.c // this promise is from another atom state, shouldn't be canceled here
