@@ -72,7 +72,7 @@ function createCommonJSConfig(input, output) {
 export default function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
-    c = c.slice('config-'.length)
+    c = c.slice('config-'.length).replaceAll('_', '/')
     return [
       createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
       createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
