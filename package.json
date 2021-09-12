@@ -23,71 +23,11 @@
       "import": "./esm/index.mjs",
       "default": "./index.js"
     },
-    "./utils": {
-      "types": "./utils.d.ts",
-      "module": "./esm/utils.js",
-      "import": "./esm/utils.mjs",
-      "default": "./utils.js"
-    },
-    "./devtools": {
-      "types": "./devtools.d.ts",
-      "module": "./esm/devtools.js",
-      "import": "./esm/devtools.mjs",
-      "default": "./devtools.js"
-    },
-    "./immer": {
-      "types": "./immer.d.ts",
-      "module": "./esm/immer.js",
-      "import": "./esm/immer.mjs",
-      "default": "./immer.js"
-    },
-    "./optics": {
-      "types": "./optics.d.ts",
-      "module": "./esm/optics.js",
-      "import": "./esm/optics.mjs",
-      "default": "./optics.js"
-    },
-    "./query": {
-      "types": "./query.d.ts",
-      "module": "./esm/query.js",
-      "import": "./esm/query.mjs",
-      "default": "./query.js"
-    },
-    "./xstate": {
-      "types": "./xstate.d.ts",
-      "module": "./esm/xstate.js",
-      "import": "./esm/xstate.mjs",
-      "default": "./xstate.js"
-    },
-    "./valtio": {
-      "types": "./valtio.d.ts",
-      "module": "./esm/valtio.js",
-      "import": "./esm/valtio.mjs",
-      "default": "./valtio.js"
-    },
-    "./zustand": {
-      "types": "./zustand.d.ts",
-      "module": "./esm/zustand.js",
-      "import": "./esm/zustand.mjs",
-      "default": "./zustand.js"
-    },
-    "./redux": {
-      "types": "./redux.d.ts",
-      "module": "./esm/redux.js",
-      "import": "./esm/redux.mjs",
-      "default": "./redux.js"
-    },
-    "./urql": {
-      "types": "./urql.d.ts",
-      "module": "./esm/urql.js",
-      "import": "./esm/urql.mjs",
-      "default": "./urql.js"
-    },
-    "./babel/plugin-debug-label": {
-      "types": "./babel/plugin-debug-label.d.ts",
-      "module": "./esm/babel/plugin-debug-labell.js",
-      "import": "./esm/babel/plugin-debug-label.mjs",
-      "default": "./babel/plugin-debug-label.js"
+    "./*": {
+      "types": "./*.d.ts",
+      "module": "./esm/*.js",
+      "import": "./esm/*.mjs",
+      "default": "./*.js"
     }
   },
   "files": [
@@ -120,7 +60,7 @@
     "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "prettier": {
     "semi": false,
