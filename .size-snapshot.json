@@ -180,5 +180,159 @@
         "code": 1202
       }
     }
+  },
+  "redux.js": {
+    "bundled": 458,
+    "minified": 220,
+    "gzipped": 167,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
+  },
+  "plugin-debug-label.js": {
+    "bundled": 1683,
+    "minified": 1090,
+    "gzipped": 520,
+    "treeshaked": {
+      "rollup": {
+        "code": 37,
+        "import_statements": 37
+      },
+      "webpack": {
+        "code": 1054
+      }
+    }
+  },
+  "zustand.js": {
+    "bundled": 549,
+    "minified": 262,
+    "gzipped": 188,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
+  },
+  "immer.js": {
+    "bundled": 1615,
+    "minified": 844,
+    "gzipped": 407,
+    "treeshaked": {
+      "rollup": {
+        "code": 42,
+        "import_statements": 42
+      },
+      "webpack": {
+        "code": 1104
+      }
+    }
+  },
+  "optics.js": {
+    "bundled": 1646,
+    "minified": 812,
+    "gzipped": 429,
+    "treeshaked": {
+      "rollup": {
+        "code": 32,
+        "import_statements": 32
+      },
+      "webpack": {
+        "code": 1061
+      }
+    }
+  },
+  "redux.mjs": {
+    "bundled": 458,
+    "minified": 220,
+    "gzipped": 167,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
+  },
+  "plugin-debug-label.mjs": {
+    "bundled": 1683,
+    "minified": 1090,
+    "gzipped": 520,
+    "treeshaked": {
+      "rollup": {
+        "code": 37,
+        "import_statements": 37
+      },
+      "webpack": {
+        "code": 1054
+      }
+    }
+  },
+  "zustand.mjs": {
+    "bundled": 549,
+    "minified": 262,
+    "gzipped": 188,
+    "treeshaked": {
+      "rollup": {
+        "code": 14,
+        "import_statements": 14
+      },
+      "webpack": {
+        "code": 998
+      }
+    }
+  },
+  "valtio.mjs": {
+    "bundled": 1235,
+    "minified": 598,
+    "gzipped": 335,
+    "treeshaked": {
+      "rollup": {
+        "code": 37,
+        "import_statements": 37
+      },
+      "webpack": {
+        "code": 1054
+      }
+    }
+  },
+  "immer.mjs": {
+    "bundled": 1615,
+    "minified": 844,
+    "gzipped": 407,
+    "treeshaked": {
+      "rollup": {
+        "code": 42,
+        "import_statements": 42
+      },
+      "webpack": {
+        "code": 1104
+      }
+    }
+  },
+  "optics.mjs": {
+    "bundled": 1646,
+    "minified": 812,
+    "gzipped": 429,
+    "treeshaked": {
+      "rollup": {
+        "code": 32,
+        "import_statements": 32
+      },
+      "webpack": {
+        "code": 1061
+      }
+    }
   }
 }
