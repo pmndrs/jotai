@@ -6,7 +6,8 @@
     "simple-react-browserify-x9yni",
     "simple-snowpack-react-o1gmx",
     "next-js-uo1h0",
-    "jotai-nextjs-with-babel-config-kc8sd"
+    "next-js-with-custom-babel-config-kc8sd",
+    "react-with-custom-babel-config-2dpyh"
   ],
   "node": "14"
 }
