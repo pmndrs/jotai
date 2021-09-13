@@ -48,6 +48,7 @@
     "build:zustand": "rollup -c --config-zustand",
     "build:redux": "rollup -c --config-redux",
     "build:urql": "rollup -c --config-urql",
+    "build:babel": "rollup -c --config-babel_plugin-debug-label",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
     "eslint:ci": "eslint '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
@@ -116,12 +117,13 @@
       "tests/**/*.{js,ts,tsx}"
     ]
   },
-  "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.15.5",
     "@babel/plugin-transform-react-jsx": "^7.14.9",
     "@babel/plugin-transform-typescript": "^7.15.4",
     "@babel/preset-env": "^7.15.4",
+    "@babel/template": "^7.15.4",
+    "@babel/types": "^7.15.4",
     "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-node-resolve": "^13.0.4",
     "@rollup/plugin-typescript": "^8.2.5",
@@ -171,6 +173,8 @@
     "zustand": "^3.5.10"
   },
   "peerDependencies": {
+    "@babel/core": "*",
+    "@babel/template": "*",
     "@urql/core": "*",
     "immer": "*",
     "optics-ts": "*",
@@ -181,6 +185,12 @@
     "xstate": "*"
   },
   "peerDependenciesMeta": {
+    "@babel/core": {
+      "optional": true
+    },
+    "@babel/template": {
+      "optional": true
+    },
     "@urql/core": {
       "optional": true
     },
