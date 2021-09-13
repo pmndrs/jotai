@@ -17,7 +17,6 @@ export default function debugLabelPlugin({
 
           let displayName = path.basename(filename, path.extname(filename))
 
-          console.log(state)
           // ./{module name}/index.js
           if (displayName === 'index') {
             displayName = path.basename(path.dirname(filename))
