@@ -252,9 +252,9 @@
     }
   },
   "preset.js": {
-    "bundled": 1713,
-    "minified": 1117,
-    "gzipped": 530,
+    "bundled": 1724,
+    "minified": 1128,
+    "gzipped": 534,
     "treeshaked": {
       "rollup": {
         "code": 37,
@@ -266,9 +266,9 @@
     }
   },
   "preset.mjs": {
-    "bundled": 1713,
-    "minified": 1117,
-    "gzipped": 530,
+    "bundled": 1724,
+    "minified": 1128,
+    "gzipped": 534,
     "treeshaked": {
       "rollup": {
         "code": 37,
