@@ -43,7 +43,10 @@ const setWeakCacheItem = <T>(
 
 export const createMemoizeAtom = () => {
   const cache: WeakCache<Atom<unknown>> = new WeakMap()
-  const memoizeAtom = <AtomType extends Atom<unknown>, Deps extends object[]>(
+  const memoizeAtom = <
+    AtomType extends Atom<unknown>,
+    Deps extends readonly object[]
+  >(
     createAtom: () => AtomType,
     deps: Deps
   ) => {
