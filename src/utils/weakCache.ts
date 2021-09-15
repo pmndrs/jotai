@@ -1,6 +1,8 @@
+import type { Atom } from 'jotai'
+
 export type WeakCache<T> = WeakMap<object, [WeakCache<T>] | [WeakCache<T>, T]>
 
-export const getWeakCacheItem = <T>(
+const getWeakCacheItem = <T>(
   cache: WeakCache<T>,
   deps: readonly object[]
 ): T | undefined => {
@@ -18,7 +20,7 @@ export const getWeakCacheItem = <T>(
   }
 }
 
-export const setWeakCacheItem = <T>(
+const setWeakCacheItem = <T>(
   cache: WeakCache<T>,
   deps: readonly object[],
   item: T
@@ -37,4 +39,21 @@ export const setWeakCacheItem = <T>(
     cache = entry[0]
     deps = rest
   }
+}
+
+export const createMemoizeAtom = () => {
+  const cache: WeakCache<Atom<unknown>> = new WeakMap()
+  const memoizeAtom = <AtomType extends Atom<unknown>, Deps extends object[]>(
+    createAtom: () => AtomType,
+    deps: Deps
+  ) => {
+    const cachedAtom = getWeakCacheItem(cache, deps)
+    if (cachedAtom) {
+      return cachedAtom as AtomType
+    }
+    const createdAtom = createAtom()
+    setWeakCacheItem(cache, deps, createdAtom)
+    return createdAtom
+  }
+  return memoizeAtom
 }
