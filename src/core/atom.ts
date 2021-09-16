@@ -1,15 +1,15 @@
 type ResolveType<T> = T extends Promise<infer V> ? V : T
 
 type Getter = {
-  <Value>(atom: Atom<Promise<Value>> & WithInitialValue<Promise<Value>>):
-    | Promise<Value>
-    | Value
   <Value>(atom: Atom<Value | Promise<Value>>): Value
   <Value>(atom: Atom<Promise<Value>>): Value
   <Value>(atom: Atom<Value>): ResolveType<Value>
 }
 
 type WriteGetter = Getter & {
+  <Value>(atom: Atom<Value | Promise<Value>>, unstable_promise: true):
+    | Promise<Value>
+    | Value
   <Value>(atom: Atom<Promise<Value>>, unstable_promise: true):
     | Promise<Value>
     | Value
