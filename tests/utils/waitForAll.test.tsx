@@ -311,7 +311,7 @@ it('large atom count', async () => {
     atom((getter) => {
       const data = createArray(count)
       const atoms = data.map(chunksFamily)
-      const values = waitForAll(atoms)
+      const values = waitForAll(atoms as any /* FIXME better typing? */)
       return getter(values)
     })
   )

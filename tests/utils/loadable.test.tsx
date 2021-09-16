@@ -25,7 +25,7 @@ it('loadable turns suspense into values', async () => {
 it('loadable turns errors into values', async () => {
   let rejectAsync!: (error: Error) => void
   const asyncAtom = atom(() => {
-    return new Promise<number>((resolve, reject) => (rejectAsync = reject))
+    return new Promise<number>((_resolve, reject) => (rejectAsync = reject))
   })
 
   const { findByText, getByText } = render(
@@ -42,7 +42,7 @@ it('loadable turns errors into values', async () => {
 it('loadable turns primitive throws into values', async () => {
   let rejectAsync!: (errorMessage: string) => void
   const asyncAtom = atom(() => {
-    return new Promise<number>((resolve, reject) => (rejectAsync = reject))
+    return new Promise<number>((_resolve, reject) => (rejectAsync = reject))
   })
 
   const { findByText, getByText } = render(
@@ -131,7 +131,7 @@ it('loadable can recover from error', async () => {
 })
 
 interface LoadableComponentProps {
-  asyncAtom: Atom<number | string>
+  asyncAtom: Atom<Promise<number> | Promise<string>>
 }
 
 const LoadableComponent = ({ asyncAtom }: LoadableComponentProps) => {

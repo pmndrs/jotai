@@ -4,11 +4,22 @@ import { RESET } from './constants'
 
 type Read<Value> = Atom<Value>['read']
 
+export function atomWithDefault<Value>(
+  getDefault: Read<Promise<Value>>
+): WritableAtom<Value, SetStateAction<Value> | typeof RESET, void>
+
+export function atomWithDefault<Value>(
+  getDefault: Read<Value>
+): WritableAtom<Value, SetStateAction<Value> | typeof RESET, void>
+
 export function atomWithDefault<Value>(getDefault: Read<Value>) {
-  type Update = SetStateAction<Value> | typeof RESET
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
-  const anAtom: WritableAtom<Value, Update, void> = atom(
+  const anAtom: WritableAtom<
+    Value,
+    SetStateAction<Value> | typeof RESET,
+    void
+  > = atom(
     (get) => {
       const overwritten = get(overwrittenAtom)
       if (overwritten !== EMPTY) {
@@ -16,17 +27,16 @@ export function atomWithDefault<Value>(getDefault: Read<Value>) {
       }
       return getDefault(get)
     },
-    (get, set, update) => {
+    (get, set, update: SetStateAction<Value> | typeof RESET) => {
       if (update === RESET) {
-        set(overwrittenAtom, EMPTY)
-      } else {
-        set(
-          overwrittenAtom,
-          typeof update === 'function'
-            ? (update as (prev: Value) => Value)(get(anAtom))
-            : update
-        )
+        return set(overwrittenAtom, EMPTY)
       }
+      return set(
+        overwrittenAtom,
+        typeof update === 'function'
+          ? (update as (prev: Value) => Value)(get(anAtom))
+          : update
+      )
     }
   )
   return anAtom

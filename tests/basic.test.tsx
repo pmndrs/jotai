@@ -501,7 +501,7 @@ it('uses an async write-only atom', async () => {
 })
 
 it('uses a writable atom without read function', async () => {
-  const countAtom: WritableAtom<number, number> = atom(
+  const countAtom: WritableAtom<number, number, void> = atom(
     1,
     async (get, set, v) => {
       await new Promise((r) => setTimeout(r, 10))

@@ -5,11 +5,11 @@ import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 const waitForAllCache = new WeakMap()
 
 export function waitForAll<Values extends Record<string, unknown>>(atoms: {
-  [K in keyof Values]: Atom<Values[K]>
+  [K in keyof Values]: Atom<Promise<Values[K]>>
 }): Atom<Values>
 
 export function waitForAll<Values extends readonly unknown[]>(atoms: {
-  [K in keyof Values]: Atom<Values[K]>
+  [K in keyof Values]: Atom<Promise<Values[K]>>
 }): Atom<Values>
 
 export function waitForAll<
