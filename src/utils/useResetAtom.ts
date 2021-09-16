@@ -6,7 +6,7 @@ import { WRITE_ATOM } from '../core/store'
 import { RESET } from './constants'
 
 export function useResetAtom<Value>(
-  anAtom: WritableAtom<Value, typeof RESET>,
+  anAtom: WritableAtom<Value, typeof RESET, void>,
   scope?: Scope
 ) {
   const ScopeContext = getScopeContext(scope)

@@ -5,7 +5,9 @@ import type { Scope } from '../core/atom'
 // NOTE importing non-core functions is generally not allowed. this is an exception.
 import { useUpdateAtom } from './useUpdateAtom'
 
-type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
+type WriteGetter = Parameters<
+  WritableAtom<unknown, unknown, void | Promise<void>>['write']
+>[0]
 
 type Callback<Result, Arg> = undefined extends Arg
   ? (arg?: Arg) => Promise<Result>

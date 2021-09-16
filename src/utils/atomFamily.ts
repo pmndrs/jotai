@@ -8,10 +8,15 @@ type AtomFamily<Param, AtomType> = {
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
 }
 
-export function atomFamily<Param, Value, Update>(
-  initializeAtom: (param: Param) => WritableAtom<Value, Update>,
+export function atomFamily<
+  Param,
+  Value,
+  Update,
+  Result extends void | Promise<void>
+>(
+  initializeAtom: (param: Param) => WritableAtom<Value, Update, Result>,
   areEqual?: (a: Param, b: Param) => boolean
-): AtomFamily<Param, WritableAtom<Value, Update>>
+): AtomFamily<Param, WritableAtom<Value, Update, Result>>
 
 export function atomFamily<Param, Value>(
   initializeAtom: (param: Param) => Atom<Value>,

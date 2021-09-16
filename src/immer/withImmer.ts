@@ -9,13 +9,15 @@ const withImmerCache = new WeakMap()
 
 export function withImmer<Value>(
   anAtom: PrimitiveAtom<Value>
-): WritableAtom<Value, Value | ((draft: Draft<Value>) => void)>
+): WritableAtom<Value, Value | ((draft: Draft<Value>) => void), void>
 
-export function withImmer<Value>(
-  anAtom: WritableAtom<Value, Value>
-): WritableAtom<Value, Value | ((draft: Draft<Value>) => void)>
+export function withImmer<Value, Result extends void | Promise<void>>(
+  anAtom: WritableAtom<Value, Value, Result>
+): WritableAtom<Value, Value | ((draft: Draft<Value>) => void), Result>
 
-export function withImmer<Value>(anAtom: WritableAtom<Value, Value>) {
+export function withImmer<Value, Result extends void | Promise<void>>(
+  anAtom: WritableAtom<Value, Value, Result>
+) {
   const deps: object[] = [anAtom]
   const cachedAtom = getWeakCacheItem(withImmerCache, deps)
   if (cachedAtom) {

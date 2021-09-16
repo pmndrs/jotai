@@ -4,7 +4,7 @@ import { RESET } from './constants'
 
 export function atomWithReset<Value>(initialValue: Value) {
   type Update = SetStateAction<Value> | typeof RESET
-  const anAtom = atom<Value, Update>(initialValue, (get, set, update) => {
+  const anAtom = atom<Value, Update, void>(initialValue, (get, set, update) => {
     if (update === RESET) {
       set(anAtom, initialValue)
     } else {
@@ -16,5 +16,5 @@ export function atomWithReset<Value>(initialValue: Value) {
       )
     }
   })
-  return anAtom as WritableAtom<Value, Update>
+  return anAtom as WritableAtom<Value, Update, void>
 }

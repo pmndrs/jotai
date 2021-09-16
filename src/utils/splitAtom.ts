@@ -11,17 +11,17 @@ import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
 
 const splitAtomCache = new WeakMap()
 
-const isWritable = <Value, Update>(
-  atom: Atom<Value> | WritableAtom<Value, Update>
-): atom is WritableAtom<Value, Update> =>
-  !!(atom as WritableAtom<Value, Update>).write
+const isWritable = <Value, Update, Result extends void | Promise<void>>(
+  atom: Atom<Value> | WritableAtom<Value, Update, Result>
+): atom is WritableAtom<Value, Update, Result> =>
+  !!(atom as WritableAtom<Value, Update, Result>).write
 
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
 export function splitAtom<Item, Key>(
-  arrAtom: WritableAtom<Item[], Item[]>,
+  arrAtom: WritableAtom<Item[], Item[], void>,
   keyExtractor?: (item: Item) => Key
-): WritableAtom<PrimitiveAtom<Item>[], PrimitiveAtom<Item>>
+): WritableAtom<PrimitiveAtom<Item>[], PrimitiveAtom<Item>, void>
 
 export function splitAtom<Item, Key>(
   arrAtom: Atom<Item[]>,
@@ -29,7 +29,7 @@ export function splitAtom<Item, Key>(
 ): Atom<Atom<Item>[]>
 
 export function splitAtom<Item, Key>(
-  arrAtom: WritableAtom<Item[], Item[]> | Atom<Item[]>,
+  arrAtom: WritableAtom<Item[], Item[], void> | Atom<Item[]>,
   keyExtractor?: (item: Item) => Key
 ) {
   const deps: object[] = keyExtractor ? [arrAtom, keyExtractor] : [arrAtom]
@@ -84,7 +84,7 @@ export function splitAtom<Item, Key>(
         const nextItem = isFunction(update)
           ? update(prev[index] as Item)
           : update
-        set(arrAtom as WritableAtom<Item[], Item[]>, [
+        set(arrAtom as WritableAtom<Item[], Item[], void>, [
           ...prev.slice(0, index),
           nextItem,
           ...prev.slice(index + 1),
@@ -107,7 +107,7 @@ export function splitAtom<Item, Key>(
     const index = get(splittedAtom).indexOf(atomToRemove)
     if (index >= 0) {
       const prev = get(arrAtom)
-      set(arrAtom as WritableAtom<Item[], Item[]>, [
+      set(arrAtom as WritableAtom<Item[], Item[], void>, [
         ...prev.slice(0, index),
         ...prev.slice(index + 1),
       ])

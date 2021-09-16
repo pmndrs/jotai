@@ -8,7 +8,7 @@ export function atomWithDefault<Value>(getDefault: Read<Value>) {
   type Update = SetStateAction<Value> | typeof RESET
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
-  const anAtom: WritableAtom<Value, Update> = atom(
+  const anAtom: WritableAtom<Value, Update, void> = atom(
     (get) => {
       const overwritten = get(overwrittenAtom)
       if (overwritten !== EMPTY) {

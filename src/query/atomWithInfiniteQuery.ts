@@ -58,7 +58,8 @@ export function atomWithInfiniteQuery<
   getQueryClient?: GetQueryClient
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction<TQueryFnData>
+  AtomWithInfiniteQueryAction<TQueryFnData>,
+  void
 >
 
 export function atomWithInfiniteQuery<
@@ -73,7 +74,8 @@ export function atomWithInfiniteQuery<
   getQueryClient?: GetQueryClient
 ): WritableAtom<
   InfiniteData<TData | TQueryData>,
-  AtomWithInfiniteQueryAction<TQueryFnData>
+  AtomWithInfiniteQueryAction<TQueryFnData>,
+  void
 >
 
 export function atomWithInfiniteQuery<
@@ -88,7 +90,8 @@ export function atomWithInfiniteQuery<
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
-  AtomWithInfiniteQueryAction<TQueryFnData>
+  AtomWithInfiniteQueryAction<TQueryFnData>,
+  void
 > {
   const queryDataAtom = atom(
     (get) => {
@@ -221,15 +224,14 @@ export function atomWithInfiniteQuery<
 
   const queryAtom = atom<
     InfiniteData<TData | TQueryData> | undefined,
-    AtomWithInfiniteQueryAction<TQueryFnData>
+    AtomWithInfiniteQueryAction<TQueryFnData>,
+    void
   >(
     (get) => {
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
     },
-    (_get, set, action) => {
-      set(queryDataAtom, action) // delegate action
-    }
+    (_get, set, action) => set(queryDataAtom, action) // delegate action
   )
   return queryAtom
 }
