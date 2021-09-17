@@ -9,7 +9,7 @@ export function useUpdateAtom<Value, Update>(
   scope?: Scope
 ) {
   const ScopeContext = getScopeContext(scope)
-  const store = useContext(ScopeContext)[0]
+  const store = useContext(ScopeContext).s
   const setAtom = useCallback(
     (update: Update) => store[WRITE_ATOM](anAtom, update),
     [store, anAtom]

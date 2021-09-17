@@ -15,7 +15,7 @@ export function useHydrateAtoms(
 ) {
   const ScopeContext = getScopeContext(scope)
   const scopeContainer = useContext(ScopeContext)
-  const store = scopeContainer[0]
+  const store = scopeContainer.s
 
   const hydratedSet = getHydratedSet(scopeContainer)
   const tuplesToRestore = []

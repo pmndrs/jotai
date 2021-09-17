@@ -64,6 +64,7 @@ type Mounted = {
 
 // for debugging purpose only
 type StateListener = (updatedAtom: AnyAtom, isNewAtom: boolean) => void
+type MountedAtoms = Set<AnyAtom>
 
 // store methods
 export const READ_ATOM = 'r'
@@ -71,16 +72,25 @@ export const WRITE_ATOM = 'w'
 export const FLUSH_PENDING = 'f'
 export const SUBSCRIBE_ATOM = 's'
 export const RESTORE_ATOMS = 'h'
+
+// store dev methods (these are tentative and subject to change)
+export const DEV_SUBSCRIBE_STATE = 'n'
+export const DEV_GET_MOUNTED_ATOMS = 'l'
 export const DEV_GET_ATOM_STATE = 'a'
 export const DEV_GET_MOUNTED = 'm'
 
 export const createStore = (
-  initialValues?: Iterable<readonly [AnyAtom, unknown]>,
-  stateListener?: StateListener
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ) => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingMap = new Map<AnyAtom, ReadDependencies | undefined>()
+  let stateListeners: Set<StateListener> | undefined
+  let mountedAtoms: MountedAtoms | undefined
+  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+    stateListeners = new Set()
+    mountedAtoms = new Set()
+  }
 
   if (initialValues) {
     for (const [atom, value] of initialValues) {
@@ -483,6 +493,9 @@ export const createStore = (
       u: undefined,
     }
     mountedMap.set(atom, mounted)
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+      mountedAtoms?.add(atom)
+    }
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const setAtom = (update: unknown) => writeAtom(atom, update)
       mounted.u = atom.onMount(setAtom)
@@ -497,6 +510,9 @@ export const createStore = (
       onUnmount()
     }
     mountedMap.delete(atom)
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+      mountedAtoms?.delete(atom)
+    }
     // unmount read dependencies afterward
     const atomState = getAtomState(atom)
     if (atomState) {
@@ -560,8 +576,8 @@ export const createStore = (
     }
     const isNewAtom = !atomStateMap.has(atom)
     atomStateMap.set(atom, atomState)
-    if (stateListener) {
-      stateListener(atom, isNewAtom)
+    if (stateListeners) {
+      stateListeners.forEach((l) => l(atom, isNewAtom))
     }
     if (!pendingMap.has(atom)) {
       pendingMap.set(atom, prevDependencies)
@@ -617,6 +633,13 @@ export const createStore = (
       [FLUSH_PENDING]: flushPending,
       [SUBSCRIBE_ATOM]: subscribeAtom,
       [RESTORE_ATOMS]: restoreAtoms,
+      [DEV_SUBSCRIBE_STATE]: (l: StateListener) => {
+        stateListeners?.add(l)
+        return () => {
+          stateListeners?.delete(l)
+        }
+      },
+      [DEV_GET_MOUNTED_ATOMS]: () => mountedAtoms?.values(),
       [DEV_GET_ATOM_STATE]: (a: AnyAtom) => atomStateMap.get(a),
       [DEV_GET_MOUNTED]: (a: AnyAtom) => mountedMap.get(a),
     }
