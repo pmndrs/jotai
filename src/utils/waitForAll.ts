@@ -1,8 +1,8 @@
 import { atom } from 'jotai'
 import type { Atom } from 'jotai'
-import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
+import { createMemoizeAtom } from './weakCache'
 
-const waitForAllCache = new WeakMap()
+const memoizeAtom = createMemoizeAtom()
 
 export function waitForAll<Values extends Record<string, unknown>>(atoms: {
   [K in keyof Values]: Atom<Promise<Values[K]>>
@@ -15,35 +15,33 @@ export function waitForAll<Values extends readonly unknown[]>(atoms: {
 export function waitForAll<
   Values extends Record<string, unknown> | readonly unknown[]
 >(atoms: { [K in keyof Values]: Atom<Values[K]> }) {
-  const cachedAtom =
-    Array.isArray(atoms) && getWeakCacheItem(waitForAllCache, atoms)
-  if (cachedAtom) {
-    return cachedAtom as Atom<Values>
-  }
-  const unwrappedAtoms = unwrapAtoms(atoms)
-  const derivedAtom = atom((get) => {
-    const promises: Promise<unknown>[] = []
-    const values = unwrappedAtoms.map((anAtom, index) => {
-      try {
-        return get(anAtom)
-      } catch (e) {
-        if (e instanceof Promise) {
-          promises[index] = e
-        } else {
-          throw e
+  const createAtom = () => {
+    const unwrappedAtoms = unwrapAtoms(atoms)
+    const derivedAtom = atom((get) => {
+      const promises: Promise<unknown>[] = []
+      const values = unwrappedAtoms.map((anAtom, index) => {
+        try {
+          return get(anAtom)
+        } catch (e) {
+          if (e instanceof Promise) {
+            promises[index] = e
+          } else {
+            throw e
+          }
         }
+      })
+      if (promises.length) {
+        throw Promise.all(promises)
       }
+      return wrapResults(atoms, values)
     })
-    if (promises.length) {
-      throw Promise.all(promises)
-    }
-    return wrapResults(atoms, values)
-  })
+    return derivedAtom
+  }
 
   if (Array.isArray(atoms)) {
-    setWeakCacheItem(waitForAllCache, atoms, derivedAtom)
+    return memoizeAtom(createAtom, atoms)
   }
-  return derivedAtom
+  return createAtom()
 }
 
 const unwrapAtoms = <
