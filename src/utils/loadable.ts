@@ -1,7 +1,9 @@
 import { atom } from 'jotai'
 import type { Atom } from 'jotai'
+import { createMemoizeAtom } from './weakCache'
 
-const loadableAtomCache = new WeakMap<Atom<unknown>, Atom<Loadable<unknown>>>()
+const memoizeAtom = createMemoizeAtom()
+
 const errorLoadableCache = new WeakMap<object, Loadable<never>>()
 
 type Loadable<Value> =
@@ -12,41 +14,36 @@ type Loadable<Value> =
 const LOADING_LOADABLE: Loadable<never> = { state: 'loading' }
 
 export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
-  const cachedAtom = loadableAtomCache.get(anAtom)
-  if (cachedAtom) {
-    return cachedAtom as Atom<Loadable<Value>>
-  }
+  return memoizeAtom(() => {
+    const derivedAtom = atom((get): Loadable<Value> => {
+      try {
+        const value = get(anAtom)
 
-  const derivedAtom = atom((get): Loadable<Value> => {
-    try {
-      const value = get(anAtom)
+        return {
+          state: 'hasData',
+          data: value,
+        }
+      } catch (error) {
+        if (error instanceof Promise) {
+          return LOADING_LOADABLE
+        }
 
-      return {
-        state: 'hasData',
-        data: value,
+        const cachedErrorLoadable = errorLoadableCache.get(error as Error)
+
+        if (cachedErrorLoadable) {
+          return cachedErrorLoadable
+        }
+
+        const errorLoadable: Loadable<never> = {
+          state: 'hasError',
+          error,
+        }
+
+        errorLoadableCache.set(error as Error, errorLoadable)
+        return errorLoadable
       }
-    } catch (error) {
-      if (error instanceof Promise) {
-        return LOADING_LOADABLE
-      }
+    })
 
-      const cachedErrorLoadable = errorLoadableCache.get(error as Error)
-
-      if (cachedErrorLoadable) {
-        return cachedErrorLoadable
-      }
-
-      const errorLoadable: Loadable<never> = {
-        state: 'hasError',
-        error,
-      }
-
-      errorLoadableCache.set(error as Error, errorLoadable)
-      return errorLoadable
-    }
-  })
-
-  loadableAtomCache.set(anAtom, derivedAtom)
-
-  return derivedAtom
+    return derivedAtom
+  }, [anAtom])
 }
