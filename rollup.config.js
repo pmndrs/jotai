@@ -26,6 +26,8 @@ function getEsbuild(target) {
   return esbuild({
     minify: false,
     target,
+    external,
+    platform: 'neutral',
     tsconfig: path.resolve('./tsconfig.json'),
   })
 }
@@ -52,7 +54,7 @@ function createESMConfig(input, output) {
     input,
     output: { file: output, format: 'esm' },
     external,
-    plugins: [resolve({ extensions }), getEsbuild('node12'), sizeSnapshot()],
+    plugins: [resolve({ extensions }), getEsbuild('esnext')],
   }
 }
 
