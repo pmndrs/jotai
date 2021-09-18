@@ -82,7 +82,7 @@ const useDebugState = (scopeContainer: ScopeContainer) => {
     Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || [])
   )
   useEffect(() => {
-    const callback = async () => {
+    const callback = () => {
       setAtoms(Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || []))
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)

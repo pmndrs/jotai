@@ -36,10 +36,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
   })
 
   useEffect(() => {
-    const callback = async (
-      updatedAtom?: Atom<unknown>,
-      isNewAtom?: boolean
-    ) => {
+    const callback = (updatedAtom?: Atom<unknown>, isNewAtom?: boolean) => {
       const atoms = Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || [])
       if (updatedAtom && isNewAtom && !atoms.includes(updatedAtom)) {
         atoms.push(updatedAtom)
