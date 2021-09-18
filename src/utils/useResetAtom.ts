@@ -10,7 +10,7 @@ export function useResetAtom<Value>(
   scope?: Scope
 ) {
   const ScopeContext = getScopeContext(scope)
-  const store = useContext(ScopeContext)[0]
+  const store = useContext(ScopeContext).s
   const setAtom = useCallback(
     () => store[WRITE_ATOM](anAtom, RESET),
     [store, anAtom]

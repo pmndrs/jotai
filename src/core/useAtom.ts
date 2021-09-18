@@ -38,7 +38,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   }
 
   const ScopeContext = getScopeContext(scope)
-  const [store] = useContext(ScopeContext)
+  const store = useContext(ScopeContext).s
 
   const getAtomValue = useCallback(() => {
     const atomState = store[READ_ATOM](atom)

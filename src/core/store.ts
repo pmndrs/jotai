@@ -69,6 +69,7 @@ type Mounted = {
 
 // for debugging purpose only
 type StateListener = (updatedAtom: AnyAtom, isNewAtom: boolean) => void
+type MountedAtoms = Set<AnyAtom>
 
 // store methods
 export const READ_ATOM = 'r'
@@ -76,16 +77,28 @@ export const WRITE_ATOM = 'w'
 export const FLUSH_PENDING = 'f'
 export const SUBSCRIBE_ATOM = 's'
 export const RESTORE_ATOMS = 'h'
+
+// store dev methods (these are tentative and subject to change)
+export const DEV_SUBSCRIBE_STATE = 'n'
+export const DEV_GET_MOUNTED_ATOMS = 'l'
 export const DEV_GET_ATOM_STATE = 'a'
 export const DEV_GET_MOUNTED = 'm'
 
 export const createStore = (
-  initialValues?: Iterable<readonly [AnyAtom, unknown]>,
-  stateListener?: StateListener
+  initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ) => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
-  const pendingMap = new Map<AnyAtom, ReadDependencies | undefined>()
+  const pendingMap = new Map<
+    AnyAtom,
+    [dependencies: ReadDependencies | undefined, isNewAtom: boolean]
+  >()
+  let stateListeners: Set<StateListener>
+  let mountedAtoms: MountedAtoms
+  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+    stateListeners = new Set()
+    mountedAtoms = new Set()
+  }
 
   if (initialValues) {
     for (const [atom, value] of initialValues) {
@@ -149,7 +162,7 @@ export const createStore = (
         atomState.d.set(atom, atomState.r)
       }
     }
-    commitAtomState(atom, atomState, dependencies && prevDependencies)
+    setAtomState(atom, atomState, dependencies && prevDependencies)
   }
 
   const setAtomReadError = <Value>(
@@ -168,7 +181,7 @@ export const createStore = (
     delete atomState.c // cancel read promise
     delete atomState.i // invalidated revision
     atomState.e = error // read error
-    commitAtomState(atom, atomState, prevDependencies)
+    setAtomState(atom, atomState, prevDependencies)
   }
 
   const setAtomReadPromise = <Value>(
@@ -191,13 +204,13 @@ export const createStore = (
       atomState.p = interruptablePromise // read promise
       atomState.c = interruptablePromise[INTERRUPT_PROMISE]
     }
-    commitAtomState(atom, atomState, prevDependencies)
+    setAtomState(atom, atomState, prevDependencies)
   }
 
   const setAtomInvalidated = <Value>(atom: Atom<Value>): void => {
     const [atomState] = wipAtomState(atom)
     atomState.i = atomState.r // invalidated revision
-    commitAtomState(atom, atomState)
+    setAtomState(atom, atomState)
   }
 
   const setAtomWritePromise = <Value>(
@@ -212,7 +225,7 @@ export const createStore = (
       // delete it only if it's not overwritten
       delete atomState.w // write promise
     }
-    commitAtomState(atom, atomState)
+    setAtomState(atom, atomState)
   }
 
   const scheduleReadAtomState = <Value>(
@@ -497,6 +510,9 @@ export const createStore = (
       u: undefined,
     }
     mountedMap.set(atom, mounted)
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+      mountedAtoms.add(atom)
+    }
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const setAtom = (update: unknown) => writeAtom(atom, update)
       mounted.u = atom.onMount(setAtom)
@@ -511,6 +527,9 @@ export const createStore = (
       onUnmount()
     }
     mountedMap.delete(atom)
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+      mountedAtoms.delete(atom)
+    }
     // unmount read dependencies afterward
     const atomState = getAtomState(atom)
     if (atomState) {
@@ -564,7 +583,7 @@ export const createStore = (
     })
   }
 
-  const commitAtomState = <Value>(
+  const setAtomState = <Value>(
     atom: Atom<Value>,
     atomState: AtomState<Value>,
     prevDependencies?: ReadDependencies
@@ -574,31 +593,29 @@ export const createStore = (
     }
     const isNewAtom = !atomStateMap.has(atom)
     atomStateMap.set(atom, atomState)
-    if (stateListener) {
-      stateListener(atom, isNewAtom)
-    }
     if (!pendingMap.has(atom)) {
-      pendingMap.set(atom, prevDependencies)
+      pendingMap.set(atom, [prevDependencies, isNewAtom])
     }
   }
 
   const flushPending = (): void => {
     const pending = Array.from(pendingMap)
     pendingMap.clear()
-    pending.forEach(([atom, prevDependencies]) => {
-      const atomState = getAtomState(atom)
-      if (atomState) {
-        if (prevDependencies) {
+    pending.forEach(([atom, [prevDependencies, isNewAtom]]) => {
+      if (prevDependencies) {
+        const atomState = getAtomState(atom)
+        if (atomState) {
           mountDependencies(atom, atomState, prevDependencies)
         }
-      } else if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        console.warn('[Bug] atom state not found in flush', atom)
       }
       const mounted = mountedMap.get(atom)
       mounted?.l.forEach((listener) => listener())
+      if (
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        stateListeners.forEach((l) => l(atom, isNewAtom))
+      }
     })
   }
 
@@ -631,6 +648,13 @@ export const createStore = (
       [FLUSH_PENDING]: flushPending,
       [SUBSCRIBE_ATOM]: subscribeAtom,
       [RESTORE_ATOMS]: restoreAtoms,
+      [DEV_SUBSCRIBE_STATE]: (l: StateListener) => {
+        stateListeners.add(l)
+        return () => {
+          stateListeners.delete(l)
+        }
+      },
+      [DEV_GET_MOUNTED_ATOMS]: () => mountedAtoms.values(),
       [DEV_GET_ATOM_STATE]: (a: AnyAtom) => atomStateMap.get(a),
       [DEV_GET_MOUNTED]: (a: AnyAtom) => mountedMap.get(a),
     }

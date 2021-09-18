@@ -10,7 +10,7 @@ export function useUpdateAtom<
   Result extends void | Promise<void>
 >(anAtom: WritableAtom<Value, Update, Result>, scope?: Scope) {
   const ScopeContext = getScopeContext(scope)
-  const store = useContext(ScopeContext)[0]
+  const store = useContext(ScopeContext).s
   const setAtom = useCallback(
     (update: Update) => store[WRITE_ATOM](anAtom, update),
     [store, anAtom]
