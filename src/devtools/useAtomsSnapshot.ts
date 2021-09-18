@@ -30,10 +30,9 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
-  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => {
-    const atoms = Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || [])
-    return createAtomsSnapshot(store, atoms)
-  })
+  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(
+    () => new Map()
+  )
 
   useEffect(() => {
     const callback = (updatedAtom?: Atom<unknown>, isNewAtom?: boolean) => {

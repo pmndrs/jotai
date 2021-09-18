@@ -78,9 +78,7 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (scopeContainer: ScopeContainer) => {
   const store = scopeContainer.s
-  const [atoms, setAtoms] = useState(() =>
-    Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || [])
-  )
+  const [atoms, setAtoms] = useState<Atom<unknown>[]>([])
   useEffect(() => {
     const callback = () => {
       setAtoms(Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || []))
