@@ -7,14 +7,14 @@ import {
 } from 'react'
 import type { PropsWithChildren } from 'react'
 import type { Atom, Scope } from './atom'
+import { createScopeContainer, getScopeContext } from './contexts'
+import type { ScopeContainer } from './contexts'
 import {
-  ScopeContainer,
-  createScopeContainer,
-  getScopeContext,
-  isDevScopeContainer,
-} from './contexts'
-import type { ScopeContainerForDevelopment } from './contexts'
-import { DEV_GET_ATOM_STATE, DEV_GET_MOUNTED } from './store'
+  DEV_GET_ATOM_STATE,
+  DEV_GET_MOUNTED,
+  DEV_GET_MOUNTED_ATOMS,
+  DEV_SUBSCRIBE_STATE,
+} from './store'
 import type { AtomState, Store } from './store'
 
 export const Provider = ({
@@ -34,8 +34,7 @@ export const Provider = ({
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
-    process.env.NODE_ENV !== 'test' &&
-    isDevScopeContainer(scopeContainerRef.current)
+    process.env.NODE_ENV !== 'test'
   ) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(scopeContainerRef.current)
@@ -77,15 +76,16 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
 
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
-const useDebugState = (scopeContainer: ScopeContainerForDevelopment) => {
-  const [store, devStore] = scopeContainer
-  const [atoms, setAtoms] = useState(devStore.atoms)
+const useDebugState = (scopeContainer: ScopeContainer) => {
+  const store = scopeContainer.s
+  const [atoms, setAtoms] = useState<Atom<unknown>[]>([])
   useEffect(() => {
-    // HACK creating a new reference for useDebugValue to update
-    const callback = () => setAtoms([...devStore.atoms])
-    const unsubscribe = devStore.subscribe(callback)
+    const callback = () => {
+      setAtoms(Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || []))
+    }
+    const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()
     return unsubscribe
-  }, [devStore])
+  }, [store])
   useDebugValue([store, atoms], stateToPrintable)
 }

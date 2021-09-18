@@ -53,7 +53,7 @@ export function useAtom<Value, Update>(
   }
 
   const ScopeContext = getScopeContext(scope)
-  const [store] = useContext(ScopeContext)
+  const store = useContext(ScopeContext).s
 
   const getAtomValue = useCallback(() => {
     const atomState = store[READ_ATOM](atom)
