@@ -1,8 +1,8 @@
 {
   "index.js": {
-    "bundled": 19887,
-    "minified": 8207,
-    "gzipped": 3057,
+    "bundled": 19635,
+    "minified": 8065,
+    "gzipped": 2997,
     "treeshaked": {
       "rollup": {
         "code": 51,
@@ -14,9 +14,9 @@
     }
   },
   "index.mjs": {
-    "bundled": 19887,
-    "minified": 8207,
-    "gzipped": 3057,
+    "bundled": 19635,
+    "minified": 8065,
+    "gzipped": 2997,
     "treeshaked": {
       "rollup": {
         "code": 51,
@@ -28,9 +28,9 @@
     }
   },
   "utils.js": {
-    "bundled": 17090,
-    "minified": 7902,
-    "gzipped": 2920,
+    "bundled": 17087,
+    "minified": 7899,
+    "gzipped": 2921,
     "treeshaked": {
       "rollup": {
         "code": 102,
@@ -42,9 +42,9 @@
     }
   },
   "utils.mjs": {
-    "bundled": 17090,
-    "minified": 7902,
-    "gzipped": 2920,
+    "bundled": 17087,
+    "minified": 7899,
+    "gzipped": 2921,
     "treeshaked": {
       "rollup": {
         "code": 102,
@@ -56,30 +56,30 @@
     }
   },
   "devtools.js": {
-    "bundled": 20179,
-    "minified": 8208,
-    "gzipped": 3117,
+    "bundled": 4500,
+    "minified": 2293,
+    "gzipped": 1062,
     "treeshaked": {
       "rollup": {
         "code": 65,
         "import_statements": 28
       },
       "webpack": {
-        "code": 1414
+        "code": 1218
       }
     }
   },
   "devtools.mjs": {
-    "bundled": 20179,
-    "minified": 8208,
-    "gzipped": 3117,
+    "bundled": 4500,
+    "minified": 2293,
+    "gzipped": 1062,
     "treeshaked": {
       "rollup": {
         "code": 65,
         "import_statements": 28
       },
       "webpack": {
-        "code": 1414
+        "code": 1218
       }
     }
   },
