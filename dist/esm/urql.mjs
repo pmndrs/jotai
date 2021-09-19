@@ -5,25 +5,6 @@ import { pipe, subscribe } from 'wonka';
 const DEFAULT_URL = typeof process === "object" && process.env.JOTAI_URQL_DEFAULT_URL || "/graphql";
 const clientAtom = atom(createClient({ url: DEFAULT_URL }));
 
-var __defProp = Object.defineProperty;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-typeof require !== "undefined" ? require : (x) => {
-  throw new Error('Dynamic require of "' + x + '" is not supported');
-};
 const isOperationResultWithData$1 = (result) => "data" in result;
 function atomWithQuery(createQueryArgs, getClient = (get) => get(clientAtom)) {
   const createResultAtom = (client, args, opts) => {
@@ -45,15 +26,18 @@ function atomWithQuery(createQueryArgs, getClient = (get) => get(clientAtom)) {
         setResult(result);
       }
     };
-    client.query(args.query, args.variables, __spreadValues(__spreadValues({
-      requestPolicy: args.requestPolicy
-    }, args.context), opts)).toPromise().then(listener).catch(() => {
+    client.query(args.query, args.variables, {
+      requestPolicy: args.requestPolicy,
+      ...args.context,
+      ...opts
+    }).toPromise().then(listener).catch(() => {
     });
     resultAtom.onMount = (update) => {
       setResult = update;
-      const subscription = pipe(client.query(args.query, args.variables, __spreadValues({
-        requestPolicy: args.requestPolicy
-      }, args.context)), subscribe(listener));
+      const subscription = pipe(client.query(args.query, args.variables, {
+        requestPolicy: args.requestPolicy,
+        ...args.context
+      }), subscribe(listener));
       return () => subscription.unsubscribe();
     };
     return resultAtom;
@@ -106,9 +90,8 @@ function atomWithMutation(createQuery, getClient = (get) => get(clientAtom)) {
     const client = getClient(get);
     const query = createQuery(get);
     client.mutation(query, action.variables, action.context).toPromise().then((result) => {
-      var _a;
       set(operationResultAtom, result);
-      (_a = action.callback) == null ? void 0 : _a.call(action, result);
+      action.callback?.(result);
     }).catch(() => {
     });
   });

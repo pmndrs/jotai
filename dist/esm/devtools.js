@@ -21,20 +21,18 @@ function useAtomDevtools(anAtom, name, scope) {
     if (extension) {
       devtools.current = extension.connect({ name: atomName });
       const unsubscribe = devtools.current.subscribe((message) => {
-        var _a, _b, _c, _d, _e, _f;
         if (message.type === "DISPATCH" && message.state) {
-          if (((_a = message.payload) == null ? void 0 : _a.type) === "JUMP_TO_ACTION" || ((_b = message.payload) == null ? void 0 : _b.type) === "JUMP_TO_STATE") {
+          if (message.payload?.type === "JUMP_TO_ACTION" || message.payload?.type === "JUMP_TO_STATE") {
             isTimeTraveling.current = true;
           }
           setValue(JSON.parse(message.state));
-        } else if (message.type === "DISPATCH" && ((_c = message.payload) == null ? void 0 : _c.type) === "COMMIT") {
-          (_d = devtools.current) == null ? void 0 : _d.init(lastValue.current);
-        } else if (message.type === "DISPATCH" && ((_e = message.payload) == null ? void 0 : _e.type) === "IMPORT_STATE") {
-          const computedStates = ((_f = message.payload.nextLiftedState) == null ? void 0 : _f.computedStates) || [];
+        } else if (message.type === "DISPATCH" && message.payload?.type === "COMMIT") {
+          devtools.current?.init(lastValue.current);
+        } else if (message.type === "DISPATCH" && message.payload?.type === "IMPORT_STATE") {
+          const computedStates = message.payload.nextLiftedState?.computedStates || [];
           computedStates.forEach(({ state }, index) => {
-            var _a2;
             if (index === 0) {
-              (_a2 = devtools.current) == null ? void 0 : _a2.init(state);
+              devtools.current?.init(state);
             } else {
               setValue(state);
             }
@@ -60,28 +58,6 @@ function useAtomDevtools(anAtom, name, scope) {
   }, [anAtom, extension, atomName, value]);
 }
 
-var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-typeof require !== "undefined" ? require : (x) => {
-  throw new Error('Dynamic require of "' + x + '" is not supported');
-};
 const hasInitialValue = (atom) => "init" in atom;
 const IS_EQUAL_PROMISE = Symbol();
 const INTERRUPT_PROMISE = Symbol();
@@ -122,23 +98,19 @@ const createStore = (initialValues, stateListener) => {
   const getAtomState = (atom) => atomStateMap.get(atom);
   const wipAtomState = (atom, dependencies) => {
     const atomState = getAtomState(atom);
-    const nextAtomState = __spreadProps(__spreadValues({
-      r: 0
-    }, atomState), {
-      d: dependencies ? new Map(Array.from(dependencies).map((a) => {
-        var _a, _b;
-        return [a, (_b = (_a = getAtomState(a)) == null ? void 0 : _a.r) != null ? _b : 0];
-      })) : (atomState == null ? void 0 : atomState.d) || new Map()
-    });
-    return [nextAtomState, (atomState == null ? void 0 : atomState.d) || new Map()];
+    const nextAtomState = {
+      r: 0,
+      ...atomState,
+      d: dependencies ? new Map(Array.from(dependencies).map((a) => [a, getAtomState(a)?.r ?? 0])) : atomState?.d || new Map()
+    };
+    return [nextAtomState, atomState?.d || new Map()];
   };
   const setAtomValue = (atom, value, dependencies, promise) => {
-    var _a, _b;
     const [atomState, prevDependencies] = wipAtomState(atom, dependencies);
-    if (promise && !((_a = atomState.p) == null ? void 0 : _a[IS_EQUAL_PROMISE](promise))) {
+    if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       return;
     }
-    (_b = atomState.c) == null ? void 0 : _b.call(atomState);
+    atomState.c?.();
     delete atomState.e;
     delete atomState.p;
     delete atomState.c;
@@ -153,12 +125,11 @@ const createStore = (initialValues, stateListener) => {
     commitAtomState(atom, atomState, dependencies && prevDependencies);
   };
   const setAtomReadError = (atom, error, dependencies, promise) => {
-    var _a, _b;
     const [atomState, prevDependencies] = wipAtomState(atom, dependencies);
-    if (promise && !((_a = atomState.p) == null ? void 0 : _a[IS_EQUAL_PROMISE](promise))) {
+    if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       return;
     }
-    (_b = atomState.c) == null ? void 0 : _b.call(atomState);
+    atomState.c?.();
     delete atomState.p;
     delete atomState.c;
     delete atomState.i;
@@ -166,12 +137,11 @@ const createStore = (initialValues, stateListener) => {
     commitAtomState(atom, atomState, prevDependencies);
   };
   const setAtomReadPromise = (atom, promise, dependencies) => {
-    var _a, _b;
     const [atomState, prevDependencies] = wipAtomState(atom, dependencies);
-    if ((_a = atomState.p) == null ? void 0 : _a[IS_EQUAL_PROMISE](promise)) {
+    if (atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       return;
     }
-    (_b = atomState.c) == null ? void 0 : _b.call(atomState);
+    atomState.c?.();
     delete atomState.e;
     if (isInterruptablePromise(promise)) {
       atomState.p = promise;
@@ -297,7 +267,7 @@ const createStore = (initialValues, stateListener) => {
   };
   const invalidateDependents = (atom) => {
     const mounted = mountedMap.get(atom);
-    mounted == null ? void 0 : mounted.d.forEach((dependent) => {
+    mounted?.d.forEach((dependent) => {
       if (dependent === atom) {
         return;
       }
@@ -399,8 +369,7 @@ const createStore = (initialValues, stateListener) => {
     return mounted;
   };
   const unmountAtom = (atom) => {
-    var _a;
-    const onUnmount = (_a = mountedMap.get(atom)) == null ? void 0 : _a.u;
+    const onUnmount = mountedMap.get(atom)?.u;
     if (onUnmount) {
       onUnmount();
     }
@@ -473,7 +442,7 @@ const createStore = (initialValues, stateListener) => {
         console.warn("[Bug] atom state not found in flush", atom);
       }
       const mounted = mountedMap.get(atom);
-      mounted == null ? void 0 : mounted.l.forEach((listener) => listener());
+      mounted?.l.forEach((listener) => listener());
     });
   };
   const subscribeAtom = (atom, callback) => {
@@ -527,7 +496,7 @@ const createScopeContainerForDevelopment = (initialValues) => {
         devStore.listeners.delete(callback);
       };
     },
-    atoms: Array.from(initialValues != null ? initialValues : []).map(([a]) => a)
+    atoms: Array.from(initialValues ?? []).map(([a]) => a)
   };
   const stateListener = (updatedAtom, isNewAtom) => {
     if (isNewAtom) {
@@ -556,12 +525,8 @@ function useAtomsSnapshot(scope) {
   useEffect(() => {
     const callback = () => {
       const { atoms } = devStore;
-      const atomToAtomValueTuples = atoms.filter((atom) => {
-        var _a;
-        return !!((_a = store[DEV_GET_MOUNTED]) == null ? void 0 : _a.call(store, atom));
-      }).map((atom) => {
-        var _a, _b;
-        const atomState = (_b = (_a = store[DEV_GET_ATOM_STATE]) == null ? void 0 : _a.call(store, atom)) != null ? _b : {};
+      const atomToAtomValueTuples = atoms.filter((atom) => !!store[DEV_GET_MOUNTED]?.(atom)).map((atom) => {
+        const atomState = store[DEV_GET_ATOM_STATE]?.(atom) ?? {};
         return [atom, atomState.v];
       });
       setAtomsSnapshot(new Map(atomToAtomValueTuples));

@@ -1,24 +1,6 @@
 import { interpret } from 'xstate';
 import { atom } from 'jotai';
 
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-typeof require !== "undefined" ? require : (x) => {
-  throw new Error('Dynamic require of "' + x + '" is not supported');
-};
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
 function atomWithMachine(getMachine, getOptions) {
   const cachedMachineAtom = atom(null);
   const machineAtom = atom((get) => {
@@ -36,19 +18,14 @@ function atomWithMachine(getMachine, getOptions) {
     const machine = typeof getMachine === "function" ? getMachine(safeGet) : getMachine;
     const options = typeof getOptions === "function" ? getOptions(safeGet) : getOptions;
     initializing = false;
-    const _a = options || {}, {
+    const {
       guards,
       actions,
       activities,
       services,
-      delays
-    } = _a, interpreterOptions = __objRest(_a, [
-      "guards",
-      "actions",
-      "activities",
-      "services",
-      "delays"
-    ]);
+      delays,
+      ...interpreterOptions
+    } = options || {};
     const machineConfig = {
       guards,
       actions,
@@ -66,10 +43,7 @@ function atomWithMachine(getMachine, getOptions) {
     commit();
   };
   const cachedMachineStateAtom = atom(null);
-  const machineStateAtom = atom((get) => {
-    var _a;
-    return (_a = get(cachedMachineStateAtom)) != null ? _a : get(machineAtom).machine.initialState;
-  }, (get, set, registerCleanup) => {
+  const machineStateAtom = atom((get) => get(cachedMachineStateAtom) ?? get(machineAtom).machine.initialState, (get, set, registerCleanup) => {
     const { service } = get(machineAtom);
     service.onTransition((nextState) => {
       set(cachedMachineStateAtom, nextState);

@@ -1,27 +1,5 @@
 import { createContext, useRef, createElement, useState, useEffect, useDebugValue, useContext, useCallback, useReducer } from 'react';
 
-var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-typeof require !== "undefined" ? require : (x) => {
-  throw new Error('Dynamic require of "' + x + '" is not supported');
-};
 const hasInitialValue = (atom) => "init" in atom;
 const IS_EQUAL_PROMISE = Symbol();
 const INTERRUPT_PROMISE = Symbol();
@@ -62,23 +40,19 @@ const createStore = (initialValues, stateListener) => {
   const getAtomState = (atom) => atomStateMap.get(atom);
   const wipAtomState = (atom, dependencies) => {
     const atomState = getAtomState(atom);
-    const nextAtomState = __spreadProps(__spreadValues({
-      r: 0
-    }, atomState), {
-      d: dependencies ? new Map(Array.from(dependencies).map((a) => {
-        var _a, _b;
-        return [a, (_b = (_a = getAtomState(a)) == null ? void 0 : _a.r) != null ? _b : 0];
-      })) : (atomState == null ? void 0 : atomState.d) || new Map()
-    });
-    return [nextAtomState, (atomState == null ? void 0 : atomState.d) || new Map()];
+    const nextAtomState = {
+      r: 0,
+      ...atomState,
+      d: dependencies ? new Map(Array.from(dependencies).map((a) => [a, getAtomState(a)?.r ?? 0])) : atomState?.d || new Map()
+    };
+    return [nextAtomState, atomState?.d || new Map()];
   };
   const setAtomValue = (atom, value, dependencies, promise) => {
-    var _a, _b;
     const [atomState, prevDependencies] = wipAtomState(atom, dependencies);
-    if (promise && !((_a = atomState.p) == null ? void 0 : _a[IS_EQUAL_PROMISE](promise))) {
+    if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       return;
     }
-    (_b = atomState.c) == null ? void 0 : _b.call(atomState);
+    atomState.c?.();
     delete atomState.e;
     delete atomState.p;
     delete atomState.c;
@@ -93,12 +67,11 @@ const createStore = (initialValues, stateListener) => {
     commitAtomState(atom, atomState, dependencies && prevDependencies);
   };
   const setAtomReadError = (atom, error, dependencies, promise) => {
-    var _a, _b;
     const [atomState, prevDependencies] = wipAtomState(atom, dependencies);
-    if (promise && !((_a = atomState.p) == null ? void 0 : _a[IS_EQUAL_PROMISE](promise))) {
+    if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       return;
     }
-    (_b = atomState.c) == null ? void 0 : _b.call(atomState);
+    atomState.c?.();
     delete atomState.p;
     delete atomState.c;
     delete atomState.i;
@@ -106,12 +79,11 @@ const createStore = (initialValues, stateListener) => {
     commitAtomState(atom, atomState, prevDependencies);
   };
   const setAtomReadPromise = (atom, promise, dependencies) => {
-    var _a, _b;
     const [atomState, prevDependencies] = wipAtomState(atom, dependencies);
-    if ((_a = atomState.p) == null ? void 0 : _a[IS_EQUAL_PROMISE](promise)) {
+    if (atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       return;
     }
-    (_b = atomState.c) == null ? void 0 : _b.call(atomState);
+    atomState.c?.();
     delete atomState.e;
     if (isInterruptablePromise(promise)) {
       atomState.p = promise;
@@ -237,7 +209,7 @@ const createStore = (initialValues, stateListener) => {
   };
   const invalidateDependents = (atom) => {
     const mounted = mountedMap.get(atom);
-    mounted == null ? void 0 : mounted.d.forEach((dependent) => {
+    mounted?.d.forEach((dependent) => {
       if (dependent === atom) {
         return;
       }
@@ -339,8 +311,7 @@ const createStore = (initialValues, stateListener) => {
     return mounted;
   };
   const unmountAtom = (atom) => {
-    var _a;
-    const onUnmount = (_a = mountedMap.get(atom)) == null ? void 0 : _a.u;
+    const onUnmount = mountedMap.get(atom)?.u;
     if (onUnmount) {
       onUnmount();
     }
@@ -413,7 +384,7 @@ const createStore = (initialValues, stateListener) => {
         console.warn("[Bug] atom state not found in flush", atom);
       }
       const mounted = mountedMap.get(atom);
-      mounted == null ? void 0 : mounted.l.forEach((listener) => listener());
+      mounted?.l.forEach((listener) => listener());
     });
   };
   const subscribeAtom = (atom, callback) => {
@@ -467,7 +438,7 @@ const createScopeContainerForDevelopment = (initialValues) => {
         devStore.listeners.delete(callback);
       };
     },
-    atoms: Array.from(initialValues != null ? initialValues : []).map(([a]) => a)
+    atoms: Array.from(initialValues ?? []).map(([a]) => a)
   };
   const stateListener = (updatedAtom, isNewAtom) => {
     if (isNewAtom) {
@@ -511,13 +482,12 @@ const Provider = ({
 };
 const atomToPrintable = (atom) => atom.debugLabel || atom.toString();
 const stateToPrintable = ([store, atoms]) => Object.fromEntries(atoms.flatMap((atom) => {
-  var _a, _b;
-  const mounted = (_a = store[DEV_GET_MOUNTED]) == null ? void 0 : _a.call(store, atom);
+  const mounted = store[DEV_GET_MOUNTED]?.(atom);
   if (!mounted) {
     return [];
   }
   const dependents = mounted.d;
-  const atomState = ((_b = store[DEV_GET_ATOM_STATE]) == null ? void 0 : _b.call(store, atom)) || {};
+  const atomState = store[DEV_GET_ATOM_STATE]?.(atom) || {};
   return [
     [
       atomToPrintable(atom),

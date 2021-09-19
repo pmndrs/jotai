@@ -88,24 +88,6 @@ function atomWithQuery(createQuery, getQueryClient = (get) => get(queryClientAto
   return queryAtom;
 }
 
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-typeof require !== "undefined" ? require : (x) => {
-  throw new Error('Dynamic require of "' + x + '" is not supported');
-};
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
 function atomWithInfiniteQuery(createQuery, getQueryClient = (get) => get(queryClientAtom)) {
   const queryDataAtom = atom((get) => {
     const queryClient = getQueryClient(get);
@@ -161,7 +143,7 @@ function atomWithInfiniteQuery(createQuery, getQueryClient = (get) => get(queryC
     }
     dataAtom.onMount = (update) => {
       setData = update;
-      const unsubscribe = observer == null ? void 0 : observer.subscribe(listener);
+      const unsubscribe = observer?.subscribe(listener);
       if (options.enabled === false) {
         if (settlePromise) {
           settlePromise(void 0);
@@ -176,7 +158,7 @@ function atomWithInfiniteQuery(createQuery, getQueryClient = (get) => get(queryC
     const { observer } = get(queryDataAtom);
     switch (action.type) {
       case "refetch": {
-        const _a = action, options = __objRest(_a, ["type"]);
+        const { type: _type, ...options } = action;
         void observer.refetch(options);
         break;
       }

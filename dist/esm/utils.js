@@ -3,9 +3,6 @@ import { SECRET_INTERNAL_getScopeContext, useAtom, atom } from 'jotai';
 
 const RESET = Symbol();
 
-typeof require !== "undefined" ? require : (x) => {
-  throw new Error('Dynamic require of "' + x + '" is not supported');
-};
 const WRITE_ATOM = "w";
 const RESTORE_ATOMS = "h";
 
@@ -67,7 +64,7 @@ function atomFamily(initializeAtom, areEqual) {
       }
     }
     if (item !== void 0) {
-      if (shouldRemove == null ? void 0 : shouldRemove(item[1], param)) {
+      if (shouldRemove?.(item[1], param)) {
         atoms.delete(param);
       } else {
         return item[0];
@@ -215,25 +212,22 @@ function splitAtom(arrAtom, keyExtractor) {
       let nextAtomList = [];
       let nextKeyList = [];
       get(arrAtom).forEach((item, index) => {
-        var _a, _b, _c;
         const key = keyExtractor ? keyExtractor(item) : index;
         nextKeyList[index] = key;
-        const cachedAtom = (_c = ref.atomList) == null ? void 0 : _c[(_b = (_a = ref.keyList) == null ? void 0 : _a.indexOf(key)) != null ? _b : -1];
+        const cachedAtom = ref.atomList?.[ref.keyList?.indexOf(key) ?? -1];
         if (cachedAtom) {
           nextAtomList[index] = cachedAtom;
           return;
         }
         const read2 = (get2) => {
-          var _a2, _b2;
-          const index2 = (_b2 = (_a2 = ref.keyList) == null ? void 0 : _a2.indexOf(key)) != null ? _b2 : -1;
+          const index2 = ref.keyList?.indexOf(key) ?? -1;
           if (index2 === -1 && typeof process === "object" && process.env.NODE_ENV !== "production") {
             console.warn("splitAtom: array index out of bounds, returning undefined", atom);
           }
           return get2(arrAtom)[index2];
         };
         const write2 = (get2, set, update) => {
-          var _a2, _b2;
-          const index2 = (_b2 = (_a2 = ref.keyList) == null ? void 0 : _a2.indexOf(key)) != null ? _b2 : -1;
+          const index2 = ref.keyList?.indexOf(key) ?? -1;
           if (index2 === -1) {
             throw new Error("splitAtom: array index not found");
           }
@@ -288,28 +282,6 @@ function atomWithDefault(getDefault) {
   return anAtom;
 }
 
-var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-typeof require !== "undefined" ? require : (x) => {
-  throw new Error('Dynamic require of "' + x + '" is not supported');
-};
 const memoizeAtom$1 = createMemoizeAtom();
 function waitForAll(atoms) {
   const createAtom = () => {
@@ -340,7 +312,7 @@ function waitForAll(atoms) {
   return createAtom();
 }
 const unwrapAtoms = (atoms) => Array.isArray(atoms) ? atoms : Object.getOwnPropertyNames(atoms).map((key) => atoms[key]);
-const wrapResults = (atoms, results) => Array.isArray(atoms) ? results : Object.getOwnPropertyNames(atoms).reduce((out, key, idx) => __spreadProps(__spreadValues({}, out), { [key]: results[idx] }), {});
+const wrapResults = (atoms, results) => Array.isArray(atoms) ? results : Object.getOwnPropertyNames(atoms).reduce((out, key, idx) => ({ ...out, [key]: results[idx] }), {});
 
 const createJSONStorage = (getStringStorage) => ({
   getItem: (key) => {
@@ -478,7 +450,7 @@ function atomWithObservable(createObservable) {
       if (!subscription) {
         subscription = observable.subscribe(dataListener, errorListener);
       }
-      return () => subscription == null ? void 0 : subscription.unsubscribe();
+      return () => subscription?.unsubscribe();
     };
     return { dataAtom, observable };
   });
