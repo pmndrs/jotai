@@ -1,5 +1,5 @@
 import { Component, StrictMode, Suspense, useEffect } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from '../../src/index'
 import { atomFamily, useUpdateAtom, waitForAll } from '../../src/utils'
 import { getTestProvider } from '../testUtils'
@@ -303,15 +303,15 @@ it('large atom count', async () => {
       .fill(0)
       .map((_, i) => i)
 
-  let result = null
+  let result: number[] | null = null
 
-  const chunksFamily = atomFamily((i) => atom(i))
+  const chunksFamily = atomFamily((i: number) => atom(async () => i))
 
   const selector = atomFamily((count: number) =>
     atom((getter) => {
       const data = createArray(count)
       const atoms = data.map(chunksFamily)
-      const values = waitForAll(atoms as any /* FIXME better typing? */)
+      const values = waitForAll(atoms)
       return getter(values)
     })
   )
@@ -327,26 +327,36 @@ it('large atom count', async () => {
   }
 
   const passingCount = 500
-  render(
+  const { findByText } = render(
     <StrictMode>
       <Provider>
-        <Loader count={passingCount} />
+        <Suspense fallback="loading">
+          <Loader count={passingCount} />
+        </Suspense>
       </Provider>
     </StrictMode>
   )
 
-  expect(result).toEqual(createArray(passingCount))
+  await findByText('loading')
+  waitFor(() => {
+    expect(result).toEqual(createArray(passingCount))
+  })
 
   jest.runOnlyPendingTimers()
 
   const failingCount = 8000
-  render(
+  const { findByText: findByText2 } = render(
     <StrictMode>
       <Provider>
-        <Loader count={failingCount} />
+        <Suspense fallback="loading">
+          <Loader count={failingCount} />
+        </Suspense>
       </Provider>
     </StrictMode>
   )
 
-  expect(result).toEqual(createArray(failingCount))
+  await findByText2('loading')
+  waitFor(() => {
+    expect(result).toEqual(createArray(failingCount))
+  })
 })
