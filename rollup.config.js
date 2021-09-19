@@ -54,7 +54,7 @@ function createESMConfig(input, output) {
     input,
     output: { file: output, format: 'esm' },
     external,
-    plugins: [resolve({ extensions }), getEsbuild('esnext')],
+    plugins: [resolve({ extensions }), getEsbuild('node12')],
   }
 }
 

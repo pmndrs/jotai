@@ -1,0 +1,100 @@
+{
+  "name": "jotai",
+  "private": false,
+  "version": "1.3.5",
+  "description": "👻 Next gen state management that will spook you",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "typesVersions": {
+    "<4.0": {
+      "esm/*": [
+        "ts3.4/*"
+      ],
+      "*": [
+        "ts3.4/*"
+      ]
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./index.d.ts",
+      "module": "./esm/index.js",
+      "import": "./esm/index.mjs",
+      "default": "./index.js"
+    },
+    "./*": {
+      "types": "./*.d.ts",
+      "module": "./esm/*.js",
+      "import": "./esm/*.mjs",
+      "default": "./*.js"
+    }
+  },
+  "files": [
+    "**"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=12"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmndrs/jotai.git"
+  },
+  "keywords": [
+    "react",
+    "state",
+    "manager",
+    "management",
+    "recoil",
+    "store"
+  ],
+  "author": "Daishi Kato",
+  "contributors": [],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pmndrs/jotai/issues"
+  },
+  "homepage": "https://github.com/pmndrs/jotai",
+  "peerDependencies": {
+    "@babel/core": "*",
+    "@babel/template": "*",
+    "@urql/core": "*",
+    "immer": "*",
+    "optics-ts": "*",
+    "react": ">=16.8",
+    "react-query": "*",
+    "valtio": "*",
+    "wonka": "*",
+    "xstate": "*"
+  },
+  "peerDependenciesMeta": {
+    "@babel/core": {
+      "optional": true
+    },
+    "@babel/template": {
+      "optional": true
+    },
+    "@urql/core": {
+      "optional": true
+    },
+    "immer": {
+      "optional": true
+    },
+    "optics-ts": {
+      "optional": true
+    },
+    "react-query": {
+      "optional": true
+    },
+    "valtio": {
+      "optional": true
+    },
+    "wonka": {
+      "optional": true
+    },
+    "xstate": {
+      "optional": true
+    }
+  }
+}
