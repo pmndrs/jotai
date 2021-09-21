@@ -93,7 +93,7 @@ export function atom<Value, Update, Result extends void | Promise<void>>(
 export function atom<Value>(read: Read<Value>): Atom<Value>
 
 // invalid function in the first argument
-export function atom(initialValue: (...args: any) => any, write?: any): never
+export function atom(invalidFunction: (...args: any) => any, write?: any): never
 
 // write-only derived atom
 export function atom<Value, Update, Result extends void | Promise<void>>(
