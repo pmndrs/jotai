@@ -19,9 +19,9 @@ const isWritable = <Value, Update, Result extends void | Promise<void>>(
 const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
 
 export function splitAtom<Item, Key>(
-  arrAtom: WritableAtom<Item[], Item[], void>,
+  arrAtom: WritableAtom<Item[], Item[]>,
   keyExtractor?: (item: Item) => Key
-): WritableAtom<PrimitiveAtom<Item>[], PrimitiveAtom<Item>, void>
+): WritableAtom<PrimitiveAtom<Item>[], PrimitiveAtom<Item>>
 
 export function splitAtom<Item, Key>(
   arrAtom: Atom<Item[]>,
@@ -29,7 +29,7 @@ export function splitAtom<Item, Key>(
 ): Atom<Atom<Item>[]>
 
 export function splitAtom<Item, Key>(
-  arrAtom: WritableAtom<Item[], Item[], void> | Atom<Item[]>,
+  arrAtom: WritableAtom<Item[], Item[]> | Atom<Item[]>,
   keyExtractor?: (item: Item) => Key
 ) {
   return memoizeAtom(
@@ -83,7 +83,7 @@ export function splitAtom<Item, Key>(
             const nextItem = isFunction(update)
               ? update(prev[index] as Item)
               : update
-            set(arrAtom as WritableAtom<Item[], Item[], void>, [
+            set(arrAtom as WritableAtom<Item[], Item[]>, [
               ...prev.slice(0, index),
               nextItem,
               ...prev.slice(index + 1),
@@ -106,7 +106,7 @@ export function splitAtom<Item, Key>(
         const index = get(splittedAtom).indexOf(atomToRemove)
         if (index >= 0) {
           const prev = get(arrAtom)
-          set(arrAtom as WritableAtom<Item[], Item[], void>, [
+          set(arrAtom as WritableAtom<Item[], Item[]>, [
             ...prev.slice(0, index),
             ...prev.slice(index + 1),
           ])

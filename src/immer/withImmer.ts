@@ -9,13 +9,13 @@ const memoizeAtom = createMemoizeAtom()
 
 export function withImmer<Value>(
   anAtom: PrimitiveAtom<Value>
-): WritableAtom<Value, Value | ((draft: Draft<Value>) => void), void>
+): WritableAtom<Value, Value | ((draft: Draft<Value>) => void)>
 
 export function withImmer<Value>(
-  anAtom: WritableAtom<Value, Value, void>
-): WritableAtom<Value, Value | ((draft: Draft<Value>) => void), void>
+  anAtom: WritableAtom<Value, Value>
+): WritableAtom<Value, Value | ((draft: Draft<Value>) => void)>
 
-export function withImmer<Value>(anAtom: WritableAtom<Value, Value, void>) {
+export function withImmer<Value>(anAtom: WritableAtom<Value, Value>) {
   return memoizeAtom(() => {
     const derivedAtom = atom(
       (get) => get(anAtom),

@@ -6,7 +6,7 @@ import type { WritableAtom } from 'jotai'
 
 export function atomWithImmer<Value>(
   initialValue: Value
-): WritableAtom<Value, Value | ((draft: Draft<Value>) => void), void> {
+): WritableAtom<Value, Value | ((draft: Draft<Value>) => void)> {
   const anAtom: any = atom(
     initialValue,
     (get, set, fn: Value | ((draft: Draft<Value>) => void)) =>

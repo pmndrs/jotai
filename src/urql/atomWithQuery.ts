@@ -43,19 +43,14 @@ type QueryArgsWithPause<Data, Variables extends object> = QueryArgs<
 export function atomWithQuery<Data, Variables extends object>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient?: (get: Getter) => Client
-): WritableAtom<
-  OperationResultWithData<Data, Variables>,
-  AtomWithQueryAction,
-  void
->
+): WritableAtom<OperationResultWithData<Data, Variables>, AtomWithQueryAction>
 
 export function atomWithQuery<Data, Variables extends object>(
   createQueryArgs: (get: Getter) => QueryArgsWithPause<Data, Variables>,
   getClient?: (get: Getter) => Client
 ): WritableAtom<
   OperationResultWithData<Data, Variables> | null,
-  AtomWithQueryAction,
-  void
+  AtomWithQueryAction
 >
 
 export function atomWithQuery<Data, Variables extends object>(

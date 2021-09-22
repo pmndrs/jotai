@@ -5,12 +5,8 @@ type ResolveType<T> = T extends Promise<infer V> ? V : T
 type AnyAtom = Atom<unknown>
 type AnyWritableAtom = WritableAtom<unknown, unknown, void | Promise<void>>
 type OnUnmount = () => void
-type WriteGetter = Parameters<
-  WritableAtom<unknown, unknown, void | Promise<void>>['write']
->[0]
-type Setter = Parameters<
-  WritableAtom<unknown, unknown, void | Promise<void>>['write']
->[1]
+type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
+type Setter = Parameters<WritableAtom<unknown, unknown>['write']>[1]
 
 const hasInitialValue = <T extends Atom<unknown>>(
   atom: T

@@ -4,12 +4,12 @@ import type { WritableAtom } from 'jotai'
 export function atomWithReducer<Value, Action>(
   initialValue: Value,
   reducer: (v: Value, a?: Action) => Value
-): WritableAtom<Value, Action | undefined, void>
+): WritableAtom<Value, Action | undefined>
 
 export function atomWithReducer<Value, Action>(
   initialValue: Value,
   reducer: (v: Value, a: Action) => Value
-): WritableAtom<Value, Action, void>
+): WritableAtom<Value, Action>
 
 export function atomWithReducer<Value, Action>(
   initialValue: Value,
