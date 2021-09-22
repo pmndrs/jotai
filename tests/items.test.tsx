@@ -102,7 +102,7 @@ it('add an item with filtered list', async () => {
 
   let itemIndex = 0
   const itemAtomsAtom = atom<ItemAtoms>([])
-  const setItemsAtom = atom<null, Update, void>(null, (_get, set, update) =>
+  const setItemsAtom = atom<null, Update>(null, (_get, set, update) =>
     set(itemAtomsAtom, update)
   )
   const filterAtom = atom<'all' | 'checked' | 'not-checked'>('all')

@@ -67,7 +67,7 @@ export type Atom<Value> = {
 export type WritableAtom<
   Value,
   Update,
-  Result extends void | Promise<void>
+  Result extends void | Promise<void> = void
 > = Atom<Value> & {
   write: Write<Update, Result>
   onMount?: OnMount<Update, Result>
@@ -75,16 +75,12 @@ export type WritableAtom<
 
 type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
-export type PrimitiveAtom<Value> = WritableAtom<
-  Value,
-  SetStateAction<Value>,
-  void
->
+export type PrimitiveAtom<Value> = WritableAtom<Value, SetStateAction<Value>>
 
 let keyCount = 0 // global key count for all atoms
 
 // writable derived atom
-export function atom<Value, Update, Result extends void | Promise<void>>(
+export function atom<Value, Update, Result extends void | Promise<void> = void>(
   read: Read<Value>,
   write: Write<Update, Result>
 ): WritableAtom<Value, Update, Result>
@@ -96,7 +92,7 @@ export function atom<Value>(read: Read<Value>): Atom<Value>
 export function atom(invalidFunction: (...args: any) => any, write?: any): never
 
 // write-only derived atom
-export function atom<Value, Update, Result extends void | Promise<void>>(
+export function atom<Value, Update, Result extends void | Promise<void> = void>(
   initialValue: Value,
   write: Write<Update, Result>
 ): WritableAtom<Value, Update, Result> & WithInitialValue<Value>
