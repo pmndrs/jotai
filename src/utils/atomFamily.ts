@@ -8,20 +8,28 @@ type AtomFamily<Param, AtomType> = {
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
 }
 
-export function atomFamily<
-  Param,
-  AtomType extends WritableAtom<any, any, void | Promise<void>>
->(
+export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
   areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, AtomType>
 
-export function atomFamily<Param, AtomType extends Atom<any>>(
-  initializeAtom: (param: Param) => AtomType,
+/**
+ * @deprecated type (use atomFamily<Param, AtomType extends Atom<unknown>>)
+ */
+export function atomFamily<Param, Value, Update>(
+  initializeAtom: (param: Param) => WritableAtom<Value, Update>,
   areEqual?: (a: Param, b: Param) => boolean
-): AtomFamily<Param, AtomType>
+): AtomFamily<Param, WritableAtom<Value, Update>>
 
-export function atomFamily<Param, AtomType extends Atom<any>>(
+/**
+ * @deprecated type (use atomFamily<Param, AtomType extends Atom<unknown>>)
+ */
+export function atomFamily<Param, Value>(
+  initializeAtom: (param: Param) => Atom<Value>,
+  areEqual?: (a: Param, b: Param) => boolean
+): AtomFamily<Param, Atom<Value>>
+
+export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
   areEqual?: (a: Param, b: Param) => boolean
 ) {
