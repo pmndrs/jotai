@@ -305,7 +305,7 @@ it('large atom count', async () => {
 
   let result: number[] | null = null
 
-  const chunksFamily = atomFamily((i: number) => atom(async () => i))
+  const chunksFamily = atomFamily((i: number) => atom(() => i))
 
   const selector = atomFamily((count: number) =>
     atom((getter) => {
@@ -327,17 +327,14 @@ it('large atom count', async () => {
   }
 
   const passingCount = 500
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Provider>
-        <Suspense fallback="loading">
-          <Loader count={passingCount} />
-        </Suspense>
+        <Loader count={passingCount} />
       </Provider>
     </StrictMode>
   )
 
-  await findByText('loading')
   waitFor(() => {
     expect(result).toEqual(createArray(passingCount))
   })
