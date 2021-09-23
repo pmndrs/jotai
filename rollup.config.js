@@ -25,7 +25,6 @@ function getEsbuild(target) {
   return esbuild({
     minify: false,
     target,
-    external,
     platform: 'neutral',
     tsconfig: path.resolve('./tsconfig.json'),
   })
