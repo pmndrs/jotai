@@ -5,6 +5,10 @@ import { RESET } from './constants'
 type Read<Value> = Atom<Value>['read']
 
 export function atomWithDefault<Value>(
+  getDefault: Read<Value | Promise<Value>>
+): WritableAtom<Value, SetStateAction<Value> | typeof RESET>
+
+export function atomWithDefault<Value>(
   getDefault: Read<Promise<Value>>
 ): WritableAtom<Value, SetStateAction<Value> | typeof RESET>
 
