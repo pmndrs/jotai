@@ -342,17 +342,14 @@ it('large atom count', async () => {
   jest.runOnlyPendingTimers()
 
   const failingCount = 8000
-  const { findByText: findByText2 } = render(
+  render(
     <StrictMode>
       <Provider>
-        <Suspense fallback="loading">
-          <Loader count={failingCount} />
-        </Suspense>
+        <Loader count={failingCount} />
       </Provider>
     </StrictMode>
   )
 
-  await findByText2('loading')
   waitFor(() => {
     expect(result).toEqual(createArray(failingCount))
   })
