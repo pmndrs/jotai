@@ -9,8 +9,7 @@ export type ExtractAtomValue<AtomType> = AtomType extends Atom<infer Value>
 
 export type ExtractAtomUpdate<AtomType> = AtomType extends WritableAtom<
   unknown,
-  infer Update,
-  void | Promise<void>
+  infer Update
 >
   ? Update
   : never
