@@ -47,7 +47,6 @@ export type AtomState<Value = unknown> = {
   e?: Error // read error
   p?: InterruptablePromise // read promise
   c?: () => void // cancel read promise
-  w?: Promise<void> // write promise
   v?: NonPromise<Value>
   r: Revision
   i?: InvalidatedRevision
@@ -208,30 +207,6 @@ export const createStore = (
     setAtomState(atom, atomState)
   }
 
-  const setAtomWritePromise = <Value>(
-    atom: Atom<Value>,
-    promise: Promise<void> | null,
-    prevPromise?: Promise<void>
-  ): void => {
-    const [atomState] = wipAtomState(atom)
-    if (promise) {
-      atomState.w = promise
-    } else if (atomState.w === prevPromise) {
-      // delete it only if it's not overwritten
-      delete atomState.w // write promise
-    }
-    setAtomState(atom, atomState)
-  }
-
-  const scheduleReadAtomState = <Value>(
-    atom: Atom<Value>,
-    promise: Promise<unknown>
-  ): void => {
-    promise.finally(() => {
-      readAtomState(atom, true)
-    })
-  }
-
   const readAtomState = <Value>(
     atom: Atom<Value>,
     force?: boolean
@@ -304,7 +279,10 @@ export const createStore = (
           })
           .catch((e) => {
             if (e instanceof Promise) {
-              scheduleReadAtomState(atom, e)
+              // schedule another read later
+              e.finally(() => {
+                readAtomState(atom, true)
+              })
               return e
             }
             setAtomReadError(
@@ -451,13 +429,6 @@ export const createStore = (
       return promiseOrVoid
     }
     const promiseOrVoid = atom.write(writeGetter, setter, update)
-    if (promiseOrVoid instanceof Promise) {
-      const promise = promiseOrVoid.finally(() => {
-        setAtomWritePromise(atom, null, promise)
-        flushPending()
-      })
-      setAtomWritePromise(atom, promise)
-    }
     flushPending()
     return promiseOrVoid
   }
