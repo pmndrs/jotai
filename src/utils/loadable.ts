@@ -15,7 +15,15 @@ const LOADING_LOADABLE: Loadable<never> = { state: 'loading' }
 
 export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
   return memoizeAtom(() => {
+    const refAtom = atom(
+      () =>
+        ({} as {
+          err: unknown
+          obj: object
+        })
+    )
     const derivedAtom = atom((get): Loadable<Value> => {
+      const ref = get(refAtom)
       try {
         const value = get(anAtom)
 
@@ -28,7 +36,17 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
           return LOADING_LOADABLE
         }
 
-        const cachedErrorLoadable = errorLoadableCache.get(error as Error)
+        let errorObject: object
+        if (typeof error === 'object') {
+          errorObject = error as object
+        } else if (ref.err === error) {
+          errorObject = ref.obj
+        } else {
+          errorObject = new Error(error as string)
+          ref.err = error
+          ref.obj = errorObject
+        }
+        const cachedErrorLoadable = errorLoadableCache.get(errorObject)
 
         if (cachedErrorLoadable) {
           return cachedErrorLoadable
@@ -39,7 +57,7 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
           error,
         }
 
-        errorLoadableCache.set(error as Error, errorLoadable)
+        errorLoadableCache.set(errorObject, errorLoadable)
         return errorLoadable
       }
     })
