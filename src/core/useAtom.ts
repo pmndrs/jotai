@@ -42,7 +42,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
 
   const getAtomValue = useCallback(() => {
     const atomState = store[READ_ATOM](atom)
-    if (atomState.e) {
+    if ('e' in atomState) {
       throw atomState.e // read error
     }
     if (atomState.p) {

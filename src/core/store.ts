@@ -33,8 +33,10 @@ const createInterruptablePromise = (
     interrupt = resolve
     promise.then(resolve, reject)
   }) as InterruptablePromise
-  interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>) =>
-    p === interruptablePromise || p === promise
+  interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>): boolean =>
+    interruptablePromise === p ||
+    promise === p ||
+    (isInterruptablePromise(promise) && promise[IS_EQUAL_PROMISE](p))
   interruptablePromise[INTERRUPT_PROMISE] = interrupt as () => void
   return interruptablePromise
 }
@@ -45,7 +47,7 @@ type ReadDependencies = Map<AnyAtom, Revision>
 
 // immutable atom state
 export type AtomState<Value = unknown> = {
-  e?: Error // read error
+  e?: unknown // read error
   p?: InterruptablePromise // read promise
   c?: () => void // cancel read promise
   w?: Promise<void> // write promise
@@ -163,7 +165,7 @@ export const createStore = (
 
   const setAtomReadError = <Value>(
     atom: Atom<Value>,
-    error: Error,
+    error: unknown,
     dependencies?: Set<AnyAtom>,
     promise?: Promise<void>
   ): void => {
@@ -192,14 +194,9 @@ export const createStore = (
     }
     atomState.c?.() // cancel read promise
     delete atomState.e // read error
-    if (isInterruptablePromise(promise)) {
-      atomState.p = promise // read promise
-      delete atomState.c // this promise is from another atom state, shouldn't be canceled here
-    } else {
-      const interruptablePromise = createInterruptablePromise(promise)
-      atomState.p = interruptablePromise // read promise
-      atomState.c = interruptablePromise[INTERRUPT_PROMISE]
-    }
+    const interruptablePromise = createInterruptablePromise(promise)
+    atomState.p = interruptablePromise // read promise
+    atomState.c = interruptablePromise[INTERRUPT_PROMISE]
     setAtomState(atom, atomState, prevDependencies)
   }
 
@@ -245,7 +242,7 @@ export const createStore = (
             const aState = getAtomState(a)
             if (
               aState &&
-              !aState.e && // no read error
+              !('e' in aState) && // no read error
               !aState.p && // no read promise
               aState.r === aState.i // revision is invalidated
             ) {
@@ -258,7 +255,7 @@ export const createStore = (
             const aState = getAtomState(a)
             return (
               aState &&
-              !aState.e && // no read error
+              !('e' in aState) && // no read error
               !aState.p && // no read promise
               aState.r !== aState.i && // revision is not invalidated
               aState.r === r // revision is equal to the last one
@@ -269,7 +266,7 @@ export const createStore = (
         }
       }
     }
-    let error: Error | undefined
+    let error: unknown | undefined
     let promise: Promise<void> | undefined
     let value: ResolveType<Value> | undefined
     const dependencies = new Set<AnyAtom>()
@@ -279,7 +276,7 @@ export const createStore = (
         const aState =
           (a as AnyAtom) === atom ? getAtomState(a) : readAtomState(a)
         if (aState) {
-          if (aState.e) {
+          if ('e' in aState) {
             throw aState.e // read error
           }
           if (aState.p) {
@@ -309,12 +306,7 @@ export const createStore = (
               scheduleReadAtomState(atom, e)
               return e
             }
-            setAtomReadError(
-              atom,
-              e instanceof Error ? e : new Error(e),
-              dependencies,
-              promise as Promise<void>
-            )
+            setAtomReadError(atom, e, dependencies, promise as Promise<void>)
             flushPending()
           })
       } else {
@@ -323,10 +315,8 @@ export const createStore = (
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
         promise = errorOrPromise
-      } else if (errorOrPromise instanceof Error) {
-        error = errorOrPromise
       } else {
-        error = new Error(errorOrPromise as string)
+        error = errorOrPromise
       }
     }
     if (error) {
@@ -384,7 +374,7 @@ export const createStore = (
       unstable_promise: boolean = false
     ) => {
       const aState = readAtomState(a)
-      if (aState.e) {
+      if ('e' in aState) {
         throw aState.e // read error
       }
       if (aState.p) {
@@ -446,7 +436,7 @@ export const createStore = (
               flushPending()
             })
             .catch((e) => {
-              setAtomReadError(atom, e instanceof Error ? e : new Error(e))
+              setAtomReadError(atom, e)
               flushPending()
             })
           setAtomReadPromise(atom, promiseOrVoid)

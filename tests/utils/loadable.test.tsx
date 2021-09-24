@@ -11,49 +11,49 @@ it('loadable turns suspense into values', async () => {
     return new Promise<number>((resolve) => (resolveAsync = resolve))
   })
 
-  const { findByText, getByText } = render(
+  const { findByText } = render(
     <Provider>
       <LoadableComponent asyncAtom={asyncAtom} />
     </Provider>
   )
 
-  getByText('Loading...')
+  await findByText('Loading...')
   resolveAsync(5)
   await findByText('Data: 5')
 })
 
 it('loadable turns errors into values', async () => {
-  let rejectAsync!: (error: Error) => void
+  let rejectAsync!: (error: unknown) => void
   const asyncAtom = atom(() => {
     return new Promise<number>((_resolve, reject) => (rejectAsync = reject))
   })
 
-  const { findByText, getByText } = render(
+  const { findByText } = render(
     <Provider>
       <LoadableComponent asyncAtom={asyncAtom} />
     </Provider>
   )
 
-  getByText('Loading...')
+  await findByText('Loading...')
   rejectAsync(new Error('An error occurred'))
   await findByText('Error: An error occurred')
 })
 
 it('loadable turns primitive throws into values', async () => {
-  let rejectAsync!: (errorMessage: string) => void
+  let rejectAsync!: (error: unknown) => void
   const asyncAtom = atom(() => {
     return new Promise<number>((_resolve, reject) => (rejectAsync = reject))
   })
 
-  const { findByText, getByText } = render(
+  const { findByText } = render(
     <Provider>
       <LoadableComponent asyncAtom={asyncAtom} />
     </Provider>
   )
 
-  getByText('Loading...')
+  await findByText('Loading...')
   rejectAsync('An error occurred')
-  await findByText('Error: An error occurred')
+  await findByText('An error occurred')
 })
 
 it('loadable goes back to loading after re-fetch', async () => {
@@ -93,7 +93,7 @@ it('loadable goes back to loading after re-fetch', async () => {
 
 it('loadable can recover from error', async () => {
   let resolveAsync!: (x: number) => void
-  let rejectAsync!: (error: Error) => void
+  let rejectAsync!: (error: unknown) => void
   const refreshAtom = atom(0)
   const asyncAtom = atom((get) => {
     get(refreshAtom)
