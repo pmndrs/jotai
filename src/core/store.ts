@@ -32,8 +32,10 @@ const createInterruptablePromise = (
     interrupt = resolve
     promise.then(resolve, reject)
   }) as InterruptablePromise
-  interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>) =>
-    p === interruptablePromise || p === promise
+  interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>): boolean =>
+    interruptablePromise === p ||
+    promise === p ||
+    (isInterruptablePromise(promise) && promise[IS_EQUAL_PROMISE](p))
   interruptablePromise[INTERRUPT_PROMISE] = interrupt as () => void
   return interruptablePromise
 }
@@ -191,14 +193,9 @@ export const createStore = (
     }
     atomState.c?.() // cancel read promise
     delete atomState.e // read error
-    if (isInterruptablePromise(promise)) {
-      atomState.p = promise // read promise
-      delete atomState.c // this promise is from another atom state, shouldn't be canceled here
-    } else {
-      const interruptablePromise = createInterruptablePromise(promise)
-      atomState.p = interruptablePromise // read promise
-      atomState.c = interruptablePromise[INTERRUPT_PROMISE]
-    }
+    const interruptablePromise = createInterruptablePromise(promise)
+    atomState.p = interruptablePromise // read promise
+    atomState.c = interruptablePromise[INTERRUPT_PROMISE]
     setAtomState(atom, atomState, prevDependencies)
   }
 
