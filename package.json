@@ -138,7 +138,7 @@
     "benny": "^3.6.15",
     "concurrently": "^6.2.1",
     "downlevel-dts": "^0.7.0",
-    "esbuild": "0.12.25",
+    "esbuild": "^0.13.2",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-import-resolver-alias": "^1.1.2",
