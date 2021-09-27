@@ -35,12 +35,9 @@ export function splitAtom<Item, Key>(
   return memoizeAtom(
     () => {
       type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
+      // TODO we should revisit this for a better solution than refAtom
       const refAtom = atom(
-        () =>
-          ({} as {
-            atomList?: ItemAtom[]
-            keyList?: Key[]
-          })
+        () => ({} as { atomList?: ItemAtom[]; keyList?: Key[] })
       )
       const read = (get: Getter) => {
         const ref = get(refAtom)

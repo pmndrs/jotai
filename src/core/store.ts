@@ -72,7 +72,7 @@ type MountedAtoms = Set<AnyAtom>
 // store methods
 export const READ_ATOM = 'r'
 export const WRITE_ATOM = 'w'
-export const FLUSH_PENDING = 'f'
+export const COMMIT_ATOM = 'c'
 export const SUBSCRIBE_ATOM = 's'
 export const RESTORE_ATOMS = 'h'
 
@@ -120,7 +120,22 @@ export const createStore = (
   const getAtomState = <Value>(atom: Atom<Value>) =>
     atomStateMap.get(atom) as AtomState<Value> | undefined
 
-  const wipAtomState = <Value>(
+  const setAtomState = <Value>(
+    atom: Atom<Value>,
+    atomState: AtomState<Value>,
+    prevDependencies?: ReadDependencies
+  ): void => {
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+      Object.freeze(atomState)
+    }
+    const isNewAtom = !atomStateMap.has(atom)
+    atomStateMap.set(atom, atomState)
+    if (!pendingMap.has(atom)) {
+      pendingMap.set(atom, [prevDependencies, isNewAtom])
+    }
+  }
+
+  const prepareNextAtomState = <Value>(
     atom: Atom<Value>,
     dependencies?: Set<AnyAtom>
   ): [AtomState<Value>, ReadDependencies] => {
@@ -143,7 +158,10 @@ export const createStore = (
     dependencies?: Set<AnyAtom>,
     promise?: Promise<void>
   ): void => {
-    const [atomState, prevDependencies] = wipAtomState(atom, dependencies)
+    const [atomState, prevDependencies] = prepareNextAtomState(
+      atom,
+      dependencies
+    )
     if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       // newer async read is running, not updating
       return
@@ -169,7 +187,10 @@ export const createStore = (
     dependencies?: Set<AnyAtom>,
     promise?: Promise<void>
   ): void => {
-    const [atomState, prevDependencies] = wipAtomState(atom, dependencies)
+    const [atomState, prevDependencies] = prepareNextAtomState(
+      atom,
+      dependencies
+    )
     if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       // newer async read is running, not updating
       return
@@ -187,7 +208,10 @@ export const createStore = (
     promise: Promise<void>,
     dependencies?: Set<AnyAtom>
   ): void => {
-    const [atomState, prevDependencies] = wipAtomState(atom, dependencies)
+    const [atomState, prevDependencies] = prepareNextAtomState(
+      atom,
+      dependencies
+    )
     if (atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       // the same promise, not updating
       return
@@ -201,7 +225,7 @@ export const createStore = (
   }
 
   const setAtomInvalidated = <Value>(atom: Atom<Value>): void => {
-    const [atomState] = wipAtomState(atom)
+    const [atomState] = prepareNextAtomState(atom)
     atomState.i = atomState.r // invalidated revision
     setAtomState(atom, atomState)
   }
@@ -211,7 +235,7 @@ export const createStore = (
     promise: Promise<void> | null,
     prevPromise?: Promise<void>
   ): void => {
-    const [atomState] = wipAtomState(atom)
+    const [atomState] = prepareNextAtomState(atom)
     if (promise) {
       atomState.w = promise
     } else if (atomState.w === prevPromise) {
@@ -569,21 +593,6 @@ export const createStore = (
     })
   }
 
-  const setAtomState = <Value>(
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-    prevDependencies?: ReadDependencies
-  ): void => {
-    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
-      Object.freeze(atomState)
-    }
-    const isNewAtom = !atomStateMap.has(atom)
-    atomStateMap.set(atom, atomState)
-    if (!pendingMap.has(atom)) {
-      pendingMap.set(atom, [prevDependencies, isNewAtom])
-    }
-  }
-
   const flushPending = (): void => {
     const pending = Array.from(pendingMap)
     pendingMap.clear()
@@ -603,6 +612,10 @@ export const createStore = (
         stateListeners.forEach((l) => l(atom, isNewAtom))
       }
     })
+  }
+
+  const commitAtom = (_atom: AnyAtom) => {
+    flushPending()
   }
 
   const subscribeAtom = (atom: AnyAtom, callback: () => void) => {
@@ -631,7 +644,7 @@ export const createStore = (
     return {
       [READ_ATOM]: readAtom,
       [WRITE_ATOM]: writeAtom,
-      [FLUSH_PENDING]: flushPending,
+      [COMMIT_ATOM]: commitAtom,
       [SUBSCRIBE_ATOM]: subscribeAtom,
       [RESTORE_ATOMS]: restoreAtoms,
       [DEV_SUBSCRIBE_STATE]: (l: StateListener) => {
@@ -648,7 +661,7 @@ export const createStore = (
   return {
     [READ_ATOM]: readAtom,
     [WRITE_ATOM]: writeAtom,
-    [FLUSH_PENDING]: flushPending,
+    [COMMIT_ATOM]: commitAtom,
     [SUBSCRIBE_ATOM]: subscribeAtom,
     [RESTORE_ATOMS]: restoreAtoms,
   }
