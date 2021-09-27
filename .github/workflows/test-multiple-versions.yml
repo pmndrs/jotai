@@ -1,0 +1,47 @@
+name: Test Multiple Versions
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+          cache: npm
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - run: yarn install --frozen-lockfile --check-files
+
+  test_default:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - run: yarn install --frozen-lockfile --check-files
+      - run: yarn test
+
+  test_minimum:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - run: yarn install react@16.8.0 react-dom@16.8.0
+      - run: yarn test
+
+  test_alpha:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - run: yarn install react@18.0.0-alpha-05726d72c-20210927 react-dom@18.0.0-alpha-05726d72c-20210927
+      - run: yarn test
+
+  test_experimental:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - run: yarn install react@0.0.0-experimental-05726d72c-20210927 react-dom@0.0.0-experimental-05726d72c-20210927
+      - run: yarn test
