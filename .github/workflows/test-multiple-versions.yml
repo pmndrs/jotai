@@ -21,7 +21,7 @@ jobs:
       - name: Test Default
         run: yarn test:ci
 
-      - name: Test Minimum:
+      - name: Test Minimum
         run: yarn add react@16.8.0 react-dom@16.8.0
         run: yarn test:ci
 
