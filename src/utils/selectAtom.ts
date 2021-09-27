@@ -10,6 +10,7 @@ export function selectAtom<Value, Slice>(
   equalityFn: (a: Slice, b: Slice) => boolean = Object.is
 ): Atom<Slice> {
   return memoizeAtom(() => {
+    // TODO we should revisit this for a better solution than refAtom
     const refAtom = atom(() => ({} as { prev?: Slice }))
     const derivedAtom = atom((get) => {
       const slice = selector(get(anAtom))
