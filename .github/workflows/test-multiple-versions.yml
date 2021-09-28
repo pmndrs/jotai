@@ -17,29 +17,30 @@ jobs:
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
+      - run: yarn build
 
       - name: Test Default
-        run: yarn test:ci
+        run: yarn test
 
       - name: Patch jest config
         run: sed -i~ -e "s/<rootDir>\/src\/\(.*\)\.ts/<rootDir>\/dist\/esm\/\1.js/" package.json
 
-      - name: Test Minimum
-        run: |
-          yarn add react@16.8.0 react-dom@16.8.0
-          yarn test:ci
-
       - name: Test Stable
         run: |
-          yarn add react@17.0.2 react-dom@17.0.2
-          yarn test:ci
+          yarn add -D react@17.0.2 react-dom@17.0.2
+          yarn test
 
       - name: Test Alpha
         run: |
-          yarn add react@18.0.0-alpha-05726d72c-20210927 react-dom@18.0.0-alpha-05726d72c-20210927
-          yarn test:ci
+          yarn add -D react@18.0.0-alpha-05726d72c-20210927 react-dom@18.0.0-alpha-05726d72c-20210927
+          yarn test
 
       - name: Test Experimental
         run: |
-          yarn add react@0.0.0-experimental-05726d72c-20210927 react-dom@0.0.0-experimental-05726d72c-20210927
+          yarn add -D react@0.0.0-experimental-05726d72c-20210927 react-dom@0.0.0-experimental-05726d72c-20210927
           yarn test:ci
+
+      - name: Test Minimum
+        run: |
+          yarn add -D react@16.8.0 react-dom@16.8.0
+          yarn test
