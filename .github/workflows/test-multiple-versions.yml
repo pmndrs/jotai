@@ -9,13 +9,32 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+          cache: yarn
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - run: yarn install --frozen-lockfile --check-files
+      - run: yarn build # we don't have any other workflows to test build
+      - name: Test Default
+        run: yarn test:ci
+      - name: Test Default Provider-less Mode
+        run: yarn test:ci
+        env:
+          PROVIDER_LESS_MODE: 'true'
+
+  test_matrix:
+    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         react:
           - 16.8.0
           - 17.0.2
           - 18.0.0-alpha-05726d72c-20210927
-          - react@0.0.0-experimental-05726d72c-20210927
+          - 0.0.0-experimental-05726d72c-20210927
         providerLessMode: ['false', 'true']
     steps:
       - uses: actions/checkout@v2
@@ -25,16 +44,6 @@ jobs:
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
-      - run: yarn build
-
-      - name: Test Default
-        run: yarn test:ci
-      
-      - name: Test Default Provider-less Mode
-        run: yarn test:ci
-        env:
-          PROVIDER_LESS_MODE: 'true'
-      
       - name: Test ${{ matrix.react }} ${{ matrix.providerLessMode }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
