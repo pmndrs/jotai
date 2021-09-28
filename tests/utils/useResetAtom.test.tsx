@@ -1,11 +1,11 @@
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from '../../src/index'
+import { atom, useAtom } from 'jotai'
 import {
   RESET,
   atomWithReducer,
   atomWithReset,
   useResetAtom,
-} from '../../src/utils'
+} from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

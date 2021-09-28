@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react'
 import { createMachine } from 'xstate'
-import { useAtom } from '../../src/index'
-import { atomWithMachine } from '../../src/xstate'
+import { useAtom } from 'jotai'
+import { atomWithMachine } from 'jotai/xstate'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

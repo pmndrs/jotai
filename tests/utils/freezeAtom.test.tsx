@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react'
-import { atom, useAtom } from '../../src/index'
-import { freezeAtom, freezeAtomCreator } from '../../src/utils'
+import { atom, useAtom } from 'jotai'
+import { freezeAtom, freezeAtomCreator } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

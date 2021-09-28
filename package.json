@@ -100,7 +100,8 @@
     "rootDir": ".",
     "testEnvironment": "jsdom",
     "moduleNameMapper": {
-      "^jotai$": "<rootDir>/src/index.ts"
+      "^jotai$": "<rootDir>/src/index.ts",
+      "^jotai/(.*)$": "<rootDir>/src/$1.ts"
     },
     "modulePathIgnorePatterns": [
       "dist"

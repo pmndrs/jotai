@@ -7,8 +7,8 @@ import {
   useState,
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { atom, useAtom } from 'jotai'
 import type { WritableAtom } from 'jotai'
-import { atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()

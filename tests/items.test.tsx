@@ -1,6 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { atom, useAtom } from 'jotai'
 import type { PrimitiveAtom } from 'jotai'
-import { atom, useAtom } from '../src/index'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
