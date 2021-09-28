@@ -10,7 +10,7 @@ const errorMessages: string[] = []
 beforeEach(() => {
   errorMessages.splice(0)
   console.error = jest.fn((err) => {
-    const match = /\[Error: (.*?)\]/.exec(err)
+    const match = /^(.*?)(\n|$)/.exec(err)
     if (match?.[1]) {
       errorMessages.push(match[1])
     }
@@ -236,7 +236,7 @@ it('can throw an error in write function', async () => {
   const errorAtom = atom(
     (get) => get(countAtom),
     () => {
-      throw new Error()
+      throw new Error('err_in_write_function')
     }
   )
 
@@ -265,9 +265,10 @@ it('can throw an error in write function', async () => {
   )
 
   await findByText('no error')
+  expect(errorMessages).not.toContain('Error: err_in_write_function')
 
   fireEvent.click(getByText('button'))
-  expect(console.error).toHaveBeenCalledTimes(1)
+  expect(errorMessages).toContain('Error: err_in_write_function')
 })
 
 it('can throw an error in async write function', async () => {
@@ -318,7 +319,7 @@ it('can throw a chained error in write function', async () => {
   const errorAtom = atom(
     (get) => get(countAtom),
     () => {
-      throw new Error()
+      throw new Error('chained_err_in_write')
     }
   )
   const chainedAtom = atom(
@@ -353,9 +354,10 @@ it('can throw a chained error in write function', async () => {
   )
 
   await findByText('no error')
+  expect(errorMessages).not.toContain('Error: chained_err_in_write')
 
   fireEvent.click(getByText('button'))
-  expect(console.error).toHaveBeenCalledTimes(1)
+  expect(errorMessages).toContain('Error: chained_err_in_write')
 })
 
 it('throws an error while updating in effect', async () => {
@@ -366,7 +368,7 @@ it('throws an error while updating in effect', async () => {
     useEffect(() => {
       try {
         setCount(() => {
-          throw new Error()
+          throw new Error('err_updating_in_effect')
         })
       } catch (e) {
         console.error(e)
@@ -388,7 +390,7 @@ it('throws an error while updating in effect', async () => {
   )
 
   await findByText('no error')
-  expect(console.error).toHaveBeenCalledTimes(1)
+  expect(errorMessages).toContain('Error: err_updating_in_effect')
 })
 
 describe('throws an error while updating in effect cleanup', () => {
@@ -435,10 +437,14 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     await findByText('no error')
-    expect(errorMessages).not.toContain('err_in_effect_cleanup')
+    expect(errorMessages).not.toContain(
+      'Error: Uncaught [Error: err_in_effect_cleanup]'
+    )
 
     fireEvent.click(getByText('close'))
-    expect(errorMessages).toContain('err_in_effect_cleanup')
+    expect(errorMessages).toContain(
+      'Error: Uncaught [Error: err_in_effect_cleanup]'
+    )
   })
 
   it('dobule setCount', async () => {
@@ -453,10 +459,14 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     await findByText('no error')
-    expect(errorMessages).not.toContain('err_in_effect_cleanup')
+    expect(errorMessages).not.toContain(
+      'Error: Uncaught [Error: err_in_effect_cleanup]'
+    )
 
     fireEvent.click(getByText('close'))
-    expect(errorMessages).toContain('err_in_effect_cleanup')
+    expect(errorMessages).toContain(
+      'Error: Uncaught [Error: err_in_effect_cleanup]'
+    )
   })
 })
 
