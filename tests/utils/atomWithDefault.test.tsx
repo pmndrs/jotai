@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from '../../src/index'
-import { RESET, atomWithDefault } from '../../src/utils'
+import { atom, useAtom } from 'jotai'
+import { RESET, atomWithDefault } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

@@ -8,7 +8,8 @@
     "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
     "paths": {
-      "jotai": ["./src/index.ts"]
+      "jotai": ["./src/index.ts"],
+      "jotai/*": ["./src/*.ts"]
     }
   },
   "include": ["src/**/*", "tests/**/*"],
