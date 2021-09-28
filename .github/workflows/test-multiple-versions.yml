@@ -21,6 +21,9 @@ jobs:
       - name: Test Default
         run: yarn test:ci
 
+      - name: Patch jest config
+        run: sed -i~ -e "s/<rootDir>\/src\/\(.*\)\.ts/<rootDir>\/dist\/esm\/\1.js/" package.json
+
       - name: Test Minimum
         run: |
           yarn add react@16.8.0 react-dom@16.8.0
