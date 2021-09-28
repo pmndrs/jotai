@@ -13,11 +13,6 @@ const useCommitCount = () => {
   return commitCountRef.current
 }
 
-const consoleError = console.error
-afterEach(() => {
-  console.error = consoleError
-})
-
 it('works with 2 level dependencies', async () => {
   const countAtom = atom(1)
   const doubledAtom = atom((get) => get(countAtom) * 2)
