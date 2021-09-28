@@ -52,7 +52,7 @@ jobs:
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
       - name: Install alpha testing-library
-        if: ${{ matrix.testing === 'alpha' }}
+        if: ${{ matrix.testing == 'alpha' }}
         run: yarn add -D @testing-library/react@alpha
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
