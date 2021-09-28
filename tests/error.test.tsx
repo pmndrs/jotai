@@ -453,10 +453,10 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     await findByText('no error')
-    expect(console.error).toHaveBeenCalledTimes(0)
+    expect(errorMessages).not.toContain('err_in_effect_cleanup')
 
     fireEvent.click(getByText('close'))
-    expect(console.error).toHaveBeenCalledTimes(1)
+    expect(errorMessages).toContain('err_in_effect_cleanup')
   })
 })
 
