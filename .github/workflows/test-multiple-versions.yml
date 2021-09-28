@@ -35,7 +35,7 @@ jobs:
           - 17.0.2
           - 18.0.0-alpha-05726d72c-20210927
           - 0.0.0-experimental-05726d72c-20210927
-        providerLessMode: ['false', 'true']
+        mode: ['withProvider', 'withoutProvider']
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -49,4 +49,4 @@ jobs:
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
           yarn test:ci
         env:
-          PROVIDER_LESS_MODE: ${{ matrix.providerLessMode }}
+          PROVIDER_LESS_MODE: ${{ matrix.mode == 'withoutProvider' }}
