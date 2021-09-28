@@ -6,8 +6,15 @@ import { getTestProvider } from './testUtils'
 const Provider = getTestProvider()
 
 const consoleError = console.error
+const errorMessages: string[] = []
 beforeEach(() => {
-  console.error = jest.fn()
+  errorMessages.splice(0)
+  console.error = jest.fn((err) => {
+    const match = /\[Error: (.*?)\]/.exec(err)
+    if (match?.[1]) {
+      errorMessages.push(match[1])
+    }
+  })
 })
 afterEach(() => {
   console.error = consoleError
@@ -359,7 +366,7 @@ it('throws an error while updating in effect', async () => {
     useEffect(() => {
       try {
         setCount(() => {
-          throw Error()
+          throw new Error()
         })
       } catch (e) {
         console.error(e)
@@ -397,7 +404,7 @@ describe('throws an error while updating in effect cleanup', () => {
           setCount((x) => x + 1)
         }
         setCount(() => {
-          throw Error()
+          throw new Error('err_in_effect_cleanup')
         })
       }
     }, [setCount])
@@ -428,10 +435,10 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     await findByText('no error')
-    expect(console.error).toHaveBeenCalledTimes(0)
+    expect(errorMessages).not.toContain('err_in_effect_cleanup')
 
     fireEvent.click(getByText('close'))
-    expect(console.error).toHaveBeenCalledTimes(1)
+    expect(errorMessages).toContain('err_in_effect_cleanup')
   })
 
   it('dobule setCount', async () => {
