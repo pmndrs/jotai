@@ -17,10 +17,11 @@ jobs:
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
-      - run: yarn build # we don't have any other workflows to test build
-      - name: Test Default
+      - name: Test Build # we don't have any other workflows to test build
+        run: yarn build
+      - name: Test Default with Provider
         run: yarn test:ci
-      - name: Test Default Provider-less Mode
+      - name: Test Default without Provider
         run: yarn test:ci
         env:
           PROVIDER_LESS_MODE: 'true'
