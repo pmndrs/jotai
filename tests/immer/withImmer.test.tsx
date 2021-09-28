@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react'
-import { withImmer } from '../../src/immer'
-import { atom, useAtom } from '../../src/index'
+import { atom, useAtom } from 'jotai'
+import { withImmer } from 'jotai/immer'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
