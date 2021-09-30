@@ -236,7 +236,7 @@ it('can throw an error in write function', async () => {
   const errorAtom = atom(
     (get) => get(countAtom),
     () => {
-      throw new Error('err_in_write_function')
+      throw new Error('error_in_write_function')
     }
   )
 
@@ -265,10 +265,10 @@ it('can throw an error in write function', async () => {
   )
 
   await findByText('no error')
-  expect(errorMessages).not.toContain('Error: err_in_write_function')
+  expect(errorMessages).not.toContain('Error: error_in_write_function')
 
   fireEvent.click(getByText('button'))
-  expect(errorMessages).toContain('Error: err_in_write_function')
+  expect(errorMessages).toContain('Error: error_in_write_function')
 })
 
 it('can throw an error in async write function', async () => {
@@ -276,7 +276,7 @@ it('can throw an error in async write function', async () => {
   const errorAtom = atom(
     (get) => get(countAtom),
     async () => {
-      throw new Error()
+      throw new Error('error_in_async_write_function')
     }
   )
 
@@ -307,10 +307,11 @@ it('can throw an error in async write function', async () => {
   )
 
   await findByText('no error')
+  expect(errorMessages).not.toContain('Error: error_in_async_write_function')
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
-    expect(console.error).toHaveBeenCalledTimes(1)
+    expect(errorMessages).toContain('Error: error_in_async_write_function')
   })
 })
 
