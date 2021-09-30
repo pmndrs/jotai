@@ -85,6 +85,12 @@ it('does not show async stale result on derived atom', async () => {
   })
   const derivedAtom = atom((get) => get(asyncAlwaysNullAtom))
 
+  const DisplayAsyncValue = () => {
+    const [asyncValue] = useAtom(asyncAlwaysNullAtom)
+
+    return <div>async value: {JSON.stringify(asyncValue)}</div>
+  }
+
   const DisplayDerivedValue = () => {
     const [derivedValue] = useAtom(derivedAtom)
     useEffect(() => {
@@ -93,22 +99,16 @@ it('does not show async stale result on derived atom', async () => {
     return <div>derived value: {JSON.stringify(derivedValue)}</div>
   }
 
-  const DisplayAsyncValue = () => {
-    const [asyncValue] = useAtom(asyncAlwaysNullAtom)
-
-    return <div>async value: {JSON.stringify(asyncValue)}</div>
-  }
-
   const Test = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <div>
         <div>count: {count}</div>
-        <Suspense fallback={<div>loading derived value</div>}>
-          <DisplayDerivedValue />
-        </Suspense>
         <Suspense fallback={<div>loading async value</div>}>
           <DisplayAsyncValue />
+        </Suspense>
+        <Suspense fallback={<div>loading derived value</div>}>
+          <DisplayDerivedValue />
         </Suspense>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </div>
