@@ -90,13 +90,13 @@ it('does not show async stale result on derived atom', async () => {
     useEffect(() => {
       committed.push(derivedValue)
     })
-    return <div>derived value:{derivedValue}</div>
+    return <div>derived value: {JSON.stringify(derivedValue)}</div>
   }
 
   const DisplayAsyncValue = () => {
     const [asyncValue] = useAtom(asyncAlwaysNullAtom)
 
-    return <div>async value:{asyncValue}</div>
+    return <div>async value: {JSON.stringify(asyncValue)}</div>
   }
 
   const Test = () => {
@@ -115,7 +115,7 @@ it('does not show async stale result on derived atom', async () => {
     )
   }
 
-  const { getByText, findByText, queryByText } = render(
+  const { getByText, queryByText } = render(
     <StrictMode>
       <Provider>
         <Test />
@@ -123,25 +123,35 @@ it('does not show async stale result on derived atom', async () => {
     </StrictMode>
   )
 
-  await findByText('count: 0')
-  await findByText('loading async value')
-  await findByText('loading derived value')
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('loading async value')
+    getByText('loading derived value')
+  })
   await waitFor(() => {
     expect(queryByText('loading async value')).toBeNull()
     expect(queryByText('loading derived value')).toBeNull()
   })
-  await findByText('async value:')
-  await findByText('derived value:')
+  await waitFor(() => {
+    getByText('async value: null')
+    getByText('derived value: null')
+  })
   expect(committed).toEqual([null])
 
   fireEvent.click(getByText('button'))
 
-  await findByText('count: 1')
-  await findByText('loading async value')
-  await findByText('loading derived value')
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('loading async value')
+    getByText('loading derived value')
+  })
   await waitFor(() => {
     expect(queryByText('loading async value')).toBeNull()
     expect(queryByText('loading derived value')).toBeNull()
+  })
+  await waitFor(() => {
+    getByText('async value: null')
+    getByText('derived value: null')
   })
   expect(committed).toEqual([null])
 })
