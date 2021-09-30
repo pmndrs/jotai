@@ -166,17 +166,22 @@ export const createStore = (
       return
     }
     atomState.c?.() // cancel read promise
-    delete atomState.e // read error
-    delete atomState.p // read promise
-    delete atomState.c // cancel read promise
-    delete atomState.i // invalidated revision
-    if (!('v' in atomState) || !Object.is(atomState.v, value)) {
-      atomState.v = value
+    if (
+      'e' in atomState || // has read error, or
+      atomState.p || // has read promise, or
+      !('v' in atomState) || // new value, or
+      !Object.is(atomState.v, value) // different value
+    ) {
       ++atomState.r // increment revision
       if (atomState.d.has(atom)) {
         atomState.d.set(atom, atomState.r)
       }
     }
+    atomState.v = value // set value anyway
+    delete atomState.e // clear read error
+    delete atomState.p // clear read promise
+    delete atomState.c // clear cancel read promise
+    delete atomState.i // clear invalidated revision
     setAtomState(atom, atomState, dependencies && prevDependencies)
   }
 
@@ -195,10 +200,10 @@ export const createStore = (
       return
     }
     atomState.c?.() // cancel read promise
-    delete atomState.p // read promise
-    delete atomState.c // cancel read promise
-    delete atomState.i // invalidated revision
-    atomState.e = error // read error
+    delete atomState.p // clear read promise
+    delete atomState.c // clear cancel read promise
+    delete atomState.i // clear invalidated revision
+    atomState.e = error // set read error
     setAtomState(atom, atomState, prevDependencies)
   }
 
@@ -216,16 +221,16 @@ export const createStore = (
       return
     }
     atomState.c?.() // cancel read promise
-    delete atomState.e // read error
+    delete atomState.e // clear read error
     const interruptablePromise = createInterruptablePromise(promise)
-    atomState.p = interruptablePromise // read promise
+    atomState.p = interruptablePromise // set read promise
     atomState.c = interruptablePromise[INTERRUPT_PROMISE]
     setAtomState(atom, atomState, prevDependencies)
   }
 
   const setAtomInvalidated = <Value>(atom: Atom<Value>): void => {
     const [atomState] = prepareNextAtomState(atom)
-    atomState.i = atomState.r // invalidated revision
+    atomState.i = atomState.r // set invalidated revision
     setAtomState(atom, atomState)
   }
 
@@ -239,7 +244,7 @@ export const createStore = (
       atomState.w = promise
     } else if (atomState.w === prevPromise) {
       // delete it only if it's not overwritten
-      delete atomState.w // write promise
+      delete atomState.w // clear write promise
     }
     setAtomState(atom, atomState)
   }
