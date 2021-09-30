@@ -76,7 +76,6 @@ it('does not show async stale result', async () => {
 })
 
 it('does not show async stale result on derived atom', async () => {
-  const committed: null[] = []
   const countAtom = atom(0)
   const asyncAlwaysNullAtom = atom(async (get) => {
     get(countAtom)
@@ -93,9 +92,6 @@ it('does not show async stale result on derived atom', async () => {
 
   const DisplayDerivedValue = () => {
     const [derivedValue] = useAtom(derivedAtom)
-    useEffect(() => {
-      committed.push(derivedValue)
-    })
     return <div>derived value: {JSON.stringify(derivedValue)}</div>
   }
 
@@ -136,7 +132,6 @@ it('does not show async stale result on derived atom', async () => {
     getByText('async value: null')
     getByText('derived value: null')
   })
-  expect(committed).toEqual([null])
 
   fireEvent.click(getByText('button'))
 
@@ -153,7 +148,6 @@ it('does not show async stale result on derived atom', async () => {
     getByText('async value: null')
     getByText('derived value: null')
   })
-  expect(committed).toEqual([null])
 })
 
 it('works with async get with extra deps', async () => {
