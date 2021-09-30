@@ -75,6 +75,77 @@ it('does not show async stale result', async () => {
   expect(committed).toEqual([0, 2])
 })
 
+it('does not show async stale result on derived atom', async () => {
+  const committed: null[] = []
+  const countAtom = atom(0)
+  const asyncAlwaysNullAtom = atom(async (get) => {
+    get(countAtom)
+    await new Promise((r) => setTimeout(r, 10))
+    return null
+  })
+  const derivedAtom = atom((get) => get(asyncAlwaysNullAtom))
+
+  const DisplayDerivedValue = () => {
+    const [derivedValue] = useAtom(derivedAtom)
+    useEffect(() => {
+      committed.push(derivedValue)
+    })
+    return <div>derived value:{derivedValue}</div>
+  }
+
+  const DisplayAsyncValue = () => {
+    const [asyncValue] = useAtom(asyncAlwaysNullAtom)
+
+    return <div>async value:{asyncValue}</div>
+  }
+
+  const Test = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <div>
+        <div>count: {count}</div>
+        <Suspense fallback={<div>loading derived value</div>}>
+          <DisplayDerivedValue />
+        </Suspense>
+        <Suspense fallback={<div>loading async value</div>}>
+          <DisplayAsyncValue />
+        </Suspense>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </div>
+    )
+  }
+
+  const { getByText, findByText, queryByText } = render(
+    <StrictMode>
+      <Provider>
+        <Test />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+  await findByText('loading async value')
+  await findByText('loading derived value')
+  await waitFor(() => {
+    expect(queryByText('loading async value')).toBeNull()
+    expect(queryByText('loading derived value')).toBeNull()
+  })
+  await findByText('async value:')
+  await findByText('derived value:')
+  expect(committed).toEqual([null])
+
+  fireEvent.click(getByText('button'))
+
+  await findByText('count: 1')
+  await findByText('loading async value')
+  await findByText('loading derived value')
+  await waitFor(() => {
+    expect(queryByText('loading async value')).toBeNull()
+    expect(queryByText('loading derived value')).toBeNull()
+  })
+  expect(committed).toEqual([null])
+})
+
 it('works with async get with extra deps', async () => {
   const countAtom = atom(0)
   const anotherAtom = atom(-1)
