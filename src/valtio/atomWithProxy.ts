@@ -49,7 +49,7 @@ export function atomWithProxy<Value extends object>(proxyObject: Value, options?
     const callback = () => {
       setValue(snapshot(proxyObject))
     }
-    const unsub = subscribe(proxyObject, callback, options?.boolean)
+    const unsub = subscribe(proxyObject, callback, options?.sync)
     callback()
     return unsub
   }
