@@ -1,5 +1,5 @@
 import { render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
+import { Provider, atom, useAtom } from 'jotai'
 
 // No PROVIDER_LESS_MODE test for this file, obviously.
 

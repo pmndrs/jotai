@@ -1,8 +1,8 @@
 import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot } from 'valtio/vanilla'
-import { useAtom } from '../../src/index'
-import { atomWithProxy } from '../../src/valtio'
+import { useAtom } from 'jotai'
+import { atomWithProxy } from 'jotai/valtio'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

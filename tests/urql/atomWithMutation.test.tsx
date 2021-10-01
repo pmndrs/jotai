@@ -2,8 +2,8 @@ import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
 import { delay, fromValue, pipe, take, toPromise } from 'wonka'
-import { atom, useAtom } from '../../src/'
-import { atomWithMutation } from '../../src/urql'
+import { atom, useAtom } from 'jotai'
+import { atomWithMutation } from 'jotai/urql'
 import { getTestProvider } from '../testUtils'
 
 const withPromise = (source$: any) => {

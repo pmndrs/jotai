@@ -1,7 +1,7 @@
 import { FC, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from '../../src/index'
-import { useHydrateAtoms } from '../../src/utils'
+import { atom, useAtom } from 'jotai'
+import { useHydrateAtoms } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

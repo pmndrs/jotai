@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react'
-import { atom } from '../../src/index'
-import { useAtomValue, useUpdateAtom } from '../../src/utils'
+import { atom } from 'jotai'
+import { useAtomValue, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

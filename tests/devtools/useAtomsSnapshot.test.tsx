@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { useAtomsSnapshot } from '../../src/devtools'
-import { Provider, atom, useAtom } from '../../src/index'
+import { Provider, atom, useAtom } from 'jotai'
+import { useAtomsSnapshot } from 'jotai/devtools'
 
 it('should register newly added atoms', async () => {
   const countAtom = atom(1)

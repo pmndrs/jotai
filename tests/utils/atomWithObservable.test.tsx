@@ -1,8 +1,8 @@
 import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Observable, Subject } from 'rxjs'
-import { useAtom } from '../../src/index'
-import { atomWithObservable } from '../../src/utils'
+import { useAtom } from 'jotai'
+import { atomWithObservable } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

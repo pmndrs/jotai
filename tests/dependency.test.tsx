@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from '../src/index'
+import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
@@ -12,11 +12,6 @@ const useCommitCount = () => {
   })
   return commitCountRef.current
 }
-
-const consoleError = console.error
-afterEach(() => {
-  console.error = consoleError
-})
 
 it('works with 2 level dependencies', async () => {
   const countAtom = atom(1)
