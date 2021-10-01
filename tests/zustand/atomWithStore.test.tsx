@@ -1,7 +1,7 @@
 import { act, fireEvent, render } from '@testing-library/react'
 import create from 'zustand/vanilla'
-import { useAtom } from '../../src/index'
-import { atomWithStore } from '../../src/zustand'
+import { useAtom } from 'jotai'
+import { atomWithStore } from 'jotai/zustand'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

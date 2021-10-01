@@ -1,7 +1,7 @@
 import { Suspense, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from '../../src/'
-import { atomWithQuery } from '../../src/query'
+import { atom, useAtom } from 'jotai'
+import { atomWithQuery } from 'jotai/query'
 import { getTestProvider } from '../testUtils'
 import fakeFetch from './fakeFetch'
 

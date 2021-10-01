@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { useAtom } from '../../src/index'
-import { atomWithHash, atomWithStorage } from '../../src/utils'
+import { useAtom } from 'jotai'
+import { atomWithHash, atomWithStorage } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -101,7 +101,7 @@ describe('atomWithStorage (async)', () => {
 
     fireEvent.click(getByText('button'))
     await findByText('count: 11')
-    waitFor(() => {
+    await waitFor(() => {
       expect(asyncStorageData.count).toBe(11)
     })
   })
@@ -132,7 +132,7 @@ describe('atomWithStorage (async)', () => {
 
     fireEvent.click(getByText('button'))
     await findByText('count: 21')
-    waitFor(() => {
+    await waitFor(() => {
       expect(asyncStorageData.count2).toBe(21)
     })
   })
@@ -163,7 +163,7 @@ describe('atomWithStorage (async)', () => {
 
     fireEvent.click(getByText('button'))
     await findByText('count: 31')
-    waitFor(() => {
+    await waitFor(() => {
       expect(asyncStorageData.count3).toBe(31)
     })
   })

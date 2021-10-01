@@ -75,6 +75,81 @@ it('does not show async stale result', async () => {
   expect(committed).toEqual([0, 2])
 })
 
+it('does not show async stale result on derived atom', async () => {
+  const countAtom = atom(0)
+  const asyncAlwaysNullAtom = atom(async (get) => {
+    get(countAtom)
+    await new Promise((r) => setTimeout(r, 10))
+    return null
+  })
+  const derivedAtom = atom((get) => get(asyncAlwaysNullAtom))
+
+  const DisplayAsyncValue = () => {
+    const [asyncValue] = useAtom(asyncAlwaysNullAtom)
+
+    return <div>async value: {JSON.stringify(asyncValue)}</div>
+  }
+
+  const DisplayDerivedValue = () => {
+    const [derivedValue] = useAtom(derivedAtom)
+    return <div>derived value: {JSON.stringify(derivedValue)}</div>
+  }
+
+  const Test = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <div>
+        <div>count: {count}</div>
+        <Suspense fallback={<div>loading async value</div>}>
+          <DisplayAsyncValue />
+        </Suspense>
+        <Suspense fallback={<div>loading derived value</div>}>
+          <DisplayDerivedValue />
+        </Suspense>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </div>
+    )
+  }
+
+  const { getByText, queryByText } = render(
+    <StrictMode>
+      <Provider>
+        <Test />
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('loading async value')
+    getByText('loading derived value')
+  })
+  await waitFor(() => {
+    expect(queryByText('loading async value')).toBeNull()
+    expect(queryByText('loading derived value')).toBeNull()
+  })
+  await waitFor(() => {
+    getByText('async value: null')
+    getByText('derived value: null')
+  })
+
+  fireEvent.click(getByText('button'))
+
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('loading async value')
+    getByText('loading derived value')
+  })
+  await waitFor(() => {
+    expect(queryByText('loading async value')).toBeNull()
+    expect(queryByText('loading derived value')).toBeNull()
+  })
+  await waitFor(() => {
+    getByText('async value: null')
+    getByText('derived value: null')
+  })
+})
+
 it('works with async get with extra deps', async () => {
   const countAtom = atom(0)
   const anotherAtom = atom(-1)

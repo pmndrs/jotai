@@ -1,17 +1,9 @@
 import { useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from '../src/index'
+import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
-
-const consoleError = console.error
-beforeEach(() => {
-  console.error = jest.fn()
-})
-afterEach(() => {
-  console.error = consoleError
-})
 
 it('simple scoped provider with scoped atom', async () => {
   const scope = Symbol()

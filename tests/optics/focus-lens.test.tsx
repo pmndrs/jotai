@@ -3,7 +3,7 @@ import * as rtl from '@testing-library/react'
 import * as O from 'optics-ts'
 import { atom, useAtom } from 'jotai'
 import type { SetStateAction } from 'jotai'
-import { focusAtom } from '../../src/optics/focusAtom'
+import { focusAtom } from 'jotai/optics'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()

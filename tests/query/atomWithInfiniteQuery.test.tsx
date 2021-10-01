@@ -1,7 +1,7 @@
-import React, { Suspense, useCallback } from 'react'
+import { Suspense, useCallback } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from '../../src/'
-import { atomWithInfiniteQuery } from '../../src/query/atomWithInfiniteQuery'
+import { atom, useAtom } from 'jotai'
+import { atomWithInfiniteQuery } from 'jotai/query'
 import { getTestProvider } from '../testUtils'
 import fakeFetch from './fakeFetch'
 

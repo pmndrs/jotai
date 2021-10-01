@@ -1,8 +1,8 @@
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from '../../src/index'
-import type { SetStateAction, WritableAtom } from '../../src/index'
-import { atomFamily, useUpdateAtom } from '../../src/utils'
+import { atom, useAtom } from 'jotai'
+import type { SetStateAction, WritableAtom } from 'jotai'
+import { atomFamily, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
