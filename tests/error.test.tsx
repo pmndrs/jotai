@@ -280,7 +280,7 @@ it('can throw an error in async write function', async () => {
     }
   )
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, dispatch] = useAtom(errorAtom)
     const onClick = async () => {
       try {

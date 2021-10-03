@@ -6,6 +6,14 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  return commitCountRef.current
+}
+
 it('selectAtom works as expected', async () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })
   const littleAtom = selectAtom(bigAtom, (v) => v.a)
@@ -58,14 +66,6 @@ it('do not update unless equality function says value has changed', async () => 
     (left, right) => JSON.stringify(left) === JSON.stringify(right)
   )
 
-  const useCommitCount = () => {
-    const rerenderCountRef = useRef(0)
-    useEffect(() => {
-      rerenderCountRef.current += 1
-    })
-    return rerenderCountRef.current
-  }
-
   const Parent = () => {
     const setValue = useUpdateAtom(bigAtom)
     return (
@@ -102,31 +102,31 @@ it('do not update unless equality function says value has changed', async () => 
   )
 
   await findByText('value: {"a":0}')
-  await findByText('commits: 0')
+  await findByText('commits: 1')
   fireEvent.click(getByText('copy'))
   await findByText('value: {"a":0}')
-  await findByText('commits: 0')
-
-  fireEvent.click(getByText('increment'))
-  await findByText('value: {"a":1}')
-  await findByText('commits: 1')
-  fireEvent.click(getByText('copy'))
-  await findByText('value: {"a":1}')
   await findByText('commits: 1')
 
   fireEvent.click(getByText('increment'))
-  await findByText('value: {"a":2}')
+  await findByText('value: {"a":1}')
   await findByText('commits: 2')
   fireEvent.click(getByText('copy'))
-  await findByText('value: {"a":2}')
+  await findByText('value: {"a":1}')
   await findByText('commits: 2')
 
   fireEvent.click(getByText('increment'))
-  await findByText('value: {"a":3}')
+  await findByText('value: {"a":2}')
   await findByText('commits: 3')
   fireEvent.click(getByText('copy'))
-  await findByText('value: {"a":3}')
+  await findByText('value: {"a":2}')
   await findByText('commits: 3')
+
+  fireEvent.click(getByText('increment'))
+  await findByText('value: {"a":3}')
+  await findByText('commits: 4')
+  fireEvent.click(getByText('copy'))
+  await findByText('value: {"a":3}')
+  await findByText('commits: 4')
 })
 
 it('useSelector with scope', async () => {

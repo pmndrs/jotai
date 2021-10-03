@@ -1,4 +1,4 @@
-import { FC, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useHydrateAtoms } from 'jotai/utils'
@@ -9,7 +9,7 @@ const Provider = getTestProvider()
 it('useHydrateAtoms should only hydrate on first render', async () => {
   const countAtom = atom(0)
 
-  const Counter: FC<{ initialCount: number }> = ({ initialCount }) => {
+  const Counter = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -41,14 +41,16 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
 it('useHydrateAtoms should not trigger unnessesary rerenders', async () => {
   const countAtom = atom(0)
 
-  const Counter: FC<{ initialCount: number }> = ({ initialCount }) => {
+  const Counter = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
-    const renderCount = useRef(0)
-    ++renderCount.current
+    const commitCount = useRef(1)
+    useEffect(() => {
+      ++commitCount.current
+    })
     return (
       <>
-        <div>renders: {renderCount.current}</div>
+        <div>commits: {commitCount.current}</div>
         <div>count: {countValue}</div>
         <button onClick={() => setCount((count) => count + 1)}>dispatch</button>
       </>
@@ -62,17 +64,17 @@ it('useHydrateAtoms should not trigger unnessesary rerenders', async () => {
   )
 
   await findByText('count: 42')
-  await findByText('renders: 1')
+  await findByText('commits: 1')
   fireEvent.click(getByText('dispatch'))
   await findByText('count: 43')
-  await findByText('renders: 2')
+  await findByText('commits: 2')
 })
 
 it('useHydrateAtoms should work with derived atoms', async () => {
   const countAtom = atom(0)
   const doubleAtom = atom((get) => get(countAtom) * 2)
 
-  const Counter: FC<{ initialCount: number }> = ({ initialCount }) => {
+  const Counter = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
     const [doubleCount] = useAtom(doubleAtom)
@@ -101,7 +103,7 @@ it('useHydrateAtoms should work with derived atoms', async () => {
 it('useHydrateAtoms can only restore an atom once', async () => {
   const countAtom = atom(0)
 
-  const Counter: FC<{ initialCount: number }> = ({ initialCount }) => {
+  const Counter = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -112,7 +114,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
       </>
     )
   }
-  const Counter2: FC<{ count: number }> = ({ count }) => {
+  const Counter2 = ({ count }: { count: number }) => {
     useHydrateAtoms([[countAtom, count]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -147,7 +149,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
 it('useHydrateAtoms can only restore an atom once', async () => {
   const countAtom = atom(0)
 
-  const Counter: FC<{ initialCount: number }> = ({ initialCount }) => {
+  const Counter = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -158,7 +160,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
       </>
     )
   }
-  const Counter2: FC<{ count: number }> = ({ count }) => {
+  const Counter2 = ({ count }: { count: number }) => {
     useHydrateAtoms([[countAtom, count]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -195,7 +197,7 @@ it('useHydrateAtoms should respect onMount', async () => {
   const onMountFn = jest.fn()
   countAtom.onMount = onMountFn
 
-  const Counter: FC<{ initialCount: number }> = ({ initialCount }) => {
+  const Counter = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue] = useAtom(countAtom)
 
@@ -215,7 +217,7 @@ it('useHydrateAtoms should let you hydrate an atom once per scope', async () => 
   const scope = Symbol()
   const countAtom = atom(0)
 
-  const Counter: FC<{ initialCount: number }> = ({ initialCount }) => {
+  const Counter = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -226,7 +228,7 @@ it('useHydrateAtoms should let you hydrate an atom once per scope', async () => 
       </>
     )
   }
-  const Counter2: FC<{ initialCount: number }> = ({ initialCount }) => {
+  const Counter2 = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]], scope)
     const [countValue, setCount] = useAtom(countAtom, scope)
 
