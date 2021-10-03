@@ -43,7 +43,10 @@ type Options = {
 // To overwrite a value that came from a promise you must do it via an immediately
 // resolving promise:
 // setStatusState({ ...state, status: Promise.resolve('newStatus') })
-export function atomWithProxy<Value extends object>(proxyObject: Value, options?: Options) {
+export function atomWithProxy<Value extends object>(
+  proxyObject: Value,
+  options?: Options
+) {
   const baseAtom = atom(snapshot(proxyObject))
   baseAtom.onMount = (setValue) => {
     const callback = () => {

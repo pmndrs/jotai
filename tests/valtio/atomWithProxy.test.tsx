@@ -1,7 +1,7 @@
-import { Suspense } from 'react'
+import { Suspense, useCallback, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot } from 'valtio/vanilla'
-import { useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 import { atomWithProxy } from 'jotai/valtio'
 import { getTestProvider } from '../testUtils'
 
@@ -129,4 +129,50 @@ it('state with a promise', async () => {
   await findByText('status: done')
   fireEvent.click(getByText('button'))
   await findByText('status: modified')
+})
+
+it('synchronous atomWithProxy and regular atom ', async () => {
+  let count = 0
+  const proxyState: { elements: Record<string, string> } = proxy({
+    elements: {},
+  })
+  const stateAtom = atomWithProxy(proxyState)
+  const selectedElementIdAtom = atom('')
+
+  const createElementAtom = atom(null, (_, set) => {
+    const id = String(count++)
+    set(selectedElementIdAtom, id)
+    proxyState.elements[id] = `element`
+  })
+
+  const Elements = () => {
+    const [state] = useAtom(stateAtom)
+    const [selected] = useAtom(selectedElementIdAtom)
+    const [, create] = useAtom(createElementAtom)
+
+    return (
+      <>
+        <span>
+          selected element:{' '}
+          {selected === '' ? 'none' : state.elements[selected]}
+        </span>
+        <button
+          onClick={() => {
+            create()
+          }}>
+          create and select element
+        </button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Elements />
+    </Provider>
+  )
+
+  await findByText('selected element: none')
+  fireEvent.click(getByText('create and select element'))
+  await findByText('selected element: element')
 })
