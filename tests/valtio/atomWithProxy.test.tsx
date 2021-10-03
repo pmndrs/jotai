@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useRef } from 'react'
+import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot } from 'valtio/vanilla'
 import { atom, useAtom } from 'jotai'
@@ -136,7 +136,7 @@ it('synchronous atomWithProxy and regular atom ', async () => {
   const proxyState: { elements: Record<string, string> } = proxy({
     elements: {},
   })
-  const stateAtom = atomWithProxy(proxyState)
+  const stateAtom = atomWithProxy(proxyState, { sync: true })
   const selectedElementIdAtom = atom('')
 
   const createElementAtom = atom(null, (_, set) => {
@@ -154,7 +154,11 @@ it('synchronous atomWithProxy and regular atom ', async () => {
       <>
         <span>
           selected element:{' '}
-          {selected === '' ? 'none' : state.elements[selected]}
+          {selected === ''
+            ? 'none'
+            : state.elements[selected] === undefined
+            ? 'undefined'
+            : 'defined'}
         </span>
         <button
           onClick={() => {
@@ -166,7 +170,7 @@ it('synchronous atomWithProxy and regular atom ', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  const { findByText, getByText, queryByText } = render(
     <Provider>
       <Elements />
     </Provider>
@@ -174,5 +178,7 @@ it('synchronous atomWithProxy and regular atom ', async () => {
 
   await findByText('selected element: none')
   fireEvent.click(getByText('create and select element'))
-  await findByText('selected element: element')
+  const undefinedSelection = queryByText('selected element: undefined')
+  expect(undefinedSelection).toBeNull()
+  await findByText('selected element: defined')
 })
