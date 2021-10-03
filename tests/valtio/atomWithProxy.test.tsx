@@ -170,7 +170,7 @@ it('synchronous atomWithProxy and regular atom ', async () => {
     )
   }
 
-  const { findByText, getByText, queryByText } = render(
+  const { findByText, getByText } = render(
     <Provider>
       <Elements />
     </Provider>
@@ -178,7 +178,5 @@ it('synchronous atomWithProxy and regular atom ', async () => {
 
   await findByText('selected element: none')
   fireEvent.click(getByText('create and select element'))
-  const undefinedSelection = queryByText('selected element: undefined')
-  expect(undefinedSelection).toBeNull()
-  await findByText('selected element: defined')
+  getByText('selected element: defined') // synchronous
 })
