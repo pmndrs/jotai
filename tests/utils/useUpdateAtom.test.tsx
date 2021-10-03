@@ -7,12 +7,12 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
-const useRerenderCount = () => {
-  const rerenderCountRef = useRef(0)
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
   useEffect(() => {
-    rerenderCountRef.current += 1
+    commitCountRef.current += 1
   })
-  return rerenderCountRef.current
+  return commitCountRef.current
 }
 
 it('useUpdateAtom does not trigger rerender in component', async () => {
@@ -20,23 +20,23 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
 
   const Displayer = () => {
     const [count] = useAtom(countAtom)
-    const rerenders = useRerenderCount()
+    const commits = useCommitCount()
     return (
       <div>
-        count: {count}, rerenders: {rerenders}
+        count: {count}, commits: {commits}
       </div>
     )
   }
 
   const Updater = () => {
     const setCount = useUpdateAtom(countAtom)
-    const rerenders = useRerenderCount()
+    const commits = useCommitCount()
     return (
       <>
         <button onClick={() => setCount((value) => value + 1)}>
           increment
         </button>
-        <div>updater rerenders: {rerenders}</div>
+        <div>updater commits: {commits}</div>
       </>
     )
   }
@@ -59,23 +59,23 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
   )
 
   await waitFor(() => {
-    getByText('count: 0, rerenders: 0')
-    getByText('updater rerenders: 0')
+    getByText('count: 0, commits: 1')
+    getByText('updater commits: 1')
   })
   fireEvent.click(getByText('increment'))
   await waitFor(() => {
-    getByText('count: 1, rerenders: 1')
-    getByText('updater rerenders: 0')
+    getByText('count: 1, commits: 2')
+    getByText('updater commits: 1')
   })
   fireEvent.click(getByText('increment'))
   await waitFor(() => {
-    getByText('count: 2, rerenders: 2')
-    getByText('updater rerenders: 0')
+    getByText('count: 2, commits: 3')
+    getByText('updater commits: 1')
   })
   fireEvent.click(getByText('increment'))
   await waitFor(() => {
-    getByText('count: 3, rerenders: 3')
-    getByText('updater rerenders: 0')
+    getByText('count: 3, commits: 4')
+    getByText('updater commits: 1')
   })
 })
 
