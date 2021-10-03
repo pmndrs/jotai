@@ -34,13 +34,15 @@ jobs:
         react:
           - 16.8.0
           - 17.0.0
-          - 18.0.0-alpha-7d38e4fd8-20210930
-          - 0.0.0-experimental-7d38e4fd8-20210930
+          - 18.0.0-alpha-bdd6d5064-20211001
+          - 0.0.0-experimental-bdd6d5064-20211001
         mode: [withProvider, withoutProvider]
         testing: [default, alpha]
         exclude:
           - { react: 16.8.0, testing: alpha }
           - { react: 17.0.0, testing: alpha }
+          - { react: 18.0.0-alpha-bdd6d5064-20211001, testing: default } # suspense doesn't work?
+          - { react: 0.0.0-experimental-bdd6d5064-20211001, testing: default } # suspense doesn't work?
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
