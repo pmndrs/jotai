@@ -47,7 +47,7 @@ it('does not show async stale result', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Counter />
@@ -56,7 +56,7 @@ it('does not show async stale result', async () => {
           <DelayedCounter />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('loading')
@@ -329,13 +329,13 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('count: 1')
@@ -380,13 +380,13 @@ it('updates an async atom in child useEffect on remount', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('count: 1')
@@ -426,13 +426,13 @@ it('async get and useEffect on parent', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('loading')
@@ -471,13 +471,13 @@ it('async get with another dep and useEffect on parent', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('loading')
@@ -638,13 +638,13 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('loading')

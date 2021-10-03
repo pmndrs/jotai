@@ -795,11 +795,7 @@ it('changes atom from parent (#273, #275)', async () => {
   const Item = ({ id }: { id: string }) => {
     const a = useMemo(() => (id === 'a' ? atomA : atomB), [id])
     const [atomValue] = useAtom(a)
-    return (
-      <div>
-        commits: {useCommitCount()}, id: {atomValue.id}
-      </div>
-    )
+    return <div>id: {atomValue.id}</div>
   }
 
   const App = () => {
@@ -819,16 +815,16 @@ it('changes atom from parent (#273, #275)', async () => {
     </Provider>
   )
 
-  await findByText('commits: 1, id: a')
+  await findByText('id: a')
 
   fireEvent.click(getByText('atom a'))
-  await findByText('commits: 1, id: a')
+  await findByText('id: a')
 
   fireEvent.click(getByText('atom b'))
-  await findByText('commits: 2, id: b')
+  await findByText('id: b')
 
   fireEvent.click(getByText('atom a'))
-  await findByText('commits: 3, id: a')
+  await findByText('id: a')
 })
 
 it('should be able to use a double derived atom twice and useEffect (#373)', async () => {
