@@ -132,15 +132,15 @@ it('state with a promise', async () => {
 })
 
 it('synchronous atomWithProxy and regular atom ', async () => {
-  let count = 0
   const proxyState: { elements: Record<string, string> } = proxy({
     elements: {},
   })
+
   const stateAtom = atomWithProxy(proxyState, { sync: true })
   const selectedElementIdAtom = atom('')
 
   const createElementAtom = atom(null, (_, set) => {
-    const id = String(count++)
+    const id = '123'
     set(selectedElementIdAtom, id)
     proxyState.elements[id] = `element`
   })
@@ -154,11 +154,7 @@ it('synchronous atomWithProxy and regular atom ', async () => {
       <>
         <span>
           selected element:{' '}
-          {selected === ''
-            ? 'none'
-            : state.elements[selected] === undefined
-            ? 'undefined'
-            : 'defined'}
+          {selected === '' ? 'none' : state.elements[selected]}
         </span>
         <button
           onClick={() => {
@@ -178,5 +174,5 @@ it('synchronous atomWithProxy and regular atom ', async () => {
 
   await findByText('selected element: none')
   fireEvent.click(getByText('create and select element'))
-  getByText('selected element: defined') // synchronous
+  getByText('selected element: element') // synchronous
 })
