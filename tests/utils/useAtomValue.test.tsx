@@ -1,7 +1,6 @@
-import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom } from '../../src/index'
-import { useAtomValue, useUpdateAtom } from '../../src/utils'
+import { atom } from 'jotai'
+import { useAtomValue, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -9,7 +8,7 @@ const Provider = getTestProvider()
 it('useAtomValue basic test', async () => {
   const countAtom = atom(0)
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const count = useAtomValue(countAtom)
     const setCount = useUpdateAtom(countAtom)
 

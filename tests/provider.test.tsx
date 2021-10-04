@@ -1,6 +1,5 @@
-import React from 'react'
 import { render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
+import { Provider, atom, useAtom } from 'jotai'
 
 // No PROVIDER_LESS_MODE test for this file, obviously.
 
@@ -8,7 +7,7 @@ it('uses initial values from provider', async () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
 
-  const Display: React.FC = () => {
+  const Display = () => {
     const [count] = useAtom(countAtom)
     const [pet] = useAtom(petAtom)
 
@@ -40,7 +39,7 @@ it('only uses initial value from provider for specific atom', async () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
 
-  const Display: React.FC = () => {
+  const Display = () => {
     const [count] = useAtom(countAtom)
     const [pet] = useAtom(petAtom)
 

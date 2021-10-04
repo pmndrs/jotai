@@ -1,10 +1,11 @@
 /* eslint-disable import/named */
-import { produce, Draft } from 'immer'
-import { PrimitiveAtom, WritableAtom, atom } from 'jotai'
+import { produce } from 'immer'
+import type { Draft } from 'immer'
+import { atom } from 'jotai'
+import type { PrimitiveAtom, WritableAtom } from 'jotai'
+import { createMemoizeAtom } from '../utils/weakCache'
 
-import { getWeakCacheItem, setWeakCacheItem } from '../utils/weakCache'
-
-const withImmerCache = new WeakMap()
+const memoizeAtom = createMemoizeAtom()
 
 export function withImmer<Value>(
   anAtom: PrimitiveAtom<Value>
@@ -15,25 +16,20 @@ export function withImmer<Value>(
 ): WritableAtom<Value, Value | ((draft: Draft<Value>) => void)>
 
 export function withImmer<Value>(anAtom: WritableAtom<Value, Value>) {
-  const deps: object[] = [anAtom]
-  const cachedAtom = getWeakCacheItem(withImmerCache, deps)
-  if (cachedAtom) {
-    return cachedAtom
-  }
-  const derivedAtom = atom(
-    (get) => get(anAtom),
-    (get, set, fn: Value | ((draft: Draft<Value>) => void)) =>
-      set(
-        anAtom,
-        produce(
-          get(anAtom),
-          typeof fn === 'function'
-            ? (fn as (draft: Draft<Value>) => void)
-            : () => fn
+  return memoizeAtom(() => {
+    const derivedAtom = atom(
+      (get) => get(anAtom),
+      (get, set, fn: Value | ((draft: Draft<Value>) => void)) =>
+        set(
+          anAtom,
+          produce(
+            get(anAtom),
+            typeof fn === 'function'
+              ? (fn as (draft: Draft<Value>) => void)
+              : () => fn
+          )
         )
-      )
-  )
-  derivedAtom.scope = anAtom.scope
-  setWeakCacheItem(withImmerCache, deps, derivedAtom)
-  return derivedAtom
+    )
+    return derivedAtom
+  }, [anAtom])
 }

@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react'
-
+import { useEffect, useRef } from 'react'
+import type { ChangeEvent } from 'react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
-import { render, fireEvent, waitFor } from '@testing-library/react'
+import { splitAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
-import { splitAtom } from '../../src/utils'
 
 const Provider = getTestProvider()
 
@@ -32,7 +32,7 @@ it('no unneccesary updates when updating atoms', async () => {
     { task: 'get dragon food', checked: false },
   ])
 
-  const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
+  const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
     const [atoms, remove] = useAtom(splitAtom(listAtom))
     return (
       <>
@@ -48,10 +48,12 @@ it('no unneccesary updates when updating atoms', async () => {
     )
   }
 
-  const TaskItem: React.FC<{
+  const TaskItem = ({
+    itemAtom,
+  }: {
     itemAtom: PrimitiveAtom<TodoItem>
     onRemove: () => void
-  }> = ({ itemAtom }) => {
+  }) => {
     const [value, onChange] = useAtom(itemAtom)
     const toggle = () =>
       onChange((value) => ({ ...value, checked: !value.checked }))
@@ -116,7 +118,7 @@ it('removing atoms', async () => {
     { task: 'help nana', checked: false },
   ])
 
-  const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
+  const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
     const [atoms, remove] = useAtom(splitAtom(listAtom))
     return (
       <>
@@ -131,10 +133,13 @@ it('removing atoms', async () => {
     )
   }
 
-  const TaskItem: React.FC<{
+  const TaskItem = ({
+    itemAtom,
+    onRemove,
+  }: {
     itemAtom: PrimitiveAtom<TodoItem>
     onRemove: () => void
-  }> = ({ itemAtom, onRemove }) => {
+  }) => {
     const [value] = useAtom(itemAtom)
     return (
       <li>
@@ -189,7 +194,7 @@ it('read-only array atom', async () => {
     { task: 'get dragon food', checked: false },
   ])
 
-  const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
+  const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
     const [atoms] = useAtom(splitAtom(listAtom))
     return (
       <>
@@ -200,7 +205,7 @@ it('read-only array atom', async () => {
     )
   }
 
-  const TaskItem: React.FC<{ itemAtom: Atom<TodoItem> }> = ({ itemAtom }) => {
+  const TaskItem = ({ itemAtom }: { itemAtom: Atom<TodoItem> }) => {
     const [value] = useAtom(itemAtom)
     return (
       <li>
@@ -236,10 +241,9 @@ it('handles scope', async () => {
     { task: 'get cat food', checked: false },
     { task: 'get dragon food', checked: false },
   ])
-  todosAtom.scope = scope
 
-  const TaskList: React.FC<{ listAtom: typeof todosAtom }> = ({ listAtom }) => {
-    const [atoms] = useAtom(splitAtom(listAtom))
+  const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
+    const [atoms] = useAtom(splitAtom(listAtom), scope)
     return (
       <>
         {atoms.map((anAtom, index) => (
@@ -249,10 +253,8 @@ it('handles scope', async () => {
     )
   }
 
-  const TaskItem: React.FC<{
-    itemAtom: PrimitiveAtom<TodoItem>
-  }> = ({ itemAtom }) => {
-    const [value, onChange] = useAtom(itemAtom)
+  const TaskItem = ({ itemAtom }: { itemAtom: PrimitiveAtom<TodoItem> }) => {
+    const [value, onChange] = useAtom(itemAtom, scope)
     const toggle = () =>
       onChange((value) => ({ ...value, checked: !value.checked }))
     return (
@@ -300,7 +302,7 @@ it('no error on wrong atom configs (fix 510)', async () => {
   const filteredAtomsAtom = splitAtom(filteredAtom, (num) => num)
 
   function useCachedAtoms<T>(atoms: T[]) {
-    const prevAtoms = React.useRef<T[]>(atoms)
+    const prevAtoms = useRef<T[]>(atoms)
     return prevAtoms.current
   }
 
@@ -308,7 +310,7 @@ it('no error on wrong atom configs (fix 510)', async () => {
     atom: Atom<number>
   }
 
-  const NumItem: React.FC<NumItemProps> = ({ atom }) => {
+  const NumItem = ({ atom }: NumItemProps) => {
     const [readOnlyItem] = useAtom(atom)
     return <>{readOnlyItem}</>
   }
@@ -316,7 +318,7 @@ it('no error on wrong atom configs (fix 510)', async () => {
   function Filter() {
     const [filter, set] = useAtom(filterAtom)
 
-    const handlechange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlechange = (e: ChangeEvent<HTMLInputElement>) => {
       set(e.target.value)
     }
 
@@ -341,7 +343,7 @@ it('no error on wrong atom configs (fix 510)', async () => {
     )
   }
 
-  const Filtered: React.FC = () => {
+  const Filtered = () => {
     const [todos] = useAtom(filteredAtomsAtom)
     const cachedAtoms = useCachedAtoms(todos)
 

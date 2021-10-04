@@ -1,6 +1,6 @@
-import React, { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from '../src/index'
+import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
@@ -10,7 +10,7 @@ it('one atom, one effect', async () => {
   const onMountFn = jest.fn()
   countAtom.onMount = onMountFn
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -42,7 +42,7 @@ it('two atoms, one each', async () => {
   countAtom.onMount = onMountFn
   countAtom2.onMount = onMountFn2
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const [count2, setCount2] = useAtom(countAtom2)
     return (
@@ -89,7 +89,7 @@ it('one derived atom, one onMount', async () => {
   const onMountFn = jest.fn()
   countAtom.onMount = onMountFn
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom2)
     return (
       <>
@@ -115,7 +115,7 @@ it('mount/unmount test', async () => {
   const onMountFn = jest.fn(() => onUnMountFn)
   countAtom.onMount = onMountFn
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
     return (
       <>
@@ -124,8 +124,8 @@ it('mount/unmount test', async () => {
     )
   }
 
-  const Display: React.FC = () => {
-    const [display, setDisplay] = React.useState(true)
+  const Display = () => {
+    const [display, setDisplay] = useState(true)
     return (
       <>
         {display ? <Counter /> : null}
@@ -167,7 +167,7 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   const derivedOnMountFn = jest.fn(() => derivedOnUnMountFn)
   derivedAtom.onMount = derivedOnMountFn
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(derivedAtom)
     return (
       <>
@@ -176,8 +176,8 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
     )
   }
 
-  const Display: React.FC = () => {
-    const [display, setDisplay] = React.useState(true)
+  const Display = () => {
+    const [display, setDisplay] = useState(true)
     return (
       <>
         {display ? <Counter /> : null}
@@ -233,7 +233,7 @@ it('mount/unMount order', async () => {
   })
   derivedAtom.onMount = derivedOnMountFn
 
-  const Counter2: React.FC = () => {
+  const Counter2 = () => {
     const [count] = useAtom(derivedAtom)
     return (
       <>
@@ -241,9 +241,9 @@ it('mount/unMount order', async () => {
       </>
     )
   }
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
-    const [display, setDisplay] = React.useState(false)
+    const [display, setDisplay] = useState(false)
     return (
       <>
         <div>count: {count}</div>
@@ -253,8 +253,8 @@ it('mount/unMount order', async () => {
     )
   }
 
-  const Display: React.FC = () => {
-    const [display, setDisplay] = React.useState(false)
+  const Display = () => {
+    const [display, setDisplay] = useState(false)
     return (
       <>
         {display ? <Counter /> : null}
@@ -308,7 +308,7 @@ it('mount/unmount test with async atom', async () => {
   const onMountFn = jest.fn(() => onUnMountFn)
   countAtom.onMount = onMountFn
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
     return (
       <>
@@ -317,8 +317,8 @@ it('mount/unmount test with async atom', async () => {
     )
   }
 
-  const Display: React.FC = () => {
-    const [display, setDisplay] = React.useState(true)
+  const Display = () => {
+    const [display, setDisplay] = useState(true)
     return (
       <>
         {display ? <Counter /> : null}
@@ -366,7 +366,7 @@ it('subscription usage test', async () => {
     return () => store.listeners.delete(callback)
   }
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count] = useAtom(countAtom)
     return (
       <>
@@ -375,8 +375,8 @@ it('subscription usage test', async () => {
     )
   }
 
-  const Display: React.FC = () => {
-    const [display, setDisplay] = React.useState(true)
+  const Display = () => {
+    const [display, setDisplay] = useState(true)
     return (
       <>
         {display ? <Counter /> : 'N/A'}
@@ -442,7 +442,7 @@ it('subscription in base atom test', async () => {
     }
   )
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, add] = useAtom(derivedAtom)
     return (
       <>
@@ -496,7 +496,7 @@ it('create atom with onMount in async get', async () => {
     }
   )
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, add] = useAtom(derivedAtom)
     return (
       <>

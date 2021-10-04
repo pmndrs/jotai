@@ -1,5 +1,13 @@
 {
   "packages": ["dist"],
-  "sandboxes": ["new", "react-typescript-react-ts"],
+  "sandboxes": [
+    "new",
+    "react-typescript-react-ts",
+    "simple-react-browserify-x9yni",
+    "simple-snowpack-react-o1gmx",
+    "next-js-uo1h0",
+    "next-js-with-custom-babel-config-komw9",
+    "react-with-custom-babel-config-2dpyh"
+  ],
   "node": "12"
 }

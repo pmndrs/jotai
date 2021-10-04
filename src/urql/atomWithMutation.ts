@@ -1,12 +1,12 @@
-import {
+import type {
   Client,
-  TypedDocumentNode,
   OperationContext,
   OperationResult,
+  TypedDocumentNode,
 } from '@urql/core'
 import { atom } from 'jotai'
 import type { Getter } from 'jotai'
-import { getClientAtom } from './clientAtom'
+import { clientAtom } from './clientAtom'
 
 type MutationAction<Data, Variables extends object> = {
   variables?: Variables
@@ -16,7 +16,7 @@ type MutationAction<Data, Variables extends object> = {
 
 export function atomWithMutation<Data, Variables extends object>(
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables> | string,
-  getClient: (get: Getter) => Client = (get) => get(getClientAtom)
+  getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
   const operationResultAtom = atom<
     OperationResult<Data, Variables> | Promise<OperationResult<Data, Variables>>

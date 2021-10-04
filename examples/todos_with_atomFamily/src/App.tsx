@@ -1,10 +1,10 @@
-import { FC, FormEvent } from 'react'
-import { Provider, atom, useAtom } from 'jotai'
-import { atomFamily } from 'jotai/utils'
-import { nanoid } from 'nanoid'
-import { Radio } from 'antd'
+import type { FormEvent } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { a, useTransition } from '@react-spring/web'
+import { Radio } from 'antd'
+import { Provider, atom, useAtom } from 'jotai'
+import { atomFamily, useUpdateAtom } from 'jotai/utils'
+import { nanoid } from 'nanoid'
 
 type Param = { id: string; title?: string }
 const todoAtomFamily = atomFamily(
@@ -24,10 +24,13 @@ const filteredAtom = atom((get) => {
   else return todos.filter((id) => !get(todoAtomFamily({ id })).completed)
 })
 
-const TodoItem: FC<{
+const TodoItem = ({
+  id,
+  remove,
+}: {
   id: string
   remove: (id: string) => void
-}> = ({ id, remove }) => {
+}) => {
   const [item, setItem] = useAtom(todoAtomFamily({ id }))
   const toggleCompleted = () => setItem({ ...item, completed: !item.completed })
   return (
@@ -45,7 +48,7 @@ const TodoItem: FC<{
   )
 }
 
-const Filter: FC = () => {
+const Filter = () => {
   const [filter, set] = useAtom(filterAtom)
   return (
     <Radio.Group onChange={(e) => set(e.target.value)} value={filter}>
@@ -56,9 +59,7 @@ const Filter: FC = () => {
   )
 }
 
-const Filtered: FC<{
-  remove: (id: string) => void
-}> = ({ remove }) => {
+const Filtered = ({ remove }: { remove: (id: string) => void }) => {
   const [todos] = useAtom(filteredAtom)
   const transitions = useTransition(todos, {
     keys: (id: string) => id,
@@ -74,7 +75,9 @@ const Filtered: FC<{
 }
 
 const TodoList = () => {
-  const [, setTodos] = useAtom(todosAtom)
+  // Use `useUpdateAtom` to avoid re-render
+  // const [, setTodos] = useAtom(todosAtom)
+  const setTodos = useUpdateAtom(todosAtom)
   const remove = (id: string) => {
     setTodos((prev) => prev.filter((item) => item !== id))
     todoAtomFamily.remove({ id })
@@ -125,7 +128,7 @@ const serializeAtom = atom<
   }
 })
 
-const Persist: FC = () => {
+const Persist = () => {
   const [, dispatch] = useAtom(serializeAtom)
   const save = () => {
     dispatch({

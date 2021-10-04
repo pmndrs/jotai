@@ -1,10 +1,13 @@
-import { useContext, useEffect, useCallback, useDebugValue } from 'react'
-
-import { getStoreContext } from './contexts'
-import { readAtom, subscribeAtom } from './vanilla'
-import type { State } from './vanilla'
-import type { Atom, WritableAtom, SetAtom } from './atom'
-import { useMutableSource } from './useMutableSource'
+import {
+  useCallback,
+  useContext,
+  useDebugValue,
+  useEffect,
+  useReducer,
+} from 'react'
+import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
+import { getScopeContext } from './contexts'
+import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM, WRITE_ATOM } from './store'
 
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
@@ -12,70 +15,84 @@ const isWritable = <Value, Update>(
   !!(atom as WritableAtom<Value, Update>).write
 
 export function useAtom<Value, Update>(
-  atom: WritableAtom<Value | Promise<Value>, Update>
+  atom: WritableAtom<Value | Promise<Value>, Update>,
+  scope?: Scope
 ): [Value, SetAtom<Update>]
 
 export function useAtom<Value, Update>(
-  atom: WritableAtom<Promise<Value>, Update>
+  atom: WritableAtom<Promise<Value>, Update>,
+  scope?: Scope
 ): [Value, SetAtom<Update>]
 
 export function useAtom<Value, Update>(
-  atom: WritableAtom<Value, Update>
+  atom: WritableAtom<Value, Update>,
+  scope?: Scope
 ): [Value, SetAtom<Update>]
 
 export function useAtom<Value>(
-  atom: Atom<Value | Promise<Value>>
+  atom: Atom<Value | Promise<Value>>,
+  scope?: Scope
 ): [Value, never]
 
-export function useAtom<Value>(atom: Atom<Promise<Value>>): [Value, never]
+export function useAtom<Value>(
+  atom: Atom<Promise<Value>>,
+  scope?: Scope
+): [Value, never]
 
-export function useAtom<Value>(atom: Atom<Value>): [Value, never]
+export function useAtom<Value>(atom: Atom<Value>, scope?: Scope): [Value, never]
 
 export function useAtom<Value, Update>(
-  atom: Atom<Value> | WritableAtom<Value, Update>
+  atom: Atom<Value> | WritableAtom<Value, Update>,
+  scope?: Scope
 ) {
-  const getAtomValue = useCallback(
-    (state: State) => {
-      const atomState = readAtom(state, atom)
-      if (atomState.e) {
-        throw atomState.e // read error
-      }
-      if (atomState.p) {
-        throw atomState.p // read promise
-      }
-      if (atomState.w) {
-        throw atomState.w // write promise
-      }
-      if ('v' in atomState) {
-        return atomState.v
-      }
-      throw new Error('no atom value')
-    },
-    [atom]
-  )
+  if ('scope' in atom) {
+    console.warn(
+      'atom.scope is deprecated. Please do useAtom(atom, scope) instead.'
+    )
+    scope = (atom as { scope: Scope }).scope
+  }
 
-  const subscribe = useCallback(
-    (state: State, callback: () => void) =>
-      subscribeAtom(state, atom, callback),
-    [atom]
-  )
+  const ScopeContext = getScopeContext(scope)
+  const store = useContext(ScopeContext).s
 
-  const StoreContext = getStoreContext(atom.scope)
-  const [mutableSource, updateAtom, commitCallback] = useContext(StoreContext)
-  const value: Value = useMutableSource(mutableSource, getAtomValue, subscribe)
+  const getAtomValue = useCallback(() => {
+    const atomState = store[READ_ATOM](atom)
+    if ('e' in atomState) {
+      throw atomState.e // read error
+    }
+    if (atomState.p) {
+      throw atomState.p // read promise
+    }
+    if (atomState.w) {
+      throw atomState.w // write promise
+    }
+    if ('v' in atomState) {
+      return atomState.v as Value
+    }
+    throw new Error('no atom value')
+  }, [store, atom])
+
+  const [value, forceUpdate] = useReducer(getAtomValue, undefined, getAtomValue)
+
   useEffect(() => {
-    commitCallback()
+    const unsubscribe = store[SUBSCRIBE_ATOM](atom, forceUpdate)
+    forceUpdate()
+    return unsubscribe
+  }, [store, atom])
+
+  useEffect(() => {
+    store[COMMIT_ATOM](atom)
   })
 
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        updateAtom(atom, update)
+        return store[WRITE_ATOM](atom, update)
       } else {
         throw new Error('not writable atom')
       }
     },
-    [updateAtom, atom]
+    [store, atom]
   )
 
   useDebugValue(value)

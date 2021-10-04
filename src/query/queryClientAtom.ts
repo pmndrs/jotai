@@ -1,8 +1,4 @@
-import { atom } from 'jotai'
 import { QueryClient } from 'react-query'
+import { atom } from 'jotai'
 
-export const queryClientAtom = atom<QueryClient | null>(null)
-
-export const getQueryClientAtom = atom(
-  (get) => get(queryClientAtom) || new QueryClient()
-)
+export const queryClientAtom = atom(new QueryClient())

@@ -1,17 +1,18 @@
 import { useCallback, useContext } from 'react'
-import { SECRET_INTERNAL_getStoreContext as getStoreContext } from 'jotai'
+import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { WritableAtom } from 'jotai'
-
-import type { SetAtom } from '../core/atom'
+import type { Scope, SetAtom } from '../core/atom'
+import { WRITE_ATOM } from '../core/store'
 
 export function useUpdateAtom<Value, Update>(
-  anAtom: WritableAtom<Value, Update>
+  anAtom: WritableAtom<Value, Update>,
+  scope?: Scope
 ) {
-  const StoreContext = getStoreContext(anAtom.scope)
-  const [, updateAtom] = useContext(StoreContext)
+  const ScopeContext = getScopeContext(scope)
+  const store = useContext(ScopeContext).s
   const setAtom = useCallback(
-    (update: Update) => updateAtom(anAtom, update),
-    [updateAtom, anAtom]
+    (update: Update) => store[WRITE_ATOM](anAtom, update),
+    [store, anAtom]
   )
   return setAtom as SetAtom<Update>
 }

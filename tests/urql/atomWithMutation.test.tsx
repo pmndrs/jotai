@@ -1,9 +1,9 @@
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
+import type { Client } from '@urql/core'
 import { delay, fromValue, pipe, take, toPromise } from 'wonka'
-import { Client } from '@urql/core'
-import { atom, useAtom } from '../../src/'
-import { atomWithMutation } from '../../src/urql'
+import { atom, useAtom } from 'jotai'
+import { atomWithMutation } from 'jotai/urql'
 import { getTestProvider } from '../testUtils'
 
 const withPromise = (source$: any) => {
@@ -26,7 +26,7 @@ it('mutation basic test', async () => {
     set(countAtom, {})
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [{ data }] = useAtom(countAtom)
     return (
       <>
@@ -35,7 +35,7 @@ it('mutation basic test', async () => {
     )
   }
 
-  const Controls: React.FC = () => {
+  const Controls = () => {
     const [, mutate] = useAtom(mutateAtom)
     return <button onClick={() => mutate()}>mutate</button>
   }

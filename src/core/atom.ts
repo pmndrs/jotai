@@ -15,8 +15,11 @@ type WriteGetter = Getter & {
 }
 
 type Setter = {
-  <Value>(atom: WritableAtom<Value, undefined>): void
-  <Value, Update>(atom: WritableAtom<Value, Update>, update: Update): void
+  <Value>(atom: WritableAtom<Value, undefined>): void | Promise<void>
+  <Value, Update>(
+    atom: WritableAtom<Value, Update>,
+    update: Update
+  ): void | Promise<void>
 }
 
 type Read<Value> = (get: Getter) => Value | Promise<Value>
@@ -35,8 +38,8 @@ export type Scope = symbol | string | number
 
 // Are there better typings?
 export type SetAtom<Update> = undefined extends Update
-  ? (update?: Update) => void
-  : (update: Update) => void
+  ? (update?: Update) => void | Promise<void>
+  : (update: Update) => void | Promise<void>
 
 type OnUnmount = () => void
 type OnMount<Update> = <S extends SetAtom<Update>>(
@@ -46,6 +49,9 @@ type OnMount<Update> = <S extends SetAtom<Update>>(
 export type Atom<Value> = {
   toString: () => string
   debugLabel?: string
+  /**
+   * @deprecated Instead use `useAtom(atom, scope)`
+   */
   scope?: Scope
   read: Read<Value>
 }

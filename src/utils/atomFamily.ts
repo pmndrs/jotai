@@ -1,4 +1,4 @@
-import { Atom, WritableAtom } from 'jotai'
+import type { Atom, WritableAtom } from 'jotai'
 
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 

@@ -1,5 +1,4 @@
 import { atom, useAtom } from 'jotai'
-
 // @ts-ignore
 import PrismCode from 'react-prism'
 import 'prismjs'

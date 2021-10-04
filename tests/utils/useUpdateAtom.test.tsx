@@ -1,46 +1,47 @@
-import React, { StrictMode, useEffect, useRef } from 'react'
+import { StrictMode, useEffect, useRef } from 'react'
+import type { PropsWithChildren } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from '../../src/index'
-import { useUpdateAtom } from '../../src/utils'
+import { atom, useAtom } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
-const useRerenderCount = () => {
-  const rerenderCountRef = useRef(0)
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
   useEffect(() => {
-    rerenderCountRef.current += 1
+    commitCountRef.current += 1
   })
-  return rerenderCountRef.current
+  return commitCountRef.current
 }
 
 it('useUpdateAtom does not trigger rerender in component', async () => {
   const countAtom = atom(0)
 
-  const Displayer: React.FC = () => {
+  const Displayer = () => {
     const [count] = useAtom(countAtom)
-    const rerenders = useRerenderCount()
+    const commits = useCommitCount()
     return (
       <div>
-        count: {count}, rerenders: {rerenders}
+        count: {count}, commits: {commits}
       </div>
     )
   }
 
-  const Updater: React.FC = () => {
+  const Updater = () => {
     const setCount = useUpdateAtom(countAtom)
-    const rerenders = useRerenderCount()
+    const commits = useCommitCount()
     return (
       <>
         <button onClick={() => setCount((value) => value + 1)}>
           increment
         </button>
-        <div>updater rerenders: {rerenders}</div>
+        <div>updater commits: {commits}</div>
       </>
     )
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     return (
       <>
         <Displayer />
@@ -58,44 +59,43 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
   )
 
   await waitFor(() => {
-    getByText('count: 0, rerenders: 0')
-    getByText('updater rerenders: 0')
+    getByText('count: 0, commits: 1')
+    getByText('updater commits: 1')
   })
   fireEvent.click(getByText('increment'))
   await waitFor(() => {
-    getByText('count: 1, rerenders: 1')
-    getByText('updater rerenders: 0')
+    getByText('count: 1, commits: 2')
+    getByText('updater commits: 1')
   })
   fireEvent.click(getByText('increment'))
   await waitFor(() => {
-    getByText('count: 2, rerenders: 2')
-    getByText('updater rerenders: 0')
+    getByText('count: 2, commits: 3')
+    getByText('updater commits: 1')
   })
   fireEvent.click(getByText('increment'))
   await waitFor(() => {
-    getByText('count: 3, rerenders: 3')
-    getByText('updater rerenders: 0')
+    getByText('count: 3, commits: 4')
+    getByText('updater commits: 1')
   })
 })
 
 it('useUpdateAtom with scope', async () => {
   const scope = Symbol()
   const countAtom = atom(0)
-  countAtom.scope = scope
 
-  const Displayer: React.FC = () => {
-    const [count] = useAtom(countAtom)
+  const Displayer = () => {
+    const [count] = useAtom(countAtom, scope)
     return <div>count: {count}</div>
   }
 
-  const Updater: React.FC = () => {
-    const setCount = useUpdateAtom(countAtom)
+  const Updater = () => {
+    const setCount = useUpdateAtom(countAtom, scope)
     return (
       <button onClick={() => setCount((value) => value + 1)}>increment</button>
     )
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     return (
       <>
         <Displayer />
@@ -127,21 +127,21 @@ it('useUpdateAtom with write without an argument', async () => {
     set(countAtom, get(countAtom) + 1)
   )
 
-  const Button: React.FC<{ cb: () => void }> = ({ cb, children }) => (
+  const Button = ({ cb, children }: PropsWithChildren<{ cb: () => void }>) => (
     <button onClick={cb}>{children}</button>
   )
 
-  const Displayer: React.FC = () => {
+  const Displayer = () => {
     const [count] = useAtom(countAtom)
     return <div>count: {count}</div>
   }
 
-  const Updater: React.FC = () => {
+  const Updater = () => {
     const setCount = useUpdateAtom(incrementCountAtom)
     return <Button cb={setCount}>increment</Button>
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     return (
       <>
         <Displayer />

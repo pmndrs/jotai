@@ -1,7 +1,7 @@
-import React, { StrictMode, Suspense } from 'react'
+import { Component, StrictMode, Suspense, useEffect } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from '../../src/index'
-import { waitForAll } from '../../src/utils'
+import { atom, useAtom } from 'jotai'
+import { atomFamily, useUpdateAtom, waitForAll } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -20,7 +20,7 @@ afterEach(() => {
   console.error = consoleError
 })
 
-class ErrorBoundary extends React.Component<
+class ErrorBoundary extends Component<
   { message?: string },
   { hasError: boolean }
 > {
@@ -64,7 +64,7 @@ it('waits for two async atoms', async () => {
     return 'a'
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [[num, str]] = useAtom(
       waitForAll([asyncAtom, anotherAsyncAtom] as const)
     )
@@ -130,7 +130,7 @@ it('can use named atoms in derived atom', async () => {
     return { num: num * 2, str: str.toUpperCase() }
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [{ num, str }] = useAtom(combinedWaitingAtom)
     return (
       <div>
@@ -193,7 +193,7 @@ it('can handle errors', async () => {
     )
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [{ num, error }] = useAtom(combinedWaitingAtom)
     return (
       <>
@@ -231,7 +231,6 @@ it('handles scope', async () => {
   let isAsyncAtomRunning = false
   let isAnotherAsyncAtomRunning = false
   const valueAtom = atom(1)
-  valueAtom.scope = scope
   const asyncAtom = atom(async (get) => {
     isAsyncAtomRunning = true
     await new Promise((resolve) => {
@@ -242,7 +241,6 @@ it('handles scope', async () => {
     })
     return get(valueAtom)
   })
-  asyncAtom.scope = scope
 
   const anotherAsyncAtom = atom(async () => {
     isAnotherAsyncAtomRunning = true
@@ -254,11 +252,13 @@ it('handles scope', async () => {
     })
     return '2'
   })
-  anotherAsyncAtom.scope = scope
 
-  const Counter: React.FC = () => {
-    const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
-    const [, setValue] = useAtom(valueAtom)
+  const Counter = () => {
+    const [[num1, num2]] = useAtom(
+      waitForAll([asyncAtom, anotherAsyncAtom]),
+      scope
+    )
+    const setValue = useUpdateAtom(valueAtom, scope)
     return (
       <>
         <div>
@@ -297,47 +297,56 @@ it('handles scope', async () => {
   await findByText('num1: 2, num2: 2')
 })
 
-it('warns on different scopes', async () => {
-  const scope = Symbol()
-  const anotherScope = Symbol()
-  const asyncAtom = atom(async (_get) => {
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true)
-      }, 10)
-    })
-    return 1
-  })
-  asyncAtom.scope = scope
+it('large atom count', async () => {
+  const createArray = (n: number) =>
+    Array(n)
+      .fill(0)
+      .map((_, i) => i)
 
-  const anotherAsyncAtom = atom(async () => {
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true)
-      }, 10)
-    })
-    return '2'
-  })
-  anotherAsyncAtom.scope = anotherScope
+  let result = null
 
-  const Counter: React.FC = () => {
-    const [[num1, num2]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
-    return (
-      <div>
-        num1: {num1}, num2: {num2}
-      </div>
-    )
+  const chunksFamily = atomFamily((i) => atom(i))
+
+  const selector = atomFamily((count: number) =>
+    atom((getter) => {
+      const data = createArray(count)
+      const atoms = data.map(chunksFamily)
+      const values = waitForAll(atoms)
+      return getter(values)
+    })
+  )
+
+  const Loader = ({ count }: { count: number }) => {
+    const [value, _] = useAtom(selector(count))
+
+    useEffect(() => {
+      result = value
+    }, [value])
+
+    return <div></div>
   }
 
+  const passingCount = 500
   render(
     <StrictMode>
-      <Provider scope={scope}>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
+      <Provider>
+        <Loader count={passingCount} />
       </Provider>
     </StrictMode>
   )
 
-  expect(console.warn).toHaveBeenCalledTimes(1)
+  expect(result).toEqual(createArray(passingCount))
+
+  jest.runOnlyPendingTimers()
+
+  const failingCount = 8000
+  render(
+    <StrictMode>
+      <Provider>
+        <Loader count={failingCount} />
+      </Provider>
+    </StrictMode>
+  )
+
+  expect(result).toEqual(createArray(failingCount))
 })

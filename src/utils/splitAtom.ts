@@ -1,16 +1,15 @@
 import { atom } from 'jotai'
 import type {
   Atom,
-  WritableAtom,
-  PrimitiveAtom,
   Getter,
-  Setter,
+  PrimitiveAtom,
   SetStateAction,
+  Setter,
+  WritableAtom,
 } from 'jotai'
+import { createMemoizeAtom } from './weakCache'
 
-import { getWeakCacheItem, setWeakCacheItem } from './weakCache'
-
-const splitAtomCache = new WeakMap()
+const memoizeAtom = createMemoizeAtom()
 
 const isWritable = <Value, Update>(
   atom: Atom<Value> | WritableAtom<Value, Update>
@@ -33,89 +32,86 @@ export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], Item[]> | Atom<Item[]>,
   keyExtractor?: (item: Item) => Key
 ) {
-  const deps: object[] = keyExtractor ? [arrAtom, keyExtractor] : [arrAtom]
-  const cachedAtom = getWeakCacheItem(splitAtomCache, deps)
-  if (cachedAtom) {
-    return cachedAtom
-  }
-  type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
-  let currentAtomList: ItemAtom[] | undefined
-  let currentKeyList: Key[] | undefined
-  const keyToAtom = (key: Key) => {
-    const index = currentKeyList?.indexOf(key)
-    if (index === undefined || index === -1) {
-      return undefined
-    }
-    return currentAtomList?.[index]
-  }
-  const read = (get: Getter) => {
-    let nextAtomList: Atom<Item>[] = []
-    let nextKeyList: Key[] = []
-    get(arrAtom).forEach((item, index) => {
-      const key = keyExtractor ? keyExtractor(item) : (index as unknown as Key)
-      nextKeyList[index] = key
-      const cachedAtom = keyToAtom(key)
-      if (cachedAtom) {
-        nextAtomList[index] = cachedAtom
-        return
-      }
+  return memoizeAtom(
+    () => {
+      type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
+      // TODO we should revisit this for a better solution than refAtom
+      const refAtom = atom(
+        () => ({} as { atomList?: ItemAtom[]; keyList?: Key[] })
+      )
       const read = (get: Getter) => {
-        const index = currentKeyList?.indexOf(key) ?? -1
+        const ref = get(refAtom)
+        let nextAtomList: Atom<Item>[] = []
+        let nextKeyList: Key[] = []
+        get(arrAtom).forEach((item, index) => {
+          const key = keyExtractor
+            ? keyExtractor(item)
+            : (index as unknown as Key)
+          nextKeyList[index] = key
+          const cachedAtom = ref.atomList?.[ref.keyList?.indexOf(key) ?? -1]
+          if (cachedAtom) {
+            nextAtomList[index] = cachedAtom
+            return
+          }
+          const read = (get: Getter) => {
+            const index = ref.keyList?.indexOf(key) ?? -1
+            if (
+              index === -1 &&
+              typeof process === 'object' &&
+              process.env.NODE_ENV !== 'production'
+            ) {
+              console.warn(
+                'splitAtom: array index out of bounds, returning undefined',
+                atom
+              )
+            }
+            return get(arrAtom)[index] as Item
+          }
+          const write = (
+            get: Getter,
+            set: Setter,
+            update: SetStateAction<Item>
+          ) => {
+            const index = ref.keyList?.indexOf(key) ?? -1
+            if (index === -1) {
+              throw new Error('splitAtom: array index not found')
+            }
+            const prev = get(arrAtom)
+            const nextItem = isFunction(update)
+              ? update(prev[index] as Item)
+              : update
+            set(arrAtom as WritableAtom<Item[], Item[]>, [
+              ...prev.slice(0, index),
+              nextItem,
+              ...prev.slice(index + 1),
+            ])
+          }
+          const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
+          nextAtomList[index] = itemAtom
+        })
+        ref.keyList = nextKeyList
         if (
-          index === -1 &&
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
+          ref.atomList &&
+          ref.atomList.length === nextAtomList.length &&
+          ref.atomList.every((x, i) => x === nextAtomList[i])
         ) {
-          console.warn(
-            'splitAtom: array index out of bounds, returning undefined',
-            atom
-          )
+          return ref.atomList
         }
-        return get(arrAtom)[index]
+        return (ref.atomList = nextAtomList)
       }
-      const write = (
-        get: Getter,
-        set: Setter,
-        update: SetStateAction<Item>
-      ) => {
-        const index = currentKeyList?.indexOf(key) ?? -1
-        if (index === -1) {
-          throw new Error('splitAtom: array index not found')
+      const write = (get: Getter, set: Setter, atomToRemove: ItemAtom) => {
+        const index = get(splittedAtom).indexOf(atomToRemove)
+        if (index >= 0) {
+          const prev = get(arrAtom)
+          set(arrAtom as WritableAtom<Item[], Item[]>, [
+            ...prev.slice(0, index),
+            ...prev.slice(index + 1),
+          ])
         }
-        const prev = get(arrAtom)
-        const nextItem = isFunction(update) ? update(prev[index]) : update
-        set(arrAtom as WritableAtom<Item[], Item[]>, [
-          ...prev.slice(0, index),
-          nextItem,
-          ...prev.slice(index + 1),
-        ])
       }
-      const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
-      itemAtom.scope = arrAtom.scope
-      nextAtomList[index] = itemAtom
-    })
-    currentKeyList = nextKeyList
-    if (
-      currentAtomList &&
-      currentAtomList.length === nextAtomList.length &&
-      currentAtomList.every((x, i) => x === nextAtomList[i])
-    ) {
-      return currentAtomList
-    }
-    return (currentAtomList = nextAtomList)
-  }
-  const write = (get: Getter, set: Setter, atomToRemove: ItemAtom) => {
-    const index = get(splittedAtom).indexOf(atomToRemove)
-    if (index >= 0) {
-      const prev = get(arrAtom)
-      set(arrAtom as WritableAtom<Item[], Item[]>, [
-        ...prev.slice(0, index),
-        ...prev.slice(index + 1),
-      ])
-    }
-  }
-  const splittedAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
-  splittedAtom.scope = arrAtom.scope
-  setWeakCacheItem(splitAtomCache, deps, splittedAtom)
-  return splittedAtom
+      const splittedAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
+      return splittedAtom
+    },
+    keyExtractor ? [arrAtom, keyExtractor] : [arrAtom]
+  )
 }
