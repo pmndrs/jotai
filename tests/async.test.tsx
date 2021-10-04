@@ -495,14 +495,12 @@ it('async get with another dep and useEffect on parent', async () => {
 
 it('set promise atom value on write (#304)', async () => {
   const countAtom = atom(Promise.resolve(0))
-  countAtom.debugLabel = 'countAtom'
   const asyncAtom = atom(null, (get, set, _arg) => {
     set(
       countAtom,
       Promise.resolve(get(countAtom)).then((c) => c + 1)
     )
   })
-  asyncAtom.debugLabel = 'asyncAtom'
 
   const Counter = () => {
     const [count] = useAtom(countAtom)
@@ -936,4 +934,31 @@ it('async write chain', async () => {
     getByText('loading') // write pending
   })
   await findByText('count: 3')
+})
+
+it('async atom double chain without setTimeout (#751)', async () => {
+  const asyncAtom = atom(async () => {
+    await new Promise((r) => setTimeout(r, 1000))
+    return 'ready'
+  })
+  const derivedAsyncAtom = atom(async (get) => get(asyncAtom))
+  const anotherAsyncAtom = atom(async (get) => get(derivedAsyncAtom))
+
+  const AsyncComponent = () => {
+    const [text] = useAtom(anotherAsyncAtom)
+    return <div>async: {text}</div>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <AsyncComponent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('async: ready')
 })
