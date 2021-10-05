@@ -15,7 +15,9 @@ export const Jotai = ({ small = false, ...rest }) => {
         <Link to="/" className="inline-block focus:ring-offset-4 rounded-lg">
           <Logo
             className={cx(
-              isDocsPage ? 'text-gray-300' : 'text-black',
+              isDocsPage
+                ? 'text-gray-300 hover:text-black transition ease-in-out duration-300'
+                : 'text-black',
               !small
                 ? 'w-full max-w-[12rem] lg:max-w-[14rem] 2xl:max-w-[16rem]'
                 : 'w-[6rem]'
