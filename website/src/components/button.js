@@ -16,7 +16,7 @@ export const Button = ({
   children,
 }) => {
   const buttonClassNames = cx(
-    'inline-flex items-center px-6 py-3 space-x-4 border rounded-lg text-base',
+    'inline-flex items-center px-6 py-3 space-x-4 shadow-md rounded-md sm:rounded-lg border text-base',
     !dark
       ? 'border-gray-200 hover:border-blue-200 bg-gray-100 hover:bg-blue-100 text-black'
       : 'border-gray-700 hover:border-blue-700 bg-gray-900 text-gray-300',
