@@ -4,10 +4,10 @@ import LazyLoad from 'react-lazyload'
 export const CodeSandbox = ({ id, tests }) => {
   return (
     <div className="mb-8 overflow-hidden shadow-lg rounded-md sm:rounded-lg border-b border-gray-200">
-      <LazyLoad height={500} once>
+      <LazyLoad height={400} once>
         <iframe
           title={id}
-          className="w-full h-[500px]"
+          className="w-full h-[400px]"
           src={`https://codesandbox.io/embed/${id}?codemirror=1&fontsize=14&hidenavigation=1&theme=light&hidedevtools=1${
             tests ? '&previewwindow=tests' : ''
           }`}
