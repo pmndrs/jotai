@@ -25,7 +25,7 @@ export const Layout = ({
       <Wrapper>
         <Sidebar />
         <Main>
-          {children}
+          <div className="prose">{children}</div>
           <Footer />
         </Main>
       </Wrapper>
