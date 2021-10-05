@@ -19,7 +19,7 @@ export const Jotai = ({ small = false, ...rest }) => {
                 ? 'text-gray-300 hover:text-black transition ease-in-out duration-300'
                 : 'text-black',
               !small
-                ? 'w-full max-w-[12rem] lg:max-w-[14rem] 2xl:max-w-[16rem]'
+                ? 'w-full max-w-[12rem] lg:max-w-[14rem] xl:max-w-[16rem] 2xl:max-w-[18rem]'
                 : 'w-[6rem]'
             )}
           />
