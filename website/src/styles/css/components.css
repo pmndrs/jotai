@@ -48,7 +48,7 @@
 }
 
 .prose blockquote {
-  @apply mt-4 px-4 py-2 rounded-lg border border-yellow-200 bg-yellow-100;
+  @apply my-4 px-4 py-2 rounded-lg border border-yellow-200 bg-yellow-100;
 }
 
 .prose a {
