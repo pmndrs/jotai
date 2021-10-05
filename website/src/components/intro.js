@@ -20,7 +20,7 @@ export const Intro = () => {
           breakpoints={[240, 480, 640, 768, 1080]}
           alt="Jotai mascot"
         />
-        <div className="relative w-2/3 lg:w-3/4 p-4 lg:p-8 space-y-4 bg-gray-100 rounded-xl text-sm sm:text-base md:text-lg lg:text-xl text-gray-700 leading-snug lg:leading-relaxed speech-bubble">
+        <div className="relative w-2/3 lg:w-3/4 p-4 lg:p-8 space-y-4 bg-gray-100 rounded-xl text-sm sm:text-base lg:text-lg text-gray-700 leading-snug lg:leading-normal speech-bubble">
           <div>
             No extra re-renders, state resides within React, you get the full
             benefits from suspense and concurrent features.

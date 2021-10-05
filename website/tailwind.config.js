@@ -21,6 +21,7 @@ module.exports = {
       white: colors.white,
       gray: colors.trueGray,
       blue: colors.blue,
+      yellow: colors.yellow,
     },
     fontSize: {
       '4xs': ['0.375rem'],

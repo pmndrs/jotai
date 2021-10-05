@@ -4,8 +4,8 @@ import { Jotai, Navigation } from '../components'
 
 export const Sidebar = () => {
   return (
-    <aside className="sticky top-0 bottom-0 hidden lg:flex flex-col flex-shrink-0 justify-between w-full max-w-md min-h-full h-full max-h-screen overflow-y-auto overscroll-none p-16 pb-8 pr-8">
-      <div>
+    <aside className="sticky top-0 hidden lg:flex flex-col flex-shrink-0 justify-between w-full max-w-md min-h-full h-full max-h-screen overflow-y-auto overscroll-none p-16 pb-8 pr-8">
+      <div className="flex-grow">
         <Jotai />
         <Navigation
           className="flex flex-col mt-6 space-y-4"

@@ -48,8 +48,8 @@ export const Navigation = ({
                     <Link
                       to={`/docs/${doc.slug}/`}
                       onClick={() => setIsMenuOpen(false)}
-                      className="relative -left-3 inline-block px-2 py-1 border border-transparent hover:!border-blue-300 hover:bg-blue-200 rounded text-lg"
-                      activeClassName="bg-gray-100 !border-gray-200"
+                      className="relative -left-3 inline-block px-2 py-1 border border-transparent hover:!border-gray-200 hover:bg-gray-100 rounded text-lg"
+                      activeClassName="bg-blue-100 !border-blue-200"
                       partiallyActive>
                       {doc.meta.title}
                     </Link>

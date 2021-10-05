@@ -10,7 +10,7 @@ pre[class*='language-'] {
   word-wrap: normal;
   tab-size: 2;
   hyphens: none;
-  @apply text-base text-[#e4f0fb] text-left whitespace-pre break-normal leading-normal;
+  @apply text-sm lg:text-base text-[#e4f0fb] text-left whitespace-pre break-normal leading-normal;
 }
 
 /* Code blocks */
