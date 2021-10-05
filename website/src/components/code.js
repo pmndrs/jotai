@@ -1,9 +1,13 @@
 import React from 'react'
 import Highlight, { defaultProps } from 'prism-react-renderer'
 
-export const Code = ({ code }) => {
+export const Code = ({ children }) => {
   return (
-    <Highlight {...defaultProps} language="jsx" code={code} theme={undefined}>
+    <Highlight
+      {...defaultProps}
+      language="jsx"
+      code={children}
+      theme={undefined}>
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <pre className={className} style={style}>
           {tokens.map((line, i) => (
