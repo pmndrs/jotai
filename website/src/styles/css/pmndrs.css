@@ -94,14 +94,11 @@ pre[class*='language-'] {
 .token.bold {
   @apply font-bold;
 }
+
 .token.italic {
   @apply italic;
 }
 
 .token.entity {
   @apply cursor-help;
-}
-
-.token:last-child {
-  display: none;
 }
