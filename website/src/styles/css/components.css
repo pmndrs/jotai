@@ -51,4 +51,8 @@
   @apply mt-4 px-4 py-2 rounded-lg border border-yellow-200 bg-yellow-100;
 }
 
+.prose a {
+  @apply text-blue-600 underline;
+}
+
 @tailwind components;
