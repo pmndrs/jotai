@@ -82,12 +82,56 @@ export function atomWithStorage<Value>(
   return anAtom
 }
 
+// atomWithHash is implemented with atomWithStorage
+
 export function atomWithHash<Value>(
   key: string,
   initialValue: Value,
-  serialize: (val: Value) => string = JSON.stringify,
-  deserialize: (str: string) => Value = JSON.parse
+  options?: {
+    serialize?: (val: Value) => string
+    deserialize?: (str: string) => Value
+    delayInit?: boolean
+    replaceState?: boolean
+  }
+): PrimitiveAtom<Value>
+
+/**
+ * @deprecated Use options
+ */
+export function atomWithHash<Value>(
+  key: string,
+  initialValue: Value,
+  deprecatedSerialize?: (val: Value) => string,
+  deprecatedDeserialize?: (str: string) => Value
+): PrimitiveAtom<Value>
+
+export function atomWithHash<Value>(
+  key: string,
+  initialValue: Value,
+  options?:
+    | {
+        serialize?: (val: Value) => string
+        deserialize?: (str: string) => Value
+        delayInit?: boolean
+        replaceState?: boolean
+      }
+    | ((val: Value) => string),
+  deprecatedDeserialize?: (str: string) => Value
 ): PrimitiveAtom<Value> {
+  if (
+    typeof options === 'function' ||
+    typeof deprecatedDeserialize === 'function'
+  ) {
+    console.warn(
+      '[DEPRECATED] use atomWithHash(key, initialValue, options) instead'
+    )
+    return atomWithHash(key, initialValue, {
+      serialize: options as (val: Value) => string,
+      deserialize: deprecatedDeserialize,
+    })
+  }
+  const serialize = options?.serialize || JSON.stringify
+  const deserialize = options?.deserialize || JSON.parse
   const hashStorage: Storage<Value> = {
     getItem: (key) => {
       const searchParams = new URLSearchParams(location.hash.slice(1))
@@ -100,9 +144,13 @@ export function atomWithHash<Value>(
     setItem: (key, newValue) => {
       const searchParams = new URLSearchParams(location.hash.slice(1))
       searchParams.set(key, serialize(newValue))
-      location.hash = searchParams.toString()
+      if (options?.replaceState) {
+        history.replaceState(null, '', '#' + searchParams.toString())
+      } else {
+        location.hash = searchParams.toString()
+      }
     },
-    delayInit: true,
+    delayInit: options?.delayInit,
     subscribe: (key, setValue) => {
       const callback = () => {
         const searchParams = new URLSearchParams(location.hash.slice(1))
