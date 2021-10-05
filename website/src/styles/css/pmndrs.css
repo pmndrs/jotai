@@ -101,3 +101,7 @@ pre[class*='language-'] {
 .token.entity {
   @apply cursor-help;
 }
+
+.token:last-child {
+  display: none;
+}

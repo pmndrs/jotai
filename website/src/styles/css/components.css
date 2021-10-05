@@ -51,6 +51,10 @@
   @apply my-4 px-4 py-2 rounded-lg border border-yellow-200 bg-yellow-100;
 }
 
+.prose blockquote p {
+  @apply text-yellow-900;
+}
+
 .prose a {
   @apply text-blue-600 underline;
 }
