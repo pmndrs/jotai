@@ -167,6 +167,8 @@ export function atomWithHash<Value>(
         const str = searchParams.get(key)
         if (str !== null) {
           setValue(deserialize(str))
+        } else {
+          setValue(initialValue)
         }
       }
       return subscribe(callback)
