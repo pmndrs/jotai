@@ -29,7 +29,13 @@ const Page = () => {
     <>
       <div className="py-8">
         <ClientOnly>
-          <div className="flex items-center p-4 lg:p-8 space-x-4 lg:space-x-8 focus-within:ring bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl transition duration-300 ease-in-out">
+          <div
+            className={cx(
+              darkMode
+                ? 'bg-gray-900 text-gray-100'
+                : 'bg-gray-100 text-gray-900',
+              'flex items-center p-4 lg:p-8 space-x-4 lg:space-x-8 focus-within:ring rounded-xl transition duration-300 ease-in-out'
+            )}>
             <div>
               <button
                 onClick={() => setDarkMode(!darkMode)}
@@ -53,7 +59,7 @@ const Page = () => {
           </div>
         </ClientOnly>
       </div>
-      <Code code={code} />
+      <Code>{code}</Code>
     </>
   )
 }

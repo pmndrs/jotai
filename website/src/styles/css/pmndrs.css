@@ -6,54 +6,41 @@
 
 code[class*='language-'],
 pre[class*='language-'] {
-  color: #e4f0fb;
-  background: none;
-  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
-  font-family: 'Meslo', Menlo, Monaco, 'Courier New', monospace;
-  font-size: 0.95em;
-  text-align: left;
-  white-space: pre;
   word-spacing: normal;
-  word-break: normal;
   word-wrap: normal;
-  line-height: 1.5;
   tab-size: 2;
   hyphens: none;
+  @apply shadow-lg rounded-md sm:rounded-lg text-sm lg:text-base text-[#e4f0fb] text-left whitespace-pre break-normal leading-normal;
 }
 
 /* Code blocks */
 pre[class*='language-'] {
-  padding: 1.75em;
-  margin: 1.5em 0;
-  overflow: auto;
-  border-radius: 0.5rem;
+  @apply my-4 p-8 pb-0 sm:pb-8 rounded-lg overflow-x-auto;
 }
 
 :not(pre) > code[class*='language-'],
 pre[class*='language-'] {
-  background: #252b37;
+  @apply bg-[#252b37];
 }
 
 /* Inline code */
 :not(pre) > code[class*='language-'] {
-  padding: 0.1em;
-  border-radius: 0.3em;
-  white-space: normal;
+  @apply p-3 shadow-lg rounded-md whitespace-normal;
 }
 
 .token.comment,
 .token.prolog,
 .token.doctype,
 .token.cdata {
-  color: #a6accd;
+  @apply text-[#a6accd];
 }
 
 .token.punctuation {
-  color: #e4f0fb;
+  @apply text-[#e4f0fb];
 }
 
 .token.namespace {
-  opacity: 0.7;
+  @apply opacity-70;
 }
 
 .token.property,
@@ -61,12 +48,12 @@ pre[class*='language-'] {
 .token.constant,
 .token.symbol,
 .token.deleted {
-  color: #e4f0fb;
+  @apply text-[#e4f0fb];
 }
 
 .token.boolean,
 .token.number {
-  color: #5de4c7;
+  @apply text-[#5de4c7];
 }
 
 .token.selector,
@@ -75,7 +62,7 @@ pre[class*='language-'] {
 .token.char,
 .token.builtin,
 .token.inserted {
-  color: #5de4c7;
+  @apply text-[#5de4c7];
 }
 
 .token.attr-name,
@@ -85,32 +72,33 @@ pre[class*='language-'] {
 .language-css .token.string,
 .style .token.string,
 .token.variable {
-  color: #add7ff;
+  @apply text-[#add7ff];
 }
 
 .token.atrule,
 .token.function,
 .token.class-name {
-  color: #5de4c7;
+  @apply text-[#5de4c7];
 }
 
 .token.keyword {
-  color: #add7ff;
+  @apply text-[#add7ff];
 }
 
 .token.regex,
 .token.important {
-  color: #fffac2;
+  @apply text-[#fffac2];
 }
 
 .token.important,
 .token.bold {
-  font-weight: bold;
+  @apply font-bold;
 }
+
 .token.italic {
-  font-style: italic;
+  @apply italic;
 }
 
 .token.entity {
-  cursor: help;
+  @apply cursor-help;
 }

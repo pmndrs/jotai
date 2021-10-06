@@ -1,0 +1,786 @@
+---
+title: Utils
+description: This doc describes `jotai/utils` bundle.
+nav: 2.2
+---
+
+## atomWithStorage
+
+Ref: https://github.com/pmndrs/jotai/pull/394
+
+```ts
+import { useAtom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
+
+const darkModeAtom = atomWithStorage('darkMode', false)
+
+const Page = () => {
+  const [darkMode, setDarkMode] = useAtom(darkModeAtom)
+
+  return (
+    <>
+      <h1>Welcome to {darkMode ? 'dark' : 'light'} mode!</h1>
+      <button onClick={() => setDarkMode(!darkMode)}>toggle theme</button>
+    </>
+  )
+}
+```
+
+The `atomWithStorage` function creates an atom with a value persisted in `localStorage` or `sessionStorage` for React or `AsyncStorage` for React Native.
+
+### Parameters
+
+**key** (required): a unique string used as the key when syncing state with localStorage, sessionStorage, or AsyncStorage
+
+**initialValue** (required): the initial value of the atom
+
+**storage** (optional): an object with `getItem` and `setItem` methods for storing/retreiving persisted state; defaults to using `localStorage` for storage/retreival and `JSON.stringify()`/`JSON.parse()` for serialization/deserialization
+
+<CodeSandbox id="7dfib" />
+
+### Server-side rendering
+
+Any JSX markup that depends on the value of a stored atom (e.g., a `className` or `style` prop) will use the `initialValue` when rendered on the server (since `localStorage` and `sessionStorage` are not available on the server).
+
+This means that there will be a mismatch between what is originally served to the user's browser as HTML and what is expected by React during the rehydration process if the user has a `storedValue` that differs from the `initialValue`.
+
+The suggested workaround for this issue is to only render the content dependent on the `storedValue` client-side by wrapping it in a [custom `<ClientOnly>` wrapper](https://www.joshwcomeau.com/react/the-perils-of-rehydration/#abstractions), which only renders after rehydration. Alternative solutions are technically possible, but would require a brief "flicker" as the `initialValue` is swapped to the `storedValue`, which can result in an unpleasant user experience, so this solution is advised.
+
+## useUpdateAtom
+
+Ref: https://github.com/pmndrs/jotai/issues/26
+
+```jsx
+import { atom, useAtom } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
+
+const countAtom = atom(0)
+
+const Counter = () => {
+  const [count] = useAtom(countAtom)
+  return <div>count: {count}</div>
+}
+
+const Controls = () => {
+  const setCount = useUpdateAtom(countAtom)
+  const inc = () => setCount((c) => c + 1)
+  return <button onClick={inc}>+1</button>
+}
+```
+
+<CodeSandbox id="hsyfr" />
+
+## useAtomValue
+
+Ref: https://github.com/pmndrs/jotai/issues/212
+
+```jsx
+import { atom, Provider, useAtom } from 'jotai'
+import { useAtomValue } from 'jotai/utils'
+
+const countAtom = atom(0)
+
+const Counter = () => {
+  const setCount = useUpdateAtom(countAtom)
+  const count = useAtomValue(countAtom)
+  return (
+    <>
+      <div>count: {count}</div>
+      <button onClick={() => setCount(count + 1)}>+1</button>
+    </>
+  )
+}
+```
+
+<CodeSandbox id="1x90m" />
+
+## atomWithReset
+
+Ref: https://github.com/pmndrs/jotai/issues/41
+
+```ts
+function atomWithReset<Value>(
+  initialValue: Value
+): WritableAtom<Value, SetStateAction<Value> | typeof RESET>
+```
+
+Creates an atom that could be reset to its `initialValue` with
+[`useResetAtom`](/jotai/api/utils#use-reset-atom) hook. It works exactly the same
+way as primitive atom would, but you are also able to set it to a special value
+[`RESET`](/jotai/api/utils#reset). See examples in [Resettable atoms](/jotai/guides/resettable).
+
+### Example
+
+```js
+import { atomWithReset } from 'jotai/utils'
+
+const dollarsAtom = atomWithReset(0)
+const todoListAtom = atomWithReset([{ description: 'Add a todo', checked: false }])
+```
+
+## useResetAtom
+
+```ts
+function useResetAtom<Value>(anAtom: WritableAtom<Value, typeof RESET>): () => void | Promise<void>
+```
+
+Resets a [Resettable atom](/jotai/guides/resettable) to its initial value.
+
+### Example
+
+```jsx
+import { useResetAtom } from 'jotai/utils'
+import { todoListAtom } from './store'
+
+const TodoResetButton = () => {
+  const resetTodoList = useResetAtom(todoListAtom)
+  return <button onClick={resetTodoList}>Reset</button>
+}
+```
+
+## RESET
+
+Ref: https://github.com/pmndrs/jotai/issues/217
+
+```ts
+const RESET: unique symbol
+```
+
+Special value that is accepted by [Resettable atoms](/jotai/guides/resettable)
+created with [`atomWithReset`](/jotai/api/utils#atom-with-reset), [`atomWithDefault`](/jotai/api/utils#atom-with-default)
+or writable atom created with `atom` if it accepts `RESET` symbol.
+
+### Example
+
+```jsx
+import { atom } from 'jotai'
+import { atomWithReset, useResetAtom, RESET } from 'jotai/utils'
+
+const dollarsAtom = atomWithReset(0)
+const centsAtom = atom(
+  (get) => get(dollarsAtom) * 100,
+  (get, set, newValue: number | typeof RESET) =>
+    set(dollarsAtom, newValue === RESET ? newValue : newValue / 100)
+)
+
+const ResetExample: React.FC = () => {
+  const setDollars = useUpdateAtom(dollarsAtom)
+  const resetCents = useResetAtom(centsAtom)
+
+  return (
+    <>
+      <button onClick={() => setDollars(RESET)}>Reset dollars</button>
+      <button onClick={resetCents}>Reset cents</button>
+    </>
+  )
+}
+```
+
+## useReducerAtom
+
+```jsx
+import { atom } from 'jotai'
+import { useReducerAtom } from 'jotai/utils'
+
+const countReducer = (prev, action) => {
+  if (action.type === 'inc') return prev + 1
+  if (action.type === 'dec') return prev - 1
+  throw new Error('unknown action type')
+}
+
+const countAtom = atom(0)
+
+const Counter = () => {
+  const [count, dispatch] = useReducerAtom(countAtom, countReducer)
+  return (
+    <div>
+      {count}
+      <button onClick={() => dispatch({ type: 'inc' })}>+1</button>
+      <button onClick={() => dispatch({ type: 'dec' })}>-1</button>
+    </div>
+  )
+}
+```
+
+<CodeSandbox id="eg0mw" />
+
+## atomWithReducer
+
+Ref: https://github.com/pmndrs/jotai/issues/38
+
+```js
+import { atomWithReducer } from 'jotai/utils'
+
+const countReducer = (prev, action) => {
+  if (action.type === 'inc') return prev + 1
+  if (action.type === 'dec') return prev - 1
+  throw new Error('unknown action type')
+}
+
+const countReducerAtom = atomWithReducer(0, countReducer)
+```
+
+<CodeSandbox id="g3tsx" />
+
+## atomWithDefault
+
+Ref: https://github.com/pmndrs/jotai/issues/352
+
+### Usage
+
+This is a function to create a resettable primitive atom.
+Its default value can be specified with a read function instead of a static initial value.
+
+```js
+import { atomWithDefault } from 'jotai/utils'
+
+const count1Atom = atom(1)
+const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
+```
+
+### Codesandbox
+
+<CodeSandbox id="unfro" />
+
+### Resetting default values
+
+You can reset the value of an `atomWithDefault` atom to its original default value.
+
+```js
+import { useAtom } from 'jotai'
+import { atomWithDefault, useResetAtom, RESET } from 'jotai/utils'
+
+const count1Atom = atom(1)
+const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
+
+const Counter: React.FC = () => {
+  const [count1, setCount1] = useAtom(count1Atom)
+  const [count2, setCount2] = useAtom(count2Atom)
+  const resetCount2 = useResetAtom(count2Atom)
+
+  return (
+    <>
+      <div>
+        count1: {count1}, count2: {count2}
+      </div>
+      <button onClick={() => setCount1((c) => c + 1)}>increment count1</button>
+      <button onClick={() => setCount2((c) => c + 1)}>increment count2</button>
+      <button onClick={() => resetCount2()}>Reset with useResetAtom</button>
+      <button onClick={() => setCount2(RESET)}>Reset with RESET const</button>
+    </>
+  )
+}
+```
+
+This can be useful when an `atomWithDefault` atom value is overwritten
+using the `set` function, in which case the provided `getter` function
+is no longer used and any change in dependencies atoms will not trigger an update.
+
+Resetting the value allows us to restore its original default value,
+discarding changes made previously via the `set` function.
+
+## atomWithHash
+
+### Usage
+
+```js
+atomWithHash(key, initialValue): PrimitiveAtom
+```
+
+This creats a new atom that is connected with URL hash.
+The hash must be in the URLSearchParams format.
+It's two-way binding: changing atom value will change the hash and
+changing the hash will change the atom value.
+This function works only with DOM.
+
+### Examples
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithHash } from 'jotai/utils'
+const countAtom = atomWithHash('count', 1)
+const Counter: React.FC = () => {
+  const [count, setCount] = useAtom(countAtom)
+  return (
+    <>
+      <div>count: {count}</div>
+      <button onClick={() => setCount((c) => c + 1)}>button</button>
+    </>
+  )
+}
+```
+
+### Codesandbox
+
+<CodeSandbox id="d5kn6" />
+
+## atomFamily
+
+Ref: https://github.com/pmndrs/jotai/issues/23
+
+### Usage
+
+```js
+atomFamily(initializeAtom, areEqual): (param) => Atom
+```
+
+This will create a function that takes `param` and returns an atom.
+If it's already created, it will return it from the cache.
+`initializeAtom` is function that can return any kind of atom (`atom()`, `atomWithDefault()`, ...).
+Note that `areEqual` is optional, which tell
+if two params are equal (defaults to `Object.is`).
+
+To reproduce the similar behavior to [Recoil's atomFamily/selectorFamily](https://recoiljs.org/docs/api-reference/utils/atomFamily),
+specify a deepEqual function to `areEqual`. For example:
+
+```js
+import { atom } from 'jotai'
+import deepEqual from 'fast-deep-equal'
+
+const fooFamily = atomFamily((param) => atom(param), deepEqual)
+```
+
+### TypeScript
+
+The atom family types will be inferred from initializeAtom. Here's a typical usage with a primitive atom.
+
+```ts
+import type { PrimitiveAtom } from 'jotai'
+
+/**
+ * here the atom(id) returns a PrimitiveAtom<number>
+ * and PrimitiveAtom<number> is a WritableAtom<number, SetStateAction<number>>
+ */
+const myFamily = atomFamily((id: number) => atom(id)).
+```
+
+You can explicitly declare the type of parameter, value, and atom's setState function using TypeScript generics.
+
+```ts
+atomFamily<Param, Value, Update>(initializeAtom: (param: Param) => WritableAtom<Value, Update>, areEqual?: (a: Param, b: Param) => boolean)
+atomFamily<Param, Value>(initializeAtom: (param: Param) => Atom<Value>, areEqual?: (a: Param, b: Param) => boolean)
+```
+
+If you want to explicitly declare the atomFamily for a primitive atom, you need to use `SetStateAction`.
+
+```ts
+type SetStateAction<Value> = Value | ((prev: Value) => Value)
+
+const myFamily = atomFamily<number, number, SetStateAction<number>>((id: number) => atom(id))
+```
+
+### Caveat: Memory Leaks
+
+Internally, atomFamily is just a Map whose key is a param and whose value is an atom config.
+Unless you explicitly remove unused params, this leads to memory leaks.
+This is crucial if you use infinite number of params.
+
+There are two ways to remove params.
+
+- `myFamily.remove(param)` allows you to remove a specific param.
+- `myFamily.setShouldRemove(shouldRemove)` is to register `shouldRemove` function which runs immediately **and** when you are to get an atom from a cache.
+  - shouldRemove is a function that takes two arguments `createdAt` in milliseconds and `param`, and returns a boolean value.
+  - setting `null` will remove the previously registered function.
+
+### Examples
+
+```js
+import { atom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
+
+const todoFamily = atomFamily((name) => atom(name))
+
+todoFamily('foo')
+// this will create a new atom('foo'), or return the one if already created
+```
+
+```js
+import { atom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
+
+const todoFamily = atomFamily((name) =>
+  atom(
+    (get) => get(todosAtom)[name],
+    (get, set, arg) => {
+      const prev = get(todosAtom)
+      return { ...prev, [name]: { ...prev[name], ...arg } }
+    }
+  )
+)
+```
+
+```js
+import { atom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
+
+const todoFamily = atomFamily(
+  ({ id, name }) => atom({ name }),
+  (a, b) => a.id === b.id
+)
+```
+
+### Codesandbox
+
+<CodeSandbox id="8zfrn" />
+
+## selectAtom
+
+Ref: https://github.com/pmndrs/jotai/issues/36
+
+```js
+function selectAtom<Value, Slice>(
+  anAtom: Atom<Value>,
+  selector: (v: Value) => Slice,
+  equalityFn: (a: Slice, b: Slice) => boolean = Object.is
+): Atom<Slice>
+```
+
+This function creates a derived atom whose value is a function of the original atom's value,
+determined by `selector.`
+The selector function runs whenever the original atom changes; it updates the derived atom
+only if `equalityFn` reports that the derived value has changed.
+By default, `equalityFn` is reference equality, but you can supply your favorite deep-equals
+function to stabilize the derived value where necessary.
+
+### Examples
+
+```js
+const defaultPerson = {
+  name: {
+    first: 'Jane',
+    last: 'Doe',
+  },
+  birth: {
+    year: 2000,
+    month: 'Jan',
+    day: 1,
+    time: {
+      hour: 1,
+      minute: 1,
+    },
+  },
+}
+
+// Original atom.
+const personAtom = atom(defaultPerson)
+
+// Tracks person.name. Updated when person.name object changes, even
+// if neither name.first nor name.last actually change.
+const nameAtom = selectAtom(personAtom, (person) => person.name)
+
+// Tracks person.birth. Updated when year, month, day, hour, or minute changes.
+// Use of deepEquals means that this atom doesn't update if birth field is
+// replaced with a new object containing the same data. E.g., if person is re-read
+// from a database.
+const birthAtom = selectAtom(personAtom, (person) => person.birth, deepEquals)
+```
+
+Ref: https://codesandbox.io/s/react-typescript-forked-8czek
+
+## useAtomCallback
+
+Ref: https://github.com/pmndrs/jotai/issues/60
+
+### Usage
+
+```js
+useAtomCallback(
+  callback: (get: Getter, set: Setter, arg: Arg) => Result
+): (arg: Arg) => Promise<Result>
+```
+
+This hook allows to interact with atoms imperatively.
+It takes a callback function that works like atom write function,
+and returns a function that returns a promise.
+
+The callback to pass in the hook must be stable (should be wrapped with useCallback).
+
+### Examples
+
+```jsx
+import { useEffect, useState, useCallback } from 'react'
+import { Provider, atom, useAtom } from 'jotai'
+import { useAtomCallback } from 'jotai/utils'
+
+const countAtom = atom(0)
+
+const Counter = () => {
+  const [count, setCount] = useAtom(countAtom)
+  return (
+    <>
+      {count} <button onClick={() => setCount((c) => c + 1)}>+1</button>
+    </>
+  )
+}
+
+const Monitor = () => {
+  const [count, setCount] = useState(0)
+  const readCount = useAtomCallback(
+    useCallback((get) => {
+      const currCount = get(countAtom)
+      setCount(currCount)
+      return currCount
+    }, [])
+  )
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      console.log(await readCount())
+    }, 1000)
+    return () => {
+      clearInterval(timer)
+    }
+  }, [readCount])
+  return <div>current count: {count}</div>
+}
+```
+
+### Codesandbox
+
+<CodeSandbox id="6ur43" />
+
+## freezeAtom
+
+```js
+import { atom } from 'jotai'
+import { freezeAtom } from 'jotai/utils'
+
+const objAtom = freezeAtom(atom({ count: 0 }))
+```
+
+`freezeAtom` takes an existing atom and returns a new derived atom.
+The returned atom is "frozen" which means when you use the atom
+with `useAtom` in components or `get` in other atoms,
+the atom value will be deeply frozen with Object.freeze.
+It would be useful to find bugs where you accidentally tried
+to mutate objects which can lead to unexpected behavior.
+
+## freezeAtomCreator
+
+```js
+import { atom } from 'jotai'
+import { freezeAtomCreator } from 'jotai/utils'
+
+const createFrozenAtom = freezeAtomCreator(atom)
+const objAtom = createFrozenAtom({ count: 0 })
+```
+
+Instead of create a frozen atom from an existing atom,
+`freezeAtomCreator` takes an atom creator function and returns a new function.
+You can use this not only for `atom`, but also for other `atomWith*` creators such as `atomWithReduer`.
+
+## splitAtom
+
+The `splitAtom` utility is useful for when you want to get an atom for each element in a list.
+It works for read/write atoms that contain a list. When used on such an atom, it returns an atom
+which itself contains a list of atoms, each corresponding to the respective item in the original list.
+
+A simplified type signature would be:
+
+```ts
+type SplitAtom = <Item>(arrayAtom: PrimitiveAtom<Array<Item>>): Atom<Array<PrimitiveAtom<Item>>>
+```
+
+Additionally, the atom returned by `splitAtom` contains a removal function in the `write` direction,
+this is useful for when you want a simple way to remove each element in the original atom.
+
+See the below example for usage.
+
+### codesandbox
+
+<CodeSandbox id="7nir9" />
+
+```tsx
+import * as React from 'react'
+import { Provider, atom, useAtom, PrimitiveAtom } from 'jotai'
+import { splitAtom } from 'jotai/utils'
+import './styles.css'
+
+const initialState = [
+  {
+    task: 'help the town',
+    done: false,
+  },
+  {
+    task: 'feed the dragon',
+    done: false,
+  },
+]
+
+const todosAtom = atom(initialState)
+const todoAtomsAtom = splitAtom(todosAtom)
+
+const TodoList = () => {
+  const [todoAtoms, removeTodoAtom] = useAtom(todoAtomsAtom)
+  return (
+    <ul>
+      {todoAtoms.map((todoAtom) => (
+        <TodoItem todoAtom={todoAtom} remove={() => removeTodoAtom(todoAtom)} />
+      ))}
+    </ul>
+  )
+}
+
+type TodoType = typeof initialState[number]
+
+const TodoItem = ({
+  todoAtom,
+  remove,
+}: {
+  todoAtom: PrimitiveAtom<TodoType>
+  remove: () => void
+}) => {
+  const [todo, setTodo] = useAtom(todoAtom)
+  return (
+    <div>
+      <input
+        value={todo.task}
+        onChange={(e) => {
+          setTodo((oldValue) => ({ ...oldValue, task: e.target.value }))
+        }}
+      />
+      <input
+        type="checkbox"
+        checked={todo.done}
+        onChange={() => {
+          setTodo((oldValue) => ({ ...oldValue, done: !oldValue.done }))
+        }}
+      />
+      <button onClick={remove}>remove</button>
+    </div>
+  )
+}
+
+const App = () => (
+  <Provider>
+    <TodoList />
+  </Provider>
+)
+
+export default App
+```
+
+## waitForAll
+
+Sometimes you have multiple async atoms in your components:
+
+```tsx
+const dogsAtom = atom(async (get) => {
+  const response = await fetch('/dogs')
+  return await response.json()
+})
+const catsAtom = atom(async (get) => {
+  const response = await fetch('/cats')
+  return await response.json()
+})
+
+const App = () => {
+  const [dogs] = useAtom(dogsAtom)
+  const [cats] = useAtom(catsAtom)
+  // ...
+}
+```
+
+However, this will start fetching one at the time, which is not optimal - It would be better if we can start fetching both as soon as possible.
+
+The `waitForAll` utility is a concurrency helper, which allows us to evaluate multiple async atoms:
+
+```tsx
+const dogsAtom = atom(async (get) => {
+  const response = await fetch('/dogs')
+  return await response.json()
+})
+const catsAtom = atom(async (get) => {
+  const response = await fetch('/cats')
+  return await response.json()
+})
+
+const App = () => {
+  const [[dogs, cats]] = useAtom(waitForAll([dogsAtom, catsAtom]))
+  // or ...
+  const [dogs, cats] = useAtomValue(waitForAll([dogsAtom, catsAtom]))
+  // ...
+}
+```
+
+You can also use `waitForAll` inside an atom - It's also possible to name them for readability:
+
+```tsx
+const dogsAtom = atom(async (get) => {
+  const response = await fetch('/dogs')
+  return await response.json()
+})
+const catsAtom = atom(async (get) => {
+  const response = await fetch('/cats')
+  return await response.json()
+})
+
+const animalsAtom = atom((get) => {
+  return get(
+    waitForAll({
+      dogs: dogsAtom,
+      cats: catsAtom,
+    })
+  )
+})
+
+const App = () => {
+  const [{ dogs, cats }] = useAtom(animalsAtom)
+  // or ...
+  const { dogs, cats } = useAtomValue(animalsAtom)
+  // ...
+}
+```
+
+### Codesandbox
+
+<CodeSandbox id="krwsv" />
+
+## useHydrateAtoms
+
+Ref: https://github.com/pmndrs/jotai/issues/340
+
+### Usage
+
+```tsx
+import { atom, useAtom } from 'jotai'
+import { useHydrateAtoms } from 'jotai/utils'
+
+const countAtom = atom(0)
+const CounterPage = ({ countFromServer }) => {
+  useHydrateAtoms([[countAtom, countFromServer]])
+  const [count] = useAtom(countAtom)
+  // count would be the value of `countFromServer`, not 0.
+}
+```
+
+The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an initial value is e.g. fetched on the server, which can be passed to a component by props.
+
+```ts
+// Definition
+function useHydrateAtoms(values: Iterable<readonly [Atom<unknown>, unknown]>, scope?: Scope): void
+```
+
+The hook takes an iterable of tuples containing `[atom, value]` as an argument and optionally scope.
+
+```ts
+// Usage with an array, specifying a scope
+useHydrateAtoms([[countAtom, 42], [frameworkAtom, "Next.js"]], myScope)
+// Or with a map
+const [initialValues] = useState(() => new Map([[count, 42]]))
+useHydrateAtoms(initialValues)
+```
+
+Atoms can only be hydrated once per scope. Therefore, if the initial value used is changed during rerenders, it won't update the atom value.
+
+If there's a need to hydrate in multiple scopes, use multiple `useHydrateAtoms` hooks to achieve that.
+
+```ts
+useHydrateAtoms([[countAtom, 42], [frameworkAtom, "Next.js"]])
+useHydrateAtoms([[countAtom, 17], [frameworkAtom, "Gatsby"]], myScope)
+```
+
+### Codesandbox
+
+<CodeSandbox id="snu7n" />
+
+There's more examples in the [Next.js section](/jotai/guides/nextjs).
