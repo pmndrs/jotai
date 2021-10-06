@@ -49,7 +49,7 @@ export const Menu = () => {
           'fixed inset-0 z-50 flex items-end max-h-screen p-4 sm:p-6 bg-black/75 transition ease-in-out duration-300'
         )}>
         <div className="w-full max-h-full overflow-y-scroll p-8 border border-gray-300 rounded-lg bg-white shadow-2xl !overscroll-none">
-          <div className="pb-16 sm:pb-20">
+          <div className="px-3 pb-16 sm:pb-0">
             <Docs />
           </div>
           <div className="fixed left-8 sm:left-auto right-8 sm:right-16 bottom-8 sm:bottom-16 z-70">
