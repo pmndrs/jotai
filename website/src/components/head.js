@@ -4,29 +4,31 @@ import { Helmet } from 'react-helmet'
 
 export const Head = ({ lang = 'en', title, description, uri }) => {
   const data = useStaticQuery(staticQuery)
+
   const { gatsby } = data
 
   const htmlAttributes = {
-    lang: lang,
+    lang,
   }
 
   const siteTitle = gatsby.meta.title
-  const siteDescription = gatsby.meta.description
   const siteUrl = gatsby.meta.siteUrl
   const siteIcon = `${siteUrl}/favicon.svg`
   const socialMediaCardImage = `${siteUrl}/preview_DRAFT.png`
+  const shortName = gatsby.meta.shortName
 
-  // @TODO remove console.info for socialMediaCardImage
-  console.info('socialMediaCardImage:', socialMediaCardImage)
+  const pageTitle = title ? `${title} — ${siteTitle}` : siteTitle
+  const pageDescription = description ?? gatsby.meta.description
+  const pageUrl = uri ? `${siteUrl}/${uri}/` : siteUrl
 
   return (
     <Helmet htmlAttributes={htmlAttributes} defer={false}>
-      <title>{siteTitle}</title>
-      <meta property="description" content={siteDescription} />
+      <title>{pageTitle}</title>
+      <meta property="description" content={pageDescription} />
       <meta property="og:locale" content={lang} />
-      <meta property="og:site_name" content="👻 Jotai" />
-      <meta property="og:title" content={siteTitle} />
-      <meta property="og:description" content={siteDescription} />
+      <meta property="og:site_name" content={shortName} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
       <meta property="og:type" content="website" />
       <meta property="og:image" content={socialMediaCardImage} />
       <meta property="og:image:url" content={socialMediaCardImage} />
@@ -35,7 +37,7 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
       <meta property="og:image:height" content="630" />
       <meta property="twitter:card" content="summary_large_image" />
       <link rel="icon" type="image/svg+xml" href={siteIcon} />
-      <link rel="canonical" href={siteUrl} />
+      <link rel="canonical" href={pageUrl} />
     </Helmet>
   )
 }
@@ -47,6 +49,7 @@ const staticQuery = graphql`
         title
         description
         siteUrl
+        shortName
       }
     }
   }

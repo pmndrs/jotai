@@ -12,7 +12,7 @@ export const CoreDemo = () => {
       <input
         value={text}
         onChange={(event) => setText(event.target.value)}
-        className="w-full focus:outline-none"
+        className="w-full focus:!ring-transparent"
       />
     )
   }
@@ -58,7 +58,7 @@ const MyApp = () => {
           <Uppercase />
         </div>
       </div>
-      <Code code={code} />
+      <Code>{code}</Code>
     </>
   )
 }

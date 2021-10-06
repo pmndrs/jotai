@@ -2,7 +2,7 @@ import React from 'react'
 
 export const InlineCode = ({ children }) => {
   return (
-    <code className="px-2 py-1 bg-gray-100 rounded text-sm text-gray-800">
+    <code className="relative -top-px px-1 py-0.5 bg-gray-100 rounded text-xs lg:text-sm text-black">
       {children}
     </code>
   )

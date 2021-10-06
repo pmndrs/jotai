@@ -1,0 +1,97 @@
+---
+title: URQL
+description: This doc describes `jotai/urql` bundle.
+nav: 4.8
+---
+
+## Install
+
+You have to install `@urql/core` and `wonka` to access this bundle and its functions.
+
+```
+yarn add @urql/core wonka
+```
+
+## atomWithQuery
+
+`atomWithQuery` creates a new atom with a query. It internally uses [client.query](https://formidable.com/open-source/urql/docs/api/core/#clientquery).
+
+```js
+import { useAtom } from 'jotai'
+import { createClient } from "@urql/core";
+import { atomWithQuery } from 'jotai/urql'
+
+const client = createClient({ url: "..." });
+
+const idAtom = atom(1)
+const userAtom = atomWithQuery(
+  (get) => ({
+    query: '{ user { first_name last_name } }',
+    variables: { id: get(idAtom) },
+  }),
+  () => client,
+)
+
+const UserData = () => {
+  const [{ data }] = useAtom(userAtom)
+  return <div>{JSON.stringify(data)}</div>
+}
+```
+
+### Examples
+
+#### Basic demo
+
+<CodeSandbox id="zujf6" />
+
+## atomWithMutation
+
+`atomWithMutation` creates a new atom with a mutation. It internally uses [client.mutation](https://formidable.com/open-source/urql/docs/api/core/#clientmutation).
+
+```js
+import { useAtom } from 'jotai'
+import { createClient } from "@urql/core";
+import { atomWithMutation } from 'jotai/urql'
+
+const client = createClient({ url: "..." });
+
+const fooAtom = atomWithMutation(
+  () => 'mutation Foo { text }',
+  () => client,
+)
+
+const FooData = () => {
+  const [{ data }, mutate] = useAtom(fooAtom)
+  return <div>{JSON.stringify(data)} <button onClick={mutate}>Click me</button></div>
+}
+```
+
+### Examples
+
+TODO
+
+## atomWithSubscription
+
+`atomWithSubscription` creates a new atom with a mutation. It internally uses [client.subscription](https://formidable.com/open-source/urql/docs/api/core/#clientsubscription).
+
+```js
+import { useAtom } from 'jotai'
+import { createClient } from "@urql/core";
+import { atomWithSubscription } from 'jotai/urql'
+
+const client = createClient({ url: "..." });
+
+const fooAtom = atomWithSubscription(
+  () => 'subscription Foo { text }',
+  () => client,
+)
+
+const FooData = () => {
+  const [{ data }] = useAtom(fooAtom)
+  return <div>{JSON.stringify(data)}</div>
+}
+```
+
+### Examples
+
+TODO

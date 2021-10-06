@@ -29,7 +29,7 @@ const Controls = () => {
 
   return (
     <>
-      <div className="flex items-center py-8 space-x-8">
+      <div className="flex items-center pt-4 lg:pt-8 lg:pb-4 space-x-8">
         <Button onClick={increment} icon="plus" className="focus:ring">
           Increment
         </Button>
@@ -37,7 +37,7 @@ const Controls = () => {
           {count}
         </span>
       </div>
-      <Code code={code} />
+      <Code>{code}</Code>
     </>
   )
 }
