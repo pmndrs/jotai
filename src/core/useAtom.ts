@@ -55,8 +55,8 @@ export function useAtom<Value, Update>(
   const ScopeContext = getScopeContext(scope)
   const store = useContext(ScopeContext).s
 
-  const getAtomValue = useCallback(() => {
-    const atomState = store[READ_ATOM](atom)
+  function getAtomValue(_: any, action: typeof atom): Value {
+    const atomState = store[READ_ATOM](action)
     if ('e' in atomState) {
       throw atomState.e // read error
     }
@@ -70,13 +70,19 @@ export function useAtom<Value, Update>(
       return atomState.v as Value
     }
     throw new Error('no atom value')
-  }, [store, atom])
+  }
 
-  const [value, forceUpdate] = useReducer(getAtomValue, undefined, getAtomValue)
+  const [value, forceUpdate] = useReducer(
+    getAtomValue,
+    getAtomValue(null, atom)
+  )
 
   useEffect(() => {
-    const unsubscribe = store[SUBSCRIBE_ATOM](atom, forceUpdate)
-    forceUpdate()
+    const unsubscribe = store[SUBSCRIBE_ATOM](
+      atom,
+      () => forceUpdate(atom)
+    )
+    forceUpdate(atom)
     return unsubscribe
   }, [store, atom])
 
