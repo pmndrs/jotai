@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import cx from 'classnames'
 import { useStaticQuery, graphql, Link } from 'gatsby'
 import { useAtomValue, useUpdateAtom } from 'jotai/utils'
@@ -6,18 +6,14 @@ import { useAtomValue, useUpdateAtom } from 'jotai/utils'
 import { menuAtom, docsAtom } from '../atoms'
 import { Button } from '../components'
 
-export const Navigation = ({
-  docsNavClassName = '',
-  isFooter = false,
-  ...rest
-}) => {
+export const Navigation = ({ isFooter = false, ...rest }) => {
   const data = useStaticQuery(staticQuery)
 
   const isDocsPage = useAtomValue(docsAtom)
   const setIsMenuOpen = useUpdateAtom(menuAtom)
 
   const allDocs = data.allMdx.nodes.sort(sortDocs)
-  const navLinks = parseDocs(allDocs)
+  const navLinks = useMemo(() => parseDocs(allDocs), [allDocs, parseDocs])
 
   return (
     <nav {...rest}>
@@ -34,7 +30,7 @@ export const Navigation = ({
         </Button>
       )}
       {!isFooter && isDocsPage && (
-        <div className={cx('space-y-8', docsNavClassName)}>
+        <div className="space-y-8">
           {navLinks.map((section, index) => (
             <div key={index}>
               {section.title && (

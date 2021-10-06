@@ -11,8 +11,10 @@ export default function DocsPage({ data }) {
   return (
     <>
       <Head title={title} description={description} uri={slug} />
-      <Layout isDocsPage>
-        <Jotai className="flex lg:hidden w-full mb-12 space-x-4" small />
+      <Layout showDocs>
+        <div className="lg:hidden mb-4">
+          <Jotai small />
+        </div>
         <h1>{title}</h1>
         <MDXRenderer>{body}</MDXRenderer>
       </Layout>

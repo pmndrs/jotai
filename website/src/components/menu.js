@@ -3,46 +3,61 @@ import cx from 'classnames'
 import { useAtom } from 'jotai'
 
 import { menuAtom } from '../atoms'
-import { Button, Navigation } from '../components'
+import { Button, Docs } from '../components'
 
 export const Menu = () => {
   const [isMenuOpen, setIsMenuOpen] = useAtom(menuAtom)
 
   return (
     <>
-      <div className="fixed bottom-0 right-0 lg:hidden p-4">
-        <div className="relative z-10 flex flex-col items-end space-y-4">
-          <div className="relative z-40 focus:outline-none shadow-2xl">
-            <Button
-              onClick={() => setIsMenuOpen(true)}
-              icon="menu"
-              dark
-              className="font-bold tracking-wider uppercase">
-              Menu
-            </Button>
-          </div>
+      <div className="fixed left-0 bottom-0 right-0 lg:hidden">
+        <div className="flex justify-center w-full p-4 space-x-4 border-t border-gray-700 bg-gray-900">
+          <Button
+            icon="github"
+            to="https://github.com/pmndrs/jotai"
+            external
+            className="font-bold tracking-wider uppercase"
+            dark
+            small>
+            GitHub
+          </Button>
+          <Button
+            icon="npm"
+            to="https://www.npmjs.com/package/jotai"
+            external
+            className="font-bold tracking-wider uppercase"
+            dark
+            small>
+            npm
+          </Button>
+          <Button
+            icon="book"
+            onClick={() => setIsMenuOpen(true)}
+            className="font-bold tracking-wider uppercase"
+            dark
+            small>
+            Docs
+          </Button>
         </div>
+        <div className="w-full h-4 bg-black" />
       </div>
       <div
         className={cx(
           isMenuOpen
             ? 'opacity-100 lg:opacity-0 pointer-events-auto lg:pointer-events-none'
             : 'opacity-0 pointer-events-none',
-          'fixed inset-0 z-50 flex items-end max-h-screen p-4 sm:p-8 bg-black/75 transition ease-in-out duration-300'
+          'fixed inset-0 z-50 flex items-end max-h-screen p-4 sm:p-6 bg-black/75 transition ease-in-out duration-300'
         )}>
-        <div className="w-full max-h-full overflow-y-scroll p-4 sm:p-8 border border-gray-300 rounded-lg bg-white shadow-2xl !overscroll-none">
-          <div className="pb-16 sm:pb-20">
-            <Navigation
-              className="flex flex-col space-y-4 sm:space-y-8"
-              docsNavClassName="px-3"
-            />
+        <div className="w-full max-h-full overflow-y-scroll p-8 border border-gray-300 rounded-lg bg-white shadow-2xl !overscroll-none">
+          <div className="px-3 pb-16 sm:pb-0">
+            <Docs />
           </div>
           <div className="fixed left-8 sm:left-auto right-8 sm:right-16 bottom-8 sm:bottom-16 z-70">
             <Button
-              onClick={() => setIsMenuOpen(false)}
               icon="close"
-              dark
-              className="w-full font-bold tracking-wider uppercase">
+              onClick={() => setIsMenuOpen(false)}
+              className="w-full font-bold tracking-wider uppercase"
+              dark>
               Close
             </Button>
           </div>
