@@ -40,12 +40,29 @@ const Counter: React.FC = () => {
   return (
     <>
       count: {state.count}
-      <button onClick={() => setState((prev) => ({ ...prev, count: prev.count + 1 }))}>
+      <button
+        onClick={() =>
+          setState((prev) => ({ ...prev, count: prev.count + 1 }))
+        }>
         button
       </button>
     </>
   )
 }
+```
+
+### Parameters
+
+```
+atomWithProxy(proxyObject, options?)
+```
+
+**proxyObject** (required): the Valtio proxy object you want to derive the atom from
+
+**options.sync** (optional): makes the atom update synchronously instead of waiting for batched updates, similar to [`valtio/useSnapshot`](https://github.com/pmndrs/valtio#update-synchronously). This will result in more renders, but have more guarantees that it syncs with other Jotai atoms.
+
+```
+atomWithProxy(proxyObject, { sync: true })
 ```
 
 ### Examples
