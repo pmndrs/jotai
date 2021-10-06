@@ -92,6 +92,7 @@ export function atomWithHash<Value>(
     deserialize?: (str: string) => Value
     delayInit?: boolean
     replaceState?: boolean
+    subscribe?: (callback: () => void) => () => void
   }
 ): PrimitiveAtom<Value>
 
@@ -114,6 +115,7 @@ export function atomWithHash<Value>(
         deserialize?: (str: string) => Value
         delayInit?: boolean
         replaceState?: boolean
+        subscribe?: (callback: () => void) => () => void
       }
     | ((val: Value) => string),
   deprecatedDeserialize?: (str: string) => Value
@@ -132,6 +134,14 @@ export function atomWithHash<Value>(
   }
   const serialize = options?.serialize || JSON.stringify
   const deserialize = options?.deserialize || JSON.parse
+  const subscribe =
+    options?.subscribe ||
+    ((callback) => {
+      window.addEventListener('hashchange', callback)
+      return () => {
+        window.removeEventListener('hashchange', callback)
+      }
+    })
   const hashStorage: Storage<Value> = {
     getItem: (key) => {
       const searchParams = new URLSearchParams(location.hash.slice(1))
@@ -159,10 +169,7 @@ export function atomWithHash<Value>(
           setValue(deserialize(str))
         }
       }
-      window.addEventListener('hashchange', callback)
-      return () => {
-        window.removeEventListener('hashchange', callback)
-      }
+      return subscribe(callback)
     },
   }
 
