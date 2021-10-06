@@ -59,12 +59,16 @@
   @apply my-4 px-4 py-2 shadow-md rounded-md sm:rounded-lg border border-yellow-200 bg-yellow-100;
 }
 
+.prose blockquote a {
+  @apply text-yellow-900;
+}
+
 .prose blockquote p {
   @apply text-yellow-900;
 }
 
 .prose a {
-  @apply text-yellow-900 underline;
+  @apply text-blue-600 underline;
 }
 
 @tailwind components;

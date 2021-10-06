@@ -5,7 +5,7 @@ import { Jotai } from '../components'
 
 export const Intro = () => {
   return (
-    <header className="lg:mt-8">
+    <header>
       <Jotai className="lg:hidden max-w-xs" />
       <div className="flex items-center mt-8 lg:mt-0 sm:px-16 lg:px-0 space-x-4 sm:space-x-8">
         <StaticImage

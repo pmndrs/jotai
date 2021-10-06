@@ -23,17 +23,22 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
       <div
         className={cx(
           !small
-            ? 'mt-2 lg:mt-8 space-x-6 lg:space-x-4 text-gray-400'
+            ? 'mt-2 xl:mt-4 space-x-6 lg:space-x-4 text-gray-400'
             : 'relative -top-1.5 space-x-2 text-gray-300',
           'flex items-center lg:text-gray-600'
         )}>
         <div
-          className={cx(!small ? 'text-xl' : 'text-2xs', 'whitespace-nowrap')}>
+          className={cx(
+            !small ? 'text-lg xl:text-xl' : 'text-2xs',
+            'whitespace-nowrap'
+          )}>
           状態
         </div>
         <div
           className={cx(
-            !small ? 'text-base leading-snug' : 'text-2xs leading-tight'
+            !small
+              ? 'text-sm xl:text-base leading-snug'
+              : 'text-2xs leading-tight'
           )}>
           Primitive and flexible state management for React
         </div>

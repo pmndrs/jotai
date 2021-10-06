@@ -12,7 +12,7 @@ export default function DocsPage({ data }) {
     <>
       <Head title={title} description={description} uri={slug} />
       <Layout showDocs>
-        <div className="flex lg:hidden sm:justify-end w-full mb-4">
+        <div className="lg:hidden mb-4">
           <Jotai small />
         </div>
         <h1>{title}</h1>
