@@ -26,12 +26,20 @@
 .prose h3 + h4 {
   @apply mt-2;
 }
-
+.prose ol,
 .prose ul {
-  @apply my-4 pl-4 space-y-4 list-disc marker:text-gray-400 font-normal text-sm sm:text-base lg:text-lg text-gray-600 leading-normal;
+  @apply my-4 pl-5 space-y-4 marker:text-gray-400 font-normal text-sm sm:text-base lg:text-lg text-gray-600 leading-normal;
 }
 
-.prose ul li {
+.prose ol {
+  @apply list-decimal;
+}
+
+.prose ul {
+  @apply list-disc;
+}
+
+.prose li {
   @apply pl-1;
 }
 
