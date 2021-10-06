@@ -10,33 +10,36 @@ export const Menu = () => {
 
   return (
     <>
-      <div className="fixed left-0 bottom-0 right-0 flex lg:hidden justify-center w-full p-4 space-x-4 border-t border-gray-700 bg-gray-900">
-        <Button
-          icon="book"
-          onClick={() => setIsMenuOpen(true)}
-          className="font-bold tracking-wider uppercase"
-          dark
-          small>
-          Docs
-        </Button>
-        <Button
-          icon="github"
-          to="https://github.com/pmndrs/jotai"
-          external
-          className="font-bold tracking-wider uppercase"
-          dark
-          small>
-          GitHub
-        </Button>
-        <Button
-          icon="npm"
-          to="https://www.npmjs.com/package/jotai"
-          external
-          className="font-bold tracking-wider uppercase"
-          dark
-          small>
-          npm
-        </Button>
+      <div className="fixed left-0 bottom-0 right-0 lg:hidden ">
+        <div className="flex justify-center w-full p-4 space-x-4 border-t border-gray-700 bg-gray-900">
+          <Button
+            icon="github"
+            to="https://github.com/pmndrs/jotai"
+            external
+            className="font-bold tracking-wider uppercase"
+            dark
+            small>
+            GitHub
+          </Button>
+          <Button
+            icon="npm"
+            to="https://www.npmjs.com/package/jotai"
+            external
+            className="font-bold tracking-wider uppercase"
+            dark
+            small>
+            npm
+          </Button>
+          <Button
+            icon="book"
+            onClick={() => setIsMenuOpen(true)}
+            className="font-bold tracking-wider uppercase"
+            dark
+            small>
+            Docs
+          </Button>
+        </div>
+        <div className="w-full h-4 bg-[#0c0c0c]" />
       </div>
       <div
         className={cx(

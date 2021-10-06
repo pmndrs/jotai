@@ -3,11 +3,16 @@
 }
 
 body {
+  @apply bg-[#0c0c0c];
   font-size: 12pt;
   text-rendering: optimizeLegibility;
   line-height: 1;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+#___gatsby {
+  @apply bg-white;
 }
 
 pre,

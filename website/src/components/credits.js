@@ -28,7 +28,6 @@ export const Credits = () => {
           <img
             src="https://storage.googleapis.com/candycode/candycode.png"
             alt="candycode alternative graphic design web development agency San Diego"
-            className="relative lg:-bottom-px"
             style={{ height: 15 }}
           />
         </div>
