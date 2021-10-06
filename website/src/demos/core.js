@@ -27,13 +27,16 @@ export const CoreDemo = () => {
 
 // Create your atoms and derivatives
 const textAtom = atom('hello')
-const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
+const uppercaseAtom = atom(
+  (get) => get(textAtom).toUpperCase()
+)
 
 // Use them anywhere in your app
 const Input = () => {
   const [text, setText] = useAtom(textAtom)
+  const handleChange = (e) => setText(e.target.value)
   return (
-    <input value={text} onChange={(e) => setText(e.target.value)} />
+    <input value={text} onChange={handleChange} />
   )
 }
 

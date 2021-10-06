@@ -4,7 +4,7 @@ import { Jotai, Button, Docs, Credits } from '../components'
 
 export const Sidebar = ({ showDocs = false }) => {
   return (
-    <aside className="sticky top-0 hidden lg:flex flex-col flex-shrink-0 justify-between w-full max-w-[384px] min-h-full h-full max-h-screen overflow-y-auto overscroll-none p-16 pb-8 pr-8">
+    <aside className="sticky top-0 hidden lg:flex flex-col flex-shrink-0 justify-between w-full lg:max-w-[288px] xl:max-w-[384px] min-h-full h-full max-h-screen overflow-y-auto overscroll-none p-8 lg:p-12 xl:p-16 !pr-0">
       <div className="flex-grow">
         <Jotai isDocsPage={showDocs} />
         <div className="flex flex-col mt-8 space-y-4">

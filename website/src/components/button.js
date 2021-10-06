@@ -11,9 +11,9 @@ export const Button = ({
   disabled = false,
   to,
   external = false,
+  dark = false,
   small = false,
   className = '',
-  dark = false,
   children,
   ...rest
 }) => {
@@ -31,7 +31,7 @@ export const Button = ({
   )
 
   const iconClassNames = cx(
-    'w-6 h-6 object-contain fill-current',
+    'flex-shrink-0 object-contain fill-current',
     !small ? 'w-6 h-6' : 'w-4 h-4',
     !dark ? 'text-gray-600' : 'text-gray-300'
   )
