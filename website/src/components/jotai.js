@@ -14,7 +14,9 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
               isDocsPage || small
                 ? 'text-gray-300 hover:text-black transition ease-in-out duration-300'
                 : 'text-black',
-              !small ? 'w-full max-w-[12rem] lg:max-w-[16rem]' : 'w-[4rem]'
+              !small
+                ? 'w-full max-w-[12rem] lg:max-w-[16rem] 2xl:max-w-[18rem]'
+                : 'w-[4rem]'
             )}
           />
         </Link>
@@ -23,17 +25,22 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
       <div
         className={cx(
           !small
-            ? 'mt-2 xl:mt-4 space-x-6 lg:space-x-4 text-gray-400'
+            ? 'mt-2 2xl:mt-6 space-x-6 lg:space-x-4 2xl:space-x-6 text-gray-400'
             : 'relative -top-1.5 space-x-2 text-gray-300',
           'flex items-center'
         )}>
         <div
-          className={cx(!small ? 'text-lg' : 'text-2xs', 'whitespace-nowrap')}>
+          className={cx(
+            !small ? 'text-lg 2xl:text-xl' : 'text-2xs',
+            'whitespace-nowrap'
+          )}>
           状態
         </div>
         <div
           className={cx(
-            !small ? 'text-sm leading-snug' : 'text-2xs leading-tight'
+            !small
+              ? 'text-sm 2xl:text-base leading-snug'
+              : 'text-2xs leading-tight'
           )}>
           Primitive and flexible state management for React
         </div>
