@@ -40,10 +40,7 @@ const Counter: React.FC = () => {
   return (
     <>
       count: {state.count}
-      <button
-        onClick={() =>
-          setState((prev) => ({ ...prev, count: prev.count + 1 }))
-        }>
+      <button onClick={() => setState((prev) => ({ ...prev, count: prev.count + 1 }))}>
         button
       </button>
     </>
