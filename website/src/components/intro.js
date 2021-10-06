@@ -10,7 +10,7 @@ export const Intro = () => {
       <div className="flex items-center mt-8 lg:mt-0 sm:px-16 lg:px-0 space-x-4 sm:space-x-8">
         <StaticImage
           src="../images/ghost_DRAFT.png"
-          className="w-1/3 lg:w-1/4"
+          className="w-1/3 lg:w-1/4 max-w-[215px]"
           imgStyle={{ objectFit: 'contain' }}
           layout="fullWidth"
           placeholder="blurred"
@@ -20,7 +20,7 @@ export const Intro = () => {
           breakpoints={[240, 480, 640, 768, 1080]}
           alt="Jotai mascot"
         />
-        <div className="relative w-2/3 lg:w-3/4 p-4 lg:p-8 space-y-4 bg-gray-100 rounded-xl text-sm sm:text-base lg:text-lg text-gray-700 leading-snug lg:leading-normal speech-bubble">
+        <div className="relative w-2/3 lg:w-3/4 p-4 lg:p-8 space-y-4 bg-gray-100 rounded-xl text-sm sm:text-base md:text-lg text-gray-700 leading-snug lg:leading-normal speech-bubble">
           <div>
             No extra re-renders, state resides within React, you get the full
             benefits from suspense and concurrent features.
