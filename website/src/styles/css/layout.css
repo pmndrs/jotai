@@ -3,7 +3,7 @@
 }
 
 body {
-  @apply overflow-y-scroll bg-gray-900 leading-none;
+  @apply overflow-y-scroll bg-black leading-none;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
 }
