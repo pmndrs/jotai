@@ -7,7 +7,7 @@ import { Logo } from '../components'
 export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
   return (
     <div {...rest}>
-      <h1 className="lg:px-2">
+      <h1>
         <Link to="/" className="inline-block focus:ring-offset-4 rounded-lg">
           <Logo
             className={cx(
@@ -28,17 +28,12 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
           'flex items-center lg:text-gray-600'
         )}>
         <div
-          className={cx(
-            !small ? 'text-lg xl:text-xl' : 'text-2xs',
-            'whitespace-nowrap'
-          )}>
+          className={cx(!small ? 'text-lg' : 'text-2xs', 'whitespace-nowrap')}>
           状態
         </div>
         <div
           className={cx(
-            !small
-              ? 'text-sm xl:text-base leading-snug'
-              : 'text-2xs leading-tight'
+            !small ? 'text-sm leading-snug' : 'text-2xs leading-tight'
           )}>
           Primitive and flexible state management for React
         </div>

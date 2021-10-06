@@ -2,6 +2,12 @@
   font-family: 'Inter Var', 'Inter', sans-serif;
 }
 
+body {
+  @apply overflow-y-scroll bg-gray-900 leading-none;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+}
+
 #___gatsby {
   @apply bg-white;
 }
@@ -43,8 +49,7 @@ textarea:focus {
 }
 
 *::-webkit-scrollbar {
-  @apply h-full bg-white;
-  width: 16px;
+  @apply w-4 h-full bg-white;
 }
 
 *::-webkit-scrollbar-track {
@@ -52,11 +57,9 @@ textarea:focus {
 }
 
 *::-webkit-scrollbar-thumb {
-  border: 4px solid #fff;
-  border-radius: 16px;
-  background-color: #bcbcbc;
+  @apply border-4 border-solid border-white bg-[#bcbcbc] rounded-2xl;
 }
 
 *::-webkit-scrollbar-button {
-  display: none;
+  @apply hidden;
 }
