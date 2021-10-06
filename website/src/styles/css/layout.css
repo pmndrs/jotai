@@ -3,8 +3,6 @@
 }
 
 body {
-  overflow-x: hidden;
-  font-size: 15px;
   text-rendering: optimizeLegibility;
   line-height: 1;
   -webkit-tap-highlight-color: transparent;
@@ -17,18 +15,31 @@ code span {
   font-family: 'Meslo', monospace !important;
 }
 
-/* @TODO replace with <div /> and Tailwind utility classes */
-.speech-bubble:after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 0;
-  height: 0;
-  margin-left: -24px;
-  margin-top: -16px;
-  border: solid transparent;
-  border-width: 16px 24px 16px 0;
-  border-right-color: #f5f5f5;
-  border-left: 0;
+::selection {
+  @apply bg-black text-white;
+}
+
+a,
+button {
+  @apply transition-all ease-in-out duration-300;
+}
+
+*:focus {
+  outline: 0 !important;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  @apply relative z-0;
+}
+
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  @apply z-10 ring;
 }

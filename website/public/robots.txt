@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://jotai.pmnd.rs/sitemap.xml
+Sitemap: https://jotai.pmnd.rs/sitemap/sitemap-index.xml

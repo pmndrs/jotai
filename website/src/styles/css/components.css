@@ -1,1 +1,70 @@
+.prose h1 {
+  @apply font-extrabold text-4xl lg:text-5xl tracking-tight lg:tracking-tighter leading-tight;
+}
+
+.prose h2 {
+  @apply font-bold text-2xl lg:text-3xl text-gray-300 leading-tight;
+}
+
+.prose * + h2 {
+  @apply mt-12 lg:mt-16;
+}
+
+.prose h3 {
+  @apply mt-6 lg:mt-8 font-semibold text-lg lg:text-xl text-gray-700 leading-tight;
+}
+
+.prose h4 {
+  @apply mt-8 font-semibold text-base lg:text-lg text-gray-600 leading-tight;
+}
+
+.prose h1 + h2 {
+  @apply !mt-4;
+}
+
+.prose h2 + h3,
+.prose h3 + h4 {
+  @apply mt-2;
+}
+.prose ol,
+.prose ul {
+  @apply my-4 pl-5 space-y-4 marker:text-gray-400 font-normal text-sm sm:text-base lg:text-lg text-gray-600 leading-normal;
+}
+
+.prose ol {
+  @apply list-decimal;
+}
+
+.prose ul {
+  @apply list-disc;
+}
+
+.prose li {
+  @apply pl-1;
+}
+
+.prose p {
+  @apply mt-1 text-sm sm:text-base lg:text-lg text-gray-600 leading-normal;
+}
+
+.prose p + p {
+  @apply mt-2;
+}
+
+.prose h1 + p {
+  @apply mt-4;
+}
+
+.prose blockquote {
+  @apply my-4 px-4 py-2 shadow-md rounded-md sm:rounded-lg border border-yellow-200 bg-yellow-100;
+}
+
+.prose blockquote p {
+  @apply text-yellow-900;
+}
+
+.prose a {
+  @apply text-blue-600 underline;
+}
+
 @tailwind components;

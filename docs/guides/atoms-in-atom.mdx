@@ -1,0 +1,157 @@
+---
+title: Atoms in atom
+nav: 3.7
+---
+
+`atom()` creates an atom config, which is an object, but it doesn't hold a value.
+Atom configs don't have string keys and we identify them with referential equality.
+In other words, we can use an atom config like a key.
+
+## Storing an atom config in useState
+
+First things first, we can store an atom config in useState.
+
+```jsx
+const Component = ({ atom1, atom2 }) => {
+  const [selectedAtom, setSelectedAtom] = useState(atom1)
+  const [value] = useAtom(selectedAtom)
+  return (
+    <div>
+      Selected value: {value}
+      <button onClick={() => setSelectedAtom(atom1)}>Select an atom</button>
+      <button onClick={() => setSelectedAtom(atom2)}>Select another atom</button>
+    </div>
+  )
+}
+```
+
+Note that we can pass atoms configs as props.
+
+It might not make any sense, but we could create an atom config on demand.
+
+```jsx
+const Component = () => {
+  const [currentAtom, setCurrentAtom] = useState(() => atom(0))
+  const [count, setCount] = useAtom(currentAtom)
+  return (
+    <div>
+      Count: {count} <button onClick={() => setCount((c) => c + 1)}>+1</button>
+      <button onClick={() => setCurrentAtom(atom(0))}>Create new</button>
+    </div>
+  )
+}
+```
+
+## Storing an atom config in atom
+
+Likewise, we can store an atom confing as a value of another atom.
+
+```jsx
+const firstNameAtom = atom('Tanjiro')
+const lastNameAtom = atom('Kamado')
+
+const showingNameAtom = atom(firstNameAtom)
+
+const Component = () => {
+  const [nameAtom, setNameAtom] = useAtom(showingNameAtom)
+  const [name] = useAtom(nameAtom)
+  return (
+    <div>
+      Name: {name}
+      <button onClick={() => setNameAtom(firstNameAtom)}>Show First Name</button>
+      <button onClick={() => setNameAtom(lastNameAtom)}>Show Last Name</button>
+    </div>
+  )
+}
+```
+
+It's possible to create a derived atom.
+
+```jsx
+const derivedNameAtom = atom(get) => {
+  const nameAtom = get(showingNameAtom)
+  return get(nameAtom)
+})
+
+// Or shoter version
+const derivedNameAtom = atom(get) => get(get(showingNameAtom)))
+```
+
+To avoid confusing what is in atoms, naming atoms explicitly would be important.
+Also, TypeScript type information would be helpful.
+
+## Storing an array of atom configs in atom
+
+Finally, the atoms in atom pattern is to store an array of atom config into an atom.
+
+```jsx
+const countsAtom = atom([atom(1), atom(2), atom(3)])
+
+const Counter = ({ countAtom }) => {
+  const [count, setCount] = useAtom(countAtom)
+  return (
+    <div>
+      {count} <button onClick={() => setCount((c) => c + 1)}>+1</button>
+    </div>
+  )
+}
+
+const Parent = () => {
+  const [counts, setCounts] = useAtom(countsAtom)
+  const addNewCount = () => {
+    const newAtom = atom(0)
+    setCounts((prev) => [...prev, newAtom])
+  }
+  return (
+    <div>
+      {counts.map((countAtom) => (
+        <Counter countAtom={countAtom} key={countAtom} />
+      ))}
+      <button onClick={addNewCount}>Add</button>
+    </div>
+  )
+}
+```
+
+The benefit of this approach is, if you increment a count,
+only the corresponding Counter component re-renders and no other components re-render.
+
+It is important to note that `anAtom.toString()` return a unique id, which can be used for `key` in map.
+
+### Hint for TypeScript users
+
+```tsx
+<Counter countAtom={countAtom} key={`${countAtom}`} />
+```
+
+## Storing a map of atom configs in atom
+
+Likewise, we can store an object map instead of an array.
+
+```jsx
+const pricesAtom = atom({
+  apple: atom(15),
+  orange: atom(12),
+  pineapple: atom(25),
+})
+
+const Fruit = ({ name, priceAtom }) => {
+  const [price] = useAtom(priceAtom)
+  return (
+    <div>
+      {name}: {price}
+    </div>
+  )
+}
+
+const Parent = () => {
+  const [prices] = useAtom(pricesAtom)
+  return (
+    <div>
+      {Object.keys(prices).map((name) => (
+        <Fruit name={name} priceAtom={prices[name]} key={name} />
+      ))}
+    </div>
+  )
+}
+```
