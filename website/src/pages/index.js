@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <>
       <Head />
-      <Layout isHomePage>
+      <Layout>
         <Intro />
         <div className="mt-8 lg:mt-16 space-y-8 lg:space-y-16">
           <section>

@@ -4,8 +4,6 @@ import { atomWithImmer } from 'jotai/immer'
 
 // Website state
 export const menuAtom = atom(false)
-export const homeAtom = atom(false)
-export const docsAtom = atom(false)
 
 // Core demo state
 export const textAtom = atom('hello')
