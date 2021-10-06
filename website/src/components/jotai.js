@@ -25,9 +25,9 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
       <div
         className={cx(
           !small
-            ? 'mt-2 2xl:mt-6 space-x-6 lg:space-x-4 2xl:space-x-6'
-            : 'relative -top-1.5 space-x-2',
-          'flex items-center text-gray-400'
+            ? 'mt-2 2xl:mt-6 space-x-6 lg:space-x-4 2xl:space-x-6 text-gray-400'
+            : 'relative -top-1 space-x-2 text-[#bcbcbc]',
+          'flex items-center '
         )}>
         <div
           className={cx(
