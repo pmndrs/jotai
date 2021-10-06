@@ -54,10 +54,10 @@ export const Menu = () => {
           </div>
           <div className="fixed left-8 sm:left-auto right-8 sm:right-16 bottom-8 sm:bottom-16 z-70">
             <Button
-              onClick={() => setIsMenuOpen(false)}
               icon="close"
-              dark
-              className="w-full font-bold tracking-wider uppercase">
+              onClick={() => setIsMenuOpen(false)}
+              className="w-full font-bold tracking-wider uppercase"
+              dark>
               Close
             </Button>
           </div>
