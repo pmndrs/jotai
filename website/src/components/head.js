@@ -36,6 +36,10 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="twitter:card" content="summary_large_image" />
+      <meta
+        name="google-site-verification"
+        content="kAk4HhO2XWygrIlMpveuGEbGC5_WoR6_SGLUQx_f7gU"
+      />
       <link rel="icon" type="image/svg+xml" href={siteIcon} />
       <link rel="canonical" href={pageUrl} />
     </Helmet>

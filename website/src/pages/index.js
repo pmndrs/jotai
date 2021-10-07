@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <>
       <Head />
-      <Layout isHomePage>
+      <Layout>
         <Intro />
         <div className="mt-8 lg:mt-16 space-y-8 lg:space-y-16">
           <section>
@@ -21,7 +21,7 @@ export default function HomePage() {
             </p>
           </section>
           <section>
-            <h2>"Core API"</h2>
+            <h2>Core API</h2>
             <p>
               Jotai has a very minimal API and is TypeScript oriented. It is as
               simple to use as React’s integrated{' '}
@@ -32,13 +32,14 @@ export default function HomePage() {
             <CoreDemo />
           </section>
           <section>
-            <h2>Extra utils</h2>
+            <h2>Extra utilities</h2>
             <p>
               The Jotai package also includes a{' '}
               <InlineCode>jotai/utils</InlineCode> bundle. These functions add
-              support for persisting an atom’s state in localStorage or a URL
-              hash, creating an atom with a set function with redux-like
-              reducers and action types, and more.
+              support for persisting an atom’s state in localStorage (or URL
+              hash), hydrating an atom’s state during server-side rendering,
+              creating an atom with a set function including Redux-like reducers
+              and action types, and much more!
             </p>
             <UtilitiesDemo />
           </section>
@@ -46,11 +47,14 @@ export default function HomePage() {
             <h2>Third-party integrations</h2>
             <p>
               There are also additional bundles for each official third-party
-              integration. Immer, Optics, Query, XState, Valtio, Zustand, and
-              Redux. Some integrations provide new atom types with alternate
-              update functions such as <InlineCode>atomWithImmer</InlineCode>{' '}
-              while others provide new atom types with two-way data binding for
-              other state management libraries such as{' '}
+              integration. Immer, Optics, Query, XState, Valtio, Zustand, Redux,
+              and URQL.
+            </p>
+            <p>
+              Some integrations provide new atom types with alternate set
+              functions such as <InlineCode>atomWithImmer</InlineCode> while
+              others provide new atom types with two-way data binding with other
+              state management libraries such as{' '}
               <InlineCode>atomWithStore</InlineCode> which is bound with a Redux
               store.
             </p>

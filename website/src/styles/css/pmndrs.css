@@ -10,12 +10,12 @@ pre[class*='language-'] {
   word-wrap: normal;
   tab-size: 2;
   hyphens: none;
-  @apply shadow-lg rounded-md sm:rounded-lg text-sm lg:text-base text-[#e4f0fb] text-left whitespace-pre break-normal leading-normal;
+  @apply shadow-lg rounded-md sm:rounded-lg text-sm xl:text-base text-[#e4f0fb] text-left whitespace-pre break-normal leading-normal;
 }
 
 /* Code blocks */
 pre[class*='language-'] {
-  @apply my-4 p-8 pb-0 sm:pb-8 rounded-lg overflow-x-auto;
+  @apply overflow-x-auto my-4 p-6 sm:p-8;
 }
 
 :not(pre) > code[class*='language-'],

@@ -17,10 +17,11 @@ const darkModeAtom = atomWithStorage('darkMode', false)
 const Page = () => {
   // Consume persisted state like any other atom
   const [darkMode, setDarkMode] = useAtom(darkModeAtom)
+  const toggleDarkMode = () => setDarkMode(!darkMode)
   return (
     <>
       <h1>Welcome to {darkMode ? 'dark' : 'light'} mode!</h1>
-      <button onClick={() => setDarkMode(!darkMode)}>toggle theme</button>
+      <button onClick={toggleDarkMode}>toggle theme</button>
     </>
   )
 }`
@@ -34,14 +35,14 @@ const Page = () => {
               darkMode
                 ? 'bg-gray-900 text-gray-100'
                 : 'bg-gray-100 text-gray-900',
-              'flex items-center p-4 lg:p-8 space-x-4 lg:space-x-8 focus-within:ring rounded-xl transition duration-300 ease-in-out'
+              'flex items-center p-4 lg:p-8 space-x-4 lg:space-x-8 rounded-xl transition duration-300 ease-in-out'
             )}>
             <div>
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={cx(
                   darkMode ? 'bg-gray-700' : 'bg-gray-300',
-                  'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none'
+                  'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none '
                 )}>
                 <span
                   className={cx(
