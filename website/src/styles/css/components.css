@@ -3,7 +3,7 @@
 }
 
 .prose h2 {
-  @apply font-bold text-2xl lg:text-3xl text-gray-300 leading-tight;
+  @apply font-bold text-2xl lg:text-3xl text-[#bcbcbc] leading-tight;
 }
 
 .prose * + h2 {
@@ -52,11 +52,15 @@
 }
 
 .prose h1 + p {
-  @apply mt-4;
+  @apply mt-8;
 }
 
 .prose blockquote {
   @apply my-4 px-4 py-2 shadow-md rounded-md sm:rounded-lg border border-yellow-200 bg-yellow-100;
+}
+
+.prose blockquote a {
+  @apply text-yellow-900;
 }
 
 .prose blockquote p {

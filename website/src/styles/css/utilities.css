@@ -14,4 +14,10 @@
   border-left: 0;
 }
 
+@supports (-moz-appearance: none) {
+  .moz\:-bottom-1 {
+    @apply -bottom-1;
+  }
+}
+
 @tailwind utilities;

@@ -3,9 +3,13 @@
 }
 
 body {
+  @apply overflow-y-scroll bg-black leading-none;
   text-rendering: optimizeLegibility;
-  line-height: 1;
   -webkit-tap-highlight-color: transparent;
+}
+
+#___gatsby {
+  @apply bg-white;
 }
 
 pre,
@@ -42,4 +46,20 @@ input:focus,
 select:focus,
 textarea:focus {
   @apply z-10 ring;
+}
+
+*::-webkit-scrollbar {
+  @apply w-4 h-full bg-white;
+}
+
+*::-webkit-scrollbar-track {
+  @apply bg-white;
+}
+
+*::-webkit-scrollbar-thumb {
+  @apply border-4 border-solid border-white bg-[#bcbcbc] rounded-2xl;
+}
+
+*::-webkit-scrollbar-button {
+  @apply hidden;
 }
