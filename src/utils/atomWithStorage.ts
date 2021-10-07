@@ -94,44 +94,7 @@ export function atomWithHash<Value>(
     replaceState?: boolean
     subscribe?: (callback: () => void) => () => void
   }
-): PrimitiveAtom<Value>
-
-/**
- * @deprecated Use options
- */
-export function atomWithHash<Value>(
-  key: string,
-  initialValue: Value,
-  deprecatedSerialize?: (val: Value) => string,
-  deprecatedDeserialize?: (str: string) => Value
-): PrimitiveAtom<Value>
-
-export function atomWithHash<Value>(
-  key: string,
-  initialValue: Value,
-  options?:
-    | {
-        serialize?: (val: Value) => string
-        deserialize?: (str: string) => Value
-        delayInit?: boolean
-        replaceState?: boolean
-        subscribe?: (callback: () => void) => () => void
-      }
-    | ((val: Value) => string),
-  deprecatedDeserialize?: (str: string) => Value
 ): PrimitiveAtom<Value> {
-  if (
-    typeof options === 'function' ||
-    typeof deprecatedDeserialize === 'function'
-  ) {
-    console.warn(
-      '[DEPRECATED] use atomWithHash(key, initialValue, options) instead'
-    )
-    return atomWithHash(key, initialValue, {
-      serialize: options as (val: Value) => string,
-      deserialize: deprecatedDeserialize,
-    })
-  }
   const serialize = options?.serialize || JSON.stringify
   const deserialize = options?.deserialize || JSON.parse
   const subscribe =
