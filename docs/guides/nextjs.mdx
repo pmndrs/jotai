@@ -1,0 +1,44 @@
+---
+title: Next.js
+description: How to use Jotai with Next.js
+nav: 3.4
+---
+
+Jotai has support for hydration of atoms with `useHydrateAtoms`. The documentation for the hook can be seen [here](/jotai/api/utils#use-hydrate-atoms).
+
+## You can't return promises in server side rendering
+
+It's important to note that you can't return promises with SSR - However, it's possible to guard against it inside the atom definition.
+
+If possible use `useHydrateAtoms` to hydrate values from the server.
+
+```js
+const postData = atom((get) => {
+  const id = get(postId)
+  if (isSSR || prefetchedPostData[id]) {
+    return prefetchedPostData[id] || EMPTY_POST_DATA
+  }
+  return fetchData(id) // returns a promise
+})
+```
+
+## Examples
+
+### Clock
+
+<CodeSandbox id="snu7n" />
+
+### HN Posts
+
+<CodeSandbox id="819n4" />
+
+### Next.js repo
+
+```bash
+npx create-next-app --example with-jotai with-jotai-app
+# or
+yarn create next-app --example with-jotai with-jotai-app
+```
+
+Here's a [link](https://github.com/vercel/next.js/tree/canary/examples/with-jotai).
+
