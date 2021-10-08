@@ -56,5 +56,7 @@ export const H6 = ({ children }) => {
 }
 
 const getAnchor = (text) => {
-  return typeof text === 'string' ? text.replace(/[ ]/g, '-') : ''
+  return typeof text === 'string'
+    ? text.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase()
+    : ''
 }
