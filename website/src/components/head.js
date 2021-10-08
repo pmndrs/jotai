@@ -19,7 +19,7 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
 
   const pageTitle = title ? `${title} — ${siteTitle}` : siteTitle
   const pageDescription = description ?? gatsby.meta.description
-  const pageUrl = uri ? `${siteUrl}/${uri}/` : siteUrl
+  const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl
 
   return (
     <Helmet htmlAttributes={htmlAttributes} defer={false}>
