@@ -26,9 +26,29 @@
 .prose h3 + h4 {
   @apply mt-2;
 }
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  scroll-margin-top: 3rem;
+}
+
+.prose h1 a,
+.prose h2 a,
+.prose h3 a,
+.prose h4 a,
+.prose h5 a,
+.prose h6 a {
+  all: inherit;
+  @apply inline cursor-pointer;
+}
+
 .prose ol,
 .prose ul {
-  @apply my-4 pl-5 space-y-4 marker:text-gray-400 font-normal text-sm sm:text-base lg:text-lg text-gray-600 leading-normal;
+  @apply my-4 pl-5 space-y-4 font-normal text-sm sm:text-base lg:text-lg text-gray-600 leading-normal;
 }
 
 .prose ol {
@@ -36,7 +56,7 @@
 }
 
 .prose ul {
-  @apply list-disc;
+  @apply list-disc marker:text-gray-400;
 }
 
 .prose li {
@@ -55,6 +75,10 @@
   @apply mt-8;
 }
 
+.prose a {
+  @apply text-blue-600 underline;
+}
+
 .prose blockquote {
   @apply my-4 px-4 py-2 shadow-md rounded-md sm:rounded-lg border border-yellow-200 bg-yellow-100;
 }
@@ -67,8 +91,12 @@
   @apply text-yellow-900;
 }
 
-.prose a {
-  @apply text-blue-600 underline;
+.prose a code {
+  @apply !text-blue-600;
+}
+
+.prose blockquote a code {
+  @apply !text-blue-900;
 }
 
 @tailwind components;

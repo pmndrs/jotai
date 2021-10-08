@@ -1,0 +1,60 @@
+import React from 'react'
+
+export const H2 = ({ children }) => {
+  const anchor = getAnchor(children)
+  const link = `#${anchor}`
+
+  return (
+    <h2 id={anchor}>
+      <a href={link}>{children}</a>
+    </h2>
+  )
+}
+
+export const H3 = ({ children }) => {
+  const anchor = getAnchor(children)
+  const link = `#${anchor}`
+
+  return (
+    <h3 id={anchor}>
+      <a href={link}>{children}</a>
+    </h3>
+  )
+}
+
+export const H4 = ({ children }) => {
+  const anchor = getAnchor(children)
+  const link = `#${anchor}`
+
+  return (
+    <h4 id={anchor}>
+      <a href={link}>{children}</a>
+    </h4>
+  )
+}
+
+export const H5 = ({ children }) => {
+  const anchor = getAnchor(children)
+  const link = `#${anchor}`
+
+  return (
+    <h5 id={anchor}>
+      <a href={link}>{children}</a>
+    </h5>
+  )
+}
+
+export const H6 = ({ children }) => {
+  const anchor = getAnchor(children)
+  const link = `#${anchor}`
+
+  return (
+    <h6 id={anchor}>
+      <a href={link}>{children}</a>
+    </h6>
+  )
+}
+
+const getAnchor = (text) => {
+  return typeof text === 'string' ? text.replace(/[ ]/g, '-') : ''
+}
