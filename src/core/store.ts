@@ -16,7 +16,7 @@ const IS_EQUAL_PROMISE = Symbol()
 const INTERRUPT_PROMISE = Symbol()
 type InterruptablePromise = Promise<void> & {
   [IS_EQUAL_PROMISE]: (p: Promise<void>) => boolean
-  [INTERRUPT_PROMISE]: () => void
+  [INTERRUPT_PROMISE]?: () => void
 }
 
 const isInterruptablePromise = (
@@ -29,14 +29,17 @@ const createInterruptablePromise = (
 ): InterruptablePromise => {
   let interrupt: (() => void) | undefined
   const interruptablePromise = new Promise<void>((resolve, reject) => {
-    interrupt = resolve
+    interrupt = () => {
+      delete interruptablePromise[INTERRUPT_PROMISE]
+      resolve()
+    }
     promise.then(resolve, reject)
   }) as InterruptablePromise
   interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>): boolean =>
     interruptablePromise === p ||
     promise === p ||
     (isInterruptablePromise(promise) && promise[IS_EQUAL_PROMISE](p))
-  interruptablePromise[INTERRUPT_PROMISE] = interrupt as () => void
+  interruptablePromise[INTERRUPT_PROMISE] = interrupt
   return interruptablePromise
 }
 
@@ -330,11 +333,13 @@ export const createStore = (
           })
           .catch((e) => {
             if (e instanceof Promise) {
-              scheduleReadAtomState(atom, e)
-              return e
+              if (!isInterruptablePromise(e) || !e[INTERRUPT_PROMISE]) {
+                scheduleReadAtomState(atom, e)
+              }
+            } else {
+              setAtomReadError(atom, e, dependencies, promise as Promise<void>)
+              flushPending()
             }
-            setAtomReadError(atom, e, dependencies, promise as Promise<void>)
-            flushPending()
           })
       } else {
         value = promiseOrValue as NonPromise<Value>
