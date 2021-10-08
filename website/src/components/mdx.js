@@ -55,6 +55,16 @@ export const H6 = ({ children }) => {
   )
 }
 
+export const A = ({ href, children, ...rest }) => {
+  const newHref = href.replace('.mdx', '')
+
+  return (
+    <a href={newHref} {...rest}>
+      {children}
+    </a>
+  )
+}
+
 const getAnchor = (text) => {
   return typeof text === 'string'
     ? text.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase()
