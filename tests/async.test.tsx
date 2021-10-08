@@ -937,8 +937,13 @@ it('async write chain', async () => {
 })
 
 it('async atom double chain without setTimeout (#751)', async () => {
-  const asyncAtom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 1000))
+  const enabledAtom = atom(false)
+  const asyncAtom = atom(async (get) => {
+    const enabled = get(enabledAtom)
+    if (!enabled) {
+      return 'init'
+    }
+    await new Promise((r) => setTimeout(r, 10))
     return 'ready'
   })
   const derivedAsyncAtom = atom(async (get) => get(asyncAtom))
@@ -949,16 +954,35 @@ it('async atom double chain without setTimeout (#751)', async () => {
     return <div>async: {text}</div>
   }
 
-  const { findByText } = render(
-    <StrictMode>
-      <Provider>
+  const Parent = () => {
+    // Use useAtom to reproduce the issue
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <>
         <Suspense fallback="loading">
           <AsyncComponent />
         </Suspense>
+        <button
+          onClick={() => {
+            setEnabled(true)
+          }}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Parent />
       </Provider>
     </StrictMode>
   )
 
+  await findByText('async: init')
+
+  fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('async: ready')
 })
