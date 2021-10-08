@@ -53,7 +53,7 @@ const Toggle = () => {
 
 ## atomWithToggleAndStorage
 
-> `atomWithToggleAndStorage` does the same as [`atomWithToggle`](#atomWithToggle) but also persist the state anytime it changes in given storage using [`atomWithStorage`](../api/utils#atomWithStorage).
+> `atomWithToggleAndStorage` does the same as [`atomWithToggle`](#atom-with-toggle) but also persist the state anytime it changes in given storage using [`atomWithStorage`](../api/utils.mdx#atom-with-storage).
 
 Here is the source :
 
@@ -88,4 +88,4 @@ import { atomWithToggleAndStorage } from 'XXX'
 const isActiveAtom = atomWithToggleAndStorage('isActive')
 ```
 
-The usage in a component is also the same as [`atomWithToggle`](#atomWithToggle).
+The usage in a component is also the same as [`atomWithToggle`](#atom-with-toggle).

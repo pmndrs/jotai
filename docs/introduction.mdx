@@ -83,7 +83,8 @@ const atoms = [count1, count2, count3, ...otherAtoms]
 const sum = atom((get) => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
-### Derived async atoms <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
+### Derived async atoms
+<img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
 
 You can make the read function an async function too.
 
@@ -132,7 +133,8 @@ function Controls() {
   return <button onClick={() => multiply(3)}>triple</button>
 ```
 
-### Async actions <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
+### Async actions
+<img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
 
 Just make the write function an async function and call `set` when you're ready.
 
