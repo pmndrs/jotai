@@ -6,14 +6,6 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
-beforeEach(() => {
-  jest.useFakeTimers()
-})
-afterEach(() => {
-  jest.runOnlyPendingTimers()
-  jest.useRealTimers()
-})
-
 describe('atomWithStorage (sync)', () => {
   const storageData: Record<string, number> = {
     count: 10,
