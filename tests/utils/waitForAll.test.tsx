@@ -9,13 +9,10 @@ const Provider = getTestProvider()
 const consoleWarn = console.warn
 const consoleError = console.error
 beforeEach(() => {
-  jest.useFakeTimers()
   console.warn = jest.fn()
   console.error = jest.fn()
 })
 afterEach(() => {
-  jest.runOnlyPendingTimers()
-  jest.useRealTimers()
   console.warn = consoleWarn
   console.error = consoleError
 })
@@ -89,8 +86,6 @@ it('waits for two async atoms', async () => {
   expect(isAsyncAtomRunning).toBe(true)
   expect(isAnotherAsyncAtomRunning).toBe(true)
 
-  jest.runOnlyPendingTimers()
-
   await findByText('num: 2, str: A')
   expect(isAsyncAtomRunning).toBe(false)
   expect(isAnotherAsyncAtomRunning).toBe(false)
@@ -152,8 +147,6 @@ it('can use named atoms in derived atom', async () => {
   await findByText('loading')
   expect(isAsyncAtomRunning).toBe(true)
   expect(isAnotherAsyncAtomRunning).toBe(true)
-
-  jest.runOnlyPendingTimers()
 
   await findByText('num: 2, str: A')
   expect(isAsyncAtomRunning).toBe(false)
@@ -219,8 +212,6 @@ it('can handle errors', async () => {
   expect(isAsyncAtomRunning).toBe(true)
   expect(isErrorAtomRunning).toBe(true)
 
-  jest.runOnlyPendingTimers()
-
   await findByText('errored')
   expect(isAsyncAtomRunning).toBe(false)
   expect(isErrorAtomRunning).toBe(false)
@@ -282,18 +273,13 @@ it('handles scope', async () => {
   await findByText('loading')
   expect(isAsyncAtomRunning).toBe(true)
   expect(isAnotherAsyncAtomRunning).toBe(true)
-  jest.runOnlyPendingTimers()
 
   await findByText('num1: 1, num2: 2')
   expect(isAsyncAtomRunning).toBe(false)
   expect(isAnotherAsyncAtomRunning).toBe(false)
 
   fireEvent.click(getByText('increment'))
-  jest.runOnlyPendingTimers()
-
   await findByText('loading')
-  jest.runOnlyPendingTimers()
-
   await findByText('num1: 2, num2: 2')
 })
 
@@ -336,8 +322,6 @@ it('large atom count', async () => {
   )
 
   expect(result).toEqual(createArray(passingCount))
-
-  jest.runOnlyPendingTimers()
 
   const failingCount = 8000
   render(
