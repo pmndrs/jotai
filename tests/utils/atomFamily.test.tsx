@@ -1,11 +1,15 @@
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import ReactDOM from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { SetStateAction, WritableAtom } from 'jotai'
 import { atomFamily, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
+
+// FIXME this is a hacky workaround temporarily
+const IS_REACT18 = !!(ReactDOM as any).createRoot
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -261,9 +265,17 @@ it('a derived atom from an async atomFamily (#351)', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  await findByText('derived: 12, commits: 2')
+  if (IS_REACT18) {
+    await findByText('derived: 12, commits: 3')
+  } else {
+    await findByText('derived: 12, commits: 2')
+  }
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  await findByText('derived: 13, commits: 3')
+  if (IS_REACT18) {
+    await findByText('derived: 13, commits: 4')
+  } else {
+    await findByText('derived: 13, commits: 3')
+  }
 })
