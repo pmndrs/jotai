@@ -16,7 +16,7 @@ const IS_EQUAL_PROMISE = Symbol()
 const INTERRUPT_PROMISE = Symbol()
 type InterruptablePromise = Promise<void> & {
   [IS_EQUAL_PROMISE]: (p: Promise<void>) => boolean
-  [INTERRUPT_PROMISE]?: () => void
+  [INTERRUPT_PROMISE]?: () => void // defined if interruptable
 }
 
 const isInterruptablePromise = (
@@ -252,15 +252,6 @@ export const createStore = (
     setAtomState(atom, atomState)
   }
 
-  const scheduleReadAtomState = <Value>(
-    atom: Atom<Value>,
-    promise: Promise<unknown>
-  ): void => {
-    promise.finally(() => {
-      readAtomState(atom, true)
-    })
-  }
-
   const readAtomState = <Value>(
     atom: Atom<Value>,
     force?: boolean
@@ -334,7 +325,8 @@ export const createStore = (
           .catch((e) => {
             if (e instanceof Promise) {
               if (!isInterruptablePromise(e) || !e[INTERRUPT_PROMISE]) {
-                scheduleReadAtomState(atom, e)
+                // schedule another read later
+                e.finally(() => readAtomState(atom, true))
               }
             } else {
               setAtomReadError(atom, e, dependencies, promise as Promise<void>)
