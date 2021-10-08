@@ -91,12 +91,14 @@ it('infinite query next page test', async () => {
   await findByText('loading')
   await findByText('page count: 1')
   expect(mockFetch).toBeCalledTimes(1)
+
   fireEvent.click(getByText('next'))
-  expect(mockFetch).toBeCalledTimes(2)
   await findByText('page count: 2')
+  expect(mockFetch).toBeCalledTimes(2)
+
   fireEvent.click(getByText('prev'))
-  expect(mockFetch).toBeCalledTimes(3)
   await findByText('page count: 3')
+  expect(mockFetch).toBeCalledTimes(3)
 })
 
 it('infinite query with enabled', async () => {

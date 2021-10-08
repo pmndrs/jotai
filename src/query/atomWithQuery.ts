@@ -38,6 +38,7 @@ export function atomWithQuery<
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<TData | TQueryData | undefined, AtomWithQueryAction>
+
 export function atomWithQuery<
   TQueryFnData,
   TError,
@@ -49,6 +50,7 @@ export function atomWithQuery<
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<TData | TQueryData, AtomWithQueryAction>
+
 export function atomWithQuery<
   TQueryFnData,
   TError,
@@ -136,11 +138,13 @@ export function atomWithQuery<
         }
       }
       const defaultedOptions = queryClient.defaultQueryObserverOptions(options)
-      const observer = new QueryObserver(queryClient, defaultedOptions)
       if (initialData === undefined && options.enabled !== false) {
         if (typeof defaultedOptions.staleTime !== 'number') {
           defaultedOptions.staleTime = 1000
         }
+      }
+      const observer = new QueryObserver(queryClient, defaultedOptions)
+      if (initialData === undefined && options.enabled !== false) {
         observer
           .fetchOptimistic(defaultedOptions)
           .then(listener)
