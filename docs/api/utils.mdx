@@ -105,9 +105,9 @@ function atomWithReset<Value>(
 ```
 
 Creates an atom that could be reset to its `initialValue` with
-[`useResetAtom`](/jotai/api/utils#use-reset-atom) hook. It works exactly the same
+[`useResetAtom`](../api/utils#use-reset-atom) hook. It works exactly the same
 way as primitive atom would, but you are also able to set it to a special value
-[`RESET`](/jotai/api/utils#reset). See examples in [Resettable atoms](/jotai/guides/resettable).
+[`RESET`](../api/utils#reset). See examples in [Resettable atoms](../guides/resettable).
 
 ### Example
 
@@ -124,7 +124,7 @@ const todoListAtom = atomWithReset([{ description: 'Add a todo', checked: false 
 function useResetAtom<Value>(anAtom: WritableAtom<Value, typeof RESET>): () => void | Promise<void>
 ```
 
-Resets a [Resettable atom](/jotai/guides/resettable) to its initial value.
+Resets a [Resettable atom](../guides/resettable) to its initial value.
 
 ### Example
 
@@ -146,8 +146,8 @@ Ref: https://github.com/pmndrs/jotai/issues/217
 const RESET: unique symbol
 ```
 
-Special value that is accepted by [Resettable atoms](/jotai/guides/resettable)
-created with [`atomWithReset`](/jotai/api/utils#atom-with-reset), [`atomWithDefault`](/jotai/api/utils#atom-with-default)
+Special value that is accepted by [Resettable atoms](../guides/resettable)
+created with [`atomWithReset`](../api/utils#atom-with-reset), [`atomWithDefault`](../api/utils#atom-with-default)
 or writable atom created with `atom` if it accepts `RESET` symbol.
 
 ### Example
@@ -783,4 +783,4 @@ useHydrateAtoms([[countAtom, 17], [frameworkAtom, "Gatsby"]], myScope)
 
 <CodeSandbox id="snu7n" />
 
-There's more examples in the [Next.js section](/jotai/guides/nextjs).
+There's more examples in the [Next.js section](../guides/nextjs).

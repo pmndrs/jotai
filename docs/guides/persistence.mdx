@@ -4,7 +4,7 @@ description: How to persist atoms
 nav: 3.3
 ---
 
-Jotai has an [atomWithStorage function in the utils bundle](/jotai/api/utils#atom-with-storage) for persistance that supports persisting state in `sessionStorage`, `localStorage`, `AsyncStorage`, or the URL hash.
+Jotai has an [atomWithStorage function in the utils bundle](../api/utils#atom-with-storage) for persistance that supports persisting state in `sessionStorage`, `localStorage`, `AsyncStorage`, or the URL hash.
 
 There are also several alternate implementations here:
 
@@ -50,7 +50,7 @@ const atomWithLocalStorage = (key, initialValue) => {
 
 ## A helper function with AsyncStorage and JSON parse
 
-This requires [onMount](/jotai/api/core#on-mount).
+This requires [onMount](../api/core#on-mount).
 
 ```js
 const atomWithAsyncStorage = (key, initialValue) => {

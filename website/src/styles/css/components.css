@@ -19,7 +19,7 @@
 }
 
 .prose h1 + h2 {
-  @apply !mt-4;
+  @apply !mt-12;
 }
 
 .prose h2 + h3,

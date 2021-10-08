@@ -39,9 +39,9 @@ const initialData = {
 }
 ```
 
-## `focusAtom`
+## focusAtom
 
-> `focusAtom` creates a new atom, based on the focus that you pass to it. [jotai/optics](/jotai/integrations/optics#focus-atom)
+> `focusAtom` creates a new atom, based on the focus that you pass to it. [jotai/optics](../integrations/optics#focus-atom)
 
 We use this utility to focus an atom and create an atom of a specific part of the data. For example we may need to consume the people property of the above data, Here's how we do it.
 
@@ -58,9 +58,9 @@ const peopleAtom = focusAtom(dataAtom, (optic) => optic.prop('people'))
 
 If we change the `film` property of the above data example, the `peopleAtom` won't cause us a re-render, so that's one of the points of using `focusAtom`.
 
-## `splitAtom`
+## splitAtom
 
-> The `splitAtom` utility is useful, when you want to get an atom for each element in a list. [jotai/utils](/jotai/api/utils#split-atom)
+> The `splitAtom` utility is useful, when you want to get an atom for each element in a list. [jotai/utils](../api/utils#split-atom)
 
 We use this utility for atoms that return arrays as their values, for example the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array. If the array atom is writable, `splitAtom` returned atoms are going to be writable, if the array atom is read-only, items atoms are going to be read-only too.
 
@@ -85,9 +85,9 @@ const People = () => {
 }
 ```
 
-## `selectAtom`
+## selectAtom
 
-> This function creates a derived atom whose value is a function of the original atom's value. [jotai/utils](/jotai/api/utils#select-atom)
+> This function creates a derived atom whose value is a function of the original atom's value. [jotai/utils](../api/utils#select-atom)
 
 This utility is similar to `focusAtom`, but we use it when we have a read-only atom to select part of it, and it always returns a read-only atom.
 
