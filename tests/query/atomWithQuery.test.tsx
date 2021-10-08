@@ -421,7 +421,6 @@ it('query with initialData test', async () => {
 
   // NOTE: the atom never suspends
   await findByText('count: 0')
-  expect(mockFetch).toHaveBeenCalledTimes(0)
   await findByText('count: 10')
   expect(mockFetch).toHaveBeenCalledTimes(1)
 })
