@@ -155,7 +155,7 @@ it('works with async get with extra deps', async () => {
   const anotherAtom = atom(-1)
   const asyncCountAtom = atom(async (get) => {
     get(anotherAtom)
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
 
@@ -190,6 +190,7 @@ it('works with async get with extra deps', async () => {
     getByText('count: 0')
     getByText('delayedCount: 0')
   })
+
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await waitFor(() => {
