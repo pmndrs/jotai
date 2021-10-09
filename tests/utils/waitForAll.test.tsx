@@ -1,5 +1,5 @@
 import { Component, StrictMode, Suspense, useEffect } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { atomFamily, useUpdateAtom, waitForAll } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
@@ -46,7 +46,7 @@ it('waits for two async atoms', async () => {
       setTimeout(() => {
         isAsyncAtomRunning = false
         resolve(true)
-      }, 10)
+      }, 100)
     })
     return 1
   })
@@ -56,7 +56,7 @@ it('waits for two async atoms', async () => {
       setTimeout(() => {
         isAnotherAsyncAtomRunning = false
         resolve(true)
-      }, 10)
+      }, 100)
     })
     return 'a'
   })
@@ -72,7 +72,7 @@ it('waits for two async atoms', async () => {
     )
   }
 
-  const { findByText } = render(
+  const { getByText } = render(
     <StrictMode>
       <Provider>
         <Suspense fallback="loading">
@@ -82,13 +82,17 @@ it('waits for two async atoms', async () => {
     </StrictMode>
   )
 
-  await findByText('loading')
-  expect(isAsyncAtomRunning).toBe(true)
-  expect(isAnotherAsyncAtomRunning).toBe(true)
+  await waitFor(() => {
+    getByText('loading')
+    expect(isAsyncAtomRunning).toBe(true)
+    expect(isAnotherAsyncAtomRunning).toBe(true)
+  })
 
-  await findByText('num: 2, str: A')
-  expect(isAsyncAtomRunning).toBe(false)
-  expect(isAnotherAsyncAtomRunning).toBe(false)
+  await waitFor(() => {
+    getByText('num: 2, str: A')
+    expect(isAsyncAtomRunning).toBe(false)
+    expect(isAnotherAsyncAtomRunning).toBe(false)
+  })
 })
 
 it('can use named atoms in derived atom', async () => {
@@ -100,7 +104,7 @@ it('can use named atoms in derived atom', async () => {
       setTimeout(() => {
         isAsyncAtomRunning = false
         resolve(true)
-      }, 10)
+      }, 100)
     })
     return 1
   })
@@ -110,7 +114,7 @@ it('can use named atoms in derived atom', async () => {
       setTimeout(() => {
         isAnotherAsyncAtomRunning = false
         resolve(true)
-      }, 10)
+      }, 100)
     })
     return 'a'
   })
@@ -134,7 +138,7 @@ it('can use named atoms in derived atom', async () => {
     )
   }
 
-  const { findByText } = render(
+  const { getByText } = render(
     <StrictMode>
       <Provider>
         <Suspense fallback="loading">
@@ -144,13 +148,17 @@ it('can use named atoms in derived atom', async () => {
     </StrictMode>
   )
 
-  await findByText('loading')
-  expect(isAsyncAtomRunning).toBe(true)
-  expect(isAnotherAsyncAtomRunning).toBe(true)
+  await waitFor(() => {
+    getByText('loading')
+    expect(isAsyncAtomRunning).toBe(true)
+    expect(isAnotherAsyncAtomRunning).toBe(true)
+  })
 
-  await findByText('num: 2, str: A')
-  expect(isAsyncAtomRunning).toBe(false)
-  expect(isAnotherAsyncAtomRunning).toBe(false)
+  await waitFor(() => {
+    getByText('num: 2, str: A')
+    expect(isAsyncAtomRunning).toBe(false)
+    expect(isAnotherAsyncAtomRunning).toBe(false)
+  })
 })
 
 it('can handle errors', async () => {
@@ -162,7 +170,7 @@ it('can handle errors', async () => {
       setTimeout(() => {
         isAsyncAtomRunning = false
         resolve(true)
-      }, 10)
+      }, 100)
     })
     return 1
   })
@@ -172,7 +180,7 @@ it('can handle errors', async () => {
       setTimeout(() => {
         isErrorAtomRunning = false
         reject(false)
-      }, 10)
+      }, 100)
     })
     return 'a'
   })
@@ -196,7 +204,7 @@ it('can handle errors', async () => {
     )
   }
 
-  const { findByText } = render(
+  const { getByText } = render(
     <StrictMode>
       <Provider>
         <ErrorBoundary>
@@ -208,13 +216,17 @@ it('can handle errors', async () => {
     </StrictMode>
   )
 
-  await findByText('loading')
-  expect(isAsyncAtomRunning).toBe(true)
-  expect(isErrorAtomRunning).toBe(true)
+  await waitFor(() => {
+    getByText('loading')
+    expect(isAsyncAtomRunning).toBe(true)
+    expect(isErrorAtomRunning).toBe(true)
+  })
 
-  await findByText('errored')
-  expect(isAsyncAtomRunning).toBe(false)
-  expect(isErrorAtomRunning).toBe(false)
+  await waitFor(() => {
+    getByText('errored')
+    expect(isAsyncAtomRunning).toBe(false)
+    expect(isErrorAtomRunning).toBe(false)
+  })
 })
 
 it('handles scope', async () => {
@@ -260,7 +272,7 @@ it('handles scope', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  const { getByText, findByText } = render(
     <StrictMode>
       <Provider scope={scope}>
         <Suspense fallback="loading">
@@ -270,13 +282,17 @@ it('handles scope', async () => {
     </StrictMode>
   )
 
-  await findByText('loading')
-  expect(isAsyncAtomRunning).toBe(true)
-  expect(isAnotherAsyncAtomRunning).toBe(true)
+  await waitFor(() => {
+    getByText('loading')
+    expect(isAsyncAtomRunning).toBe(true)
+    expect(isAnotherAsyncAtomRunning).toBe(true)
+  })
 
-  await findByText('num1: 1, num2: 2')
-  expect(isAsyncAtomRunning).toBe(false)
-  expect(isAnotherAsyncAtomRunning).toBe(false)
+  await waitFor(() => {
+    getByText('num1: 1, num2: 2')
+    expect(isAsyncAtomRunning).toBe(false)
+    expect(isAnotherAsyncAtomRunning).toBe(false)
+  })
 
   fireEvent.click(getByText('increment'))
   await findByText('loading')
