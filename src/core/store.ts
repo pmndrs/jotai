@@ -333,10 +333,10 @@ export const createStore = (
                 // schedule another read later
                 e.finally(() => readAtomState(atom, true))
               }
-            } else {
-              setAtomReadError(atom, e, dependencies, promise as Promise<void>)
-              flushPending()
+              return e
             }
+            setAtomReadError(atom, e, dependencies, promise as Promise<void>)
+            flushPending()
           })
       } else {
         value = promiseOrValue as NonPromise<Value>
