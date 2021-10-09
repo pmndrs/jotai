@@ -18,7 +18,7 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
   const shortName = gatsby.meta.shortName
 
   const pageTitle = title ? `${title} — ${siteTitle}` : siteTitle
-  const pageDescription = description ?? gatsby.meta.description
+  const pageDescription = description || gatsby.meta.description
   const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl
 
   return (

@@ -31,8 +31,7 @@
 .prose h2,
 .prose h3,
 .prose h4,
-.prose h5,
-.prose h6 {
+.prose h5 {
   scroll-margin-top: 3rem;
 }
 
@@ -40,8 +39,7 @@
 .prose h2 a,
 .prose h3 a,
 .prose h4 a,
-.prose h5 a,
-.prose h6 a {
+.prose h5 a {
   all: inherit;
   @apply inline cursor-pointer;
 }
@@ -97,6 +95,14 @@
 
 .prose blockquote a code {
   @apply !text-blue-900;
+}
+
+.prose h2 a code,
+.prose h4 a code,
+.prose h3 a code,
+.prose h4 a code,
+.prose h5 a code {
+  @apply !text-black;
 }
 
 @tailwind components;
