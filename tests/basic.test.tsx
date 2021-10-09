@@ -272,7 +272,7 @@ it('only re-renders if value has changed', async () => {
 it('works with async get', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
 
@@ -352,7 +352,7 @@ it('shows loading with async set', async () => {
   const asyncCountAtom = atom(
     (get) => get(countAtom),
     async (_get, set, value: number) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       set(countAtom, value)
     }
   )
@@ -391,7 +391,7 @@ it('uses atoms with tree dependencies', async () => {
   const rightAtom = atom(
     (get) => get(topAtom),
     async (get, set, update: (prev: number) => number) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       set(topAtom, update(get(topAtom)))
     }
   )
@@ -470,7 +470,7 @@ it('uses an async write-only atom', async () => {
   const asyncCountAtom = atom(
     null,
     async (get, set, update: (prev: number) => number) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       set(countAtom, update(get(countAtom)))
     }
   )
@@ -508,7 +508,7 @@ it('uses a writable atom without read function', async () => {
   const countAtom: WritableAtom<number, number> = atom(
     1,
     async (get, set, v) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       set(countAtom, get(countAtom) + 10 * v)
     }
   )
@@ -906,11 +906,11 @@ it('write self atom (undocumented usage)', async () => {
 })
 it('async chain for multiple sync and async atoms (#443)', async () => {
   const num1Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return 1
   })
   const num2Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return 2
   })
 

@@ -55,14 +55,14 @@ describe('atomWithStorage (async)', () => {
   }
   const asyncDummyStorage = {
     getItem: async (key: string) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       if (!(key in asyncStorageData)) {
         throw new Error('no value stored')
       }
       return asyncStorageData[key] as number
     },
     setItem: async (key: string, newValue: number) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       asyncStorageData[key] = newValue
     },
   }
