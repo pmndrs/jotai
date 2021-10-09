@@ -63,16 +63,16 @@ it('does not show async stale result', async () => {
   await waitFor(() => {
     getByText('count: 0')
     getByText('delayedCount: 0')
+    expect(committed).toEqual([0])
   })
-  expect(committed).toEqual([0])
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await waitFor(() => {
     getByText('count: 2')
     getByText('delayedCount: 2')
+    expect(committed).toEqual([0, 2])
   })
-  expect(committed).toEqual([0, 2])
 })
 
 it('does not show async stale result on derived atom', async () => {
