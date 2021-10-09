@@ -499,7 +499,9 @@ it('set promise atom value on write (#304)', async () => {
   const asyncAtom = atom(null, (get, set, _arg) => {
     set(
       countAtom,
-      Promise.resolve(get(countAtom)).then((c) => c + 1)
+      Promise.resolve(get(countAtom)).then(
+        (c) => new Promise((r) => setTimeout(() => r(c + 1), 100))
+      )
     )
   })
 
@@ -614,7 +616,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
       atomCache.set(
         n,
         atom(async () => {
-          await new Promise((r) => setTimeout(r, 10))
+          await new Promise((r) => setTimeout(r, 100))
           return n + 10
         })
       )
