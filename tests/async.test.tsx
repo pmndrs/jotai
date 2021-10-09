@@ -1,14 +1,10 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import ReactDOM from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { Atom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
-
-// FIXME this is a hacky workaround temporarily
-const IS_REACT18 = !!(ReactDOM as any).createRoot
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -159,7 +155,7 @@ it('works with async get with extra deps', async () => {
   const anotherAtom = atom(-1)
   const asyncCountAtom = atom(async (get) => {
     get(anotherAtom)
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 500))
     return get(countAtom)
   })
 
@@ -196,11 +192,7 @@ it('works with async get with extra deps', async () => {
   })
 
   fireEvent.click(getByText('button'))
-  if (IS_REACT18) {
-    // FIXME doesn't show loading?
-  } else {
-    await findByText('loading')
-  }
+  await findByText('loading')
   await waitFor(() => {
     getByText('count: 1')
     getByText('delayedCount: 1')

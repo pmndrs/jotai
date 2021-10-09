@@ -228,7 +228,7 @@ it('handles scope', async () => {
       setTimeout(() => {
         isAsyncAtomRunning = false
         resolve(true)
-      }, 10)
+      }, 100)
     })
     return get(valueAtom)
   })
@@ -239,7 +239,7 @@ it('handles scope', async () => {
       setTimeout(() => {
         isAnotherAsyncAtomRunning = false
         resolve(true)
-      }, 10)
+      }, 100)
     })
     return '2'
   })
