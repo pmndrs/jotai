@@ -14,7 +14,7 @@ export default function DocsPage({ data }) {
       <Head title={title} description={description} uri={uri} />
       <Layout showDocs>
         <div className="lg:hidden mb-4">
-          <Jotai small />
+          <Jotai isDocsPage small />
         </div>
         <h1>{title}</h1>
         <MDXRenderer>{body}</MDXRenderer>
