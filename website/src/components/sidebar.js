@@ -13,7 +13,7 @@ export const Sidebar = ({ showDocs = false }) => {
               Home
             </Button>
           ) : (
-            <Button to="/docs/introduction/" icon="book">
+            <Button to="/docs/introduction" icon="book">
               Documentation
             </Button>
           )}

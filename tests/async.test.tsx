@@ -495,14 +495,12 @@ it('async get with another dep and useEffect on parent', async () => {
 
 it('set promise atom value on write (#304)', async () => {
   const countAtom = atom(Promise.resolve(0))
-  countAtom.debugLabel = 'countAtom'
   const asyncAtom = atom(null, (get, set, _arg) => {
     set(
       countAtom,
       Promise.resolve(get(countAtom)).then((c) => c + 1)
     )
   })
-  asyncAtom.debugLabel = 'asyncAtom'
 
   const Counter = () => {
     const [count] = useAtom(countAtom)
@@ -936,4 +934,55 @@ it('async write chain', async () => {
     getByText('loading') // write pending
   })
   await findByText('count: 3')
+})
+
+it('async atom double chain without setTimeout (#751)', async () => {
+  const enabledAtom = atom(false)
+  const asyncAtom = atom(async (get) => {
+    const enabled = get(enabledAtom)
+    if (!enabled) {
+      return 'init'
+    }
+    await new Promise((r) => setTimeout(r, 10))
+    return 'ready'
+  })
+  const derivedAsyncAtom = atom(async (get) => get(asyncAtom))
+  const anotherAsyncAtom = atom(async (get) => get(derivedAsyncAtom))
+
+  const AsyncComponent = () => {
+    const [text] = useAtom(anotherAsyncAtom)
+    return <div>async: {text}</div>
+  }
+
+  const Parent = () => {
+    // Use useAtom to reproduce the issue
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <>
+        <Suspense fallback="loading">
+          <AsyncComponent />
+        </Suspense>
+        <button
+          onClick={() => {
+            setEnabled(true)
+          }}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('async: init')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('async: ready')
 })

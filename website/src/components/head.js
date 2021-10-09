@@ -19,7 +19,7 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
 
   const pageTitle = title ? `${title} — ${siteTitle}` : siteTitle
   const pageDescription = description ?? gatsby.meta.description
-  const pageUrl = uri ? `${siteUrl}/${uri}/` : siteUrl
+  const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl
 
   return (
     <Helmet htmlAttributes={htmlAttributes} defer={false}>
@@ -35,6 +35,7 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
       <meta property="og:image:secure_url" content={socialMediaCardImage} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
+      <meta property="og:url" content={pageUrl} />
       <meta property="twitter:card" content="summary_large_image" />
       <meta
         name="google-site-verification"

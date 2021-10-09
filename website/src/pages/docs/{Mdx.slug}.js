@@ -7,10 +7,11 @@ import { Head, Layout, Jotai } from '../../components'
 export default function DocsPage({ data }) {
   const { slug, frontmatter, body } = data.mdx
   const { title, description } = frontmatter
+  const uri = `docs/${slug}`
 
   return (
     <>
-      <Head title={title} description={description} uri={slug} />
+      <Head title={title} description={description} uri={uri} />
       <Layout showDocs>
         <div className="lg:hidden mb-4">
           <Jotai small />
