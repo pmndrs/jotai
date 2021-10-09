@@ -500,7 +500,7 @@ it('set promise atom value on write (#304)', async () => {
     set(
       countAtom,
       Promise.resolve(get(countAtom)).then(
-        (c) => new Promise((r) => setTimeout(() => r(c + 1), 100))
+        (c) => new Promise((r) => setTimeout(() => r(c + 1), 500))
       )
     )
   })
