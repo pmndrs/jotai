@@ -231,7 +231,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   const countAtom = atom(1)
   const getAsyncAtom = atomFamily((n: number) =>
     atom(async () => {
-      await new Promise((r) => setTimeout(r, 1))
+      await new Promise((r) => setTimeout(r, 100))
       return n + 10
     })
   )
