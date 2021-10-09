@@ -267,14 +267,19 @@ export const createStore = (
       if (atomState) {
         atomState.d.forEach((_, a) => {
           if (a !== atom) {
-            const aState = getAtomState(a)
-            if (
-              aState &&
-              !('e' in aState) && // no read error
-              !aState.p && // no read promise
-              aState.r === aState.i // revision is invalidated
-            ) {
-              readAtomState(a, true)
+            if (!mountedMap.has(a)) {
+              // not mounted
+              readAtomState(a)
+            } else {
+              const aState = getAtomState(a)
+              if (
+                aState &&
+                !('e' in aState) && // no read error
+                !aState.p && // no read promise
+                aState.r === aState.i // revision is invalidated
+              ) {
+                readAtomState(a, true)
+              }
             }
           }
         })
