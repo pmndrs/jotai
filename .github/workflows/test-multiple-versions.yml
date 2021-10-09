@@ -41,6 +41,7 @@ jobs:
         testing: [default, alpha]
         exclude:
           - { react: 16.8.6, testing: alpha }
+          - { react: 16.9.0, testing: alpha }
           - { react: 17.0.0, testing: alpha }
           - { react: 18.0.0-alpha-bdd6d5064-20211001, testing: default } # suspense doesn't work?
           - { react: 0.0.0-experimental-bdd6d5064-20211001, testing: default } # suspense doesn't work?
