@@ -7,11 +7,15 @@ import {
   useState,
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import ReactDOM from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
+
+// FIXME this is a hacky workaround temporarily
+const IS_REACT18 = !!(ReactDOM as any).createRoot
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -795,7 +799,11 @@ it('changes atom from parent (#273, #275)', async () => {
   const Item = ({ id }: { id: string }) => {
     const a = useMemo(() => (id === 'a' ? atomA : atomB), [id])
     const [atomValue] = useAtom(a)
-    return <div>id: {atomValue.id}</div>
+    return (
+      <div>
+        commits: {useCommitCount()}, id: {atomValue.id}
+      </div>
+    )
   }
 
   const App = () => {
@@ -815,16 +823,24 @@ it('changes atom from parent (#273, #275)', async () => {
     </Provider>
   )
 
-  await findByText('id: a')
+  await findByText('commits: 1, id: a')
 
   fireEvent.click(getByText('atom a'))
-  await findByText('id: a')
+  await findByText('commits: 1, id: a')
 
   fireEvent.click(getByText('atom b'))
-  await findByText('id: b')
+  if (IS_REACT18) {
+    await findByText('commits: 3, id: b')
+  } else {
+    await findByText('commits: 2, id: b')
+  }
 
   fireEvent.click(getByText('atom a'))
-  await findByText('id: a')
+  if (IS_REACT18) {
+    await findByText('commits: 5, id: a')
+  } else {
+    await findByText('commits: 3, id: a')
+  }
 })
 
 it('should be able to use a double derived atom twice and useEffect (#373)', async () => {
