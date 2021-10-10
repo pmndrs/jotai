@@ -1,0 +1,73 @@
+name: Test Multiple Versions
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+          cache: yarn
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - run: yarn install --frozen-lockfile --check-files
+      - name: Test Build # we don't have any other workflows to test build
+        run: yarn build
+      - name: Test Default with Provider
+        run: yarn test:ci
+      - name: Test Default without Provider
+        run: yarn test:ci
+        env:
+          PROVIDER_LESS_MODE: 'true'
+
+  test_matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        react:
+          - 16.8.6
+          - 16.9.0
+          - 17.0.0
+          - 18.0.0-alpha-bdd6d5064-20211001
+          - 0.0.0-experimental-bdd6d5064-20211001
+        mode: [withProvider, withoutProvider]
+        testing: [default, alpha]
+        exclude:
+          - { react: 16.8.6, testing: alpha }
+          - { react: 16.9.0, testing: alpha }
+          - { react: 17.0.0, testing: alpha }
+          - { react: 18.0.0-alpha-bdd6d5064-20211001, testing: default } # suspense doesn't work?
+          - { react: 0.0.0-experimental-bdd6d5064-20211001, testing: default } # suspense doesn't work?
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+          cache: yarn
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - run: yarn install --frozen-lockfile --check-files
+      - name: Install alpha testing-library
+        if: ${{ matrix.testing == 'alpha' }}
+        run: yarn add -D @testing-library/react@alpha
+      - name: Patch for React 16.8
+        if: ${{ startsWith(matrix.react, '16.8.') }}
+        run: |
+          sed -i~ 's/it(.async atom double chain without setTimeout (#751).,/it.skip("async atom double chain without setTimeout (#751)",/' tests/async.test.tsx
+      - name: Patch for React 16
+        if: ${{ startsWith(matrix.react, '16.') }}
+        run: |
+          sed -i~ '1s/^/import React from "react";/' tests/*.tsx tests/*/*.tsx
+          sed -i~ 's/automatic/classic/' babel.config.js
+      - name: Test ${{ matrix.react }} ${{ matrix.mode }}
+        run: |
+          yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
+          yarn test:ci
+        env:
+          PROVIDER_LESS_MODE: ${{ matrix.mode == 'withoutProvider' }}
