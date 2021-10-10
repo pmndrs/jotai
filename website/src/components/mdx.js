@@ -44,17 +44,6 @@ export const H5 = ({ children }) => {
   )
 }
 
-export const H6 = ({ children }) => {
-  const anchor = getAnchor(children)
-  const link = `#${anchor}`
-
-  return (
-    <h6 id={anchor}>
-      <a href={link}>{children}</a>
-    </h6>
-  )
-}
-
 export const A = ({ href, children, ...rest }) => {
   const newHref = href.replace('.mdx', '')
 

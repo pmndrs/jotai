@@ -7,11 +7,11 @@ import { Logo } from '../components'
 export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
   return (
     <div {...rest}>
-      <h1>
+      <Headline isHomePage={!isDocsPage}>
         <Link to="/" className="inline-block focus:ring-offset-4 rounded-lg">
           <Logo
             className={cx(
-              isDocsPage || small
+              isDocsPage
                 ? 'text-gray-300 hover:text-black transition ease-in-out duration-300'
                 : 'text-black',
               !small
@@ -21,13 +21,13 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
           />
         </Link>
         <span className="sr-only">Jotai</span>
-      </h1>
+      </Headline>
       <div
         className={cx(
           !small
             ? 'mt-2 2xl:mt-6 space-x-6 lg:space-x-4 2xl:space-x-6 text-gray-400'
-            : 'relative -top-1 space-x-2 text-[#bcbcbc]',
-          'flex items-center '
+            : 'mt-1 space-x-2 text-[#bcbcbc]',
+          'flex items-center'
         )}>
         <div
           className={cx(
@@ -46,5 +46,13 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
         </div>
       </div>
     </div>
+  )
+}
+
+const Headline = ({ isHomePage, children, ...rest }) => {
+  return isHomePage ? (
+    <h1 {...rest}>{children}</h1>
+  ) : (
+    <h2 {...rest}>{children}</h2>
   )
 }

@@ -17,8 +17,10 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
   const socialMediaCardImage = `${siteUrl}/preview_DRAFT.png`
   const shortName = gatsby.meta.shortName
 
-  const pageTitle = title ? `${title} — ${siteTitle}` : siteTitle
-  const pageDescription = description ?? gatsby.meta.description
+  const pageTitle = title
+    ? `${title} — ${title.length <= 10 ? siteTitle : shortName}`
+    : siteTitle
+  const pageDescription = description || gatsby.meta.description
   const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl
 
   return (
