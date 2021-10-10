@@ -18,7 +18,7 @@ export const Docs = ({ className = '', ...rest }) => {
       {navLinks.map((section, index) => (
         <div key={index}>
           {section.title && (
-            <div className="relative -left-0.5 font-bold text-[#bcbcbc] text-sm uppercase tracking-widest">
+            <div className="relative -left-0.5 font-bold text-gray-350 text-sm uppercase tracking-widest">
               {section.title}
             </div>
           )}
