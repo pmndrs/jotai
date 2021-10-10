@@ -272,7 +272,7 @@ it('only re-renders if value has changed', async () => {
 it('works with async get', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 500))
     return get(countAtom)
   })
 

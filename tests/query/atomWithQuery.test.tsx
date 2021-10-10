@@ -77,7 +77,7 @@ it('query refetch', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count3',
     queryFn: async () => {
-      const response = await mockFetch({ count }, false, 100)
+      const response = await mockFetch({ count }, false, 500)
       count++
       return response
     },
@@ -108,6 +108,7 @@ it('query refetch', async () => {
   await findByText('loading')
   await findByText('count: 0')
   expect(mockFetch).toBeCalledTimes(1)
+
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 1')
@@ -159,9 +160,11 @@ it('query loading', async () => {
 
   await findByText('loading')
   await findByText('count: 0')
+
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 1')
+
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 2')
@@ -203,9 +206,11 @@ it('query loading 2', async () => {
 
   await findByText('loading')
   await findByText('count: 0')
+
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 1')
+
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 2')
@@ -256,6 +261,7 @@ it('query with enabled', async () => {
 
   await findByText('not enabled')
   expect(mockFetch).toHaveBeenCalledTimes(0)
+
   fireEvent.click(getByText('set slug'))
   await findByText('loading')
   await findByText('slug: hello-world')
@@ -323,10 +329,12 @@ it('query with enabled 2', async () => {
   await findByText('loading')
   expect(mockFetch).toHaveBeenCalledTimes(1)
   await findByText('slug: hello-first')
+
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
   await findByText('slug: hello-first')
   expect(mockFetch).toHaveBeenCalledTimes(1)
+
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
   expect(mockFetch).toHaveBeenCalledTimes(2)
