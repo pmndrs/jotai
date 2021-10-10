@@ -38,9 +38,9 @@
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.3.4",
-    "autoprefixer": "^10.3.6",
+    "autoprefixer": "^10.3.7",
     "babel-preset-gatsby": "^1.14.0",
-    "postcss": "^8.3.8",
+    "postcss": "^8.3.9",
     "postcss-import": "^14.0.2",
     "postcss-loader": "^6.1.1",
     "prettier": "^2.4.1",
