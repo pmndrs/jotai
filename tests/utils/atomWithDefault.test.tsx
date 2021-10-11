@@ -45,7 +45,7 @@ it('simple sync get default', async () => {
 it('simple async get default', async () => {
   const count1Atom = atom(1)
   const count2Atom = atomWithDefault(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 500))
     return get(count1Atom) * 2
   })
 
