@@ -7,11 +7,15 @@ import {
   useState,
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import ReactDOM from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
+
+// FIXME this is a hacky workaround temporarily
+const IS_REACT18 = !!(ReactDOM as any).createRoot
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -268,7 +272,7 @@ it('only re-renders if value has changed', async () => {
 it('works with async get', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 500))
     return get(countAtom)
   })
 
@@ -348,7 +352,7 @@ it('shows loading with async set', async () => {
   const asyncCountAtom = atom(
     (get) => get(countAtom),
     async (_get, set, value: number) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       set(countAtom, value)
     }
   )
@@ -387,7 +391,7 @@ it('uses atoms with tree dependencies', async () => {
   const rightAtom = atom(
     (get) => get(topAtom),
     async (get, set, update: (prev: number) => number) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       set(topAtom, update(get(topAtom)))
     }
   )
@@ -466,7 +470,7 @@ it('uses an async write-only atom', async () => {
   const asyncCountAtom = atom(
     null,
     async (get, set, update: (prev: number) => number) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       set(countAtom, update(get(countAtom)))
     }
   )
@@ -504,7 +508,7 @@ it('uses a writable atom without read function', async () => {
   const countAtom: WritableAtom<number, number> = atom(
     1,
     async (get, set, v) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       set(countAtom, get(countAtom) + 10 * v)
     }
   )
@@ -825,10 +829,18 @@ it('changes atom from parent (#273, #275)', async () => {
   await findByText('commits: 1, id: a')
 
   fireEvent.click(getByText('atom b'))
-  await findByText('commits: 2, id: b')
+  if (IS_REACT18) {
+    await findByText('commits: 3, id: b')
+  } else {
+    await findByText('commits: 2, id: b')
+  }
 
   fireEvent.click(getByText('atom a'))
-  await findByText('commits: 3, id: a')
+  if (IS_REACT18) {
+    await findByText('commits: 5, id: a')
+  } else {
+    await findByText('commits: 3, id: a')
+  }
 })
 
 it('should be able to use a double derived atom twice and useEffect (#373)', async () => {
@@ -894,11 +906,11 @@ it('write self atom (undocumented usage)', async () => {
 })
 it('async chain for multiple sync and async atoms (#443)', async () => {
   const num1Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return 1
   })
   const num2Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return 2
   })
 

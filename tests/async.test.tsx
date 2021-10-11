@@ -47,7 +47,7 @@ it('does not show async stale result', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Counter />
@@ -56,30 +56,30 @@ it('does not show async stale result', async () => {
           <DelayedCounter />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('loading')
   await waitFor(() => {
     getByText('count: 0')
     getByText('delayedCount: 0')
+    expect(committed).toEqual([0])
   })
-  expect(committed).toEqual([0])
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await waitFor(() => {
     getByText('count: 2')
     getByText('delayedCount: 2')
+    expect(committed).toEqual([0, 2])
   })
-  expect(committed).toEqual([0, 2])
 })
 
 it('does not show async stale result on derived atom', async () => {
   const countAtom = atom(0)
   const asyncAlwaysNullAtom = atom(async (get) => {
     get(countAtom)
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return null
   })
   const derivedAtom = atom((get) => get(asyncAlwaysNullAtom))
@@ -155,7 +155,7 @@ it('works with async get with extra deps', async () => {
   const anotherAtom = atom(-1)
   const asyncCountAtom = atom(async (get) => {
     get(anotherAtom)
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 500))
     return get(countAtom)
   })
 
@@ -190,6 +190,7 @@ it('works with async get with extra deps', async () => {
     getByText('count: 0')
     getByText('delayedCount: 0')
   })
+
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await waitFor(() => {
@@ -202,7 +203,7 @@ it('reuses promises on initial read', async () => {
   let invokeCount = 0
   const asyncAtom = atom(async () => {
     invokeCount += 1
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return 'ready'
   })
 
@@ -229,11 +230,11 @@ it('reuses promises on initial read', async () => {
 
 it('uses multiple async atoms at once', async () => {
   const someAtom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return 'ready'
   })
   const someAtom2 = atom(async () => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return 'ready2'
   })
 
@@ -266,7 +267,7 @@ it('uses multiple async atoms at once', async () => {
 it('uses async atom in the middle of dependency chain', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
   const delayedCountAtom = atom((get) => get(asyncCountAtom))
@@ -329,13 +330,13 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('count: 1')
@@ -352,11 +353,11 @@ it('updates an async atom in child useEffect on remount', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(
     async (get) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       return get(countAtom)
     },
     async (get, set) => {
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise((r) => setTimeout(r, 100))
       set(countAtom, get(countAtom) + 1)
     }
   )
@@ -380,13 +381,13 @@ it('updates an async atom in child useEffect on remount', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('count: 1')
@@ -426,13 +427,13 @@ it('async get and useEffect on parent', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('loading')
@@ -471,13 +472,13 @@ it('async get with another dep and useEffect on parent', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('loading')
@@ -495,14 +496,14 @@ it('async get with another dep and useEffect on parent', async () => {
 
 it('set promise atom value on write (#304)', async () => {
   const countAtom = atom(Promise.resolve(0))
-  countAtom.debugLabel = 'countAtom'
   const asyncAtom = atom(null, (get, set, _arg) => {
     set(
       countAtom,
-      Promise.resolve(get(countAtom)).then((c) => c + 1)
+      Promise.resolve(get(countAtom)).then(
+        (c) => new Promise((r) => setTimeout(() => r(c + 1), 500))
+      )
     )
   })
-  asyncAtom.debugLabel = 'asyncAtom'
 
   const Counter = () => {
     const [count] = useAtom(countAtom)
@@ -540,7 +541,7 @@ it('set promise atom value on write (#304)', async () => {
 it('uses async atom double chain (#306)', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 500))
     return get(countAtom)
   })
   const delayedCountAtom = atom(async (get) => {
@@ -580,7 +581,7 @@ it('uses async atom double chain (#306)', async () => {
 
 it('uses an async atom that depends on another async atom', async () => {
   const asyncAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     get(anotherAsyncAtom)
     return 1
   })
@@ -615,7 +616,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
       atomCache.set(
         n,
         atom(async () => {
-          await new Promise((r) => setTimeout(r, 10))
+          await new Promise((r) => setTimeout(r, 500))
           return n + 10
         })
       )
@@ -638,13 +639,13 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await findByText('loading')
@@ -666,7 +667,7 @@ it('Handles synchronously invoked async set (#375)', async () => {
     const fetch = async () => {
       set(loadingAtom, true)
       const response = await new Promise<string>((resolve) =>
-        setTimeout(() => resolve('great document'), 10)
+        setTimeout(() => resolve('great document'), 100)
       )
       set(documentAtom, response)
       set(loadingAtom, false)
@@ -893,13 +894,13 @@ it('set two promise atoms at once', async () => {
 it('async write chain', async () => {
   const countAtom = atom(0)
   const asyncWriteAtom = atom(null, async (_get, set, _arg) => {
-    await new Promise((r) => setTimeout(r, 20))
+    await new Promise((r) => setTimeout(r, 200))
     set(countAtom, 2)
   })
   const controlAtom = atom(null, async (_get, set, _arg) => {
     set(countAtom, 1)
     await set(asyncWriteAtom, null)
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     set(countAtom, 3)
   })
 
@@ -936,4 +937,55 @@ it('async write chain', async () => {
     getByText('loading') // write pending
   })
   await findByText('count: 3')
+})
+
+it('async atom double chain without setTimeout (#751)', async () => {
+  const enabledAtom = atom(false)
+  const asyncAtom = atom(async (get) => {
+    const enabled = get(enabledAtom)
+    if (!enabled) {
+      return 'init'
+    }
+    await new Promise((r) => setTimeout(r, 100))
+    return 'ready'
+  })
+  const derivedAsyncAtom = atom(async (get) => get(asyncAtom))
+  const anotherAsyncAtom = atom(async (get) => get(derivedAsyncAtom))
+
+  const AsyncComponent = () => {
+    const [text] = useAtom(anotherAsyncAtom)
+    return <div>async: {text}</div>
+  }
+
+  const Parent = () => {
+    // Use useAtom to reproduce the issue
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <>
+        <Suspense fallback="loading">
+          <AsyncComponent />
+        </Suspense>
+        <button
+          onClick={() => {
+            setEnabled(true)
+          }}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('async: init')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('async: ready')
 })

@@ -16,7 +16,7 @@ const IS_EQUAL_PROMISE = Symbol()
 const INTERRUPT_PROMISE = Symbol()
 type InterruptablePromise = Promise<void> & {
   [IS_EQUAL_PROMISE]: (p: Promise<void>) => boolean
-  [INTERRUPT_PROMISE]: () => void
+  [INTERRUPT_PROMISE]?: () => void // defined if interruptable
 }
 
 const isInterruptablePromise = (
@@ -29,14 +29,17 @@ const createInterruptablePromise = (
 ): InterruptablePromise => {
   let interrupt: (() => void) | undefined
   const interruptablePromise = new Promise<void>((resolve, reject) => {
-    interrupt = resolve
+    interrupt = () => {
+      delete interruptablePromise[INTERRUPT_PROMISE]
+      resolve()
+    }
     promise.then(resolve, reject)
   }) as InterruptablePromise
   interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>): boolean =>
     interruptablePromise === p ||
     promise === p ||
     (isInterruptablePromise(promise) && promise[IS_EQUAL_PROMISE](p))
-  interruptablePromise[INTERRUPT_PROMISE] = interrupt as () => void
+  interruptablePromise[INTERRUPT_PROMISE] = interrupt
   return interruptablePromise
 }
 
@@ -249,15 +252,6 @@ export const createStore = (
     setAtomState(atom, atomState)
   }
 
-  const scheduleReadAtomState = <Value>(
-    atom: Atom<Value>,
-    promise: Promise<unknown>
-  ): void => {
-    promise.finally(() => {
-      readAtomState(atom, true)
-    })
-  }
-
   const readAtomState = <Value>(
     atom: Atom<Value>,
     force?: boolean
@@ -267,14 +261,19 @@ export const createStore = (
       if (atomState) {
         atomState.d.forEach((_, a) => {
           if (a !== atom) {
-            const aState = getAtomState(a)
-            if (
-              aState &&
-              !('e' in aState) && // no read error
-              !aState.p && // no read promise
-              aState.r === aState.i // revision is invalidated
-            ) {
-              readAtomState(a, true)
+            if (!mountedMap.has(a)) {
+              // not mounted
+              readAtomState(a)
+            } else {
+              const aState = getAtomState(a)
+              if (
+                aState &&
+                !('e' in aState) && // no read error
+                !aState.p && // no read promise
+                aState.r === aState.i // revision is invalidated
+              ) {
+                readAtomState(a, true)
+              }
             }
           }
         })
@@ -330,7 +329,10 @@ export const createStore = (
           })
           .catch((e) => {
             if (e instanceof Promise) {
-              scheduleReadAtomState(atom, e)
+              if (!isInterruptablePromise(e) || !e[INTERRUPT_PROMISE]) {
+                // schedule another read later
+                e.finally(() => readAtomState(atom, true))
+              }
               return e
             }
             setAtomReadError(atom, e, dependencies, promise as Promise<void>)

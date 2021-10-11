@@ -15,7 +15,7 @@ it('infinite query basic test', async () => {
     queryKey: 'count1Infinite',
     queryFn: async (context) => {
       const count = context.pageParam ? parseInt(context.pageParam) : 0
-      return fakeFetch({ count })
+      return fakeFetch({ count }, false, 100)
     },
   }))
 
@@ -49,7 +49,7 @@ it('infinite query next page test', async () => {
     queryKey: 'nextPageAtom',
     queryFn: (context) => {
       const count = context.pageParam ? parseInt(context.pageParam) : 0
-      return mockFetch({ count })
+      return mockFetch({ count }, false, 100)
     },
     getNextPageParam: (lastPage) => {
       const {
@@ -91,12 +91,14 @@ it('infinite query next page test', async () => {
   await findByText('loading')
   await findByText('page count: 1')
   expect(mockFetch).toBeCalledTimes(1)
+
   fireEvent.click(getByText('next'))
-  expect(mockFetch).toBeCalledTimes(2)
   await findByText('page count: 2')
+  expect(mockFetch).toBeCalledTimes(2)
+
   fireEvent.click(getByText('prev'))
-  expect(mockFetch).toBeCalledTimes(3)
   await findByText('page count: 3')
+  expect(mockFetch).toBeCalledTimes(3)
 })
 
 it('infinite query with enabled', async () => {
@@ -108,7 +110,7 @@ it('infinite query with enabled', async () => {
       enabled: !!slug,
       queryKey: ['disabled_until_value', slug],
       queryFn: async () => {
-        return await fakeFetch({ slug: `hello-${slug}` })
+        return await fakeFetch({ slug: `hello-${slug}` }, false, 100)
       },
     }
   })
@@ -159,7 +161,7 @@ it('infinite query with enabled 2', async () => {
       enabled: isEnabled,
       queryKey: ['enabled_toggle'],
       queryFn: async () => {
-        return await fakeFetch({ slug: `hello-${slug}` })
+        return await fakeFetch({ slug: `hello-${slug}` }, false, 100)
       },
     }
   })

@@ -51,11 +51,11 @@ it('useUpdateAtom does not trigger rerender in component', async () => {
   }
 
   const { getByText } = render(
-    <StrictMode>
+    <>
       <Provider>
         <Parent />
       </Provider>
-    </StrictMode>
+    </>
   )
 
   await waitFor(() => {
