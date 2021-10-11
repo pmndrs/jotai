@@ -18,7 +18,7 @@ export const Docs = ({ className = '', ...rest }) => {
       {navLinks.map((section, index) => (
         <div key={index}>
           {section.title && (
-            <div className="relative -left-0.5 font-bold text-[#bcbcbc] text-sm uppercase tracking-widest">
+            <div className="relative -left-0.5 font-bold text-gray-350 text-sm uppercase tracking-widest">
               {section.title}
             </div>
           )}
@@ -26,7 +26,7 @@ export const Docs = ({ className = '', ...rest }) => {
             {section.contents.map((doc, index) => (
               <li key={index}>
                 <Link
-                  to={`/docs/${doc.slug}/`}
+                  to={`/docs/${doc.slug}`}
                   onClick={() => setIsMenuOpen(false)}
                   className="relative -left-3 inline-block px-2 py-1 border border-transparent hover:!border-gray-200 hover:bg-gray-100 rounded text-lg"
                   activeClassName="bg-blue-100 !border-blue-200"

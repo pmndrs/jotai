@@ -520,9 +520,7 @@ describe('error recovery', () => {
     const { counterAtom, Counter } = createCounter()
     const asyncAtom = atom(async (get) => {
       const value = get(counterAtom)
-      await new Promise((resolve) => {
-        setTimeout(resolve, 50)
-      })
+      await new Promise((r) => setTimeout(r, 100))
 
       if (value === 0) {
         throw new Error('An error occurred')

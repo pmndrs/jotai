@@ -1,9 +1,13 @@
 import { useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import ReactDOM from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
+
+// FIXME this is a hacky workaround temporarily
+const IS_REACT18 = !!(ReactDOM as any).createRoot
 
 it('only relevant render function called (#156)', async () => {
   const count1Atom = atom(0)
@@ -51,14 +55,23 @@ it('only relevant render function called (#156)', async () => {
 
   fireEvent.click(getByText('button1'))
   await waitFor(() => {
-    getByText('count1: 1 (2)')
+    if (IS_REACT18) {
+      getByText('count1: 1 (3)')
+    } else {
+      getByText('count1: 1 (2)')
+    }
     getByText('count2: 0 (1)')
   })
 
   fireEvent.click(getByText('button2'))
   await waitFor(() => {
-    getByText('count1: 1 (2)')
-    getByText('count2: 1 (2)')
+    if (IS_REACT18) {
+      getByText('count1: 1 (3)')
+      getByText('count2: 1 (3)')
+    } else {
+      getByText('count1: 1 (2)')
+      getByText('count2: 1 (2)')
+    }
   })
 })
 
@@ -97,10 +110,18 @@ it('only render once using atoms with write-only atom', async () => {
   await findByText('count1: 0, count2: 0 (1)')
 
   fireEvent.click(getByText('button'))
-  await findByText('count1: 1, count2: 1 (2)')
+  if (IS_REACT18) {
+    await findByText('count1: 1, count2: 1 (3)')
+  } else {
+    await findByText('count1: 1, count2: 1 (2)')
+  }
 
   fireEvent.click(getByText('button'))
-  await findByText('count1: 2, count2: 2 (3)')
+  if (IS_REACT18) {
+    await findByText('count1: 2, count2: 2 (4)')
+  } else {
+    await findByText('count1: 2, count2: 2 (3)')
+  }
 })
 
 it('useless re-renders with static atoms (#355)', async () => {
@@ -133,8 +154,18 @@ it('useless re-renders with static atoms (#355)', async () => {
   )
 
   await findByText('count: 0 (1)')
+
   fireEvent.click(getByText('button'))
-  await findByText('count: 1 (2)')
+  if (IS_REACT18) {
+    await findByText('count: 1 (3)')
+  } else {
+    await findByText('count: 1 (2)')
+  }
+
   fireEvent.click(getByText('button'))
-  await findByText('count: 2 (3)')
+  if (IS_REACT18) {
+    await findByText('count: 2 (4)')
+  } else {
+    await findByText('count: 2 (3)')
+  }
 })

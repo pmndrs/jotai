@@ -124,16 +124,17 @@ export function atomWithInfiniteQuery<
         | Promise<InfiniteData<TData | TQueryData>>
         | undefined
       >(
-        initialData ||
-          new Promise<InfiniteData<TData>>((resolve, reject) => {
-            settlePromise = (data, err) => {
-              if (err) {
-                reject(err)
-              } else {
-                resolve(data as InfiniteData<TData>)
+        initialData === undefined && options.enabled !== false
+          ? new Promise<InfiniteData<TData>>((resolve, reject) => {
+              settlePromise = (data, err) => {
+                if (err) {
+                  reject(err)
+                } else {
+                  resolve(data as InfiniteData<TData>)
+                }
               }
-            }
-          })
+            })
+          : initialData
       )
       let setData: (
         data: InfiniteData<TData> | Promise<InfiniteData<TData>> | undefined
@@ -166,13 +167,12 @@ export function atomWithInfiniteQuery<
       }
 
       const defaultedOptions = queryClient.defaultQueryObserverOptions(options)
-
-      if (typeof defaultedOptions.staleTime !== 'number') {
-        defaultedOptions.staleTime = 1000
+      if (initialData === undefined && options.enabled !== false) {
+        if (typeof defaultedOptions.staleTime !== 'number') {
+          defaultedOptions.staleTime = 1000
+        }
       }
-
       const observer = new InfiniteQueryObserver(queryClient, defaultedOptions)
-
       if (initialData === undefined && options.enabled !== false) {
         observer
           .fetchOptimistic(defaultedOptions)
@@ -182,15 +182,7 @@ export function atomWithInfiniteQuery<
 
       dataAtom.onMount = (update) => {
         setData = update
-        const unsubscribe = observer?.subscribe(listener)
-        if (options.enabled === false) {
-          if (settlePromise) {
-            settlePromise(undefined)
-          } else {
-            setData(undefined)
-          }
-        }
-        return unsubscribe
+        return observer.subscribe(listener)
       }
       return { dataAtom, observer, options }
     },
@@ -199,12 +191,7 @@ export function atomWithInfiniteQuery<
       switch (action.type) {
         case 'refetch': {
           const { type: _type, ...options } = action
-          void (
-            observer.refetch as (
-              // FIXME is this correct type assertion?
-              options?: RefetchOptions & RefetchQueryFilters<TQueryFnData>
-            ) => Promise<QueryObserverResult<TData, TError>>
-          )(options)
+          void observer.refetch(options)
           break
         }
         case 'fetchPreviousPage': {
