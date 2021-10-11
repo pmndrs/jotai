@@ -107,16 +107,17 @@ export function atomWithQuery<
       const dataAtom = atom<
         TData | TQueryData | Promise<TData | TQueryData> | undefined
       >(
-        initialData ||
-          new Promise<TData>((resolve, reject) => {
-            settlePromise = (data, err) => {
-              if (err) {
-                reject(err)
-              } else {
-                resolve(data as TData)
+        initialData === undefined && options.enabled !== false
+          ? new Promise<TData>((resolve, reject) => {
+              settlePromise = (data, err) => {
+                if (err) {
+                  reject(err)
+                } else {
+                  resolve(data as TData)
+                }
               }
-            }
-          })
+            })
+          : initialData
       )
       let setData: (data: TData | Promise<TData> | undefined) => void = () => {
         throw new Error('atomWithQuery: setting data without mount')
@@ -146,8 +147,10 @@ export function atomWithQuery<
         }
       }
       const defaultedOptions = queryClient.defaultQueryObserverOptions(options)
-      if (typeof defaultedOptions.staleTime !== 'number') {
-        defaultedOptions.staleTime = 1000
+      if (initialData === undefined && options.enabled !== false) {
+        if (typeof defaultedOptions.staleTime !== 'number') {
+          defaultedOptions.staleTime = 1000
+        }
       }
       const observer = new QueryObserver(queryClient, defaultedOptions)
       if (initialData === undefined && options.enabled !== false) {
@@ -158,15 +161,7 @@ export function atomWithQuery<
       }
       dataAtom.onMount = (update) => {
         setData = update
-        const unsubscribe = observer.subscribe(listener)
-        if (options.enabled === false) {
-          if (settlePromise) {
-            settlePromise(undefined)
-          } else {
-            setData(undefined)
-          }
-        }
-        return unsubscribe
+        return observer.subscribe(listener)
       }
       return { dataAtom, observer }
     },

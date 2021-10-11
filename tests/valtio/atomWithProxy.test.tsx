@@ -92,7 +92,7 @@ it('state with a promise', async () => {
     new Promise<string>((resolve) => {
       setTimeout(() => {
         resolve(status)
-      }, 15)
+      }, 100)
     })
 
   const proxyState = proxy({

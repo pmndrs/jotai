@@ -10,7 +10,7 @@ const generateClient = (id = 'default') =>
   ({
     subscription: () =>
       pipe(
-        interval(10),
+        interval(100),
         map((i: number) => ({ data: { id, count: i } }))
       ),
   } as unknown as Client)

@@ -23,7 +23,7 @@ export const Navigation = ({ isFooter = false, ...rest }) => {
         </Button>
       ) : (
         <Button
-          to="/docs/introduction/"
+          to="/docs/introduction"
           onClick={() => setIsMenuOpen(false)}
           icon="book">
           Documentation
@@ -42,7 +42,7 @@ export const Navigation = ({ isFooter = false, ...rest }) => {
                 {section.contents.map((doc, index) => (
                   <li key={index}>
                     <Link
-                      to={`/docs/${doc.slug}/`}
+                      to={`/docs/${doc.slug}`}
                       onClick={() => setIsMenuOpen(false)}
                       className="relative -left-3 inline-block px-2 py-1 border border-transparent hover:!border-gray-200 hover:bg-gray-100 rounded text-lg"
                       activeClassName="bg-blue-100 !border-blue-200"

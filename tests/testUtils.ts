@@ -1,7 +1,11 @@
 import { Provider } from 'jotai'
 
 export function getTestProvider() {
-  return process.env.PROVIDER_LESS_MODE
-    ? (props: any) => props.children
-    : Provider
+  if (process.env.PROVIDER_LESS_MODE === 'true') {
+    if (process.env.CI) {
+      console.log('TESTING WITH PROVIDER_LESS_MODE')
+    }
+    return (props: any) => props.children
+  }
+  return Provider
 }

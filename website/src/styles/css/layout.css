@@ -57,7 +57,7 @@ textarea:focus {
 }
 
 *::-webkit-scrollbar-thumb {
-  @apply border-4 border-solid border-white bg-[#bcbcbc] rounded-2xl;
+  @apply border-4 border-solid border-white bg-gray-350 rounded-2xl;
 }
 
 *::-webkit-scrollbar-button {

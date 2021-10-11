@@ -338,9 +338,10 @@ it('mount/unmount test with async atom', async () => {
   await findByText('loading')
   await waitFor(() => {
     getByText('count: 0')
+    expect(onMountFn).toBeCalledTimes(1)
+    expect(onUnMountFn).toBeCalledTimes(0)
   })
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onUnMountFn).toBeCalledTimes(0)
+
   fireEvent.click(getByText('button'))
   expect(onMountFn).toBeCalledTimes(1)
   expect(onUnMountFn).toBeCalledTimes(1)
