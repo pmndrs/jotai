@@ -380,10 +380,18 @@ it('uses atoms with tree dependencies', async () => {
   await findByText('commits: 1, count: 0')
 
   fireEvent.click(getByText('button'))
-  await findByText('commits: 3, count: 1')
+  if (IS_REACT18) {
+    await findByText('commits: 2, count: 1')
+  } else {
+    await findByText('commits: 3, count: 1')
+  }
 
   fireEvent.click(getByText('button'))
-  await findByText('commits: 5, count: 2')
+  if (IS_REACT18) {
+    await findByText('commits: 3, count: 2')
+  } else {
+    await findByText('commits: 5, count: 2')
+  }
 })
 
 it('runs update only once in StrictMode', async () => {
