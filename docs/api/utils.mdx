@@ -46,6 +46,34 @@ This means that there will be a mismatch between what is originally served to th
 
 The suggested workaround for this issue is to only render the content dependent on the `storedValue` client-side by wrapping it in a [custom `<ClientOnly>` wrapper](https://www.joshwcomeau.com/react/the-perils-of-rehydration/#abstractions), which only renders after rehydration. Alternative solutions are technically possible, but would require a brief "flicker" as the `initialValue` is swapped to the `storedValue`, which can result in an unpleasant user experience, so this solution is advised.
 
+## atomWithObservable
+
+Ref: https://github.com/pmndrs/jotai/pull/341
+
+### Usage
+```ts
+import { useAtom } from 'jotai'
+import { atomWithObservable } from 'jotai/utils'
+import { interval } from 'rxjs'
+
+const counterSubject = interval(1000).pipe(map((i) => `#${i}`));
+const counterAtom = atomWithObservable(() => counterSubject);
+
+const Counter = () => {
+  const [counter] = useAtom(counterAtom)
+  return <div>count: {counter}</div>;
+}
+```
+
+The `atomWithObservable` function creates an atom from a rxjs (or similar) `subject` or `observable`.
+Its value will be last value emitted from the stream.
+
+To use this atom, you need to wrap your component with `<Suspense>`. Check out [basics/async](../basics/async.mdx).
+
+<!-- TODO: uncomment when fix #760 -->
+<!-- ### Codesandbox -->
+<!-- <CodeSandbox id="88pnt" /> -->
+
 ## useUpdateAtom
 
 Ref: https://github.com/pmndrs/jotai/issues/26
