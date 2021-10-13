@@ -54,8 +54,11 @@ export const A = ({ href, children, ...rest }) => {
   )
 }
 
-const getAnchor = (text) => {
-  return typeof text === 'string'
-    ? text.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase()
+const getAnchor = (value) => {
+  return typeof value === 'string'
+    ? value
+        .replace(/ /g, '-')
+        .replace(/([a-z])([A-Z])/g, '$1-$2')
+        .toLowerCase()
     : ''
 }
