@@ -52,6 +52,11 @@ const anotherAtom = atom((get) => get(asyncCountAtom) / 2)
 // it is a read async atom because `asyncCountAtom` is async.
 ```
 
+<details>
+<summary>Async write atom behavior until v1.3.9</summary>
+
+(This is no longer the case since v1.4.0.)
+
 ## Async write atom
 
 There are another kind of async atoms, called async write atom.
@@ -113,3 +118,5 @@ const writeAtom = atom(null, (get, set) => {
 ```
 
 But **_both_** of the above will still properly set `somePrimitiveAtom` to the correct values.
+
+</details>

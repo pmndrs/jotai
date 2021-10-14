@@ -139,7 +139,7 @@ function Controls() {
   return <button onClick={() => multiply(3)}>triple</button>
 ```
 
-### Async actions <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
+### Async actions
 
 Just make the write function an async function and call `set` when you're ready.
 
