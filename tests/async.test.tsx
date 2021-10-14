@@ -724,9 +724,7 @@ it('async write self atom', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
+        <Counter />
       </Provider>
     </StrictMode>
   )
@@ -734,7 +732,6 @@ it('async write self atom', async () => {
   await findByText('count: 0')
 
   fireEvent.click(getByText('button'))
-  await findByText('loading') // write pending
   await findByText('count: -1')
 })
 
@@ -918,9 +915,7 @@ it('async write chain', async () => {
     <StrictMode>
       <Provider>
         <Counter />
-        <Suspense fallback="loading">
-          <Control />
-        </Suspense>
+        <Control />
       </Provider>
     </StrictMode>
   )
@@ -928,14 +923,8 @@ it('async write chain', async () => {
   await findByText('count: 0')
 
   fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('count: 1')
-    getByText('loading') // write pending
-  })
-  await waitFor(() => {
-    getByText('count: 2')
-    getByText('loading') // write pending
-  })
+  await findByText('count: 1')
+  await findByText('count: 2')
   await findByText('count: 3')
 })
 
