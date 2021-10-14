@@ -206,7 +206,7 @@
     "concurrently": "^6.3.0",
     "downlevel-dts": "^0.7.0",
     "esbuild": "^0.13.6",
-    "eslint": "8.0.1",
+    "eslint": "^8.0.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.25.2",
