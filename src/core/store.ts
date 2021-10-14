@@ -1,9 +1,10 @@
 import type { Atom, WritableAtom } from './atom'
 
+type ResolveType<T> = T extends Promise<infer V> ? V : T
+
 type AnyAtom = Atom<unknown>
-type AnyWritableAtom = WritableAtom<unknown, unknown>
+type AnyWritableAtom = WritableAtom<unknown, unknown, void | Promise<void>>
 type OnUnmount = () => void
-type NonPromise<T> = T extends Promise<infer V> ? V : T
 type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
 type Setter = Parameters<WritableAtom<unknown, unknown>['write']>[1]
 
@@ -53,7 +54,7 @@ export type AtomState<Value = unknown> = {
   p?: InterruptablePromise // read promise
   c?: () => void // cancel read promise
   w?: Promise<void> // write promise
-  v?: NonPromise<Value>
+  v?: ResolveType<Value>
   r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
@@ -156,7 +157,7 @@ export const createStore = (
 
   const setAtomValue = <Value>(
     atom: Atom<Value>,
-    value: NonPromise<Value>,
+    value: ResolveType<Value>,
     dependencies?: Set<AnyAtom>,
     promise?: Promise<void>
   ): void => {
@@ -295,12 +296,13 @@ export const createStore = (
     }
     let error: unknown | undefined
     let promise: Promise<void> | undefined
-    let value: NonPromise<Value> | undefined
+    let value: ResolveType<Value> | undefined
     const dependencies = new Set<AnyAtom>()
     try {
-      const promiseOrValue = atom.read((a: AnyAtom) => {
+      const promiseOrValue = atom.read(<V>(a: Atom<V>) => {
         dependencies.add(a)
-        const aState = a === atom ? getAtomState(a) : readAtomState(a)
+        const aState =
+          (a as AnyAtom) === atom ? getAtomState(a) : readAtomState(a)
         if (aState) {
           if ('e' in aState) {
             throw aState.e // read error
@@ -308,7 +310,7 @@ export const createStore = (
           if (aState.p) {
             throw aState.p // read promise
           }
-          return aState.v // value
+          return aState.v as ResolveType<V> // value
         }
         if (hasInitialValue(a)) {
           return a.init
@@ -321,7 +323,7 @@ export const createStore = (
           .then((value) => {
             setAtomValue(
               atom,
-              value as NonPromise<Value>,
+              value as ResolveType<Value>,
               dependencies,
               promise as Promise<void>
             )
@@ -339,7 +341,7 @@ export const createStore = (
             flushPending()
           })
       } else {
-        value = promiseOrValue as NonPromise<Value>
+        value = promiseOrValue as ResolveType<Value>
       }
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
@@ -353,7 +355,7 @@ export const createStore = (
     } else if (promise) {
       setAtomReadPromise(atom, promise, dependencies)
     } else {
-      setAtomValue(atom, value as NonPromise<Value>, dependencies)
+      setAtomValue(atom, value as ResolveType<Value>, dependencies)
     }
     return getAtomState(atom) as AtomState<Value>
   }
@@ -394,12 +396,12 @@ export const createStore = (
     })
   }
 
-  const writeAtomState = <Value, Update>(
-    atom: WritableAtom<Value, Update>,
+  const writeAtomState = <Value, Update, Result extends void | Promise<void>>(
+    atom: WritableAtom<Value, Update, Result>,
     update: Update
   ): void | Promise<void> => {
-    const writeGetter: WriteGetter = (
-      a: AnyAtom,
+    const writeGetter: WriteGetter = <V>(
+      a: Atom<V>,
       unstable_promise: boolean = false
     ) => {
       const aState = readAtomState(a)
@@ -424,12 +426,17 @@ export const createStore = (
           }
         }
         if (unstable_promise) {
-          return aState.p.then(() => writeGetter(a, unstable_promise))
+          return aState.p.then(() =>
+            writeGetter(
+              a as unknown as Atom<Promise<unknown>>,
+              unstable_promise
+            )
+          ) as Promise<ResolveType<V>> // FIXME proper typing
         }
         throw aState.p // read promise
       }
       if ('v' in aState) {
-        return aState.v // value
+        return aState.v as ResolveType<V> // value
       }
       if (
         typeof process === 'object' &&
@@ -442,7 +449,10 @@ export const createStore = (
       }
       throw new Error('no value found')
     }
-    const setter: Setter = <V, U>(a: WritableAtom<V, U>, v?: V) => {
+    const setter: Setter = <V, U, R extends void | Promise<void>>(
+      a: WritableAtom<V, U, R>,
+      v?: V
+    ) => {
       let promiseOrVoid: void | Promise<void>
       if ((a as AnyWritableAtom) === atom) {
         if (!hasInitialValue(a)) {
@@ -462,7 +472,7 @@ export const createStore = (
             })
           setAtomReadPromise(atom, promiseOrVoid)
         } else {
-          setAtomValue(a, v as NonPromise<V>)
+          setAtomValue(a, v as ResolveType<V>)
         }
         invalidateDependents(a)
         flushPending()
@@ -483,8 +493,8 @@ export const createStore = (
     return promiseOrVoid
   }
 
-  const writeAtom = <Value, Update>(
-    writingAtom: WritableAtom<Value, Update>,
+  const writeAtom = <Value, Update, Result extends void | Promise<void>>(
+    writingAtom: WritableAtom<Value, Update, Result>,
     update: Update
   ): void | Promise<void> => {
     const promiseOrVoid = writeAtomState(writingAtom, update)
