@@ -53,7 +53,6 @@ export type AtomState<Value = unknown> = {
   e?: unknown // read error
   p?: InterruptablePromise // read promise
   c?: () => void // cancel read promise
-  w?: Promise<void> // write promise
   v?: ResolveType<Value>
   r: Revision
   i?: InvalidatedRevision
@@ -235,21 +234,6 @@ export const createStore = (
   const setAtomInvalidated = <Value>(atom: Atom<Value>): void => {
     const [atomState] = prepareNextAtomState(atom)
     atomState.i = atomState.r // set invalidated revision
-    setAtomState(atom, atomState)
-  }
-
-  const setAtomWritePromise = <Value>(
-    atom: Atom<Value>,
-    promise: Promise<void> | null,
-    prevPromise?: Promise<void>
-  ): void => {
-    const [atomState] = prepareNextAtomState(atom)
-    if (promise) {
-      atomState.w = promise
-    } else if (atomState.w === prevPromise) {
-      // delete it only if it's not overwritten
-      delete atomState.w // clear write promise
-    }
     setAtomState(atom, atomState)
   }
 
@@ -482,13 +466,6 @@ export const createStore = (
       return promiseOrVoid
     }
     const promiseOrVoid = atom.write(writeGetter, setter, update)
-    if (promiseOrVoid instanceof Promise) {
-      const promise = promiseOrVoid.finally(() => {
-        setAtomWritePromise(atom, null, promise)
-        flushPending()
-      })
-      setAtomWritePromise(atom, promise)
-    }
     flushPending()
     return promiseOrVoid
   }

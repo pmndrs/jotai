@@ -48,9 +48,6 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     if (atomState.p) {
       throw atomState.p // read promise
     }
-    if (atomState.w) {
-      throw atomState.w // write promise
-    }
     if ('v' in atomState) {
       return atomState.v as ResolveType<Value>
     }
