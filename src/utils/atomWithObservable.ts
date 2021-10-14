@@ -24,7 +24,7 @@ type ObservableLike<T> = {
     error?: (error: unknown) => void,
     complete?: () => void
   ): Subscription
-  [Symbol.observable]?: () => ObservableLike<T>
+  [Symbol.observable]?: () => ObservableLike<T> | undefined
 }
 
 type SubjectLike<T> = ObservableLike<T> & Observer<T>
@@ -44,9 +44,9 @@ export function atomWithObservable<TData>(
     let settlePromise: ((data: TData | null, err?: unknown) => void) | null =
       null
     let observable = createObservable(get)
-    const returnsItself = observable[Symbol.observable]
-    if (returnsItself) {
-      observable = returnsItself()
+    const itself = observable[Symbol.observable]?.()
+    if (itself) {
+      observable = itself
     }
     const dataAtom = atom<TData | Promise<TData>>(
       new Promise<TData>((resolve, reject) => {
