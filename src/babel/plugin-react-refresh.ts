@@ -1,5 +1,5 @@
 import path from 'path'
-import babel, { PluginObj, types } from '@babel/core'
+import babel, { PluginObj } from '@babel/core'
 import templateBuilder from '@babel/template'
 import { isAtom } from './utils'
 
@@ -31,43 +31,37 @@ export default function reactRefreshPlugin({
           isAtom(t, node.declaration.callee)
         ) {
           const filename = state.filename || 'unknown'
+          const atomKey = `${filename}/defaultExport`
 
-          let displayName = path.basename(filename, path.extname(filename))
-
-          // ./{module name}/index.js
-          if (displayName === 'index') {
-            displayName = path.basename(path.dirname(filename))
-          }
-          // Relies on visiting the variable declaration to add the debugLabel
-          const buildExport = templateBuilder(`
-          const %%atomIdentifier%% = %%atom%%;
-          export default %%atomIdentifier%%
-          `)
+          const buildExport = templateBuilder(
+            `export default globalThis.jotaiAtomCache.get(%%atomKey%%, %%atom%%)`
+          )
           const ast = buildExport({
-            atomIdentifier: t.identifier(displayName),
+            atomIdentifier: t.stringLiteral(atomKey),
             atom: node.declaration,
           })
-          nodePath.replaceWithMultiple(ast as babel.Node[])
+          nodePath.replaceWith(ast as babel.Node)
         }
       },
-      VariableDeclarator(nodePath) {
+      VariableDeclarator(nodePath, state) {
         if (
           t.isIdentifier(nodePath.node.id) &&
           t.isCallExpression(nodePath.node.init) &&
           isAtom(t, nodePath.node.init.callee)
         ) {
-          nodePath.parentPath.insertAfter(
-            t.expressionStatement(
-              t.assignmentExpression(
-                '=',
-                t.memberExpression(
-                  t.identifier(nodePath.node.id.name),
-                  t.identifier('debugLabel')
-                ),
-                t.stringLiteral(nodePath.node.id.name)
-              )
-            )
+          console.log(state)
+          const filename = state.filename || 'unknown'
+          const atomKey = `${filename}/${nodePath.node.id.name}`
+
+          const buildAtomDeclaration = templateBuilder(
+            `const %%atomIdentifier%% = globalThis.jotaiAtomCache.get(%%atomKey%%, %%atom%%)`
           )
+          const ast = buildAtomDeclaration({
+            atomIdentifier: t.identifier(nodePath.node.id.name),
+            atomKey: t.stringLiteral(atomKey),
+            atom: nodePath.node.init,
+          })
+          nodePath.parentPath.replaceWith(ast as babel.Node)
         }
       },
     },
