@@ -5,14 +5,11 @@ nav: 3.6
 
 > The content of this page will be easier to follow if you have taken a look at the [basics/async](../basics/async.mdx) part of the docs.
 
-Sometimes we need to wrap our components in suspense to use asynchronous atoms. Two kinds of atoms need Suspense.
-
-- Derived async atoms (async `read` function)
-- Asynchronous actions (async `write`)
+Sometimes we need to wrap our components in suspense to use asynchronous atoms.
 
 But sometimes we're not allowed to wrap our components in Suspense, So we're going to do some hacks below and and make our async atoms synchronous.
 
-## Async `read`
+## Async `read` (Derived async atoms)
 
 Check this derived async atom:
 
@@ -60,7 +57,12 @@ const Component = () => {
 }
 ```
 
-## Async `write`
+<details>
+<summary>For async write until v1.3.9</summary>
+
+(This is no longer the case since v1.4.0.)
+
+## Async `write` (Asynchronous actions)
 
 The original code is:
 
@@ -90,3 +92,5 @@ const fetchCountAtom = atom(
   }
 )
 ```
+
+</details>

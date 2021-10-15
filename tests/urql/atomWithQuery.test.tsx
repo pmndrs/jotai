@@ -14,7 +14,7 @@ const clientMock = {
   query: () =>
     withPromise(
       pipe(
-        interval(10),
+        interval(100),
         map((i: number) => ({ data: { count: i } }))
       )
     ),
@@ -59,7 +59,7 @@ it('query basic test', async () => {
 it('query dependency test', async () => {
   type Update = (prev: number) => number
   const dummyAtom = atom(10)
-  const setDummyAtom = atom<null, Update>(null, (_get, set, update) =>
+  const setDummyAtom = atom(null, (_get, set, update: Update) =>
     set(dummyAtom, update)
   )
   const countAtom = atomWithQuery<{ count: number }, { dummy: number }>(

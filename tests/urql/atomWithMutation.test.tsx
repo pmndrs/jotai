@@ -12,7 +12,7 @@ const withPromise = (source$: any) => {
 }
 const clientMock = {
   mutation: () =>
-    withPromise(pipe(fromValue({ data: { count: 1 } }), delay(10))),
+    withPromise(pipe(fromValue({ data: { count: 1 } }), delay(100))),
 } as unknown as Client
 
 const Provider = getTestProvider()

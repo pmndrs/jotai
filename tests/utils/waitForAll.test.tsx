@@ -305,9 +305,9 @@ it('large atom count', async () => {
       .fill(0)
       .map((_, i) => i)
 
-  let result = null
+  let result: number[] | null = null
 
-  const chunksFamily = atomFamily((i) => atom(i))
+  const chunksFamily = atomFamily((i: number) => atom(() => i))
 
   const selector = atomFamily((count: number) =>
     atom((getter) => {
@@ -337,7 +337,9 @@ it('large atom count', async () => {
     </StrictMode>
   )
 
-  expect(result).toEqual(createArray(passingCount))
+  waitFor(() => {
+    expect(result).toEqual(createArray(passingCount))
+  })
 
   const failingCount = 8000
   render(
@@ -348,5 +350,7 @@ it('large atom count', async () => {
     </StrictMode>
   )
 
-  expect(result).toEqual(createArray(failingCount))
+  waitFor(() => {
+    expect(result).toEqual(createArray(failingCount))
+  })
 })

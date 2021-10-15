@@ -214,9 +214,7 @@ export function atomWithInfiniteQuery<
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
     },
-    (_get, set, action) => {
-      set(queryDataAtom, action) // delegate action
-    }
+    (_get, set, action) => set(queryDataAtom, action) // delegate action
   )
   return queryAtom
 }
