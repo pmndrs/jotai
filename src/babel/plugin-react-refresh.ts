@@ -1,4 +1,3 @@
-import path from 'path'
 import babel, { PluginObj } from '@babel/core'
 import templateBuilder from '@babel/template'
 import { isAtom } from './utils'
@@ -7,6 +6,11 @@ export default function reactRefreshPlugin({
   types: t,
 }: typeof babel): PluginObj {
   return {
+    pre({ opts }) {
+      if (!opts.filename) {
+        throw new Error('Filename must be available')
+      }
+    },
     visitor: {
       Program: {
         exit(path) {
@@ -49,7 +53,6 @@ export default function reactRefreshPlugin({
           t.isCallExpression(nodePath.node.init) &&
           isAtom(t, nodePath.node.init.callee)
         ) {
-          console.log(state)
           const filename = state.filename || 'unknown'
           const atomKey = `${filename}/${nodePath.node.id.name}`
 

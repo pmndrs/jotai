@@ -3,7 +3,7 @@ import { transformSync } from '@babel/core'
 
 const plugin = path.join(__dirname, '../../src/babel/plugin-react-refresh')
 
-const transform = (code: string, filename: string) =>
+const transform = (code: string, filename?: string) =>
   transformSync(code, {
     babelrc: false,
     configFile: false,
@@ -30,4 +30,10 @@ it('Should add a debugLabel to an atom', () => {
     };
     const countAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/countAtom\\", atom(0));"
   `)
+})
+
+it('Should fail if no filename is available', () => {
+  expect(() => transform(`const countAtom = atom(0);`)).toThrowError(
+    'Filename must be available'
+  )
 })
