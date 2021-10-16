@@ -27,17 +27,17 @@ type SyncStringStorage = {
   setItem: (key: string, newValue: string) => void
 }
 
-export function createJSONStorage(
+export function createJSONStorage<Value>(
   getStringStorage: () => AsyncStringStorage
-): AsyncStorage<unknown>
+): AsyncStorage<Value>
 
-export function createJSONStorage(
+export function createJSONStorage<Value>(
   getStringStorage: () => SyncStringStorage
-): SyncStorage<unknown>
+): SyncStorage<Value>
 
-export function createJSONStorage(
+export function createJSONStorage<Value>(
   getStringStorage: () => AsyncStringStorage | SyncStringStorage
-): AsyncStorage<unknown> | SyncStorage<unknown> {
+): AsyncStorage<Value> | SyncStorage<Value> {
   return {
     getItem: (key) => {
       const value = getStringStorage().getItem(key)
