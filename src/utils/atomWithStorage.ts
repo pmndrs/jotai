@@ -1,42 +1,84 @@
 import { atom } from 'jotai'
-import type { PrimitiveAtom, SetStateAction } from 'jotai'
+import type { PrimitiveAtom, SetStateAction, WritableAtom } from 'jotai'
 
 type Unsubscribe = () => void
 
-type Storage<Value> = {
-  getItem: (key: string) => Value | Promise<Value>
-  setItem: (key: string, newValue: Value) => void | Promise<void>
+type AsyncStorage<Value> = {
+  getItem: (key: string) => Promise<Value>
+  setItem: (key: string, newValue: Value) => Promise<void>
   delayInit?: boolean
   subscribe?: (key: string, callback: (value: Value) => void) => Unsubscribe
 }
 
-type StringStorage = {
-  getItem: (key: string) => string | null | Promise<string | null>
-  setItem: (key: string, newValue: string) => void | Promise<void>
+type SyncStorage<Value> = {
+  getItem: (key: string) => Value
+  setItem: (key: string, newValue: Value) => void
+  delayInit?: boolean
+  subscribe?: (key: string, callback: (value: Value) => void) => Unsubscribe
 }
 
-export const createJSONStorage = (
-  getStringStorage: () => StringStorage
-): Storage<unknown> => ({
-  getItem: (key) => {
-    const value = getStringStorage().getItem(key)
-    if (value instanceof Promise) {
-      return value.then((v) => JSON.parse(v || ''))
-    }
-    return JSON.parse(value || '')
-  },
-  setItem: (key, newValue) => {
-    getStringStorage().setItem(key, JSON.stringify(newValue))
-  },
-})
+type AsyncStringStorage = {
+  getItem: (key: string) => Promise<string | null>
+  setItem: (key: string, newValue: string) => Promise<void>
+}
+
+type SyncStringStorage = {
+  getItem: (key: string) => string | null
+  setItem: (key: string, newValue: string) => void
+}
+
+export function createJSONStorage(
+  getStringStorage: () => AsyncStringStorage
+): AsyncStorage<unknown>
+
+export function createJSONStorage(
+  getStringStorage: () => SyncStringStorage
+): SyncStorage<unknown>
+
+export function createJSONStorage(
+  getStringStorage: () => AsyncStringStorage | SyncStringStorage
+): AsyncStorage<unknown> | SyncStorage<unknown> {
+  return {
+    getItem: (key) => {
+      const value = getStringStorage().getItem(key)
+      if (value instanceof Promise) {
+        return value.then((v) => JSON.parse(v || ''))
+      }
+      return JSON.parse(value || '')
+    },
+    setItem: (key, newValue) => {
+      getStringStorage().setItem(key, JSON.stringify(newValue))
+    },
+  }
+}
 
 const defaultStorage = createJSONStorage(() => localStorage)
 
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
-  storage: Storage<Value> = defaultStorage as Storage<Value>
-): PrimitiveAtom<Value> {
+  storage: AsyncStorage<Value> & { delayInit: true }
+): WritableAtom<Value, SetStateAction<Value>, Promise<void>>
+
+export function atomWithStorage<Value>(
+  key: string,
+  initialValue: Value,
+  storage: AsyncStorage<Value>
+): WritableAtom<Promise<Value>, SetStateAction<Value>, Promise<void>>
+
+export function atomWithStorage<Value>(
+  key: string,
+  initialValue: Value,
+  storage: SyncStorage<Value>
+): PrimitiveAtom<Value>
+
+export function atomWithStorage<Value>(
+  key: string,
+  initialValue: Value,
+  storage:
+    | SyncStorage<Value>
+    | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>
+) {
   const getInitialValue = () => {
     try {
       const value = storage.getItem(key)
@@ -75,7 +117,7 @@ export function atomWithStorage<Value>(
           ? (update as (prev: Value) => Value)(get(baseAtom))
           : update
       set(baseAtom, newValue)
-      storage.setItem(key, newValue)
+      return storage.setItem(key, newValue)
     }
   )
 
@@ -105,7 +147,7 @@ export function atomWithHash<Value>(
         window.removeEventListener('hashchange', callback)
       }
     })
-  const hashStorage: Storage<Value> = {
+  const hashStorage: SyncStorage<Value> = {
     getItem: (key) => {
       const searchParams = new URLSearchParams(location.hash.slice(1))
       const storedValue = searchParams.get(key)
