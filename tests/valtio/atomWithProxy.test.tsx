@@ -180,23 +180,18 @@ it('synchronous atomWithProxy and regular atom ', async () => {
 it('array.length state', async () => {
   const proxyState = proxy({ array: [0, 0] })
   const stateAtom = atomWithProxy(proxyState)
-  
+
   const Counter = () => {
     const [state, setState] = useAtom(stateAtom)
 
     return (
       <>
         array0: {state.array[0]}
-        <button
-          onClick={() =>
-            setState({ array: [1] })
-          }>
-          button
-        </button>
+        <button onClick={() => setState({ array: [1] })}>button</button>
       </>
     )
   }
-  
+
   const { findByText, getByText } = render(
     <Provider>
       <Counter />
