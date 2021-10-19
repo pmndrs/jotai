@@ -41,7 +41,7 @@ export default function reactRefreshPlugin({
             `export default globalThis.jotaiAtomCache.get(%%atomKey%%, %%atom%%)`
           )
           const ast = buildExport({
-            atomIdentifier: t.stringLiteral(atomKey),
+            atomKey: t.stringLiteral(atomKey),
             atom: node.declaration,
           })
           nodePath.replaceWith(ast as babel.Node)
