@@ -57,6 +57,7 @@ export type AtomState<Value = unknown> = {
   r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
+  o: ReadDependencies // old read depencencies
 }
 
 type Listeners = Set<() => void>
@@ -89,10 +90,7 @@ export const createStore = (
 ) => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
-  const pendingMap = new Map<
-    AnyAtom,
-    [dependencies: ReadDependencies | undefined, isNewAtom: boolean]
-  >()
+  const pendingMap = new Map<AnyAtom, boolean /* isNewAtom */>()
   let stateListeners: Set<StateListener>
   let mountedAtoms: MountedAtoms
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
@@ -102,7 +100,13 @@ export const createStore = (
 
   if (initialValues) {
     for (const [atom, value] of initialValues) {
-      const atomState: AtomState = { v: value, r: 0, d: new Map() }
+      const readDependencies = new Map()
+      const atomState: AtomState = {
+        v: value,
+        r: 0,
+        d: readDependencies,
+        o: readDependencies,
+      }
       if (
         typeof process === 'object' &&
         process.env.NODE_ENV !== 'production'
@@ -124,8 +128,7 @@ export const createStore = (
 
   const setAtomState = <Value>(
     atom: Atom<Value>,
-    atomState: AtomState<Value>,
-    prevDependencies?: ReadDependencies
+    atomState: AtomState<Value>
   ): void => {
     if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
       Object.freeze(atomState)
@@ -133,15 +136,16 @@ export const createStore = (
     const isNewAtom = !atomStateMap.has(atom)
     atomStateMap.set(atom, atomState)
     if (!pendingMap.has(atom)) {
-      pendingMap.set(atom, [prevDependencies, isNewAtom])
+      pendingMap.set(atom, isNewAtom)
     }
   }
 
   const prepareNextAtomState = <Value>(
     atom: Atom<Value>,
     dependencies?: Set<AnyAtom>
-  ): [AtomState<Value>, ReadDependencies] => {
+  ): AtomState<Value> => {
     const atomState = getAtomState(atom)
+    const oldReadDependencies = atomState?.d || new Map()
     const nextAtomState = {
       r: 0,
       ...atomState,
@@ -149,9 +153,10 @@ export const createStore = (
         ? new Map(
             Array.from(dependencies).map((a) => [a, getAtomState(a)?.r ?? 0])
           )
-        : atomState?.d || new Map(),
+        : oldReadDependencies,
+      o: oldReadDependencies,
     }
-    return [nextAtomState, atomState?.d || new Map()]
+    return nextAtomState
   }
 
   const setAtomValue = <Value>(
@@ -160,10 +165,7 @@ export const createStore = (
     dependencies?: Set<AnyAtom>,
     promise?: Promise<void>
   ): void => {
-    const [atomState, prevDependencies] = prepareNextAtomState(
-      atom,
-      dependencies
-    )
+    const atomState = prepareNextAtomState(atom, dependencies)
     if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       // newer async read is running, not updating
       return
@@ -185,7 +187,7 @@ export const createStore = (
     delete atomState.p // clear read promise
     delete atomState.c // clear cancel read promise
     delete atomState.i // clear invalidated revision
-    setAtomState(atom, atomState, dependencies && prevDependencies)
+    setAtomState(atom, atomState)
   }
 
   const setAtomReadError = <Value>(
@@ -194,10 +196,7 @@ export const createStore = (
     dependencies?: Set<AnyAtom>,
     promise?: Promise<void>
   ): void => {
-    const [atomState, prevDependencies] = prepareNextAtomState(
-      atom,
-      dependencies
-    )
+    const atomState = prepareNextAtomState(atom, dependencies)
     if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       // newer async read is running, not updating
       return
@@ -207,7 +206,7 @@ export const createStore = (
     delete atomState.c // clear cancel read promise
     delete atomState.i // clear invalidated revision
     atomState.e = error // set read error
-    setAtomState(atom, atomState, prevDependencies)
+    setAtomState(atom, atomState)
   }
 
   const setAtomReadPromise = <Value>(
@@ -215,10 +214,7 @@ export const createStore = (
     promise: Promise<void>,
     dependencies?: Set<AnyAtom>
   ): void => {
-    const [atomState, prevDependencies] = prepareNextAtomState(
-      atom,
-      dependencies
-    )
+    const atomState = prepareNextAtomState(atom, dependencies)
     if (atomState.p?.[IS_EQUAL_PROMISE](promise)) {
       // the same promise, not updating
       return
@@ -228,11 +224,11 @@ export const createStore = (
     const interruptablePromise = createInterruptablePromise(promise)
     atomState.p = interruptablePromise // set read promise
     atomState.c = interruptablePromise[INTERRUPT_PROMISE]
-    setAtomState(atom, atomState, prevDependencies)
+    setAtomState(atom, atomState)
   }
 
   const setAtomInvalidated = <Value>(atom: Atom<Value>): void => {
-    const [atomState] = prepareNextAtomState(atom)
+    const atomState = prepareNextAtomState(atom)
     atomState.i = atomState.r // set invalidated revision
     setAtomState(atom, atomState)
   }
@@ -548,11 +544,11 @@ export const createStore = (
 
   const mountDependencies = <Value>(
     atom: Atom<Value>,
-    atomState: AtomState<Value>,
-    prevDependencies: ReadDependencies
+    atomState: AtomState<Value>
   ): void => {
     const dependencies = new Set(atomState.d.keys())
-    prevDependencies.forEach((_, a) => {
+    const oldReadDependencies = atomState.o
+    oldReadDependencies.forEach((_, a) => {
       if (dependencies.has(a)) {
         // not changed
         dependencies.delete(a)
@@ -580,12 +576,10 @@ export const createStore = (
   const flushPending = (): void => {
     const pending = Array.from(pendingMap)
     pendingMap.clear()
-    pending.forEach(([atom, [prevDependencies, isNewAtom]]) => {
-      if (prevDependencies) {
-        const atomState = getAtomState(atom)
-        if (atomState) {
-          mountDependencies(atom, atomState, prevDependencies)
-        }
+    pending.forEach(([atom, isNewAtom]) => {
+      const atomState = getAtomState(atom)
+      if (atomState && atomState.d !== atomState.o) {
+        mountDependencies(atom, atomState)
       }
       const mounted = mountedMap.get(atom)
       mounted?.l.forEach((listener) => listener())

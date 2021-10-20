@@ -978,3 +978,63 @@ it('async atom double chain without setTimeout (#751)', async () => {
   await findByText('loading')
   await findByText('async: ready')
 })
+
+it('update unmounted async atom with intermediate atom', async () => {
+  const enabledAtom = atom(true)
+  const countAtom = atom(1)
+
+  const intermediateAtom = atom((get) => {
+    const count = get(countAtom)
+    const enabled = get(enabledAtom)
+    const initAtom = atom(async () => {
+      if (!enabled) {
+        return -1
+      }
+      await new Promise((r) => setTimeout(r, 100))
+      return count * 2
+    })
+    return initAtom
+  })
+  const derivedAtom = atom((get) => {
+    const initAtom = get(intermediateAtom)
+    return get(initAtom)
+  })
+
+  const DerivedCounter = () => {
+    const [derived] = useAtom(derivedAtom)
+    return <div>derived: {derived}</div>
+  }
+
+  const Control = () => {
+    const [, setEnabled] = useAtom(enabledAtom)
+    const [, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <button onClick={() => setCount((c) => c + 1)}>increment count</button>
+        <button onClick={() => setEnabled((x) => !x)}>toggle enabled</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <DerivedCounter />
+        </Suspense>
+        <Control />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('derived: 2')
+
+  fireEvent.click(getByText('toggle enabled'))
+  fireEvent.click(getByText('increment count'))
+  await findByText('derived: -1')
+
+  fireEvent.click(getByText('toggle enabled'))
+  await findByText('loading')
+  await findByText('derived: 4')
+})
