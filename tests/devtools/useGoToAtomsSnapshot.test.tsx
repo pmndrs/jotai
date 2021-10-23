@@ -100,7 +100,7 @@ it('useGotoAtomsSnapshot should work with derived atoms', async () => {
 it('useGotoAtomsSnapshot should work with async derived atoms', async () => {
   const priceAtom = atom(10)
   const taxAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 500))
     return get(priceAtom) * 0.2
   })
 
