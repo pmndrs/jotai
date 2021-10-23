@@ -182,7 +182,9 @@ export function atomWithInfiniteQuery<
 
       dataAtom.onMount = (update) => {
         setData = update
-        return observer.subscribe(listener)
+        if (options.enabled !== false) {
+          return observer.subscribe(listener)
+        }
       }
       return { dataAtom, observer, options }
     },
