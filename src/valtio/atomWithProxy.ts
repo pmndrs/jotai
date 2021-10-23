@@ -6,7 +6,7 @@ const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
 const applyChanges = <T extends object>(proxyObject: T, prev: T, next: T) => {
-  ;(Object.keys(prev) as (keyof T)[]).forEach((key) => {
+  ;(Object.getOwnPropertyNames(prev) as (keyof T)[]).forEach((key) => {
     if (!(key in next)) {
       delete proxyObject[key]
     } else if (Object.is(prev[key], next[key])) {
