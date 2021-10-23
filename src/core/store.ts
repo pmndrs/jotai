@@ -562,6 +562,7 @@ export const createStore = (
         }
       }
     })
+    oldReadDependencies.clear() // to avoid memory leak (but this is mutation)
     dependencies.forEach((a) => {
       const mounted = mountedMap.get(a)
       if (mounted) {
