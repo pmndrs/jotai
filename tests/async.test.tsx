@@ -986,18 +986,18 @@ it('update unmounted async atom with intermediate atom', async () => {
   const intermediateAtom = atom((get) => {
     const count = get(countAtom)
     const enabled = get(enabledAtom)
-    const initAtom = atom(async () => {
+    const tmpAtom = atom(async () => {
       if (!enabled) {
         return -1
       }
       await new Promise((r) => setTimeout(r, 100))
       return count * 2
     })
-    return initAtom
+    return tmpAtom
   })
   const derivedAtom = atom((get) => {
-    const initAtom = get(intermediateAtom)
-    return get(initAtom)
+    const tmpAtom = get(intermediateAtom)
+    return get(tmpAtom)
   })
 
   const DerivedCounter = () => {

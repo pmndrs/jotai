@@ -601,12 +601,12 @@ it('update unmounted atom with intermediate atom', async () => {
   const intermediateAtom = atom((get) => {
     const count = get(countAtom)
     const enabled = get(enabledAtom)
-    const initAtom = atom(enabled ? count * 2 : -1)
-    return initAtom
+    const tmpAtom = atom(enabled ? count * 2 : -1)
+    return tmpAtom
   })
   const derivedAtom = atom((get) => {
-    const initAtom = get(intermediateAtom)
-    return get(initAtom)
+    const tmpAtom = get(intermediateAtom)
+    return get(tmpAtom)
   })
 
   const DerivedCounter = () => {
