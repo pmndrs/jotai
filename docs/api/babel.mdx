@@ -51,13 +51,45 @@ With a `babel` configuration file:
 }
 ```
 
+Examples can be found below.
+
+## plugin-react-refresh
+
+This plugin adds support for React Refresh for Jotai atoms. This makes sure that state isn't reset, when developing using React Refresh.
+
+## Usage
+
+With a `babel` configuration file:
+
+```json
+{
+  "plugins": ["jotai/babel/plugin-react-refresh"]
+}
+```
+
+Examples can be found below.
+
+## preset
+
+Jotai ships with a `babel` containing the plugins created for Jotai.
+
+## Usage
+
+With a `babel` configuration file:
+
+```json
+{
+  "presets": ["jotai/babel/preset"]
+}
+```
+
 ## Examples
 
 ### Next.js
 
-<CodeSandbox id="kc8sd" />
+<CodeSandbox id="o2di2" />
 
 ### Parcel
 
-<CodeSandbox id="2dpyh" />
+<CodeSandbox id="bgf3b" />
 
