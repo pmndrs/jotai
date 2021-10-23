@@ -89,6 +89,12 @@
       "import": "./esm/babel/plugin-debug-label.mjs",
       "default": "./babel/plugin-debug-label.js"
     },
+    "./babel/plugin-react-refresh": {
+      "types": "./babel/plugin-react-refresh.d.ts",
+      "module": "./esm/babel/plugin-react-refresh.js",
+      "import": "./esm/babel/plugin-react-refresh.mjs",
+      "default": "./babel/plugin-react-refresh.js"
+    },
     "./babel/preset": {
       "types": "./babel/preset.d.ts",
       "module": "./esm/babel/preset.js",
@@ -115,6 +121,7 @@
     "build:redux": "rollup -c --config-redux",
     "build:urql": "rollup -c --config-urql",
     "build:babel:plugin-debug-label": "rollup -c --config-babel_plugin-debug-label",
+    "build:babel:plugin-react-refresh": "rollup -c --config-babel_plugin-react-refresh",
     "build:babel:preset": "rollup -c --config-babel_preset",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
