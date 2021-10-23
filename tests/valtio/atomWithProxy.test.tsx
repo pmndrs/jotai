@@ -176,3 +176,31 @@ it('synchronous atomWithProxy and regular atom ', async () => {
   fireEvent.click(getByText('create and select element'))
   getByText('selected element: element') // synchronous
 })
+
+it('array.length state', async () => {
+  const proxyState = proxy({ array: [0, 0] })
+  const stateAtom = atomWithProxy(proxyState)
+
+  const Counter = () => {
+    const [state, setState] = useAtom(stateAtom)
+
+    return (
+      <>
+        array0: {state.array[0]}
+        <button onClick={() => setState({ array: [1] })}>button</button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('array0: 0')
+  fireEvent.click(getByText('button'))
+
+  await findByText('array0: 1')
+  expect(proxyState.array.length).toBe(1)
+})
