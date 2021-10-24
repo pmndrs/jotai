@@ -57,7 +57,6 @@ export type AtomState<Value = unknown> = {
   r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
-  o: ReadDependencies // old read depencencies
 }
 
 type Listeners = Set<() => void>
@@ -90,7 +89,10 @@ export const createStore = (
 ) => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
-  const pendingMap = new Map<AnyAtom, boolean /* isNewAtom */>()
+  const pendingMap = new Map<
+    AnyAtom,
+    AtomState /* prevAtomState */ | undefined
+  >()
   let stateListeners: Set<StateListener>
   let mountedAtoms: MountedAtoms
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
@@ -100,13 +102,7 @@ export const createStore = (
 
   if (initialValues) {
     for (const [atom, value] of initialValues) {
-      const readDependencies = new Map()
-      const atomState: AtomState = {
-        v: value,
-        r: 0,
-        d: readDependencies,
-        o: readDependencies,
-      }
+      const atomState: AtomState = { v: value, r: 0, d: new Map() }
       if (
         typeof process === 'object' &&
         process.env.NODE_ENV !== 'production'
@@ -133,10 +129,10 @@ export const createStore = (
     if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
       Object.freeze(atomState)
     }
-    const isNewAtom = !atomStateMap.has(atom)
+    const prevAtomState = atomStateMap.get(atom)
     atomStateMap.set(atom, atomState)
     if (!pendingMap.has(atom)) {
-      pendingMap.set(atom, isNewAtom)
+      pendingMap.set(atom, prevAtomState)
     }
   }
 
@@ -145,7 +141,6 @@ export const createStore = (
     dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
     const atomState = getAtomState(atom)
-    const oldReadDependencies = atomState?.d || new Map()
     const nextAtomState = {
       r: 0,
       ...atomState,
@@ -153,8 +148,7 @@ export const createStore = (
         ? new Map(
             Array.from(dependencies).map((a) => [a, getAtomState(a)?.r ?? 0])
           )
-        : oldReadDependencies,
-      o: oldReadDependencies,
+        : atomState?.d || new Map(),
     }
     return nextAtomState
   }
@@ -544,11 +538,11 @@ export const createStore = (
 
   const mountDependencies = <Value>(
     atom: Atom<Value>,
-    atomState: AtomState<Value>
+    atomState: AtomState<Value>,
+    prevReadDependencies: ReadDependencies
   ): void => {
     const dependencies = new Set(atomState.d.keys())
-    const oldReadDependencies = atomState.o
-    oldReadDependencies.forEach((_, a) => {
+    prevReadDependencies.forEach((_, a) => {
       if (dependencies.has(a)) {
         // not changed
         dependencies.delete(a)
@@ -562,7 +556,6 @@ export const createStore = (
         }
       }
     })
-    oldReadDependencies.clear() // to avoid memory leak (but this is mutation)
     dependencies.forEach((a) => {
       const mounted = mountedMap.get(a)
       if (mounted) {
@@ -577,10 +570,10 @@ export const createStore = (
   const flushPending = (): void => {
     const pending = Array.from(pendingMap)
     pendingMap.clear()
-    pending.forEach(([atom, isNewAtom]) => {
+    pending.forEach(([atom, prevAtomState]) => {
       const atomState = getAtomState(atom)
-      if (atomState && atomState.d !== atomState.o) {
-        mountDependencies(atom, atomState)
+      if (atomState && atomState.d !== prevAtomState?.d) {
+        mountDependencies(atom, atomState, prevAtomState?.d || new Map())
       }
       const mounted = mountedMap.get(atom)
       mounted?.l.forEach((listener) => listener())
@@ -588,7 +581,7 @@ export const createStore = (
         typeof process === 'object' &&
         process.env.NODE_ENV !== 'production'
       ) {
-        stateListeners.forEach((l) => l(atom, isNewAtom))
+        stateListeners.forEach((l) => l(atom, !prevAtomState))
       }
     })
   }
