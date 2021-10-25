@@ -74,6 +74,11 @@ export function atomWithStorage<Value>(
 
 export function atomWithStorage<Value>(
   key: string,
+  initialValue: Value
+): PrimitiveAtom<Value>
+
+export function atomWithStorage<Value>(
+  key: string,
   initialValue: Value,
   storage:
     | SyncStorage<Value>
