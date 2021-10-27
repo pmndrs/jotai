@@ -187,7 +187,7 @@ The `updateValue` takes just one argument, which will be passed to the third arg
 
 ### How atom dependency works
 
-To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh the dependencies and dependents. For example, If A depends on B, it means that B has a dependency on A, and A is a dependent of B.
+To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh the dependencies and dependents. For example, If A depends on B, it means that B is a dependency of A, and A is a dependent of B.
 
 ```js
 const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
