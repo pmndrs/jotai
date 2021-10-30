@@ -1,4 +1,5 @@
 import { PrimitiveAtom, atom } from 'jotai'
+import { createMemoizeAtom } from '../utils/weakCache'
 
 type Config = {
   instanceID?: number
@@ -30,11 +31,12 @@ type Extension = {
 
 type Options = { name?: string }
 
-const getExtension = (): Extension => {
+const memoizeAtom = createMemoizeAtom()
+const getExtension = (): Extension | undefined => {
   try {
     return (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
   } catch (e) {
-    throw new Error('Please install/enable Redux devtools extension')
+    console.warn('Please install/enable Redux devtools extension')
   }
 }
 
@@ -42,26 +44,66 @@ export function devtoolsAtom<Value>(
   anAtom: PrimitiveAtom<Value>,
   options?: Options
 ): PrimitiveAtom<Value> {
-  const isWriteable = !!anAtom.write
-  const atomName = options?.name || anAtom.debugLabel || anAtom.toString()
-
   const extension = getExtension()
-  const devtools = extension.connect({ name: atomName })
+  const nameAtom = atom(
+    () =>
+      options?.name ||
+      newAtom.debugLabel ||
+      anAtom.debugLabel ||
+      anAtom.toString()
+  )
 
-  let isTimeTraveling = false
+  const refAtom = memoizeAtom(
+    () =>
+      atom(
+        () =>
+          ({ isTimeTraveling: false } as {
+            devtools?: ConnectionResult
+            isTimeTraveling: boolean
+          })
+      ),
+    [anAtom]
+  )
+  const unsubscribeValueAtom = atom({} as { value?: () => void })
+
+  const subscribeAtom = atom(null, (get, set, type: 'init' | 'unsubscribe') => {
+    if (!extension) {
+      return
+    }
+    const ref = get(refAtom)
+
+    if (type === 'init') {
+      ref.devtools = extension.connect({ name: get(nameAtom) })
+      ref.devtools.init(get(anAtom))
+
+      const unsubscribe = ref.devtools.subscribe((message: Message) => {
+        set(listenerAtom, message)
+      })
+
+      set(unsubscribeValueAtom, { value: unsubscribe })
+    } else if (type === 'unsubscribe') {
+      const unsubscribe = get(unsubscribeValueAtom).value
+      unsubscribe?.()
+    }
+  })
 
   const listenerAtom = atom(
     null,
-    (get, set, message: Message | { type: 'init' }) => {
-      if (message.type === 'init') {
-        return devtools.init(get(anAtom))
+    (get, set, message: Message | { type: 'init' | 'unsubscribe' }) => {
+      if (!extension) {
+        return
       }
+
+      if (message.type === 'init') {
+        set(subscribeAtom, 'init')
+      } else if (message.type === 'unsubscribe') {
+        set(subscribeAtom, 'unsubscribe')
+      }
+      const ref = get(refAtom)
 
       if (message.type === 'ACTION' && message.payload) {
         try {
-          if (isWriteable) {
-            set(subscribeAtom, JSON.parse(message.payload))
-          }
+          set(newAtom, JSON.parse(message.payload))
         } catch (e) {
           console.error(
             'please dispatch a serializable value that JSON.parse() support\n',
@@ -73,17 +115,15 @@ export function devtoolsAtom<Value>(
           message.payload?.type === 'JUMP_TO_ACTION' ||
           message.payload?.type === 'JUMP_TO_STATE'
         ) {
-          isTimeTraveling = true
+          ref.isTimeTraveling = true
 
-          if (isWriteable) {
-            set(subscribeAtom, JSON.parse(message.state))
-          }
+          set(newAtom, JSON.parse(message.state))
         }
       } else if (
         message.type === 'DISPATCH' &&
         message.payload?.type === 'COMMIT'
       ) {
-        devtools.init(get(anAtom))
+        ref.devtools?.init(get(anAtom))
       } else if (
         message.type === 'DISPATCH' &&
         message.payload?.type === 'IMPORT_STATE'
@@ -92,11 +132,9 @@ export function devtoolsAtom<Value>(
           message.payload.nextLiftedState?.computedStates || []
         computedStates.forEach(({ state }: { state: any }, index: number) => {
           if (index === 0) {
-            devtools.init(state)
+            ref.devtools?.init(state)
           } else {
-            if (isWriteable) {
-              set(subscribeAtom, state)
-            }
+            set(newAtom, state)
           }
         })
       }
@@ -104,30 +142,27 @@ export function devtoolsAtom<Value>(
   )
 
   listenerAtom.onMount = (setAtom) => {
-    const unsubscribe = devtools.subscribe((message: Message) =>
-      setAtom(message)
-    )
-
     setAtom({ type: 'init' })
-
-    return unsubscribe
+    return () => setAtom({ type: 'unsubscribe' })
   }
 
-  const subscribeAtom: PrimitiveAtom<Value> = atom(
+  const newAtom: PrimitiveAtom<Value> = atom(
     (get) => {
       get(listenerAtom)
 
-      return anAtom.read(get)
+      return get(anAtom)
     },
     (get, set, update) => {
-      const writeReturn = anAtom.write(get, set, update)
+      const writeReturn = set(anAtom, update)
 
-      if (isTimeTraveling) {
-        isTimeTraveling = false
+      const ref = get(refAtom)
+
+      if (ref.isTimeTraveling) {
+        ref.isTimeTraveling = false
       } else {
-        devtools.send(
-          `${atomName} - ${new Date().toLocaleString()}`,
-          anAtom.read(get)
+        ref.devtools?.send(
+          `${get(nameAtom)} - ${new Date().toLocaleString()}`,
+          get(anAtom)
         )
       }
 
@@ -135,8 +170,7 @@ export function devtoolsAtom<Value>(
     }
   )
 
-  subscribeAtom.onMount = anAtom.onMount
-  subscribeAtom.debugLabel = anAtom.debugLabel
+  newAtom.onMount = anAtom.onMount
 
-  return subscribeAtom
+  return newAtom
 }
