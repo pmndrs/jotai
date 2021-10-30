@@ -1,4 +1,4 @@
-import { atom, Atom, WritableAtom } from 'jotai'
+import { atom, PrimitiveAtom } from 'jotai'
 
 type Config = {
   instanceID?: number
@@ -38,20 +38,16 @@ const getExtension = (): Extension => {
   }
 }
 
-export function devtoolsAtom<Value, AtomType extends Atom<Value>>(
-  anAtom: AtomType,
+export function devtoolsAtom<Value>(
+  anAtom: PrimitiveAtom<Value>,
   options?: Options
-): AtomType
-
-export function devtoolsAtom<
-  Value,
-  AtomType extends WritableAtom<Value, Value>
->(anAtom: AtomType, options?: Options): AtomType {
-  const extension = getExtension()
+): PrimitiveAtom<Value> {
   const isWriteable = !!anAtom.write
   const atomName = options?.name || anAtom.debugLabel || anAtom.toString()
 
+  const extension = getExtension()
   const devtools = extension.connect({ name: atomName })
+
   let isTimeTraveling = false
 
   const listenerAtom = atom(
@@ -60,6 +56,7 @@ export function devtoolsAtom<
       if (message.type === 'init') {
         return devtools.init(get(anAtom))
       }
+
       if (message.type === 'ACTION' && message.payload) {
         try {
           if (isWriteable) {
@@ -95,7 +92,7 @@ export function devtoolsAtom<
           message.payload.nextLiftedState?.computedStates || []
         computedStates.forEach(({ state }: { state: any }, index: number) => {
           if (index === 0) {
-            devtools?.init(state)
+            devtools.init(state)
           } else {
             if (isWriteable) {
               set(subscribeAtom, state)
@@ -116,23 +113,30 @@ export function devtoolsAtom<
     return unsubscribe
   }
 
-  const subscribeAtom = atom((get) => {
-    get(listenerAtom)
+  const subscribeAtom: PrimitiveAtom<Value> = atom(
+    (get) => {
+      get(listenerAtom)
 
-    const value = anAtom.read(get)
-    if (isTimeTraveling) {
-      isTimeTraveling = false
-    } else {
-      devtools.send(`${atomName} - ${new Date().toLocaleString()}`, value)
+      return anAtom.read(get)
+    },
+    (get, set, update) => {
+      const writeReturn = anAtom.write(get, set, update)
+
+      if (isTimeTraveling) {
+        isTimeTraveling = false
+      } else {
+        devtools.send(
+          `${atomName} - ${new Date().toLocaleString()}`,
+          anAtom.read(get)
+        )
+      }
+
+      return writeReturn
     }
-    return value
-  }, anAtom.write)
+  )
 
   subscribeAtom.onMount = anAtom.onMount
+  subscribeAtom.debugLabel = anAtom.debugLabel
 
-  subscribeAtom.scope = anAtom?.scope
-  subscribeAtom.debugLabel = anAtom?.debugLabel
-
-
-  return subscribeAtom as AtomType
+  return subscribeAtom
 }
