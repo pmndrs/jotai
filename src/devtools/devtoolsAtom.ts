@@ -1,4 +1,4 @@
-import { atom, PrimitiveAtom } from 'jotai'
+import { PrimitiveAtom, atom } from 'jotai'
 
 type Config = {
   instanceID?: number
