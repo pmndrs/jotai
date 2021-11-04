@@ -75,7 +75,7 @@ export function useAtomDevtools<Value>(
       return
     }
     console.warn(
-      '[Warn] you cannot do write operations (Time-travelling, etc) in read-only atoms ',
+      '[Warn] you cannot do write operations (Time-travelling, etc) in read-only atoms\n',
       anAtom
     )
   }
