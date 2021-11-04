@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
+import { atom, Setter, useAtom } from 'jotai'
 import type { Atom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
@@ -1037,4 +1037,84 @@ it('update unmounted async atom with intermediate atom', async () => {
   fireEvent.click(getByText('toggle enabled'))
   await findByText('loading')
   await findByText('derived: 4')
+})
+
+it('#813', async () => {
+  const INIT = Symbol()
+
+  interface ServerResponse {
+    items: {
+      uuid: string
+      name: string
+    }[]
+  }
+
+  const responseBaseAtom = atom<ServerResponse | null>(null)
+
+  function asyncFetch(set: Setter) {
+    // imagine a network request here
+    setTimeout(() => {
+      set(responseBaseAtom, {
+        items: [
+          { name: 'alpha', uuid: 'a' },
+          { name: 'beta', uuid: 'b' },
+        ],
+      })
+    }, 100)
+  }
+
+  const responseAtom = atom(
+    (get) => get(responseBaseAtom),
+    (_, set, arg) => {
+      if (arg === INIT) {
+        asyncFetch(set)
+      } else {
+        set(responseBaseAtom as any, arg)
+      }
+    }
+  )
+  responseAtom.onMount = (dispatch) => {
+    dispatch(INIT)
+  }
+
+  const mapAtom = atom((get) => {
+    const response = get(responseAtom)
+    if (!response) {
+      return null
+    }
+    return new Map(response.items.map((x) => [x.uuid, x]))
+  })
+
+  const itemA = atom((get) => get(mapAtom)?.get('a'))
+  const itemB = atom((get) => get(mapAtom)?.get('b'))
+
+  // FYI: For some reason if you grab this data direct from responseAtom (insstead of mapAtom) everything works.
+  // const itemA = atom(get => get(responseAtom)?.items.find(x => x.uuid === 'a'));
+  // const itemB = atom(get => get(responseAtom)?.items.find(x => x.uuid === 'b'));
+
+  const itemAName = atom((get) => get(itemA)?.name)
+  const itemBName = atom((get) => get(itemB)?.name)
+
+  function App() {
+    const [aName] = useAtom(itemAName)
+    const [bName] = useAtom(itemBName)
+
+    return (
+      <>
+        <div>aName: {aName}</div>
+        <div>bName: {bName}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <App />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('aName: alpha')
+  await findByText('bName: beta')
 })
