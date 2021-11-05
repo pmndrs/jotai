@@ -31,11 +31,6 @@ type Extension = {
   connect: (options?: Config) => ConnectionResult
 }
 
-const isWritable = <Value, Update, Result extends void | Promise<void>>(
-  atom: Atom<Value> | WritableAtom<Value, Update, Result>
-): atom is WritableAtom<Value, Update, Result> =>
-  !!(atom as WritableAtom<Value, Update, Result>).write
-
 export function useAtomDevtools<Value>(
   anAtom: WritableAtom<Value, Value>,
   name?: string,
@@ -69,17 +64,6 @@ export function useAtomDevtools<Value>(
 
   const [value, setValue] = useAtom(anAtom, scope)
 
-  const setAnyAtom = (value: Value) => {
-    if (isWritable(anAtom)) {
-      ;(setValue as SetAtom<Value, void>)(value)
-      return
-    }
-    console.warn(
-      '[Warn] you cannot do write operations (Time-travelling, etc) in read-only atoms\n',
-      anAtom
-    )
-  }
-
   const lastValue = useRef(value)
   const isTimeTraveling = useRef(false)
   const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
@@ -88,11 +72,21 @@ export function useAtomDevtools<Value>(
 
   useEffect(() => {
     if (extension) {
+      const setValueIfWritable = (value: Value) => {
+        if (typeof setValue === 'function') {
+          ;(setValue as SetAtom<Value, void>)(value)
+          return
+        }
+        console.warn(
+          '[Warn] you cannot do write operations (Time-travelling, etc) in read-only atoms\n',
+          anAtom
+        )
+      }
       devtools.current = extension.connect({ name: atomName })
       const unsubscribe = devtools.current.subscribe((message: Message) => {
         if (message.type === 'ACTION' && message.payload) {
           try {
-            setAnyAtom(JSON.parse(message.payload))
+            setValueIfWritable(JSON.parse(message.payload))
           } catch (e) {
             console.error(
               'please dispatch a serializable value that JSON.parse() support\n',
@@ -106,7 +100,7 @@ export function useAtomDevtools<Value>(
           ) {
             isTimeTraveling.current = true
 
-            setAnyAtom(JSON.parse(message.state))
+            setValueIfWritable(JSON.parse(message.state))
           }
         } else if (
           message.type === 'DISPATCH' &&
@@ -125,7 +119,7 @@ export function useAtomDevtools<Value>(
               if (index === 0) {
                 devtools.current?.init(state)
               } else {
-                setAnyAtom(state)
+                setValueIfWritable(state)
               }
             }
           )
