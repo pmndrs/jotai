@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
-import type { Atom, Scope, SetAtom, WritableAtom } from '../core/atom'
+import type { Atom, WritableAtom } from 'jotai'
+import type { Scope, SetAtom } from '../core/atom'
 
 type Config = {
   instanceID?: number
