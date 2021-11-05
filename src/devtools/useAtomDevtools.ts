@@ -31,8 +31,8 @@ type Extension = {
   connect: (options?: Config) => ConnectionResult
 }
 
-export function useAtomDevtools<Value>(
-  anAtom: WritableAtom<Value, Value>,
+export function useAtomDevtools<Value, Result extends void | Promise<void>>(
+  anAtom: WritableAtom<Value, Value, Result>,
   name?: string,
   scope?: Scope
 ): void
@@ -43,8 +43,8 @@ export function useAtomDevtools<Value>(
   scope?: Scope
 ): void
 
-export function useAtomDevtools<Value>(
-  anAtom: WritableAtom<Value, Value> | Atom<Value>,
+export function useAtomDevtools<Value, Result extends void | Promise<void>>(
+  anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
   name?: string,
   scope?: Scope
 ): void {
