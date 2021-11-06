@@ -120,14 +120,16 @@ it('state with a promise', async () => {
 
   const { findByText, getByText } = render(
     <Provider>
-      <Suspense fallback="loading...">
+      <Suspense fallback="loading">
         <Status />
       </Suspense>
     </Provider>
   )
 
+  await findByText('loading')
   await findByText('status: done')
   fireEvent.click(getByText('button'))
+  await findByText('loading')
   await findByText('status: modified')
 })
 
