@@ -49,9 +49,7 @@ it('does not show async stale result', async () => {
   const { getByText, findByText } = render(
     <>
       <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
+        <Counter />
         <Suspense fallback="loading">
           <DelayedCounter />
         </Suspense>
