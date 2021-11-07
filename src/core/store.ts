@@ -218,6 +218,7 @@ export const createStore = (
     const interruptablePromise = createInterruptablePromise(promise)
     atomState.p = interruptablePromise // set read promise
     atomState.c = interruptablePromise[INTERRUPT_PROMISE]
+    delete atomState.i // clear invalidated revision
     setAtomState(atom, atomState)
   }
 
@@ -243,8 +244,6 @@ export const createStore = (
               const aState = getAtomState(a)
               if (
                 aState &&
-                !('e' in aState) && // no read error
-                !aState.p && // no read promise
                 aState.r === aState.i // revision is invalidated
               ) {
                 readAtomState(a, true)
