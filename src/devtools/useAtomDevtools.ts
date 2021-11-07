@@ -32,18 +32,6 @@ type Extension = {
 }
 
 export function useAtomDevtools<Value, Result extends void | Promise<void>>(
-  anAtom: WritableAtom<Value, Value, Result>,
-  name?: string,
-  scope?: Scope
-): void
-
-export function useAtomDevtools<Value>(
-  anAtom: Atom<Value>,
-  name?: string,
-  scope?: Scope
-): void
-
-export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
   name?: string,
   scope?: Scope
