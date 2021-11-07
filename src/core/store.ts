@@ -23,7 +23,7 @@ type InterruptablePromise = Promise<void> & {
 const isInterruptablePromise = (
   promise: Promise<void>
 ): promise is InterruptablePromise =>
-  !!(promise as InterruptablePromise)[INTERRUPT_PROMISE]
+  !!(promise as InterruptablePromise)[IS_EQUAL_PROMISE]
 
 const createInterruptablePromise = (
   promise: Promise<void>
@@ -34,7 +34,7 @@ const createInterruptablePromise = (
       delete interruptablePromise[INTERRUPT_PROMISE]
       resolve()
     }
-    promise.then(resolve, reject)
+    promise.then(interrupt, reject)
   }) as InterruptablePromise
   interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>): boolean =>
     interruptablePromise === p ||
