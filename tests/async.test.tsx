@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, Setter, useAtom } from 'jotai'
+import { Setter, atom, useAtom } from 'jotai'
 import type { Atom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
@@ -1042,24 +1042,12 @@ it('update unmounted async atom with intermediate atom', async () => {
 it('#813', async () => {
   const INIT = Symbol()
 
-  interface ServerResponse {
-    items: {
-      uuid: string
-      name: string
-    }[]
-  }
-
-  const responseBaseAtom = atom<ServerResponse | null>(null)
+  const responseBaseAtom = atom<{ name: string }[] | null>(null)
 
   function asyncFetch(set: Setter) {
     // imagine a network request here
     setTimeout(() => {
-      set(responseBaseAtom, {
-        items: [
-          { name: 'alpha', uuid: 'a' },
-          { name: 'beta', uuid: 'b' },
-        ],
-      })
+      set(responseBaseAtom, [{ name: 'alpha' }, { name: 'beta' }])
     }, 100)
   }
 
@@ -1082,11 +1070,12 @@ it('#813', async () => {
     if (!response) {
       return null
     }
-    return new Map(response.items.map((x) => [x.uuid, x]))
+    // `return response` gives a different output
+    return [...response]
   })
 
-  const itemA = atom((get) => get(mapAtom)?.get('a'))
-  const itemB = atom((get) => get(mapAtom)?.get('b'))
+  const itemA = atom((get) => get(mapAtom)?.[0])
+  const itemB = atom((get) => get(mapAtom)?.[1])
 
   // FYI: For some reason if you grab this data direct from responseAtom (insstead of mapAtom) everything works.
   // const itemA = atom(get => get(responseAtom)?.items.find(x => x.uuid === 'a'));
