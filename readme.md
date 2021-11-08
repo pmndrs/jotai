@@ -168,7 +168,7 @@ yarn add jotai react
 
 ## Learn Jotai
 
-[![egghead course by Daishi](https://res.cloudinary.com/dg3gyk0gu/image/upload/v1636388460/egghead-next-pages/jotai/github--jotai-atoms.png)](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0?utm_source=github&utm_medium=cta&utm_term=jotai)
+[![free egghead Jotai introduction course by Daishi](https://res.cloudinary.com/dg3gyk0gu/image/upload/v1636388460/egghead-next-pages/jotai/github--jotai-atoms.png)](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0?utm_source=github&utm_medium=cta&utm_term=jotai)
 
 ## More documents
 
