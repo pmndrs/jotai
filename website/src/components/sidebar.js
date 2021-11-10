@@ -34,6 +34,9 @@ export const Sidebar = ({ showDocs = false }) => {
             external>
             Course
           </Button>
+          <Button icon="discord" to="https://discord.gg/poimandres" external>
+            Community
+          </Button>
           <Button icon="twitter" to="https://twitter.com/dai_shi" external>
             Updates
           </Button>

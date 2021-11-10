@@ -1,4 +1,5 @@
 import React from 'react'
+import { StaticImage } from 'gatsby-plugin-image'
 
 import { Head, Layout, Intro, InlineCode } from '../components'
 import { CoreDemo, UtilitiesDemo, IntegrationsDemo } from '../demos'
@@ -59,6 +60,31 @@ export default function HomePage() {
               store.
             </p>
             <IntegrationsDemo />
+          </section>
+          <section>
+            <h2>Learn more</h2>
+            <p>
+              Check out the free Egghead course by Daishi, the creator of Jotai.
+            </p>
+            <a
+              href="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
+              target="_blank"
+              rel="noopener"
+              className="block mt-4">
+              <StaticImage
+                src="../images/egghead.png"
+                className="block shadow-lg rounded-md sm:rounded-lg"
+                imgStyle={{ objectFit: 'contain' }}
+                layout="fullWidth"
+                placeholder="blurred"
+                formats={['auto']}
+                sizes="50vw"
+                outputPixelDensities={[1]}
+                breakpoints={[480, 640, 768, 1080]}
+                alt="Jotai course"
+                title="Jotai course"
+              />
+            </a>
           </section>
         </div>
       </Layout>
