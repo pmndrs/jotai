@@ -68,7 +68,7 @@ export const Navigation = ({ isFooter = false, ...rest }) => {
         external>
         Course
       </Button>
-      <Button icon="discord" to="https://discord.gg/5sxEkcBhRw" external>
+      <Button icon="discord" to="https://discord.gg/poimandres" external>
         Community
       </Button>
       <Button to="https://twitter.com/dai_shi" icon="twitter" external>
