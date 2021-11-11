@@ -1,5 +1,3 @@
-import React from 'react'
-
 export const Icon = ({ icon, ...rest }) => {
   switch (icon) {
     case 'book':

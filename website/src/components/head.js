@@ -1,5 +1,4 @@
-import React from 'react'
-import { useStaticQuery, graphql } from 'gatsby'
+import { graphql, useStaticQuery } from 'gatsby'
 import { Helmet } from 'react-helmet'
 
 export const Head = ({ lang = 'en', title, description, uri }) => {

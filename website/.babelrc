@@ -3,6 +3,7 @@
     [
       "babel-preset-gatsby",
       {
+        "reactRuntime": "automatic",
         "targets": {
           "browsers": [
             ">0.25%",
@@ -13,6 +14,7 @@
           ]
         }
       }
-    ]
+    ],
+    "jotai/babel/preset"
   ]
 }

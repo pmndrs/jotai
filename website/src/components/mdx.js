@@ -1,5 +1,3 @@
-import React from 'react'
-
 export const H2 = ({ children }) => {
   const anchor = getAnchor(children)
   const link = `#${anchor}`

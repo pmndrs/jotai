@@ -1,6 +1,4 @@
-import React from 'react'
-
-import { Jotai, Button, Docs, Credits } from '../components'
+import { Button, Credits, Docs, Jotai } from '../components'
 
 export const Sidebar = ({ showDocs = false }) => {
   return (
