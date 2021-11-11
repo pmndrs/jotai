@@ -4,7 +4,29 @@ description: How to use Jotai with Next.js
 nav: 3.4
 ---
 
+## Hydration
+
 Jotai has support for hydration of atoms with `useHydrateAtoms`. The documentation for the hook can be seen [here](../api/utils.mdx#use-hydrate-atoms).
+
+## Sync with router
+
+It's possible to sync Jotai with the router. You can achieve this with `atomWithHash`:
+
+```js
+const pageAtom = atomWithHash("page", 1, {
+  replaceState: true,
+  subscribe: (callback) => {
+    Router.events.on('routeChangeComplete', callback)
+    window.addEventListener('hashchange', callback)
+    return () => {
+      Router.events.off('routeChangeComplete', callback)
+      window.removeEventListener('hashchange', callback)
+    }
+  }
+})
+```
+
+This way you have full control over what [router event](https://nextjs.org/docs/api-reference/next/router#routerevents) you want to subscribe to.
 
 ## You can't return promises in server side rendering
 
