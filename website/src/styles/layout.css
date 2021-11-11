@@ -4,6 +4,7 @@
 
 body {
   @apply overflow-y-scroll bg-black leading-none;
+  overscroll-behavior: none;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
 }

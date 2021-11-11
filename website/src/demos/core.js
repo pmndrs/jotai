@@ -1,6 +1,4 @@
-import React from 'react'
 import { useAtom } from 'jotai'
-
 import { textAtom, uppercaseAtom } from '../atoms'
 import { Code } from '../components'
 

@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 module.exports = {
   siteMetadata: {
     title: `Jotai, primitive and flexible state management for React`,
@@ -57,4 +59,8 @@ module.exports = {
     },
     `gatsby-plugin-remove-trailing-slashes`,
   ],
+  jsxRuntime: 'automatic',
+  flags: {
+    FAST_DEV: true,
+  },
 }

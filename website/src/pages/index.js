@@ -1,8 +1,6 @@
-import React from 'react'
 import { StaticImage } from 'gatsby-plugin-image'
-
-import { Head, Layout, Intro, InlineCode } from '../components'
-import { CoreDemo, UtilitiesDemo, IntegrationsDemo } from '../demos'
+import { Head, InlineCode, Intro, Layout } from '../components'
+import { CoreDemo, IntegrationsDemo, UtilitiesDemo } from '../demos'
 
 export default function HomePage() {
   return (

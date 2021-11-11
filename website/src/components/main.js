@@ -1,5 +1,3 @@
-import React from 'react'
-
 export const Main = ({ children, ...rest }) => {
   return (
     <main

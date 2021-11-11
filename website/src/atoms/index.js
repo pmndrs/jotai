@@ -1,6 +1,6 @@
 import { atom } from 'jotai'
-import { atomWithStorage } from 'jotai/utils'
 import { atomWithImmer } from 'jotai/immer'
+import { atomWithStorage } from 'jotai/utils'
 
 // Website state
 export const menuAtom = atom(false)

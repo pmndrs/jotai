@@ -1,9 +1,7 @@
-import React, { useMemo } from 'react'
-import cx from 'classnames'
-import { useStaticQuery, graphql, Link } from 'gatsby'
+import { useMemo } from 'react'
+import { Link, graphql, useStaticQuery } from 'gatsby'
 import { useAtomValue, useUpdateAtom } from 'jotai/utils'
-
-import { menuAtom, docsAtom } from '../atoms'
+import { menuAtom } from '../atoms'
 import { Button } from '../components'
 
 export const Navigation = ({ isFooter = false, ...rest }) => {
@@ -13,7 +11,7 @@ export const Navigation = ({ isFooter = false, ...rest }) => {
   const setIsMenuOpen = useUpdateAtom(menuAtom)
 
   const allDocs = data.allMdx.nodes.sort(sortDocs)
-  const navLinks = useMemo(() => parseDocs(allDocs), [allDocs, parseDocs])
+  const navLinks = useMemo(() => parseDocs(allDocs), [allDocs])
 
   return (
     <nav {...rest}>
