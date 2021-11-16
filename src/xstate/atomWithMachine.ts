@@ -59,11 +59,11 @@ export function atomWithMachine<
         ...interpreterOptions
       } = options || {}
       const machineConfig = {
-        guards,
-        actions,
-        activities,
-        services,
-        delays,
+        ...(guards && { guards }),
+        ...(actions && { actions }),
+        ...(activities && { activities }),
+        ...(services && { services }),
+        ...(delays && { delays }),
       }
       const machineWithConfig = machine.withConfig(
         machineConfig,

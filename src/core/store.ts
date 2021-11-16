@@ -17,7 +17,7 @@ const IS_EQUAL_PROMISE = Symbol()
 const INTERRUPT_PROMISE = Symbol()
 type InterruptablePromise = Promise<void> & {
   [IS_EQUAL_PROMISE]: (p: Promise<void>) => boolean
-  [INTERRUPT_PROMISE]?: () => void // defined if interruptable
+  [INTERRUPT_PROMISE]: (() => void) | undefined // defined if interruptable
 }
 
 const isInterruptablePromise = (
@@ -31,7 +31,7 @@ const createInterruptablePromise = (
   let interrupt: (() => void) | undefined
   const interruptablePromise = new Promise<void>((resolve, reject) => {
     interrupt = () => {
-      delete interruptablePromise[INTERRUPT_PROMISE]
+      interruptablePromise[INTERRUPT_PROMISE] = undefined
       resolve()
     }
     promise.then(interrupt, reject)
@@ -52,7 +52,7 @@ type ReadDependencies = Map<AnyAtom, Revision>
 export type AtomState<Value = unknown> = {
   e?: unknown // read error
   p?: InterruptablePromise // read promise
-  c?: () => void // cancel read promise
+  c?: (() => void) | undefined // cancel read promise
   v?: ResolveType<Value>
   r: Revision
   i?: InvalidatedRevision

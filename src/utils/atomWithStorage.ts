@@ -170,7 +170,7 @@ export function atomWithHash<Value>(
         location.hash = searchParams.toString()
       }
     },
-    delayInit: options?.delayInit,
+    ...(options?.delayInit && { delayInit: true }),
     subscribe: (key, setValue) => {
       const callback = () => {
         const searchParams = new URLSearchParams(location.hash.slice(1))
