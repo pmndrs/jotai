@@ -1,0 +1,30 @@
+diff --git a/node_modules/xstate/lib/types.d.ts b/node_modules/xstate/lib/types.d.ts
+index 38e6a3a..8c2ecb1 100644
+--- a/node_modules/xstate/lib/types.d.ts
++++ b/node_modules/xstate/lib/types.d.ts
+@@ -447,7 +447,6 @@ export interface AtomicStateNodeConfig<TContext, TEvent extends EventObject> ext
+     initial?: undefined;
+     parallel?: false | undefined;
+     states?: undefined;
+-    onDone?: undefined;
+ }
+ export interface HistoryStateNodeConfig<TContext, TEvent extends EventObject> extends AtomicStateNodeConfig<TContext, TEvent> {
+     history: 'shallow' | 'deep' | true;
+@@ -627,7 +626,7 @@ export interface NullEvent {
+ export interface ActivityActionObject<TContext, TEvent extends EventObject> extends ActionObject<TContext, TEvent> {
+     type: ActionTypes.Start | ActionTypes.Stop;
+     activity: ActivityDefinition<TContext, TEvent> | undefined;
+-    exec: ActionFunction<TContext, TEvent> | undefined;
++    exec: ActionFunction<TContext, TEvent>;
+ }
+ export interface InvokeActionObject<TContext, TEvent extends EventObject> extends ActivityActionObject<TContext, TEvent> {
+     activity: InvokeDefinition<TContext, TEvent>;
+@@ -709,7 +708,7 @@ export interface ChooseAction<TContext, TEvent extends EventObject> extends Acti
+     conds: Array<ChooseCondition<TContext, TEvent>>;
+ }
+ export interface TransitionDefinition<TContext, TEvent extends EventObject> extends TransitionConfig<TContext, TEvent> {
+-    target: Array<StateNode<TContext, any, TEvent>> | undefined;
++    target: Array<StateNode<TContext, any, TEvent>>;
+     source: StateNode<TContext, any, TEvent>;
+     actions: Array<ActionObject<TContext, TEvent>>;
+     cond?: Guard<TContext, TEvent>;
