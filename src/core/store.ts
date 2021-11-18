@@ -64,7 +64,7 @@ type Dependents = Set<AnyAtom>
 type Mounted = {
   l: Listeners
   d: Dependents
-  u: OnUnmount | void
+  u?: OnUnmount
 }
 
 // for debugging purpose only
@@ -474,8 +474,17 @@ export const createStore = (
     atom: Atom<Value>,
     initialDependent?: AnyAtom
   ): Mounted => {
+    // mount self
+    const mounted: Mounted = {
+      d: new Set(initialDependent && [initialDependent]),
+      l: new Set(),
+    }
+    mountedMap.set(atom, mounted)
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+      mountedAtoms.add(atom)
+    }
+    // mount read dependencies before onMount
     const atomState = readAtomState(atom)
-    // mount read dependencies beforehand
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
         const aMounted = mountedMap.get(a)
@@ -486,19 +495,13 @@ export const createStore = (
         }
       }
     })
-    // mount self
-    const mounted: Mounted = {
-      d: new Set(initialDependent && [initialDependent]),
-      l: new Set(),
-      u: undefined,
-    }
-    mountedMap.set(atom, mounted)
-    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
-      mountedAtoms.add(atom)
-    }
+    // onMount
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const setAtom = (update: unknown) => writeAtom(atom, update)
-      mounted.u = atom.onMount(setAtom)
+      const onUnmount = atom.onMount(setAtom)
+      if (onUnmount) {
+        mounted.u = onUnmount
+      }
     }
     return mounted
   }
@@ -549,7 +552,7 @@ export const createStore = (
       }
       const mounted = mountedMap.get(a)
       if (mounted) {
-        mounted.d.delete(atom)
+        mounted.d.delete(atom) // delete from dependents
         if (canUnmountAtom(a, mounted)) {
           unmountAtom(a)
         }
@@ -558,8 +561,7 @@ export const createStore = (
     dependencies.forEach((a) => {
       const mounted = mountedMap.get(a)
       if (mounted) {
-        const dependents = mounted.d
-        dependents.add(atom)
+        mounted.d.add(atom) // add to dependents
       } else {
         mountAtom(a, atom)
       }
