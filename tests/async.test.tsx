@@ -1042,32 +1042,21 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
 
   const responseAtom = atom(
     (get) => get(responseBaseAtom),
-    (_get, set, arg: 'INIT' | { name: string }[]) => {
-      if (arg === 'INIT') {
-        // imagine a network request here
-        setTimeout(() => {
-          set(responseBaseAtom, [{ name: 'alpha' }, { name: 'beta' }])
-        }, 100)
-      } else {
-        set(responseBaseAtom, arg)
-      }
+    (_get, set) => {
+      // imagine a network request here
+      setTimeout(() => {
+        set(responseBaseAtom, [{ name: 'alpha' }, { name: 'beta' }])
+      }, 100)
     }
   )
-  responseAtom.onMount = (dispatch) => {
-    dispatch('INIT')
+  responseAtom.onMount = (init) => {
+    init()
   }
 
-  const mapAtom = atom((get) => {
-    const response = get(responseAtom)
-    if (!response) {
-      return null
-    }
-    return response
-  })
+  const mapAtom = atom((get) => get(responseAtom))
 
   const itemA = atom((get) => get(mapAtom)?.[0])
   const itemB = atom((get) => get(mapAtom)?.[1])
-
   // FYI: For some reason if you grab this data direct from responseAtom (insstead of mapAtom) everything works.
   // const itemA = atom(get => get(responseAtom)?.[0]);
   // const itemB = atom(get => get(responseAtom)?.[1]);
@@ -1078,7 +1067,6 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
   const App = () => {
     const [aName] = useAtom(itemAName)
     const [bName] = useAtom(itemBName)
-
     return (
       <>
         <div>aName: {aName}</div>
