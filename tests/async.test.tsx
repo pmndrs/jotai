@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Setter, atom, useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 import type { Atom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
@@ -1039,30 +1039,24 @@ it('update unmounted async atom with intermediate atom', async () => {
   await findByText('derived: 4')
 })
 
-it('#813', async () => {
-  const INIT = Symbol()
-
+it('multiple derived atoms with dependency chaining and async write (#813)', async () => {
   const responseBaseAtom = atom<{ name: string }[] | null>(null)
-
-  function asyncFetch(set: Setter) {
-    // imagine a network request here
-    setTimeout(() => {
-      set(responseBaseAtom, [{ name: 'alpha' }, { name: 'beta' }])
-    }, 100)
-  }
 
   const responseAtom = atom(
     (get) => get(responseBaseAtom),
-    (_, set, arg) => {
-      if (arg === INIT) {
-        asyncFetch(set)
+    (_get, set, arg: 'INIT' | { name: string }[]) => {
+      if (arg === 'INIT') {
+        // imagine a network request here
+        setTimeout(() => {
+          set(responseBaseAtom, [{ name: 'alpha' }, { name: 'beta' }])
+        }, 100)
       } else {
-        set(responseBaseAtom as any, arg)
+        set(responseBaseAtom, arg)
       }
     }
   )
   responseAtom.onMount = (dispatch) => {
-    dispatch(INIT)
+    dispatch('INIT')
   }
 
   const mapAtom = atom((get) => {
@@ -1070,21 +1064,20 @@ it('#813', async () => {
     if (!response) {
       return null
     }
-    // `return response` gives a different output
-    return [...response]
+    return response
   })
 
   const itemA = atom((get) => get(mapAtom)?.[0])
   const itemB = atom((get) => get(mapAtom)?.[1])
 
   // FYI: For some reason if you grab this data direct from responseAtom (insstead of mapAtom) everything works.
-  // const itemA = atom(get => get(responseAtom)?.items.find(x => x.uuid === 'a'));
-  // const itemB = atom(get => get(responseAtom)?.items.find(x => x.uuid === 'b'));
+  // const itemA = atom(get => get(responseAtom)?.[0]);
+  // const itemB = atom(get => get(responseAtom)?.[1]);
 
   const itemAName = atom((get) => get(itemA)?.name)
   const itemBName = atom((get) => get(itemB)?.name)
 
-  function App() {
+  const App = () => {
     const [aName] = useAtom(itemAName)
     const [bName] = useAtom(itemBName)
 
@@ -1096,7 +1089,7 @@ it('#813', async () => {
     )
   }
 
-  const { findByText } = render(
+  const { getByText } = render(
     <StrictMode>
       <Provider>
         <App />
@@ -1104,6 +1097,8 @@ it('#813', async () => {
     </StrictMode>
   )
 
-  await findByText('aName: alpha')
-  await findByText('bName: beta')
+  await waitFor(() => {
+    getByText('aName: alpha')
+    getByText('bName: beta')
+  })
 })
