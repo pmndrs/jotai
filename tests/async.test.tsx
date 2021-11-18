@@ -1043,7 +1043,6 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
   const responseAtom = atom(
     (get) => get(responseBaseAtom),
     (_get, set) => {
-      // imagine a network request here
       setTimeout(() => {
         set(responseBaseAtom, [{ name: 'alpha' }, { name: 'beta' }])
       }, 100)
@@ -1054,13 +1053,8 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
   }
 
   const mapAtom = atom((get) => get(responseAtom))
-
   const itemA = atom((get) => get(mapAtom)?.[0])
   const itemB = atom((get) => get(mapAtom)?.[1])
-  // FYI: For some reason if you grab this data direct from responseAtom (insstead of mapAtom) everything works.
-  // const itemA = atom(get => get(responseAtom)?.[0]);
-  // const itemB = atom(get => get(responseAtom)?.[1]);
-
   const itemAName = atom((get) => get(itemA)?.name)
   const itemBName = atom((get) => get(itemB)?.name)
 
