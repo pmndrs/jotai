@@ -23,7 +23,7 @@ type InterruptablePromise = Promise<void> & {
 const isInterruptablePromise = (
   promise: Promise<void>
 ): promise is InterruptablePromise =>
-  !!(promise as InterruptablePromise)[INTERRUPT_PROMISE]
+  !!(promise as InterruptablePromise)[IS_EQUAL_PROMISE]
 
 const createInterruptablePromise = (
   promise: Promise<void>
@@ -34,7 +34,7 @@ const createInterruptablePromise = (
       delete interruptablePromise[INTERRUPT_PROMISE]
       resolve()
     }
-    promise.then(resolve, reject)
+    promise.then(interrupt, reject)
   }) as InterruptablePromise
   interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>): boolean =>
     interruptablePromise === p ||
@@ -218,6 +218,7 @@ export const createStore = (
     const interruptablePromise = createInterruptablePromise(promise)
     atomState.p = interruptablePromise // set read promise
     atomState.c = interruptablePromise[INTERRUPT_PROMISE]
+    delete atomState.i // clear invalidated revision
     setAtomState(atom, atomState)
   }
 
@@ -243,8 +244,6 @@ export const createStore = (
               const aState = getAtomState(a)
               if (
                 aState &&
-                !('e' in aState) && // no read error
-                !aState.p && // no read promise
                 aState.r === aState.i // revision is invalidated
               ) {
                 readAtomState(a, true)

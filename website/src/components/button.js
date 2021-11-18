@@ -1,7 +1,5 @@
-import React from 'react'
-import { Link } from 'gatsby'
 import cx from 'classnames'
-
+import { Link } from 'gatsby'
 import { Icon } from '../components'
 
 export const Button = ({

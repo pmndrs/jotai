@@ -1,8 +1,10 @@
+require('dotenv').config()
+
 module.exports = {
   siteMetadata: {
     title: `Jotai, primitive and flexible state management for React`,
     description: `Jotai takes a bottom-up approach to React state management with an atomic model inspired by Recoil. One can build state by combining atoms and renders are optimized based on atom dependency. This solves the extra re-render issue of React context and avoids requiring the memoization technique.`,
-    siteUrl: `https://jotai.pmnd.rs`,
+    siteUrl: `https://jotai.org`,
     shortName: `Jotai`,
   },
   plugins: [
@@ -57,4 +59,8 @@ module.exports = {
     },
     `gatsby-plugin-remove-trailing-slashes`,
   ],
+  jsxRuntime: 'automatic',
+  flags: {
+    FAST_DEV: true,
+  },
 }

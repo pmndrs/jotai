@@ -1,6 +1,4 @@
-import React from 'react'
 import { StaticImage } from 'gatsby-plugin-image'
-
 import { Jotai } from '../components'
 
 export const Intro = () => {

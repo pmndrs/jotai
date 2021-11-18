@@ -1,8 +1,6 @@
-import React from 'react'
 import cx from 'classnames'
-import { useStaticQuery, graphql, Link } from 'gatsby'
+import { Link, graphql, useStaticQuery } from 'gatsby'
 import { useUpdateAtom } from 'jotai/utils'
-
 import { menuAtom } from '../atoms'
 
 export const Docs = ({ className = '', ...rest }) => {
