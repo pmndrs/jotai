@@ -896,3 +896,37 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
   await findByText('loading')
   await findByText('count: 3')
 })
+
+it('sync re-renders with useState re-renders', async () => {
+  const atom0 = atom('atom0')
+  const atom1 = atom('atom1')
+  const atom2 = atom('atom2')
+  const atoms = [atom0, atom1, atom2]
+
+  const App = () => {
+    const [currentAtomIndex, setCurrentAtomIndex] = useState(0)
+    const rotateAtoms = () => {
+      setCurrentAtomIndex((prev) => (prev + 1) % atoms.length)
+    }
+    const [atomValue] = useAtom(atoms[currentAtomIndex] as typeof atoms[number])
+
+    return (
+      <>
+        <span>commits: {useCommitCount()}</span>
+        <h1>{atomValue}</h1>
+        <button onClick={rotateAtoms}>rotate</button>
+      </>
+    )
+  }
+  const { findByText, getByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  await findByText('commits: 1')
+  fireEvent.click(getByText('rotate'))
+  await findByText('commits: 2')
+  fireEvent.click(getByText('rotate'))
+  await findByText('commits: 3')
+})
