@@ -1,5 +1,5 @@
 diff --git a/node_modules/xstate/lib/types.d.ts b/node_modules/xstate/lib/types.d.ts
-index 38e6a3a..0f57a89 100644
+index 38e6a3a..8c61c55 100644
 --- a/node_modules/xstate/lib/types.d.ts
 +++ b/node_modules/xstate/lib/types.d.ts
 @@ -34,7 +34,7 @@ export interface ActionObject<TContext, TEvent extends EventObject> extends Base
@@ -11,6 +11,15 @@ index 38e6a3a..0f57a89 100644
  }
  export declare type DefaultContext = Record<string, any> | undefined;
  export declare type EventData = Record<string, any> & {
+@@ -87,7 +87,7 @@ declare type KeysWithStates<TStates extends Record<string, StateSchema> | undefi
+     } ? K : never;
+ }[keyof TStates] : never;
+ export declare type ExtractStateValue<TSchema extends Required<Pick<StateSchema<any>, 'states'>>> = keyof TSchema['states'] | (KeysWithStates<TSchema['states']> extends never ? never : {
+-    [K in KeysWithStates<TSchema['states']>]?: ExtractStateValue<TSchema['states'][K]>;
++    [K in KeysWithStates<TSchema['states']>]?: ExtractStateValue<any /* FIXME TSchema['states'][K] */>;
+ });
+ export interface HistoryValue {
+     states: Record<string, HistoryValue | undefined>;
 @@ -114,7 +114,7 @@ export interface TransitionConfig<TContext, TEvent extends EventObject> {
      actions?: Actions<TContext, TEvent>;
      in?: StateValue;
