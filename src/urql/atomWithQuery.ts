@@ -94,7 +94,7 @@ export function atomWithQuery<Data, Variables extends object>(
     }
     client
       .query(args.query, args.variables, {
-        requestPolicy: args.requestPolicy,
+        ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
         ...args.context,
         ...opts,
       })
@@ -107,7 +107,7 @@ export function atomWithQuery<Data, Variables extends object>(
       setResult = update
       const subscription = pipe(
         client.query(args.query, args.variables, {
-          requestPolicy: args.requestPolicy,
+          ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
           ...args.context,
         }),
         subscribe(listener)
