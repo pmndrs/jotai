@@ -1036,3 +1036,49 @@ it('update unmounted async atom with intermediate atom', async () => {
   await findByText('loading')
   await findByText('derived: 4')
 })
+
+it('multiple derived atoms with dependency chaining and async write (#813)', async () => {
+  const responseBaseAtom = atom<{ name: string }[] | null>(null)
+
+  const responseAtom = atom(
+    (get) => get(responseBaseAtom),
+    (_get, set) => {
+      setTimeout(() => {
+        set(responseBaseAtom, [{ name: 'alpha' }, { name: 'beta' }])
+      }, 100)
+    }
+  )
+  responseAtom.onMount = (init) => {
+    init()
+  }
+
+  const mapAtom = atom((get) => get(responseAtom))
+  const itemA = atom((get) => get(mapAtom)?.[0])
+  const itemB = atom((get) => get(mapAtom)?.[1])
+  const itemAName = atom((get) => get(itemA)?.name)
+  const itemBName = atom((get) => get(itemB)?.name)
+
+  const App = () => {
+    const [aName] = useAtom(itemAName)
+    const [bName] = useAtom(itemBName)
+    return (
+      <>
+        <div>aName: {aName}</div>
+        <div>bName: {bName}</div>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <StrictMode>
+      <Provider>
+        <App />
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('aName: alpha')
+    getByText('bName: beta')
+  })
+})
