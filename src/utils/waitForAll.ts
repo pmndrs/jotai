@@ -20,7 +20,7 @@ export function waitForAll<Values extends readonly unknown[]>(atoms: {
 
 export function waitForAll<
   Values extends Record<string, unknown> | readonly unknown[]
->(atoms: { [K in keyof Values]: Atom<Values[K]> }) {
+>(atoms: any /* FIXME { [K in keyof Values]: Atom<Values[K]> } */) {
   const createAtom = () => {
     const unwrappedAtoms = unwrapAtoms(atoms)
     const derivedAtom = atom((get) => {
