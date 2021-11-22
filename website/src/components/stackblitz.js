@@ -9,7 +9,7 @@ export const Stackblitz = ({ id, file }) => {
           className="w-full h-[400px]"
           src={`https://stackblitz.com/edit/${id}?embed=1${
             file ? `&file=${file}` : ''
-          }`}
+          }&terminal=dev`}
           allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
           sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
         />
