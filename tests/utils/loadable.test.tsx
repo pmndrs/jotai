@@ -145,5 +145,8 @@ const LoadableComponent = ({ asyncAtom }: LoadableComponentProps) => {
     return <>{String(value.error)}</>
   }
 
-  return <>Data: {value.data}</>
+  // this is to ensure correct typing
+  const data: number | string = value.data
+
+  return <>Data: {data}</>
 }
