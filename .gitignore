@@ -6,6 +6,10 @@ node_modules
 # testing
 coverage
 
+# development
+.devcontainer
+.vscode
+
 # production
 dist
 build
@@ -25,3 +29,4 @@ yarn-error.log*
 # misc
 .DS_Store
 .idea
+

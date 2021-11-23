@@ -1,7 +1,5 @@
-import React from 'react'
 import cx from 'classnames'
 import { Link } from 'gatsby'
-
 import { Logo } from '../components'
 
 export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {

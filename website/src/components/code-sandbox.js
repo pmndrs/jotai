@@ -1,4 +1,3 @@
-import React from 'react'
 import LazyLoad from 'react-lazyload'
 
 export const CodeSandbox = ({ id, tests }) => {
