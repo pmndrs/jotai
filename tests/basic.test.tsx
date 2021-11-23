@@ -788,18 +788,10 @@ it('changes atom from parent (#273, #275)', async () => {
   await findByText('commits: 1, id: a')
 
   fireEvent.click(getByText('atom b'))
-  if (IS_REACT18) {
-    await findByText('commits: 3, id: b')
-  } else {
-    await findByText('commits: 2, id: b')
-  }
+  await findByText('commits: 2, id: b')
 
   fireEvent.click(getByText('atom a'))
-  if (IS_REACT18) {
-    await findByText('commits: 5, id: a')
-  } else {
-    await findByText('commits: 3, id: a')
-  }
+  await findByText('commits: 3, id: a')
 })
 
 it('should be able to use a double derived atom twice and useEffect (#373)', async () => {
