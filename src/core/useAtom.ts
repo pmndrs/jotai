@@ -58,7 +58,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     useCallback(
       (prev) => {
         const nextValue = getAtomValue()
-        if (Object.is(prev[0], nextValue)) {
+        if (Object.is(prev[0], nextValue) && prev[1] === atom) {
           return prev // bail out
         }
         return [nextValue, atom]
