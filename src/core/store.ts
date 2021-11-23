@@ -430,7 +430,7 @@ export const createStore = (
       if ((a as AnyWritableAtom) === atom) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
-          throw new Error('no atom init')
+          throw new Error('atom not writable')
         }
         if (v instanceof Promise) {
           promiseOrVoid = v
