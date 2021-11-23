@@ -54,7 +54,29 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     throw new Error('no atom value')
   }, [store, atom])
 
-  const [value, forceUpdate] = useReducer(getAtomValue, undefined, getAtomValue)
+  const [[value, atomFromUseReducer], forceUpdate] = useReducer(
+    useCallback(
+      (prev) => {
+        const nextValue = getAtomValue()
+        if (Object.is(prev[0], nextValue)) {
+          return prev // bail out
+        }
+        return [nextValue, atom]
+      },
+      [getAtomValue, atom]
+    ),
+    undefined,
+    () => {
+      const initialValue = getAtomValue()
+      return [initialValue, atom]
+    }
+  )
+
+  if (atomFromUseReducer !== atom) {
+    // Note: This seems like a useReducer bug, doesn't it?
+    // https://github.com/pmndrs/jotai/issues/827
+    forceUpdate()
+  }
 
   useEffect(() => {
     const unsubscribe = store[SUBSCRIBE_ATOM](atom, forceUpdate)

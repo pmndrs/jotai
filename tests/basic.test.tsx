@@ -897,7 +897,7 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
   await findByText('count: 3')
 })
 
-it('sync re-renders with useState re-renders', async () => {
+it('sync re-renders with useState re-renders (#827)', async () => {
   const atom0 = atom('atom0')
   const atom1 = atom('atom1')
   const atom2 = atom('atom2')
