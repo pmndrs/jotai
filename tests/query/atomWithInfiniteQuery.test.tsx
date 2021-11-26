@@ -1,4 +1,4 @@
-import { Suspense, useCallback } from 'react'
+import React, { Suspense, useCallback } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { atomWithInfiniteQuery } from 'jotai/query'

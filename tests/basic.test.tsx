@@ -1,4 +1,4 @@
-import {
+import React, {
   StrictMode,
   Suspense,
   useEffect,

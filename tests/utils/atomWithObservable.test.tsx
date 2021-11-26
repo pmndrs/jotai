@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import React, { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Observable, Subject } from 'rxjs'
 import { useAtom } from 'jotai'
