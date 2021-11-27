@@ -1,7 +1,7 @@
 async function fakeFetch<Response>(
   response: Response,
-  error: boolean = false,
-  time: number = 0
+  error = false,
+  time = 0
 ): Promise<{ response: Response }> {
   await new Promise((r) => setTimeout(r, time))
   if (error) {

@@ -28,7 +28,7 @@ const generateClient = (id: string) =>
 const Provider = getTestProvider()
 
 it('query basic test', async () => {
-  const countAtom = atomWithQuery<{ count: number }, {}>(
+  const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     () => ({
       query: '{ count }',
     }),
@@ -107,7 +107,7 @@ it('query change client at runtime', async () => {
   const firstClient = generateClient('first')
   const secondClient = generateClient('second')
   const clientAtom = atom(firstClient)
-  const idAtom = atomWithQuery<{ id: string }, {}>(
+  const idAtom = atomWithQuery<{ id: string }, Record<string, never>>(
     () => ({
       query: '{ id }',
     }),
@@ -154,7 +154,7 @@ it('query change client at runtime', async () => {
 
 it('pause test', async () => {
   const enabledAtom = atom(false)
-  const countAtom = atomWithQuery<{ count: number }, {}>(
+  const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     (get) => ({
       query: '{ count }',
       pause: !get(enabledAtom),
@@ -193,7 +193,7 @@ it('pause test', async () => {
 })
 
 it('reexecute test', async () => {
-  const countAtom = atomWithQuery<{ count: number }, {}>(
+  const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     () => ({
       query: '{ count }',
     }),
@@ -229,7 +229,7 @@ it('reexecute test', async () => {
 it('query null client suspense', async () => {
   const client = generateClient('client is set')
   const clientAtom = atom<Client | null>(null)
-  const idAtom = atomWithQuery<{ id: string }, {}>(
+  const idAtom = atomWithQuery<{ id: string }, Record<string, never>>(
     () => ({
       query: '{ id }',
     }),

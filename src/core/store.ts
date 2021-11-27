@@ -375,7 +375,7 @@ export const createStore = (
   ): void | Promise<void> => {
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
-      unstable_promise: boolean = false
+      unstable_promise = false
     ) => {
       const aState = readAtomState(a)
       if ('e' in aState) {
