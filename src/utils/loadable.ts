@@ -45,8 +45,7 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
         LOADING as Loadable<Value>,
         async (get, set) => {
           try {
-            // NOTE using unstable_promise
-            const data: Value = await get(anAtom, true)
+            const data: Value = await get(anAtom, { unstable_promise: true })
             set(loadableAtom, { state: 'hasData', data })
           } catch (error) {
             set(loadableAtom, { state: 'hasError', error })
