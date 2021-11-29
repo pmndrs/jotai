@@ -375,36 +375,32 @@ export const createStore = (
   ): void | Promise<void> => {
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
-      unstable_promise = false
+      options?: {
+        unstable_promise: boolean
+      }
     ) => {
+      if (typeof options === 'boolean') {
+        console.warn('[DEPRECATED] Please use { unstable_promise: true }')
+        options = { unstable_promise: options }
+      }
       const aState = readAtomState(a)
       if ('e' in aState) {
         throw aState.e // read error
       }
       if (aState.p) {
+        if (options?.unstable_promise) {
+          return aState.p.then(() =>
+            writeGetter(a as unknown as Atom<Promise<unknown>>, options as any)
+          ) as Promise<ResolveType<V>> // FIXME proper typing
+        }
         if (
           typeof process === 'object' &&
           process.env.NODE_ENV !== 'production'
         ) {
-          if (unstable_promise) {
-            console.info(
-              'promise option in getter is an experimental feature.',
-              a
-            )
-          } else {
-            console.warn(
-              'Reading pending atom state in write operation. We throw a promise for now.',
-              a
-            )
-          }
-        }
-        if (unstable_promise) {
-          return aState.p.then(() =>
-            writeGetter(
-              a as unknown as Atom<Promise<unknown>>,
-              unstable_promise
-            )
-          ) as Promise<ResolveType<V>> // FIXME proper typing
+          console.info(
+            'Reading pending atom state in write operation. We throw a promise for now.',
+            a
+          )
         }
         throw aState.p // read promise
       }

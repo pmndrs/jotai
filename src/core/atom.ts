@@ -7,13 +7,14 @@ type Getter = {
 }
 
 type WriteGetter = Getter & {
-  <Value>(atom: Atom<Value | Promise<Value>>, unstable_promise: true):
+  <Value>(
+    atom: Atom<Value | Promise<Value>>,
+    options: { unstable_promise: true }
+  ): Promise<Value> | Value
+  <Value>(atom: Atom<Promise<Value>>, options: { unstable_promise: true }):
     | Promise<Value>
     | Value
-  <Value>(atom: Atom<Promise<Value>>, unstable_promise: true):
-    | Promise<Value>
-    | Value
-  <Value>(atom: Atom<Value>, unstable_promise: true):
+  <Value>(atom: Atom<Value>, options: { unstable_promise: true }):
     | Promise<ResolveType<Value>>
     | ResolveType<Value>
 }
