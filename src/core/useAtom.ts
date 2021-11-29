@@ -86,8 +86,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   )
 
   if (atomFromUseReducer !== atom) {
-    const initialVersion = getVersion()
-    dispatch(initialVersion)
+    dispatch(getVersion())
   }
 
   useEffect(() => {
