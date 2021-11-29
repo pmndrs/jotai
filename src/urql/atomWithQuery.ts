@@ -5,7 +5,7 @@ import type {
   RequestPolicy,
   TypedDocumentNode,
 } from '@urql/core'
-import { delay, pipe, skip, subscribe } from 'wonka'
+import { pipe, skip, subscribe } from 'wonka'
 import { atom } from 'jotai'
 import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
@@ -111,7 +111,6 @@ export function atomWithQuery<Data, Variables extends object>(
           ...args.context,
         }),
         skip(1), // handled by toPromise
-        delay(10), // FIXME test sometimes fails without this
         subscribe(listener)
       )
       return () => subscription.unsubscribe()
