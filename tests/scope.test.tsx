@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'

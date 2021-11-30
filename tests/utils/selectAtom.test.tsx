@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom } from 'jotai'
 import { selectAtom, useAtomValue, useUpdateAtom } from 'jotai/utils'

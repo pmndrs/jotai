@@ -1,4 +1,3 @@
-import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtom } from 'jotai'
 import { atomWithReducer } from 'jotai/utils'

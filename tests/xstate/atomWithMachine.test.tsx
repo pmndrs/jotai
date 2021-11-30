@@ -1,4 +1,3 @@
-import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { createMachine } from 'xstate'
 import { useAtom } from 'jotai'

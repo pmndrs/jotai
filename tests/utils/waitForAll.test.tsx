@@ -1,4 +1,4 @@
-import React, { Component, StrictMode, Suspense, useEffect } from 'react'
+import { Component, StrictMode, Suspense, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { atomFamily, useUpdateAtom, waitForAll } from 'jotai/utils'

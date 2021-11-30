@@ -1,4 +1,3 @@
-import React from 'react'
 import * as rtl from '@testing-library/react'
 import * as O from 'optics-ts'
 import { atom, useAtom } from 'jotai'

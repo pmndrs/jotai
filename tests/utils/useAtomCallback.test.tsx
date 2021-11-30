@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useAtomCallback } from 'jotai/utils'

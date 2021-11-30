@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
 import { delay, fromValue, pipe, take, toPromise } from 'wonka'

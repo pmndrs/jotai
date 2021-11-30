@@ -1,4 +1,3 @@
-import React from 'react'
 import { render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { freezeAtom, freezeAtomCreator } from 'jotai/utils'

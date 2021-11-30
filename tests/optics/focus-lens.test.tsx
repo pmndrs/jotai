@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
 import * as rtl from '@testing-library/react'
 import * as O from 'optics-ts'
 import { atom, useAtom } from 'jotai'

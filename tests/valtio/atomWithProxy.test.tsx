@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot } from 'valtio/vanilla'
 import { atom, useAtom } from 'jotai'
