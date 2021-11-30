@@ -61,7 +61,10 @@ export function atomWithQuery<Data, Variables extends object>(
     | OperationResultWithData<Data, Variables>
     | Promise<OperationResultWithData<Data, Variables>>
   >
+  // TODO we should revisit this for a better solution than refAtom
+  const refAtom = atom(() => ({} as { resultAtom?: ResultAtom }))
   const createResultAtom = (
+    ref: { resultAtom?: ResultAtom },
     client: Client,
     args: QueryArgs<Data, Variables>,
     opts?: Partial<OperationContext>
@@ -77,11 +80,16 @@ export function atomWithQuery<Data, Variables extends object>(
         resolve = r
       })
     )
+    ref.resultAtom = resultAtom // FIXME this is too hacky, may not work in some edge cases
     let setResult: (result: OperationResultWithData<Data, Variables>) => void =
       () => {
         throw new Error('setting result without mount')
       }
     const listener = (result: OperationResult<Data, Variables>) => {
+      if (resultAtom !== ref.resultAtom) {
+        // New subscription is working, ignoring old one
+        return
+      }
       if (!isOperationResultWithData(result)) {
         throw new Error('result does not have data')
       }
@@ -109,6 +117,7 @@ export function atomWithQuery<Data, Variables extends object>(
         client.query(args.query, args.variables, {
           ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
           ...args.context,
+          ...opts,
         }),
         skip(1), // handled by toPromise
         subscribe(listener)
@@ -123,7 +132,7 @@ export function atomWithQuery<Data, Variables extends object>(
       return null
     }
     const client = getClient(get)
-    const resultAtom = createResultAtom(client, args)
+    const resultAtom = createResultAtom(get(refAtom), client, args)
     return { resultAtom, client, args }
   })
   const overwrittenResultAtom = atom<{
@@ -153,7 +162,12 @@ export function atomWithQuery<Data, Variables extends object>(
           const { resultAtom, client, args } = queryResult
           set(overwrittenResultAtom, {
             oldResultAtom: resultAtom,
-            newResultAtom: createResultAtom(client, args, action.opts),
+            newResultAtom: createResultAtom(
+              get(refAtom),
+              client,
+              args,
+              action.opts
+            ),
           })
         }
       }
