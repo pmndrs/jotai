@@ -1,4 +1,4 @@
-import { Suspense, useState } from 'react'
+import React, { Suspense, useState } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { atomWithQuery } from 'jotai/query'

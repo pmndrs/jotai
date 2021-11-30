@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
+import React, { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import ReactDOM from 'react-dom'
 import { atom, useAtom } from 'jotai'

@@ -1,4 +1,4 @@
-import {
+import React, {
   StrictMode,
   Suspense,
   useEffect,
@@ -788,18 +788,10 @@ it('changes atom from parent (#273, #275)', async () => {
   await findByText('commits: 1, id: a')
 
   fireEvent.click(getByText('atom b'))
-  if (IS_REACT18) {
-    await findByText('commits: 3, id: b')
-  } else {
-    await findByText('commits: 2, id: b')
-  }
+  await findByText('commits: 2, id: b')
 
   fireEvent.click(getByText('atom a'))
-  if (IS_REACT18) {
-    await findByText('commits: 5, id: a')
-  } else {
-    await findByText('commits: 3, id: a')
-  }
+  await findByText('commits: 3, id: a')
 })
 
 it('should be able to use a double derived atom twice and useEffect (#373)', async () => {
@@ -895,4 +887,38 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
 
   await findByText('loading')
   await findByText('count: 3')
+})
+
+it('sync re-renders with useState re-renders (#827)', async () => {
+  const atom0 = atom('atom0')
+  const atom1 = atom('atom1')
+  const atom2 = atom('atom2')
+  const atoms = [atom0, atom1, atom2]
+
+  const App = () => {
+    const [currentAtomIndex, setCurrentAtomIndex] = useState(0)
+    const rotateAtoms = () => {
+      setCurrentAtomIndex((prev) => (prev + 1) % atoms.length)
+    }
+    const [atomValue] = useAtom(atoms[currentAtomIndex] as typeof atoms[number])
+
+    return (
+      <>
+        <span>commits: {useCommitCount()}</span>
+        <h1>{atomValue}</h1>
+        <button onClick={rotateAtoms}>rotate</button>
+      </>
+    )
+  }
+  const { findByText, getByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  await findByText('commits: 1')
+  fireEvent.click(getByText('rotate'))
+  await findByText('commits: 2')
+  fireEvent.click(getByText('rotate'))
+  await findByText('commits: 3')
 })
