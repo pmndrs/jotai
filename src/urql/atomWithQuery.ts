@@ -81,10 +81,11 @@ export function atomWithQuery<Data, Variables extends object>(
       })
     )
     ref.resultAtom = resultAtom // FIXME this is too hacky, may not work in some edge cases
-    let setResult: (result: OperationResultWithData<Data, Variables>) => void =
-      () => {
-        throw new Error('setting result without mount')
-      }
+    let setResult: (
+      result: OperationResultWithData<Data, Variables>
+    ) => void = () => {
+      throw new Error('setting result without mount')
+    }
     const listener = (result: OperationResult<Data, Variables>) => {
       if (resultAtom !== ref.resultAtom) {
         // New subscription is working, ignoring old one
