@@ -97,10 +97,14 @@ it('query dependency test', async () => {
 
   await findByText('loading')
   await findByText('count: 0')
+  await findByText('count: 1')
+  await findByText('count: 2')
 
   fireEvent.click(getByText('dummy'))
   await findByText('loading')
+  await findByText('count: 0')
   await findByText('count: 1')
+  await findByText('count: 2')
 })
 
 it('query change client at runtime', async () => {
