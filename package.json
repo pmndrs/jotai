@@ -172,6 +172,11 @@
   "jest": {
     "rootDir": ".",
     "testEnvironment": "jsdom",
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@swc/jest"
+      ]
+    },
     "moduleNameMapper": {
       "^jotai$": "<rootDir>/src/index.ts",
       "^jotai/(.*)$": "<rootDir>/src/$1.ts"
@@ -203,6 +208,8 @@
     "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-node-resolve": "^13.0.6",
     "@rollup/plugin-typescript": "^8.3.0",
+    "@swc/core": "^1.2.112",
+    "@swc/jest": "^0.2.9",
     "@testing-library/react": "^12.1.2",
     "@types/jest": "^27.0.3",
     "@types/react": "^17.0.37",
