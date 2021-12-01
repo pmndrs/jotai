@@ -11,32 +11,57 @@ type Loadable<Value> =
   | { state: 'hasError'; error: unknown }
   | { state: 'hasData'; data: ResolveType<Value> }
 
+const LOADING: Loadable<unknown> = { state: 'loading' }
+
 export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
   return memoizeAtom(() => {
-    // TODO we should revisit this for a better solution than refAtom
-    const refAtom = atom(() => ({} as { prev?: Loadable<Value> }))
+    const loadableAtomCache = new WeakMap<
+      Promise<void>,
+      Atom<Loadable<Value>>
+    >()
 
-    const derivedAtom = atom((get): Loadable<Value> => {
-      const ref = get(refAtom)
-      let curr = ref.prev
+    const catchAtom = atom((get) => {
+      let promise: Promise<void>
       try {
-        const value = get(anAtom) as ResolveType<Value>
-        if (curr?.state !== 'hasData' || !Object.is(curr.data, value)) {
-          curr = { state: 'hasData', data: value }
-        }
+        const data = get(anAtom) as ResolveType<Value>
+        const loadableAtom = atom({ state: 'hasData', data } as Loadable<Value>)
+        return loadableAtom
       } catch (error) {
         if (error instanceof Promise) {
-          if (curr?.state !== 'loading') {
-            curr = { state: 'loading' }
-          }
+          promise = error
         } else {
-          if (curr?.state !== 'hasError' || !Object.is(curr.error, error)) {
-            curr = { state: 'hasError', error }
-          }
+          const loadableAtom = atom({
+            state: 'hasError',
+            error,
+          } as Loadable<Value>)
+          return loadableAtom
         }
       }
-      ref.prev = curr
-      return curr as Loadable<Value>
+      const cached = loadableAtomCache.get(promise)
+      if (cached) {
+        return cached
+      }
+      const loadableAtom = atom(
+        LOADING as Loadable<Value>,
+        async (get, set) => {
+          try {
+            const data: Value = await get(anAtom, { unstable_promise: true })
+            set(loadableAtom, { state: 'hasData', data })
+          } catch (error) {
+            set(loadableAtom, { state: 'hasError', error })
+          }
+        }
+      )
+      loadableAtom.onMount = (init) => {
+        init()
+      }
+      loadableAtomCache.set(promise, loadableAtom)
+      return loadableAtom
+    })
+
+    const derivedAtom = atom((get) => {
+      const loadableAtom = get(catchAtom)
+      return get(loadableAtom)
     })
 
     return derivedAtom

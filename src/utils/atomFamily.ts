@@ -42,7 +42,7 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
       item = atoms.get(param)
     } else {
       // Custom comparator, iterate over all elements
-      for (let [key, value] of atoms) {
+      for (const [key, value] of atoms) {
         if (areEqual(key, param)) {
           item = value
           break
@@ -67,7 +67,7 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
     if (areEqual === undefined) {
       atoms.delete(param)
     } else {
-      for (let [key] of atoms) {
+      for (const [key] of atoms) {
         if (areEqual(key, param)) {
           atoms.delete(key)
           break
@@ -79,7 +79,7 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
   createAtom.setShouldRemove = (fn: ShouldRemove<Param> | null) => {
     shouldRemove = fn
     if (!shouldRemove) return
-    for (let [key, value] of atoms) {
+    for (const [key, value] of atoms) {
       if (shouldRemove(value[1], key)) {
         atoms.delete(key)
       }

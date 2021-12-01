@@ -6,7 +6,7 @@ const getWeakCacheItem = <T>(
   cache: WeakCache<T>,
   deps: readonly object[]
 ): T | undefined => {
-  while (true) {
+  do {
     const [dep, ...rest] = deps
     const entry = cache.get(dep as object)
     if (!entry) {
@@ -17,7 +17,7 @@ const getWeakCacheItem = <T>(
     }
     cache = entry[0]
     deps = rest
-  }
+  } while (deps.length)
 }
 
 const setWeakCacheItem = <T>(
@@ -25,7 +25,7 @@ const setWeakCacheItem = <T>(
   deps: readonly object[],
   item: T
 ): void => {
-  while (true) {
+  do {
     const [dep, ...rest] = deps
     let entry = cache.get(dep as object)
     if (!entry) {
@@ -38,7 +38,7 @@ const setWeakCacheItem = <T>(
     }
     cache = entry[0]
     deps = rest
-  }
+  } while (deps.length)
 }
 
 export const createMemoizeAtom = () => {

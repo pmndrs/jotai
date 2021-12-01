@@ -73,8 +73,6 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   )
 
   if (atomFromUseReducer !== atom) {
-    // Note: This seems like a useReducer bug, doesn't it?
-    // https://github.com/pmndrs/jotai/issues/827
     forceUpdate()
   }
 

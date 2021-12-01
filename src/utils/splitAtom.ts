@@ -16,7 +16,8 @@ const isWritable = <Value, Update, Result extends void | Promise<void>>(
 ): atom is WritableAtom<Value, Update, Result> =>
   !!(atom as WritableAtom<Value, Update, Result>).write
 
-const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
+const isFunction = <T>(x: T): x is T & ((...args: any[]) => any) =>
+  typeof x === 'function'
 
 export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], Item[]>,
@@ -41,8 +42,8 @@ export function splitAtom<Item, Key>(
       )
       const read = (get: Getter) => {
         const ref = get(refAtom)
-        let nextAtomList: Atom<Item>[] = []
-        let nextKeyList: Key[] = []
+        const nextAtomList: Atom<Item>[] = []
+        const nextKeyList: Key[] = []
         get(arrAtom).forEach((item, index) => {
           const key = keyExtractor
             ? keyExtractor(item)
