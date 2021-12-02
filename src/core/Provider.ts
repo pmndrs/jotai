@@ -10,26 +10,47 @@ import type { Atom, Scope } from './atom'
 import { createScopeContainer, getScopeContext } from './contexts'
 import type { ScopeContainer } from './contexts'
 import {
+  COMMIT_ATOM,
   DEV_GET_ATOM_STATE,
   DEV_GET_MOUNTED,
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
 } from './store'
-import type { AtomState, Store } from './store'
+import type { AtomState, Store, VersionObject } from './store'
 
 export const Provider = ({
+  children,
   initialValues,
   scope,
-  children,
+  unstable_enableVersionedWrite,
 }: PropsWithChildren<{
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
   scope?: Scope
+  unstable_enableVersionedWrite?: boolean
 }>) => {
   const scopeContainerRef = useRef<ScopeContainer>()
   if (!scopeContainerRef.current) {
     // lazy initialization
     scopeContainerRef.current = createScopeContainer(initialValues)
+    if (unstable_enableVersionedWrite) {
+      scopeContainerRef.current.w = (write) => {
+        setVersion((prevVersion) => {
+          const nextVersion = prevVersion ? { p: prevVersion } : {}
+          write(nextVersion)
+          return nextVersion
+        })
+      }
+    }
   }
+  const scopeContainer = scopeContainerRef.current
+
+  const [version, setVersion] = useState<VersionObject>()
+  useEffect(() => {
+    if (version) {
+      scopeContainer.s[COMMIT_ATOM](null, version)
+      delete version.p
+    }
+  }, [version])
 
   if (
     typeof process === 'object' &&
@@ -37,14 +58,14 @@ export const Provider = ({
     process.env.NODE_ENV !== 'test'
   ) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(scopeContainerRef.current)
+    useDebugState(scopeContainer)
   }
 
   const ScopeContainerContext = getScopeContext(scope)
   return createElement(
     ScopeContainerContext.Provider,
     {
-      value: scopeContainerRef.current,
+      value: scopeContainer,
     },
     children
   )

@@ -61,7 +61,7 @@ export type AtomState<Value = unknown> = {
   d: ReadDependencies
 }
 
-type VersionObject = object
+export type VersionObject = { p?: VersionObject }
 
 type Listeners = Set<(version?: VersionObject) => void>
 type Dependents = Set<AnyAtom>
@@ -81,7 +81,6 @@ export const WRITE_ATOM = 'w'
 export const COMMIT_ATOM = 'c'
 export const SUBSCRIBE_ATOM = 's'
 export const RESTORE_ATOMS = 'h'
-export const VERSION_OBJECT = 'v'
 
 // store dev methods (these are tentative and subject to change)
 export const DEV_SUBSCRIBE_STATE = 'n'
@@ -124,14 +123,6 @@ export const createStore = (
     }
   }
 
-  let versionObject: VersionObject | undefined
-  const getVersion = (): VersionObject => {
-    if (!versionObject) {
-      versionObject = new Object()
-    }
-    return versionObject
-  }
-
   const versionedAtomStateMapMap = new WeakMap<
     VersionObject,
     Map<AnyAtom, AtomState>
@@ -155,15 +146,11 @@ export const createStore = (
         | AtomState<Value>
         | undefined
       if (!atomState) {
-        atomState = committedAtomStateMap.get(atom) as
-          | AtomState<Value>
-          | undefined
+        atomState = getAtomState(version.p, atom)
         if (atomState) {
           if (atomState.p) {
             atomState.p.then(() => {
-              const nextAtomState = committedAtomStateMap.get(atom) as
-                | AtomState<Value>
-                | undefined
+              const nextAtomState = getAtomState(version.p, atom)
               if (nextAtomState) {
                 versionedAtomStateMap.set(atom, nextAtomState)
               }
@@ -175,18 +162,6 @@ export const createStore = (
       return atomState
     }
     return committedAtomStateMap.get(atom) as AtomState<Value> | undefined
-  }
-
-  const commitAtomState = <Value>(
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-    prevAtomState?: AtomState<Value>
-  ): void => {
-    committedAtomStateMap.set(atom, atomState)
-    versionObject = undefined
-    if (!pendingMap.has(atom)) {
-      pendingMap.set(atom, prevAtomState)
-    }
   }
 
   const setAtomState = <Value>(
@@ -202,7 +177,10 @@ export const createStore = (
       versionedAtomStateMap.set(atom, atomState)
     } else {
       const prevAtomState = committedAtomStateMap.get(atom)
-      commitAtomState(atom, atomState, prevAtomState)
+      committedAtomStateMap.set(atom, atomState)
+      if (!pendingMap.has(atom)) {
+        pendingMap.set(atom, prevAtomState)
+      }
     }
   }
 
@@ -702,12 +680,15 @@ export const createStore = (
     versionedAtomStateMap.forEach((atomState, atom) => {
       const prevAtomState = committedAtomStateMap.get(atom)
       if (atomState.u > (prevAtomState?.u || 0)) {
-        commitAtomState(atom, atomState, prevAtomState)
+        committedAtomStateMap.set(atom, atomState)
+        if (atomState && atomState.d !== prevAtomState?.d) {
+          mountDependencies(atom, atomState, prevAtomState?.d || new Map())
+        }
       }
     })
   }
 
-  const commitAtom = (_atom: AnyAtom, version?: VersionObject) => {
+  const commitAtom = (_atom: AnyAtom | null, version?: VersionObject) => {
     if (version) {
       commitVersionedAtomStateMap(version)
     }
@@ -747,7 +728,6 @@ export const createStore = (
       [COMMIT_ATOM]: commitAtom,
       [SUBSCRIBE_ATOM]: subscribeAtom,
       [RESTORE_ATOMS]: restoreAtoms,
-      [VERSION_OBJECT]: getVersion,
       [DEV_SUBSCRIBE_STATE]: (l: StateListener) => {
         stateListeners.add(l)
         return () => {
@@ -765,7 +745,6 @@ export const createStore = (
     [COMMIT_ATOM]: commitAtom,
     [SUBSCRIBE_ATOM]: subscribeAtom,
     [RESTORE_ATOMS]: restoreAtoms,
-    [VERSION_OBJECT]: getVersion,
   }
 }
 

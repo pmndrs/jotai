@@ -38,7 +38,6 @@ jobs:
           - 18.0.0-beta-149b420f6-20211119
           - 0.0.0-experimental-149b420f6-20211119
         mode: [withProvider, withoutProvider]
-        versionObject: [withVersionObject, withoutVersionObject]
         testing: [default, alpha]
         exclude:
           - { react: 16.8.6, testing: alpha }
@@ -67,10 +66,9 @@ jobs:
           sed -i~ '1s/^/import React from "react";/' tests/*.tsx tests/*/*.tsx
           sed -i~ 's/automatic/classic/' babel.config.js
           sed -i~ 's/automatic/classic/' .swcrc
-      - name: Test ${{ matrix.react }} ${{ matrix.mode }} ${{ matrix.versionObject }}
+      - name: Test ${{ matrix.react }} ${{ matrix.mode }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
           yarn test:ci
         env:
           PROVIDER_LESS_MODE: ${{ matrix.mode == 'withoutProvider' }}
-          JOTAI_EXPERIMENTAL_VERSION_OBJECT: ${{ matrix.versionObject == 'withVersionObject' }}

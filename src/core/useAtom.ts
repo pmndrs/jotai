@@ -9,9 +9,9 @@ import type { Reducer } from 'react'
 import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM, WRITE_ATOM } from './store'
+import type { VersionObject } from './store'
 
 type ResolveType<T> = T extends Promise<infer V> ? V : T
-type VersionObject = object
 
 const isWritable = <Value, Update, Result extends void | Promise<void>>(
   atom: Atom<Value> | WritableAtom<Value, Update, Result>
@@ -40,7 +40,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   }
 
   const ScopeContext = getScopeContext(scope)
-  const { s: store, v: getVersion } = useContext(ScopeContext)
+  const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
   const getAtomValue = useCallback(
     (version?: VersionObject) => {
@@ -78,7 +78,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     ),
     undefined,
     () => {
-      // TODO currently, there's no way to get a stable initial version
+      // NOTE should/could branch on mount?
       const initialVersion = undefined
       const initialValue = getAtomValue(initialVersion)
       return [initialVersion, initialValue, atom]
@@ -86,30 +86,32 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   )
 
   if (atomFromUseReducer !== atom) {
-    dispatch(getVersion())
+    dispatch(undefined)
   }
 
   useEffect(() => {
-    const callback = (version?: VersionObject) =>
-      dispatch(version || getVersion())
-    const unsubscribe = store[SUBSCRIBE_ATOM](atom, callback)
-    callback()
+    const unsubscribe = store[SUBSCRIBE_ATOM](atom, dispatch)
+    dispatch(undefined)
     return unsubscribe
-  }, [store, getVersion, atom])
+  }, [store, atom])
 
   useEffect(() => {
-    store[COMMIT_ATOM](atom, version)
+    if (!versionedWrite) {
+      store[COMMIT_ATOM](atom, version)
+    }
   })
 
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        return store[WRITE_ATOM](atom, update, getVersion(true))
+        const write = (version?: VersionObject) =>
+          store[WRITE_ATOM](atom, update, version)
+        return versionedWrite ? versionedWrite(write) : write()
       } else {
         throw new Error('not writable atom')
       }
     },
-    [store, getVersion, atom]
+    [store, versionedWrite, atom]
   )
 
   useDebugValue(value)
