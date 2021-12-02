@@ -63,7 +63,7 @@ export type AtomState<Value = unknown> = {
 
 type VersionObject = object
 
-type Listeners = Set<() => void>
+type Listeners = Set<(version?: VersionObject) => void>
 type Dependents = Set<AnyAtom>
 type Mounted = {
   l: Listeners
@@ -92,7 +92,6 @@ export const DEV_GET_MOUNTED = 'm'
 export const createStore = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ) => {
-  let versionObject: VersionObject = new Object()
   const committedAtomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingMap = new Map<
@@ -123,6 +122,14 @@ export const createStore = (
       }
       committedAtomStateMap.set(atom, atomState)
     }
+  }
+
+  let versionObject: VersionObject | undefined
+  const getVersion = (): VersionObject => {
+    if (!versionObject) {
+      versionObject = new Object()
+    }
+    return versionObject
   }
 
   const versionedAtomStateMapMap = new WeakMap<
@@ -176,7 +183,7 @@ export const createStore = (
     prevAtomState?: AtomState<Value>
   ): void => {
     committedAtomStateMap.set(atom, atomState)
-    versionObject = new Object()
+    versionObject = undefined
     if (!pendingMap.has(atom)) {
       pendingMap.set(atom, prevAtomState)
     }
@@ -379,9 +386,7 @@ export const createStore = (
               dependencies,
               promise as Promise<void>
             )
-            if (!version) {
-              flushPending()
-            }
+            flushPending(version)
           })
           .catch((e) => {
             if (e instanceof Promise) {
@@ -398,9 +403,7 @@ export const createStore = (
               dependencies,
               promise as Promise<void>
             )
-            if (!version) {
-              flushPending()
-            }
+            flushPending(version)
           })
       } else {
         value = promiseOrValue as ResolveType<Value>
@@ -450,17 +453,21 @@ export const createStore = (
     }
   }
 
-  const invalidateDependents = <Value>(atom: Atom<Value>): void => {
+  const invalidateDependents = <Value>(
+    version: VersionObject | undefined,
+    atom: Atom<Value>
+  ): void => {
     const mounted = mountedMap.get(atom)
     mounted?.d.forEach((dependent) => {
       if (dependent !== atom) {
-        setAtomInvalidated(undefined, dependent)
-        invalidateDependents(dependent)
+        setAtomInvalidated(version, dependent)
+        invalidateDependents(version, dependent)
       }
     })
   }
 
   const writeAtomState = <Value, Update, Result extends void | Promise<void>>(
+    version: VersionObject | undefined,
     atom: WritableAtom<Value, Update, Result>,
     update: Update
   ): void | Promise<void> => {
@@ -475,7 +482,7 @@ export const createStore = (
         console.warn('[DEPRECATED] Please use { unstable_promise: true }')
         options = { unstable_promise: options }
       }
-      const aState = readAtomState(undefined, a)
+      const aState = readAtomState(version, a)
       if ('e' in aState) {
         throw aState.e // read error
       }
@@ -521,40 +528,43 @@ export const createStore = (
           throw new Error('atom not writable')
         }
         if (v instanceof Promise) {
+          // TODO revisit if we can simply store the promise
           promiseOrVoid = v
             .then((resolvedValue) => {
-              setAtomValue(undefined, a, resolvedValue)
-              invalidateDependents(a)
-              flushPending()
+              setAtomValue(version, a, resolvedValue)
+              invalidateDependents(version, a)
+              flushPending(version)
             })
             .catch((e) => {
-              setAtomReadError(undefined, atom, e)
-              flushPending()
+              setAtomReadError(version, atom, e)
+              flushPending(version)
             })
-          setAtomReadPromise(undefined, atom, promiseOrVoid)
+          setAtomReadPromise(version, atom, promiseOrVoid)
         } else {
-          setAtomValue(undefined, a, v as ResolveType<V>)
+          setAtomValue(version, a, v as ResolveType<V>)
         }
-        invalidateDependents(a)
+        invalidateDependents(version, a)
       } else {
-        promiseOrVoid = writeAtomState(a as AnyWritableAtom, v)
+        promiseOrVoid = writeAtomState(version, a as AnyWritableAtom, v)
       }
       if (!isSync) {
-        flushPending()
+        flushPending(version)
       }
       return promiseOrVoid
     }
     const promiseOrVoid = atom.write(writeGetter, setter, update)
     isSync = false
+    version = undefined
     return promiseOrVoid
   }
 
   const writeAtom = <Value, Update, Result extends void | Promise<void>>(
     writingAtom: WritableAtom<Value, Update, Result>,
-    update: Update
+    update: Update,
+    version?: VersionObject
   ): void | Promise<void> => {
-    const promiseOrVoid = writeAtomState(writingAtom, update)
-    flushPending()
+    const promiseOrVoid = writeAtomState(version, writingAtom, update)
+    flushPending(version)
     return promiseOrVoid
   }
 
@@ -659,7 +669,16 @@ export const createStore = (
     })
   }
 
-  const flushPending = (): void => {
+  const flushPending = (version: VersionObject | undefined): void => {
+    if (version) {
+      const versionedAtomStateMap = getVersionedAtomStateMap(version)
+      // TODO no need to flush everything
+      versionedAtomStateMap.forEach((_, atom) => {
+        const mounted = mountedMap.get(atom)
+        mounted?.l.forEach((listener) => listener(version))
+      })
+      return
+    }
     const pending = Array.from(pendingMap)
     pendingMap.clear()
     pending.forEach(([atom, prevAtomState]) => {
@@ -692,10 +711,13 @@ export const createStore = (
     if (version) {
       commitVersionedAtomStateMap(version)
     }
-    flushPending()
+    flushPending(undefined)
   }
 
-  const subscribeAtom = (atom: AnyAtom, callback: () => void) => {
+  const subscribeAtom = (
+    atom: AnyAtom,
+    callback: (version?: VersionObject) => void
+  ) => {
     const mounted = addAtom(atom)
     const listeners = mounted.l
     listeners.add(callback)
@@ -706,15 +728,16 @@ export const createStore = (
   }
 
   const restoreAtoms = (
-    values: Iterable<readonly [AnyAtom, unknown]>
+    values: Iterable<readonly [AnyAtom, unknown]>,
+    version?: VersionObject
   ): void => {
     for (const [atom, value] of values) {
       if (hasInitialValue(atom)) {
-        setAtomValue(undefined, atom, value)
-        invalidateDependents(atom)
+        setAtomValue(version, atom, value)
+        invalidateDependents(version, atom)
       }
     }
-    flushPending()
+    flushPending(version)
   }
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
@@ -724,7 +747,7 @@ export const createStore = (
       [COMMIT_ATOM]: commitAtom,
       [SUBSCRIBE_ATOM]: subscribeAtom,
       [RESTORE_ATOMS]: restoreAtoms,
-      [VERSION_OBJECT]: () => versionObject,
+      [VERSION_OBJECT]: getVersion,
       [DEV_SUBSCRIBE_STATE]: (l: StateListener) => {
         stateListeners.add(l)
         return () => {
@@ -742,7 +765,7 @@ export const createStore = (
     [COMMIT_ATOM]: commitAtom,
     [SUBSCRIBE_ATOM]: subscribeAtom,
     [RESTORE_ATOMS]: restoreAtoms,
-    [VERSION_OBJECT]: () => versionObject,
+    [VERSION_OBJECT]: getVersion,
   }
 }
 

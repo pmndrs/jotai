@@ -90,7 +90,8 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   }
 
   useEffect(() => {
-    const callback = () => dispatch(getVersion())
+    const callback = (version?: VersionObject) =>
+      dispatch(version || getVersion())
     const unsubscribe = store[SUBSCRIBE_ATOM](atom, callback)
     callback()
     return unsubscribe
@@ -103,12 +104,12 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        return store[WRITE_ATOM](atom, update)
+        return store[WRITE_ATOM](atom, update, getVersion(true))
       } else {
         throw new Error('not writable atom')
       }
     },
-    [store, atom]
+    [store, getVersion, atom]
   )
 
   useDebugValue(value)
