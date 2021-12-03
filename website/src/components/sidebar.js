@@ -1,6 +1,4 @@
-import React from 'react'
-
-import { Jotai, Button, Docs, Credits } from '../components'
+import { Button, Credits, Docs, Jotai } from '../components'
 
 export const Sidebar = ({ showDocs = false }) => {
   return (
@@ -33,6 +31,9 @@ export const Sidebar = ({ showDocs = false }) => {
             to="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
             external>
             Course
+          </Button>
+          <Button icon="discord" to="https://discord.gg/poimandres" external>
+            Community
           </Button>
           <Button icon="twitter" to="https://twitter.com/dai_shi" external>
             Updates

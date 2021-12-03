@@ -5,9 +5,10 @@ import { createMemoizeAtom } from '../utils/weakCache'
 
 const memoizeAtom = createMemoizeAtom()
 
-const isFunction = <T>(x: T): x is T & Function => typeof x === 'function'
+const isFunction = <T>(x: T): x is T & ((...args: any[]) => any) =>
+  typeof x === 'function'
 
-type NonFunction<T> = [T] extends [Function] ? never : T
+type NonFunction<T> = [T] extends [(...args: any[]) => any] ? never : T
 
 export function focusAtom<S, A, R extends void | Promise<void>>(
   baseAtom: WritableAtom<Promise<S>, NonFunction<S>, R>,

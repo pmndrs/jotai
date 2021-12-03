@@ -17,13 +17,13 @@ const IS_EQUAL_PROMISE = Symbol()
 const INTERRUPT_PROMISE = Symbol()
 type InterruptablePromise = Promise<void> & {
   [IS_EQUAL_PROMISE]: (p: Promise<void>) => boolean
-  [INTERRUPT_PROMISE]?: () => void // defined if interruptable
+  [INTERRUPT_PROMISE]: (() => void) | undefined // defined if interruptable
 }
 
 const isInterruptablePromise = (
   promise: Promise<void>
 ): promise is InterruptablePromise =>
-  !!(promise as InterruptablePromise)[INTERRUPT_PROMISE]
+  !!(promise as InterruptablePromise)[IS_EQUAL_PROMISE]
 
 const createInterruptablePromise = (
   promise: Promise<void>
@@ -31,10 +31,10 @@ const createInterruptablePromise = (
   let interrupt: (() => void) | undefined
   const interruptablePromise = new Promise<void>((resolve, reject) => {
     interrupt = () => {
-      delete interruptablePromise[INTERRUPT_PROMISE]
+      interruptablePromise[INTERRUPT_PROMISE] = undefined
       resolve()
     }
-    promise.then(resolve, reject)
+    promise.then(interrupt, reject)
   }) as InterruptablePromise
   interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>): boolean =>
     interruptablePromise === p ||
@@ -52,7 +52,7 @@ type ReadDependencies = Map<AnyAtom, Revision>
 export type AtomState<Value = unknown> = {
   e?: unknown // read error
   p?: InterruptablePromise // read promise
-  c?: () => void // cancel read promise
+  c?: (() => void) | undefined // cancel read promise
   v?: ResolveType<Value>
   r: Revision
   i?: InvalidatedRevision
@@ -64,7 +64,7 @@ type Dependents = Set<AnyAtom>
 type Mounted = {
   l: Listeners
   d: Dependents
-  u: OnUnmount | void
+  u?: OnUnmount
 }
 
 // for debugging purpose only
@@ -218,6 +218,7 @@ export const createStore = (
     const interruptablePromise = createInterruptablePromise(promise)
     atomState.p = interruptablePromise // set read promise
     atomState.c = interruptablePromise[INTERRUPT_PROMISE]
+    delete atomState.i // clear invalidated revision
     setAtomState(atom, atomState)
   }
 
@@ -243,8 +244,6 @@ export const createStore = (
               const aState = getAtomState(a)
               if (
                 aState &&
-                !('e' in aState) && // no read error
-                !aState.p && // no read promise
                 aState.r === aState.i // revision is invalidated
               ) {
                 readAtomState(a, true)
@@ -376,36 +375,32 @@ export const createStore = (
   ): void | Promise<void> => {
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
-      unstable_promise: boolean = false
+      options?: {
+        unstable_promise: boolean
+      }
     ) => {
+      if (typeof options === 'boolean') {
+        console.warn('[DEPRECATED] Please use { unstable_promise: true }')
+        options = { unstable_promise: options }
+      }
       const aState = readAtomState(a)
       if ('e' in aState) {
         throw aState.e // read error
       }
       if (aState.p) {
+        if (options?.unstable_promise) {
+          return aState.p.then(() =>
+            writeGetter(a as unknown as Atom<Promise<unknown>>, options as any)
+          ) as Promise<ResolveType<V>> // FIXME proper typing
+        }
         if (
           typeof process === 'object' &&
           process.env.NODE_ENV !== 'production'
         ) {
-          if (unstable_promise) {
-            console.info(
-              'promise option in getter is an experimental feature.',
-              a
-            )
-          } else {
-            console.warn(
-              'Reading pending atom state in write operation. We throw a promise for now.',
-              a
-            )
-          }
-        }
-        if (unstable_promise) {
-          return aState.p.then(() =>
-            writeGetter(
-              a as unknown as Atom<Promise<unknown>>,
-              unstable_promise
-            )
-          ) as Promise<ResolveType<V>> // FIXME proper typing
+          console.info(
+            'Reading pending atom state in write operation. We throw a promise for now.',
+            a
+          )
         }
         throw aState.p // read promise
       }
@@ -431,7 +426,7 @@ export const createStore = (
       if ((a as AnyWritableAtom) === atom) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
-          throw new Error('no atom init')
+          throw new Error('atom not writable')
         }
         if (v instanceof Promise) {
           promiseOrVoid = v
@@ -475,8 +470,17 @@ export const createStore = (
     atom: Atom<Value>,
     initialDependent?: AnyAtom
   ): Mounted => {
+    // mount self
+    const mounted: Mounted = {
+      d: new Set(initialDependent && [initialDependent]),
+      l: new Set(),
+    }
+    mountedMap.set(atom, mounted)
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+      mountedAtoms.add(atom)
+    }
+    // mount read dependencies before onMount
     const atomState = readAtomState(atom)
-    // mount read dependencies beforehand
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
         const aMounted = mountedMap.get(a)
@@ -487,19 +491,13 @@ export const createStore = (
         }
       }
     })
-    // mount self
-    const mounted: Mounted = {
-      d: new Set(initialDependent && [initialDependent]),
-      l: new Set(),
-      u: undefined,
-    }
-    mountedMap.set(atom, mounted)
-    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
-      mountedAtoms.add(atom)
-    }
+    // onMount
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const setAtom = (update: unknown) => writeAtom(atom, update)
-      mounted.u = atom.onMount(setAtom)
+      const onUnmount = atom.onMount(setAtom)
+      if (onUnmount) {
+        mounted.u = onUnmount
+      }
     }
     return mounted
   }
@@ -550,7 +548,7 @@ export const createStore = (
       }
       const mounted = mountedMap.get(a)
       if (mounted) {
-        mounted.d.delete(atom)
+        mounted.d.delete(atom) // delete from dependents
         if (canUnmountAtom(a, mounted)) {
           unmountAtom(a)
         }
@@ -559,8 +557,7 @@ export const createStore = (
     dependencies.forEach((a) => {
       const mounted = mountedMap.get(a)
       if (mounted) {
-        const dependents = mounted.d
-        dependents.add(atom)
+        mounted.d.add(atom) // add to dependents
       } else {
         mountAtom(a, atom)
       }

@@ -35,16 +35,16 @@ jobs:
           - 16.8.6
           - 16.9.0
           - 17.0.0
-          - 18.0.0-alpha-3c4c1c470-20211021
-          - 0.0.0-experimental-3c4c1c470-20211021
+          - 18.0.0-beta-149b420f6-20211119
+          - 0.0.0-experimental-149b420f6-20211119
         mode: [withProvider, withoutProvider]
         testing: [default, alpha]
         exclude:
           - { react: 16.8.6, testing: alpha }
           - { react: 16.9.0, testing: alpha }
           - { react: 17.0.0, testing: alpha }
-          - { react: 18.0.0-alpha-3c4c1c470-20211021, testing: default } # suspense doesn't work?
-          - { react: 0.0.0-experimental-3c4c1c470-20211021, testing: default } # suspense doesn't work?
+          - { react: 18.0.0-beta-149b420f6-20211119, testing: default } # suspense doesn't work?
+          - { react: 0.0.0-experimental-149b420f6-20211119, testing: default } # suspense doesn't work?
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -65,6 +65,7 @@ jobs:
         run: |
           sed -i~ '1s/^/import React from "react";/' tests/*.tsx tests/*/*.tsx
           sed -i~ 's/automatic/classic/' babel.config.js
+          sed -i~ 's/automatic/classic/' .swcrc
       - name: Test ${{ matrix.react }} ${{ matrix.mode }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}

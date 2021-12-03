@@ -1,7 +1,5 @@
-import React from 'react'
 import cx from 'classnames'
 import { useAtom } from 'jotai'
-
 import { menuAtom } from '../atoms'
 import { Button, Docs } from '../components'
 

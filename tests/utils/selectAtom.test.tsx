@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom } from 'jotai'
 import { selectAtom, useAtomValue, useUpdateAtom } from 'jotai/utils'
@@ -45,6 +45,53 @@ it('selectAtom works as expected', async () => {
     <Provider>
       <Parent />
       <Selector />
+    </Provider>
+  )
+
+  await findByText('a: 0')
+
+  fireEvent.click(getByText('increment'))
+  await findByText('a: 1')
+  fireEvent.click(getByText('increment'))
+  await findByText('a: 2')
+  fireEvent.click(getByText('increment'))
+  await findByText('a: 3')
+})
+
+it('selectAtom works with async atom', async () => {
+  const bigAtom = atom({ a: 0, b: 'othervalue' })
+  const bigAtomAsync = atom((get) => Promise.resolve(get(bigAtom)))
+  const littleAtom = selectAtom(bigAtomAsync, (v) => v.a)
+
+  const Parent = () => {
+    const setValue = useUpdateAtom(bigAtom)
+    return (
+      <>
+        <button
+          onClick={() =>
+            setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
+          }>
+          increment
+        </button>
+      </>
+    )
+  }
+
+  const Selector = () => {
+    const a = useAtomValue(littleAtom)
+    return (
+      <>
+        <div>a: {a}</div>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback={null}>
+        <Parent />
+        <Selector />
+      </Suspense>
     </Provider>
   )
 

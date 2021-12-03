@@ -18,7 +18,7 @@ const clientMock = {
 const Provider = getTestProvider()
 
 it('mutation basic test', async () => {
-  const countAtom = atomWithMutation<{ count: number }, {}>(
+  const countAtom = atomWithMutation<{ count: number }, Record<string, never>>(
     () => 'mutation Test { count }',
     () => clientMock
   )

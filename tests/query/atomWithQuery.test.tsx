@@ -432,3 +432,50 @@ it('query with initialData test', async () => {
   await findByText('count: 10')
   expect(mockFetch).toHaveBeenCalledTimes(1)
 })
+
+it('query dependency test', async () => {
+  const baseCountAtom = atom(0)
+  const incrementAtom = atom(null, (_get, set) =>
+    set(baseCountAtom, (c) => c + 1)
+  )
+  const countAtom = atomWithQuery((get) => ({
+    queryKey: ['count_with_dependency', get(baseCountAtom)],
+    queryFn: async () => {
+      return await fakeFetch({ count: get(baseCountAtom) }, false, 100)
+    },
+  }))
+
+  const Counter = () => {
+    const [
+      {
+        response: { count },
+      },
+    ] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
+
+  const Controls = () => {
+    const [, increment] = useAtom(incrementAtom)
+    return <button onClick={increment}>increment</button>
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+      <Controls />
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('increment'))
+  await findByText('loading')
+  await findByText('count: 1')
+})

@@ -1,8 +1,6 @@
-import React from 'react'
 import { graphql } from 'gatsby'
 import { MDXRenderer } from 'gatsby-plugin-mdx'
-
-import { Head, Layout, Jotai } from '../../components'
+import { Head, Jotai, Layout } from '../../components'
 
 export default function DocsPage({ data }) {
   const { slug, frontmatter, body } = data.mdx

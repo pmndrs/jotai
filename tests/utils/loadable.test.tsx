@@ -1,3 +1,4 @@
+import { Suspense, useEffect } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Atom, atom } from 'jotai'
 import { loadable, useAtomValue, useUpdateAtom } from 'jotai/utils'
@@ -130,12 +131,75 @@ it('loadable can recover from error', async () => {
   await findByText('Data: 6')
 })
 
+it('loadable immediately resolves sync values', async () => {
+  const syncAtom = atom(5)
+  const effectCallback = jest.fn()
+
+  const { getByText } = render(
+    <Provider>
+      <LoadableComponent effectCallback={effectCallback} asyncAtom={syncAtom} />
+    </Provider>
+  )
+
+  getByText('Data: 5')
+  expect(effectCallback.mock.calls).not.toContain(
+    expect.objectContaining({ state: 'loading' })
+  )
+  expect(effectCallback).toHaveBeenLastCalledWith({ state: 'hasData', data: 5 })
+})
+
+it('loadable can use resolved promises syncronously', async () => {
+  const asyncAtom = atom(Promise.resolve(5))
+  const effectCallback = jest.fn()
+
+  const ResolveAtomComponent = () => {
+    useAtomValue(asyncAtom)
+
+    return <div>Ready</div>
+  }
+
+  const { getByText, findByText, rerender } = render(
+    <Provider>
+      <Suspense fallback={null}>
+        <ResolveAtomComponent />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('Ready')
+
+  rerender(
+    <Provider>
+      <LoadableComponent
+        effectCallback={effectCallback}
+        asyncAtom={asyncAtom}
+      />
+    </Provider>
+  )
+  getByText('Data: 5')
+
+  expect(effectCallback.mock.calls).not.toContain(
+    expect.objectContaining({ state: 'loading' })
+  )
+  expect(effectCallback).toHaveBeenLastCalledWith({ state: 'hasData', data: 5 })
+})
+
 interface LoadableComponentProps {
-  asyncAtom: Atom<Promise<number> | Promise<string>>
+  asyncAtom: Atom<Promise<number> | Promise<string> | string | number>
+  effectCallback?: (loadableValue: any) => void
 }
 
-const LoadableComponent = ({ asyncAtom }: LoadableComponentProps) => {
+const LoadableComponent = ({
+  asyncAtom,
+  effectCallback,
+}: LoadableComponentProps) => {
   const value = useAtomValue(loadable(asyncAtom))
+
+  useEffect(() => {
+    if (effectCallback) {
+      effectCallback(value)
+    }
+  }, [value, effectCallback])
 
   if (value.state === 'loading') {
     return <>Loading...</>
@@ -145,5 +209,8 @@ const LoadableComponent = ({ asyncAtom }: LoadableComponentProps) => {
     return <>{String(value.error)}</>
   }
 
-  return <>Data: {value.data}</>
+  // this is to ensure correct typing
+  const data: number | string = value.data
+
+  return <>Data: {data}</>
 }

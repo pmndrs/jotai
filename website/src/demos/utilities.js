@@ -1,7 +1,5 @@
-import React from 'react'
 import cx from 'classnames'
 import { useAtom } from 'jotai'
-
 import { darkModeAtom } from '../atoms'
 import { ClientOnly, Code } from '../components'
 
