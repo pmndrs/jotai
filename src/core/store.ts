@@ -27,7 +27,7 @@ const cancelSuspensePromise = (suspensePromise: SuspensePromise) => {
   suspensePromise[CANCEL_PROMISE]?.()
 }
 
-const isEqualSuspensePromsie = (
+const isEqualSuspensePromise = (
   a: SuspensePromise,
   b: SuspensePromise
 ): boolean => {
@@ -35,7 +35,7 @@ const isEqualSuspensePromsie = (
     return true
   }
   const c = a[ORIGINAL_PROMISE]
-  return isSuspensePromise(c) && isEqualSuspensePromsie(c, b)
+  return isSuspensePromise(c) && isEqualSuspensePromise(c, b)
 }
 
 const isSuspensePromise = (
@@ -161,7 +161,7 @@ export const createStore = (
     if (atomState) {
       if (
         suspensePromise &&
-        (!atomState.p || !isEqualSuspensePromsie(atomState.p, suspensePromise))
+        (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
       ) {
         // newer async read is running, not updating
         return
@@ -202,7 +202,7 @@ export const createStore = (
     if (atomState) {
       if (
         suspensePromise &&
-        (!atomState.p || !isEqualSuspensePromsie(atomState.p, suspensePromise))
+        (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
       ) {
         // newer async read is running, not updating
         return
@@ -254,7 +254,7 @@ export const createStore = (
       typeof process === 'object' &&
       process.env.NODE_ENV !== 'production'
     ) {
-      console.warn('[Bug] could not invalidate non existent atom', atom)
+      console.warn('[Bug] could not invalidate non existing atom', atom)
     }
   }
 
