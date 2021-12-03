@@ -52,8 +52,7 @@ type ReadDependencies = Map<AnyAtom, Revision>
 export type AtomState<Value = unknown> = {
   e?: unknown // read error
   p?: InterruptablePromise // read promise
-  c?: (() => void) | undefined // cancel read promise
-  v?: ResolveType<Value>
+  v?: Value | ResolveType<Value>
   r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
@@ -136,52 +135,43 @@ export const createStore = (
     }
   }
 
-  const prepareNextAtomState = <Value>(
-    atom: Atom<Value>,
-    dependencies?: Set<AnyAtom>
-  ): AtomState<Value> => {
-    const atomState = getAtomState(atom)
-    const nextAtomState = {
-      r: 0,
-      ...atomState,
-      d: dependencies
-        ? new Map(
-            Array.from(dependencies).map((a) => [a, getAtomState(a)?.r ?? 0])
-          )
-        : atomState?.d || new Map(),
-    }
-    return nextAtomState
-  }
+  const getReadDependencies = (dependencies: Set<AnyAtom>): ReadDependencies =>
+    new Map(Array.from(dependencies).map((a) => [a, getAtomState(a)?.r || 0]))
 
   const setAtomValue = <Value>(
     atom: Atom<Value>,
-    value: ResolveType<Value>,
+    value: Value | ResolveType<Value>,
     dependencies?: Set<AnyAtom>,
     promise?: Promise<void>
   ): void => {
-    const atomState = prepareNextAtomState(atom, dependencies)
-    if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
-      // newer async read is running, not updating
-      return
+    const atomState = getAtomState(atom)
+    if (atomState) {
+      if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
+        // newer async read is running, not updating
+        return
+      }
+      atomState.p?.[INTERRUPT_PROMISE]?.() // cancel read promise
     }
-    atomState.c?.() // cancel read promise
+    const nextAtomState: AtomState<Value> = {
+      v: value,
+      r: atomState?.r || 0,
+      d: dependencies
+        ? getReadDependencies(dependencies)
+        : atomState?.d || new Map(),
+    }
     if (
+      !atomState ||
       'e' in atomState || // has read error, or
       atomState.p || // has read promise, or
       !('v' in atomState) || // new value, or
       !Object.is(atomState.v, value) // different value
     ) {
-      ++atomState.r // increment revision
-      if (atomState.d.has(atom)) {
-        atomState.d.set(atom, atomState.r)
+      ++nextAtomState.r // increment revision
+      if (nextAtomState.d.has(atom)) {
+        nextAtomState.d.set(atom, nextAtomState.r)
       }
     }
-    atomState.v = value // set value anyway
-    delete atomState.e // clear read error
-    delete atomState.p // clear read promise
-    delete atomState.c // clear cancel read promise
-    delete atomState.i // clear invalidated revision
-    setAtomState(atom, atomState)
+    setAtomState(atom, nextAtomState)
   }
 
   const setAtomReadError = <Value>(
@@ -190,17 +180,23 @@ export const createStore = (
     dependencies?: Set<AnyAtom>,
     promise?: Promise<void>
   ): void => {
-    const atomState = prepareNextAtomState(atom, dependencies)
-    if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
-      // newer async read is running, not updating
-      return
+    const atomState = getAtomState(atom)
+    if (atomState) {
+      if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
+        // newer async read is running, not updating
+        return
+      }
+      atomState.p?.[INTERRUPT_PROMISE]?.() // cancel read promise
     }
-    atomState.c?.() // cancel read promise
-    delete atomState.p // clear read promise
-    delete atomState.c // clear cancel read promise
-    delete atomState.i // clear invalidated revision
-    atomState.e = error // set read error
-    setAtomState(atom, atomState)
+    const nextAtomState: AtomState<Value> = {
+      e: error, // set read error
+      ...(atomState && 'v' in atomState ? { v: atomState.v } : {}), // copy v
+      r: atomState?.r || 0,
+      d: dependencies
+        ? getReadDependencies(dependencies)
+        : atomState?.d || new Map(),
+    }
+    setAtomState(atom, nextAtomState)
   }
 
   const setAtomReadPromise = <Value>(
@@ -208,24 +204,35 @@ export const createStore = (
     promise: Promise<void>,
     dependencies?: Set<AnyAtom>
   ): void => {
-    const atomState = prepareNextAtomState(atom, dependencies)
-    if (atomState.p?.[IS_EQUAL_PROMISE](promise)) {
-      // the same promise, not updating
-      return
+    const atomState = getAtomState(atom)
+    if (atomState) {
+      atomState.p?.[INTERRUPT_PROMISE]?.() // cancel read promise
     }
-    atomState.c?.() // cancel read promise
-    delete atomState.e // clear read error
-    const interruptablePromise = createInterruptablePromise(promise)
-    atomState.p = interruptablePromise // set read promise
-    atomState.c = interruptablePromise[INTERRUPT_PROMISE]
-    delete atomState.i // clear invalidated revision
-    setAtomState(atom, atomState)
+    const nextAtomState: AtomState<Value> = {
+      p: createInterruptablePromise(promise), // set read promise
+      ...(atomState && 'v' in atomState ? { v: atomState.v } : {}), // copy v
+      r: atomState?.r || 0,
+      d: dependencies
+        ? getReadDependencies(dependencies)
+        : atomState?.d || new Map(),
+    }
+    setAtomState(atom, nextAtomState)
   }
 
   const setAtomInvalidated = <Value>(atom: Atom<Value>): void => {
-    const atomState = prepareNextAtomState(atom)
-    atomState.i = atomState.r // set invalidated revision
-    setAtomState(atom, atomState)
+    const atomState = getAtomState(atom)
+    if (atomState) {
+      const nextAtomState: AtomState<Value> = {
+        ...atomState, // copy everything
+        i: atomState.r, // set invalidated revision
+      }
+      setAtomState(atom, nextAtomState)
+    } else if (
+      typeof process === 'object' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      console.warn('[Bug] could not invalidate non existent atom', atom)
+    }
   }
 
   const readAtomState = <Value>(
@@ -294,12 +301,7 @@ export const createStore = (
       if (promiseOrValue instanceof Promise) {
         promise = promiseOrValue
           .then((value) => {
-            setAtomValue(
-              atom,
-              value as ResolveType<Value>,
-              dependencies,
-              promise as Promise<void>
-            )
+            setAtomValue(atom, value, dependencies, promise as Promise<void>)
             flushPending()
           })
           .catch((e) => {
@@ -428,20 +430,9 @@ export const createStore = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
+        setAtomValue(a, v)
         if (v instanceof Promise) {
-          promiseOrVoid = v
-            .then((resolvedValue) => {
-              setAtomValue(a, resolvedValue)
-              invalidateDependents(a)
-              flushPending()
-            })
-            .catch((e) => {
-              setAtomReadError(atom, e)
-              flushPending()
-            })
-          setAtomReadPromise(atom, promiseOrVoid)
-        } else {
-          setAtomValue(a, v as ResolveType<V>)
+          setAtomInvalidated(a)
         }
         invalidateDependents(a)
         flushPending()
