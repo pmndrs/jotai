@@ -2,9 +2,9 @@ import type { Atom, WritableAtom } from './atom'
 import {
   cancelSuspensePromise,
   createSuspensePromise,
-  isCancellableSuspensePromise,
   isEqualSuspensePromise,
   isSuspensePromise,
+  isSuspensePromiseAlreadyCancelled,
 } from './suspensePromise'
 import type { SuspensePromise } from './suspensePromise'
 
@@ -299,7 +299,10 @@ export const createStore = (
             })
             .catch((e) => {
               if (e instanceof Promise) {
-                if (!isSuspensePromise(e) || !isCancellableSuspensePromise(e)) {
+                if (
+                  !isSuspensePromise(e) ||
+                  isSuspensePromiseAlreadyCancelled(e)
+                ) {
                   // schedule another read later
                   e.finally(() => readAtomState(atom, true))
                 }

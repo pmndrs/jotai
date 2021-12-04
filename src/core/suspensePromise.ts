@@ -12,9 +12,9 @@ export const isSuspensePromise = (
 ): promise is SuspensePromise =>
   !!(promise as SuspensePromise)[SUSPENSE_PROMISE]
 
-export const isCancellableSuspensePromise = (
+export const isSuspensePromiseAlreadyCancelled = (
   suspensePromise: SuspensePromise
-) => !!suspensePromise[SUSPENSE_PROMISE].c
+) => !suspensePromise[SUSPENSE_PROMISE].c
 
 export const cancelSuspensePromise = (suspensePromise: SuspensePromise) => {
   suspensePromise[SUSPENSE_PROMISE].c?.()
