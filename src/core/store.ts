@@ -159,7 +159,7 @@ export const createStore = (
 
   const setAtomReadError = <Value>(
     atom: Atom<Value>,
-    error: unknown,
+    error: ReadError,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
   ): void => {
@@ -266,7 +266,7 @@ export const createStore = (
         }
       }
     }
-    let error: unknown | undefined
+    let error: ReadError | undefined
     let suspensePromise: SuspensePromise | undefined
     let value: ResolveType<Value> | undefined
     const dependencies = new Set<AnyAtom>()
