@@ -13,46 +13,54 @@ const hasInitialValue = <T extends Atom<unknown>>(
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
-const ORIGINAL_PROMISE = Symbol()
-const CANCEL_PROMISE = Symbol()
+const SUSPENSE_PROMISE = Symbol()
 type SuspensePromise = Promise<void> & {
-  [ORIGINAL_PROMISE]: Promise<void>
-  [CANCEL_PROMISE]: (() => void) | null // defined if interruptable
-}
-
-const isCancellableSuspensePromise = (suspensePromise: SuspensePromise) =>
-  !!suspensePromise[CANCEL_PROMISE]
-
-const cancelSuspensePromise = (suspensePromise: SuspensePromise) => {
-  suspensePromise[CANCEL_PROMISE]?.()
-}
-
-const isEqualSuspensePromise = (
-  a: SuspensePromise,
-  b: SuspensePromise
-): boolean => {
-  if (a === b || a[ORIGINAL_PROMISE] === b) {
-    return true
+  [SUSPENSE_PROMISE]: {
+    o: Promise<void> // original promise
+    c: (() => void) | null // cancel promise (null if already cancelled)
   }
-  const c = a[ORIGINAL_PROMISE]
-  return isSuspensePromise(c) && isEqualSuspensePromise(c, b)
 }
 
 const isSuspensePromise = (
   promise: Promise<void>
-): promise is SuspensePromise => CANCEL_PROMISE in promise
+): promise is SuspensePromise =>
+  !!(promise as SuspensePromise)[SUSPENSE_PROMISE]
+
+const isCancellableSuspensePromise = (suspensePromise: SuspensePromise) =>
+  !!suspensePromise[SUSPENSE_PROMISE].c
+
+const cancelSuspensePromise = (suspensePromise: SuspensePromise) => {
+  suspensePromise[SUSPENSE_PROMISE].c?.()
+}
+
+// Note: this is a special equality function
+const isEqualSuspensePromise = (
+  oldSuspensePromise: SuspensePromise,
+  newSuspensePromise: SuspensePromise
+): boolean => {
+  const oldOriginalPromise = oldSuspensePromise[SUSPENSE_PROMISE].o
+  const newOriginalPromise = newSuspensePromise[SUSPENSE_PROMISE].o
+  return (
+    oldOriginalPromise === newOriginalPromise ||
+    oldSuspensePromise === newOriginalPromise ||
+    (isSuspensePromise(oldOriginalPromise) &&
+      isEqualSuspensePromise(oldOriginalPromise, newSuspensePromise))
+  )
+}
 
 const createSuspensePromise = (promise: Promise<void>): SuspensePromise => {
-  let interrupt: (() => void) | null = null
+  const objectToAttach = {
+    o: promise, // original promise
+    c: null as (() => void) | null, // cancel promise
+  }
   const suspensePromise = new Promise<void>((resolve, reject) => {
-    interrupt = () => {
-      suspensePromise[CANCEL_PROMISE] = null
+    objectToAttach.c = () => {
+      objectToAttach.c = null
       resolve()
     }
-    promise.then(interrupt, reject)
+    promise.then(objectToAttach.c, reject)
   }) as SuspensePromise
-  suspensePromise[ORIGINAL_PROMISE] = promise
-  suspensePromise[CANCEL_PROMISE] = interrupt
+  suspensePromise[SUSPENSE_PROMISE] = objectToAttach
   return suspensePromise
 }
 
@@ -229,6 +237,10 @@ export const createStore = (
   ): void => {
     const atomState = getAtomState(atom)
     if (atomState && atomState.p) {
+      if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
+        // the same promise, not updating
+        return
+      }
       cancelSuspensePromise(atomState.p)
     }
     const nextAtomState: AtomState<Value> = {
