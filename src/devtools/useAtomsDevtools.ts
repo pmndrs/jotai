@@ -1,11 +1,12 @@
 import {
   AtomState,
   DEV_GET_ATOM_STATE,
+  DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
-  WRITE_ATOM,
+  RESTORE_ATOMS,
 } from '../core/store'
 import { useContext, useEffect, useRef } from 'react'
-import { Atom, Scope, WritableAtom } from '../core/atom'
+import { Atom, Scope } from '../core/atom'
 import { getScopeContext } from '../core/contexts'
 
 type Config = {
@@ -62,9 +63,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)
   const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
-  const snapshots = useRef<
-    { value: unknown; atom: Atom<unknown> | WritableAtom<unknown, unknown> }[]
-  >([])
+  const actions = useRef<{ value: unknown | symbol; atomKey: string }[]>([])
 
   useEffect(() => {
     let devtoolsUnsubscribe: () => void | undefined
@@ -86,15 +85,30 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
               case 'JUMP_TO_STATE':
               case 'JUMP_TO_ACTION':
                 isTimeTraveling.current = true
-                const { atom, value } =
-                  snapshots.current[message.payload.actionId]
 
-                if ('write' in atom) {
-                  store[WRITE_ATOM](atom, value)
+                const atomAction = actions.current[message.payload.actionId - 1]!
+
+                const mountedAtoms = Array.from(
+                  store[DEV_GET_MOUNTED_ATOMS]?.() || []
+                )
+                const mountedAtom = mountedAtoms.find(
+                  (atom) => atom.toString() === atomAction.atomKey
+                )
+
+                if (!mountedAtom) {
+                  console.warn(
+                    '[Warn] you cannot do devtools operations (Time-travelling, etc) on unmounted atoms\n',
+                    mountedAtom
+                  )
+                  delete atomAction.value
+                  return
+                }
+                if ('write' in mountedAtom) {
+                  store[RESTORE_ATOMS]([[mountedAtom, atomAction.value]])
                 } else {
                   console.warn(
                     '[Warn] you cannot do write operations (Time-travelling, etc) in read-only atoms\n',
-                    atom
+                    mountedAtom
                   )
                 }
                 return
@@ -123,7 +137,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       if (isTimeTraveling.current) {
         isTimeTraveling.current = false
       } else if (isRecording.current) {
-        snapshots.current.push({ atom: updatedAtom, value })
+        actions.current.push({ atomKey: updatedAtom.toString(), value })
 
         devtools.current.send(
           `${name}:${atomName} - ${new Date().toLocaleString()}`,
@@ -134,7 +148,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     const stateUnsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()
     return () => {
-      snapshots.current = []
+      actions.current = []
       stateUnsubscribe?.()
       devtoolsUnsubscribe?.()
     }
