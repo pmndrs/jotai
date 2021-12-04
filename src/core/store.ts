@@ -1,4 +1,12 @@
 import type { Atom, WritableAtom } from './atom'
+import {
+  cancelSuspensePromise,
+  createSuspensePromise,
+  isCancellableSuspensePromise,
+  isEqualSuspensePromise,
+  isSuspensePromise,
+} from './suspensePromise'
+import type { SuspensePromise } from './suspensePromise'
 
 type ResolveType<T> = T extends Promise<infer V> ? V : T
 
@@ -12,57 +20,6 @@ const hasInitialValue = <T extends Atom<unknown>>(
   atom: T
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
-
-const SUSPENSE_PROMISE = Symbol()
-type SuspensePromise = Promise<void> & {
-  [SUSPENSE_PROMISE]: {
-    o: Promise<void> // original promise
-    c: (() => void) | null // cancel promise (null if already cancelled)
-  }
-}
-
-const isSuspensePromise = (
-  promise: Promise<void>
-): promise is SuspensePromise =>
-  !!(promise as SuspensePromise)[SUSPENSE_PROMISE]
-
-const isCancellableSuspensePromise = (suspensePromise: SuspensePromise) =>
-  !!suspensePromise[SUSPENSE_PROMISE].c
-
-const cancelSuspensePromise = (suspensePromise: SuspensePromise) => {
-  suspensePromise[SUSPENSE_PROMISE].c?.()
-}
-
-// Note: this is a special equality function
-const isEqualSuspensePromise = (
-  oldSuspensePromise: SuspensePromise,
-  newSuspensePromise: SuspensePromise
-): boolean => {
-  const oldOriginalPromise = oldSuspensePromise[SUSPENSE_PROMISE].o
-  const newOriginalPromise = newSuspensePromise[SUSPENSE_PROMISE].o
-  return (
-    oldOriginalPromise === newOriginalPromise ||
-    oldSuspensePromise === newOriginalPromise ||
-    (isSuspensePromise(oldOriginalPromise) &&
-      isEqualSuspensePromise(oldOriginalPromise, newSuspensePromise))
-  )
-}
-
-const createSuspensePromise = (promise: Promise<void>): SuspensePromise => {
-  const objectToAttach = {
-    o: promise, // original promise
-    c: null as (() => void) | null, // cancel promise
-  }
-  const suspensePromise = new Promise<void>((resolve, reject) => {
-    objectToAttach.c = () => {
-      objectToAttach.c = null
-      resolve()
-    }
-    promise.then(objectToAttach.c, reject)
-  }) as SuspensePromise
-  suspensePromise[SUSPENSE_PROMISE] = objectToAttach
-  return suspensePromise
-}
 
 type ReadError = unknown
 type Revision = number
