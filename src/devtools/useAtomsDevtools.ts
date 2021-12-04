@@ -56,7 +56,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   const store = scopeContainer.s
 
   if (!store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useAtomsSnapshot can only be used in dev mode.')
+    throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
   const isTimeTraveling = useRef(false)
