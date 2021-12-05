@@ -48,7 +48,7 @@ it('works with 2 level dependencies', async () => {
 it('works a primitive atom and a dependent async atom', async () => {
   const countAtom = atom(1)
   const doubledAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 500))
     return get(countAtom) * 2
   })
 

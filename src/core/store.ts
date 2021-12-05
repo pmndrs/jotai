@@ -263,6 +263,44 @@ export const createStore = (
     return nextAtomState
   }
 
+  const setAtomPromiseOrValue = <Value>(
+    version: VersionObject | undefined,
+    atom: Atom<Value>,
+    promiseOrValue: Value | ResolveType<Value>,
+    dependencies?: Set<AnyAtom>
+  ): AtomState<Value> => {
+    if (promiseOrValue instanceof Promise) {
+      const suspensePromise = createSuspensePromise(
+        promiseOrValue
+          .then((value) => {
+            setAtomValue(version, atom, value, dependencies, suspensePromise)
+            flushPending(version)
+          })
+          .catch((e) => {
+            if (e instanceof Promise) {
+              if (
+                !isSuspensePromise(e) ||
+                isSuspensePromiseAlreadyCancelled(e)
+              ) {
+                // schedule another read later
+                e.finally(() => readAtomState(version, atom, true))
+              }
+              return e
+            }
+            setAtomReadError(version, atom, e, dependencies, suspensePromise)
+            flushPending(version)
+          })
+      )
+      return setAtomSuspensePromise(
+        version,
+        atom,
+        suspensePromise,
+        dependencies
+      )
+    }
+    return setAtomValue(version, atom, promiseOrValue, dependencies)
+  }
+
   const setAtomInvalidated = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>
@@ -345,37 +383,7 @@ export const createStore = (
         // NOTE invalid derived atoms can reach here
         throw new Error('no atom init')
       })
-      if (promiseOrValue instanceof Promise) {
-        const suspensePromise = createSuspensePromise(
-          promiseOrValue
-            .then((value) => {
-              setAtomValue(version, atom, value, dependencies, suspensePromise)
-              flushPending(version)
-            })
-            .catch((e) => {
-              if (e instanceof Promise) {
-                if (
-                  !isSuspensePromise(e) ||
-                  isSuspensePromiseAlreadyCancelled(e)
-                ) {
-                  // schedule another read later
-                  e.finally(() => readAtomState(version, atom, true))
-                }
-                return e
-              }
-              setAtomReadError(version, atom, e, dependencies, suspensePromise)
-              flushPending(version)
-            })
-        )
-        return setAtomSuspensePromise(
-          version,
-          atom,
-          suspensePromise,
-          dependencies
-        )
-      } else {
-        return setAtomValue(version, atom, promiseOrValue, dependencies)
-      }
+      return setAtomPromiseOrValue(version, atom, promiseOrValue, dependencies)
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
         const suspensePromise = createSuspensePromise(errorOrPromise)
@@ -492,10 +500,7 @@ export const createStore = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
-        setAtomValue(version, a, v)
-        if (v instanceof Promise) {
-          setAtomInvalidated(version, a)
-        }
+        setAtomPromiseOrValue(version, a, v)
         invalidateDependents(version, a)
       } else {
         promiseOrVoid = writeAtomState(version, a as AnyWritableAtom, v)
@@ -690,7 +695,7 @@ export const createStore = (
   ): void => {
     for (const [atom, value] of values) {
       if (hasInitialValue(atom)) {
-        setAtomValue(version, atom, value)
+        setAtomPromiseOrValue(version, atom, value)
         invalidateDependents(version, atom)
       }
     }
