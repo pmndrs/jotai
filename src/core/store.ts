@@ -121,7 +121,7 @@ export const createStore = (
     value: Value | ResolveType<Value>,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
-  ): void => {
+  ): AtomState<Value> => {
     const atomState = getAtomState(atom)
     if (atomState) {
       if (
@@ -129,7 +129,7 @@ export const createStore = (
         (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
       ) {
         // newer async read is running, not updating
-        return
+        return atomState
       }
       if (atomState.p) {
         cancelSuspensePromise(atomState.p)
@@ -155,6 +155,7 @@ export const createStore = (
       }
     }
     setAtomState(atom, nextAtomState)
+    return nextAtomState
   }
 
   const setAtomReadError = <Value>(
@@ -162,7 +163,7 @@ export const createStore = (
     error: ReadError,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
-  ): void => {
+  ): AtomState<Value> => {
     const atomState = getAtomState(atom)
     if (atomState) {
       if (
@@ -170,7 +171,7 @@ export const createStore = (
         (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
       ) {
         // newer async read is running, not updating
-        return
+        return atomState
       }
       if (atomState.p) {
         cancelSuspensePromise(atomState.p)
@@ -185,18 +186,19 @@ export const createStore = (
         : atomState?.d || new Map(),
     }
     setAtomState(atom, nextAtomState)
+    return nextAtomState
   }
 
   const setAtomSuspensePromise = <Value>(
     atom: Atom<Value>,
     suspensePromise: SuspensePromise,
     dependencies?: Set<AnyAtom>
-  ): void => {
+  ): AtomState<Value> => {
     const atomState = getAtomState(atom)
     if (atomState && atomState.p) {
       if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
         // the same promise, not updating
-        return
+        return atomState
       }
       cancelSuspensePromise(atomState.p)
     }
@@ -209,6 +211,7 @@ export const createStore = (
         : atomState?.d || new Map(),
     }
     setAtomState(atom, nextAtomState)
+    return nextAtomState
   }
 
   const setAtomInvalidated = <Value>(atom: Atom<Value>): void => {
@@ -266,9 +269,6 @@ export const createStore = (
         }
       }
     }
-    let error: ReadError | undefined
-    let suspensePromise: SuspensePromise | undefined
-    let value: ResolveType<Value> | undefined
     const dependencies = new Set<AnyAtom>()
     try {
       const promiseOrValue = atom.read(<V>(a: Atom<V>) => {
@@ -291,7 +291,7 @@ export const createStore = (
         throw new Error('no atom init')
       })
       if (promiseOrValue instanceof Promise) {
-        suspensePromise = createSuspensePromise(
+        const suspensePromise = createSuspensePromise(
           promiseOrValue
             .then((value) => {
               setAtomValue(atom, value, dependencies, suspensePromise)
@@ -312,24 +312,17 @@ export const createStore = (
               flushPending()
             })
         )
+        return setAtomSuspensePromise(atom, suspensePromise, dependencies)
       } else {
-        value = promiseOrValue as ResolveType<Value>
+        return setAtomValue(atom, promiseOrValue, dependencies)
       }
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
-        suspensePromise = createSuspensePromise(errorOrPromise)
-      } else {
-        error = errorOrPromise
+        const suspensePromise = createSuspensePromise(errorOrPromise)
+        return setAtomSuspensePromise(atom, suspensePromise, dependencies)
       }
+      return setAtomReadError(atom, errorOrPromise, dependencies)
     }
-    if (error) {
-      setAtomReadError(atom, error, dependencies)
-    } else if (suspensePromise) {
-      setAtomSuspensePromise(atom, suspensePromise, dependencies)
-    } else {
-      setAtomValue(atom, value as ResolveType<Value>, dependencies)
-    }
-    return getAtomState(atom) as AtomState<Value>
   }
 
   const readAtom = <Value>(readingAtom: Atom<Value>): AtomState<Value> => {
@@ -360,11 +353,10 @@ export const createStore = (
   const invalidateDependents = <Value>(atom: Atom<Value>): void => {
     const mounted = mountedMap.get(atom)
     mounted?.d.forEach((dependent) => {
-      if (dependent === atom) {
-        return
+      if (dependent !== atom) {
+        setAtomInvalidated(dependent)
+        invalidateDependents(dependent)
       }
-      setAtomInvalidated(dependent)
-      invalidateDependents(dependent)
     })
   }
 
