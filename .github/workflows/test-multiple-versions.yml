@@ -44,6 +44,7 @@ jobs:
         mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
         testing: [default, alpha]
         exclude:
+          - { react: 16.8.6, mode: VERSIONED_WRITE }
           - { react: 16.8.6, testing: alpha }
           - { react: 16.9.0, testing: alpha }
           - { react: 17.0.0, testing: alpha }
