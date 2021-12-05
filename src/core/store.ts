@@ -1,4 +1,12 @@
 import type { Atom, WritableAtom } from './atom'
+import {
+  cancelSuspensePromise,
+  createSuspensePromise,
+  isEqualSuspensePromise,
+  isSuspensePromise,
+  isSuspensePromiseAlreadyCancelled,
+} from './suspensePromise'
+import type { SuspensePromise } from './suspensePromise'
 
 type ResolveType<T> = T extends Promise<infer V> ? V : T
 
@@ -13,37 +21,7 @@ const hasInitialValue = <T extends Atom<unknown>>(
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
-const IS_EQUAL_PROMISE = Symbol()
-const INTERRUPT_PROMISE = Symbol()
-type InterruptablePromise = Promise<void> & {
-  [IS_EQUAL_PROMISE]: (p: Promise<void>) => boolean
-  [INTERRUPT_PROMISE]: (() => void) | undefined // defined if interruptable
-}
-
-const isInterruptablePromise = (
-  promise: Promise<void>
-): promise is InterruptablePromise =>
-  !!(promise as InterruptablePromise)[IS_EQUAL_PROMISE]
-
-const createInterruptablePromise = (
-  promise: Promise<void>
-): InterruptablePromise => {
-  let interrupt: (() => void) | undefined
-  const interruptablePromise = new Promise<void>((resolve, reject) => {
-    interrupt = () => {
-      interruptablePromise[INTERRUPT_PROMISE] = undefined
-      resolve()
-    }
-    promise.then(interrupt, reject)
-  }) as InterruptablePromise
-  interruptablePromise[IS_EQUAL_PROMISE] = (p: Promise<void>): boolean =>
-    interruptablePromise === p ||
-    promise === p ||
-    (isInterruptablePromise(promise) && promise[IS_EQUAL_PROMISE](p))
-  interruptablePromise[INTERRUPT_PROMISE] = interrupt
-  return interruptablePromise
-}
-
+type ReadError = unknown
 type RevisionForValue = number
 type RevisionForUpdate = number
 type InvalidatedRevision = number
@@ -51,10 +29,9 @@ type ReadDependencies = Map<AnyAtom, RevisionForValue>
 
 // immutable atom state
 export type AtomState<Value = unknown> = {
-  e?: unknown // read error
-  p?: InterruptablePromise // read promise
-  c?: (() => void) | undefined // cancel read promise
-  v?: ResolveType<Value>
+  e?: ReadError
+  p?: SuspensePromise
+  v?: Value | ResolveType<Value>
   r: RevisionForValue
   u: RevisionForUpdate
   i?: InvalidatedRevision
@@ -149,12 +126,7 @@ export const createStore = (
         atomState = getAtomState(version.p, atom)
         if (atomState) {
           if (atomState.p) {
-            atomState.p.then(() => {
-              const nextAtomState = getAtomState(version.p, atom)
-              if (nextAtomState) {
-                versionedAtomStateMap.set(atom, nextAtomState)
-              }
-            })
+            atomState.p.then(() => versionedAtomStateMap.delete(atom))
           }
           versionedAtomStateMap.set(atom, atomState)
         }
@@ -184,108 +156,132 @@ export const createStore = (
     }
   }
 
-  const prepareNextAtomState = <Value>(
+  const getReadDependencies = (
     version: VersionObject | undefined,
-    atom: Atom<Value>,
-    dependencies?: Set<AnyAtom>
-  ): AtomState<Value> => {
-    const atomState = getAtomState(version, atom)
-    const nextAtomState = {
-      r: 0,
-      u: 0,
-      ...atomState,
-      d: dependencies
-        ? new Map(
-            Array.from(dependencies).map((a) => [
-              a,
-              getAtomState(version, a)?.r ?? 0,
-            ])
-          )
-        : atomState?.d || new Map(),
-    }
-    return nextAtomState
-  }
+    dependencies: Set<AnyAtom>
+  ): ReadDependencies =>
+    new Map(
+      Array.from(dependencies).map((a) => [a, getAtomState(version, a)?.r || 0])
+    )
 
   const setAtomValue = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
-    value: ResolveType<Value>,
+    value: Value | ResolveType<Value>,
     dependencies?: Set<AnyAtom>,
-    promise?: Promise<void>
+    suspensePromise?: SuspensePromise
   ): void => {
-    const atomState = prepareNextAtomState(version, atom, dependencies)
-    if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
-      // newer async read is running, not updating
-      return
+    const atomState = getAtomState(version, atom)
+    if (atomState) {
+      if (
+        suspensePromise &&
+        (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
+      ) {
+        // newer async read is running, not updating
+        return
+      }
+      if (atomState.p) {
+        cancelSuspensePromise(atomState.p)
+      }
     }
-    atomState.c?.() // cancel read promise
+    const nextAtomState: AtomState<Value> = {
+      v: value,
+      r: atomState?.r || 0,
+      u: (atomState?.u || 0) + 1, // increment revision for update
+      d: dependencies
+        ? getReadDependencies(version, dependencies)
+        : atomState?.d || new Map(),
+    }
     if (
+      !atomState ||
       'e' in atomState || // has read error, or
-      atomState.p || // has read promise, or
+      atomState.p || // has suspense promise, or
       !('v' in atomState) || // new value, or
       !Object.is(atomState.v, value) // different value
     ) {
-      ++atomState.r // increment revision for value
-      if (atomState.d.has(atom)) {
-        atomState.d.set(atom, atomState.r)
+      ++nextAtomState.r // increment revision for value
+      if (nextAtomState.d.has(atom)) {
+        nextAtomState.d.set(atom, nextAtomState.r)
       }
     }
-    ++atomState.u // increment revision for update
-    atomState.v = value // set value anyway
-    delete atomState.e // clear read error
-    delete atomState.p // clear read promise
-    delete atomState.c // clear cancel read promise
-    delete atomState.i // clear invalidated revision
-    setAtomState(version, atom, atomState)
+    setAtomState(version, atom, nextAtomState)
   }
 
   const setAtomReadError = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
-    error: unknown,
+    error: ReadError,
     dependencies?: Set<AnyAtom>,
-    promise?: Promise<void>
+    suspensePromise?: SuspensePromise
   ): void => {
-    const atomState = prepareNextAtomState(version, atom, dependencies)
-    if (promise && !atomState.p?.[IS_EQUAL_PROMISE](promise)) {
-      // newer async read is running, not updating
-      return
+    const atomState = getAtomState(version, atom)
+    if (atomState) {
+      if (
+        suspensePromise &&
+        (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
+      ) {
+        // newer async read is running, not updating
+        return
+      }
+      if (atomState.p) {
+        cancelSuspensePromise(atomState.p)
+      }
     }
-    atomState.c?.() // cancel read promise
-    delete atomState.p // clear read promise
-    delete atomState.c // clear cancel read promise
-    delete atomState.i // clear invalidated revision
-    atomState.e = error // set read error
-    setAtomState(version, atom, atomState)
+    const nextAtomState: AtomState<Value> = {
+      e: error, // set read error
+      ...(atomState && 'v' in atomState ? { v: atomState.v } : {}), // copy v
+      r: atomState?.r || 0,
+      u: atomState?.u || 0,
+      d: dependencies
+        ? getReadDependencies(version, dependencies)
+        : atomState?.d || new Map(),
+    }
+    setAtomState(version, atom, nextAtomState)
   }
 
-  const setAtomReadPromise = <Value>(
+  const setAtomSuspensePromise = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
-    promise: Promise<void>,
+    suspensePromise: SuspensePromise,
     dependencies?: Set<AnyAtom>
   ): void => {
-    const atomState = prepareNextAtomState(version, atom, dependencies)
-    if (atomState.p?.[IS_EQUAL_PROMISE](promise)) {
-      // the same promise, not updating
-      return
+    const atomState = getAtomState(version, atom)
+    if (atomState && atomState.p) {
+      if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
+        // the same promise, not updating
+        return
+      }
+      cancelSuspensePromise(atomState.p)
     }
-    atomState.c?.() // cancel read promise
-    delete atomState.e // clear read error
-    const interruptablePromise = createInterruptablePromise(promise)
-    atomState.p = interruptablePromise // set read promise
-    atomState.c = interruptablePromise[INTERRUPT_PROMISE]
-    delete atomState.i // clear invalidated revision
-    setAtomState(version, atom, atomState)
+    const nextAtomState: AtomState<Value> = {
+      p: suspensePromise,
+      ...(atomState && 'v' in atomState ? { v: atomState.v } : {}), // copy v
+      r: atomState?.r || 0,
+      u: atomState?.u || 0,
+      d: dependencies
+        ? getReadDependencies(version, dependencies)
+        : atomState?.d || new Map(),
+    }
+    setAtomState(version, atom, nextAtomState)
   }
 
   const setAtomInvalidated = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>
   ): void => {
-    const atomState = prepareNextAtomState(version, atom)
-    atomState.i = atomState.r // set invalidated revision
-    setAtomState(version, atom, atomState)
+    const atomState = getAtomState(version, atom)
+    if (atomState) {
+      const nextAtomState: AtomState<Value> = {
+        ...atomState, // copy everything
+        i: atomState.r, // set invalidated revision
+      }
+      setAtomState(version, atom, nextAtomState)
+    } else if (
+      typeof process === 'object' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      console.warn('[Bug] could not invalidate non existing atom', atom)
+    }
   }
 
   const readAtomState = <Value>(
@@ -318,7 +314,7 @@ export const createStore = (
             return (
               aState &&
               !('e' in aState) && // no read error
-              !aState.p && // no read promise
+              !aState.p && // no suspense promise
               aState.r !== aState.i && // revision is not invalidated
               aState.r === r // revision is equal to the last one
             )
@@ -328,8 +324,8 @@ export const createStore = (
         }
       }
     }
-    let error: unknown | undefined
-    let promise: Promise<void> | undefined
+    let error: ReadError | undefined
+    let suspensePromise: SuspensePromise | undefined
     let value: ResolveType<Value> | undefined
     const dependencies = new Set<AnyAtom>()
     try {
@@ -344,7 +340,7 @@ export const createStore = (
             throw aState.e // read error
           }
           if (aState.p) {
-            throw aState.p // read promise
+            throw aState.p // suspense promise
           }
           return aState.v as ResolveType<V> // value
         }
@@ -355,48 +351,41 @@ export const createStore = (
         throw new Error('no atom init')
       })
       if (promiseOrValue instanceof Promise) {
-        promise = promiseOrValue
-          .then((value) => {
-            setAtomValue(
-              version,
-              atom,
-              value as ResolveType<Value>,
-              dependencies,
-              promise as Promise<void>
-            )
-            flushPending(version)
-          })
-          .catch((e) => {
-            if (e instanceof Promise) {
-              if (!isInterruptablePromise(e) || !e[INTERRUPT_PROMISE]) {
-                // schedule another read later
-                e.finally(() => readAtomState(version, atom, true))
+        suspensePromise = createSuspensePromise(
+          promiseOrValue
+            .then((value) => {
+              setAtomValue(version, atom, value, dependencies, suspensePromise)
+              flushPending(version)
+            })
+            .catch((e) => {
+              if (e instanceof Promise) {
+                if (
+                  !isSuspensePromise(e) ||
+                  isSuspensePromiseAlreadyCancelled(e)
+                ) {
+                  // schedule another read later
+                  e.finally(() => readAtomState(version, atom, true))
+                }
+                return e
               }
-              return e
-            }
-            setAtomReadError(
-              version,
-              atom,
-              e,
-              dependencies,
-              promise as Promise<void>
-            )
-            flushPending(version)
-          })
+              setAtomReadError(version, atom, e, dependencies, suspensePromise)
+              flushPending(version)
+            })
+        )
       } else {
         value = promiseOrValue as ResolveType<Value>
       }
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
-        promise = errorOrPromise
+        suspensePromise = createSuspensePromise(errorOrPromise)
       } else {
         error = errorOrPromise
       }
     }
     if (error) {
       setAtomReadError(version, atom, error, dependencies)
-    } else if (promise) {
-      setAtomReadPromise(version, atom, promise, dependencies)
+    } else if (suspensePromise) {
+      setAtomSuspensePromise(version, atom, suspensePromise, dependencies)
     } else {
       setAtomValue(version, atom, value as ResolveType<Value>, dependencies)
     }
@@ -479,7 +468,7 @@ export const createStore = (
             a
           )
         }
-        throw aState.p // read promise
+        throw aState.p // suspense promise
       }
       if ('v' in aState) {
         return aState.v as ResolveType<V> // value
@@ -505,21 +494,9 @@ export const createStore = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
+        setAtomValue(version, a, v)
         if (v instanceof Promise) {
-          // TODO revisit if we can simply store the promise
-          promiseOrVoid = v
-            .then((resolvedValue) => {
-              setAtomValue(version, a, resolvedValue)
-              invalidateDependents(version, a)
-              flushPending(version)
-            })
-            .catch((e) => {
-              setAtomReadError(version, atom, e)
-              flushPending(version)
-            })
-          setAtomReadPromise(version, atom, promiseOrVoid)
-        } else {
-          setAtomValue(version, a, v as ResolveType<V>)
+          setAtomInvalidated(version, a)
         }
         invalidateDependents(version, a)
       } else {

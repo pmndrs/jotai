@@ -1,7 +1,7 @@
 import { Component, Suspense, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
-import { getTestProvider } from './testUtils'
+import { getTestProvider, itSkipIfVersionedWrite } from './testUtils'
 
 const Provider = getTestProvider()
 
@@ -231,7 +231,7 @@ it('can throw an error in async read function', async () => {
   await findByText('errored')
 })
 
-it('can throw an error in write function', async () => {
+itSkipIfVersionedWrite('can throw an error in write function', async () => {
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
@@ -271,97 +271,103 @@ it('can throw an error in write function', async () => {
   expect(errorMessages).toContain('Error: error_in_write_function')
 })
 
-it('can throw an error in async write function', async () => {
-  const countAtom = atom(0)
-  const errorAtom = atom(
-    (get) => get(countAtom),
-    async () => {
-      throw new Error('error_in_async_write_function')
-    }
-  )
-
-  const Counter = () => {
-    const [count, dispatch] = useAtom(errorAtom)
-    const onClick = async () => {
-      try {
-        await dispatch()
-      } catch (e) {
-        console.error(e)
+itSkipIfVersionedWrite(
+  'can throw an error in async write function',
+  async () => {
+    const countAtom = atom(0)
+    const errorAtom = atom(
+      (get) => get(countAtom),
+      async () => {
+        throw new Error('error_in_async_write_function')
       }
-    }
-    return (
-      <>
-        <div>count: {count}</div>
-        <div>no error</div>
-        <button onClick={onClick}>button</button>
-      </>
     )
-  }
 
-  const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback={null}>
+    const Counter = () => {
+      const [count, dispatch] = useAtom(errorAtom)
+      const onClick = async () => {
+        try {
+          await dispatch()
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      return (
+        <>
+          <div>count: {count}</div>
+          <div>no error</div>
+          <button onClick={onClick}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <Provider>
+        <Suspense fallback={null}>
+          <Counter />
+        </Suspense>
+      </Provider>
+    )
+
+    await findByText('no error')
+    expect(errorMessages).not.toContain('Error: error_in_async_write_function')
+
+    fireEvent.click(getByText('button'))
+    await waitFor(() => {
+      expect(errorMessages).toContain('Error: error_in_async_write_function')
+    })
+  }
+)
+
+itSkipIfVersionedWrite(
+  'can throw a chained error in write function',
+  async () => {
+    const countAtom = atom(0)
+    const errorAtom = atom(
+      (get) => get(countAtom),
+      () => {
+        throw new Error('chained_err_in_write')
+      }
+    )
+    const chainedAtom = atom(
+      (get) => get(errorAtom),
+      (_get, set) => {
+        set(errorAtom, null)
+      }
+    )
+
+    const Counter = () => {
+      const [count, dispatch] = useAtom(chainedAtom)
+      const onClick = () => {
+        try {
+          dispatch()
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      return (
+        <>
+          <div>count: {count}</div>
+          <div>no error</div>
+          <button onClick={onClick}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <Provider>
         <Counter />
-      </Suspense>
-    </Provider>
-  )
-
-  await findByText('no error')
-  expect(errorMessages).not.toContain('Error: error_in_async_write_function')
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    expect(errorMessages).toContain('Error: error_in_async_write_function')
-  })
-})
-
-it('can throw a chained error in write function', async () => {
-  const countAtom = atom(0)
-  const errorAtom = atom(
-    (get) => get(countAtom),
-    () => {
-      throw new Error('chained_err_in_write')
-    }
-  )
-  const chainedAtom = atom(
-    (get) => get(errorAtom),
-    (_get, set) => {
-      set(errorAtom, null)
-    }
-  )
-
-  const Counter = () => {
-    const [count, dispatch] = useAtom(chainedAtom)
-    const onClick = () => {
-      try {
-        dispatch()
-      } catch (e) {
-        console.error(e)
-      }
-    }
-    return (
-      <>
-        <div>count: {count}</div>
-        <div>no error</div>
-        <button onClick={onClick}>button</button>
-      </>
+      </Provider>
     )
+
+    await findByText('no error')
+    expect(errorMessages).not.toContain('Error: chained_err_in_write')
+
+    fireEvent.click(getByText('button'))
+    expect(errorMessages).toContain('Error: chained_err_in_write')
   }
+)
 
-  const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
-  )
-
-  await findByText('no error')
-  expect(errorMessages).not.toContain('Error: chained_err_in_write')
-
-  fireEvent.click(getByText('button'))
-  expect(errorMessages).toContain('Error: chained_err_in_write')
-})
-
-it('throws an error while updating in effect', async () => {
+itSkipIfVersionedWrite('throws an error while updating in effect', async () => {
   const countAtom = atom(0)
 
   const Counter = () => {
@@ -428,7 +434,7 @@ describe('throws an error while updating in effect cleanup', () => {
     )
   }
 
-  it('single setCount', async () => {
+  itSkipIfVersionedWrite('single setCount', async () => {
     const { getByText, findByText } = render(
       <Provider>
         <ErrorBoundary>
@@ -448,7 +454,7 @@ describe('throws an error while updating in effect cleanup', () => {
     )
   })
 
-  it('dobule setCount', async () => {
+  itSkipIfVersionedWrite('dobule setCount', async () => {
     doubleSetCount = true
 
     const { getByText, findByText } = render(

@@ -1,0 +1,1 @@
+process.env.PROVIDER_MODE = 'VERSIONED_WRITE'

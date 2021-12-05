@@ -28,6 +28,17 @@ export const Provider = ({
   scope?: Scope
   unstable_enableVersionedWrite?: boolean
 }>) => {
+  const [version, setVersion] = useState<VersionObject>()
+  useEffect(() => {
+    if (version) {
+      ;(scopeContainerRef.current as ScopeContainer).s[COMMIT_ATOM](
+        null,
+        version
+      )
+      delete version.p
+    }
+  }, [version])
+
   const scopeContainerRef = useRef<ScopeContainer>()
   if (!scopeContainerRef.current) {
     // lazy initialization
@@ -42,15 +53,6 @@ export const Provider = ({
       }
     }
   }
-  const scopeContainer = scopeContainerRef.current
-
-  const [version, setVersion] = useState<VersionObject>()
-  useEffect(() => {
-    if (version) {
-      scopeContainer.s[COMMIT_ATOM](null, version)
-      delete version.p
-    }
-  }, [version])
 
   if (
     typeof process === 'object' &&
@@ -58,14 +60,14 @@ export const Provider = ({
     process.env.NODE_ENV !== 'test'
   ) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(scopeContainer)
+    useDebugState(scopeContainerRef.current)
   }
 
   const ScopeContainerContext = getScopeContext(scope)
   return createElement(
     ScopeContainerContext.Provider,
     {
-      value: scopeContainer,
+      value: scopeContainerRef.current,
     },
     children
   )

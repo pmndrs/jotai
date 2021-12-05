@@ -37,7 +37,7 @@ jobs:
           - 17.0.0
           - 18.0.0-beta-149b420f6-20211119
           - 0.0.0-experimental-149b420f6-20211119
-        mode: [withProvider, withoutProvider]
+        mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
         testing: [default, alpha]
         exclude:
           - { react: 16.8.6, testing: alpha }
@@ -71,4 +71,4 @@ jobs:
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
           yarn test:ci
         env:
-          PROVIDER_LESS_MODE: ${{ matrix.mode == 'withoutProvider' }}
+          PROVIDER_MODE: ${{ matrix.mode }}

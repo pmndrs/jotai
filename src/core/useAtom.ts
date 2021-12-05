@@ -10,6 +10,9 @@ import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM, WRITE_ATOM } from './store'
 import type { VersionObject } from './store'
+import { isSuspensePromiseAlreadyCancelled } from './suspensePromise'
+
+const RETRY = Symbol()
 
 type ResolveType<T> = T extends Promise<infer V> ? V : T
 
@@ -49,6 +52,12 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
         throw atomState.e // read error
       }
       if (atomState.p) {
+        if (
+          atomState.r !== atomState.i && // revision is not invalidated
+          isSuspensePromiseAlreadyCancelled(atomState.p)
+        ) {
+          return RETRY
+        }
         throw atomState.p // read promise
       }
       if ('v' in atomState) {
@@ -69,7 +78,10 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     useCallback(
       (prev, nextVersion) => {
         const nextValue = getAtomValue(nextVersion)
-        if (Object.is(prev[1], nextValue) && prev[2] === atom) {
+        if (
+          nextValue === RETRY ||
+          (Object.is(prev[1], nextValue) && prev[2] === atom)
+        ) {
           return prev // bail out
         }
         return [nextVersion, nextValue, atom]
@@ -81,6 +93,9 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
       // NOTE should/could branch on mount?
       const initialVersion = undefined
       const initialValue = getAtomValue(initialVersion)
+      if (initialValue === RETRY) {
+        throw Promise.resolve()
+      }
       return [initialVersion, initialValue, atom]
     }
   )
@@ -96,9 +111,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   }, [store, atom])
 
   useEffect(() => {
-    if (!versionedWrite) {
-      store[COMMIT_ATOM](atom, version)
-    }
+    store[COMMIT_ATOM](atom, version)
   })
 
   const setAtom = useCallback(
