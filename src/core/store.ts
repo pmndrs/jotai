@@ -168,7 +168,7 @@ export const createStore = (
     value: Value | ResolveType<Value>,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
-  ): void => {
+  ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
     if (atomState) {
       if (
@@ -176,7 +176,7 @@ export const createStore = (
         (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
       ) {
         // newer async read is running, not updating
-        return
+        return atomState
       }
       if (atomState.p) {
         cancelSuspensePromise(atomState.p)
@@ -202,6 +202,7 @@ export const createStore = (
       }
     }
     setAtomState(version, atom, nextAtomState)
+    return nextAtomState
   }
 
   const setAtomReadError = <Value>(
@@ -210,7 +211,7 @@ export const createStore = (
     error: ReadError,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
-  ): void => {
+  ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
     if (atomState) {
       if (
@@ -218,7 +219,7 @@ export const createStore = (
         (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
       ) {
         // newer async read is running, not updating
-        return
+        return atomState
       }
       if (atomState.p) {
         cancelSuspensePromise(atomState.p)
@@ -233,6 +234,7 @@ export const createStore = (
         : atomState?.d || new Map(),
     }
     setAtomState(version, atom, nextAtomState)
+    return nextAtomState
   }
 
   const setAtomSuspensePromise = <Value>(
@@ -240,12 +242,12 @@ export const createStore = (
     atom: Atom<Value>,
     suspensePromise: SuspensePromise,
     dependencies?: Set<AnyAtom>
-  ): void => {
+  ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
     if (atomState && atomState.p) {
       if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
         // the same promise, not updating
-        return
+        return atomState
       }
       cancelSuspensePromise(atomState.p)
     }
@@ -258,6 +260,7 @@ export const createStore = (
         : atomState?.d || new Map(),
     }
     setAtomState(version, atom, nextAtomState)
+    return nextAtomState
   }
 
   const setAtomInvalidated = <Value>(
@@ -319,9 +322,6 @@ export const createStore = (
         }
       }
     }
-    let error: ReadError | undefined
-    let suspensePromise: SuspensePromise | undefined
-    let value: ResolveType<Value> | undefined
     const dependencies = new Set<AnyAtom>()
     try {
       const promiseOrValue = atom.read(<V>(a: Atom<V>) => {
@@ -346,7 +346,7 @@ export const createStore = (
         throw new Error('no atom init')
       })
       if (promiseOrValue instanceof Promise) {
-        suspensePromise = createSuspensePromise(
+        const suspensePromise = createSuspensePromise(
           promiseOrValue
             .then((value) => {
               setAtomValue(version, atom, value, dependencies, suspensePromise)
@@ -367,24 +367,27 @@ export const createStore = (
               flushPending(version)
             })
         )
+        return setAtomSuspensePromise(
+          version,
+          atom,
+          suspensePromise,
+          dependencies
+        )
       } else {
-        value = promiseOrValue as ResolveType<Value>
+        return setAtomValue(version, atom, promiseOrValue, dependencies)
       }
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
-        suspensePromise = createSuspensePromise(errorOrPromise)
-      } else {
-        error = errorOrPromise
+        const suspensePromise = createSuspensePromise(errorOrPromise)
+        return setAtomSuspensePromise(
+          version,
+          atom,
+          suspensePromise,
+          dependencies
+        )
       }
+      return setAtomReadError(version, atom, errorOrPromise, dependencies)
     }
-    if (error) {
-      setAtomReadError(version, atom, error, dependencies)
-    } else if (suspensePromise) {
-      setAtomSuspensePromise(version, atom, suspensePromise, dependencies)
-    } else {
-      setAtomValue(version, atom, value as ResolveType<Value>, dependencies)
-    }
-    return getAtomState(version, atom) as AtomState<Value>
   }
 
   const readAtom = <Value>(
