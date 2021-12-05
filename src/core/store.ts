@@ -30,7 +30,7 @@ type ReadDependencies = Map<AnyAtom, Revision>
 export type AtomState<Value = unknown> = {
   e?: ReadError
   p?: SuspensePromise
-  v?: Value | ResolveType<Value>
+  v?: ResolveType<Value>
   r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
@@ -165,7 +165,7 @@ export const createStore = (
   const setAtomValue = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
-    value: Value | ResolveType<Value>,
+    value: ResolveType<Value>,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
   ): AtomState<Value> => {
@@ -266,13 +266,13 @@ export const createStore = (
   const setAtomPromiseOrValue = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
-    promiseOrValue: Value | ResolveType<Value>,
+    promiseOrValue: Value,
     dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
     if (promiseOrValue instanceof Promise) {
       const suspensePromise = createSuspensePromise(
         promiseOrValue
-          .then((value) => {
+          .then((value: ResolveType<Value>) => {
             setAtomValue(version, atom, value, dependencies, suspensePromise)
             flushPending(version)
           })
@@ -298,7 +298,12 @@ export const createStore = (
         dependencies
       )
     }
-    return setAtomValue(version, atom, promiseOrValue, dependencies)
+    return setAtomValue(
+      version,
+      atom,
+      promiseOrValue as ResolveType<Value>,
+      dependencies
+    )
   }
 
   const setAtomInvalidated = <Value>(
