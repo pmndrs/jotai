@@ -397,7 +397,8 @@ it('updates an async atom in child useEffect on remount', async () => {
   await findByText('count: 2')
 })
 
-it('async get and useEffect on parent', async () => {
+// It passes with React 18 though
+itSkipIfVersionedWrite('async get and useEffect on parent', async () => {
   const countAtom = atom(0)
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
