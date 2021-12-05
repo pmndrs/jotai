@@ -657,7 +657,7 @@ export const createStore = (
       const prevAtomState = committedAtomStateMap.get(atom)
       if (atomState.r > (prevAtomState?.r || 0)) {
         committedAtomStateMap.set(atom, atomState)
-        if (atomState && atomState.d !== prevAtomState?.d) {
+        if (atomState.d !== prevAtomState?.d) {
           mountDependencies(atom, atomState, prevAtomState?.d || new Map())
         }
       }
