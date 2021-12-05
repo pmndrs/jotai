@@ -45,8 +45,8 @@ export const Provider = ({
     scopeContainerRef.current = createScopeContainer(initialValues)
     if (unstable_enableVersionedWrite) {
       scopeContainerRef.current.w = (write) => {
-        setVersion((prevVersion) => {
-          const nextVersion = prevVersion ? { p: prevVersion } : {}
+        setVersion((parentVersion) => {
+          const nextVersion = parentVersion ? { p: parentVersion } : {}
           write(nextVersion)
           return nextVersion
         })
@@ -100,7 +100,7 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (scopeContainer: ScopeContainer) => {
-  const store = scopeContainer.s
+  const { s: store } = scopeContainer
   const [atoms, setAtoms] = useState<Atom<unknown>[]>([])
   useEffect(() => {
     const callback = () => {

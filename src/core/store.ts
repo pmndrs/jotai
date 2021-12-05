@@ -22,18 +22,16 @@ const hasInitialValue = <T extends Atom<unknown>>(
   'init' in atom
 
 type ReadError = unknown
-type RevisionForValue = number
-type RevisionForUpdate = number
+type Revision = number
 type InvalidatedRevision = number
-type ReadDependencies = Map<AnyAtom, RevisionForValue>
+type ReadDependencies = Map<AnyAtom, Revision>
 
 // immutable atom state
 export type AtomState<Value = unknown> = {
   e?: ReadError
   p?: SuspensePromise
   v?: Value | ResolveType<Value>
-  r: RevisionForValue
-  u: RevisionForUpdate
+  r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
 }
@@ -83,7 +81,7 @@ export const createStore = (
 
   if (initialValues) {
     for (const [atom, value] of initialValues) {
-      const atomState: AtomState = { v: value, r: 0, u: 0, d: new Map() }
+      const atomState: AtomState = { v: value, r: 0, d: new Map() }
       if (
         typeof process === 'object' &&
         process.env.NODE_ENV !== 'production'
@@ -187,7 +185,6 @@ export const createStore = (
     const nextAtomState: AtomState<Value> = {
       v: value,
       r: atomState?.r || 0,
-      u: (atomState?.u || 0) + 1, // increment revision for update
       d: dependencies
         ? getReadDependencies(version, dependencies)
         : atomState?.d || new Map(),
@@ -231,7 +228,6 @@ export const createStore = (
       e: error, // set read error
       ...(atomState && 'v' in atomState ? { v: atomState.v } : {}), // copy v
       r: atomState?.r || 0,
-      u: atomState?.u || 0,
       d: dependencies
         ? getReadDependencies(version, dependencies)
         : atomState?.d || new Map(),
@@ -257,7 +253,6 @@ export const createStore = (
       p: suspensePromise,
       ...(atomState && 'v' in atomState ? { v: atomState.v } : {}), // copy v
       r: atomState?.r || 0,
-      u: atomState?.u || 0,
       d: dependencies
         ? getReadDependencies(version, dependencies)
         : atomState?.d || new Map(),
@@ -656,7 +651,7 @@ export const createStore = (
     const versionedAtomStateMap = getVersionedAtomStateMap(version)
     versionedAtomStateMap.forEach((atomState, atom) => {
       const prevAtomState = committedAtomStateMap.get(atom)
-      if (atomState.u > (prevAtomState?.u || 0)) {
+      if (atomState.r > (prevAtomState?.r || 0)) {
         committedAtomStateMap.set(atom, atomState)
         if (atomState && atomState.d !== prevAtomState?.d) {
           mountDependencies(atom, atomState, prevAtomState?.d || new Map())
