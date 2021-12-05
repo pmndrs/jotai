@@ -214,6 +214,38 @@ export const createStore = (
     return nextAtomState
   }
 
+  const setAtomPromiseOrValue = <Value>(
+    atom: Atom<Value>,
+    promiseOrValue: Value | ResolveType<Value>,
+    dependencies?: Set<AnyAtom>
+  ): AtomState<Value> => {
+    if (promiseOrValue instanceof Promise) {
+      const suspensePromise = createSuspensePromise(
+        promiseOrValue
+          .then((value) => {
+            setAtomValue(atom, value, dependencies, suspensePromise)
+            flushPending()
+          })
+          .catch((e) => {
+            if (e instanceof Promise) {
+              if (
+                !isSuspensePromise(e) ||
+                isSuspensePromiseAlreadyCancelled(e)
+              ) {
+                // schedule another read later
+                e.finally(() => readAtomState(atom, true))
+              }
+              return e
+            }
+            setAtomReadError(atom, e, dependencies, suspensePromise)
+            flushPending()
+          })
+      )
+      return setAtomSuspensePromise(atom, suspensePromise, dependencies)
+    }
+    return setAtomValue(atom, promiseOrValue, dependencies)
+  }
+
   const setAtomInvalidated = <Value>(atom: Atom<Value>): void => {
     const atomState = getAtomState(atom)
     if (atomState) {
@@ -290,32 +322,7 @@ export const createStore = (
         // NOTE invalid derived atoms can reach here
         throw new Error('no atom init')
       })
-      if (promiseOrValue instanceof Promise) {
-        const suspensePromise = createSuspensePromise(
-          promiseOrValue
-            .then((value) => {
-              setAtomValue(atom, value, dependencies, suspensePromise)
-              flushPending()
-            })
-            .catch((e) => {
-              if (e instanceof Promise) {
-                if (
-                  !isSuspensePromise(e) ||
-                  isSuspensePromiseAlreadyCancelled(e)
-                ) {
-                  // schedule another read later
-                  e.finally(() => readAtomState(atom, true))
-                }
-                return e
-              }
-              setAtomReadError(atom, e, dependencies, suspensePromise)
-              flushPending()
-            })
-        )
-        return setAtomSuspensePromise(atom, suspensePromise, dependencies)
-      } else {
-        return setAtomValue(atom, promiseOrValue, dependencies)
-      }
+      return setAtomPromiseOrValue(atom, promiseOrValue, dependencies)
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
         const suspensePromise = createSuspensePromise(errorOrPromise)
@@ -419,10 +426,7 @@ export const createStore = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
-        setAtomValue(a, v)
-        if (v instanceof Promise) {
-          setAtomInvalidated(a)
-        }
+        setAtomPromiseOrValue(a, v)
         invalidateDependents(a)
         flushPending()
       } else {
@@ -582,7 +586,7 @@ export const createStore = (
   ): void => {
     for (const [atom, value] of values) {
       if (hasInitialValue(atom)) {
-        setAtomValue(atom, value)
+        setAtomPromiseOrValue(atom, value)
         invalidateDependents(atom)
       }
     }
