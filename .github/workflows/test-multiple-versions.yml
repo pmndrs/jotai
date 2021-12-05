@@ -24,7 +24,11 @@ jobs:
       - name: Test Default without Provider
         run: yarn test:ci
         env:
-          PROVIDER_LESS_MODE: 'true'
+          PROVIDER_MODE: 'PROVIDER_LESS'
+      - name: Test Default with Versioned Write
+        run: yarn test:ci
+        env:
+          PROVIDER_MODE: 'VERSIONED_WRITE'
 
   test_matrix:
     runs-on: ubuntu-latest
