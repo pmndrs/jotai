@@ -625,9 +625,11 @@ export const createStore = (
   const flushPending = (version: VersionObject | undefined): void => {
     if (version) {
       const versionedAtomStateMap = getVersionedAtomStateMap(version)
-      versionedAtomStateMap.forEach((_, atom) => {
-        const mounted = mountedMap.get(atom)
-        mounted?.l.forEach((listener) => listener(version))
+      versionedAtomStateMap.forEach((atomState, atom) => {
+        if (atomState !== committedAtomStateMap.get(atom)) {
+          const mounted = mountedMap.get(atom)
+          mounted?.l.forEach((listener) => listener(version))
+        }
       })
       return
     }

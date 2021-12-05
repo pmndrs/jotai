@@ -14,7 +14,7 @@ const useCommitCount = () => {
   return commitCountRef.current
 }
 
-it('does not show async stale result', async () => {
+itSkipIfVersionedWrite('does not show async stale result', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
     await new Promise((r) => setTimeout(r, 10))
