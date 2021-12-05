@@ -196,7 +196,7 @@ export const createStore = (
       !('v' in atomState) || // new value, or
       !Object.is(atomState.v, value) // different value
     ) {
-      ++nextAtomState.r // increment revision for value
+      ++nextAtomState.r // increment revision
       if (nextAtomState.d.has(atom)) {
         nextAtomState.d.set(atom, nextAtomState.r)
       }
@@ -622,7 +622,6 @@ export const createStore = (
   const flushPending = (version: VersionObject | undefined): void => {
     if (version) {
       const versionedAtomStateMap = getVersionedAtomStateMap(version)
-      // TODO no need to flush everything
       versionedAtomStateMap.forEach((_, atom) => {
         const mounted = mountedMap.get(atom)
         mounted?.l.forEach((listener) => listener(version))

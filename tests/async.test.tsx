@@ -2,7 +2,7 @@ import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { Atom } from 'jotai'
-import { getTestProvider, itSkipIfVersionedWrite } from './testUtils'
+import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
@@ -397,7 +397,7 @@ it('updates an async atom in child useEffect on remount', async () => {
   await findByText('count: 2')
 })
 
-itSkipIfVersionedWrite('async get and useEffect on parent', async () => {
+it('async get and useEffect on parent', async () => {
   const countAtom = atom(0)
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
@@ -441,59 +441,56 @@ itSkipIfVersionedWrite('async get and useEffect on parent', async () => {
   })
 })
 
-itSkipIfVersionedWrite(
-  'async get with another dep and useEffect on parent',
-  async () => {
-    const countAtom = atom(0)
-    const derivedAtom = atom((get) => get(countAtom))
-    const asyncAtom = atom(async (get) => {
-      const count = get(derivedAtom)
-      if (!count) return 'none'
-      return count
-    })
+it('async get with another dep and useEffect on parent', async () => {
+  const countAtom = atom(0)
+  const derivedAtom = atom((get) => get(countAtom))
+  const asyncAtom = atom(async (get) => {
+    const count = get(derivedAtom)
+    if (!count) return 'none'
+    return count
+  })
 
-    const AsyncComponent = () => {
-      const [count] = useAtom(asyncAtom)
-      return <div>async: {count}</div>
-    }
+  const AsyncComponent = () => {
+    const [count] = useAtom(asyncAtom)
+    return <div>async: {count}</div>
+  }
 
-    const Parent = () => {
-      const [count, setCount] = useAtom(countAtom)
-      useEffect(() => {
-        setCount((c) => c + 1)
-      }, [setCount])
-      return (
-        <>
-          <div>count: {count}</div>
-          <button onClick={() => setCount((c) => c + 1)}>button</button>
-          <AsyncComponent />
-        </>
-      )
-    }
-
-    const { getByText, findByText } = render(
+  const Parent = () => {
+    const [count, setCount] = useAtom(countAtom)
+    useEffect(() => {
+      setCount((c) => c + 1)
+    }, [setCount])
+    return (
       <>
-        <Provider>
-          <Suspense fallback="loading">
-            <Parent />
-          </Suspense>
-        </Provider>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+        <AsyncComponent />
       </>
     )
-
-    await findByText('loading')
-    await waitFor(() => {
-      getByText('count: 1')
-      getByText('async: 1')
-    })
-
-    fireEvent.click(getByText('button'))
-    await waitFor(() => {
-      getByText('count: 2')
-      getByText('async: 2')
-    })
   }
-)
+
+  const { getByText, findByText } = render(
+    <>
+      <Provider>
+        <Suspense fallback="loading">
+          <Parent />
+        </Suspense>
+      </Provider>
+    </>
+  )
+
+  await findByText('loading')
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('async: 1')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('async: 2')
+  })
+})
 
 it('set promise atom value on write (#304)', async () => {
   const countAtom = atom(Promise.resolve(0))
