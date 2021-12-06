@@ -69,7 +69,7 @@ const isEqualSnapshot = (
   return true
 }
 
-const parseSnapshot = (snapshot: AtomsSnapshot): any => {
+const serializeSnapshot = (snapshot: AtomsSnapshot): any => {
   const result: Record<string, unknown> = {}
 
   snapshot.forEach((v, atom) => {
@@ -184,7 +184,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
         snapshots.current.push(snapshot)
 
-        const parsedSnapshot = parseSnapshot(snapshot)
+        const parsedSnapshot = serializeSnapshot(snapshot)
 
         devtools.current.send(
           `action:${snapshots.current.length} - ${new Date().toLocaleString()}`,
