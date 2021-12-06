@@ -53,7 +53,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
       }
       if (atomState.p) {
         if (
-          atomState.r !== atomState.i && // revision is not invalidated
+          // atomState.r !== atomState.i && // revision is not invalidated
           isSuspensePromiseAlreadyCancelled(atomState.p)
         ) {
           return RETRY

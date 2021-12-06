@@ -505,7 +505,13 @@ export const createStore = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
-        setAtomPromiseOrValue(version, a, v)
+        if (version) {
+          // FIXME this is not really intended
+          setAtomValue(version, a, v as any)
+          setAtomInvalidated(version, a)
+        } else {
+          setAtomPromiseOrValue(version, a, v)
+        }
         invalidateDependents(version, a)
       } else {
         promiseOrVoid = writeAtomState(version, a as AnyWritableAtom, v)
