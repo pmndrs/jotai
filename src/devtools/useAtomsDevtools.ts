@@ -4,6 +4,7 @@ import {
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
   RESTORE_ATOMS,
+  Store,
 } from '../core/store'
 import { useContext, useEffect, useRef } from 'react'
 import { Atom, Scope } from '../core/atom'
@@ -37,6 +38,47 @@ type Extension = {
   connect: (options?: Config) => ConnectionResult
 }
 
+type AtomsSnapshot = Map<Atom<unknown>, unknown>
+
+const createAtomsSnapshot = (
+  store: Store,
+  atoms: Atom<unknown>[]
+): AtomsSnapshot => {
+  const tuples = atoms.map<[Atom<unknown>, unknown]>((atom) => {
+    const atomState = store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
+    return [atom, atomState.v]
+  })
+  return new Map(tuples)
+}
+
+const isEqualSnapshot = (
+  aSnapshot: AtomsSnapshot | undefined,
+  bSnapshot: AtomsSnapshot
+) => {
+  if (aSnapshot?.size !== bSnapshot.size) {
+    return false
+  }
+
+  for (const [atom, aValue] of aSnapshot) {
+    const bValue = bSnapshot.get(atom)
+    if (aValue !== bValue) {
+      return false
+    }
+  }
+
+  return true
+}
+
+const parseSnapshot = (snapshot: AtomsSnapshot): any => {
+  const result: Record<string, unknown> = {}
+
+  snapshot.forEach((v, atom) => {
+    result[`${atom}:${atom.debugLabel}`] = v
+  })
+
+  return result
+}
+
 export function useAtomsDevtools(name: string, scope?: Scope) {
   let extension: Extension | undefined
   try {
@@ -57,13 +99,13 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   const store = scopeContainer.s
 
   if (!store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useAtomsDevtools can only be used in dev mode.')
+    throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)
   const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
-  const actions = useRef<{ value: unknown | symbol; atomKey: string }[]>([])
+  const snapshots = useRef<AtomsSnapshot[]>([])
 
   useEffect(() => {
     let devtoolsUnsubscribe: () => void | undefined
@@ -86,31 +128,25 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
               case 'JUMP_TO_ACTION':
                 isTimeTraveling.current = true
 
-                const atomAction = actions.current[message.payload.actionId - 1]!
+                const snapshot =
+                  snapshots.current[message.payload.actionId - 1]!
 
                 const mountedAtoms = Array.from(
                   store[DEV_GET_MOUNTED_ATOMS]?.() || []
                 )
-                const mountedAtom = mountedAtoms.find(
-                  (atom) => atom.toString() === atomAction.atomKey
-                )
 
-                if (!mountedAtom) {
-                  console.warn(
-                    '[Warn] you cannot do devtools operations (Time-travelling, etc) on unmounted atoms\n',
-                    mountedAtom
+                if (
+                  ![...snapshot.keys()].every((atom) =>
+                    mountedAtoms.includes(atom)
                   )
-                  delete atomAction.value
+                ) {
+                  console.warn(
+                    '[Warn] you cannot do devtools operations (Time-travelling, etc) on unmounted atoms\n'
+                  )
                   return
                 }
-                if ('write' in mountedAtom) {
-                  store[RESTORE_ATOMS]([[mountedAtom, atomAction.value]])
-                } else {
-                  console.warn(
-                    '[Warn] you cannot do write operations (Time-travelling, etc) in read-only atoms\n',
-                    mountedAtom
-                  )
-                }
+
+                store[RESTORE_ATOMS](snapshot)
                 return
               case 'PAUSE_RECORDING':
                 return (isRecording.current = !isRecording.current)
@@ -119,7 +155,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       })
     }
 
-    const callback = (updatedAtom?: Atom<unknown>) => {
+    const callback = (updatedAtom?: Atom<unknown>, isNewAtom?: boolean) => {
       if (!devtools.current) {
         return
       }
@@ -128,27 +164,37 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         devtools.current.shouldInit = false
         return
       }
-      const atomName = updatedAtom.debugLabel || updatedAtom.toString()
-
-      const atomState =
-        store[DEV_GET_ATOM_STATE]?.(updatedAtom!) ?? ({} as AtomState)
-      const value = atomState.v
 
       if (isTimeTraveling.current) {
-        isTimeTraveling.current = false
+        // better solution to stop logging on JUMP_TO_ACTION & JUMP_TO_STATE ?
+        Promise.resolve().then(() => {
+          isTimeTraveling.current = false
+        })
       } else if (isRecording.current) {
-        actions.current.push({ atomKey: updatedAtom.toString(), value })
+        const atoms = Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || [])
+        if (updatedAtom && isNewAtom && !atoms.includes(updatedAtom)) {
+          atoms.push(updatedAtom)
+        }
+
+        const prevSnapshot = snapshots.current[snapshots.current.length - 1]
+        const snapshot = createAtomsSnapshot(store, atoms)
+        if (isEqualSnapshot(prevSnapshot, snapshot)) {
+          return
+        }
+
+        snapshots.current.push(snapshot)
+
+        const parsedSnapshot = parseSnapshot(snapshot)
 
         devtools.current.send(
-          `${name}:${atomName} - ${new Date().toLocaleString()}`,
-          value
+          `action:${snapshots.current.length} - ${new Date().toLocaleString()}`,
+          parsedSnapshot
         )
       }
     }
     const stateUnsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()
     return () => {
-      actions.current = []
       stateUnsubscribe?.()
       devtoolsUnsubscribe?.()
     }
