@@ -75,7 +75,7 @@ export function atomWithObservable<TData>(
     let observable =
       typeof createObservable === 'function'
         ? createObservable(get)
-        : createObservable
+        : { enabled: true, ...createObservable }
 
     function getInitialData() {
       const initialData = (
@@ -118,17 +118,16 @@ export function atomWithObservable<TData>(
     }
 
     const dataAtom = atom<TData | Promise<TData>>(
-      enabled
-        ? new Promise<TData>((resolve, reject) => {
-            settlePromise = (data, err) => {
-              if (err) {
-                reject(err)
-              } else {
-                resolve(data as TData)
-              }
+      enabled &&
+        new Promise<TData>((resolve, reject) => {
+          settlePromise = (data, err) => {
+            if (err) {
+              reject(err)
+            } else {
+              resolve(data as TData)
             }
-          })
-        : initialData
+          }
+        })
     )
     let setData: (data: TData | Promise<TData>) => void = () => {
       throw new Error('setting data without mount')
