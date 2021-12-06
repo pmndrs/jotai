@@ -70,3 +70,29 @@ it('writable count state', async () => {
   fireEvent.click(getByText('button'))
   await findByText('count: 9')
 })
+
+it('count state from disabled', async () => {
+  const observableAtom = atomWithObservable({
+    enabled: false,
+    observableFn: () =>
+      new Observable<number>((subscriber) => {
+        subscriber.next(1)
+      }),
+  })
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+
+    return <>count: {state}</>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('count:')
+})
