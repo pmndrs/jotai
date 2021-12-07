@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
-import { splitAtom } from 'jotai/utils'
+import { splitAtom, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -374,4 +374,61 @@ it('no error on wrong atom configs (fix 510)', async () => {
 
   expect(numbersEl.textContent).toBe('0')
   expect(console.warn).toHaveBeenCalledTimes(1)
+})
+
+it.only('variable sized splitted atom', async () => {
+  const warn = jest.spyOn(global.console, 'warn')
+
+  const collectionAtom = atom<number[]>([])
+  const collectionAtomsAtom = splitAtom(collectionAtom)
+
+  const derivativeAtom = atom((get) =>
+    get(collectionAtomsAtom).map(
+      (ca) => get(ca) + Math.round(Math.random() * 150)
+    )
+  )
+
+  const numberAtom = atom(1)
+
+  const generateCollection = (number: number) =>
+    Array.from({ length: Math.round(Math.random() * 30) }, (_, i) => i + number)
+
+  function App() {
+    const [number, setNumber] = useAtom(numberAtom)
+    const setCollection = useUpdateAtom(collectionAtom)
+    const [derivative] = useAtom(derivativeAtom)
+
+    const generatedCollection = generateCollection(number)
+
+    useEffect(() => {
+      setCollection(generatedCollection)
+    }, [generatedCollection, number, setCollection])
+
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setNumber((prev) => prev + 1)
+          }}>
+          +{number}
+        </button>
+
+        {derivative.map((d, i) => (
+          <p key={i}>{d}</p>
+        ))}
+      </div>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  fireEvent.click(getByText('+1'))
+
+  expect(warn).not.toHaveBeenCalled()
+  warn.mockReset()
+  warn.mockRestore()
 })
