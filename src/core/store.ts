@@ -690,7 +690,7 @@ export const createStore = (
     const pending = Array.from(pendingMap)
     pendingMap.clear()
     pending.forEach(([atom, prevAtomState]) => {
-      const atomState = committedAtomStateMap.get(atom)
+      const atomState = getAtomState(undefined, atom)
       if (atomState && atomState.d !== prevAtomState?.d) {
         mountDependencies(atom, atomState, prevAtomState?.d || new Map())
       }
