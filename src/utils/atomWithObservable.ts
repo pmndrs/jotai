@@ -1,12 +1,6 @@
 import { atom } from 'jotai'
 import type { Atom, Getter, WritableAtom } from 'jotai'
 
-function isObservable(observable) {
-  return (
-    typeof observable === 'object' && typeof observable.subscribe === 'function'
-  )
-}
-
 declare global {
   interface SymbolConstructor {
     readonly observable: symbol
@@ -37,88 +31,52 @@ type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
 type InitialDataFunction<T> = () => T | undefined
 
-export type AtomWithObservableOptions<TData, TObservable> = {
+export type AtomWithObservableOptions<TData> = {
   initialData?: TData | InitialDataFunction<TData>
-  enabled?: boolean
-  observableFn: () => TObservable
 }
-export type CreateObservableOptions<Options, TData> =
-  | Options
-  | ((get: Getter) => ObservableLike<TData>)
+export type CreateObservableOptions<TData> = {
+  initialData?: TData
+}
 
 export function atomWithObservable<TData>(
-  createObservable: CreateObservableOptions<
-    AtomWithObservableOptions<TData, SubjectLike<TData>>,
-    TData
-  >
+  createObservable: (get: Getter) => SubjectLike<TData>,
+  options?: AtomWithObservableOptions<TData>
 ): WritableAtom<TData, TData>
 
 export function atomWithObservable<TData>(
-  createObservable: CreateObservableOptions<
-    AtomWithObservableOptions<TData, ObservableLike<TData>>,
-    TData
-  >
+  createObservable: (get: Getter) => ObservableLike<TData>,
+  options?: AtomWithObservableOptions<TData>
 ): Atom<TData>
 
 export function atomWithObservable<TData>(
-  createObservable: CreateObservableOptions<
-    AtomWithObservableOptions<
-      TData,
-      ObservableLike<TData> | SubjectLike<TData>
-    >,
-    TData
-  >
+  createObservable: (get: Getter) => ObservableLike<TData> | SubjectLike<TData>,
+  options?: AtomWithObservableOptions<TData>
 ) {
   const observableResultAtom = atom((get) => {
     let settlePromise: ((data: TData | null, err?: unknown) => void) | null =
       null
-    let observable =
-      typeof createObservable === 'function'
-        ? createObservable(get)
-        : { enabled: true, ...createObservable }
+    let observable = createObservable(get)
+    const itself = observable[Symbol.observable]?.()
+
+    if (itself) {
+      observable = itself
+    }
 
     function getInitialData() {
-      const initialData = (
-        observable as AtomWithObservableOptions<
-          TData,
-          ObservableLike<TData> | SubjectLike<TData>
-        >
-      ).initialData
+      const initialData = options?.initialData
+      if (!initialData) {
+        return
+      }
 
       if (typeof initialData !== 'function') {
         return typeof initialData === 'function' ? initialData() : initialData
       }
     }
 
-    function getEnabled() {
-      return !isObservable(observable)
-        ? (
-            observable as AtomWithObservableOptions<
-              TData,
-              ObservableLike<TData>
-            >
-          ).enabled
-        : true
-    }
-
     const initialData = getInitialData()
-    const enabled = getEnabled()
-
-    const itself: ObservableLike<TData> = isObservable(observable)
-      ? (observable as ObservableLike<TData>)[Symbol.observable]?.()
-      : (
-          observable as AtomWithObservableOptions<
-            TData,
-            ObservableLike<TData> | SubjectLike<TData>
-          >
-        ).observableFn?.()
-
-    if (itself) {
-      observable = itself
-    }
 
     const dataAtom = atom<TData | Promise<TData>>(
-      enabled && initialData === undefined
+      initialData === undefined
         ? new Promise<TData>((resolve, reject) => {
             settlePromise = (data, err) => {
               if (err) {
@@ -158,19 +116,17 @@ export function atomWithObservable<TData>(
       }
     }
     let subscription: Subscription | null = null
-    if (enabled) {
-      subscription = (observable as ObservableLike<TData>).subscribe(
-        dataListener,
-        errorListener
-      )
-    }
+    subscription = (observable as ObservableLike<TData>).subscribe(
+      dataListener,
+      errorListener
+    )
     if (!settlePromise && subscription) {
       subscription.unsubscribe()
       subscription = null
     }
     dataAtom.onMount = (update) => {
       setData = update
-      if (!subscription && enabled) {
+      if (!subscription) {
         subscription = (observable as ObservableLike<TData>).subscribe(
           dataListener,
           errorListener
