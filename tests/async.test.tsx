@@ -845,7 +845,8 @@ it('combine two promise atom values (#442)', async () => {
   await findByText('count: 3')
 })
 
-it('set two promise atoms at once', async () => {
+// FIXME let us revisit this after #877 is resolved
+itSkipIfVersionedWrite('set two promise atoms at once', async () => {
   const count1Atom = atom(new Promise<number>(() => {}))
   const count2Atom = atom(new Promise<number>(() => {}))
   const derivedAtom = atom((get) => get(count1Atom) + get(count2Atom))

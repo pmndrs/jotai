@@ -98,6 +98,43 @@ export const createStore = (
     }
   }
 
+  type SuspensePromiseCache = Map<VersionObject | undefined, SuspensePromise>
+  const suspensePromiseCacheMap = new WeakMap<AnyAtom, SuspensePromiseCache>()
+  const addSuspensePromiseToCache = (
+    version: VersionObject | undefined,
+    atom: AnyAtom,
+    suspensePromise: SuspensePromise
+  ): void => {
+    let cache = suspensePromiseCacheMap.get(atom)
+    if (!cache) {
+      cache = new Map()
+      suspensePromiseCacheMap.set(atom, cache)
+    }
+    suspensePromise.then(() => {
+      if ((cache as SuspensePromiseCache).get(version) === suspensePromise) {
+        ;(cache as SuspensePromiseCache).delete(version)
+        if (!(cache as SuspensePromiseCache).size) {
+          suspensePromiseCacheMap.delete(atom)
+        }
+      }
+    })
+    cache.set(version, suspensePromise)
+  }
+  const cancelAllSuspensePromiseInCache = (
+    atom: AnyAtom
+  ): Set<VersionObject | undefined> => {
+    const versionSet = new Set<VersionObject | undefined>()
+    const cache = suspensePromiseCacheMap.get(atom)
+    if (cache) {
+      suspensePromiseCacheMap.delete(atom)
+      cache.forEach((suspensePromise, version) => {
+        cancelSuspensePromise(suspensePromise)
+        versionSet.add(version)
+      })
+    }
+    return versionSet
+  }
+
   const versionedAtomStateMapMap = new WeakMap<
     VersionObject,
     Map<AnyAtom, AtomState>
@@ -251,6 +288,7 @@ export const createStore = (
       }
       cancelSuspensePromise(atomState.p)
     }
+    addSuspensePromiseToCache(version, atom, suspensePromise)
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
       ...(atomState && 'v' in atomState ? { v: atomState.v } : {}), // copy v
@@ -505,13 +543,13 @@ export const createStore = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
-        if (version) {
-          // FIXME this is not really intended
-          setAtomValue(version, a, v as any)
-          setAtomInvalidated(version, a)
-        } else {
-          setAtomPromiseOrValue(version, a, v)
-        }
+        const versionSet = cancelAllSuspensePromiseInCache(a)
+        versionSet.forEach((cancelledVersion) => {
+          if (cancelledVersion !== version) {
+            setAtomPromiseOrValue(cancelledVersion, a, v)
+          }
+        })
+        setAtomPromiseOrValue(version, a, v)
         invalidateDependents(version, a)
       } else {
         promiseOrVoid = writeAtomState(version, a as AnyWritableAtom, v)
