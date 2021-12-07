@@ -641,3 +641,94 @@ it('update unmounted atom with intermediate atom', async () => {
   fireEvent.click(getByText('toggle enabled'))
   await findByText('derived: 4')
 })
+
+it('Should bail for derived sync chains (#877)', async () => {
+  let syncAtomCount = 0
+  const textAtom = atom('hello')
+
+  const syncAtom = atom((get) => {
+    get(textAtom)
+    syncAtomCount++
+    return 'My very long data'
+  })
+
+  const derivedAtom = atom((get) => {
+    return get(syncAtom)
+  })
+
+  const Input = () => {
+    const [result] = useAtom(derivedAtom)
+    return <div>{result}</div>
+  }
+
+  const ForceValue = () => {
+    const setText = useAtom(textAtom)[1]
+    return (
+      <div>
+        <button onClick={() => setText('hello')}>set value to 'hello'</button>
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Input />
+      <ForceValue />
+    </Provider>
+  )
+
+  await findByText('My very long data')
+  expect(syncAtomCount).toBe(1)
+
+  fireEvent.click(getByText(`set value to 'hello'`))
+
+  await findByText('My very long data')
+  expect(syncAtomCount).toBe(1)
+})
+
+it('Should bail for derived async chains (#877)', async () => {
+  let syncAtomCount = 0
+  const textAtom = atom('hello')
+
+  const asyncAtom = atom(async (get) => {
+    get(textAtom)
+    await new Promise((r) => setTimeout(r, 1))
+    syncAtomCount++
+    return 'My very long data'
+  })
+
+  const derivedAtom = atom((get) => {
+    return get(asyncAtom)
+  })
+
+  const Input = () => {
+    const [result] = useAtom(derivedAtom)
+    return <div>{result}</div>
+  }
+
+  const ForceValue = () => {
+    const setText = useAtom(textAtom)[1]
+    return (
+      <div>
+        <button onClick={() => setText('hello')}>set value to 'hello'</button>
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Input />
+        <ForceValue />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('My very long data')
+  expect(syncAtomCount).toBe(1)
+
+  fireEvent.click(getByText(`set value to 'hello'`))
+
+  await findByText('My very long data')
+  expect(syncAtomCount).toBe(1)
+})

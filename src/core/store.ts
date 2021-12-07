@@ -426,6 +426,11 @@ export const createStore = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
+        const aState = getAtomState(a)
+        // Bail out, if update value and current value are equal
+        if (aState && 'v' in aState && Object.is(aState.v, v)) {
+          return
+        }
         setAtomPromiseOrValue(a, v)
         invalidateDependents(a)
         flushPending()
