@@ -26,6 +26,13 @@ export const Provider = ({
 }: PropsWithChildren<{
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
   scope?: Scope
+  /**
+   * This is an unstable experimental feature for React 18.
+   * When this is enabled, a) write function must be pure
+   * (read function must be pure regardless of this),
+   * b) React will show warning in DEV mode,
+   * c) then state branching works.
+   */
   unstable_enableVersionedWrite?: boolean
 }>) => {
   const [version, setVersion] = useState<VersionObject>()
