@@ -311,14 +311,34 @@ discarding changes made previously via the `set` function.
 ### Usage
 
 ```js
-atomWithHash(key, initialValue): PrimitiveAtom
+atomWithHash(key, initialValue, options): PrimitiveAtom
 ```
 
-This creats a new atom that is connected with URL hash.
+This creates a new atom that is connected with URL hash.
 The hash must be in the URLSearchParams format.
-It's two-way binding: changing atom value will change the hash and
+It’s a two-way binding: changing the atom value will change the hash and
 changing the hash will change the atom value.
 This function works only with DOM.
+
+### Parameters
+
+**key** (required): a unique string used as the key when syncing state with localStorage, sessionStorage, or AsyncStorage
+
+**initialValue** (required): the initial value of the atom
+
+**options** (optional): an object of options to customize the behavior of the atom
+
+### Options
+
+**serialize** (optional): a custom function to serialize the atom value to the hash. Defaults to `JSON.stringify`.
+
+**deserialize** (optional): a custom function to deserialize the hash to the atom value. Defaults to `JSON.parse`.
+
+**delayInit** (optional): delay initialization of the atom to when `onMount` is called. See [#739](https://github.com/pmndrs/jotai/issues/739#issuecomment-929260696). Defaults to `true`.
+
+**replaceState** (optional): when the atom value is changed, replace the current history entry instead of adding a new one. See [#660](https://github.com/pmndrs/jotai/issues/660). Defaults to `false`.
+
+**subscribe** (optional): custom hash change subscribe function
 
 ### Examples
 
