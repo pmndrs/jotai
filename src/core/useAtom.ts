@@ -45,7 +45,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     if ('e' in atomState) {
       throw atomState.e // read error
     }
-    if (atomState.p) {
+    if ('p' in atomState) {
       throw atomState.p // read promise
     }
     if ('v' in atomState) {
