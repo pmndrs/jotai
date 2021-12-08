@@ -16,7 +16,7 @@ const createAtomsSnapshot = (
 ): AtomsSnapshot => {
   const tuples = atoms.map<[Atom<unknown>, unknown]>((atom) => {
     const atomState = store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
-    return [atom, atomState.v]
+    return [atom, 'v' in atomState ? atomState.v : undefined]
   })
   return new Map(tuples)
 }
