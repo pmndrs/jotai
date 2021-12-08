@@ -28,13 +28,10 @@ type ReadDependencies = Map<AnyAtom, Revision>
 
 // immutable atom state
 export type AtomState<Value = unknown> = {
-  e?: ReadError
-  p?: SuspensePromise
-  v?: ResolveType<Value>
   r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
-}
+} & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
 
 export type VersionObject = { p?: VersionObject }
 
@@ -160,7 +157,7 @@ export const createStore = (
       if (!atomState) {
         atomState = getAtomState(version.p, atom)
         if (atomState) {
-          if (atomState.p) {
+          if ('p' in atomState) {
             atomState.p.then(() => versionedAtomStateMap.delete(atom))
           }
           versionedAtomStateMap.set(atom, atomState)
@@ -210,12 +207,13 @@ export const createStore = (
     if (atomState) {
       if (
         suspensePromise &&
-        (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
+        (!('p' in atomState) ||
+          !isEqualSuspensePromise(atomState.p, suspensePromise))
       ) {
         // newer async read is running, not updating
         return atomState
       }
-      if (atomState.p) {
+      if ('p' in atomState) {
         cancelSuspensePromise(atomState.p)
       }
     }
@@ -228,8 +226,6 @@ export const createStore = (
     }
     if (
       !atomState ||
-      'e' in atomState || // has read error, or
-      atomState.p || // has suspense promise, or
       !('v' in atomState) || // new value, or
       !Object.is(atomState.v, value) // different value
     ) {
@@ -253,18 +249,18 @@ export const createStore = (
     if (atomState) {
       if (
         suspensePromise &&
-        (!atomState.p || !isEqualSuspensePromise(atomState.p, suspensePromise))
+        (!('p' in atomState) ||
+          !isEqualSuspensePromise(atomState.p, suspensePromise))
       ) {
         // newer async read is running, not updating
         return atomState
       }
-      if (atomState.p) {
+      if ('p' in atomState) {
         cancelSuspensePromise(atomState.p)
       }
     }
     const nextAtomState: AtomState<Value> = {
       e: error, // set read error
-      ...(atomState && 'v' in atomState ? { v: atomState.v } : {}), // copy v
       r: atomState?.r || 0,
       d: dependencies
         ? getReadDependencies(version, dependencies)
@@ -281,7 +277,7 @@ export const createStore = (
     dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
-    if (atomState && atomState.p) {
+    if (atomState && 'p' in atomState) {
       if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
         // the same promise, not updating
         return atomState
@@ -291,7 +287,6 @@ export const createStore = (
     addSuspensePromiseToCache(version, atom, suspensePromise)
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
-      ...(atomState && 'v' in atomState ? { v: atomState.v } : {}), // copy v
       r: atomState?.r || 0,
       d: dependencies
         ? getReadDependencies(version, dependencies)
@@ -317,11 +312,12 @@ export const createStore = (
           .catch((e) => {
             if (e instanceof Promise) {
               if (
-                !isSuspensePromise(e) ||
+                isSuspensePromise(e) &&
                 isSuspensePromiseAlreadyCancelled(e)
               ) {
                 // schedule another read later
-                e.finally(() => readAtomState(version, atom, true))
+                // FIXME not 100% confident with this code
+                e.then(() => readAtomState(version, atom, true))
               }
               return e
             }
@@ -382,7 +378,7 @@ export const createStore = (
                 aState &&
                 aState.r === aState.i // revision is invalidated
               ) {
-                readAtomState(version, a, true)
+                readAtomState(version, a)
               }
             }
           }
@@ -393,7 +389,7 @@ export const createStore = (
             return (
               aState &&
               !('e' in aState) && // no read error
-              !aState.p && // no suspense promise
+              !('p' in aState) && // no suspense promise
               aState.r !== aState.i && // revision is not invalidated
               aState.r === r // revision is equal to the last one
             )
@@ -415,7 +411,7 @@ export const createStore = (
           if ('e' in aState) {
             throw aState.e // read error
           }
-          if (aState.p) {
+          if ('p' in aState) {
             throw aState.p // suspense promise
           }
           return aState.v as ResolveType<V> // value
@@ -502,7 +498,7 @@ export const createStore = (
       if ('e' in aState) {
         throw aState.e // read error
       }
-      if (aState.p) {
+      if ('p' in aState) {
         if (options?.unstable_promise) {
           return aState.p.then(() =>
             writeGetter(a as unknown as Atom<Promise<unknown>>, options as any)
@@ -542,11 +538,6 @@ export const createStore = (
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
-        }
-        const aState = getAtomState(version, a)
-        // Bail out, if update value and current value are equal
-        if (aState && 'v' in aState && Object.is(aState.v, v)) {
-          return
         }
         const versionSet = cancelAllSuspensePromiseInCache(a)
         versionSet.forEach((cancelledVersion) => {

@@ -89,7 +89,9 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
         [
           atomToPrintable(atom),
           {
-            value: atomState.e || atomState.p || atomState.v,
+            ...('e' in atomState && { error: atomState.e }),
+            ...('p' in atomState && { promise: atomState.p }),
+            ...('v' in atomState && { value: atomState.v }),
             dependents: Array.from(dependents).map(atomToPrintable),
           },
         ],
