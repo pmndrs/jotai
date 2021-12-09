@@ -401,7 +401,13 @@ it.only('variable sized splitted atom', async () => {
     const generatedCollection = generateCollection(number)
 
     useEffect(() => {
-      setCollection(generatedCollection)
+      const oneArray = [1, 2, 3]
+      const twoArray = [1, 2]
+      if (number === 1) {
+        setCollection(oneArray)
+      } else {
+        setCollection(twoArray)
+      }
     }, [generatedCollection, number, setCollection])
 
     return (
