@@ -6,21 +6,11 @@ const memoizeAtom = createMemoizeAtom()
 
 type ResolveType<T> = T extends Promise<infer V> ? V : T
 
-export function waitForAll<Values extends Record<string, unknown>>(atoms: {
-  [K in keyof Values]: Atom<Values[K]>
-}): Atom<{
-  [K in keyof Values]: ResolveType<Values[K]>
-}>
-
-export function waitForAll<Values extends readonly unknown[]>(atoms: {
-  [K in keyof Values]: Atom<Values[K]>
-}): Atom<{
-  [K in keyof Values]: ResolveType<Values[K]>
-}>
-
 export function waitForAll<
   Values extends Record<string, unknown> | readonly unknown[]
->(atoms: any /* FIXME { [K in keyof Values]: Atom<Values[K]> } */) {
+>(atoms: { [K in keyof Values]: Atom<Values[K]> }): Atom<{
+  [K in keyof Values]: ResolveType<Values[K]>
+}> {
   const createAtom = () => {
     const unwrappedAtoms = unwrapAtoms(atoms)
     const derivedAtom = atom((get) => {
@@ -39,7 +29,9 @@ export function waitForAll<
       if (promises.length) {
         throw Promise.all(promises)
       }
-      return wrapResults(atoms, values)
+      return wrapResults(atoms, values) as {
+        [K in keyof Values]: ResolveType<Values[K]>
+      }
     })
     return derivedAtom
   }
