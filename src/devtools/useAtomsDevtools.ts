@@ -50,14 +50,17 @@ const serializeSnapshot = (snapshot: AtomsSnapshot) => {
 }
 
 const atomToDebuggingString = (atom: Atom<unknown>) =>
-  `${atom}:${atom.debugLabel}`
+  `${atom}:${atom.debugLabel ? atom.debugLabel : atom}`
 
 const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
   const result: Record<string, string[]> = {}
 
   snapshot.forEach((_, atom) => {
-    const atomState = store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
+    const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
 
+    if (!atomState) {
+      return
+    }
     result[atomToDebuggingString(atom)] = [...atomState.d.keys()].map(
       atomToDebuggingString
     )
