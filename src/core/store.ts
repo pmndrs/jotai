@@ -33,7 +33,7 @@ export type AtomState<Value = unknown> = {
   d: ReadDependencies
 } & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
 
-export type VersionObject = { p?: VersionObject }
+export type VersionObject = { p?: VersionObject } // "p"arent version
 
 type Listeners = Set<(version?: VersionObject) => void>
 type Dependents = Set<AnyAtom>
