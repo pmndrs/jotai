@@ -1,16 +1,12 @@
-import { fireEvent, render } from '@testing-library/react'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useAtomDevtools } from 'jotai/devtools'
+import { Suspense } from 'react'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
 let extensionSubscriber: ((message: any) => void) | undefined
-
-let sendArgs: [
-  string,
-  { values: Record<string, unknown>; dependencies: Record<string, unknown> }
-]
 
 const extension = {
   subscribe: jest.fn((f) => {
@@ -18,9 +14,7 @@ const extension = {
     return () => {}
   }),
   unsubscribe: jest.fn(),
-  send: jest.fn((title, value) => {
-    sendArgs = [title, value]
-  }),
+  send: jest.fn(),
   init: jest.fn(),
   error: jest.fn(),
 }
@@ -39,7 +33,6 @@ beforeEach(() => {
 
 it('connects to the extension by initialiing', () => {
   const countAtom = atom(0)
-  countAtom.debugLabel = 'countAtom'
 
   const Counter = () => {
     useAtomDevtools(countAtom)
@@ -69,7 +62,6 @@ describe('If there is no extension installed...', () => {
   })
 
   const countAtom = atom(0)
-  countAtom.debugLabel = 'countAtom'
 
   const Counter = () => {
     useAtomDevtools(countAtom)
@@ -155,7 +147,121 @@ it('updating state should call devtools.send', async () => {
 })
 
 describe('when it receives an message of type...', () => {
+  it('updating state with ACTION', async () => {
+    const countAtom = atom(0)
+
+    const Counter = () => {
+      useAtomDevtools(countAtom)
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    extension.send.mockClear()
+    const { getByText, findByText } = render(
+      <Provider>
+        <Suspense fallback={'loading'}>
+          <Counter />
+        </Suspense>
+      </Provider>
+    )
+
+    expect(extension.send).toBeCalledTimes(0)
+    fireEvent.click(getByText('button'))
+    await findByText('count: 1')
+    expect(extension.send).toBeCalledTimes(1)
+    act(() =>
+      (extensionSubscriber as (message: any) => void)({
+        type: 'ACTION',
+        payload: JSON.stringify(0),
+      })
+    )
+    await findByText('count: 0')
+    expect(extension.send).toBeCalledTimes(2)
+  })
+
   describe('DISPATCH and payload of type...', () => {
+    it('dispatch & COMMIT', async () => {
+      const countAtom = atom(0)
+
+      const Counter = () => {
+        useAtomDevtools(countAtom)
+        const [count, setCount] = useAtom(countAtom)
+        return (
+          <>
+            <div>count: {count}</div>
+            <button onClick={() => setCount((c) => c + 1)}>button</button>
+          </>
+        )
+      }
+
+      extension.send.mockClear()
+      const { getByText, findByText } = render(
+        <Provider>
+          <Counter />
+        </Provider>
+      )
+
+      expect(extension.send).toBeCalledTimes(0)
+      fireEvent.click(getByText('button'))
+      await findByText('count: 1')
+      expect(extension.send).toBeCalledTimes(1)
+      fireEvent.click(getByText('button'))
+      await findByText('count: 2')
+      act(() =>
+        (extensionSubscriber as (message: any) => void)({
+          type: 'DISPATCH',
+          payload: { type: 'COMMIT' },
+        })
+      )
+      await findByText('count: 2')
+      expect(extension.init).toBeCalledWith(2)
+    })
+
+    it('dispatch & IMPORT_STATE', async () => {
+      const countAtom = atom(0)
+
+      const Counter = () => {
+        useAtomDevtools(countAtom)
+        const [count, setCount] = useAtom(countAtom)
+        return (
+          <>
+            <div>count: {count}</div>
+            <button onClick={() => setCount((c) => c + 1)}>button</button>
+          </>
+        )
+      }
+
+      extension.send.mockClear()
+      const { getByText, findByText } = render(
+        <Provider>
+          <Counter />
+        </Provider>
+      )
+
+      const nextLiftedState = {
+        computedStates: [{ state: 5 }, { state: 6 }],
+      }
+      expect(extension.send).toBeCalledTimes(0)
+      fireEvent.click(getByText('button'))
+      await findByText('count: 1')
+      expect(extension.send).toBeCalledTimes(1)
+      fireEvent.click(getByText('button'))
+      await findByText('count: 2')
+      act(() =>
+        (extensionSubscriber as (message: any) => void)({
+          type: 'DISPATCH',
+          payload: { type: 'IMPORT_STATE', nextLiftedState },
+        })
+      )
+      expect(extension.init).toBeCalledWith(5)
+      await findByText('count: 6')
+    })
+
     describe('JUMP_TO_STATE | JUMP_TO_ACTION...', () => {
       it('time travelling', async () => {
         const countAtom = atom(0)
@@ -182,12 +288,13 @@ describe('when it receives an message of type...', () => {
         fireEvent.click(getByText('button'))
         await findByText('count: 1')
         expect(extension.send).toBeCalledTimes(1)
-        debugger
-        ;(extensionSubscriber as (message: any) => void)({
-          type: 'DISPATCH',
-          payload: { type: 'JUMP_TO_ACTION' },
-          state: JSON.stringify(0),
-        })
+        act(() =>
+          (extensionSubscriber as (message: any) => void)({
+            type: 'DISPATCH',
+            payload: { type: 'JUMP_TO_ACTION' },
+            state: JSON.stringify(0),
+          })
+        )
         await findByText('count: 0')
         expect(extension.send).toBeCalledTimes(1)
         fireEvent.click(getByText('button'))
