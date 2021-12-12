@@ -1,7 +1,7 @@
-import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { Suspense } from 'react'
+import { act, fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useAtomDevtools } from 'jotai/devtools'
-import { Suspense } from 'react'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
