@@ -1,0 +1,52 @@
+---
+title: useHydrateAtoms
+nav: 6.19
+---
+
+Ref: https://github.com/pmndrs/jotai/issues/340
+
+## Usage
+
+```tsx
+import { atom, useAtom } from 'jotai'
+import { useHydrateAtoms } from 'jotai/utils'
+
+const countAtom = atom(0)
+const CounterPage = ({ countFromServer }) => {
+  useHydrateAtoms([[countAtom, countFromServer]])
+  const [count] = useAtom(countAtom)
+  // count would be the value of `countFromServer`, not 0.
+}
+```
+
+The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an initial value is e.g. fetched on the server, which can be passed to a component by props.
+
+```ts
+// Definition
+function useHydrateAtoms(values: Iterable<readonly [Atom<unknown>, unknown]>, scope?: Scope): void
+```
+
+The hook takes an iterable of tuples containing `[atom, value]` as an argument and optionally scope.
+
+```ts
+// Usage with an array, specifying a scope
+useHydrateAtoms([[countAtom, 42], [frameworkAtom, "Next.js"]], myScope)
+// Or with a map
+const [initialValues] = useState(() => new Map([[count, 42]]))
+useHydrateAtoms(initialValues)
+```
+
+Atoms can only be hydrated once per scope. Therefore, if the initial value used is changed during rerenders, it won't update the atom value.
+
+If there's a need to hydrate in multiple scopes, use multiple `useHydrateAtoms` hooks to achieve that.
+
+```ts
+useHydrateAtoms([[countAtom, 42], [frameworkAtom, "Next.js"]])
+useHydrateAtoms([[countAtom, 17], [frameworkAtom, "Gatsby"]], myScope)
+```
+
+## Codesandbox
+
+<CodeSandbox id="snu7n" />
+
+There's more examples in the [Next.js section](../guides/nextjs.mdx).

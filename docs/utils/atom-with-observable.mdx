@@ -1,0 +1,29 @@
+---
+title: atomWithObservable
+nav: 6.02
+---
+
+Ref: https://github.com/pmndrs/jotai/pull/341
+
+## Usage
+```ts
+import { useAtom } from 'jotai'
+import { atomWithObservable } from 'jotai/utils'
+import { interval } from 'rxjs'
+
+const counterSubject = interval(1000).pipe(map((i) => `#${i}`));
+const counterAtom = atomWithObservable(() => counterSubject);
+
+const Counter = () => {
+  const [counter] = useAtom(counterAtom)
+  return <div>count: {counter}</div>;
+}
+```
+
+The `atomWithObservable` function creates an atom from a rxjs (or similar) `subject` or `observable`.
+Its value will be last value emitted from the stream.
+
+To use this atom, you need to wrap your component with `<Suspense>`. Check out [basics/async](../basics/async.mdx).
+
+### Codesandbox
+<CodeSandbox id="88pnt" />
