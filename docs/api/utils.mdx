@@ -6,81 +6,81 @@ nav: 2.2
 
 ## Table of Contents
 
-1. [atomWithStorage](#atomWithStorage)
+1. [atomWithStorage](#atom-with-storage)
 
-   The atomWithStorage function creates an atom with a value persisted in localStorage or sessionStorage for React or AsyncStorage for React Native.
+   The `atomWithStorage` function creates an atom with a value persisted in `localStorage` or `sessionStorage` for React or `AsyncStorage` for React Native.
 
-2. [atomWithObservable](#atomWithObservable)
+2. [atomWithObservable](#atom-with-observable)
    
-   The atomWithObservable function creates an atom from a rxjs (or similar) subject or observable. Its value will be last value emitted from the stream.
+   The `atomWithObservable` function creates an atom from a rxjs (or similar) `subject` or `observable`. Its value will be last value emitted from the stream.
 
-3. [useUpdateAtom](#useUpdateAtom)
+3. [useUpdateAtom](#use-update-atom)
    
-   Use useUpdateAtom and write-only atoms to avoid re-render.
+   Use `useUpdateAtom` and write-only atoms to avoid re-render.
 
-4. [useAtomValue](#useAtomValue)
+4. [useAtomValue](#use-atom-value)
    
    Returns the value of the given atom.
 
-5. [atomWithReset](#atomWithReset)
+5. [atomWithReset](#atom-with-reset)
    
-   Creates an atom that could be reset to its initialValue with useResetAtom hook.
+   Creates an atom that could be reset to its `initialValue` with `useResetAtom` hook.
 
-6. [useResetAtom](#useResetAtom)
+6. [useResetAtom](#use-reset-atom)
    
    Resets a Resettable atom to its initial value.
 
-7. [RESET](#RESET)
+7. [RESET](#reset)
    
-   Special value that is accepted by Resettable atoms created with atomWithReset, atomWithDefault or writable atom created with atom if it accepts RESET symbol.
+   Special value that is accepted by Resettable atoms created with `atomWithReset`, `atomWithDefault` or writable atom created with atom if it accepts `RESET` symbol.
 
-8. [useReducerAtom](#useReducerAtom)
+8. [useReducerAtom](#use-reducer-atom)
    
    Use this hook to update an atom value with a reducer function.
 
-9.  [atomWithReducer](#atomWithReducer)
+9.  [atomWithReducer](#atom-with-reducer)
     
     This is a function to create an atom with an embeded reducer function to update the value.
 
-10. [atomWithDefault](#atomWithDefault)
+10. [atomWithDefault](#atom-with-default)
     
     This is a function to create an overwritable primitive atom. Its default value can be specified with a read function instead of a static initial value.
 
-11. [atomWithHash](#atomWithHash)
+11. [atomWithHash](#atom-with-hash)
     
     This creates a new atom that is connected with URL hash.
 
-12. [atomFamily](#atomFamily)
+12. [atomFamily](#atom-family)
     
     This will create a function that takes param and returns an atom.
 
-13. [selectAtom](#selectAtom)
+13. [selectAtom](#select-atom)
     
-    This function creates a derived atom whose value is a function of the original atom's value, determined by selector.
+    This function creates a derived atom whose value is a function of the original atom's value, determined by `selector`.
 
-14. [useAtomCallback](#useAtomCallback)
+14. [useAtomCallback](#use-atom-callback)
     
     This hook allows to interact with atoms imperatively.
 
-15. [freezeAtom](#freezeAtom)
+15. [freezeAtom](#freeze-atom)
     
-    The freezeAtom takes an existing atom and returns a new derived atom. The value with the new derived atom will be frozen (= not mutable).
+    The `freezeAtom` takes an existing atom and returns a new derived atom. The value with the new derived atom will be frozen (= not mutable).
 
-16. [freezeAtomCreator](#freezeAtomCreator)
+16. [freezeAtomCreator](#freeze-atom-creator)
     
-    Instead of create a frozen atom from an existing atom, freezeAtomCreator takes an atom creator function and returns a new function.
+    Instead of create a frozen atom from an existing atom, `freezeAtomCreator` takes an atom creator function and returns a new function.
 
-17. [splitAtom](#splitAtom)
+17. [splitAtom](#split-atom)
     
-    The splitAtom utility is useful for when you want to get an atom for each element in a list.
+    The `splitAtom` utility is useful for when you want to get an atom for each element in a list.
 
-18. [waitForAll](#waitForAll)
+18. [waitForAll](#wait-for-all)
     
-    The waitForAll utility is a concurrency helper, which allows us to evaluate multiple async atoms.
+    The `waitForAll` utility is a concurrency helper, which allows us to evaluate multiple async atoms.
 
-19. [useHydrateAtoms](#useHydrateAtoms)
+19. [useHydrateAtoms](#use-hydrate-atoms)
     
-    The primary use case for useHydrateAtoms are SSR apps like Next.js, where an initial value is e.g. fetched on the server, which can be passed to a component by props.
+    The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an initial value is e.g. fetched on the server, which can be passed to a component by props.
 
 ---
 
