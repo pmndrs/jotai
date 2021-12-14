@@ -1,0 +1,26 @@
+---
+title: useAtomValue
+nav: 6.04
+---
+
+Ref: https://github.com/pmndrs/jotai/issues/212
+
+```jsx
+import { atom, Provider, useAtom } from 'jotai'
+import { useAtomValue } from 'jotai/utils'
+
+const countAtom = atom(0)
+
+const Counter = () => {
+  const setCount = useUpdateAtom(countAtom)
+  const count = useAtomValue(countAtom)
+  return (
+    <>
+      <div>count: {count}</div>
+      <button onClick={() => setCount(count + 1)}>+1</button>
+    </>
+  )
+}
+```
+
+<CodeSandbox id="1x90m" />

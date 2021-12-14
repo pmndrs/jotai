@@ -1,0 +1,26 @@
+---
+title: useUpdateAtom
+nav: 6.03
+---
+
+Ref: https://github.com/pmndrs/jotai/issues/26
+
+```jsx
+import { atom, useAtom } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
+
+const countAtom = atom(0)
+
+const Counter = () => {
+  const [count] = useAtom(countAtom)
+  return <div>count: {count}</div>
+}
+
+const Controls = () => {
+  const setCount = useUpdateAtom(countAtom)
+  const inc = () => setCount((c) => c + 1)
+  return <button onClick={inc}>+1</button>
+}
+```
+
+<CodeSandbox id="hsyfr" />
