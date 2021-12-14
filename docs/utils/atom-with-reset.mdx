@@ -1,0 +1,26 @@
+---
+title: atomWithReset
+nav: 6.05
+---
+
+Ref: https://github.com/pmndrs/jotai/issues/41
+
+```ts
+function atomWithReset<Value>(
+  initialValue: Value
+): WritableAtom<Value, SetStateAction<Value> | typeof RESET>
+```
+
+Creates an atom that could be reset to its `initialValue` with
+[`useResetAtom`](../api/utils.mdx#use-reset-atom) hook. It works exactly the same
+way as primitive atom would, but you are also able to set it to a special value
+[`RESET`](../api/utils.mdx#reset). See examples in [Resettable atoms](../guides/resettable.mdx).
+
+## Example
+
+```js
+import { atomWithReset } from 'jotai/utils'
+
+const dollarsAtom = atomWithReset(0)
+const todoListAtom = atomWithReset([{ description: 'Add a todo', checked: false }])
+```

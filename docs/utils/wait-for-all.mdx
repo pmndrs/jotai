@@ -1,0 +1,78 @@
+---
+title: waitForAll
+nav: 6.18
+---
+
+Sometimes you have multiple async atoms in your components:
+
+```tsx
+const dogsAtom = atom(async (get) => {
+  const response = await fetch('/dogs')
+  return await response.json()
+})
+const catsAtom = atom(async (get) => {
+  const response = await fetch('/cats')
+  return await response.json()
+})
+
+const App = () => {
+  const [dogs] = useAtom(dogsAtom)
+  const [cats] = useAtom(catsAtom)
+  // ...
+}
+```
+
+However, this will start fetching one at the time, which is not optimal - It would be better if we can start fetching both as soon as possible.
+
+The `waitForAll` utility is a concurrency helper, which allows us to evaluate multiple async atoms:
+
+```tsx
+const dogsAtom = atom(async (get) => {
+  const response = await fetch('/dogs')
+  return await response.json()
+})
+const catsAtom = atom(async (get) => {
+  const response = await fetch('/cats')
+  return await response.json()
+})
+
+const App = () => {
+  const [[dogs, cats]] = useAtom(waitForAll([dogsAtom, catsAtom]))
+  // or ...
+  const [dogs, cats] = useAtomValue(waitForAll([dogsAtom, catsAtom]))
+  // ...
+}
+```
+
+You can also use `waitForAll` inside an atom - It's also possible to name them for readability:
+
+```tsx
+const dogsAtom = atom(async (get) => {
+  const response = await fetch('/dogs')
+  return await response.json()
+})
+const catsAtom = atom(async (get) => {
+  const response = await fetch('/cats')
+  return await response.json()
+})
+
+const animalsAtom = atom((get) => {
+  return get(
+    waitForAll({
+      dogs: dogsAtom,
+      cats: catsAtom,
+    })
+  )
+})
+
+const App = () => {
+  const [{ dogs, cats }] = useAtom(animalsAtom)
+  // or ...
+  const { dogs, cats } = useAtomValue(animalsAtom)
+  // ...
+}
+```
+
+## Codesandbox
+
+<CodeSandbox id="krwsv" />

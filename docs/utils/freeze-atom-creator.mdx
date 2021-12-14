@@ -1,0 +1,16 @@
+---
+title: freezeAtomCreator
+nav: 6.16
+---
+
+```js
+import { atom } from 'jotai'
+import { freezeAtomCreator } from 'jotai/utils'
+
+const createFrozenAtom = freezeAtomCreator(atom)
+const objAtom = createFrozenAtom({ count: 0 })
+```
+
+Instead of create a frozen atom from an existing atom,
+`freezeAtomCreator` takes an atom creator function and returns a new function.
+You can use this not only for `atom`, but also for other `atomWith*` creators such as `atomWithReduer`.

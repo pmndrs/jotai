@@ -1,0 +1,44 @@
+---
+title: atomWithStorage
+nav: 6.01
+---
+
+Ref: https://github.com/pmndrs/jotai/pull/394
+
+```ts
+import { useAtom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
+
+const darkModeAtom = atomWithStorage('darkMode', false)
+
+const Page = () => {
+  const [darkMode, setDarkMode] = useAtom(darkModeAtom)
+
+  return (
+    <>
+      <h1>Welcome to {darkMode ? 'dark' : 'light'} mode!</h1>
+      <button onClick={() => setDarkMode(!darkMode)}>toggle theme</button>
+    </>
+  )
+}
+```
+
+The `atomWithStorage` function creates an atom with a value persisted in `localStorage` or `sessionStorage` for React or `AsyncStorage` for React Native.
+
+## Parameters
+
+**key** (required): a unique string used as the key when syncing state with localStorage, sessionStorage, or AsyncStorage
+
+**initialValue** (required): the initial value of the atom
+
+**storage** (optional): an object with `getItem` and `setItem` methods for storing/retreiving persisted state; defaults to using `localStorage` for storage/retreival and `JSON.stringify()`/`JSON.parse()` for serialization/deserialization
+
+<CodeSandbox id="7dfib" />
+
+## Server-side rendering
+
+Any JSX markup that depends on the value of a stored atom (e.g., a `className` or `style` prop) will use the `initialValue` when rendered on the server (since `localStorage` and `sessionStorage` are not available on the server).
+
+This means that there will be a mismatch between what is originally served to the user's browser as HTML and what is expected by React during the rehydration process if the user has a `storedValue` that differs from the `initialValue`.
+
+The suggested workaround for this issue is to only render the content dependent on the `storedValue` client-side by wrapping it in a [custom `<ClientOnly>` wrapper](https://www.joshwcomeau.com/react/the-perils-of-rehydration/#abstractions), which only renders after rehydration. Alternative solutions are technically possible, but would require a brief "flicker" as the `initialValue` is swapped to the `storedValue`, which can result in an unpleasant user experience, so this solution is advised.

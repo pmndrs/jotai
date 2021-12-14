@@ -1,0 +1,18 @@
+---
+title: freezeAtom
+nav: 6.15
+---
+
+```js
+import { atom } from 'jotai'
+import { freezeAtom } from 'jotai/utils'
+
+const objAtom = freezeAtom(atom({ count: 0 }))
+```
+
+`freezeAtom` takes an existing atom and returns a new derived atom.
+The returned atom is "frozen" which means when you use the atom
+with `useAtom` in components or `get` in other atoms,
+the atom value will be deeply frozen with Object.freeze.
+It would be useful to find bugs where you accidentally tried
+to mutate objects which can lead to unexpected behavior.
