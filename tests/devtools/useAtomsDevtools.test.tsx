@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react'
+import { act, fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useAtomsDevtools } from 'jotai/devtools'
 import { getTestProvider } from '../testUtils'
@@ -175,7 +175,6 @@ it('dependencies + updating state should call devtools.send', async () => {
       <Counter />
     </Provider>
   )
-  console.log(sendArgs)
   expect(extension.send).toBeCalledTimes(1)
   expect(sendArgs[0]).toContain('action:1')
   expect(sendArgs[1].values).toEqual({
@@ -202,6 +201,51 @@ it('dependencies + updating state should call devtools.send', async () => {
 
 describe('when it receives an message of type...', () => {
   describe('DISPATCH and payload of type...', () => {
+    it('dispatch & COMMIT', async () => {
+      const countAtom = atom(0)
+
+      const Counter = () => {
+        useAtomsDevtools('test')
+        const [count, setCount] = useAtom(countAtom)
+        return (
+          <>
+            <div>count: {count}</div>
+            <button onClick={() => setCount((c) => c + 1)}>button</button>
+          </>
+        )
+      }
+
+      extension.send.mockClear()
+      const { getByText, findByText } = render(
+        <Provider>
+          <Counter />
+        </Provider>
+      )
+
+      expect(extension.send).toBeCalledTimes(1)
+      fireEvent.click(getByText('button'))
+      await findByText('count: 1')
+      expect(extension.send).toBeCalledTimes(2)
+      fireEvent.click(getByText('button'))
+      await findByText('count: 2')
+      act(() =>
+        (extensionSubscriber as (message: any) => void)({
+          type: 'DISPATCH',
+          payload: { type: 'COMMIT' },
+        })
+      )
+
+      await findByText('count: 2')
+      expect(extension.init).toBeCalledWith({
+        values: {
+          [`${countAtom}:${countAtom}`]: 2,
+        },
+        dependencies: {
+          [`${countAtom}:${countAtom}`]: [`${countAtom}:${countAtom}`],
+        },
+      })
+    })
+
     describe('JUMP_TO_STATE | JUMP_TO_ACTION...', () => {
       it('time travelling', async () => {
         const countAtom = atom(0)
@@ -228,10 +272,12 @@ describe('when it receives an message of type...', () => {
         fireEvent.click(getByText('button'))
         await findByText('count: 1')
         expect(extension.send).toBeCalledTimes(2)
-        ;(extensionSubscriber as (message: any) => void)({
-          type: 'DISPATCH',
-          payload: { type: 'JUMP_TO_ACTION', actionId: 1 },
-        })
+        act(() =>
+          (extensionSubscriber as (message: any) => void)({
+            type: 'DISPATCH',
+            payload: { type: 'JUMP_TO_ACTION', actionId: 1 },
+          })
+        )
         await findByText('count: 0')
         expect(extension.send).toBeCalledTimes(2)
         fireEvent.click(getByText('button'))
@@ -265,17 +311,21 @@ describe('when it receives an message of type...', () => {
 
       expect(extension.send).toBeCalledTimes(1)
       await findByText('count: 0')
-      ;(extensionSubscriber as (message: any) => void)({
-        type: 'DISPATCH',
-        payload: { type: 'PAUSE_RECORDING' },
-      })
+      act(() =>
+        (extensionSubscriber as (message: any) => void)({
+          type: 'DISPATCH',
+          payload: { type: 'PAUSE_RECORDING' },
+        })
+      )
       fireEvent.click(getByText('button'))
       await findByText('count: 1')
       expect(extension.send).toBeCalledTimes(1)
-      ;(extensionSubscriber as (message: any) => void)({
-        type: 'DISPATCH',
-        payload: { type: 'PAUSE_RECORDING' },
-      })
+      act(() =>
+        (extensionSubscriber as (message: any) => void)({
+          type: 'DISPATCH',
+          payload: { type: 'PAUSE_RECORDING' },
+        })
+      )
       fireEvent.click(getByText('button'))
       await findByText('count: 2')
       expect(extension.send).toBeCalledTimes(2)
