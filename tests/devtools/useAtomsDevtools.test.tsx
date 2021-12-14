@@ -170,15 +170,15 @@ it('dependencies + updating state should call devtools.send', async () => {
   )
   expect(extension.send).toBeCalledTimes(1)
   expect(extension.send).toBeCalledWith(
-    expect.stringContaining('action:1'),
+    expect.objectContaining({ type: '1' }),
     expect.anything()
   )
   expect(extension.send).toBeCalledWith(
     expect.anything(),
     expect.objectContaining({
       values: {
-        [`${countAtom}:${countAtom}`]: 0,
-        [`${doubleAtom}:${doubleAtom}`]: 0,
+        [`${countAtom}`]: 0,
+        [`${doubleAtom}`]: 0,
       },
     })
   )
@@ -186,8 +186,8 @@ it('dependencies + updating state should call devtools.send', async () => {
     expect.anything(),
     expect.objectContaining({
       dependencies: {
-        [`${countAtom}:${countAtom}`]: [`${countAtom}:${countAtom}`],
-        [`${doubleAtom}:${doubleAtom}`]: [`${countAtom}:${countAtom}`],
+        [`${countAtom}`]: [`${countAtom}`],
+        [`${doubleAtom}`]: [`${countAtom}`],
       },
     })
   )
@@ -198,8 +198,8 @@ it('dependencies + updating state should call devtools.send', async () => {
     expect.anything(),
     expect.objectContaining({
       values: {
-        [`${countAtom}:${countAtom}`]: 1,
-        [`${doubleAtom}:${doubleAtom}`]: 2,
+        [`${countAtom}`]: 1,
+        [`${doubleAtom}`]: 2,
       },
     })
   )
@@ -249,10 +249,10 @@ describe('when it receives an message of type...', () => {
       await findByText('count: 2')
       expect(extension.init).toBeCalledWith({
         values: {
-          [`${countAtom}:${countAtom}`]: 2,
+          [`${countAtom}`]: 2,
         },
         dependencies: {
-          [`${countAtom}:${countAtom}`]: [`${countAtom}:${countAtom}`],
+          [`${countAtom}`]: [`${countAtom}`],
         },
       })
     })
@@ -295,7 +295,7 @@ describe('when it receives an message of type...', () => {
         await findByText('count: 1')
         fireEvent.click(getByText('button'))
         await findByText('count: 2')
-        expect(extension.send).toBeCalledTimes(3)
+        expect(extension.send).toBeCalledTimes(4)
       })
     })
 

@@ -23,7 +23,7 @@ type Message = {
 type ConnectionResult = {
   subscribe: (dispatch: any) => () => void
   unsubscribe: () => void
-  send: (action: string, state: any) => void
+  send: (action: any, state: any) => void
   init: (state: any) => void
   error: (payload: any) => void
 }
@@ -38,14 +38,14 @@ const serializeSnapshot = (snapshot: AtomsSnapshot) => {
   const result: Record<string, unknown> = {}
 
   snapshot.forEach((v, atom) => {
-    result[atomToDebuggingString(atom)] = v
+    result[atomToPrintable(atom)] = v
   })
 
   return result
 }
 
-const atomToDebuggingString = (atom: Atom<unknown>) =>
-  `${atom}:${atom.debugLabel ? atom.debugLabel : atom}`
+const atomToPrintable = (atom: Atom<unknown>) =>
+    atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
 
 const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
   const result: Record<string, string[]> = {}
@@ -56,8 +56,8 @@ const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
     if (!atomState) {
       return
     }
-    result[atomToDebuggingString(atom)] = [...atomState.d.keys()].map(
-      atomToDebuggingString
+    result[atomToPrintable(atom)] = [...atomState.d.keys()].map(
+      atomToPrintable
     )
   })
 
@@ -92,6 +92,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)
   const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
+
   const snapshots = useRef<AtomsSnapshot[]>([])
 
   useEffect(() => {
@@ -101,8 +102,6 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
       devtoolsUnsubscribe = devtools.current.subscribe((message: Message) => {
         switch (message.type) {
-          case 'ACTION':
-            return
           case 'DISPATCH':
             switch (message.payload?.type) {
               case 'RESET':
@@ -112,17 +111,13 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
                 const lastSnapshot =
                   snapshots.current[snapshots.current.length - 1]!
 
-                if ([...lastSnapshot.keys()].length === 0) {
-                  return
-                }
-                const parsedSnapshot = serializeSnapshot(lastSnapshot)
+                const serializedSnapshot = serializeSnapshot(lastSnapshot)
 
                 devtools.current!.init({
-                  values: parsedSnapshot,
+                  values: serializedSnapshot,
                   dependencies: getDependencies(store, lastSnapshot),
                 })
                 return
-              case 'JUMP_TO_STATE':
               case 'JUMP_TO_ACTION':
                 isTimeTraveling.current = true
 
@@ -155,7 +150,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       return
     }
 
-    if ([...snapshot.keys()].length === 0) {
+    if (!snapshot.size) {
       return
     }
 
@@ -167,12 +162,15 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     } else if (isRecording.current) {
       snapshots.current.push(snapshot)
 
-      const parsedSnapshot = serializeSnapshot(snapshot)
+      const serializedSnapshot = serializeSnapshot(snapshot)
 
       devtools.current.send(
-        `action:${snapshots.current.length} - ${new Date().toLocaleString()}`,
         {
-          values: parsedSnapshot,
+          type: `${snapshots.current.length}`,
+          updatedAt: new Date().toLocaleString(),
+        },
+        {
+          values: serializedSnapshot,
           dependencies: getDependencies(store, snapshot),
         }
       )
