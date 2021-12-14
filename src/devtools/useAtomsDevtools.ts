@@ -157,7 +157,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     }
 
     if (isTimeTraveling.current) {
-      isTimeTraveling.current = false
+      Promise.resolve().then(() => {
+        isTimeTraveling.current = false
+      })
     } else if (isRecording.current) {
       snapshots.current.push(snapshot)
 
