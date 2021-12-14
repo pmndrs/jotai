@@ -67,7 +67,7 @@ it('waits for two async atoms', async () => {
     )
     return (
       <div>
-        num: {num * 2}, str: {str.toUpperCase()}
+        num: {num}, str: {str}
       </div>
     )
   }
@@ -89,7 +89,7 @@ it('waits for two async atoms', async () => {
   })
 
   await waitFor(() => {
-    getByText('num: 2, str: A')
+    getByText('num: 1, str: a')
     expect(isAsyncAtomRunning).toBe(false)
     expect(isAnotherAsyncAtomRunning).toBe(false)
   })
@@ -126,7 +126,7 @@ it('can use named atoms in derived atom', async () => {
         str: anotherAsyncAtom,
       })
     )
-    return { num: num * 2, str: str.toUpperCase() }
+    return { num, str }
   })
 
   const Counter = () => {
@@ -155,7 +155,7 @@ it('can use named atoms in derived atom', async () => {
   })
 
   await waitFor(() => {
-    getByText('num: 2, str: A')
+    getByText('num: 1, str: a')
     expect(isAsyncAtomRunning).toBe(false)
     expect(isAnotherAsyncAtomRunning).toBe(false)
   })

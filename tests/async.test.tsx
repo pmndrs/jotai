@@ -17,7 +17,7 @@ const useCommitCount = () => {
 it('does not show async stale result', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
 
@@ -27,7 +27,7 @@ it('does not show async stale result', async () => {
     const [count, setCount] = useAtom(countAtom)
     const onClick = async () => {
       setCount((c) => c + 1)
-      await new Promise((r) => setTimeout(r, 1))
+      await new Promise((r) => setTimeout(r, 10))
       setCount((c) => c + 1)
     }
     return (
@@ -77,7 +77,7 @@ it('does not show async stale result on derived atom', async () => {
   const countAtom = atom(0)
   const asyncAlwaysNullAtom = atom(async (get) => {
     get(countAtom)
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r, 100))
     return null
   })
   const derivedAtom = atom((get) => get(asyncAlwaysNullAtom))
@@ -153,7 +153,7 @@ it('works with async get with extra deps', async () => {
   const anotherAtom = atom(-1)
   const asyncCountAtom = atom(async (get) => {
     get(anotherAtom)
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
 
@@ -201,7 +201,7 @@ it('reuses promises on initial read', async () => {
   let invokeCount = 0
   const asyncAtom = atom(async () => {
     invokeCount += 1
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r, 100))
     return 'ready'
   })
 
@@ -228,11 +228,11 @@ it('reuses promises on initial read', async () => {
 
 it('uses multiple async atoms at once', async () => {
   const someAtom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r, 100))
     return 'ready'
   })
   const someAtom2 = atom(async () => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r, 100))
     return 'ready2'
   })
 
@@ -265,7 +265,7 @@ it('uses multiple async atoms at once', async () => {
 it('uses async atom in the middle of dependency chain', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
   const delayedCountAtom = atom((get) => get(asyncCountAtom))
@@ -539,7 +539,7 @@ it('set promise atom value on write (#304)', async () => {
 it('uses async atom double chain (#306)', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
   const delayedCountAtom = atom(async (get) => {
@@ -579,7 +579,7 @@ it('uses async atom double chain (#306)', async () => {
 
 it('uses an async atom that depends on another async atom', async () => {
   const asyncAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r, 100))
     get(anotherAsyncAtom)
     return 1
   })
@@ -614,7 +614,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
       atomCache.set(
         n,
         atom(async () => {
-          await new Promise((r) => setTimeout(r, 1))
+          await new Promise((r) => setTimeout(r, 100))
           return n + 10
         })
       )
@@ -665,7 +665,7 @@ it('Handles synchronously invoked async set (#375)', async () => {
     const fetch = async () => {
       set(loadingAtom, true)
       const response = await new Promise<string>((resolve) =>
-        setTimeout(() => resolve('great document'), 1)
+        setTimeout(() => resolve('great document'), 100)
       )
       set(documentAtom, response)
       set(loadingAtom, false)
@@ -806,10 +806,10 @@ it('combine two promise atom values (#442)', async () => {
   const initAtom = atom(null, (_get, set) => {
     setTimeout(() => {
       set(count1Atom, Promise.resolve(1))
-    }, 1)
+    }, 100)
     setTimeout(() => {
       set(count2Atom, Promise.resolve(2))
-    }, 1)
+    }, 100)
   })
   initAtom.onMount = (init) => {
     init()
@@ -923,7 +923,7 @@ it('async atom double chain without setTimeout (#751)', async () => {
     if (!enabled) {
       return 'init'
     }
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r, 100))
     return 'ready'
   })
   const derivedAsyncAtom = atom(async (get) => get(asyncAtom))
@@ -978,7 +978,7 @@ it('update unmounted async atom with intermediate atom', async () => {
       if (!enabled) {
         return -1
       }
-      await new Promise((r) => setTimeout(r, 1))
+      await new Promise((r) => setTimeout(r, 100))
       return count * 2
     })
     return tmpAtom

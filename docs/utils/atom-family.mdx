@@ -1,0 +1,111 @@
+---
+title: atomFamily
+nav: 6.12
+---
+
+Ref: https://github.com/pmndrs/jotai/issues/23
+
+## Usage
+
+```js
+atomFamily(initializeAtom, areEqual): (param) => Atom
+```
+
+This will create a function that takes `param` and returns an atom.
+If it's already created, it will return it from the cache.
+`initializeAtom` is function that can return any kind of atom (`atom()`, `atomWithDefault()`, ...).
+Note that `areEqual` is optional, which tell
+if two params are equal (defaults to `Object.is`).
+
+To reproduce the similar behavior to [Recoil's atomFamily/selectorFamily](https://recoiljs.org/docs/api-reference/utils/atomFamily),
+specify a deepEqual function to `areEqual`. For example:
+
+```js
+import { atom } from 'jotai'
+import deepEqual from 'fast-deep-equal'
+
+const fooFamily = atomFamily((param) => atom(param), deepEqual)
+```
+
+## TypeScript
+
+The atom family types will be inferred from initializeAtom. Here's a typical usage with a primitive atom.
+
+```ts
+import type { PrimitiveAtom } from 'jotai'
+
+/**
+ * here the atom(id) returns a PrimitiveAtom<number>
+ * and PrimitiveAtom<number> is a WritableAtom<number, SetStateAction<number>>
+ */
+const myFamily = atomFamily((id: number) => atom(id)).
+```
+
+You can explicitly declare the type of parameter, value, and atom's setState function using TypeScript generics.
+
+```ts
+atomFamily<Param, Value, Update>(initializeAtom: (param: Param) => WritableAtom<Value, Update>, areEqual?: (a: Param, b: Param) => boolean)
+atomFamily<Param, Value>(initializeAtom: (param: Param) => Atom<Value>, areEqual?: (a: Param, b: Param) => boolean)
+```
+
+If you want to explicitly declare the atomFamily for a primitive atom, you need to use `SetStateAction`.
+
+```ts
+type SetStateAction<Value> = Value | ((prev: Value) => Value)
+
+const myFamily = atomFamily<number, number, SetStateAction<number>>((id: number) => atom(id))
+```
+
+### Caveat: Memory Leaks
+
+Internally, atomFamily is just a Map whose key is a param and whose value is an atom config.
+Unless you explicitly remove unused params, this leads to memory leaks.
+This is crucial if you use infinite number of params.
+
+There are two ways to remove params.
+
+- `myFamily.remove(param)` allows you to remove a specific param.
+- `myFamily.setShouldRemove(shouldRemove)` is to register `shouldRemove` function which runs immediately **and** when you are to get an atom from a cache.
+  - shouldRemove is a function that takes two arguments `createdAt` in milliseconds and `param`, and returns a boolean value.
+  - setting `null` will remove the previously registered function.
+
+## Examples
+
+```js
+import { atom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
+
+const todoFamily = atomFamily((name) => atom(name))
+
+todoFamily('foo')
+// this will create a new atom('foo'), or return the one if already created
+```
+
+```js
+import { atom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
+
+const todoFamily = atomFamily((name) =>
+  atom(
+    (get) => get(todosAtom)[name],
+    (get, set, arg) => {
+      const prev = get(todosAtom)
+      return { ...prev, [name]: { ...prev[name], ...arg } }
+    }
+  )
+)
+```
+
+```js
+import { atom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
+
+const todoFamily = atomFamily(
+  ({ id, name }) => atom({ name }),
+  (a, b) => a.id === b.id
+)
+```
+
+## Codesandbox
+
+<CodeSandbox id="8zfrn" />
