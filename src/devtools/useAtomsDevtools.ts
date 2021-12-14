@@ -68,7 +68,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   let extension: Extension | undefined
   try {
     extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
-  } catch {}
+  } catch {
+    // ignored
+  }
   if (!extension) {
     if (
       typeof process === 'object' &&
