@@ -96,11 +96,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   const snapshots = useRef<AtomsSnapshot[]>([])
 
   useEffect(() => {
-    let devtoolsUnsubscribe: (() => void) | undefined
     if (extension) {
-      devtools.current = extension.connect({ name })
-
-      devtoolsUnsubscribe = devtools.current.subscribe((message: Message) => {
+      const connection = extension.connect({ name })
+      const devtoolsUnsubscribe = connection.subscribe((message: Message) => {
         switch (message.type) {
           case 'DISPATCH':
             switch (message.payload?.type) {
@@ -114,7 +112,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
                 const serializedSnapshot = serializeSnapshot(lastSnapshot)
 
-                devtools.current?.init({
+                connection.init({
                   values: serializedSnapshot,
                   dependencies: getDependencies(store, lastSnapshot),
                 })
@@ -139,9 +137,10 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         }
       })
 
+      devtools.current = connection
       devtools.current.shouldInit = true
+      return devtoolsUnsubscribe
     }
-    return devtoolsUnsubscribe
   }, [store, extension, goToSnapshot, name])
 
   useEffect(() => {
