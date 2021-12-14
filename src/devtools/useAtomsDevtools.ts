@@ -45,7 +45,7 @@ const serializeSnapshot = (snapshot: AtomsSnapshot) => {
 }
 
 const atomToPrintable = (atom: Atom<unknown>) =>
-    atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
+  atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
 
 const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
   const result: Record<string, string[]> = {}
@@ -56,9 +56,7 @@ const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
     if (!atomState) {
       return
     }
-    result[atomToPrintable(atom)] = [...atomState.d.keys()].map(
-      atomToPrintable
-    )
+    result[atomToPrintable(atom)] = [...atomState.d.keys()].map(atomToPrintable)
   })
 
   return result
@@ -155,10 +153,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     }
 
     if (isTimeTraveling.current) {
-      // better solution to stop logging on JUMP_TO_ACTION & JUMP_TO_STATE ?
-      setTimeout(() => {
-        isTimeTraveling.current = false
-      }, 0)
+      isTimeTraveling.current = false
     } else if (isRecording.current) {
       snapshots.current.push(snapshot)
 

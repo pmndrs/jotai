@@ -293,6 +293,7 @@ describe('when it receives an message of type...', () => {
         expect(extension.send).toBeCalledTimes(2)
         fireEvent.click(getByText('button'))
         await findByText('count: 1')
+        expect(extension.send).toBeCalledTimes(3)
         fireEvent.click(getByText('button'))
         await findByText('count: 2')
         expect(extension.send).toBeCalledTimes(4)
