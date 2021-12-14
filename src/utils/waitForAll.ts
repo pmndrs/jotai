@@ -4,11 +4,15 @@ import { createMemoizeAtom } from './weakCache'
 
 const memoizeAtom = createMemoizeAtom()
 
-type ResolveType<T> = T extends Promise<infer V> ? V : T
+type ResolvePromise<T> = T extends Promise<infer V> ? V : T
+type ResolveAtom<T> = T extends Atom<infer V> ? V : T
+type ResolveType<T> = ResolvePromise<ResolveAtom<T>>
 
 export function waitForAll<
-  Values extends Record<string, unknown> | readonly unknown[]
->(atoms: { [K in keyof Values]: Atom<Values[K]> }): Atom<{
+  Values extends Record<string, Atom<unknown>> | readonly Atom<unknown>[]
+>(
+  atoms: Values
+): Atom<{
   [K in keyof Values]: ResolveType<Values[K]>
 }> {
   const createAtom = () => {
@@ -43,14 +47,18 @@ export function waitForAll<
 }
 
 const unwrapAtoms = <
-  Values extends Record<string, unknown> | unknown[]
->(atoms: { [K in keyof Values]: Atom<Values[K]> }): Atom<unknown>[] =>
+  Values extends Record<string, Atom<unknown>> | readonly Atom<unknown>[]
+>(
+  atoms: Values
+): Atom<unknown>[] =>
   Array.isArray(atoms)
     ? atoms
     : Object.getOwnPropertyNames(atoms).map((key) => atoms[key as keyof Values])
 
-const wrapResults = <Values extends Record<string, unknown> | unknown[]>(
-  atoms: { [K in keyof Values]: Atom<Values[K]> },
+const wrapResults = <
+  Values extends Record<string, Atom<unknown>> | readonly Atom<unknown>[]
+>(
+  atoms: Values,
   results: unknown[]
 ): unknown[] | Record<string, unknown> =>
   Array.isArray(atoms)
