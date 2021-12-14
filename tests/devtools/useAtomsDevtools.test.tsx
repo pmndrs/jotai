@@ -7,20 +7,13 @@ const Provider = getTestProvider()
 
 let extensionSubscriber: ((message: any) => void) | undefined
 
-let sendArgs: [
-  string,
-  { values: Record<string, unknown>; dependencies: Record<string, unknown> }
-]
-
 const extension = {
   subscribe: jest.fn((f) => {
     extensionSubscriber = f
     return () => {}
   }),
   unsubscribe: jest.fn(),
-  send: jest.fn((title, value) => {
-    sendArgs = [title, value]
-  }),
+  send: jest.fn(),
   init: jest.fn(),
   error: jest.fn(),
 }
@@ -176,22 +169,40 @@ it('dependencies + updating state should call devtools.send', async () => {
     </Provider>
   )
   expect(extension.send).toBeCalledTimes(1)
-  expect(sendArgs[0]).toContain('action:1')
-  expect(sendArgs[1].values).toEqual({
-    [`${countAtom}:${countAtom}`]: 0,
-    [`${doubleAtom}:${doubleAtom}`]: 0,
-  })
-  expect(sendArgs[1].dependencies).toEqual({
-    [`${countAtom}:${countAtom}`]: [`${countAtom}:${countAtom}`],
-    [`${doubleAtom}:${doubleAtom}`]: [`${countAtom}:${countAtom}`],
-  })
+  expect(extension.send).toBeCalledWith(
+    expect.stringContaining('action:1'),
+    expect.anything()
+  )
+  expect(extension.send).toBeCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      values: {
+        [`${countAtom}:${countAtom}`]: 0,
+        [`${doubleAtom}:${doubleAtom}`]: 0,
+      },
+    })
+  )
+  expect(extension.send).toBeCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      dependencies: {
+        [`${countAtom}:${countAtom}`]: [`${countAtom}:${countAtom}`],
+        [`${doubleAtom}:${doubleAtom}`]: [`${countAtom}:${countAtom}`],
+      },
+    })
+  )
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
   await findByText('double: 2')
-  expect(sendArgs[1].values).toEqual({
-    [`${countAtom}:${countAtom}`]: 1,
-    [`${doubleAtom}:${doubleAtom}`]: 2,
-  })
+  expect(extension.send).toBeCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      values: {
+        [`${countAtom}:${countAtom}`]: 1,
+        [`${doubleAtom}:${doubleAtom}`]: 2,
+      },
+    })
+  )
   expect(extension.send).toBeCalledTimes(3)
   fireEvent.click(getByText('button'))
   await findByText('count: 2')

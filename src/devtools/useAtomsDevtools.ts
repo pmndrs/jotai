@@ -132,7 +132,8 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
                 goToSnapshot(currentSnapshot)
                 return
               case 'PAUSE_RECORDING':
-                return (isRecording.current = !isRecording.current)
+                isRecording.current = !isRecording.current
+                return
             }
         }
       })
