@@ -2,12 +2,7 @@ import { useContext, useEffect, useRef } from 'react'
 import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
 import { Atom, Scope } from '../core/atom'
 import { getScopeContext } from '../core/contexts'
-import {
-  AtomState,
-  DEV_GET_ATOM_STATE,
-  DEV_SUBSCRIBE_STATE,
-  Store,
-} from '../core/store'
+import { DEV_GET_ATOM_STATE, DEV_SUBSCRIBE_STATE, Store } from '../core/store'
 
 type Config = {
   instanceID?: number
@@ -114,16 +109,27 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
                 // Todo
                 return
               case 'COMMIT':
-                devtools.current!.init(undefined)
+                const lastSnapshot =
+                  snapshots.current[snapshots.current.length - 1]!
+
+                if ([...lastSnapshot.keys()].length === 0) {
+                  return
+                }
+                const parsedSnapshot = serializeSnapshot(lastSnapshot)
+
+                devtools.current!.init({
+                  values: parsedSnapshot,
+                  dependencies: getDependencies(store, lastSnapshot),
+                })
                 return
               case 'JUMP_TO_STATE':
               case 'JUMP_TO_ACTION':
                 isTimeTraveling.current = true
 
-                const snapshot =
+                const currentSnapshot =
                   snapshots.current[message.payload.actionId - 1]!
 
-                goToSnapshot(snapshot)
+                goToSnapshot(currentSnapshot)
                 return
               case 'PAUSE_RECORDING':
                 return (isRecording.current = !isRecording.current)
