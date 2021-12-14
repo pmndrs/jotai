@@ -96,7 +96,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   const snapshots = useRef<AtomsSnapshot[]>([])
 
   useEffect(() => {
-    let devtoolsUnsubscribe: () => void | undefined
+    let devtoolsUnsubscribe: (() => void) | undefined
     if (extension) {
       devtools.current = extension.connect({ name })
 
@@ -108,8 +108,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
                 // Todo
                 return
               case 'COMMIT': {
-                const lastSnapshot =
-                  snapshots.current[snapshots.current.length - 1]!
+                const lastSnapshot = snapshots.current[
+                  snapshots.current.length - 1
+                ] as AtomsSnapshot
 
                 const serializedSnapshot = serializeSnapshot(lastSnapshot)
 
@@ -123,8 +124,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
               case 'JUMP_TO_ACTION': {
                 isTimeTraveling.current = true
 
-                const currentSnapshot =
-                  snapshots.current[message.payload.actionId - 1]!
+                const currentSnapshot = snapshots.current[
+                  message.payload.actionId - 1
+                ] as AtomsSnapshot
 
                 goToSnapshot(currentSnapshot)
                 return
@@ -139,10 +141,8 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
       devtools.current.shouldInit = true
     }
-    return () => {
-      devtoolsUnsubscribe?.()
-    }
-  }, [store])
+    return devtoolsUnsubscribe
+  }, [store, extension, goToSnapshot, name])
 
   useEffect(() => {
     if (!devtools.current) {
