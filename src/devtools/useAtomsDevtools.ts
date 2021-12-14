@@ -105,18 +105,20 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
               case 'RESET':
                 // Todo
                 return
-              case 'COMMIT':
+              case 'COMMIT': {
                 const lastSnapshot =
                   snapshots.current[snapshots.current.length - 1]!
 
                 const serializedSnapshot = serializeSnapshot(lastSnapshot)
 
-                devtools.current!.init({
+                devtools.current?.init({
                   values: serializedSnapshot,
                   dependencies: getDependencies(store, lastSnapshot),
                 })
                 return
-              case 'JUMP_TO_ACTION':
+              }
+
+              case 'JUMP_TO_ACTION': {
                 isTimeTraveling.current = true
 
                 const currentSnapshot =
@@ -124,6 +126,8 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
                 goToSnapshot(currentSnapshot)
                 return
+              }
+
               case 'PAUSE_RECORDING':
                 isRecording.current = !isRecording.current
                 return
@@ -170,5 +174,5 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         }
       )
     }
-  }, [snapshot])
+  }, [snapshot, store])
 }
