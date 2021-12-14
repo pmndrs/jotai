@@ -1,0 +1,57 @@
+---
+title: selectAtom
+nav: 6.13
+---
+
+
+Ref: https://github.com/pmndrs/jotai/issues/36
+
+```js
+function selectAtom<Value, Slice>(
+  anAtom: Atom<Value>,
+  selector: (v: Value) => Slice,
+  equalityFn: (a: Slice, b: Slice) => boolean = Object.is
+): Atom<Slice>
+```
+
+This function creates a derived atom whose value is a function of the original atom's value,
+determined by `selector.`
+The selector function runs whenever the original atom changes; it updates the derived atom
+only if `equalityFn` reports that the derived value has changed.
+By default, `equalityFn` is reference equality, but you can supply your favorite deep-equals
+function to stabilize the derived value where necessary.
+
+## Examples
+
+```js
+const defaultPerson = {
+  name: {
+    first: 'Jane',
+    last: 'Doe',
+  },
+  birth: {
+    year: 2000,
+    month: 'Jan',
+    day: 1,
+    time: {
+      hour: 1,
+      minute: 1,
+    },
+  },
+}
+
+// Original atom.
+const personAtom = atom(defaultPerson)
+
+// Tracks person.name. Updated when person.name object changes, even
+// if neither name.first nor name.last actually change.
+const nameAtom = selectAtom(personAtom, (person) => person.name)
+
+// Tracks person.birth. Updated when year, month, day, hour, or minute changes.
+// Use of deepEquals means that this atom doesn't update if birth field is
+// replaced with a new object containing the same data. E.g., if person is re-read
+// from a database.
+const birthAtom = selectAtom(personAtom, (person) => person.birth, deepEquals)
+```
+
+Ref: https://codesandbox.io/s/react-typescript-forked-8czek
