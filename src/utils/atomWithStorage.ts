@@ -46,9 +46,8 @@ export function createJSONStorage<Value>(
       }
       return JSON.parse(value || '')
     },
-    setItem: (key, newValue) => {
-      getStringStorage().setItem(key, JSON.stringify(newValue))
-    },
+    setItem: (key, newValue) =>
+      getStringStorage().setItem(key, JSON.stringify(newValue)),
   }
 }
 
