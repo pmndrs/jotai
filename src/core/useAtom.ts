@@ -84,7 +84,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
 
   useEffect(() => {
     store[COMMIT_ATOM](atom)
-  })
+  }, [store, atom])
 
   const setAtom = useCallback(
     (update: Update) => {
