@@ -124,6 +124,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
                   values: serializedSnapshot,
                   dependencies: getDependencies(store, lastSnapshot),
                 })
+                snapshots.current.length = 0
                 return
               }
 
@@ -171,15 +172,17 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       })
     } else if (isRecording.current) {
       queueMicrotask(() => {
-          batchedLog(devtools.current!, snapshots.current!, snapshot, store)
+        batchedLog(devtools.current!, snapshots.current!, snapshot, store)
       })
     }
   }, [snapshot, store])
 }
 
-const batchesQueue: { state: any }[] = []
+const batchesQueue: {
+  values: any
+  dependencies: any
+}[] = []
 const snapshotsQueue: AtomsSnapshot[] = []
-let batchActionNumber = 0
 
 const batchedLog = (
   devtools: ConnectionResult,
@@ -193,15 +196,15 @@ const batchedLog = (
     dependencies: getDependencies(store, snapshot),
   }
 
-  batchesQueue.push({ state })
+  batchesQueue.push(state)
   snapshotsQueue.push(snapshot)
   const logslength = batchesQueue.length
   setTimeout(() => {
     if (logslength === 1) {
-      const { state } = batchesQueue[batchesQueue.length - 1]!
+      const state = batchesQueue[batchesQueue.length - 1]!
       devtools.send(
         {
-          type: `${++batchActionNumber}`,
+          type: `${snapshots.length + 1}`,
           updatedAt: new Date().toLocaleString(),
         },
         state

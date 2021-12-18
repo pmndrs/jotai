@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useAtomsDevtools } from 'jotai/devtools'
 import { getTestProvider } from '../testUtils'
@@ -136,13 +136,14 @@ it('updating state should call devtools.send', async () => {
     </Provider>
   )
 
-  expect(extension.send).toBeCalledTimes(1)
+
+  await waitFor(() => expect(extension.send).toBeCalledTimes(1))
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
-  expect(extension.send).toBeCalledTimes(2)
+  await waitFor(() => expect(extension.send).toBeCalledTimes(2))
   fireEvent.click(getByText('button'))
   await findByText('count: 2')
-  expect(extension.send).toBeCalledTimes(3)
+  await waitFor(() => expect(extension.send).toBeCalledTimes(3))
 })
 
 it('dependencies + updating state should call devtools.send', async () => {
@@ -168,12 +169,12 @@ it('dependencies + updating state should call devtools.send', async () => {
       <Counter />
     </Provider>
   )
-  expect(extension.send).toBeCalledTimes(1)
-  expect(extension.send).toBeCalledWith(
+  await waitFor(() => expect(extension.send).toBeCalledTimes(1))
+  await waitFor(() => expect(extension.send).toBeCalledWith(
     expect.objectContaining({ type: '1' }),
     expect.anything()
-  )
-  expect(extension.send).toBeCalledWith(
+  ))
+  await waitFor(() => expect(extension.send).toBeCalledWith(
     expect.anything(),
     expect.objectContaining({
       values: {
@@ -181,8 +182,8 @@ it('dependencies + updating state should call devtools.send', async () => {
         [`${doubleAtom}`]: 0,
       },
     })
-  )
-  expect(extension.send).toBeCalledWith(
+  ))
+  await waitFor(() => expect(extension.send).toBeCalledWith(
     expect.anything(),
     expect.objectContaining({
       dependencies: {
@@ -190,11 +191,11 @@ it('dependencies + updating state should call devtools.send', async () => {
         [`${doubleAtom}`]: [`${countAtom}`],
       },
     })
-  )
+  ))
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
   await findByText('double: 2')
-  expect(extension.send).toBeCalledWith(
+  await waitFor(() => expect(extension.send).toBeCalledWith(
     expect.anything(),
     expect.objectContaining({
       values: {
@@ -202,12 +203,12 @@ it('dependencies + updating state should call devtools.send', async () => {
         [`${doubleAtom}`]: 2,
       },
     })
-  )
-  expect(extension.send).toBeCalledTimes(3)
+  ))
+  await waitFor(() => expect(extension.send).toBeCalledTimes(2))
   fireEvent.click(getByText('button'))
   await findByText('count: 2')
   await findByText('double: 4')
-  expect(extension.send).toBeCalledTimes(5)
+  await waitFor(() => expect(extension.send).toBeCalledTimes(3))
 })
 
 describe('when it receives an message of type...', () => {
@@ -233,28 +234,27 @@ describe('when it receives an message of type...', () => {
         </Provider>
       )
 
-      expect(extension.send).toBeCalledTimes(1)
+      await waitFor(() => expect(extension.send).toBeCalledTimes(1))
       fireEvent.click(getByText('button'))
       await findByText('count: 1')
-      expect(extension.send).toBeCalledTimes(2)
-      fireEvent.click(getByText('button'))
-      await findByText('count: 2')
+      await waitFor(() => expect(extension.send).toBeCalledTimes(2))
       act(() =>
         (extensionSubscriber as (message: any) => void)({
           type: 'DISPATCH',
           payload: { type: 'COMMIT' },
         })
       )
-
-      await findByText('count: 2')
-      expect(extension.init).toBeCalledWith({
-        values: {
-          [`${countAtom}`]: 2,
-        },
-        dependencies: {
-          [`${countAtom}`]: [`${countAtom}`],
-        },
-      })
+      await findByText('count: 1')
+      await waitFor(() =>
+        expect(extension.init).toBeCalledWith({
+          values: {
+            [`${countAtom}`]: 1,
+          },
+          dependencies: {
+            [`${countAtom}`]: [`${countAtom}`],
+          },
+        })
+      )
     })
 
     describe('JUMP_TO_STATE | JUMP_TO_ACTION...', () => {
@@ -279,10 +279,11 @@ describe('when it receives an message of type...', () => {
           </Provider>
         )
 
-        expect(extension.send).toBeCalledTimes(1)
+        await waitFor(() => expect(extension.send).toBeCalledTimes(1))
+
         fireEvent.click(getByText('button'))
         await findByText('count: 1')
-        expect(extension.send).toBeCalledTimes(2)
+        await waitFor(() => expect(extension.send).toBeCalledTimes(2))
         act(() =>
           (extensionSubscriber as (message: any) => void)({
             type: 'DISPATCH',
@@ -293,10 +294,10 @@ describe('when it receives an message of type...', () => {
         expect(extension.send).toBeCalledTimes(2)
         fireEvent.click(getByText('button'))
         await findByText('count: 1')
-        expect(extension.send).toBeCalledTimes(3)
+        await waitFor(() => expect(extension.send).toBeCalledTimes(3))
         fireEvent.click(getByText('button'))
         await findByText('count: 2')
-        expect(extension.send).toBeCalledTimes(4)
+        await waitFor(() => expect(extension.send).toBeCalledTimes(4))
       })
     })
 
@@ -321,7 +322,7 @@ describe('when it receives an message of type...', () => {
         </Provider>
       )
 
-      expect(extension.send).toBeCalledTimes(1)
+      await waitFor(() => expect(extension.send).toBeCalledTimes(1))
       await findByText('count: 0')
       act(() =>
         (extensionSubscriber as (message: any) => void)({
@@ -340,7 +341,7 @@ describe('when it receives an message of type...', () => {
       )
       fireEvent.click(getByText('button'))
       await findByText('count: 2')
-      expect(extension.send).toBeCalledTimes(2)
+      await waitFor(() => expect(extension.send).toBeCalledTimes(2))
     })
   })
 })
