@@ -136,7 +136,6 @@ it('updating state should call devtools.send', async () => {
     </Provider>
   )
 
-
   await waitFor(() => expect(extension.send).toBeCalledTimes(1))
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
@@ -170,40 +169,48 @@ it('dependencies + updating state should call devtools.send', async () => {
     </Provider>
   )
   await waitFor(() => expect(extension.send).toBeCalledTimes(1))
-  await waitFor(() => expect(extension.send).toBeCalledWith(
-    expect.objectContaining({ type: '1' }),
-    expect.anything()
-  ))
-  await waitFor(() => expect(extension.send).toBeCalledWith(
-    expect.anything(),
-    expect.objectContaining({
-      values: {
-        [`${countAtom}`]: 0,
-        [`${doubleAtom}`]: 0,
-      },
-    })
-  ))
-  await waitFor(() => expect(extension.send).toBeCalledWith(
-    expect.anything(),
-    expect.objectContaining({
-      dependencies: {
-        [`${countAtom}`]: [`${countAtom}`],
-        [`${doubleAtom}`]: [`${countAtom}`],
-      },
-    })
-  ))
+  await waitFor(() =>
+    expect(extension.send).toBeCalledWith(
+      expect.objectContaining({ type: '1' }),
+      expect.anything()
+    )
+  )
+  await waitFor(() =>
+    expect(extension.send).toBeCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        values: {
+          [`${countAtom}`]: 0,
+          [`${doubleAtom}`]: 0,
+        },
+      })
+    )
+  )
+  await waitFor(() =>
+    expect(extension.send).toBeCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        dependencies: {
+          [`${countAtom}`]: [`${countAtom}`],
+          [`${doubleAtom}`]: [`${countAtom}`],
+        },
+      })
+    )
+  )
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
   await findByText('double: 2')
-  await waitFor(() => expect(extension.send).toBeCalledWith(
-    expect.anything(),
-    expect.objectContaining({
-      values: {
-        [`${countAtom}`]: 1,
-        [`${doubleAtom}`]: 2,
-      },
-    })
-  ))
+  await waitFor(() =>
+    expect(extension.send).toBeCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        values: {
+          [`${countAtom}`]: 1,
+          [`${doubleAtom}`]: 2,
+        },
+      })
+    )
+  )
   await waitFor(() => expect(extension.send).toBeCalledTimes(2))
   fireEvent.click(getByText('button'))
   await findByText('count: 2')
