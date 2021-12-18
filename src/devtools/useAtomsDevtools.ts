@@ -206,7 +206,6 @@ const batchedLog = (
         state
       )
       const lastSnapshot = snapshotsQueue[snapshotsQueue.length - 1]!
-      console.log(lastSnapshot)
       snapshots.push(lastSnapshot)
       snapshotsQueue.length = 0
       batchesQueue.length = 0
