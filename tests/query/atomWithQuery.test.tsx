@@ -11,7 +11,7 @@ it('query basic test', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count1',
     queryFn: async () => {
-      return await fakeFetch({ count: 0 }, false, 100)
+      return await fakeFetch({ count: 0 }, false, 500)
     },
   }))
   const Counter = () => {
@@ -43,7 +43,7 @@ it('query basic test with object instead of function', async () => {
   const countAtom = atomWithQuery({
     queryKey: 'count2',
     queryFn: async () => {
-      return await fakeFetch({ count: 0 }, false, 100)
+      return await fakeFetch({ count: 0 }, false, 500)
     },
   })
   const Counter = () => {
@@ -121,7 +121,7 @@ it('query loading', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count4',
     queryFn: async () => {
-      const response = await mockFetch({ count }, false, 100)
+      const response = await mockFetch({ count }, false, 500)
       count++
       return response
     },
@@ -176,7 +176,7 @@ it('query loading 2', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count5',
     queryFn: async () => {
-      const response = await mockFetch({ count }, false, 100)
+      const response = await mockFetch({ count }, false, 500)
       count++
       return response
     },
@@ -225,7 +225,7 @@ it('query with enabled', async () => {
       enabled: !!slug,
       queryKey: ['disabled_until_value', slug],
       queryFn: async () => {
-        return await mockFetch({ slug: `hello-${slug}` }, false, 100)
+        return await mockFetch({ slug: `hello-${slug}` }, false, 500)
       },
     }
   })
@@ -280,7 +280,7 @@ it('query with enabled 2', async () => {
       enabled: isEnabled,
       queryKey: ['enabled_toggle'],
       queryFn: async () => {
-        return await mockFetch({ slug: `hello-${slug}` }, false, 100)
+        return await mockFetch({ slug: `hello-${slug}` }, false, 500)
       },
     }
   })
@@ -348,7 +348,7 @@ it('query with enabled (#500)', async () => {
       enabled,
       queryKey: 'count_500_issue',
       queryFn: async () => {
-        return await fakeFetch({ count: 1 }, false, 100)
+        return await fakeFetch({ count: 1 }, false, 500)
       },
     }
   })
@@ -441,7 +441,7 @@ it('query dependency test', async () => {
   const countAtom = atomWithQuery((get) => ({
     queryKey: ['count_with_dependency', get(baseCountAtom)],
     queryFn: async () => {
-      return await fakeFetch({ count: get(baseCountAtom) }, false, 100)
+      return await fakeFetch({ count: get(baseCountAtom) }, false, 500)
     },
   }))
 
