@@ -1,15 +1,8 @@
-import { useContext, useEffect, useRef, useLayoutEffect } from 'react'
+import { useContext, useEffect, useRef } from 'react'
 import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
-import { Atom, Scope } from '../core/atom'
-import { getScopeContext } from '../core/contexts'
-import {
-  DEV_GET_ATOM_STATE,
-  DEV_GET_MOUNTED,
-  DEV_GET_MOUNTED_ATOMS,
-  DEV_SUBSCRIBE_STATE,
-  Store,
-} from '../core/store'
-import ReactDOM from 'react-dom'
+import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
+import type { Atom, Scope } from '../core/atom'
+import { DEV_GET_ATOM_STATE, DEV_SUBSCRIBE_STATE, Store } from '../core/store'
 
 type Config = {
   instanceID?: number
