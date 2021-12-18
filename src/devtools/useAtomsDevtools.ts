@@ -191,6 +191,7 @@ const batchedLog = (
   store: Store
 ) => {
   const serializedSnapshot = serializeSnapshot(snapshot)
+
   const state = {
     values: serializedSnapshot,
     dependencies: getDependencies(store, snapshot),
@@ -198,9 +199,9 @@ const batchedLog = (
 
   batchesQueue.push(state)
   snapshotsQueue.push(snapshot)
-  const logslength = batchesQueue.length
+  const batchesLength = batchesQueue.length
   setTimeout(() => {
-    if (logslength === 1) {
+    if (batchesLength === 1) {
       const state = batchesQueue[batchesQueue.length - 1]!
       devtools.send(
         {
