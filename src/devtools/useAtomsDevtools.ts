@@ -76,7 +76,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   let extension: Extension | undefined
   try {
     extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
-  } catch {}
+  } catch {
+    // ignored
+  }
   if (!extension) {
     if (
       typeof process === 'object' &&
@@ -102,11 +104,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   const snapshots = useRef<AtomsSnapshot[]>([])
 
   useEffect(() => {
-    let devtoolsUnsubscribe: () => void | undefined
     if (extension) {
-      devtools.current = extension.connect({ name })
-
-      devtoolsUnsubscribe = devtools.current.subscribe((message: Message) => {
+      const connection = extension.connect({ name })
+      const devtoolsUnsubscribe = connection.subscribe((message: Message) => {
         switch (message.type) {
           case 'DISPATCH':
             switch (message.payload?.type) {
@@ -114,12 +114,13 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
                 // Todo
                 return
               case 'COMMIT': {
-                const lastSnapshot =
-                  snapshots.current[snapshots.current.length - 1]!
+                const lastSnapshot = snapshots.current[
+                  snapshots.current.length - 1
+                ] as AtomsSnapshot
 
                 const serializedSnapshot = serializeSnapshot(lastSnapshot)
 
-                devtools.current?.init({
+                connection.init({
                   values: serializedSnapshot,
                   dependencies: getDependencies(store, lastSnapshot),
                 })
@@ -129,8 +130,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
               case 'JUMP_TO_ACTION': {
                 isTimeTraveling.current = true
 
-                const currentSnapshot =
-                  snapshots.current[message.payload.actionId - 1]!
+                const currentSnapshot = snapshots.current[
+                  message.payload.actionId - 1
+                ] as AtomsSnapshot
 
                 goToSnapshot(currentSnapshot)
                 return
@@ -143,12 +145,11 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         }
       })
 
+      devtools.current = connection
       devtools.current.shouldInit = true
+      return devtoolsUnsubscribe
     }
-    return () => {
-      devtoolsUnsubscribe?.()
-    }
-  }, [store])
+  }, [store, extension, goToSnapshot, name])
 
   useEffect(() => {
     if (!devtools.current) {
