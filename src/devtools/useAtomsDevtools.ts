@@ -1,8 +1,9 @@
 import { useContext, useEffect, useRef } from 'react'
-import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
+import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
 import type { Atom, Scope } from '../core/atom'
-import { DEV_GET_ATOM_STATE, DEV_SUBSCRIBE_STATE, Store } from '../core/store'
+import type { Store } from '../core/store'
+import { DEV_GET_ATOM_STATE, DEV_SUBSCRIBE_STATE } from '../core/store'
 
 type Config = {
   instanceID?: number
@@ -165,7 +166,12 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       })
     } else if (isRecording.current) {
       queueMicrotask(() => {
-        batchedLog(devtools.current!, snapshots.current!, snapshot, store)
+        batchedLog(
+          devtools.current as ConnectionResult,
+          snapshots.current,
+          snapshot,
+          store
+        )
       })
     }
   }, [snapshot, store])
@@ -195,7 +201,7 @@ const batchedLog = (
   const batchesLength = batchesQueue.length
   setTimeout(() => {
     if (batchesLength === 1) {
-      const state = batchesQueue[batchesQueue.length - 1]!
+      const state = batchesQueue[batchesQueue.length - 1]
       devtools.send(
         {
           type: `${snapshots.length + 1}`,
@@ -203,8 +209,8 @@ const batchedLog = (
         },
         state
       )
-      const lastSnapshot = snapshotsQueue[snapshotsQueue.length - 1]!
-      snapshots.push(lastSnapshot)
+      const lastSnapshot = snapshotsQueue[snapshotsQueue.length - 1]
+      snapshots.push(lastSnapshot as AtomsSnapshot)
       snapshotsQueue.length = 0
       batchesQueue.length = 0
     }
