@@ -1,8 +1,15 @@
-import { useContext, useEffect, useRef } from 'react'
+import { useContext, useEffect, useRef, useLayoutEffect } from 'react'
 import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
 import { Atom, Scope } from '../core/atom'
 import { getScopeContext } from '../core/contexts'
-import { DEV_GET_ATOM_STATE, DEV_SUBSCRIBE_STATE, Store } from '../core/store'
+import {
+  DEV_GET_ATOM_STATE,
+  DEV_GET_MOUNTED,
+  DEV_GET_MOUNTED_ATOMS,
+  DEV_SUBSCRIBE_STATE,
+  Store,
+} from '../core/store'
+import ReactDOM from 'react-dom'
 
 type Config = {
   instanceID?: number
@@ -56,6 +63,7 @@ const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
     if (!atomState) {
       return
     }
+
     result[atomToPrintable(atom)] = [...atomState.d.keys()].map(atomToPrintable)
   })
 
@@ -157,24 +165,51 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     }
 
     if (isTimeTraveling.current) {
-      Promise.resolve().then(() => {
+      queueMicrotask(() => {
         isTimeTraveling.current = false
       })
     } else if (isRecording.current) {
-      snapshots.current.push(snapshot)
-
-      const serializedSnapshot = serializeSnapshot(snapshot)
-
-      devtools.current.send(
-        {
-          type: `${snapshots.current.length}`,
-          updatedAt: new Date().toLocaleString(),
-        },
-        {
-          values: serializedSnapshot,
-          dependencies: getDependencies(store, snapshot),
-        }
-      )
+      queueMicrotask(() => {
+          batchedLog(devtools.current!, snapshots.current!, snapshot, store)
+      })
     }
   }, [snapshot, store])
+}
+
+const batchesQueue: { state: any }[] = []
+const snapshotsQueue: AtomsSnapshot[] = []
+let batchActionNumber = 0
+
+const batchedLog = (
+  devtools: ConnectionResult,
+  snapshots: AtomsSnapshot[],
+  snapshot: AtomsSnapshot,
+  store: Store
+) => {
+  const serializedSnapshot = serializeSnapshot(snapshot)
+  const state = {
+    values: serializedSnapshot,
+    dependencies: getDependencies(store, snapshot),
+  }
+
+  batchesQueue.push({ state })
+  snapshotsQueue.push(snapshot)
+  const logslength = batchesQueue.length
+  setTimeout(() => {
+    if (logslength === 1) {
+      const { state } = batchesQueue[batchesQueue.length - 1]!
+      devtools.send(
+        {
+          type: `${++batchActionNumber}`,
+          updatedAt: new Date().toLocaleString(),
+        },
+        state
+      )
+      const lastSnapshot = snapshotsQueue[snapshotsQueue.length - 1]!
+      console.log(lastSnapshot)
+      snapshots.push(lastSnapshot)
+      snapshotsQueue.length = 0
+      batchesQueue.length = 0
+    }
+  })
 }
