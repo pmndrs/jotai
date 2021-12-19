@@ -175,9 +175,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     }
 
     if (isTimeTraveling.current) {
-      queueMicrotask(() => {
-        isTimeTraveling.current = false
-      })
+      isTimeTraveling.current = false
     } else if (isRecording.current) {
       const serializedSnapshot = serializeSnapshot(snapshot)
 
