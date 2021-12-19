@@ -37,11 +37,9 @@ type AtomsSnapshot = Map<Atom<unknown>, unknown>
 
 const serializeSnapshot = (snapshot: AtomsSnapshot) => {
   const result: Record<string, unknown> = {}
-
   snapshot.forEach((v, atom) => {
     result[atomToPrintable(atom)] = v
   })
-
   return result
 }
 
@@ -50,18 +48,30 @@ const atomToPrintable = (atom: Atom<unknown>) =>
 
 const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
   const result: Record<string, string[]> = {}
-
   snapshot.forEach((_, atom) => {
     const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
-
-    if (!atomState) {
-      return
+    if (atomState) {
+      result[atomToPrintable(atom)] = Array.from(atomState.d.keys()).map(
+        atomToPrintable
+      )
     }
-
-    result[atomToPrintable(atom)] = [...atomState.d.keys()].map(atomToPrintable)
   })
-
   return result
+}
+
+const hasInvalidatedAtoms = (store: Store, snapshot: AtomsSnapshot) => {
+  // FIXME refactor to construct snapshot on effect?
+  for (const [atom, value] of snapshot) {
+    const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
+    if (
+      !atomState ||
+      atomState.r === atomState.i ||
+      !('v' in atomState && Object.is(atomState.v, value))
+    ) {
+      return true
+    }
+  }
+  return false
 }
 
 export function useAtomsDevtools(name: string, scope?: Scope) {
@@ -85,7 +95,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
   const ScopeContext = getScopeContext(scope)
   const scopeContainer = useContext(ScopeContext)
-  const store = scopeContainer.s
+  const { s: store } = scopeContainer
 
   if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
@@ -160,59 +170,29 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       return
     }
 
+    if (hasInvalidatedAtoms(store, snapshot)) {
+      return
+    }
+
     if (isTimeTraveling.current) {
       queueMicrotask(() => {
         isTimeTraveling.current = false
       })
     } else if (isRecording.current) {
-      queueMicrotask(() => {
-        batchedLog(
-          devtools.current as ConnectionResult,
-          snapshots.current,
-          snapshot,
-          store
-        )
-      })
-    }
-  }, [snapshot, store])
-}
+      const serializedSnapshot = serializeSnapshot(snapshot)
 
-const batchesQueue: {
-  values: any
-  dependencies: any
-}[] = []
-const snapshotsQueue: AtomsSnapshot[] = []
-
-const batchedLog = (
-  devtools: ConnectionResult,
-  snapshots: AtomsSnapshot[],
-  snapshot: AtomsSnapshot,
-  store: Store
-) => {
-  const serializedSnapshot = serializeSnapshot(snapshot)
-
-  const state = {
-    values: serializedSnapshot,
-    dependencies: getDependencies(store, snapshot),
-  }
-
-  batchesQueue.push(state)
-  snapshotsQueue.push(snapshot)
-  const batchesLength = batchesQueue.length
-  setTimeout(() => {
-    if (batchesLength === 1) {
-      const state = batchesQueue[batchesQueue.length - 1]
-      devtools.send(
+      const state = {
+        values: serializedSnapshot,
+        dependencies: getDependencies(store, snapshot),
+      }
+      devtools.current.send(
         {
-          type: `${snapshots.length + 1}`,
+          type: `${snapshots.current.length + 1}`,
           updatedAt: new Date().toLocaleString(),
         },
         state
       )
-      const lastSnapshot = snapshotsQueue[snapshotsQueue.length - 1]
-      snapshots.push(lastSnapshot as AtomsSnapshot)
-      snapshotsQueue.length = 0
-      batchesQueue.length = 0
+      snapshots.current.push(snapshot)
     }
-  })
+  }, [snapshot, store])
 }
