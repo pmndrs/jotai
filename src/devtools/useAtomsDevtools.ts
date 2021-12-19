@@ -59,6 +59,11 @@ const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
   return result
 }
 
+const getDevtoolsState = (store: Store, snapshot: AtomsSnapshot) => ({
+  values: serializeSnapshot(snapshot),
+  dependencies: getDependencies(store, snapshot),
+})
+
 const hasInvalidatedAtoms = (store: Store, snapshot: AtomsSnapshot) => {
   // FIXME refactor to construct snapshot on effect?
   for (const [atom, value] of snapshot) {
@@ -109,43 +114,35 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
   useEffect(() => {
     if (extension) {
+      const getSnapshotAt = (index = snapshots.current.length - 1) => {
+        const s = snapshots.current[index]
+        if (!s) {
+          throw new Error('snapshot index out of bounds')
+        }
+        return s
+      }
       const connection = extension.connect({ name })
       const devtoolsUnsubscribe = connection.subscribe((message: Message) => {
         switch (message.type) {
           case 'DISPATCH':
             switch (message.payload?.type) {
               case 'RESET':
-                // Todo
-                return
-              case 'COMMIT': {
-                const lastSnapshot = snapshots.current[
-                  snapshots.current.length - 1
-                ] as AtomsSnapshot
+                // TODO
+                break
 
-                const serializedSnapshot = serializeSnapshot(lastSnapshot)
+              case 'COMMIT':
+                connection.init(getDevtoolsState(store, getSnapshotAt()))
+                snapshots.current = []
+                break
 
-                connection.init({
-                  values: serializedSnapshot,
-                  dependencies: getDependencies(store, lastSnapshot),
-                })
-                snapshots.current.length = 0
-                return
-              }
-
-              case 'JUMP_TO_ACTION': {
+              case 'JUMP_TO_ACTION':
                 isTimeTraveling.current = true
-
-                const currentSnapshot = snapshots.current[
-                  message.payload.actionId - 1
-                ] as AtomsSnapshot
-
-                goToSnapshot(currentSnapshot)
-                return
-              }
+                goToSnapshot(getSnapshotAt(message.payload.actionId - 1))
+                break
 
               case 'PAUSE_RECORDING':
                 isRecording.current = !isRecording.current
-                return
+                break
             }
         }
       })
@@ -165,30 +162,21 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       devtools.current.shouldInit = false
       return
     }
-
     if (!snapshot.size) {
       return
     }
-
     if (hasInvalidatedAtoms(store, snapshot)) {
       return
     }
-
     if (isTimeTraveling.current) {
       isTimeTraveling.current = false
     } else if (isRecording.current) {
-      const serializedSnapshot = serializeSnapshot(snapshot)
-
-      const state = {
-        values: serializedSnapshot,
-        dependencies: getDependencies(store, snapshot),
-      }
       devtools.current.send(
         {
           type: `${snapshots.current.length + 1}`,
           updatedAt: new Date().toLocaleString(),
         },
-        state
+        getDevtoolsState(store, snapshot)
       )
       snapshots.current.push(snapshot)
     }
