@@ -153,7 +153,7 @@ it('works with async get with extra deps', async () => {
   const anotherAtom = atom(-1)
   const asyncCountAtom = atom(async (get) => {
     get(anotherAtom)
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 500))
     return get(countAtom)
   })
 

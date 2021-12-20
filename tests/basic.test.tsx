@@ -922,3 +922,31 @@ it('sync re-renders with useState re-renders (#827)', async () => {
   fireEvent.click(getByText('rotate'))
   await findByText('commits: 3')
 })
+
+it('chained derive atom with onMount and useEffect (#897)', async () => {
+  const countAtom = atom(0)
+  countAtom.onMount = (set) => {
+    set(1)
+  }
+  const derivedAtom = atom((get) => get(countAtom))
+  const derivedObjectAtom = atom((get) => ({
+    count: get(derivedAtom),
+  }))
+
+  const Counter = () => {
+    const [, setCount] = useAtom(countAtom)
+    const [{ count }] = useAtom(derivedObjectAtom)
+    useEffect(() => {
+      setCount(1)
+    }, [setCount])
+    return <div>count: {count}</div>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 1')
+})
