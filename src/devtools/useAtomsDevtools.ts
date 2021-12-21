@@ -37,11 +37,9 @@ type AtomsSnapshot = Map<Atom<unknown>, unknown>
 
 const serializeSnapshot = (snapshot: AtomsSnapshot) => {
   const result: Record<string, unknown> = {}
-
   snapshot.forEach((v, atom) => {
     result[atomToPrintable(atom)] = v
   })
-
   return result
 }
 
@@ -50,18 +48,35 @@ const atomToPrintable = (atom: Atom<unknown>) =>
 
 const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
   const result: Record<string, string[]> = {}
-
   snapshot.forEach((_, atom) => {
     const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
-
-    if (!atomState) {
-      return
+    if (atomState) {
+      result[atomToPrintable(atom)] = Array.from(atomState.d.keys()).map(
+        atomToPrintable
+      )
     }
-
-    result[atomToPrintable(atom)] = [...atomState.d.keys()].map(atomToPrintable)
   })
-
   return result
+}
+
+const getDevtoolsState = (store: Store, snapshot: AtomsSnapshot) => ({
+  values: serializeSnapshot(snapshot),
+  dependencies: getDependencies(store, snapshot),
+})
+
+const hasInvalidatedAtoms = (store: Store, snapshot: AtomsSnapshot) => {
+  // FIXME refactor to construct snapshot on effect?
+  for (const [atom, value] of snapshot) {
+    const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
+    if (
+      !atomState ||
+      atomState.r === atomState.i ||
+      !('v' in atomState && Object.is(atomState.v, value))
+    ) {
+      return true
+    }
+  }
+  return false
 }
 
 export function useAtomsDevtools(name: string, scope?: Scope) {
@@ -85,7 +100,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
   const ScopeContext = getScopeContext(scope)
   const scopeContainer = useContext(ScopeContext)
-  const store = scopeContainer.s
+  const { s: store } = scopeContainer
 
   if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
@@ -99,43 +114,35 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
   useEffect(() => {
     if (extension) {
+      const getSnapshotAt = (index = snapshots.current.length - 1) => {
+        const s = snapshots.current[index]
+        if (!s) {
+          throw new Error('snapshot index out of bounds')
+        }
+        return s
+      }
       const connection = extension.connect({ name })
       const devtoolsUnsubscribe = connection.subscribe((message: Message) => {
         switch (message.type) {
           case 'DISPATCH':
             switch (message.payload?.type) {
               case 'RESET':
-                // Todo
-                return
-              case 'COMMIT': {
-                const lastSnapshot = snapshots.current[
-                  snapshots.current.length - 1
-                ] as AtomsSnapshot
+                // TODO
+                break
 
-                const serializedSnapshot = serializeSnapshot(lastSnapshot)
+              case 'COMMIT':
+                connection.init(getDevtoolsState(store, getSnapshotAt()))
+                snapshots.current = []
+                break
 
-                connection.init({
-                  values: serializedSnapshot,
-                  dependencies: getDependencies(store, lastSnapshot),
-                })
-                snapshots.current.length = 0
-                return
-              }
-
-              case 'JUMP_TO_ACTION': {
+              case 'JUMP_TO_ACTION':
                 isTimeTraveling.current = true
-
-                const currentSnapshot = snapshots.current[
-                  message.payload.actionId - 1
-                ] as AtomsSnapshot
-
-                goToSnapshot(currentSnapshot)
-                return
-              }
+                goToSnapshot(getSnapshotAt(message.payload.actionId - 1))
+                break
 
               case 'PAUSE_RECORDING':
                 isRecording.current = !isRecording.current
-                return
+                break
             }
         }
       })
@@ -155,64 +162,23 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       devtools.current.shouldInit = false
       return
     }
-
     if (!snapshot.size) {
       return
     }
-
-    if (isTimeTraveling.current) {
-      queueMicrotask(() => {
-        isTimeTraveling.current = false
-      })
-    } else if (isRecording.current) {
-      queueMicrotask(() => {
-        batchedLog(
-          devtools.current as ConnectionResult,
-          snapshots.current,
-          snapshot,
-          store
-        )
-      })
+    if (hasInvalidatedAtoms(store, snapshot)) {
+      return
     }
-  }, [snapshot, store])
-}
-
-const batchesQueue: {
-  values: any
-  dependencies: any
-}[] = []
-const snapshotsQueue: AtomsSnapshot[] = []
-
-const batchedLog = (
-  devtools: ConnectionResult,
-  snapshots: AtomsSnapshot[],
-  snapshot: AtomsSnapshot,
-  store: Store
-) => {
-  const serializedSnapshot = serializeSnapshot(snapshot)
-
-  const state = {
-    values: serializedSnapshot,
-    dependencies: getDependencies(store, snapshot),
-  }
-
-  batchesQueue.push(state)
-  snapshotsQueue.push(snapshot)
-  const batchesLength = batchesQueue.length
-  setTimeout(() => {
-    if (batchesLength === 1) {
-      const state = batchesQueue[batchesQueue.length - 1]
-      devtools.send(
+    if (isTimeTraveling.current) {
+      isTimeTraveling.current = false
+    } else if (isRecording.current) {
+      devtools.current.send(
         {
-          type: `${snapshots.length + 1}`,
+          type: `${snapshots.current.length + 1}`,
           updatedAt: new Date().toLocaleString(),
         },
-        state
+        getDevtoolsState(store, snapshot)
       )
-      const lastSnapshot = snapshotsQueue[snapshotsQueue.length - 1]
-      snapshots.push(lastSnapshot as AtomsSnapshot)
-      snapshotsQueue.length = 0
-      batchesQueue.length = 0
+      snapshots.current.push(snapshot)
     }
-  })
+  }, [snapshot, store])
 }
