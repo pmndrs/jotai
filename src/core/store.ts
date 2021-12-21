@@ -292,7 +292,6 @@ export const createStore = (
               aState &&
               !('e' in aState) && // no read error
               !('p' in aState) && // no suspense promise
-              aState.r !== aState.i && // revision is not invalidated
               aState.r === r // revision is equal to the last one
             )
           })
