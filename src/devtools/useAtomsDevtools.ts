@@ -136,6 +136,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
                 break
 
               case 'JUMP_TO_ACTION':
+              case 'JUMP_TO_STATE':
                 isTimeTraveling.current = true
                 goToSnapshot(getSnapshotAt(message.payload.actionId - 1))
                 break
