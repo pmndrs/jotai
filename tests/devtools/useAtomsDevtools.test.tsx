@@ -218,6 +218,87 @@ it('dependencies + updating state should call devtools.send', async () => {
   await waitFor(() => expect(extension.send).toBeCalledTimes(3))
 })
 
+it('conditional dependencies + updating state should call devtools.send', async () => {
+  const trueAtom = atom('true')
+  const falseAtom = atom('false')
+
+  const enabledAtom = atom(true)
+  const anAtom = atom((get) =>
+    get(enabledAtom) ? get(trueAtom) : get(falseAtom)
+  )
+  const App = () => {
+    useAtomsDevtools('test')
+    const [enabled, setEnabled] = useAtom(enabledAtom)
+    const [value] = useAtom(anAtom)
+
+    return (
+      <div className="App">
+        <h1>enabled: {enabled ? 'true' : 'false'}</h1>
+        <h1>condition: {value}</h1>
+        <button onClick={() => setEnabled(!enabled)}>change</button>
+      </div>
+    )
+  }
+
+  extension.send.mockClear()
+  const { getByText, findByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+  await waitFor(() => expect(extension.send).toBeCalledTimes(1))
+  await waitFor(() =>
+    expect(extension.send).toBeCalledWith(
+      expect.objectContaining({ type: '1' }),
+      expect.anything()
+    )
+  )
+  await waitFor(() =>
+    expect(extension.send).toBeCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        values: {
+          [`${enabledAtom}`]: true,
+          [`${trueAtom}`]: 'true',
+          [`${anAtom}`]: 'true',
+        },
+      })
+    )
+  )
+  await waitFor(() =>
+    expect(extension.send).toBeCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        dependencies: {
+          [`${trueAtom}`]: [`${trueAtom}`],
+          [`${enabledAtom}`]: [`${enabledAtom}`],
+          [`${anAtom}`]: [`${enabledAtom}`, `${trueAtom}`],
+        },
+      })
+    )
+  )
+  fireEvent.click(getByText('change'))
+  await findByText('enabled: false')
+  await findByText('condition: false')
+  await waitFor(() =>
+    expect(extension.send).toBeCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        values: {
+          [`${enabledAtom}`]: false,
+          [`${falseAtom}`]: 'false',
+          [`${anAtom}`]: 'false',
+        },
+      })
+    )
+  )
+  await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+  fireEvent.click(getByText('change'))
+  await findByText('enabled: true')
+  await findByText('condition: true')
+  await waitFor(() => expect(extension.send).toBeCalledTimes(3))
+})
+
 describe('when it receives an message of type...', () => {
   describe('DISPATCH and payload of type...', () => {
     it('dispatch & COMMIT', async () => {
