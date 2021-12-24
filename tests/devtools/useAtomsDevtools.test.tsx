@@ -342,6 +342,60 @@ describe('when it receives an message of type...', () => {
     )
   })
 
+  it('JUMP_TO_STATE & JUMP_TO_ACTION should not should not call devtools.send', async () => {
+    const countAtom = atom(0)
+    const secondCountAtom = atom(0)
+    const enabledAtom = atom(true)
+    const anAtom = atom((get) =>
+      get(enabledAtom) ? get(countAtom) : get(secondCountAtom)
+    )
+    const App = () => {
+      useAtomsDevtools('test')
+      const [enabled, setEnabled] = useAtom(enabledAtom)
+      const [cond] = useAtom(anAtom)
+
+      return (
+        <div className="App">
+          <h1>enabled: {enabled ? 'true' : 'false'}</h1>
+          <h1>condition: {cond}</h1>
+          <button onClick={() => setEnabled(!enabled)}>change</button>
+        </div>
+      )
+    }
+
+    extension.send.mockClear()
+    const { getByText, findByText } = render(
+      <Provider>
+        <App />
+      </Provider>
+    )
+
+    fireEvent.click(getByText('change'))
+    fireEvent.click(getByText('change'))
+    fireEvent.click(getByText('change'))
+    await waitFor(() => expect(extension.send).toBeCalledTimes(4))
+    await findByText('enabled: false')
+    await findByText('condition: 0')
+    act(() =>
+      (extensionSubscriber as (message: any) => void)({
+        type: 'DISPATCH',
+        payload: { type: 'JUMP_TO_STATE', actionId: 2 },
+      })
+    )
+    await findByText('enabled: false')
+    await findByText('condition: 0')
+    await waitFor(() => expect(extension.send).toBeCalledTimes(4))
+    act(() =>
+      (extensionSubscriber as (message: any) => void)({
+        type: 'DISPATCH',
+        payload: { type: 'JUMP_TO_STATE', actionId: 3 },
+      })
+    )
+    await findByText('enabled: true')
+    await findByText('condition: 0')
+    await waitFor(() => expect(extension.send).toBeCalledTimes(4))
+  })
+
   it('time travelling with JUMP_TO_ACTION', async () => {
     const countAtom = atom(0)
 
