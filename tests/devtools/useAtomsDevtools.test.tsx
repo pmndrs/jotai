@@ -219,23 +219,27 @@ it('dependencies + updating state should call devtools.send', async () => {
 })
 
 it('conditional dependencies + updating state should call devtools.send', async () => {
-  const trueAtom = atom('true')
-  const falseAtom = atom('false')
-
-  const enabledAtom = atom(true)
-  const anAtom = atom((get) =>
-    get(enabledAtom) ? get(trueAtom) : get(falseAtom)
-  )
+const countAtom = atom(0);
+const secondCountAtom = atom(0);
+// const doubleCountAtom = atom((get) =>
+//   get(countAtom) % 2 === 0 ? get(countAtom) : get(secondCountAtom)
+// )
+const enabledAtom = atom(true);
+const anAtom = atom((get) =>
+  get(enabledAtom) ? get(countAtom) : get(secondCountAtom)
+);
   const App = () => {
     useAtomsDevtools('test')
-    const [enabled, setEnabled] = useAtom(enabledAtom)
-    const [value] = useAtom(anAtom)
+  const [enabled, setEnabled] = useAtom(enabledAtom);
+  const [cond] = useAtom(anAtom);
 
     return (
       <div className="App">
-        <h1>enabled: {enabled ? 'true' : 'false'}</h1>
-        <h1>condition: {value}</h1>
-        <button onClick={() => setEnabled(!enabled)}>change</button>
+      <h1>
+      enabled: {enabled ? "true" : "false"}
+      </h1>
+      <h1>condition: {cond}</h1>
+      <button onClick={() => setEnabled(!enabled)}>change</button>
       </div>
     )
   }
@@ -259,8 +263,8 @@ it('conditional dependencies + updating state should call devtools.send', async 
       expect.objectContaining({
         values: {
           [`${enabledAtom}`]: true,
-          [`${trueAtom}`]: 'true',
-          [`${anAtom}`]: 'true',
+          [`${countAtom}`]: 0,
+          [`${anAtom}`]: 0,
         },
       })
     )
@@ -270,24 +274,24 @@ it('conditional dependencies + updating state should call devtools.send', async 
       expect.anything(),
       expect.objectContaining({
         dependencies: {
-          [`${trueAtom}`]: [`${trueAtom}`],
           [`${enabledAtom}`]: [`${enabledAtom}`],
-          [`${anAtom}`]: [`${enabledAtom}`, `${trueAtom}`],
+          [`${countAtom}`]: [`${countAtom}`],
+          [`${anAtom}`]: [`${enabledAtom}`, `${countAtom}`],
         },
       })
     )
   )
   fireEvent.click(getByText('change'))
   await findByText('enabled: false')
-  await findByText('condition: false')
+  await findByText('condition: 0')
   await waitFor(() =>
     expect(extension.send).toBeCalledWith(
       expect.anything(),
       expect.objectContaining({
         values: {
+          [`${secondCountAtom}`]: 0,
           [`${enabledAtom}`]: false,
-          [`${falseAtom}`]: 'false',
-          [`${anAtom}`]: 'false',
+          [`${anAtom}`]: 0,
         },
       })
     )
@@ -295,7 +299,6 @@ it('conditional dependencies + updating state should call devtools.send', async 
   await waitFor(() => expect(extension.send).toBeCalledTimes(2))
   fireEvent.click(getByText('change'))
   await findByText('enabled: true')
-  await findByText('condition: true')
   await waitFor(() => expect(extension.send).toBeCalledTimes(3))
 })
 
