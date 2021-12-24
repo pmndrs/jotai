@@ -1,9 +1,13 @@
-import { useContext, useEffect, useRef } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
-import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
 import type { Atom, Scope } from '../core/atom'
 import type { Store } from '../core/store'
-import { DEV_GET_ATOM_STATE, DEV_SUBSCRIBE_STATE } from '../core/store'
+import {
+  DEV_GET_ATOM_STATE,
+  DEV_GET_MOUNTED_ATOMS,
+  DEV_SUBSCRIBE_STATE,
+  RESTORE_ATOMS,
+} from '../core/store'
 
 type Config = {
   instanceID?: number
@@ -35,20 +39,20 @@ type Extension = {
 
 type AtomsSnapshot = Map<Atom<unknown>, unknown>
 
-const serializeSnapshot = (snapshot: AtomsSnapshot) => {
+const atomToPrintable = (atom: Atom<unknown>) =>
+  atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
+
+const serializeValues = (atomsSnapshot: AtomsSnapshot) => {
   const result: Record<string, unknown> = {}
-  snapshot.forEach((v, atom) => {
+  atomsSnapshot.forEach((v, atom) => {
     result[atomToPrintable(atom)] = v
   })
   return result
 }
 
-const atomToPrintable = (atom: Atom<unknown>) =>
-  atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
-
-const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
+const serializeDependencies = (store: Store, atomsSnapshot: AtomsSnapshot) => {
   const result: Record<string, string[]> = {}
-  snapshot.forEach((_, atom) => {
+  atomsSnapshot.forEach((_, atom) => {
     const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
     if (atomState) {
       result[atomToPrintable(atom)] = Array.from(atomState.d.keys()).map(
@@ -59,29 +63,64 @@ const getDependencies = (store: Store, snapshot: AtomsSnapshot) => {
   return result
 }
 
-const getDevtoolsState = (store: Store, snapshot: AtomsSnapshot) => ({
-  values: serializeSnapshot(snapshot),
-  dependencies: getDependencies(store, snapshot),
+const getDevtoolsState = (store: Store, atomsSnapshot: AtomsSnapshot) => ({
+  values: serializeValues(atomsSnapshot),
+  dependencies: serializeDependencies(store, atomsSnapshot),
 })
 
-const hasInvalidatedAtoms = (store: Store, snapshot: AtomsSnapshot) => {
-  // FIXME refactor to construct snapshot on effect?
-  for (const [atom, value] of snapshot) {
-    const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
-    if (
-      !atomState ||
-      atomState.r === atomState.i ||
-      !('v' in atomState && Object.is(atomState.v, value))
-    ) {
-      return true
-    }
-  }
-  return false
-}
-
 export function useAtomsDevtools(name: string, scope?: Scope) {
-  const snapshot = useAtomsSnapshot()
-  const goToSnapshot = useGotoAtomsSnapshot()
+  const ScopeContext = getScopeContext(scope)
+  const scopeContainer = useContext(ScopeContext)
+  const { s: store } = scopeContainer
+
+  if (!store[DEV_SUBSCRIBE_STATE]) {
+    throw new Error('useAtomsSnapshot can only be used in dev mode.')
+  }
+
+  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(
+    () => new Map()
+  )
+
+  useEffect(() => {
+    const callback = () => {
+      setAtomsSnapshot((prevSnapshot: AtomsSnapshot) => {
+        let changed = false
+        const snapshot: AtomsSnapshot = new Map()
+        for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
+          const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
+          if (atomState) {
+            // check invalidated atom
+            if (atomState.r === atomState.i) {
+              // bail out
+              return prevSnapshot
+            }
+            if ('v' in atomState) {
+              snapshot.set(atom, atomState.v)
+              if (!Object.is(prevSnapshot.get(atom), atomState.v)) {
+                changed = true
+              }
+            }
+          }
+        }
+        if (!changed && prevSnapshot.size === snapshot.size) {
+          // bail out
+          return prevSnapshot
+        }
+        return snapshot
+      })
+    }
+    const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
+    callback()
+    return unsubscribe
+  }, [store])
+
+  const goToSnapshot = useCallback(
+    (values: Iterable<readonly [Atom<unknown>, unknown]>) => {
+      store[RESTORE_ATOMS](values)
+    },
+    [store]
+  )
+
   let extension: Extension | undefined
   try {
     extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
@@ -98,10 +137,6 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     }
   }
 
-  const ScopeContext = getScopeContext(scope)
-  const scopeContainer = useContext(ScopeContext)
-  const { s: store } = scopeContainer
-
   if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
@@ -116,11 +151,11 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     if (extension) {
       const getSnapshotAt = (index = snapshots.current.length - 1) => {
         // index 0 is @@INIT, so we need to return the next action (0)
-        const s = snapshots.current[index >= 0 ? index : 0]
-        if (!s) {
-          throw new Error('snapshot index out of bounds')
+        const snapshot = snapshots.current[index >= 0 ? index : 0]
+        if (!snapshot) {
+          throw new Error('snaphost index out of bounds')
         }
-        return s
+        return snapshot
       }
       const connection = extension.connect({ name })
       const devtoolsUnsubscribe = connection.subscribe((message: Message) => {
@@ -164,23 +199,20 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       devtools.current.shouldInit = false
       return
     }
-    if (!snapshot.size) {
-      return
-    }
-    if (hasInvalidatedAtoms(store, snapshot)) {
+    if (!atomsSnapshot.size) {
       return
     }
     if (isTimeTraveling.current) {
       isTimeTraveling.current = false
     } else if (isRecording.current) {
+      snapshots.current.push(atomsSnapshot)
       devtools.current.send(
         {
-          type: `${snapshots.current.length + 1}`,
+          type: `${snapshots.current.length}`,
           updatedAt: new Date().toLocaleString(),
         },
-        getDevtoolsState(store, snapshot)
+        getDevtoolsState(store, atomsSnapshot)
       )
-      snapshots.current.push(snapshot)
     }
-  }, [snapshot, store])
+  }, [store, atomsSnapshot])
 }
