@@ -115,7 +115,8 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   useEffect(() => {
     if (extension) {
       const getSnapshotAt = (index = snapshots.current.length - 1) => {
-        const s = snapshots.current[index]
+        // index 0 is @@INIT, so we need to return the next action (0)
+        const s = snapshots.current[index >= 0 ? index : 0]
         if (!s) {
           throw new Error('snapshot index out of bounds')
         }

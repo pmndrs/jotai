@@ -392,6 +392,53 @@ describe('when it receives an message of type...', () => {
       })
     })
 
+      it('time travelling with JUMP_TO_STATE', async () => {
+        const countAtom = atom(0)
+
+        const Counter = () => {
+          const [count, setCount] = useAtom(countAtom)
+          useAtomsDevtools('test')
+          return (
+            <>
+              <div>count: {count}</div>
+              <button onClick={() => setCount((c) => c + 1)}>button</button>
+            </>
+          )
+        }
+
+        extension.send.mockClear()
+        const { getByText, findByText } = render(
+          <Provider>
+            <Counter />
+          </Provider>
+        )
+
+        await waitFor(() => expect(extension.send).toBeCalledTimes(1))
+
+        fireEvent.click(getByText('button'))
+        await findByText('count: 1')
+        await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+        fireEvent.click(getByText('button'))
+        await findByText('count: 2')
+        await waitFor(() => expect(extension.send).toBeCalledTimes(3))
+
+        act(() =>
+          (extensionSubscriber as (message: any) => void)({
+            type: 'DISPATCH',
+            payload: { type: 'JUMP_TO_STATE', actionId: 1 },
+          })
+        )
+        await findByText('count: 0')
+        act(() =>
+          (extensionSubscriber as (message: any) => void)({
+            type: 'DISPATCH',
+            payload: { type: 'JUMP_TO_STATE', actionId: 0 },
+          })
+        )
+        await findByText('count: 0')
+      })
+
+
     it('PAUSE_RECORDING, it toggles the sending of actions', async () => {
       const countAtom = atom(0)
 
