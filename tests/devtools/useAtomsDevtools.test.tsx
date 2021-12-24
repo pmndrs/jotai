@@ -219,27 +219,22 @@ it('dependencies + updating state should call devtools.send', async () => {
 })
 
 it('conditional dependencies + updating state should call devtools.send', async () => {
-const countAtom = atom(0);
-const secondCountAtom = atom(0);
-// const doubleCountAtom = atom((get) =>
-//   get(countAtom) % 2 === 0 ? get(countAtom) : get(secondCountAtom)
-// )
-const enabledAtom = atom(true);
-const anAtom = atom((get) =>
-  get(enabledAtom) ? get(countAtom) : get(secondCountAtom)
-);
+  const countAtom = atom(0)
+  const secondCountAtom = atom(0)
+  const enabledAtom = atom(true)
+  const anAtom = atom((get) =>
+    get(enabledAtom) ? get(countAtom) : get(secondCountAtom)
+  )
   const App = () => {
     useAtomsDevtools('test')
-  const [enabled, setEnabled] = useAtom(enabledAtom);
-  const [cond] = useAtom(anAtom);
+    const [enabled, setEnabled] = useAtom(enabledAtom)
+    const [cond] = useAtom(anAtom)
 
     return (
       <div className="App">
-      <h1>
-      enabled: {enabled ? "true" : "false"}
-      </h1>
-      <h1>condition: {cond}</h1>
-      <button onClick={() => setEnabled(!enabled)}>change</button>
+        <h1>enabled: {enabled ? 'true' : 'false'}</h1>
+        <h1>condition: {cond}</h1>
+        <button onClick={() => setEnabled(!enabled)}>change</button>
       </div>
     )
   }
@@ -392,52 +387,51 @@ describe('when it receives an message of type...', () => {
       })
     })
 
-      it('time travelling with JUMP_TO_STATE', async () => {
-        const countAtom = atom(0)
+    it('time travelling with JUMP_TO_STATE', async () => {
+      const countAtom = atom(0)
 
-        const Counter = () => {
-          const [count, setCount] = useAtom(countAtom)
-          useAtomsDevtools('test')
-          return (
-            <>
-              <div>count: {count}</div>
-              <button onClick={() => setCount((c) => c + 1)}>button</button>
-            </>
-          )
-        }
-
-        extension.send.mockClear()
-        const { getByText, findByText } = render(
-          <Provider>
-            <Counter />
-          </Provider>
+      const Counter = () => {
+        const [count, setCount] = useAtom(countAtom)
+        useAtomsDevtools('test')
+        return (
+          <>
+            <div>count: {count}</div>
+            <button onClick={() => setCount((c) => c + 1)}>button</button>
+          </>
         )
+      }
 
-        await waitFor(() => expect(extension.send).toBeCalledTimes(1))
+      extension.send.mockClear()
+      const { getByText, findByText } = render(
+        <Provider>
+          <Counter />
+        </Provider>
+      )
 
-        fireEvent.click(getByText('button'))
-        await findByText('count: 1')
-        await waitFor(() => expect(extension.send).toBeCalledTimes(2))
-        fireEvent.click(getByText('button'))
-        await findByText('count: 2')
-        await waitFor(() => expect(extension.send).toBeCalledTimes(3))
+      await waitFor(() => expect(extension.send).toBeCalledTimes(1))
 
-        act(() =>
-          (extensionSubscriber as (message: any) => void)({
-            type: 'DISPATCH',
-            payload: { type: 'JUMP_TO_STATE', actionId: 1 },
-          })
-        )
-        await findByText('count: 0')
-        act(() =>
-          (extensionSubscriber as (message: any) => void)({
-            type: 'DISPATCH',
-            payload: { type: 'JUMP_TO_STATE', actionId: 0 },
-          })
-        )
-        await findByText('count: 0')
-      })
+      fireEvent.click(getByText('button'))
+      await findByText('count: 1')
+      await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+      fireEvent.click(getByText('button'))
+      await findByText('count: 2')
+      await waitFor(() => expect(extension.send).toBeCalledTimes(3))
 
+      act(() =>
+        (extensionSubscriber as (message: any) => void)({
+          type: 'DISPATCH',
+          payload: { type: 'JUMP_TO_STATE', actionId: 1 },
+        })
+      )
+      await findByText('count: 0')
+      act(() =>
+        (extensionSubscriber as (message: any) => void)({
+          type: 'DISPATCH',
+          payload: { type: 'JUMP_TO_STATE', actionId: 0 },
+        })
+      )
+      await findByText('count: 0')
+    })
 
     it('PAUSE_RECORDING, it toggles the sending of actions', async () => {
       const countAtom = atom(0)
