@@ -1,4 +1,4 @@
-import type { Atom, WritableAtom } from 'jotai'
+import type { Atom } from 'jotai'
 
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
@@ -12,22 +12,6 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
   areEqual?: (a: Param, b: Param) => boolean
 ): AtomFamily<Param, AtomType>
-
-/**
- * @deprecated type (use atomFamily<Param, AtomType extends Atom<unknown>>)
- */
-export function atomFamily<Param, Value, Update>(
-  initializeAtom: (param: Param) => WritableAtom<Value, Update>,
-  areEqual?: (a: Param, b: Param) => boolean
-): AtomFamily<Param, WritableAtom<Value, Update>>
-
-/**
- * @deprecated type (use atomFamily<Param, AtomType extends Atom<unknown>>)
- */
-export function atomFamily<Param, Value>(
-  initializeAtom: (param: Param) => Atom<Value>,
-  areEqual?: (a: Param, b: Param) => boolean
-): AtomFamily<Param, Atom<Value>>
 
 export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
