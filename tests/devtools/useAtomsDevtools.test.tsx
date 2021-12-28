@@ -203,9 +203,9 @@ it('dependencies + updating state should call devtools.send', async () => {
     expect(extension.send).toBeCalledWith(
       expect.anything(),
       expect.objectContaining({
-        dependencies: {
-          [`${countAtom}`]: [`${countAtom}`],
-          [`${doubleAtom}`]: [`${countAtom}`],
+        dependents: {
+          [`${countAtom}`]: [`${countAtom}`, `${doubleAtom}`],
+          [`${doubleAtom}`]: [],
         },
       })
     )
@@ -283,10 +283,10 @@ it('conditional dependencies + updating state should call devtools.send', async 
     expect(extension.send).toBeCalledWith(
       expect.anything(),
       expect.objectContaining({
-        dependencies: {
-          [`${enabledAtom}`]: [`${enabledAtom}`],
-          [`${countAtom}`]: [`${countAtom}`],
-          [`${anAtom}`]: [`${enabledAtom}`, `${countAtom}`],
+        dependents: {
+          [`${enabledAtom}`]: [`${enabledAtom}`, `${anAtom}`],
+          [`${countAtom}`]: [`${countAtom}`, `${anAtom}`],
+          [`${anAtom}`]: [],
         },
       })
     )
@@ -352,7 +352,7 @@ describe('when it receives an message of type...', () => {
         values: {
           [`${countAtom}`]: 1,
         },
-        dependencies: {
+        dependents: {
           [`${countAtom}`]: [`${countAtom}`],
         },
       })

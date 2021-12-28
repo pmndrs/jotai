@@ -4,6 +4,7 @@ import type { Atom, Scope } from '../core/atom'
 import type { Store } from '../core/store'
 import {
   DEV_GET_ATOM_STATE,
+  DEV_GET_MOUNTED,
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
   RESTORE_ATOMS,
@@ -61,22 +62,22 @@ const serializeValues = (atomsSnapshot: AtomsSnapshot) => {
   return result
 }
 
-const serializeDependencies = (store: Store, atomsSnapshot: AtomsSnapshot) => {
+const serializeDependents = (store: Store) => {
   const result: Record<string, string[]> = {}
-  atomsSnapshot.forEach((_, atom) => {
-    const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
-    if (atomState) {
-      result[atomToPrintable(atom)] = Array.from(atomState.d.keys()).map(
-        atomToPrintable
-      )
+  for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
+    const mounted = store[DEV_GET_MOUNTED]?.(atom)
+    if (mounted) {
+      const dependents = mounted.d
+      result[atomToPrintable(atom)] =
+        Array.from(dependents).map(atomToPrintable)
     }
-  })
+  }
   return result
 }
 
 const getDevtoolsState = (store: Store, atomsSnapshot: AtomsSnapshot) => ({
   values: serializeValues(atomsSnapshot),
-  dependencies: serializeDependencies(store, atomsSnapshot),
+  dependents: serializeDependents(store),
 })
 
 export function useAtomsDevtools(name: string, scope?: Scope) {
