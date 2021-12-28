@@ -285,7 +285,10 @@ it('conditional dependencies + updating state should call devtools.send', async 
       expect.objectContaining({
         dependents: {
           [`${enabledAtom}`]: [`${enabledAtom}`, `${anAtom}`],
-          [`${countAtom}`]: [`${countAtom}`, `${anAtom}`],
+          [`${countAtom}`]: expect.arrayContaining([
+            `${countAtom}`,
+            `${anAtom}`,
+          ]),
           [`${anAtom}`]: [],
         },
       })

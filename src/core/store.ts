@@ -465,11 +465,11 @@ export const createStore = (
     // mount read dependencies before onMount
     const atomState = readAtomState(atom)
     atomState.d.forEach((_, a) => {
-      if (a !== atom) {
-        const aMounted = mountedMap.get(a)
-        if (aMounted) {
-          aMounted.d.add(atom) // add dependent
-        } else {
+      const aMounted = mountedMap.get(a)
+      if (aMounted) {
+        aMounted.d.add(atom) // add dependent
+      } else {
+        if (a !== atom) {
           mountAtom(a, atom)
         }
       }
