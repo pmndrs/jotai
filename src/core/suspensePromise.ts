@@ -42,12 +42,12 @@ export const createSuspensePromise = (
     o: promise, // original promise
     c: null as (() => void) | null, // cancel promise
   }
-  const suspensePromise = new Promise<void>((resolve, reject) => {
+  const suspensePromise = new Promise<void>((resolve) => {
     objectToAttach.c = () => {
       objectToAttach.c = null
       resolve()
     }
-    promise.then(objectToAttach.c, reject)
+    promise.then(objectToAttach.c, objectToAttach.c)
   }) as SuspensePromise
   suspensePromise[SUSPENSE_PROMISE] = objectToAttach
   return suspensePromise

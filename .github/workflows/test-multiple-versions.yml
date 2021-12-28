@@ -24,7 +24,11 @@ jobs:
       - name: Test Default without Provider
         run: yarn test:ci
         env:
-          PROVIDER_LESS_MODE: 'true'
+          PROVIDER_MODE: 'PROVIDER_LESS'
+      - name: Test Default with Versioned Write
+        run: yarn test:ci
+        env:
+          PROVIDER_MODE: 'VERSIONED_WRITE'
 
   test_matrix:
     runs-on: ubuntu-latest
@@ -37,9 +41,10 @@ jobs:
           - 17.0.0
           - 18.0.0-rc.0
           - 0.0.0-experimental-aa8f2bdbc-20211215
-        mode: [withProvider, withoutProvider]
+        mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
         testing: [default, alpha]
         exclude:
+          - { react: 16.8.6, mode: VERSIONED_WRITE }
           - { react: 16.8.6, testing: alpha }
           - { react: 16.9.0, testing: alpha }
           - { react: 17.0.0, testing: alpha }
@@ -71,4 +76,4 @@ jobs:
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
           yarn test:ci
         env:
-          PROVIDER_LESS_MODE: ${{ matrix.mode == 'withoutProvider' }}
+          PROVIDER_MODE: ${{ matrix.mode }}

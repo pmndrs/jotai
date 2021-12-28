@@ -4,8 +4,11 @@ import type { Atom, Scope } from './atom'
 import { createStore } from './store'
 import type { Store } from './store'
 
+type VersionedWrite = (write: (version?: object) => void) => void
+
 export type ScopeContainer = {
   s: Store
+  w?: VersionedWrite
 }
 
 export const createScopeContainer = (

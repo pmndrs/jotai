@@ -61,10 +61,6 @@ type OnMount<Update, Result extends void | Promise<void>> = <
 export type Atom<Value> = {
   toString: () => string
   debugLabel?: string
-  /**
-   * @deprecated Instead use `useAtom(atom, scope)`
-   */
-  scope?: Scope
   read: Read<Value>
 }
 
