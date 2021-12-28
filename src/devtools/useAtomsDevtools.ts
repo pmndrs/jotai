@@ -42,6 +42,17 @@ type AtomsSnapshot = Map<Atom<unknown>, unknown>
 const atomToPrintable = (atom: Atom<unknown>) =>
   atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
 
+const createAtomsSnapshot = (store: Store): AtomsSnapshot => {
+  const atomsSnapshot: AtomsSnapshot = new Map()
+  for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
+    const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
+    if (atomState && 'v' in atomState) {
+      atomsSnapshot.set(atom, atomState.v)
+    }
+  }
+  return atomsSnapshot
+}
+
 const serializeValues = (atomsSnapshot: AtomsSnapshot) => {
   const result: Record<string, unknown> = {}
   atomsSnapshot.forEach((v, atom) => {
@@ -77,37 +88,18 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
-  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(
-    () => new Map()
-  )
+  const [version, setVersion] = useState(0)
 
   useEffect(() => {
     const callback = () => {
-      setAtomsSnapshot((prevSnapshot: AtomsSnapshot) => {
-        let changed = false
-        const snapshot: AtomsSnapshot = new Map()
-        for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
-          const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
-          if (atomState) {
-            // check invalidated atom
-            if (atomState.r === atomState.i) {
-              // bail out
-              return prevSnapshot
-            }
-            if ('v' in atomState) {
-              snapshot.set(atom, atomState.v)
-              if (!Object.is(prevSnapshot.get(atom), atomState.v)) {
-                changed = true
-              }
-            }
-          }
+      for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
+        const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
+        if (atomState && atomState.r === atomState.i) {
+          // ignore if there are any invalidated atoms
+          return
         }
-        if (!changed && prevSnapshot.size === snapshot.size) {
-          // bail out
-          return prevSnapshot
-        }
-        return snapshot
-      })
+      }
+      setVersion((v) => v + 1)
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()
@@ -199,9 +191,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       devtools.current.shouldInit = false
       return
     }
-    if (!atomsSnapshot.size) {
-      return
-    }
+    const atomsSnapshot = createAtomsSnapshot(store)
     if (isTimeTraveling.current) {
       isTimeTraveling.current = false
     } else if (isRecording.current) {
@@ -214,5 +204,5 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         getDevtoolsState(store, atomsSnapshot)
       )
     }
-  }, [store, atomsSnapshot])
+  }, [store, version])
 }

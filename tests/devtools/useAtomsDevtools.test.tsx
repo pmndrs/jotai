@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useAtomsDevtools } from 'jotai/devtools'
@@ -44,9 +45,11 @@ it('connects to the extension by initialiing', () => {
     )
   }
   render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   expect(extension.init).toHaveBeenLastCalledWith(undefined)
@@ -75,9 +78,11 @@ describe('If there is no extension installed...', () => {
   it('does not throw', () => {
     expect(() => {
       render(
-        <Provider>
-          <Counter />
-        </Provider>
+        <StrictMode>
+          <Provider>
+            <Counter />
+          </Provider>
+        </StrictMode>
       )
     }).not.toThrow()
   })
@@ -89,9 +94,11 @@ describe('If there is no extension installed...', () => {
     console.warn = jest.fn()
 
     render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
     expect(console.warn).toHaveBeenLastCalledWith(
       'Please install/enable Redux devtools extension'
@@ -105,9 +112,11 @@ describe('If there is no extension installed...', () => {
     const consoleWarn = jest.spyOn(console, 'warn')
 
     render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
     expect(consoleWarn).not.toBeCalled()
 
@@ -131,9 +140,11 @@ it('updating state should call devtools.send', async () => {
 
   extension.send.mockClear()
   const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => expect(extension.send).toBeCalledTimes(1))
@@ -164,9 +175,11 @@ it('dependencies + updating state should call devtools.send', async () => {
 
   extension.send.mockClear()
   const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
   await waitFor(() => expect(extension.send).toBeCalledTimes(1))
   await waitFor(() =>
@@ -241,9 +254,11 @@ it('conditional dependencies + updating state should call devtools.send', async 
 
   extension.send.mockClear()
   const { getByText, findByText } = render(
-    <Provider>
-      <App />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <App />
+      </Provider>
+    </StrictMode>
   )
   await waitFor(() => expect(extension.send).toBeCalledTimes(1))
   await waitFor(() =>
@@ -314,9 +329,11 @@ describe('when it receives an message of type...', () => {
 
     extension.send.mockClear()
     const { getByText, findByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await waitFor(() => expect(extension.send).toBeCalledTimes(1))
@@ -342,7 +359,7 @@ describe('when it receives an message of type...', () => {
     )
   })
 
-  it('JUMP_TO_STATE & JUMP_TO_ACTION should not should not call devtools.send', async () => {
+  it('JUMP_TO_STATE & JUMP_TO_ACTION should not call devtools.send', async () => {
     const countAtom = atom(0)
     const secondCountAtom = atom(0)
     const enabledAtom = atom(true)
@@ -365,35 +382,46 @@ describe('when it receives an message of type...', () => {
 
     extension.send.mockClear()
     const { getByText, findByText } = render(
-      <Provider>
-        <App />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <App />
+        </Provider>
+      </StrictMode>
     )
 
+    await findByText('enabled: true')
     fireEvent.click(getByText('change'))
-    fireEvent.click(getByText('change'))
-    fireEvent.click(getByText('change'))
-    await waitFor(() => expect(extension.send).toBeCalledTimes(4))
     await findByText('enabled: false')
-    await findByText('condition: 0')
-    act(() =>
-      (extensionSubscriber as (message: any) => void)({
-        type: 'DISPATCH',
-        payload: { type: 'JUMP_TO_STATE', actionId: 2 },
-      })
-    )
-    await findByText('enabled: false')
-    await findByText('condition: 0')
-    await waitFor(() => expect(extension.send).toBeCalledTimes(4))
+    fireEvent.click(getByText('change'))
+    await findByText('enabled: true')
+    fireEvent.click(getByText('change'))
+    await waitFor(() => {
+      getByText('enabled: false')
+      getByText('condition: 0')
+    })
+    expect(extension.send).toBeCalledTimes(4)
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
         payload: { type: 'JUMP_TO_STATE', actionId: 3 },
       })
     )
-    await findByText('enabled: true')
-    await findByText('condition: 0')
-    await waitFor(() => expect(extension.send).toBeCalledTimes(4))
+    await waitFor(() => {
+      getByText('enabled: true')
+      getByText('condition: 0')
+    })
+    expect(extension.send).toBeCalledTimes(4)
+    act(() =>
+      (extensionSubscriber as (message: any) => void)({
+        type: 'DISPATCH',
+        payload: { type: 'JUMP_TO_STATE', actionId: 2 },
+      })
+    )
+    await waitFor(() => {
+      getByText('enabled: false')
+      getByText('condition: 0')
+    })
+    expect(extension.send).toBeCalledTimes(4)
   })
 
   it('time travelling with JUMP_TO_ACTION', async () => {
@@ -412,9 +440,11 @@ describe('when it receives an message of type...', () => {
 
     extension.send.mockClear()
     const { getByText, findByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await waitFor(() => expect(extension.send).toBeCalledTimes(1))
@@ -454,9 +484,11 @@ describe('when it receives an message of type...', () => {
 
     extension.send.mockClear()
     const { getByText, findByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await waitFor(() => expect(extension.send).toBeCalledTimes(1))
@@ -514,9 +546,11 @@ describe('when it receives an message of type...', () => {
 
     extension.send.mockClear()
     const { getByText, findByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await waitFor(() => expect(extension.send).toBeCalledTimes(1))
