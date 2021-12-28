@@ -1,7 +1,8 @@
 import { render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
+import { getTestProvider } from './testUtils'
 
-// No PROVIDER_LESS_MODE test for this file, obviously.
+const Provider = getTestProvider(true)
 
 it('uses initial values from provider', async () => {
   const countAtom = atom(1)

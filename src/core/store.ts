@@ -33,7 +33,9 @@ export type AtomState<Value = unknown> = {
   d: ReadDependencies
 } & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
 
-type Listeners = Set<() => void>
+export type VersionObject = { p?: VersionObject } // "p"arent version
+
+type Listeners = Set<(version?: VersionObject) => void>
 type Dependents = Set<AnyAtom>
 type Mounted = {
   l: Listeners
@@ -61,7 +63,7 @@ export const DEV_GET_MOUNTED = 'm'
 export const createStore = (
   initialValues?: Iterable<readonly [AnyAtom, unknown]>
 ) => {
-  const atomStateMap = new WeakMap<AnyAtom, AtomState>()
+  const committedAtomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingMap = new Map<
     AnyAtom,
@@ -89,37 +91,119 @@ export const createStore = (
           )
         }
       }
-      atomStateMap.set(atom, atomState)
+      committedAtomStateMap.set(atom, atomState)
     }
   }
 
-  const getAtomState = <Value>(atom: Atom<Value>) =>
-    atomStateMap.get(atom) as AtomState<Value> | undefined
+  type SuspensePromiseCache = Map<VersionObject | undefined, SuspensePromise>
+  const suspensePromiseCacheMap = new WeakMap<AnyAtom, SuspensePromiseCache>()
+  const addSuspensePromiseToCache = (
+    version: VersionObject | undefined,
+    atom: AnyAtom,
+    suspensePromise: SuspensePromise
+  ): void => {
+    let cache = suspensePromiseCacheMap.get(atom)
+    if (!cache) {
+      cache = new Map()
+      suspensePromiseCacheMap.set(atom, cache)
+    }
+    suspensePromise.then(() => {
+      if ((cache as SuspensePromiseCache).get(version) === suspensePromise) {
+        ;(cache as SuspensePromiseCache).delete(version)
+        if (!(cache as SuspensePromiseCache).size) {
+          suspensePromiseCacheMap.delete(atom)
+        }
+      }
+    })
+    cache.set(version, suspensePromise)
+  }
+  const cancelAllSuspensePromiseInCache = (
+    atom: AnyAtom
+  ): Set<VersionObject | undefined> => {
+    const versionSet = new Set<VersionObject | undefined>()
+    const cache = suspensePromiseCacheMap.get(atom)
+    if (cache) {
+      suspensePromiseCacheMap.delete(atom)
+      cache.forEach((suspensePromise, version) => {
+        cancelSuspensePromise(suspensePromise)
+        versionSet.add(version)
+      })
+    }
+    return versionSet
+  }
+
+  const versionedAtomStateMapMap = new WeakMap<
+    VersionObject,
+    Map<AnyAtom, AtomState>
+  >()
+  const getVersionedAtomStateMap = (version: VersionObject) => {
+    let versionedAtomStateMap = versionedAtomStateMapMap.get(version)
+    if (!versionedAtomStateMap) {
+      versionedAtomStateMap = new Map()
+      versionedAtomStateMapMap.set(version, versionedAtomStateMap)
+    }
+    return versionedAtomStateMap
+  }
+
+  const getAtomState = <Value>(
+    version: VersionObject | undefined,
+    atom: Atom<Value>
+  ): AtomState<Value> | undefined => {
+    if (version) {
+      const versionedAtomStateMap = getVersionedAtomStateMap(version)
+      let atomState = versionedAtomStateMap.get(atom) as
+        | AtomState<Value>
+        | undefined
+      if (!atomState) {
+        atomState = getAtomState(version.p, atom)
+        if (atomState) {
+          if ('p' in atomState) {
+            atomState.p.then(() => versionedAtomStateMap.delete(atom))
+          }
+          versionedAtomStateMap.set(atom, atomState)
+        }
+      }
+      return atomState
+    }
+    return committedAtomStateMap.get(atom) as AtomState<Value> | undefined
+  }
 
   const setAtomState = <Value>(
+    version: VersionObject | undefined,
     atom: Atom<Value>,
     atomState: AtomState<Value>
   ): void => {
     if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
       Object.freeze(atomState)
     }
-    const prevAtomState = atomStateMap.get(atom)
-    atomStateMap.set(atom, atomState)
-    if (!pendingMap.has(atom)) {
-      pendingMap.set(atom, prevAtomState)
+    if (version) {
+      const versionedAtomStateMap = getVersionedAtomStateMap(version)
+      versionedAtomStateMap.set(atom, atomState)
+    } else {
+      const prevAtomState = committedAtomStateMap.get(atom)
+      committedAtomStateMap.set(atom, atomState)
+      if (!pendingMap.has(atom)) {
+        pendingMap.set(atom, prevAtomState)
+      }
     }
   }
 
-  const getReadDependencies = (dependencies: Set<AnyAtom>): ReadDependencies =>
-    new Map(Array.from(dependencies).map((a) => [a, getAtomState(a)?.r || 0]))
+  const getReadDependencies = (
+    version: VersionObject | undefined,
+    dependencies: Set<AnyAtom>
+  ): ReadDependencies =>
+    new Map(
+      Array.from(dependencies).map((a) => [a, getAtomState(version, a)?.r || 0])
+    )
 
   const setAtomValue = <Value>(
+    version: VersionObject | undefined,
     atom: Atom<Value>,
     value: ResolveType<Value>,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
   ): AtomState<Value> => {
-    const atomState = getAtomState(atom)
+    const atomState = getAtomState(version, atom)
     if (atomState) {
       if (
         suspensePromise &&
@@ -137,7 +221,7 @@ export const createStore = (
       v: value,
       r: atomState?.r || 0,
       d: dependencies
-        ? getReadDependencies(dependencies)
+        ? getReadDependencies(version, dependencies)
         : atomState?.d || new Map(),
     }
     if (
@@ -150,17 +234,18 @@ export const createStore = (
         nextAtomState.d.set(atom, nextAtomState.r)
       }
     }
-    setAtomState(atom, nextAtomState)
+    setAtomState(version, atom, nextAtomState)
     return nextAtomState
   }
 
   const setAtomReadError = <Value>(
+    version: VersionObject | undefined,
     atom: Atom<Value>,
     error: ReadError,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
   ): AtomState<Value> => {
-    const atomState = getAtomState(atom)
+    const atomState = getAtomState(version, atom)
     if (atomState) {
       if (
         suspensePromise &&
@@ -178,19 +263,20 @@ export const createStore = (
       e: error, // set read error
       r: atomState?.r || 0,
       d: dependencies
-        ? getReadDependencies(dependencies)
+        ? getReadDependencies(version, dependencies)
         : atomState?.d || new Map(),
     }
-    setAtomState(atom, nextAtomState)
+    setAtomState(version, atom, nextAtomState)
     return nextAtomState
   }
 
   const setAtomSuspensePromise = <Value>(
+    version: VersionObject | undefined,
     atom: Atom<Value>,
     suspensePromise: SuspensePromise,
     dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
-    const atomState = getAtomState(atom)
+    const atomState = getAtomState(version, atom)
     if (atomState && 'p' in atomState) {
       if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
         // the same promise, not updating
@@ -198,18 +284,20 @@ export const createStore = (
       }
       cancelSuspensePromise(atomState.p)
     }
+    addSuspensePromiseToCache(version, atom, suspensePromise)
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
       r: atomState?.r || 0,
       d: dependencies
-        ? getReadDependencies(dependencies)
+        ? getReadDependencies(version, dependencies)
         : atomState?.d || new Map(),
     }
-    setAtomState(atom, nextAtomState)
+    setAtomState(version, atom, nextAtomState)
     return nextAtomState
   }
 
   const setAtomPromiseOrValue = <Value>(
+    version: VersionObject | undefined,
     atom: Atom<Value>,
     promiseOrValue: Value,
     dependencies?: Set<AnyAtom>
@@ -218,8 +306,8 @@ export const createStore = (
       const suspensePromise = createSuspensePromise(
         promiseOrValue
           .then((value: ResolveType<Value>) => {
-            setAtomValue(atom, value, dependencies, suspensePromise)
-            flushPending()
+            setAtomValue(version, atom, value, dependencies, suspensePromise)
+            flushPending(version)
           })
           .catch((e) => {
             if (e instanceof Promise) {
@@ -229,31 +317,40 @@ export const createStore = (
               ) {
                 // schedule another read later
                 // FIXME not 100% confident with this code
-                e.then(() => readAtomState(atom, true))
+                e.then(() => readAtomState(version, atom, true))
               }
               return e
             }
-            setAtomReadError(atom, e, dependencies, suspensePromise)
-            flushPending()
+            setAtomReadError(version, atom, e, dependencies, suspensePromise)
+            flushPending(version)
           })
       )
-      return setAtomSuspensePromise(atom, suspensePromise, dependencies)
+      return setAtomSuspensePromise(
+        version,
+        atom,
+        suspensePromise,
+        dependencies
+      )
     }
     return setAtomValue(
+      version,
       atom,
       promiseOrValue as ResolveType<Value>,
       dependencies
     )
   }
 
-  const setAtomInvalidated = <Value>(atom: Atom<Value>): void => {
-    const atomState = getAtomState(atom)
+  const setAtomInvalidated = <Value>(
+    version: VersionObject | undefined,
+    atom: Atom<Value>
+  ): void => {
+    const atomState = getAtomState(version, atom)
     if (atomState) {
       const nextAtomState: AtomState<Value> = {
         ...atomState, // copy everything
         i: atomState.r, // set invalidated revision
       }
-      setAtomState(atom, nextAtomState)
+      setAtomState(version, atom, nextAtomState)
     } else if (
       typeof process === 'object' &&
       process.env.NODE_ENV !== 'production'
@@ -263,31 +360,32 @@ export const createStore = (
   }
 
   const readAtomState = <Value>(
+    version: VersionObject | undefined,
     atom: Atom<Value>,
     force?: boolean
   ): AtomState<Value> => {
     if (!force) {
-      const atomState = getAtomState(atom)
+      const atomState = getAtomState(version, atom)
       if (atomState) {
         atomState.d.forEach((_, a) => {
           if (a !== atom) {
             if (!mountedMap.has(a)) {
               // not mounted
-              readAtomState(a)
+              readAtomState(version, a)
             } else {
-              const aState = getAtomState(a)
+              const aState = getAtomState(version, a)
               if (
                 aState &&
                 aState.r === aState.i // revision is invalidated
               ) {
-                readAtomState(a)
+                readAtomState(version, a)
               }
             }
           }
         })
         if (
           Array.from(atomState.d.entries()).every(([a, r]) => {
-            const aState = getAtomState(a)
+            const aState = getAtomState(version, a)
             return (
               aState &&
               !('e' in aState) && // no read error
@@ -305,7 +403,9 @@ export const createStore = (
       const promiseOrValue = atom.read(<V>(a: Atom<V>) => {
         dependencies.add(a)
         const aState =
-          (a as AnyAtom) === atom ? getAtomState(a) : readAtomState(a)
+          (a as AnyAtom) === atom
+            ? getAtomState(version, a)
+            : readAtomState(version, a)
         if (aState) {
           if ('e' in aState) {
             throw aState.e // read error
@@ -321,18 +421,26 @@ export const createStore = (
         // NOTE invalid derived atoms can reach here
         throw new Error('no atom init')
       })
-      return setAtomPromiseOrValue(atom, promiseOrValue, dependencies)
+      return setAtomPromiseOrValue(version, atom, promiseOrValue, dependencies)
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
         const suspensePromise = createSuspensePromise(errorOrPromise)
-        return setAtomSuspensePromise(atom, suspensePromise, dependencies)
+        return setAtomSuspensePromise(
+          version,
+          atom,
+          suspensePromise,
+          dependencies
+        )
       }
-      return setAtomReadError(atom, errorOrPromise, dependencies)
+      return setAtomReadError(version, atom, errorOrPromise, dependencies)
     }
   }
 
-  const readAtom = <Value>(readingAtom: Atom<Value>): AtomState<Value> => {
-    const atomState = readAtomState(readingAtom)
+  const readAtom = <Value>(
+    readingAtom: Atom<Value>,
+    version?: VersionObject
+  ): AtomState<Value> => {
+    const atomState = readAtomState(version, readingAtom)
     return atomState
   }
 
@@ -356,20 +464,25 @@ export const createStore = (
     }
   }
 
-  const invalidateDependents = <Value>(atom: Atom<Value>): void => {
+  const invalidateDependents = <Value>(
+    version: VersionObject | undefined,
+    atom: Atom<Value>
+  ): void => {
     const mounted = mountedMap.get(atom)
     mounted?.d.forEach((dependent) => {
       if (dependent !== atom) {
-        setAtomInvalidated(dependent)
-        invalidateDependents(dependent)
+        setAtomInvalidated(version, dependent)
+        invalidateDependents(version, dependent)
       }
     })
   }
 
   const writeAtomState = <Value, Update, Result extends void | Promise<void>>(
+    version: VersionObject | undefined,
     atom: WritableAtom<Value, Update, Result>,
     update: Update
   ): void | Promise<void> => {
+    let isSync = true
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
       options?: {
@@ -380,7 +493,7 @@ export const createStore = (
         console.warn('[DEPRECATED] Please use { unstable_promise: true }')
         options = { unstable_promise: options }
       }
-      const aState = readAtomState(a)
+      const aState = readAtomState(version, a)
       if ('e' in aState) {
         throw aState.e // read error
       }
@@ -425,24 +538,35 @@ export const createStore = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
-        setAtomPromiseOrValue(a, v)
-        invalidateDependents(a)
-        flushPending()
+        const versionSet = cancelAllSuspensePromiseInCache(a)
+        versionSet.forEach((cancelledVersion) => {
+          if (cancelledVersion !== version) {
+            setAtomPromiseOrValue(cancelledVersion, a, v)
+          }
+        })
+        setAtomPromiseOrValue(version, a, v)
+        invalidateDependents(version, a)
       } else {
-        promiseOrVoid = writeAtomState(a as AnyWritableAtom, v)
+        promiseOrVoid = writeAtomState(version, a as AnyWritableAtom, v)
+      }
+      if (!isSync) {
+        flushPending(version)
       }
       return promiseOrVoid
     }
     const promiseOrVoid = atom.write(writeGetter, setter, update)
-    flushPending()
+    isSync = false
+    version = undefined
     return promiseOrVoid
   }
 
   const writeAtom = <Value, Update, Result extends void | Promise<void>>(
     writingAtom: WritableAtom<Value, Update, Result>,
-    update: Update
+    update: Update,
+    version?: VersionObject
   ): void | Promise<void> => {
-    const promiseOrVoid = writeAtomState(writingAtom, update)
+    const promiseOrVoid = writeAtomState(version, writingAtom, update)
+    flushPending(version)
     return promiseOrVoid
   }
 
@@ -463,7 +587,7 @@ export const createStore = (
       mountedAtoms.add(atom)
     }
     // mount read dependencies before onMount
-    const atomState = readAtomState(atom)
+    const atomState = readAtomState(undefined, atom)
     atomState.d.forEach((_, a) => {
       if (a !== atom) {
         const aMounted = mountedMap.get(a)
@@ -496,7 +620,7 @@ export const createStore = (
       mountedAtoms.delete(atom)
     }
     // unmount read dependencies afterward
-    const atomState = getAtomState(atom)
+    const atomState = getAtomState(undefined, atom)
     if (atomState) {
       atomState.d.forEach((_, a) => {
         if (a !== atom) {
@@ -547,11 +671,21 @@ export const createStore = (
     })
   }
 
-  const flushPending = (): void => {
+  const flushPending = (version: VersionObject | undefined): void => {
+    if (version) {
+      const versionedAtomStateMap = getVersionedAtomStateMap(version)
+      versionedAtomStateMap.forEach((atomState, atom) => {
+        if (atomState !== committedAtomStateMap.get(atom)) {
+          const mounted = mountedMap.get(atom)
+          mounted?.l.forEach((listener) => listener(version))
+        }
+      })
+      return
+    }
     const pending = Array.from(pendingMap)
     pendingMap.clear()
     pending.forEach(([atom, prevAtomState]) => {
-      const atomState = getAtomState(atom)
+      const atomState = getAtomState(undefined, atom)
       if (atomState && atomState.d !== prevAtomState?.d) {
         mountDependencies(atom, atomState, prevAtomState?.d || new Map())
       }
@@ -566,11 +700,30 @@ export const createStore = (
     })
   }
 
-  const commitAtom = (_atom: AnyAtom) => {
-    flushPending()
+  const commitVersionedAtomStateMap = (version: VersionObject) => {
+    const versionedAtomStateMap = getVersionedAtomStateMap(version)
+    versionedAtomStateMap.forEach((atomState, atom) => {
+      const prevAtomState = committedAtomStateMap.get(atom)
+      if (atomState.r > (prevAtomState?.r || 0)) {
+        committedAtomStateMap.set(atom, atomState)
+        if (atomState.d !== prevAtomState?.d) {
+          mountDependencies(atom, atomState, prevAtomState?.d || new Map())
+        }
+      }
+    })
   }
 
-  const subscribeAtom = (atom: AnyAtom, callback: () => void) => {
+  const commitAtom = (_atom: AnyAtom | null, version?: VersionObject) => {
+    if (version) {
+      commitVersionedAtomStateMap(version)
+    }
+    flushPending(undefined)
+  }
+
+  const subscribeAtom = (
+    atom: AnyAtom,
+    callback: (version?: VersionObject) => void
+  ) => {
     const mounted = addAtom(atom)
     const listeners = mounted.l
     listeners.add(callback)
@@ -581,15 +734,16 @@ export const createStore = (
   }
 
   const restoreAtoms = (
-    values: Iterable<readonly [AnyAtom, unknown]>
+    values: Iterable<readonly [AnyAtom, unknown]>,
+    version?: VersionObject
   ): void => {
     for (const [atom, value] of values) {
       if (hasInitialValue(atom)) {
-        setAtomPromiseOrValue(atom, value)
-        invalidateDependents(atom)
+        setAtomPromiseOrValue(version, atom, value)
+        invalidateDependents(version, atom)
       }
     }
-    flushPending()
+    flushPending(version)
   }
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
@@ -606,7 +760,7 @@ export const createStore = (
         }
       },
       [DEV_GET_MOUNTED_ATOMS]: () => mountedAtoms.values(),
-      [DEV_GET_ATOM_STATE]: (a: AnyAtom) => atomStateMap.get(a),
+      [DEV_GET_ATOM_STATE]: (a: AnyAtom) => committedAtomStateMap.get(a),
       [DEV_GET_MOUNTED]: (a: AnyAtom) => mountedMap.get(a),
     }
   }

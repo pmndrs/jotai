@@ -5,9 +5,11 @@ import {
   useEffect,
   useReducer,
 } from 'react'
+import type { Reducer } from 'react'
 import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM, WRITE_ATOM } from './store'
+import type { VersionObject } from './store'
 
 type ResolveType<T> = T extends Promise<infer V> ? V : T
 
@@ -38,63 +40,76 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   }
 
   const ScopeContext = getScopeContext(scope)
-  const store = useContext(ScopeContext).s
+  const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  const getAtomValue = useCallback(() => {
-    const atomState = store[READ_ATOM](atom)
-    if ('e' in atomState) {
-      throw atomState.e // read error
-    }
-    if ('p' in atomState) {
-      throw atomState.p // read promise
-    }
-    if ('v' in atomState) {
-      return atomState.v as ResolveType<Value>
-    }
-    throw new Error('no atom value')
-  }, [store, atom])
+  const getAtomValue = useCallback(
+    (version?: VersionObject) => {
+      const atomState = store[READ_ATOM](atom, version)
+      if ('e' in atomState) {
+        throw atomState.e // read error
+      }
+      if ('p' in atomState) {
+        throw atomState.p // read promise
+      }
+      if ('v' in atomState) {
+        return atomState.v as ResolveType<Value>
+      }
+      throw new Error('no atom value')
+    },
+    [store, atom]
+  )
 
-  const [[value, atomFromUseReducer], forceUpdate] = useReducer(
+  const [[version, value, atomFromUseReducer], dispatch] = useReducer<
+    Reducer<
+      readonly [VersionObject | undefined, ResolveType<Value>, Atom<Value>],
+      VersionObject | undefined
+    >,
+    undefined
+  >(
     useCallback(
-      (prev) => {
-        const nextValue = getAtomValue()
-        if (Object.is(prev[0], nextValue) && prev[1] === atom) {
+      (prev, nextVersion) => {
+        const nextValue = getAtomValue(nextVersion)
+        if (Object.is(prev[1], nextValue) && prev[2] === atom) {
           return prev // bail out
         }
-        return [nextValue, atom]
+        return [nextVersion, nextValue, atom]
       },
       [getAtomValue, atom]
     ),
     undefined,
     () => {
-      const initialValue = getAtomValue()
-      return [initialValue, atom]
+      // NOTE should/could branch on mount?
+      const initialVersion = undefined
+      const initialValue = getAtomValue(initialVersion)
+      return [initialVersion, initialValue, atom]
     }
   )
 
   if (atomFromUseReducer !== atom) {
-    forceUpdate()
+    dispatch(undefined)
   }
 
   useEffect(() => {
-    const unsubscribe = store[SUBSCRIBE_ATOM](atom, forceUpdate)
-    forceUpdate()
+    const unsubscribe = store[SUBSCRIBE_ATOM](atom, dispatch)
+    dispatch(undefined)
     return unsubscribe
   }, [store, atom])
 
   useEffect(() => {
-    store[COMMIT_ATOM](atom)
+    store[COMMIT_ATOM](atom, version)
   })
 
   const setAtom = useCallback(
     (update: Update) => {
       if (isWritable(atom)) {
-        return store[WRITE_ATOM](atom, update)
+        const write = (version?: VersionObject) =>
+          store[WRITE_ATOM](atom, update, version)
+        return versionedWrite ? versionedWrite(write) : write()
       } else {
         throw new Error('not writable atom')
       }
     },
-    [store, atom]
+    [store, versionedWrite, atom]
   )
 
   useDebugValue(value)

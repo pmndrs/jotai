@@ -10,25 +10,55 @@ import type { Atom, Scope } from './atom'
 import { createScopeContainer, getScopeContext } from './contexts'
 import type { ScopeContainer } from './contexts'
 import {
+  COMMIT_ATOM,
   DEV_GET_ATOM_STATE,
   DEV_GET_MOUNTED,
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
 } from './store'
-import type { AtomState, Store } from './store'
+import type { AtomState, Store, VersionObject } from './store'
 
 export const Provider = ({
+  children,
   initialValues,
   scope,
-  children,
+  unstable_enableVersionedWrite,
 }: PropsWithChildren<{
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
   scope?: Scope
+  /**
+   * This is an unstable experimental feature for React 18.
+   * When this is enabled, a) write function must be pure
+   * (read function must be pure regardless of this),
+   * b) React will show warning in DEV mode,
+   * c) then state branching works.
+   */
+  unstable_enableVersionedWrite?: boolean
 }>) => {
+  const [version, setVersion] = useState<VersionObject>()
+  useEffect(() => {
+    if (version) {
+      ;(scopeContainerRef.current as ScopeContainer).s[COMMIT_ATOM](
+        null,
+        version
+      )
+      delete version.p
+    }
+  }, [version])
+
   const scopeContainerRef = useRef<ScopeContainer>()
   if (!scopeContainerRef.current) {
     // lazy initialization
     scopeContainerRef.current = createScopeContainer(initialValues)
+    if (unstable_enableVersionedWrite) {
+      scopeContainerRef.current.w = (write) => {
+        setVersion((parentVersion) => {
+          const nextVersion = parentVersion ? { p: parentVersion } : {}
+          write(nextVersion)
+          return nextVersion
+        })
+      }
+    }
   }
 
   if (
@@ -79,7 +109,7 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
 // We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 const useDebugState = (scopeContainer: ScopeContainer) => {
-  const store = scopeContainer.s
+  const { s: store } = scopeContainer
   const [atoms, setAtoms] = useState<Atom<unknown>[]>([])
   useEffect(() => {
     const callback = () => {
