@@ -748,7 +748,10 @@ it('set atom right after useEffect (#208)', async () => {
   )
 
   await findByText('count: 2')
-  expect(effectFn).lastCalledWith(2)
+  if (!IS_REACT18) {
+    // can't guarantee in concurrent rendering
+    expect(effectFn).lastCalledWith(2)
+  }
 })
 
 it('changes atom from parent (#273, #275)', async () => {

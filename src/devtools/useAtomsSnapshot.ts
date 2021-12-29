@@ -35,11 +35,8 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
   )
 
   useEffect(() => {
-    const callback = (updatedAtom?: Atom<unknown>, isNewAtom?: boolean) => {
+    const callback = () => {
       const atoms = Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || [])
-      if (updatedAtom && isNewAtom && !atoms.includes(updatedAtom)) {
-        atoms.push(updatedAtom)
-      }
       setAtomsSnapshot(createAtomsSnapshot(store, atoms))
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
