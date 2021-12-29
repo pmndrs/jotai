@@ -44,7 +44,7 @@ type Mounted = {
 }
 
 // for debugging purpose only
-type StateListener = (updatedAtom: AnyAtom, isNewAtom: boolean) => void
+type StateListener = () => void
 type MountedAtoms = Set<AnyAtom>
 
 // store methods
@@ -691,13 +691,14 @@ export const createStore = (
       }
       const mounted = mountedMap.get(atom)
       mounted?.l.forEach((listener) => listener())
-      if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        stateListeners.forEach((l) => l(atom, !prevAtomState))
-      }
     })
+    if (
+      pending.length &&
+      typeof process === 'object' &&
+      process.env.NODE_ENV !== 'production'
+    ) {
+      stateListeners.forEach((l) => l())
+    }
   }
 
   const commitVersionedAtomStateMap = (version: VersionObject) => {
