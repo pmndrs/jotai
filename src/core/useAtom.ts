@@ -44,6 +44,8 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
 
   const getAtomValue = useCallback(
     (version?: VersionObject) => {
+      // This call to READ_ATOM is the place where derived atoms will actually be
+      // recomputed if needed.
       const atomState = store[READ_ATOM](atom, version)
       if ('e' in atomState) {
         throw atomState.e // read error
@@ -59,6 +61,13 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     [store, atom]
   )
 
+  // This reducer stores this hook's view of the atom's state (prev[1]).
+  //
+  // We know the component should re-render whenever it's view of the atom changes.
+  //
+  // If we did change tracking using a previous state stored outside of React,
+  // that state could be out of sync with React's concurrent rendering with
+  // `useTransition`.
   const [[version, value, atomFromUseReducer], dispatch] = useReducer<
     Reducer<
       readonly [VersionObject | undefined, ResolveType<Value>, Atom<Value>],
@@ -90,6 +99,8 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   }
 
   useEffect(() => {
+    // Call `rerenderIfAtomStateChanged` whenever this atom is invalidated. Note
+    // that derived atoms may not be recomputed yet.
     const unsubscribe = store[SUBSCRIBE_ATOM](atom, dispatch)
     dispatch(undefined)
     return unsubscribe

@@ -49,7 +49,29 @@ export type AtomState<Value = AnyAtomValue> = {
   d: ReadDependencies
 } & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
 
-export type VersionObject = { p?: VersionObject } // "p"arent version
+/**
+ * Represents a version of a store. A version contains a state for all atoms.
+ *
+ * In concurrent React rendering, state can "branch" during transitions: the
+ * current state may continue to be rendered while a new state is being built
+ * concurrently. We key our atom state containers by this global version to
+ * represent the state for each diverging branch.
+ *
+ * While a new version is being built, we read atom previous state from the
+ * previous version.
+ */
+export type VersionObject = {
+  /**
+   * "p"arent version.
+   *
+   * Once a version is committed completely, the `p` property is deleted so the
+   * child version is independent, and the parent revision can be garbage
+   * collected.
+   *
+   * See [Provider] for more details on version data flow.
+   */
+  p?: VersionObject
+}
 
 type Listeners = Set<(version?: VersionObject) => void>
 type Dependents = Set<AnyAtom>
