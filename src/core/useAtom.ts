@@ -68,7 +68,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   // If we did change tracking using a previous state stored outside of React,
   // that state could be out of sync with React's concurrent rendering with
   // `useTransition`.
-  const [[version, value, atomFromUseReducer], dispatch] = useReducer<
+  const [[version, value, atomFromUseReducer], rerenderIfChanged] = useReducer<
     Reducer<
       readonly [VersionObject | undefined, ResolveType<Value>, Atom<Value>],
       VersionObject | undefined
@@ -95,14 +95,14 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   )
 
   if (atomFromUseReducer !== atom) {
-    dispatch(undefined)
+    rerenderIfChanged(undefined)
   }
 
   useEffect(() => {
     // Call `rerenderIfAtomStateChanged` whenever this atom is invalidated. Note
     // that derived atoms may not be recomputed yet.
-    const unsubscribe = store[SUBSCRIBE_ATOM](atom, dispatch)
-    dispatch(undefined)
+    const unsubscribe = store[SUBSCRIBE_ATOM](atom, rerenderIfChanged)
+    rerenderIfChanged(undefined)
     return unsubscribe
   }, [store, atom])
 
