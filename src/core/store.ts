@@ -692,11 +692,7 @@ export const createStore = (
       const mounted = mountedMap.get(atom)
       mounted?.l.forEach((listener) => listener())
     })
-    if (
-      pending.length &&
-      typeof process === 'object' &&
-      process.env.NODE_ENV !== 'production'
-    ) {
+    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
       stateListeners.forEach((l) => l())
     }
   }

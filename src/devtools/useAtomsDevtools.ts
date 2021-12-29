@@ -95,7 +95,16 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
           dependents.set(atom, mounted.d)
         }
       }
-      setAtomsSnapshot([values, dependents])
+      setAtomsSnapshot((prev) => {
+        if (
+          prev[0].size === values.size &&
+          Array.from(prev[0]).every(([a, v]) => Object.is(values.get(a), v))
+        ) {
+          // bail out
+          return prev
+        }
+        return [values, dependents]
+      })
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()

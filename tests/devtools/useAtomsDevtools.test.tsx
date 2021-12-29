@@ -309,11 +309,11 @@ it('conditional dependencies + updating state should call devtools.send', async 
     expect(extension.send).toBeCalledWith(
       expect.anything(),
       expect.objectContaining({
-        values: {
+        values: expect.objectContaining({
           [`${secondCountAtom}`]: 0,
           [`${enabledAtom}`]: false,
           [`${anAtom}`]: 0,
-        },
+        }),
       })
     )
   )
