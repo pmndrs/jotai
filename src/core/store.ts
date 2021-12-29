@@ -27,10 +27,25 @@ type Revision = number
 type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 
-// immutable atom state
+/**
+ * Immutable atom state, tracked for both mounted and unmounted atoms in a store.
+ */
 export type AtomState<Value = AnyAtomValue> = {
+  /**
+   * Counts number of times atom has actually changed or recomputed.
+   */
   r: Revision
+  /**
+   * Marks the revision of this atom when a transitive dependency was invalidated.
+   * Mounted atoms are considered invalid when `r === i`. Unmounted atoms are
+   * always considered invalid.
+   */
   i?: InvalidatedRevision
+  /**
+   * Maps from a dependency to the dependency's revision when it was last read.
+   * We can skip recomputation of an atom by comparing the ReadDependencies revision
+   * of each dependency to that dependencies's current revision.
+   */
   d: ReadDependencies
 } & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
 
@@ -38,9 +53,17 @@ export type VersionObject = { p?: VersionObject } // "p"arent version
 
 type Listeners = Set<(version?: VersionObject) => void>
 type Dependents = Set<AnyAtom>
+
+/**
+ * State tracked for atoms with subscribers, or transitive dependencies of atoms
+ * with subscribers. It is freed once an atom no longer has subscribers.
+ */
 type Mounted = {
+  /** The list of subscriber functions. */
   l: Listeners
+  /** Atoms that depend on *this* atom. Used to fan out invalidation. */
   t: Dependents
+  /** Function to run when the atom is unmounted. */
   u?: OnUnmount
 }
 
@@ -49,10 +72,31 @@ type StateListener = () => void
 type MountedAtoms = Set<AnyAtom>
 
 // store methods
+/**
+ * Read an atom's hidden [AtomState]. Derived atom state may be recomputed if they
+ * are invalidated and any of their transitive dependencies have changed.
+ */
 export const READ_ATOM = 'r'
+/**
+ * Write an atom's Value.
+ */
 export const WRITE_ATOM = 'w'
+/**
+ * Commit pending writes to an atom.
+ */
 export const COMMIT_ATOM = 'c'
+/**
+ * Add a subscriber function to an atom. The atom will become "mounted" if this
+ * is the first subscriber.
+ *
+ * The subscriber is called whenever the atom is *invalidated* (i.e. when it's
+ * possibly transitive dependencies change or become invalidated), **not** when
+ * the actual Value of the atom changes. Derived atoms are only recomputed on read.
+ */
 export const SUBSCRIBE_ATOM = 's'
+/**
+ * Bulk-apply new values to atoms.
+ */
 export const RESTORE_ATOMS = 'h'
 
 // store dev methods (these are tentative and subject to change)
@@ -462,7 +506,7 @@ export const createStore = (
     return mounted
   }
 
-  // FIXME doesn't work with mutally dependent atoms
+  // FIXME doesn't work with mutually dependent atoms
   const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
     !mounted.l.size &&
     (!mounted.t.size || (mounted.t.size === 1 && mounted.t.has(atom)))
