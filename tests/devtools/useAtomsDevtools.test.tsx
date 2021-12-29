@@ -1,4 +1,5 @@
 import { StrictMode } from 'react'
+import type { ReactElement } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useAtomsDevtools } from 'jotai/devtools'
@@ -31,12 +32,16 @@ beforeEach(() => {
   extensionSubscriber = undefined
 })
 
+const AtomsDevtools = ({ children }: { children: ReactElement }) => {
+  useAtomsDevtools('test')
+  return children
+}
+
 it('connects to the extension by initialiing', () => {
   const countAtom = atom(0)
 
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
-    useAtomsDevtools('test')
     return (
       <>
         <div>count: {count}</div>
@@ -44,10 +49,13 @@ it('connects to the extension by initialiing', () => {
       </>
     )
   }
+
   render(
     <StrictMode>
       <Provider>
-        <Counter />
+        <AtomsDevtools>
+          <Counter />
+        </AtomsDevtools>
       </Provider>
     </StrictMode>
   )
@@ -67,7 +75,6 @@ describe('If there is no extension installed...', () => {
 
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
-    useAtomsDevtools('test')
     return (
       <>
         <div>count: {count}</div>
@@ -75,12 +82,15 @@ describe('If there is no extension installed...', () => {
       </>
     )
   }
+
   it('does not throw', () => {
     expect(() => {
       render(
         <StrictMode>
           <Provider>
-            <Counter />
+            <AtomsDevtools>
+              <Counter />
+            </AtomsDevtools>
           </Provider>
         </StrictMode>
       )
@@ -129,7 +139,6 @@ it('updating state should call devtools.send', async () => {
 
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
-    useAtomsDevtools('test')
     return (
       <>
         <div>count: {count}</div>
@@ -142,7 +151,9 @@ it('updating state should call devtools.send', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Provider>
-        <Counter />
+        <AtomsDevtools>
+          <Counter />
+        </AtomsDevtools>
       </Provider>
     </StrictMode>
   )
@@ -172,16 +183,13 @@ it('dependencies + updating state should call devtools.send', async () => {
     )
   }
 
-  const App = () => {
-    useAtomsDevtools('test')
-    return <Counter />
-  }
-
   extension.send.mockClear()
   const { getByText, findByText } = render(
     <StrictMode>
       <Provider>
-        <App />
+        <AtomsDevtools>
+          <Counter />
+        </AtomsDevtools>
       </Provider>
     </StrictMode>
   )
@@ -242,7 +250,7 @@ it('conditional dependencies + updating state should call devtools.send', async 
   const anAtom = atom((get) =>
     get(enabledAtom) ? get(countAtom) : get(secondCountAtom)
   )
-  const Main = () => {
+  const App = () => {
     const [enabled, setEnabled] = useAtom(enabledAtom)
     const [cond] = useAtom(anAtom)
 
@@ -255,16 +263,13 @@ it('conditional dependencies + updating state should call devtools.send', async 
     )
   }
 
-  const App = () => {
-    useAtomsDevtools('test')
-    return <Main />
-  }
-
   extension.send.mockClear()
   const { getByText, findByText } = render(
     <StrictMode>
       <Provider>
-        <App />
+        <AtomsDevtools>
+          <App />
+        </AtomsDevtools>
       </Provider>
     </StrictMode>
   )
@@ -328,7 +333,6 @@ describe('when it receives an message of type...', () => {
     const countAtom = atom(0)
 
     const Counter = () => {
-      useAtomsDevtools('test')
       const [count, setCount] = useAtom(countAtom)
       return (
         <>
@@ -342,7 +346,9 @@ describe('when it receives an message of type...', () => {
     const { getByText, findByText } = render(
       <StrictMode>
         <Provider>
-          <Counter />
+          <AtomsDevtools>
+            <Counter />
+          </AtomsDevtools>
         </Provider>
       </StrictMode>
     )
@@ -378,7 +384,6 @@ describe('when it receives an message of type...', () => {
       get(enabledAtom) ? get(countAtom) : get(secondCountAtom)
     )
     const App = () => {
-      useAtomsDevtools('test')
       const [enabled, setEnabled] = useAtom(enabledAtom)
       const [cond] = useAtom(anAtom)
 
@@ -395,7 +400,9 @@ describe('when it receives an message of type...', () => {
     const { getByText, findByText } = render(
       <StrictMode>
         <Provider>
-          <App />
+          <AtomsDevtools>
+            <App />
+          </AtomsDevtools>
         </Provider>
       </StrictMode>
     )
@@ -440,7 +447,6 @@ describe('when it receives an message of type...', () => {
 
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
-      useAtomsDevtools('test')
       return (
         <>
           <div>count: {count}</div>
@@ -453,7 +459,9 @@ describe('when it receives an message of type...', () => {
     const { getByText, findByText } = render(
       <StrictMode>
         <Provider>
-          <Counter />
+          <AtomsDevtools>
+            <Counter />
+          </AtomsDevtools>
         </Provider>
       </StrictMode>
     )
@@ -484,7 +492,6 @@ describe('when it receives an message of type...', () => {
 
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
-      useAtomsDevtools('test')
       return (
         <>
           <div>count: {count}</div>
@@ -497,7 +504,9 @@ describe('when it receives an message of type...', () => {
     const { getByText, findByText } = render(
       <StrictMode>
         <Provider>
-          <Counter />
+          <AtomsDevtools>
+            <Counter />
+          </AtomsDevtools>
         </Provider>
       </StrictMode>
     )
@@ -546,7 +555,6 @@ describe('when it receives an message of type...', () => {
 
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
-      useAtomsDevtools('test')
       return (
         <>
           <div>count: {count}</div>
@@ -559,7 +567,9 @@ describe('when it receives an message of type...', () => {
     const { getByText, findByText } = render(
       <StrictMode>
         <Provider>
-          <Counter />
+          <AtomsDevtools>
+            <Counter />
+          </AtomsDevtools>
         </Provider>
       </StrictMode>
     )
