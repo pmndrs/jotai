@@ -1,7 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
-import type { Store } from '../core/store'
 import {
   DEV_GET_ATOM_STATE,
   DEV_GET_MOUNTED,
@@ -38,47 +37,29 @@ type Extension = {
   connect: (options?: Config) => ConnectionResult
 }
 
-type AtomsSnapshot = Map<Atom<unknown>, unknown>
+type AnyAtomValue = unknown
+type AnyAtom = Atom<AnyAtomValue>
+type AtomsValues = Map<AnyAtom, AnyAtomValue> // immutable
+type AtomsDependents = Map<AnyAtom, Set<AnyAtom>> // immutable
+type AtomsSnapshot = readonly [AtomsValues, AtomsDependents]
 
-const atomToPrintable = (atom: Atom<unknown>) =>
+const atomToPrintable = (atom: AnyAtom) =>
   atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
 
-const createAtomsSnapshot = (store: Store): AtomsSnapshot => {
-  const atomsSnapshot: AtomsSnapshot = new Map()
-  for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
-    const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
-    if (atomState && 'v' in atomState) {
-      atomsSnapshot.set(atom, atomState.v)
-    }
-  }
-  return atomsSnapshot
-}
-
-const serializeValues = (atomsSnapshot: AtomsSnapshot) => {
-  const result: Record<string, unknown> = {}
-  atomsSnapshot.forEach((v, atom) => {
-    result[atomToPrintable(atom)] = v
+const getDevtoolsState = (atomsSnapshot: AtomsSnapshot) => {
+  const values: Record<string, AnyAtomValue> = {}
+  atomsSnapshot[0].forEach((v, atom) => {
+    values[atomToPrintable(atom)] = v
   })
-  return result
-}
-
-const serializeDependents = (store: Store) => {
-  const result: Record<string, string[]> = {}
-  for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
-    const mounted = store[DEV_GET_MOUNTED]?.(atom)
-    if (mounted) {
-      const dependents = mounted.d
-      result[atomToPrintable(atom)] =
-        Array.from(dependents).map(atomToPrintable)
-    }
+  const dependents: Record<string, string[]> = {}
+  atomsSnapshot[1].forEach((d, atom) => {
+    dependents[atomToPrintable(atom)] = Array.from(d).map(atomToPrintable)
+  })
+  return {
+    values,
+    dependents,
   }
-  return result
 }
-
-const getDevtoolsState = (store: Store, atomsSnapshot: AtomsSnapshot) => ({
-  values: serializeValues(atomsSnapshot),
-  dependents: serializeDependents(store),
-})
 
 export function useAtomsDevtools(name: string, scope?: Scope) {
   const ScopeContext = getScopeContext(scope)
@@ -89,18 +70,32 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
-  const [version, setVersion] = useState(0)
+  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => [
+    new Map(),
+    new Map(),
+  ])
 
   useEffect(() => {
     const callback = () => {
+      const values: AtomsValues = new Map()
+      const dependents: AtomsDependents = new Map()
       for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
         const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
-        if (atomState && atomState.r === atomState.i) {
-          // ignore if there are any invalidated atoms
-          return
+        if (atomState) {
+          if (atomState.r === atomState.i) {
+            // ignore if there are any invalidated atoms
+            return
+          }
+          if ('v' in atomState) {
+            values.set(atom, atomState.v)
+          }
+        }
+        const mounted = store[DEV_GET_MOUNTED]?.(atom)
+        if (mounted) {
+          dependents.set(atom, mounted.d)
         }
       }
-      setVersion((v) => v + 1)
+      setAtomsSnapshot([values, dependents])
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()
@@ -108,7 +103,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   }, [store])
 
   const goToSnapshot = useCallback(
-    (values: Iterable<readonly [Atom<unknown>, unknown]>) => {
+    (values: Iterable<readonly [AnyAtom, AnyAtomValue]>) => {
       store[RESTORE_ATOMS](values)
     },
     [store]
@@ -160,14 +155,14 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
                 break
 
               case 'COMMIT':
-                connection.init(getDevtoolsState(store, getSnapshotAt()))
+                connection.init(getDevtoolsState(getSnapshotAt()))
                 snapshots.current = []
                 break
 
               case 'JUMP_TO_ACTION':
               case 'JUMP_TO_STATE':
                 isTimeTraveling.current = true
-                goToSnapshot(getSnapshotAt(message.payload.actionId - 1))
+                goToSnapshot(getSnapshotAt(message.payload.actionId - 1)[0])
                 break
 
               case 'PAUSE_RECORDING':
@@ -181,7 +176,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       devtools.current.shouldInit = true
       return devtoolsUnsubscribe
     }
-  }, [store, extension, goToSnapshot, name])
+  }, [extension, goToSnapshot, name])
 
   useEffect(() => {
     if (!devtools.current) {
@@ -192,7 +187,6 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       devtools.current.shouldInit = false
       return
     }
-    const atomsSnapshot = createAtomsSnapshot(store)
     if (isTimeTraveling.current) {
       isTimeTraveling.current = false
     } else if (isRecording.current) {
@@ -202,8 +196,8 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
           type: `${snapshots.current.length}`,
           updatedAt: new Date().toLocaleString(),
         },
-        getDevtoolsState(store, atomsSnapshot)
+        getDevtoolsState(atomsSnapshot)
       )
     }
-  }, [store, version])
+  }, [atomsSnapshot])
 }

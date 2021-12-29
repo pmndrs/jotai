@@ -160,7 +160,6 @@ it('dependencies + updating state should call devtools.send', async () => {
   const countAtom = atom(0)
   const doubleAtom = atom((get) => get(countAtom) * 2)
   const Counter = () => {
-    useAtomsDevtools('test')
     const [count, setCount] = useAtom(countAtom)
     const [double] = useAtom(doubleAtom)
 
@@ -173,11 +172,16 @@ it('dependencies + updating state should call devtools.send', async () => {
     )
   }
 
+  const App = () => {
+    useAtomsDevtools('test')
+    return <Counter />
+  }
+
   extension.send.mockClear()
   const { getByText, findByText } = render(
     <StrictMode>
       <Provider>
-        <Counter />
+        <App />
       </Provider>
     </StrictMode>
   )
@@ -238,8 +242,7 @@ it('conditional dependencies + updating state should call devtools.send', async 
   const anAtom = atom((get) =>
     get(enabledAtom) ? get(countAtom) : get(secondCountAtom)
   )
-  const App = () => {
-    useAtomsDevtools('test')
+  const Main = () => {
     const [enabled, setEnabled] = useAtom(enabledAtom)
     const [cond] = useAtom(anAtom)
 
@@ -250,6 +253,11 @@ it('conditional dependencies + updating state should call devtools.send', async 
         <button onClick={() => setEnabled(!enabled)}>change</button>
       </div>
     )
+  }
+
+  const App = () => {
+    useAtomsDevtools('test')
+    return <Main />
   }
 
   extension.send.mockClear()
