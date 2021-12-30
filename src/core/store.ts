@@ -29,6 +29,7 @@ type ReadDependencies = Map<AnyAtom, Revision>
 
 /**
  * Immutable atom state, tracked for both mounted and unmounted atoms in a store.
+ * @private This is for internal use and not considered part of the public API.
  */
 export type AtomState<Value = AnyAtomValue> = {
   /**
@@ -38,7 +39,7 @@ export type AtomState<Value = AnyAtomValue> = {
   /**
    * Marks the revision of this atom when a transitive dependency was invalidated.
    * Mounted atoms are considered invalid when `r === i`. Unmounted atoms are
-   * always considered invalid.
+   * considered invalid until they are mounted again.
    */
   i?: InvalidatedRevision
   /**
@@ -50,7 +51,8 @@ export type AtomState<Value = AnyAtomValue> = {
 } & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
 
 /**
- * Represents a version of a store. A version contains a state for all atoms.
+ * Represents a version of a store. A version contains a state for every atom
+ * read during the version's lifetime.
  *
  * In concurrent React rendering, state can "branch" during transitions: the
  * current state may continue to be rendered while a new state is being built
@@ -77,8 +79,11 @@ type Listeners = Set<(version?: VersionObject) => void>
 type Dependents = Set<AnyAtom>
 
 /**
- * State tracked for atoms with subscribers, or transitive dependencies of atoms
- * with subscribers. It is freed once an atom no longer has subscribers.
+ * State tracked for mounted atoms. An atom is considered "mounted" if it has a
+ * subscriber, or is a transitive dependency of another atom that has a
+ * subscriber.
+ *
+ * The mounted state of an atom is freed once it is no longer mounted.
  */
 type Mounted = {
   /** The list of subscriber functions. */
@@ -111,9 +116,13 @@ export const COMMIT_ATOM = 'c'
  * Add a subscriber function to an atom. The atom will become "mounted" if this
  * is the first subscriber.
  *
- * The subscriber is called whenever the atom is *invalidated* (i.e. when it's
- * possibly transitive dependencies change or become invalidated), **not** when
- * the actual Value of the atom changes. Derived atoms are only recomputed on read.
+ * The subscriber is called in two cases:
+ * - For writable atoms, the subscriber is called whenever the atom is directly
+ *   changed by `atom.write`.
+ * - For derived atoms, the subscriber is called whenever the atom is
+ *   *invalidated* (i.e. when it's possibly transitive dependencies change or
+ *   become invalidated), **not** when the actual Value of the atom changes.
+ *   Derived atoms are only recomputed on read.
  */
 export const SUBSCRIBE_ATOM = 's'
 /**
@@ -127,6 +136,26 @@ export const DEV_GET_MOUNTED_ATOMS = 'l'
 export const DEV_GET_ATOM_STATE = 'a'
 export const DEV_GET_MOUNTED = 'm'
 
+/**
+ * Create a new store. Each store is an independent, isolated universe of atom
+ * states.
+ *
+ * Jotai atoms are not themselves state containers. When you read or write an
+ * atom, that state is stored in a store. You can think of a Store like a
+ * multi-layered map from atoms to states, like this:
+ *
+ * ```
+ * // Conceptually, a Store is a map from atoms to states.
+ * // The real type is a bit different.
+ * type Store = Map<VersionObject, Map<Atom, AtomState>>
+ * ```
+ *
+ * @param initialValues An iterable where item is a pair of [an atom, its
+ *   initial value]. Use to set initial state of writable atoms; useful for
+ *   testing.
+ *
+ * @returns A store.
+ */
 export const createStore = (
   initialValues?: Iterable<readonly [AnyAtom, AnyAtomValue]>
 ) => {
