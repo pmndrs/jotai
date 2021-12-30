@@ -10,13 +10,14 @@ import type { SuspensePromise } from './suspensePromise'
 
 type ResolveType<T> = T extends Promise<infer V> ? V : T
 
-type AnyAtom = Atom<unknown>
-type AnyWritableAtom = WritableAtom<unknown, unknown, void | Promise<void>>
+type AnyAtomValue = unknown
+type AnyAtom = Atom<AnyAtomValue>
+type AnyWritableAtom = WritableAtom<AnyAtomValue, unknown, void | Promise<void>>
 type OnUnmount = () => void
-type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
-type Setter = Parameters<WritableAtom<unknown, unknown>['write']>[1]
+type WriteGetter = Parameters<WritableAtom<AnyAtomValue, unknown>['write']>[0]
+type Setter = Parameters<WritableAtom<AnyAtomValue, unknown>['write']>[1]
 
-const hasInitialValue = <T extends Atom<unknown>>(
+const hasInitialValue = <T extends Atom<AnyAtomValue>>(
   atom: T
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
@@ -27,7 +28,7 @@ type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 
 // immutable atom state
-export type AtomState<Value = unknown> = {
+export type AtomState<Value = AnyAtomValue> = {
   r: Revision
   i?: InvalidatedRevision
   d: ReadDependencies
@@ -39,7 +40,7 @@ type Listeners = Set<(version?: VersionObject) => void>
 type Dependents = Set<AnyAtom>
 type Mounted = {
   l: Listeners
-  d: Dependents
+  t: Dependents
   u?: OnUnmount
 }
 
@@ -61,7 +62,7 @@ export const DEV_GET_ATOM_STATE = 'a'
 export const DEV_GET_MOUNTED = 'm'
 
 export const createStore = (
-  initialValues?: Iterable<readonly [AnyAtom, unknown]>
+  initialValues?: Iterable<readonly [AnyAtom, AnyAtomValue]>
 ) => {
   const committedAtomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
@@ -188,13 +189,28 @@ export const createStore = (
     }
   }
 
-  const getReadDependencies = (
+  const createReadDependencies = (
     version: VersionObject | undefined,
-    dependencies: Set<AnyAtom>
-  ): ReadDependencies =>
-    new Map(
-      Array.from(dependencies).map((a) => [a, getAtomState(version, a)?.r || 0])
-    )
+    prevReadDependencies: ReadDependencies = new Map(),
+    dependencies?: Set<AnyAtom>
+  ): ReadDependencies => {
+    if (!dependencies) {
+      return prevReadDependencies
+    }
+    const readDependencies: ReadDependencies = new Map()
+    let changed = false
+    dependencies.forEach((atom) => {
+      const revision = getAtomState(version, atom)?.r || 0
+      readDependencies.set(atom, revision)
+      if (prevReadDependencies.get(atom) !== revision) {
+        changed = true
+      }
+    })
+    if (prevReadDependencies.size === readDependencies.size && !changed) {
+      return prevReadDependencies
+    }
+    return readDependencies
+  }
 
   const setAtomValue = <Value>(
     version: VersionObject | undefined,
@@ -220,9 +236,7 @@ export const createStore = (
     const nextAtomState: AtomState<Value> = {
       v: value,
       r: atomState?.r || 0,
-      d: dependencies
-        ? getReadDependencies(version, dependencies)
-        : atomState?.d || new Map(),
+      d: createReadDependencies(version, atomState?.d, dependencies),
     }
     if (
       !atomState ||
@@ -231,7 +245,7 @@ export const createStore = (
     ) {
       ++nextAtomState.r // increment revision
       if (nextAtomState.d.has(atom)) {
-        nextAtomState.d.set(atom, nextAtomState.r)
+        nextAtomState.d = new Map(nextAtomState.d).set(atom, nextAtomState.r)
       }
     }
     setAtomState(version, atom, nextAtomState)
@@ -262,9 +276,7 @@ export const createStore = (
     const nextAtomState: AtomState<Value> = {
       e: error, // set read error
       r: atomState?.r || 0,
-      d: dependencies
-        ? getReadDependencies(version, dependencies)
-        : atomState?.d || new Map(),
+      d: createReadDependencies(version, atomState?.d, dependencies),
     }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
@@ -288,9 +300,7 @@ export const createStore = (
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
       r: atomState?.r || 0,
-      d: dependencies
-        ? getReadDependencies(version, dependencies)
-        : atomState?.d || new Map(),
+      d: createReadDependencies(version, atomState?.d, dependencies),
     }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
@@ -455,7 +465,7 @@ export const createStore = (
   // FIXME doesn't work with mutally dependent atoms
   const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
     !mounted.l.size &&
-    (!mounted.d.size || (mounted.d.size === 1 && mounted.d.has(atom)))
+    (!mounted.t.size || (mounted.t.size === 1 && mounted.t.has(atom)))
 
   const delAtom = (deletingAtom: AnyAtom): void => {
     const mounted = mountedMap.get(deletingAtom)
@@ -469,7 +479,7 @@ export const createStore = (
     atom: Atom<Value>
   ): void => {
     const mounted = mountedMap.get(atom)
-    mounted?.d.forEach((dependent) => {
+    mounted?.t.forEach((dependent) => {
       if (dependent !== atom) {
         setAtomInvalidated(version, dependent)
         invalidateDependents(version, dependent)
@@ -579,7 +589,7 @@ export const createStore = (
   ): Mounted => {
     // mount self
     const mounted: Mounted = {
-      d: new Set(initialDependent && [initialDependent]),
+      t: new Set(initialDependent && [initialDependent]),
       l: new Set(),
     }
     mountedMap.set(atom, mounted)
@@ -591,7 +601,7 @@ export const createStore = (
     atomState.d.forEach((_, a) => {
       const aMounted = mountedMap.get(a)
       if (aMounted) {
-        aMounted.d.add(atom) // add dependent
+        aMounted.t.add(atom) // add dependent
       } else {
         if (a !== atom) {
           mountAtom(a, atom)
@@ -626,7 +636,7 @@ export const createStore = (
         if (a !== atom) {
           const mounted = mountedMap.get(a)
           if (mounted) {
-            mounted.d.delete(atom)
+            mounted.t.delete(atom)
             if (canUnmountAtom(a, mounted)) {
               unmountAtom(a)
             }
@@ -644,10 +654,10 @@ export const createStore = (
   const mountDependencies = <Value>(
     atom: Atom<Value>,
     atomState: AtomState<Value>,
-    prevReadDependencies: ReadDependencies
+    prevReadDependencies?: ReadDependencies
   ): void => {
     const dependencies = new Set(atomState.d.keys())
-    prevReadDependencies.forEach((_, a) => {
+    prevReadDependencies?.forEach((_, a) => {
       if (dependencies.has(a)) {
         // not changed
         dependencies.delete(a)
@@ -655,7 +665,7 @@ export const createStore = (
       }
       const mounted = mountedMap.get(a)
       if (mounted) {
-        mounted.d.delete(atom) // delete from dependents
+        mounted.t.delete(atom) // delete from dependents
         if (canUnmountAtom(a, mounted)) {
           unmountAtom(a)
         }
@@ -664,7 +674,7 @@ export const createStore = (
     dependencies.forEach((a) => {
       const mounted = mountedMap.get(a)
       if (mounted) {
-        mounted.d.add(atom) // add to dependents
+        mounted.t.add(atom) // add to dependents
       } else {
         mountAtom(a, atom)
       }
@@ -687,7 +697,7 @@ export const createStore = (
     pending.forEach(([atom, prevAtomState]) => {
       const atomState = getAtomState(undefined, atom)
       if (atomState && atomState.d !== prevAtomState?.d) {
-        mountDependencies(atom, atomState, prevAtomState?.d || new Map())
+        mountDependencies(atom, atomState, prevAtomState?.d)
       }
       const mounted = mountedMap.get(atom)
       mounted?.l.forEach((listener) => listener())
@@ -701,10 +711,15 @@ export const createStore = (
     const versionedAtomStateMap = getVersionedAtomStateMap(version)
     versionedAtomStateMap.forEach((atomState, atom) => {
       const prevAtomState = committedAtomStateMap.get(atom)
-      if (atomState.r > (prevAtomState?.r || 0)) {
+      if (
+        atomState.r > (prevAtomState?.r || 0) ||
+        ('v' in atomState &&
+          atomState.r === prevAtomState?.r &&
+          atomState.d !== prevAtomState?.d)
+      ) {
         committedAtomStateMap.set(atom, atomState)
         if (atomState.d !== prevAtomState?.d) {
-          mountDependencies(atom, atomState, prevAtomState?.d || new Map())
+          mountDependencies(atom, atomState, prevAtomState?.d)
         }
       }
     })
@@ -731,7 +746,7 @@ export const createStore = (
   }
 
   const restoreAtoms = (
-    values: Iterable<readonly [AnyAtom, unknown]>,
+    values: Iterable<readonly [AnyAtom, AnyAtomValue]>,
     version?: VersionObject
   ): void => {
     for (const [atom, value] of values) {
