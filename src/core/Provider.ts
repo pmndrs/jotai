@@ -90,7 +90,7 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
       if (!mounted) {
         return []
       }
-      const dependents = mounted.d
+      const dependents = mounted.t
       const atomState = store[DEV_GET_ATOM_STATE]?.(atom) || ({} as AtomState)
       return [
         [
