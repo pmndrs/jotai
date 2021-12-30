@@ -8,7 +8,6 @@ import {
   DEV_SUBSCRIBE_STATE,
   RESTORE_ATOMS,
 } from '../core/store'
-import type { VersionObject } from '../core/store'
 
 type Config = {
   instanceID?: number
@@ -131,9 +130,13 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
   const goToSnapshot = useCallback(
     (values: Iterable<readonly [AnyAtom, AnyAtomValue]>) => {
-      const restore = (version?: VersionObject) =>
-        store[RESTORE_ATOMS](values, version)
-      return versionedWrite ? versionedWrite(restore) : restore()
+      if (versionedWrite) {
+        versionedWrite((version) => {
+          store[RESTORE_ATOMS](values, version)
+        })
+      } else {
+        store[RESTORE_ATOMS](values)
+      }
     },
     [store, versionedWrite]
   )
