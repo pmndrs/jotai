@@ -61,13 +61,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     [store, atom]
   )
 
-  // This reducer stores this hook's view of the atom's state (prev[1]).
-  //
-  // We know the component should re-render whenever it's view of the atom changes.
-  //
-  // If we did change tracking using a previous state stored outside of React,
-  // that state could be out of sync with React's concurrent rendering with
-  // `useTransition`.
+  // Pull the atoms's state from the store into React state.
   const [[version, value, atomFromUseReducer], rerenderIfChanged] = useReducer<
     Reducer<
       readonly [VersionObject | undefined, ResolveType<Value>, Atom<Value>],
