@@ -39,7 +39,6 @@ const AtomsDevtools = ({ children }: { children: ReactElement }) => {
 
 it('connects to the extension by initialiing', () => {
   const countAtom = atom(0)
-
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
@@ -72,7 +71,6 @@ describe('If there is no extension installed...', () => {
   })
 
   const countAtom = atom(0)
-
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
@@ -112,6 +110,7 @@ describe('If there is no extension installed...', () => {
         </Provider>
       </StrictMode>
     )
+
     expect(console.warn).toHaveBeenLastCalledWith(
       'Please install/enable Redux devtools extension'
     )
@@ -140,7 +139,6 @@ describe('If there is no extension installed...', () => {
 
 it('updating state should call devtools.send', async () => {
   const countAtom = atom(0)
-
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
@@ -162,13 +160,16 @@ it('updating state should call devtools.send', async () => {
     </StrictMode>
   )
 
-  await waitFor(() => expect(extension.send).toBeCalledTimes(1))
+  await findByText('count: 0')
+  expect(extension.send).toBeCalledTimes(1)
+
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
-  await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+  expect(extension.send).toBeCalledTimes(2)
+
   fireEvent.click(getByText('button'))
   await findByText('count: 2')
-  await waitFor(() => expect(extension.send).toBeCalledTimes(3))
+  expect(extension.send).toBeCalledTimes(3)
 })
 
 it('dependencies + updating state should call devtools.send', async () => {
@@ -177,7 +178,6 @@ it('dependencies + updating state should call devtools.send', async () => {
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const [double] = useAtom(doubleAtom)
-
     return (
       <>
         <div>count: {count}</div>
@@ -197,54 +197,71 @@ it('dependencies + updating state should call devtools.send', async () => {
       </Provider>
     </StrictMode>
   )
-  await waitFor(() => expect(extension.send).toBeCalledTimes(1))
-  await waitFor(() =>
-    expect(extension.send).toBeCalledWith(
-      expect.objectContaining({ type: '1' }),
-      expect.anything()
-    )
+
+  await findByText('count: 0')
+  expect(extension.send).toBeCalledTimes(1)
+  expect(extension.send).lastCalledWith(
+    expect.objectContaining({ type: '1' }),
+    expect.objectContaining({
+      values: expect.objectContaining({
+        [`${countAtom}`]: 0,
+        [`${doubleAtom}`]: 0,
+      }),
+      dependents: expect.objectContaining({
+        [`${countAtom}`]: expect.arrayContaining([
+          `${countAtom}`,
+          `${doubleAtom}`,
+        ]),
+        [`${doubleAtom}`]: [],
+      }),
+    })
   )
-  await waitFor(() =>
-    expect(extension.send).toBeCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        values: {
-          [`${countAtom}`]: 0,
-          [`${doubleAtom}`]: 0,
-        },
-      })
-    )
-  )
-  await waitFor(() =>
-    expect(extension.send).toBeCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        dependents: {
-          [`${countAtom}`]: [`${countAtom}`, `${doubleAtom}`],
-          [`${doubleAtom}`]: [],
-        },
-      })
-    )
-  )
+
   fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  await findByText('double: 2')
-  await waitFor(() =>
-    expect(extension.send).toBeCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        values: {
-          [`${countAtom}`]: 1,
-          [`${doubleAtom}`]: 2,
-        },
-      })
-    )
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('double: 2')
+  })
+  expect(extension.send).toBeCalledTimes(2)
+  expect(extension.send).lastCalledWith(
+    expect.objectContaining({ type: '2' }),
+    expect.objectContaining({
+      values: expect.objectContaining({
+        [`${countAtom}`]: 1,
+        [`${doubleAtom}`]: 2,
+      }),
+      dependents: expect.objectContaining({
+        [`${countAtom}`]: expect.arrayContaining([
+          `${countAtom}`,
+          `${doubleAtom}`,
+        ]),
+        [`${doubleAtom}`]: [],
+      }),
+    })
   )
-  await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+
   fireEvent.click(getByText('button'))
-  await findByText('count: 2')
-  await findByText('double: 4')
-  await waitFor(() => expect(extension.send).toBeCalledTimes(3))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('double: 4')
+  })
+  expect(extension.send).toBeCalledTimes(3)
+  expect(extension.send).lastCalledWith(
+    expect.objectContaining({ type: '3' }),
+    expect.objectContaining({
+      values: expect.objectContaining({
+        [`${countAtom}`]: 2,
+        [`${doubleAtom}`]: 4,
+      }),
+      dependents: expect.objectContaining({
+        [`${countAtom}`]: expect.arrayContaining([
+          `${countAtom}`,
+          `${doubleAtom}`,
+        ]),
+        [`${doubleAtom}`]: [],
+      }),
+    })
+  )
 })
 
 it('conditional dependencies + updating state should call devtools.send', async () => {
@@ -257,7 +274,6 @@ it('conditional dependencies + updating state should call devtools.send', async 
   const App = () => {
     const [enabled, setEnabled] = useAtom(enabledAtom)
     const [cond] = useAtom(anAtom)
-
     return (
       <div className="App">
         <h1>enabled: {enabled ? 'true' : 'false'}</h1>
@@ -268,7 +284,7 @@ it('conditional dependencies + updating state should call devtools.send', async 
   }
 
   extension.send.mockClear()
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <StrictMode>
       <Provider>
         <AtomsDevtools>
@@ -277,65 +293,88 @@ it('conditional dependencies + updating state should call devtools.send', async 
       </Provider>
     </StrictMode>
   )
-  await waitFor(() => expect(extension.send).toBeCalledTimes(1))
-  await waitFor(() =>
-    expect(extension.send).toBeCalledWith(
-      expect.objectContaining({ type: '1' }),
-      expect.anything()
-    )
+
+  await waitFor(() => {
+    getByText('enabled: true')
+    getByText('condition: 0')
+  })
+  expect(extension.send).toBeCalledTimes(1)
+  expect(extension.send).lastCalledWith(
+    expect.objectContaining({ type: '1' }),
+    expect.objectContaining({
+      values: expect.objectContaining({
+        [`${enabledAtom}`]: true,
+        [`${countAtom}`]: 0,
+        [`${anAtom}`]: 0,
+      }),
+      dependents: expect.objectContaining({
+        [`${enabledAtom}`]: expect.arrayContaining([
+          `${enabledAtom}`,
+          `${anAtom}`,
+        ]),
+        [`${countAtom}`]: expect.arrayContaining([`${countAtom}`, `${anAtom}`]),
+        [`${anAtom}`]: [],
+      }),
+    })
   )
-  await waitFor(() =>
-    expect(extension.send).toBeCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        values: {
-          [`${enabledAtom}`]: true,
-          [`${countAtom}`]: 0,
-          [`${anAtom}`]: 0,
-        },
-      })
-    )
-  )
-  await waitFor(() =>
-    expect(extension.send).toBeCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        dependents: {
-          [`${enabledAtom}`]: [`${enabledAtom}`, `${anAtom}`],
-          [`${countAtom}`]: expect.arrayContaining([
-            `${countAtom}`,
-            `${anAtom}`,
-          ]),
-          [`${anAtom}`]: [],
-        },
-      })
-    )
-  )
+
   fireEvent.click(getByText('change'))
-  await findByText('enabled: false')
-  await findByText('condition: 0')
-  await waitFor(() =>
-    expect(extension.send).toBeCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        values: expect.objectContaining({
-          [`${secondCountAtom}`]: 0,
-          [`${enabledAtom}`]: false,
-          [`${anAtom}`]: 0,
-        }),
-      })
-    )
+  await waitFor(() => {
+    getByText('enabled: false')
+    getByText('condition: 0')
+  })
+  expect(extension.send).toBeCalledTimes(2)
+  expect(extension.send).lastCalledWith(
+    expect.objectContaining({ type: '2' }),
+    expect.objectContaining({
+      values: expect.objectContaining({
+        [`${enabledAtom}`]: false,
+        [`${secondCountAtom}`]: 0,
+        [`${anAtom}`]: 0,
+      }),
+      dependents: expect.objectContaining({
+        [`${enabledAtom}`]: expect.arrayContaining([
+          `${enabledAtom}`,
+          `${anAtom}`,
+        ]),
+        [`${secondCountAtom}`]: expect.arrayContaining([
+          `${secondCountAtom}`,
+          `${anAtom}`,
+        ]),
+        [`${anAtom}`]: [],
+      }),
+    })
   )
-  await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+
   fireEvent.click(getByText('change'))
-  await findByText('enabled: true')
-  await waitFor(() => expect(extension.send).toBeCalledTimes(3))
+  await waitFor(() => {
+    getByText('enabled: true')
+    getByText('condition: 0')
+  })
+  expect(extension.send).toBeCalledTimes(3)
+  expect(extension.send).lastCalledWith(
+    expect.objectContaining({ type: '3' }),
+    expect.objectContaining({
+      values: expect.objectContaining({
+        [`${enabledAtom}`]: true,
+        [`${countAtom}`]: 0,
+        [`${anAtom}`]: 0,
+      }),
+      dependents: expect.objectContaining({
+        [`${enabledAtom}`]: expect.arrayContaining([
+          `${enabledAtom}`,
+          `${anAtom}`,
+        ]),
+        [`${countAtom}`]: expect.arrayContaining([`${countAtom}`, `${anAtom}`]),
+        [`${anAtom}`]: [],
+      }),
+    })
+  )
 })
 
 describe('when it receives an message of type...', () => {
   it('dispatch & COMMIT', async () => {
     const countAtom = atom(0)
-
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
       return (
@@ -357,17 +396,19 @@ describe('when it receives an message of type...', () => {
       </StrictMode>
     )
 
-    await waitFor(() => expect(extension.send).toBeCalledTimes(1))
+    await findByText('count: 0')
+    expect(extension.send).toBeCalledTimes(1)
+
     fireEvent.click(getByText('button'))
     await findByText('count: 1')
-    await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+    expect(extension.send).toBeCalledTimes(2)
+
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
         payload: { type: 'COMMIT' },
       })
     )
-    await findByText('count: 1')
     await waitFor(() =>
       expect(extension.init).toBeCalledWith({
         values: {
@@ -390,7 +431,6 @@ describe('when it receives an message of type...', () => {
     const App = () => {
       const [enabled, setEnabled] = useAtom(enabledAtom)
       const [cond] = useAtom(anAtom)
-
       return (
         <div className="App">
           <h1>enabled: {enabled ? 'true' : 'false'}</h1>
@@ -412,16 +452,20 @@ describe('when it receives an message of type...', () => {
     )
 
     await findByText('enabled: true')
+
     fireEvent.click(getByText('change'))
     await findByText('enabled: false')
+
     fireEvent.click(getByText('change'))
     await findByText('enabled: true')
+
     fireEvent.click(getByText('change'))
     await waitFor(() => {
       getByText('enabled: false')
       getByText('condition: 0')
     })
     expect(extension.send).toBeCalledTimes(4)
+
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
@@ -433,6 +477,7 @@ describe('when it receives an message of type...', () => {
       getByText('condition: 0')
     })
     expect(extension.send).toBeCalledTimes(4)
+
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
@@ -448,7 +493,6 @@ describe('when it receives an message of type...', () => {
 
   it('time travelling with JUMP_TO_ACTION', async () => {
     const countAtom = atom(0)
-
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
       return (
@@ -470,11 +514,13 @@ describe('when it receives an message of type...', () => {
       </StrictMode>
     )
 
-    await waitFor(() => expect(extension.send).toBeCalledTimes(1))
+    await findByText('count: 0')
+    expect(extension.send).toBeCalledTimes(1)
 
     fireEvent.click(getByText('button'))
     await findByText('count: 1')
-    await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+    expect(extension.send).toBeCalledTimes(2)
+
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
@@ -483,17 +529,18 @@ describe('when it receives an message of type...', () => {
     )
     await findByText('count: 0')
     expect(extension.send).toBeCalledTimes(2)
+
     fireEvent.click(getByText('button'))
     await findByText('count: 1')
-    await waitFor(() => expect(extension.send).toBeCalledTimes(3))
+    expect(extension.send).toBeCalledTimes(3)
+
     fireEvent.click(getByText('button'))
     await findByText('count: 2')
-    await waitFor(() => expect(extension.send).toBeCalledTimes(4))
+    expect(extension.send).toBeCalledTimes(4)
   })
 
   it('time travelling with JUMP_TO_STATE', async () => {
     const countAtom = atom(0)
-
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
       return (
@@ -515,14 +562,16 @@ describe('when it receives an message of type...', () => {
       </StrictMode>
     )
 
-    await waitFor(() => expect(extension.send).toBeCalledTimes(1))
+    await findByText('count: 0')
+    expect(extension.send).toBeCalledTimes(1)
 
     fireEvent.click(getByText('button'))
     await findByText('count: 1')
-    await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+    expect(extension.send).toBeCalledTimes(2)
+
     fireEvent.click(getByText('button'))
     await findByText('count: 2')
-    await waitFor(() => expect(extension.send).toBeCalledTimes(3))
+    expect(extension.send).toBeCalledTimes(3)
 
     act(() =>
       (extensionSubscriber as (message: any) => void)({
@@ -531,6 +580,7 @@ describe('when it receives an message of type...', () => {
       })
     )
     await findByText('count: 1')
+
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
@@ -538,6 +588,7 @@ describe('when it receives an message of type...', () => {
       })
     )
     await findByText('count: 0')
+
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
@@ -545,6 +596,7 @@ describe('when it receives an message of type...', () => {
       })
     )
     await findByText('count: 0')
+
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
@@ -556,7 +608,6 @@ describe('when it receives an message of type...', () => {
 
   it('PAUSE_RECORDING, it toggles the sending of actions', async () => {
     const countAtom = atom(0)
-
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
       return (
@@ -578,8 +629,9 @@ describe('when it receives an message of type...', () => {
       </StrictMode>
     )
 
-    await waitFor(() => expect(extension.send).toBeCalledTimes(1))
     await findByText('count: 0')
+    expect(extension.send).toBeCalledTimes(1)
+
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
@@ -589,6 +641,7 @@ describe('when it receives an message of type...', () => {
     fireEvent.click(getByText('button'))
     await findByText('count: 1')
     expect(extension.send).toBeCalledTimes(1)
+
     act(() =>
       (extensionSubscriber as (message: any) => void)({
         type: 'DISPATCH',
@@ -597,6 +650,6 @@ describe('when it receives an message of type...', () => {
     )
     fireEvent.click(getByText('button'))
     await findByText('count: 2')
-    await waitFor(() => expect(extension.send).toBeCalledTimes(2))
+    expect(extension.send).toBeCalledTimes(2)
   })
 })
