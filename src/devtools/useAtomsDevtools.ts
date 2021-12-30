@@ -44,6 +44,24 @@ type AtomsValues = Map<AnyAtom, AnyAtomValue> // immutable
 type AtomsDependents = Map<AnyAtom, Set<AnyAtom>> // immutable
 type AtomsSnapshot = readonly [AtomsValues, AtomsDependents]
 
+const isEqualAtomsValues = (left: AtomsValues, right: AtomsValues) =>
+  left.size === right.size &&
+  Array.from(left).every(([left, v]) => Object.is(right.get(left), v))
+
+const isEqualAtomsDependents = (
+  left: AtomsDependents,
+  right: AtomsDependents
+) =>
+  left.size === right.size &&
+  Array.from(left).every(([a, dLeft]) => {
+    const dRight = right.get(a)
+    return (
+      dRight &&
+      dLeft.size === dRight.size &&
+      Array.from(dLeft).every((d) => dRight.has(d))
+    )
+  })
+
 const atomToPrintable = (atom: AnyAtom) =>
   atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
 
@@ -97,8 +115,8 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       }
       setAtomsSnapshot((prev) => {
         if (
-          prev[0].size === values.size &&
-          Array.from(prev[0]).every(([a, v]) => Object.is(values.get(a), v))
+          isEqualAtomsValues(prev[0], values) &&
+          isEqualAtomsDependents(prev[1], dependents)
         ) {
           // bail out
           return prev
