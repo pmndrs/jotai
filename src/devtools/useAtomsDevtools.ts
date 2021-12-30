@@ -110,7 +110,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         }
         const mounted = store[DEV_GET_MOUNTED]?.(atom)
         if (mounted) {
-          dependents.set(atom, mounted.d)
+          dependents.set(atom, mounted.t)
         }
       }
       setAtomsSnapshot((prev) => {
