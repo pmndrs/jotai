@@ -67,7 +67,7 @@ export type VersionObject = {
    * "p"arent version.
    *
    * Once a version is committed completely, the `p` property is deleted so the
-   * child version is independent, and the parent revision can be garbage
+   * child version is independent, and the parent version can be garbage
    * collected.
    *
    * See [Provider] for more details on version data flow.
