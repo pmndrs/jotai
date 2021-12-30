@@ -98,7 +98,7 @@ type Mounted = {
 type StateListener = () => void
 type MountedAtoms = Set<AnyAtom>
 
-// store methods
+// store methods (not for public API)
 /**
  * Read an atom's hidden [AtomState]. Derived atom state may be recomputed if they
  * are invalidated and any of their transitive dependencies have changed.
