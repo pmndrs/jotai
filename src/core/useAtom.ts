@@ -99,7 +99,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   }
 
   useEffect(() => {
-    // Call `rerenderIfAtomStateChanged` whenever this atom is invalidated. Note
+    // Call `rerenderIfChanged` whenever this atom is invalidated. Note
     // that derived atoms may not be recomputed yet.
     const unsubscribe = store[SUBSCRIBE_ATOM](atom, rerenderIfChanged)
     rerenderIfChanged(undefined)
