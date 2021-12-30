@@ -106,7 +106,9 @@ describe('If there is no extension installed...', () => {
     render(
       <StrictMode>
         <Provider>
-          <Counter />
+          <AtomsDevtools>
+            <Counter />
+          </AtomsDevtools>
         </Provider>
       </StrictMode>
     )
@@ -124,7 +126,9 @@ describe('If there is no extension installed...', () => {
     render(
       <StrictMode>
         <Provider>
-          <Counter />
+          <AtomsDevtools>
+            <Counter />
+          </AtomsDevtools>
         </Provider>
       </StrictMode>
     )
