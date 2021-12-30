@@ -8,6 +8,7 @@ import {
   DEV_SUBSCRIBE_STATE,
   RESTORE_ATOMS,
 } from '../core/store'
+import type { VersionObject } from '../core/store'
 
 type Config = {
   instanceID?: number
@@ -63,8 +64,7 @@ const getDevtoolsState = (atomsSnapshot: AtomsSnapshot) => {
 
 export function useAtomsDevtools(name: string, scope?: Scope) {
   const ScopeContext = getScopeContext(scope)
-  const scopeContainer = useContext(ScopeContext)
-  const { s: store } = scopeContainer
+  const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
   if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
@@ -113,9 +113,11 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
   const goToSnapshot = useCallback(
     (values: Iterable<readonly [AnyAtom, AnyAtomValue]>) => {
-      store[RESTORE_ATOMS](values)
+      const restore = (version?: VersionObject) =>
+        store[RESTORE_ATOMS](values, version)
+      return versionedWrite ? versionedWrite(restore) : restore()
     },
-    [store]
+    [store, versionedWrite]
   )
 
   let extension: Extension | undefined
