@@ -38,8 +38,7 @@ export type AtomState<Value = AnyAtomValue> = {
   r: Revision
   /**
    * Marks the revision of this atom when a transitive dependency was invalidated.
-   * Mounted atoms are considered invalid when `r === i`. Unmounted atoms are
-   * considered invalid until they are mounted again.
+   * Mounted atoms are considered invalidated when `r === i`.
    */
   i?: InvalidatedRevision
   /**
@@ -478,14 +477,22 @@ export const createStore = (
     force?: boolean
   ): AtomState<Value> => {
     if (!force) {
+      // See if we can skip recomputing this atom.
       const atomState = getAtomState(version, atom)
       if (atomState) {
+        // First, ensure that each atom we depend on is up to date.
+        //
+        // Recursive calls to `readAtomState(version, a)` will recompute `a` if
+        // it's out of date thus increment its revision number if it changes.
         atomState.d.forEach((_, a) => {
           if (a !== atom) {
             if (!mountedMap.has(a)) {
-              // not mounted
+              // Dependency is new or unmounted.
+              // Invalidation doesn't touch unmounted atoms, so we need to recurse
+              // into this dependency in case it needs to update.
               readAtomState(version, a)
             } else {
+              // Dependency is mounted.
               const aState = getAtomState(version, a)
               if (
                 aState &&
@@ -496,6 +503,9 @@ export const createStore = (
             }
           }
         })
+
+        // If a dependency's revision changed since this atom was last computed,
+        // then we're out of date and need to recompute.
         if (
           Array.from(atomState.d.entries()).every(([a, r]) => {
             const aState = getAtomState(version, a)
@@ -511,6 +521,8 @@ export const createStore = (
         }
       }
     }
+
+    // Compute a new state for this atom.
     const dependencies = new Set<AnyAtom>()
     try {
       const promiseOrValue = atom.read(<V>(a: Atom<V>) => {
