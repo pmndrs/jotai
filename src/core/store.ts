@@ -113,10 +113,11 @@ export const WRITE_ATOM = 'w'
  */
 export const COMMIT_ATOM = 'c'
 /**
- * Add a subscriber function to an atom. The atom will become "mounted" if this
- * is the first subscriber.
+ * Add a subscriber function to an atom. Returns a function that removes the
+ * subscriber.
  *
  * The subscriber is called in two cases:
+ *
  * - For writable atoms, the subscriber is called whenever the atom is directly
  *   changed by `atom.write`.
  * - For derived atoms, the subscriber is called whenever the atom is
