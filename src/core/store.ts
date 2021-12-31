@@ -27,20 +27,69 @@ type Revision = number
 type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 
-// immutable atom state
+/**
+ * Immutable atom state, tracked for both mounted and unmounted atoms in a store.
+ * @private This is for internal use and not considered part of the public API.
+ */
 export type AtomState<Value = AnyAtomValue> = {
+  /**
+   * Counts number of times atom has actually changed or recomputed.
+   */
   r: Revision
+  /**
+   * Marks the revision of this atom when a transitive dependency was invalidated.
+   * Mounted atoms are considered invalidated when `r === i`.
+   */
   i?: InvalidatedRevision
+  /**
+   * Maps from a dependency to the dependency's revision when it was last read.
+   * We can skip recomputation of an atom by comparing the ReadDependencies revision
+   * of each dependency to that dependencies's current revision.
+   */
   d: ReadDependencies
 } & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
 
-export type VersionObject = { p?: VersionObject } // "p"arent version
+/**
+ * Represents a version of a store. A version contains a state for every atom
+ * read during the version's lifetime.
+ *
+ * In concurrent React rendering, state can "branch" during transitions: the
+ * current state may continue to be rendered while a new state is being built
+ * concurrently. We key our atom state containers by this global version to
+ * represent the state for each diverging branch.
+ *
+ * While a new version is being built, we read atom previous state from the
+ * previous version.
+ */
+export type VersionObject = {
+  /**
+   * "p"arent version.
+   *
+   * Once a version is committed completely, the `p` property is deleted so the
+   * child version is independent, and the parent version can be garbage
+   * collected.
+   *
+   * See [Provider] for more details on version data flow.
+   */
+  p?: VersionObject
+}
 
 type Listeners = Set<(version?: VersionObject) => void>
 type Dependents = Set<AnyAtom>
+
+/**
+ * State tracked for mounted atoms. An atom is considered "mounted" if it has a
+ * subscriber, or is a transitive dependency of another atom that has a
+ * subscriber.
+ *
+ * The mounted state of an atom is freed once it is no longer mounted.
+ */
 type Mounted = {
+  /** The list of subscriber functions. */
   l: Listeners
+  /** Atoms that depend on *this* atom. Used to fan out invalidation. */
   t: Dependents
+  /** Function to run when the atom is unmounted. */
   u?: OnUnmount
 }
 
@@ -48,11 +97,44 @@ type Mounted = {
 type StateListener = () => void
 type MountedAtoms = Set<AnyAtom>
 
-// store methods
+// store methods (not for public API)
+/**
+ * Read an atom's [AtomState], an internal data structure that is not considered
+ * part of the public API. See [useAtom] for more details.
+ *
+ * Derived atom states may be recomputed if they are invalidated and any of
+ * their transitive dependencies have changed.
+ */
 export const READ_ATOM = 'r'
+/**
+ * Invoke an atom's [WritableAtom.write] method with an update value.
+ * That `write` method may set one or more atoms.
+ * The default `write` method of primitive atoms just sets the atom itself to
+ * the update value.
+ */
 export const WRITE_ATOM = 'w'
+/**
+ * Commit pending writes to an atom.
+ * (The current implementation commits pending writes to all atoms; this is subject to change.)
+ */
 export const COMMIT_ATOM = 'c'
+/**
+ * Add a subscriber function to an atom. Returns a function that removes the
+ * subscriber.
+ *
+ * The subscriber is called in two cases:
+ *
+ * - For writable atoms, the subscriber is called whenever the atom is directly
+ *   changed by `atom.write`.
+ * - For derived atoms, the subscriber is called whenever the atom is
+ *   *invalidated* (i.e. when it's possibly transitive dependencies change or
+ *   become invalidated), **not** when the actual Value of the atom changes.
+ *   Derived atoms are only recomputed on read.
+ */
 export const SUBSCRIBE_ATOM = 's'
+/**
+ * Bulk-apply new values to atoms.
+ */
 export const RESTORE_ATOMS = 'h'
 
 // store dev methods (these are tentative and subject to change)
@@ -61,6 +143,26 @@ export const DEV_GET_MOUNTED_ATOMS = 'l'
 export const DEV_GET_ATOM_STATE = 'a'
 export const DEV_GET_MOUNTED = 'm'
 
+/**
+ * Create a new store. Each store is an independent, isolated universe of atom
+ * states.
+ *
+ * Jotai atoms are not themselves state containers. When you read or write an
+ * atom, that state is stored in a store. You can think of a Store like a
+ * multi-layered map from atoms to states, like this:
+ *
+ * ```
+ * // Conceptually, a Store is a map from atoms to states.
+ * // The real type is a bit different.
+ * type Store = Map<VersionObject, Map<Atom, AtomState>>
+ * ```
+ *
+ * @param initialValues An iterable where item is a pair of [an atom, its
+ *   initial value]. Use to set initial state of writable atoms; useful for
+ *   testing.
+ *
+ * @returns A store.
+ */
 export const createStore = (
   initialValues?: Iterable<readonly [AnyAtom, AnyAtomValue]>
 ) => {
@@ -375,14 +477,21 @@ export const createStore = (
     force?: boolean
   ): AtomState<Value> => {
     if (!force) {
+      // See if we can skip recomputing this atom.
       const atomState = getAtomState(version, atom)
       if (atomState) {
+        // First, ensure that each atom we depend on is up to date.
+        // Recursive calls to `readAtomState(version, a)` will recompute `a` if
+        // it's out of date thus increment its revision number if it changes.
         atomState.d.forEach((_, a) => {
           if (a !== atom) {
             if (!mountedMap.has(a)) {
-              // not mounted
+              // Dependency is new or unmounted.
+              // Invalidation doesn't touch unmounted atoms, so we need to recurse
+              // into this dependency in case it needs to update.
               readAtomState(version, a)
             } else {
+              // Dependency is mounted.
               const aState = getAtomState(version, a)
               if (
                 aState &&
@@ -393,6 +502,8 @@ export const createStore = (
             }
           }
         })
+        // If a dependency's revision changed since this atom was last computed,
+        // then we're out of date and need to recompute.
         if (
           Array.from(atomState.d.entries()).every(([a, r]) => {
             const aState = getAtomState(version, a)
@@ -408,6 +519,7 @@ export const createStore = (
         }
       }
     }
+    // Compute a new state for this atom.
     const dependencies = new Set<AnyAtom>()
     try {
       const promiseOrValue = atom.read(<V>(a: Atom<V>) => {
@@ -462,7 +574,7 @@ export const createStore = (
     return mounted
   }
 
-  // FIXME doesn't work with mutally dependent atoms
+  // FIXME doesn't work with mutually dependent atoms
   const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
     !mounted.l.size &&
     (!mounted.t.size || (mounted.t.size === 1 && mounted.t.has(atom)))

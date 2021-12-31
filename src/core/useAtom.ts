@@ -44,6 +44,8 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
 
   const getAtomValue = useCallback(
     (version?: VersionObject) => {
+      // This call to READ_ATOM is the place where derived atoms will actually be
+      // recomputed if needed.
       const atomState = store[READ_ATOM](atom, version)
       if ('e' in atomState) {
         throw atomState.e // read error
@@ -59,7 +61,8 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     [store, atom]
   )
 
-  const [[version, value, atomFromUseReducer], dispatch] = useReducer<
+  // Pull the atoms's state from the store into React state.
+  const [[version, value, atomFromUseReducer], rerenderIfChanged] = useReducer<
     Reducer<
       readonly [VersionObject | undefined, ResolveType<Value>, Atom<Value>],
       VersionObject | undefined
@@ -86,12 +89,14 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   )
 
   if (atomFromUseReducer !== atom) {
-    dispatch(undefined)
+    rerenderIfChanged(undefined)
   }
 
   useEffect(() => {
-    const unsubscribe = store[SUBSCRIBE_ATOM](atom, dispatch)
-    dispatch(undefined)
+    // Call `rerenderIfChanged` whenever this atom is invalidated. Note
+    // that derived atoms may not be recomputed yet.
+    const unsubscribe = store[SUBSCRIBE_ATOM](atom, rerenderIfChanged)
+    rerenderIfChanged(undefined)
     return unsubscribe
   }, [store, atom])
 
