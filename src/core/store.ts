@@ -481,7 +481,6 @@ export const createStore = (
       const atomState = getAtomState(version, atom)
       if (atomState) {
         // First, ensure that each atom we depend on is up to date.
-        //
         // Recursive calls to `readAtomState(version, a)` will recompute `a` if
         // it's out of date thus increment its revision number if it changes.
         atomState.d.forEach((_, a) => {
