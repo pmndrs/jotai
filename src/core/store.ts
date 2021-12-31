@@ -502,7 +502,6 @@ export const createStore = (
             }
           }
         })
-
         // If a dependency's revision changed since this atom was last computed,
         // then we're out of date and need to recompute.
         if (
