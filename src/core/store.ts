@@ -519,7 +519,6 @@ export const createStore = (
         }
       }
     }
-
     // Compute a new state for this atom.
     const dependencies = new Set<AnyAtom>()
     try {
