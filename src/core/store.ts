@@ -100,16 +100,20 @@ type MountedAtoms = Set<AnyAtom>
 
 // store methods (not for public API)
 /**
- * Read an atom's hidden [AtomState]. Derived atom state may be recomputed if they
+ * Read an atom's [AtomState]. Derived atom state may be recomputed if they
  * are invalidated and any of their transitive dependencies have changed.
  */
 export const READ_ATOM = 'r'
 /**
- * Write an atom's Value.
+ * Invoke an atom's [WritableAtom.write] method with an update value.
+ * That `write` method may set one or more atoms.
+ * The default `write` method of primitive atoms just sets the atom itself to
+ * the update value.
  */
 export const WRITE_ATOM = 'w'
 /**
  * Commit pending writes to an atom.
+ * (The current implementation commits pending writes to all atoms; this is subject to change.)
  */
 export const COMMIT_ATOM = 'c'
 /**
