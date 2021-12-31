@@ -26,7 +26,7 @@ const useCommitCount = () => {
   return commitCountRef.current
 }
 
-it('no unneccesary updates when updating atoms', async () => {
+it('no unnecessary updates when updating atoms', async () => {
   const todosAtom = atom<TodoItem[]>([
     { task: 'get cat food', checked: false },
     { task: 'get dragon food', checked: false },
