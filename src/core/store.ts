@@ -100,8 +100,11 @@ type MountedAtoms = Set<AnyAtom>
 
 // store methods (not for public API)
 /**
- * Read an atom's [AtomState]. Derived atom state may be recomputed if they
- * are invalidated and any of their transitive dependencies have changed.
+ * Read an atom's [AtomState], an internal data structure that is not considered
+ * part of the public API. See [useAtom] for more details.
+ *
+ * Derived atom states may be recomputed if they are invalidated and any of
+ * their transitive dependencies have changed.
  */
 export const READ_ATOM = 'r'
 /**
