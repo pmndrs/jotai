@@ -904,9 +904,15 @@ export const createStoreForExport = (
 ) => {
   const store = createStore(initialValues)
   return {
-    get: <Value>(atom: Atom<Value>): ResolveType<Value> | undefined => {
+    get: <Value>(atom: Atom<Value>): ResolveType<Value> => {
       const atomState = store[READ_ATOM](atom)
-      return 'v' in atomState ? atomState.v : undefined
+      if ('e' in atomState) {
+        throw atomState.e // read error
+      }
+      if ('p' in atomState) {
+        throw atomState.p // suspense promise
+      }
+      return atomState.v
     },
     set: <Value, Update, Result extends void | Promise<void>>(
       atom: WritableAtom<Value, Update, Result>,
