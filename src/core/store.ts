@@ -903,15 +903,29 @@ export const createStoreForExport = (
   initialValues?: Iterable<readonly [AnyAtom, AnyAtomValue]>
 ) => {
   const store = createStore(initialValues)
-  const get = <Value>(
-    atom: Atom<Value>
-  ): ResolveType<Value> | Promise<ResolveType<Value>> => {
+  const get: {
+    <Value>(atom: Atom<Value>): ResolveType<Value>
+    <Value>(
+      atom: Atom<Value>,
+      options: {
+        unstable_promise: true
+      }
+    ): Promise<ResolveType<Value>> | ResolveType<Value>
+  } = <Value>(
+    atom: Atom<Value>,
+    options?: {
+      unstable_promise: boolean
+    }
+  ) => {
     const atomState = store[READ_ATOM](atom)
     if ('e' in atomState) {
       throw atomState.e // read error
     }
     if ('p' in atomState) {
-      return atomState.p.then(() => get(atom))
+      if (options?.unstable_promise) {
+        return atomState.p.then(() => get(atom))
+      }
+      throw atomState.p
     }
     return atomState.v
   }
