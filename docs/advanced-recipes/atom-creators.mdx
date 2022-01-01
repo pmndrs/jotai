@@ -1,0 +1,157 @@
+---
+title: Atom creators
+nav: 5.2
+---
+
+## atomWithToggle
+
+> `atomWithToggle` creates a new atom with a boolean as initial state & a setter function to toggle it.
+
+This avoids the boilerplate of having to setup another atom just to update the state of the first.
+
+```ts
+import { WritableAtom, atom } from 'jotai'
+
+export function atomWithToggle(
+  initialValue?: boolean
+): WritableAtom<boolean, boolean | undefined> {
+  const anAtom = atom(initialValue, (get, set, nextValue?: boolean) => {
+    const update = nextValue ?? !get(anAtom)
+    set(anAtom, update)
+  })
+
+  return anAtom as WritableAtom<boolean, boolean | undefined>
+}
+```
+
+An optional initial state can be provided as first argument.
+
+The setter function can have an optional arg to force a particular state (if you want to make a setActive function out of it for example).
+
+Here is how it's used.
+
+```ts
+import { atomWithToggle } from 'XXX'
+
+// will have an initial value set to true
+const isActiveAtom = atomWithToggle(true)
+```
+
+And in a component :
+
+```tsx
+const Toggle = () => {
+  const [isActive, toggle] = useAtom(isActiveAtom)
+
+  return (
+    <>
+      <button onClick={() => toggle()}>
+        isActive: {isActive ? 'yes' : 'no'}
+      </button>
+      <button onClick={() => toggle(true)}>force true</button>
+      <button onClick={() => toggle(false)}>force false</button>
+    </>
+  )
+}
+```
+
+## atomWithToggleAndStorage
+
+> `atomWithToggleAndStorage` does the same as [`atomWithToggle`](#atom-with-toggle) but also persist the state anytime it changes in given storage using [`atomWithStorage`](../api/utils.mdx#atom-with-storage).
+
+Here is the source :
+
+```ts
+import { WritableAtom, atom } from 'jotai'
+import { atomWithStorage } from 'jotai/utils'
+
+export function atomWithToggleAndStorage(
+  key: string,
+  initialValue?: boolean,
+  storage?: any
+): WritableAtom<boolean, boolean | undefined> {
+  const anAtom = atomWithStorage(key, initialValue, storage)
+  const derivedAtom = atom(
+    (get) => get(anAtom),
+    (get, set, nextValue?: boolean) => {
+      const update = nextValue ?? !get(anAtom)
+      set(anAtom, update)
+    }
+  )
+
+  return derivedAtom
+}
+```
+
+And how it's used :
+
+```ts
+import { atomWithToggleAndStorage } from 'XXX'
+
+// will have an initial value set to false & be stored in localStorage under the key "isActive"
+const isActiveAtom = atomWithToggleAndStorage('isActive')
+```
+
+The usage in a component is also the same as [`atomWithToggle`](#atom-with-toggle).
+
+## atomWithCompare
+
+> `atomWithCompare` creates atom that only triggers updates when custom compare function `areEqual(prev, next)` is false.
+
+This can help you avoid unwanted re-renders by ignoring state changes that don't matter to your application.
+
+Note: Jotai uses `Object.is` internally to compare values when changes occur. If `areEqual(a, b)` returns false, but `Object.is(a, b)` returns true, Jotai will not trigger an update.
+
+```ts
+import { atomWithReducer } from 'jotai/utils'
+
+export function atomWithCompare<Value>(
+  initialValue: Value,
+  areEqual: (prev: Value, next: Value) => boolean
+) {
+  return atomWithReducer(initialValue, (prev: Value, next: Value) => {
+    if (areEqual(prev, next)) {
+      return prev
+    }
+
+    return next
+  })
+}
+```
+
+Here's how you'd use it to implement an atom that ignores updates that are shallow-equal:
+
+```ts
+import { atomWithCompare } from 'XXX'
+import { shallowEquals } from 'YYY'
+import { CSSProperties } from 'react'
+
+const styleAtom = atomWithCompare<CSSProperties>(
+  { backgroundColor: 'blue' },
+  shallowEquals
+)
+```
+
+In a component:
+
+```ts
+const StylePreview = () => {
+  const [styles, setStyles] = useAtom(styleAtom)
+
+  return (
+    <div>
+      <div styles={styles}>Style preview</div>
+
+      {/* Clicking this button twice will only trigger one render */}
+      <button onClick={() => setStyles({ ...styles, backgroundColor: 'red' })}>
+        Set background to red
+      </button>
+
+      {/* Clicking this button twice will only trigger one render */}
+      <button onClick={() => setStyles({ ...styles, fontSize: 32 })}>
+        Enlarge font
+      </button>
+    </div>
+  )
+}
+```

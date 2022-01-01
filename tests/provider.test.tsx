@@ -1,12 +1,14 @@
-import React from 'react'
 import { render, waitFor } from '@testing-library/react'
-import { Provider, atom, useAtom } from '../src/index'
+import { atom, useAtom } from 'jotai'
+import { getTestProvider } from './testUtils'
+
+const Provider = getTestProvider(true)
 
 it('uses initial values from provider', async () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
 
-  const Display: React.FC = () => {
+  const Display = () => {
     const [count] = useAtom(countAtom)
     const [pet] = useAtom(petAtom)
 
@@ -38,7 +40,7 @@ it('only uses initial value from provider for specific atom', async () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
 
-  const Display: React.FC = () => {
+  const Display = () => {
     const [count] = useAtom(countAtom)
     const [pet] = useAtom(petAtom)
 
@@ -60,4 +62,8 @@ it('only uses initial value from provider for specific atom', async () => {
     getByText('count: 1')
     getByText('pet: dog')
   })
+})
+
+it('renders correctly without children', () => {
+  render(<Provider />)
 })

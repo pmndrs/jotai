@@ -1,31 +1,19 @@
-import { useMemo } from 'react'
-import { atom, useAtom, WritableAtom } from 'jotai'
+import { useCallback, useContext } from 'react'
+import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
+import type { WritableAtom } from 'jotai'
+import type { Scope } from '../core/atom'
+import { WRITE_ATOM } from '../core/store'
+import { RESET } from './constants'
 
-import type { SetStateAction } from '../core/types'
-
-const RESET = Symbol()
-
-export function atomWithReset<Value>(initialValue: Value) {
-  type Update = SetStateAction<Value> | typeof RESET
-  const anAtom: any = atom<Value, Update>(initialValue, (get, set, update) => {
-    if (update === RESET) {
-      set(anAtom, initialValue)
-    } else {
-      set(
-        anAtom,
-        typeof update === 'function'
-          ? (update as (prev: Value) => Value)(get(anAtom))
-          : update
-      )
-    }
-  })
-  return anAtom as WritableAtom<Value, Update>
-}
-
-export function useResetAtom<Value>(anAtom: WritableAtom<Value, typeof RESET>) {
-  const writeOnlyAtom = useMemo(
-    () => atom(null, (_get, set, _update) => set(anAtom, RESET)),
-    [anAtom]
+export function useResetAtom<Value>(
+  anAtom: WritableAtom<Value, typeof RESET>,
+  scope?: Scope
+) {
+  const ScopeContext = getScopeContext(scope)
+  const store = useContext(ScopeContext).s
+  const setAtom = useCallback(
+    () => store[WRITE_ATOM](anAtom, RESET),
+    [store, anAtom]
   )
-  return useAtom(writeOnlyAtom)[1]
+  return setAtom
 }

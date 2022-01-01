@@ -1,49 +1,158 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "0.11.1",
+  "version": "1.5.0",
   "description": "👻 Next gen state management that will spook you",
-  "main": "index.cjs.js",
-  "module": "index.js",
-  "types": "index.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "typesVersions": {
+    "<4.0": {
+      "esm/*": [
+        "ts3.4/*"
+      ],
+      "*": [
+        "ts3.4/*"
+      ]
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./index.d.ts",
+      "module": "./esm/index.js",
+      "import": "./esm/index.mjs",
+      "default": "./index.js"
+    },
+    "./utils": {
+      "types": "./utils.d.ts",
+      "module": "./esm/utils.js",
+      "import": "./esm/utils.mjs",
+      "default": "./utils.js"
+    },
+    "./devtools": {
+      "types": "./devtools.d.ts",
+      "module": "./esm/devtools.js",
+      "import": "./esm/devtools.mjs",
+      "default": "./devtools.js"
+    },
+    "./immer": {
+      "types": "./immer.d.ts",
+      "module": "./esm/immer.js",
+      "import": "./esm/immer.mjs",
+      "default": "./immer.js"
+    },
+    "./optics": {
+      "types": "./optics.d.ts",
+      "module": "./esm/optics.js",
+      "import": "./esm/optics.mjs",
+      "default": "./optics.js"
+    },
+    "./query": {
+      "types": "./query.d.ts",
+      "module": "./esm/query.js",
+      "import": "./esm/query.mjs",
+      "default": "./query.js"
+    },
+    "./xstate": {
+      "types": "./xstate.d.ts",
+      "module": "./esm/xstate.js",
+      "import": "./esm/xstate.mjs",
+      "default": "./xstate.js"
+    },
+    "./valtio": {
+      "types": "./valtio.d.ts",
+      "module": "./esm/valtio.js",
+      "import": "./esm/valtio.mjs",
+      "default": "./valtio.js"
+    },
+    "./zustand": {
+      "types": "./zustand.d.ts",
+      "module": "./esm/zustand.js",
+      "import": "./esm/zustand.mjs",
+      "default": "./zustand.js"
+    },
+    "./redux": {
+      "types": "./redux.d.ts",
+      "module": "./esm/redux.js",
+      "import": "./esm/redux.mjs",
+      "default": "./redux.js"
+    },
+    "./urql": {
+      "types": "./urql.d.ts",
+      "module": "./esm/urql.js",
+      "import": "./esm/urql.mjs",
+      "default": "./urql.js"
+    },
+    "./babel/plugin-debug-label": {
+      "types": "./babel/plugin-debug-label.d.ts",
+      "module": "./esm/babel/plugin-debug-label.js",
+      "import": "./esm/babel/plugin-debug-label.mjs",
+      "default": "./babel/plugin-debug-label.js"
+    },
+    "./babel/plugin-react-refresh": {
+      "types": "./babel/plugin-react-refresh.d.ts",
+      "module": "./esm/babel/plugin-react-refresh.js",
+      "import": "./esm/babel/plugin-react-refresh.mjs",
+      "default": "./babel/plugin-react-refresh.js"
+    },
+    "./babel/preset": {
+      "types": "./babel/preset.d.ts",
+      "module": "./esm/babel/preset.js",
+      "import": "./esm/babel/preset.mjs",
+      "default": "./babel/preset.js"
+    }
+  },
   "files": [
     "**"
   ],
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "rollup -c",
+    "build": "concurrently 'yarn:build:*'",
+    "build:base": "rollup -c",
+    "build:utils": "rollup -c --config-utils",
+    "build:devtools": "rollup -c --config-devtools",
+    "build:immer": "rollup -c --config-immer",
+    "build:optics": "rollup -c --config-optics",
+    "build:query": "rollup -c --config-query",
+    "build:xstate": "rollup -c --config-xstate",
+    "build:valtio": "rollup -c --config-valtio",
+    "build:zustand": "rollup -c --config-zustand",
+    "build:redux": "rollup -c --config-redux",
+    "build:urql": "rollup -c --config-urql",
+    "build:babel:plugin-debug-label": "rollup -c --config-babel_plugin-debug-label",
+    "build:babel:plugin-react-refresh": "rollup -c --config-babel_plugin-react-refresh",
+    "build:babel:preset": "rollup -c --config-babel_preset",
     "postbuild": "yarn copy",
-    "eslint": "eslint --fix '{src,tests}/**/*.{js,ts,jsx,tsx}'",
-    "eslint:ci": "eslint '{src,tests}/**/*.{js,ts,jsx,tsx}'",
-    "prepare": "yarn build",
+    "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
+    "eslint:ci": "eslint '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
     "pretest": "tsc --noEmit",
-    "test": "jest && jest --setupFiles ./tests/setReactExperimental.ts",
+    "test": "jest && jest --setupFiles ./tests/setProviderLessMode.ts && jest --setupFiles ./tests/setVersionedWriteMode.ts",
+    "test:ci": "jest",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/utils.d.ts dist/utils.cjs.d.ts && shx cp dist/devtools.d.ts dist/devtools.cjs.d.ts && shx cp dist/immer.d.ts dist/immer.cjs.d.ts && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\"",
+    "postinstall": "patch-package"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+  "engines": {
+    "node": ">=12.7.0"
   },
   "prettier": {
     "semi": false,
     "trailingComma": "es5",
     "singleQuote": true,
-    "jsxBracketSameLine": true,
+    "bracketSameLine": true,
     "tabWidth": 2,
     "printWidth": 80
   },
   "lint-staged": {
-    "*.{js,ts,tsx}": [
+    "*.{js,ts,tsx,md}": [
       "prettier --write"
     ]
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/react-spring/jotai.git"
+    "url": "git+https://github.com/pmndrs/jotai.git"
   },
   "keywords": [
     "react",
@@ -57,13 +166,20 @@
   "contributors": [],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/react-spring/jotai/issues"
+    "url": "https://github.com/pmndrs/jotai/issues"
   },
-  "homepage": "https://github.com/react-spring/jotai",
+  "homepage": "https://github.com/pmndrs/jotai",
   "jest": {
     "rootDir": ".",
+    "testEnvironment": "jsdom",
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@swc/jest"
+      ]
+    },
     "moduleNameMapper": {
-      "^jotai$": "<rootDir>/src/index.ts"
+      "^jotai$": "<rootDir>/src/index.ts",
+      "^jotai/(.*)$": "<rootDir>/src/$1.ts"
     },
     "modulePathIgnorePatterns": [
       "dist"
@@ -82,58 +198,102 @@
       "tests/**/*.{js,ts,tsx}"
     ]
   },
-  "dependencies": {
-    "use-context-selector": "1.2.11"
-  },
   "devDependencies": {
-    "@babel/core": "^7.12.7",
-    "@babel/plugin-transform-react-jsx": "^7.12.7",
-    "@babel/plugin-transform-typescript": "^7.12.1",
-    "@babel/preset-env": "^7.12.7",
-    "@rollup/plugin-babel": "^5.2.1",
-    "@rollup/plugin-node-resolve": "^10.0.0",
-    "@rollup/plugin-typescript": "^6.1.0",
-    "@testing-library/react": "^11.2.2",
-    "@types/jest": "^26.0.15",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0",
-    "@types/scheduler": "^0.16.1",
-    "@typescript-eslint/eslint-plugin": "^4.8.1",
-    "@typescript-eslint/parser": "^4.8.1",
-    "copyfiles": "^2.4.0",
-    "eslint": "^7.14.0",
-    "eslint-config-prettier": "^6.15.0",
+    "@babel/core": "^7.15.5",
+    "@babel/plugin-transform-react-jsx": "^7.16.5",
+    "@babel/plugin-transform-typescript": "^7.16.1",
+    "@babel/preset-env": "^7.16.5",
+    "@babel/template": "^7.15.4",
+    "@babel/types": "^7.16.0",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-node-resolve": "^13.1.1",
+    "@rollup/plugin-typescript": "^8.3.0",
+    "@swc/core": "^1.2.124",
+    "@swc/jest": "^0.2.15",
+    "@testing-library/react": "^12.1.2",
+    "@types/jest": "^27.0.3",
+    "@types/react": "^17.0.38",
+    "@types/react-dom": "^17.0.11",
+    "@typescript-eslint/eslint-plugin": "^5.8.1",
+    "@typescript-eslint/parser": "^5.8.1",
+    "@urql/core": "^2.0.0",
+    "benny": "^3.7.1",
+    "concurrently": "^6.5.1",
+    "downlevel-dts": "^0.7.0",
+    "esbuild": "^0.14.9",
+    "eslint": "^8.5.0",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jest": "^24.1.3",
-    "eslint-plugin-prettier": "^3.1.4",
-    "eslint-plugin-react": "^7.21.5",
-    "eslint-plugin-react-hooks": "^4.2.0",
-    "husky": "^4.3.0",
-    "immer": "^8.0.0",
-    "jest": "^26.6.3",
-    "json": "^10.0.0",
-    "lint-staged": "^10.5.1",
-    "prettier": "^2.2.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "rollup": "^2.33.3",
-    "rollup-plugin-size-snapshot": "^0.12.0",
-    "scheduler": "^0.19.1",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-jest": "^25.3.2",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.28.0",
+    "eslint-plugin-react-hooks": "^4.3.0",
+    "graphql": "^16.2.0",
+    "husky": "^7.0.4",
+    "immer": "^8.0.1",
+    "jest": "^27.4.5",
+    "json": "^11.0.0",
+    "lint-staged": "^12.1.4",
+    "optics-ts": "^2.1.0",
+    "patch-package": "^6.4.7",
+    "postinstall-postinstall": "^2.1.0",
+    "prettier": "^2.5.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-query": "^3.21.0",
+    "redux": "^4.1.2",
+    "rollup": "^2.62.0",
+    "rollup-plugin-esbuild": "^4.8.2",
+    "rxjs": "^7.5.1",
     "shx": "^0.3.3",
-    "typescript": "^4.1.2"
+    "ts-expect": "^1.3.0",
+    "ts-node": "^10.4.0",
+    "tslib": "^2.3.1",
+    "typescript": "^4.5.4",
+    "valtio": "^1.2.4",
+    "wonka": "^4.0.15",
+    "xstate": "^4.26.0",
+    "zustand": "^3.6.8"
   },
   "peerDependencies": {
+    "@babel/core": "*",
+    "@babel/template": "*",
+    "@urql/core": "*",
+    "immer": "*",
+    "optics-ts": "*",
     "react": ">=16.8",
-    "react-dom": "*",
-    "react-native": "*",
-    "scheduler": ">=0.19"
+    "react-query": "*",
+    "valtio": "*",
+    "wonka": "*",
+    "xstate": "*"
   },
   "peerDependenciesMeta": {
-    "react-dom": {
+    "@babel/core": {
       "optional": true
     },
-    "react-native": {
+    "@babel/template": {
+      "optional": true
+    },
+    "@urql/core": {
+      "optional": true
+    },
+    "immer": {
+      "optional": true
+    },
+    "optics-ts": {
+      "optional": true
+    },
+    "react-query": {
+      "optional": true
+    },
+    "valtio": {
+      "optional": true
+    },
+    "wonka": {
+      "optional": true
+    },
+    "xstate": {
       "optional": true
     }
   }

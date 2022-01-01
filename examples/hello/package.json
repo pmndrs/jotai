@@ -1,28 +1,27 @@
 {
-  "name": "examples-cra",
+  "name": "hello",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
-    "test": "react-app-rewired test",
-    "eject": "react-app-rewired eject",
-    "serve": "serve -s ./build"
-  },
   "dependencies": {
-    "jotai": "^0.2.0",
-    "prismjs": "^1.21.0",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-prism": "^4.3.2",
-    "react-scripts": "3.4.3"
+    "jotai": "^1.0.0",
+    "prismjs": "^1.23.0",
+    "prop-types": "^15.7.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-prism": "4.3.2",
+    "react-scripts": "^4.0.3"
   },
   "devDependencies": {
-    "customize-cra": "^1.0.0",
-    "customize-cra-react-refresh": "^1.1.0",
-    "raw-loader": "^4.0.1",
-    "react-app-rewired": "^2.1.6",
-    "serve": "^11.3.2"
+    "@types/react": "^17.0.11",
+    "@types/react-dom": "^17.0.7",
+    "typescript": "^4.3.2"
+  },
+  "scripts": {
+    "start": "SKIP_PREFLIGHT_CHECK=true react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "serve": "serve -s build"
   },
   "browserslist": {
     "production": [

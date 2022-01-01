@@ -1,0 +1,105 @@
+/**
+ * Pmndrs theme for JavaScript, CSS and HTML
+ * Loosely based on https://marketplace.visualstudio.com/items?itemName=pmndrs.pmndrs
+ * @author Paul Henschel
+ */
+
+code[class*='language-'],
+pre[class*='language-'] {
+  word-spacing: normal;
+  word-wrap: normal;
+  tab-size: 2;
+  hyphens: none;
+  font-size: 0.9em;
+  @apply shadow-lg rounded-md sm:rounded-lg text-[#e4f0fb] text-left break-normal leading-normal;
+}
+
+/* Code blocks */
+pre[class*='language-'] {
+  @apply overflow-x-auto my-4 p-6 sm:p-8 whitespace-pre;
+}
+
+:not(pre) > code[class*='language-'],
+pre[class*='language-'] {
+  @apply bg-[#252b37];
+}
+
+/* Inline code */
+:not(pre) > code[class*='language-'] {
+  @apply p-3 shadow-lg rounded-md whitespace-normal;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  @apply text-[#a6accd];
+}
+
+.token.punctuation {
+  @apply text-[#e4f0fb];
+}
+
+.token.namespace {
+  @apply opacity-70;
+}
+
+.token.property,
+.token.tag,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  @apply text-[#e4f0fb];
+}
+
+.token.boolean,
+.token.number {
+  @apply text-[#5de4c7];
+}
+
+.token.selector,
+.token.attr-value,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  @apply text-[#5de4c7];
+}
+
+.token.attr-name,
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string,
+.token.variable {
+  @apply text-[#add7ff];
+}
+
+.token.atrule,
+.token.function,
+.token.class-name {
+  @apply text-[#5de4c7];
+}
+
+.token.keyword {
+  @apply text-[#add7ff];
+}
+
+.token.regex,
+.token.important {
+  @apply text-[#fffac2];
+}
+
+.token.important,
+.token.bold {
+  @apply font-bold;
+}
+
+.token.italic {
+  @apply italic;
+}
+
+.token.entity {
+  @apply cursor-help;
+}

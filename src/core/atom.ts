@@ -1,53 +1,122 @@
-import { Getter, Setter, Atom, WritableAtom, PrimitiveAtom } from './types'
+type ResolveType<T> = T extends Promise<infer V> ? V : T
+
+type Getter = {
+  <Value>(atom: Atom<Value | Promise<Value>>): Value
+  <Value>(atom: Atom<Promise<Value>>): Value
+  <Value>(atom: Atom<Value>): ResolveType<Value>
+}
+
+type WriteGetter = Getter & {
+  <Value>(
+    atom: Atom<Value | Promise<Value>>,
+    options: { unstable_promise: true }
+  ): Promise<Value> | Value
+  <Value>(atom: Atom<Promise<Value>>, options: { unstable_promise: true }):
+    | Promise<Value>
+    | Value
+  <Value>(atom: Atom<Value>, options: { unstable_promise: true }):
+    | Promise<ResolveType<Value>>
+    | ResolveType<Value>
+}
+
+type Setter = {
+  <Value, Result extends void | Promise<void>>(
+    atom: WritableAtom<Value, undefined, Result>
+  ): Result
+  <Value, Update, Result extends void | Promise<void>>(
+    atom: WritableAtom<Value, Update, Result>,
+    update: Update
+  ): Result
+}
+
+type Read<Value> = (get: Getter) => Value
+
+type Write<Update, Result extends void | Promise<void>> = (
+  get: WriteGetter,
+  set: Setter,
+  update: Update
+) => Result
+
+type WithInitialValue<Value> = {
+  init: Value
+}
+
+export type Scope = symbol | string | number
+
+// Are there better typings?
+export type SetAtom<
+  Update,
+  Result extends void | Promise<void>
+> = undefined extends Update
+  ? (update?: Update) => Result
+  : (update: Update) => Result
+
+type OnUnmount = () => void
+type OnMount<Update, Result extends void | Promise<void>> = <
+  S extends SetAtom<Update, Result>
+>(
+  setAtom: S
+) => OnUnmount | void
+
+export type Atom<Value> = {
+  toString: () => string
+  debugLabel?: string
+  read: Read<Value>
+}
+
+export type WritableAtom<
+  Value,
+  Update,
+  Result extends void | Promise<void> = void
+> = Atom<Value> & {
+  write: Write<Update, Result>
+  onMount?: OnMount<Update, Result>
+}
+
+type SetStateAction<Value> = Value | ((prev: Value) => Value)
+
+export type PrimitiveAtom<Value> = WritableAtom<Value, SetStateAction<Value>>
 
 let keyCount = 0 // global key count for all atoms
 
 // writable derived atom
-export function atom<Value, Update>(
-  read: (get: Getter) => Value | Promise<Value>,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value, Update>
-
-// invalid writable derived atom
-export function atom<Value, Update>(
-  read: Function,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): never
-
-// write-only derived atom
-export function atom<Value, Update>(
-  read: Value,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
-): WritableAtom<Value, Update>
+export function atom<Value, Update, Result extends void | Promise<void> = void>(
+  read: Read<Value>,
+  write: Write<Update, Result>
+): WritableAtom<Value, Update, Result>
 
 // read-only derived atom
-export function atom<Value, Update extends never = never>(
-  read: (get: Getter) => Value | Promise<Value>
-): Atom<Value>
+export function atom<Value>(read: Read<Value>): Atom<Value>
 
-// invalid read-only derived atom
-export function atom<Value, Update>(read: Function): never
+// invalid function in the first argument
+export function atom(invalidFunction: (...args: any) => any, write?: any): never
+
+// write-only derived atom
+export function atom<Value, Update, Result extends void | Promise<void> = void>(
+  initialValue: Value,
+  write: Write<Update, Result>
+): WritableAtom<Value, Update, Result> & WithInitialValue<Value>
 
 // primitive atom
-export function atom<Value, Update extends never = never>(
+export function atom<Value>(
   initialValue: Value
-): PrimitiveAtom<Value>
+): PrimitiveAtom<Value> & WithInitialValue<Value>
 
-export function atom<Value, Update>(
-  read: Value | ((get: Getter) => Value | Promise<Value>),
-  write?: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+export function atom<Value, Update, Result extends void | Promise<void>>(
+  read: Value | Read<Value>,
+  write?: Write<Update, Result>
 ) {
+  const key = `atom${++keyCount}`
   const config = {
-    key: ++keyCount,
-  } as WritableAtom<Value, Update>
+    toString: () => key,
+  } as WritableAtom<Value, Update, Result> & { init?: Value }
   if (typeof read === 'function') {
-    config.read = read as (get: Getter) => Value | Promise<Value>
+    config.read = read as Read<Value>
   } else {
     config.init = read
-    config.read = (get: Getter) => get(config)
-    config.write = (get: Getter, set: Setter, update: Update) => {
+    config.read = (get) => get(config)
+    config.write = (get, set, update) =>
       set(config, typeof update === 'function' ? update(get(config)) : update)
-    }
   }
   if (write) {
     config.write = write

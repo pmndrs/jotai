@@ -1,0 +1,57 @@
+{
+  "name": "jotai-website",
+  "version": "0.0.0",
+  "description": "👻 Next gen state management that will spook you",
+  "homepage": "https://github.com/pmndrs/jotai",
+  "bugs": "https://github.com/pmndrs/jotai/issues",
+  "license": "MIT",
+  "author": "Sophia Michelle Andren <sophia+poimandres@candycode.com> (https://candycode.com/)",
+  "scripts": {
+    "start": "yarn develop",
+    "develop": "gatsby develop",
+    "build": "gatsby build",
+    "serve": "gatsby serve",
+    "clean": "gatsby clean",
+    "deduplicate": "npx yarn-deduplicate yarn.lock",
+    "postdeduplicate": "yarn install"
+  },
+  "dependencies": {
+    "@mdx-js/mdx": "^1.6.22",
+    "@mdx-js/react": "^1.6.22",
+    "classnames": "^2.3.1",
+    "gatsby": "^4.1.2",
+    "gatsby-plugin-google-gtag": "^4.1.0",
+    "gatsby-plugin-image": "^2.1.0",
+    "gatsby-plugin-mdx": "^3.1.1",
+    "gatsby-plugin-postcss": "^5.1.0",
+    "gatsby-plugin-react-helmet": "^5.1.0",
+    "gatsby-plugin-remove-trailing-slashes": "^4.1.0",
+    "gatsby-plugin-sharp": "^4.1.1",
+    "gatsby-plugin-sitemap": "^5.1.1",
+    "gatsby-source-filesystem": "^4.1.0",
+    "jotai": "^1.4.3",
+    "prism-react-renderer": "^1.2.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-helmet": "^6.1.0",
+    "react-lazyload": "^3.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.3.4",
+    "autoprefixer": "^10.4.0",
+    "babel-preset-gatsby": "^2.1.0",
+    "postcss": "^8.3.11",
+    "postcss-import": "^14.0.2",
+    "postcss-loader": "^6.2.0",
+    "prettier": "^2.4.1",
+    "tailwindcss": "^2.2.19"
+  },
+  "private": true,
+  "browserslist": [
+    ">0.25%",
+    "not dead",
+    "not ie <=11",
+    "not ie_mob <=11",
+    "not op_mini all"
+  ]
+}

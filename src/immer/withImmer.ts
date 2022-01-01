@@ -1,14 +1,35 @@
 /* eslint-disable import/named */
-import { produce, Draft } from 'immer'
-import { atom, WritableAtom } from 'jotai'
+import { produce } from 'immer'
+import type { Draft } from 'immer'
+import { atom } from 'jotai'
+import type { PrimitiveAtom, WritableAtom } from 'jotai'
+import { createMemoizeAtom } from '../utils/weakCache'
+
+const memoizeAtom = createMemoizeAtom()
+
+export function withImmer<Value>(
+  anAtom: PrimitiveAtom<Value>
+): WritableAtom<Value, Value | ((draft: Draft<Value>) => void)>
+
+export function withImmer<Value>(
+  anAtom: WritableAtom<Value, Value>
+): WritableAtom<Value, Value | ((draft: Draft<Value>) => void)>
 
 export function withImmer<Value>(anAtom: WritableAtom<Value, Value>) {
-  return atom(
-    (get) => get(anAtom),
-    (get, set, fn: (draft: Draft<Value>) => void) =>
-      set(
-        anAtom,
-        produce(get(anAtom), (draft) => fn(draft))
-      )
-  )
+  return memoizeAtom(() => {
+    const derivedAtom = atom(
+      (get) => get(anAtom),
+      (get, set, fn: Value | ((draft: Draft<Value>) => void)) =>
+        set(
+          anAtom,
+          produce(
+            get(anAtom),
+            typeof fn === 'function'
+              ? (fn as (draft: Draft<Value>) => void)
+              : () => fn
+          )
+        )
+    )
+    return derivedAtom
+  }, [anAtom])
 }

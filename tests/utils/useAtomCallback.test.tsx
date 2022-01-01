@@ -1,12 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { Provider, useAtom, atom } from '../../src/index'
-import { useAtomCallback } from '../../src/utils'
+import { atom, useAtom } from 'jotai'
+import { useAtomCallback } from 'jotai/utils'
+import { getTestProvider } from '../testUtils'
+
+const Provider = getTestProvider()
 
 it('useAtomCallback with get', async () => {
   const countAtom = atom(0)
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -16,7 +19,7 @@ it('useAtomCallback with get', async () => {
     )
   }
 
-  const Monitor: React.FC = () => {
+  const Monitor = () => {
     const [count, setCount] = useState(0)
     const readCount = useAtomCallback(
       useCallback((get) => {
@@ -58,7 +61,7 @@ it('useAtomCallback with get', async () => {
 it('useAtomCallback with set and update', async () => {
   const countAtom = atom(0)
   const changeableAtom = atom(0)
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -68,9 +71,9 @@ it('useAtomCallback with set and update', async () => {
     )
   }
 
-  const Monitor: React.FC = () => {
+  const Monitor = () => {
     const [changeableCount] = useAtom(changeableAtom)
-    const chagneCount = useAtomCallback(
+    const changeCount = useAtomCallback(
       useCallback((get, set) => {
         const currentCount = get(countAtom)
         set(changeableAtom, currentCount)
@@ -79,12 +82,12 @@ it('useAtomCallback with set and update', async () => {
     )
     useEffect(() => {
       const timer = setInterval(async () => {
-        await chagneCount()
+        await changeCount()
       }, 10)
       return () => {
         clearInterval(timer)
       }
-    }, [chagneCount])
+    }, [changeCount])
     return (
       <>
         <div>changeable count: {changeableCount}</div>
@@ -104,5 +107,38 @@ it('useAtomCallback with set and update', async () => {
   await waitFor(() => {
     getByText('count: 1')
     getByText('changeable count: 1')
+  })
+})
+
+it('useAtomCallback with set and update and arg', async () => {
+  const countAtom = atom(0)
+
+  const App = () => {
+    const [count] = useAtom(countAtom)
+    const setCount = useAtomCallback(
+      useCallback((_get, set, arg: number) => {
+        set(countAtom, arg)
+        return arg
+      }, [])
+    )
+
+    return (
+      <div>
+        <p>count: {count}</p>
+        <button onClick={() => setCount(42)}>dispatch</button>
+      </div>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+  fireEvent.click(getByText('dispatch'))
+  await waitFor(() => {
+    getByText('count: 42')
   })
 })

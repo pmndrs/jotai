@@ -1,16 +1,28 @@
 /* eslint-disable import/named */
 import { useCallback } from 'react'
-import { produce, Draft } from 'immer'
-import { WritableAtom, useAtom } from 'jotai'
+import { produce } from 'immer'
+import type { Draft } from 'immer'
+import { useAtom } from 'jotai'
+import type { WritableAtom } from 'jotai'
+import type { Scope } from '../core/atom'
 
-export function useImmerAtom<Value, Update>(
-  anAtom: WritableAtom<Value, Update>
-): [Value, (fn: (draft: Draft<Value>) => void) => void] {
-  const [state, setState] = useAtom<Value, any>(anAtom)
+export function useImmerAtom<Value, Result extends void | Promise<void>>(
+  anAtom: WritableAtom<Value, (draft: Draft<Value>) => void, Result>,
+  scope?: Scope
+): [Value, (fn: (draft: Draft<Value>) => void) => Result]
+
+export function useImmerAtom<Value, Result extends void | Promise<void>>(
+  anAtom: WritableAtom<Value, (value: Value) => Value, Result>,
+  scope?: Scope
+): [Value, (fn: (draft: Draft<Value>) => void) => Result]
+
+export function useImmerAtom<Value, Result extends void | Promise<void>>(
+  anAtom: WritableAtom<Value, (value: Value) => Value, Result>,
+  scope?: Scope
+) {
+  const [state, setState] = useAtom(anAtom, scope)
   const setStateWithImmer = useCallback(
-    (fn) => {
-      setState(produce((draft) => fn(draft)))
-    },
+    (fn) => setState(produce((draft) => fn(draft)) as (value: Value) => Value),
     [setState]
   )
   return [state, setStateWithImmer]

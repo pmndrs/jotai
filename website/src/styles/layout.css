@@ -1,0 +1,66 @@
+* {
+  font-family: 'Inter Var', 'Inter', sans-serif;
+}
+
+body {
+  @apply overflow-y-scroll bg-black leading-none;
+  overscroll-behavior: none;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#___gatsby {
+  @apply bg-white;
+}
+
+pre,
+code,
+pre span,
+code span {
+  font-family: 'Meslo', monospace !important;
+}
+
+::selection {
+  @apply bg-black text-white;
+}
+
+a,
+button {
+  @apply transition-all ease-in-out duration-300;
+}
+
+*:focus {
+  outline: 0 !important;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  @apply relative z-0;
+}
+
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  @apply z-10 ring;
+}
+
+*::-webkit-scrollbar {
+  @apply w-4 h-full bg-white;
+}
+
+*::-webkit-scrollbar-track {
+  @apply bg-white;
+}
+
+*::-webkit-scrollbar-thumb {
+  @apply border-4 border-solid border-white bg-gray-350 rounded-2xl;
+}
+
+*::-webkit-scrollbar-button {
+  @apply hidden;
+}

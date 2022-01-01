@@ -1,4 +1,4 @@
-# Text Length [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/master/examples/text_length)
+# Text Length [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/main/examples/text_length)
 
 ## Description
 
@@ -21,4 +21,4 @@ yarn start
 
 ## Set up on codesandbox
 
-Link: https://githubbox.com/pmndrs/jotai/tree/master/examples/text_length
+Link: https://githubbox.com/pmndrs/jotai/tree/main/examples/text_length

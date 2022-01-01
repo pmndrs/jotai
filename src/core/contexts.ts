@@ -1,48 +1,30 @@
-import { createContext } from 'use-context-selector'
+import { createContext } from 'react'
+import type { Context } from 'react'
+import type { Atom, Scope } from './atom'
+import { createStore } from './store'
+import type { Store } from './store'
 
-import { Atom, WritableAtom, AnyAtom, Scope } from './types'
-import { ImmutableMap } from './immutableMap'
+type VersionedWrite = (write: (version?: object) => void) => void
 
-type Revision = number
-
-export type AtomState<Value = unknown> = {
-  readE?: Error // read error
-  readP?: Promise<void> // read promise
-  writeP?: Promise<void> // write promise
-  value?: Value
-  rev: Revision
-  deps: Map<AnyAtom, Revision> // read dependencies
+export type ScopeContainer = {
+  s: Store
+  w?: VersionedWrite
 }
 
-export type State = ImmutableMap<AnyAtom, AtomState>
-
-export type Actions = {
-  add: <Value>(id: symbol, atom: Atom<Value>) => void
-  del: <Value>(id: symbol, atom: Atom<Value>) => void
-  read: <Value>(state: State, atom: Atom<Value>) => AtomState<Value>
-  write: <Value, Update>(
-    atom: WritableAtom<Value, Update>,
-    update: Update
-  ) => void | Promise<void>
+export const createScopeContainer = (
+  initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
+): ScopeContainer => {
+  const store = createStore(initialValues)
+  return { s: store }
 }
 
-// dummy function for typing
-const createContexts = () =>
-  [
-    createContext<Actions | null>(null),
-    createContext<State | null>(null),
-  ] as const
+type ScopeContext = Context<ScopeContainer>
 
-type Contexts = ReturnType<typeof createContexts>
+const ScopeContextMap = new Map<Scope | undefined, ScopeContext>()
 
-const ContextsMap = new Map<Scope | undefined, Contexts>()
-
-export const getContexts = (scope?: Scope) => {
-  if (!ContextsMap.has(scope)) {
-    ContextsMap.set(scope, [
-      createContext<Actions | null>(null),
-      createContext<State | null>(null),
-    ])
+export const getScopeContext = (scope?: Scope) => {
+  if (!ScopeContextMap.has(scope)) {
+    ScopeContextMap.set(scope, createContext(createScopeContainer()))
   }
-  return ContextsMap.get(scope) as Contexts
+  return ScopeContextMap.get(scope) as ScopeContext
 }

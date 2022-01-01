@@ -2,23 +2,17 @@
   "compilerOptions": {
     "target": "esnext",
     "strict": true,
-    "jsx": "preserve",
-    "allowSyntheticDefaultImports": true,
+    "jsx": "react-jsx",
     "esModuleInterop": true,
     "moduleResolution": "node",
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "baseUrl": ".",
     "paths": {
-      "jotai": [
-        "./src/index.ts"
-      ]
+      "jotai": ["./src/index.ts"],
+      "jotai/*": ["./src/*.ts"]
     }
   },
-  "include": [
-    "src/**/*",
-    "tests/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

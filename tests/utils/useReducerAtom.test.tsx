@@ -1,13 +1,15 @@
-import React from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Provider, atom } from '../../src/index'
-import { useReducerAtom } from '../../src/utils'
+import { atom } from 'jotai'
+import { useReducerAtom } from 'jotai/utils'
+import { getTestProvider } from '../testUtils'
+
+const Provider = getTestProvider()
 
 it('useReducerAtom with no action argument', async () => {
   const countAtom = atom(0)
   const reducer = (state: number) => state + 2
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [count, dispatch] = useReducerAtom(countAtom, reducer)
     return (
       <>
@@ -45,7 +47,7 @@ it('useReducerAtom with optional action argument', async () => {
     }
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [count, dispatch] = useReducerAtom(countAtom, reducer)
     return (
       <>
@@ -86,7 +88,7 @@ it('useReducerAtom with non-optional action argument', async () => {
     }
   }
 
-  const Parent: React.FC = () => {
+  const Parent = () => {
     const [count, dispatch] = useReducerAtom(countAtom, reducer)
     return (
       <>

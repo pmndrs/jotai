@@ -1,18 +1,29 @@
 import { useCallback, useMemo } from 'react'
-import { atom, useAtom } from 'jotai'
+import { atom } from 'jotai'
+import type { Setter, WritableAtom } from 'jotai'
+import type { Scope } from '../core/atom'
+// NOTE importing non-core functions is generally not allowed. this is an exception.
+import { useUpdateAtom } from './useUpdateAtom'
 
-import type { Getter, Setter } from '../core/types'
+type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
 
-export function useAtomCallback<Result>(
-  callback: (get: Getter, set: Setter) => Result
-): () => Promise<Result>
+type Callback<Result, Arg> = undefined extends Arg
+  ? (arg?: Arg) => Promise<Result>
+  : (arg: Arg) => Promise<Result>
 
 export function useAtomCallback<Result, Arg>(
-  callback: (get: Getter, set: Setter, arg: Arg) => Result
-): (arg: Arg) => Promise<Result>
+  callback: (get: WriteGetter, set: Setter, arg: Arg) => Promise<Result>,
+  scope?: Scope
+): Callback<Result, Arg>
 
 export function useAtomCallback<Result, Arg>(
-  callback: (get: Getter, set: Setter, arg: Arg) => Result
+  callback: (get: WriteGetter, set: Setter, arg: Arg) => Result,
+  scope?: Scope
+): Callback<Result, Arg>
+
+export function useAtomCallback<Result, Arg>(
+  callback: (get: WriteGetter, set: Setter, arg: Arg) => Result,
+  scope?: Scope
 ) {
   const anAtom = useMemo(
     () =>
@@ -24,7 +35,7 @@ export function useAtomCallback<Result, Arg>(
           [arg, resolve, reject]: [
             Arg,
             (result: Result) => void,
-            (reason: any) => void
+            (reason: unknown) => void
           ]
         ) => {
           try {
@@ -36,7 +47,7 @@ export function useAtomCallback<Result, Arg>(
       ),
     [callback]
   )
-  const [, invoke] = useAtom(anAtom)
+  const invoke = useUpdateAtom(anAtom, scope)
   return useCallback(
     (arg: Arg) =>
       new Promise<Result>((resolve, reject) => {

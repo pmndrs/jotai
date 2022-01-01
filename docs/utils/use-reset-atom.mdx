@@ -1,0 +1,23 @@
+---
+title: useResetAtom
+nav: 6.06
+---
+
+```ts
+function useResetAtom<Value>(anAtom: WritableAtom<Value, typeof RESET>): () => void | Promise<void>
+```
+
+Resets a [Resettable atom](../guides/resettable.mdx) to its initial value.
+
+## Example
+
+```jsx
+import { useResetAtom } from 'jotai/utils'
+import { todoListAtom } from './store'
+
+const TodoResetButton = () => {
+  const resetTodoList = useResetAtom(todoListAtom)
+  return <button onClick={resetTodoList}>Reset</button>
+}
+```
+

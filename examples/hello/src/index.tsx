@@ -1,4 +1,3 @@
-import React from 'react'
 import ReactDOM from 'react-dom'
 import App from './App'
 import './prism.css'
@@ -8,7 +7,7 @@ ReactDOM.render(
   <div className="max-w-4xl mx-auto px-8 pb-8">
     <header className="mt-12 mb-12">
       <h1 className="mainlink text-6xl font-bold">
-        <a href="https://github.com/react-spring/jotai">Jōtai</a>
+        <a href="https://github.com/pmndrs/jotai">Jōtai</a>
       </h1>
       <h2
         className="

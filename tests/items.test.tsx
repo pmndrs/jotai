@@ -1,12 +1,9 @@
-import React from 'react'
-import { fireEvent, cleanup, render } from '@testing-library/react'
-import { Provider, atom, useAtom, PrimitiveAtom } from '../src/index'
+import { fireEvent, render, waitFor } from '@testing-library/react'
+import { atom, useAtom } from 'jotai'
+import type { PrimitiveAtom } from 'jotai'
+import { getTestProvider } from './testUtils'
 
-const consoleError = console.error
-afterEach(() => {
-  cleanup()
-  console.error = consoleError
-})
+const Provider = getTestProvider()
 
 it('remove an item, then add another', async () => {
   type Item = {
@@ -16,10 +13,13 @@ it('remove an item, then add another', async () => {
   let itemIndex = 0
   const itemsAtom = atom<PrimitiveAtom<Item>[]>([])
 
-  const ListItem: React.FC<{
+  const ListItem = ({
+    itemAtom,
+    remove,
+  }: {
     itemAtom: PrimitiveAtom<Item>
     remove: () => void
-  }> = ({ itemAtom, remove }) => {
+  }) => {
     const [item, setItem] = useAtom(itemAtom)
     const toggle = () =>
       setItem((prev) => ({ ...prev, checked: !prev.checked }))
@@ -34,7 +34,7 @@ it('remove an item, then add another', async () => {
     )
   }
 
-  const List: React.FC = () => {
+  const List = () => {
     const [items, setItems] = useAtom(itemsAtom)
     const addItem = () => {
       setItems((prev) => [
@@ -49,7 +49,7 @@ it('remove an item, then add another', async () => {
       <ul>
         {items.map((itemAtom) => (
           <ListItem
-            key={itemAtom.key}
+            key={`${itemAtom}`}
             itemAtom={itemAtom}
             remove={() => removeItem(itemAtom)}
           />
@@ -71,19 +71,25 @@ it('remove an item, then add another', async () => {
   await findByText('item1 checked: no')
 
   fireEvent.click(getByText('Add'))
-  await findByText('item1 checked: no')
-  await findByText('item2 checked: no')
+  await waitFor(() => {
+    getByText('item1 checked: no')
+    getByText('item2 checked: no')
+  })
 
   fireEvent.click(getByText('Check item2'))
-  await findByText('item1 checked: no')
-  await findByText('item2 checked: yes')
+  await waitFor(() => {
+    getByText('item1 checked: no')
+    getByText('item2 checked: yes')
+  })
 
   fireEvent.click(getByText('Remove item1'))
   await findByText('item2 checked: yes')
 
   fireEvent.click(getByText('Add'))
-  await findByText('item2 checked: yes')
-  await findByText('item3 checked: no')
+  await waitFor(() => {
+    getByText('item2 checked: yes')
+    getByText('item3 checked: no')
+  })
 })
 
 it('add an item with filtered list', async () => {
@@ -91,23 +97,34 @@ it('add an item with filtered list', async () => {
     text: string
     checked: boolean
   }
+  type ItemAtoms = PrimitiveAtom<Item>[]
+  type Update = (prev: ItemAtoms) => ItemAtoms
 
   let itemIndex = 0
-  const itemsAtom = atom<PrimitiveAtom<Item>[]>([])
+  const itemAtomsAtom = atom<ItemAtoms>([])
+  const setItemsAtom = atom<null, Update>(null, (_get, set, update) =>
+    set(itemAtomsAtom, update)
+  )
   const filterAtom = atom<'all' | 'checked' | 'not-checked'>('all')
   const filteredAtom = atom((get) => {
     const filter = get(filterAtom)
-    const items = get(itemsAtom)
-    if (filter === 'all') return items
-    else if (filter === 'checked')
+    const items = get(itemAtomsAtom)
+    if (filter === 'all') {
+      return items
+    }
+    if (filter === 'checked') {
       return items.filter((atom) => get(atom).checked)
-    else return items.filter((atom) => !get(atom).checked)
+    }
+    return items.filter((atom) => !get(atom).checked)
   })
 
-  const ListItem: React.FC<{
+  const ListItem = ({
+    itemAtom,
+    remove,
+  }: {
     itemAtom: PrimitiveAtom<Item>
     remove: () => void
-  }> = ({ itemAtom, remove }) => {
+  }) => {
     const [item, setItem] = useAtom(itemAtom)
     const toggle = () =>
       setItem((prev) => ({ ...prev, checked: !prev.checked }))
@@ -122,7 +139,7 @@ it('add an item with filtered list', async () => {
     )
   }
 
-  const Filter: React.FC = () => {
+  const Filter = () => {
     const [filter, setFilter] = useAtom(filterAtom)
     return (
       <>
@@ -134,15 +151,17 @@ it('add an item with filtered list', async () => {
     )
   }
 
-  const FilteredList: React.FC<{
+  const FilteredList = ({
+    removeItem,
+  }: {
     removeItem: (itemAtom: PrimitiveAtom<Item>) => void
-  }> = ({ removeItem }) => {
+  }) => {
     const [items] = useAtom(filteredAtom)
     return (
       <ul>
         {items.map((itemAtom) => (
           <ListItem
-            key={itemAtom.key}
+            key={`${itemAtom}`}
             itemAtom={itemAtom}
             remove={() => removeItem(itemAtom)}
           />
@@ -151,8 +170,8 @@ it('add an item with filtered list', async () => {
     )
   }
 
-  const List: React.FC = () => {
-    const [, setItems] = useAtom(itemsAtom)
+  const List = () => {
+    const [, setItems] = useAtom(setItemsAtom)
     const addItem = () => {
       setItems((prev) => [
         ...prev,
