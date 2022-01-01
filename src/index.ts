@@ -1,6 +1,7 @@
 export { Provider } from './core/Provider'
 export { atom } from './core/atom'
 export { useAtom } from './core/useAtom'
+export { createStoreForExport as unstable_createStore } from './core/store'
 export type { Atom, WritableAtom, PrimitiveAtom } from './core/atom'
 export type {
   Getter,

@@ -603,7 +603,7 @@ export const createStore = (
     version: VersionObject | undefined,
     atom: WritableAtom<Value, Update, Result>,
     update: Update
-  ): void | Promise<void> => {
+  ): Result => {
     let isSync = true
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
@@ -686,7 +686,7 @@ export const createStore = (
     writingAtom: WritableAtom<Value, Update, Result>,
     update: Update,
     version?: VersionObject
-  ): void | Promise<void> => {
+  ): Result => {
     const promiseOrVoid = writeAtomState(version, writingAtom, update)
     flushPending(version)
     return promiseOrVoid
@@ -898,3 +898,22 @@ export const createStore = (
 }
 
 export type Store = ReturnType<typeof createStore>
+
+export const createStoreForExport = (
+  initialValues?: Iterable<readonly [AnyAtom, AnyAtomValue]>
+) => {
+  const store = createStore(initialValues)
+  return {
+    get: <Value>(atom: Atom<Value>): ResolveType<Value> | undefined => {
+      const atomState = store[READ_ATOM](atom)
+      return 'v' in atomState ? atomState.v : undefined
+    },
+    set: <Value, Update, Result extends void | Promise<void>>(
+      atom: WritableAtom<Value, Update, Result>,
+      update: Update
+    ): Result => store[WRITE_ATOM](atom, update),
+    sub: (atom: AnyAtom, callback: () => void) =>
+      store[SUBSCRIBE_ATOM](atom, callback),
+    SECRET_INTERNAL_store: store,
+  }
+}
