@@ -1,0 +1,206 @@
+---
+title: Composing atoms
+nav: 3.10
+---
+
+The `atom` function provided by library is very primitive,
+but it's also so flexible that you can combine multiple atoms
+to implement a functionality.
+
+> Note again that `atom()` creates an atom config, which is an object
+to define a behavior of the atom.
+
+Let's recap how we can derive an atom.
+
+## Basic derived atoms
+
+Here's one of the simplest examples of a derived atom:
+
+```js
+export const textAtom = atom('hello')
+export const textLenAtom = atom((get) => get(textAtom).length)
+```
+
+The `textLenAtom` is called read-only atom, because
+it doesn't have a `write` function defined.
+
+The following is another simple example with the `write` function:
+
+```js
+const textAtom = atom('hello')
+export const textUpperCaseAtom = atom(
+  (get) => get(textAtom).toUpperCase(),
+  (_get, set, newText) => set(textAtom, newText)
+)
+```
+
+In this case, `textUpperCaseAtom` is capable to set the original `textAtom`.
+So, we can only export `textUpperCaseAtom` and can hide
+`textAtom` in a smaller scope.
+
+Now, let's see some real examples.
+
+## Overriding default atom values
+
+Suppose we have a read-only atom.
+Obviously read-only atoms are not writable, but we can combine two atoms
+to override the read-only atom value.
+
+```js
+const rawNumberAtom = atom(10.1) // can be exported
+count roundNumberAtom = atom((get) => Math.round(get(rawNumberAtom)))
+const overwrittenAtom = atom(null)
+export const numberAtom = atom(
+  (get) => get(overwrittenAtom) ?? get(roundNumberAtom),
+  (get, set, newValue) => {
+    const nextValue = typeof newValue === 'function'
+      ? newValue(get(numberAtom))
+      : newValue
+    set(overwrittenAtom, nextValue)
+  }
+)
+```
+
+The final `numberAtom` just works like a normal primitive atom like `atom(10)`.
+If you set a number value, it will override the `roundNumberAtom` value,
+and if you set `null`, it will be the `roundNumberAtom` value.
+
+The reusable implementation is available as `atomWithDefault`
+in `jotai/utils`. See [atomWithDefault](../utils/atom-with-default.mdx).
+
+Next, let's see another example to sync with external value.
+
+## Syncing atom values with external values
+
+There are some external values we want to deal with.
+`localStorage` is the one. Another is `window.title`.
+
+Let's see how to create an atom that is in sync with `localStorage`.
+
+```js
+const baseAtom = atom(localStorage.getItem('mykey') || '')
+export const persistedAtom = atom(
+  (get) => get(baseAtom),
+  (get, set, newValue) => {
+    const nextValue = typeof newValue === 'function'
+      ? newValue(get(baseAtom))
+      : newValue
+    set(baseAtom, nextValue)
+    localStorage.setItem('mykey', nextValue)
+  }
+)
+```
+
+The `persistedAtom` works like a primitive atom, but its value
+is persisted in `localStorage`.
+
+The reusable implementation is available as `atomWithStorage`
+in `jotai/utils`. See [atomWithStorage](../utils/atom-with-storage.mdx).
+
+There is a caveat with this usage. While atom config doesn't hold a value,
+the external value is a singleton value.
+So, if we use this atom in two different Providers,
+There will be an inconsistency between the two `persistedAtom` values.
+This could be solved if the external value had a subscription mechanism.
+
+For example, `atomWithProxy` in `jotai/valtio` comes with subscription,
+so we don't have such a limitation. Values in different Providers
+will be in sync.
+
+Back to the main topic, let's explore another example.
+
+## Extending atoms with `atomWith*` utils
+
+We have several utils whose names start with `atomWith`.
+They create an atom with a certain functionality.
+Unfortunately, we can't combine two atom utils.
+For example, `atomWithStorage` and `atomWithReducer`
+can't be used to define a single atom.
+
+In such a case, we need to derive an atom by ourselves.
+Let's try adding reducer functionality to `atomWithStorage`:
+
+```js
+const reducer = ...
+const baseAtom = atomWithStorage('mykey', '')
+export const derivedAtom = atom(
+  (get) => get(baseAtom),
+  (get, set, action) => {
+    set(baseAtom, reducer(get(baseAtom), action))
+  }
+)
+```
+
+This is easy, because in this case, `atomWithReducer`
+is a simple implementation compared to `atomWithStorage`.
+
+For more complex cases, it wouldn't be very easy.
+It would still be a open research field.
+
+Finally, let's see another example with actions.
+
+## Action atoms
+
+This should be known pattern as it's described in README.
+Nonetheless, it might to be usefule to revisit.
+
+Let's create a counter that you can only increment or decrement by one.
+
+One solution is `atomWithReducer`:
+
+```js
+const countAtom = atomWithReducer(0, (prev, action) => {
+  if (action === 'INC') {
+    return prev + 1
+  }
+  if (action === 'DEC') {
+    return prev - 1
+  }
+  throw new Error('unknown action')
+})
+```
+
+This is fine, but not very atomic.
+If we want to get benefit from code splitting / lazy loading,
+We want to create write only atoms, or action atoms.
+
+```js
+const baseAtom = atom(0) // do not export
+export const countAtom = atom((get) => get(baseAtom)) // read only
+export const incAtom = atom(null, (_get, set) => {
+  set(baseAtom, (prev) => prev + 1)
+})
+export const decAtom = atom(null, (_get, set) => {
+  set(baseAtom, (prev) => prev - 1)
+})
+```
+
+This is more atomic and looks like a Jotai way.
+
+You can also create an action atom that will call another action atom:
+
+```js
+// continued from the previous code
+export const dispatchAtom = atom(null, (_get, set, action) => {
+  if (action === 'INC') {
+    set(incAtom)
+  }
+  if (action === 'DEC') {
+    set(decAtom)
+  }
+  throw new Error('unknown action')
+}
+```
+
+Why do we want it? Because it will be used only when needed.
+It allows code splitting and dead code elimination.
+
+## In summary
+
+Atoms are building block.
+By composing atoms based on other atoms,
+we can implement complicated logic.
+This is not only for read derived atoms, but also for write action atoms.
+
+Essentially, atoms are like functions, so composing atoms is
+like composing functions with other functions.
