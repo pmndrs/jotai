@@ -903,36 +903,20 @@ export const createStoreForExport = (
   initialValues?: Iterable<readonly [AnyAtom, AnyAtomValue]>
 ) => {
   const store = createStore(initialValues)
-  const get: {
-    <Value>(atom: Atom<Value>): ResolveType<Value>
-    <Value>(
-      atom: Atom<Value>,
-      options: {
-        unstable_promise: true
-      }
-    ): Promise<ResolveType<Value>> | ResolveType<Value>
-  } = <Value>(
-    atom: Atom<Value>,
-    options?: {
-      unstable_promise: boolean
-    }
-  ) => {
+  const get = <Value>(atom: Atom<Value>) => {
     const atomState = store[READ_ATOM](atom)
     if ('e' in atomState) {
       throw atomState.e // read error
     }
     if ('p' in atomState) {
-      if (options?.unstable_promise) {
-        return atomState.p.then(() => get(atom))
-      }
-      throw atomState.p
+      return undefined // suspended
     }
     return atomState.v
   }
   const set = <Value, Update, Result extends void | Promise<void>>(
     atom: WritableAtom<Value, Update, Result>,
     update: Update
-  ): Result => store[WRITE_ATOM](atom, update)
+  ) => store[WRITE_ATOM](atom, update)
   const sub = (atom: AnyAtom, callback: () => void) =>
     store[SUBSCRIBE_ATOM](atom, callback)
   return {
