@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
-import { splitAtom } from 'jotai/utils'
+import { splitAtom, useAtomValue, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -374,4 +374,51 @@ it('no error on wrong atom configs (fix 510)', async () => {
 
   expect(numbersEl.textContent).toBe('0')
   expect(console.warn).toHaveBeenCalledTimes(1)
+})
+
+it('changing array of items (fix #736)', async () => {
+  const collectionAtom = atom<number[]>([])
+  const collectionAtomsAtom = splitAtom(collectionAtom)
+
+  const derivativeAtom = atom((get) => {
+    return get(collectionAtomsAtom).map(
+      (ca) => get(ca) + Math.round(Math.random() * 150)
+    )
+  })
+
+  const numberAtom = atom(1)
+
+  function App() {
+    const [number, setNumber] = useAtom(numberAtom)
+    const setCollection = useUpdateAtom(collectionAtom)
+    const derivative = useAtomValue(derivativeAtom)
+
+    useEffect(() => {
+      setCollection(number % 2 === 0 ? [1, 2, 3, 4] : [1])
+    }, [number])
+
+    return (
+      <div>
+        <button
+          onClick={() => {
+            setNumber((prev) => prev + 1)
+          }}>
+          change
+        </button>
+
+        {derivative.map((d, i) => (
+          <p key={i}>{d}</p>
+        ))}
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+  fireEvent.click(getByText('change'))
+  fireEvent.click(getByText('change'))
+  expect(console.warn).not.toHaveBeenCalledWith(expect.stringMatching(/array index out of bounds/), expect.anything())
 })
