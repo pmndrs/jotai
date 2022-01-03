@@ -373,7 +373,6 @@ it('no error on wrong atom configs (fix 510)', async () => {
   fireEvent.click(evenCheckboxEl)
 
   expect(numbersEl.textContent).toBe('0')
-  expect(console.warn).toHaveBeenCalledTimes(0)
 })
 
 it('variable sized splitted atom', async () => {
