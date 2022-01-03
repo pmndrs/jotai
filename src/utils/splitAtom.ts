@@ -44,7 +44,7 @@ export function splitAtom<Item, Key>(
         const ref = get(refAtom)
         const nextAtomList: Atom<Item>[] = []
         const nextKeyList: Key[] = []
-        for (const [index, item] of get(arrAtom).entries()) {
+        get(arrAtom).forEach((item, index) => {
           const key = keyExtractor
             ? keyExtractor(item)
             : (index as unknown as Key)
@@ -55,15 +55,12 @@ export function splitAtom<Item, Key>(
             return
           }
           const read = (get: Getter) => {
-            const index = ref.keyList?.indexOf(key) ?? -1
-            console.log(index)
-            debugger
+            const index = nextKeyList?.indexOf(key) ?? -1
             if (
               index === -1 &&
               typeof process === 'object' &&
               process.env.NODE_ENV !== 'production'
             ) {
-              console.log('bug here')
               console.warn(
                 'splitAtom: array index out of bounds, returning undefined',
                 atom
@@ -92,7 +89,7 @@ export function splitAtom<Item, Key>(
           }
           const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
           nextAtomList[index] = itemAtom
-        }
+        })
         ref.keyList = nextKeyList
         if (
           ref.atomList &&
