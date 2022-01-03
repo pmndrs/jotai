@@ -44,7 +44,7 @@ export function splitAtom<Item, Key>(
         const ref = get(refAtom)
         const nextAtomList: Atom<Item>[] = []
         const nextKeyList: Key[] = []
-        get(arrAtom).forEach((item, index) => {
+        for (const [index, item] of get(arrAtom).entries()) {
           const key = keyExtractor
             ? keyExtractor(item)
             : (index as unknown as Key)
@@ -92,7 +92,7 @@ export function splitAtom<Item, Key>(
           }
           const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
           nextAtomList[index] = itemAtom
-        })
+        }
         ref.keyList = nextKeyList
         if (
           ref.atomList &&
