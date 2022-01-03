@@ -382,7 +382,6 @@ it('changing array of items (fix #736)', async () => {
 
   const derivativeAtom = atom((get) => {
     return get(collectionAtomsAtom)?.map((ca, index) => {
-      console.log('value', get(ca))
       return get(ca) + index
     })
   })
@@ -414,7 +413,7 @@ it('changing array of items (fix #736)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText } = render(
     <Provider>
       <App />
     </Provider>
@@ -428,8 +427,6 @@ it('changing array of items (fix #736)', async () => {
 })
 
 it('variable sized splitted atom', async () => {
-  const warn = jest.spyOn(global.console, 'warn')
-
   const collectionAtom = atom<number[]>([])
   const collectionAtomsAtom = splitAtom(collectionAtom)
 
@@ -485,7 +482,5 @@ it('variable sized splitted atom', async () => {
 
   fireEvent.click(getByText('+1'))
 
-  expect(warn).not.toHaveBeenCalled()
-  warn.mockReset()
-  warn.mockRestore()
+  expect(console.warn).not.toHaveBeenCalled()
 })
