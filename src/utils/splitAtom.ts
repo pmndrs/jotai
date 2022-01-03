@@ -56,11 +56,14 @@ export function splitAtom<Item, Key>(
           }
           const read = (get: Getter) => {
             const index = ref.keyList?.indexOf(key) ?? -1
+            console.log(index)
+            debugger
             if (
               index === -1 &&
               typeof process === 'object' &&
               process.env.NODE_ENV !== 'production'
             ) {
+              console.log('bug here')
               console.warn(
                 'splitAtom: array index out of bounds, returning undefined',
                 atom

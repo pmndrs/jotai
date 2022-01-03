@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
-import { splitAtom, useAtomValue, useUpdateAtom } from 'jotai/utils'
+import { splitAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -381,17 +381,18 @@ it('changing array of items (fix #736)', async () => {
   const collectionAtomsAtom = splitAtom(collectionAtom)
 
   const derivativeAtom = atom((get) => {
-    return get(collectionAtomsAtom).map(
-      (ca) => get(ca) + Math.round(Math.random() * 150)
-    )
+    return get(collectionAtomsAtom).map((ca, index) => {
+      console.log('value', get(ca))
+      return get(ca) + index
+    })
   })
 
   const numberAtom = atom(1)
 
   function App() {
     const [number, setNumber] = useAtom(numberAtom)
-    const setCollection = useUpdateAtom(collectionAtom)
-    const derivative = useAtomValue(derivativeAtom)
+    const [, setCollection] = useAtom(collectionAtom)
+    const [derivative] = useAtom(derivativeAtom)
 
     useEffect(() => {
       setCollection(number % 2 === 0 ? [1, 2, 3, 4] : [1])
@@ -420,5 +421,9 @@ it('changing array of items (fix #736)', async () => {
   )
   fireEvent.click(getByText('change'))
   fireEvent.click(getByText('change'))
-  expect(console.warn).not.toHaveBeenCalledWith(expect.stringMatching(/array index out of bounds/), expect.anything())
+  expect(console.warn).not.toHaveBeenCalledWith(
+    expect.stringMatching(/array index out of bounds/),
+    expect.anything()
+  )
 })
+
