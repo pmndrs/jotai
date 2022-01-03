@@ -381,7 +381,7 @@ it('variable sized splitted atom', async () => {
 
   const derivativeAtom = atom((get) =>
     get(collectionAtomsAtom).map(
-      (ca) => get(ca) + Math.round(Math.random() * 150)
+      (ca, index) => get(ca) + index
     )
   )
 
