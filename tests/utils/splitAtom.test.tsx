@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react'
 import type { ChangeEvent } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, SetStateAction, useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
-import { atomWithHash, splitAtom, useUpdateAtom } from 'jotai/utils'
-import {focusAtom} from 'jotai/optics'
+import { splitAtom, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -435,4 +434,3 @@ it('variable sized splitted atom', async () => {
 
   expect(console.warn).not.toHaveBeenCalled()
 })
-
