@@ -388,15 +388,10 @@ it('variable sized splitted atom', async () => {
 
   const numberAtom = atom(1)
 
-  const generateCollection = (number: number) =>
-    Array.from({ length: Math.round(Math.random() * 30) }, (_, i) => i + number)
-
   function App() {
     const [number, setNumber] = useAtom(numberAtom)
     const setCollection = useUpdateAtom(collectionAtom)
     const [derivative] = useAtom(derivativeAtom)
-
-    const generatedCollection = generateCollection(number)
 
     useEffect(() => {
       const oneArray = [1, 2, 3]
@@ -406,7 +401,7 @@ it('variable sized splitted atom', async () => {
       } else {
         setCollection(twoArray)
       }
-    }, [generatedCollection, number, setCollection])
+    }, [number, setCollection])
 
     return (
       <div>
