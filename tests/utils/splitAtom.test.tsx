@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { ChangeEvent } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
+import { atom, SetStateAction, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
-import { splitAtom, useUpdateAtom } from 'jotai/utils'
+import { atomWithHash, splitAtom, useUpdateAtom } from 'jotai/utils'
+import {focusAtom} from 'jotai/optics'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -376,56 +377,6 @@ it('no error on wrong atom configs (fix 510)', async () => {
   expect(console.warn).toHaveBeenCalledTimes(0)
 })
 
-it('changing array of items (fix #736)', async () => {
-  const collectionAtom = atom<number[]>([])
-  const collectionAtomsAtom = splitAtom(collectionAtom)
-
-  const derivativeAtom = atom((get) => {
-    return get(collectionAtomsAtom)?.map((ca, index) => {
-      return get(ca) + index
-    })
-  })
-
-  const numberAtom = atom(1)
-
-  function App() {
-    const [number, setNumber] = useAtom(numberAtom)
-    const [, setCollection] = useAtom(collectionAtom)
-    const [derivative] = useAtom(derivativeAtom)
-
-    useEffect(() => {
-      setCollection(number % 2 === 0 ? [1, 2, 3, 4] : [1])
-    }, [number])
-
-    return (
-      <div>
-        <button
-          onClick={() => {
-            setNumber((prev) => prev + 1)
-          }}>
-          change
-        </button>
-
-        {derivative.map((d, i) => (
-          <p key={i}>{d}</p>
-        ))}
-      </div>
-    )
-  }
-
-  const { getByText } = render(
-    <Provider>
-      <App />
-    </Provider>
-  )
-  fireEvent.click(getByText('change'))
-  fireEvent.click(getByText('change'))
-  expect(console.warn).not.toHaveBeenCalledWith(
-    expect.stringMatching(/array index out of bounds/),
-    expect.anything()
-  )
-})
-
 it('variable sized splitted atom', async () => {
   const collectionAtom = atom<number[]>([])
   const collectionAtomsAtom = splitAtom(collectionAtom)
@@ -484,3 +435,4 @@ it('variable sized splitted atom', async () => {
 
   expect(console.warn).not.toHaveBeenCalled()
 })
+
