@@ -380,9 +380,7 @@ it('variable sized splitted atom', async () => {
   const collectionAtomsAtom = splitAtom(collectionAtom)
 
   const derivativeAtom = atom((get) =>
-    get(collectionAtomsAtom).map(
-      (ca, index) => get(ca) + index
-    )
+    get(collectionAtomsAtom).map((ca, index) => get(ca) + index)
   )
 
   const numberAtom = atom(1)
