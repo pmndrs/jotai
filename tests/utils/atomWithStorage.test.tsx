@@ -190,6 +190,7 @@ describe('atomWithHash', () => {
         <>
           <div>count: {count}</div>
           <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <button onClick={() => setCount(RESET)}>reset</button>
         </>
       )
     }
@@ -208,5 +209,9 @@ describe('atomWithHash', () => {
 
     window.location.hash = 'count=3'
     await findByText('count: 3')
+
+    fireEvent.click(getByText('reset'))
+    await findByText('count: 1')
+    expect(window.location.hash).toEqual('')
   })
 })

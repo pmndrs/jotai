@@ -1,5 +1,5 @@
 import { atom } from 'jotai'
-import type { PrimitiveAtom, SetStateAction, WritableAtom } from 'jotai'
+import type { SetStateAction, WritableAtom } from 'jotai'
 import { RESET } from './constants'
 
 type Unsubscribe = () => void
@@ -55,7 +55,7 @@ export function createJSONStorage<Value>(
 export function createJSONStorage<Value>(
   getStringStorage: () => AsyncStringStorage | SyncStringStorage
 ): AsyncStorage<Value> | SyncStorage<Value> {
-  if (getStringStorage().removeItem) {
+  if (!getStringStorage().removeItem) {
     console.warn(
       'Missing removeItem. In the next version, it will be required.'
     )
@@ -177,7 +177,7 @@ export function atomWithHash<Value>(
     replaceState?: boolean
     subscribe?: (callback: () => void) => () => void
   }
-): PrimitiveAtom<Value> {
+): WritableAtom<Value, SetStateAction<Value> | typeof RESET> {
   const serialize = options?.serialize || JSON.stringify
   const deserialize = options?.deserialize || JSON.parse
   const subscribe =
@@ -200,6 +200,15 @@ export function atomWithHash<Value>(
     setItem: (key, newValue) => {
       const searchParams = new URLSearchParams(location.hash.slice(1))
       searchParams.set(key, serialize(newValue))
+      if (options?.replaceState) {
+        history.replaceState(null, '', '#' + searchParams.toString())
+      } else {
+        location.hash = searchParams.toString()
+      }
+    },
+    removeItem: (key) => {
+      const searchParams = new URLSearchParams(location.hash.slice(1))
+      searchParams.delete(key)
       if (options?.replaceState) {
         history.replaceState(null, '', '#' + searchParams.toString())
       } else {
