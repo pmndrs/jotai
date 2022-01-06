@@ -367,62 +367,43 @@ it('no error on wrong atom configs (fix 510)', async () => {
 
   const numbersEl = getByTestId('numbers')
   const evenCheckboxEl = getByTestId('even-checkbox')
-
   expect(numbersEl.textContent).toBe('01')
 
   fireEvent.click(evenCheckboxEl)
-
   expect(numbersEl.textContent).toBe('0')
 })
 
 it('variable sized splitted atom', async () => {
+  const lengthAtom = atom(3)
   const collectionAtom = atom<number[]>([])
   const collectionAtomsAtom = splitAtom(collectionAtom)
-
   const derivativeAtom = atom((get) =>
-    get(collectionAtomsAtom).map((ca, index) => get(ca) + index)
+    get(collectionAtomsAtom).map((ca) => get(ca))
   )
 
-  const numberAtom = atom(1)
-
   function App() {
-    const [number, setNumber] = useAtom(numberAtom)
+    const [length, setLength] = useAtom(lengthAtom)
     const setCollection = useUpdateAtom(collectionAtom)
     const [derivative] = useAtom(derivativeAtom)
-
     useEffect(() => {
-      const oneArray = [1, 2, 3]
-      const twoArray = [1, 2]
-      if (number === 1) {
-        setCollection(oneArray)
-      } else {
-        setCollection(twoArray)
-      }
-    }, [number, setCollection])
-
+      setCollection([1, 2, 3].splice(0, length))
+    }, [length, setCollection])
     return (
       <div>
-        <button
-          onClick={() => {
-            setNumber((prev) => prev + 1)
-          }}>
-          +{number}
-        </button>
-
-        {derivative.map((d, i) => (
-          <p key={i}>{d}</p>
-        ))}
+        <button onClick={() => setLength(2)}>button</button>
+        numbers: {derivative.join(',')}
       </div>
     )
   }
 
-  const { getByText } = render(
+  const { findByText, getByText } = render(
     <Provider>
       <App />
     </Provider>
   )
 
-  fireEvent.click(getByText('+1'))
+  await findByText('numbers: 1,2,3')
 
-  expect(console.warn).not.toHaveBeenCalled()
+  fireEvent.click(getByText('button'))
+  await findByText('numbers: 1,2')
 })
