@@ -12,17 +12,24 @@ export function selectAtom<Value, Slice>(
   equalityFn: (a: Slice, b: Slice) => boolean = Object.is
 ): Atom<Slice> {
   return memoizeAtom(() => {
-    // TODO we should revisit this for a better solution than refAtom
-    const refAtom = atom(() => ({} as { prev?: Slice }))
-    const derivedAtom = atom((get) => {
-      const slice = selector(get(anAtom) as ResolveType<Value>)
-      const ref = get(refAtom)
-      if ('prev' in ref && equalityFn(ref.prev as Slice, slice)) {
-        return ref.prev as Slice
+    type State = { slice: Slice }
+    const stateAtom: Atom<State> = atom((get) => {
+      let state: { slice: Slice } | undefined = undefined
+      try {
+        state = get(stateAtom)
+      } catch (error) {
+        // initial state
+        state = undefined
       }
-      ref.prev = slice
-      return slice
+
+      const slice = selector(get(anAtom) as ResolveType<Value>)
+      if (state && equalityFn(state.slice, slice)) {
+        return state
+      }
+
+      return { slice }
     })
+    const derivedAtom = atom((get) => get(stateAtom).slice)
     return derivedAtom
   }, [anAtom, selector, equalityFn])
 }
