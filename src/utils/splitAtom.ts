@@ -71,8 +71,7 @@ export function splitAtom<Item, Key>(
             const index = mapping.keyList.indexOf(key) ?? -1
             if (index < 0 || index >= arr.length) {
               if ('prev' in itemRef) {
-                // returning a stale previous value to avoid errors
-                // with use cases such as react-spring
+                // returning a stale value to avoid errors for use cases such as react-spring
                 return itemRef.prev
               }
               throw new Error('splitAtom: index out of bounds for read')
