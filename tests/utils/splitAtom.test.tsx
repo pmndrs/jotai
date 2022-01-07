@@ -68,9 +68,9 @@ it('no unnecessary updates when updating atoms', async () => {
   )
 
   await waitFor(() => {
+    getByText('TaskListUpdates: 1')
     getByText('get cat food commits: 1')
     getByText('get dragon food commits: 1')
-    getByText('TaskListUpdates: 1')
   })
 
   const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
@@ -82,9 +82,9 @@ it('no unnecessary updates when updating atoms', async () => {
   fireEvent.click(catBox)
 
   await waitFor(() => {
+    getByText('TaskListUpdates: 1')
     getByText('get cat food commits: 2')
     getByText('get dragon food commits: 1')
-    getByText('TaskListUpdates: 1')
   })
 
   expect(catBox.checked).toBe(true)
@@ -93,9 +93,9 @@ it('no unnecessary updates when updating atoms', async () => {
   fireEvent.click(dragonBox)
 
   await waitFor(() => {
+    getByText('TaskListUpdates: 1')
     getByText('get cat food commits: 2')
     getByText('get dragon food commits: 2')
-    getByText('TaskListUpdates: 1')
   })
 
   expect(catBox.checked).toBe(true)

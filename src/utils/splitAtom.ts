@@ -36,77 +36,93 @@ export function splitAtom<Item, Key>(
   return memoizeAtom(
     () => {
       type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
-      // TODO we should revisit this for a better solution than refAtom
-      const refAtom = atom(
-        () => ({} as { atomList?: ItemAtom[]; keyList?: Key[] })
-      )
-      const read = (get: Getter) => {
-        const ref = get(refAtom)
-        const nextAtomList: Atom<Item>[] = []
-        const nextKeyList: Key[] = []
-        get(arrAtom).forEach((item, index) => {
+      type Mapping = {
+        atomList: ItemAtom[]
+        keyList: Key[]
+      }
+      const mappingCache = new WeakMap<Item[], Mapping>()
+      const getMapping = (arr: Item[], prev?: Item[]) => {
+        let mapping = mappingCache.get(arr)
+        if (mapping) {
+          return mapping
+        }
+        const prevMapping = prev && mappingCache.get(prev)
+        const atomList: Atom<Item>[] = []
+        const keyList: Key[] = []
+        arr.forEach((item, index) => {
           const key = keyExtractor
             ? keyExtractor(item)
             : (index as unknown as Key)
-          nextKeyList[index] = key
-          const cachedAtom = ref.atomList?.[ref.keyList?.indexOf(key) ?? -1]
+          keyList[index] = key
+          const cachedAtom =
+            prevMapping &&
+            prevMapping.atomList[prevMapping.keyList.indexOf(key) ?? -1]
           if (cachedAtom) {
-            nextAtomList[index] = cachedAtom
+            atomList[index] = cachedAtom
             return
           }
           const read = (get: Getter) => {
-            const index = nextKeyList?.indexOf(key) ?? -1
-            if (
-              index === -1 &&
-              typeof process === 'object' &&
-              process.env.NODE_ENV !== 'production'
-            ) {
-              console.warn(
-                'splitAtom: array index out of bounds, returning undefined',
-                atom
-              )
+            const ref = get(refAtom)
+            const arr = get(arrAtom)
+            const mapping = getMapping(arr, ref.prev)
+            const index = mapping.keyList.indexOf(key) ?? -1
+            if (index < 0 || index >= arr.length) {
+              throw new Error('splitAtom: index out of bounds for read')
             }
-            return get(arrAtom)[index] as Item
+            return arr[index] as Item
           }
           const write = (
             get: Getter,
             set: Setter,
             update: SetStateAction<Item>
           ) => {
-            const index = ref.keyList?.indexOf(key) ?? -1
-            if (index === -1) {
-              throw new Error('splitAtom: array index not found')
+            const ref = get(refAtom)
+            const arr = get(arrAtom)
+            const mapping = getMapping(arr, ref.prev)
+            const index = mapping.keyList.indexOf(key) ?? -1
+            if (index < 0 || index >= arr.length) {
+              throw new Error('splitAtom: index out of bounds for write')
             }
-            const prev = get(arrAtom)
             const nextItem = isFunction(update)
-              ? update(prev[index] as Item)
+              ? update(arr[index] as Item)
               : update
             set(arrAtom as WritableAtom<Item[], Item[]>, [
-              ...prev.slice(0, index),
+              ...arr.slice(0, index),
               nextItem,
-              ...prev.slice(index + 1),
+              ...arr.slice(index + 1),
             ])
           }
-          const itemAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
-          nextAtomList[index] = itemAtom
+          atomList[index] = isWritable(arrAtom) ? atom(read, write) : atom(read)
         })
-        ref.keyList = nextKeyList
         if (
-          ref.atomList &&
-          ref.atomList.length === nextAtomList.length &&
-          ref.atomList.every((x, i) => x === nextAtomList[i])
+          prevMapping &&
+          prevMapping.keyList.length === keyList.length &&
+          prevMapping.keyList.every((x, i) => x === keyList[i])
         ) {
-          return ref.atomList
+          // not changed
+          mapping = prevMapping
+        } else {
+          mapping = { atomList, keyList }
         }
-        return (ref.atomList = nextAtomList)
+        mappingCache.set(arr, mapping)
+        return mapping
+      }
+      // TODO we should revisit this for a better solution than refAtom
+      const refAtom = atom(() => ({} as { prev?: Item[] }))
+      const read = (get: Getter) => {
+        const ref = get(refAtom)
+        const arr = get(arrAtom)
+        const mapping = getMapping(arr, ref.prev)
+        ref.prev = arr
+        return mapping.atomList
       }
       const write = (get: Getter, set: Setter, atomToRemove: ItemAtom) => {
         const index = get(splittedAtom).indexOf(atomToRemove)
         if (index >= 0) {
-          const prev = get(arrAtom)
+          const arr = get(arrAtom)
           set(arrAtom as WritableAtom<Item[], Item[]>, [
-            ...prev.slice(0, index),
-            ...prev.slice(index + 1),
+            ...arr.slice(0, index),
+            ...arr.slice(index + 1),
           ])
         }
       }
