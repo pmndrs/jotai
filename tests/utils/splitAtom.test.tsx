@@ -323,26 +323,20 @@ it('no error with cached atoms (fix 510)', async () => {
     return (
       <>
         {cachedAtoms.map((atom) => (
-          <NumItem key={atom.toString()} atom={atom} />
+          <NumItem key={`${atom}`} atom={atom} />
         ))}
       </>
     )
   }
 
-  const { getByText, getByTestId } = render(
+  const { getByText } = render(
     <Provider>
       <Filter />
-      <div data-testid="numbers">
-        <Filtered />
-      </div>
+      <Filtered />
     </Provider>
   )
 
-  const numbersEl = getByTestId('numbers')
-  expect(numbersEl.textContent).toBe('01234')
-
   fireEvent.click(getByText('button'))
-  expect(numbersEl.textContent).toBe('024')
 })
 
 it('variable sized splitted atom', async () => {

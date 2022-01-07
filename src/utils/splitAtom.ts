@@ -9,6 +9,13 @@ import type {
 } from 'jotai'
 import { createMemoizeAtom } from './weakCache'
 
+const SafeWeakRef =
+  typeof WeakRef !== 'undefined'
+    ? WeakRef
+    : (class DummyWeakRef {
+        deref() {}
+      } as typeof WeakRef)
+
 const memoizeAtom = createMemoizeAtom()
 
 const isWritable = <Value, Update, Result extends void | Promise<void>>(
@@ -39,6 +46,7 @@ export function splitAtom<Item, Key>(
       type Mapping = {
         atomList: ItemAtom[]
         keyList: Key[]
+        prevRef?: WeakRef<Item[]>
       }
       const mappingCache = new WeakMap<Item[], Mapping>()
       const getMapping = (arr: Item[], prev?: Item[]) => {
@@ -62,23 +70,28 @@ export function splitAtom<Item, Key>(
             return
           }
           const read = (get: Getter) => {
-            const ref = get(refAtom)
-            const arr = get(arrAtom)
-            const mapping = getMapping(arr, ref.prev)
-            const index = mapping.keyList.indexOf(key) ?? -1
-            if (index < 0 || index >= arr.length) {
-              throw new Error('splitAtom: index out of bounds for read')
+            let prev = get(refAtom).prev
+            let arr = get(arrAtom) as Item[] | undefined
+            while (arr) {
+              const mapping = getMapping(arr, prev)
+              const index = mapping.keyList.indexOf(key) ?? -1
+              if (index < 0 || index >= arr.length) {
+                arr = prev
+                prev = mapping.prevRef?.deref()
+              } else {
+                return arr[index] as Item
+              }
             }
-            return arr[index] as Item
+            throw new Error('splitAtom: index out of bounds for read')
           }
           const write = (
             get: Getter,
             set: Setter,
             update: SetStateAction<Item>
           ) => {
-            const ref = get(refAtom)
+            const prev = get(refAtom).prev
             const arr = get(arrAtom)
-            const mapping = getMapping(arr, ref.prev)
+            const mapping = getMapping(arr, prev)
             const index = mapping.keyList.indexOf(key) ?? -1
             if (index < 0 || index >= arr.length) {
               throw new Error('splitAtom: index out of bounds for write')
@@ -101,6 +114,8 @@ export function splitAtom<Item, Key>(
         ) {
           // not changed
           mapping = prevMapping
+        } else if (prev) {
+          mapping = { atomList, keyList, prevRef: new SafeWeakRef(prev) }
         } else {
           mapping = { atomList, keyList }
         }
