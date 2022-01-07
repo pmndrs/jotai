@@ -12,21 +12,18 @@ export function selectAtom<Value, Slice>(
   equalityFn: (a: Slice, b: Slice) => boolean = Object.is
 ): Atom<Slice> {
   return memoizeAtom(() => {
-    const mountedAtom = atom(false)
-    mountedAtom.onMount = (set) => {
-      set(true)
-      return () => set(false)
-    }
-    const derivedAtom: Atom<Slice> = atom((get) => {
-      const slice = selector(get(anAtom) as ResolveType<Value>)
-      if (get(mountedAtom)) {
+    const EMPTY = Symbol()
+    const derivedAtom: Atom<Slice | typeof EMPTY> & { init?: typeof EMPTY } =
+      atom((get) => {
+        const slice = selector(get(anAtom) as ResolveType<Value>)
         const prev = get(derivedAtom)
-        if (equalityFn(prev, slice)) {
+        if (prev !== EMPTY && equalityFn(prev, slice)) {
           return prev
         }
-      }
-      return slice
-    })
-    return derivedAtom
+        return slice
+      })
+    // Note: This is not a public API. It's not a recommended pattern in application code.
+    derivedAtom.init = EMPTY
+    return derivedAtom as Atom<Slice>
   }, [anAtom, selector, equalityFn])
 }
