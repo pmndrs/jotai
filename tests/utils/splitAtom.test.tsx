@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import type { ChangeEvent } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
@@ -7,14 +6,6 @@ import { splitAtom, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
-
-const consoleWarn = console.warn
-beforeEach(() => {
-  console.warn = jest.fn()
-})
-afterEach(() => {
-  console.warn = consoleWarn
-})
 
 type TodoItem = { task: string; checked?: boolean }
 
@@ -290,14 +281,16 @@ it('handles scope', async () => {
   expect(dragonBox.checked).toBe(false)
 })
 
-it('no error on wrong atom configs (fix 510)', async () => {
+it('no error with cached atoms (fix 510)', async () => {
   const filterAtom = atom('all')
-  const numsAtom = atom<number[]>([0, 1])
+  const numsAtom = atom<number[]>([0, 1, 2, 3, 4])
   const filteredAtom = atom<number[]>((get) => {
     const filter = get(filterAtom)
     const nums = get(numsAtom)
-    if (filter === 'even') return nums.filter((num) => num % 2 === 0)
-    else return nums
+    if (filter === 'even') {
+      return nums.filter((num) => num % 2 === 0)
+    }
+    return nums
   })
   const filteredAtomsAtom = splitAtom(filteredAtom, (num) => num)
 
@@ -312,35 +305,15 @@ it('no error on wrong atom configs (fix 510)', async () => {
 
   const NumItem = ({ atom }: NumItemProps) => {
     const [readOnlyItem] = useAtom(atom)
+    if (typeof readOnlyItem !== 'number') {
+      throw new Error('expecting a number')
+    }
     return <>{readOnlyItem}</>
   }
 
   function Filter() {
-    const [filter, set] = useAtom(filterAtom)
-
-    const handlechange = (e: ChangeEvent<HTMLInputElement>) => {
-      set(e.target.value)
-    }
-
-    return (
-      <div>
-        <input
-          type="radio"
-          value="all"
-          checked={filter === 'all'}
-          onChange={handlechange}
-        />{' '}
-        all
-        <input
-          type="radio"
-          value="even"
-          checked={filter === 'even'}
-          data-testid={'even-checkbox'}
-          onChange={handlechange}
-        />{' '}
-        even
-      </div>
-    )
+    const [, setFilter] = useAtom(filterAtom)
+    return <button onClick={() => setFilter('even')}>button</button>
   }
 
   const Filtered = () => {
@@ -356,21 +329,20 @@ it('no error on wrong atom configs (fix 510)', async () => {
     )
   }
 
-  const { getByTestId } = render(
+  const { getByText, getByTestId } = render(
     <Provider>
       <Filter />
-      <div data-testid={`numbers`}>
+      <div data-testid="numbers">
         <Filtered />
       </div>
     </Provider>
   )
 
   const numbersEl = getByTestId('numbers')
-  const evenCheckboxEl = getByTestId('even-checkbox')
-  expect(numbersEl.textContent).toBe('01')
+  expect(numbersEl.textContent).toBe('01234')
 
-  fireEvent.click(evenCheckboxEl)
-  expect(numbersEl.textContent).toBe('0')
+  fireEvent.click(getByText('button'))
+  expect(numbersEl.textContent).toBe('024')
 })
 
 it('variable sized splitted atom', async () => {
