@@ -56,7 +56,7 @@ export function splitAtom<Item, Key>(
           keyList[index] = key
           const cachedAtom =
             prevMapping &&
-            prevMapping.atomList[prevMapping.keyList.indexOf(key) ?? -1]
+            prevMapping.atomList[prevMapping.keyList.indexOf(key)]
           if (cachedAtom) {
             atomList[index] = cachedAtom
             return
@@ -68,7 +68,7 @@ export function splitAtom<Item, Key>(
             const ref = get(refAtom)
             const arr = get(arrAtom)
             const mapping = getMapping(arr, ref.prev)
-            const index = mapping.keyList.indexOf(key) ?? -1
+            const index = mapping.keyList.indexOf(key)
             if (index < 0 || index >= arr.length) {
               if ('prev' in itemRef) {
                 // returning a stale value to avoid errors for use cases such as react-spring
@@ -87,7 +87,7 @@ export function splitAtom<Item, Key>(
             const ref = get(refAtom)
             const arr = get(arrAtom)
             const mapping = getMapping(arr, ref.prev)
-            const index = mapping.keyList.indexOf(key) ?? -1
+            const index = mapping.keyList.indexOf(key)
             if (index < 0 || index >= arr.length) {
               throw new Error('splitAtom: index out of bounds for write')
             }
