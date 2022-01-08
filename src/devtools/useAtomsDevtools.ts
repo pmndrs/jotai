@@ -7,6 +7,7 @@ import {
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
   RESTORE_ATOMS,
+  WriteEvent,
 } from '../core/store'
 
 type Config = {
@@ -41,7 +42,11 @@ type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
 type AtomsValues = Map<AnyAtom, AnyAtomValue> // immutable
 type AtomsDependents = Map<AnyAtom, Set<AnyAtom>> // immutable
-type AtomsSnapshot = readonly [AtomsValues, AtomsDependents]
+type AtomsSnapshot = readonly [
+  values: AtomsValues,
+  dependents: AtomsDependents,
+  write?: WriteEvent
+]
 
 const isEqualAtomsValues = (left: AtomsValues, right: AtomsValues) =>
   left.size === right.size &&
@@ -93,7 +98,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   ])
 
   useEffect(() => {
-    const callback = () => {
+    const callback = (write?: WriteEvent) => {
       const values: AtomsValues = new Map()
       const dependents: AtomsDependents = new Map()
       for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
@@ -120,7 +125,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
           // bail out
           return prev
         }
-        return [values, dependents]
+        return write
+          ? [values, dependents, WriteEvent.getRootEvent(write)]
+          : [values, dependents]
       })
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
@@ -173,7 +180,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         // index 0 is @@INIT, so we need to return the next action (0)
         const snapshot = snapshots.current[index >= 0 ? index : 0]
         if (!snapshot) {
-          throw new Error('snaphost index out of bounds')
+          throw new Error('snapshot index out of bounds')
         }
         return snapshot
       }
@@ -227,6 +234,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         {
           type: `${snapshots.current.length}`,
           updatedAt: new Date().toLocaleString(),
+          write: atomsSnapshot[2],
         },
         getDevtoolsState(atomsSnapshot)
       )
