@@ -1,8 +1,9 @@
 import { Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom } from 'jotai'
+import { Atom, atom } from 'jotai'
 import { selectAtom, useAtomValue, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
+import { createStore, READ_ATOM, SUBSCRIBE_ATOM } from 'jotai/core/store'
 
 const Provider = getTestProvider()
 
@@ -58,51 +59,117 @@ it('selectAtom works as expected', async () => {
   await findByText('a: 3')
 })
 
-it('selectAtom works with async atom', async () => {
+it.only('GENERIC suspense with derived atoms', async () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })
+  bigAtom.debugLabel = 'bigAtom'
   const bigAtomAsync = atom((get) => Promise.resolve(get(bigAtom)))
-  const littleAtom = selectAtom(bigAtomAsync, (v) => v.a)
+  bigAtomAsync.debugLabel = 'bigAtomAsync'
+  const littleAtom = atom((get) => {
+    try {
+      get(littleAtom)
+    } catch (error) {
+      if (error instanceof Error && error.message === 'no atom init') {
+        console.log('ok to error reading self first time')
+      } else {
+        console.log('littleAtom read: get(littleAtom) threw ', error)
+        throw error
+      }
+    }
+    return get(bigAtomAsync).a
+  })
+  littleAtom.debugLabel = 'littleAtom'
 
-  const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom)
-    return (
-      <>
-        <button
-          onClick={() =>
-            setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
-          }>
-          increment
-        </button>
-      </>
-    )
+  const store = createStore()
+  const get = function <T>(atom: Atom<T>) {
+    return store[READ_ATOM](atom)
   }
 
-  const Selector = () => {
-    const a = useAtomValue(littleAtom)
-    return (
-      <>
-        <div>a: {a}</div>
-      </>
-    )
-  }
-
-  const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback={null}>
-        <Parent />
-        <Selector />
-      </Suspense>
-    </Provider>
+  console.log('MOUNT LITTLE ATOM')
+  store[SUBSCRIBE_ATOM](littleAtom, () =>
+    console.log('little atom invalidated')
   )
 
-  await findByText('a: 0')
+  console.log('READ LITTLE ATOM')
+  const firstGet = get(littleAtom)
+  console.log('READ LITTLE ATOM -> ', firstGet)
 
-  fireEvent.click(getByText('increment'))
-  await findByText('a: 1')
-  fireEvent.click(getByText('increment'))
-  await findByText('a: 2')
-  fireEvent.click(getByText('increment'))
-  await findByText('a: 3')
+  await (firstGet as any).p
+
+  console.log('READ LITTLE ATOM 2 after await')
+  const secondGet = get(littleAtom)
+  console.log('READ LITTLE ATOM 2 after await ->', secondGet)
+
+  expect('v' in secondGet && secondGet.v).toBe(0)
+})
+
+it('selectAtom works with async atom', async () => {
+  const bigAtom = atom({ a: 0, b: 'othervalue' })
+  bigAtom.debugLabel = 'bigAtom'
+  const bigAtomAsync = atom((get) => Promise.resolve(get(bigAtom)))
+  bigAtomAsync.debugLabel = 'bigAtomAsync'
+  const littleAtom = selectAtom(bigAtomAsync, (v) => v.a)
+  littleAtom.debugLabel = 'littleAtom'
+
+  const store = createStore()
+  const get = function <T>(atom: Atom<T>) {
+    return store[READ_ATOM](atom)
+  }
+
+  console.log('MOUNT LITTLE ATOM')
+  store[SUBSCRIBE_ATOM](littleAtom, () =>
+    console.log('little atom invalidated')
+  )
+
+  console.log('READ LITTLE ATOM')
+  const firstGet = get(littleAtom)
+  console.log('READ LITTLE ATOM -> ', firstGet)
+
+  await (firstGet as any).p
+
+  console.log('READ LITTLE ATOM 2 after await')
+  const secondGet = get(littleAtom)
+  console.log('READ LITTLE ATOM 2 after await ->', secondGet)
+
+  // const Parent = () => {
+  //   const setValue = useUpdateAtom(bigAtom)
+  //   return (
+  //     <>
+  //       <button
+  //         onClick={() =>
+  //           setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
+  //         }>
+  //         increment
+  //       </button>
+  //     </>
+  //   )
+  // }
+
+  // const Selector = () => {
+  //   const a = useAtomValue(littleAtom)
+  //   return (
+  //     <>
+  //       <div>a: {a}</div>
+  //     </>
+  //   )
+  // }
+
+  // const { findByText, getByText } = render(
+  //   <Provider>
+  //     <Suspense fallback={null}>
+  //       <Parent />
+  //       <Selector />
+  //     </Suspense>
+  //   </Provider>
+  // )
+
+  // await findByText('a: 0')
+
+  // fireEvent.click(getByText('increment'))
+  // await findByText('a: 1')
+  // fireEvent.click(getByText('increment'))
+  // await findByText('a: 2')
+  // fireEvent.click(getByText('increment'))
+  // await findByText('a: 3')
 })
 
 it('do not update unless equality function says value has changed', async () => {
