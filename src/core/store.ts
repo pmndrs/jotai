@@ -28,6 +28,7 @@ type Revision = number
 type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 const Initial = Symbol('initial')
+type SuspendedPreviousValue<Value> = ResolveType<Value> | typeof Initial
 
 /**
  * Immutable atom state, tracked for both mounted and unmounted atoms in a store.
@@ -51,7 +52,7 @@ export type AtomState<Value = AnyAtomValue> = {
   d: ReadDependencies
 } & (
   | { e: ReadError }
-  | { p: SuspensePromise; pv?: ResolveType<Value> | typeof Initial }
+  | { p: SuspensePromise; pv?: SuspendedPreviousValue<Value> }
   | { v: ResolveType<Value> }
 )
 
@@ -393,7 +394,7 @@ export const createStore = (
   const atomPreviousValue = <Value>(
     atom: Atom<Value>,
     atomState: AtomState<Value> | undefined
-  ): { pv: ResolveType<Value> | typeof Initial } | undefined => {
+  ): { pv: SuspendedPreviousValue<Value> } | undefined => {
     if (atomState && 'pv' in atomState) {
       return { pv: atomState.pv }
     }
