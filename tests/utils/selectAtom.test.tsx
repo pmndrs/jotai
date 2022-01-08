@@ -1,9 +1,8 @@
 import { Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Atom, atom } from 'jotai'
+import { atom } from 'jotai'
 import { selectAtom, useAtomValue, useUpdateAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
-import { createStore, READ_ATOM, SUBSCRIBE_ATOM } from 'jotai/core/store'
 
 const Provider = getTestProvider()
 
