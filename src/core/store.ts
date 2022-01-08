@@ -27,6 +27,7 @@ type ReadError = unknown
 type Revision = number
 type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
+const Initial = Symbol('initial')
 
 /**
  * Immutable atom state, tracked for both mounted and unmounted atoms in a store.
@@ -48,7 +49,11 @@ export type AtomState<Value = AnyAtomValue> = {
    * of each dependency to that dependencies's current revision.
    */
   d: ReadDependencies
-} & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
+} & (
+  | { e: ReadError }
+  | { p: SuspensePromise; pv?: ResolveType<Value> | typeof Initial }
+  | { v: ResolveType<Value> }
+)
 
 /**
  * Represents a version of a store. A version contains a state for every atom
@@ -385,6 +390,23 @@ export const createStore = (
     return nextAtomState
   }
 
+  const atomPreviousValue = <Value>(
+    atom: Atom<Value>,
+    atomState: AtomState<Value> | undefined
+  ): { pv: ResolveType<Value> | typeof Initial } | undefined => {
+    if (atomState && 'pv' in atomState) {
+      return { pv: atomState.pv }
+    }
+
+    if (atomState && 'v' in atomState) {
+      return { pv: atomState.v }
+    }
+
+    if (hasInitialValue(atom)) {
+      return { pv: Initial }
+    }
+  }
+
   const setAtomSuspensePromise = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
@@ -400,25 +422,25 @@ export const createStore = (
       cancelSuspensePromise(atomState.p)
     }
     addSuspensePromiseToCache(version, atom, suspensePromise)
-    const nextAtomState: AtomState<Value> =
-      atomState &&
-      'v' in atomState &&
-      !isSuspensePromiseOwner(suspensePromise, atom)
-        ? {
-            // Retain the previous value for derived atoms that read themselves.
-            // This atom depends on the owner of this suspense promise.
-            // In the future when the promise resolves, the owner atom will be
-            // invalidated, this atom will recompute, and may read itself.
-            v: atomState.v,
-            p: suspensePromise,
-            r: atomState?.r || 0,
-            d: createReadDependencies(version, atomState?.d, dependencies),
-          }
-        : {
-            p: suspensePromise,
-            r: atomState?.r || 0,
-            d: createReadDependencies(version, atomState?.d, dependencies),
-          }
+    const nextAtomState: AtomState<Value> = !isSuspensePromiseOwner(
+      suspensePromise,
+      atom
+    )
+      ? {
+          // Retain the previous value for derived atoms that read themselves.
+          // This atom depends on the owner of this suspense promise.
+          // In the future when the promise resolves, the owner atom will be
+          // invalidated, this atom will recompute, and may read itself.
+          ...atomPreviousValue(atom, atomState),
+          p: suspensePromise,
+          r: atomState?.r || 0,
+          d: createReadDependencies(version, atomState?.d, dependencies),
+        }
+      : {
+          p: suspensePromise,
+          r: atomState?.r || 0,
+          d: createReadDependencies(version, atomState?.d, dependencies),
+        }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
   }
@@ -551,7 +573,11 @@ export const createStore = (
             throw aState.e // read error
           }
           if ('p' in aState) {
-            if (readingSelf && !isSuspensePromiseOwner(aState.p, atom)) {
+            if (
+              'pv' in aState &&
+              readingSelf &&
+              !isSuspensePromiseOwner(aState.p, atom)
+            ) {
               // special case: reading self, but was suspended due to
               // dependency. Throwing a promise here would result in infinite
               // suspension. Instead, we fall through to the previous value or
@@ -559,6 +585,9 @@ export const createStore = (
               //
               // If *that dependency* is still suspended, then reading it will
               // still throw and suspend this atom again.
+              if (aState.pv !== Initial) {
+                return aState.pv
+              }
             } else {
               throw aState.p // suspense promise
             }
