@@ -5,6 +5,7 @@ import {
   isEqualSuspensePromise,
   isSuspensePromise,
   isSuspensePromiseAlreadyCancelled,
+  isSuspensePromiseOwner,
 } from './suspensePromise'
 import type { SuspensePromise } from './suspensePromise'
 
@@ -403,11 +404,25 @@ export const createStore = (
       cancelSuspensePromise(atomState.p)
     }
     addSuspensePromiseToCache(version, atom, suspensePromise)
-    const nextAtomState: AtomState<Value> = {
-      p: suspensePromise,
-      r: atomState?.r || 0,
-      d: createReadDependencies(version, atomState?.d, dependencies),
-    }
+    const nextAtomState: AtomState<Value> =
+      atomState &&
+      'v' in atomState &&
+      !isSuspensePromiseOwner(suspensePromise, atom)
+        ? {
+            // Retain the previous value for derived atoms that read themselves.
+            // This atom depends on the owner of this suspense promise.
+            // In the future when the promise resolves, the owner atom will be
+            // invalidated, this atom will recompute, and may read itself.
+            v: atomState.v,
+            p: suspensePromise,
+            r: atomState?.r || 0,
+            d: createReadDependencies(version, atomState?.d, dependencies),
+          }
+        : {
+            p: suspensePromise,
+            r: atomState?.r || 0,
+            d: createReadDependencies(version, atomState?.d, dependencies),
+          }
     console.log('setAtomState', version, atom, nextAtomState)
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
@@ -454,7 +469,8 @@ export const createStore = (
             }
             setAtomReadError(version, atom, e, dependencies, suspensePromise)
             flushPending(version)
-          })
+          }),
+        atom
       )
       return setAtomSuspensePromise(
         version,
@@ -548,19 +564,27 @@ export const createStore = (
     try {
       const promiseOrValue = atom.read(<V>(a: Atom<V>) => {
         dependencies.add(a)
-        const aState =
-          (a as AnyAtom) === atom
-            ? getAtomState(version, a)
-            : readAtomState(version, a)
+        const readingSelf = (a as AnyAtom) === atom
+        const aState = readingSelf
+          ? getAtomState(version, a)
+          : readAtomState(version, a)
         if (aState) {
           if ('e' in aState) {
             throw aState.e // read error
           }
           if ('p' in aState) {
-            debug('get(', a, ') => promise')
-            throw aState.p // suspense promise
+            if (readingSelf && !isSuspensePromiseOwner(aState.p, atom)) {
+              debug(
+                'special case: reading self, but was suspended due to dependency. Throwing a promise here would result in infinite suspension.'
+              )
+            } else {
+              debug('get(', a, ') => promise')
+              throw aState.p // suspense promise
+            }
           }
-          return aState.v as ResolveType<V> // value
+          if ('v' in aState) {
+            return aState.v as ResolveType<V> // value
+          }
         }
         if (hasInitialValue(a)) {
           return a.init

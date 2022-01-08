@@ -4,6 +4,7 @@ export type SuspensePromise = Promise<void> & {
   [SUSPENSE_PROMISE]: {
     o: Promise<void> // original promise
     c: (() => void) | null // cancel promise (null if already cancelled)
+    a?: unknown // Owner
   }
 }
 
@@ -36,12 +37,19 @@ export const isEqualSuspensePromise = (
 }
 
 export const createSuspensePromise = (
-  promise: Promise<void>
+  promise: Promise<void>,
+  ownerAtom?: unknown
 ): SuspensePromise => {
-  const objectToAttach = {
-    o: promise, // original promise
-    c: null as (() => void) | null, // cancel promise
-  }
+  const objectToAttach = ownerAtom
+    ? {
+        o: promise, // original promise
+        c: null as (() => void) | null, // cancel promise
+        a: ownerAtom,
+      }
+    : {
+        o: promise, // original promise
+        c: null as (() => void) | null, // cancel promise
+      }
   const suspensePromise = new Promise<void>((resolve) => {
     objectToAttach.c = () => {
       objectToAttach.c = null
@@ -52,3 +60,9 @@ export const createSuspensePromise = (
   suspensePromise[SUSPENSE_PROMISE] = objectToAttach
   return suspensePromise
 }
+
+export const isSuspensePromiseOwner = (
+  suspensePromise: SuspensePromise,
+  owner: unknown
+): boolean =>
+  owner !== undefined && suspensePromise[SUSPENSE_PROMISE].a === owner
