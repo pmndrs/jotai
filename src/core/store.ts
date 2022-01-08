@@ -330,11 +330,9 @@ export const createStore = (
           !isEqualSuspensePromise(atomState.p, suspensePromise))
       ) {
         // newer async read is running, not updating
-        console.log('newer async read is running, not updating')
         return atomState
       }
       if ('p' in atomState) {
-        console.log('cancel previous async read')
         cancelSuspensePromise(atomState.p)
       }
     }
@@ -397,10 +395,8 @@ export const createStore = (
     if (atomState && 'p' in atomState) {
       if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
         // the same promise, not updating
-        console.log('same suspense promise, not updating', atom)
         return atomState
       }
-      console.log('already suspended, cancelling', atom)
       cancelSuspensePromise(atomState.p)
     }
     addSuspensePromiseToCache(version, atom, suspensePromise)
@@ -423,7 +419,6 @@ export const createStore = (
             r: atomState?.r || 0,
             d: createReadDependencies(version, atomState?.d, dependencies),
           }
-    console.log('setAtomState', version, atom, nextAtomState)
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
   }
@@ -438,16 +433,6 @@ export const createStore = (
       const suspensePromise = createSuspensePromise(
         promiseOrValue
           .then((value: ResolveType<Value>) => {
-            console.log(
-              'suspense promise resolve as',
-              value,
-              'gonna set the atom',
-              atom,
-              version,
-              value,
-              dependencies,
-              suspensePromise
-            )
             setAtomValue(version, atom, value, dependencies, suspensePromise)
             flushPending(version)
           })
@@ -459,9 +444,7 @@ export const createStore = (
               ) {
                 // schedule another read later
                 // FIXME not 100% confident with this code
-                console.log('schedule another read later')
                 e.then(() => {
-                  console.log('another read later resolved')
                   readAtomState(version, atom, true)
                 })
               }
@@ -511,12 +494,10 @@ export const createStore = (
     atom: Atom<Value>,
     force?: boolean
   ): AtomState<Value> => {
-    const debug = console.log
     if (!force) {
       // See if we can skip recomputing this atom.
       const atomState = getAtomState(version, atom)
       if (atomState) {
-        debug('have previous state', atomState)
         // First, ensure that each atom we depend on is up to date.
         // Recursive calls to `readAtomState(version, a)` will recompute `a` if
         // it's out of date thus increment its revision number if it changes.
@@ -526,7 +507,6 @@ export const createStore = (
               // Dependency is new or unmounted.
               // Invalidation doesn't touch unmounted atoms, so we need to recurse
               // into this dependency in case it needs to update.
-              debug('read atom state for unmounted dep', a)
               readAtomState(version, a)
             } else {
               // Dependency is mounted.
@@ -535,7 +515,6 @@ export const createStore = (
                 aState &&
                 aState.r === aState.i // revision is invalidated
               ) {
-                debug('read atom state for mounted but invalid dep', a)
                 readAtomState(version, a)
               }
             }
@@ -559,7 +538,6 @@ export const createStore = (
       }
     }
     // Compute a new state for this atom.
-    debug('computing new state')
     const dependencies = new Set<AnyAtom>()
     try {
       const promiseOrValue = atom.read(<V>(a: Atom<V>) => {
@@ -574,11 +552,14 @@ export const createStore = (
           }
           if ('p' in aState) {
             if (readingSelf && !isSuspensePromiseOwner(aState.p, atom)) {
-              debug(
-                'special case: reading self, but was suspended due to dependency. Throwing a promise here would result in infinite suspension.'
-              )
+              // special case: reading self, but was suspended due to
+              // dependency. Throwing a promise here would result in infinite
+              // suspension. Instead, we fall through to the previous value or
+              // initial value.
+              //
+              // If *that dependency* is still suspended, then reading it will
+              // still throw and suspend this atom again.
             } else {
-              debug('get(', a, ') => promise')
               throw aState.p // suspense promise
             }
           }

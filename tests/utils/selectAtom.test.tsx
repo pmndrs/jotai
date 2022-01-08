@@ -59,49 +59,6 @@ it('selectAtom works as expected', async () => {
   await findByText('a: 3')
 })
 
-it('GENERIC suspense with derived atoms', async () => {
-  const bigAtom = atom({ a: 0, b: 'othervalue' })
-  bigAtom.debugLabel = 'bigAtom'
-  const bigAtomAsync = atom((get) => Promise.resolve(get(bigAtom)))
-  bigAtomAsync.debugLabel = 'bigAtomAsync'
-  const littleAtom = atom((get) => {
-    try {
-      get(littleAtom)
-    } catch (error) {
-      if (error instanceof Error && error.message === 'no atom init') {
-        console.log('ok to error reading self first time')
-      } else {
-        console.log('littleAtom read: get(littleAtom) threw ', error)
-        throw error
-      }
-    }
-    return get(bigAtomAsync).a
-  })
-  littleAtom.debugLabel = 'littleAtom'
-
-  const store = createStore()
-  const get = function <T>(atom: Atom<T>) {
-    return store[READ_ATOM](atom)
-  }
-
-  console.log('MOUNT LITTLE ATOM')
-  store[SUBSCRIBE_ATOM](littleAtom, () =>
-    console.log('little atom invalidated')
-  )
-
-  console.log('READ LITTLE ATOM')
-  const firstGet = get(littleAtom)
-  console.log('READ LITTLE ATOM -> ', firstGet)
-
-  await (firstGet as any).p
-
-  console.log('READ LITTLE ATOM 2 after await')
-  const secondGet = get(littleAtom)
-  console.log('READ LITTLE ATOM 2 after await ->', secondGet)
-
-  expect('v' in secondGet && secondGet.v).toBe(0)
-})
-
 it('selectAtom works with async atom', async () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })
   bigAtom.debugLabel = 'bigAtom'
@@ -109,26 +66,6 @@ it('selectAtom works with async atom', async () => {
   bigAtomAsync.debugLabel = 'bigAtomAsync'
   const littleAtom = selectAtom(bigAtomAsync, (v) => v.a)
   littleAtom.debugLabel = 'littleAtom'
-
-  // const store = createStore()
-  // const get = function <T>(atom: Atom<T>) {
-  //   return store[READ_ATOM](atom)
-  // }
-
-  // console.log('MOUNT LITTLE ATOM')
-  // store[SUBSCRIBE_ATOM](littleAtom, () =>
-  //   console.log('little atom invalidated')
-  // )
-
-  // console.log('READ LITTLE ATOM')
-  // const firstGet = get(littleAtom)
-  // console.log('READ LITTLE ATOM -> ', firstGet)
-
-  // await (firstGet as any).p
-
-  // console.log('READ LITTLE ATOM 2 after await')
-  // const secondGet = get(littleAtom)
-  // console.log('READ LITTLE ATOM 2 after await ->', secondGet)
 
   const Parent = () => {
     const setValue = useUpdateAtom(bigAtom)

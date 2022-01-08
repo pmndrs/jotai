@@ -48,15 +48,12 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
       // recomputed if needed.
       const atomState = store[READ_ATOM](atom, version)
       if ('e' in atomState) {
-        console.log('read errr')
         throw atomState.e // read error
       }
       if ('p' in atomState) {
-        // console.log('read promise', atomState.p)
         throw atomState.p // read promise
       }
       if ('v' in atomState) {
-        console.log('read value', atomState.v)
         return atomState.v as ResolveType<Value>
       }
       throw new Error('no atom value')
