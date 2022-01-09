@@ -16,13 +16,26 @@ export function selectAtom<Value, Slice>(
     const derivedAtom: Atom<Slice | typeof EMPTY> & { init?: typeof EMPTY } =
       atom((get) => {
         const slice = selector(get(anAtom) as ResolveType<Value>)
-        const prev = get(derivedAtom)
+        let prev: Slice | typeof EMPTY = EMPTY
+        try {
+          prev = get(derivedAtom)
+        } catch (e) {
+          if (e instanceof Promise) {
+            // This is suspense promise from the self atom.
+            // Unless we ignore this, it causes an infinite loop.
+            // Note: This is not a part of public API / behavior.
+            // It's not a recommended pattern in application code.
+          } else {
+            throw e
+          }
+        }
         if (prev !== EMPTY && equalityFn(prev, slice)) {
           return prev
         }
         return slice
       })
-    // Note: This is not a public API. It's not a recommended pattern in application code.
+    // Note: This is not a public API.
+    // It's not a recommended pattern in application code.
     derivedAtom.init = EMPTY
     return derivedAtom as Atom<Slice>
   }, [anAtom, selector, equalityFn])
