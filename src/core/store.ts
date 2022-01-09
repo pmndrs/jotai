@@ -412,14 +412,15 @@ export const createStore = (
     version: VersionObject | undefined,
     atom: Atom<Value>,
     promiseOrValue: Value,
-    dependencies?: Set<AnyAtom>
+    dependencies?: Set<AnyAtom>,
+    writeEvent?: WriteEvent
   ): AtomState<Value> => {
     if (promiseOrValue instanceof Promise) {
       const suspensePromise = createSuspensePromise(
         promiseOrValue
           .then((value: ResolveType<Value>) => {
             setAtomValue(version, atom, value, dependencies, suspensePromise)
-            flushPending(version)
+            flushPending(version, writeEvent)
           })
           .catch((e) => {
             if (e instanceof Promise) {
@@ -434,7 +435,7 @@ export const createStore = (
               return e
             }
             setAtomReadError(version, atom, e, dependencies, suspensePromise)
-            flushPending(version)
+            flushPending(version, writeEvent)
           })
       )
       return setAtomSuspensePromise(
@@ -678,7 +679,7 @@ export const createStore = (
         )
       }
       if (!isSync) {
-        flushPending(version)
+        flushPending(version, event)
       }
       return promiseOrVoid
     }
@@ -697,7 +698,7 @@ export const createStore = (
       ? new WriteEvent(writingAtom, update)
       : undefined
     const promiseOrVoid = writeAtomState(version, writingAtom, update, event)
-    flushPending(version)
+    flushPending(version, event)
     return promiseOrVoid
   }
 
@@ -804,7 +805,7 @@ export const createStore = (
 
   const flushPending = (
     version: VersionObject | undefined,
-    writeEvent?: WriteEvent
+    writeEvent: WriteEvent | undefined
   ): void => {
     if (version) {
       const versionedAtomStateMap = getVersionedAtomStateMap(version)
@@ -853,7 +854,7 @@ export const createStore = (
     if (version) {
       commitVersionedAtomStateMap(version)
     }
-    flushPending(undefined)
+    flushPending(undefined, undefined)
   }
 
   const subscribeAtom = (
@@ -873,13 +874,22 @@ export const createStore = (
     values: Iterable<readonly [AnyAtom, AnyAtomValue]>,
     version?: VersionObject
   ): void => {
+    const event = isDebugMode()
+      ? new WriteEvent(undefined as any, undefined)
+      : undefined
     for (const [atom, value] of values) {
       if (hasInitialValue(atom)) {
-        setAtomPromiseOrValue(version, atom, value)
+        setAtomPromiseOrValue(
+          version,
+          atom,
+          value,
+          undefined,
+          event?.newChildWrite(atom, value)
+        )
         invalidateDependents(version, atom)
       }
     }
-    flushPending(version)
+    flushPending(version, event)
   }
 
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
@@ -911,13 +921,18 @@ export const createStore = (
 
 const isDebugMode = () =>
   typeof process === 'object' && process.env.NODE_ENV !== 'production'
-export class DevtoolsEvent {
+
+class BaseEvent {
+  type = 'unknown'
   atom: AnyAtom
   stack: string[]
   ts: number
   constructor(atom: AnyAtom) {
     this.ts = Date.now()
     this.atom = atom
+
+    // TODO: clean up stack trace capture to only include user's code.
+    // See https://github.com/facebook/react/blob/cae635054e17a6f107a39d328649137b83f25972/packages/react-devtools-shared/src/backend/DevToolsComponentStackFrame.js
     try {
       throw new Error()
     } catch (error) {
@@ -929,7 +944,8 @@ export class DevtoolsEvent {
     }
   }
 }
-export class WriteEvent extends DevtoolsEvent {
+export class WriteEvent extends BaseEvent {
+  type = 'set' as const
   static getRootEvent(writeEvent: WriteEvent) {
     while (writeEvent.parent) {
       writeEvent = writeEvent.parent
@@ -955,6 +971,8 @@ export class WriteEvent extends DevtoolsEvent {
 }
 
 export class ReadEvent extends DevtoolsEvent {}
+
+export type DevtoolsEvent = ReadEvent | WriteEvent
 
 // Debug-only
 

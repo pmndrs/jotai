@@ -6,6 +6,7 @@ import {
   DEV_GET_MOUNTED,
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
+  DevtoolsEvent,
   RESTORE_ATOMS,
   WriteEvent,
 } from '../core/store'
@@ -45,7 +46,7 @@ type AtomsDependents = Map<AnyAtom, Set<AnyAtom>> // immutable
 type AtomsSnapshot = readonly [
   values: AtomsValues,
   dependents: AtomsDependents,
-  write?: WriteEvent
+  event?: DevtoolsEvent
 ]
 
 const isEqualAtomsValues = (left: AtomsValues, right: AtomsValues) =>
@@ -68,6 +69,32 @@ const isEqualAtomsDependents = (
 
 const atomToPrintable = (atom: AnyAtom) =>
   atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
+
+const eventToPrintable = (
+  devtoolsEvent: DevtoolsEvent | undefined
+): object | undefined => {
+  if (!devtoolsEvent) {
+    return
+  }
+
+  if (devtoolsEvent.type === 'set') {
+    const value: any = {
+      setAtom: atomToPrintable(devtoolsEvent.atom),
+      toValue: devtoolsEvent.update,
+      stackTrace: devtoolsEvent.stack,
+    }
+    if (devtoolsEvent.children.length > 0) {
+      value.details = devtoolsEvent.children.map(eventToPrintable)
+    }
+    return value
+  }
+
+  return devtoolsEvent
+}
+
+const eventToType = (event: DevtoolsEvent | undefined) => {
+  return event?.type ?? 'unknown'
+}
 
 const getDevtoolsState = (atomsSnapshot: AtomsSnapshot) => {
   const values: Record<string, AnyAtomValue> = {}
@@ -98,7 +125,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   ])
 
   useEffect(() => {
-    const callback = (write?: WriteEvent) => {
+    const callback = (event?: WriteEvent) => {
       const values: AtomsValues = new Map()
       const dependents: AtomsDependents = new Map()
       for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
@@ -125,8 +152,8 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
           // bail out
           return prev
         }
-        return write
-          ? [values, dependents, WriteEvent.getRootEvent(write)]
+        return event
+          ? [values, dependents, WriteEvent.getRootEvent(event)]
           : [values, dependents]
       })
     }
@@ -230,14 +257,14 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       isTimeTraveling.current = false
     } else if (isRecording.current) {
       snapshots.current.push(atomsSnapshot)
-      devtools.current.send(
-        {
-          type: `${snapshots.current.length}`,
-          updatedAt: new Date().toLocaleString(),
-          write: atomsSnapshot[2],
-        },
-        getDevtoolsState(atomsSnapshot)
-      )
+      const storeEvent = atomsSnapshot[2]
+      const eventType = eventToType(storeEvent)
+      const action: any = {
+        type: `${snapshots.current.length} (${eventToType(storeEvent)})`,
+        updatedAt: new Date().toLocaleString(),
+        ...eventToPrintable(storeEvent),
+      }
+      devtools.current.send(action, getDevtoolsState(atomsSnapshot))
     }
   }, [atomsSnapshot])
 }
