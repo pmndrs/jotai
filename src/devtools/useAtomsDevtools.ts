@@ -153,7 +153,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
           return prev
         }
         return event
-          ? [values, dependents, WriteEvent.getRootEvent(event)]
+          ? [values, dependents, event.getRoot()]
           : [values, dependents]
       })
     }

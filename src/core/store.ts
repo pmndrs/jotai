@@ -919,6 +919,11 @@ export const createStore = (
   }
 }
 
+export type Store = ReturnType<typeof createStore>
+
+// TODO: make the following code development mode only, and dead-code eliminated in production:
+
+// TODO: inline this
 const isDebugMode = () =>
   typeof process === 'object' && process.env.NODE_ENV !== 'production'
 
@@ -944,14 +949,10 @@ class BaseEvent {
     }
   }
 }
+
+/** Records all the atoms and their update values as a write fans out. */
 export class WriteEvent extends BaseEvent {
   type = 'set' as const
-  static getRootEvent(writeEvent: WriteEvent) {
-    while (writeEvent.parent) {
-      writeEvent = writeEvent.parent
-    }
-    return writeEvent
-  }
 
   update: unknown
   parent: WriteEvent | undefined
@@ -968,12 +969,20 @@ export class WriteEvent extends BaseEvent {
     this.children.push(child)
     return child
   }
+
+  getRoot() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let writeEvent: WriteEvent = this
+    while (writeEvent.parent) {
+      writeEvent = writeEvent.parent
+    }
+    return writeEvent
+  }
 }
 
-export class ReadEvent extends DevtoolsEvent {}
+// TODO: attach the read event to ReadDependencies
+export class ReadEvent extends BaseEvent {
+  type = 'get' as const
+}
 
 export type DevtoolsEvent = ReadEvent | WriteEvent
-
-// Debug-only
-
-export type Store = ReturnType<typeof createStore>
