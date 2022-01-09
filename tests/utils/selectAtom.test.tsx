@@ -60,11 +60,8 @@ it('selectAtom works as expected', async () => {
 
 it('selectAtom works with async atom', async () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })
-  bigAtom.debugLabel = 'bigAtom'
   const bigAtomAsync = atom((get) => Promise.resolve(get(bigAtom)))
-  bigAtomAsync.debugLabel = 'bigAtomAsync'
   const littleAtom = selectAtom(bigAtomAsync, (v) => v.a)
-  littleAtom.debugLabel = 'littleAtom'
 
   const Parent = () => {
     const setValue = useUpdateAtom(bigAtom)
