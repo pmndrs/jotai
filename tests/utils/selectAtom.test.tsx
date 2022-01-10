@@ -190,8 +190,14 @@ it('equality function works even if suspend', async () => {
     return (
       <>
         <div>bigValue: {JSON.stringify(value)}</div>
-        <button onClick={() => setValue((oldValue) => ({ ...oldValue, b: 1 }))}>
-          button
+        <button
+          onClick={() =>
+            setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
+          }>
+          increment
+        </button>
+        <button onClick={() => setValue((oldValue) => ({ ...oldValue, b: 2 }))}>
+          other
         </button>
       </>
     )
@@ -214,9 +220,13 @@ it('equality function works even if suspend', async () => {
   await findByText('bigValue: {"a":0}')
   await findByText('littleValue: {"a":0}')
 
-  fireEvent.click(getByText('button'))
-  await findByText('bigValue: {"a":0,"b":1}')
-  await findByText('littleValue: {"a":0}')
+  fireEvent.click(getByText('increment'))
+  await findByText('bigValue: {"a":1}')
+  await findByText('littleValue: {"a":1}')
+
+  fireEvent.click(getByText('other'))
+  await findByText('bigValue: {"a":1,"b":2}')
+  await findByText('littleValue: {"a":1}')
 })
 
 it('useSelector with scope', async () => {
