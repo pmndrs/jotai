@@ -109,6 +109,7 @@
   "scripts": {
     "prebuild": "shx rm -rf dist",
     "build": "concurrently 'yarn:build:*'",
+    "build-watch": "concurrently -n watch: 'yarn:build:* --watch'",
     "build:base": "rollup -c",
     "build:utils": "rollup -c --config-utils",
     "build:devtools": "rollup -c --config-devtools",
