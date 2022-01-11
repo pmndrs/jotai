@@ -54,7 +54,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
         throw atomState.p // read promise
       }
       if ('v' in atomState) {
-        return atomState.v as ResolveType<Value>
+        return [atomState.v, atomState.r] as [ResolveType<Value>, number]
       }
       throw new Error('no atom value')
     },
@@ -62,31 +62,41 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   )
 
   // Pull the atoms's state from the store into React state.
-  const [[version, value, atomFromUseReducer], rerenderIfChanged] = useReducer<
-    Reducer<
-      readonly [VersionObject | undefined, ResolveType<Value>, Atom<Value>],
-      VersionObject | undefined
-    >,
-    undefined
-  >(
-    useCallback(
-      (prev, nextVersion) => {
-        const nextValue = getAtomValue(nextVersion)
-        if (Object.is(prev[1], nextValue) && prev[2] === atom) {
-          return prev // bail out
-        }
-        return [nextVersion, nextValue, atom]
-      },
-      [getAtomValue, atom]
-    ),
-    undefined,
-    () => {
-      // NOTE should/could branch on mount?
-      const initialVersion = undefined
-      const initialValue = getAtomValue(initialVersion)
-      return [initialVersion, initialValue, atom]
-    }
-  )
+  const [[version, value, revision, atomFromUseReducer], rerenderIfChanged] =
+    useReducer<
+      Reducer<
+        readonly [
+          VersionObject | undefined,
+          ResolveType<Value>,
+          number,
+          Atom<Value>
+        ],
+        VersionObject | undefined
+      >,
+      undefined
+    >(
+      useCallback(
+        (prev, nextVersion) => {
+          const [nextValue, nextRevision] = getAtomValue(nextVersion)
+          if (
+            Object.is(prev[1], nextValue) &&
+            Object.is(prev[2], nextRevision) &&
+            prev[3] === atom
+          ) {
+            return prev // bail out
+          }
+          return [nextVersion, nextValue, nextRevision, atom]
+        },
+        [getAtomValue, atom]
+      ),
+      undefined,
+      () => {
+        // NOTE should/could branch on mount?
+        const initialVersion = undefined
+        const [initialValue, initialRevision] = getAtomValue(initialVersion)
+        return [initialVersion, initialValue, initialRevision, atom]
+      }
+    )
 
   if (atomFromUseReducer !== atom) {
     rerenderIfChanged(undefined)
@@ -100,9 +110,10 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
     return unsubscribe
   }, [store, atom])
 
+  // The revision hook dependency is needed to track atom changes.
   useEffect(() => {
     store[COMMIT_ATOM](atom, version)
-  })
+  }, [store, atom, version, revision])
 
   const setAtom = useCallback(
     (update: Update) => {
