@@ -83,8 +83,8 @@ it('Should add a cache for multiple exported atoms', () => {
       }
 
     };
-    export const countAtom = atom(0);
-    export const doubleAtom = atom(get => get(countAtom) * 2);"
+    export const countAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/countAtom\\", atom(0));
+    export const doubleAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/doubleAtom\\", atom(get => get(countAtom) * 2));"
   `)
 })
 
@@ -131,7 +131,7 @@ it('Should add a cache for mixed exports of atoms', () => {
       }
 
     };
-    export const countAtom = atom(0);
+    export const countAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/countAtom\\", atom(0));
     export default globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/defaultExport\\", atom(get => get(countAtom) * 2));"
   `)
 })
