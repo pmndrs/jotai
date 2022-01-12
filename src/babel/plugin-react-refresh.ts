@@ -48,7 +48,6 @@ export default function reactRefreshPlugin({
         }
       },
       VariableDeclarator(nodePath, state) {
-        console.log(nodePath.parentPath.parentPath?.type)
         if (
           t.isIdentifier(nodePath.node.id) &&
           t.isCallExpression(nodePath.node.init) &&
@@ -57,7 +56,6 @@ export default function reactRefreshPlugin({
           (nodePath.parentPath.parentPath?.isProgram() ||
             nodePath.parentPath.parentPath?.isExportNamedDeclaration())
         ) {
-          console.log('yay!')
           const filename = state.filename || 'unknown'
           const atomKey = `${filename}/${nodePath.node.id.name}`
 
