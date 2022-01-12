@@ -42,3 +42,28 @@ Any JSX markup that depends on the value of a stored atom (e.g., a `className` o
 This means that there will be a mismatch between what is originally served to the user's browser as HTML and what is expected by React during the rehydration process if the user has a `storedValue` that differs from the `initialValue`.
 
 The suggested workaround for this issue is to only render the content dependent on the `storedValue` client-side by wrapping it in a [custom `<ClientOnly>` wrapper](https://www.joshwcomeau.com/react/the-perils-of-rehydration/#abstractions), which only renders after rehydration. Alternative solutions are technically possible, but would require a brief "flicker" as the `initialValue` is swapped to the `storedValue`, which can result in an unpleasant user experience, so this solution is advised.
+
+## Deleting an item from storage
+
+For the case you want to delete an item from storage,
+the atom created with `atomWithStorage` accepts the `RESET` symbol on write.
+
+See the following example for the usage:
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithStorage, RESET } from 'jotai/utils'
+
+const textAtom = atomWithStorage('text', 'hello')
+
+const TextBox = () => {
+  const [text, setText] = useAtom(textAtom)
+
+  return (
+    <>
+      <input value={text} onChange={(e) => setText(e.target.value)} />
+      <button onClick={() => setText(RESET)}>Reset (to 'hello')</button>
+    </>
+  )
+}
+```
