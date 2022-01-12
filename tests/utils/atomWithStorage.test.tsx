@@ -1,7 +1,12 @@
 import { Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai'
-import { RESET, atomWithHash, atomWithStorage } from 'jotai/utils'
+import {
+  RESET,
+  atomWithHash,
+  atomWithStorage,
+  createJSONStorage,
+} from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -177,6 +182,36 @@ describe('atomWithStorage (async)', () => {
     await waitFor(() => {
       expect(asyncStorageData.count3).toBe(31)
     })
+  })
+})
+
+describe('atomWithStorage (no storage) (#949)', () => {
+  it('can throw in createJSONStorage', async () => {
+    const countAtom = atomWithStorage(
+      'count',
+      1,
+      createJSONStorage(() => {
+        throw new Error('no storage')
+      })
+    )
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('count: 1')
   })
 })
 
