@@ -953,3 +953,32 @@ it('chained derive atom with onMount and useEffect (#897)', async () => {
 
   await findByText('count: 1')
 })
+
+it('onMount is not called when atom value is accessed from writeGetter in derived atom (#942)', async () => {
+  const onUnmount = jest.fn()
+  const onMount = jest.fn(() => {
+    return onUnmount
+  })
+
+  const aAtom = atom(false)
+  aAtom.onMount = onMount
+
+  const bAtom = atom(null, (get) => {
+    get(aAtom)
+  })
+
+  const App = () => {
+    const [, action] = useAtom(bAtom)
+    useEffect(() => action(), [action])
+    return null
+  }
+
+  render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  expect(onMount).not.toBeCalled()
+  expect(onUnmount).not.toBeCalled()
+})
