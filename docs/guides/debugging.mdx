@@ -3,13 +3,13 @@ title: Debugging
 nav: 3.2
 ---
 
+
 In basic apps, `console.log` can be our best friend for debugging atoms, but when applications get bigger and we have more atoms to use, logging would not be a good way of debugging atoms.
 Jotai provides two ways of debugging atoms, **React Dev Tools** and **Redux Dev tools**. For reading values and simple debugging, React Dev Tools might suit you, but for more complicated tasks like Time-travelling and setting values, Redux Dev Tools would be a better option.
 
 ## Debug labels
 It is worth mentioning that we have a concept called **Debug labels** in jotai which may help us with debugging. 
-By default each jotai state has the label like `1:<no debugLabel>` with number being
-internal `key` assigned to each atom automatically. But you can add labels to atoms to help you distinguish them more easily with `debugLabel`.
+By default each jotai state has the label like `1:<no debugLabel>` with number being internal `key` assigned to each atom automatically. But you can add labels to atoms to help you distinguish them more easily with `debugLabel`.
 
 ```js
 const countAtom = atom(0)
@@ -19,6 +19,7 @@ if (process.env.NODE_ENV !== 'production') {
   // debugLabel is 'count' now
 }
 ```
+> Jotai provides a babel plugin that adds a debugLabel automatically to every atom, which makes things easier for us. for more info check out [jotai/babel](https://github.com/pmndrs/jotai/blob/main/docs/api/babel.mdx#plugin-debug-label)
 
 ## Using React Dev Tools
 
@@ -26,6 +27,8 @@ You can use [React Dev Tools](https://chrome.google.com/webstore/detail/react-de
 to inspect Jotai state. To achieve that [useDebugValue](https://reactjs.org/docs/hooks-reference.html#usedebugvalue)
 is used inside custom hooks. Keep in mind that it only works in dev mode
 (`NODE_ENV === 'development'`).
+
+> Provider-less mode does not work with React Dev Tools, So we need to wrap our app with the Jotai `Provider`
 
 ### Provider
 
@@ -108,3 +111,4 @@ To find bugs where you accidentally tried to mutate objects stored in atoms you
 could use [`freezeAtom`](../api/utils.mdx#freeze-atom) or
 [`atomFrozenInDev`](../api/utils.mdx#atom-frozen-in-dev) from `jotai/utils` bundle.
 Which returns atoms value that is deeply freezed with `Object.freeze`.
+
