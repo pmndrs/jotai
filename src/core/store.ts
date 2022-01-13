@@ -295,9 +295,9 @@ export const createStore = (
     version: VersionObject | undefined,
     prevReadDependencies: ReadDependencies = new Map(),
     dependencies?: Set<AnyAtom>
-  ): ReadDependencies => {
+  ): { d: ReadDependencies; changed: boolean } => {
     if (!dependencies) {
-      return prevReadDependencies
+      return { d: prevReadDependencies, changed: false }
     }
     const readDependencies: ReadDependencies = new Map()
     let changed = false
@@ -309,9 +309,9 @@ export const createStore = (
       }
     })
     if (prevReadDependencies.size === readDependencies.size && !changed) {
-      return prevReadDependencies
+      return { d: prevReadDependencies, changed }
     }
-    return readDependencies
+    return { d: readDependencies, changed }
   }
 
   const setAtomValue = <Value>(
@@ -335,15 +335,23 @@ export const createStore = (
         cancelSuspensePromise(atomState.p)
       }
     }
+
+    const { d, changed: dependenciesChanged } = createReadDependencies(
+      version,
+      atomState?.d,
+      dependencies
+    )
+
     const nextAtomState: AtomState<Value> = {
       v: value,
       r: atomState?.r || 0,
-      d: createReadDependencies(version, atomState?.d, dependencies),
+      d,
     }
     if (
       !atomState ||
       !('v' in atomState) || // new value, or
-      !Object.is(atomState.v, value) // different value
+      !Object.is(atomState.v, value) || // different value,
+      dependenciesChanged
     ) {
       ++nextAtomState.r // increment revision
       if (nextAtomState.d.has(atom)) {
@@ -378,7 +386,7 @@ export const createStore = (
     const nextAtomState: AtomState<Value> = {
       e: error, // set read error
       r: atomState?.r || 0,
-      d: createReadDependencies(version, atomState?.d, dependencies),
+      d: createReadDependencies(version, atomState?.d, dependencies).d,
     }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
@@ -402,7 +410,7 @@ export const createStore = (
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
       r: atomState?.r || 0,
-      d: createReadDependencies(version, atomState?.d, dependencies),
+      d: createReadDependencies(version, atomState?.d, dependencies).d,
     }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
