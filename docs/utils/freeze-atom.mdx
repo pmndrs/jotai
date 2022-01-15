@@ -11,9 +11,9 @@ freezeAtom(anAtom): AtomType
 
 `freezeAtom` takes an existing atom and returns a new derived "frozen" atom.
 The atom will be deeply frozen by `Object.freeze`.
-It would be useful to find bugs where you accidentally tried
-to manipulate objects (states) which can lead to unexpected behavior.
-You may combine `freezeAtom` with all atoms to prevent accidentally manipulate objects (states).
+It is useful to find bugs where you unintentionally tried
+to change objects (states) which can lead to unexpected behavior.
+You may use `freezeAtom` with all atoms to prevent this situation.
 
 ## Parameters
 
