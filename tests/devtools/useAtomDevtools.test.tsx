@@ -84,8 +84,6 @@ describe('If there is no extension installed...', () => {
   })
 
   it('warns in dev env', () => {
-    const originalNodeEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
 
@@ -98,21 +96,7 @@ describe('If there is no extension installed...', () => {
       'Please install/enable Redux devtools extension'
     )
 
-    process.env.NODE_ENV = originalNodeEnv
     console.warn = originalConsoleWarn
-  })
-
-  it('does not warn if not in dev env', () => {
-    const consoleWarn = jest.spyOn(console, 'warn')
-
-    render(
-      <Provider>
-        <Counter />
-      </Provider>
-    )
-    expect(consoleWarn).not.toBeCalled()
-
-    consoleWarn.mockRestore()
   })
 })
 

@@ -43,11 +43,7 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
     // ignored
   }
   if (!extension) {
-    if (
-      typeof process === 'object' &&
-      process.env.NODE_ENV === 'development' &&
-      typeof window !== 'undefined'
-    ) {
+    if (__DEV__ && typeof window !== 'undefined') {
       console.warn('Please install/enable Redux devtools extension')
     }
   }
