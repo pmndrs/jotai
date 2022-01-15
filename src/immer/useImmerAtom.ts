@@ -1,4 +1,3 @@
-/* eslint-disable import/named */
 import { useCallback } from 'react'
 import { produce } from 'immer'
 import type { Draft } from 'immer'

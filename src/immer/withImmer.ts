@@ -1,4 +1,3 @@
-/* eslint-disable import/named */
 import { produce } from 'immer'
 import type { Draft } from 'immer'
 import { atom } from 'jotai'
