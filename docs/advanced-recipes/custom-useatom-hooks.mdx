@@ -1,0 +1,59 @@
+---
+title: Custom useAtom hooks
+nav: 5.3
+---
+
+
+This page shows the ways of creating different utility functions. Utility functions save your time on coding, and you can preserve your base atom for other usage.
+
+## utils
+
+### useSelectAtom
+
+```ts
+import { useAtom } from 'jotai'
+import { selectAtom } from 'jotai/utils'
+
+export function useSelectAtom(anAtom, keyFn) {
+    return useAtom(selectAtom(anAtom, keyFn));
+}
+```
+
+Please note that in this case `keyFn` must be stable, either define outside render or warp with `useCallback`
+
+### useFreezeAtom
+
+```ts
+import { useAtom } from 'jotai'
+import { freezeAtom } from 'jotai/utils'
+
+export function useFreezeAtom(anAtom) {
+    return useAtom(freezeAtom(anAtom))
+}
+```
+
+### useSplitAtom
+
+```ts
+import { useAtom } from 'jotai'
+import { splitAtom } from 'jotai/utils'
+
+export function useSplitAtom(anAtom) {
+    return useAtom(splitAtom(anAtom))
+}
+```
+
+## integrations
+
+### useFocusAtom
+
+```ts
+import { useAtom } from 'jotai'
+import { focusAtom } from 'jotai/optics'
+
+export function useFocusAtom(anAtom, keyFn) {
+    return useAtom(focusAtom(anAtom, keyFn))
+}
+```
+
+Please note that in this case `keyFn` must be stable, either define outside render or warp with `useCallback`

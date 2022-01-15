@@ -51,7 +51,10 @@ export default function reactRefreshPlugin({
         if (
           t.isIdentifier(nodePath.node.id) &&
           t.isCallExpression(nodePath.node.init) &&
-          isAtom(t, nodePath.node.init.callee)
+          isAtom(t, nodePath.node.init.callee) &&
+          // Make sure atom declaration is in module scope
+          (nodePath.parentPath.parentPath?.isProgram() ||
+            nodePath.parentPath.parentPath?.isExportNamedDeclaration())
         ) {
           const filename = state.filename || 'unknown'
           const atomKey = `${filename}/${nodePath.node.id.name}`

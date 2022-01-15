@@ -1,4 +1,3 @@
-/* eslint-disable import/named */
 import { useCallback } from 'react'
 import { produce } from 'immer'
 import type { Draft } from 'immer'
@@ -22,7 +21,10 @@ export function useImmerAtom<Value, Result extends void | Promise<void>>(
 ) {
   const [state, setState] = useAtom(anAtom, scope)
   const setStateWithImmer = useCallback(
-    (fn) => setState(produce((draft) => fn(draft)) as (value: Value) => Value),
+    (fn) =>
+      setState(
+        produce((draft) => fn(draft)) as unknown as (value: Value) => Value
+      ),
     [setState]
   )
   return [state, setStateWithImmer]
