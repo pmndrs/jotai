@@ -973,6 +973,63 @@ it('async atom double chain without setTimeout (#751)', async () => {
   await findByText('async: ready')
 })
 
+it('async atom double chain with setTimeout', async () => {
+  const enabledAtom = atom(false)
+  const asyncAtom = atom(async (get) => {
+    const enabled = get(enabledAtom)
+    if (!enabled) {
+      return 'init'
+    }
+    await new Promise((r) => setTimeout(r, 100))
+    return 'ready'
+  })
+  const derivedAsyncAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 100))
+    return get(asyncAtom)
+  })
+  const anotherAsyncAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 100))
+    return get(derivedAsyncAtom)
+  })
+
+  const AsyncComponent = () => {
+    const [text] = useAtom(anotherAsyncAtom)
+    return <div>async: {text}</div>
+  }
+
+  const Parent = () => {
+    // Use useAtom to reproduce the issue
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <>
+        <Suspense fallback="loading">
+          <AsyncComponent />
+        </Suspense>
+        <button
+          onClick={() => {
+            setEnabled(true)
+          }}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('async: init')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('async: ready')
+})
+
 it('update unmounted async atom with intermediate atom', async () => {
   const enabledAtom = atom(true)
   const countAtom = atom(1)
