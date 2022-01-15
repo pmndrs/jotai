@@ -31,7 +31,7 @@ const Counter = () => {
 }
 
 const Controls = () => {
-  const [, setCount] = useAtom(setCountAtom)
+  const [, setCount] = useAtom(countAtom)
   // setCount === update : (draft: Draft<Value>) => void
   const inc = () => setCount((c) => (c = c + 1))
   return <button onClick={inc}>+1</button>

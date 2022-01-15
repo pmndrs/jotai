@@ -55,10 +55,14 @@ export function createJSONStorage<Value>(
 export function createJSONStorage<Value>(
   getStringStorage: () => AsyncStringStorage | SyncStringStorage
 ): AsyncStorage<Value> | SyncStorage<Value> {
-  if (!getStringStorage().removeItem) {
-    console.warn(
-      'Missing removeItem. In the next version, it will be required.'
-    )
+  try {
+    if (!getStringStorage().removeItem) {
+      console.warn(
+        'Missing removeItem. In the next version, it will be required.'
+      )
+    }
+  } catch {
+    // getStringStorage can throw if localStorage is not defined
   }
   return {
     getItem: (key) => {
