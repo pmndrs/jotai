@@ -178,7 +178,7 @@
       ]
     },
     "globals": {
-      "__DEV__": false
+      "__DEV__": true
     },
     "moduleNameMapper": {
       "^jotai$": "<rootDir>/src/index.ts",
