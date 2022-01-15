@@ -5,9 +5,6 @@
     "node": true,
     "es6": true
   },
-  "globals": {
-    "__DEV__": "readonly"
-  },
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
