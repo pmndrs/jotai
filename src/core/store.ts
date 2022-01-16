@@ -479,8 +479,9 @@ export const createStore = (
       // See if we can skip recomputing this atom.
       const atomState = getAtomState(version, atom)
       if (atomState) {
-        // First, if we have suspending promise
+        // First, check if we already have suspending promise
         if (
+          atomState.r !== atomState.i && // revision is not invalidated
           'p' in atomState &&
           !isSuspensePromiseAlreadyCancelled(atomState.p)
         ) {
