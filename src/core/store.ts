@@ -4,6 +4,7 @@ import {
   createSuspensePromise,
   isEqualSuspensePromise,
   isSuspensePromise,
+  isSuspensePromiseAlreadyCancelled,
 } from './suspensePromise'
 import type { SuspensePromise } from './suspensePromise'
 
@@ -425,7 +426,7 @@ export const createStore = (
               if (isSuspensePromise(e)) {
                 // schedule another read later
                 // FIXME not 100% confident with this code
-                e.then(() => {
+                return e.then(() => {
                   readAtomState(version, atom, true)
                 })
               }
@@ -478,7 +479,14 @@ export const createStore = (
       // See if we can skip recomputing this atom.
       const atomState = getAtomState(version, atom)
       if (atomState) {
-        // First, ensure that each atom we depend on is up to date.
+        // First, if we have suspending promise
+        if (
+          'p' in atomState &&
+          !isSuspensePromiseAlreadyCancelled(atomState.p)
+        ) {
+          return atomState
+        }
+        // Second, ensure that each atom we depend on is up to date.
         // Recursive calls to `readAtomState(version, a)` will recompute `a` if
         // it's out of date thus increment its revision number if it changes.
         atomState.d.forEach((_, a) => {
