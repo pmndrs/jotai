@@ -3,16 +3,30 @@ title: freezeAtom
 nav: 6.15
 ---
 
-```js
+## Usage
+
+```typescript
+freezeAtom(anAtom): AtomType
+```
+
+`freezeAtom` takes an existing atom and returns a new derived "frozen" atom.
+The atom will be deeply frozen by `Object.freeze`.
+It is useful to find bugs where you unintentionally tried
+to change objects (states) which can lead to unexpected behavior.
+You may use `freezeAtom` with all atoms to prevent this situation.
+
+## Parameters
+
+**anAtom** (required): An atom you wish to freeze.
+
+
+## Examples
+
+```typescript
 import { atom } from 'jotai'
 import { freezeAtom } from 'jotai/utils'
 
 const objAtom = freezeAtom(atom({ count: 0 }))
 ```
 
-`freezeAtom` takes an existing atom and returns a new derived atom.
-The returned atom is "frozen" which means when you use the atom
-with `useAtom` in components or `get` in other atoms,
-the atom value will be deeply frozen with Object.freeze.
-It would be useful to find bugs where you accidentally tried
-to mutate objects which can lead to unexpected behavior.
+## CodeSandbox
