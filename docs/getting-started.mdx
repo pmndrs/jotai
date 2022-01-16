@@ -32,9 +32,7 @@ To create an atom, all you need is to pass an initial value.
 ```jsx
 import { atom, useAtom } from 'jotai'
 
-function Counter() {
 const countAtom = atom(0);
-}
 ```
 
 ## useAtom
@@ -45,18 +43,16 @@ just like React's `useState`.
 
 Now that we understand the main idea behind Jotai, let's create the components:
 ```jsx
-function Counter() {
-const countAtom = atom(0);
-
-const [count, setCount] = useAtom(countAtom);
+const Counter = () => {
+  const [count, setCount] = useAtom(countAtom);
   return (
     <>
       <h1>{count} </h1>
       <button onClick={() => setCount((value) => value + 1)}>one up</button>
-			<button onClick={() => setCount((value) => value - 1)}>one down</button>
+      <button onClick={() => setCount((value) => value - 1)}>one down</button>
     </>
   );
-}
+};
 
 const App = () => (
   <>
@@ -67,6 +63,8 @@ const App = () => (
 export default App;
 
 ```
+
+<CodeSandbox id="q1hpx" />
 
 We created a sample atom in the example above, but we can also create a derived atom.
 For more detailed information about the atom, we recommend reading [Primitives](https://jotai.org/docs/basics/primitives) section of the documentation.
