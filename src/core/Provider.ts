@@ -61,7 +61,10 @@ export const Provider = ({
     }
   }
 
-  if (__DEV__) {
+  if (
+    __DEV__ &&
+    (typeof process !== 'object' || process.env.NODE_ENV !== 'test')
+  ) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(scopeContainerRef.current)
   }
