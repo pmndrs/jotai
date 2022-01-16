@@ -423,13 +423,12 @@ export const createStore = (
           })
           .catch((e) => {
             if (e instanceof Promise) {
-              if (
-                isSuspensePromise(e) &&
-                isSuspensePromiseAlreadyCancelled(e)
-              ) {
+              if (isSuspensePromise(e)) {
                 // schedule another read later
                 // FIXME not 100% confident with this code
-                e.then(() => readAtomState(version, atom, true))
+                return e.then(() => {
+                  readAtomState(version, atom, true)
+                })
               }
               return e
             }
@@ -480,7 +479,15 @@ export const createStore = (
       // See if we can skip recomputing this atom.
       const atomState = getAtomState(version, atom)
       if (atomState) {
-        // First, ensure that each atom we depend on is up to date.
+        // First, check if we already have suspending promise
+        if (
+          atomState.r !== atomState.i && // revision is not invalidated
+          'p' in atomState &&
+          !isSuspensePromiseAlreadyCancelled(atomState.p)
+        ) {
+          return atomState
+        }
+        // Second, ensure that each atom we depend on is up to date.
         // Recursive calls to `readAtomState(version, a)` will recompute `a` if
         // it's out of date thus increment its revision number if it changes.
         atomState.d.forEach((_, a) => {
@@ -505,12 +512,11 @@ export const createStore = (
         // If a dependency's revision changed since this atom was last computed,
         // then we're out of date and need to recompute.
         if (
-          Array.from(atomState.d.entries()).every(([a, r]) => {
+          Array.from(atomState.d).every(([a, r]) => {
             const aState = getAtomState(version, a)
             return (
               aState &&
-              !('e' in aState) && // no read error
-              !('p' in aState) && // no suspense promise
+              'v' in aState && // has value
               aState.r === r // revision is equal to the last one
             )
           })
@@ -804,16 +810,18 @@ export const createStore = (
       })
       return
     }
-    const pending = Array.from(pendingMap)
-    pendingMap.clear()
-    pending.forEach(([atom, prevAtomState]) => {
-      const atomState = getAtomState(undefined, atom)
-      if (atomState && atomState.d !== prevAtomState?.d) {
-        mountDependencies(atom, atomState, prevAtomState?.d)
-      }
-      const mounted = mountedMap.get(atom)
-      mounted?.l.forEach((listener) => listener())
-    })
+    while (pendingMap.size) {
+      const pending = Array.from(pendingMap)
+      pendingMap.clear()
+      pending.forEach(([atom, prevAtomState]) => {
+        const atomState = getAtomState(undefined, atom)
+        if (atomState && atomState.d !== prevAtomState?.d) {
+          mountDependencies(atom, atomState, prevAtomState?.d)
+        }
+        const mounted = mountedMap.get(atom)
+        mounted?.l.forEach((listener) => listener())
+      })
+    }
     if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
       stateListeners.forEach((l) => l())
     }
