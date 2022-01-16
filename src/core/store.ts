@@ -921,6 +921,17 @@ export const createStoreForExport = (
     }
     return atomState.v
   }
+  const asyncGet = <Value>(atom: Atom<Value>) =>
+    new Promise<ResolveType<Value>>((resolve, reject) => {
+      const atomState = store[READ_ATOM](atom)
+      if ('e' in atomState) {
+        reject(atomState.e) // read error
+      } else if ('p' in atomState) {
+        resolve(atomState.p.then(() => asyncGet(atom))) // retry later
+      } else {
+        resolve(atomState.v)
+      }
+    })
   const set = <Value, Update, Result extends void | Promise<void>>(
     atom: WritableAtom<Value, Update, Result>,
     update: Update
@@ -929,6 +940,7 @@ export const createStoreForExport = (
     store[SUBSCRIBE_ATOM](atom, callback)
   return {
     get,
+    asyncGet,
     set,
     sub,
     SECRET_INTERNAL_store: store,
