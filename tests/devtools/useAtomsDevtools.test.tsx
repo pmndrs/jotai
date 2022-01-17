@@ -82,6 +82,9 @@ describe('If there is no extension installed...', () => {
   }
 
   it('does not throw', () => {
+    const originalConsoleWarn = console.warn
+    console.warn = jest.fn()
+
     expect(() => {
       render(
         <StrictMode>
@@ -93,6 +96,8 @@ describe('If there is no extension installed...', () => {
         </StrictMode>
       )
     }).not.toThrow()
+
+    console.warn = originalConsoleWarn
   })
 
   it('warns in dev env', () => {
