@@ -130,22 +130,16 @@ export default function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
     c = c.slice('config-'.length).replace(/_/g, '/')
-    return [
-      createCommonJSConfig(`src/${c}.ts`, `dist/${c}`),
-      createESMConfig(`src/${c}.ts`, `dist/esm/${c}`),
-      createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development'),
-      createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production'),
-      createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'development'),
-      createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'production'),
-    ]
+  } else {
+    c = 'index'
   }
   return [
-    createDeclarationConfig('src/index.ts', 'dist'),
-    createCommonJSConfig('src/index.ts', 'dist/index'),
-    createESMConfig('src/index.ts', 'dist/esm/index'),
-    createUMDConfig('src/index.ts', 'dist/umd/index', 'development'),
-    createUMDConfig('src/index.ts', 'dist/umd/index', 'production'),
-    createSystemConfig('src/index.ts', 'dist/system/index', 'development'),
-    createSystemConfig('src/index.ts', 'dist/system/index', 'production'),
+    ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
+    createCommonJSConfig(`src/${c}.ts`, `dist/${c}`),
+    createESMConfig(`src/${c}.ts`, `dist/esm/${c}`),
+    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development'),
+    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production'),
+    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'development'),
+    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'production'),
   ]
 }
