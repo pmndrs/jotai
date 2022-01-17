@@ -5,7 +5,7 @@ nav: 0.1
 
 Welcome to the Jotai Getting Started tutorial!
 This tutorial will introduce you to Jotai and teach you how to use it correctly.
-By creating a sample counter app!!
+By creating a sample list of things app!!
 
 
 For this tutorial, we assume that you're using Jotai with React. For creating the react app, we will use [ Create-React-App ](https://create-react-app.dev/docs/getting-started), so the first thing you have to do is:
@@ -27,12 +27,14 @@ for more details consider reading [Primitives](https://jotai.org/docs/basics/pri
 
 An exported function called `atom` comes with jotai, which represents a piece of state. Atoms can be read from and written to from any component.
 
-To create an atom, all you need is to pass an initial value.
+To create an atom, all you need is to pass an initial value. 
+Unlike `useState` hook in react, you can use `atom` outside of a function.
 
 ```jsx
 import { atom, useAtom } from 'jotai'
 
-const countAtom = atom(0);
+const itemsAtom = atom([]);
+const itemNameAtom = atom("");
 ```
 
 ## useAtom
@@ -43,20 +45,46 @@ just like React's `useState`.
 
 Now that we understand the main idea behind Jotai, let's create the components:
 ```jsx
-const Counter = () => {
-  const [count, setCount] = useAtom(countAtom);
+const ListOfThings = () => {
+  const [items, setItems] = useAtom(itemsAtom);
+  const [itemName, setItemName] = useAtom(itemNameAtom);
+
+  const addItem = (event) => {
+    event.preventDefault();
+    setItems([
+      ...items,
+      {
+        id: items.length,
+        name: itemName
+      }
+    ]);
+    setItemName("");
+  };
+
   return (
     <>
-      <h1>{count} </h1>
-      <button onClick={() => setCount((value) => value + 1)}>one up</button>
-      <button onClick={() => setCount((value) => value - 1)}>one down</button>
+      <form onSubmit={addItem}>
+        <label>
+          <input
+            name="item"
+            type="text"
+            value={itemName}
+            onChange={(e) => setItemName(e.target.value)}
+          />
+        </label>
+      </form>
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>{item.name}</li>
+        ))}
+      </ul>
     </>
   );
 };
 
 const App = () => (
   <>
-    <Counter />
+    <ListOfThings />
   </>
 );
 
