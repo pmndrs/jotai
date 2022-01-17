@@ -108,7 +108,7 @@
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "concurrently 'yarn:build:*'",
+    "build": "concurrently -m 8 'yarn:build:*'",
     "build-watch": "concurrently -n watch: 'yarn:build:* --watch'",
     "build:base": "rollup -c",
     "build:utils": "rollup -c --config-utils",
