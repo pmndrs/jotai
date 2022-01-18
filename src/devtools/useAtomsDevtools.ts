@@ -84,7 +84,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
   if (!store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useAtomsSnapshot can only be used in dev mode.')
+    throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
   const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => [
