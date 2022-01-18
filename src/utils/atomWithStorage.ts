@@ -7,10 +7,7 @@ type Unsubscribe = () => void
 type AsyncStorage<Value> = {
   getItem: (key: string) => Promise<Value>
   setItem: (key: string, newValue: Value) => Promise<void>
-  /**
-   * This will be required in the next version
-   */
-  removeItem?: (key: string) => Promise<void>
+  removeItem: (key: string) => Promise<void>
   delayInit?: boolean
   subscribe?: (key: string, callback: (value: Value) => void) => Unsubscribe
 }
@@ -18,10 +15,7 @@ type AsyncStorage<Value> = {
 type SyncStorage<Value> = {
   getItem: (key: string) => Value
   setItem: (key: string, newValue: Value) => void
-  /**
-   * This will be required in the next version
-   */
-  removeItem?: (key: string) => void
+  removeItem: (key: string) => void
   delayInit?: boolean
   subscribe?: (key: string, callback: (value: Value) => void) => Unsubscribe
 }
@@ -29,19 +23,13 @@ type SyncStorage<Value> = {
 type AsyncStringStorage = {
   getItem: (key: string) => Promise<string | null>
   setItem: (key: string, newValue: string) => Promise<void>
-  /**
-   * This will be required in the next version
-   */
-  removeItem?: (key: string) => Promise<void>
+  removeItem: (key: string) => Promise<void>
 }
 
 type SyncStringStorage = {
   getItem: (key: string) => string | null
   setItem: (key: string, newValue: string) => void
-  /**
-   * This will be required in the next version
-   */
-  removeItem?: (key: string) => void
+  removeItem: (key: string) => void
 }
 
 export function createJSONStorage<Value>(
@@ -55,15 +43,6 @@ export function createJSONStorage<Value>(
 export function createJSONStorage<Value>(
   getStringStorage: () => AsyncStringStorage | SyncStringStorage
 ): AsyncStorage<Value> | SyncStorage<Value> {
-  try {
-    if (!getStringStorage().removeItem) {
-      console.warn(
-        'Missing removeItem. In the next version, it will be required.'
-      )
-    }
-  } catch {
-    // getStringStorage can throw if localStorage is not defined
-  }
   return {
     getItem: (key) => {
       const value = getStringStorage().getItem(key)
@@ -74,7 +53,7 @@ export function createJSONStorage<Value>(
     },
     setItem: (key, newValue) =>
       getStringStorage().setItem(key, JSON.stringify(newValue)),
-    removeItem: (key) => getStringStorage().removeItem?.(key), // TODO remove optional chaining
+    removeItem: (key) => getStringStorage().removeItem(key),
   }
 }
 
@@ -114,12 +93,6 @@ export function atomWithStorage<Value>(
     | SyncStorage<Value>
     | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>
 ) {
-  if (!storage.removeItem) {
-    console.warn(
-      'Missing removeItem. In the next version, it will be required.'
-    )
-  }
-
   const getInitialValue = () => {
     try {
       const value = storage.getItem(key)
@@ -155,7 +128,7 @@ export function atomWithStorage<Value>(
     (get, set, update: SetStateAction<Value> | typeof RESET) => {
       if (update === RESET) {
         set(baseAtom, initialValue)
-        return storage.removeItem?.(key) // TODO remove optional chaining
+        return storage.removeItem(key)
       }
       const newValue =
         typeof update === 'function'
