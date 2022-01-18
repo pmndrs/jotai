@@ -251,8 +251,6 @@ it('should be able to refetch only specific pages when refetchPages is provided'
       [setState]
     )
 
-    states.push(state)
-
     return (
       <>
         <div>length: {state.pages.length}</div>
