@@ -804,7 +804,10 @@ export const createStore = (
       const mounted = mountedMap.get(a)
       if (mounted) {
         mounted.t.add(atom) // add to dependents
-      } else {
+      } else if (mountedMap.has(atom)) {
+        // we mount dependencies only when atom is already mounted
+        // Note: we should revisit this when you find other issues
+        // https://github.com/pmndrs/jotai/issues/942
         mountAtom(a, atom)
       }
     })
