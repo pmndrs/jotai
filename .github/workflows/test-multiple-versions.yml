@@ -40,7 +40,7 @@ jobs:
           - 16.9.0
           - 17.0.0
           - 18.0.0-rc.0
-          - 0.0.0-experimental-fe905f152-20220107
+          - 0.0.0-experimental-51947a14b-20220113
         mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
         testing: [default, alpha]
         exclude:
@@ -49,7 +49,7 @@ jobs:
           - { react: 16.9.0, testing: alpha }
           - { react: 17.0.0, testing: alpha }
           - { react: 18.0.0-rc.0, testing: default } # suspense doesn't work?
-          - { react: 0.0.0-experimental-fe905f152-20220107, testing: default } # suspense doesn't work?
+          - { react: 0.0.0-experimental-51947a14b-20220113, testing: default } # suspense doesn't work?
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -61,10 +61,6 @@ jobs:
       - name: Install alpha testing-library
         if: ${{ matrix.testing == 'alpha' }}
         run: yarn add -D @testing-library/react@alpha
-      - name: Patch for React 16.8
-        if: ${{ startsWith(matrix.react, '16.8.') }}
-        run: |
-          sed -i~ 's/it(.async atom double chain without setTimeout (#751).,/it.skip("async atom double chain without setTimeout (#751)",/' tests/async.test.tsx
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
