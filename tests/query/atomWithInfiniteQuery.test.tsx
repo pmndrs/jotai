@@ -276,7 +276,6 @@ it('should be able to refetch only specific pages when refetchPages is provided'
   await findByText('loading')
   await findByText('length: 1')
   await findByText('page 1: 10')
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('fetch next page'))
   await findByText('length: 2')
   await findByText('page 2: 11')
