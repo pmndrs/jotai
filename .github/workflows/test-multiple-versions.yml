@@ -61,10 +61,6 @@ jobs:
       - name: Install alpha testing-library
         if: ${{ matrix.testing == 'alpha' }}
         run: yarn add -D @testing-library/react@alpha
-      - name: Patch for React 16.8
-        if: ${{ startsWith(matrix.react, '16.8.') }}
-        run: |
-          sed -i~ 's/it(.async atom double chain without setTimeout (#751).,/it.skip("async atom double chain without setTimeout (#751)",/' tests/async.test.tsx
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
