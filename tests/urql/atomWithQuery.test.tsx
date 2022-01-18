@@ -14,7 +14,7 @@ const clientMock = {
   query: () =>
     withPromise(
       pipe(
-        interval(100),
+        interval(500),
         map((i: number) => ({ data: { count: i } }))
       )
     ),
