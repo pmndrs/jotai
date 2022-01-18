@@ -22,6 +22,7 @@ jobs:
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
+      - run: yarn build
       - name: Patch for CJS
         if: ${{ matrix.build == 'cjs' }}
         run: |
