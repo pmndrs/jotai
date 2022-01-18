@@ -87,7 +87,7 @@ describe('If there is no extension installed...', () => {
     }).not.toThrow()
   })
 
-  it('warns in dev env', () => {
+  it('[DEV-ONLY] warns in dev env', () => {
     __DEV__ = true
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
@@ -104,7 +104,7 @@ describe('If there is no extension installed...', () => {
     console.warn = originalConsoleWarn
   })
 
-  it('does not warn if not in dev env', () => {
+  it('[PRD-ONLY] does not warn if not in dev env', () => {
     __DEV__ = false
     console.error = jest.fn()
     const consoleWarn = jest.spyOn(console, 'warn')

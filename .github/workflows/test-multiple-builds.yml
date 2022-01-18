@@ -23,20 +23,30 @@ jobs:
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
       - run: yarn build
+      - name: Patch for DEV-ONLY
+        if: ${{ matrix.env == 'development' }}
+        run: |
+          sed -i~ "s/it('[DEV-ONLY]/it.skip('/" tests/*.tsx tests/*/*.tsx
+          NODE_ENV: ${{ matrix.env }}
+      - name: Patch for PRD-ONLY
+        if: ${{ matrix.env == 'production' }}
+        run: |
+          sed -i~ "s/it('[PRD-ONLY]/it.skip('/" tests/*.tsx tests/*/*.tsx
+          NODE_ENV: ${{ matrix.env }}
       - name: Patch for CJS
         if: ${{ matrix.build == 'cjs' }}
         run: |
-          sed -i~ 's/<rootDir>\/src\(.*\)\.ts/<rootDir>\/dist\1.js/' package.json
+          sed -i~ "s/<rootDir>\/src\(.*\)\.ts/<rootDir>\/dist\1.js/" package.json
       - name: Patch for ESM
         if: ${{ matrix.build == 'esm' }}
         run: |
-          sed -i~ 's/<rootDir>\/src\(.*\)\.ts/<rootDir>\/dist\/esm\1.js' package.json
-          sed -i~ '1s/^/import.meta.env="${NODE_ENV}";/' tests/*.tsx tests/*/*.tsx
+          sed -i~ "s/<rootDir>\/src\(.*\)\.ts/<rootDir>\/dist\/esm\1.js" package.json
+          sed -i~ "1s/^/import.meta.env='${NODE_ENV}';/" tests/*.tsx tests/*/*.tsx
           NODE_ENV: ${{ matrix.env }}
       - name: Patch for UMD/SystemJS
         if: ${{ matrix.build == 'umd' || matrix.build == 'system' }}
         run: |
-          sed -i~ 's/<rootDir>\/src\(.*\)\.ts/<rootDir>\/dist\/${BUILD}\1.${NODE_ENV}.js/' package.json
+          sed -i~ "s/<rootDir>\/src\(.*\)\.ts/<rootDir>\/dist\/${BUILD}\1.${NODE_ENV}.js/" package.json
           BUILD: ${{ matrix.build }}
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
