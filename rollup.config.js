@@ -60,7 +60,7 @@ function createESMConfig(input, output) {
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: 'import.meta.env!=="production"',
+        __DEV__: '(import.meta.env&&import.meta.env.MODE)!=="production"',
         preventAssignment: true,
       }),
       getEsbuild('node12'),
