@@ -39,8 +39,8 @@ jobs:
           BUILD: ${{ matrix.build }}
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
-        run:
-          | cat package.json
-          | yarn test:ci
+        run: |
+          cat package.json
+          yarn test:ci
         env:
           NODE_ENV: ${{ matrix.env }}
