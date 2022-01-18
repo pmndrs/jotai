@@ -434,7 +434,7 @@ describe('throws an error while updating in effect cleanup', () => {
     )
   }
 
-  itSkipIfVersionedWrite('single setCount', async () => {
+  itSkipIfVersionedWrite('[DEV-ONLY] single setCount', async () => {
     const { getByText, findByText } = render(
       <Provider>
         <ErrorBoundary>
@@ -454,7 +454,7 @@ describe('throws an error while updating in effect cleanup', () => {
     )
   })
 
-  itSkipIfVersionedWrite('dobule setCount', async () => {
+  itSkipIfVersionedWrite('[DEV-ONLY] dobule setCount', async () => {
     doubleSetCount = true
 
     const { getByText, findByText } = render(
