@@ -27,12 +27,10 @@ jobs:
         if: ${{ matrix.env == 'development' }}
         run: |
           sed -i~ "s/it('\[DEV-ONLY\]/it.skip('/" tests/*.tsx tests/*/*.tsx
-          NODE_ENV: ${{ matrix.env }}
       - name: Patch for PRD-ONLY
         if: ${{ matrix.env == 'production' }}
         run: |
           sed -i~ "s/it('\[PRD-ONLY\]/it.skip('/" tests/*.tsx tests/*/*.tsx
-          NODE_ENV: ${{ matrix.env }}
       - name: Patch for CJS
         if: ${{ matrix.build == 'cjs' }}
         run: |
@@ -42,11 +40,13 @@ jobs:
         run: |
           sed -i~ "s/<rootDir>\/src\(.*\)\.ts/<rootDir>\/dist\/esm\1.js" package.json
           sed -i~ "1s/^/import.meta.env='${NODE_ENV}';/" tests/*.tsx tests/*/*.tsx
+        env:
           NODE_ENV: ${{ matrix.env }}
       - name: Patch for UMD/SystemJS
         if: ${{ matrix.build == 'umd' || matrix.build == 'system' }}
         run: |
           sed -i~ "s/<rootDir>\/src\(.*\)\.ts/<rootDir>\/dist\/${BUILD}\1.${NODE_ENV}.js/" package.json
+        env:
           BUILD: ${{ matrix.build }}
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
