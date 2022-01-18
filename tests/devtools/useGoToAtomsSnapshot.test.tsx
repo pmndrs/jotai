@@ -4,7 +4,7 @@ import { Provider, atom, useAtom } from 'jotai'
 import type { Atom } from 'jotai'
 import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
 
-it('useGotoAtomsSnapshot should modify atoms snapshot', async () => {
+it('[DEV-ONLY] useGotoAtomsSnapshot should modify atoms snapshot', async () => {
   const petAtom = atom('cat')
   const colorAtom = atom('blue')
 
