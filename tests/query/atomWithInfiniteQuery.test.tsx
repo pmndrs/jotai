@@ -251,8 +251,6 @@ it('should be able to refetch only specific pages when refetchPages is provided'
       [setState]
     )
 
-    states.push(state)
-
     return (
       <>
         <div>length: {state.pages.length}</div>
@@ -274,14 +272,19 @@ it('should be able to refetch only specific pages when refetchPages is provided'
   )
 
   await findByText('loading')
+
   await findByText('length: 1')
   await findByText('page 1: 10')
+
+  await new Promise((r) => setTimeout(r, 100)) // not sure how this helps or not
   fireEvent.click(getByText('fetch next page'))
   await findByText('length: 2')
   await findByText('page 2: 11')
+
   fireEvent.click(getByText('fetch next page'))
   await findByText('length: 3')
   await findByText('page 3: 12')
+
   fireEvent.click(getByText('refetch page 1'))
   await findByText('length: 3')
   await findByText('page 1: 20')
