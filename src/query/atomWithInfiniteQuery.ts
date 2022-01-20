@@ -24,18 +24,33 @@ export type AtomWithInfiniteQueryOptions<
   TQueryFnData,
   TError,
   TData,
-  TQueryData
-> = InfiniteQueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
-  queryKey: QueryKey
-}
+  TQueryData,
+  TQueryKey extends QueryKey
+> = Omit<
+  InfiniteQueryObserverOptions<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >,
+  'queryKey'
+> & { queryKey: TQueryKey }
 
 export type AtomWithInfiniteQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
   TData,
-  TQueryData
+  TQueryData,
+  TQueryKey extends QueryKey
 > = Omit<
-  AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>,
+  AtomWithInfiniteQueryOptions<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  >,
   'enabled'
 > & {
   enabled: boolean
@@ -45,14 +60,16 @@ export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
     AtomWithInfiniteQueryOptionsWithEnabled<
       TQueryFnData,
       TError,
       TData,
-      TQueryData
+      TQueryData,
+      TQueryKey
     >
   >,
   getQueryClient?: GetQueryClient
@@ -65,10 +82,17 @@ export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithInfiniteQueryOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<
@@ -80,10 +104,17 @@ export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithInfiniteQueryOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >
   >,
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<
@@ -166,7 +197,17 @@ export function atomWithInfiniteQuery<
         }
       }
 
-      const defaultedOptions = queryClient.defaultQueryObserverOptions(options)
+      const defaultedOptions = queryClient.defaultQueryObserverOptions(
+        options
+        // For some reason, InfiniteQueryObserver only has 4 type arguments instead of 5, hence the need for a cast.
+        // Even react-query casts in a similar way, see
+        // https://github.com/tannerlinsley/react-query/blob/e328ca0bc3815572114c7c41d4ead0d63cb43b54/src/react/useInfiniteQuery.ts#L97
+      ) as unknown as InfiniteQueryObserverOptions<
+        TQueryFnData,
+        TError,
+        TData,
+        TQueryData
+      >
       if (initialData === undefined && options.enabled !== false) {
         if (typeof defaultedOptions.staleTime !== 'number') {
           defaultedOptions.staleTime = 1000

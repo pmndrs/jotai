@@ -40,6 +40,35 @@ it('infinite query basic test', async () => {
   await findByText('page count: 1')
 })
 
+it('infinite query key object test', async () => {
+  const countAtom = atomWithInfiniteQuery(() => ({
+    queryKey: ['count1Infinite', { countValue: 5 }] as const,
+    queryFn: async ({ queryKey: [, { countValue }] }) => {
+      return fakeFetch({ countValue }, false, 100)
+    },
+  }))
+
+  const Counter = () => {
+    const [data] = useAtom(countAtom)
+    return (
+      <>
+        <div>page count: {data.pages.length}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('page count: 1')
+})
+
 it('infinite query next page test', async () => {
   const mockFetch = jest.fn(fakeFetch)
   const countAtom = atomWithInfiniteQuery<

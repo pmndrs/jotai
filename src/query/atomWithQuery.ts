@@ -11,17 +11,24 @@ import { queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
 
 export type AtomWithQueryAction = { type: 'refetch' }
-export type AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData> =
-  QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
-    queryKey: QueryKey
-  }
+export type AtomWithQueryOptions<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryData,
+  TQueryKey extends QueryKey
+> = Omit<
+  QueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+  'queryKey'
+> & { queryKey: TQueryKey }
 export type AtomWithQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
   TData,
-  TQueryData
+  TQueryData,
+  TQueryKey extends QueryKey
 > = Omit<
-  AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>,
+  AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   'enabled'
 > & {
   enabled: boolean
@@ -31,10 +38,17 @@ export function atomWithQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithQueryOptionsWithEnabled<TQueryFnData, TError, TData, TQueryData>
+    AtomWithQueryOptionsWithEnabled<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<
@@ -47,10 +61,11 @@ export function atomWithQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<TData | TQueryData, AtomWithQueryAction, Promise<void>>
@@ -59,10 +74,11 @@ export function atomWithQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >,
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<
@@ -75,7 +91,13 @@ export function atomWithQuery<
       dataAtom: PrimitiveAtom<
         TData | TQueryData | Promise<TData | TQueryData> | undefined
       >
-      observer: QueryObserver<TQueryFnData, TError, TData, TQueryData>
+      observer: QueryObserver<
+        TQueryFnData,
+        TError,
+        TData,
+        TQueryData,
+        TQueryKey
+      >
     },
     AtomWithQueryAction,
     Promise<void>

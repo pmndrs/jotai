@@ -39,6 +39,38 @@ it('query basic test', async () => {
   await findByText('count: 0')
 })
 
+it('query key object test', async () => {
+  const countAtom = atomWithQuery(() => ({
+    queryKey: ['count1', { countValue: 2 }] as const,
+    queryFn: async ({ queryKey: [, { countValue }] }) => {
+      return await fakeFetch({ count: countValue }, false, 100)
+    },
+  }))
+  const Counter = () => {
+    const [
+      {
+        response: { count },
+      },
+    ] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 2')
+})
+
 it('query basic test with object instead of function', async () => {
   const countAtom = atomWithQuery({
     queryKey: 'count2',
