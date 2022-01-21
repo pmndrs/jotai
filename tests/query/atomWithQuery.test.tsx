@@ -40,7 +40,7 @@ it('query basic test', async () => {
 })
 
 it('query key object test', async () => {
-  const countAtom = atomWithQuery(() => ({
+  const countAtom = atomWithQuery((_get) => ({
     queryKey: ['count1', { countValue: 2 }] as const,
     queryFn: async ({ queryKey: [, { countValue }] }) => {
       return await fakeFetch({ count: countValue }, false, 100)

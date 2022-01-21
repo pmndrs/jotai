@@ -41,7 +41,7 @@ it('infinite query basic test', async () => {
 })
 
 it('infinite query key object test', async () => {
-  const countAtom = atomWithInfiniteQuery(() => ({
+  const countAtom = atomWithInfiniteQuery((_get) => ({
     queryKey: ['count1Infinite', { countValue: 5 }] as const,
     queryFn: async ({ queryKey: [, { countValue }] }) => {
       return fakeFetch({ countValue }, false, 100)
