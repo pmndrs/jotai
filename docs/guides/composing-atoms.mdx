@@ -48,7 +48,7 @@ to override the read-only atom value.
 
 ```js
 const rawNumberAtom = atom(10.1) // can be exported
-count roundNumberAtom = atom((get) => Math.round(get(rawNumberAtom)))
+const roundNumberAtom = atom((get) => Math.round(get(rawNumberAtom)))
 const overwrittenAtom = atom(null)
 export const numberAtom = atom(
   (get) => get(overwrittenAtom) ?? get(roundNumberAtom),
