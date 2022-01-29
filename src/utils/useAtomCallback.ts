@@ -1,9 +1,7 @@
 import { useCallback, useMemo } from 'react'
-import { atom } from 'jotai'
+import { atom, useSetAtom } from 'jotai'
 import type { Setter, WritableAtom } from 'jotai'
 import type { Scope } from '../core/atom'
-// NOTE importing non-core functions is generally not allowed. this is an exception.
-import { useUpdateAtom } from './useUpdateAtom'
 
 type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
 
@@ -47,7 +45,7 @@ export function useAtomCallback<Result, Arg>(
       ),
     [callback]
   )
-  const invoke = useUpdateAtom(anAtom, scope)
+  const invoke = useSetAtom(anAtom, scope)
   return useCallback(
     (arg: Arg) =>
       new Promise<Result>((resolve, reject) => {

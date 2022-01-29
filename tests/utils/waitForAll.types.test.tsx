@@ -1,6 +1,6 @@
 import { expectType } from 'ts-expect'
-import { atom } from 'jotai'
-import { useAtomValue, waitForAll } from 'jotai/utils'
+import { atom, useAtomValue } from 'jotai'
+import { waitForAll } from 'jotai/utils'
 
 it('waitForAll() should return the correct types', () => {
   function Component() {
