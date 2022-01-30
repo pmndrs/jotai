@@ -1,6 +1,6 @@
 export { RESET } from './utils/constants'
-export { useUpdateAtom } from './utils/useUpdateAtom'
-export { useAtomValue } from './utils/useAtomValue'
+export { useSetAtom as useUpdateAtom } from 'jotai'
+export { useAtomValue } from 'jotai'
 export { atomWithReset } from './utils/atomWithReset'
 export { useResetAtom } from './utils/useResetAtom'
 export { useReducerAtom } from './utils/useReducerAtom'
