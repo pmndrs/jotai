@@ -1,6 +1,6 @@
 ---
 title: Debugging
-nav: 3.2
+nav: 3.02
 ---
 
 
@@ -8,7 +8,7 @@ In basic apps, `console.log` can be our best friend for debugging atoms, but whe
 Jotai provides two ways of debugging atoms, **React Dev Tools** and **Redux Dev tools**. For reading values and simple debugging, React Dev Tools might suit you, but for more complicated tasks like Time-travelling and setting values, Redux Dev Tools would be a better option.
 
 ## Debug labels
-It is worth mentioning that we have a concept called **Debug labels** in jotai which may help us with debugging. 
+It is worth mentioning that we have a concept called **Debug labels** in jotai which may help us with debugging.
 By default each jotai state has the label like `1:<no debugLabel>` with number being internal `key` assigned to each atom automatically. But you can add labels to atoms to help you distinguish them more easily with `debugLabel`.
 
 ```js
@@ -43,13 +43,13 @@ If you navigate to Jotai `Provider` component in the React Dev Tools, we can see
 You can also use [Redux DevTools](https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd)
 to inspect atoms, with many features like Time-travelling and  value dispatching.
 
-### [useAtomDevtools](https://jotai.org/docs/api/devtools#use-atom-devtools) 
+### [useAtomDevtools](https://jotai.org/docs/api/devtools#use-atom-devtools)
 > `useAtomDevtools` is a React hook that manages ReduxDevTools integration for a particular atom.
 
-If you have a specific atom in mind that you may want to debug, `useAtomDevtools` can be a good option. 
+If you have a specific atom in mind that you may want to debug, `useAtomDevtools` can be a good option.
 ```ts
 const  countAtom = atom(0)
-// setting countAtom.debugLabel is recommended if we have more atoms 
+// setting countAtom.debugLabel is recommended if we have more atoms
 
 function Counter() {
   const [count, setCount] = useAtom(countAtom)
@@ -60,7 +60,7 @@ Now if we try `setCount`, we can see that the Redux Dev Tools logs those changes
 ![](https://cdn.discordapp.com/attachments/688751221464367186/930857764719329290/unknown.png)
 
 #### Time travel
-Sometimes we need to switch to a specific value of our atoms' state, with Time travelling this is possible. 
+Sometimes we need to switch to a specific value of our atoms' state, with Time travelling this is possible.
 You can hover on each action you see in the devtools and see the **Jump** option there, with clicking it you'd be able to switch to that specific value.
 
 #### Pause
@@ -76,7 +76,7 @@ It's possible to set values on atoms with the **Dispatch** feature. You can do t
 ### [useAtomsDevtools](https://jotai.org/docs/api/devtools#use-atoms-devtools)
 > `useAtomsDevtools` is a catch-all version of `useAtomDevtools` where it shows all atoms in the store instead of showing a specific one.
 
-We'd recommend this hook if you want to keep track of all of your atoms in one place. It means every action on every atom that is placed in the bottom of this hook (in the React tree) will be catched by the Redux Dev Tools. 
+We'd recommend this hook if you want to keep track of all of your atoms in one place. It means every action on every atom that is placed in the bottom of this hook (in the React tree) will be catched by the Redux Dev Tools.
 
 Every feature of `useAtomDevtools` is supported in this hook, but there's an extra feature, which includes giving more information about atoms dependants like:
 ```json

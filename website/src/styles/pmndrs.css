@@ -93,11 +93,11 @@ pre[class*='language-'] {
 
 .token.important,
 .token.bold {
-  @apply font-bold;
+  font-weight: 700;
 }
 
 .token.italic {
-  @apply italic;
+  font-style: italic;
 }
 
 .token.entity {
