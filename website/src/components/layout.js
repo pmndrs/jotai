@@ -1,4 +1,11 @@
-import { Footer, Main, Menu, Sidebar, Wrapper } from '../components'
+import {
+  Footer,
+  Main,
+  Menu,
+  SearchModal,
+  Sidebar,
+  Wrapper,
+} from '../components'
 
 export const Layout = ({ showDocs = false, children }) => {
   return (
@@ -11,6 +18,7 @@ export const Layout = ({ showDocs = false, children }) => {
         </Main>
       </Wrapper>
       <Menu />
+      <SearchModal />
     </>
   )
 }

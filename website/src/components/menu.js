@@ -1,7 +1,7 @@
 import cx from 'classnames'
 import { useAtom } from 'jotai'
 import { menuAtom } from '../atoms'
-import { Button, Docs } from '../components'
+import { Button, Docs, SearchButton } from '../components'
 
 export const Menu = () => {
   const [isMenuOpen, setIsMenuOpen] = useAtom(menuAtom)
@@ -48,6 +48,9 @@ export const Menu = () => {
         )}>
         <div className="w-full max-h-full overflow-y-scroll p-8 border border-gray-300 rounded-lg bg-white shadow-2xl !overscroll-none">
           <div className="px-3 pb-16 sm:pb-0">
+            <div className="-mx-3 mb-6">
+              <SearchButton className="w-full" />
+            </div>
             <Docs />
           </div>
           <div className="fixed left-8 sm:left-auto right-8 sm:right-16 bottom-8 sm:bottom-16 z-70">

@@ -1,4 +1,4 @@
-import { Button, Credits, Docs, Jotai } from '../components'
+import { Button, Credits, Docs, Jotai, SearchButton } from '../components'
 
 export const Sidebar = ({ showDocs = false }) => {
   return (
@@ -6,6 +6,7 @@ export const Sidebar = ({ showDocs = false }) => {
       <div className="flex-grow">
         <Jotai isDocsPage={showDocs} />
         <div className="flex flex-col mt-8 space-y-4">
+          <SearchButton />
           {showDocs ? (
             <Button to="/" icon="home">
               Home
