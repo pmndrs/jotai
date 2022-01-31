@@ -22,26 +22,24 @@ If you want to store objects and booleans, however, there are a series of helper
 
 ## Storing non-string items in AsyncStorage
 
-First, create a storage item using the createJSONStorage function.  This automatically stringifies and parses objects before writing to AsyncStorage.
+First, create a storage item using the createJSONStorage function.  This automatically stringifies and parses objects before writing to AsyncStorage.   If you use atoms throughout your codebase, you can define storage in one place and export it for use everywhere.
 
 ```js
-export const storage = createJSONStorage(() => AsyncStorage)
+const storage = createJSONStorage(() => AsyncStorage)
 ```
 
-Now you can pass an object into the store just by passing storage as the storage type.
+Now you can pass an object into the store just by passing storage as the storage type. The rest of the examples assume you have declared storage locally or imported it as a utility.
 
 ```js
-export const storage = createJSONStorage(() => AsyncStorage)
-export const objectAtom = atomWithStorage('object', undefined, storage)
+const objectAtom = atomWithStorage('object', undefined, storage)
 ```
 
 ## Storing booleans in AsyncStorage
 
-To store a boolean, there is an additional helper function atomWithToggleAndStorage.
+To store a boolean, there is an additional advanced recipe for [atomWithToggleAndStorage](../advanced-recipes/atom-creators.mdx#atom-with-toggle-and-storage).
 
 ```js
-export const storage = createJSONStorage(() => AsyncStorage)
-export const booleanAtom = atomWithToggleAndStorage('boolean', false, storage)
+const booleanAtom = atomWithToggleAndStorage('boolean', false, storage)
 ```
 
 With these three functions you should be able to easily manage persistent storage in React Native.
