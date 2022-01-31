@@ -31,7 +31,7 @@ export const Button = ({
   const iconClassNames = cx(
     'flex-shrink-0 object-contain fill-current',
     !small ? 'w-6 h-6' : 'w-4 h-4',
-    !dark ? 'text-gray-600' : 'text-gray-300'
+    !dark ? 'text-gray-700' : 'text-gray-300'
   )
 
   if (onClick && to) {
@@ -77,7 +77,7 @@ export const Button = ({
         <span>{children}</span>
       </Link>
     )
-  } else if (type) {
+  } else {
     return (
       <button
         type={type}
@@ -89,6 +89,4 @@ export const Button = ({
       </button>
     )
   }
-
-  return null
 }
