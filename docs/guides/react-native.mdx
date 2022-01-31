@@ -1,0 +1,47 @@
+---
+title: React Native
+description: Using Jotai in React Native
+nav: 3.05
+---
+
+Jotai atoms can be used in React Native applications with very few changes except for the use of persistence.
+
+Jotai has an [atomWithStorage function in the utils bundle](../api/utils.mdx#atom-with-storage) for persistance that supports persisting state in `sessionStorage`, `localStorage`, `AsyncStorage`, or the URL hash.
+
+Because react-native only supports AsyncStorage, you need to tell Jotai to use AsyncStorage instead of the default.
+
+Then, depending on what you are storing, you may need to take additional steps.  By default, AsyncStorage stores strings.  So, if you are simply storing a string, just passing AsyncStorage in is enough.
+
+## A simple pattern with AsyncStorage
+
+```js
+export const strAtom = atomWithStorage('string', undefined, AsyncStorage)
+```
+
+If you want to store objects and booleans, however, there are a series of helper functions that make this easier.
+
+## Storing non-string items in AsyncStorage
+
+First, create a storage item using the createJSONStorage function.  This automatically stringifies and parses objects before writing to AsyncStorage.   If you use atoms throughout your codebase, you can define storage in one place and export it for use everywhere.
+
+```js
+const storage = createJSONStorage(() => AsyncStorage)
+```
+
+Now you can pass an object into the store just by passing storage as the storage type. The rest of the examples assume you have declared storage locally or imported it as a utility.
+
+```js
+const objectAtom = atomWithStorage('object', undefined, storage)
+```
+
+## Storing booleans in AsyncStorage
+
+To store a boolean, there is an additional advanced recipe for [atomWithToggleAndStorage](../advanced-recipes/atom-creators.mdx#atom-with-toggle-and-storage).
+
+```js
+const booleanAtom = atomWithToggleAndStorage('boolean', false, storage)
+```
+
+With these three functions you should be able to easily manage persistent storage in React Native.
+
+And remember, atoms that don't require AsyncStorage can simply use the standard atom() function.
