@@ -24,7 +24,7 @@ export const Credits = () => {
         <div className="inline-flex items-center space-x-1">
           <span>website by</span>
           <img
-            src="https://storage.googleapis.com/candycode/candycode.png"
+            src="https://storage.googleapis.com/candycode/candycode.svg"
             alt="candycode alternative graphic design web development agency San Diego"
             style={{ height: 15 }}
           />

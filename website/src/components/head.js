@@ -4,22 +4,22 @@ import { Helmet } from 'react-helmet'
 export const Head = ({ lang = 'en', title, description, uri }) => {
   const data = useStaticQuery(staticQuery)
 
-  const { gatsby } = data
+  const { site } = data
 
   const htmlAttributes = {
     lang,
   }
 
-  const siteTitle = gatsby.meta.title
-  const siteUrl = gatsby.meta.siteUrl
+  const siteTitle = site.siteMetadata.title
+  const siteUrl = site.siteMetadata.siteUrl
   const siteIcon = `${siteUrl}/favicon.svg`
   const socialMediaCardImage = `${siteUrl}/preview_DRAFT.png`
-  const shortName = gatsby.meta.shortName
+  const shortName = site.siteMetadata.shortName
 
   const pageTitle = title
     ? `${title} — ${title.length <= 10 ? siteTitle : shortName}`
     : siteTitle
-  const pageDescription = description || gatsby.meta.description
+  const pageDescription = description || site.siteMetadata.description
   const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl
 
   return (
@@ -46,8 +46,8 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
 
 const staticQuery = graphql`
   query {
-    gatsby: site {
-      meta: siteMetadata {
+    site {
+      siteMetadata {
         title
         description
         siteUrl

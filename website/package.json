@@ -18,8 +18,11 @@
   "dependencies": {
     "@mdx-js/mdx": "^1.6.22",
     "@mdx-js/react": "^1.6.22",
+    "@radix-ui/react-dialog": "^0.1.5",
+    "algoliasearch": "^4.12.1",
     "classnames": "^2.3.1",
     "gatsby": "^4.6.0",
+    "gatsby-plugin-algolia": "^0.25.0",
     "gatsby-plugin-google-gtag": "^4.6.0",
     "gatsby-plugin-image": "^2.6.0",
     "gatsby-plugin-mdx": "^3.6.0",
@@ -34,7 +37,7 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-helmet": "^6.1.0",
-    "react-lazyload": "^3.2.0"
+    "react-instantsearch-dom": "^6.21.1"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.4.0",
