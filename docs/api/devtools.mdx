@@ -1,7 +1,7 @@
 ---
 title: Devtools
 description: This doc describes `jotai/devtool` bundle.
-nav: 2.3
+nav: 2.03
 ---
 
 ## useAtomDevtools
@@ -55,7 +55,7 @@ function useAtomsDevtools(name: string, scope?: Scope): void
 ```
 It takes a `name` parameter that is needed for naming the Redux devtools instance and a `scope` parameter if the hook is used for a specific scope of atoms.
 
-As a limitation for this API, we need to put `useAtomsDevtools` in a component where the consumed atoms should be in a lower place of the React tree than that component (`AtomsDevtools` in the below example). 
+As a limitation for this API, we need to put `useAtomsDevtools` in a component where the consumed atoms should be in a lower place of the React tree than that component (`AtomsDevtools` in the below example).
 `AtomsDevtools` component can be considered as a best practice for our apps.
 
 ### Example

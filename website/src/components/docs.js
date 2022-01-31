@@ -8,7 +8,9 @@ export const Docs = ({ className = '', ...rest }) => {
 
   const setIsMenuOpen = useUpdateAtom(menuAtom)
 
-  const allDocs = data.allMdx.nodes.sort(sortDocs)
+  const allDocs = data.allMdx.nodes
+    .filter((item) => item.meta.nav !== null)
+    .sort(sortDocs)
   const navLinks = parseDocs(allDocs)
 
   return (
