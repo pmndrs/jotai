@@ -8,7 +8,7 @@ export const Docs = ({ className = '', ...rest }) => {
 
   const setIsMenuOpen = useSetAtom(menuAtom)
 
-  const allDocs = data.allMdx.nodes.sort(sortDocs)
+  const allDocs = data.allMdx.nodes.filter(checkDocs).sort(sortDocs)
   const navLinks = parseDocs(allDocs)
 
   return (
@@ -53,6 +53,9 @@ const staticQuery = graphql`
     }
   }
 `
+
+const checkDocs = (doc) => doc.meta?.nav !== null
+
 const sortDocs = (a, b) => a.meta.nav - b.meta.nav
 
 const parseDocs = (docs) => {
