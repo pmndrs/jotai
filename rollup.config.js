@@ -92,6 +92,9 @@ function createUMDConfig(input, output, env) {
       format: 'umd',
       exports: 'named',
       name: 'jotai',
+      globals: {
+        react: 'React',
+      },
     },
     external,
     plugins: [
