@@ -1,6 +1,8 @@
 import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
-import { ResolveType, useAtomValue } from './useAtomValue'
+import { useAtomValue } from './useAtomValue'
 import { useSetAtom } from './useSetAtom'
+
+type ResolveType<T> = T extends Promise<infer V> ? V : T
 
 export function useAtom<Value, Update, Result extends void | Promise<void>>(
   atom: WritableAtom<Value, Update, Result>,

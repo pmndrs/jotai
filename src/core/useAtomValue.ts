@@ -11,7 +11,7 @@ import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM } from './store'
 import type { VersionObject } from './store'
 
-export type ResolveType<T> = T extends Promise<infer V> ? V : T
+type ResolveType<T> = T extends Promise<infer V> ? V : T
 
 export function useAtomValue<Value>(
   atom: Atom<Value>,
