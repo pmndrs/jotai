@@ -1,9 +1,8 @@
 import { useCallback, useContext } from 'react'
-import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
-import type { WritableAtom } from 'jotai'
-import type { Atom, Scope, SetAtom } from '../core/atom'
+import type { Atom, Scope, SetAtom, WritableAtom } from '../core/atom'
 import { WRITE_ATOM } from '../core/store'
 import type { VersionObject } from '../core/store'
+import { getScopeContext } from './contexts'
 
 const isWritable = <Value, Update, Result extends void | Promise<void>>(
   atom: Atom<Value> | WritableAtom<Value, Update, Result>
