@@ -59,31 +59,12 @@ module.exports = {
       },
     },
     {
-      resolve: `gatsby-source-filesystem`,
-      options: {
-        name: `images`,
-        path: `./src/images`,
-      },
-    },
-    {
       resolve: `gatsby-plugin-mdx`,
       options: {
         extensions: [`.md`, `.mdx`],
       },
     },
     `gatsby-plugin-postcss`,
-    `gatsby-plugin-image`,
-    {
-      resolve: `gatsby-plugin-sharp`,
-      options: {
-        defaults: {
-          placeholder: 'none',
-          formats: ['auto', 'webp', 'avif'],
-          quality: 90,
-        },
-        failOnError: false,
-      },
-    },
     {
       resolve: `gatsby-plugin-algolia`,
       options: {

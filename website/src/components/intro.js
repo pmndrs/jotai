@@ -1,4 +1,3 @@
-import { StaticImage } from 'gatsby-plugin-image'
 import { Jotai } from '../components'
 
 export const Intro = () => {
@@ -6,16 +5,9 @@ export const Intro = () => {
     <header>
       <Jotai className="lg:hidden max-w-xs" />
       <div className="flex items-center mt-8 lg:mt-0 sm:px-16 lg:px-0 space-x-4 sm:space-x-8">
-        <StaticImage
-          src="../images/ghost_DRAFT.png"
+        <img
+          src="https://storage.googleapis.com/candycode/jotai/jotai-mascot.png"
           className="w-1/3 lg:w-1/4 max-w-[215px]"
-          imgStyle={{ objectFit: 'contain' }}
-          layout="fullWidth"
-          placeholder="blurred"
-          formats={['auto']}
-          sizes="50vw"
-          outputPixelDensities={[1]}
-          breakpoints={[240, 480, 640, 768, 1080]}
           title="Jotai mascot"
           alt="Jotai mascot"
         />
