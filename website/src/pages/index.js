@@ -1,4 +1,3 @@
-import { StaticImage } from 'gatsby-plugin-image'
 import { Head, InlineCode, Intro, Layout } from '../components'
 import { CoreDemo, IntegrationsDemo, UtilitiesDemo } from '../demos'
 
@@ -69,16 +68,9 @@ export default function HomePage() {
               target="_blank"
               rel="noopener"
               className="block mt-4">
-              <StaticImage
-                src="../images/egghead.png"
+              <img
+                src="https://storage.googleapis.com/candycode/jotai/jotai-course-banner.jpg"
                 className="block shadow-lg rounded-md sm:rounded-lg"
-                imgStyle={{ objectFit: 'contain' }}
-                layout="fullWidth"
-                placeholder="blurred"
-                formats={['auto']}
-                sizes="50vw"
-                outputPixelDensities={[1]}
-                breakpoints={[480, 640, 768, 1080]}
                 alt="Jotai course"
                 title="Jotai course"
               />

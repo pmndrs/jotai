@@ -12,8 +12,8 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
 
   const siteTitle = site.siteMetadata.title
   const siteUrl = site.siteMetadata.siteUrl
-  const siteIcon = `${siteUrl}/favicon.svg`
-  const socialMediaCardImage = `${siteUrl}/preview_DRAFT.png`
+  const siteIcon = `/favicon.svg`
+  const socialMediaCardImage = `https://storage.googleapis.com/candycode/jotai/jotai-opengraph.png`
   const shortName = site.siteMetadata.shortName
 
   const pageTitle = title
