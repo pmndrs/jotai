@@ -1,8 +1,13 @@
-<p align="center">
-  <img src="img/title.svg" alt="jotai" />
-</p>
+<br>
 
-Primitive and flexible state management for React
+<p>
+  <a href="https://jotai.org/#gh-light-mode-only" target="_blank">
+    <img src="https://storage.googleapis.com/candycode/jotai/jotai-header-light.png" alt="Jotai">
+  </a>
+  <a href="https://jotai.org/#gh-dark-mode-only" target="_blank">
+    <img src="https://storage.googleapis.com/candycode/jotai/jotai-header-dark.png" alt="Jotai">
+  </a>
+</p>
 
 `npm i jotai`
 
@@ -168,7 +173,7 @@ yarn add jotai react
 
 ## Learn Jotai
 
-[![free egghead Jotai introduction course by Daishi](https://res.cloudinary.com/dg3gyk0gu/image/upload/v1636388460/egghead-next-pages/jotai/github--jotai-atoms.png)](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0?utm_source=github&utm_medium=cta&utm_term=jotai)
+[![free egghead Jotai introduction course by Daishi](https://storage.googleapis.com/candycode/jotai/jotai-course-banner.jpg)](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0?utm_source=github&utm_medium=cta&utm_term=jotai)
 
 ## More documents
 

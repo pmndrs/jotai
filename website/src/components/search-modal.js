@@ -58,8 +58,10 @@ const SearchBox = ({ currentRefinement, refine }) => (
 const CustomSearchBox = connectSearchBox(SearchBox)
 
 const Results = connectStateResults(
-  ({ searchState, searchResults, children }) =>
-    searchResults && searchResults.nbHits !== 0 ? (
+  ({ searchState, searchResults, children }) => {
+    if (searchState && !searchState.query) return null
+
+    return searchResults && searchResults.nbHits !== 0 ? (
       children
     ) : (
       <div className="flex items-center space-x-3 p-8">
@@ -72,6 +74,7 @@ const Results = connectStateResults(
         </div>
       </div>
     )
+  }
 )
 
 const Hit = ({ hit }) => {
