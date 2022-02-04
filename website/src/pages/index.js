@@ -69,7 +69,7 @@ export default function HomePage() {
               rel="noopener"
               className="block mt-4">
               <img
-                src="https://storage.googleapis.com/candycode/jotai/jotai-course-banner.png"
+                src="https://storage.googleapis.com/candycode/jotai/jotai-course-banner.jpg"
                 className="block shadow-lg rounded-md sm:rounded-lg"
                 alt="Jotai course"
                 title="Jotai course"
