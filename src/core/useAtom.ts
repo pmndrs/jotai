@@ -26,6 +26,7 @@ export function useAtom<Value, Update, Result extends void | Promise<void>>(
   }
   return [
     useAtomValue(atom, scope),
+    // We do wrong type assertion here, which results in throwing an error.
     useSetAtom(atom as WritableAtom<Value, Update, Result>, scope),
   ]
 }

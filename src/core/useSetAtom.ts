@@ -1,13 +1,8 @@
 import { useCallback, useContext } from 'react'
-import type { Atom, Scope, SetAtom, WritableAtom } from '../core/atom'
+import type { Scope, SetAtom, WritableAtom } from '../core/atom'
 import { WRITE_ATOM } from '../core/store'
 import type { VersionObject } from '../core/store'
 import { getScopeContext } from './contexts'
-
-const isWritable = <Value, Update, Result extends void | Promise<void>>(
-  atom: Atom<Value> | WritableAtom<Value, Update, Result>
-): atom is WritableAtom<Value, Update, Result> =>
-  !!(atom as WritableAtom<Value, Update, Result>).write
 
 export function useSetAtom<Value, Update, Result extends void | Promise<void>>(
   atom: WritableAtom<Value, Update, Result>,
@@ -17,13 +12,18 @@ export function useSetAtom<Value, Update, Result extends void | Promise<void>>(
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
   const setAtom = useCallback(
     (update: Update) => {
-      if (isWritable(atom)) {
-        const write = (version?: VersionObject) =>
-          store[WRITE_ATOM](atom, update, version)
-        return versionedWrite ? versionedWrite(write) : write()
-      } else {
+      if (
+        !('write' in atom) &&
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        // useAtom can pass non writable atom with wrong type assertion,
+        // so we should check here.
         throw new Error('not writable atom')
       }
+      const write = (version?: VersionObject) =>
+        store[WRITE_ATOM](atom, update, version)
+      return versionedWrite ? versionedWrite(write) : write()
     },
     [store, versionedWrite, atom]
   )
