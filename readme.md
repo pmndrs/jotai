@@ -1,5 +1,11 @@
-![Jotai (light)](https://storage.googleapis.com/candycode/jotai/jotai-header-light.png#gh-light-mode-only)
-![Jotai (dark)](https://storage.googleapis.com/candycode/jotai/jotai-header-dark.png#gh-dark-mode-only)
+<p>
+  <a href="https://jotai.org/#gh-light-mode-only" target="_blank">
+    <img src="https://storage.googleapis.com/candycode/jotai/jotai-header-light.png" alt="Jotai">
+  </a>
+  <a href="https://jotai.org/#gh-dark-mode-only" target="_blank">
+    <img src="https://storage.googleapis.com/candycode/jotai/jotai-header-dark.png" alt="Jotai">
+  </a>
+</p>
 
 `npm i jotai`
 
