@@ -75,21 +75,21 @@ export function createJSONStorage<Value>(
     setItem: (key, newValue) =>
       getStringStorage().setItem(key, JSON.stringify(newValue)),
     removeItem: (key) => getStringStorage().removeItem?.(key), // TODO remove optional chaining
-    subscribe: (key, callback) => {
-      const storageEventCallback = (e: StorageEvent) => {
-        if (e.key === key && e.newValue) {
-          callback(JSON.parse(e.newValue))
-        }
-      }
-      window.addEventListener('storage', storageEventCallback)
-      return () => {
-        window.removeEventListener('storage', storageEventCallback)
-      }
-    },
   }
 }
 
 const defaultStorage = createJSONStorage(() => localStorage)
+defaultStorage.subscribe = (key, callback) => {
+  const storageEventCallback = (e: StorageEvent) => {
+    if (e.key === key && e.newValue) {
+      callback(JSON.parse(e.newValue))
+    }
+  }
+  window.addEventListener('storage', storageEventCallback)
+  return () => {
+    window.removeEventListener('storage', storageEventCallback)
+  }
+}
 
 export function atomWithStorage<Value>(
   key: string,
