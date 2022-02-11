@@ -58,6 +58,17 @@ export function createJSONStorage<Value>(
 }
 
 const defaultStorage = createJSONStorage(() => localStorage)
+defaultStorage.subscribe = (key, callback) => {
+  const storageEventCallback = (e: StorageEvent) => {
+    if (e.key === key && e.newValue) {
+      callback(JSON.parse(e.newValue))
+    }
+  }
+  window.addEventListener('storage', storageEventCallback)
+  return () => {
+    window.removeEventListener('storage', storageEventCallback)
+  }
+}
 
 export function atomWithStorage<Value>(
   key: string,

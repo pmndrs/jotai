@@ -30,9 +30,10 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 
 **initialValue** (required): the initial value of the atom
 
-**storage** (optional): an object with `getItem` and `setItem` methods for storing/retreiving persisted state; defaults to using `localStorage` for storage/retreival and `JSON.stringify()`/`JSON.parse()` for serialization/deserialization
+**storage** (optional): an object with `getItem` and `setItem` methods for storing/retreiving persisted state; defaults to using `localStorage` for storage/retreival and `JSON.stringify()`/`JSON.parse()` for serialization/deserialization.
+Optionally, the storage has a `subscribe` property, which can be used to synchronize storage. The default `localStorage` handles `storage` events for cross-tab synchronization.
 
-<CodeSandbox id="7dfib" />
+<CodeSandbox id="vuwi7" />
 
 ## Server-side rendering
 
