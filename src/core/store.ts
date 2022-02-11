@@ -614,7 +614,7 @@ export const createStore = (
     version: VersionObject | undefined,
     atom: WritableAtom<Value, Update, Result>,
     update: Update
-  ): void | Promise<void> => {
+  ): Result => {
     let isSync = true
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
@@ -687,7 +687,7 @@ export const createStore = (
     writingAtom: WritableAtom<Value, Update, Result>,
     update: Update,
     version?: VersionObject
-  ): void | Promise<void> => {
+  ): Result => {
     const promiseOrVoid = writeAtomState(version, writingAtom, update)
     flushPending(version)
     return promiseOrVoid
@@ -901,3 +901,43 @@ export const createStore = (
 }
 
 export type Store = ReturnType<typeof createStore>
+
+export const createStoreForExport = (
+  initialValues?: Iterable<readonly [AnyAtom, AnyAtomValue]>
+) => {
+  const store = createStore(initialValues)
+  const get = <Value>(atom: Atom<Value>) => {
+    const atomState = store[READ_ATOM](atom)
+    if ('e' in atomState) {
+      throw atomState.e // read error
+    }
+    if ('p' in atomState) {
+      return undefined // suspended
+    }
+    return atomState.v
+  }
+  const asyncGet = <Value>(atom: Atom<Value>) =>
+    new Promise<ResolveType<Value>>((resolve, reject) => {
+      const atomState = store[READ_ATOM](atom)
+      if ('e' in atomState) {
+        reject(atomState.e) // read error
+      } else if ('p' in atomState) {
+        resolve(atomState.p.then(() => asyncGet(atom))) // retry later
+      } else {
+        resolve(atomState.v)
+      }
+    })
+  const set = <Value, Update, Result extends void | Promise<void>>(
+    atom: WritableAtom<Value, Update, Result>,
+    update: Update
+  ) => store[WRITE_ATOM](atom, update)
+  const sub = (atom: AnyAtom, callback: () => void) =>
+    store[SUBSCRIBE_ATOM](atom, callback)
+  return {
+    get,
+    asyncGet,
+    set,
+    sub,
+    SECRET_INTERNAL_store: store,
+  }
+}
