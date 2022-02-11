@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
-import { selectAtom, useAtomValue, useUpdateAtom } from 'jotai/utils'
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { selectAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -19,7 +19,7 @@ it('selectAtom works as expected', async () => {
   const littleAtom = selectAtom(bigAtom, (v) => v.a)
 
   const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom)
+    const setValue = useSetAtom(bigAtom)
     return (
       <>
         <button
@@ -64,7 +64,7 @@ it('selectAtom works with async atom', async () => {
   const littleAtom = selectAtom(bigAtomAsync, (v) => v.a)
 
   const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom)
+    const setValue = useSetAtom(bigAtom)
     return (
       <>
         <button
@@ -114,7 +114,7 @@ it('do not update unless equality function says value has changed', async () => 
   )
 
   const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom)
+    const setValue = useSetAtom(bigAtom)
     return (
       <>
         <button
@@ -234,7 +234,7 @@ it('useSelector with scope', async () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })
 
   const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom, scope)
+    const setValue = useSetAtom(bigAtom, scope)
     return (
       <>
         <button

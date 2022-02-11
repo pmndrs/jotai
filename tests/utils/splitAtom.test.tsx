@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useSetAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
-import { splitAtom, useUpdateAtom } from 'jotai/utils'
+import { splitAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -349,7 +349,7 @@ it('variable sized splitted atom', async () => {
 
   function App() {
     const [length, setLength] = useAtom(lengthAtom)
-    const setCollection = useUpdateAtom(collectionAtom)
+    const setCollection = useSetAtom(collectionAtom)
     const [derivative] = useAtom(derivativeAtom)
     useEffect(() => {
       setCollection([1, 2, 3].splice(0, length))

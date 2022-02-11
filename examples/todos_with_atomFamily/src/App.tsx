@@ -2,8 +2,8 @@ import type { FormEvent } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { a, useTransition } from '@react-spring/web'
 import { Radio } from 'antd'
-import { Provider, atom, useAtom } from 'jotai'
-import { atomFamily, useUpdateAtom } from 'jotai/utils'
+import { Provider, atom, useAtom, useSetAtom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
 import { nanoid } from 'nanoid'
 
 type Param = { id: string; title?: string }
@@ -75,9 +75,9 @@ const Filtered = ({ remove }: { remove: (id: string) => void }) => {
 }
 
 const TodoList = () => {
-  // Use `useUpdateAtom` to avoid re-render
+  // Use `useSetAtom` to avoid re-render
   // const [, setTodos] = useAtom(todosAtom)
-  const setTodos = useUpdateAtom(todosAtom)
+  const setTodos = useSetAtom(todosAtom)
   const remove = (id: string) => {
     setTodos((prev) => prev.filter((item) => item !== id))
     todoAtomFamily.remove({ id })

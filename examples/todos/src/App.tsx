@@ -2,9 +2,8 @@ import type { FormEvent } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 import { a, useTransition } from '@react-spring/web'
 import { Radio } from 'antd'
-import { Provider, atom, useAtom } from 'jotai'
+import { Provider, atom, useAtom, useSetAtom } from 'jotai'
 import type { PrimitiveAtom } from 'jotai'
-import { useUpdateAtom } from 'jotai/utils'
 
 type Todo = {
   title: string
@@ -76,9 +75,9 @@ const Filtered = (props: FilteredType) => {
 }
 
 const TodoList = () => {
-  // Use `useUpdateAtom` to avoid re-render
+  // Use `useSetAtom` to avoid re-render
   // const [, setTodos] = useAtom(todosAtom)
-  const setTodos = useUpdateAtom(todosAtom)
+  const setTodos = useSetAtom(todosAtom)
   const remove: RemoveFn = (todo) =>
     setTodos((prev) => prev.filter((item) => item !== todo))
   const add = (e: FormEvent<HTMLFormElement>) => {

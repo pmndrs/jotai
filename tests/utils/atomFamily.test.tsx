@@ -1,9 +1,9 @@
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import ReactDOM from 'react-dom'
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useSetAtom } from 'jotai'
 import type { SetStateAction, WritableAtom } from 'jotai'
-import { atomFamily, useUpdateAtom } from 'jotai/utils'
+import { atomFamily } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -239,7 +239,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
   const Counter = () => {
-    const setCount = useUpdateAtom(countAtom)
+    const setCount = useSetAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
     return (
       <>

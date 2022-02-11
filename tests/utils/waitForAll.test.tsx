@@ -1,7 +1,7 @@
 import { Component, StrictMode, Suspense, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
-import { atomFamily, useUpdateAtom, waitForAll } from 'jotai/utils'
+import { atom, useAtom, useSetAtom } from 'jotai'
+import { atomFamily, waitForAll } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -261,7 +261,7 @@ it('handles scope', async () => {
       waitForAll([asyncAtom, anotherAsyncAtom]),
       scope
     )
-    const setValue = useUpdateAtom(valueAtom, scope)
+    const setValue = useSetAtom(valueAtom, scope)
     return (
       <>
         <div>

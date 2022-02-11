@@ -1,7 +1,6 @@
 import { fireEvent, render } from '@testing-library/react'
-import { atom } from 'jotai'
-import { useAtomValue, useUpdateAtom } from 'jotai/utils'
-import { getTestProvider } from '../testUtils'
+import { atom, useAtomValue, useSetAtom } from 'jotai'
+import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
@@ -10,7 +9,7 @@ it('useAtomValue basic test', async () => {
 
   const Counter = () => {
     const count = useAtomValue(countAtom)
-    const setCount = useUpdateAtom(countAtom)
+    const setCount = useSetAtom(countAtom)
 
     return (
       <>
