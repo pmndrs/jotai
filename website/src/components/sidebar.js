@@ -35,7 +35,7 @@ export const Sidebar = ({ showDocs = false }) => {
           </Button>
           <Button
             icon="chalkboard"
-            to="https://daishi.gumroad.com/l/learn-jotai"
+            to="https://daishi.gumroad.com/l/learn-jotai/website_qpiwdj8"
             external>
             Walkthrough
           </Button>
