@@ -37,7 +37,7 @@ const AtomsDevtools = ({ children }: { children: ReactElement }) => {
   return children
 }
 
-it('connects to the extension by initialiing', () => {
+it('[DEV-ONLY] connects to the extension by initialiing', () => {
   const countAtom = atom(0)
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -81,7 +81,10 @@ describe('If there is no extension installed...', () => {
     )
   }
 
-  it('does not throw', () => {
+  it('[DEV-ONLY] does not throw', () => {
+    const originalConsoleWarn = console.warn
+    console.warn = jest.fn()
+
     expect(() => {
       render(
         <StrictMode>
@@ -93,11 +96,11 @@ describe('If there is no extension installed...', () => {
         </StrictMode>
       )
     }).not.toThrow()
+
+    console.warn = originalConsoleWarn
   })
 
-  it('warns in dev env', () => {
-    const originalNodeEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
+  it('[DEV-ONLY] warns in dev env', () => {
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
 
@@ -115,29 +118,11 @@ describe('If there is no extension installed...', () => {
       'Please install/enable Redux devtools extension'
     )
 
-    process.env.NODE_ENV = originalNodeEnv
     console.warn = originalConsoleWarn
-  })
-
-  it('does not warn if not in dev env', () => {
-    const consoleWarn = jest.spyOn(console, 'warn')
-
-    render(
-      <StrictMode>
-        <Provider>
-          <AtomsDevtools>
-            <Counter />
-          </AtomsDevtools>
-        </Provider>
-      </StrictMode>
-    )
-    expect(consoleWarn).not.toBeCalled()
-
-    consoleWarn.mockRestore()
   })
 })
 
-it('updating state should call devtools.send', async () => {
+it('[DEV-ONLY] updating state should call devtools.send', async () => {
   const countAtom = atom(0)
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -172,7 +157,7 @@ it('updating state should call devtools.send', async () => {
   expect(extension.send).toBeCalledTimes(3)
 })
 
-it('dependencies + updating state should call devtools.send', async () => {
+it('[DEV-ONLY] dependencies + updating state should call devtools.send', async () => {
   const countAtom = atom(0)
   const doubleAtom = atom((get) => get(countAtom) * 2)
   const Counter = () => {
@@ -264,7 +249,7 @@ it('dependencies + updating state should call devtools.send', async () => {
   )
 })
 
-it('conditional dependencies + updating state should call devtools.send', async () => {
+it('[DEV-ONLY] conditional dependencies + updating state should call devtools.send', async () => {
   const countAtom = atom(0)
   const secondCountAtom = atom(0)
   const enabledAtom = atom(true)
@@ -373,7 +358,7 @@ it('conditional dependencies + updating state should call devtools.send', async 
 })
 
 describe('when it receives an message of type...', () => {
-  it('dispatch & COMMIT', async () => {
+  it('[DEV-ONLY] dispatch & COMMIT', async () => {
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -421,7 +406,7 @@ describe('when it receives an message of type...', () => {
     )
   })
 
-  it('JUMP_TO_STATE & JUMP_TO_ACTION should not call devtools.send', async () => {
+  it('[DEV-ONLY] JUMP_TO_STATE & JUMP_TO_ACTION should not call devtools.send', async () => {
     const countAtom = atom(0)
     const secondCountAtom = atom(0)
     const enabledAtom = atom(true)
@@ -491,7 +476,7 @@ describe('when it receives an message of type...', () => {
     expect(extension.send).toBeCalledTimes(4)
   })
 
-  it('time travelling with JUMP_TO_ACTION', async () => {
+  it('[DEV-ONLY] time travelling with JUMP_TO_ACTION', async () => {
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -539,7 +524,7 @@ describe('when it receives an message of type...', () => {
     expect(extension.send).toBeCalledTimes(4)
   })
 
-  it('time travelling with JUMP_TO_STATE', async () => {
+  it('[DEV-ONLY] time travelling with JUMP_TO_STATE', async () => {
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -606,7 +591,7 @@ describe('when it receives an message of type...', () => {
     await findByText('count: 2')
   })
 
-  it('PAUSE_RECORDING, it toggles the sending of actions', async () => {
+  it('[DEV-ONLY] PAUSE_RECORDING, it toggles the sending of actions', async () => {
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)

@@ -148,11 +148,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     // ignored
   }
   if (!extension) {
-    if (
-      typeof process === 'object' &&
-      process.env.NODE_ENV === 'development' &&
-      typeof window !== 'undefined'
-    ) {
+    if (__DEV__ && typeof window !== 'undefined') {
       console.warn('Please install/enable Redux devtools extension')
     }
   }
