@@ -628,10 +628,6 @@ export const createStore = (
         unstable_promise: boolean
       }
     ) => {
-      if (typeof options === 'boolean') {
-        console.warn('[DEPRECATED] Please use { unstable_promise: true }')
-        options = { unstable_promise: options }
-      }
       const aState = readAtomState(version, a)
       if ('e' in aState) {
         throw aState.e // read error
