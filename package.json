@@ -108,7 +108,7 @@
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "concurrently 'yarn:build:*'",
+    "build": "concurrently -m 8 'yarn:build:*'",
     "build-watch": "concurrently -n watch: 'yarn:build:* --watch'",
     "build:base": "rollup -c",
     "build:utils": "rollup -c --config-utils",
@@ -177,6 +177,9 @@
         "@swc/jest"
       ]
     },
+    "globals": {
+      "__DEV__": true
+    },
     "moduleNameMapper": {
       "^jotai$": "<rootDir>/src/index.ts",
       "^jotai/(.*)$": "<rootDir>/src/$1.ts"
@@ -207,6 +210,7 @@
     "@babel/types": "^7.16.8",
     "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-node-resolve": "^13.1.3",
+    "@rollup/plugin-replace": "^3.0.1",
     "@rollup/plugin-typescript": "^8.3.0",
     "@swc/core": "^1.2.130",
     "@swc/jest": "^0.2.17",
@@ -244,6 +248,7 @@
     "redux": "^4.1.2",
     "rollup": "^2.64.0",
     "rollup-plugin-esbuild": "^4.8.2",
+    "rollup-plugin-terser": "^7.0.2",
     "rxjs": "^7.5.2",
     "shx": "^0.3.4",
     "ts-expect": "^1.3.0",

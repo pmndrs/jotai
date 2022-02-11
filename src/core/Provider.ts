@@ -15,6 +15,7 @@ import {
   DEV_GET_MOUNTED,
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
+  createStoreForExport,
 } from './store'
 import type { AtomState, Store, VersionObject } from './store'
 
@@ -22,10 +23,15 @@ export const Provider = ({
   children,
   initialValues,
   scope,
+  unstable_createStore,
   unstable_enableVersionedWrite,
 }: PropsWithChildren<{
   initialValues?: Iterable<readonly [Atom<unknown>, unknown]>
   scope?: Scope
+  /**
+   * This is an unstable feature to use exported createStore.
+   */
+  unstable_createStore?: typeof createStoreForExport
   /**
    * This is an unstable experimental feature for React 18.
    * When this is enabled, a) write function must be pure
@@ -49,7 +55,10 @@ export const Provider = ({
   const scopeContainerRef = useRef<ScopeContainer>()
   if (!scopeContainerRef.current) {
     // lazy initialization
-    scopeContainerRef.current = createScopeContainer(initialValues)
+    scopeContainerRef.current = createScopeContainer(
+      initialValues,
+      unstable_createStore
+    )
     if (unstable_enableVersionedWrite) {
       scopeContainerRef.current.w = (write) => {
         setVersion((parentVersion) => {
@@ -62,9 +71,8 @@ export const Provider = ({
   }
 
   if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production' &&
-    process.env.NODE_ENV !== 'test'
+    __DEV__ &&
+    (typeof process !== 'object' || process.env.NODE_ENV !== 'test')
   ) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(scopeContainerRef.current)

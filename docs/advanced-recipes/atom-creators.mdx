@@ -214,3 +214,80 @@ const PostsList = () => {
   )
 }
 ```
+
+## atomWithListeners
+
+> `atomWithListeners` creates an atom and a hook. The hook can be called to
+> add a new listener. The hook takes as an argument a callback, and that
+> callback will be called every time the atom's value is set. The hook also
+> returns a function to remove the listener.
+
+This can be useful when you want to create a component that can listen to when
+an atom's state changes without having to re-render that component with each of
+those state changes.
+
+```ts
+import { useEffect } from 'react'
+import { atom, Getter, Setter, SetStateAction } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
+
+type Callback<Value> = (
+  get: Getter,
+  set: Setter,
+  newVal: Value,
+  prevVal: Value,
+) => void
+
+export function atomWithListeners<Value>(initialValue: Value) {
+  const baseAtom = atom(initialValue)
+  const listenersAtom = atom(<Callback<Value>[]>[])
+  const anAtom = atom(
+    (get) => get(baseAtom),
+    (get, set, arg: SetStateAction<Value>) => {
+      const prevVal = get(baseAtom)
+      set(baseAtom, arg)
+      const newVal = get(baseAtom)
+      get(listenersAtom).forEach((callback) => {
+        callback(get, set, newVal, prevVal)
+      })
+    },
+  )
+  const useListener = (callback: Callback<Value>) => {
+    const setListeners = useUpdateAtom(listenersAtom)
+    useEffect(() => {
+      setListeners((prev) => [...prev, callback])
+      return () =>
+        setListeners((prev) => {
+          const index = prev.indexOf(callback)
+          return [...prev.slice(0, index), ...prev.slice(index + 1)]
+        })
+    }, [setListeners, callback])
+  }
+  return [anAtom, useListener] as const
+}
+```
+
+In a component:
+
+```ts
+const [countAtom, useCountListener] = atomWithListeners(0)
+
+function EvenCounter() {
+  const [evenCount, setEvenCount] = useState(0)
+
+  useCountListener(
+    useCallback(
+      (get, set, newVal, prevVal) => {
+        // Every time `countAtom`'s value is set, we check if its new value
+        // is even, and if it is, we increment `evenCount`.
+        if (newVal % 2 === 0) {
+          setEvenCount((c) => c + 1)
+        }
+      },
+      [setEvenCount],
+    ),
+  )
+
+  return <>Count was set to an even number {evenCount} times.</>
+}
+```
