@@ -33,6 +33,12 @@ export const Sidebar = ({ showDocs = false }) => {
             external>
             Course
           </Button>
+          <Button
+            icon="chalkboard"
+            to="https://daishi.gumroad.com/l/learn-jotai/website_qpiwdj8"
+            external>
+            Walkthrough
+          </Button>
           <Button icon="discord" to="https://discord.gg/poimandres" external>
             Community
           </Button>

@@ -1,15 +1,11 @@
 <br>
 
-<p>
-  <a href="https://jotai.org/#gh-light-mode-only" target="_blank">
-    <img src="https://storage.googleapis.com/candycode/jotai/jotai-header-light.png" alt="Jotai">
-  </a>
-  <a href="https://jotai.org/#gh-dark-mode-only" target="_blank">
-    <img src="https://storage.googleapis.com/candycode/jotai/jotai-header-dark.png" alt="Jotai">
-  </a>
-</p>
+![Jotai mascot (light mode)](https://storage.googleapis.com/candycode/jotai/jotai-header-light.png#gh-light-mode-only)
+![Jotai mascot (dark mode)](https://storage.googleapis.com/candycode/jotai/jotai-header-dark.png#gh-dark-mode-only)
 
-`npm i jotai`
+<br>
+
+`npm i jotai` or visit [jotai.org](https://jotai.org)
 
 [![Build Status](https://img.shields.io/github/workflow/status/pmndrs/jotai/Lint?style=flat&colorA=000000&colorB=000000)](https://github.com/pmndrs/jotai/actions?query=workflow%3ALint)
 [![Build Size](https://img.shields.io/bundlephobia/minzip/jotai?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=jotai)

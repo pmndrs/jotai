@@ -7,7 +7,7 @@ export const Credits = () => {
         to="https://jessiewaters.com"
         title="Jessie Waters"
         className="inline-flex justify-center items-center"
-        style={{ width: 172 }}
+        style={{ width: 175 }}
         dark
         small
         external>
@@ -17,12 +17,12 @@ export const Credits = () => {
         to="https://candycode.com/"
         title="candycode, an alternative graphic design and web development agency based in San Diego"
         className="inline-flex justify-center items-center"
-        style={{ width: 172, height: 28 }}
+        style={{ width: 175, height: 28 }}
         dark
         small
         external>
         <div className="inline-flex items-center space-x-1">
-          <span>website by</span>
+          <span className="whitespace-nowrap">website by</span>
           <img
             src="https://storage.googleapis.com/candycode/candycode.svg"
             alt="candycode alternative graphic design web development agency San Diego"
