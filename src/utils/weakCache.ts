@@ -1,6 +1,6 @@
 import type { Atom } from 'jotai'
 
-export type WeakCache<T> = WeakMap<object, [WeakCache<T>] | [WeakCache<T>, T]>
+type WeakCache<T> = WeakMap<object, [WeakCache<T>] | [WeakCache<T>, T]>
 
 const getWeakCacheItem = <T>(
   cache: WeakCache<T>,

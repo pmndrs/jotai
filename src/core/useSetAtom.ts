@@ -1,8 +1,8 @@
 import { useCallback, useContext } from 'react'
-import type { Scope, SetAtom, WritableAtom } from '../core/atom'
-import { WRITE_ATOM } from '../core/store'
-import type { VersionObject } from '../core/store'
+import type { Scope, SetAtom, WritableAtom } from './atom'
 import { getScopeContext } from './contexts'
+import { WRITE_ATOM } from './store'
+import type { VersionObject } from './store'
 
 export function useSetAtom<Value, Update, Result extends void | Promise<void>>(
   atom: WritableAtom<Value, Update, Result>,
