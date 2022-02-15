@@ -68,13 +68,13 @@ const Component = () => {
 It's possible to create a derived atom.
 
 ```jsx
-const derivedNameAtom = atom(get) => {
+const derivedNameAtom = atom(get => {
   const nameAtom = get(showingNameAtom)
   return get(nameAtom)
 })
 
 // Or shoter version
-const derivedNameAtom = atom(get) => get(get(showingNameAtom)))
+const derivedNameAtom = atom(get => get(get(showingNameAtom)))
 ```
 
 To avoid confusing what is in atoms, naming atoms explicitly would be important.
