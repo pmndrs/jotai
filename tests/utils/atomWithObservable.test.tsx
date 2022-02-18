@@ -1,5 +1,5 @@
-import { Suspense } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { ReactElement, Suspense, useState } from 'react'
+import { act, fireEvent, render } from '@testing-library/react'
 import { Observable, Subject } from 'rxjs'
 import { useAtom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
@@ -69,4 +69,45 @@ it('writable count state', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('count: 9')
+})
+
+it('resubscribe on remount', async () => {
+  const subject = new Subject<number>()
+  const observableAtom = atomWithObservable(() => subject)
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+
+    return <>count: {state}</>
+  }
+
+  const Toggle = ({ children }: { children: ReactElement }) => {
+    const [visible, setVisible] = useState(true)
+    return (
+      <>
+        {visible && children}
+        <button onClick={() => setVisible(!visible)}>Toggle</button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Toggle>
+          <Counter />
+        </Toggle>
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  act(() => subject.next(1))
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('Toggle'))
+  fireEvent.click(getByText('Toggle'))
+
+  act(() => subject.next(2))
+  await findByText('count: 2')
 })
