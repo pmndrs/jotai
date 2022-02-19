@@ -136,7 +136,8 @@ Just do not define a read function.
 const multiplyCountAtom = atom(null, (get, set, by) => set(countAtom, get(countAtom) * by))
 
 function Controls() {
-  const [, multiply] = useAtom(multiplyCountAtom)
+  // causes unnecessary re-render: const [, multiply] = useAtom(multiplyCountAtom)
+  const nultiply = useSetAtom(multiplyCountAtom)
   return <button onClick={() => multiply(3)}>triple</button>
 ```
 
