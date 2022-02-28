@@ -19,9 +19,9 @@ export default function reactRefreshPlugin({
             cache: new Map(),
             get(name, inst) { 
               if (this.cache.has(name)) {
-                return this.cache.get(name)
+                return this.cache.get(name + inst.toString())
               }
-              this.cache.set(name, inst)
+              this.cache.set(name + inst.toString(), inst)
               return inst
             },
           }`)()

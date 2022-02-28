@@ -19,10 +19,10 @@ it('Should add a debugLabel and cache to an atom', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
@@ -46,10 +46,10 @@ it('Should add a debugLabel and cache to multiple atoms', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
@@ -76,10 +76,10 @@ it('Should add a cache and debugLabel for multiple exported atoms', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
@@ -99,10 +99,10 @@ it('Should add a cache and debugLabel for a default exported atom', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
@@ -128,10 +128,10 @@ it('Should add a cache and debugLabel for mixed exports of atoms', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 

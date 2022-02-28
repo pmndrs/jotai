@@ -20,10 +20,10 @@ it('Should add a cache for a single atom', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
@@ -47,10 +47,10 @@ it('Should add a cache for multiple atoms', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
@@ -75,10 +75,10 @@ it('Should add a cache for multiple exported atoms', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
@@ -96,10 +96,10 @@ it('Should add a cache for a default exported atom', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
@@ -123,10 +123,10 @@ it('Should add a cache for mixed exports of atoms', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
@@ -162,10 +162,10 @@ it('Should handle atoms returned from functions (#891)', () => {
 
       get(name, inst) {
         if (this.cache.has(name)) {
-          return this.cache.get(name);
+          return this.cache.get(name + inst.toString());
         }
 
-        this.cache.set(name, inst);
+        this.cache.set(name + inst.toString(), inst);
         return inst;
       }
 
