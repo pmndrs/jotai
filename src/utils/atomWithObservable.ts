@@ -97,7 +97,10 @@ export function atomWithObservable<TData>(
       if (!subscription) {
         subscription = observable.subscribe(dataListener, errorListener)
       }
-      return () => subscription?.unsubscribe()
+      return () => {
+        subscription?.unsubscribe()
+        subscription = null
+      }
     }
     return { dataAtom, observable }
   })

@@ -43,6 +43,7 @@ type WithInitialValue<Value> = {
 
 export type Scope = symbol | string | number
 
+// Not exported for public API
 // Are there better typings?
 export type SetAtom<
   Update,
