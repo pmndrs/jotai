@@ -29,43 +29,61 @@ type ObservableLike<T> = {
 
 type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
+type InitialDataFunction<T> = () => T | undefined
+
+export type AtomWithObservableOptions<TData> = {
+  initialData?: TData | InitialDataFunction<TData>
+}
+export type CreateObservableOptions<TData> = {
+  initialData?: TData
+}
+
 export function atomWithObservable<TData>(
-  createObservable: (get: Getter) => SubjectLike<TData>
+  createObservable: (get: Getter) => SubjectLike<TData>,
+  options?: AtomWithObservableOptions<TData>
 ): WritableAtom<TData, TData>
 
 export function atomWithObservable<TData>(
-  createObservable: (get: Getter) => ObservableLike<TData>
+  createObservable: (get: Getter) => ObservableLike<TData>,
+  options?: AtomWithObservableOptions<TData>
 ): Atom<TData>
 
 export function atomWithObservable<TData>(
-  createObservable: (get: Getter) => ObservableLike<TData> | SubjectLike<TData>
+  createObservable: (get: Getter) => ObservableLike<TData> | SubjectLike<TData>,
+  options?: AtomWithObservableOptions<TData>
 ) {
   const observableResultAtom = atom((get) => {
     let settlePromise: ((data: TData | null, err?: unknown) => void) | null =
       null
+    let initialized = false
     let observable = createObservable(get)
     const itself = observable[Symbol.observable]?.()
     if (itself) {
       observable = itself
     }
-    const dataAtom = atom<TData | Promise<TData>>(
-      new Promise<TData>((resolve, reject) => {
-        settlePromise = (data, err) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(data as TData)
-          }
-        }
-      })
+    const initialData = getInitialData(options)
+
+    const dataAtom = atom(
+      initialData === undefined
+        ? new Promise<TData>((resolve, reject) => {
+            settlePromise = (data, err) => {
+              if (err) {
+                reject(err)
+              } else {
+                resolve(data as TData)
+              }
+            }
+          })
+        : initialData
     )
     let setData: (data: TData | Promise<TData>) => void = () => {
       throw new Error('setting data without mount')
     }
     const dataListener = (data: TData) => {
-      if (settlePromise) {
-        settlePromise(data)
+      if (!initialized) {
+        settlePromise?.(data)
         settlePromise = null
+        initialized = true
         if (subscription && !setData) {
           subscription.unsubscribe()
           subscription = null
@@ -75,9 +93,10 @@ export function atomWithObservable<TData>(
       }
     }
     const errorListener = (error: unknown) => {
-      if (settlePromise) {
-        settlePromise(null, error)
+      if (!initialized) {
+        settlePromise?.(null, error)
         settlePromise = null
+        initialized = true
         if (subscription && !setData) {
           subscription.unsubscribe()
           subscription = null
@@ -94,6 +113,7 @@ export function atomWithObservable<TData>(
     }
     dataAtom.onMount = (update) => {
       setData = update
+      initialized = true
       if (!subscription) {
         subscription = observable.subscribe(dataListener, errorListener)
       }
@@ -119,4 +139,15 @@ export function atomWithObservable<TData>(
     }
   )
   return observableAtom
+}
+
+function getInitialData<TData>(options?: AtomWithObservableOptions<TData>) {
+  const initialData = options?.initialData
+  if (!initialData) {
+    return
+  }
+
+  if (typeof initialData !== 'function') {
+    return typeof initialData === 'function' ? initialData() : initialData
+  }
 }
