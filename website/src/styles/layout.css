@@ -3,14 +3,14 @@
 }
 
 body {
-  @apply overflow-y-scroll bg-black leading-none;
+  @apply overflow-x-clip overflow-y-scroll bg-black leading-none;
   overscroll-behavior: none;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
 }
 
 #___gatsby {
-  @apply bg-white;
+  @apply bg-white dark:bg-gray-950 text-black dark:text-gray-50;
 }
 
 pre,
@@ -21,7 +21,7 @@ code span {
 }
 
 ::selection {
-  @apply bg-black text-white;
+  @apply bg-black dark:bg-gray-50 text-white dark:text-gray-950;
 }
 
 a,
@@ -50,15 +50,27 @@ textarea:focus {
 }
 
 *::-webkit-scrollbar {
-  @apply w-4 h-full bg-white;
+  @apply w-4 h-full bg-white dark:bg-gray-950;
+}
+
+body.dark::-webkit-scrollbar {
+  @apply bg-gray-950;
 }
 
 *::-webkit-scrollbar-track {
-  @apply bg-white;
+  @apply bg-white dark:bg-gray-950;
+}
+
+body.dark::-webkit-scrollbar-track {
+  @apply bg-gray-950;
 }
 
 *::-webkit-scrollbar-thumb {
-  @apply border-4 border-solid border-white bg-gray-350 rounded-2xl;
+  @apply border-4 border-solid border-white dark:border-gray-950 bg-gray-350 dark:bg-gray-800 rounded-2xl;
+}
+
+body.dark::-webkit-scrollbar-thumb {
+  @apply border-gray-950 bg-gray-800;
 }
 
 *::-webkit-scrollbar-button {

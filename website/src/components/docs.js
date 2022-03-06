@@ -16,7 +16,7 @@ export const Docs = ({ className = '', ...rest }) => {
       {navLinks.map((section, index) => (
         <div key={index}>
           {section.title && (
-            <div className="relative -left-0.5 font-bold text-gray-350 text-sm uppercase tracking-widest">
+            <div className="relative -left-0.5 font-bold text-gray-350 dark:text-gray-650 text-sm uppercase tracking-widest">
               {section.title}
             </div>
           )}
@@ -26,8 +26,8 @@ export const Docs = ({ className = '', ...rest }) => {
                 <Link
                   to={`/docs/${doc.slug}`}
                   onClick={() => setIsMenuOpen(false)}
-                  className="relative -left-3 inline-block px-2 py-1 border border-transparent hover:!border-gray-200 hover:bg-gray-100 rounded text-lg"
-                  activeClassName="bg-blue-100 !border-blue-200"
+                  className="relative -left-3 inline-block px-2 py-1 border border-transparent hover:!border-blue-200 dark:hover:!border-teal-800 hover:bg-blue-100 dark:hover:bg-teal-950 rounded text-lg"
+                  activeClassName="!border-blue-200 dark:!border-teal-900 bg-blue-100 dark:bg-teal-950"
                   partiallyActive>
                   {doc.meta.title}
                 </Link>
