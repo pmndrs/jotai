@@ -15,10 +15,13 @@ const todosAtom = atom<PrimitiveAtom<Todo>[]>([])
 const filteredAtom = atom<PrimitiveAtom<Todo>[]>((get) => {
   const filter = get(filterAtom)
   const todos = get(todosAtom)
-  if (filter === 'all') return todos
-  else if (filter === 'completed')
+  if (filter === 'all') {
+    return todos
+  } else if (filter === 'completed') {
     return todos.filter((atom) => get(atom).completed)
-  else return todos.filter((atom) => !get(atom).completed)
+  } else {
+    return todos.filter((atom) => !get(atom).completed)
+  }
 })
 
 type RemoveFn = (item: PrimitiveAtom<Todo>) => void

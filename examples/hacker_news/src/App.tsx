@@ -2,29 +2,33 @@ import { Suspense } from 'react'
 import { a, useSpring } from '@react-spring/web'
 import Parser from 'html-react-parser'
 import { Provider, atom, useAtom, useSetAtom } from 'jotai'
+import { atomWithQuery } from 'jotai/query'
 
-type PostData = {
-  by: string
-  descendants?: number
-  id: number
-  kids?: number[]
-  parent: number
-  score?: number
-  text?: string
-  time: number
-  title?: string
-  type: 'comment' | 'story'
-  url?: string
-}
+// type PostData = {
+//   by: string
+//   descendants?: number
+//   id: number
+//   kids?: number[]
+//   parent: number
+//   score?: number
+//   text?: string
+//   time: number
+//   title?: string
+//   type: 'comment' | 'story'
+//   url?: string
+// }
 
 const postId = atom(9001)
-const postData = atom<PostData>(async (get) => {
-  const id = get(postId)
-  const response = await fetch(
-    `https://hacker-news.firebaseio.com/v0/item/${id}.json`
-  )
-  return await response.json()
-})
+
+const postData = atomWithQuery((get) => ({
+  queryKey: ['news', get(postId)],
+  queryFn: async ({ queryKey: [, id] }) => {
+    const res = await fetch(
+      `https://hacker-news.firebaseio.com/v0/item/${id}.json`
+    )
+    return res.json()
+  },
+}))
 
 function Id() {
   const [id] = useAtom(postId)

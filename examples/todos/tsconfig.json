@@ -10,7 +10,15 @@
       "dom.iterable",
       "esnext"
     ],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true
   },
   "include": [
     "./src/**/*"

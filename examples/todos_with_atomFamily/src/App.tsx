@@ -18,10 +18,13 @@ const todosAtom = atom<string[]>([])
 const filteredAtom = atom((get) => {
   const filter = get(filterAtom)
   const todos = get(todosAtom)
-  if (filter === 'all') return todos
-  else if (filter === 'completed')
+  if (filter === 'all') {
+    return todos
+  } else if (filter === 'completed') {
     return todos.filter((id) => get(todoAtomFamily({ id })).completed)
-  else return todos.filter((id) => !get(todoAtomFamily({ id })).completed)
+  } else {
+    return todos.filter((id) => !get(todoAtomFamily({ id })).completed)
+  }
 })
 
 const TodoItem = ({
