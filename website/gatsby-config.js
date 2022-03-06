@@ -66,6 +66,15 @@ module.exports = {
     },
     `gatsby-plugin-postcss`,
     {
+      resolve: 'gatsby-plugin-use-dark-mode',
+      options: {
+        classNameDark: 'dark',
+        classNameLight: 'light',
+        storageKey: 'darkMode',
+        minify: true,
+      },
+    },
+    {
       resolve: `gatsby-plugin-algolia`,
       options: {
         appId: process.env.GATSBY_ALGOLIA_APP_ID,
@@ -89,9 +98,9 @@ module.exports = {
         },
       },
     },
-    `gatsby-plugin-remove-trailing-slashes`,
   ],
   jsxRuntime: 'automatic',
+  trailingSlash: 'never',
   flags: {
     FAST_DEV: true,
   },

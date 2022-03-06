@@ -51,7 +51,7 @@ const SearchBox = ({ currentRefinement, refine }) => (
     placeholder="Search here..."
     value={currentRefinement}
     onChange={(event) => refine(event.currentTarget.value)}
-    className="flex items-center w-full px-4 py-2 ring-0 border border-gray-300 rounded-lg bg-white text-lg"
+    className="flex items-center w-full px-4 py-2 ring-0 border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 text-lg text-black dark:text-gray-200"
   />
 )
 
@@ -88,10 +88,15 @@ const Hit = ({ hit }) => {
       to={`/docs/${slug}`}
       className="flex my-6 space-x-3 group">
       <div>
-        <Icon icon="file" className="w-6 h-6 fill-current text-blue-400" />
+        <Icon
+          icon="file"
+          className="w-6 h-6 fill-current text-blue-400 dark:text-teal-600"
+        />
       </div>
       <div>
-        <div className="font-semibold text-xl">{title}</div>
+        <div className="font-semibold text-xl text-white dark:text-gray-200">
+          {title}
+        </div>
         {excerpt && (
           <div className="mt-1 text-sm text-gray-500 leading-snug">
             {excerpt}

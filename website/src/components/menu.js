@@ -9,7 +9,7 @@ export const Menu = () => {
   return (
     <>
       <div className="fixed left-0 bottom-0 right-0 lg:hidden">
-        <div className="flex justify-center w-full p-4 space-x-4 border-t border-gray-700 bg-gray-900">
+        <div className="flex justify-center w-full p-4 space-x-4 border-t border-gray-700 dark:border-gray-800 bg-gray-900">
           <Button
             icon="github"
             to="https://github.com/pmndrs/jotai"
@@ -46,7 +46,7 @@ export const Menu = () => {
             : 'opacity-0 pointer-events-none',
           'fixed inset-0 z-50 flex items-end max-h-screen p-4 sm:p-6 bg-black/75 transition ease-in-out duration-300'
         )}>
-        <div className="w-full max-h-full overflow-y-scroll p-8 border border-gray-300 rounded-lg bg-white shadow-2xl !overscroll-none">
+        <div className="w-full max-h-full overflow-y-scroll p-8 border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 shadow-2xl dark:!shadow-none !overscroll-none">
           <div className="px-3 pb-16 sm:pb-0">
             <div className="-mx-3 mb-6">
               <SearchButton className="w-full" />

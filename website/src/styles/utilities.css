@@ -14,6 +14,10 @@
   border-left: 0;
 }
 
+.dark .speech-bubble:after {
+  border-right-color: #171717 !important;
+}
+
 @supports (-moz-appearance: none) {
   .moz\:-bottom-1 {
     @apply -bottom-1;
