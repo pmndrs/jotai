@@ -98,9 +98,9 @@ module.exports = {
         },
       },
     },
-    `gatsby-plugin-remove-trailing-slashes`,
   ],
   jsxRuntime: 'automatic',
+  trailingSlash: 'never',
   flags: {
     FAST_DEV: true,
   },

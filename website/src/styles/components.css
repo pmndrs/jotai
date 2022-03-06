@@ -15,7 +15,7 @@
 }
 
 .prose h2 a code {
-  @apply px-2 py-1 !text-black;
+  @apply px-2 py-1 !text-black dark:!text-white;
   font-size: 0.7em;
 }
 
@@ -28,7 +28,7 @@
 }
 
 .prose h3 a code {
-  @apply px-2 py-1 !text-black;
+  @apply px-2 py-1 !text-black dark:!text-white;
   font-size: 0.7em;
 }
 
@@ -37,7 +37,7 @@
 }
 
 .prose h4 a code {
-  @apply px-2 py-1 !text-black;
+  @apply px-2 py-1 !text-black dark:!text-white;
   font-size: 0.7em;
 }
 
@@ -118,6 +118,10 @@
 
 .prose blockquote a code {
   @apply !text-blue-900;
+}
+
+.prose hr {
+  @apply w-full h-px my-8 border-none bg-gray-300 dark:bg-gray-700;
 }
 
 @tailwind components;

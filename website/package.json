@@ -27,7 +27,6 @@
     "gatsby-plugin-mdx": "^3.7.0",
     "gatsby-plugin-postcss": "^5.7.0",
     "gatsby-plugin-react-helmet": "^5.7.0",
-    "gatsby-plugin-remove-trailing-slashes": "^4.7.0",
     "gatsby-plugin-sitemap": "^5.7.0",
     "gatsby-plugin-use-dark-mode": "^1.4.0",
     "gatsby-source-filesystem": "^4.7.0",
