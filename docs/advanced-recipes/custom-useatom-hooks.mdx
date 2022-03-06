@@ -14,12 +14,16 @@ This page shows the ways of creating different utility functions. Utility functi
 import { useAtom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
+/* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
 export function useSelectAtom(anAtom, keyFn) {
-    return useAtom(selectAtom(anAtom, keyFn));
+    return useAtom(selectAtom(
+        anAtom, 
+        useCallBack(keyFn, [])
+    ));
 }
 ```
 
-Please note that in this case `keyFn` must be stable, either define outside render or warp with `useCallback`
+Please note that in this case `keyFn` must be stable, either define outside render or warp with `useCallback`.
 
 ### useFreezeAtom
 
@@ -51,9 +55,13 @@ export function useSplitAtom(anAtom) {
 import { useAtom } from 'jotai'
 import { focusAtom } from 'jotai/optics'
 
-export function useFocusAtom(anAtom, keyFn) {
-    return useAtom(focusAtom(anAtom, keyFn))
+/* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
+export function useFocusAtom(anAtom, (optic) => optic.prop('key')) {
+    return useAtom(focusAtom(
+        anAtom,
+        useCallBack((optic) => optic.prop('key'), [])
+    ))
 }
 ```
 
-Please note that in this case `keyFn` must be stable, either define outside render or warp with `useCallback`
+Please note that in this case `keyFn` must be stable, either define outside render or warp with `useCallback`.
