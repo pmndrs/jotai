@@ -15,10 +15,10 @@ import { useAtom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
-export function useSelectAtom(anAtom, keyFn) {
-    return useAtom(selectAtom(
+export function useSelectAtom(anAtom) {
+    return useAtomValue(selectAtom(
         anAtom, 
-        useCallBack(keyFn, [])
+        useCallBack((state) => state.prop, [])
     ));
 }
 ```
@@ -56,7 +56,7 @@ import { useAtom } from 'jotai'
 import { focusAtom } from 'jotai/optics'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
-export function useFocusAtom(anAtom, (optic) => optic.prop('key')) {
+export function useFocusAtom(anAtom) {
     return useAtom(focusAtom(
         anAtom,
         useCallBack((optic) => optic.prop('key'), [])
