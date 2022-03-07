@@ -1,6 +1,6 @@
 import type {} from '@redux-devtools/extension'
 
-export type Message = {
+type Message = {
   type: string
   payload?: any
   state?: any
@@ -13,8 +13,6 @@ interface Action<T = any> {
 export interface ConnectResponse {
   init: (state: unknown) => void
   send: (action: Action<unknown>, state: unknown) => void
-  subscribe?: (
-    listener: (message: any) => void // FIXME no-any
-  ) => (() => void) | undefined
+  subscribe?: (listener: (message: Message) => void) => (() => void) | undefined
   shouldInit?: boolean
 }

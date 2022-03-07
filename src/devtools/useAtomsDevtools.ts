@@ -8,7 +8,7 @@ import {
   DEV_SUBSCRIBE_STATE,
   RESTORE_ATOMS,
 } from '../core/store'
-import { ConnectResponse, Message } from './types'
+import { ConnectResponse } from './types'
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
@@ -114,7 +114,13 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     [store, versionedWrite]
   )
 
-  let extension = window?.__REDUX_DEVTOOLS_EXTENSION__
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__']
+
+  try {
+    extension = window.__REDUX_DEVTOOLS_EXTENSION__
+  } catch {
+    // ignored
+  }
 
   if (!extension) {
     if (__DEV__ && typeof window !== 'undefined') {
@@ -144,7 +150,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
       }
       const connection = extension.connect({ name }) as ConnectResponse
 
-      const devtoolsUnsubscribe = connection.subscribe!((message: Message) => {
+      const devtoolsUnsubscribe = connection.subscribe!((message) => {
         switch (message.type) {
           case 'DISPATCH':
             switch (message.payload?.type) {

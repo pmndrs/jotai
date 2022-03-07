@@ -2,14 +2,20 @@ import { useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
 import type { Atom, WritableAtom } from 'jotai'
 import type { Scope, SetAtom } from '../core/atom'
-import { ConnectResponse, Message } from './types'
+import { ConnectResponse } from './types'
 
 export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
   name?: string,
   scope?: Scope
 ): void {
-  let extension = window?.__REDUX_DEVTOOLS_EXTENSION__
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__']
+
+  try {
+    extension = window.__REDUX_DEVTOOLS_EXTENSION__
+  } catch {
+    // ignored
+  }
 
   if (!extension) {
     if (__DEV__ && typeof window !== 'undefined') {
@@ -40,7 +46,7 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
 
       devtools.current = extension.connect({ name: atomName })
 
-      const unsubscribe = devtools.current.subscribe!((message: Message) => {
+      const unsubscribe = devtools.current.subscribe!((message) => {
         if (message.type === 'ACTION' && message.payload) {
           try {
             setValueIfWritable(JSON.parse(message.payload))
