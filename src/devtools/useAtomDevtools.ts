@@ -1,23 +1,8 @@
-import type {} from '@redux-devtools/extension'
 import { useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
 import type { Atom, WritableAtom } from 'jotai'
 import type { Scope, SetAtom } from '../core/atom'
-
-type Message = {
-  type: string
-  payload?: any
-  state?: any
-}
-
-interface Action<T = any> {
-  type: T
-}
-
-interface ConnectResponse {
-  init: (state: unknown) => void
-  send: (action: Action<unknown>, state: unknown) => void
-}
+import { ConnectResponse, Message } from './types'
 
 export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
@@ -36,11 +21,7 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
 
   const lastValue = useRef(value)
   const isTimeTraveling = useRef(false)
-  const devtools = useRef<ConnectResponse &  {
-        subscribe?: (
-          listener: (message: any) => void // FIXME no-any
-        ) => (() => void) | undefined
-      }   & { shouldInit?: boolean }>()
+  const devtools = useRef<ConnectResponse>()
 
   const atomName = name || anAtom.debugLabel || anAtom.toString()
 
@@ -58,6 +39,7 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
       }
 
       devtools.current = extension.connect({ name: atomName })
+
       const unsubscribe = devtools.current.subscribe!((message: Message) => {
         if (message.type === 'ACTION' && message.payload) {
           try {
