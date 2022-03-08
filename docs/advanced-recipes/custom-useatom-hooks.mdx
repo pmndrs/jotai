@@ -61,8 +61,7 @@ import { focusAtom } from 'jotai/optics'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
 export function useFocusAtom(anAtom, keyFn) {
-
-    return useAtom(focusAtom(anAtom, keyFn));
+    return useAtom(focusAtom(anAtom, keyFn))
 }
 
 // how to use it
