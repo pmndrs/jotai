@@ -17,7 +17,7 @@ import { selectAtom } from 'jotai/utils'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
 export function useSelectAtom(anAtom, keyFn) {
-    return useAtomValue(selectAtom(anAtom, keyFn));
+    return useAtomValue(selectAtom(anAtom, keyFn))
 }
 
 // how to use it
