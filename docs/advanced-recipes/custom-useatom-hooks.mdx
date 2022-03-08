@@ -15,12 +15,15 @@ import { useAtom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
-export function useSelectAtom(anAtom) {
-    return useAtomValue(selectAtom(
-        anAtom, 
-        useCallBack((state) => state.prop, [])
-    ));
+export function useSelectAtom(anAtom, keyFn) {
+    return useAtomValue(selectAtom(anAtom, keyFn));
 }
+
+// how to use it
+useSelectAtom(
+    useMemo(() => atom(initValue), [initValue]),
+    useCallBack((state) => state.prop, [])
+)
 ```
 
 Please note that in this case `keyFn` must be stable, either define outside render or warp with `useCallback`.
@@ -56,11 +59,15 @@ import { useAtom } from 'jotai'
 import { focusAtom } from 'jotai/optics'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
-export function useFocusAtom(anAtom) {
-    return useAtom(focusAtom(
-        anAtom,
-        useCallBack((optic) => optic.prop('key'), [])
-    ))
+export function useSelectAtom(anAtom, keyFn) {
+    return useAtom(focusAtom(anAtom, keyFn));
+}
+
+// how to use it
+
+useFocusAtom(anAtom) {
+    useMemo(() => atom(initValue), [initValue]),
+    useCallBack((optic) => optic.prop('key'), [])
 }
 ```
 
