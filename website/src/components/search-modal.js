@@ -94,7 +94,7 @@ const Hit = ({ hit }) => {
         />
       </div>
       <div>
-        <div className="font-semibold text-xl text-white dark:text-gray-200">
+        <div className="font-semibold text-xl dark:text-gray-200">
           {title}
         </div>
         {excerpt && (
