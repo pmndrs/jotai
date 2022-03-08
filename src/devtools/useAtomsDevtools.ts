@@ -8,7 +8,7 @@ import {
   DEV_SUBSCRIBE_STATE,
   RESTORE_ATOMS,
 } from '../core/store'
-import { ConnectResponse } from './types'
+import { Message } from './types'
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
@@ -134,7 +134,11 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)
-  const devtools = useRef<ConnectResponse>()
+  const devtools = useRef<
+    ReturnType<NonNullable<typeof extension>['connect']> & {
+      shouldInit?: boolean
+    }
+  >()
 
   const snapshots = useRef<AtomsSnapshot[]>([])
 
@@ -148,9 +152,16 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         }
         return snapshot
       }
-      const connection = extension.connect({ name }) as ConnectResponse
+      const connection = extension.connect({ name })
 
-      const devtoolsUnsubscribe = connection.subscribe!((message) => {
+      const devtoolsUnsubscribe = (
+        connection as unknown as {
+          // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
+          subscribe: (
+            listener: (message: Message) => void
+          ) => (() => void) | undefined
+        }
+      ).subscribe((message) => {
         switch (message.type) {
           case 'DISPATCH':
             switch (message.payload?.type) {

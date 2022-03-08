@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
 import type { Atom, WritableAtom } from 'jotai'
 import type { Scope, SetAtom } from '../core/atom'
-import { ConnectResponse } from './types'
+import { Message } from './types'
 
 export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
@@ -27,7 +27,11 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
 
   const lastValue = useRef(value)
   const isTimeTraveling = useRef(false)
-  const devtools = useRef<ConnectResponse>()
+  const devtools = useRef<
+    ReturnType<NonNullable<typeof extension>['connect']> & {
+      shouldInit?: boolean
+    }
+  >()
 
   const atomName = name || anAtom.debugLabel || anAtom.toString()
 
@@ -46,7 +50,14 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
 
       devtools.current = extension.connect({ name: atomName })
 
-      const unsubscribe = devtools.current.subscribe!((message) => {
+      const unsubscribe = (
+        devtools.current as unknown as {
+          // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
+          subscribe: (
+            listener: (message: Message) => void
+          ) => (() => void) | undefined
+        }
+      ).subscribe((message) => {
         if (message.type === 'ACTION' && message.payload) {
           try {
             setValueIfWritable(JSON.parse(message.payload))
