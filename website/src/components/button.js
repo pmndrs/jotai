@@ -16,22 +16,21 @@ export const Button = ({
   ...rest
 }) => {
   const buttonClassNames = cx(
-    'inline-flex items-center border',
+    'inline-flex items-center border dark:!shadow-none select-none',
     !small
       ? 'px-6 py-3 space-x-4 shadow-md rounded-md sm:rounded-lg text-base'
       : 'px-3 py-1.5 space-x-2 shadow-sm rounded sm:rounded-md text-xs',
     !dark
-      ? 'border-gray-200 hover:border-blue-200 bg-gray-100 hover:bg-blue-100 text-black'
-      : 'border-gray-700 hover:border-blue-700 bg-gray-900 text-gray-300',
+      ? 'border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 hover:bg-blue-100 text-black dark:text-gray-300'
+      : 'border-gray-800 bg-gray-900 text-gray-300',
     !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
-    'select-none',
     className
   )
 
   const iconClassNames = cx(
     'flex-shrink-0 object-contain fill-current',
     !small ? 'w-6 h-6' : 'w-4 h-4',
-    !dark ? 'text-gray-700' : 'text-gray-300'
+    !dark ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300'
   )
 
   if (onClick && to) {

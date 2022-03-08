@@ -11,7 +11,7 @@ pre[class*='language-'] {
   tab-size: 2;
   hyphens: none;
   font-size: 0.9em;
-  @apply shadow-lg rounded-md sm:rounded-lg text-[#e4f0fb] text-left break-normal leading-normal;
+  @apply shadow-lg dark:!shadow-none rounded-md sm:rounded-lg text-[#e4f0fb] text-left break-normal leading-normal;
 }
 
 /* Code blocks */
@@ -22,6 +22,11 @@ pre[class*='language-'] {
 :not(pre) > code[class*='language-'],
 pre[class*='language-'] {
   @apply bg-[#252b37];
+}
+
+.dark :not(pre) > code[class*='language-'],
+.dark pre[class*='language-'] {
+  @apply bg-[#13161c];
 }
 
 /* Inline code */

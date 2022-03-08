@@ -7,15 +7,15 @@
 }
 
 .prose h1 {
-  @apply font-extrabold text-4xl lg:text-5xl tracking-tight lg:tracking-tighter leading-tight;
+  @apply font-extrabold text-4xl lg:text-5xl text-black dark:text-gray-50 tracking-tight lg:tracking-tighter leading-tight;
 }
 
 .prose h2 {
-  @apply font-bold text-2xl lg:text-3xl text-gray-350 leading-tight;
+  @apply font-bold text-2xl lg:text-3xl text-gray-350 dark:text-gray-200 leading-tight;
 }
 
 .prose h2 a code {
-  @apply px-2 py-1 !text-black;
+  @apply px-2 py-1 !text-black dark:!text-white;
   font-size: 0.7em;
 }
 
@@ -24,20 +24,20 @@
 }
 
 .prose h3 {
-  @apply mt-6 lg:mt-8 font-semibold text-lg lg:text-xl text-gray-700 leading-tight;
+  @apply mt-6 lg:mt-8 font-semibold text-lg lg:text-xl text-gray-700 dark:text-gray-300 leading-tight;
 }
 
 .prose h3 a code {
-  @apply px-2 py-1 !text-black;
+  @apply px-2 py-1 !text-black dark:!text-white;
   font-size: 0.7em;
 }
 
 .prose h4 {
-  @apply mt-8 font-semibold text-base lg:text-lg text-gray-600 leading-tight;
+  @apply mt-8 font-semibold text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-tight;
 }
 
 .prose h4 a code {
-  @apply px-2 py-1 !text-black;
+  @apply px-2 py-1 !text-black dark:!text-white;
   font-size: 0.7em;
 }
 
@@ -61,7 +61,7 @@
 
 .prose ol,
 .prose ul {
-  @apply my-4 pl-5 space-y-4 font-normal text-sm sm:text-base lg:text-lg text-gray-600 leading-normal;
+  @apply my-4 pl-5 space-y-4 font-normal text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-500 leading-normal;
 }
 
 .prose ol {
@@ -69,7 +69,7 @@
 }
 
 .prose ul {
-  @apply list-disc marker:text-gray-400;
+  @apply list-disc marker:text-gray-400 dark:marker:text-gray-700;
 }
 
 .prose li {
@@ -77,7 +77,7 @@
 }
 
 .prose p {
-  @apply mt-1 text-sm sm:text-base lg:text-lg text-gray-600 leading-normal;
+  @apply mt-1 text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-500 leading-normal;
 }
 
 .prose p + p {
@@ -89,7 +89,15 @@
 }
 
 .prose a {
-  @apply text-blue-600 underline;
+  @apply text-blue-600 dark:text-teal-400 underline;
+}
+
+.dark .prose h1 a,
+.dark .prose h2 a,
+.dark .prose h3 a,
+.dark .prose h4 a,
+.dark .prose h5 a {
+  color: inherit;
 }
 
 .prose a code {
@@ -97,19 +105,23 @@
 }
 
 .prose blockquote {
-  @apply my-4 px-4 py-2 shadow-md rounded-md sm:rounded-lg border border-yellow-200 bg-yellow-100;
+  @apply my-4 px-4 py-2 shadow-md dark:!shadow-none rounded-md sm:rounded-lg border border-yellow-200 dark:border-yellow-300 bg-yellow-100 dark:bg-yellow-200;
 }
 
 .prose blockquote a {
-  @apply text-yellow-900;
+  @apply text-yellow-900 dark:text-yellow-950;
 }
 
 .prose blockquote p {
-  @apply text-yellow-900;
+  @apply text-yellow-900 dark:text-yellow-950;
 }
 
 .prose blockquote a code {
   @apply !text-blue-900;
+}
+
+.prose hr {
+  @apply w-full h-px my-8 border-none bg-gray-300 dark:bg-gray-700;
 }
 
 @tailwind components;
