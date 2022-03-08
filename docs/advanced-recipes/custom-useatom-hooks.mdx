@@ -11,7 +11,8 @@ This page shows the ways of creating different utility functions. Utility functi
 ### useSelectAtom
 
 ```ts
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
+
 import { selectAtom } from 'jotai/utils'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
