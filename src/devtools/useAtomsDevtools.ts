@@ -8,34 +8,7 @@ import {
   DEV_SUBSCRIBE_STATE,
   RESTORE_ATOMS,
 } from '../core/store'
-
-type Config = {
-  instanceID?: number
-  name?: string
-  serialize?: boolean
-  actionCreators?: any
-  latency?: number
-  predicate?: any
-  autoPause?: boolean
-}
-
-type Message = {
-  type: string
-  payload?: { type: string; actionId: number }
-  state?: any
-}
-
-type ConnectionResult = {
-  subscribe: (dispatch: any) => () => void
-  unsubscribe: () => void
-  send: (action: any, state: any) => void
-  init: (state: any) => void
-  error: (payload: any) => void
-}
-
-type Extension = {
-  connect: (options?: Config) => ConnectionResult
-}
+import { Message } from './types'
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
@@ -141,12 +114,14 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     [store, versionedWrite]
   )
 
-  let extension: Extension | undefined
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__']
+
   try {
-    extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
+    extension = window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
     // ignored
   }
+
   if (!extension) {
     if (__DEV__ && typeof window !== 'undefined') {
       console.warn('Please install/enable Redux devtools extension')
@@ -159,7 +134,11 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
 
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)
-  const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
+  const devtools = useRef<
+    ReturnType<NonNullable<typeof extension>['connect']> & {
+      shouldInit?: boolean
+    }
+  >()
 
   const snapshots = useRef<AtomsSnapshot[]>([])
 
@@ -174,7 +153,15 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         return snapshot
       }
       const connection = extension.connect({ name })
-      const devtoolsUnsubscribe = connection.subscribe((message: Message) => {
+
+      const devtoolsUnsubscribe = (
+        connection as unknown as {
+          // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
+          subscribe: (
+            listener: (message: Message) => void
+          ) => (() => void) | undefined
+        }
+      ).subscribe((message) => {
         switch (message.type) {
           case 'DISPATCH':
             switch (message.payload?.type) {
@@ -223,7 +210,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
         {
           type: `${snapshots.current.length}`,
           updatedAt: new Date().toLocaleString(),
-        },
+        } as any,
         getDevtoolsState(atomsSnapshot)
       )
     }

@@ -2,46 +2,21 @@ import { useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
 import type { Atom, WritableAtom } from 'jotai'
 import type { Scope, SetAtom } from '../core/atom'
-
-type Config = {
-  instanceID?: number
-  name?: string
-  serialize?: boolean
-  actionCreators?: any
-  latency?: number
-  predicate?: any
-  autoPause?: boolean
-}
-
-type Message = {
-  type: string
-  payload?: any
-  state?: any
-}
-
-type ConnectionResult = {
-  subscribe: (dispatch: any) => () => void
-  unsubscribe: () => void
-  send: (action: string, state: any) => void
-  init: (state: any) => void
-  error: (payload: any) => void
-}
-
-type Extension = {
-  connect: (options?: Config) => ConnectionResult
-}
+import { Message } from './types'
 
 export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
   name?: string,
   scope?: Scope
 ): void {
-  let extension: Extension | undefined
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__']
+
   try {
-    extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
+    extension = window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
     // ignored
   }
+
   if (!extension) {
     if (__DEV__ && typeof window !== 'undefined') {
       console.warn('Please install/enable Redux devtools extension')
@@ -52,7 +27,11 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
 
   const lastValue = useRef(value)
   const isTimeTraveling = useRef(false)
-  const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
+  const devtools = useRef<
+    ReturnType<NonNullable<typeof extension>['connect']> & {
+      shouldInit?: boolean
+    }
+  >()
 
   const atomName = name || anAtom.debugLabel || anAtom.toString()
 
@@ -68,8 +47,17 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
           anAtom
         )
       }
+
       devtools.current = extension.connect({ name: atomName })
-      const unsubscribe = devtools.current.subscribe((message: Message) => {
+
+      const unsubscribe = (
+        devtools.current as unknown as {
+          // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
+          subscribe: (
+            listener: (message: Message) => void
+          ) => (() => void) | undefined
+        }
+      ).subscribe((message) => {
         if (message.type === 'ACTION' && message.payload) {
           try {
             setValueIfWritable(JSON.parse(message.payload))
@@ -126,7 +114,7 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
         isTimeTraveling.current = false
       } else {
         devtools.current.send(
-          `${atomName} - ${new Date().toLocaleString()}`,
+          `${atomName} - ${new Date().toLocaleString()}` as any,
           value
         )
       }
