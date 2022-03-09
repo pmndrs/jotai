@@ -67,3 +67,62 @@ it('Should handle all types of exports', () => {
     export default atoms;"
   `)
 })
+
+it('Should handle all atom types', () => {
+  expect(
+    transform(
+      `
+      export const countAtom = atom(0);
+
+      const myFamily = atomFamily((param) => atom(param));
+
+      const countAtomWithDefault = atomWithDefault((get) => get(countAtom) * 2);
+
+      const observableAtom = atomWithObservable(() => {});
+
+      const reducerAtom = atomWithReducer(0, () => {});
+
+      const resetAtom = atomWithReset(0);
+
+      const storageAtom = atomWithStorage('count', 1);
+
+      const freezedAtom = freezeAtom(atom({ count: 0 }));
+
+      const loadedAtom = loadable(countAtom);
+
+      const selectedValueAtom = selectAtom(atom({ a: 0, b: 'othervalue' }), (v) => v.a);
+
+      const splittedAtom = splitAtom(atom([]));
+    `,
+      'atoms/index.ts'
+    )
+  ).toMatchInlineSnapshot(`
+    "export const countAtom = atom(0);
+    countAtom.debugLabel = \\"countAtom\\";
+    const myFamily = atomFamily(param => atom(param));
+    myFamily.debugLabel = \\"myFamily\\";
+    const countAtomWithDefault = atomWithDefault(get => get(countAtom) * 2);
+    countAtomWithDefault.debugLabel = \\"countAtomWithDefault\\";
+    const observableAtom = atomWithObservable(() => {});
+    observableAtom.debugLabel = \\"observableAtom\\";
+    const reducerAtom = atomWithReducer(0, () => {});
+    reducerAtom.debugLabel = \\"reducerAtom\\";
+    const resetAtom = atomWithReset(0);
+    resetAtom.debugLabel = \\"resetAtom\\";
+    const storageAtom = atomWithStorage('count', 1);
+    storageAtom.debugLabel = \\"storageAtom\\";
+    const freezedAtom = freezeAtom(atom({
+      count: 0
+    }));
+    freezedAtom.debugLabel = \\"freezedAtom\\";
+    const loadedAtom = loadable(countAtom);
+    loadedAtom.debugLabel = \\"loadedAtom\\";
+    const selectedValueAtom = selectAtom(atom({
+      a: 0,
+      b: 'othervalue'
+    }), v => v.a);
+    selectedValueAtom.debugLabel = \\"selectedValueAtom\\";
+    const splittedAtom = splitAtom(atom([]));
+    splittedAtom.debugLabel = \\"splittedAtom\\";"
+  `)
+})

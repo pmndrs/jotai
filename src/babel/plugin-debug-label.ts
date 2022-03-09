@@ -1,6 +1,7 @@
 import path from 'path'
-import babel, { PluginObj, types } from '@babel/core'
+import babel, { PluginObj } from '@babel/core'
 import templateBuilder from '@babel/template'
+import { isAtom } from './utils'
 
 export default function debugLabelPlugin({
   types: t,
@@ -55,21 +56,4 @@ export default function debugLabelPlugin({
       },
     },
   }
-}
-
-function isAtom(
-  t: typeof types,
-  callee: babel.types.Expression | babel.types.V8IntrinsicIdentifier
-) {
-  if (t.isIdentifier(callee) && callee.name === 'atom') {
-    return true
-  }
-
-  if (t.isMemberExpression(callee)) {
-    const { property } = callee
-    if (t.isIdentifier(property) && property.name === 'atom') {
-      return true
-    }
-  }
-  return false
 }
