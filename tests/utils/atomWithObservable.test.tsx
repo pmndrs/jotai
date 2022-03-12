@@ -1,8 +1,8 @@
 import { ReactElement, Suspense, useState } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
+import { Observable, Subject } from 'rxjs'
 import { useAtom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
-import { Observable, Subject } from 'rxjs'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
