@@ -29,13 +29,10 @@ type ObservableLike<T> = {
 
 type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
-type InitialDataFunction<T> = () => T | undefined
+type InitialValueFunction<T> = () => T | undefined
 
-export type AtomWithObservableOptions<TData> = {
-  initialData?: TData | InitialDataFunction<TData>
-}
-export type CreateObservableOptions<TData> = {
-  initialData?: TData
+type AtomWithObservableOptions<TData> = {
+  initialValue?: TData | InitialValueFunction<TData>
 }
 
 export function atomWithObservable<TData>(
@@ -60,8 +57,8 @@ export function atomWithObservable<TData>(
     }
 
     const dataAtom = atom(
-      options?.initialData
-        ? getInitialData(options)
+      options?.initialValue
+        ? getInitialValue(options)
         : firstValueFrom(observable)
     )
     let setData: (data: TData | Promise<TData>) => void = () => {
@@ -105,9 +102,9 @@ export function atomWithObservable<TData>(
   return observableAtom
 }
 
-function getInitialData<TData>(options: AtomWithObservableOptions<TData>) {
-  const initialData = options.initialData
-  return initialData instanceof Function ? initialData() : initialData
+function getInitialValue<TData>(options: AtomWithObservableOptions<TData>) {
+  const initialValue = options.initialValue
+  return initialValue instanceof Function ? initialValue() : initialValue
 }
 
 function firstValueFrom<T>(source: ObservableLike<T>): Promise<T> {

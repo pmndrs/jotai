@@ -112,9 +112,9 @@ it('resubscribe on remount', async () => {
   await findByText('count: 2')
 })
 
-it("count state with initialData doesn't suspend", async () => {
+it("count state with initialValue doesn't suspend", async () => {
   const subject = new Subject<number>()
-  const observableAtom = atomWithObservable(() => subject, { initialData: 5 })
+  const observableAtom = atomWithObservable(() => subject, { initialValue: 5 })
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
@@ -135,7 +135,7 @@ it("count state with initialData doesn't suspend", async () => {
   await findByText('count: 10')
 })
 
-it('writable count state with initialData', async () => {
+it('writable count state with initialValue', async () => {
   const observableAtom = atomWithObservable(
     () => {
       const observable = new Observable<number>((subscriber) => {
@@ -148,7 +148,7 @@ it('writable count state with initialData', async () => {
       }, 100)
       return subject
     },
-    { initialData: 5 }
+    { initialValue: 5 }
   )
 
   const Counter = () => {
@@ -178,13 +178,13 @@ it('writable count state with initialData', async () => {
   await findByText('count: 9')
 })
 
-it('with initial data and synchronous subscription', async () => {
+it('with initial value and synchronous subscription', async () => {
   const observableAtom = atomWithObservable(
     () =>
       new Observable<number>((subscriber) => {
         subscriber.next(1)
       }),
-    { initialData: 5 }
+    { initialValue: 5 }
   )
 
   const Counter = () => {
