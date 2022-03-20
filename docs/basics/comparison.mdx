@@ -12,8 +12,8 @@ Zustand means "state" in German.
 
 ### Analogy
 
-Jotai is close to Recoil.
-Zustand is close to Redux.
+Jotai is like Recoil.
+Zustand is like Redux.
 
 ### Where state resides
 
@@ -27,9 +27,9 @@ Zustand state is one object (i.e. top-down).
 
 ### Technical difference
 
-The major difference is the state model. Zustand is basically a single store (you could create multiple stores, but they are separated.) Jotai is primitive atoms and composing them. In this sense, it's the matter of programming mental model.
+The major difference is the state model. Zustand is a single store (although you could create multiple separate stores), while Jotai consists of primitive atoms and allows composing them together. In this sense, it's the matter of programming mental model.
 
-Jotai can be seen as a replacement for useState+useContext. Instead of creating multiple contexts, atoms share one big context.
+Jotai can be a replacement for useState+useContext. Instead of creating multiple contexts, atoms share one big context.
 
 Zustand is an external store and the hook is to connect the external world to the React world.
 
@@ -45,7 +45,7 @@ Zustand is an external store and the hook is to connect the external world to th
 
 ## How is Jotai different from Recoil?
 
-(Disclaimer: the author is not very familiar with Recoil, this can be biased and not accurate.)
+(Disclaimer: the author is not very familiar with Recoil, this may be biased and inaccurate.)
 
 ### Developer
 
@@ -54,8 +54,8 @@ Zustand is an external store and the hook is to connect the external world to th
 
 ### Basis
 
-- Jotai is focusing on primitive APIs for lean learning, and it's unopinionated. (The same philosophy with Zustand)
-- Recoil is full featured for big apps with various requirements.
+- Jotai is focusing on primitive APIs for easy learning, and it's unopinionated. (The same philosophy with Zustand)
+- Recoil is full featured for big apps with complex requirements.
 
 ### Technical difference
 
@@ -69,4 +69,4 @@ Zustand is an external store and the hook is to connect the external world to th
 - If your app heavily requires state serialization (storing state in storage, server, or URL), Recoil comes with good features.
 - If you need React Context alternatives, Jotai comes with enough features.
 - If you would try to create a new library, Jotai might give good primitives.
-- Otherwise, both are pretty similar about the general goals and basic techniques, so please try both and give us a feedback.
+- Otherwise, both are pretty similar about the general goals and basic techniques, so please try both and share you feedback with us.
