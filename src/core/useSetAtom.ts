@@ -12,11 +12,7 @@ export function useSetAtom<Value, Update, Result extends void | Promise<void>>(
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
   const setAtom = useCallback(
     (update: Update) => {
-      if (
-        !('write' in atom) &&
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
+      if (__DEV__ && !('write' in atom)) {
         // useAtom can pass non writable atom with wrong type assertion,
         // so we should check here.
         throw new Error('not writable atom')
