@@ -8,7 +8,7 @@ This guide is beneficial for those who want to understand the core implementatio
 core implementation but rather a simplified version. It's inspired by the collection of tweets by Daishi Kato([@dai_shi](https://twitter.com/dai_shi)).
 
 ## First Version
-Let's start with an easy example. An atom is just a function that will return some configured value. We are using WeakMap to map atom with their state.
+Let's start with an easy example. An atom is just a function that will return a configuration object. We are using WeakMap to map atom with their state.
 WeakMap doesn't keep its keys in memory, so if an atom is garbage collected, its state will be garbage collected too. This helps avoid memory leaks.
 
 ```js
