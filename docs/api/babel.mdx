@@ -8,37 +8,37 @@ nav: 2.04
 
 Jotai is based on object references and not keys (like Recoil). This means there's no identifier for atoms. To identify atoms, it's possible to add a `debugLabel` to an atom, which can be found in React devtools.
 
-However, this can quickly become  cumbersome to add a `debugLabel` to every atom.
+However, this can quickly become cumbersome to add a `debugLabel` to every atom.
 
 This `babel` plugin adds a `debugLabel` to every atom, based on its identifer.
 
 The plugin transforms this code:
 
 ```ts
-export const countAtom = atom(0);
+export const countAtom = atom(0)
 ```
 
 Into:
 
 ```ts
-export const countAtom = atom(0);
-countAtom.debugLabel = "countAtom";
+export const countAtom = atom(0)
+countAtom.debugLabel = 'countAtom'
 ```
 
 Default exports are also handled, based on the file naming:
 
 ```ts
 // countAtom.ts
-export default atom(0);
+export default atom(0)
 ```
 
 Which transform into:
 
 ```ts
 // countAtom.ts
-const countAtom = atom(0);
-countAtom.debugLabel = "countAtom";
-export default countAtom;
+const countAtom = atom(0)
+countAtom.debugLabel = 'countAtom'
+export default countAtom
 ```
 
 ## Usage
@@ -92,4 +92,3 @@ With a `babel` configuration file:
 ### Parcel
 
 <CodeSandbox id="bgf3b" />
-

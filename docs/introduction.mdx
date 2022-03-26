@@ -8,7 +8,7 @@ nav: 0
 
 Jotai is pronounced "joe-tie" and means "state" in Japanese.
 
-You can try live demos in the following:
+You can try live demos here:
 [Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) |
 [Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d).
 
@@ -21,8 +21,8 @@ You can try live demos in the following:
 ### First create a primitive atom
 
 An atom represents a piece of state. All you need is to specify an initial
-value, which can be primitive values like strings and numbers, objects and
-arrays. You can create as many primitive atoms as you want.
+value, which can be a primitive value like a string, number, object or
+array. You can create as many primitive atoms as you like.
 
 ```jsx
 import { atom } from 'jotai'
@@ -35,7 +35,7 @@ const mangaAtom = atom({ 'Dragon Ball': 1984, 'One Piece': 1997, Naruto: 1999 })
 
 ### Use the atom in your components
 
-It can be used like `React.useState`:
+Use an atom like you'd use `React.useState`:
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -64,9 +64,9 @@ function DoubleCounter() {
 
 ## Recipes
 
-### Creating an atom from multiple atoms
+### Creating an atom from atoms
 
-You can combine multiple atoms to create a derived atom.
+You can combine atoms to create a derived atom.
 
 ```jsx
 const count1 = atom(1)
@@ -83,10 +83,9 @@ const atoms = [count1, count2, count3, ...otherAtoms]
 const sum = atom((get) => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
-### Derived async atoms
-<img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
+### Derived async atoms <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
 
-You can make the read function an async function too.
+You can make the read function an async function.
 
 ```jsx
 const urlAtom = atom("https://json.host.com")
@@ -105,7 +104,7 @@ function Status() {
 ### You can create a writable derived atom
 
 Specify a write function at the second argument. `get` will return the current
-value of an atom. `set` will update an atoms value.
+value of an atom. `set` will update an atom's value.
 
 ```jsx
 const decrementCountAtom = atom(
@@ -123,7 +122,8 @@ function Counter() {
 
 ### Write only atoms
 
-Just do not define a read function.
+To make a write-only atom, don't define a read function by passing `null` as the
+first argument.
 
 ```jsx
 const multiplyCountAtom = atom(null, (get, set, by) => set(countAtom, get(countAtom) * by))
@@ -135,7 +135,7 @@ function Controls() {
 
 ### Async actions
 
-Just make the write function an async function and call `set` when you're ready.
+Make the write function an async function, and call `set` when you're ready.
 
 ```jsx
 const fetchCountAtom = atom(
