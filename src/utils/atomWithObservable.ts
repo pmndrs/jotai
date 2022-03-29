@@ -72,6 +72,8 @@ export function atomWithObservable<TData>(
     }
     let subscription: Subscription | null = null
 
+    // FIXME this implementation is not fully compatible with concurrent rendering.
+    // we need to deal with the case `onMount` is not invoked after the atom is initialized.
     dataAtom.onMount = (update) => {
       setData = update
       if (!subscription) {
