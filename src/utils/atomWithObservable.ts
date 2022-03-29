@@ -74,6 +74,7 @@ export function atomWithObservable<TData>(
 
     // FIXME this implementation is not fully compatible with concurrent rendering.
     // we need to deal with the case `onMount` is not invoked after the atom is initialized.
+    // Ref: https://github.com/pmndrs/jotai/pull/1058
     dataAtom.onMount = (update) => {
       setData = update
       if (!subscription) {
