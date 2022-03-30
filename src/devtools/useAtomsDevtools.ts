@@ -52,11 +52,17 @@ const getDevtoolsState = (atomsSnapshot: AtomsSnapshot) => {
   }
 }
 
-export function useAtomsDevtools(name: string, scope?: Scope) {
-  const ScopeContext = getScopeContext(scope)
+interface DevtoolsOptions {
+  scope?: Scope
+  enabled?: boolean
+}
+
+export function useAtomsDevtools(name: string, options?: DevtoolsOptions) {
+  const ScopeContext = getScopeContext(options?.scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  if (!store[DEV_SUBSCRIBE_STATE]) {
+  console.log(options?.enabled, global.__DEV__)
+  if (!store[DEV_SUBSCRIBE_STATE] && options?.enabled && __DEV__) {
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
@@ -117,18 +123,21 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__']
 
   try {
-    extension = window.__REDUX_DEVTOOLS_EXTENSION__
+    extension =
+      ((options?.enabled ? options.enabled : __DEV__) &&
+        window.__REDUX_DEVTOOLS_EXTENSION__) ||
+      undefined
   } catch {
     // ignored
   }
 
   if (!extension) {
-    if (__DEV__ && typeof window !== 'undefined') {
+    if (__DEV__ && options?.enabled) {
       console.warn('Please install/enable Redux devtools extension')
     }
   }
 
-  if (!store[DEV_SUBSCRIBE_STATE]) {
+  if (!store[DEV_SUBSCRIBE_STATE] && options?.enabled && __DEV__) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
 

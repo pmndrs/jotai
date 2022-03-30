@@ -22,6 +22,8 @@ const extension = {
 const extensionConnector = { connect: jest.fn(() => extension) }
 ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
 
+const savedDev = __DEV__
+
 beforeEach(() => {
   extensionConnector.connect.mockClear()
   extension.subscribe.mockClear()
@@ -32,8 +34,18 @@ beforeEach(() => {
   extensionSubscriber = undefined
 })
 
-const AtomsDevtools = ({ children }: { children: ReactElement }) => {
-  useAtomsDevtools('test')
+afterEach(() => {
+  __DEV__ = savedDev
+})
+
+const AtomsDevtools = ({
+  children,
+  enabled,
+}: {
+  children: ReactElement
+  enabled?: boolean
+}) => {
+  useAtomsDevtools('test', enabled ? { enabled } : undefined)
   return children
 }
 
@@ -100,14 +112,15 @@ describe('If there is no extension installed...', () => {
     console.warn = originalConsoleWarn
   })
 
-  it('[DEV-ONLY] warns in dev env', () => {
+  it('[DEV-ONLY] warns in dev env only if enabled', () => {
+    __DEV__ = true
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
 
     render(
       <StrictMode>
         <Provider>
-          <AtomsDevtools>
+          <AtomsDevtools enabled={true}>
             <Counter />
           </AtomsDevtools>
         </Provider>
@@ -115,6 +128,28 @@ describe('If there is no extension installed...', () => {
     )
 
     expect(console.warn).toHaveBeenLastCalledWith(
+      'Please install/enable Redux devtools extension'
+    )
+
+    console.warn = originalConsoleWarn
+  })
+
+  it('[PRD-ONLY] does not warn in prod env even if enabled is true', () => {
+    __DEV__ = false
+    const originalConsoleWarn = console.warn
+    console.warn = jest.fn()
+
+    render(
+      <StrictMode>
+        <Provider>
+          <AtomsDevtools enabled={true}>
+            <Counter />
+          </AtomsDevtools>
+        </Provider>
+      </StrictMode>
+    )
+
+    expect(console.warn).not.toHaveBeenLastCalledWith(
       'Please install/enable Redux devtools extension'
     )
 
