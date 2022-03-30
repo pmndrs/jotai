@@ -61,7 +61,6 @@ export function useAtomsDevtools(name: string, options?: DevtoolsOptions) {
   const ScopeContext = getScopeContext(options?.scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  console.log(options?.enabled, global.__DEV__)
   if (!store[DEV_SUBSCRIBE_STATE] && options?.enabled && __DEV__) {
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
