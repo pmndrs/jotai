@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
@@ -57,11 +58,28 @@ interface DevtoolsOptions {
   enabled?: boolean
 }
 
-export function useAtomsDevtools(name: string, options?: DevtoolsOptions) {
-  const ScopeContext = getScopeContext(options?.scope)
+export function useAtomsDevtools(name: string, options?: DevtoolsOptions): void
+/*
+ * @deprecated Please use object options (DevtoolsOptions)
+ */
+export function useAtomsDevtools(name: string, options?: Scope): void
+
+export function useAtomsDevtools(
+  name: string,
+  options?: DevtoolsOptions | Scope
+) {
+  if (typeof options !== 'undefined' && typeof options !== 'object') {
+    options = { scope: options }
+  }
+  const { enabled, scope } = options || {}
+  const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  if (!store[DEV_SUBSCRIBE_STATE] && options?.enabled && __DEV__) {
+  if (enabled === false) {
+    return
+  }
+
+  if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
@@ -123,20 +141,18 @@ export function useAtomsDevtools(name: string, options?: DevtoolsOptions) {
 
   try {
     extension =
-      ((options?.enabled ? options.enabled : __DEV__) &&
-        window.__REDUX_DEVTOOLS_EXTENSION__) ||
-      undefined
+      ((enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__) || undefined
   } catch {
     // ignored
   }
 
   if (!extension) {
-    if (__DEV__ && options?.enabled) {
+    if (__DEV__ && enabled) {
       console.warn('Please install/enable Redux devtools extension')
     }
   }
 
-  if (!store[DEV_SUBSCRIBE_STATE] && options?.enabled && __DEV__) {
+  if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
