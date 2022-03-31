@@ -75,11 +75,7 @@ export function useAtomsDevtools(
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  if (enabled === false) {
-    return
-  }
-
-  if (!store[DEV_SUBSCRIBE_STATE]) {
+  if (!store[DEV_SUBSCRIBE_STATE] && enabled && __DEV__) {
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
@@ -152,7 +148,7 @@ export function useAtomsDevtools(
     }
   }
 
-  if (!store[DEV_SUBSCRIBE_STATE]) {
+  if (!store[DEV_SUBSCRIBE_STATE] && enabled && __DEV__) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
