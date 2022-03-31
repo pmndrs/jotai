@@ -72,9 +72,6 @@ export function atomWithObservable<TData>(
     }
     let subscription: Subscription | null = null
 
-    // FIXME this implementation is not fully compatible with concurrent rendering.
-    // we need to deal with the case `onMount` is not invoked after the atom is initialized.
-    // Ref: https://github.com/pmndrs/jotai/pull/1058
     dataAtom.onMount = (update) => {
       setData = update
       if (!subscription) {
@@ -110,6 +107,13 @@ function getInitialValue<TData>(options: AtomWithObservableOptions<TData>) {
   return initialValue instanceof Function ? initialValue() : initialValue
 }
 
+// Limitation
+// Unless the source emit a new value,
+// the subscription will never be destroyed.
+// So, there's a risk of memory leaks, especially because
+// the atom `read` function can be called multiple times without mounting.
+// Ref: https://github.com/pmndrs/jotai/pull/1058
+// (This was present even before #1058.)
 function firstValueFrom<T>(source: ObservableLike<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     let resolved = false
