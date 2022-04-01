@@ -24,9 +24,22 @@ describe('atomWithStorage (sync)', () => {
     },
     setItem: (key: string, newValue: number) => {
       storageData[key] = newValue
+      dummyStorage.listeners.forEach((listener) => {
+        listener(key, newValue)
+      })
     },
     removeItem: (key: string) => {
       delete storageData[key]
+    },
+    listeners: new Set<(key: string, value: number) => void>(),
+    subscribe: (key: string, callback: (value: number) => void) => {
+      const listener = (k: string, value: number) => {
+        if (k === key) {
+          callback(value)
+        }
+      }
+      dummyStorage.listeners.add(listener)
+      return () => dummyStorage.listeners.delete(listener)
     },
   }
 
@@ -59,6 +72,28 @@ describe('atomWithStorage (sync)', () => {
     fireEvent.click(getByText('reset'))
     await findByText('count: 1')
     expect(storageData.count).toBeUndefined()
+  })
+
+  it('storage updates before mount (#1079)', async () => {
+    dummyStorage.setItem('count', 10)
+    const countAtom = atomWithStorage('count', 1, dummyStorage)
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom)
+      // emulating updating before mount
+      if (dummyStorage.getItem('count') !== 9) {
+        dummyStorage.setItem('count', 9)
+      }
+      return <div>count: {count}</div>
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('count: 9')
   })
 })
 
