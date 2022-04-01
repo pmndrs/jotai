@@ -43,13 +43,23 @@ export function createJSONStorage<Value>(
 export function createJSONStorage<Value>(
   getStringStorage: () => AsyncStringStorage | SyncStringStorage
 ): AsyncStorage<Value> | SyncStorage<Value> {
+  let lastStr: string | undefined
+  let lastValue: any
   return {
     getItem: (key) => {
-      const value = getStringStorage().getItem(key)
-      if (value instanceof Promise) {
-        return value.then((v) => JSON.parse(v || ''))
+      const parse = (str: string | null) => {
+        str = str || ''
+        if (lastStr !== str) {
+          lastStr = str
+          lastValue = JSON.parse(str)
+        }
+        return lastValue
       }
-      return JSON.parse(value || '')
+      const str = getStringStorage().getItem(key)
+      if (str instanceof Promise) {
+        return str.then(parse)
+      }
+      return parse(str)
     },
     setItem: (key, newValue) =>
       getStringStorage().setItem(key, JSON.stringify(newValue)),
@@ -122,6 +132,8 @@ export function atomWithStorage<Value>(
     let unsub: Unsubscribe | undefined
     if (storage.subscribe) {
       unsub = storage.subscribe(key, setAtom)
+      // in case it's updated before subscribing
+      setAtom(getInitialValue())
     }
     if (storage.delayInit) {
       const value = getInitialValue()
