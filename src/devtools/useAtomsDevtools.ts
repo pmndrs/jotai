@@ -78,14 +78,14 @@ export function useAtomsDevtools(
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  console.log('here', enabled, __DEV__)
   if (enabled === false) {
     return
   }
-  console.log('dev', __DEV__)
-  /* if (!__DEV__) {
+
+  if (!__DEV__) {
+    console.log('dev', __DEV__, !__DEV__)
     return
-  } */
+  }
   if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
@@ -152,11 +152,9 @@ export function useAtomsDevtools(
     // ignored
   }
 
-  console.log('here', extension)
   if (!extension) {
     if (__DEV__ && enabled) {
       console.warn('Please install/enable Redux devtools extension')
-      console.log('condition called')
     }
   }
 
