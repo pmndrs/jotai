@@ -83,7 +83,7 @@ export function useAtomsDevtools(
   }
 
   if (!__DEV__) {
-    console.log('dev', __DEV__, !__DEV__)
+    console.log('dev', __DEV__, !(__DEV__))
     return
   }
   if (!store[DEV_SUBSCRIBE_STATE]) {
