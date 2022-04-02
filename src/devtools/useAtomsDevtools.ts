@@ -81,9 +81,10 @@ export function useAtomsDevtools(
   if (enabled === false) {
     return
   }
+  const isDev = __DEV__
 
-  if (!__DEV__) {
-    console.log('dev', __DEV__, !(__DEV__))
+  if (!isDev) {
+    console.log('dev', isDev, !isDev)
     return
   }
   if (!store[DEV_SUBSCRIBE_STATE]) {
