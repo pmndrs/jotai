@@ -78,7 +78,7 @@ export function useAtomsDevtools(
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  if (enabled === false) {
+  if (enabled === false || !__DEV__) {
     return
   }
   if (!store[DEV_SUBSCRIBE_STATE]) {
