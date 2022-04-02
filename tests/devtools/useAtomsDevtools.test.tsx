@@ -76,10 +76,10 @@ it('[DEV-ONLY] connects to the extension by initialiing', () => {
 })
 
 describe('If there is no extension installed...', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
-  afterAll(() => {
+  afterEach(() => {
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
   })
 
