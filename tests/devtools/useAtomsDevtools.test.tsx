@@ -50,7 +50,7 @@ const AtomsDevtools = ({
 }
 
 it('[DEV-ONLY] connects to the extension by initialiing', () => {
-    __DEV__ = true
+  __DEV__ = true
   const countAtom = atom(0)
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -160,7 +160,7 @@ describe('If there is no extension installed...', () => {
 })
 
 it('[DEV-ONLY] updating state should call devtools.send', async () => {
-    __DEV__ = true
+  __DEV__ = true
   const countAtom = atom(0)
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -196,7 +196,7 @@ it('[DEV-ONLY] updating state should call devtools.send', async () => {
 })
 
 it('[DEV-ONLY] dependencies + updating state should call devtools.send', async () => {
-    __DEV__ = true
+  __DEV__ = true
   const countAtom = atom(0)
   const doubleAtom = atom((get) => get(countAtom) * 2)
   const Counter = () => {
@@ -289,7 +289,7 @@ it('[DEV-ONLY] dependencies + updating state should call devtools.send', async (
 })
 
 it('[DEV-ONLY] conditional dependencies + updating state should call devtools.send', async () => {
-    __DEV__ = true
+  __DEV__ = true
   const countAtom = atom(0)
   const secondCountAtom = atom(0)
   const enabledAtom = atom(true)

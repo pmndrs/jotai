@@ -160,10 +160,12 @@ export function useAtomsDevtools(
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)
   const devtools = useRef<
-    ReturnType<NonNullable<typeof extension>['connect']> & {
+    ReturnType<
+      NonNullable<typeof window['__REDUX_DEVTOOLS_EXTENSION__']>['connect']
+    > & {
       shouldInit?: boolean
     }
-  >()
+  >() as unknown as typeof window['__REDUX_DEVTOOLS_EXTENSION__']
 
   const snapshots = useRef<AtomsSnapshot[]>([])
 
