@@ -50,6 +50,7 @@ const AtomsDevtools = ({
 }
 
 it('[DEV-ONLY] connects to the extension by initialiing', () => {
+    __DEV__ = true
   const countAtom = atom(0)
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -94,6 +95,7 @@ describe('If there is no extension installed...', () => {
   }
 
   it('[DEV-ONLY] does not throw', () => {
+    __DEV__ = true
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
 
@@ -158,6 +160,7 @@ describe('If there is no extension installed...', () => {
 })
 
 it('[DEV-ONLY] updating state should call devtools.send', async () => {
+    __DEV__ = true
   const countAtom = atom(0)
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -193,6 +196,7 @@ it('[DEV-ONLY] updating state should call devtools.send', async () => {
 })
 
 it('[DEV-ONLY] dependencies + updating state should call devtools.send', async () => {
+    __DEV__ = true
   const countAtom = atom(0)
   const doubleAtom = atom((get) => get(countAtom) * 2)
   const Counter = () => {
@@ -285,6 +289,7 @@ it('[DEV-ONLY] dependencies + updating state should call devtools.send', async (
 })
 
 it('[DEV-ONLY] conditional dependencies + updating state should call devtools.send', async () => {
+    __DEV__ = true
   const countAtom = atom(0)
   const secondCountAtom = atom(0)
   const enabledAtom = atom(true)
@@ -394,6 +399,7 @@ it('[DEV-ONLY] conditional dependencies + updating state should call devtools.se
 
 describe('when it receives an message of type...', () => {
   it('[DEV-ONLY] dispatch & COMMIT', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -442,6 +448,7 @@ describe('when it receives an message of type...', () => {
   })
 
   it('[DEV-ONLY] JUMP_TO_STATE & JUMP_TO_ACTION should not call devtools.send', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const secondCountAtom = atom(0)
     const enabledAtom = atom(true)
@@ -512,6 +519,7 @@ describe('when it receives an message of type...', () => {
   })
 
   it('[DEV-ONLY] time travelling with JUMP_TO_ACTION', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -560,6 +568,7 @@ describe('when it receives an message of type...', () => {
   })
 
   it('[DEV-ONLY] time travelling with JUMP_TO_STATE', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -627,6 +636,7 @@ describe('when it receives an message of type...', () => {
   })
 
   it('[DEV-ONLY] PAUSE_RECORDING, it toggles the sending of actions', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
