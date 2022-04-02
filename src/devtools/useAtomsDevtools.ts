@@ -148,9 +148,11 @@ export function useAtomsDevtools(
     // ignored
   }
 
+  console.log('here', extension)
   if (!extension) {
     if (__DEV__ && enabled) {
       console.warn('Please install/enable Redux devtools extension')
+      console.log('condition called')
     }
   }
 
