@@ -82,9 +82,9 @@ export function useAtomsDevtools(
   if (enabled === false) {
     return
   }
-  if (!__DEV__) {
+  /* if (!__DEV__) {
     return
-  }
+  } */
   if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
