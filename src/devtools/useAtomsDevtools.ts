@@ -78,6 +78,7 @@ export function useAtomsDevtools(
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
+  console.log('here', enabled, __DEV__)
   if (enabled === false || !__DEV__) {
     return
   }
