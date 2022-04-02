@@ -70,12 +70,18 @@ export function useAtomsDevtools(
 ) {
   if (typeof options !== 'undefined' && typeof options !== 'object') {
     options = { scope: options }
+    console.warn(
+      '[useAtomsDevtools] Please use object options (DevtoolsOptions)'
+    )
   }
   const { enabled, scope } = options || {}
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  if (!store[DEV_SUBSCRIBE_STATE] && enabled && __DEV__) {
+  if (enabled === false) {
+    return
+  }
+  if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
@@ -133,11 +139,10 @@ export function useAtomsDevtools(
     [store, versionedWrite]
   )
 
-  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__']
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
 
   try {
-    extension =
-      ((enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__) || undefined
+    extension = (enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
     // ignored
   }
@@ -148,7 +153,7 @@ export function useAtomsDevtools(
     }
   }
 
-  if (!store[DEV_SUBSCRIBE_STATE] && enabled && __DEV__) {
+  if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
