@@ -69,17 +69,20 @@ export function useAtomsDevtools(
   options?: DevtoolsOptions | Scope
 ) {
   if (typeof options !== 'undefined' && typeof options !== 'object') {
-    options = { scope: options }
     console.warn(
       '[useAtomsDevtools] Please use object options (DevtoolsOptions)'
     )
+    options = { scope: options }
   }
   const { enabled, scope } = options || {}
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
   console.log('here', enabled, __DEV__)
-  if (enabled === false || !__DEV__) {
+  if (enabled === false) {
+    return
+  }
+  if (!__DEV__) {
     return
   }
   if (!store[DEV_SUBSCRIBE_STATE]) {
