@@ -82,6 +82,7 @@ export function useAtomsDevtools(
   if (enabled === false) {
     return
   }
+  console.log('dev', __DEV__)
   /* if (!__DEV__) {
     return
   } */
