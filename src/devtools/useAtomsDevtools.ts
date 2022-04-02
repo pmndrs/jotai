@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
@@ -78,12 +77,21 @@ export function useAtomsDevtools(
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  const isDev = __DEV__
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
 
-  if (enabled === false || !isDev) {
-    return
+  try {
+    extension = (enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__
+  } catch {
+    // ignored
   }
-  if (!store[DEV_SUBSCRIBE_STATE]) {
+
+  if (!extension) {
+    if (__DEV__ && enabled) {
+      console.warn('Please install/enable Redux devtools extension')
+    }
+  }
+
+  if (extension && !store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
@@ -93,6 +101,9 @@ export function useAtomsDevtools(
   ])
 
   useEffect(() => {
+    if (!extension) {
+      return
+    }
     const callback = () => {
       const values: AtomsValues = new Map()
       const dependents: AtomsDependents = new Map()
@@ -126,7 +137,7 @@ export function useAtomsDevtools(
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()
     return unsubscribe
-  }, [store])
+  }, [extension, store])
 
   const goToSnapshot = useCallback(
     (values: Iterable<readonly [AnyAtom, AnyAtomValue]>) => {
@@ -141,24 +152,6 @@ export function useAtomsDevtools(
     [store, versionedWrite]
   )
 
-  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
-
-  try {
-    extension = (enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__
-  } catch {
-    // ignored
-  }
-
-  if (!extension) {
-    if (__DEV__ && enabled) {
-      console.warn('Please install/enable Redux devtools extension')
-    }
-  }
-
-  if (!store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useAtomsSnapshot can only be used in dev mode.')
-  }
-
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)
   const devtools = useRef<
@@ -172,54 +165,55 @@ export function useAtomsDevtools(
   const snapshots = useRef<AtomsSnapshot[]>([])
 
   useEffect(() => {
-    if (extension) {
-      const getSnapshotAt = (index = snapshots.current.length - 1) => {
-        // index 0 is @@INIT, so we need to return the next action (0)
-        const snapshot = snapshots.current[index >= 0 ? index : 0]
-        if (!snapshot) {
-          throw new Error('snaphost index out of bounds')
-        }
-        return snapshot
-      }
-      const connection = extension.connect({ name })
-
-      const devtoolsUnsubscribe = (
-        connection as unknown as {
-          // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
-          subscribe: (
-            listener: (message: Message) => void
-          ) => (() => void) | undefined
-        }
-      ).subscribe((message) => {
-        switch (message.type) {
-          case 'DISPATCH':
-            switch (message.payload?.type) {
-              case 'RESET':
-                // TODO
-                break
-
-              case 'COMMIT':
-                connection.init(getDevtoolsState(getSnapshotAt()))
-                snapshots.current = []
-                break
-
-              case 'JUMP_TO_ACTION':
-              case 'JUMP_TO_STATE':
-                isTimeTraveling.current = true
-                goToSnapshot(getSnapshotAt(message.payload.actionId - 1)[0])
-                break
-
-              case 'PAUSE_RECORDING':
-                isRecording.current = !isRecording.current
-                break
-            }
-        }
-      })
-
-      devtools.current = connection
-      devtools.current.shouldInit = true
-      return devtoolsUnsubscribe
+    if (!extension) {
+      return
     }
+    const getSnapshotAt = (index = snapshots.current.length - 1) => {
+      // index 0 is @@INIT, so we need to return the next action (0)
+      const snapshot = snapshots.current[index >= 0 ? index : 0]
+      if (!snapshot) {
+        throw new Error('snaphost index out of bounds')
+      }
+      return snapshot
+    }
+    const connection = extension.connect({ name })
+
+    const devtoolsUnsubscribe = (
+      connection as unknown as {
+        // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
+        subscribe: (
+          listener: (message: Message) => void
+        ) => (() => void) | undefined
+      }
+    ).subscribe((message) => {
+      switch (message.type) {
+        case 'DISPATCH':
+          switch (message.payload?.type) {
+            case 'RESET':
+              // TODO
+              break
+
+            case 'COMMIT':
+              connection.init(getDevtoolsState(getSnapshotAt()))
+              snapshots.current = []
+              break
+
+            case 'JUMP_TO_ACTION':
+            case 'JUMP_TO_STATE':
+              isTimeTraveling.current = true
+              goToSnapshot(getSnapshotAt(message.payload.actionId - 1)[0])
+              break
+
+            case 'PAUSE_RECORDING':
+              isRecording.current = !isRecording.current
+              break
+          }
+      }
+    })
+
+    devtools.current = connection
+    devtools.current.shouldInit = true
+    return devtoolsUnsubscribe
   }, [extension, goToSnapshot, name])
 
   useEffect(() => {
