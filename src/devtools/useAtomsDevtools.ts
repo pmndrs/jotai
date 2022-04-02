@@ -165,7 +165,7 @@ export function useAtomsDevtools(
     > & {
       shouldInit?: boolean
     }
-  >() as unknown as typeof window['__REDUX_DEVTOOLS_EXTENSION__']
+  >()
 
   const snapshots = useRef<AtomsSnapshot[]>([])
 
