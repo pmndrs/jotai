@@ -107,13 +107,17 @@ function getInitialValue<TData>(options: AtomWithObservableOptions<TData>) {
   return initialValue instanceof Function ? initialValue() : initialValue
 }
 
-// Limitation
-// Unless the source emit a new value,
-// the subscription will never be destroyed.
-// So, there's a risk of memory leaks, especially because
-// the atom `read` function can be called multiple times without mounting.
-// Ref: https://github.com/pmndrs/jotai/pull/1058
-// (This was present even before #1058.)
+// FIXME There are two fatal issues in the current implememtation.
+// See also: https://github.com/pmndrs/jotai/pull/1058
+// - There's a risk of memory leaks.
+//   Unless the source emit a new value,
+//   the subscription will never be destroyed.
+//   atom `read` function can be called multiple times without mounting.
+//   This issue has existed even before #1058.
+// - The second value before mounting the atom is dropped.
+//   There's no guarantee that `onMount` is invoked in a short period.
+//   So, by the time we invoke `subscribe`, the value can be changed.
+//   Before #1058, an error was thrown, but currently it's silently dropped.
 function firstValueFrom<T>(source: ObservableLike<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     let resolved = false
