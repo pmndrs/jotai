@@ -7,7 +7,7 @@ nav: 5.02
 
 > `atomWithToggle` creates a new atom with a boolean as initial state & a setter function to toggle it.
 
-This avoids the boilerplate of having to setup another atom just to update the state of the first.
+This avoids the boilerplate of having to set up another atom just to update the state of the first.
 
 ```ts
 import { WritableAtom, atom } from 'jotai'
@@ -24,9 +24,9 @@ export function atomWithToggle(
 }
 ```
 
-An optional initial state can be provided as first argument.
+An optional initial state can be provided as the first argument.
 
-The setter function can have an optional arg to force a particular state (if you want to make a setActive function out of it for example).
+The setter function can have an optional argument to force a particular state, such as if you want to make a setActive function out of it.
 
 Here is how it's used.
 
@@ -37,7 +37,7 @@ import { atomWithToggle } from 'XXX'
 const isActiveAtom = atomWithToggle(true)
 ```
 
-And in a component :
+And in a component:
 
 ```tsx
 const Toggle = () => {
@@ -57,9 +57,9 @@ const Toggle = () => {
 
 ## atomWithToggleAndStorage
 
-> `atomWithToggleAndStorage` does the same as [`atomWithToggle`](#atom-with-toggle) but also persist the state anytime it changes in given storage using [`atomWithStorage`](../api/utils.mdx#atom-with-storage).
+> `atomWithToggleAndStorage` is like [`atomWithToggle`](#atom-with-toggle) but also persist the state anytime it changes in given storage using [`atomWithStorage`](../api/utils.mdx#atom-with-storage).
 
-Here is the source :
+Here is the source:
 
 ```ts
 import { WritableAtom, atom } from 'jotai'
@@ -83,12 +83,12 @@ export function atomWithToggleAndStorage(
 }
 ```
 
-And how it's used :
+And how it's used:
 
 ```ts
 import { atomWithToggleAndStorage } from 'XXX'
 
-// will have an initial value set to false & be stored in localStorage under the key "isActive"
+// will have an initial value set to false & get stored in localStorage under the key "isActive"
 const isActiveAtom = atomWithToggleAndStorage('isActive')
 ```
 
@@ -96,7 +96,7 @@ The usage in a component is also the same as [`atomWithToggle`](#atom-with-toggl
 
 ## atomWithCompare
 
-> `atomWithCompare` creates atom that only triggers updates when custom compare function `areEqual(prev, next)` is false.
+> `atomWithCompare` creates atom that triggers updates when custom compare function `areEqual(prev, next)` is false.
 
 This can help you avoid unwanted re-renders by ignoring state changes that don't matter to your application.
 
@@ -119,7 +119,7 @@ export function atomWithCompare<Value>(
 }
 ```
 
-Here's how you'd use it to implement an atom that ignores updates that are shallow-equal:
+Here's how you'd use it to make an atom that ignores updates that are shallow-equal:
 
 ```ts
 import { atomWithCompare } from 'XXX'
@@ -182,7 +182,7 @@ export function atomWithRefresh<T>(fn: (get: Getter) => T) {
 }
 ```
 
-Here's how you'd use it to implement an refreshable source of data:
+Here's how you'd use it to implement an refresh-able source of data:
 
 ```ts
 import { atomWithRefresh } from 'XXX'
@@ -219,7 +219,7 @@ const PostsList = () => {
 
 > `atomWithListeners` creates an atom and a hook. The hook can be called to
 > add a new listener. The hook takes as an argument a callback, and that
-> callback will be called every time the atom's value is set. The hook also
+> callback is called every time the atom's value is set. The hook also
 > returns a function to remove the listener.
 
 This can be useful when you want to create a component that can listen to when
@@ -235,7 +235,7 @@ type Callback<Value> = (
   get: Getter,
   set: Setter,
   newVal: Value,
-  prevVal: Value,
+  prevVal: Value
 ) => void
 
 export function atomWithListeners<Value>(initialValue: Value) {
@@ -250,7 +250,7 @@ export function atomWithListeners<Value>(initialValue: Value) {
       get(listenersAtom).forEach((callback) => {
         callback(get, set, newVal, prevVal)
       })
-    },
+    }
   )
   const useListener = (callback: Callback<Value>) => {
     const setListeners = useUpdateAtom(listenersAtom)
@@ -284,8 +284,8 @@ function EvenCounter() {
           setEvenCount((c) => c + 1)
         }
       },
-      [setEvenCount],
-    ),
+      [setEvenCount]
+    )
   )
 
   return <>Count was set to an even number {evenCount} times.</>

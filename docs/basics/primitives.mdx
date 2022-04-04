@@ -12,9 +12,9 @@ Let's see how to define and use atoms.
 
 There's an exported function called `atom`, which is to create
 an atom config. We call it "config" as it's just a definition
-and it doesn't hold a value. We may just call it "atom" if the context is clear.
+and it doesn't yet hold a value. We may also call it "atom" if the context is clear.
 
-To create a primitive atom (config), all you need is pass an initial value.
+To create a primitive atom (config), all you need is to provide an initial value.
 
 ```js
 import { atom } from 'jotai'
@@ -24,7 +24,7 @@ const messageAtom = atom('hello')
 const productAtom = atom({ id: 12, name: 'good stuff' })
 ```
 
-You can also create derived atoms. We have three patterns.
+You can also create derived atoms. We have three patterns:
 
 - Read-only atom
 - Write-only atom
@@ -53,7 +53,7 @@ const readWriteAtom = atom(
 `get` in the read function is to read the atom value.
 It's reactive and read dependencies are tracked.
 
-`get` in the write function is also to read atom value, and it's not tracked.
+`get` in the write function is also to read atom value, but it's not tracked.
 Furthermore, it can't read unresolved async values.
 For async behavior, please refer to the [async](../basics/async.mdx) doc.
 
@@ -62,7 +62,7 @@ It will invoke the write function of the target atom.
 
 Atom configs can be created anywhere, but referential equality is important.
 They can be created dynamically too.
-To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memorization, use `useMemo`.
+To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memoization, use `useMemo`.
 
 ```jsx
 const Component = ({ value }) => {
@@ -76,15 +76,15 @@ const Component = ({ value }) => {
 The `useAtom` hook is to read an atom value in the state.
 The state can be seen as a WeakMap of atom configs and atom values.
 
-The `useAtom` function returns the atom value and an updating function as a tuple,
+The `useAtom` function returns the atom value and an update function as a tuple,
 just like React's `useState`.
 It takes an atom config created with `atom()`.
 
-Initially, there is no value stored in the state.
-The first time the atom is used via `useAtom`,
-the initial value is stored in the state.
-If the atom is a derived atom, the read function is executed to compute an initial value.
-When an atom is no longer used, meaning all the components using it is unmounted,
+Initially, there is no value associated with the atom.
+Only once the atom is used via `useAtom`,
+does the initial value get stored in the state.
+If the atom is a derived atom, the read function is called to compute the initial value.
+When an atom is no longer used, meaning all the components using it are unmounted,
 and the atom config no longer exists, the value in the state is garbage collected.
 
 ```js
@@ -92,23 +92,23 @@ const [value, updateValue] = useAtom(anAtom)
 ```
 
 The `updateValue` takes just one argument, which will be passed
-to the third argument of write function of the atom.
-The behavior totally depends on how the write function is implemented.
+to the third argument of the write function of the atom.
+The behavior depends on how the write function is implemented.
 
 ## Provider
 
-Provider is to provide a state for component sub tree.
-Multiple Providers can be used for multiple subtrees, even nested.
-This works just like the normal React Context.
+Provider is to provide state for a component sub tree.
+Multiple Providers can be used for multiple subtrees, and they can even be nested.
+This works just like React Context.
 
-If an atom is used in a tree which no Providers exist,
+If an atom is used in a tree without a Provider,
 it will use the default state. This is so-called provider-less mode.
 
-Providers are useful for some reasons.
+Providers are useful for three reasons:
 
-1. It can provide a different state for each sub tree.
-2. Provider can hold some debug information.
-3. Provider can accept initial values of atoms.
+1. To provide a different state for each sub tree.
+2. To contain some debug information.
+3. To accept initial values of atoms.
 
 ```jsx
 const SubTree = () => (

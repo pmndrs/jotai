@@ -1,23 +1,11 @@
-import {
-  createElement,
-  useDebugValue,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { createElement, useEffect, useRef, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import type { Atom, Scope } from './atom'
 import { createScopeContainer, getScopeContext } from './contexts'
 import type { ScopeContainer } from './contexts'
-import {
-  COMMIT_ATOM,
-  DEV_GET_ATOM_STATE,
-  DEV_GET_MOUNTED,
-  DEV_GET_MOUNTED_ATOMS,
-  DEV_SUBSCRIBE_STATE,
-  createStoreForExport,
-} from './store'
-import type { AtomState, Store, VersionObject } from './store'
+import { COMMIT_ATOM, createStoreForExport } from './store'
+import type { VersionObject } from './store'
+import { useDebugState } from './useDebugState'
 
 export const Provider = ({
   children,
@@ -70,10 +58,8 @@ export const Provider = ({
     }
   }
 
-  if (
-    __DEV__ &&
-    (typeof process !== 'object' || process.env.NODE_ENV !== 'test')
-  ) {
+  // LIMITATION: useDebugState prevents to work versioned write properly
+  if (__DEV__ && !unstable_enableVersionedWrite) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useDebugState(scopeContainerRef.current)
   }
@@ -86,46 +72,4 @@ export const Provider = ({
     },
     children
   )
-}
-
-const atomToPrintable = (atom: Atom<unknown>) =>
-  atom.debugLabel || atom.toString()
-
-const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
-  Object.fromEntries(
-    atoms.flatMap((atom) => {
-      const mounted = store[DEV_GET_MOUNTED]?.(atom)
-      if (!mounted) {
-        return []
-      }
-      const dependents = mounted.t
-      const atomState = store[DEV_GET_ATOM_STATE]?.(atom) || ({} as AtomState)
-      return [
-        [
-          atomToPrintable(atom),
-          {
-            ...('e' in atomState && { error: atomState.e }),
-            ...('p' in atomState && { promise: atomState.p }),
-            ...('v' in atomState && { value: atomState.v }),
-            dependents: Array.from(dependents).map(atomToPrintable),
-          },
-        ],
-      ]
-    })
-  )
-
-// We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
-// so atoms aren't garbage collected by the WeakMap of mounted atoms
-const useDebugState = (scopeContainer: ScopeContainer) => {
-  const { s: store } = scopeContainer
-  const [atoms, setAtoms] = useState<Atom<unknown>[]>([])
-  useEffect(() => {
-    const callback = () => {
-      setAtoms(Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || []))
-    }
-    const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
-    callback()
-    return unsubscribe
-  }, [store])
-  useDebugValue([store, atoms], stateToPrintable)
 }

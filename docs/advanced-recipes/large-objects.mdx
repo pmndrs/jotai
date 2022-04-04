@@ -3,9 +3,9 @@ title: Large objects
 nav: 5.01
 ---
 
-> All of the examples and descriptions below are based on this [codesandbox](https://codesandbox.io/s/zealous-sun-f2qnl?file=/src/App.tsx), so it will give you a better understanding if you check it out along these examples.
+> The examples and descriptions below are based on this [codesandbox](https://codesandbox.io/s/zealous-sun-f2qnl?file=/src/App.tsx), so it will give you a better understanding if you check it out along with these examples.
 
-Sometimes we have big data we need to keep into atoms, we may need to change that data in some levels, or we need to use part of that data, but we can't listen to all these changes or use all that data for just a specific part.
+Sometimes we have nested data we need to store in atoms, and we may need to change that data at different levels, or we need to use part of that data without listening to all changes.
 
 Consider this example:
 
@@ -43,7 +43,7 @@ const initialData = {
 
 > `focusAtom` creates a new atom, based on the focus that you pass to it. [jotai/optics](../integrations/optics.mdx#focus-atom)
 
-We use this utility to focus an atom and create an atom of a specific part of the data. For example we may need to consume the people property of the above data, Here's how we do it.
+We use this utility to focus an atom and create an atom from a specific part of the data. For example we may need to consume the people property of the above data, Here's how we do it:
 
 ```jsx
 import { atom } from 'jotai'
@@ -56,13 +56,13 @@ const peopleAtom = focusAtom(dataAtom, (optic) => optic.prop('people'))
 
 `focusAtom` returns `WritableAtom` which means it's possible to change the `peopleAtom` data.
 
-If we change the `film` property of the above data example, the `peopleAtom` won't cause us a re-render, so that's one of the points of using `focusAtom`.
+If we change the `film` property of the above data example, the `peopleAtom` won't cause a re-render, so that's one of the benefits of using `focusAtom`.
 
 ## splitAtom
 
-> The `splitAtom` utility is useful, when you want to get an atom for each element in a list. [jotai/utils](../api/utils.mdx#split-atom)
+> The `splitAtom` utility is useful when you want to get an atom for each element in a list. [jotai/utils](../api/utils.mdx#split-atom)
 
-We use this utility for atoms that return arrays as their values, for example the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array. If the array atom is writable, `splitAtom` returned atoms are going to be writable, if the array atom is read-only, items atoms are going to be read-only too.
+We use this utility for atoms that return arrays as their values. For example, the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array. If the array atom is writable, `splitAtom` returned atoms are going to be writable, if the array atom is read-only, the returned atoms will be read-only too.
 
 ```jsx
 import { splitAtom } from 'jotai/utils'
@@ -70,7 +70,7 @@ import { splitAtom } from 'jotai/utils'
 const peopleAtomsAtom = splitAtom(peopleAtom)
 ```
 
-And that's how we use it in components.
+And this is how we use it in components.
 
 ```jsx
 const People = () => {
@@ -89,16 +89,16 @@ const People = () => {
 
 > This function creates a derived atom whose value is a function of the original atom's value. [jotai/utils](../api/utils.mdx#select-atom)
 
-This utility is similar to `focusAtom`, but we use it when we have a read-only atom to select part of it, and it always returns a read-only atom.
+This utility is like `focusAtom`, but we use it when we have a read-only atom to select part of it, and it always returns a read-only atom.
 
-Assume we want to consume the info data, and its data is always unchangeable, so we can make a read-only atom from it and select that created atom.
+Assume we want to consume the info data, and its data is always unchangeable. We can make a read-only atom from it and select that created atom.
 
 ```jsx
 // first we create a read-only atom based on initialData.info
 const readOnlyInfoAtom = atom((get) => get(dataAtom).info)
 ```
 
-Then we are going to consume it in our component:
+Then we use it in our component:
 
 ```jsx
 import { atom, useAtom } from 'jotai'

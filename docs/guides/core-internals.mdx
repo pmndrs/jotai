@@ -4,12 +4,12 @@ description: A simplified version of the core implementation
 nav: 3.10
 ---
 
-This guide is beneficial for those who want to understand the core implementation of the jotai. It is not meant to be a complete guide of the 
-core implementation but rather a simplified version. It is inspired by the collection of tweets by Daishi Kato([@dai_shi](https://twitter.com/dai_shi)).
+This guide is beneficial for those who want to understand the core implementation of jotai. It's not meant to be a complete example of the 
+core implementation but rather a simplified version. It's inspired by the collection of tweets by Daishi Kato([@dai_shi](https://twitter.com/dai_shi)).
 
 ## First Version
-Let's start with the easy one. An atom is just a function that will return some config. We are using WeakMap to map atom with their state.
-WeakMap doesn't keep the keys in memory. So if atom is garbage collected, its state will be garbage collected too. It helps to avoid memory leaks.
+Let's start with an easy example. An atom is just a function that will return a configuration object. We are using WeakMap to map atom with their state.
+WeakMap doesn't keep its keys in memory, so if an atom is garbage collected, its state will be garbage collected too. This helps avoid memory leaks.
 
 ```js
 import { useState, useEffect } from "react";
@@ -55,7 +55,7 @@ export const useAtom = (atom) => {
 };
 
 ```
-Here is an example using our simplified atom implementation. [Counter example](https://codesandbox.io/s/zealous-field-z2xk6?file=/src/App.js)
+Here's an example using our simplified atom implementation. [Counter example](https://codesandbox.io/s/zealous-field-z2xk6?file=/src/App.js)
 
 Ref tweet: [Demystifying the internal of jotai](https://twitter.com/dai_shi/status/1484835169475653634)
 
@@ -81,8 +81,8 @@ const readWriteAtom = atom(
 )
 ```
 
-We need to add one more property in the atom's state to keep track of all the dependent. Let's say atom X depends on atom Y, 
-so when we update atom Y,we need to update atom X. This is called dependency tracking.
+To keep track of all the dependents, we need to add one more property to the atom's state. Let's say atom X depends on atom Y, 
+so when we update atom Y, we also update atom X. This is called dependency tracking.
 
 ```js
 const atomState = {
@@ -92,7 +92,7 @@ const atomState = {
 };
 ```
 
-We need to create functions for reading and writing an atom that handle updation of dependents atom state.
+We now need to create functions for reading and writing an atom that can handle updating dependent atoms' state.
 
 
 ```js
@@ -110,7 +110,7 @@ export const atom = (read, write) => {
     // It's reactive and read dependencies are tracked.
     read: (get) => get(config),
 
-    // get in the write function is also to read atom value, and it's not tracked.
+    // get in the write function is also to read atom value, but it's not tracked.
     // set in the write function is to write atom value and
     // it will invoke the write function of the target atom.
     write:
@@ -126,7 +126,7 @@ export const atom = (read, write) => {
   return config;
 };
 
-// same as above but state have one extra property dependents
+// same as above but the state has one extra property: dependents
 const atomStateMap = new WeakMap();
 const getAtomState = (atom) => {
   let atomState = atomStateMap.get(atom);
@@ -141,7 +141,7 @@ const getAtomState = (atom) => {
   return atomState;
 };
 
-// If atom is primitive, we just return it's value.
+// If atom is primitive, we return it's value.
 // If atom is derived, we read the parent atom's value 
 // and add current atom to parent's the dependent set (recursivly).
 const readAtom = (atom) => {
@@ -160,7 +160,7 @@ const readAtom = (atom) => {
 };
 
 
-// it atomState is modified, we need to notify all the dependent atoms (recursivly)
+// if atomState is modified, we need to notify all the dependent atoms (recursivly)
 // now run callbacks for all the components that are dependent on this atom
 const notify = (atom) => {
   const atomState = getAtomState(atom);
@@ -171,7 +171,7 @@ const notify = (atom) => {
 };
 
 
-// writeAtom calls atom.write with necessary params and trigger notify function
+// writeAtom calls atom.write with the necessary params and triggers notify function
 const writeAtom = (atom, value) => {
   const atomState = getAtomState(atom);
 
@@ -181,7 +181,7 @@ const writeAtom = (atom, value) => {
     return aState.value;
   };
 
-  // if 'a' is same as atom, just update the value, notify that atom and return
+  // if 'a' is the same as atom, update the value, notify that atom and return
   // else calls writeAtom for 'a' (recursivly)
   const set = (a, v) => {
     if (a === atom) {

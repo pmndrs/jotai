@@ -11,7 +11,7 @@ Async support is first class in jotai. It fully leverages React Suspense.
 ## Suspense
 
 To use async atoms, you need to wrap your component tree with `<Suspense>`.
-If you have `<Provider>` at least one `<Suspense>` is placed inside the `<Provider>`.
+If you have `<Provider>`, place at least one `<Suspense>` inside the `<Provider>`.
 
 ```jsx
 const App = () => (
@@ -23,12 +23,12 @@ const App = () => (
 )
 ```
 
-Having more `<Suspense>`s in the component tree is possible.
+Having more `<Suspense>`s in the component tree is also possible.
 
 ## Async read atom
 
 The `read` function of an atom can return a promise.
-It will suspend and re-render when the promise is fulfilled.
+It will suspend and re-render once the promise fulfills.
 
 Most importantly, useAtom only returns a resolved value.
 
@@ -44,12 +44,12 @@ const Component = () => {
 ```
 
 An atom becomes async not only if the atom read function is async,
-but also one or more of its dependencies are async.
+but also if one or more of its dependencies are async.
 
 ```js
 const anotherAtom = atom((get) => get(asyncCountAtom) / 2)
 // even though this atom doesn't return a promise,
-// it is a read async atom because `asyncCountAtom` is async.
+// it's a read async atom because `asyncCountAtom` is async.
 ```
 
 <details>
@@ -59,10 +59,10 @@ const anotherAtom = atom((get) => get(asyncCountAtom) / 2)
 
 ## Async write atom
 
-There are another kind of async atoms, called async write atom.
-When `write` function of atom returns a promise, it may suspend.
-This happens only if the atom is used directly with useAtom,
-regardless of its value. (The atom value can be just `null`.)
+Async write atoms are another kind of async atom.
+When the `write` function of atom returns a promise, it may suspend.
+This happens if the atom is used directly with useAtom,
+regardless of its value. (The atom value can be `null`.)
 
 ```js
 const countAtom = atom(1)
@@ -81,12 +81,12 @@ const Component = () => {
 
 ### Triggering `Suspense` fallback of write atom
 
-This section applies only for "async write atom" not "async read atom", which works different with `Suspense`.
+This section applies only for "async write atom" not "async read atom", which works differently with `Suspense`.
 
-**A write atom will trigger the `Suspense` fallback only if:**
+**A write atom will trigger the `Suspense` fallback if:**
 
-    * the atom's write arg (2nd one) is async
-    * the awaited call is made directly and not from inside another containing function
+    * the atom's write argument (2nd one) is async
+    * the awaited call is made directly, and not from inside another containing function
 
 This _will_ trigger the `Suspense` fallback:
 
@@ -117,6 +117,6 @@ const writeAtom = atom(null, (get, set) => {
 })
 ```
 
-But **_both_** of the above will still properly set `somePrimitiveAtom` to the correct values.
+But **_both_** of the above will still set `somePrimitiveAtom` to the correct values.
 
 </details>

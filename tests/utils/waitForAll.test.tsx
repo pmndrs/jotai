@@ -6,6 +6,8 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
+jest.mock('../../src/core/useDebugState.ts')
+
 const consoleWarn = console.warn
 const consoleError = console.error
 beforeEach(() => {
