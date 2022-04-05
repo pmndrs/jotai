@@ -39,17 +39,12 @@ jobs:
           - 16.8.6
           - 16.9.0
           - 17.0.0
-          - 18.0.0-rc.2
-          - 0.0.0-experimental-a59f53a60-20220308
+          - 18.0.0
+          - 18.1.0-next-fc47cb1b6-20220404
+          - 0.0.0-experimental-fc47cb1b6-20220404
         mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
-        testing: [default, alpha]
         exclude:
           - { react: 16.8.6, mode: VERSIONED_WRITE }
-          - { react: 16.8.6, testing: alpha }
-          - { react: 16.9.0, testing: alpha }
-          - { react: 17.0.0, testing: alpha }
-          - { react: 18.0.0-rc.2, testing: default } # suspense doesn't work?
-          - { react: 0.0.0-experimental-a59f53a60-20220308, testing: default } # suspense doesn't work?
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -58,9 +53,9 @@ jobs:
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
-      - name: Install alpha testing-library
-        if: ${{ matrix.testing == 'alpha' }}
-        run: yarn add -D @testing-library/react@13.0.0-alpha.5
+      - name: Install legacy testing-library
+        if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
+        run: yarn add -D @testing-library/react@12.1.4
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
