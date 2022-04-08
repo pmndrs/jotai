@@ -50,8 +50,8 @@ export function createJSONStorage<Value>(
       const parse = (str: string | null) => {
         str = str || ''
         if (lastStr !== str) {
-          lastStr = str
           lastValue = JSON.parse(str)
+          lastStr = str
         }
         return lastValue
       }
