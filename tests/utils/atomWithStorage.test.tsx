@@ -97,6 +97,85 @@ describe('atomWithStorage (sync)', () => {
   })
 })
 
+describe('with sync string storage', () => {
+  const storageData: Record<string, string> = {
+    count: '10',
+  }
+  const stringStorage = {
+    getItem: (key: string) => {
+      return storageData[key] || null
+    },
+    setItem: (key: string, newValue: string) => {
+      storageData[key] = newValue
+      stringStorage.listeners.forEach((listener) => {
+        listener(key, newValue)
+      })
+    },
+    removeItem: (key: string) => {
+      delete storageData[key]
+    },
+    listeners: new Set<(key: string, value: string) => void>(),
+  }
+  const dummyStorage = createJSONStorage<number>(() => stringStorage)
+  dummyStorage.subscribe = (key, callback) => {
+    const listener = (k: string, value: string) => {
+      if (k === key) {
+        callback(JSON.parse(value))
+      }
+    }
+    stringStorage.listeners.add(listener)
+    return () => stringStorage.listeners.delete(listener)
+  }
+
+  it('simple count', async () => {
+    const countAtom = atomWithStorage('count', 1, dummyStorage)
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <button onClick={() => setCount(RESET)}>reset</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('count: 10')
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 11')
+    expect(storageData.count).toBe('11')
+
+    fireEvent.click(getByText('reset'))
+    await findByText('count: 1')
+    expect(storageData.count).toBeUndefined()
+  })
+
+  it('no entry (#1086)', async () => {
+    const noentryAtom = atomWithStorage('noentry', -1, dummyStorage)
+
+    const Counter = () => {
+      const [noentry] = useAtom(noentryAtom)
+      return <div>noentry: {noentry}</div>
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('noentry: -1')
+  })
+})
+
 describe('atomWithStorage (async)', () => {
   const asyncStorageData: Record<string, number> = {
     count: 10,
