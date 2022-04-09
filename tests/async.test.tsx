@@ -884,6 +884,54 @@ itSkipIfVersionedWrite('set two promise atoms at once', async () => {
   await findByText('count: 3')
 })
 
+it('should override promise in derived atom (#1054)', async () => {
+  const countAtom = atom(0)
+  const derivedAtom = atom((get) => {
+    const count = get(countAtom)
+    if (count === 0) {
+      return new Promise<number>(() => {})
+    }
+    return count
+  })
+
+  const Counter = () => {
+    const [derived] = useAtom(derivedAtom)
+    return <div>derived: {derived}</div>
+  }
+
+  const Control = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Control />
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('loading')
+    getByText('count: 0')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('derived: 1')
+    getByText('count: 1')
+  })
+})
+
 it('async write chain', async () => {
   const countAtom = atom(0)
   const asyncWriteAtom = atom(null, async (_get, set, _arg) => {
