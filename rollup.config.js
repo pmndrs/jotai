@@ -27,7 +27,6 @@ function getEsbuild(target, env = 'development') {
   return esbuild({
     minify: env === 'production',
     target,
-    platform: 'neutral',
     tsconfig: path.resolve('./tsconfig.json'),
   })
 }

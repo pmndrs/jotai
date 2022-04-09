@@ -104,7 +104,10 @@ it('state with a promise', async () => {
     const [state, setState] = useAtom(stateAtom)
     return (
       <>
-        <span>status: {state.status}</span>
+        <span>
+          status:{' '}
+          {state.status as any /* LIMITATION: we don't yet use resolved type */}
+        </span>
         <button
           onClick={() =>
             setState((prev) => ({
