@@ -22,7 +22,7 @@ const useCommitCount = () => {
 }
 
 it('new atomFamily impl', async () => {
-  const myFamily = atomFamily((param) => atom(param))
+  const myFamily = atomFamily((param: string) => atom(param))
 
   const Displayer = ({ index }: { index: string }) => {
     const [count] = useAtom(myFamily(index))
