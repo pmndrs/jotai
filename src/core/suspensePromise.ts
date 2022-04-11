@@ -1,11 +1,13 @@
 const SUSPENSE_PROMISE = Symbol()
 
+type SuspensePromiseExtra = {
+  o: Promise<void> // original promise
+  c: ((needsAbort?: boolean) => void) | null // cancel promise (null if already cancelled)
+}
+
 // Not exported for public API
 export type SuspensePromise = Promise<void> & {
-  [SUSPENSE_PROMISE]: {
-    o: Promise<void> // original promise
-    c: (() => void) | null // cancel promise (null if already cancelled)
-  }
+  [SUSPENSE_PROMISE]: SuspensePromiseExtra
 }
 
 export const isSuspensePromise = (
@@ -37,19 +39,32 @@ export const isEqualSuspensePromise = (
 }
 
 export const createSuspensePromise = (
+  basePromise: Promise<unknown>,
   promise: Promise<void>
 ): SuspensePromise => {
-  const objectToAttach = {
-    o: promise, // original promise
-    c: null as (() => void) | null, // cancel promise
+  const suspensePromiseExtra: SuspensePromiseExtra = {
+    o: promise,
+    c: null,
   }
   const suspensePromise = new Promise<void>((resolve) => {
-    objectToAttach.c = () => {
-      objectToAttach.c = null
+    suspensePromiseExtra.c = (needsAbort?: boolean) => {
+      suspensePromiseExtra.c = null
       resolve()
+      if (needsAbort) {
+        promiseAbortMap.get(basePromise)?.()
+      }
     }
-    promise.then(objectToAttach.c, objectToAttach.c)
+    promise.finally(suspensePromiseExtra.c)
   }) as SuspensePromise
-  suspensePromise[SUSPENSE_PROMISE] = objectToAttach
+  suspensePromise[SUSPENSE_PROMISE] = suspensePromiseExtra
   return suspensePromise
+}
+
+const promiseAbortMap = new WeakMap<Promise<unknown>, () => void>()
+
+export const registerPromiseAbort = (
+  basePromise: Promise<unknown>,
+  abort: () => void
+) => {
+  promiseAbortMap.set(basePromise, abort)
 }

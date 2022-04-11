@@ -424,6 +424,7 @@ export const createStore = (
   ): AtomState<Value> => {
     if (promiseOrValue instanceof Promise) {
       const suspensePromise = createSuspensePromise(
+        promiseOrValue,
         promiseOrValue
           .then((value: ResolveType<Value>) => {
             setAtomValue(version, atom, value, dependencies, suspensePromise)
@@ -560,7 +561,10 @@ export const createStore = (
       return setAtomPromiseOrValue(version, atom, promiseOrValue, dependencies)
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
-        const suspensePromise = createSuspensePromise(errorOrPromise)
+        const suspensePromise = createSuspensePromise(
+          errorOrPromise,
+          errorOrPromise
+        )
         return setAtomSuspensePromise(
           version,
           atom,
@@ -745,9 +749,13 @@ export const createStore = (
     if (__DEV__) {
       mountedAtoms.delete(atom)
     }
-    // unmount read dependencies afterward
     const atomState = getAtomState(undefined, atom)
     if (atomState) {
+      // cancel suspense promise (and abort base promise)
+      if ('p' in atomState) {
+        cancelSuspensePromise(atomState.p)
+      }
+      // unmount read dependencies afterward
       atomState.d.forEach((_, a) => {
         if (a !== atom) {
           const mounted = mountedMap.get(a)
