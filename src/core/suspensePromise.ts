@@ -1,8 +1,9 @@
 const SUSPENSE_PROMISE = Symbol()
 
 type SuspensePromiseExtra = {
+  b: Promise<unknown> // base promise
   o: Promise<void> // original promise
-  c: ((needsAbort?: boolean) => void) | null // cancel promise (null if already cancelled)
+  c: (() => void) | null // cancel promise (null if already cancelled)
 }
 
 // Not exported for public API
@@ -20,7 +21,11 @@ export const isSuspensePromiseAlreadyCancelled = (
 ) => !suspensePromise[SUSPENSE_PROMISE].c
 
 export const cancelSuspensePromise = (suspensePromise: SuspensePromise) => {
-  suspensePromise[SUSPENSE_PROMISE].c?.(true)
+  const { b: basePromise, c: cancelPromise } = suspensePromise[SUSPENSE_PROMISE]
+  if (cancelPromise) {
+    cancelPromise()
+    promiseAbortMap.get(basePromise)?.()
+  }
 }
 
 // Note: this is a special equality function
@@ -43,16 +48,14 @@ export const createSuspensePromise = (
   promise: Promise<void>
 ): SuspensePromise => {
   const suspensePromiseExtra: SuspensePromiseExtra = {
+    b: basePromise,
     o: promise,
     c: null,
   }
   const suspensePromise = new Promise<void>((resolve) => {
-    suspensePromiseExtra.c = (needsAbort?: boolean) => {
+    suspensePromiseExtra.c = () => {
       suspensePromiseExtra.c = null
       resolve()
-      if (needsAbort) {
-        promiseAbortMap.get(basePromise)?.()
-      }
     }
     promise.finally(suspensePromiseExtra.c)
   }) as SuspensePromise
