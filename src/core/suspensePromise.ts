@@ -20,7 +20,7 @@ export const isSuspensePromiseAlreadyCancelled = (
 ) => !suspensePromise[SUSPENSE_PROMISE].c
 
 export const cancelSuspensePromise = (suspensePromise: SuspensePromise) => {
-  suspensePromise[SUSPENSE_PROMISE].c?.()
+  suspensePromise[SUSPENSE_PROMISE].c?.(true)
 }
 
 // Note: this is a special equality function
