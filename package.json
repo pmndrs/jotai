@@ -261,6 +261,9 @@
     "xstate": "4.28.1",
     "zustand": "^3.7.2"
   },
+  "resolutions": {
+    "date-fns": "2.27.0"
+  },
   "peerDependencies": {
     "@babel/core": "*",
     "@babel/template": "*",
