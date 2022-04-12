@@ -34,11 +34,11 @@ export function abortableAtom<
   Update,
   Result extends void | Promise<void>
 >(read: Read<Value>, write?: Write<Update, Result>) {
-  const { signal, abort } = new AbortController()
+  const controller = new AbortController()
   return atom((get) => {
-    const promise = read(get, { signal })
+    const promise = read(get, { signal: controller.signal })
     if (promise instanceof Promise) {
-      registerPromiseAbort(promise, abort)
+      registerPromiseAbort(promise, () => controller.abort())
     }
     return promise
   }, write)
