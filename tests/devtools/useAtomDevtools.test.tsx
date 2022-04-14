@@ -21,8 +21,6 @@ const extension = {
 const extensionConnector = { connect: jest.fn(() => extension) }
 ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
 
-const savedDev = __DEV__
-
 beforeAll(() => {
   extensionConnector.connect.mockClear()
   extension.subscribe.mockClear()
@@ -33,12 +31,7 @@ beforeAll(() => {
   extensionSubscriber = undefined
 })
 
-afterEach(() => {
-  __DEV__ = savedDev
-})
-
-it('connects to the extension by initialiing', () => {
-  __DEV__ = true
+it('[DEV-ONLY] connects to the extension by initialiing', () => {
   const countAtom = atom(0)
 
   const Counter = () => {
