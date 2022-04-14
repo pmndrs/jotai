@@ -79,29 +79,20 @@ export function splitAtom<Item, Key>(
             atomList[index] = cachedAtom
             return
           }
-          // TODO we should revisit this for a better solution than refAtom
-          const itemRefAtom = atom(() => ({} as { prev?: Item }))
           const read = (get: Getter) => {
-            const itemRef = get(itemRefAtom)
             const ref = get(refAtom)
-            const arr = get(arrAtom)
-            const mapping = getMapping(arr, ref.prev)
+            const currArr = get(arrAtom)
+            const mapping = getMapping(currArr, ref.prev)
             const index = mapping.keyList.indexOf(key)
-            if (index < 0 || index >= arr.length) {
-              if ('prev' in itemRef) {
-                // returning a stale value to avoid errors for use cases such as react-spring
-                return itemRef.prev
-              }
-              const fallback =
-                ref.prev && ref.prev[getMapping(ref.prev).keyList.indexOf(key)]
-              if (fallback) {
-                // FIXME this shoudn't be correct. refAtom must be a problem.
-                return fallback
+            if (index < 0 || index >= currArr.length) {
+              // returning a stale value to avoid errors for use cases such as react-spring
+              const prevItem = arr[getMapping(arr).keyList.indexOf(key)]
+              if (prevItem) {
+                return prevItem
               }
               throw new Error('splitAtom: index out of bounds for read')
             }
-            itemRef.prev = arr[index] as Item
-            return arr[index] as Item
+            return currArr[index] as Item
           }
           const write = (
             get: Getter,
