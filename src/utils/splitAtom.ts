@@ -92,6 +92,12 @@ export function splitAtom<Item, Key>(
                 // returning a stale value to avoid errors for use cases such as react-spring
                 return itemRef.prev
               }
+              const fallback =
+                ref.prev && ref.prev[getMapping(ref.prev).keyList.indexOf(key)]
+              if (fallback) {
+                // FIXME this shoudn't be correct. refAtom must be a problem.
+                return fallback
+              }
               throw new Error('splitAtom: index out of bounds for read')
             }
             itemRef.prev = arr[index] as Item
