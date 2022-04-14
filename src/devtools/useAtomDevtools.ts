@@ -139,8 +139,8 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
       return
     }
     lastValue.current = value
+    console.log('init', value)
     if (devtools.current.shouldInit) {
-      console.log('init', value)
       devtools.current.init(value)
       devtools.current.shouldInit = false
     } else if (isTimeTraveling.current) {
