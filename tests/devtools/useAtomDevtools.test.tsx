@@ -59,7 +59,7 @@ describe('If there is no extension installed...', () => {
     savedDEV = __DEV__
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
-  afterAll(() => {
+  afterEach(() => {
     __DEV__ = savedDEV
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
   })
