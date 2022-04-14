@@ -55,13 +55,9 @@ const catsAtom = atom(async (get) => {
   return await response.json()
 })
 
-const animalsAtom = atom((get) => {
-  return get(
-    waitForAll({
-      dogs: dogsAtom,
-      cats: catsAtom,
-    })
-  )
+const animalsAtom = waitForAll({
+  dogs: dogsAtom,
+  cats: catsAtom,
 })
 
 const App = () => {
@@ -71,6 +67,8 @@ const App = () => {
   // ...
 }
 ```
+
+Note: If you use an object in `waitForAll` **and** `waitForAll` is inside render function, you need to wrap it with `useMemo` to avoid infinite loop.
 
 ## Codesandbox
 
