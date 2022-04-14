@@ -23,7 +23,7 @@ type SplitAtomAction<Item> =
   | { type: 'remove'; atom: PrimitiveAtom<Item> }
   | {
       type: 'insert'
-      atom: PrimitiveAtom<Item>
+      value: Item
       before?: PrimitiveAtom<Item>
     }
   | {
@@ -159,6 +159,20 @@ export function splitAtom<Item, Key>(
               set(arrAtom as WritableAtom<Item[], Item[]>, [
                 ...arr.slice(0, index),
                 ...arr.slice(index + 1),
+              ])
+            }
+            break
+          }
+          case 'insert': {
+            const index = action.before
+              ? get(splittedAtom).indexOf(action.before)
+              : get(splittedAtom).length
+            if (index >= 0) {
+              const arr = get(arrAtom)
+              set(arrAtom as WritableAtom<Item[], Item[]>, [
+                ...arr.slice(0, index),
+                action.value,
+                ...arr.slice(index),
               ])
             }
             break

@@ -179,6 +179,101 @@ it('removing atoms', async () => {
   })
 })
 
+it('inserting atoms', async () => {
+  const todosAtom = atom<TodoItem[]>([
+    { task: 'get cat food' },
+    { task: 'get dragon food' },
+    { task: 'help nana' },
+  ])
+
+  const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
+    const [atoms, dispatch] = useAtom(splitAtom(listAtom))
+    return (
+      <>
+        <ul data-testid="list">
+          {atoms.map((anAtom, index) => (
+            <TaskItem
+              key={index}
+              onInsert={(newValue) =>
+                dispatch({
+                  type: 'insert',
+                  value: newValue,
+                  before: anAtom,
+                })
+              }
+              itemAtom={anAtom}
+            />
+          ))}
+        </ul>
+        <button
+          data-testid="addtaskbutton"
+          onClick={() =>
+            dispatch({
+              type: 'insert',
+              value: { task: 'end' },
+            })
+          }>
+          add task
+        </button>
+      </>
+    )
+  }
+
+  let taskCount = 1
+  const TaskItem = ({
+    itemAtom,
+    onInsert,
+  }: {
+    itemAtom: PrimitiveAtom<TodoItem>
+    onInsert: (newValue: TodoItem) => void
+  }) => {
+    const [value] = useAtom(itemAtom)
+    return (
+      <li>
+        <div>{value.task}</div>
+        <button
+          data-testid={`${value.task}-insertbutton`}
+          onClick={() => onInsert({ task: 'new task' + taskCount++ })}>
+          +
+        </button>
+      </li>
+    )
+  }
+
+  const { getByTestId, queryByTestId } = render(
+    <Provider>
+      <TaskList listAtom={todosAtom} />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    expect(queryByTestId('list')?.textContent).toBe(
+      'get cat food+get dragon food+help nana+'
+    )
+  })
+
+  fireEvent.click(getByTestId('help nana-insertbutton'))
+  await waitFor(() => {
+    expect(queryByTestId('list')?.textContent).toBe(
+      'get cat food+get dragon food+new task1+help nana+'
+    )
+  })
+
+  fireEvent.click(getByTestId('get cat food-insertbutton'))
+  await waitFor(() => {
+    expect(queryByTestId('list')?.textContent).toBe(
+      'new task2+get cat food+get dragon food+new task1+help nana+'
+    )
+  })
+
+  fireEvent.click(getByTestId('addtaskbutton'))
+  await waitFor(() => {
+    expect(queryByTestId('list')?.textContent).toBe(
+      'new task2+get cat food+get dragon food+new task1+help nana+end+'
+    )
+  })
+})
+
 it('read-only array atom', async () => {
   const todosAtom = atom<TodoItem[]>(() => [
     { task: 'get cat food', checked: false },
