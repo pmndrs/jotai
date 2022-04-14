@@ -66,8 +66,8 @@ describe('If there is no extension installed...', () => {
 
   const countAtom = atom(0)
 
-  const Counter = () => {
-    useAtomDevtools(countAtom)
+  const Counter = ({ enabled }: { enabled?: boolean }) => {
+    useAtomDevtools(countAtom, { enabled })
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -87,17 +87,35 @@ describe('If there is no extension installed...', () => {
     }).not.toThrow()
   })
 
-  it('[DEV-ONLY] warns in dev env', () => {
+  it('[DEV-ONLY] warns in dev env only if enabled', () => {
     __DEV__ = true
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
 
     render(
       <Provider>
-        <Counter />
+        <Counter enabled={true} />
       </Provider>
     )
     expect(console.warn).toHaveBeenLastCalledWith(
+      'Please install/enable Redux devtools extension'
+    )
+
+    console.warn = originalConsoleWarn
+  })
+
+  it('[PRD-ONLY] does not warn in prod env even if enabled is true', () => {
+    __DEV__ = false
+    const originalConsoleWarn = console.warn
+    console.warn = jest.fn()
+
+    render(
+      <Provider>
+        <Counter enabled={true} />
+      </Provider>
+    )
+
+    expect(console.warn).not.toHaveBeenLastCalledWith(
       'Please install/enable Redux devtools extension'
     )
 
