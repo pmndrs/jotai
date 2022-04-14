@@ -55,7 +55,7 @@ it('connects to the extension by initialiing', () => {
 
 describe('If there is no extension installed...', () => {
   let savedDEV: boolean
-  beforeAll(() => {
+  beforeEach(() => {
     savedDEV = __DEV__
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
@@ -138,7 +138,8 @@ describe('If there is no extension installed...', () => {
   })
 })
 
-it('updating state should call devtools.send', async () => {
+it('[DEV-ONLY] updating state should call devtools.send', async () => {
+  __DEV__ = true
   const countAtom = atom(0)
 
   const Counter = () => {
@@ -169,7 +170,8 @@ it('updating state should call devtools.send', async () => {
 })
 
 describe('when it receives an message of type...', () => {
-  it('updating state with ACTION', async () => {
+  it('[DEV-ONLY] updating state with ACTION', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
 
     const Counter = () => {
@@ -207,7 +209,8 @@ describe('when it receives an message of type...', () => {
   })
 
   describe('DISPATCH and payload of type...', () => {
-    it('dispatch & COMMIT', async () => {
+    it('[DEV-ONLY] dispatch & COMMIT', async () => {
+      __DEV__ = true
       const countAtom = atom(0)
 
       const Counter = () => {
@@ -244,7 +247,8 @@ describe('when it receives an message of type...', () => {
       expect(extension.init).toBeCalledWith(2)
     })
 
-    it('dispatch & IMPORT_STATE', async () => {
+    it('[DEV-ONLY] dispatch & IMPORT_STATE', async () => {
+      __DEV__ = true
       const countAtom = atom(0)
 
       const Counter = () => {
@@ -285,7 +289,8 @@ describe('when it receives an message of type...', () => {
     })
 
     describe('JUMP_TO_STATE | JUMP_TO_ACTION...', () => {
-      it('time travelling', async () => {
+      it('[DEV-ONLY] time travelling', async () => {
+        __DEV__ = true
         const countAtom = atom(0)
 
         const Counter = () => {
