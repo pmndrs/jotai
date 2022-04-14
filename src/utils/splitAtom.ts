@@ -177,6 +177,31 @@ export function splitAtom<Item, Key>(
             }
             break
           }
+          case 'move': {
+            const index1 = get(splittedAtom).indexOf(action.atom)
+            const index2 = action.before
+              ? get(splittedAtom).indexOf(action.before)
+              : get(splittedAtom).length
+            if (index1 >= 0 && index2 >= 0) {
+              const arr = get(arrAtom)
+              if (index1 < index2) {
+                set(arrAtom as WritableAtom<Item[], Item[]>, [
+                  ...arr.slice(0, index1),
+                  ...arr.slice(index1 + 1, index2),
+                  arr[index1] as Item,
+                  ...arr.slice(index2),
+                ])
+              } else {
+                set(arrAtom as WritableAtom<Item[], Item[]>, [
+                  ...arr.slice(0, index2),
+                  arr[index1] as Item,
+                  ...arr.slice(index2, index1),
+                  ...arr.slice(index1 + 1),
+                ])
+              }
+            }
+            break
+          }
         }
       }
       const splittedAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
