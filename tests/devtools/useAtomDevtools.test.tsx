@@ -32,6 +32,7 @@ beforeAll(() => {
 })
 
 it('connects to the extension by initialiing', () => {
+  __DEV__ = true
   const countAtom = atom(0)
 
   const Counter = () => {
