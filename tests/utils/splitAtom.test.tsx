@@ -24,14 +24,14 @@ it('no unnecessary updates when updating atoms', async () => {
   ])
 
   const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
-    const [atoms, remove] = useAtom(splitAtom(listAtom))
+    const [atoms, dispatch] = useAtom(splitAtom(listAtom))
     return (
       <>
         TaskListUpdates: {useCommitCount()}
         {atoms.map((anAtom, index) => (
           <TaskItem
             key={index}
-            onRemove={() => remove(anAtom)}
+            onRemove={() => dispatch({ type: 'remove', atom: anAtom })}
             itemAtom={anAtom}
           />
         ))}
@@ -110,13 +110,13 @@ it('removing atoms', async () => {
   ])
 
   const TaskList = ({ listAtom }: { listAtom: typeof todosAtom }) => {
-    const [atoms, remove] = useAtom(splitAtom(listAtom))
+    const [atoms, dispatch] = useAtom(splitAtom(listAtom))
     return (
       <>
         {atoms.map((anAtom, index) => (
           <TaskItem
             key={index}
-            onRemove={() => remove(anAtom)}
+            onRemove={() => dispatch({ type: 'remove', atom: anAtom })}
             itemAtom={anAtom}
           />
         ))}
