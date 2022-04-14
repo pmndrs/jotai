@@ -31,7 +31,8 @@ beforeAll(() => {
   extensionSubscriber = undefined
 })
 
-it('[DEV-ONLY] connects to the extension by initialiing', () => {
+it('[DEV-ONLY] connects to the extension by initializing', () => {
+  __DEV__ = true
   const countAtom = atom(0)
 
   const Counter = () => {

@@ -31,12 +31,11 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   if (typeof options !== 'undefined' && typeof options !== 'object') {
     console.warn('[useAtomDevtools] Please use object options (DevtoolOptions)')
     options = { name: options }
-    if (scope) {
-      options.scope = scope
+    if (deprecatedScope) {
+      options.scope = deprecatedScope
     }
   }
-  const { enabled, name } = options || {}
-  scope ??= options?.scope
+  const { enabled, name, scope } = { scope: deprecatedScope, ...options }
 
   let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
 
