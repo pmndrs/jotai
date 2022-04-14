@@ -67,7 +67,7 @@ describe('If there is no extension installed...', () => {
   const countAtom = atom(0)
 
   const Counter = ({ enabled }: { enabled?: boolean }) => {
-    useAtomDevtools(countAtom, { enabled })
+    useAtomDevtools(countAtom, enabled ? { enabled } : undefined)
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
