@@ -21,7 +21,7 @@ const extension = {
 const extensionConnector = { connect: jest.fn(() => extension) }
 ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
 
-beforeEach(() => {
+beforeAll(() => {
   extensionConnector.connect.mockClear()
   extension.subscribe.mockClear()
   extension.unsubscribe.mockClear()
