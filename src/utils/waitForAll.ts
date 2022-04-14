@@ -4,17 +4,25 @@ import { createMemoizeAtom } from './weakCache'
 
 const memoizeAtom = createMemoizeAtom()
 
-type ResolvePromise<T> = T extends Promise<infer V> ? V : T
+type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 type ResolveAtom<T> = T extends Atom<infer V> ? V : T
-type ResolveType<T> = ResolvePromise<ResolveAtom<T>>
+type AwaitedAtom<T> = Awaited<ResolveAtom<T>>
+
+export function waitForAll<Atoms extends Atom<unknown>[]>(
+  atoms: readonly [...Atoms]
+): Atom<{
+  [K in keyof Atoms]: AwaitedAtom<Atoms[K]>
+}>
+
+export function waitForAll<Atoms extends Record<string, Atom<unknown>>>(
+  atoms: Atoms
+): Atom<{
+  [K in keyof Atoms]: AwaitedAtom<Atoms[K]>
+}>
 
 export function waitForAll<
   Atoms extends Record<string, Atom<unknown>> | readonly Atom<unknown>[]
->(
-  atoms: Atoms
-): Atom<{
-  [K in keyof Atoms]: ResolveType<Atoms[K]>
-}> {
+>(atoms: Atoms) {
   const createAtom = () => {
     const unwrappedAtoms = unwrapAtoms(atoms)
     const derivedAtom = atom((get) => {
@@ -34,7 +42,7 @@ export function waitForAll<
         throw Promise.all(promises)
       }
       return wrapResults(atoms, values) as {
-        [K in keyof Atoms]: ResolveType<Atoms[K]>
+        [K in keyof Atoms]: AwaitedAtom<Atoms[K]>
       }
     })
     return derivedAtom

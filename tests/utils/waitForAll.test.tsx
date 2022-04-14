@@ -65,12 +65,10 @@ it('waits for two async atoms', async () => {
   })
 
   const Counter = () => {
-    const [[num, str]] = useAtom(
-      waitForAll([asyncAtom, anotherAsyncAtom] as const)
-    )
+    const [[num, str]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
     return (
       <div>
-        num: {num}, str: {str}
+        num: {num * 1}, str: {str.toLowerCase()}
       </div>
     )
   }
