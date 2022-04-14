@@ -26,7 +26,7 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
 export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
   options?: DevtoolOptions | string,
-  scope?: Scope
+  deprecatedScope?: Scope
 ): void {
   if (typeof options !== 'undefined' && typeof options !== 'object') {
     console.warn('[useAtomDevtools] Please use object options (DevtoolOptions)')
