@@ -176,7 +176,7 @@ it('query loading 2', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count5',
     queryFn: async () => {
-      const response = await mockFetch({ count }, false, 500)
+      const response = await mockFetch({ count }, false, 500 * 1.5)
       count++
       return response
     },
