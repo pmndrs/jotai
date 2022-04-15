@@ -9,6 +9,7 @@ interface DevtoolOptions {
   scope?: Scope
   enabled?: boolean
 }
+
 export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
   options?: DevtoolOptions
@@ -19,7 +20,7 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
  */
 export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
-  options?: string,
+  name?: string,
   scope?: Scope
 ): void
 
@@ -28,14 +29,14 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   options?: DevtoolOptions | string,
   deprecatedScope?: Scope
 ): void {
-  if (typeof options !== 'undefined' && typeof options !== 'object') {
-    console.warn('[useAtomDevtools] Please use object options (DevtoolOptions)')
-    options = { name: options }
-    if (deprecatedScope) {
-      options.scope = deprecatedScope
-    }
+  if (typeof options === 'string' || typeof deprecatedScope !== 'undefined') {
+    console.warn('DEPRECATED [useAtomDevtools] use DevtoolOptions')
+    options = {
+      name: options,
+      scope: deprecatedScope,
+    } as DevtoolOptions // we intentionally lie the type a little bit here
   }
-  const { enabled, name, scope } = { scope: deprecatedScope, ...options }
+  const { enabled, name, scope } = options || {}
 
   let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
 
