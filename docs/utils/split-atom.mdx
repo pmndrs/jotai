@@ -12,81 +12,83 @@ A simplified type signature would be:
 type SplitAtom = <Item>(arrayAtom: PrimitiveAtom<Array<Item>>): Atom<Array<PrimitiveAtom<Item>>>
 ```
 
-Additionally, the atom returned by `splitAtom` contains a removal function in the `write` direction,
-this is useful for when you want a simple way to remove each element in the original atom.
+Additionally, the atom returned by `splitAtom` contains a dispatch function in the `write` direction (since v1.6.4),
+this is useful for when you want a simple way to modify the original atom with actions such as `remove`, `insert`, and `move`.
 
 See the below example for usage.
 
 ## codesandbox
 
-<CodeSandbox id="7nir9" />
+<CodeSandbox id="s4hvgo" />
 
 ```tsx
-import * as React from 'react'
-import { Provider, atom, useAtom, PrimitiveAtom } from 'jotai'
-import { splitAtom } from 'jotai/utils'
-import './styles.css'
+import { Provider, atom, useAtom, PrimitiveAtom } from "jotai";
+import { splitAtom } from "jotai/utils";
+import "./styles.css";
 
 const initialState = [
   {
-    task: 'help the town',
-    done: false,
+    task: "help the town",
+    done: false
   },
   {
-    task: 'feed the dragon',
-    done: false,
-  },
-]
+    task: "feed the dragon",
+    done: false
+  }
+];
 
-const todosAtom = atom(initialState)
-const todoAtomsAtom = splitAtom(todosAtom)
+const todosAtom = atom(initialState);
+const todoAtomsAtom = splitAtom(todosAtom);
 
-const TodoList = () => {
-  const [todoAtoms, removeTodoAtom] = useAtom(todoAtomsAtom)
-  return (
-    <ul>
-      {todoAtoms.map((todoAtom) => (
-        <TodoItem todoAtom={todoAtom} remove={() => removeTodoAtom(todoAtom)} />
-      ))}
-    </ul>
-  )
-}
-
-type TodoType = typeof initialState[number]
+type TodoType = typeof initialState[number];
 
 const TodoItem = ({
   todoAtom,
-  remove,
+  remove
 }: {
-  todoAtom: PrimitiveAtom<TodoType>
-  remove: () => void
+  todoAtom: PrimitiveAtom<TodoType>;
+  remove: () => void;
 }) => {
-  const [todo, setTodo] = useAtom(todoAtom)
+  const [todo, setTodo] = useAtom(todoAtom);
   return (
     <div>
       <input
         value={todo.task}
         onChange={(e) => {
-          setTodo((oldValue) => ({ ...oldValue, task: e.target.value }))
+          setTodo((oldValue) => ({ ...oldValue, task: e.target.value }));
         }}
       />
       <input
         type="checkbox"
         checked={todo.done}
         onChange={() => {
-          setTodo((oldValue) => ({ ...oldValue, done: !oldValue.done }))
+          setTodo((oldValue) => ({ ...oldValue, done: !oldValue.done }));
         }}
       />
       <button onClick={remove}>remove</button>
     </div>
-  )
-}
+  );
+};
+
+const TodoList = () => {
+  const [todoAtoms, dispatch] = useAtom(todoAtomsAtom);
+  return (
+    <ul>
+      {todoAtoms.map((todoAtom) => (
+        <TodoItem
+          todoAtom={todoAtom}
+          remove={() => dispatch({ type: "remove", atom: todoAtom })}
+        />
+      ))}
+    </ul>
+  );
+};
 
 const App = () => (
   <Provider>
     <TodoList />
   </Provider>
-)
+);
 
-export default App
+export default App;
 ```
