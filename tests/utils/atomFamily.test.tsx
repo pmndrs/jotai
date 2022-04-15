@@ -8,6 +8,8 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
+jest.mock('../../src/core/useDebugState.ts')
+
 // FIXME this is a hacky workaround temporarily
 const IS_REACT18 = !!(ReactDOM as any).createRoot
 
@@ -20,7 +22,7 @@ const useCommitCount = () => {
 }
 
 it('new atomFamily impl', async () => {
-  const myFamily = atomFamily((param) => atom(param))
+  const myFamily = atomFamily((param: string) => atom(param))
 
   const Displayer = ({ index }: { index: string }) => {
     const [count] = useAtom(myFamily(index))

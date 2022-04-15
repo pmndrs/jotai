@@ -9,6 +9,7 @@ Ref: https://github.com/pmndrs/jotai/pull/341
 import { useAtom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
 import { interval } from 'rxjs'
+import { map } from "rxjs/operators"
 
 const counterSubject = interval(1000).pipe(map((i) => `#${i}`));
 const counterAtom = atomWithObservable(() => counterSubject);
@@ -23,6 +24,15 @@ The `atomWithObservable` function creates an atom from a rxjs (or similar) `subj
 Its value will be last value emitted from the stream.
 
 To use this atom, you need to wrap your component with `<Suspense>`. Check out [basics/async](../basics/async.mdx).
+
+## Initial value
+`atomWithObservable` takes second optional parameter `{ initialValue }` that allows to specify initial value for the atom. If `initialValue` is provided then `atomWithObservable` will not suspend and will show initial value before receiving first value from observable. `initialValue` can be either a value or a function that returns a value
+
+```ts
+const counterAtom = atomWithObservable(() => counterSubject, {initialValue: 10});
+
+const counterAtom2 = atomWithObservable(() => counterSubject, {initialValue: () => Math.random()});
+```
 
 ### Codesandbox
 <CodeSandbox id="88pnt" />

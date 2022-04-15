@@ -1,4 +1,5 @@
 import { Component, Suspense, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { getTestProvider, itSkipIfVersionedWrite } from './testUtils'
@@ -21,10 +22,10 @@ afterEach(() => {
 })
 
 class ErrorBoundary extends Component<
-  { message?: string },
+  { message?: string; children: ReactNode },
   { hasError: boolean }
 > {
-  constructor(props: { message?: string }) {
+  constructor(props: { message?: string; children: ReactNode }) {
     super(props)
     this.state = { hasError: false }
   }

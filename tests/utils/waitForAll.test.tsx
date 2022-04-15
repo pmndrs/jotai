@@ -1,10 +1,13 @@
 import { Component, StrictMode, Suspense, useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useSetAtom } from 'jotai'
 import { atomFamily, waitForAll } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
+
+jest.mock('../../src/core/useDebugState.ts')
 
 const consoleWarn = console.warn
 const consoleError = console.error
@@ -18,10 +21,10 @@ afterEach(() => {
 })
 
 class ErrorBoundary extends Component<
-  { message?: string },
+  { message?: string; children: ReactNode },
   { hasError: boolean }
 > {
-  constructor(props: { message?: string }) {
+  constructor(props: { message?: string; children: ReactNode }) {
     super(props)
     this.state = { hasError: false }
   }
