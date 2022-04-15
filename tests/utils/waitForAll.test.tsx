@@ -65,12 +65,10 @@ it('waits for two async atoms', async () => {
   })
 
   const Counter = () => {
-    const [[num, str]] = useAtom(
-      waitForAll([asyncAtom, anotherAsyncAtom] as const)
-    )
+    const [[num, str]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
     return (
       <div>
-        num: {num}, str: {str}
+        num: {num * 1}, str: {str.toLowerCase()}
       </div>
     )
   }
@@ -243,7 +241,7 @@ it('handles scope', async () => {
       setTimeout(() => {
         isAsyncAtomRunning = false
         resolve(true)
-      }, 500 * 1.5)
+      }, 500)
     })
     return get(valueAtom)
   })
@@ -254,7 +252,7 @@ it('handles scope', async () => {
       setTimeout(() => {
         isAnotherAsyncAtomRunning = false
         resolve(true)
-      }, 500 * 1.5)
+      }, 500)
     })
     return '2'
   })
@@ -297,6 +295,7 @@ it('handles scope', async () => {
     expect(isAnotherAsyncAtomRunning).toBe(false)
   })
 
+  await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('increment'))
   await findByText('loading')
   await findByText('num1: 2, num2: 2')

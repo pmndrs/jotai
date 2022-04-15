@@ -11,12 +11,12 @@ import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM } from './store'
 import type { VersionObject } from './store'
 
-type ResolveType<T> = T extends Promise<infer V> ? V : T
+type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 
 export function useAtomValue<Value>(
   atom: Atom<Value>,
   scope?: Scope
-): ResolveType<Value> {
+): Awaited<Value> {
   const ScopeContext = getScopeContext(scope)
   const { s: store } = useContext(ScopeContext)
 
@@ -32,7 +32,7 @@ export function useAtomValue<Value>(
         throw atomState.p // read promise
       }
       if ('v' in atomState) {
-        return atomState.v as ResolveType<Value>
+        return atomState.v as Awaited<Value>
       }
       throw new Error('no atom value')
     },
@@ -42,7 +42,7 @@ export function useAtomValue<Value>(
   // Pull the atoms's state from the store into React state.
   const [[version, value, atomFromUseReducer], rerenderIfChanged] = useReducer<
     Reducer<
-      readonly [VersionObject | undefined, ResolveType<Value>, Atom<Value>],
+      readonly [VersionObject | undefined, Awaited<Value>, Atom<Value>],
       VersionObject | undefined
     >,
     undefined
