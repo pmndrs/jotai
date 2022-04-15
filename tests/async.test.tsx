@@ -621,7 +621,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
       atomCache.set(
         n,
         atom(async () => {
-          await new Promise((r) => setTimeout(r, 100))
+          await new Promise((r) => setTimeout(r, 500))
           return n + 10
         })
       )
