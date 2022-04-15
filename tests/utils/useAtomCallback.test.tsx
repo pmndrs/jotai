@@ -142,3 +142,35 @@ it('useAtomCallback with set and update and arg', async () => {
     getByText('count: 42')
   })
 })
+
+it('useAtomCallback with sync atom (#1100)', async () => {
+  const countAtom = atom(0)
+
+  const Counter = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const readCount = useAtomCallback(useCallback((get) => get(countAtom), []))
+    useEffect(() => {
+      const promiseOrValue = readCount()
+      if (typeof promiseOrValue !== 'number') {
+        throw new Error('should return number')
+      }
+    }, [readCount])
+    return (
+      <>
+        <div>atom count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>dispatch</button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('atom count: 0')
+
+  fireEvent.click(getByText('dispatch'))
+  await findByText('atom count: 1')
+})
