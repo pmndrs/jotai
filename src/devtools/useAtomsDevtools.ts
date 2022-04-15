@@ -52,11 +52,45 @@ const getDevtoolsState = (atomsSnapshot: AtomsSnapshot) => {
   }
 }
 
-export function useAtomsDevtools(name: string, scope?: Scope) {
+interface DevtoolsOptions {
+  scope?: Scope
+  enabled?: boolean
+}
+
+export function useAtomsDevtools(name: string, options?: DevtoolsOptions): void
+
+/*
+ * @deprecated Please use object options (DevtoolsOptions)
+ */
+export function useAtomsDevtools(name: string, scope?: Scope): void
+
+export function useAtomsDevtools(
+  name: string,
+  options?: DevtoolsOptions | Scope
+) {
+  if (typeof options !== 'undefined' && typeof options !== 'object') {
+    console.warn('DEPRECATED [useAtomsDevtools] use DevtoolsOptions')
+    options = { scope: options }
+  }
+  const { enabled, scope } = options || {}
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  if (!store[DEV_SUBSCRIBE_STATE]) {
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
+
+  try {
+    extension = (enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__
+  } catch {
+    // ignored
+  }
+
+  if (!extension) {
+    if (__DEV__ && enabled) {
+      console.warn('Please install/enable Redux devtools extension')
+    }
+  }
+
+  if (extension && !store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
@@ -66,6 +100,9 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   ])
 
   useEffect(() => {
+    if (!extension) {
+      return
+    }
     const callback = () => {
       const values: AtomsValues = new Map()
       const dependents: AtomsDependents = new Map()
@@ -99,7 +136,7 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()
     return unsubscribe
-  }, [store])
+  }, [extension, store])
 
   const goToSnapshot = useCallback(
     (values: Iterable<readonly [AnyAtom, AnyAtomValue]>) => {
@@ -114,28 +151,12 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
     [store, versionedWrite]
   )
 
-  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__']
-
-  try {
-    extension = window.__REDUX_DEVTOOLS_EXTENSION__
-  } catch {
-    // ignored
-  }
-
-  if (!extension) {
-    if (__DEV__ && typeof window !== 'undefined') {
-      console.warn('Please install/enable Redux devtools extension')
-    }
-  }
-
-  if (!store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useAtomsSnapshot can only be used in dev mode.')
-  }
-
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)
   const devtools = useRef<
-    ReturnType<NonNullable<typeof extension>['connect']> & {
+    ReturnType<
+      NonNullable<typeof window['__REDUX_DEVTOOLS_EXTENSION__']>['connect']
+    > & {
       shouldInit?: boolean
     }
   >()
@@ -143,54 +164,55 @@ export function useAtomsDevtools(name: string, scope?: Scope) {
   const snapshots = useRef<AtomsSnapshot[]>([])
 
   useEffect(() => {
-    if (extension) {
-      const getSnapshotAt = (index = snapshots.current.length - 1) => {
-        // index 0 is @@INIT, so we need to return the next action (0)
-        const snapshot = snapshots.current[index >= 0 ? index : 0]
-        if (!snapshot) {
-          throw new Error('snaphost index out of bounds')
-        }
-        return snapshot
-      }
-      const connection = extension.connect({ name })
-
-      const devtoolsUnsubscribe = (
-        connection as unknown as {
-          // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
-          subscribe: (
-            listener: (message: Message) => void
-          ) => (() => void) | undefined
-        }
-      ).subscribe((message) => {
-        switch (message.type) {
-          case 'DISPATCH':
-            switch (message.payload?.type) {
-              case 'RESET':
-                // TODO
-                break
-
-              case 'COMMIT':
-                connection.init(getDevtoolsState(getSnapshotAt()))
-                snapshots.current = []
-                break
-
-              case 'JUMP_TO_ACTION':
-              case 'JUMP_TO_STATE':
-                isTimeTraveling.current = true
-                goToSnapshot(getSnapshotAt(message.payload.actionId - 1)[0])
-                break
-
-              case 'PAUSE_RECORDING':
-                isRecording.current = !isRecording.current
-                break
-            }
-        }
-      })
-
-      devtools.current = connection
-      devtools.current.shouldInit = true
-      return devtoolsUnsubscribe
+    if (!extension) {
+      return
     }
+    const getSnapshotAt = (index = snapshots.current.length - 1) => {
+      // index 0 is @@INIT, so we need to return the next action (0)
+      const snapshot = snapshots.current[index >= 0 ? index : 0]
+      if (!snapshot) {
+        throw new Error('snaphost index out of bounds')
+      }
+      return snapshot
+    }
+    const connection = extension.connect({ name })
+
+    const devtoolsUnsubscribe = (
+      connection as unknown as {
+        // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
+        subscribe: (
+          listener: (message: Message) => void
+        ) => (() => void) | undefined
+      }
+    ).subscribe((message) => {
+      switch (message.type) {
+        case 'DISPATCH':
+          switch (message.payload?.type) {
+            case 'RESET':
+              // TODO
+              break
+
+            case 'COMMIT':
+              connection.init(getDevtoolsState(getSnapshotAt()))
+              snapshots.current = []
+              break
+
+            case 'JUMP_TO_ACTION':
+            case 'JUMP_TO_STATE':
+              isTimeTraveling.current = true
+              goToSnapshot(getSnapshotAt(message.payload.actionId - 1)[0])
+              break
+
+            case 'PAUSE_RECORDING':
+              isRecording.current = !isRecording.current
+              break
+          }
+      }
+    })
+
+    devtools.current = connection
+    devtools.current.shouldInit = true
+    return devtoolsUnsubscribe
   }, [extension, goToSnapshot, name])
 
   useEffect(() => {
