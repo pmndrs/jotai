@@ -295,6 +295,7 @@ it('handles scope', async () => {
     expect(isAnotherAsyncAtomRunning).toBe(false)
   })
 
+  await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('increment'))
   await findByText('loading')
   await findByText('num1: 2, num2: 2')
