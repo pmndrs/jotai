@@ -41,7 +41,7 @@ it('writable count state', async () => {
     // is this usual to delay the subscription?
     setTimeout(() => {
       observable.subscribe(subject)
-    }, 100)
+    }, 500)
     return subject
   })
 
