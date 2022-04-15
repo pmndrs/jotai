@@ -1,9 +1,9 @@
-type ResolveType<T> = T extends Promise<infer V> ? V : T
+type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 
 type Getter = {
   <Value>(atom: Atom<Value | Promise<Value>>): Value
   <Value>(atom: Atom<Promise<Value>>): Value
-  <Value>(atom: Atom<Value>): ResolveType<Value>
+  <Value>(atom: Atom<Value>): Awaited<Value>
 }
 
 type WriteGetter = Getter & {
@@ -15,8 +15,8 @@ type WriteGetter = Getter & {
     | Promise<Value>
     | Value
   <Value>(atom: Atom<Value>, options: { unstable_promise: true }):
-    | Promise<ResolveType<Value>>
-    | ResolveType<Value>
+    | Promise<Awaited<Value>>
+    | Awaited<Value>
 }
 
 type Setter = {
