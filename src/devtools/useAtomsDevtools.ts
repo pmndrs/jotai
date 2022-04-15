@@ -58,19 +58,18 @@ interface DevtoolsOptions {
 }
 
 export function useAtomsDevtools(name: string, options?: DevtoolsOptions): void
+
 /*
  * @deprecated Please use object options (DevtoolsOptions)
  */
-export function useAtomsDevtools(name: string, options?: Scope): void
+export function useAtomsDevtools(name: string, scope?: Scope): void
 
 export function useAtomsDevtools(
   name: string,
   options?: DevtoolsOptions | Scope
 ) {
   if (typeof options !== 'undefined' && typeof options !== 'object') {
-    console.warn(
-      '[useAtomsDevtools] Please use object options (DevtoolsOptions)'
-    )
+    console.warn('DEPRECATED [useAtomsDevtools] use DevtoolsOptions')
     options = { scope: options }
   }
   const { enabled, scope } = options || {}
