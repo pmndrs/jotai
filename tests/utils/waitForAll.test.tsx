@@ -296,7 +296,12 @@ it('handles scope', async () => {
   })
 
   fireEvent.click(getByText('increment'))
-  await findByText('loading')
+  await waitFor(
+    () => {
+      getByText('loading')
+    },
+    { timeout: 2000 }
+  )
   await findByText('num1: 2, num2: 2')
 })
 
