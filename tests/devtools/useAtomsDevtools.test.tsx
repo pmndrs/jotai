@@ -22,6 +22,8 @@ const extension = {
 const extensionConnector = { connect: jest.fn(() => extension) }
 ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
 
+const savedDev = __DEV__
+
 beforeEach(() => {
   extensionConnector.connect.mockClear()
   extension.subscribe.mockClear()
@@ -32,12 +34,23 @@ beforeEach(() => {
   extensionSubscriber = undefined
 })
 
-const AtomsDevtools = ({ children }: { children: ReactElement }) => {
-  useAtomsDevtools('test')
+afterEach(() => {
+  __DEV__ = savedDev
+})
+
+const AtomsDevtools = ({
+  children,
+  enabled,
+}: {
+  children: ReactElement
+  enabled?: boolean
+}) => {
+  useAtomsDevtools('test', enabled ? { enabled } : undefined)
   return children
 }
 
 it('[DEV-ONLY] connects to the extension by initialiing', () => {
+  __DEV__ = true
   const countAtom = atom(0)
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -63,10 +76,10 @@ it('[DEV-ONLY] connects to the extension by initialiing', () => {
 })
 
 describe('If there is no extension installed...', () => {
-  beforeAll(() => {
+  beforeEach(() => {
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
-  afterAll(() => {
+  afterEach(() => {
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
   })
 
@@ -82,6 +95,7 @@ describe('If there is no extension installed...', () => {
   }
 
   it('[DEV-ONLY] does not throw', () => {
+    __DEV__ = true
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
 
@@ -100,14 +114,15 @@ describe('If there is no extension installed...', () => {
     console.warn = originalConsoleWarn
   })
 
-  it('[DEV-ONLY] warns in dev env', () => {
+  it('[DEV-ONLY] warns in dev env only if enabled', () => {
+    __DEV__ = true
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
 
     render(
       <StrictMode>
         <Provider>
-          <AtomsDevtools>
+          <AtomsDevtools enabled={true}>
             <Counter />
           </AtomsDevtools>
         </Provider>
@@ -120,9 +135,32 @@ describe('If there is no extension installed...', () => {
 
     console.warn = originalConsoleWarn
   })
+
+  it('[PRD-ONLY] does not warn in prod env even if enabled is true', () => {
+    __DEV__ = false
+    const originalConsoleWarn = console.warn
+    console.warn = jest.fn()
+
+    render(
+      <StrictMode>
+        <Provider>
+          <AtomsDevtools enabled={true}>
+            <Counter />
+          </AtomsDevtools>
+        </Provider>
+      </StrictMode>
+    )
+
+    expect(console.warn).not.toHaveBeenLastCalledWith(
+      'Please install/enable Redux devtools extension'
+    )
+
+    console.warn = originalConsoleWarn
+  })
 })
 
 it('[DEV-ONLY] updating state should call devtools.send', async () => {
+  __DEV__ = true
   const countAtom = atom(0)
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -158,6 +196,7 @@ it('[DEV-ONLY] updating state should call devtools.send', async () => {
 })
 
 it('[DEV-ONLY] dependencies + updating state should call devtools.send', async () => {
+  __DEV__ = true
   const countAtom = atom(0)
   const doubleAtom = atom((get) => get(countAtom) * 2)
   const Counter = () => {
@@ -250,6 +289,7 @@ it('[DEV-ONLY] dependencies + updating state should call devtools.send', async (
 })
 
 it('[DEV-ONLY] conditional dependencies + updating state should call devtools.send', async () => {
+  __DEV__ = true
   const countAtom = atom(0)
   const secondCountAtom = atom(0)
   const enabledAtom = atom(true)
@@ -359,6 +399,7 @@ it('[DEV-ONLY] conditional dependencies + updating state should call devtools.se
 
 describe('when it receives an message of type...', () => {
   it('[DEV-ONLY] dispatch & COMMIT', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -407,6 +448,7 @@ describe('when it receives an message of type...', () => {
   })
 
   it('[DEV-ONLY] JUMP_TO_STATE & JUMP_TO_ACTION should not call devtools.send', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const secondCountAtom = atom(0)
     const enabledAtom = atom(true)
@@ -477,6 +519,7 @@ describe('when it receives an message of type...', () => {
   })
 
   it('[DEV-ONLY] time travelling with JUMP_TO_ACTION', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -525,6 +568,7 @@ describe('when it receives an message of type...', () => {
   })
 
   it('[DEV-ONLY] time travelling with JUMP_TO_STATE', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -592,6 +636,7 @@ describe('when it receives an message of type...', () => {
   })
 
   it('[DEV-ONLY] PAUSE_RECORDING, it toggles the sending of actions', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
