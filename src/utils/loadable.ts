@@ -2,14 +2,14 @@ import { atom } from 'jotai'
 import type { Atom } from 'jotai'
 import { createMemoizeAtom } from './weakCache'
 
-type ResolveType<T> = T extends Promise<infer V> ? V : T
+type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 
 const memoizeAtom = createMemoizeAtom()
 
 type Loadable<Value> =
   | { state: 'loading' }
   | { state: 'hasError'; error: unknown }
-  | { state: 'hasData'; data: ResolveType<Value> }
+  | { state: 'hasData'; data: Awaited<Value> }
 
 const LOADING: Loadable<unknown> = { state: 'loading' }
 
@@ -23,7 +23,7 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
     const catchAtom = atom((get) => {
       let promise: Promise<void>
       try {
-        const data = get(anAtom) as ResolveType<Value>
+        const data = get(anAtom) as Awaited<Value>
         const loadableAtom = atom({ state: 'hasData', data } as Loadable<Value>)
         return loadableAtom
       } catch (error) {

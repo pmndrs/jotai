@@ -2,17 +2,17 @@ import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { useAtomValue } from './useAtomValue'
 import { useSetAtom } from './useSetAtom'
 
-type ResolveType<T> = T extends Promise<infer V> ? V : T
+type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 
 export function useAtom<Value, Update, Result extends void | Promise<void>>(
   atom: WritableAtom<Value, Update, Result>,
   scope?: Scope
-): [ResolveType<Value>, SetAtom<Update, Result>]
+): [Awaited<Value>, SetAtom<Update, Result>]
 
 export function useAtom<Value>(
   atom: Atom<Value>,
   scope?: Scope
-): [ResolveType<Value>, never]
+): [Awaited<Value>, never]
 
 export function useAtom<Value, Update, Result extends void | Promise<void>>(
   atom: Atom<Value> | WritableAtom<Value, Update, Result>,

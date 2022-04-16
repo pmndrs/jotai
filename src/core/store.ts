@@ -8,7 +8,7 @@ import {
 } from './suspensePromise'
 import type { SuspensePromise } from './suspensePromise'
 
-type ResolveType<T> = T extends Promise<infer V> ? V : T
+type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
@@ -47,7 +47,7 @@ export type AtomState<Value = AnyAtomValue> = {
    * of each dependency to that dependencies's current revision.
    */
   d: ReadDependencies
-} & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
+} & ({ e: ReadError } | { p: SuspensePromise } | { v: Awaited<Value> })
 
 /**
  * Represents a version of a store. A version contains a state for every atom
@@ -314,7 +314,7 @@ export const createStore = (
   const setAtomValue = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
-    value: ResolveType<Value>,
+    value: Awaited<Value>,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
   ): AtomState<Value> => {
@@ -426,7 +426,7 @@ export const createStore = (
       const suspensePromise = createSuspensePromise(
         promiseOrValue,
         promiseOrValue
-          .then((value: ResolveType<Value>) => {
+          .then((value: Awaited<Value>) => {
             setAtomValue(version, atom, value, dependencies, suspensePromise)
             flushPending(version)
           })
@@ -455,7 +455,7 @@ export const createStore = (
     return setAtomValue(
       version,
       atom,
-      promiseOrValue as ResolveType<Value>,
+      promiseOrValue as Awaited<Value>,
       dependencies
     )
   }
@@ -550,7 +550,7 @@ export const createStore = (
           if ('p' in aState) {
             throw aState.p // suspense promise
           }
-          return aState.v as ResolveType<V> // value
+          return aState.v as Awaited<V> // value
         }
         if (hasInitialValue(a)) {
           return a.init
@@ -637,7 +637,7 @@ export const createStore = (
         if (options?.unstable_promise) {
           return aState.p.then(() =>
             writeGetter(a as unknown as Atom<Promise<unknown>>, options as any)
-          ) as Promise<ResolveType<V>> // FIXME proper typing
+          ) as Promise<Awaited<V>> // FIXME proper typing
         }
         if (__DEV__) {
           console.info(
@@ -648,7 +648,7 @@ export const createStore = (
         throw aState.p // suspense promise
       }
       if ('v' in aState) {
-        return aState.v as ResolveType<V> // value
+        return aState.v as Awaited<V> // value
       }
       if (__DEV__) {
         console.warn(
@@ -928,7 +928,7 @@ export const createStoreForExport = (
     return atomState.v
   }
   const asyncGet = <Value>(atom: Atom<Value>) =>
-    new Promise<ResolveType<Value>>((resolve, reject) => {
+    new Promise<Awaited<Value>>((resolve, reject) => {
       const atomState = store[READ_ATOM](atom)
       if ('e' in atomState) {
         reject(atomState.e) // read error

@@ -6,21 +6,25 @@ import type { Scope } from '../core/atom'
 type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
 
 type Callback<Result, Arg> = undefined extends Arg
-  ? (arg?: Arg) => Promise<Result>
-  : (arg: Arg) => Promise<Result>
+  ? (arg?: Arg) => Result
+  : (arg: Arg) => Result
 
 export function useAtomCallback<Result, Arg>(
   callback: (get: WriteGetter, set: Setter, arg: Arg) => Promise<Result>,
   scope?: Scope
-): Callback<Result, Arg>
+): Callback<Promise<Result>, Arg>
 
 export function useAtomCallback<Result, Arg>(
   callback: (get: WriteGetter, set: Setter, arg: Arg) => Result,
   scope?: Scope
-): Callback<Result, Arg>
+): Callback<Result | Promise<Result>, Arg>
 
 export function useAtomCallback<Result, Arg>(
-  callback: (get: WriteGetter, set: Setter, arg: Arg) => Result,
+  callback: (
+    get: WriteGetter,
+    set: Setter,
+    arg: Arg
+  ) => Result | Promise<Result>,
   scope?: Scope
 ) {
   const anAtom = useMemo(
@@ -32,7 +36,7 @@ export function useAtomCallback<Result, Arg>(
           set,
           [arg, resolve, reject]: [
             Arg,
-            (result: Result) => void,
+            (result: Result | Promise<Result>) => void,
             (reason: unknown) => void
           ]
         ) => {
@@ -47,10 +51,37 @@ export function useAtomCallback<Result, Arg>(
   )
   const invoke = useSetAtom(anAtom, scope)
   return useCallback(
-    (arg: Arg) =>
-      new Promise<Result>((resolve, reject) => {
-        invoke([arg, resolve, reject])
-      }),
+    (arg: Arg) => {
+      let isSync = true
+      let settled: { v?: Result | Promise<Result>; e?: unknown } = {}
+      const promise = new Promise<Result>((resolve, reject) => {
+        invoke([
+          arg,
+          (v) => {
+            if (isSync) {
+              settled = { v }
+            } else {
+              resolve(v)
+            }
+          },
+          (e) => {
+            if (isSync) {
+              settled = { e }
+            } else {
+              reject(e)
+            }
+          },
+        ])
+      })
+      isSync = false
+      if ('e' in settled) {
+        throw settled.e
+      }
+      if ('v' in settled) {
+        return settled.v
+      }
+      return promise
+    },
     [invoke]
   )
 }
