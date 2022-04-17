@@ -1,0 +1,51 @@
+---
+title: useSetAtom
+---
+
+```jsx
+import { atom, useSetAtom, useAtomValue } from 'jotai'
+
+const switchAtom = atom(false)
+
+const SetTrueButton = () => {
+  const setCount = useSetAtom(switchAtom)
+  const setTrue = () => setCount(true)
+
+  return (
+    <div>
+      <button onClick={setTrue}>Set True</button>
+    </div>
+  )
+}
+
+const SetFalseButton = () => {
+  const setCount = useSetAtom(switchAtom)
+  const setFalse = () => setCount(false)
+
+  return (
+    <div>
+      <button onClick={setFalse}>Set False</button>
+    </div>
+  )
+}
+
+export default function App() {
+  const state = useAtomValue(switchAtom)
+
+  return (
+    <div className="App">
+      State: <b>{state.toString()}</b>
+      <SetTrueButton />
+      <SetFalseButton />
+    </div>
+  )
+}
+```
+
+In case you create a write only atom where the value never changes you can use the `useSetAtom` hook.
+`useSetAtom` is premature optimization in this scenario.
+
+For primitive values if you use `const [, setValue] = useAtom(valueAtom)` it can cause unnecessary re-renders,
+so `useSetAtom` helps to avoid those extra re-renders.
+
+<CodeSandbox id="1vvvl7" />
