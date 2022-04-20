@@ -14,6 +14,8 @@ import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
+jest.mock('../src/core/useDebugState.ts')
+
 // FIXME this is a hacky workaround temporarily
 const IS_REACT18 = !!(ReactDOM as any).createRoot
 
@@ -267,6 +269,40 @@ it('only re-renders if value has changed', async () => {
     getByText('commits: 2, count2: 1')
     getByText('commits: 2, product: 1')
   })
+})
+
+it('re-renders a time delayed derived atom with the same initial value (#947)', async () => {
+  const aAtom = atom(false)
+  aAtom.onMount = (set) => {
+    setTimeout(() => {
+      set(true)
+    })
+  }
+
+  const bAtom = atom(1)
+  bAtom.onMount = (set) => {
+    set(2)
+  }
+
+  const cAtom = atom((get) => {
+    if (get(aAtom)) {
+      return get(bAtom)
+    }
+    return 1
+  })
+
+  const App = () => {
+    const [value] = useAtom(cAtom)
+    return <>{value}</>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  await findByText('2')
 })
 
 it('works with async get', async () => {
@@ -952,4 +988,33 @@ it('chained derive atom with onMount and useEffect (#897)', async () => {
   )
 
   await findByText('count: 1')
+})
+
+it('onMount is not called when atom value is accessed from writeGetter in derived atom (#942)', async () => {
+  const onUnmount = jest.fn()
+  const onMount = jest.fn(() => {
+    return onUnmount
+  })
+
+  const aAtom = atom(false)
+  aAtom.onMount = onMount
+
+  const bAtom = atom(null, (get) => {
+    get(aAtom)
+  })
+
+  const App = () => {
+    const [, action] = useAtom(bAtom)
+    useEffect(() => action(), [action])
+    return null
+  }
+
+  render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  expect(onMount).not.toBeCalled()
+  expect(onUnmount).not.toBeCalled()
 })

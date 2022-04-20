@@ -31,7 +31,8 @@ beforeEach(() => {
   extensionSubscriber = undefined
 })
 
-it('connects to the extension by initialiing', () => {
+it('[DEV-ONLY] connects to the extension by initializing', () => {
+  __DEV__ = true
   const countAtom = atom(0)
 
   const Counter = () => {
@@ -54,17 +55,20 @@ it('connects to the extension by initialiing', () => {
 })
 
 describe('If there is no extension installed...', () => {
-  beforeAll(() => {
+  let savedDEV: boolean
+  beforeEach(() => {
+    savedDEV = __DEV__
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
   afterAll(() => {
+    __DEV__ = savedDEV
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
   })
 
   const countAtom = atom(0)
 
-  const Counter = () => {
-    useAtomDevtools(countAtom)
+  const Counter = ({ enabled }: { enabled?: boolean }) => {
+    useAtomDevtools(countAtom, enabled ? { enabled } : undefined)
     const [count, setCount] = useAtom(countAtom)
     return (
       <>
@@ -74,6 +78,7 @@ describe('If there is no extension installed...', () => {
     )
   }
   it('does not throw', () => {
+    __DEV__ = false
     expect(() => {
       render(
         <Provider>
@@ -83,26 +88,44 @@ describe('If there is no extension installed...', () => {
     }).not.toThrow()
   })
 
-  it('warns in dev env', () => {
-    const originalNodeEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
+  it('[DEV-ONLY] warns in dev env only if enabled', () => {
+    __DEV__ = true
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
 
     render(
       <Provider>
-        <Counter />
+        <Counter enabled={true} />
       </Provider>
     )
     expect(console.warn).toHaveBeenLastCalledWith(
       'Please install/enable Redux devtools extension'
     )
 
-    process.env.NODE_ENV = originalNodeEnv
     console.warn = originalConsoleWarn
   })
 
-  it('does not warn if not in dev env', () => {
+  it('[PRD-ONLY] does not warn in prod env even if enabled is true', () => {
+    __DEV__ = false
+    const originalConsoleWarn = console.warn
+    console.warn = jest.fn()
+
+    render(
+      <Provider>
+        <Counter enabled={true} />
+      </Provider>
+    )
+
+    expect(console.warn).not.toHaveBeenLastCalledWith(
+      'Please install/enable Redux devtools extension'
+    )
+
+    console.warn = originalConsoleWarn
+  })
+
+  it('[PRD-ONLY] does not warn if not in dev env', () => {
+    __DEV__ = false
+    console.error = jest.fn()
     const consoleWarn = jest.spyOn(console, 'warn')
 
     render(
@@ -116,7 +139,8 @@ describe('If there is no extension installed...', () => {
   })
 })
 
-it('updating state should call devtools.send', async () => {
+it('[DEV-ONLY] updating state should call devtools.send', async () => {
+  __DEV__ = true
   const countAtom = atom(0)
 
   const Counter = () => {
@@ -147,7 +171,8 @@ it('updating state should call devtools.send', async () => {
 })
 
 describe('when it receives an message of type...', () => {
-  it('updating state with ACTION', async () => {
+  it('[DEV-ONLY] updating state with ACTION', async () => {
+    __DEV__ = true
     const countAtom = atom(0)
 
     const Counter = () => {
@@ -185,7 +210,8 @@ describe('when it receives an message of type...', () => {
   })
 
   describe('DISPATCH and payload of type...', () => {
-    it('dispatch & COMMIT', async () => {
+    it('[DEV-ONLY] dispatch & COMMIT', async () => {
+      __DEV__ = true
       const countAtom = atom(0)
 
       const Counter = () => {
@@ -222,7 +248,8 @@ describe('when it receives an message of type...', () => {
       expect(extension.init).toBeCalledWith(2)
     })
 
-    it('dispatch & IMPORT_STATE', async () => {
+    it('[DEV-ONLY] dispatch & IMPORT_STATE', async () => {
+      __DEV__ = true
       const countAtom = atom(0)
 
       const Counter = () => {
@@ -263,7 +290,8 @@ describe('when it receives an message of type...', () => {
     })
 
     describe('JUMP_TO_STATE | JUMP_TO_ACTION...', () => {
-      it('time travelling', async () => {
+      it('[DEV-ONLY] time travelling', async () => {
+        __DEV__ = true
         const countAtom = atom(0)
 
         const Counter = () => {

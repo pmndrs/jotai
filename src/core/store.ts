@@ -8,7 +8,7 @@ import {
 } from './suspensePromise'
 import type { SuspensePromise } from './suspensePromise'
 
-type ResolveType<T> = T extends Promise<infer V> ? V : T
+type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
@@ -47,7 +47,7 @@ export type AtomState<Value = AnyAtomValue> = {
    * of each dependency to that dependencies's current revision.
    */
   d: ReadDependencies
-} & ({ e: ReadError } | { p: SuspensePromise } | { v: ResolveType<Value> })
+} & ({ e: ReadError } | { p: SuspensePromise } | { v: Awaited<Value> })
 
 /**
  * Represents a version of a store. A version contains a state for every atom
@@ -174,7 +174,7 @@ export const createStore = (
   >()
   let stateListeners: Set<StateListener>
   let mountedAtoms: MountedAtoms
-  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+  if (__DEV__) {
     stateListeners = new Set()
     mountedAtoms = new Set()
   }
@@ -182,10 +182,7 @@ export const createStore = (
   if (initialValues) {
     for (const [atom, value] of initialValues) {
       const atomState: AtomState = { v: value, r: 0, d: new Map() }
-      if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
+      if (__DEV__) {
         Object.freeze(atomState)
         if (!hasInitialValue(atom)) {
           console.warn(
@@ -276,7 +273,7 @@ export const createStore = (
     atom: Atom<Value>,
     atomState: AtomState<Value>
   ): void => {
-    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+    if (__DEV__) {
       Object.freeze(atomState)
     }
     if (version) {
@@ -317,7 +314,7 @@ export const createStore = (
   const setAtomValue = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
-    value: ResolveType<Value>,
+    value: Awaited<Value>,
     dependencies?: Set<AnyAtom>,
     suspensePromise?: SuspensePromise
   ): AtomState<Value> => {
@@ -349,6 +346,17 @@ export const createStore = (
       if (nextAtomState.d.has(atom)) {
         nextAtomState.d = new Map(nextAtomState.d).set(atom, nextAtomState.r)
       }
+    } else if (
+      nextAtomState.d !== atomState.d &&
+      (nextAtomState.d.size !== atomState.d.size ||
+        !Array.from(nextAtomState.d.keys()).every((a) => atomState.d.has(a)))
+    ) {
+      // value is not changed, but dependencies are changed
+      // we should schdule a flush in async
+      // FIXME any better way? https://github.com/pmndrs/jotai/issues/947
+      Promise.resolve().then(() => {
+        flushPending(version)
+      })
     }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
@@ -417,19 +425,18 @@ export const createStore = (
     if (promiseOrValue instanceof Promise) {
       const suspensePromise = createSuspensePromise(
         promiseOrValue
-          .then((value: ResolveType<Value>) => {
+          .then((value: Awaited<Value>) => {
             setAtomValue(version, atom, value, dependencies, suspensePromise)
             flushPending(version)
           })
           .catch((e) => {
             if (e instanceof Promise) {
-              if (
-                isSuspensePromise(e) &&
-                isSuspensePromiseAlreadyCancelled(e)
-              ) {
+              if (isSuspensePromise(e)) {
                 // schedule another read later
                 // FIXME not 100% confident with this code
-                e.then(() => readAtomState(version, atom, true))
+                return e.then(() => {
+                  readAtomState(version, atom, true)
+                })
               }
               return e
             }
@@ -447,7 +454,7 @@ export const createStore = (
     return setAtomValue(
       version,
       atom,
-      promiseOrValue as ResolveType<Value>,
+      promiseOrValue as Awaited<Value>,
       dependencies
     )
   }
@@ -458,15 +465,15 @@ export const createStore = (
   ): void => {
     const atomState = getAtomState(version, atom)
     if (atomState) {
+      if ('p' in atomState) {
+        cancelSuspensePromise(atomState.p)
+      }
       const nextAtomState: AtomState<Value> = {
         ...atomState, // copy everything
         i: atomState.r, // set invalidated revision
       }
       setAtomState(version, atom, nextAtomState)
-    } else if (
-      typeof process === 'object' &&
-      process.env.NODE_ENV !== 'production'
-    ) {
+    } else if (__DEV__) {
       console.warn('[Bug] could not invalidate non existing atom', atom)
     }
   }
@@ -480,7 +487,15 @@ export const createStore = (
       // See if we can skip recomputing this atom.
       const atomState = getAtomState(version, atom)
       if (atomState) {
-        // First, ensure that each atom we depend on is up to date.
+        // First, check if we already have suspending promise
+        if (
+          atomState.r !== atomState.i && // revision is not invalidated
+          'p' in atomState &&
+          !isSuspensePromiseAlreadyCancelled(atomState.p)
+        ) {
+          return atomState
+        }
+        // Second, ensure that each atom we depend on is up to date.
         // Recursive calls to `readAtomState(version, a)` will recompute `a` if
         // it's out of date thus increment its revision number if it changes.
         atomState.d.forEach((_, a) => {
@@ -505,12 +520,11 @@ export const createStore = (
         // If a dependency's revision changed since this atom was last computed,
         // then we're out of date and need to recompute.
         if (
-          Array.from(atomState.d.entries()).every(([a, r]) => {
+          Array.from(atomState.d).every(([a, r]) => {
             const aState = getAtomState(version, a)
             return (
               aState &&
-              !('e' in aState) && // no read error
-              !('p' in aState) && // no suspense promise
+              'v' in aState && // has value
               aState.r === r // revision is equal to the last one
             )
           })
@@ -535,7 +549,7 @@ export const createStore = (
           if ('p' in aState) {
             throw aState.p // suspense promise
           }
-          return aState.v as ResolveType<V> // value
+          return aState.v as Awaited<V> // value
         }
         if (hasInitialValue(a)) {
           return a.init
@@ -603,7 +617,7 @@ export const createStore = (
     version: VersionObject | undefined,
     atom: WritableAtom<Value, Update, Result>,
     update: Update
-  ): void | Promise<void> => {
+  ): Result => {
     let isSync = true
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
@@ -611,10 +625,6 @@ export const createStore = (
         unstable_promise: boolean
       }
     ) => {
-      if (typeof options === 'boolean') {
-        console.warn('[DEPRECATED] Please use { unstable_promise: true }')
-        options = { unstable_promise: options }
-      }
       const aState = readAtomState(version, a)
       if ('e' in aState) {
         throw aState.e // read error
@@ -623,12 +633,9 @@ export const createStore = (
         if (options?.unstable_promise) {
           return aState.p.then(() =>
             writeGetter(a as unknown as Atom<Promise<unknown>>, options as any)
-          ) as Promise<ResolveType<V>> // FIXME proper typing
+          ) as Promise<Awaited<V>> // FIXME proper typing
         }
-        if (
-          typeof process === 'object' &&
-          process.env.NODE_ENV !== 'production'
-        ) {
+        if (__DEV__) {
           console.info(
             'Reading pending atom state in write operation. We throw a promise for now.',
             a
@@ -637,12 +644,9 @@ export const createStore = (
         throw aState.p // suspense promise
       }
       if ('v' in aState) {
-        return aState.v as ResolveType<V> // value
+        return aState.v as Awaited<V> // value
       }
-      if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
+      if (__DEV__) {
         console.warn(
           '[Bug] no value found while reading atom in write operation. This is probably a bug.',
           a
@@ -686,7 +690,7 @@ export const createStore = (
     writingAtom: WritableAtom<Value, Update, Result>,
     update: Update,
     version?: VersionObject
-  ): void | Promise<void> => {
+  ): Result => {
     const promiseOrVoid = writeAtomState(version, writingAtom, update)
     flushPending(version)
     return promiseOrVoid
@@ -705,7 +709,7 @@ export const createStore = (
       l: new Set(),
     }
     mountedMap.set(atom, mounted)
-    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+    if (__DEV__) {
       mountedAtoms.add(atom)
     }
     // mount read dependencies before onMount
@@ -738,7 +742,7 @@ export const createStore = (
       onUnmount()
     }
     mountedMap.delete(atom)
-    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+    if (__DEV__) {
       mountedAtoms.delete(atom)
     }
     // unmount read dependencies afterward
@@ -755,10 +759,7 @@ export const createStore = (
           }
         }
       })
-    } else if (
-      typeof process === 'object' &&
-      process.env.NODE_ENV !== 'production'
-    ) {
+    } else if (__DEV__) {
       console.warn('[Bug] could not find atom state to unmount', atom)
     }
   }
@@ -787,7 +788,10 @@ export const createStore = (
       const mounted = mountedMap.get(a)
       if (mounted) {
         mounted.t.add(atom) // add to dependents
-      } else {
+      } else if (mountedMap.has(atom)) {
+        // we mount dependencies only when atom is already mounted
+        // Note: we should revisit this when you find other issues
+        // https://github.com/pmndrs/jotai/issues/942
         mountAtom(a, atom)
       }
     })
@@ -804,17 +808,19 @@ export const createStore = (
       })
       return
     }
-    const pending = Array.from(pendingMap)
-    pendingMap.clear()
-    pending.forEach(([atom, prevAtomState]) => {
-      const atomState = getAtomState(undefined, atom)
-      if (atomState && atomState.d !== prevAtomState?.d) {
-        mountDependencies(atom, atomState, prevAtomState?.d)
-      }
-      const mounted = mountedMap.get(atom)
-      mounted?.l.forEach((listener) => listener())
-    })
-    if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+    while (pendingMap.size) {
+      const pending = Array.from(pendingMap)
+      pendingMap.clear()
+      pending.forEach(([atom, prevAtomState]) => {
+        const atomState = getAtomState(undefined, atom)
+        if (atomState && atomState.d !== prevAtomState?.d) {
+          mountDependencies(atom, atomState, prevAtomState?.d)
+        }
+        const mounted = mountedMap.get(atom)
+        mounted?.l.forEach((listener) => listener())
+      })
+    }
+    if (__DEV__) {
       stateListeners.forEach((l) => l())
     }
   }
@@ -870,7 +876,7 @@ export const createStore = (
     flushPending(version)
   }
 
-  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+  if (__DEV__) {
     return {
       [READ_ATOM]: readAtom,
       [WRITE_ATOM]: writeAtom,
@@ -898,3 +904,43 @@ export const createStore = (
 }
 
 export type Store = ReturnType<typeof createStore>
+
+export const createStoreForExport = (
+  initialValues?: Iterable<readonly [AnyAtom, AnyAtomValue]>
+) => {
+  const store = createStore(initialValues)
+  const get = <Value>(atom: Atom<Value>) => {
+    const atomState = store[READ_ATOM](atom)
+    if ('e' in atomState) {
+      throw atomState.e // read error
+    }
+    if ('p' in atomState) {
+      return undefined // suspended
+    }
+    return atomState.v
+  }
+  const asyncGet = <Value>(atom: Atom<Value>) =>
+    new Promise<Awaited<Value>>((resolve, reject) => {
+      const atomState = store[READ_ATOM](atom)
+      if ('e' in atomState) {
+        reject(atomState.e) // read error
+      } else if ('p' in atomState) {
+        resolve(atomState.p.then(() => asyncGet(atom))) // retry later
+      } else {
+        resolve(atomState.v)
+      }
+    })
+  const set = <Value, Update, Result extends void | Promise<void>>(
+    atom: WritableAtom<Value, Update, Result>,
+    update: Update
+  ) => store[WRITE_ATOM](atom, update)
+  const sub = (atom: AnyAtom, callback: () => void) =>
+    store[SUBSCRIBE_ATOM](atom, callback)
+  return {
+    get,
+    asyncGet,
+    set,
+    sub,
+    SECRET_INTERNAL_store: store,
+  }
+}

@@ -1,4 +1,4 @@
-import { Button, Credits, Docs, Jotai } from '../components'
+import { Button, Credits, Docs, Jotai, SearchButton } from '../components'
 
 export const Sidebar = ({ showDocs = false }) => {
   return (
@@ -6,6 +6,7 @@ export const Sidebar = ({ showDocs = false }) => {
       <div className="flex-grow">
         <Jotai isDocsPage={showDocs} />
         <div className="flex flex-col mt-8 space-y-4">
+          <SearchButton />
           {showDocs ? (
             <Button to="/" icon="home">
               Home
@@ -31,6 +32,12 @@ export const Sidebar = ({ showDocs = false }) => {
             to="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
             external>
             Course
+          </Button>
+          <Button
+            icon="chalkboard"
+            to="https://daishi.gumroad.com/l/learn-jotai/website_qpiwdj8"
+            external>
+            Walkthrough
           </Button>
           <Button icon="discord" to="https://discord.gg/poimandres" external>
             Community

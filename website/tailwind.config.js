@@ -1,17 +1,13 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 const colors = require('tailwindcss/colors')
 
 module.exports = {
-  mode: 'jit',
-  purge: {
-    layers: ['components', 'utilities'],
-    content: [
-      './src/**/*.js',
-      './src/**/*.json',
-      './src/**/*.jsx',
-      './src/**/*.ts',
-      './src/**/*.tsx',
-    ],
-  },
+  content: [
+    './src/**/*.js',
+    './src/**/*.jsx',
+    './src/**/*.ts',
+    './src/**/*.tsx',
+  ],
   darkMode: 'class',
   theme: {
     colors: {
@@ -19,14 +15,18 @@ module.exports = {
       current: 'currentColor',
       black: colors.black,
       white: colors.white,
-      gray: { ...colors.trueGray, 350: '#bcbcbc' },
-      blue: colors.blue,
-      yellow: colors.yellow,
+      gray: {
+        ...colors.neutral,
+        350: '#bcbcbc',
+        650: '#494949',
+        950: '#0c0c0c',
+      },
+      blue: { ...colors.blue, 950: '#0f1d45' },
+      red: { ...colors.red, 950: '#400f0f' },
+      teal: { ...colors.teal, 950: '#0a2725' },
+      yellow: { ...colors.yellow, 950: '#392009' },
     },
     fontSize: {
-      '4xs': ['0.375rem'],
-      '3xs': ['0.5rem'],
-      '2xs': ['0.625rem'],
       xs: ['0.75rem'],
       sm: ['0.875rem'],
       base: ['1rem'],
@@ -40,7 +40,6 @@ module.exports = {
       '7xl': ['4.5rem'],
       '8xl': ['6rem'],
       '9xl': ['8rem'],
-      '10xl': ['10rem'],
     },
   },
   plugins: [require('@tailwindcss/forms')],

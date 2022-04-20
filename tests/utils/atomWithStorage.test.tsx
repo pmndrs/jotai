@@ -1,7 +1,12 @@
 import { Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai'
-import { atomWithHash, atomWithStorage } from 'jotai/utils'
+import {
+  RESET,
+  atomWithHash,
+  atomWithStorage,
+  createJSONStorage,
+} from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -19,6 +24,22 @@ describe('atomWithStorage (sync)', () => {
     },
     setItem: (key: string, newValue: number) => {
       storageData[key] = newValue
+      dummyStorage.listeners.forEach((listener) => {
+        listener(key, newValue)
+      })
+    },
+    removeItem: (key: string) => {
+      delete storageData[key]
+    },
+    listeners: new Set<(key: string, value: number) => void>(),
+    subscribe: (key: string, callback: (value: number) => void) => {
+      const listener = (k: string, value: number) => {
+        if (k === key) {
+          callback(value)
+        }
+      }
+      dummyStorage.listeners.add(listener)
+      return () => dummyStorage.listeners.delete(listener)
     },
   }
 
@@ -31,6 +52,7 @@ describe('atomWithStorage (sync)', () => {
         <>
           <div>count: {count}</div>
           <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <button onClick={() => setCount(RESET)}>reset</button>
         </>
       )
     }
@@ -46,6 +68,111 @@ describe('atomWithStorage (sync)', () => {
     fireEvent.click(getByText('button'))
     await findByText('count: 11')
     expect(storageData.count).toBe(11)
+
+    fireEvent.click(getByText('reset'))
+    await findByText('count: 1')
+    expect(storageData.count).toBeUndefined()
+  })
+
+  it('storage updates before mount (#1079)', async () => {
+    dummyStorage.setItem('count', 10)
+    const countAtom = atomWithStorage('count', 1, dummyStorage)
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom)
+      // emulating updating before mount
+      if (dummyStorage.getItem('count') !== 9) {
+        dummyStorage.setItem('count', 9)
+      }
+      return <div>count: {count}</div>
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('count: 9')
+  })
+})
+
+describe('with sync string storage', () => {
+  const storageData: Record<string, string> = {
+    count: '10',
+  }
+  const stringStorage = {
+    getItem: (key: string) => {
+      return storageData[key] || null
+    },
+    setItem: (key: string, newValue: string) => {
+      storageData[key] = newValue
+      stringStorage.listeners.forEach((listener) => {
+        listener(key, newValue)
+      })
+    },
+    removeItem: (key: string) => {
+      delete storageData[key]
+    },
+    listeners: new Set<(key: string, value: string) => void>(),
+  }
+  const dummyStorage = createJSONStorage<number>(() => stringStorage)
+  dummyStorage.subscribe = (key, callback) => {
+    const listener = (k: string, value: string) => {
+      if (k === key) {
+        callback(JSON.parse(value))
+      }
+    }
+    stringStorage.listeners.add(listener)
+    return () => stringStorage.listeners.delete(listener)
+  }
+
+  it('simple count', async () => {
+    const countAtom = atomWithStorage('count', 1, dummyStorage)
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <button onClick={() => setCount(RESET)}>reset</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('count: 10')
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 11')
+    expect(storageData.count).toBe('11')
+
+    fireEvent.click(getByText('reset'))
+    await findByText('count: 1')
+    expect(storageData.count).toBeUndefined()
+  })
+
+  it('no entry (#1086)', async () => {
+    const noentryAtom = atomWithStorage('noentry', -1, dummyStorage)
+
+    const Counter = () => {
+      const [noentry] = useAtom(noentryAtom)
+      return <div>noentry: {noentry}</div>
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('noentry: -1')
   })
 })
 
@@ -65,6 +192,10 @@ describe('atomWithStorage (async)', () => {
       await new Promise((r) => setTimeout(r, 100))
       asyncStorageData[key] = newValue
     },
+    removeItem: async (key: string) => {
+      await new Promise((r) => setTimeout(r, 100))
+      delete asyncStorageData[key]
+    },
   }
 
   it('async count', async () => {
@@ -76,6 +207,7 @@ describe('atomWithStorage (async)', () => {
         <>
           <div>count: {count}</div>
           <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <button onClick={() => setCount(RESET)}>reset</button>
         </>
       )
     }
@@ -95,6 +227,12 @@ describe('atomWithStorage (async)', () => {
     await findByText('count: 11')
     await waitFor(() => {
       expect(asyncStorageData.count).toBe(11)
+    })
+
+    fireEvent.click(getByText('reset'))
+    await findByText('count: 1')
+    await waitFor(() => {
+      expect(asyncStorageData.count).toBeUndefined()
     })
   })
 
@@ -161,6 +299,36 @@ describe('atomWithStorage (async)', () => {
   })
 })
 
+describe('atomWithStorage (no storage) (#949)', () => {
+  it('can throw in createJSONStorage', async () => {
+    const countAtom = atomWithStorage(
+      'count',
+      1,
+      createJSONStorage(() => {
+        throw new Error('no storage')
+      })
+    )
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('count: 1')
+  })
+})
+
 describe('atomWithHash', () => {
   it('simple count', async () => {
     const countAtom = atomWithHash('count', 1)
@@ -171,6 +339,7 @@ describe('atomWithHash', () => {
         <>
           <div>count: {count}</div>
           <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <button onClick={() => setCount(RESET)}>reset</button>
         </>
       )
     }
@@ -189,5 +358,9 @@ describe('atomWithHash', () => {
 
     window.location.hash = 'count=3'
     await findByText('count: 3')
+
+    fireEvent.click(getByText('reset'))
+    await findByText('count: 1')
+    expect(window.location.hash).toEqual('')
   })
 })

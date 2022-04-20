@@ -1,12 +1,14 @@
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import ReactDOM from 'react-dom'
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useSetAtom } from 'jotai'
 import type { SetStateAction, WritableAtom } from 'jotai'
-import { atomFamily, useUpdateAtom } from 'jotai/utils'
+import { atomFamily } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
+
+jest.mock('../../src/core/useDebugState.ts')
 
 // FIXME this is a hacky workaround temporarily
 const IS_REACT18 = !!(ReactDOM as any).createRoot
@@ -20,7 +22,7 @@ const useCommitCount = () => {
 }
 
 it('new atomFamily impl', async () => {
-  const myFamily = atomFamily((param) => atom(param))
+  const myFamily = atomFamily((param: string) => atom(param))
 
   const Displayer = ({ index }: { index: string }) => {
     const [count] = useAtom(myFamily(index))
@@ -239,7 +241,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
   const Counter = () => {
-    const setCount = useUpdateAtom(countAtom)
+    const setCount = useSetAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
     return (
       <>

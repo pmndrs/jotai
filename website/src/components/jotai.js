@@ -10,8 +10,8 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
           <Logo
             className={cx(
               isDocsPage
-                ? 'text-gray-300 hover:text-black transition ease-in-out duration-300'
-                : 'text-black',
+                ? 'text-gray-300 dark:text-white hover:text-black dark:hover:text-white transition ease-in-out duration-300 '
+                : 'text-black dark:text-white',
               !small
                 ? 'w-full max-w-[12rem] lg:max-w-[16rem] 2xl:max-w-[18rem]'
                 : 'w-[4rem]'
@@ -24,7 +24,7 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
         className={cx(
           !small
             ? 'mt-2 2xl:mt-6 space-x-6 lg:space-x-4 2xl:space-x-6 text-gray-400'
-            : 'mt-1 space-x-2 text-gray-350',
+            : 'mt-1 space-x-2 text-gray-350 dark:text-gray-500',
           'flex items-center'
         )}>
         <div

@@ -1,5 +1,6 @@
 const SUSPENSE_PROMISE = Symbol()
 
+// Not exported for public API
 export type SuspensePromise = Promise<void> & {
   [SUSPENSE_PROMISE]: {
     o: Promise<void> // original promise

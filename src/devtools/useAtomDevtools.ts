@@ -2,52 +2,52 @@ import { useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
 import type { Atom, WritableAtom } from 'jotai'
 import type { Scope, SetAtom } from '../core/atom'
+import { Message } from './types'
 
-type Config = {
-  instanceID?: number
+interface DevtoolOptions {
   name?: string
-  serialize?: boolean
-  actionCreators?: any
-  latency?: number
-  predicate?: any
-  autoPause?: boolean
-}
-
-type Message = {
-  type: string
-  payload?: any
-  state?: any
-}
-
-type ConnectionResult = {
-  subscribe: (dispatch: any) => () => void
-  unsubscribe: () => void
-  send: (action: string, state: any) => void
-  init: (state: any) => void
-  error: (payload: any) => void
-}
-
-type Extension = {
-  connect: (options?: Config) => ConnectionResult
+  scope?: Scope
+  enabled?: boolean
 }
 
 export function useAtomDevtools<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
+  options?: DevtoolOptions
+): void
+
+/*
+ * @deprecated Please use object options (DevtoolsOptions)
+ */
+export function useAtomDevtools<Value, Result extends void | Promise<void>>(
+  anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
   name?: string,
   scope?: Scope
+): void
+
+export function useAtomDevtools<Value, Result extends void | Promise<void>>(
+  anAtom: WritableAtom<Value, Value, Result> | Atom<Value>,
+  options?: DevtoolOptions | string,
+  deprecatedScope?: Scope
 ): void {
-  let extension: Extension | undefined
+  if (typeof options === 'string' || typeof deprecatedScope !== 'undefined') {
+    console.warn('DEPRECATED [useAtomDevtools] use DevtoolOptions')
+    options = {
+      name: options,
+      scope: deprecatedScope,
+    } as DevtoolOptions // we intentionally lie the type a little bit here
+  }
+  const { enabled, name, scope } = options || {}
+
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
+
   try {
-    extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__ as Extension
+    extension = (enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
     // ignored
   }
+
   if (!extension) {
-    if (
-      typeof process === 'object' &&
-      process.env.NODE_ENV === 'development' &&
-      typeof window !== 'undefined'
-    ) {
+    if (__DEV__ && enabled) {
       console.warn('Please install/enable Redux devtools extension')
     }
   }
@@ -56,84 +56,99 @@ export function useAtomDevtools<Value, Result extends void | Promise<void>>(
 
   const lastValue = useRef(value)
   const isTimeTraveling = useRef(false)
-  const devtools = useRef<ConnectionResult & { shouldInit?: boolean }>()
+  const devtools = useRef<
+    ReturnType<
+      NonNullable<typeof window['__REDUX_DEVTOOLS_EXTENSION__']>['connect']
+    > & {
+      shouldInit?: boolean
+    }
+  >()
 
   const atomName = name || anAtom.debugLabel || anAtom.toString()
 
   useEffect(() => {
-    if (extension) {
-      const setValueIfWritable = (value: Value) => {
-        if (typeof setValue === 'function') {
-          ;(setValue as SetAtom<Value, void>)(value)
-          return
-        }
-        console.warn(
-          '[Warn] you cannot do write operations (Time-travelling, etc) in read-only atoms\n',
-          anAtom
-        )
+    if (!extension) {
+      return
+    }
+    const setValueIfWritable = (value: Value) => {
+      if (typeof setValue === 'function') {
+        ;(setValue as SetAtom<Value, void>)(value)
+        return
       }
-      devtools.current = extension.connect({ name: atomName })
-      const unsubscribe = devtools.current.subscribe((message: Message) => {
-        if (message.type === 'ACTION' && message.payload) {
-          try {
-            setValueIfWritable(JSON.parse(message.payload))
-          } catch (e) {
-            console.error(
-              'please dispatch a serializable value that JSON.parse() support\n',
-              e
-            )
-          }
-        } else if (message.type === 'DISPATCH' && message.state) {
-          if (
-            message.payload?.type === 'JUMP_TO_ACTION' ||
-            message.payload?.type === 'JUMP_TO_STATE'
-          ) {
-            isTimeTraveling.current = true
+      console.warn(
+        '[Warn] you cannot do write operations (Time-travelling, etc) in read-only atoms\n',
+        anAtom
+      )
+    }
 
-            setValueIfWritable(JSON.parse(message.state))
-          }
-        } else if (
-          message.type === 'DISPATCH' &&
-          message.payload?.type === 'COMMIT'
-        ) {
-          devtools.current?.init(lastValue.current)
-        } else if (
-          message.type === 'DISPATCH' &&
-          message.payload?.type === 'IMPORT_STATE'
-        ) {
-          const computedStates =
-            message.payload.nextLiftedState?.computedStates || []
+    devtools.current = extension.connect({ name: atomName })
 
-          computedStates.forEach(
-            ({ state }: { state: Value }, index: number) => {
-              if (index === 0) {
-                devtools.current?.init(state)
-              } else {
-                setValueIfWritable(state)
-              }
-            }
+    const unsubscribe = (
+      devtools.current as unknown as {
+        // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
+        subscribe: (
+          listener: (message: Message) => void
+        ) => (() => void) | undefined
+      }
+    ).subscribe((message) => {
+      if (message.type === 'ACTION' && message.payload) {
+        try {
+          setValueIfWritable(JSON.parse(message.payload))
+        } catch (e) {
+          console.error(
+            'please dispatch a serializable value that JSON.parse() support\n',
+            e
           )
         }
-      })
-      devtools.current.shouldInit = true
-      return unsubscribe
-    }
+      } else if (message.type === 'DISPATCH' && message.state) {
+        if (
+          message.payload?.type === 'JUMP_TO_ACTION' ||
+          message.payload?.type === 'JUMP_TO_STATE'
+        ) {
+          isTimeTraveling.current = true
+
+          setValueIfWritable(JSON.parse(message.state))
+        }
+      } else if (
+        message.type === 'DISPATCH' &&
+        message.payload?.type === 'COMMIT'
+      ) {
+        devtools.current?.init(lastValue.current)
+      } else if (
+        message.type === 'DISPATCH' &&
+        message.payload?.type === 'IMPORT_STATE'
+      ) {
+        const computedStates =
+          message.payload.nextLiftedState?.computedStates || []
+
+        computedStates.forEach(({ state }: { state: Value }, index: number) => {
+          if (index === 0) {
+            devtools.current?.init(state)
+          } else {
+            setValueIfWritable(state)
+          }
+        })
+      }
+    })
+    devtools.current.shouldInit = true
+    return unsubscribe
   }, [anAtom, extension, atomName, setValue])
 
   useEffect(() => {
-    if (devtools.current) {
-      lastValue.current = value
-      if (devtools.current.shouldInit) {
-        devtools.current.init(value)
-        devtools.current.shouldInit = false
-      } else if (isTimeTraveling.current) {
-        isTimeTraveling.current = false
-      } else {
-        devtools.current.send(
-          `${atomName} - ${new Date().toLocaleString()}`,
-          value
-        )
-      }
+    if (!devtools.current) {
+      return
+    }
+    lastValue.current = value
+    if (devtools.current.shouldInit) {
+      devtools.current.init(value)
+      devtools.current.shouldInit = false
+    } else if (isTimeTraveling.current) {
+      isTimeTraveling.current = false
+    } else {
+      devtools.current.send(
+        `${atomName} - ${new Date().toLocaleString()}` as any,
+        value
+      )
     }
   }, [anAtom, extension, atomName, value])
 }

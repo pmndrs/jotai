@@ -6,6 +6,8 @@ import { getTestProvider, itSkipIfVersionedWrite } from './testUtils'
 
 const Provider = getTestProvider()
 
+jest.mock('../src/core/useDebugState.ts')
+
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
   useEffect(() => {
@@ -544,7 +546,7 @@ it('set promise atom value on write (#304)', async () => {
 it('uses async atom double chain (#306)', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 500))
     return get(countAtom)
   })
   const delayedCountAtom = atom(async (get) => {
@@ -619,7 +621,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
       atomCache.set(
         n,
         atom(async () => {
-          await new Promise((r) => setTimeout(r, 100))
+          await new Promise((r) => setTimeout(r, 500))
           return n + 10
         })
       )
@@ -882,6 +884,54 @@ itSkipIfVersionedWrite('set two promise atoms at once', async () => {
   await findByText('count: 3')
 })
 
+it('should override promise in derived atom (#1054)', async () => {
+  const countAtom = atom(0)
+  const derivedAtom = atom((get) => {
+    const count = get(countAtom)
+    if (count === 0) {
+      return new Promise<number>(() => {})
+    }
+    return count
+  })
+
+  const Counter = () => {
+    const [derived] = useAtom(derivedAtom)
+    return <div>derived: {derived}</div>
+  }
+
+  const Control = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Control />
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('loading')
+    getByText('count: 0')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('derived: 1')
+    getByText('count: 1')
+  })
+})
+
 it('async write chain', async () => {
   const countAtom = atom(0)
   const asyncWriteAtom = atom(null, async (_get, set, _arg) => {
@@ -934,6 +984,63 @@ it('async atom double chain without setTimeout (#751)', async () => {
   })
   const derivedAsyncAtom = atom(async (get) => get(asyncAtom))
   const anotherAsyncAtom = atom(async (get) => get(derivedAsyncAtom))
+
+  const AsyncComponent = () => {
+    const [text] = useAtom(anotherAsyncAtom)
+    return <div>async: {text}</div>
+  }
+
+  const Parent = () => {
+    // Use useAtom to reproduce the issue
+    const [, setEnabled] = useAtom(enabledAtom)
+    return (
+      <>
+        <Suspense fallback="loading">
+          <AsyncComponent />
+        </Suspense>
+        <button
+          onClick={() => {
+            setEnabled(true)
+          }}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('async: init')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('async: ready')
+})
+
+it('async atom double chain with setTimeout', async () => {
+  const enabledAtom = atom(false)
+  const asyncAtom = atom(async (get) => {
+    const enabled = get(enabledAtom)
+    if (!enabled) {
+      return 'init'
+    }
+    await new Promise((r) => setTimeout(r, 100))
+    return 'ready'
+  })
+  const derivedAsyncAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 100))
+    return get(asyncAtom)
+  })
+  const anotherAsyncAtom = atom(async (get) => {
+    await new Promise((r) => setTimeout(r, 100))
+    return get(derivedAsyncAtom)
+  })
 
   const AsyncComponent = () => {
     const [text] = useAtom(anotherAsyncAtom)

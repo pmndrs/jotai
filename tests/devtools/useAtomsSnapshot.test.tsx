@@ -3,7 +3,7 @@ import { fireEvent, render } from '@testing-library/react'
 import { Provider, atom, useAtom } from 'jotai'
 import { useAtomsSnapshot } from 'jotai/devtools'
 
-it('should register newly added atoms', async () => {
+it('[DEV-ONLY] should register newly added atoms', async () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
 
@@ -43,7 +43,7 @@ it('should register newly added atoms', async () => {
   await findByText('atom count: 2')
 })
 
-it('should let you access atoms and their state', async () => {
+it('[DEV-ONLY] should let you access atoms and their state', async () => {
   const countAtom = atom(1)
   countAtom.debugLabel = 'countAtom'
   const petAtom = atom('cat')
@@ -78,7 +78,7 @@ it('should let you access atoms and their state', async () => {
   await findByText('petAtom: cat')
 })
 
-it('should contain initial values', async () => {
+it('[DEV-ONLY] should contain initial values', async () => {
   const countAtom = atom(1)
   countAtom.debugLabel = 'countAtom'
   const petAtom = atom('cat')

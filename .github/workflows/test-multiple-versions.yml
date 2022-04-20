@@ -39,17 +39,12 @@ jobs:
           - 16.8.6
           - 16.9.0
           - 17.0.0
-          - 18.0.0-rc.0
-          - 0.0.0-experimental-3dc41d8a2-20211223
+          - 18.0.0
+          - 18.1.0-next-ddb1ab1e9-20220413
+          - 0.0.0-experimental-ddb1ab1e9-20220413
         mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
-        testing: [default, alpha]
         exclude:
           - { react: 16.8.6, mode: VERSIONED_WRITE }
-          - { react: 16.8.6, testing: alpha }
-          - { react: 16.9.0, testing: alpha }
-          - { react: 17.0.0, testing: alpha }
-          - { react: 18.0.0-rc.0, testing: default } # suspense doesn't work?
-          - { react: 0.0.0-experimental-3dc41d8a2-20211223, testing: default } # suspense doesn't work?
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -58,13 +53,9 @@ jobs:
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
-      - name: Install alpha testing-library
-        if: ${{ matrix.testing == 'alpha' }}
-        run: yarn add -D @testing-library/react@alpha
-      - name: Patch for React 16.8
-        if: ${{ startsWith(matrix.react, '16.8.') }}
-        run: |
-          sed -i~ 's/it(.async atom double chain without setTimeout (#751).,/it.skip("async atom double chain without setTimeout (#751)",/' tests/async.test.tsx
+      - name: Install legacy testing-library
+        if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
+        run: yarn add -D @testing-library/react@12.1.4
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |

@@ -1,10 +1,11 @@
-<p align="center">
-  <img src="img/title.svg" alt="jotai" />
-</p>
+<br>
 
-Primitive and flexible state management for React
+![Jotai (light mode)](./img/jotai-header-light.png#gh-light-mode-only)
+![Jotai (dark mode)](./img/jotai-header-dark.png#gh-dark-mode-only)
 
-`npm i jotai`
+<br>
+
+`npm i jotai` or visit [jotai.org](https://jotai.org)
 
 [![Build Status](https://img.shields.io/github/workflow/status/pmndrs/jotai/Lint?style=flat&colorA=000000&colorB=000000)](https://github.com/pmndrs/jotai/actions?query=workflow%3ALint)
 [![Build Size](https://img.shields.io/bundlephobia/minzip/jotai?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=jotai)
@@ -168,7 +169,7 @@ yarn add jotai react
 
 ## Learn Jotai
 
-[![free egghead Jotai introduction course by Daishi](https://res.cloudinary.com/dg3gyk0gu/image/upload/v1636388460/egghead-next-pages/jotai/github--jotai-atoms.png)](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0?utm_source=github&utm_medium=cta&utm_term=jotai)
+[![free egghead Jotai introduction course by Daishi](./img/jotai-course-banner.jpg)](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0?utm_source=github&utm_medium=cta&utm_term=jotai)
 
 ## More documents
 
@@ -184,6 +185,7 @@ yarn add jotai react
   - [Testing](./docs/guides/testing.mdx)
   - [Persistence](./docs/guides/persistence.mdx)
   - [Next.js](./docs/guides/nextjs.mdx)
+  - [React Native](./docs/guides/react-native.mdx)
   - [Resettable](./docs/guides/resettable.mdx)
   - [No Suspense](./docs/guides/no-suspense.mdx)
   - [Atoms in atom](./docs/guides/atoms-in-atom.mdx)

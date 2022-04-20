@@ -1,4 +1,5 @@
 import { Component, Suspense, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { getTestProvider, itSkipIfVersionedWrite } from './testUtils'
@@ -21,10 +22,10 @@ afterEach(() => {
 })
 
 class ErrorBoundary extends Component<
-  { message?: string },
+  { message?: string; children: ReactNode },
   { hasError: boolean }
 > {
-  constructor(props: { message?: string }) {
+  constructor(props: { message?: string; children: ReactNode }) {
     super(props)
     this.state = { hasError: false }
   }
@@ -434,7 +435,7 @@ describe('throws an error while updating in effect cleanup', () => {
     )
   }
 
-  itSkipIfVersionedWrite('single setCount', async () => {
+  itSkipIfVersionedWrite('[DEV-ONLY] single setCount', async () => {
     const { getByText, findByText } = render(
       <Provider>
         <ErrorBoundary>
@@ -454,7 +455,7 @@ describe('throws an error while updating in effect cleanup', () => {
     )
   })
 
-  itSkipIfVersionedWrite('dobule setCount', async () => {
+  itSkipIfVersionedWrite('[DEV-ONLY] dobule setCount', async () => {
     doubleSetCount = true
 
     const { getByText, findByText } = render(

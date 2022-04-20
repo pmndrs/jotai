@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom } from 'jotai'
-import { selectAtom, useAtomValue, useUpdateAtom } from 'jotai/utils'
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { selectAtom } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -19,7 +19,7 @@ it('selectAtom works as expected', async () => {
   const littleAtom = selectAtom(bigAtom, (v) => v.a)
 
   const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom)
+    const setValue = useSetAtom(bigAtom)
     return (
       <>
         <button
@@ -64,7 +64,7 @@ it('selectAtom works with async atom', async () => {
   const littleAtom = selectAtom(bigAtomAsync, (v) => v.a)
 
   const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom)
+    const setValue = useSetAtom(bigAtom)
     return (
       <>
         <button
@@ -114,7 +114,7 @@ it('do not update unless equality function says value has changed', async () => 
   )
 
   const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom)
+    const setValue = useSetAtom(bigAtom)
     return (
       <>
         <button
@@ -176,12 +176,65 @@ it('do not update unless equality function says value has changed', async () => 
   await findByText('commits: 4')
 })
 
+it('equality function works even if suspend', async () => {
+  const bigAtom = atom({ a: 0 })
+  const bigAtomAsync = atom((get) => Promise.resolve(get(bigAtom)))
+  const littleAtom = selectAtom(
+    bigAtomAsync,
+    (value) => value,
+    (left, right) => left.a === right.a
+  )
+
+  const Controls = () => {
+    const [value, setValue] = useAtom(bigAtom)
+    return (
+      <>
+        <div>bigValue: {JSON.stringify(value)}</div>
+        <button
+          onClick={() =>
+            setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
+          }>
+          increment
+        </button>
+        <button onClick={() => setValue((oldValue) => ({ ...oldValue, b: 2 }))}>
+          other
+        </button>
+      </>
+    )
+  }
+
+  const Selector = () => {
+    const value = useAtomValue(littleAtom)
+    return <div>littleValue: {JSON.stringify(value)}</div>
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback={null}>
+        <Controls />
+        <Selector />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('bigValue: {"a":0}')
+  await findByText('littleValue: {"a":0}')
+
+  fireEvent.click(getByText('increment'))
+  await findByText('bigValue: {"a":1}')
+  await findByText('littleValue: {"a":1}')
+
+  fireEvent.click(getByText('other'))
+  await findByText('bigValue: {"a":1,"b":2}')
+  await findByText('littleValue: {"a":1}')
+})
+
 it('useSelector with scope', async () => {
   const scope = Symbol()
   const bigAtom = atom({ a: 0, b: 'othervalue' })
 
   const Parent = () => {
-    const setValue = useUpdateAtom(bigAtom, scope)
+    const setValue = useSetAtom(bigAtom, scope)
     return (
       <>
         <button

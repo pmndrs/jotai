@@ -1,4 +1,46 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 require('dotenv').config()
+
+const DOCS_QUERY = `
+  query {
+    allMdx {
+      nodes {
+        slug
+        meta: frontmatter {
+          title
+          description
+        }
+        excerpt
+        rawBody
+      }
+    }
+  }
+`
+
+const queries = [
+  {
+    query: DOCS_QUERY,
+    transformer: ({ data }) =>
+      data.allMdx.nodes.map((item) => {
+        const transformedNode = {
+          objectID: item.slug,
+          slug: item.slug,
+          title: item.meta.title,
+          description: item.meta.description,
+          excerpt: item.excerpt,
+          body: item.rawBody.replace(/(<([^>]+)>)/gi, ''),
+        }
+
+        return transformedNode
+      }),
+    indexName: 'Docs',
+    settings: {
+      searchableAttributes: ['title', 'description', 'slug', 'excerpt', 'body'],
+      indexLanguages: ['en'],
+    },
+    mergeSettings: false,
+  },
+]
 
 module.exports = {
   siteMetadata: {
@@ -17,29 +59,28 @@ module.exports = {
       },
     },
     {
-      resolve: `gatsby-source-filesystem`,
-      options: {
-        name: `images`,
-        path: `./src/images`,
-      },
-    },
-    {
       resolve: `gatsby-plugin-mdx`,
       options: {
         extensions: [`.md`, `.mdx`],
       },
     },
     `gatsby-plugin-postcss`,
-    `gatsby-plugin-image`,
     {
-      resolve: `gatsby-plugin-sharp`,
+      resolve: 'gatsby-plugin-use-dark-mode',
       options: {
-        defaults: {
-          placeholder: 'none',
-          formats: ['auto', 'webp', 'avif'],
-          quality: 90,
-        },
-        failOnError: false,
+        classNameDark: 'dark',
+        classNameLight: 'light',
+        storageKey: 'darkMode',
+        minify: true,
+      },
+    },
+    {
+      resolve: `gatsby-plugin-algolia`,
+      options: {
+        appId: process.env.GATSBY_ALGOLIA_APP_ID,
+        apiKey: process.env.ALGOLIA_ADMIN_KEY,
+        queries,
+        skipIndexing: process.env.ALGOLIA_SKIP_INDEXING,
       },
     },
     `gatsby-plugin-sitemap`,
@@ -57,9 +98,9 @@ module.exports = {
         },
       },
     },
-    `gatsby-plugin-remove-trailing-slashes`,
   ],
   jsxRuntime: 'automatic',
+  trailingSlash: 'never',
   flags: {
     FAST_DEV: true,
   },

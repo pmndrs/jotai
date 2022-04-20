@@ -1,7 +1,7 @@
 import { Suspense, useEffect } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { Atom, atom } from 'jotai'
-import { loadable, useAtomValue, useUpdateAtom } from 'jotai/utils'
+import { Atom, atom, useAtomValue, useSetAtom } from 'jotai'
+import { loadable } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -66,7 +66,7 @@ it('loadable goes back to loading after re-fetch', async () => {
   })
 
   const Refresh = () => {
-    const setRefresh = useUpdateAtom(refreshAtom)
+    const setRefresh = useSetAtom(refreshAtom)
     return (
       <>
         <button onClick={() => setRefresh((value) => value + 1)}>
@@ -105,7 +105,7 @@ it('loadable can recover from error', async () => {
   })
 
   const Refresh = () => {
-    const setRefresh = useUpdateAtom(refreshAtom)
+    const setRefresh = useSetAtom(refreshAtom)
     return (
       <>
         <button onClick={() => setRefresh((value) => value + 1)}>

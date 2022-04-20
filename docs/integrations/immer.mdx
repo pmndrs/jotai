@@ -1,7 +1,7 @@
 ---
 title: Immer
 description: This doc describes `jotai/immer` bundle.
-nav: 4.1
+nav: 4.01
 ---
 
 ## Install
@@ -31,7 +31,7 @@ const Counter = () => {
 }
 
 const Controls = () => {
-  const [, setCount] = useAtom(setCountAtom)
+  const [, setCount] = useAtom(countAtom)
   // setCount === update : (draft: Draft<Value>) => void
   const inc = () => setCount((c) => (c = c + 1))
   return <button onClick={inc}>+1</button>
@@ -94,7 +94,5 @@ const Controls = () => {
 It would be better if you don't use `withImmer` and `atomWithImmer` with `useImmerAtom` because they provide the immer-like `writeFunction` and we don't need to create a new one.
 
 ## Codesandbox
-
-A good example of this bundle in [codesandbox](https://codesandbox.io/s/immer-jotai-doc-ms9pv?file=/src/App.tsx).
 
 <CodeSandbox id="ms9pv" />

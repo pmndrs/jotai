@@ -1,10 +1,13 @@
 import { Component, StrictMode, Suspense, useEffect } from 'react'
+import type { ReactNode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
-import { atomFamily, useUpdateAtom, waitForAll } from 'jotai/utils'
+import { atom, useAtom, useSetAtom } from 'jotai'
+import { atomFamily, waitForAll } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
+
+jest.mock('../../src/core/useDebugState.ts')
 
 const consoleWarn = console.warn
 const consoleError = console.error
@@ -18,10 +21,10 @@ afterEach(() => {
 })
 
 class ErrorBoundary extends Component<
-  { message?: string },
+  { message?: string; children: ReactNode },
   { hasError: boolean }
 > {
-  constructor(props: { message?: string }) {
+  constructor(props: { message?: string; children: ReactNode }) {
     super(props)
     this.state = { hasError: false }
   }
@@ -62,12 +65,10 @@ it('waits for two async atoms', async () => {
   })
 
   const Counter = () => {
-    const [[num, str]] = useAtom(
-      waitForAll([asyncAtom, anotherAsyncAtom] as const)
-    )
+    const [[num, str]] = useAtom(waitForAll([asyncAtom, anotherAsyncAtom]))
     return (
       <div>
-        num: {num}, str: {str}
+        num: {num * 1}, str: {str.toLowerCase()}
       </div>
     )
   }
@@ -261,7 +262,7 @@ it('handles scope', async () => {
       waitForAll([asyncAtom, anotherAsyncAtom]),
       scope
     )
-    const setValue = useUpdateAtom(valueAtom, scope)
+    const setValue = useSetAtom(valueAtom, scope)
     return (
       <>
         <div>
@@ -294,6 +295,7 @@ it('handles scope', async () => {
     expect(isAnotherAsyncAtomRunning).toBe(false)
   })
 
+  await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('increment'))
   await findByText('loading')
   await findByText('num1: 2, num2: 2')
