@@ -84,7 +84,7 @@ type Dependents = Set<AnyAtom>
  *
  * The mounted state of an atom is freed once it is no longer mounted.
  */
-type Mounted = {
+export type Mounted = {
   /** The list of subscriber functions. */
   l: Listeners
   /** Atoms that depend on *this* atom. Used to fan out invalidation. */
