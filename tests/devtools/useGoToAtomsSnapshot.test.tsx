@@ -20,7 +20,7 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should modify atoms snapshot', async () => {
   }
 
   const UpdateSnapshot = () => {
-    const snapshot = useAtomsSnapshot()
+    const [snapshot] = useAtomsSnapshot()
     const goToSnapshot = useGotoAtomsSnapshot()
     return (
       <button
@@ -65,7 +65,7 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with derived atoms', async () =>
   }
 
   const UpdateSnapshot = () => {
-    const snapshot = useAtomsSnapshot()
+    const [snapshot] = useAtomsSnapshot()
     const goToSnapshot = useGotoAtomsSnapshot()
     return (
       <button
@@ -116,7 +116,7 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with async derived atoms', async
   }
 
   const UpdateSnapshot = () => {
-    const snapshot = useAtomsSnapshot()
+    const [snapshot] = useAtomsSnapshot()
     const goToSnapshot = useGotoAtomsSnapshot()
     return (
       <button
@@ -170,7 +170,7 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with original snapshot', async (
   }
 
   const UpdateSnapshot = () => {
-    const snapshot = useAtomsSnapshot()
+    const [snapshot] = useAtomsSnapshot()
     const snapshotRef = useRef<Map<Atom<unknown>, unknown>>()
     useEffect(() => {
       if (snapshot.size && !snapshotRef.current) {
@@ -226,7 +226,7 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should respect atom scope', async () => {
   }
 
   const UpdateSnapshot = () => {
-    const snapshot = useAtomsSnapshot(scope)
+    const [snapshot] = useAtomsSnapshot(scope)
     const goToSnapshot = useGotoAtomsSnapshot(scope)
     return (
       <button

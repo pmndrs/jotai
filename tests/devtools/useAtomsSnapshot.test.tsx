@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from 'jotai'
 import { useAtomsSnapshot } from 'jotai/devtools'
 
@@ -26,7 +26,7 @@ it('[DEV-ONLY] should register newly added atoms', async () => {
   }
 
   const RegisteredAtomsCount = () => {
-    const atoms = useAtomsSnapshot()
+    const [atoms] = useAtomsSnapshot()
 
     return <p>atom count: {atoms.size}</p>
   }
@@ -56,7 +56,7 @@ it('[DEV-ONLY] should let you access atoms and their state', async () => {
   }
 
   const SimpleDevtools = () => {
-    const atoms = useAtomsSnapshot()
+    const [atoms] = useAtomsSnapshot()
 
     return (
       <div>
@@ -91,7 +91,7 @@ it('[DEV-ONLY] should contain initial values', async () => {
   }
 
   const SimpleDevtools = () => {
-    const atoms = useAtomsSnapshot()
+    const [atoms] = useAtomsSnapshot()
 
     return (
       <div>
@@ -115,4 +115,86 @@ it('[DEV-ONLY] should contain initial values', async () => {
 
   await findByText('countAtom: 42')
   await findByText('petAtom: dog')
+})
+
+it('[DEV-ONLY] conditional dependencies + updating state should call devtools.send', async () => {
+  __DEV__ = true
+  const countAtom = atom(0)
+  countAtom.debugLabel = 'countAtom'
+  const secondCountAtom = atom(0)
+  secondCountAtom.debugLabel = 'secondCountAtom'
+  const enabledAtom = atom(true)
+  enabledAtom.debugLabel = 'enabledAtom'
+  const anAtom = atom((get) =>
+    get(enabledAtom) ? get(countAtom) : get(secondCountAtom)
+  )
+  anAtom.debugLabel = 'anAtom'
+  const App = () => {
+    const [enabled, setEnabled] = useAtom(enabledAtom)
+    const [cond] = useAtom(anAtom)
+
+    return (
+      <div className="App">
+        <h1>enabled: {enabled ? 'true' : 'false'}</h1>
+        <h1>condition: {cond}</h1>
+        <button onClick={() => setEnabled(!enabled)}>change</button>
+      </div>
+    )
+  }
+
+  const SimpleDevtools = () => {
+    const [, dependents] = useAtomsSnapshot()
+
+    const obj: Record<string, string[]> = {}
+
+    for (const [atom, dependentAtoms] of dependents) {
+      obj[`${atom}`] = [...dependentAtoms].map((_atom) => `${_atom}`)
+    }
+
+    return <div>{JSON.stringify(obj)}</div>
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <App />
+      <SimpleDevtools />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('enabled: true')
+    getByText('condition: 0')
+    getByText(
+      JSON.stringify({
+        [`${enabledAtom}`]: [`${enabledAtom}`, `${anAtom}`],
+        [`${anAtom}`]: [],
+        [`${countAtom}`]: [`${anAtom}`, `${countAtom}`],
+      })
+    )
+  })
+  fireEvent.click(getByText('change'))
+  await waitFor(() => {
+    getByText('enabled: false')
+    getByText('condition: 0')
+    getByText(
+      JSON.stringify({
+        [`${enabledAtom}`]: [`${enabledAtom}`, `${anAtom}`],
+        [`${anAtom}`]: [],
+        [`${secondCountAtom}`]: [`${anAtom}`, `${secondCountAtom}`],
+      })
+    )
+  })
+
+  fireEvent.click(getByText('change'))
+  await waitFor(() => {
+    getByText('enabled: true')
+    getByText('condition: 0')
+    getByText(
+      JSON.stringify({
+        [`${enabledAtom}`]: [`${enabledAtom}`, `${anAtom}`],
+        [`${anAtom}`]: [],
+        [`${countAtom}`]: [`${anAtom}`, `${countAtom}`],
+      })
+    )
+  })
 })
