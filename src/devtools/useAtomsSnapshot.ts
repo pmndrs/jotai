@@ -6,9 +6,8 @@ import {
   DEV_GET_MOUNTED,
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
-  Mounted,
 } from '../core/store'
-import type { AtomState, Store } from '../core/store'
+import type { AtomState, Mounted, Store } from '../core/store'
 
 type AtomsValues = Map<Atom<unknown>, unknown>
 type AtomsDependants = Map<Atom<unknown>, Set<Atom<unknown>>>
