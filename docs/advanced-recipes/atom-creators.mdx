@@ -301,16 +301,15 @@ function EvenCounter() {
 This can be useful when you want the state to interact with each other without
 the use of localStorage and that by just using The Broadcast Channel API allows
 basic communication between browsing contexts (that is, windows, tabs, frames, 
-create a component or iframes) and workers on the same origin.
+create a component or iframes) and workers on the same origin. According to the MDN documentation receiving a message in initialization is not supported in broadcast and if we want to support that we may need to add extra stuff to atomWithBroadcast (like local storage).
 
 ```ts
 import { atom } from "jotai";
 
 export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
   const channel = new BroadcastChannel(key);
-
-
   const baseAtom = atom(initialValue);
+  const listeners = new Set<(event: MessageEvent<any>) => void>();
 
   const broadcastAtom = atom<Value, { fromOnMessage: boolean; value: Value }>(
     (get) => get(baseAtom),
@@ -322,8 +321,16 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
     }
   );
   broadcastAtom.onMount = (setAtom) => {
-    channel.onmessage = (event) => {
+    const listener = (event: MessageEvent<any>) => {
       setAtom({ fromOnMessage: true, value: event.data });
+    };
+    listeners.add(listener);
+    channel.onmessage = (event) => {
+      listeners.forEach((l) => l(event));
+    };
+    return () => {
+      channel.close();
+      listeners.delete(listener);
     };
   };
   const returnedAtom = atom<Value, Value>(
@@ -334,11 +341,10 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
   );
   return returnedAtom;
 }
+const broadAtom = atomWithBroadcast("count", 0);
 
-const atomBroad = atomWithBroadcast("count", 0);
-
-const ListOfThings: FC = () => {
-  const [count, setCount] = useAtom(atomBroad);
+const ListOfThings = () => {
+  const [count, setCount] = useAtom(broadAtom);
 
   return (
     <div>
@@ -349,3 +355,5 @@ const ListOfThings: FC = () => {
 };
 
 ```
+
+<CodeSandbox id="ugkzm0" />
