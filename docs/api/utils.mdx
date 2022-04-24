@@ -24,66 +24,62 @@ This is an overview of the atom creators/hooks utilities that can be found under
 
    Returns the value of the given atom.
 
-5. [useSetAtom](../utils/use-set-atom.mdx)
-
-   Returns the setter function of the given atom.
-
-6. [atomWithReset](../utils/atom-with-reset.mdx)
+5. [atomWithReset](../utils/atom-with-reset.mdx)
 
    Creates an atom that could be reset to its `initialValue` with `useResetAtom` hook.
 
-7. [useResetAtom](../utils/use-reset-atom.mdx)
+6. [useResetAtom](../utils/use-reset-atom.mdx)
 
    Resets a Resettable atom to its initial value.
 
-8. [RESET](../utils/reset.mdx)
+7. [RESET](../utils/reset.mdx)
 
    Special value that is accepted by Resettable atoms created with `atomWithReset`, `atomWithDefault` or writable atom created with atom if it accepts `RESET` symbol.
 
-9. [useReducerAtom](../utils/use-reducer-atom.mdx)
+8. [useReducerAtom](../utils/use-reducer-atom.mdx)
 
    Use this hook to update an atom value with a reducer function.
 
-10.  [atomWithReducer](../utils/atom-with-reducer.mdx)
+9. [atomWithReducer](../utils/atom-with-reducer.mdx)
 
-    This is a function to create an atom with an embeded reducer function to update the value.
+   This is a function to create an atom with an embeded reducer function to update the value.
 
-11. [atomWithDefault](../utils/atom-with-default.mdx)
+10. [atomWithDefault](../utils/atom-with-default.mdx)
 
     This is a function to create an overwritable primitive atom. Its default value can be specified with a read function instead of a static initial value.
 
-12. [atomWithHash](../utils/atom-with-hash.mdx)
+11. [atomWithHash](../utils/atom-with-hash.mdx)
 
     This creates a new atom that is connected with URL hash.
 
-13. [atomFamily](../utils/atom-family.mdx)
+12. [atomFamily](../utils/atom-family.mdx)
 
     This will create a function that takes param and returns an atom.
 
-14. [selectAtom](../utils/select-atom.mdx)
+13. [selectAtom](../utils/select-atom.mdx)
 
     This function creates a derived atom whose value is a function of the original atom's value, determined by `selector`.
 
-15. [useAtomCallback](../utils/use-atom-callback.mdx)
+14. [useAtomCallback](../utils/use-atom-callback.mdx)
 
     This hook allows one to interact with atoms imperatively.
 
-16. [freezeAtom](../utils/freeze-atom.mdx)
+15. [freezeAtom](../utils/freeze-atom.mdx)
 
     The `freezeAtom` takes an existing atom and returns a new derived atom. The value with the new derived atom will be frozen (i.e. not mutable).
 
-17. [freezeAtomCreator](../utils/freeze-atom-creator.mdx)
+16. [freezeAtomCreator](../utils/freeze-atom-creator.mdx)
 
     Instead of creating a frozen atom from an existing atom, `freezeAtomCreator` takes an atom creator function and returns a new function.
 
-18. [splitAtom](../utils/split-atom.mdx)
+17. [splitAtom](../utils/split-atom.mdx)
 
     The `splitAtom` utility is useful for when you want to get an atom for each element in a list.
 
-19. [waitForAll](../utils/wait-for-all.mdx)
+18. [waitForAll](../utils/wait-for-all.mdx)
 
     The `waitForAll` utility is a concurrency helper, which allows us to evaluate multiple async atoms.
 
-20. [useHydrateAtoms](../utils/use-hydrate-atoms.mdx)
+19. [useHydrateAtoms](../utils/use-hydrate-atoms.mdx)
 
     The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an initial value is e.g. fetched on the server, which can be passed to a component by props.
