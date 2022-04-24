@@ -465,9 +465,6 @@ export const createStore = (
   ): void => {
     const atomState = getAtomState(version, atom)
     if (atomState) {
-      if ('p' in atomState) {
-        cancelSuspensePromise(atomState.p)
-      }
       const nextAtomState: AtomState<Value> = {
         ...atomState, // copy everything
         i: atomState.r, // set invalidated revision
