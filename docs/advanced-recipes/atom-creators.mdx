@@ -303,7 +303,7 @@ the use of localStorage and that by just using The Broadcast Channel API allows
 basic communication between browsing contexts (that is, windows, tabs, frames, 
 create a component or iframes) and workers on the same origin. According to the MDN documentation receiving a message in initialization is not supported in broadcast and if we want to support that we may need to add extra stuff to atomWithBroadcast (like local storage).
 
-```ts
+```tsx
 import { atom } from "jotai";
 
 export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
