@@ -245,7 +245,9 @@ it('should be able to refetch only specific pages when refetchPages is provided'
         multiplier = 2
         setState({
           type: 'refetch',
-          refetchPage: (_, index) => index === value,
+          payload: {
+            refetchPage: (_, index) => index === value,
+          },
         })
       },
       [setState]
