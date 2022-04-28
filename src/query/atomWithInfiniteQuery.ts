@@ -14,9 +14,9 @@ import { queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
 export type AtomWithInfiniteQueryAction<TQueryFnData> =
-  | ({ type: 'refetch' } & Partial<
-      RefetchOptions & RefetchQueryFilters<TQueryFnData>
-    >)
+  | ({ type: 'refetch', payload: Partial<
+  RefetchOptions & RefetchQueryFilters<TQueryFnData>
+> } )
   | { type: 'fetchNextPage' }
   | { type: 'fetchPreviousPage' }
 
@@ -24,18 +24,18 @@ export type AtomWithInfiniteQueryOptions<
   TQueryFnData,
   TError,
   TData,
-  TQueryData
-> = InfiniteQueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
-  queryKey: QueryKey
+  TQueryData, TQueryKey extends QueryKey = QueryKey
+> = InfiniteQueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey> & {
+  queryKey: TQueryKey
 }
 
 export type AtomWithInfiniteQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
   TData,
-  TQueryData
+  TQueryData, TQueryKey extends QueryKey = QueryKey
 > = Omit<
-  AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>,
+  AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
   'enabled'
 > & {
   enabled: boolean
@@ -45,14 +45,15 @@ export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData, TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
     AtomWithInfiniteQueryOptionsWithEnabled<
       TQueryFnData,
       TError,
       TData,
-      TQueryData
+      TQueryData,
+      TQueryKey
     >
   >,
   getQueryClient?: GetQueryClient
@@ -65,10 +66,10 @@ export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData, TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<
@@ -166,7 +167,7 @@ export function atomWithInfiniteQuery<
         }
       }
 
-      const defaultedOptions = queryClient.defaultQueryObserverOptions(options)
+      const defaultedOptions = queryClient.defaultQueryOptions(options)
       if (initialData === undefined && options.enabled !== false) {
         if (typeof defaultedOptions.staleTime !== 'number') {
           defaultedOptions.staleTime = 1000
@@ -192,8 +193,8 @@ export function atomWithInfiniteQuery<
       const { observer } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
-          const { type: _type, ...options } = action
-          void observer.refetch(options)
+          const { type: _type, payload } = action
+          void observer.refetch(payload)
           break
         }
         case 'fetchPreviousPage': {
