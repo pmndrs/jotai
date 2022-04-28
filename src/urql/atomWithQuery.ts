@@ -18,9 +18,7 @@ type AtomWithQueryAction = {
 type OperationResultWithData<Data, Variables> = OperationResult<
   Data,
   Variables
-> & {
-  data: Data
-}
+>
 
 const isOperationResultWithData = <Data, Variables>(
   result: OperationResult<Data, Variables>
