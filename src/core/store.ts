@@ -1,4 +1,5 @@
 import type { Atom, WritableAtom } from './atom'
+import { unstable_batchedUpdates } from 'react-dom'
 import {
   cancelSuspensePromise,
   createSuspensePromise,
@@ -814,7 +815,9 @@ export const createStore = (
           mountDependencies(atom, atomState, prevAtomState?.d)
         }
         const mounted = mountedMap.get(atom)
-        mounted?.l.forEach((listener) => listener())
+        unstable_batchedUpdates(() => {
+          mounted?.l.forEach((listener) => listener())
+        })
       })
     }
     if (__DEV__) {
