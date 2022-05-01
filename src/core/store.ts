@@ -1,5 +1,5 @@
-import type { Atom, WritableAtom } from './atom'
 import { unstable_batchedUpdates } from 'react-dom'
+import type { Atom, WritableAtom } from './atom'
 import {
   cancelSuspensePromise,
   createSuspensePromise,
