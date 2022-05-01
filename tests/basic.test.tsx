@@ -1036,7 +1036,7 @@ it('second useAtom call should not return old data (#1127)', async () => {
     useEffect(() => {
       setTimeout(() => {
         setValue('bar')
-      }, 0)
+      })
     }, [setValue])
 
     return (
@@ -1061,6 +1061,7 @@ it('second useAtom call should not return old data (#1127)', async () => {
     try {
       // expect(func).toThrow does not work for this case
       await findByText('bar, foo')
+      console.log('here')
     } catch {
       tearing = false
     }
