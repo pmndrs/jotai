@@ -1036,7 +1036,7 @@ it('second useAtom call should not return old data (#1127)', async () => {
     useEffect(() => {
       setTimeout(() => {
         setValue('bar')
-      }, 1000)
+      }, 0)
     }, [setValue])
 
     return (
