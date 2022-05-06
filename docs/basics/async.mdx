@@ -12,7 +12,7 @@ Async support is first class in jotai. It fully leverages React Suspense.
 
 To use async atoms, you need to wrap your component tree with `<Suspense>`.
 
-> If you have a `<Provider>`, place **at least one** `<Suspense>` inside said `<Provider>`.
+> If you have a `<Provider>`, place **at least one** `<Suspense>` inside said `<Provider>`; otherwise, it may cause an endless loop while rendering the components.
 
 ```jsx
 const App = () => (
