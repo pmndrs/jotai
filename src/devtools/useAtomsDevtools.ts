@@ -14,7 +14,10 @@ type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
 type AtomsValues = Map<AnyAtom, AnyAtomValue> // immutable
 type AtomsDependents = Map<AnyAtom, Set<AnyAtom>> // immutable
-type AtomsSnapshot = readonly [AtomsValues, AtomsDependents]
+type AtomsSnapshot = Readonly<{
+  values: AtomsValues
+  dependents: AtomsDependents
+}>
 
 const isEqualAtomsValues = (left: AtomsValues, right: AtomsValues) =>
   left.size === right.size &&
@@ -39,11 +42,11 @@ const atomToPrintable = (atom: AnyAtom) =>
 
 const getDevtoolsState = (atomsSnapshot: AtomsSnapshot) => {
   const values: Record<string, AnyAtomValue> = {}
-  atomsSnapshot[0].forEach((v, atom) => {
+  atomsSnapshot.values.forEach((v, atom) => {
     values[atomToPrintable(atom)] = v
   })
   const dependents: Record<string, string[]> = {}
-  atomsSnapshot[1].forEach((d, atom) => {
+  atomsSnapshot.dependents.forEach((d, atom) => {
     dependents[atomToPrintable(atom)] = Array.from(d).map(atomToPrintable)
   })
   return {
@@ -94,10 +97,10 @@ export function useAtomsDevtools(
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
-  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => [
-    new Map(),
-    new Map(),
-  ])
+  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => ({
+    values: new Map(),
+    dependents: new Map(),
+  }))
 
   useEffect(() => {
     if (!extension) {
@@ -124,13 +127,13 @@ export function useAtomsDevtools(
       }
       setAtomsSnapshot((prev) => {
         if (
-          isEqualAtomsValues(prev[0], values) &&
-          isEqualAtomsDependents(prev[1], dependents)
+          isEqualAtomsValues(prev.values, values) &&
+          isEqualAtomsDependents(prev.dependents, dependents)
         ) {
           // bail out
           return prev
         }
-        return [values, dependents]
+        return { values, dependents }
       })
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
@@ -139,7 +142,8 @@ export function useAtomsDevtools(
   }, [extension, store])
 
   const goToSnapshot = useCallback(
-    (values: Iterable<readonly [AnyAtom, AnyAtomValue]>) => {
+    (snapshot: AtomsSnapshot) => {
+      const { values } = snapshot
       if (versionedWrite) {
         versionedWrite((version) => {
           store[RESTORE_ATOMS](values, version)
@@ -200,7 +204,7 @@ export function useAtomsDevtools(
             case 'JUMP_TO_ACTION':
             case 'JUMP_TO_STATE':
               isTimeTraveling.current = true
-              goToSnapshot(getSnapshotAt(message.payload.actionId - 1)[0])
+              goToSnapshot(getSnapshotAt(message.payload.actionId - 1))
               break
 
             case 'PAUSE_RECORDING':
