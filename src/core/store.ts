@@ -427,7 +427,6 @@ export const createStore = (
         promiseOrValue
           .then((value: Awaited<Value>) => {
             setAtomValue(version, atom, value, dependencies, suspensePromise)
-            flushPending(version)
           })
           .catch((e) => {
             if (e instanceof Promise) {
@@ -441,7 +440,6 @@ export const createStore = (
               return e
             }
             setAtomReadError(version, atom, e, dependencies, suspensePromise)
-            flushPending(version)
           })
       )
       return setAtomSuspensePromise(
