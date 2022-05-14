@@ -1,6 +1,6 @@
 import { ReactElement, Suspense, useState } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
-import { Observable, Subject } from 'rxjs'
+import { BehaviorSubject, Observable, Subject } from 'rxjs'
 import { useAtom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
@@ -196,6 +196,27 @@ it('with initial value and synchronous subscription', async () => {
   const { findByText } = render(
     <Provider>
       <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 1')
+})
+
+it('behaviour subject', async () => {
+  const subject$ = new BehaviorSubject(1)
+  const observableAtom = atomWithObservable(() => subject$)
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+
+    return <>count: {state}</>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </Provider>
   )
 

@@ -121,7 +121,8 @@ function getInitialValue<TData>(options: AtomWithObservableOptions<TData>) {
 function firstValueFrom<T>(source: ObservableLike<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     let resolved = false
-    const subscription = source.subscribe({
+    let subscription: Subscription | undefined = undefined
+    subscription = source.subscribe({
       next: (value) => {
         resolve(value)
         resolved = true
