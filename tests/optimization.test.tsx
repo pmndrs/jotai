@@ -1,27 +1,22 @@
-import { useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import ReactDOM from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
-// FIXME this is a hacky workaround temporarily
-const IS_REACT18 = !!(ReactDOM as any).createRoot
-
 it('only relevant render function called (#156)', async () => {
   const count1Atom = atom(0)
   const count2Atom = atom(0)
 
+  let renderCount1 = 0
+  let renderCount2 = 0
+
   const Counter1 = () => {
     const [count, setCount] = useAtom(count1Atom)
-    const renderCount = useRef(0)
-    ++renderCount.current
+    ++renderCount1
     return (
       <>
-        <div>
-          count1: {count} ({renderCount.current})
-        </div>
+        <div>count1: {count}</div>
         <button onClick={() => setCount((c) => c + 1)}>button1</button>
       </>
     )
@@ -29,13 +24,10 @@ it('only relevant render function called (#156)', async () => {
 
   const Counter2 = () => {
     const [count, setCount] = useAtom(count2Atom)
-    const renderCount = useRef(0)
-    ++renderCount.current
+    ++renderCount2
     return (
       <>
-        <div>
-          count2: {count} ({renderCount.current})
-        </div>
+        <div>count2: {count}</div>
         <button onClick={() => setCount((c) => c + 1)}>button2</button>
       </>
     )
@@ -49,30 +41,27 @@ it('only relevant render function called (#156)', async () => {
   )
 
   await waitFor(() => {
-    getByText('count1: 0 (1)')
-    getByText('count2: 0 (1)')
+    getByText('count1: 0')
+    getByText('count2: 0')
   })
+  const renderCount1AfterMount = renderCount1
+  const renderCount2AfterMount = renderCount2
 
   fireEvent.click(getByText('button1'))
   await waitFor(() => {
-    if (IS_REACT18) {
-      getByText('count1: 1 (3)')
-    } else {
-      getByText('count1: 1 (2)')
-    }
-    getByText('count2: 0 (1)')
+    getByText('count1: 1')
+    getByText('count2: 0')
   })
+  expect(renderCount1).toBe(renderCount1AfterMount + 1)
+  expect(renderCount2).toBe(renderCount2AfterMount + 0)
 
   fireEvent.click(getByText('button2'))
   await waitFor(() => {
-    if (IS_REACT18) {
-      getByText('count1: 1 (3)')
-      getByText('count2: 1 (3)')
-    } else {
-      getByText('count1: 1 (2)')
-      getByText('count2: 1 (2)')
-    }
+    getByText('count1: 1')
+    getByText('count2: 1')
   })
+  expect(renderCount1).toBe(renderCount1AfterMount + 1)
+  expect(renderCount2).toBe(renderCount2AfterMount + 1)
 })
 
 it('only render once using atoms with write-only atom', async () => {
@@ -83,14 +72,15 @@ it('only render once using atoms with write-only atom', async () => {
     set(count2Atom, (c) => c + 1)
   })
 
+  let renderCount = 0
+
   const Counter = () => {
     const [count1] = useAtom(count1Atom)
     const [count2] = useAtom(count2Atom)
-    const renderCount = useRef(0)
-    ++renderCount.current
+    ++renderCount
     return (
       <div>
-        count1: {count1}, count2: {count2} ({renderCount.current})
+        count1: {count1}, count2: {count2}
       </div>
     )
   }
@@ -107,21 +97,16 @@ it('only render once using atoms with write-only atom', async () => {
     </Provider>
   )
 
-  await findByText('count1: 0, count2: 0 (1)')
+  await findByText('count1: 0, count2: 0')
+  const renderCountAfterMount = renderCount
 
   fireEvent.click(getByText('button'))
-  if (IS_REACT18) {
-    await findByText('count1: 1, count2: 1 (3)')
-  } else {
-    await findByText('count1: 1, count2: 1 (2)')
-  }
+  await findByText('count1: 1, count2: 1')
+  expect(renderCount).toBe(renderCountAfterMount + 1)
 
   fireEvent.click(getByText('button'))
-  if (IS_REACT18) {
-    await findByText('count1: 2, count2: 2 (4)')
-  } else {
-    await findByText('count1: 2, count2: 2 (3)')
-  }
+  await findByText('count1: 2, count2: 2')
+  expect(renderCount).toBe(renderCountAfterMount + 2)
 })
 
 it('useless re-renders with static atoms (#355)', async () => {
@@ -129,19 +114,16 @@ it('useless re-renders with static atoms (#355)', async () => {
   const countAtom = atom(0)
   const unrelatedAtom = atom(0)
 
+  let renderCount = 0
+
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     useAtom(unrelatedAtom)
-    const renderCount = useRef(0)
-    ++renderCount.current
+    ++renderCount
 
     return (
       <>
-        <div>
-          <p>
-            count: {count} ({renderCount.current})
-          </p>
-        </div>
+        <div>count: {count}</div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
     )
@@ -153,21 +135,16 @@ it('useless re-renders with static atoms (#355)', async () => {
     </Provider>
   )
 
-  await findByText('count: 0 (1)')
+  await findByText('count: 0')
+  const renderCountAfterMount = renderCount
 
   fireEvent.click(getByText('button'))
-  if (IS_REACT18) {
-    await findByText('count: 1 (3)')
-  } else {
-    await findByText('count: 1 (2)')
-  }
+  await findByText('count: 1')
+  expect(renderCount).toBe(renderCountAfterMount + 1)
 
   fireEvent.click(getByText('button'))
-  if (IS_REACT18) {
-    await findByText('count: 2 (4)')
-  } else {
-    await findByText('count: 2 (3)')
-  }
+  await findByText('count: 2')
+  expect(renderCount).toBe(renderCountAfterMount + 2)
 })
 
 it('does not re-render if value is the same (#1158)', async () => {
