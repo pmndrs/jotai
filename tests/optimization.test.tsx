@@ -194,21 +194,21 @@ it('does not re-render if value is the same (#1158)', async () => {
   )
 
   await findByText('count: 0')
-  expect(renderCount).toBe(1)
+  const renderCountAfterMount = renderCount
 
   fireEvent.click(getByText('noop'))
   await findByText('count: 0')
-  expect(renderCount).toBe(1)
+  expect(renderCount).toBe(renderCountAfterMount + 0)
 
   fireEvent.click(getByText('inc'))
   await findByText('count: 1')
-  expect(renderCount).toBe(2)
+  expect(renderCount).toBe(renderCountAfterMount + 1)
 
   fireEvent.click(getByText('noop'))
   await findByText('count: 1')
-  expect(renderCount).toBe(2)
+  expect(renderCount).toBe(renderCountAfterMount + 1)
 
   fireEvent.click(getByText('inc'))
   await findByText('count: 2')
-  expect(renderCount).toBe(3)
+  expect(renderCount).toBe(renderCountAfterMount + 2)
 })
