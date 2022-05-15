@@ -169,3 +169,46 @@ it('useless re-renders with static atoms (#355)', async () => {
     await findByText('count: 2 (3)')
   }
 })
+
+it('does not re-render if value is the same (#1158)', async () => {
+  const countAtom = atom(0)
+
+  let renderCount = 0
+
+  const Counter = () => {
+    const [count, setCount] = useAtom(countAtom)
+    ++renderCount
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c)}>noop</button>
+        <button onClick={() => setCount((c) => c + 1)}>inc</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+  expect(renderCount).toBe(1)
+
+  fireEvent.click(getByText('noop'))
+  await findByText('count: 0')
+  expect(renderCount).toBe(1)
+
+  fireEvent.click(getByText('inc'))
+  await findByText('count: 1')
+  expect(renderCount).toBe(2)
+
+  fireEvent.click(getByText('noop'))
+  await findByText('count: 1')
+  expect(renderCount).toBe(2)
+
+  fireEvent.click(getByText('inc'))
+  await findByText('count: 2')
+  expect(renderCount).toBe(3)
+})
