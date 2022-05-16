@@ -1,0 +1,12 @@
+---
+title: atomWithSuspense
+---
+
+## Usage
+
+```ts
+atomWithSuspense<Value>(): WritableAtom<Value | Promise<Value>, SetStateAction<Value>
+```
+
+This creates a new atom that suspend by default.
+When the value is set for the first time it will act like a normal atom.

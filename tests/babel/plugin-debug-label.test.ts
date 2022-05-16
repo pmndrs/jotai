@@ -86,6 +86,8 @@ it('Should handle all atom types', () => {
 
       const storageAtom = atomWithStorage('count', 1);
 
+      const suspenseAtom = atomWithSuspense();
+
       const freezedAtom = freezeAtom(atom({ count: 0 }));
 
       const loadedAtom = loadable(countAtom);
@@ -111,6 +113,8 @@ it('Should handle all atom types', () => {
     resetAtom.debugLabel = \\"resetAtom\\";
     const storageAtom = atomWithStorage('count', 1);
     storageAtom.debugLabel = \\"storageAtom\\";
+    const suspenseAtom = atomWithSuspense();
+    suspenseAtom.debugLabel = \\"suspenseAtom\\";
     const freezedAtom = freezeAtom(atom({
       count: 0
     }));

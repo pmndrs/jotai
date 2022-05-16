@@ -25,6 +25,7 @@ const atomFunctionNames = [
   'atomWithReducer',
   'atomWithReset',
   'atomWithStorage',
+  'atomWithSuspense',
   'freezeAtom',
   'loadable',
   'selectAtom',

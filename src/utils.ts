@@ -17,6 +17,7 @@ export {
   atomWithHash,
   createJSONStorage,
 } from './utils/atomWithStorage'
+export { atomWithSuspense } from './utils/atomWithSuspense'
 export { atomWithObservable } from './utils/atomWithObservable'
 export { useHydrateAtoms } from './utils/useHydrateAtoms'
 export { loadable } from './utils/loadable'
