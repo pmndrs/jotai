@@ -1,6 +1,6 @@
 import { ReactElement, Suspense, useState } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
-import { BehaviorSubject, Observable, Subject } from 'rxjs'
+import { BehaviorSubject, Observable, ReplaySubject, Subject } from 'rxjs'
 import { useAtom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
@@ -37,7 +37,7 @@ it('writable count state', async () => {
     const observable = new Observable<number>((subscriber) => {
       subscriber.next(1)
     })
-    const subject = new Subject<number>()
+    const subject = new ReplaySubject<number>()
     // is this usual to delay the subscription?
     setTimeout(() => {
       observable.subscribe(subject)
