@@ -75,11 +75,11 @@ const atomWithAsyncStorage = (key, initialValue) => {
 
 ### Common AsyncStorage Usage
 
-The atom has to be loaded before being used in async actions
+You can directly use the [atomWithStorage function in the utils bundle](../api/utils.mdx#atom-with-storage), specifying your favorite AsyncStorage library. The atom has to be loaded before being used in async actions.
 
 ```typescript
 const storage = createJSONStorage(() => AsyncStorage)
-const userId = atomWithAsyncStorage('user-id-key', null, storage)
+const userId = atomWithStorage('user-id-key', null, storage)
 const userInfo = atom({})
 const fetchUserInfo = atom(null, async (_get, set, payload: any) => {
     const id = _get(userId) // This throws an error if "userId" is not loaded yet
@@ -113,7 +113,7 @@ const Root = () => {
 ```typescript
 // We add the "delayInit: true" option to tell jotai to not use Suspense
 const storage = { ...createJSONStorage(() => AsyncStorage), delayInit: true }
-const userId = atomWithAsyncStorage('user-id-key', null, storage)
+const userId = atomWithStorage('user-id-key', null, storage)
 const userInfo = atom({})
 const fetchUserInfo = atom(null, async (_get, set, payload: any) => {
     let id = _get(userId)
