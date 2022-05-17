@@ -291,3 +291,61 @@ function EvenCounter() {
   return <>Count was set to an even number {evenCount} times.</>
 }
 ```
+
+## atomWithPending
+
+> `atomWithPending` creates an atom that suspend by default.
+> When the value is set for the first time it will act like a normal atom.
+
+This can be useful when you need to delegate asynchronous data, for example,
+if some business logic cant be promisified.
+
+```ts
+import { atom } from 'jotai'
+
+export function atomWithPending<Value>() {
+  return atom(new Promise(() => {}) as unknown as Value)
+}
+```
+
+Here's how you'd use it to make an pending atom:
+
+```ts
+import { atomWithPending } from 'XXX'
+
+const workAtom = atomWithPending<string>()
+```
+
+In components:
+
+```ts
+import { useSetAtom, useAtomValue } from 'jotai'
+
+const WorkController = () => {
+  const done = useSetAtom(workAtom)
+
+  return (
+    <>
+      <button onClick={() => done('success')}>success</button>
+      <button onClick={() => done('fail')}>fail</button>
+    </>
+  )
+}
+
+const WorkStatus = () => {
+  const status = useAtomValue(workAtom)
+
+  return <>Work is done with {status}.</>
+}
+
+const Work = () => {
+  return (
+    <>
+      <WorkController />
+      <Suspense fallback="Work in progress...">
+        <WorkStatus />
+      </Suspense>
+    </>
+  )
+}
+```
