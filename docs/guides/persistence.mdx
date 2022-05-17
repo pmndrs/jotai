@@ -4,7 +4,7 @@ description: How to persist atoms
 nav: 3.03
 ---
 
-Jotai has an [atomWithStorage function in the utils bundle](../api/utils.mdx#atom-with-storage) for persistance that supports persisting state in `sessionStorage`, `localStorage`, `AsyncStorage`, or the URL hash.
+Jotai has an [atomWithStorage function in the utils bundle](../api/utils.mdx#atom-with-storage) for persistence that supports persisting state in `sessionStorage`, `localStorage`, `AsyncStorage`, or the URL hash.
 
 There are also several alternate implementations here:
 
@@ -72,6 +72,61 @@ const atomWithAsyncStorage = (key, initialValue) => {
   return derivedAtom
 }
 ```
+
+### Common AsyncStorage Usage
+
+The atom has to be loaded before being used in async actions
+
+```typescript
+const storage = createJSONStorage(() => AsyncStorage)
+const userId = atomWithAsyncStorage('user-id-key', null, storage)
+const userInfo = atom({})
+const fetchUserInfo = atom(null, async (_get, set, payload: any) => {
+    const id = _get(userId) // This throws an error if "userId" is not loaded yet
+    const info = await fetch('https://jotai.org/users/' + id)
+    set(userInfo, info)
+})
+```
+So you may want to create a component at root level of your app:
+```typescript
+const Preloader = () => {
+    useAtomValue(userId)
+    return (null)
+}
+```
+
+#### With Suspense
+
+```typescript
+const Root = () => {
+    return (
+        <React.Suspense fallback={<Text>Hydrating...<Text>}>
+            <Preloader /> {/* Wait for atoms to preload */}
+            <App /> {/* Rest of your app */}
+        </React.Suspense>
+    )
+}
+```
+
+#### Without Suspense
+
+```typescript
+// We add the "delayInit: true" option to tell jotai to not use Suspense
+const storage = { ...createJSONStorage(() => AsyncStorage), delayInit: true }
+const userId = atomWithAsyncStorage('user-id-key', null, storage)
+const userInfo = atom({})
+const fetchUserInfo = atom(null, async (_get, set, payload: any) => {
+    let id = _get(userId)
+    if (id === null) {
+        // We make sure to preload if no value has yet been loaded
+        id = await AsyncStorage.getItem('user-id-key')
+    }
+    const info = await fetch('https://jotai.org/users/' + id)
+    set(userInfo, info)
+})
+```
+
+But always remember jotai is un-opinionated and your workflow may not need preloading at all.
 
 ---
 
