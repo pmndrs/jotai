@@ -33,6 +33,7 @@ type InitialValueFunction<T> = () => T | undefined
 
 type AtomWithObservableOptions<TData> = {
   initialValue?: TData | InitialValueFunction<TData>
+  timeout?: number | false
 }
 
 export function atomWithObservable<TData>(
@@ -56,24 +57,80 @@ export function atomWithObservable<TData>(
       observable = itself
     }
 
-    const dataAtom = atom(
-      options?.initialValue
-        ? getInitialValue(options)
-        : firstValueFrom(observable)
-    )
-    let setData: (data: TData | Promise<TData>) => void = () => {
-      throw new Error('setting data without mount')
+    // To differentiate beetwen no value was emitted and `undefined` was emitted,
+    // this symbol is used
+    const NotEmitted = Symbol()
+    type NotEmitted = typeof NotEmitted
+
+    let resolveEmittedInitialValue:
+      | ((data: TData | Promise<TData>) => void)
+      | null = null
+    let initialEmittedValue: Promise<TData> | TData | undefined =
+      options?.initialValue === undefined
+        ? new Promise((resolve) => {
+            resolveEmittedInitialValue = resolve
+          })
+        : undefined
+    let initialValueWasEmitted = false
+    let initialEmittedValueTimer: NodeJS.Timeout | null = null
+
+    let emittedValueBeforeMount: TData | Promise<TData> | NotEmitted =
+      NotEmitted
+    let isSync = true
+    let setData: (data: TData | Promise<TData>) => void = (data) => {
+      // First we set the initial value (if not other initialValue was provided)
+      // All the following data is saved in a variable so it doesn't get lost before the mount
+      if (options?.initialValue === undefined && !initialValueWasEmitted) {
+        if (isSync) {
+          initialEmittedValue = data
+        }
+        resolveEmittedInitialValue?.(data)
+        initialValueWasEmitted = true
+        resolveEmittedInitialValue = null
+        if (initialEmittedValueTimer) clearTimeout(initialEmittedValueTimer)
+      } else {
+        emittedValueBeforeMount = data
+      }
     }
+
     const dataListener = (data: TData) => {
       setData(data)
     }
+
     const errorListener = (error: unknown) => {
       setData(Promise.reject<TData>(error))
     }
-    let subscription: Subscription | null = null
 
+    let subscription: Subscription | null = null
+    let initialValue:
+      | TData
+      | Promise<TData>
+      | InitialValueFunction<TData>
+      | undefined
+    let isMounted = false
+    if (options?.initialValue !== undefined) {
+      initialValue = getInitialValue(options)
+    } else {
+      subscription = observable.subscribe(dataListener, errorListener)
+      isSync = false
+      // Unsubscribe after an timeout, in case the `onMount` method was never called
+      // and the subscription is still pending
+      if (options?.timeout !== false) {
+        initialEmittedValueTimer = setTimeout(() => {
+          initialEmittedValueTimer = null
+          if (!isMounted) subscription?.unsubscribe()
+        }, options?.timeout ?? 10_000)
+      }
+      initialValue = initialEmittedValue
+    }
+
+    const dataAtom = atom(initialValue)
     dataAtom.onMount = (update) => {
+      isMounted = true
       setData = update
+      if (emittedValueBeforeMount !== NotEmitted) {
+        update(emittedValueBeforeMount)
+      }
       if (!subscription) {
         subscription = observable.subscribe(dataListener, errorListener)
       }
@@ -82,6 +139,7 @@ export function atomWithObservable<TData>(
         subscription = null
       }
     }
+
     return { dataAtom, observable }
   })
   const observableAtom = atom(
@@ -105,41 +163,4 @@ export function atomWithObservable<TData>(
 function getInitialValue<TData>(options: AtomWithObservableOptions<TData>) {
   const initialValue = options.initialValue
   return initialValue instanceof Function ? initialValue() : initialValue
-}
-
-// FIXME There are two fatal issues in the current implememtation.
-// See also: https://github.com/pmndrs/jotai/pull/1058
-// - There's a risk of memory leaks.
-//   Unless the source emit a new value,
-//   the subscription will never be destroyed.
-//   atom `read` function can be called multiple times without mounting.
-//   This issue has existed even before #1058.
-// - The second value before mounting the atom is dropped.
-//   There's no guarantee that `onMount` is invoked in a short period.
-//   So, by the time we invoke `subscribe`, the value can be changed.
-//   Before #1058, an error was thrown, but currently it's silently dropped.
-function firstValueFrom<T>(source: ObservableLike<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    let resolved = false
-    let isSync = true
-    const subscription = source.subscribe({
-      next: (value) => {
-        resolve(value)
-        resolved = true
-        if (!isSync) {
-          subscription.unsubscribe()
-        }
-      },
-      error: reject,
-      complete: () => {
-        reject()
-      },
-    })
-    isSync = false
-
-    if (resolved) {
-      // If subscription was resolved synchronously
-      subscription.unsubscribe()
-    }
-  })
 }

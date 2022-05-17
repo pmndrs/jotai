@@ -40,6 +40,18 @@ const counterAtom2 = atomWithObservable(() => counterSubject, {
 })
 ```
 
+## Timeout
+
+To prevent memory leaks, the subscription to the observable is cancelled if no initial value was omitted after ten seconds. 
+You can change this value via the `timeout` option. 
+You can disable the `timeout` by setting the value to `false`.
+
+```ts
+const counterAtomWithOneSecondTimeout = atomWithObservable(() => counterSubject, {timeout: 1000});
+
+const counterAtomWithoutTimeout = atomWithObservable(() => counterSubject, {timeout: false});
+```
+
 ### Codesandbox
 
 <CodeSandbox id="88pnt" />
