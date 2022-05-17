@@ -87,15 +87,17 @@ const fetchUserInfo = atom(null, async (_get, set, payload: any) => {
     set(userInfo, info)
 })
 ```
-So you may want to create a component at root level of your app:
+
+#### With Suspense
+
+You may want to preload atoms at root level of your app directly:
+
 ```typescript
 const Preloader = () => {
-    useAtomValue(userId)
+    useAtomValue(userId) // Trigger the "onMount" function that will load the data from the store
     return (null)
 }
 ```
-
-#### With Suspense
 
 ```typescript
 const Root = () => {
