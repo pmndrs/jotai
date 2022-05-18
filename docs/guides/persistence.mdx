@@ -80,14 +80,14 @@ This can cause an issue, for example, if you want to retrieve the value of your 
 
 Let's use the [atomWithStorage function in the utils bundle](../api/utils.mdx#atom-with-storage) for the examples, so that we have more options available.
 
-```typescript
+```js
 const storage = createJSONStorage(() => AsyncStorage)
 const userId = atomWithStorage('user-id-key', null, storage)
 const userInfo = atom({})
-const fetchUserInfo = atom(null, async (_get, set, payload: any) => {
-    const id = _get(userId) // This throws an error if "userId" is not loaded yet
-    const info = await fetch('https://jotai.org/users/' + id)
-    set(userInfo, info)
+const fetchUserInfo = atom(null, async (get, set, payload: any) => {
+  const id = get(userId) // This throws an error if "userId" is not loaded yet
+  const info = await fetch('https://jotai.org/users/' + id)
+  set(userInfo, info)
 })
 ```
 
@@ -97,39 +97,39 @@ We want to make sure the action will never fail. As always with asynchronous flo
 
 You may want to preload atoms at root level of your app directly:
 
-```typescript
+```js
 const Preloader = () => {
-    useAtomValue(userId) // Trigger the "onMount" function that will load the data from the store
-    return (null)
+  useAtomValue(userId) // Trigger the "onMount" function that will load the data from the store
+  return (null)
 }
 ```
 
-```typescript
+```js
 const Root = () => {
-    return (
-        <React.Suspense fallback={<Text>Hydrating...<Text>}>
-            <Preloader /> {/* Wait for atoms to preload */}
-            <App /> {/* Rest of your app */}
-        </React.Suspense>
-    )
+  return (
+    <React.Suspense fallback={<Text>Hydrating...<Text>}>
+      <Preloader /> {/* Wait for atoms to preload */}
+      <App /> {/* Rest of your app */}
+    </React.Suspense>
+  )
 }
 ```
 
 #### Without Suspense
 
-```typescript
+```js
 // We add the "delayInit: true" option to tell jotai not to use Suspense
 const storage = { ...createJSONStorage(() => AsyncStorage), delayInit: true }
 const userId = atomWithStorage('user-id-key', null, storage)
 const userInfo = atom({})
-const fetchUserInfo = atom(null, async (_get, set, payload: any) => {
-    let id = _get(userId)
-    if (id === null) {
-        // We make sure to preload if no value has yet been loaded
-        id = await AsyncStorage.getItem('user-id-key')
-    }
-    const info = await fetch('https://jotai.org/users/' + id)
-    set(userInfo, info)
+const fetchUserInfo = atom(null, async (get, set, payload: any) => {
+  let id = get(userId)
+  if (id === null) {
+    // We make sure to preload if no value has yet been loaded
+    id = await AsyncStorage.getItem('user-id-key')
+  }
+  const info = await fetch('https://jotai.org/users/' + id)
+  set(userInfo, info)
 })
 ```
 
