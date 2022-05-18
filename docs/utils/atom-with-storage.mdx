@@ -67,3 +67,17 @@ const TextBox = () => {
   )
 }
 ```
+
+## React-Native implementation
+
+You can use any library that implements `getItem`, `setItem` & `removeItem`.
+Let's say you would use the standard AsyncStorage provided by the community.
+
+```jsx
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+import AsyncStorage from "@react-native-async-storage/async-storage"
+
+const storage = createJSONStorage(() => AsyncStorage)
+const content = {} // anything JSON serializable
+const storedAtom = atomWithStorage('stored-key', content, storage)
+```
