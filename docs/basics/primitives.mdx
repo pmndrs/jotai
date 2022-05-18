@@ -98,11 +98,11 @@ The behavior depends on how the write function is implemented.
 
 **Note:** as mentioned in the *atom* section, you have to take care of handling the reference of your atom, otherwise it may enter an infinite loop
 ```typescript
-const safeAtom = atom(0)
+const stableAtom = atom(0)
 const Component = () => {
-  const [value] = useAtom(atom(0)) // Will cause an infinite loop
-  const [safeValue] = useAtom(safeAtmo) // is fine
-  const [alsoSafeValue] = useAtom(React.useMemo(0, [])) // is also fine
+  const [atomValue] = useAtom(atom(0)) // Will cause an infinite loop
+  const [atomValue] = useAtom(stableAtom) // is fine
+  const [derivedAtomValue] = useMemo(() => atom((get) => get(stableAtom) * 2), []) // is also fine
 }
 ```
 
