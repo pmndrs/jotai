@@ -53,6 +53,33 @@ const nameAtom = selectAtom(personAtom, (person) => person.name)
 const birthAtom = selectAtom(personAtom, (person) => person.birth, deepEquals)
 ```
 
+## Hold stable references
+
+As always, to prevent an infinite loop when using `useAtom` in render cycle, you must provide `useAtom` a stable reference of your atoms.
+For `selectAtom`, we need **both** the base atom and the selector to be stable.
+
+```typescript
+const [value] = useAtom(selectAtom(atom(0), (val) => val)) // So this will cause an infinite loop
+```
+
+You have multiple options in order to satisfy these constraints:
+
+```typescript
+const baseAtom = atom(0) // Stable
+const selector = (v) => v // Stable
+const Component = () => {
+  // Solution 1: Memoize the whole resulting atom with "useMemo"
+  const [value] = useAtom(useMemo(() => selectAtom(baseAtom, (v) => v), []))
+
+  // Solution 2: Memoize the inline callback with "useCallback"
+  const [value] = useAtom(selectAtom(baseAtom, useCallback((v) => v, [])))
+
+  // Solution 3: All constraints are already satisfied
+  const [value] = useAtom(selectAtom(baseAtom, selector))
+}
+
+```
+
 ## CodeSandbox
 
 <CodeSandbox id="8czek" />

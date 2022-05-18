@@ -53,6 +53,10 @@ jobs:
         env:
           BUILD: ${{ matrix.build }}
           NODE_ENV: ${{ matrix.env }}
+      - name: Patch for CJS/UMD
+        if: ${{ matrix.build == 'cjs' || matrix.build == 'umd' }}
+        run: |
+          sed -i~ "s/\"target\": \"es2015\"/\"target\": \"es5\"/" .swcrc
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
         run: |
           cat package.json
