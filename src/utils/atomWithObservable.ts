@@ -121,11 +121,12 @@ function getInitialValue<TData>(options: AtomWithObservableOptions<TData>) {
 function firstValueFrom<T>(source: ObservableLike<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     let resolved = false
+    let isSync = true
     const subscription = source.subscribe({
       next: (value) => {
         resolve(value)
         resolved = true
-        if (subscription) {
+        if (!isSync) {
           subscription.unsubscribe()
         }
       },
@@ -134,6 +135,7 @@ function firstValueFrom<T>(source: ObservableLike<T>): Promise<T> {
         reject()
       },
     })
+    isSync = false
 
     if (resolved) {
       // If subscription was resolved synchronously
