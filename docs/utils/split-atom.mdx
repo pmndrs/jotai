@@ -22,73 +22,73 @@ See the below example for usage.
 <CodeSandbox id="s4hvgo" />
 
 ```tsx
-import { Provider, atom, useAtom, PrimitiveAtom } from "jotai";
-import { splitAtom } from "jotai/utils";
-import "./styles.css";
+import { Provider, atom, useAtom, PrimitiveAtom } from 'jotai'
+import { splitAtom } from 'jotai/utils'
+import './styles.css'
 
 const initialState = [
   {
-    task: "help the town",
-    done: false
+    task: 'help the town',
+    done: false,
   },
   {
-    task: "feed the dragon",
-    done: false
-  }
-];
+    task: 'feed the dragon',
+    done: false,
+  },
+]
 
-const todosAtom = atom(initialState);
-const todoAtomsAtom = splitAtom(todosAtom);
+const todosAtom = atom(initialState)
+const todoAtomsAtom = splitAtom(todosAtom)
 
-type TodoType = typeof initialState[number];
+type TodoType = typeof initialState[number]
 
 const TodoItem = ({
   todoAtom,
-  remove
+  remove,
 }: {
-  todoAtom: PrimitiveAtom<TodoType>;
-  remove: () => void;
+  todoAtom: PrimitiveAtom<TodoType>
+  remove: () => void
 }) => {
-  const [todo, setTodo] = useAtom(todoAtom);
+  const [todo, setTodo] = useAtom(todoAtom)
   return (
     <div>
       <input
         value={todo.task}
         onChange={(e) => {
-          setTodo((oldValue) => ({ ...oldValue, task: e.target.value }));
+          setTodo((oldValue) => ({ ...oldValue, task: e.target.value }))
         }}
       />
       <input
         type="checkbox"
         checked={todo.done}
         onChange={() => {
-          setTodo((oldValue) => ({ ...oldValue, done: !oldValue.done }));
+          setTodo((oldValue) => ({ ...oldValue, done: !oldValue.done }))
         }}
       />
       <button onClick={remove}>remove</button>
     </div>
-  );
-};
+  )
+}
 
 const TodoList = () => {
-  const [todoAtoms, dispatch] = useAtom(todoAtomsAtom);
+  const [todoAtoms, dispatch] = useAtom(todoAtomsAtom)
   return (
     <ul>
       {todoAtoms.map((todoAtom) => (
         <TodoItem
           todoAtom={todoAtom}
-          remove={() => dispatch({ type: "remove", atom: todoAtom })}
+          remove={() => dispatch({ type: 'remove', atom: todoAtom })}
         />
       ))}
     </ul>
-  );
-};
+  )
+}
 
 const App = () => (
   <Provider>
     <TodoList />
   </Provider>
-);
+)
 
-export default App;
+export default App
 ```

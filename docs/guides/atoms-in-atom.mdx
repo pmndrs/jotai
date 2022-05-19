@@ -19,7 +19,9 @@ const Component = ({ atom1, atom2 }) => {
     <div>
       Selected value: {value}
       <button onClick={() => setSelectedAtom(atom1)}>Select an atom</button>
-      <button onClick={() => setSelectedAtom(atom2)}>Select another atom</button>
+      <button onClick={() => setSelectedAtom(atom2)}>
+        Select another atom
+      </button>
     </div>
   )
 }
@@ -58,7 +60,9 @@ const Component = () => {
   return (
     <div>
       Name: {name}
-      <button onClick={() => setNameAtom(firstNameAtom)}>Show First Name</button>
+      <button onClick={() => setNameAtom(firstNameAtom)}>
+        Show First Name
+      </button>
       <button onClick={() => setNameAtom(lastNameAtom)}>Show Last Name</button>
     </div>
   )
@@ -68,13 +72,13 @@ const Component = () => {
 It's possible to create a derived atom.
 
 ```jsx
-const derivedNameAtom = atom(get => {
+const derivedNameAtom = atom((get) => {
   const nameAtom = get(showingNameAtom)
   return get(nameAtom)
 })
 
 // Or shoter version
-const derivedNameAtom = atom(get => get(get(showingNameAtom)))
+const derivedNameAtom = atom((get) => get(get(showingNameAtom)))
 ```
 
 To avoid confusing what is in atoms, naming atoms explicitly would be important.
