@@ -24,7 +24,8 @@ type OperationResultWithData<Data, Variables> = OperationResult<
 
 const isOperationResultWithData = <Data, Variables>(
   result: OperationResult<Data, Variables>
-): result is OperationResultWithData<Data, Variables> => 'data' in result
+): result is OperationResultWithData<Data, Variables> =>
+  'data' in result && !result.error
 
 type QueryArgs<Data, Variables extends object> = {
   query: TypedDocumentNode<Data, Variables> | string

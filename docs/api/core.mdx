@@ -4,6 +4,11 @@ description: This doc describes core `jotai` bundle.
 nav: 2.01
 ---
 
+- [Basic APIs](/docs/api/core.mdx#basic-apis)
+- [Additional APIs](/docs/api/core.mdx#additional-apis)
+
+## Basic APIs
+
 ## atom
 
 Use `atom` to create an atom config. An atom config is an immutable object. The atom config doesn't hold an atom value. The atom value is stored in a Provider state.
@@ -80,6 +85,65 @@ derivedAtom.onMount = (setAtom) => {
   setAtom({ type: 'init' })
 }
 ```
+
+## useAtom
+
+```ts
+// primitive or writable derived atom
+function useAtom<Value, Update>(
+  atom: WritableAtom<Value, Update>,
+  scope?: Scope
+): [Value, SetAtom<Update>]
+
+// read-only atom
+function useAtom<Value>(atom: Atom<Value>, scope?: Scope): [Value, never]
+```
+
+The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it are unmounted, and the atom config no longer exists, the value is removed from the Provider.
+
+```js
+const [value, updateValue] = useAtom(anAtom)
+```
+
+The `updateValue` takes one argument, which will be passed to the third argument of writeFunction of the atom. The behavior depends on how the writeFunction is implemented.
+
+---
+
+## Notes
+
+### How atom dependency works
+
+To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh the dependencies and dependents. For example, If A depends on B, it means that B is a dependency of A, and A is a dependent of B.
+
+```js
+const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
+```
+
+The read function is the first parameter of the atom.
+The dependency will initially be empty. On first use, we run the read function and know that `uppercaseAtom` depends on `textAtom`. `textAtom` has a dependency on `uppercaseAtom`. So, add `uppercaseAtom` to the dependents of `textAtom`.
+When we re-run the read function (because its dependency `textAtom` is updated),
+the dependency is created again, which is the same in this case. We then remove stale dependents and replace with the latest one.
+
+### Atoms can be created on demand
+
+While the basic examples here show defining atoms globally outside components,
+there's no restrictions about where or when we can create an atom.
+As long as we remember that atoms are identified by their object referential identity,
+we can create them anytime.
+
+If you create atoms in render functions, you would typically want to use
+a hook like `useRef` or `useMemo` for memoization. If not, the atom would be re-created each time the component renders.
+
+You can create an atom and store it with `useState` or even in another atom.
+See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
+
+You can cache atoms somewhere globally.
+See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or
+[that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
+
+Check [`atomFamily`](../api/utils.mdx#atom-family) in utils for parameterized atoms.
+
+## Additional APIs
 
 ## Provider
 
@@ -160,62 +224,71 @@ const LibraryRoot = ({ children }) => (
 )
 ```
 
-## useAtom
+## useSetAtom
 
-```ts
-// primitive or writable derived atom
-function useAtom<Value, Update>(
-  atom: WritableAtom<Value, Update>,
-  scope?: Scope
-): [Value, SetAtom<Update>]
+```jsx
+const switchAtom = atom(false)
 
-// read-only atom
-function useAtom<Value>(atom: Atom<Value>, scope?: Scope): [Value, never]
+const SetTrueButton = () => {
+  const setCount = useSetAtom(switchAtom)
+  const setTrue = () => setCount(true)
+
+  return (
+    <div>
+      <button onClick={setTrue}>Set True</button>
+    </div>
+  )
+}
+
+const SetFalseButton = () => {
+  const setCount = useSetAtom(switchAtom)
+  const setFalse = () => setCount(false)
+
+  return (
+    <div>
+      <button onClick={setFalse}>Set False</button>
+    </div>
+  )
+}
+
+export default function App() {
+  const state = useAtomValue(switchAtom)
+
+  return (
+    <div>
+      State: <b>{state.toString()}</b>
+      <SetTrueButton />
+      <SetFalseButton />
+    </div>
+  )
+}
 ```
 
-The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it are unmounted, and the atom config no longer exists, the value is removed from the Provider.
+In case you create a write only atom where the value never changes you can use the `useSetAtom` hook.
+`useSetAtom` is premature optimization in this scenario.
 
-```js
-const [value, updateValue] = useAtom(anAtom)
+For primitive values if you use `const [, setValue] = useAtom(valueAtom)` it can cause unnecessary re-renders,
+so `useSetAtom` helps to avoid those extra re-renders.
+
+## useAtomValue
+
+```jsx
+const countAtom = atom(0)
+
+const Counter = () => {
+  const setCount = useSetAtom(countAtom)
+  const count = useAtomValue(countAtom)
+
+  return (
+    <>
+      <div>count: {count}</div>
+      <button onClick={() => setCount(count + 1)}>+1</button>
+    </>
+  )
+}
 ```
 
-The `updateValue` takes one argument, which will be passed to the third argument of writeFunction of the atom. The behavior depends on how the writeFunction is implemented.
-
----
-
-## Notes
-
-### How atom dependency works
-
-To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh the dependencies and dependents. For example, If A depends on B, it means that B is a dependency of A, and A is a dependent of B.
-
-```js
-const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
-```
-
-The read function is the first parameter of the atom.
-The dependency will initially be empty. On first use, we run the read function and know that `uppercaseAtom` depends on `textAtom`. `textAtom` has a dependency on `uppercaseAtom`. So, add `uppercaseAtom` to the dependents of `textAtom`.
-When we re-run the read function (because its dependency `textAtom` is updated),
-the dependency is created again, which is the same in this case. We then remove stale dependents and replace with the latest one.
-
-### Atoms can be created on demand
-
-While the basic examples here show defining atoms globally outside components,
-there's no restrictions about where or when we can create an atom.
-As long as we remember that atoms are identified by their object referential identity,
-we can create them anytime.
-
-If you create atoms in render functions, you would typically want to use
-a hook like `useRef` or `useMemo` for memoization. If not, the atom would be re-created each time the component renders.
-
-You can create an atom and store it with `useState` or even in another atom.
-See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
-
-You can cache atoms somewhere globally.
-See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or
-[that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
-
-Check [`atomFamily`](../api/utils.mdx#atom-family) in utils for parameterized atoms.
+Similar to the `useSetAtom` hook, `useAtomValue` allows you to access a read-only atom.
 
 ### Some more notes about atoms
 

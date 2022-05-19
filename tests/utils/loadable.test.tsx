@@ -184,6 +184,37 @@ it('loadable can use resolved promises syncronously', async () => {
   expect(effectCallback).toHaveBeenLastCalledWith({ state: 'hasData', data: 5 })
 })
 
+it('loadable of a derived async atom does not trigger infinite loop (#1114)', async () => {
+  let resolveAsync!: (x: number) => void
+  const baseAtom = atom(0)
+  const asyncAtom = atom((get) => {
+    get(baseAtom)
+    return new Promise<number>((resolve) => (resolveAsync = resolve))
+  })
+
+  const Trigger = () => {
+    const trigger = useSetAtom(baseAtom)
+    return (
+      <>
+        <button onClick={() => trigger((value) => value)}>trigger</button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Trigger />
+      <LoadableComponent asyncAtom={asyncAtom} />
+    </Provider>
+  )
+
+  getByText('Loading...')
+  fireEvent.click(getByText('trigger'))
+  await new Promise((r) => setTimeout(r, 10))
+  resolveAsync(5)
+  await findByText('Data: 5')
+})
+
 interface LoadableComponentProps {
   asyncAtom: Atom<Promise<number> | Promise<string> | string | number>
   effectCallback?: (loadableValue: any) => void
