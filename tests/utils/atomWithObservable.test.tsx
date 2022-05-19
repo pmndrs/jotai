@@ -200,7 +200,6 @@ it('only subscribe once per atom', async () => {
       </Suspense>
     </Provider>
   )
-  await findByText('loading')
   act(() => subject.next(2))
   await findByText('count: 2')
 
