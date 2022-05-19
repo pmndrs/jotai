@@ -3,11 +3,11 @@ title: Debugging
 nav: 3.02
 ---
 
-
 In basic apps, `console.log` can be our best friend for debugging atoms, but when applications get bigger and we have more atoms to use, logging would not be a good way of debugging atoms.
 Jotai provides two ways of debugging atoms, **React Dev Tools** and **Redux Dev tools**. For reading values and simple debugging, React Dev Tools might suit you, but for more complicated tasks like Time-travelling and setting values, Redux Dev Tools would be a better option.
 
 ## Debug labels
+
 It is worth mentioning that we have a concept called **Debug labels** in jotai which may help us with debugging.
 By default each jotai state has the label like `1:<no debugLabel>` with number being internal `key` assigned to each atom automatically. But you can add labels to atoms to help you distinguish them more easily with `debugLabel`.
 
@@ -19,6 +19,7 @@ if (process.env.NODE_ENV !== 'production') {
   // debugLabel is 'count' now
 }
 ```
+
 > Jotai provides a babel plugin that adds a debugLabel automatically to every atom, which makes things easier for us. for more info check out [jotai/babel](https://github.com/pmndrs/jotai/blob/main/docs/api/babel.mdx#plugin-debug-label)
 
 ## Using React Dev Tools
@@ -41,12 +42,14 @@ If you navigate to Jotai `Provider` component in the React Dev Tools, we can see
 ## Using Redux DevTools
 
 You can also use [Redux DevTools](https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd)
-to inspect atoms, with many features like Time-travelling and  value dispatching.
+to inspect atoms, with many features like Time-travelling and value dispatching.
 
 ### [useAtomDevtools](https://jotai.org/docs/api/devtools#use-atom-devtools)
+
 > `useAtomDevtools` is a React hook that manages ReduxDevTools integration for a particular atom.
 
 If you have a specific atom in mind that you may want to debug, `useAtomDevtools` can be a good option.
+
 ```ts
 const  countAtom = atom(0)
 // setting countAtom.debugLabel is recommended if we have more atoms
@@ -55,52 +58,51 @@ function Counter() {
   const [count, setCount] = useAtom(countAtom)
   useAtomDevtools(countAtom)
 ```
+
 Now if we try `setCount`, we can see that the Redux Dev Tools logs those changes immediately.
 
 ![](https://cdn.discordapp.com/attachments/688751221464367186/930857764719329290/unknown.png)
 
 #### Time travel
+
 Sometimes we need to switch to a specific value of our atoms' state, with Time travelling this is possible.
 You can hover on each action you see in the devtools and see the **Jump** option there, with clicking it you'd be able to switch to that specific value.
 
 #### Pause
+
 If we don't record changes on atoms, we can stop watching those using the **Pausing** feature.
 
 ![](https://cdn.discordapp.com/attachments/688751221464367186/930893033925378118/unknown.png)
+
 #### Dispatch
+
 It's possible to set values on atoms with the **Dispatch** feature. You can do that by clicking on the **Show Dispatcher** button.
 ![](https://cdn.discordapp.com/attachments/688751221464367186/930895694846361680/unknown.png)
- This would set the `countAtoms`'s value to `5`.
- > We should note that the value will be parsed by JSON.parse, so pass supported values.
+This would set the `countAtoms`'s value to `5`.
+
+> We should note that the value will be parsed by JSON.parse, so pass supported values.
 
 ### [useAtomsDevtools](https://jotai.org/docs/api/devtools#use-atoms-devtools)
+
 > `useAtomsDevtools` is a catch-all version of `useAtomDevtools` where it shows all atoms in the store instead of showing a specific one.
 
 We'd recommend this hook if you want to keep track of all of your atoms in one place. It means every action on every atom that is placed in the bottom of this hook (in the React tree) will be catched by the Redux Dev Tools.
 
 Every feature of `useAtomDevtools` is supported in this hook, but there's an extra feature, which includes giving more information about atoms dependants like:
+
 ```json
 {
-  values: {
-    'atom1:count': 0,
-    'atom2:doubleCount': 0,
-    'atom3:half': 0,
-    'atom4:sum': 0
+  "values": {
+    "atom1:count": 0,
+    "atom2:doubleCount": 0,
+    "atom3:half": 0,
+    "atom4:sum": 0
   },
-  dependents: {
-    'atom1:count': [
-      'atom1:count',
-      'atom2:doubleCount',
-      'atom4:sum'
-    ],
-    'atom2:doubleCount': [
-      'atom3:half',
-      'atom4:sum'
-    ],
-    'atom3:half': [
-      'atom4:sum'
-    ],
-    'atom4:sum': []
+  "dependents": {
+    "atom1:count": ["atom1:count", "atom2:doubleCount", "atom4:sum"],
+    "atom2:doubleCount": ["atom3:half", "atom4:sum"],
+    "atom3:half": ["atom4:sum"],
+    "atom4:sum": []
   }
 }
 ```
@@ -111,4 +113,3 @@ To find bugs where you accidentally tried to mutate objects stored in atoms you
 could use [`freezeAtom`](../utils/freeze-atom.mdx) or
 [`freezeAtomCreator`](../utils/freeze-atom-creator.mdx#) from `jotai/utils` bundle.
 Which returns atoms value that is deeply freezed with `Object.freeze`.
-

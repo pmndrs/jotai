@@ -71,7 +71,6 @@ const Component = ({ value }) => {
 }
 ```
 
-
 ## useAtom
 
 The `useAtom` hook is to read an atom value in the state.
@@ -96,13 +95,17 @@ The `updateValue` takes just one argument, which will be passed
 to the third argument of the write function of the atom.
 The behavior depends on how the write function is implemented.
 
-**Note:** as mentioned in the *atom* section, you have to take care of handling the reference of your atom, otherwise it may enter an infinite loop
+**Note:** as mentioned in the _atom_ section, you have to take care of handling the reference of your atom, otherwise it may enter an infinite loop
+
 ```typescript
 const stableAtom = atom(0)
 const Component = () => {
   const [atomValue] = useAtom(atom(0)) // Will cause an infinite loop
   const [atomValue] = useAtom(stableAtom) // is fine
-  const [derivedAtomValue] = useMemo(() => atom((get) => get(stableAtom) * 2), []) // is also fine
+  const [derivedAtomValue] = useMemo(
+    () => atom((get) => get(stableAtom) * 2),
+    []
+  ) // is also fine
 }
 ```
 

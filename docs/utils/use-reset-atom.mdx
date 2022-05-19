@@ -3,7 +3,9 @@ title: useResetAtom
 ---
 
 ```ts
-function useResetAtom<Value>(anAtom: WritableAtom<Value, typeof RESET>): () => void | Promise<void>
+function useResetAtom<Value>(
+  anAtom: WritableAtom<Value, typeof RESET>
+): () => void | Promise<void>
 ```
 
 Resets a [Resettable atom](../guides/resettable.mdx) to its initial value.
@@ -19,4 +21,3 @@ const TodoResetButton = () => {
   return <button onClick={resetTodoList}>Reset</button>
 }
 ```
-

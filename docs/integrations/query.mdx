@@ -12,7 +12,6 @@ From the [React Query docs](https://react-query.tanstack.com/overview):
 
 Jotai with `react-query` provides a wonderful interface with all of the `react-query` features, providing you the ability to use those features in combination with your existing Jotai state.
 
-
 ## Install
 
 In addition to `jotai`, you have to install `react-query` to make use of this bundle and its functions.
@@ -71,7 +70,9 @@ const userAtom = atomWithInfiniteQuery((get) => ({
 
 const UserData = () => {
   const [data] = useAtom(userAtom)
-  return data.pages.map((userData, index) => <div key={index}>{JSON.stringify(userData)}</div>)
+  return data.pages.map((userData, index) => (
+    <div key={index}>{JSON.stringify(userData)}</div>
+  ))
 }
 ```
 
@@ -90,7 +91,6 @@ const UserData = () => {
   const handleRefetchAllPages = () => update({ type: 'refetch' })
 }
 ```
-
 
 ### SSR support
 
