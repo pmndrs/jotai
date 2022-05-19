@@ -13,7 +13,9 @@ But you can create those with helper functions from `jotai/utils`.
 import { useAtom } from 'jotai'
 import { atomWithReset, useResetAtom } from 'jotai/utils'
 
-const todoListAtom = atomWithReset([{ description: 'Add a todo', checked: false }])
+const todoListAtom = atomWithReset([
+  { description: 'Add a todo', checked: false },
+])
 
 const TodoList = () => {
   const [todoList, setTodoList] = useAtom(todoListAtom)
@@ -36,8 +38,7 @@ const TodoList = () => {
               checked: false,
             },
           ])
-        }
-      >
+        }>
         Add todo
       </button>
       <button onClick={resetTodoList}>Reset</button>

@@ -37,7 +37,8 @@ const atomWithLocalStorage = (key, initialValue) => {
   const derivedAtom = atom(
     (get) => get(baseAtom),
     (get, set, update) => {
-      const nextValue = typeof update === 'function' ? update(get(baseAtom)) : update
+      const nextValue =
+        typeof update === 'function' ? update(get(baseAtom)) : update
       set(baseAtom, nextValue)
       localStorage.setItem(key, JSON.stringify(nextValue))
     }
@@ -64,7 +65,8 @@ const atomWithAsyncStorage = (key, initialValue) => {
   const derivedAtom = atom(
     (get) => get(baseAtom),
     (get, set, update) => {
-      const nextValue = typeof update === 'function' ? update(get(baseAtom)) : update
+      const nextValue =
+        typeof update === 'function' ? update(get(baseAtom)) : update
       set(baseAtom, nextValue)
       AsyncStorage.setItem(key, JSON.stringify(nextValue))
     }
@@ -100,7 +102,7 @@ You may want to preload atoms at root level of your app directly:
 ```js
 const Preloader = () => {
   useAtomValue(userId) // Trigger the "onMount" function that will load the data from the store
-  return (null)
+  return null
 }
 ```
 
@@ -142,7 +144,8 @@ But always remember jotai is un-opinionated and your workflow may not need prelo
 ```tsx
 const serializeAtom = atom<
   null,
-  { type: 'serialize'; callback: (value: string) => void } | { type: 'deserialize'; value: string }
+  | { type: 'serialize'; callback: (value: string) => void }
+  | { type: 'deserialize'; value: string }
 >(null, (get, set, action) => {
   if (action.type === 'serialize') {
     const obj = {
@@ -193,7 +196,8 @@ const Persist: React.FC = () => {
 ```tsx
 const serializeAtom = atom<
   null,
-  { type: 'serialize'; callback: (value: string) => void } | { type: 'deserialize'; value: string }
+  | { type: 'serialize'; callback: (value: string) => void }
+  | { type: 'deserialize'; value: string }
 >(null, (get, set, action) => {
   if (action.type === 'serialize') {
     const todos = get(todosAtom)

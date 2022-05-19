@@ -4,57 +4,58 @@ description: A simplified version of the core implementation
 nav: 3.10
 ---
 
-This guide is beneficial for those who want to understand the core implementation of jotai. It's not meant to be a complete example of the 
+This guide is beneficial for those who want to understand the core implementation of jotai. It's not meant to be a complete example of the
 core implementation but rather a simplified version. It's inspired by the collection of tweets by Daishi Kato([@dai_shi](https://twitter.com/dai_shi)).
 
 ## First Version
+
 Let's start with an easy example. An atom is just a function that will return a configuration object. We are using WeakMap to map atom with their state.
 WeakMap doesn't keep its keys in memory, so if an atom is garbage collected, its state will be garbage collected too. This helps avoid memory leaks.
 
 ```js
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react'
 
 // atom function returns a config object which contains initial value
-export const atom = (initialValue) => ({ init: initialValue });
+export const atom = (initialValue) => ({ init: initialValue })
 
 // we need to keep track of the state of the atom.
 // we are using weakmap to avoid memory leaks
-const atomStateMap = new WeakMap();
+const atomStateMap = new WeakMap()
 const getAtomState = (atom) => {
-  let atomState = atomStateMap.get(atom);
+  let atomState = atomStateMap.get(atom)
   if (!atomState) {
-    atomState = { value: atom.init, listeners: new Set() };
-    atomStateMap.set(atom, atomState);
+    atomState = { value: atom.init, listeners: new Set() }
+    atomStateMap.set(atom, atomState)
   }
-  return atomState;
-};
+  return atomState
+}
 
-// useAtom hook returns a tuple of the current value 
+// useAtom hook returns a tuple of the current value
 // and a function to update the atom's value
 export const useAtom = (atom) => {
-  const atomState = getAtomState(atom);
-  const [value, setValue] = useState(atomState.value);
+  const atomState = getAtomState(atom)
+  const [value, setValue] = useState(atomState.value)
   useEffect(() => {
-    const callback = () => setValue(atomState.value);
-    
+    const callback = () => setValue(atomState.value)
+
     // same atom can be used at multiple components, so we need to
     // keep listening for atom's state change till component is mounted.
-    atomState.listeners.add(callback);
-    callback();
-    return () => atomState.listeners.delete(callback);
-  }, [atomState]);
+    atomState.listeners.add(callback)
+    callback()
+    return () => atomState.listeners.delete(callback)
+  }, [atomState])
 
   const setAtom = (nextValue) => {
-    atomState.value = nextValue;
+    atomState.value = nextValue
 
     // let all the subscribed components know that the atom's state has changed
-    atomState.listeners.forEach((l) => l());
-  };
+    atomState.listeners.forEach((l) => l())
+  }
 
-  return [value, setAtom];
-};
-
+  return [value, setAtom]
+}
 ```
+
 Here's an example using our simplified atom implementation. [Counter example](https://codesandbox.io/s/zealous-field-z2xk6?file=/src/App.js)
 
 Ref tweet: [Demystifying the internal of jotai](https://twitter.com/dai_shi/status/1484835169475653634)
@@ -81,27 +82,25 @@ const readWriteAtom = atom(
 )
 ```
 
-To keep track of all the dependents, we need to add one more property to the atom's state. Let's say atom X depends on atom Y, 
+To keep track of all the dependents, we need to add one more property to the atom's state. Let's say atom X depends on atom Y,
 so when we update atom Y, we also update atom X. This is called dependency tracking.
 
 ```js
 const atomState = {
   value: atom.init,
   listeners: new Set(),
-  dependents: new Set()
-};
+  dependents: new Set(),
+}
 ```
 
 We now need to create functions for reading and writing an atom that can handle updating dependent atoms' state.
 
-
 ```js
-
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react'
 
 export const atom = (read, write) => {
-  if (typeof read === "function") {
-    return { read, write };
+  if (typeof read === 'function') {
+    return { read, write }
   }
   const config = {
     init: read,
@@ -116,102 +115,97 @@ export const atom = (read, write) => {
     write:
       write ||
       ((get, set, arg) => {
-        if (typeof arg === "function") {
-          set(config, arg(get(config)));
+        if (typeof arg === 'function') {
+          set(config, arg(get(config)))
         } else {
-          set(config, arg);
+          set(config, arg)
         }
-      })
-  };
-  return config;
-};
+      }),
+  }
+  return config
+}
 
 // same as above but the state has one extra property: dependents
-const atomStateMap = new WeakMap();
+const atomStateMap = new WeakMap()
 const getAtomState = (atom) => {
-  let atomState = atomStateMap.get(atom);
+  let atomState = atomStateMap.get(atom)
   if (!atomState) {
     atomState = {
       value: atom.init,
       listeners: new Set(),
-      dependents: new Set()
-    };
-    atomStateMap.set(atom, atomState);
+      dependents: new Set(),
+    }
+    atomStateMap.set(atom, atomState)
   }
-  return atomState;
-};
+  return atomState
+}
 
 // If atom is primitive, we return it's value.
-// If atom is derived, we read the parent atom's value 
+// If atom is derived, we read the parent atom's value
 // and add current atom to parent's the dependent set (recursivly).
 const readAtom = (atom) => {
-  const atomState = getAtomState(atom);
+  const atomState = getAtomState(atom)
   const get = (a) => {
     if (a === atom) {
-      return atomState.value;
+      return atomState.value
     }
-    const aState = getAtomState(a);
-    aState.dependents.add(atom); // XXX add only
-    return readAtom(a); // XXX no caching
-  };
-  const value = atom.read(get);
-  atomState.value = value;
-  return value;
-};
-
+    const aState = getAtomState(a)
+    aState.dependents.add(atom) // XXX add only
+    return readAtom(a) // XXX no caching
+  }
+  const value = atom.read(get)
+  atomState.value = value
+  return value
+}
 
 // if atomState is modified, we need to notify all the dependent atoms (recursivly)
 // now run callbacks for all the components that are dependent on this atom
 const notify = (atom) => {
-  const atomState = getAtomState(atom);
+  const atomState = getAtomState(atom)
   atomState.dependents.forEach((d) => {
-    if (d !== atom) notify(d);
-  });
-  atomState.listeners.forEach((l) => l());
-};
-
+    if (d !== atom) notify(d)
+  })
+  atomState.listeners.forEach((l) => l())
+}
 
 // writeAtom calls atom.write with the necessary params and triggers notify function
 const writeAtom = (atom, value) => {
-  const atomState = getAtomState(atom);
+  const atomState = getAtomState(atom)
 
   // 'a' is some atom from atomStateMap
   const get = (a) => {
-    const aState = getAtomState(a);
-    return aState.value;
-  };
+    const aState = getAtomState(a)
+    return aState.value
+  }
 
   // if 'a' is the same as atom, update the value, notify that atom and return
   // else calls writeAtom for 'a' (recursivly)
   const set = (a, v) => {
     if (a === atom) {
-      atomState.value = v;
-      notify(atom);
-      return;
+      atomState.value = v
+      notify(atom)
+      return
     }
-    writeAtom(a, v);
-  };
+    writeAtom(a, v)
+  }
 
-  atom.write(get, set, value);
-};
-
+  atom.write(get, set, value)
+}
 
 export const useAtom = (atom) => {
-  const [value, setValue] = useState();
+  const [value, setValue] = useState()
   useEffect(() => {
-    const callback = () => setValue(readAtom(atom));
-    const atomState = getAtomState(atom);
-    atomState.listeners.add(callback);
-    callback();
-    return () => atomState.listeners.delete(callback);
-  }, [atom]);
+    const callback = () => setValue(readAtom(atom))
+    const atomState = getAtomState(atom)
+    atomState.listeners.add(callback)
+    callback()
+    return () => atomState.listeners.delete(callback)
+  }, [atom])
   const setAtom = (nextValue) => {
-    writeAtom(atom, nextValue);
-  };
-  return [value, setAtom];
-};
-
-
+    writeAtom(atom, nextValue)
+  }
+  return [value, setAtom]
+}
 ```
 
 Here is an example using our derived atom implementation. [Derived counter example](https://codesandbox.io/s/affectionate-chandrasekhar-nuxms?file=/src/App.js)

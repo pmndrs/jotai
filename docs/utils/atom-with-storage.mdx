@@ -31,6 +31,7 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 **initialValue** (required): the initial value of the atom
 
 **storage** (optional): an object with:
+
 - `getItem` and `setItem` methods for storing/retreiving persisted state; defaults to using `localStorage` for storage/retreival and `JSON.stringify()`/`JSON.parse()` for serialization/deserialization.
 - Optionally, the storage has a `subscribe` property, which can be used to synchronize storage. The default `localStorage` handles `storage` events for cross-tab synchronization.
 - Optionally, the storage has a `delayInit` (`boolean`) property, which can be used to tell jotai whether to use Suspense
@@ -79,7 +80,7 @@ Let's say you would use the standard AsyncStorage provided by the community.
 
 ```jsx
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const storage = createJSONStorage(() => AsyncStorage)
 const content = {} // anything JSON serializable

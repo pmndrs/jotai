@@ -2,7 +2,6 @@
 title: selectAtom
 ---
 
-
 Ref: https://github.com/pmndrs/jotai/issues/36
 
 ```js
@@ -72,12 +71,16 @@ const Component = () => {
   const [value] = useAtom(useMemo(() => selectAtom(baseAtom, (v) => v), []))
 
   // Solution 2: Memoize the inline callback with "useCallback"
-  const [value] = useAtom(selectAtom(baseAtom, useCallback((v) => v, [])))
+  const [value] = useAtom(
+    selectAtom(
+      baseAtom,
+      useCallback((v) => v, [])
+    )
+  )
 
   // Solution 3: All constraints are already satisfied
   const [value] = useAtom(selectAtom(baseAtom, selector))
 }
-
 ```
 
 ## CodeSandbox

@@ -3,7 +3,6 @@ title: Custom useAtom hooks
 nav: 5.03
 ---
 
-
 This page shows the ways of creating different utility functions. Utility functions save your time on coding, and you can preserve your base atom for other usage.
 
 ## utils
@@ -16,13 +15,13 @@ import { selectAtom } from 'jotai/utils'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
 export function useSelectAtom(anAtom, keyFn) {
-    return useAtomValue(selectAtom(anAtom, keyFn))
+  return useAtomValue(selectAtom(anAtom, keyFn))
 }
 
 // how to use it
 useSelectAtom(
-    useMemo(() => atom(initValue), [initValue]),
-    useCallBack((state) => state.prop, [])
+  useMemo(() => atom(initValue), [initValue]),
+  useCallBack((state) => state.prop, [])
 )
 ```
 
@@ -35,7 +34,7 @@ import { useAtom } from 'jotai'
 import { freezeAtom } from 'jotai/utils'
 
 export function useFreezeAtom(anAtom) {
-    return useAtom(freezeAtom(anAtom))
+  return useAtom(freezeAtom(anAtom))
 }
 ```
 
@@ -46,7 +45,7 @@ import { useAtom } from 'jotai'
 import { splitAtom } from 'jotai/utils'
 
 export function useSplitAtom(anAtom) {
-    return useAtom(splitAtom(anAtom))
+  return useAtom(splitAtom(anAtom))
 }
 ```
 

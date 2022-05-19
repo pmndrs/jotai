@@ -9,7 +9,10 @@ nav: 2.03
 `useAtomDevtools` is a React hook that manages ReduxDevTools integration for a particular atom.
 
 ```ts
-function useAtomDevtools<Value>(anAtom: WritableAtom<Value, Value>, name?: string): void
+function useAtomDevtools<Value>(
+  anAtom: WritableAtom<Value, Value>,
+  name?: string
+): void
 ```
 
 The `useAtomDevtools` hook accepts a generic type parameter (mirroring the type stored in the atom). Additionally, the hook accepts two invocation parameters, `anAtom` and `name`.
@@ -50,15 +53,18 @@ export const useTasksDevtools = () => {
 ⚠️ Note: This hook is experimental (feedbacks are welcome) and only works in a `process.env.NODE_ENV !== 'production'` environment.
 
 `useAtomsDevtools` is a catch-all version of `useAtomDevtools` where it shows all atoms in the store instead of showing a specific one.
+
 ```ts
 function useAtomsDevtools(name: string, scope?: Scope): void
 ```
+
 It takes a `name` parameter that is needed for naming the Redux devtools instance and a `scope` parameter if the hook is used for a specific scope of atoms.
 
 As a limitation for this API, we need to put `useAtomsDevtools` in a component where the consumed atoms should be in a lower place of the React tree than that component (`AtomsDevtools` in the below example).
 `AtomsDevtools` component can be considered as a best practice for our apps.
 
 ### Example
+
 ```ts
 const countAtom = atom(0);
 const doubleCountAtom = atom((get) => get(countAtom) * 2);
@@ -83,6 +89,7 @@ export default function App()  {
   )
  }
 ```
+
 <CodeSandbox id="3xobn" />
 
 ## useAtomsSnapshot
@@ -162,8 +169,7 @@ const UpdateSnapshot: React.FC = () => {
         newSnapshot.set(petAtom, 'dog')
         newSnapshot.set(colorAtom, 'green')
         goToSnapshot(newSnapshot)
-      }}
-    >
+      }}>
       Go to snapshot
     </button>
   )
