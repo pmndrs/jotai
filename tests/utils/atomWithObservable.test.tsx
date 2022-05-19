@@ -243,39 +243,6 @@ it('cleanup subscription', async () => {
   await waitFor(() => expect(activeSubscriptions).toEqual(0))
 })
 
-it('cleanup subscriptions after timeout if initial value never emits', async () => {
-  const subject = new Subject()
-  let subscriptions = 0
-  const observable = new Observable((subscriber) => {
-    subscriptions++
-    subject.subscribe(subscriber)
-    return () => {
-      subscriptions--
-    }
-  })
-  const observableAtom = atomWithObservable(() => observable, { timeout: 500 })
-
-  const Counter = () => {
-    const [state] = useAtom(observableAtom)
-
-    return <>count: {state}</>
-  }
-
-  const { findByText, rerender } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
-  )
-
-  await findByText('loading')
-  expect(subscriptions).toEqual(1)
-
-  rerender(<div />)
-  await waitFor(() => expect(subscriptions).toEqual(0))
-})
-
 it('resubscribe on remount', async () => {
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => subject)

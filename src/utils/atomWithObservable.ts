@@ -33,7 +33,6 @@ type InitialValueFunction<T> = () => T | undefined
 
 type AtomWithObservableOptions<TData> = {
   initialValue?: TData | InitialValueFunction<TData>
-  timeout?: number | false
 }
 
 export function atomWithObservable<TData>(
@@ -72,7 +71,6 @@ export function atomWithObservable<TData>(
           })
         : undefined
     let initialValueWasEmitted = false
-    let initialEmittedValueTimer: NodeJS.Timeout | null = null
 
     let emittedValueBeforeMount: TData | Promise<TData> | NotEmitted =
       NotEmitted
@@ -87,7 +85,6 @@ export function atomWithObservable<TData>(
         resolveEmittedInitialValue?.(data)
         initialValueWasEmitted = true
         resolveEmittedInitialValue = null
-        if (initialEmittedValueTimer) clearTimeout(initialEmittedValueTimer)
       } else {
         emittedValueBeforeMount = data
       }
@@ -107,26 +104,16 @@ export function atomWithObservable<TData>(
       | Promise<TData>
       | InitialValueFunction<TData>
       | undefined
-    let isMounted = false
     if (options?.initialValue !== undefined) {
       initialValue = getInitialValue(options)
     } else {
       subscription = observable.subscribe(dataListener, errorListener)
       isSync = false
-      // Unsubscribe after an timeout, in case the `onMount` method was never called
-      // and the subscription is still pending
-      if (options?.timeout !== false) {
-        initialEmittedValueTimer = setTimeout(() => {
-          initialEmittedValueTimer = null
-          if (!isMounted) subscription?.unsubscribe()
-        }, options?.timeout ?? 10_000)
-      }
       initialValue = initialEmittedValue
     }
 
     const dataAtom = atom(initialValue)
     dataAtom.onMount = (update) => {
-      isMounted = true
       setData = update
       if (emittedValueBeforeMount !== NotEmitted) {
         update(emittedValueBeforeMount)
