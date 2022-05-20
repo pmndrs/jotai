@@ -58,8 +58,7 @@ export function atomWithObservable<TData>(
 
     // To differentiate beetwen no value was emitted and `undefined` was emitted,
     // this symbol is used
-    const NotEmitted = Symbol()
-    type NotEmitted = typeof NotEmitted
+    const EMPTY = Symbol()
 
     let resolveEmittedInitialValue:
       | ((data: TData | Promise<TData>) => void)
@@ -72,8 +71,7 @@ export function atomWithObservable<TData>(
         : undefined
     let initialValueWasEmitted = false
 
-    let emittedValueBeforeMount: TData | Promise<TData> | NotEmitted =
-      NotEmitted
+    let emittedValueBeforeMount: TData | Promise<TData> | typeof EMPTY = EMPTY
     let isSync = true
     let setData: (data: TData | Promise<TData>) => void = (data) => {
       // First we set the initial value (if not other initialValue was provided)
@@ -108,14 +106,14 @@ export function atomWithObservable<TData>(
       initialValue = getInitialValue(options)
     } else {
       subscription = observable.subscribe(dataListener, errorListener)
-      isSync = false
       initialValue = initialEmittedValue
     }
+    isSync = false
 
     const dataAtom = atom(initialValue)
     dataAtom.onMount = (update) => {
       setData = update
-      if (emittedValueBeforeMount !== NotEmitted) {
+      if (emittedValueBeforeMount !== EMPTY) {
         update(emittedValueBeforeMount)
       }
       if (!subscription) {
