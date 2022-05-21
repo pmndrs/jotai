@@ -99,5 +99,8 @@ describeWithUseTransition('useTransition', () => {
 
     fireEvent.click(getByText('increment'))
     await findByText('count: 1')
+
+    fireEvent.click(getByText('increment'))
+    await findByText('count: 2')
   })
 })

@@ -578,6 +578,11 @@ export const createStore = (
     version?: VersionObject
   ): AtomState<Value> => {
     const atomState = readAtomState(version, readingAtom)
+    if ('p' in atomState) {
+      // We want to avoid flushing a promise again (#1151)
+      // TODO There should be better implementations
+      pendingMap.delete(readingAtom)
+    }
     return atomState
   }
 
