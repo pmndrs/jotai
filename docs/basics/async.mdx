@@ -60,6 +60,33 @@ const anotherAtom = atom((get) => get(asyncAtom) / 2)
 // it's a read async atom because `asyncAtom` is async.
 ```
 
+**Note**: You cannot use an async atom in a write-atom (wether its async or not) before it's value has been set
+
+```js
+const asyncAtom = atom(async (get) => ...)
+const writeAtom = atom(null, (get, set, payload: any) => {
+  get(asyncAtom) // This throws an error if "asyncAtom" is still in pending state
+})
+```
+
+If you want to make sure the action will never fail, you could preload atoms at root level of your app directly:
+
+```jsx
+const Preloader = () => {
+  useAtomValue(asyncAtom) // The value will be pre-loaded
+  return null
+}
+
+const Root = () => {
+  return (
+    <React.Suspense fallback={<Text>Loading...<Text>}>
+      <Preloader /> {/* Wait for atoms to preload */}
+      <App /> {/* Rest of your app */}
+    </React.Suspense>
+  )
+}
+```
+
 ## Async write atom
 
 Async write atoms are another kind of async atom.
@@ -132,7 +159,6 @@ Having more `<Suspense>`s in the component tree is also possible and must be con
 <summary>Async write atom behavior until v1.3.9</summary>
 
 (This is no longer the case since v1.4.0.)
-
 
 ### Triggering `Suspense` fallback of write atom
 
