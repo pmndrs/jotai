@@ -4,6 +4,12 @@ description: This doc describes about the behavior with async.
 nav: 1.03
 ---
 
+With async atoms, you gain access to real-world data but still managing them directly from your atoms and incredible ease.
+We can seperate them in two main categories:
+
+- Async read atoms: async request is started instantly as soon as you try to get its value, you could relate to them as "smart getters"
+- Async write atoms: async request is started at a specific moment, you could relate to them as "actions"
+
 ## Async read atom
 
 The `read` function of an atom can return a promise.
