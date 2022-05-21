@@ -337,11 +337,13 @@ export const createStore = (
       r: atomState?.r || 0,
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
+    let changed = false
     if (
       !atomState ||
       !('v' in atomState) || // new value, or
       !Object.is(atomState.v, value) // different value
     ) {
+      changed = true
       ++nextAtomState.r // increment revision
       if (nextAtomState.d.has(atom)) {
         nextAtomState.d = new Map(nextAtomState.d).set(atom, nextAtomState.r)
@@ -351,12 +353,16 @@ export const createStore = (
       (nextAtomState.d.size !== atomState.d.size ||
         !Array.from(nextAtomState.d.keys()).every((a) => atomState.d.has(a)))
     ) {
+      changed = true
       // value is not changed, but dependencies are changed
       // we should schdule a flush in async
       // FIXME any better way? https://github.com/pmndrs/jotai/issues/947
       Promise.resolve().then(() => {
         flushPending(version)
       })
+    }
+    if (atomState && !changed) {
+      return atomState
     }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
@@ -665,8 +671,11 @@ export const createStore = (
             setAtomPromiseOrValue(cancelledVersion, a, v)
           }
         })
-        setAtomPromiseOrValue(version, a, v)
-        invalidateDependents(version, a)
+        const prevAtomState = getAtomState(version, a)
+        const nextAtomState = setAtomPromiseOrValue(version, a, v)
+        if (prevAtomState !== nextAtomState) {
+          invalidateDependents(version, a)
+        }
       } else {
         promiseOrVoid = writeAtomState(version, a as AnyWritableAtom, v)
       }

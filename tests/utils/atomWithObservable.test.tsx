@@ -1,6 +1,6 @@
 import { ReactElement, Suspense, useState } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
-import { Observable, Subject } from 'rxjs'
+import { BehaviorSubject, Observable, ReplaySubject, Subject } from 'rxjs'
 import { useAtom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
@@ -37,11 +37,11 @@ it('writable count state', async () => {
     const observable = new Observable<number>((subscriber) => {
       subscriber.next(1)
     })
-    const subject = new Subject<number>()
+    const subject = new ReplaySubject<number>()
     // is this usual to delay the subscription?
     setTimeout(() => {
       observable.subscribe(subject)
-    }, 500)
+    }, 100)
     return subject
   })
 
@@ -196,6 +196,27 @@ it('with initial value and synchronous subscription', async () => {
   const { findByText } = render(
     <Provider>
       <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 1')
+})
+
+it('behaviour subject', async () => {
+  const subject$ = new BehaviorSubject(1)
+  const observableAtom = atomWithObservable(() => subject$)
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+
+    return <>count: {state}</>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </Provider>
   )
 

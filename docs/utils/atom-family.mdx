@@ -52,7 +52,9 @@ If you want to explicitly declare the atomFamily for a primitive atom, you need 
 ```ts
 type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
-const myFamily = atomFamily<number, number, SetStateAction<number>>((id: number) => atom(id))
+const myFamily = atomFamily<number, number, SetStateAction<number>>(
+  (id: number) => atom(id)
+)
 ```
 
 ### Caveat: Memory Leaks

@@ -73,7 +73,9 @@ const Toggle: React.FC = () => {
 
   return (
     <div>
-      {state.matches('reading') && <strong onDoubleClick={send}>{state.context.value}</strong>}
+      {state.matches('reading') && (
+        <strong onDoubleClick={send}>{state.context.value}</strong>
+      )}
       {state.matches('editing') && (
         <input
           autoFocus
@@ -92,8 +94,8 @@ const Toggle: React.FC = () => {
       <br />
       <br />
       <div>
-        Double-click to edit. Blur the input or press <code>enter</code> to commit. Press{' '}
-        <code>esc</code> to cancel.
+        Double-click to edit. Blur the input or press <code>enter</code> to
+        commit. Press <code>esc</code> to cancel.
       </div>
     </div>
   )

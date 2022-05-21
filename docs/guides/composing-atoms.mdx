@@ -8,7 +8,7 @@ but it's also so flexible that you can combine multiple atoms
 to implement a functionality.
 
 > Note again that `atom()` creates an atom config, which is an object
-to define a behavior of the atom.
+> to define a behavior of the atom.
 
 Let's recap how we can derive an atom.
 
@@ -53,9 +53,8 @@ const overwrittenAtom = atom(null)
 export const numberAtom = atom(
   (get) => get(overwrittenAtom) ?? get(roundNumberAtom),
   (get, set, newValue) => {
-    const nextValue = typeof newValue === 'function'
-      ? newValue(get(numberAtom))
-      : newValue
+    const nextValue =
+      typeof newValue === 'function' ? newValue(get(numberAtom)) : newValue
     set(overwrittenAtom, nextValue)
   }
 )
@@ -82,9 +81,8 @@ const baseAtom = atom(localStorage.getItem('mykey') || '')
 export const persistedAtom = atom(
   (get) => get(baseAtom),
   (get, set, newValue) => {
-    const nextValue = typeof newValue === 'function'
-      ? newValue(get(baseAtom))
-      : newValue
+    const nextValue =
+      typeof newValue === 'function' ? newValue(get(baseAtom)) : newValue
     set(baseAtom, nextValue)
     localStorage.setItem('mykey', nextValue)
   }

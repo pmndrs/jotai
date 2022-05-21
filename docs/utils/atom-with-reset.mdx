@@ -21,5 +21,7 @@ way as primitive atom would, but you are also able to set it to a special value
 import { atomWithReset } from 'jotai/utils'
 
 const dollarsAtom = atomWithReset(0)
-const todoListAtom = atomWithReset([{ description: 'Add a todo', checked: false }])
+const todoListAtom = atomWithReset([
+  { description: 'Add a todo', checked: false },
+])
 ```
