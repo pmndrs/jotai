@@ -187,7 +187,6 @@ yarn add jotai react
   - [Next.js](./docs/guides/nextjs.mdx)
   - [React Native](./docs/guides/react-native.mdx)
   - [Resettable](./docs/guides/resettable.mdx)
-  - [No Suspense](./docs/guides/no-suspense.mdx)
   - [Atoms in atom](./docs/guides/atoms-in-atom.mdx)
 - API
   - [Core](./docs/api/core.mdx)
