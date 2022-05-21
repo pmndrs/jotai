@@ -4,7 +4,8 @@ description: This doc describes about the behavior with async.
 nav: 1.03
 ---
 
-With async atoms, you gain access to real-world data but still managing them directly from your atoms and incredible ease.
+Using async atoms, you gain access to real-world data while still managing them directly from your atoms and with incredible ease.
+
 We can seperate them in two main categories:
 
 - Async read atoms: async request is started instantly as soon as you try to get its value, you could relate to them as "smart getters"
@@ -19,7 +20,7 @@ const countAtom = atom(1)
 const asyncAtom = atom(async (get) => get(countAtom) * 2)
 ```
 
-Jotai is inherently leveraging `Suspense` to use asynchronous flows.
+Jotai is inherently leveraging `Suspense` to handle asynchronous flows.
 
 ```js
 const ComponentUsingAsyncAtoms = () => {
@@ -60,7 +61,7 @@ const anotherAtom = atom((get) => get(asyncAtom) / 2)
 // it's a read async atom because `asyncAtom` is async.
 ```
 
-**Note**: You cannot use an async atom in a write-atom (wether its async or not) before it's value has been set
+**Note**: You cannot get the value of an async atom in a write-atom (wether its async or not) before its value has been set
 
 ```js
 const asyncAtom = atom(async (get) => ...)
