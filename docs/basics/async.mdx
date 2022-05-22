@@ -22,7 +22,7 @@ const asyncAtom = atom(async (get) => get(countAtom) * 2)
 
 Jotai is inherently leveraging `Suspense` to handle asynchronous flows.
 
-```js
+```jsx
 const ComponentUsingAsyncAtoms = () => {
   const [num] = useAtom(asyncAtom)
   // here `num` is always `number` even though asyncAtom returns a Promise
@@ -38,17 +38,18 @@ const App = () => {
 
 Alternatively, you could avoid the inherent suspending that jotai does for you, by wrapping your atoms with the `loadable` API.
 
-```js
+```jsx
 const loadableAtom = loadable(asyncAtom)
 // Does not need to be wrapped by a <React.Suspense> element
 const Component = () => {
   const value = useAtom(loadableAtom)
-  if (value.error)
-    return (<Text>Error</Text>)
-  if (value.state === 'pending') // 'pending' | 'hasData'
-    return (<Text>Loading...</Text>)
+  if (value.error) return <Text>Error</Text>
+  if (value.state === 'pending') {
+    // 'pending' | 'hasData'
+    return <Text>Loading...</Text>
+  }
   console.log(value.data) // Results of the Promise
-  return (<Text>Value: {value.data}</Text>)
+  return <Text>Value: {value.data}</Text>
 }
 ```
 
@@ -90,12 +91,9 @@ const Root = () => {
 
 ## Async write atom
 
-Async write atoms are another kind of async atom.
-When the `write` function of atom returns a promise, it may suspend.
-This happens if the atom is used directly with useAtom,
-regardless of its value. (The atom value can be `null`.)
+Async write atoms are another kind of async atom. When the `write` function of atom returns a promise, triggering it will suspend the component.
 
-```js
+```jsx
 const countAtom = atom(1)
 const asyncIncrementAtom = atom(null, async (get, set) => {
   // await something
@@ -104,18 +102,20 @@ const asyncIncrementAtom = atom(null, async (get, set) => {
 
 const Component = () => {
   const [, increment] = useAtom(asyncIncrementAtom)
-  // it will suspend while `increment` is pending.
+  React.useEffect(() => {
+    setTimeout(() => {
+      increment() // triggers the suspend while `increment` is pending
+    }, 2000)
+  }, [])
 }
 ```
-
-> There's no way to know as of now if an atom suspends because of `read` or `write`.
 
 ## Async sometimes
 
 An interesting pattern that can be achieved with jotai are is switching from async to sync to trigger suspending when wanted.
 
 ```jsx
-const request = async () => fetch('https://...').then(res => res.json())
+const request = async () => fetch('https://...').then((res) => res.json())
 const baseAtom = atom(0)
 const Component = () => {
   const [value, setValue] = useAtom(baseAtom)
@@ -154,6 +154,7 @@ const App = () => (
   </Provider>
 )
 ```
+
 Having more `<Suspense>`s in the component tree is also possible and must be considered to profit from jotai inherent handling at the best.
 
 <details>
