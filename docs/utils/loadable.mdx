@@ -1,0 +1,33 @@
+---
+title: loadable
+---
+
+For some reason, you may not want to profit from the React's `Suspense` core handling of jotai, and prevent your app from suspending when using async atoms.
+
+It would work the same way for any atom. By wrapping your atoms with the `loadable` util, your directly get the value out of your async atom, wrapped by an object with the state of the request.
+
+```
+{
+	state: 'pending' | 'hasData' | 'error'
+	data?: any
+	error?: any
+}
+```
+
+```jsx
+import { loadable } from "jotai/utils"
+
+const asyncAtom = atom(async (get) => ...)
+const loadableAtom = loadable(asyncAtom)
+// Does not need to be wrapped by a <React.Suspense> element
+const Component = () => {
+  const value = useAtom(loadableAtom)
+  if (value.error) return <Text>Error</Text>
+  if (value.state === 'pending') {
+    // 'pending' | 'hasData'
+    return <Text>Loading...</Text>
+  }
+  console.log(value.data) // Results of the Promise
+  return <Text>Value: {value.data}</Text>
+}
+```
