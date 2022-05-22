@@ -6,11 +6,11 @@ For some reason, you may not want to profit from the React's `Suspense` core han
 
 It would work the same way for any atom. By wrapping your atoms with the `loadable` util, your directly get the value out of your async atom, wrapped by an object with the state of the request.
 
-```
+```ts
 {
-	state: 'pending' | 'hasData' | 'error'
-	data?: any
-	error?: any
+	state: 'loading' | 'hasData' | 'hasError',
+	data?: any,
+	error?: any,
 }
 ```
 
@@ -22,8 +22,8 @@ const loadableAtom = loadable(asyncAtom)
 // Does not need to be wrapped by a <React.Suspense> element
 const Component = () => {
   const value = useAtom(loadableAtom)
-  if (value.error) return <Text>Error</Text>
-  if (value.state === 'pending') {
+  if (value.state === 'hasError') return <Text>{value.error}</Text>
+  if (value.state === 'loading') {
     return <Text>Loading...</Text>
   }
   console.log(value.data) // Results of the Promise
