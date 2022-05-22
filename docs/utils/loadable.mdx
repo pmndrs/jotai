@@ -24,7 +24,6 @@ const Component = () => {
   const value = useAtom(loadableAtom)
   if (value.error) return <Text>Error</Text>
   if (value.state === 'pending') {
-    // 'pending' | 'hasData'
     return <Text>Loading...</Text>
   }
   console.log(value.data) // Results of the Promise
