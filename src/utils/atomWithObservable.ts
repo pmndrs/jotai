@@ -105,6 +105,16 @@ export function atomWithObservable<TData>(
     if (options?.initialValue !== undefined) {
       initialValue = getInitialValue(options)
     } else {
+      // FIXME
+      // There is the potential for memory leaks in this implementation.
+      //
+      // If the observable doesn't emit an initial value before the component that uses the atom gets destroyed,
+      // the onMount function never gets called and therefore the subscription never gets cleaned up.
+      //
+      // Unfortunately, currently there is no good way to prevent this issue (as of 2022-05-23).
+      // Timeouts may lead to an endless loading state, if the subscription get's cleaned up too quickly.
+      //
+      // Discussion: https://github.com/pmndrs/jotai/pull/1170
       subscription = observable.subscribe(dataListener, errorListener)
       initialValue = initialEmittedValue
     }
