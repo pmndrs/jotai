@@ -76,7 +76,7 @@ const Root = () => {
 
 ## Async write atom
 
-Async write atoms are another kind of async atom. When the `write` function of atom returns a promise, triggering it will suspend the component.
+Async write atoms are another kind of async atom. When the `write` function of atom returns a promise.
 
 ```jsx
 const countAtom = atom(1)
@@ -88,9 +88,7 @@ const asyncIncrementAtom = atom(null, async (get, set) => {
 const Component = () => {
   const [, increment] = useAtom(asyncIncrementAtom)
   React.useEffect(() => {
-    setTimeout(() => {
-      increment() // triggers the suspend while `increment` is pending
-    }, 2000)
+    increment()
   }, [])
 }
 ```
