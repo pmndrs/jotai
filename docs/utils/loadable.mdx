@@ -2,9 +2,9 @@
 title: loadable
 ---
 
-If you don't want async atoms to suspend or throw to an error boundary (for example, for finer-grained control of loading and error logic), you can use the `loadable` util. It returns a value with one of three states: `loading`, `hasData` and `hasError`.
+If you don't want async atoms to suspend or throw to an error boundary (for example, for finer-grained control of loading and error logic), you can use the `loadable` util.
 
-It would work the same way for any atom. By wrapping your atoms with the `loadable` util, your directly get the value out of your async atom, wrapped by an object with the state of the request.
+It would work the same way for any atom. Simply wrap your atoms with the `loadable` util. It returns a value with one of three states: `loading`, `hasData` and `hasError`.
 
 ```ts
 {
