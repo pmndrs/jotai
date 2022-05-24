@@ -356,3 +356,20 @@ it('large atom count', async () => {
     expect(result).toEqual(createArray(failingCount))
   })
 })
+
+it('works with an empty list (#1177)', async () => {
+  const Component = () => {
+    useAtom(waitForAll([]))
+    return <span>works!</span>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Component />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('works!')
+})
