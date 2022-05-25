@@ -176,10 +176,8 @@ yarn add jotai react
 - Basics
   - [Concepts](./docs/basics/concepts.mdx)
   - [Primitives](./docs/basics/primitives.mdx)
-  - [Async](./docs/basics/async.mdx)
-  - [Comparison](./docs/basics/comparison.mdx)
-  - [Showcase](./docs/basics/showcase.mdx)
 - Guides
+  - [Async](./docs/basics/async.mdx)
   - [TypeScript](./docs/guides/typescript.mdx)
   - [Debugging](./docs/guides/debugging.mdx)
   - [Testing](./docs/guides/testing.mdx)
@@ -205,3 +203,6 @@ yarn add jotai react
 - Advanced Recipes
   - [Large Objects](./docs/advanced-recipes/large-objects.mdx)
   - [Atom Creators](./docs/advanced-recipes/atom-creators.mdx)
+- Demo
+  - [Comparison](./docs/basics/comparison.mdx)
+  - [Showcase](./docs/basics/showcase.mdx)
