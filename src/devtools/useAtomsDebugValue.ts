@@ -42,7 +42,7 @@ type Options = {
 
 // We keep a reference to the atoms,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
-export const useDebugState = (options?: Options) => {
+export const useAtomsDebugValue = (options?: Options) => {
   const enabled = options?.enabled ?? __DEV__
   const ScopeContext = getScopeContext(options?.scope)
   const { s: store } = useContext(ScopeContext)

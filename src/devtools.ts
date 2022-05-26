@@ -1,4 +1,4 @@
-export { useDebugState } from './devtools/useDebugState'
+export { useAtomsDebugValue } from './devtools/useAtomsDebugValue'
 export { useAtomDevtools } from './devtools/useAtomDevtools'
 export { useAtomsSnapshot } from './devtools/useAtomsSnapshot'
 export { useGotoAtomsSnapshot } from './devtools/useGotoAtomsSnapshot'
