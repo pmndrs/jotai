@@ -1,23 +1,11 @@
-import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
+import { StrictMode, Suspense, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import ReactDOM from 'react-dom'
 import { atom, useAtom, useSetAtom } from 'jotai'
 import type { SetStateAction, WritableAtom } from 'jotai'
 import { atomFamily } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
-
-// FIXME this is a hacky workaround temporarily
-const IS_REACT18 = !!(ReactDOM as any).createRoot
-
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
-  })
-  return commitCountRef.current
-}
 
 it('new atomFamily impl', async () => {
   const myFamily = atomFamily((param: string) => atom(param))
@@ -238,14 +226,17 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   )
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
+  let commitCount = 0
+
   const Counter = () => {
     const setCount = useSetAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
+    useEffect(() => {
+      ++commitCount
+    })
     return (
       <>
-        <div>
-          derived: {derived}, commits: {useCommitCount()}
-        </div>
+        <div>derived: {derived}</div>
         <button onClick={() => setCount((c) => c + 1)}>button</button>
       </>
     )
@@ -262,21 +253,16 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   )
 
   await findByText('loading')
-  await findByText('derived: 11, commits: 1')
+  await findByText('derived: 11')
+  const commitCountAfterMount = commitCount
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  if (IS_REACT18) {
-    await findByText('derived: 12, commits: 3')
-  } else {
-    await findByText('derived: 12, commits: 2')
-  }
+  await findByText('derived: 12')
+  expect(commitCount).toBe(commitCountAfterMount + 1)
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  if (IS_REACT18) {
-    await findByText('derived: 13, commits: 4')
-  } else {
-    await findByText('derived: 13, commits: 3')
-  }
+  await findByText('derived: 13')
+  expect(commitCount).toBe(commitCountAfterMount + 2)
 })
