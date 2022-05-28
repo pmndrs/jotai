@@ -29,7 +29,7 @@ const ComponentUsingAsyncAtoms = () => {
 }
 const App = () => {
   return (
-    <React.Suspense fallback={/* What to show while suspended */}>
+    <Suspense fallback={/* What to show while suspended */}>
       <ComponentUsingAsyncAtoms />
     </React.Suspense>
   )
