@@ -47,7 +47,7 @@ const anotherAtom = atom((get) => get(asyncAtom) / 2)
 // it's a read async atom because `asyncAtom` is async.
 ```
 
-**Note**: You cannot get the value of an async atom in a write-atom (wether its async or not) before its value has been set
+**Note**: You cannot get the value of an async atom in a write-atom (whether the write function is async or not) before its value has been resolved
 
 ```js
 const asyncAtom = atom(async (get) => ...)
