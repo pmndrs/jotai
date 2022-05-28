@@ -97,7 +97,7 @@ The behavior depends on how the write function is implemented.
 
 **Note:** as mentioned in the _atom_ section, you have to take care of handling the reference of your atom, otherwise it may enter an infinite loop
 
-```typescript
+```ts
 const stableAtom = atom(0)
 const Component = () => {
   const [atomValue] = useAtom(atom(0)) // Will cause an infinite loop
@@ -121,8 +121,8 @@ it will use the default state. This is so-called provider-less mode.
 Providers are useful for three reasons:
 
 1. To provide a different state for each sub tree.
-2. To contain some debug information.
-3. To accept initial values of atoms.
+2. To accept initial values of atoms.
+3. To clear all atoms by remounting.
 
 ```jsx
 const SubTree = () => (

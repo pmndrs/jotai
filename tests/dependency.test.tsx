@@ -5,8 +5,6 @@ import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
-jest.mock('../src/core/useDebugState.ts')
-
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
   useEffect(() => {
