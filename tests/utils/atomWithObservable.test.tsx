@@ -1,13 +1,6 @@
 import { Component, ReactElement, ReactNode, Suspense, useState } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
-import {
-  BehaviorSubject,
-  Observable,
-  ReplaySubject,
-  Subject,
-  delay,
-  of,
-} from 'rxjs'
+import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
