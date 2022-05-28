@@ -31,7 +31,7 @@ const App = () => {
   return (
     <Suspense fallback={/* What to show while suspended */}>
       <ComponentUsingAsyncAtoms />
-    </React.Suspense>
+    </Suspense>
   )
 }
 ```
@@ -66,10 +66,10 @@ const Preloader = () => {
 
 const Root = () => {
   return (
-    <React.Suspense fallback={<Text>Loading...<Text>}>
+    <Suspense fallback={<Text>Loading...<Text>}>
       <Preloader /> {/* Wait for atoms to preload */}
       <App /> {/* Rest of your app */}
-    </React.Suspense>
+    </Suspense>
   )
 }
 ```

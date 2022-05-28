@@ -111,10 +111,10 @@ const Preloader = () => {
 ```js
 const Root = () => {
   return (
-    <React.Suspense fallback={<Text>Hydrating...<Text>}>
+    <Suspense fallback={<Text>Hydrating...<Text>}>
       <Preloader /> {/* Wait for atoms to preload */}
       <App /> {/* Rest of your app */}
-    </React.Suspense>
+    </Suspense>
   )
 }
 ```
