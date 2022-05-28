@@ -46,7 +46,7 @@ const Component = () => {
 
 ## Storing an atom config in atom
 
-Likewise, we can store an atom confing as a value of another atom.
+Likewise, we can store an atom config as a value of another atom.
 
 ```jsx
 const firstNameAtom = atom('Tanjiro')
@@ -77,7 +77,7 @@ const derivedNameAtom = atom((get) => {
   return get(nameAtom)
 })
 
-// Or shoter version
+// Or a shorter version
 const derivedNameAtom = atom((get) => get(get(showingNameAtom)))
 ```
 
