@@ -98,15 +98,18 @@ The behavior depends on how the write function is implemented.
 **Note:** as mentioned in the _atom_ section, you have to take care of handling the reference of your atom, otherwise it may enter an infinite loop
 
 ```ts
-const stableAtom = atom(0)
+const stableAtom = atom(0);
 const Component = () => {
-  const [atomValue] = useAtom(atom(0)) // This will cause an infinite loop
-  const [atomValue] = useAtom(stableAtom) // This is fine
-  const [derivedAtomValue] = useAtom(useMemo( // This is also fine
-    () => atom((get) => get(stableAtom) * 2),
-    []
-  ))
-}
+   const [atomValue] = useAtom(atom(0)); // This will cause an infinite loop
+   const [atomValue] = useAtom(stableAtom); // This is fine
+   const [derivedAtomValue] = useAtom(
+      useMemo(
+         // This is also fine
+         () => atom((get) => get(stableAtom) * 2),
+         []
+      )
+   );
+};
 ```
 
 ## Provider
