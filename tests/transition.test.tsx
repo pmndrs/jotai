@@ -5,8 +5,6 @@ import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
-jest.mock('../src/core/useDebugState.ts')
-
 const describeWithUseTransition =
   typeof useTransition === 'function' ? describe : describe.skip
 
