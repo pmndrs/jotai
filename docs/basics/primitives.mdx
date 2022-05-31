@@ -100,12 +100,15 @@ The behavior depends on how the write function is implemented.
 ```ts
 const stableAtom = atom(0)
 const Component = () => {
-  const [atomValue] = useAtom(atom(0)) // Will cause an infinite loop
-  const [atomValue] = useAtom(stableAtom) // is fine
-  const [derivedAtomValue] = useMemo(
-    () => atom((get) => get(stableAtom) * 2),
-    []
-  ) // is also fine
+  const [atomValue] = useAtom(atom(0)) // This will cause an infinite loop
+  const [atomValue] = useAtom(stableAtom) // This is fine
+  const [derivedAtomValue] = useAtom(
+    useMemo(
+      // This is also fine
+      () => atom((get) => get(stableAtom) * 2),
+      []
+    )
+  )
 }
 ```
 
