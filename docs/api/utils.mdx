@@ -83,3 +83,7 @@ This is an overview of the atom creators/hooks utilities that can be found under
 19. [useHydrateAtoms](../utils/use-hydrate-atoms.mdx)
 
     The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an initial value is e.g. fetched on the server, which can be passed to a component by props.
+
+20. [loadable](../utils/loadable.mdx)
+
+    The `loadable` API will allow you to bypass the inherent suspending happening at the core of asynchronous flows in jotai. Wrap your atoms with `loadable` and you directly get the results of your async atoms as an object with a state to tell you if the Promise has resolved or even failed.

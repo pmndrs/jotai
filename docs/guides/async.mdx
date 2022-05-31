@@ -1,0 +1,188 @@
+---
+title: Async
+description: This doc describes about the behavior with async.
+nav: 1.03
+---
+
+Using async atoms, you gain access to real-world data while still managing them directly from your atoms and with incredible ease.
+
+We can seperate them in two main categories:
+
+- Async read atoms: async request is started instantly as soon as you try to get its value, you could relate to them as "smart getters"
+- Async write atoms: async request is started at a specific moment, you could relate to them as "actions"
+
+## Async read atom
+
+The `read` function of an atom can return a promise.
+
+```js
+const countAtom = atom(1)
+const asyncAtom = atom(async (get) => get(countAtom) * 2)
+```
+
+Jotai is inherently leveraging `Suspense` to handle asynchronous flows.
+
+```jsx
+const ComponentUsingAsyncAtoms = () => {
+  const [num] = useAtom(asyncAtom)
+  // here `num` is always `number` even though asyncAtom returns a Promise
+}
+const App = () => {
+  return (
+    <Suspense fallback={/* What to show while suspended */}>
+      <ComponentUsingAsyncAtoms />
+    </Suspense>
+  )
+}
+```
+
+Alternatively, you could avoid the inherent suspending that jotai does for you, by wrapping your atoms with the [`loadable` API](../utils/loadable.mdx).
+
+**Note**: An atom becomes async not only if the atom read function is async,
+but also if one or more of its dependencies are async.
+
+```js
+const anotherAtom = atom((get) => get(asyncAtom) / 2)
+// even though this atom doesn't return a promise,
+// it's a read async atom because `asyncAtom` is async.
+```
+
+**Note**: You cannot get the value of an async atom in a write-atom (whether the write function is async or not) before its value has been resolved
+
+```js
+const asyncAtom = atom(async (get) => ...)
+const writeAtom = atom(null, (get, set, payload: any) => {
+  get(asyncAtom) // This throws an error if "asyncAtom" is still in pending state
+})
+```
+
+If you want to make sure the action will never fail, you could preload atoms at root level of your app directly:
+
+```jsx
+const Preloader = () => {
+  useAtomValue(asyncAtom) // The value will be pre-loaded
+  return null
+}
+
+const Root = () => {
+  return (
+    <Suspense fallback={<Text>Loading...<Text>}>
+      <Preloader /> {/* Wait for atoms to preload */}
+      <App /> {/* Rest of your app */}
+    </Suspense>
+  )
+}
+```
+
+## Async write atom
+
+Async write atoms are another kind of async atom. When the `write` function of atom returns a promise.
+
+```jsx
+const countAtom = atom(1)
+const asyncIncrementAtom = atom(null, async (get, set) => {
+  // await something
+  set(countAtom, get(countAtom) + 1)
+})
+
+const Component = () => {
+  const [, increment] = useAtom(asyncIncrementAtom)
+  React.useEffect(() => {
+    increment()
+  }, [])
+}
+```
+
+## Async sometimes
+
+An interesting pattern that can be achieved with jotai are is switching from async to sync to trigger suspending when wanted.
+
+```jsx
+const request = async () => fetch('https://...').then((res) => res.json())
+const baseAtom = atom(0)
+const Component = () => {
+  const [value, setValue] = useAtom(baseAtom)
+  React.useEffect(() => {
+    setTimeout(() => {
+      setValue(request()) // Will suspend until request resolves
+    }, 2000)
+  }, [])
+}
+```
+
+## Async forever
+
+Sometimes you may want to suspend until an unpredetermined moment (or never).
+
+```jsx
+const baseAtom = atom(new Promise(() => {})) // Will be suspend until set otherwise
+```
+
+## Suspense
+
+Async support is first class in jotai. It fully leverages React Suspense at its core.
+
+> Technically, Suspense usage other than React.lazy is still unsupported / undocumented in React 17. If this is blocking, so you can still use the [`loadable` API](../utils/loadable.mdx) to avoid suspending
+
+To use async atoms, you need to wrap your component tree with `<Suspense>`.
+
+> If you have a `<Provider>`, place **at least one** `<Suspense>` inside said `<Provider>`; otherwise, it may cause an endless loop while rendering the components.
+
+```jsx
+const App = () => (
+  <Provider>
+    <Suspense fallback="Loading...">
+      <Layout />
+    </Suspense>
+  </Provider>
+)
+```
+
+Having more `<Suspense>`s in the component tree is also possible and must be considered to profit from jotai inherent handling at the best.
+
+<details>
+<summary>Async write atom behavior until v1.3.9</summary>
+
+(This is no longer the case since v1.4.0.)
+
+### Triggering `Suspense` fallback of write atom
+
+This section applies only for "async write atom" not "async read atom", which works differently with `Suspense`.
+
+**A write atom will trigger the `Suspense` fallback if:**
+
+    * the atom's write argument (2nd one) is async
+    * the awaited call is made directly, and not from inside another containing function
+
+This _will_ trigger the `Suspense` fallback:
+
+```ts
+const writeAtom = atom(null, async (get, set) => {
+  const response = await new Promise<string>((resolve, _reject) => {
+    setTimeout(() => {
+      resolve('some returned value')
+    }, 2000)
+  })
+  set(somePrimitiveAtom, 'The returned value is: ' + response)
+})
+```
+
+This _will not_ trigger the `Suspense` fallback:
+
+```ts
+const writeAtom = atom(null, (get, set) => {
+  const getResponse = async () => {
+    const response = await new Promise<string>((resolve, _reject) => {
+      setTimeout(() => {
+        resolve('some returned value')
+      }, 2000)
+    })
+    set(somePrimitiveAtom, 'The returned value is: ' + response)
+  }
+  getResponse()
+})
+```
+
+But **_both_** of the above will still set `somePrimitiveAtom` to the correct values.
+
+</details>

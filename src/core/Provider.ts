@@ -5,7 +5,6 @@ import { createScopeContainer, getScopeContext } from './contexts'
 import type { ScopeContainer } from './contexts'
 import { COMMIT_ATOM, createStoreForExport } from './store'
 import type { VersionObject } from './store'
-import { useDebugState } from './useDebugState'
 
 export const Provider = ({
   children,
@@ -56,12 +55,6 @@ export const Provider = ({
         })
       }
     }
-  }
-
-  // LIMITATION: useDebugState prevents to work versioned write properly
-  if (__DEV__ && !unstable_enableVersionedWrite) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(scopeContainerRef.current)
   }
 
   const ScopeContainerContext = getScopeContext(scope)

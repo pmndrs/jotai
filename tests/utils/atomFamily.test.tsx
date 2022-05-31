@@ -7,8 +7,6 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
-jest.mock('../../src/core/useDebugState.ts')
-
 it('new atomFamily impl', async () => {
   const myFamily = atomFamily((param: string) => atom(param))
 
