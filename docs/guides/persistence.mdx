@@ -75,6 +75,8 @@ const atomWithAsyncStorage = (key, initialValue) => {
 }
 ```
 
+Don't forget to check out the [Async documentation](./async) for more details on how to use async atoms.
+
 ### Usage in Async actions
 
 When using an asynchronous storage, the reading of the created atoms are asynchronous too. That comes with some limitations. Before `useAtom` has been called at least once, the value is not set.
@@ -109,10 +111,10 @@ const Preloader = () => {
 ```js
 const Root = () => {
   return (
-    <React.Suspense fallback={<Text>Hydrating...<Text>}>
+    <Suspense fallback={<Text>Hydrating...<Text>}>
       <Preloader /> {/* Wait for atoms to preload */}
       <App /> {/* Rest of your app */}
-    </React.Suspense>
+    </Suspense>
   )
 }
 ```

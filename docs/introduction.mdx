@@ -69,17 +69,17 @@ function DoubleCounter() {
 You can combine atoms to create a derived atom.
 
 ```jsx
-const count1 = atom(1)
-const count2 = atom(2)
-const count3 = atom(3)
+const count1Atom = atom(1)
+const count2Atom = atom(2)
+const count3Atom = atom(3)
 
-const sum = atom((get) => get(count1) + get(count2) + get(count3))
+const sum = atom((get) => get(count1Atom) + get(count2Atom) + get(count3Atom))
 ```
 
 Or if you like fp patterns ...
 
 ```jsx
-const atoms = [count1, count2, count3, ...otherAtoms]
+const atoms = [count1Atom, count2Atom, count3Atom, ...otherAtoms]
 const sum = atom((get) => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
