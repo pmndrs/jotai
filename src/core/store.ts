@@ -807,15 +807,6 @@ export const createStore = (
       versionedAtomStateMap.forEach((atomState, atom) => {
         const committedAtomState = committedAtomStateMap.get(atom)
         if (atomState !== committedAtomState) {
-          if (
-            atomState &&
-            'p' in atomState &&
-            atomState.r === committedAtomState?.i
-          ) {
-            // We want to avoid flushing a promise again (#1151)
-            // TODO There should be better implementations
-            return
-          }
           const mounted = mountedMap.get(atom)
           mounted?.l.forEach((listener) => listener(version))
         }
