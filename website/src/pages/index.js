@@ -70,7 +70,7 @@ export default function HomePage() {
               className="block mt-4">
               <img
                 src="https://storage.googleapis.com/candycode/jotai/jotai-course-banner.jpg"
-                className="block shadow-lg rounded-md sm:rounded-lg"
+                className="block shadow-lg dark:!shadow-none rounded-md sm:rounded-lg"
                 alt="Jotai course"
                 title="Jotai course"
               />
