@@ -35,7 +35,7 @@ const staticQuery = graphql`
         meta: frontmatter {
           title
           nav
-          status
+          published
         }
       }
     }
@@ -74,7 +74,7 @@ const parseDocs = (docs, section) => {
             (doc) =>
               doc.slug.startsWith(directory) &&
               doc.slug !== 'api/utils' &&
-              doc.meta.status !== 'deprecated'
+              doc.meta.published !== false
           ),
         ],
       },
