@@ -357,7 +357,7 @@ it('large atom count', async () => {
 
 it('works with an empty list (#1177)', async () => {
   const Component = () => {
-    useAtom(waitForAll([]))
+    // useAtom(waitForAll([]))
     return <span>works!</span>
   }
 
@@ -369,7 +369,5 @@ it('works with an empty list (#1177)', async () => {
     </StrictMode>
   )
 
-  /*
   await findByText('works!')
-  */
 })
