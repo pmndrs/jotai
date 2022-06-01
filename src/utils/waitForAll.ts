@@ -50,9 +50,9 @@ export function waitForAll<
   }
 
   if (Array.isArray(atoms)) {
-    // if (atoms.length) {
-    return memoizeAtom(createAtom, atoms)
-    // }
+    if (atoms.length) {
+      return memoizeAtom(createAtom, atoms)
+    }
     // return emptyArrayAtom
   }
   return createAtom()
