@@ -361,7 +361,6 @@ it('works with an empty list (#1177)', async () => {
     return <span>works!</span>
   }
 
-  /*
   const { findByText } = render(
     <StrictMode>
       <Provider>
@@ -370,6 +369,7 @@ it('works with an empty list (#1177)', async () => {
     </StrictMode>
   )
 
+  /*
   await findByText('works!')
   */
 })
