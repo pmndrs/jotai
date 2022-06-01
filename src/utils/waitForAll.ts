@@ -53,7 +53,7 @@ export function waitForAll<
     if (atoms.length) {
       return memoizeAtom(createAtom, atoms)
     }
-    // return emptyArrayAtom
+    return emptyArrayAtom
   }
   return createAtom()
 }
