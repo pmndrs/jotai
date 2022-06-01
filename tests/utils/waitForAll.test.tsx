@@ -355,7 +355,7 @@ it('large atom count', async () => {
   })
 })
 
-it.skip('works with an empty list (#1177)', async () => {
+it('works with an empty list (#1177)', async () => {
   const Component = () => {
     useAtom(waitForAll([]))
     return <span>works!</span>
