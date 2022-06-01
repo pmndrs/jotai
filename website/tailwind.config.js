@@ -24,7 +24,6 @@ module.exports = {
       blue: { ...colors.blue, 950: '#0f1d45' },
       red: { ...colors.red, 950: '#400f0f' },
       teal: { ...colors.teal, 950: '#0a2725' },
-      yellow: { ...colors.yellow, 950: '#392009' },
     },
     fontSize: {
       xs: ['0.75rem'],

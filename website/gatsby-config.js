@@ -10,6 +10,9 @@ const DOCS_QUERY = `
           title
           description
         }
+        headings(depth: h2) {
+          value
+        }
         excerpt
         rawBody
       }

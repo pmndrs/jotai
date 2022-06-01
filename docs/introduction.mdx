@@ -1,152 +1,55 @@
 ---
 title: Introduction
-description: How to use Jotai
+description: Table of contents
 nav: 0
 ---
 
+Welcome to the Jotai documentation! Jotai is a primitive and flexible state management library for React. It takes a bottom-up approach with an atomic model inspired by Recoil.
+
+## Features
+
+- Minimal API
+- TypeScript oriented
+- Tiny bundle size (3kb)
+- Many extra utils and official integrations
+- Supports Next.js and React Native
+
+## Installation
+
 `npm install jotai` or `yarn add jotai`
 
-Jotai is pronounced "joe-tie" and means "state" in Japanese.
+## Basics
 
-You can try live demos here:
-[Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) |
-[Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d).
+Learn the basic concepts and primitives of the library, discover how it compares with other solutions, and see examples of it in use.
 
-#### How does Jotai differ from Recoil?
+<TOC section="basics" />
 
-- Minimalistic API
-- No string keys
-- TypeScript oriented
+## Guides
 
-### First create a primitive atom
+These guides can help with common use cases such as async behavior, TypeScript, and Next.js.
 
-An atom represents a piece of state. All you need is to specify an initial
-value, which can be a primitive value like a string, number, object or
-array. You can create as many primitive atoms as you like.
+<TOC section="guides" />
 
-```jsx
-import { atom } from 'jotai'
+## API
 
-const countAtom = atom(0)
-const countryAtom = atom('Japan')
-const citiesAtom = atom(['Tokyo', 'Kyoto', 'Osaka'])
-const mangaAtom = atom({ 'Dragon Ball': 1984, 'One Piece': 1997, Naruto: 1999 })
-```
+Jotai has a very minimal API, exposing only a few exports from the main `jotai` bundle. Each is explained in more detail in the Core doc. Jotai also has a nice devtool for debugging and a few helpful Babel plugins.
 
-### Use the atom in your components
+<TOC section="api" />
 
-Use an atom like you'd use `React.useState`:
+## Utilities
 
-```jsx
-import { useAtom } from 'jotai'
+Jotai also includes a `jotai/utils` bundle with a variety of extra utility functions. One example is `atomWithStorage`, which includes localStorage persistence and browser tab synchronization.
 
-function Counter() {
-  const [count, setCount] = useAtom(countAtom)
-  return (
-    <h1>
-      {count}
-      <button onClick={() => setCount(c => c + 1)}>one up</button>
-```
+<TOC section="utils" />
 
-### Create derived atoms with computed values
+## Integrations
 
-A new read-only atom can be created from existing atoms by passing a read
-function as the first argument. `get` allows you to fetch the contextual value
-of any atom.
+Jotai has separate bundles for many official integrations including `atomWithQuery` for React Query and `atomWithMachine` for XState, among many others.
 
-```jsx
-const doubledCountAtom = atom((get) => get(countAtom) * 2)
+<TOC section="integrations" />
 
-function DoubleCounter() {
-  const [doubledCount] = useAtom(doubledCountAtom)
-  return <h2>{doubledCount}</h2>
-```
+## Advanced recipes
 
-## Recipes
+These recipes can help with more advanced patterns.
 
-### Creating an atom from atoms
-
-You can combine atoms to create a derived atom.
-
-```jsx
-const count1Atom = atom(1)
-const count2Atom = atom(2)
-const count3Atom = atom(3)
-
-const sum = atom((get) => get(count1Atom) + get(count2Atom) + get(count3Atom))
-```
-
-Or if you like fp patterns ...
-
-```jsx
-const atoms = [count1Atom, count2Atom, count3Atom, ...otherAtoms]
-const sum = atom((get) => atoms.map(get).reduce((acc, count) => acc + count))
-```
-
-### Derived async atoms <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
-
-You can make the read function an async function.
-
-```jsx
-const urlAtom = atom("https://json.host.com")
-const fetchUrlAtom = atom(
-  async (get) => {
-    const response = await fetch(get(urlAtom))
-    return await response.json()
-  }
-)
-
-function Status() {
-  // Re-renders the component after urlAtom changed and the async function above concludes
-  const [json] = useAtom(fetchUrlAtom)
-```
-
-### You can create a writable derived atom
-
-Specify a write function at the second argument. `get` will return the current
-value of an atom. `set` will update an atom's value.
-
-```jsx
-const decrementCountAtom = atom(
-  (get) => get(countAtom),
-  (get, set, _arg) => set(countAtom, get(countAtom) - 1),
-)
-
-function Counter() {
-  const [count, decrement] = useAtom(decrementCountAtom)
-  return (
-    <h1>
-      {count}
-      <button onClick={decrement}>Decrease</button>
-```
-
-### Write only atoms
-
-To make a write-only atom, don't define a read function by passing `null` as the
-first argument.
-
-```jsx
-const multiplyCountAtom = atom(null, (get, set, by) => set(countAtom, get(countAtom) * by))
-
-function Controls() {
-  const [, multiply] = useAtom(multiplyCountAtom)
-  return <button onClick={() => multiply(3)}>triple</button>
-```
-
-### Async actions
-
-Make the write function an async function, and call `set` when you're ready.
-
-```jsx
-const fetchCountAtom = atom(
-  (get) => get(countAtom),
-  async (_get, set, url) => {
-    const response = await fetch(url)
-    set(countAtom, (await response.json()).count)
-  }
-)
-
-function Controls() {
-  const [count, compute] = useAtom(fetchCountAtom)
-  return <button onClick={() => compute("http://count.host.com")}>compute</button>
-```
+<TOC section="advanced-recipes" />

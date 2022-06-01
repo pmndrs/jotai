@@ -1,6 +1,6 @@
 export const Stackblitz = ({ id, file }) => {
   return (
-    <div className="mb-8 overflow-hidden shadow-lg rounded-md sm:rounded-lg border-b border-gray-200">
+    <div className="mb-8 overflow-hidden shadow-lg dark:!shadow-none rounded-md sm:rounded-lg border-b border-gray-200">
       <iframe
         title={id}
         className="w-full h-[400px]"
