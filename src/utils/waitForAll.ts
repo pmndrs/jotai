@@ -3,7 +3,7 @@ import type { Atom } from 'jotai'
 import { createMemoizeAtom } from './weakCache'
 
 const memoizeAtom = createMemoizeAtom()
-const emptyArrayAtom = atom(() => [])
+// const emptyArrayAtom = atom(() => [])
 
 type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 type ResolveAtom<T> = T extends Atom<infer V> ? V : T
@@ -50,10 +50,10 @@ export function waitForAll<
   }
 
   if (Array.isArray(atoms)) {
-    if (atoms.length) {
-      return memoizeAtom(createAtom, atoms)
-    }
-    return emptyArrayAtom
+    // if (atoms.length) {
+    return memoizeAtom(createAtom, atoms)
+    // }
+    // return emptyArrayAtom
   }
   return createAtom()
 }
