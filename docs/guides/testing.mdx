@@ -60,14 +60,11 @@ In order to do that, simply use a [Provider](..api/core#provider), and export yo
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { countAtom, Counter } from './Counter'
-import { Provider } from "jotai"
+import { Provider } from 'jotai'
 
 const CounterProvider = () => {
   return (
-    <Provider
-      initialValues={[
-        [countAtom, 1],
-      ]}>
+    <Provider initialValues={[[countAtom, 1]]}>
       <Counter />
     </Provider>
   )
