@@ -337,7 +337,7 @@ it('large atom count', async () => {
     </StrictMode>
   )
 
-  waitFor(() => {
+  await waitFor(() => {
     expect(result).toEqual(createArray(passingCount))
   })
 
@@ -350,7 +350,7 @@ it('large atom count', async () => {
     </StrictMode>
   )
 
-  waitFor(() => {
+  await waitFor(() => {
     expect(result).toEqual(createArray(failingCount))
   })
 })
