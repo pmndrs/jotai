@@ -254,15 +254,18 @@ it('a derived atom from an async atomFamily (#351)', async () => {
 
   await findByText('loading')
   await findByText('derived: 11')
+  await new Promise((r) => setTimeout(r, 10))
   const commitCountAfterMount = commitCount
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 12')
+  await new Promise((r) => setTimeout(r, 10))
   expect(commitCount).toBe(commitCountAfterMount + 1)
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 13')
+  await new Promise((r) => setTimeout(r, 10))
   expect(commitCount).toBe(commitCountAfterMount + 2)
 })

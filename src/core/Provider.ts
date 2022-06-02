@@ -28,7 +28,7 @@ export const Provider = ({
    */
   unstable_enableVersionedWrite?: boolean
 }>) => {
-  const [version, setVersion] = useState<VersionObject>()
+  const [version, setVersion] = useState<VersionObject>({})
   useEffect(() => {
     if (version) {
       ;(scopeContainerRef.current as ScopeContainer).s[COMMIT_ATOM](

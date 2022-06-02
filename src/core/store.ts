@@ -805,7 +805,8 @@ export const createStore = (
     if (version) {
       const versionedAtomStateMap = getVersionedAtomStateMap(version)
       versionedAtomStateMap.forEach((atomState, atom) => {
-        if (atomState !== committedAtomStateMap.get(atom)) {
+        const committedAtomState = committedAtomStateMap.get(atom)
+        if (atomState !== committedAtomState) {
           const mounted = mountedMap.get(atom)
           mounted?.l.forEach((listener) => listener(version))
         }
@@ -819,6 +820,11 @@ export const createStore = (
         const atomState = getAtomState(undefined, atom)
         if (atomState && atomState.d !== prevAtomState?.d) {
           mountDependencies(atom, atomState, prevAtomState?.d)
+        }
+        if (atomState && 'p' in atomState && atomState.r === prevAtomState?.i) {
+          // We want to avoid flushing a promise again (#1151)
+          // TODO There should be better implementations
+          return
         }
         const mounted = mountedMap.get(atom)
         mounted?.l.forEach((listener) => listener())
