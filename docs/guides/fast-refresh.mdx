@@ -1,0 +1,39 @@
+---
+title: Fast Refresh
+description: Using React's Fast Refresh with Jotai
+nav: 3.12
+---
+
+In order to deliver the best Developer Experience (DX), we're working on being compatible with Fast Refresh from the ground up.
+
+### Caveats
+
+Currently, editing a file will result in resetting the state of all the declared atoms inside it.
+In order to best avoid resetting, you can split your atoms in seperate files. This way, the state is reset according to more granular file updates.
+
+```ts
+// file: atoms/atom1.ts
+const atom1 = atom(0)
+// Refreshing this file will only reset this atom
+```
+
+```ts
+// file: atoms/atom2.ts
+const atom2 = atom(0)
+// Refreshing this file will only reset this atom
+```
+
+```ts
+// file: App.tsx
+import { atom1 } from './atoms/atom1'
+import { atom2 } from './atoms/atom2'
+// Other files can be refreshed and don't reset the state
+```
+
+However, please note that in some edge-cases, atoms will still reset even if you didn't edit the file containing its declaration, and it will be hard to predict and understand why. If you're in doubt, reload
+
+### Contribution
+
+Fast Refresh is an incredible tool that really improves the DX experience, and we need your help to support it. We're very much open to any contribution on that part.
+
+Thank you
