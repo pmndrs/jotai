@@ -60,7 +60,7 @@ For async behavior, please refer to the [async](../guides/async.mdx) doc.
 `set` in the write function is to write atom value.
 It will invoke the write function of the target atom.
 
-Atom configs can be created anywhere, but referential equality is important.
+**Note**: Atom configs can be created anywhere, but referential equality is important.
 They can be created dynamically too.
 To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memoization, use `useMemo`.
 
@@ -69,6 +69,15 @@ const Component = ({ value }) => {
   const valueAtom = useMemo(() => atom({ value }), [value])
   // ...
 }
+```
+
+**Note**: We mentioned that our atoms can contain any kind of data, it can be a string, Blob, Observer, anything really. There is just one exception. Because derived atoms are defined using a function, jotai will not understand if we pass it a function that isn't exactly a pure getter.
+So what you can do is simply wrap your function in an object.
+```js
+const doublerAtom = atom({ callback: (n) => n * 2 })
+// Usage
+const [doubler] = useAtom(doublerAtom)
+const doubledValue = doubler.callback(50) // Will compute to 100
 ```
 
 ## useAtom
@@ -133,15 +142,4 @@ const SubTree = () => (
     <Child />
   </Provider>
 )
-```
-
-## Store functions in atoms
-
-We mentioned that our atoms can contain any kind of data, it can be a string, Blob, Observer, anything really. There is just one exception. Because read-only atoms are defined using a function, jotai will not understand if we give it a function that isn't exactly a pure getter.
-So what you can do is simply wrap your function in an object.
-```js
-const doublerAtom = atom({ callback: (n) => n * 2 })
-// Usage
-const [doubler] = useAtom(doublerAtom)
-const doubledValue = doubler.callback(50) // Will compute to 100
 ```
