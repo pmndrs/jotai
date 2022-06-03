@@ -202,3 +202,13 @@ This is not only for read derived atoms, but also for write action atoms.
 
 Essentially, atoms are like functions, so composing atoms is
 like composing functions with other functions.
+
+**Note**: We mentioned that our atoms can contain any kind of data, it can be a string, Blob, Observer, anything really. There is just one exception. Because derived atoms are defined using a function, Jotai will not understand if we pass it a function that isn't exactly a pure getter.
+So what you can do is simply wrap your function in an object.
+
+```js
+const doublerAtom = atom({ callback: (n) => n * 2 })
+// Usage
+const [doubler] = useAtom(doublerAtom)
+const doubledValue = doubler.callback(50) // Will compute to 100
+```
