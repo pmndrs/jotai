@@ -38,10 +38,10 @@ Then, when the user clicks one toggle, we update it
 
 ```tsx
 const Item = ({ index, val }) => {
-	const setToggles = useSetAtom(togglesAtom)
-	const onPress = () => {
-		setToggles(old => [...old, [index]: !val])
-	}
+  const setToggles = useSetAtom(togglesAtom)
+  const onPress = () => {
+    setToggles(old => [...old, [index]: !val])
+  }
 }
 
 const List = () => {
@@ -67,13 +67,13 @@ But now it means we have to handle the changes locally in each `Item`
 
 ```tsx
 const Item = ({ index, initialValue }) => {
-	const setToggles = useSetAtom(togglesAtom)
-	const [toggle, setToggle] = React.useMemo() => useAtom(atom(val)), [])
+  const setToggles = useSetAtom(togglesAtom)
+  const [toggle, setToggle] = React.useMemo() => useAtom(atom(val)), [])
 
-	const onPress = () => {
-		setToggle(!toggle) // Update locally
-		setToggles(old => [...old, [index]: !val]) // Update the main atom
-	}
+  const onPress = () => {
+    setToggle(!toggle) // Update locally
+    setToggles(old => [...old, [index]: !val]) // Update the main atom
+  }
 }
 ```
 
