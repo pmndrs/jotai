@@ -70,7 +70,7 @@ const CounterProvider = () => {
   )
 }
 
-test('should not increment on max (100)', () => {
+test('should increment counter', () => {
   render(<CounterProvider />)
 
   const counter = screen.getByText('100')
