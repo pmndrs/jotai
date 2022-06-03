@@ -53,9 +53,8 @@ test('should increment counter', () => {
 
 ## Injected Values
 
-You may want to inject arbitrary values to your atom before starting some tests.
-Maybe the counter should be limmited to 100. Let's see how to test that it doesn't increase after reaching 100.
-In order to do that, simply use a [Provider](..api/core#provider), and export your atom to be filled-in.
+You may want to setup atom values before starting some tests, for example you may want to limit your counter to 100, and test this behaviour. So you would need to set the current value to 100 to check if incrementing is prevented as expected.
+In order to do that, simply use a [Provider](..api/core#provider), and export your atom for to be filled-in.
 
 ```tsx
 import React from 'react'
@@ -65,7 +64,7 @@ import { Provider } from 'jotai'
 
 const CounterProvider = () => {
   return (
-    <Provider initialValues={[[countAtom, 100]]}>
+    <Provider initialValues={[[countAtom, 1]]}>
       <Counter />
     </Provider>
   )
