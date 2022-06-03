@@ -112,6 +112,8 @@ const Component = () => {
 }
 ```
 
+**Note**: Remember that React is responsible for calling your component. Meaning it has to be idempotent, ready to be called multiple times. You will often see an extra re-render even if no props or atoms have changed. An extra re-render without a commit is an expected behavior. It is actually the default behavior of useReducer in React 18.
+
 ## Provider
 
 Provider is to provide state for a component sub tree.
