@@ -36,7 +36,7 @@ const App = () => {
 }
 ```
 
-Alternatively, you could avoid the inherent suspending that jotai does for you, by wrapping your atoms with the [`loadable` API](../utils/loadable.mdx).
+Alternatively, you could avoid the inherent suspending that Jotai does for you, by wrapping your atoms with the [`loadable` API](../utils/loadable.mdx).
 
 **Note**: An atom becomes async not only if the atom read function is async,
 but also if one or more of its dependencies are async.
@@ -95,7 +95,7 @@ const Component = () => {
 
 ## Async sometimes
 
-An interesting pattern that can be achieved with jotai are is switching from async to sync to trigger suspending when wanted.
+An interesting pattern that can be achieved with Jotai are is switching from async to sync to trigger suspending when wanted.
 
 ```jsx
 const request = async () => fetch('https://...').then((res) => res.json())
@@ -120,7 +120,7 @@ const baseAtom = atom(new Promise(() => {})) // Will be suspend until set otherw
 
 ## Suspense
 
-Async support is first class in jotai. It fully leverages React Suspense at its core.
+Async support is first class in Jotai. It fully leverages React Suspense at its core.
 
 > Technically, Suspense usage other than React.lazy is still unsupported / undocumented in React 17. If this is blocking, so you can still use the [`loadable` API](../utils/loadable.mdx) to avoid suspending
 
@@ -138,7 +138,7 @@ const App = () => (
 )
 ```
 
-Having more `<Suspense>`s in the component tree is also possible and must be considered to profit from jotai inherent handling at the best.
+Having more `<Suspense>`s in the component tree is also possible and must be considered to profit from Jotai inherent handling at best.
 
 <details>
 <summary>Async write atom behavior until v1.3.9</summary>
