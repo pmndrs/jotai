@@ -1,0 +1,74 @@
+---
+title: Performance
+description: How to limit extra re-renders
+nav: 3.12
+---
+
+Jotai & React gives us quite a few tools to manage the re-renders that happen in the app lifecycle. 
+First, please read about the difference [between render & commit](https://reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html#browsing-commits), because that's very important to understand before going further.
+
+### Available tools
+
+- `selectAtom` subscribe to specific part of a large object and only re-render on value change
+- `focusAtom` same as selectAtom, but creating a new atom for the part, giving a setter to update that specific part easily
+- `useMemo` & `useCallback` you can always use these to limit changes to a specific array of dependencies
+- You can also break down large object atoms to more primitive atoms
+
+### Example pattern
+
+An example of pattern that can be interesting is to use `useMemo` to read an atom value only once, in order to prevent further renders even if the atom changes down the line.
+
+Let's imagine a case, you have a list of toggles. Let's view 2 approaches for it:
+
+## Standard pattern
+
+We create our store of 3 toggles set to false
+
+```tsx
+const togglesAtom = atom([false, false, false])
+```
+
+Then, when the user clicks one toggle, we update it
+
+```tsx
+const Item = ({ index, val }) => {
+	const setToggles = useSetAtom(togglesAtom)
+	const onPress = () => {
+		setToggles(old => [...old, [index]: !val])
+	}
+}
+
+const List = () => {
+  const [toggles] = useAtom(togglesAtom)
+  return toggles.map((val, index) => <Item id={index} val={val} />)
+}
+```
+
+With this approach, updating any toggle will cause all `<Item />` to re-render.
+
+## Memoized pattern
+
+Now let's try to memoize the value on the first render
+
+```tsx
+const List = () => {
+  const [toggles] = useMemo(() => useAtom(togglesAtom), [])
+  return toggles.map((val, index) => <Item id={index} initialValue={val} />)
+}
+```
+
+But now it means we have to handle the changes locally in each `Item`
+
+```tsx
+const Item = ({ index, initialValue }) => {
+	const setToggles = useSetAtom(togglesAtom)
+	const [toggle, setToggle] = React.useMemo() => useAtom(atom(val)), [])
+
+	const onPress = () => {
+		setToggle(!toggle) // Update locally
+		setToggles(old => [...old, [index]: !val]) // Update the main atom
+	}
+}
+```
+
+Now if you update one toggle, it will only re-render the corresponding `<Item />`
