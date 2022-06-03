@@ -6,7 +6,7 @@ nav: 3.12
 
 In order to deliver the best Developer Experience (DX), we're working on being compatible with Fast Refresh from the ground up.
 
-### Caveats
+### Developer experience issue
 
 Currently, editing a file will result in resetting the state of all the declared atoms inside it.
 In order to best avoid resetting, you can split your atoms in seperate files. This way, the state is reset according to more granular file updates.
@@ -31,6 +31,17 @@ import { atom2 } from './atoms/atom2'
 ```
 
 However, please note that in some edge-cases, atoms will still reset even if you didn't edit the file containing its declaration, and it will be hard to predict and understand why. If you're in doubt, reload
+
+### Our solution
+
+In order to prevent the reset of your atoms when you update a file, we setup a babel plugin that fixes the issue.
+Just plug it in your babel configuration file and restart your hot-reload server. See [Babel documentation](../api/babel.mdx) for more info.
+
+```json
+{
+  "plugins": ["jotai/babel/plugin-react-refresh"]
+}
+```
 
 ### Contribution
 
