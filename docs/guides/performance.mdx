@@ -7,20 +7,26 @@ nav: 3.12
 Jotai & React gives us quite a few tools to manage the re-renders that happen in the app lifecycle.
 First, please read about the difference [between render & commit](https://reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html#browsing-commits), because that's very important to understand before going further.
 
-### Available tools
+### Available tools & logic
 
+There are 2 main ideas:
+
+First is to always make heavy computation outside of the React lifecycle (in actions for example), because React works by calling your component multiple times to check for new commits to do. Always remember to make your renders as cheap as possible.
+
+Second is to use the Jotai & React tools to prevent (heavy) re-renders.
+
+- You can break down large object atoms to more primitive atoms
 - `selectAtom` subscribe to specific part of a large object and only re-render on value change
 - `focusAtom` same as selectAtom, but creating a new atom for the part, giving a setter to update that specific part easily
 - `useMemo` & `useCallback` you can always use these to limit changes to a specific array of dependencies
-- You can also break down large object atoms to more primitive atoms
 
-### Example pattern
+## "Stop observing" pattern
 
 An example of pattern that can be interesting is to use `useMemo` to read an atom value only once, in order to prevent further renders even if the atom changes down the line.
 
 Let's imagine a case, you have a list of toggles. Let's view 2 approaches for it:
 
-## Standard pattern
+### Standard pattern
 
 We create our store of 3 toggles set to false
 
@@ -46,7 +52,7 @@ const List = () => {
 
 With this approach, updating any toggle will cause all `<Item />` to re-render.
 
-## Memoized pattern
+### Memoized pattern
 
 Now let's try to memoize the value on the first render
 
