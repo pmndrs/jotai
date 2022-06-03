@@ -8,8 +8,8 @@ Jotai provides two ways of debugging atoms, **React Dev Tools** and **Redux Dev 
 
 ## Debug labels
 
-It is worth mentioning that we have a concept called **Debug labels** in jotai which may help us with debugging.
-By default each jotai state has the label like `1:<no debugLabel>` with number being internal `key` assigned to each atom automatically. But you can add labels to atoms to help you distinguish them more easily with `debugLabel`.
+It is worth mentioning that we have a concept called **Debug labels** in Jotai which may help us with debugging.
+By default each Jotai state has the label like `1:<no debugLabel>` with number being internal `key` assigned to each atom automatically. But you can add labels to atoms to help you distinguish them more easily with `debugLabel`.
 
 ```js
 const countAtom = atom(0)
@@ -31,7 +31,7 @@ is used inside custom hooks. Keep in mind that it only works in dev mode
 
 ### useAtom
 
-`useAtom` calls `useDebugValue` for atom values, so if you select the component that consumes jotai atoms in React Dev Tools, you would see "Atom" hooks for each atom that is used in the component along with the value it has right now.
+`useAtom` calls `useDebugValue` for atom values, so if you select the component that consumes Jotai atoms in React Dev Tools, you would see "Atom" hooks for each atom that is used in the component along with the value it has right now.
 
 ### useAtomsDebugValue
 

@@ -3,8 +3,8 @@ title: Primitives
 nav: 1.02
 ---
 
-State in Jotai is a set of atoms.
-An atom is a piece of state.
+An atom in Jotai represents a piece of state. It can hold any value ranging from number, boolean or string to complex structures like arrays and objects. You can consider them the building blocks of your app state.
+
 Unlike useState in React, atoms are not tied to specific components.
 Let's see how to define and use atoms.
 
@@ -60,7 +60,7 @@ For async behavior, please refer to the [async](../guides/async.mdx) doc.
 `set` in the write function is to write atom value.
 It will invoke the write function of the target atom.
 
-Atom configs can be created anywhere, but referential equality is important.
+**Note**: Atom configs can be created anywhere, but referential equality is important.
 They can be created dynamically too.
 To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memoization, use `useMemo`.
 
