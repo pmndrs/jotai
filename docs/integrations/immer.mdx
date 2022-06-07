@@ -19,7 +19,7 @@ yarn add immer
 `atomWithImmer` creates a new atom similar to the regular [`atom`](../api/core.mdx#atom) [atom] with a different `writeFunction`. In this bundle, we don't have read-only atoms, because the point of these functions is the immer produce(mutability) function.
 The signature of writeFunction is `(get, set, update: (draft: Draft<Value>) => void) => void`.
 
-```js
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithImmer } from 'jotai/immer'
 
@@ -48,7 +48,7 @@ Check this example with atomWithImmer:
 
 `withImmer` takes an atom and returns a derived atom, same as `atomWithImmer` it has a different `writeFunction`.
 
-```js
+```jsx
 import { useAtom, atom } from 'jotai'
 import { withImmer } from 'jotai/immer'
 

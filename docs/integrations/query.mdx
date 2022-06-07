@@ -26,7 +26,7 @@ yarn add react-query
 
 > A query is a declarative dependency on an asynchronous source of data that is tied to a unique key. A query can be used with any Promise based method (including GET and POST methods) to fetch data from a server.
 
-```js
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithQuery } from 'jotai/query'
 
@@ -53,7 +53,7 @@ const UserData = () => {
 
 A notable difference between a standard query atom is the additional option `getNextPageParam` and `getPreviousPageParam`, which is what you'll use to instruct the query on how to fetch any additional pages.
 
-```js
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithInfiniteQuery } from 'jotai/query'
 

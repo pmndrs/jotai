@@ -64,7 +64,7 @@ It will invoke the write function of the target atom.
 They can be created dynamically too.
 To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memoization, use `useMemo`.
 
-```jsx
+```js
 const Component = ({ value }) => {
   const valueAtom = useMemo(() => atom({ value }), [value])
   // ...
@@ -97,7 +97,7 @@ The behavior depends on how the write function is implemented.
 
 **Note:** as mentioned in the _atom_ section, you have to take care of handling the reference of your atom, otherwise it may enter an infinite loop
 
-```ts
+```js
 const stableAtom = atom(0)
 const Component = () => {
   const [atomValue] = useAtom(atom(0)) // This will cause an infinite loop

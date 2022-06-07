@@ -51,7 +51,7 @@ const anotherAtom = atom((get) => get(asyncAtom) / 2)
 
 ```js
 const asyncAtom = atom(async (get) => ...)
-const writeAtom = atom(null, (get, set, payload: any) => {
+const writeAtom = atom(null, (get, set, payload) => {
   get(asyncAtom) // This throws an error if "asyncAtom" is still in pending state
 })
 ```
@@ -78,7 +78,7 @@ const Root = () => {
 
 Async write atoms are another kind of async atom. When the `write` function of atom returns a promise.
 
-```jsx
+```js
 const countAtom = atom(1)
 const asyncIncrementAtom = atom(null, async (get, set) => {
   // await something
@@ -97,15 +97,13 @@ const Component = () => {
 
 An interesting pattern that can be achieved with Jotai are is switching from async to sync to trigger suspending when wanted.
 
-```jsx
+```js
 const request = async () => fetch('https://...').then((res) => res.json())
 const baseAtom = atom(0)
 const Component = () => {
   const [value, setValue] = useAtom(baseAtom)
   React.useEffect(() => {
-    setTimeout(() => {
-      setValue(request()) // Will suspend until request resolves
-    }, 2000)
+    setValue(request()) // Will suspend until request resolves
   }, [])
 }
 ```
@@ -114,7 +112,7 @@ const Component = () => {
 
 Sometimes you may want to suspend until an unpredetermined moment (or never).
 
-```jsx
+```js
 const baseAtom = atom(new Promise(() => {})) // Will be suspend until set otherwise
 ```
 

@@ -14,27 +14,27 @@ This `babel` plugin adds a `debugLabel` to every atom, based on its identifer.
 
 The plugin transforms this code:
 
-```ts
+```js
 export const countAtom = atom(0)
 ```
 
 Into:
 
-```ts
+```js
 export const countAtom = atom(0)
 countAtom.debugLabel = 'countAtom'
 ```
 
 Default exports are also handled, based on the file naming:
 
-```ts
+```js
 // countAtom.ts
 export default atom(0)
 ```
 
 Which transform into:
 
-```ts
+```js
 // countAtom.ts
 const countAtom = atom(0)
 countAtom.debugLabel = 'countAtom'

@@ -27,14 +27,14 @@ yarn add zustand
 `atomWithStore` creates a new atom with zustand store.
 It's two-way binding and you can change the value from both ends.
 
-```js
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithStore } from 'jotai/zustand'
 import create from 'zustand/vanilla'
 
 const store = create(() => ({ count: 0 }))
 const stateAtom = atomWithStore(store)
-const Counter: React.FC = () => {
+const Counter = () => {
   const [state, setState] = useAtom(stateAtom)
 
   return (

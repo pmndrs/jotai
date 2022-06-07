@@ -125,7 +125,7 @@ As a limitation for this API, we need to put `useAtomsDevtools` in a component w
 
 ### Example
 
-```tsx
+```jsx
 const countAtom = atom(0);
 const doubleCountAtom = atom((get) => get(countAtom) * 2);
 
@@ -136,7 +136,7 @@ function Counter() {
   ...
 }
 
-const AtomsDevtools = ({ children }: { children: ReactElement }) => {
+const AtomsDevtools = ({ children }) => {
   useAtomsDevtools('demo')
   return children
 }
@@ -169,7 +169,7 @@ Be careful using this hook because it will cause the component to re-render for 
 
 ### Example
 
-```tsx
+```jsx
 import { Provider } from 'jotai'
 import { useAtomsSnapshot } from 'jotai/devtools'
 
@@ -212,14 +212,14 @@ This hook is primarily meant for debugging and devtools use cases.
 
 ### Example
 
-```tsx
+```jsx
 import { Provider } from 'jotai'
 import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
 
 const petAtom = atom('cat')
 const colorAtom = atom('blue')
 
-const UpdateSnapshot: React.FC = () => {
+const UpdateSnapshot = () => {
   const snapshot = useAtomsSnapshot()
   const goToSnapshot = useGotoAtomsSnapshot()
   return (

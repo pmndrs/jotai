@@ -108,7 +108,7 @@ const Preloader = () => {
 }
 ```
 
-```js
+```jsx
 const Root = () => {
   return (
     <Suspense fallback={<Text>Hydrating...<Text>}>
@@ -126,7 +126,7 @@ const Root = () => {
 const storage = { ...createJSONStorage(() => AsyncStorage), delayInit: true }
 const userId = atomWithStorage('user-id-key', null, storage)
 const userInfo = atom({})
-const fetchUserInfo = atom(null, async (get, set, payload: any) => {
+const fetchUserInfo = atom(null, async (get, set, payload) => {
   let id = get(userId)
   if (id === null) {
     // We make sure to preload if no value has yet been loaded
@@ -164,7 +164,7 @@ const serializeAtom = atom<
   }
 })
 
-const Persist: React.FC = () => {
+const Persist = () => {
   const [, dispatch] = useAtom(serializeAtom)
   const save = () => {
     dispatch({
@@ -225,7 +225,7 @@ const serializeAtom = atom<
   }
 })
 
-const Persist: React.FC = () => {
+const Persist = () => {
   const [, dispatch] = useAtom(serializeAtom)
   const save = () => {
     dispatch({
