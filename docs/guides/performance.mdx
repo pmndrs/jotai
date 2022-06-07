@@ -7,11 +7,83 @@ nav: 3.12
 Jotai & React gives us quite a few tools to manage the re-renders that happen in the app lifecycle.
 First, please read about the difference [between render & commit](https://reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html#browsing-commits), because that's very important to understand before going further.
 
-### Available tools & logic
+### Cheap renders
 
-There are 2 main ideas:
+As seen in the [core section](../api/core.mdx), React 18 default behaviour (and overall good practice) is to make sure your component functions are *idempotent*.
+They will be called multiple times in the render phase, even at mount. So we need to keep our renders cheap at all cost!
 
-First is to always make heavy computation outside of the React lifecycle (in actions for example), because React works by calling your component multiple times to check for new commits to do. Always remember to make your renders as cheap as possible.
+#### Heavy computation
+
+Always make heavy computation outside of the React lifecycle (in actions for example)
+
+Dont's:
+```js
+// Heavy computation for each item
+const selector = (s) => s.filter(heavyComputation)
+const Profile = () => {
+  const [computed] = useAtom(selectAtom(friendsAtom, selector))
+}
+```
+Do's:
+```js
+const friendsAtom = atom([])
+const fetchFriendsAtom = atom(null, async (get, set, payload) => {
+  // Fetch all friends
+  const res = await fetch('https://...')
+  // Make heavy computation once only
+  const computed = res.filter(heavyComputation)
+  set(friendsAtom, computed)
+})
+// Usage in components
+const Profile = () => {
+  const [friends] = useAtom(friendsAtom)
+}
+```
+
+#### Small components
+
+Observed atoms should only re-render small parts of your application that required an update. The less comparison React has to make, the shorter your render time will be.
+
+Dont's:
+```jsx
+const Profile = () => {
+  const [name] = useAtom(nameAtom)
+  const [ageAtom] = useAtom(ageAtom)
+  return (
+    <>
+      <div>{name}</div>
+      <div>{age}</div>
+    </>
+  )
+}
+```
+Do's:
+```jsx
+const NameComponent = () => {
+  const [name] = useAtom(nameAtom)
+  return (<div>{name}</div>)
+}
+const AgeComponent = () => {
+  const [age] = useAtom(ageAtom)
+  return (<div>{age}</div>)
+}
+const Profile = () => {
+  return (
+    <>
+      <NameComponent />
+      <AgeComponent />
+    </>
+  )
+}
+```
+
+### Render on demand
+
+Usually, the main performance overhead will come from re-rendering parts of your app that did not need to, or way more than they should.
+
+We have 
+
+First is to always  , because React works by calling your component multiple times to check for new commits to do. Always remember to make your renders as cheap as possible.
 
 Second is to use the Jotai & React tools to prevent (heavy) re-renders.
 
@@ -19,6 +91,13 @@ Second is to use the Jotai & React tools to prevent (heavy) re-renders.
 - `selectAtom` subscribe to specific part of a large object and only re-render on value change
 - `focusAtom` same as selectAtom, but creating a new atom for the part, giving a setter to update that specific part easily
 - `useMemo` & `useCallback` you can always use these to limit changes to a specific array of dependencies
+
+#### Frequent or rare updates
+
+Ask yourself whether your atom is usually going to be frequently update or more rarely.
+Let's imagine you store in an atom an object that changes almost every second, it may not be best suited to "focus" on a specific properties of this object using `focusAtom`, because anyway they will all re-render in the same time, so best adding no overhead and not create any more atoms.
+
+On the other hand, if your object has properties that rarely change, and most importantly, that change independently from the other properties, then you may want to use `focusAtom` or `selectAtom` to prevent un-necessary renders.
 
 ## "Stop observing" pattern
 
