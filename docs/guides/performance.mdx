@@ -9,7 +9,7 @@ First, please read about the difference [between render & commit](https://reactj
 
 ### Cheap renders
 
-As seen in the [core section](../api/core.mdx), React 18 default behaviour (and overall good practice) is to make sure your component functions are *idempotent*.
+As seen in the [core section](../api/core.mdx), React 18 default behaviour (and overall good practice) is to make sure your component functions are _idempotent_.
 They will be called multiple times in the render phase, even at mount. So we need to keep our renders cheap at all cost!
 
 #### Heavy computation
@@ -17,6 +17,7 @@ They will be called multiple times in the render phase, even at mount. So we nee
 Always make heavy computation outside of the React lifecycle (in actions for example)
 
 Dont's:
+
 ```js
 // Heavy computation for each item
 const selector = (s) => s.filter(heavyComputation)
@@ -24,7 +25,9 @@ const Profile = () => {
   const [computed] = useAtom(selectAtom(friendsAtom, selector))
 }
 ```
+
 Do's:
+
 ```js
 const friendsAtom = atom([])
 const fetchFriendsAtom = atom(null, async (get, set, payload) => {
@@ -45,6 +48,7 @@ const Profile = () => {
 Observed atoms should only re-render small parts of your application that required an update. The less comparison React has to make, the shorter your render time will be.
 
 Dont's:
+
 ```jsx
 const Profile = () => {
   const [name] = useAtom(nameAtom)
@@ -57,15 +61,17 @@ const Profile = () => {
   )
 }
 ```
+
 Do's:
+
 ```jsx
 const NameComponent = () => {
   const [name] = useAtom(nameAtom)
-  return (<div>{name}</div>)
+  return <div>{name}</div>
 }
 const AgeComponent = () => {
   const [age] = useAtom(ageAtom)
-  return (<div>{age}</div>)
+  return <div>{age}</div>
 }
 const Profile = () => {
   return (
