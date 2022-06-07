@@ -40,7 +40,7 @@ const reducer = (state = initialState, action: { type: 'INC' }) => {
 const store = createStore(reducer)
 const storeAtom = atomWithStore(store)
 
-const Counter: React.FC = () => {
+const Counter = () => {
   const [state, dispatch] = useAtom(storeAtom)
 
   return (

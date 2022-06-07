@@ -164,7 +164,7 @@ const serializeAtom = atom<
   }
 })
 
-const Persist: React.FC = () => {
+const Persist = () => {
   const [, dispatch] = useAtom(serializeAtom)
   const save = () => {
     dispatch({
@@ -225,7 +225,7 @@ const serializeAtom = atom<
   }
 })
 
-const Persist: React.FC = () => {
+const Persist = () => {
   const [, dispatch] = useAtom(serializeAtom)
   const save = () => {
     dispatch({
