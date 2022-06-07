@@ -4,7 +4,7 @@ title: atomWithStorage
 
 Ref: https://github.com/pmndrs/jotai/pull/394
 
-```ts
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 
@@ -78,7 +78,7 @@ const TextBox = () => {
 You can use any library that implements `getItem`, `setItem` & `removeItem`.
 Let's say you would use the standard AsyncStorage provided by the community.
 
-```jsx
+```js
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 

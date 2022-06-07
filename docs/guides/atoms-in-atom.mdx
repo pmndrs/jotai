@@ -71,7 +71,7 @@ const Component = () => {
 
 It's possible to create a derived atom.
 
-```jsx
+```js
 const derivedNameAtom = atom((get) => {
   const nameAtom = get(showingNameAtom)
   return get(nameAtom)
@@ -124,7 +124,7 @@ It is important to note that `anAtom.toString()` returns a unique id, which can 
 
 ### Hint for TypeScript users
 
-```tsx
+```jsx
 <Counter countAtom={countAtom} key={`${countAtom}`} />
 ```
 

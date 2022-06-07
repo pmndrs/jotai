@@ -27,14 +27,14 @@ yarn add valtio
 `atomWithProxy` creates a new atom with valtio proxy.
 It's two-way binding and you can change the value from both ends.
 
-```js
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithProxy } from 'jotai/valtio'
 import { proxy } from 'valtio/vanilla'
 
 const proxyState = proxy({ count: 0 })
 const stateAtom = atomWithProxy(proxyState)
-const Counter: React.FC = () => {
+const Counter = () => {
   const [state, setState] = useAtom(stateAtom)
 
   return (

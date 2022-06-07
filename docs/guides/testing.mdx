@@ -15,7 +15,7 @@ Here's an example using [React testing library](https://github.com/testing-libra
 
 `Counter.tsx`:
 
-```tsx
+```jsx
 import { atom, useAtom } from 'jotai'
 
 const countAtom = atom(0)
@@ -31,9 +31,9 @@ export function Counter() {
 }
 ```
 
-`Counter.test.tsx`:
+`Counter.test.ts`:
 
-```tsx
+```jsx
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { Counter } from './Counter'
@@ -60,7 +60,7 @@ Here's an example below:
 
 `countAtom.ts`:
 
-```tsx
+```ts
 import { useAtom } from 'jotai'
 import { atomWithReducer } from 'jotai/utils'
 
@@ -79,7 +79,7 @@ export const countAtom = atomWithReducer(0, reducer)
 
 `countAtom.test.ts`:
 
-```tsx
+```ts
 import { renderHook, act } from '@testing-library/react-hooks'
 import { useAtom } from 'jotai'
 import { countAtom } from './countAtom'

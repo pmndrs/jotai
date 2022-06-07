@@ -21,7 +21,7 @@ and when the derived atom is updated, the derivee is notified of the update, and
 
 See this:
 
-```typescript
+```js
 const baseAtom = atom({ a: 5 }) // PrimitiveAtom<{a: number}>
 const derivedAtom = focusAtom(baseAtom, (optic) => optic.prop('a')) // PrimitiveAtom<number>
 ```
