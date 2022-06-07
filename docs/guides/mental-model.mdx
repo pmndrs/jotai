@@ -1,0 +1,29 @@
+---
+title: React Native
+description: Using Jotai in React Native
+nav: 3.13
+---
+
+Jotai is an awesome library that will make you return to the basics of React development & keep everything simple.
+
+### From scratch
+
+Before trying to compare Jotai with what we may have known previously, let's just dive straight into something very simple.
+
+The React world is very much like our world, it's a big set of small entities, we call them components, and we know that they have their own state. Structuring your components to interact altogether will create your app.
+
+Now, the Jotai world also has its small entities, atoms, and they also have their state. Composing atoms will create your app state!
+
+Jotai considers anything to be an atom, so you may say: `Huh, I need objects and arrays, filter them and then sort them out`.
+And here's the beauty of it, Jotai gracefully lets you create dumb atoms derivated from even more dumb atoms.
+
+If, for example, I have a page with 2 tabs: online friends and offline friends.
+I will have 2 atoms simply derivating from a common, dumber source.
+
+```js
+const dumbAtom = atom([{ name: 'Friend 1', online: false }])
+const onlineAtom = atom(get => get(dumbAtom).filter(item => item.online))
+const offlineAtom = atom(get => get(dumbAtom).filter(item => item.online))
+```
+
+And you could keep going on complexity forever.
