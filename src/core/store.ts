@@ -821,9 +821,15 @@ export const createStore = (
         if (atomState && atomState.d !== prevAtomState?.d) {
           mountDependencies(atom, atomState, prevAtomState?.d)
         }
-        if (atomState && 'p' in atomState && atomState.r === prevAtomState?.i) {
-          // We want to avoid flushing a promise again (#1151)
-          // TODO There should be better implementations
+        if (
+          prevAtomState &&
+          'i' in prevAtomState &&
+          atomState &&
+          !('i' in atomState)
+        ) {
+          // We don't want to notify listeners
+          // to avoid flushing a promise again (#1151)
+          // and avoid extra re-renders (#1213).
           return
         }
         const mounted = mountedMap.get(atom)
