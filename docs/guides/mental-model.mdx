@@ -1,6 +1,6 @@
 ---
-title: React Native
-description: Using Jotai in React Native
+title: Mental Modal
+description: Think Jotai, think simple!
 nav: 3.13
 ---
 
@@ -22,8 +22,8 @@ I will have 2 atoms simply derivating from a common, dumber source.
 
 ```js
 const dumbAtom = atom([{ name: 'Friend 1', online: false }])
-const onlineAtom = atom(get => get(dumbAtom).filter(item => item.online))
-const offlineAtom = atom(get => get(dumbAtom).filter(item => item.online))
+const onlineAtom = atom((get) => get(dumbAtom).filter((item) => item.online))
+const offlineAtom = atom((get) => get(dumbAtom).filter((item) => item.online))
 ```
 
 And you could keep going on complexity forever.
