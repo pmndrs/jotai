@@ -9,8 +9,8 @@ First, please read about the difference [between render & commit](https://reactj
 
 ### Cheap renders
 
-As seen in the [core section](../api/core.mdx), React 18 default behaviour (and overall good practice) is to make sure your component functions are _idempotent_.
-They will be called multiple times in the render phase, even at mount. So we need to keep our renders cheap at all cost!
+As seen in the [core section](../api/core.mdx), due to React 18 default behaviour (but overall good practice), you have to make sure your component functions are _idempotent_.
+They will be called multiple times during the render phase, even at mount. So we need to keep our renders cheap at all cost!
 
 #### Heavy computation
 
@@ -102,7 +102,7 @@ While this seems simplistic, it is simple to reason about. That was the goal, le
 #### Frequent or rare updates
 
 Ask yourself whether your atom is usually going to be frequently update or more rarely.
-Let's imagine you store in an atom an object that changes almost every second, it may not be best suited to "focus" on a specific properties of this object using `focusAtom`, because anyway they will all re-render in the same time, so best adding no overhead and not create any more atoms.
+Let's imagine an atom containing an object that changes almost every second, it may not be best suited to "focus" on a specific properties of this object using `focusAtom`, because anyway they will all re-render in the same time, so best adding no overhead and not create any more atoms.
 
 On the other hand, if your object has properties that rarely change, and most importantly, that change independently from the other properties, then you may want to use `focusAtom` or `selectAtom` to prevent un-necessary renders.
 
