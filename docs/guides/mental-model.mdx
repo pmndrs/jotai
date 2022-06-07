@@ -27,3 +27,20 @@ const offlineAtom = atom(get => get(dumbAtom).filter(item => item.online))
 ```
 
 And you could keep going on complexity forever.
+
+Another incredible feature of Jotai is the built-in ability to suspend when using asynchronous atoms. This is a relatively new features that yet needs to get experimented more, but definitely the future of how we build React apps. [Check out the docs](https://reactjs.org/blog/2022/03/29/react-v18.html#new-suspense-features) for more info.
+
+### Comparison with Flux
+
+Flux is considered "top-down" technique. You will tend to first create your data model that contains all needed that and start to use them in components afterwards.
+With Jotai, considered "bottom-up", you will tend to first create your component, and call/create the required atom for this part of the app.
+
+### Comparison with Proxies
+
+Proxies are the most easy to use and to understand while first playing them, but we know for sure that mutating the state can cause troubles if not handled correctly. Hence, we generally tend to like immutability and the (feeling of) safety that it brings.
+
+You can use Proxies pretty much any way you want and you could view them as "global" even though they can be scoped, that comes with a lot of freedom, but also potentially messy code.
+
+Jotai on the other hands comes with a lot of limitations due to his ties to React lifecycle. This brings graceful implementation of new React features like `Concurrent Mode` and `Suspense`. It also reduces the opportunity of multiple coding styles appearing from different developers in the same code base.
+
+Jotai, like Flux style (with Redux for example), play with plain JS objects while proxies are wrappers around the object themselves. That is still one layer of complexity less to think about.
