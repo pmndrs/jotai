@@ -85,6 +85,8 @@ This can cause an issue, for example, if you want to retrieve the value of your 
 Let's use the [atomWithStorage function in the utils bundle](../api/utils.mdx#atom-with-storage) for the examples, so that we have more options available.
 
 ```js
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+
 const storage = createJSONStorage(() => AsyncStorage)
 const userId = atomWithStorage('user-id-key', null, storage)
 const userInfo = atom({})
@@ -140,6 +142,17 @@ const fetchUserInfo = atom(null, async (get, set, payload) => {
 But always remember jotai is un-opinionated and your workflow may not need preloading at all.
 
 ---
+
+## Example with sessionStorage
+
+Same as AsyncStorage, just use `atomWithStorage` util and override the default storage with the `sessionStorage`
+
+```js
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+
+const storage = createJSONStorage(() => sessionStorage)
+const someAtom = atomWithStorage('some-key', someInitialValue, storage)
+```
 
 ## A serialize atom pattern
 
