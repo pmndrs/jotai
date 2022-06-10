@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
@@ -188,4 +189,86 @@ it('does not re-render if value is the same (#1158)', async () => {
   fireEvent.click(getByText('inc'))
   await findByText('count: 2')
   expect(renderCount).toBe(renderCountAfterMount + 2)
+})
+
+it('no extra rerenders after commit with derived atoms (#1213)', async () => {
+  const baseAtom = atom({ count1: 0, count2: 0 })
+  const count1Atom = atom((get) => get(baseAtom).count1)
+  const count2Atom = atom((get) => get(baseAtom).count2)
+
+  let renderCount1 = 0
+  let renderCount1AfterCommit = 0
+
+  const Counter1 = () => {
+    const [count1] = useAtom(count1Atom)
+    ++renderCount1
+    useEffect(() => {
+      renderCount1AfterCommit = renderCount1
+    })
+    return <div>count1: {count1}</div>
+  }
+
+  let renderCount2 = 0
+  let renderCount2AfterCommit = 0
+
+  const Counter2 = () => {
+    const [count2] = useAtom(count2Atom)
+    ++renderCount2
+    useEffect(() => {
+      renderCount2AfterCommit = renderCount2
+    })
+    return <div>count2: {count2}</div>
+  }
+
+  const Control = () => {
+    const [, setValue] = useAtom(baseAtom)
+    const inc1 = () => {
+      setValue((prev) => ({ ...prev, count1: prev.count1 + 1 }))
+    }
+    const inc2 = () => {
+      setValue((prev) => ({ ...prev, count2: prev.count2 + 1 }))
+    }
+    return (
+      <div>
+        <button onClick={inc1}>inc1</button>
+        <button onClick={inc2}>inc2</button>
+      </div>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <Counter1 />
+      <Counter2 />
+      <Control />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('count1: 0')
+    getByText('count2: 0')
+  })
+  expect(renderCount1 > 0).toBe(true)
+  expect(renderCount2 > 0).toBe(true)
+
+  fireEvent.click(getByText('inc1'))
+  await waitFor(() => {
+    getByText('count1: 1')
+    getByText('count2: 0')
+  })
+  expect(renderCount1).toBe(renderCount1AfterCommit)
+
+  fireEvent.click(getByText('inc2'))
+  await waitFor(() => {
+    getByText('count1: 1')
+    getByText('count2: 1')
+  })
+  expect(renderCount2).toBe(renderCount2AfterCommit)
+
+  fireEvent.click(getByText('inc1'))
+  await waitFor(() => {
+    getByText('count1: 2')
+    getByText('count2: 1')
+  })
+  expect(renderCount1).toBe(renderCount1AfterCommit)
 })
