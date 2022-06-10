@@ -141,6 +141,15 @@ But always remember jotai is un-opinionated and your workflow may not need prelo
 
 ---
 
+## Example with sessionStorage
+
+Same as AsyncStorage, just use `atomWithStorage` util and override the default storage with the `sessionStorage`
+
+```js
+const storage = createJSONStorage(() => sessionStorage)
+const someAtom = atomWithStorage('some-key', someInitialValue, storage)
+```
+
 ## A serialize atom pattern
 
 ```tsx
