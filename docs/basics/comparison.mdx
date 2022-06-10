@@ -3,6 +3,78 @@ title: Comparison
 nav: 1.04
 ---
 
+## How is Jotai different from useContext of React?
+
+### Analogy
+
+You can view Jotai as a drop-in replacement to `useContext`, as it actually uses it in the core. Except Jotai is aiming for simplicity, minimalistic API and can do much more than `useContext` & `useState`.
+
+### Usage difference
+
+We can see how we used to share data to children, compared to how we do it with Jotai. But let's use a real-world example where we have multiple `Context` in our app.
+
+```jsx
+// 1. useState local state
+const Component = () => {
+  const [state, setState] = useState(0)
+  ...
+}
+
+// 2. Lift local state up and share it via context
+const StateContext = createContext()
+const Parent = ({ children }) => (
+  <StateContext.Provider value={useState(0)}>
+    {children}
+  </StateContext.Provider>
+)
+const Component = () => {
+  const [state, setState] = useContext(StateContext)
+}
+
+// 3. Have multiple states and contexts
+const State1Context = createContext()
+const State2Context = createContext()
+const Parent = ({ children }) => (
+  <State1Context.Provider value={useState(0)}>
+    <State2Context.Provider value={useState(0)}>
+      {children}
+    </State2Context.Provider>
+  </State1Context.Provider>
+)
+const Component1 = () => {
+  const [state, setState] = useContext(State1Context)
+  // ...
+}
+const Component2 = () => {
+  const [state, setState] = useContext(State2Context)
+  // ...
+}
+```
+
+Now let's see how Jotai simplify it for us. You can just use atoms instead of multiple `Context`.
+
+```jsx
+import { Provider, atom, useAtom } from 'jotai'
+const atom1 = atom(0)
+const atom2 = atom(0)
+// Optional: you can use Provider's just like useContext,
+// ...but if you only need one,
+// ...you can just omit it and Jotai will use a default one (called Provider-less mode).
+const Parent = ({ children }) => (
+  <Provider>
+    {children}
+  </Provider>
+)
+const Component1 = () => {
+  const [state, setState] = useAtom(atom1)
+}
+const Component2 = () => {
+  const [state, setState] = useAtom(atom2)
+}
+```
+
+---
+
 ## How is Jotai different from Zustand?
 
 ### Name
