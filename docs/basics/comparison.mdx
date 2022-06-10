@@ -17,16 +17,17 @@ We can see how we used to share data to children, compared to how we do it with 
 // 1. useState local state
 const Component = () => {
   const [state, setState] = useState(0)
-  ...
 }
 
 // 2. Lift local state up and share it via context
 const StateContext = createContext()
-const Parent = ({ children }) => (
-  <StateContext.Provider value={useState(0)}>
-    {children}
-  </StateContext.Provider>
-)
+const Parent = ({ children }) => {
+  return (
+    <StateContext.Provider value={useState(0)}>
+      {children}
+    </StateContext.Provider>
+  )
+}
 const Component = () => {
   const [state, setState] = useContext(StateContext)
 }
@@ -43,11 +44,9 @@ const Parent = ({ children }) => (
 )
 const Component1 = () => {
   const [state, setState] = useContext(State1Context)
-  // ...
 }
 const Component2 = () => {
   const [state, setState] = useContext(State2Context)
-  // ...
 }
 ```
 
@@ -60,11 +59,9 @@ const atom2 = atom(0)
 // Optional: you can use Provider's just like useContext,
 // ...but if you only need one,
 // ...you can just omit it and Jotai will use a default one (called Provider-less mode).
-const Parent = ({ children }) => (
-  <Provider>
-    {children}
-  </Provider>
-)
+const Parent = ({ children }) => {
+  return <Provider>{children}</Provider>
+}
 const Component1 = () => {
   const [state, setState] = useAtom(atom1)
 }
