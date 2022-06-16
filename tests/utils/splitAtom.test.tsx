@@ -7,7 +7,10 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
-type TodoItem = { task: string; checked?: boolean }
+interface TodoItem {
+  task: string
+  checked?: boolean
+}
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -495,7 +498,7 @@ it('no error with cached atoms (fix 510)', async () => {
     return prevAtoms.current
   }
 
-  type NumItemProps = {
+  interface NumItemProps {
     atom: Atom<number>
   }
 
