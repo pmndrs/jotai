@@ -40,7 +40,7 @@ export function useAtomValue<Value>(
   )
 
   // Pull the atoms's state from the store into React state.
-  const [[version, valueFromReducer, atomFromUseReducer], rerenderIfChanged] =
+  const [[version, valueFromReducer, atomFromReducer], rerenderIfChanged] =
     useReducer<
       Reducer<
         readonly [VersionObject | undefined, Awaited<Value>, Atom<Value>],
@@ -68,7 +68,7 @@ export function useAtomValue<Value>(
     )
 
   let value = valueFromReducer
-  if (atomFromUseReducer !== atom) {
+  if (atomFromReducer !== atom) {
     rerenderIfChanged(undefined)
     value = getAtomValue()
   }
