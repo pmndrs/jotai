@@ -41,6 +41,7 @@ jobs:
           - 17.0.0
           - 18.0.0
           - 18.1.0
+          - 18.2.0
           - 18.2.0-next-4ddd8b455-20220606
           - 0.0.0-experimental-4ddd8b455-20220606
         mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]

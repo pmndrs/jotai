@@ -48,6 +48,7 @@ describeWithUseTransition('useTransition', () => {
     fireEvent.click(getByText('button'))
     await findByText('delayed: 1')
 
+    await new Promise((r) => setTimeout(r, 100))
     expect(commited).toEqual([
       { pending: false, delayed: 0 },
       { pending: true, delayed: 0 },

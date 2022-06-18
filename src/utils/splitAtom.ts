@@ -54,7 +54,7 @@ export function splitAtom<Item, Key>(
   return memoizeAtom(
     () => {
       type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
-      type Mapping = {
+      interface Mapping {
         atomList: ItemAtom[]
         keyList: Key[]
       }
