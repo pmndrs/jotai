@@ -2,7 +2,7 @@ import type { Atom } from 'jotai'
 
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
-type AtomFamily<Param, AtomType> = {
+interface AtomFamily<Param, AtomType> {
   (param: Param): AtomType
   remove(param: Param): void
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
