@@ -607,9 +607,6 @@ describe('error handling', () => {
     await findByText('loading')
     await findByText('errored')
 
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 100))
-    })
     fireEvent.click(getByText('retry'))
     await findByText('loading')
     await findByText('count: 1')
@@ -621,9 +618,6 @@ describe('error handling', () => {
     await findByText('loading')
     await findByText('errored')
 
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 100))
-    })
     fireEvent.click(getByText('retry'))
     await findByText('loading')
     await findByText('count: 3')
