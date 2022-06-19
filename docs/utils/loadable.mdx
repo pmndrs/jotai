@@ -1,0 +1,32 @@
+---
+title: loadable
+---
+
+If you don't want async atoms to suspend or throw to an error boundary (for example, for finer-grained control of loading and error logic), you can use the `loadable` util.
+
+It would work the same way for any atom. Simply wrap your atoms with the `loadable` util. It returns a value with one of three states: `loading`, `hasData` and `hasError`.
+
+```ts
+{
+	state: 'loading' | 'hasData' | 'hasError',
+	data?: any,
+	error?: any,
+}
+```
+
+```jsx
+import { loadable } from "jotai/utils"
+
+const asyncAtom = atom(async (get) => ...)
+const loadableAtom = loadable(asyncAtom)
+// Does not need to be wrapped by a <Suspense> element
+const Component = () => {
+  const value = useAtom(loadableAtom)
+  if (value.state === 'hasError') return <Text>{value.error}</Text>
+  if (value.state === 'loading') {
+    return <Text>Loading...</Text>
+  }
+  console.log(value.data) // Results of the Promise
+  return <Text>Value: {value.data}</Text>
+}
+```

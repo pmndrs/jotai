@@ -13,7 +13,7 @@ Jotai has support for hydration of atoms with `useHydrateAtoms`. The documentati
 It's possible to sync Jotai with the router. You can achieve this with `atomWithHash`:
 
 ```js
-const pageAtom = atomWithHash("page", 1, {
+const pageAtom = atomWithHash('page', 1, {
   replaceState: true,
   subscribe: (callback) => {
     Router.events.on('routeChangeComplete', callback)
@@ -22,7 +22,7 @@ const pageAtom = atomWithHash("page", 1, {
       Router.events.off('routeChangeComplete', callback)
       window.removeEventListener('hashchange', callback)
     }
-  }
+  },
 })
 ```
 
@@ -44,6 +44,10 @@ const postData = atom((get) => {
 })
 ```
 
+## Provider
+
+Because of the nature of SSR, your app can have more instances existing in JS memory in the same time. You need to wrap your app inside a `Provider` (view more details [in the Core section](../api/core.mdx)) so that each instance has its own state and will not interfere with previous values from a default store (provider-less mode).
+
 ## Examples
 
 ### Clock
@@ -63,4 +67,3 @@ yarn create next-app --example with-jotai with-jotai-app
 ```
 
 Here's a [link](https://github.com/vercel/next.js/tree/canary/examples/with-jotai).
-

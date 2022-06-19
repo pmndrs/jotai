@@ -12,7 +12,7 @@ it('infinite query basic test', async () => {
     { response: { count: number } },
     void
   >(() => ({
-    queryKey: 'count1Infinite',
+    queryKey: ['count1Infinite'],
     queryFn: async (context) => {
       const count = context.pageParam ? parseInt(context.pageParam) : 0
       return fakeFetch({ count }, false, 100)
@@ -46,7 +46,7 @@ it('infinite query next page test', async () => {
     { response: { count: number } },
     void
   >(() => ({
-    queryKey: 'nextPageAtom',
+    queryKey: ['nextPageAtom'],
     queryFn: (context) => {
       const count = context.pageParam ? parseInt(context.pageParam) : 0
       return mockFetch({ count }, false, 100)
@@ -219,7 +219,7 @@ it('infinite query with enabled 2', async () => {
 
 // adapted from https://github.com/tannerlinsley/react-query/commit/f9b23fcae9c5d45e3985df4519dd8f78a9fa364e#diff-121ad879f17e2b996ac2c01b4250996c79ffdb6b7efcb5f1ddf719ac00546d14R597
 it('should be able to refetch only specific pages when refetchPages is provided', async () => {
-  const key = 'refetch_given_page'
+  const key = ['refetch_given_page']
   const states: any[] = []
 
   let multiplier = 1

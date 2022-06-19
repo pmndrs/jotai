@@ -16,12 +16,12 @@ yarn add @urql/core wonka
 
 `atomWithQuery` creates a new atom with a query. It internally uses [client.query](https://formidable.com/open-source/urql/docs/api/core/#clientquery).
 
-```js
+```jsx
 import { useAtom } from 'jotai'
-import { createClient } from "@urql/core";
+import { createClient } from '@urql/core'
 import { atomWithQuery } from 'jotai/urql'
 
-const client = createClient({ url: "..." });
+const client = createClient({ url: '...' })
 
 const idAtom = atom(1)
 const userAtom = atomWithQuery(
@@ -29,7 +29,7 @@ const userAtom = atomWithQuery(
     query: '{ user { first_name last_name } }',
     variables: { id: get(idAtom) },
   }),
-  () => client,
+  () => client
 )
 
 const UserData = () => {
@@ -48,21 +48,25 @@ const UserData = () => {
 
 `atomWithMutation` creates a new atom with a mutation. It internally uses [client.mutation](https://formidable.com/open-source/urql/docs/api/core/#clientmutation).
 
-```js
+```jsx
 import { useAtom } from 'jotai'
-import { createClient } from "@urql/core";
+import { createClient } from '@urql/core'
 import { atomWithMutation } from 'jotai/urql'
 
-const client = createClient({ url: "..." });
+const client = createClient({ url: '...' })
 
 const fooAtom = atomWithMutation(
   () => 'mutation Foo { text }',
-  () => client,
+  () => client
 )
 
 const FooData = () => {
   const [{ data }, mutate] = useAtom(fooAtom)
-  return <div>{JSON.stringify(data)} <button onClick={mutate}>Click me</button></div>
+  return (
+    <div>
+      {JSON.stringify(data)} <button onClick={mutate}>Click me</button>
+    </div>
+  )
 }
 ```
 
@@ -74,16 +78,16 @@ TODO
 
 `atomWithSubscription` creates a new atom with a mutation. It internally uses [client.subscription](https://formidable.com/open-source/urql/docs/api/core/#clientsubscription).
 
-```js
+```jsx
 import { useAtom } from 'jotai'
-import { createClient } from "@urql/core";
+import { createClient } from '@urql/core'
 import { atomWithSubscription } from 'jotai/urql'
 
-const client = createClient({ url: "..." });
+const client = createClient({ url: '...' })
 
 const fooAtom = atomWithSubscription(
   () => 'subscription Foo { text }',
-  () => client,
+  () => client
 )
 
 const FooData = () => {

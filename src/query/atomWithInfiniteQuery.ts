@@ -21,41 +21,38 @@ export type AtomWithInfiniteQueryAction<TQueryFnData> =
   | { type: 'fetchNextPage' }
   | { type: 'fetchPreviousPage' }
 
-export type AtomWithInfiniteQueryOptions<
+export interface AtomWithInfiniteQueryOptions<
   TQueryFnData,
   TError,
   TData,
   TQueryData,
   TQueryKey extends QueryKey
-> = Omit<
-  InfiniteQueryObserverOptions<
+> extends InfiniteQueryObserverOptions<
     TQueryFnData,
     TError,
     TData,
     TQueryData,
     TQueryKey
-  >,
-  'queryKey'
-> & {
+  > {
   queryKey: TQueryKey
 }
 
-export type AtomWithInfiniteQueryOptionsWithEnabled<
+export interface AtomWithInfiniteQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
   TData,
   TQueryData,
   TQueryKey extends QueryKey
-> = Omit<
-  AtomWithInfiniteQueryOptions<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryData,
-    TQueryKey
-  >,
-  'enabled'
-> & {
+> extends Omit<
+    AtomWithInfiniteQueryOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >,
+    'enabled'
+  > {
   enabled: boolean
 }
 

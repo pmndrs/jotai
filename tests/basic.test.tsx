@@ -7,17 +7,23 @@ import {
   useState,
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import ReactDOM from 'react-dom'
+import ReactDOM, { unstable_batchedUpdates } from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
-jest.mock('../src/core/useDebugState.ts')
-
 // FIXME this is a hacky workaround temporarily
 const IS_REACT18 = !!(ReactDOM as any).createRoot
+
+const batchedUpdates = (fn: () => void) => {
+  if (IS_REACT18) {
+    fn()
+  } else {
+    unstable_batchedUpdates(fn)
+  }
+}
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -220,7 +226,10 @@ it('only re-renders if value has changed', async () => {
   const count2Atom = atom(0)
   const productAtom = atom((get) => get(count1Atom) * get(count2Atom))
 
-  type Props = { countAtom: typeof count1Atom; name: string }
+  interface Props {
+    countAtom: typeof count1Atom
+    name: string
+  }
   const Counter = ({ countAtom, name }: Props) => {
     const [count, setCount] = useAtom(countAtom)
     return (
@@ -390,7 +399,9 @@ it('uses atoms with tree dependencies', async () => {
     (get) => get(topAtom),
     async (get, set, update: (prev: number) => number) => {
       await new Promise((r) => setTimeout(r, 100))
-      set(topAtom, update(get(topAtom)))
+      batchedUpdates(() => {
+        set(topAtom, update(get(topAtom)))
+      })
     }
   )
 
@@ -416,18 +427,10 @@ it('uses atoms with tree dependencies', async () => {
   await findByText('commits: 1, count: 0')
 
   fireEvent.click(getByText('button'))
-  if (IS_REACT18) {
-    await findByText('commits: 2, count: 1')
-  } else {
-    await findByText('commits: 3, count: 1')
-  }
+  await findByText('commits: 2, count: 1')
 
   fireEvent.click(getByText('button'))
-  if (IS_REACT18) {
-    await findByText('commits: 3, count: 2')
-  } else {
-    await findByText('commits: 5, count: 2')
-  }
+  await findByText('commits: 3, count: 2')
 })
 
 it('runs update only once in StrictMode', async () => {

@@ -31,7 +31,7 @@ pre[class*='language-'] {
 
 /* Inline code */
 :not(pre) > code[class*='language-'] {
-  @apply p-3 shadow-lg rounded-md whitespace-normal;
+  @apply p-3 shadow-lg dark:!shadow-none rounded-md whitespace-normal;
 }
 
 .token.comment,

@@ -10,29 +10,36 @@ import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
 
-export type AtomWithQueryAction = { type: 'refetch' }
-export type AtomWithQueryOptions<
+export interface AtomWithQueryAction {
+  type: 'refetch'
+}
+
+export interface AtomWithQueryOptions<
   TQueryFnData,
   TError,
   TData,
   TQueryData,
   TQueryKey extends QueryKey
-> = Omit<
-  QueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-  'queryKey'
-> & {
+> extends QueryObserverOptions<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  > {
   queryKey: TQueryKey
 }
-export type AtomWithQueryOptionsWithEnabled<
+
+export interface AtomWithQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
   TData,
   TQueryData,
   TQueryKey extends QueryKey
-> = Omit<
-  AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
-  'enabled'
-> & {
+> extends Omit<
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    'enabled'
+  > {
   enabled: boolean
 }
 
