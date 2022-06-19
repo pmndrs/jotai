@@ -126,46 +126,39 @@ export function atomWithQuery<
       return { options, errorAtom, dataAtom, observer }
     },
     (get, set, action) => {
+      const { options, errorAtom, dataAtom, observer } = get(queryDataAtom)
+      const listener = (result: QueryObserverResult<TData, TError>) => {
+        if (result.isFetching) {
+          return
+        }
+        if (result.isError) {
+          set(errorAtom, result.error)
+          set(dataAtom, undefined)
+        } else if (result.data !== undefined) {
+          set(errorAtom, undefined)
+          set(dataAtom, result.data)
+        }
+      }
       switch (action.type) {
         case 'init': {
-          const { options, errorAtom, dataAtom, observer } = get(queryDataAtom)
-          const listener = (result: QueryObserverResult<TData, TError>) => {
-            if (result.isFetching) {
-              return
-            }
-            if (result.isError) {
-              set(errorAtom, result.error)
-            } else if (result.data !== undefined) {
-              set(dataAtom, result.data)
-            }
-          }
-          listener(observer.getCurrentResult())
           const unsubscribe =
             options.enabled !== false ? observer.subscribe(listener) : null
+          listener(observer.getCurrentResult())
           action.cb(() => {
             unsubscribe?.()
           })
           return Promise.resolve()
         }
         case 'refetch': {
-          const { errorAtom, dataAtom, observer } = get(queryDataAtom)
-          const listener = (result: QueryObserverResult<TData, TError>) => {
-            if (result.isFetching) {
-              return
-            }
-            if (result.isError) {
-              set(errorAtom, result.error)
-            } else if (result.data !== undefined) {
-              set(dataAtom, result.data)
-            }
-          }
           set(errorAtom, undefined)
           set(dataAtom, new Promise<TData>(() => {})) // infinite pending
           const p = Promise.resolve()
-            .then(() =>
-              observer.refetch({ throwOnError: true, cancelRefetch: true })
-            )
-            .then(listener)
+            .then(() => observer.refetch({ cancelRefetch: true }))
+            .then((result) => {
+              if (!observer.hasListeners()) {
+                listener(result)
+              }
+            })
           return p
         }
         default:

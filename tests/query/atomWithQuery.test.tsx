@@ -334,6 +334,7 @@ it('query with enabled 2', async () => {
 
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
+  await new Promise((r) => setTimeout(r, 500 + 100))
   await findByText('slug: hello-first')
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
