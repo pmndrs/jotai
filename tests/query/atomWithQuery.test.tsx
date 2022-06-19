@@ -510,6 +510,7 @@ describe('error handling', () => {
   it('can catch error in error boundary', async () => {
     const countAtom = atomWithQuery(() => ({
       queryKey: ['error test', 'count1'],
+      retry: false,
       queryFn: async () => {
         return await fakeFetch({ count: 0 }, true, 500)
       },
@@ -545,7 +546,8 @@ describe('error handling', () => {
     let count = 0
     let willThrowError = true
     const countAtom = atomWithQuery(() => ({
-      queryKey: ['error test', 'count1'],
+      queryKey: ['error test', 'count2'],
+      retry: false,
       queryFn: () => {
         const promise = fakeFetch({ count }, willThrowError, 500)
         willThrowError = !willThrowError
