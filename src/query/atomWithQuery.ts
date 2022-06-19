@@ -77,20 +77,18 @@ export function atomWithQuery<
   type Data = TData | TQueryData
   const queryDataAtom: WritableAtom<
     {
+      options: AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
       errorAtom: PrimitiveAtom<TError | undefined>
       dataAtom: PrimitiveAtom<Data | Promise<Data> | undefined>
       observer: QueryObserver<TQueryFnData, TError, TData, TQueryData>
     },
-    AtomWithQueryAction,
+    AtomWithQueryAction | { type: 'init'; cb: (cleanup: () => void) => void },
     Promise<void>
   > = atom(
     (get) => {
       const queryClient = getQueryClient(get)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
-
-      let resolvePromise: (data: TData) => void = () => {}
-      let rejectPromise: (err: TError) => void = () => {}
 
       const getInitialData = () => {
         let data: Data | undefined = queryClient.getQueryData<TData>(
@@ -106,84 +104,68 @@ export function atomWithQuery<
       }
 
       const initialData = getInitialData()
+      const defaultedOptions = queryClient.defaultQueryOptions(options)
+      if (initialData === undefined && options.enabled !== false) {
+        if (typeof defaultedOptions.staleTime !== 'number') {
+          defaultedOptions.staleTime = 1000
+        }
+      }
+      const observer = new QueryObserver(queryClient, defaultedOptions)
 
       const errorAtom = atom<TError | undefined>(undefined)
       const dataAtom = atom<Data | Promise<Data> | undefined>(
         initialData === undefined && options.enabled !== false
-          ? new Promise<TData>((resolve, reject) => {
-              resolvePromise = resolve
-              rejectPromise = reject
+          ? observer.fetchOptimistic(options).then((result) => {
+              if (result.data !== undefined) {
+                return result.data
+              }
+              throw result.error
             })
           : initialData
       )
-      let setError: ((error: TError | undefined) => void) | null = null
-      let setData: ((data: TData | Promise<TData> | undefined) => void) | null =
-        null
-      const results: QueryObserverResult<TData, TError>[] = []
-      const flushResults = () => {
-        if (setError && setData) {
-          results.forEach((result) => {
-            if (result.isError) {
-              ;(setError as NonNullable<typeof setError>)(result.error)
-            } else if (result.data !== undefined) {
-              ;(setData as NonNullable<typeof setData>)(result.data)
-            }
-          })
-          results.splice(0)
-        }
-      }
-      const listener = (result: QueryObserverResult<TData, TError>) => {
-        if (result.isFetching) {
-          return
-        }
-        if (result.isError) {
-          rejectPromise(result.error)
-        } else if (result.data !== undefined) {
-          resolvePromise(result.data)
-        }
-        results.push(result)
-        flushResults()
-      }
-      const defaultedOptions = queryClient.defaultQueryObserverOptions(options)
-      const observer = new QueryObserver(queryClient, defaultedOptions)
-      let unsubscribe: (() => void) | null = null
-      const timer = setTimeout(() => {
-        unsubscribe?.()
-        unsubscribe = null
-      }, 1000)
-      if (initialData === undefined && options.enabled !== false) {
-        unsubscribe = observer.subscribe(listener)
-      }
-      errorAtom.onMount = (update) => {
-        setError = update
-        flushResults()
-      }
-      dataAtom.onMount = (update) => {
-        clearTimeout(timer)
-        if (options.enabled !== false && !unsubscribe) {
-          unsubscribe = observer.subscribe(listener)
-          const result = observer.getCurrentResult()
-          if (result) {
-            results.push(result)
-          }
-        }
-        setData = update
-        flushResults()
-        return () => unsubscribe?.()
-      }
-      return { errorAtom, dataAtom, observer }
+      return { options, errorAtom, dataAtom, observer }
     },
-    (get, set, action: AtomWithQueryAction) => {
+    (get, set, action) => {
       switch (action.type) {
+        case 'init': {
+          const { options, errorAtom, dataAtom, observer } = get(queryDataAtom)
+          const listener = (result: QueryObserverResult<TData, TError>) => {
+            if (result.isFetching) {
+              return
+            }
+            if (result.isError) {
+              set(errorAtom, result.error)
+            } else if (result.data !== undefined) {
+              set(dataAtom, result.data)
+            }
+          }
+          listener(observer.getCurrentResult())
+          const unsubscribe =
+            options.enabled !== false ? observer.subscribe(listener) : null
+          action.cb(() => {
+            unsubscribe?.()
+          })
+          return Promise.resolve()
+        }
         case 'refetch': {
           const { errorAtom, dataAtom, observer } = get(queryDataAtom)
+          const listener = (result: QueryObserverResult<TData, TError>) => {
+            if (result.isFetching) {
+              return
+            }
+            if (result.isError) {
+              set(errorAtom, result.error)
+            } else if (result.data !== undefined) {
+              set(dataAtom, result.data)
+            }
+          }
           set(errorAtom, undefined)
           set(dataAtom, new Promise<TData>(() => {})) // infinite pending
           const p = Promise.resolve()
             .then(() =>
               observer.refetch({ throwOnError: true, cancelRefetch: true })
             )
-            .then(() => {})
+            .then(listener)
           return p
         }
         default:
@@ -191,6 +173,25 @@ export function atomWithQuery<
       }
     }
   )
+  queryDataAtom.onMount = (dispatch) => {
+    let unsub: (() => void) | undefined | false
+    dispatch({
+      type: 'init',
+      cb: (cleanup) => {
+        if (unsub === false) {
+          cleanup()
+        } else {
+          unsub = cleanup
+        }
+      },
+    })
+    return () => {
+      if (unsub) {
+        unsub()
+      }
+      unsub = false
+    }
+  }
   const queryAtom = atom<Data | undefined, AtomWithQueryAction, Promise<void>>(
     (get) => {
       const { errorAtom, dataAtom } = get(queryDataAtom)
