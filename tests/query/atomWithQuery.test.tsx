@@ -110,6 +110,7 @@ it('query refetch', async () => {
   await findByText('count: 0')
   expect(mockFetch).toBeCalledTimes(1)
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 1')
@@ -602,6 +603,7 @@ describe('error handling', () => {
     await findByText('loading')
     await findByText('count: 1')
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('refetch'))
     await findByText('loading')
     await findByText('errored')
