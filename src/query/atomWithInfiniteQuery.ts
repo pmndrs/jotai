@@ -200,14 +200,7 @@ export function atomWithInfiniteQuery<
         }
       }
 
-      const defaultedOptions = queryClient.defaultQueryOptions(
-        options
-      ) as unknown as InfiniteQueryObserverOptions<
-        TQueryFnData,
-        TError,
-        TData,
-        TQueryData
-      >
+      const defaultedOptions = queryClient.defaultQueryOptions(options)
       if (initialData === undefined && options.enabled !== false) {
         if (typeof defaultedOptions.staleTime !== 'number') {
           defaultedOptions.staleTime = 1000
