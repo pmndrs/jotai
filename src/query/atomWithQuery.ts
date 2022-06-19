@@ -74,11 +74,10 @@ export function atomWithQuery<
   AtomWithQueryAction,
   Promise<void>
 > {
+  type Data = TData | TQueryData
   const queryDataAtom: WritableAtom<
     {
-      dataAtom: PrimitiveAtom<
-        TData | TQueryData | Promise<TData | TQueryData> | undefined
-      >
+      dataAtom: PrimitiveAtom<Data | Promise<Data> | undefined>
       observer: QueryObserver<TQueryFnData, TError, TData, TQueryData>
     },
     AtomWithQueryAction,
@@ -94,8 +93,9 @@ export function atomWithQuery<
         | null = null
 
       const getInitialData = () => {
-        let data: TQueryData | TData | undefined =
-          queryClient.getQueryData<TData>(options.queryKey)
+        let data: Data | undefined = queryClient.getQueryData<TData>(
+          options.queryKey
+        )
 
         if (data === undefined && options.initialData) {
           data =
@@ -108,9 +108,7 @@ export function atomWithQuery<
 
       const initialData = getInitialData()
 
-      const dataAtom = atom<
-        TData | TQueryData | Promise<TData | TQueryData> | undefined
-      >(
+      const dataAtom = atom<Data | Promise<Data> | undefined>(
         initialData === undefined && options.enabled !== false
           ? new Promise<TData>((resolve, reject) => {
               settlePromise = (data, err) => {
@@ -186,11 +184,7 @@ export function atomWithQuery<
       }
     }
   )
-  const queryAtom = atom<
-    TData | TQueryData | undefined,
-    AtomWithQueryAction,
-    Promise<void>
-  >(
+  const queryAtom = atom<Data | undefined, AtomWithQueryAction, Promise<void>>(
     (get) => {
       const { dataAtom } = get(queryDataAtom)
       return get(dataAtom)
