@@ -1,6 +1,7 @@
-import { Suspense, useState } from 'react'
+import { Component, Suspense, useState } from 'react'
+import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useSetAtom } from 'jotai'
 import { atomWithQuery } from 'jotai/query'
 import { getTestProvider } from '../testUtils'
 import fakeFetch from './fakeFetch'
@@ -478,4 +479,114 @@ it('query dependency test', async () => {
   fireEvent.click(getByText('increment'))
   await findByText('loading')
   await findByText('count: 1')
+})
+
+describe('error handling', () => {
+  class ErrorBoundary extends Component<
+    { message?: string; retry?: () => void; children: ReactNode },
+    { hasError: boolean }
+  > {
+    constructor(props: { message?: string; children: ReactNode }) {
+      super(props)
+      this.state = { hasError: false }
+    }
+    static getDerivedStateFromError() {
+      return { hasError: true }
+    }
+    render() {
+      return this.state.hasError ? (
+        <div>
+          {this.props.message || 'errored'}
+          {this.props.retry && (
+            <button onClick={this.props.retry}>retry</button>
+          )}
+        </div>
+      ) : (
+        this.props.children
+      )
+    }
+  }
+
+  it('can catch error in error boundary', async () => {
+    const countAtom = atomWithQuery(() => ({
+      queryKey: ['error test', 'count1'],
+      queryFn: async () => {
+        return await fakeFetch({ count: 0 }, true, 500)
+      },
+    }))
+    const Counter = () => {
+      const [
+        {
+          response: { count },
+        },
+      ] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+        </>
+      )
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <ErrorBoundary>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('errored')
+  })
+
+  it('can recover from error', async () => {
+    let willThrowError = true
+    const countAtom = atomWithQuery(() => ({
+      queryKey: ['error test', 'count1'],
+      queryFn: () => {
+        const promise = fakeFetch({ count: 0 }, willThrowError, 500)
+        willThrowError = !willThrowError
+        return promise
+      },
+    }))
+    const Counter = () => {
+      const [
+        {
+          response: { count },
+        },
+      ] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+        </>
+      )
+    }
+
+    const App = () => {
+      const dispatch = useSetAtom(countAtom)
+      const retry = () => dispatch({ type: 'refetch' })
+      return (
+        <ErrorBoundary retry={retry}>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <App />
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('errored')
+
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 0')
+  })
 })
