@@ -79,7 +79,7 @@ it('query refetch', async () => {
     queryKey: 'count3',
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 500)
-      count++
+      ++count
       return response
     },
   }))
@@ -123,7 +123,7 @@ it('query loading', async () => {
     queryKey: 'count4',
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 500)
-      count++
+      ++count
       return response
     },
   }))
@@ -178,7 +178,7 @@ it('query loading 2', async () => {
     queryKey: 'count5',
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 500 * 1.5)
-      count++
+      ++count
       return response
     },
   }))
@@ -542,12 +542,14 @@ describe('error handling', () => {
   })
 
   it('can recover from error', async () => {
+    let count = 0
     let willThrowError = true
     const countAtom = atomWithQuery(() => ({
       queryKey: ['error test', 'count1'],
       queryFn: () => {
-        const promise = fakeFetch({ count: 0 }, willThrowError, 500)
+        const promise = fakeFetch({ count }, willThrowError, 500)
         willThrowError = !willThrowError
+        ++count
         return promise
       },
     }))
@@ -556,10 +558,13 @@ describe('error handling', () => {
         {
           response: { count },
         },
+        dispatch,
       ] = useAtom(countAtom)
+      const refetch = () => dispatch({ type: 'refetch' })
       return (
         <>
           <div>count: {count}</div>
+          <button onClick={refetch}>refetch</button>
         </>
       )
     }
@@ -587,6 +592,14 @@ describe('error handling', () => {
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    await findByText('count: 0')
+    await findByText('count: 1')
+
+    fireEvent.click(getByText('refetch'))
+    await findByText('loading')
+    await findByText('errored')
+
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 3')
   })
 })
