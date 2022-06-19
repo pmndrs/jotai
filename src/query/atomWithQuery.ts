@@ -1,6 +1,5 @@
 import { QueryObserver } from 'react-query'
 import type {
-  InitialDataFunction,
   QueryKey,
   QueryObserverOptions,
   QueryObserverResult,
@@ -75,12 +74,11 @@ export function atomWithQuery<
   Promise<void>
 > {
   type Data = TData | TQueryData
+  type Result = QueryObserverResult<TData, TError>
   const queryDataAtom: WritableAtom<
     {
       options: AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
-      initAtom: WritableAtom<null, (cleanup: () => void) => void, void>
-      errorAtom: PrimitiveAtom<TError | undefined>
-      dataAtom: PrimitiveAtom<Data | Promise<Data> | undefined>
+      resultAtom: PrimitiveAtom<Result | Promise<Result>>
       observer: QueryObserver<TQueryFnData, TError, TData, TQueryData>
     },
     AtomWithQueryAction,
@@ -91,102 +89,49 @@ export function atomWithQuery<
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
 
-      const getInitialData = () => {
-        let data: Data | undefined = queryClient.getQueryData<TData>(
-          options.queryKey
-        )
-        if (data === undefined && options.initialData) {
-          data =
-            typeof options.initialData === 'function'
-              ? (options.initialData as InitialDataFunction<TQueryData>)()
-              : options.initialData
-        }
-        return data
-      }
-
-      const initialData = getInitialData()
       const defaultedOptions = queryClient.defaultQueryOptions(options)
-      if (initialData === undefined && options.enabled !== false) {
-        if (typeof defaultedOptions.staleTime !== 'number') {
-          defaultedOptions.staleTime = 1000
-        }
+      if (
+        options.enabled !== false &&
+        typeof defaultedOptions.staleTime !== 'number'
+      ) {
+        // FIXME We don't want to depend on this config
+        defaultedOptions.staleTime = 500
       }
       const observer = new QueryObserver(queryClient, defaultedOptions)
+      const initialResult = observer.getCurrentResult()
 
-      const errorAtom = atom<TError | undefined>(undefined)
-      const dataAtom = atom<Data | Promise<Data> | undefined>(
-        initialData === undefined && options.enabled !== false
-          ? observer.fetchOptimistic(options).then((result) => {
-              if (result.data !== undefined) {
-                return result.data
-              }
-              throw result.error
-            })
-          : initialData
+      const resultAtom = atom<Result | Promise<Result>>(
+        initialResult.data === undefined && options.enabled !== false
+          ? observer.fetchOptimistic(options)
+          : initialResult
       )
-      const initAtom = atom(
-        null,
-        (_get, set, cb: (cleanup: () => void) => void) => {
-          const listener = (result: QueryObserverResult<TData, TError>) => {
+      resultAtom.onMount = (setResult) => {
+        if (options.enabled !== false) {
+          const listener = (result: Result) => {
             if (result.isFetching) {
               return
             }
-            if (result.isError) {
-              set(errorAtom, result.error)
-              set(dataAtom, undefined)
-            } else if (result.data !== undefined) {
-              set(errorAtom, undefined)
-              set(dataAtom, result.data)
+            if (result.isError || result.data !== undefined) {
+              setResult(result)
             }
           }
-          if (options.enabled !== false) {
-            const unsubscribe = observer.subscribe(listener)
-            listener(observer.getCurrentResult())
-            cb(unsubscribe)
-          }
-        }
-      )
-      initAtom.onMount = (init) => {
-        let unsub: (() => void) | undefined | false
-        init((cleanup) => {
-          if (unsub === false) {
-            cleanup()
-          } else {
-            unsub = cleanup
-          }
-        })
-        return () => {
-          if (unsub) {
-            unsub()
-          }
-          unsub = false
+          const unsubscribe = observer.subscribe(listener)
+          listener(observer.getCurrentResult())
+          return unsubscribe
         }
       }
-      return { options, initAtom, errorAtom, dataAtom, observer }
+      return { options, resultAtom, observer }
     },
     (get, set, action) => {
-      const { options, errorAtom, dataAtom, observer } = get(queryDataAtom)
-      const listener = (result: QueryObserverResult<TData, TError>) => {
-        if (result.isFetching) {
-          return
-        }
-        if (result.isError) {
-          set(errorAtom, result.error)
-          set(dataAtom, undefined)
-        } else if (result.data !== undefined) {
-          set(errorAtom, undefined)
-          set(dataAtom, result.data)
-        }
-      }
+      const { options, resultAtom, observer } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
-          set(errorAtom, undefined)
-          set(dataAtom, new Promise<never>(() => {})) // infinite pending
+          set(resultAtom, new Promise<never>(() => {})) // infinite pending
           const p = Promise.resolve()
             .then(() => observer.refetch({ cancelRefetch: true }))
             .then((result) => {
               if (options.enabled !== false && !observer.hasListeners()) {
-                listener(result)
+                set(resultAtom, result)
               }
             })
           return p
@@ -198,14 +143,12 @@ export function atomWithQuery<
   )
   const queryAtom = atom<Data | undefined, AtomWithQueryAction, Promise<void>>(
     (get) => {
-      const { initAtom, errorAtom, dataAtom } = get(queryDataAtom)
-      get(initAtom) // to run onMount
-      const error = get(errorAtom)
-      const data = get(dataAtom)
-      if (error !== undefined) {
-        throw error
+      const { resultAtom } = get(queryDataAtom)
+      const result = get(resultAtom)
+      if (result.isError) {
+        throw result.error
       }
-      return data
+      return result.data
     },
     (_get, set, action) => set(queryDataAtom, action) // delegate action
   )
