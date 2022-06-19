@@ -498,7 +498,13 @@ describe('error handling', () => {
         <div>
           {this.props.message || 'errored'}
           {this.props.retry && (
-            <button onClick={this.props.retry}>retry</button>
+            <button
+              onClick={() => {
+                this.props.retry?.()
+                this.setState({ hasError: false })
+              }}>
+              retry
+            </button>
           )}
         </div>
       ) : (

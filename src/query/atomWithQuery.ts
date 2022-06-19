@@ -77,6 +77,7 @@ export function atomWithQuery<
   type Data = TData | TQueryData
   const queryDataAtom: WritableAtom<
     {
+      errorAtom: PrimitiveAtom<TError | undefined>
       dataAtom: PrimitiveAtom<Data | Promise<Data> | undefined>
       observer: QueryObserver<TQueryFnData, TError, TData, TQueryData>
     },
@@ -108,11 +109,12 @@ export function atomWithQuery<
 
       const initialData = getInitialData()
 
+      const errorAtom = atom<TError | undefined>(undefined)
       const dataAtom = atom<Data | Promise<Data> | undefined>(
         initialData === undefined && options.enabled !== false
           ? new Promise<TData>((resolve, reject) => {
               settlePromise = (data, err) => {
-                if (err) {
+                if (err !== undefined) {
                   reject(err)
                 } else {
                   resolve(data as TData)
@@ -121,6 +123,9 @@ export function atomWithQuery<
             })
           : initialData
       )
+      let setError: (error: TError | undefined) => void = () => {
+        throw new Error('atomWithQuery: setting error without mount')
+      }
       let setData: (data: TData | Promise<TData> | undefined) => void = () => {
         throw new Error('atomWithQuery: setting data without mount')
       }
@@ -134,7 +139,7 @@ export function atomWithQuery<
             settlePromise(undefined, result.error)
             settlePromise = null
           } else {
-            setData(Promise.reject<TData>(result.error))
+            setError(result.error)
           }
           return
         }
@@ -145,6 +150,7 @@ export function atomWithQuery<
           settlePromise(result.data)
           settlePromise = null
         } else {
+          setError(undefined)
           setData(result.data)
         }
       }
@@ -161,21 +167,27 @@ export function atomWithQuery<
           .then(listener)
           .catch((error) => listener({ error }))
       }
+      errorAtom.onMount = (update) => {
+        setError = update
+      }
       dataAtom.onMount = (update) => {
         setData = update
         if (options.enabled !== false) {
           return observer.subscribe(listener)
         }
       }
-      return { dataAtom, observer }
+      return { errorAtom, dataAtom, observer }
     },
     (get, set, action: AtomWithQueryAction) => {
       switch (action.type) {
         case 'refetch': {
-          const { dataAtom, observer } = get(queryDataAtom)
+          const { errorAtom, dataAtom, observer } = get(queryDataAtom)
+          set(errorAtom, undefined)
           set(dataAtom, new Promise<TData>(() => {})) // infinite pending
           const p = Promise.resolve()
-            .then(() => observer.refetch({ cancelRefetch: true }))
+            .then(() =>
+              observer.refetch({ throwOnError: true, cancelRefetch: true })
+            )
             .then(() => {})
           return p
         }
@@ -186,8 +198,13 @@ export function atomWithQuery<
   )
   const queryAtom = atom<Data | undefined, AtomWithQueryAction, Promise<void>>(
     (get) => {
-      const { dataAtom } = get(queryDataAtom)
-      return get(dataAtom)
+      const { errorAtom, dataAtom } = get(queryDataAtom)
+      const error = get(errorAtom)
+      const data = get(dataAtom)
+      if (error !== undefined) {
+        throw error
+      }
+      return data
     },
     (_get, set, action) => set(queryDataAtom, action) // delegate action
   )
