@@ -61,7 +61,7 @@
 
 .prose ol,
 .prose ul {
-  @apply my-4 pl-5 space-y-4 font-normal text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-500 leading-normal;
+  @apply my-2 pl-5 space-y-1 font-normal text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-500 leading-normal;
 }
 
 .prose ol {
@@ -101,19 +101,19 @@
 }
 
 .prose a code {
-  @apply !text-blue-600;
+  @apply !text-blue-600 dark:!text-teal-400;
 }
 
 .prose blockquote {
-  @apply my-4 px-4 py-2 shadow-md dark:!shadow-none rounded-md sm:rounded-lg border border-yellow-200 dark:border-yellow-300 bg-yellow-100 dark:bg-yellow-200;
+  @apply my-4 px-4 py-2 rounded-md sm:rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900;
 }
 
 .prose blockquote a {
-  @apply text-yellow-900 dark:text-yellow-950;
+  @apply text-gray-900 dark:text-gray-300;
 }
 
 .prose blockquote p {
-  @apply text-yellow-900 dark:text-yellow-950;
+  @apply text-gray-900 dark:text-gray-300;
 }
 
 .prose blockquote a code {

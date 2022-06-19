@@ -14,8 +14,6 @@ import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
-jest.mock('../src/core/useDebugState.ts')
-
 // FIXME this is a hacky workaround temporarily
 const IS_REACT18 = !!(ReactDOM as any).createRoot
 
@@ -228,7 +226,10 @@ it('only re-renders if value has changed', async () => {
   const count2Atom = atom(0)
   const productAtom = atom((get) => get(count1Atom) * get(count2Atom))
 
-  type Props = { countAtom: typeof count1Atom; name: string }
+  interface Props {
+    countAtom: typeof count1Atom
+    name: string
+  }
   const Counter = ({ countAtom, name }: Props) => {
     const [count, setCount] = useAtom(countAtom)
     return (

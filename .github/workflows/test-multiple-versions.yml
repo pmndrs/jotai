@@ -41,8 +41,9 @@ jobs:
           - 17.0.0
           - 18.0.0
           - 18.1.0
-          - 18.2.0-next-d20c3af9d-20220506
-          - 0.0.0-experimental-d20c3af9d-20220506
+          - 18.2.0
+          - 18.2.0-next-4ddd8b455-20220606
+          - 0.0.0-experimental-4ddd8b455-20220606
         mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
         exclude:
           - { react: 16.8.6, mode: VERSIONED_WRITE }

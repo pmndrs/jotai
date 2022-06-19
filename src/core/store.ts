@@ -61,7 +61,7 @@ export type AtomState<Value = AnyAtomValue> = {
  * While a new version is being built, we read atom previous state from the
  * previous version.
  */
-export type VersionObject = {
+export interface VersionObject {
   /**
    * "p"arent version.
    *
@@ -84,7 +84,7 @@ type Dependents = Set<AnyAtom>
  *
  * The mounted state of an atom is freed once it is no longer mounted.
  */
-type Mounted = {
+interface Mounted {
   /** The list of subscriber functions. */
   l: Listeners
   /** Atoms that depend on *this* atom. Used to fan out invalidation. */
@@ -813,7 +813,8 @@ export const createStore = (
     if (version) {
       const versionedAtomStateMap = getVersionedAtomStateMap(version)
       versionedAtomStateMap.forEach((atomState, atom) => {
-        if (atomState !== committedAtomStateMap.get(atom)) {
+        const committedAtomState = committedAtomStateMap.get(atom)
+        if (atomState !== committedAtomState) {
           const mounted = mountedMap.get(atom)
           mounted?.l.forEach((listener) => listener(version))
         }
@@ -827,6 +828,17 @@ export const createStore = (
         const atomState = getAtomState(undefined, atom)
         if (atomState && atomState.d !== prevAtomState?.d) {
           mountDependencies(atom, atomState, prevAtomState?.d)
+        }
+        if (
+          prevAtomState &&
+          'i' in prevAtomState &&
+          atomState &&
+          !('i' in atomState)
+        ) {
+          // We don't want to notify listeners
+          // to avoid flushing a promise again (#1151)
+          // and avoid extra re-renders (#1213).
+          return
         }
         const mounted = mountedMap.get(atom)
         mounted?.l.forEach((listener) => listener())

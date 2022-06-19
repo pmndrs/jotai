@@ -13,7 +13,7 @@ nav: 2.01
 
 Use `atom` to create an atom config. An atom config is an immutable object. The atom config doesn't hold an atom value. The atom value is stored in a Provider state.
 
-```tsx
+```ts
 // primitive atom
 function atom<Value>(initialValue: Value): PrimitiveAtom<Value>
 
@@ -37,7 +37,7 @@ function atom<Value, Update>(
 - `read`: a function that's called on every re-render. The signature of `read` is `(get) => Value | Promise<Value>`, and `get` is a function that takes an atom config and returns its value stored in Provider as described below. Dependency is tracked, so if `get` is used for an atom at least once, the `read` will be reevaluated whenever the atom value is changed.
 - `write`: a function mostly used for mutating atom's values, for a better description; it gets called whenever we call the second value of the returned pair of `useAtom`, the `useAtom()[1]`. The default value of this function in the primitive atom will change the value of that atom. The signature of `write` is `(get, set, update) => void | Promise<void>`. `get` is similar to the one described above, but it doesn't track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `update` is an arbitrary value that we receive from the updating function returned by `useAtom` described below.
 
-```tsx
+```js
 const primitiveAtom = atom(initialValue)
 const derivedAtomWithRead = atom(read)
 const derivedAtomWithReadWrite = atom(read, write)
@@ -58,7 +58,7 @@ The created atom config can have an optional property `onMount`. `onMount` is a 
 
 The `onMount` function is called when the atom is first used in a provider, and `onUnmount` is called when it’s no longer used. In some edge cases, an atom can be unmounted and then mounted immediately.
 
-```tsx
+```js
 const anAtom = atom(1)
 anAtom.onMount = (setAtom) => {
   console.log('atom is mounted in provider')
@@ -69,7 +69,7 @@ anAtom.onMount = (setAtom) => {
 
 Calling `setAtom` function will invoke the atom’s `write`. Customizing `write` allows changing the behavior.
 
-```tsx
+```js
 const countAtom = atom(1)
 const derivedAtom = atom(
   (get) => get(countAtom),

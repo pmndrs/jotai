@@ -28,7 +28,7 @@ It receives a function `getMachine` to create a new machine.
 `getMachine` is invoked at the first use with `get` argument,
 with which you can read other atom values.
 
-```js
+```tsx
 import { useAtom } from 'jotai'
 import { atomWithMachine } from 'jotai/xstate'
 import { assign, createMachine } from 'xstate'
@@ -68,7 +68,7 @@ const editableMachineAtom = atomWithMachine((get) =>
   createEditableMachine(get(defaultTextAtom))
 )
 
-const Toggle: React.FC = () => {
+const Toggle = () => {
   const [state, send] = useAtom(editableMachineAtom)
 
   return (

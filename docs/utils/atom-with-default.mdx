@@ -24,14 +24,14 @@ const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
 
 You can reset the value of an `atomWithDefault` atom to its original default value.
 
-```js
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithDefault, useResetAtom, RESET } from 'jotai/utils'
 
 const count1Atom = atom(1)
 const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
 
-const Counter: React.FC = () => {
+const Counter = () => {
   const [count1, setCount1] = useAtom(count1Atom)
   const [count2, setCount2] = useAtom(count2Atom)
   const resetCount2 = useResetAtom(count2Atom)

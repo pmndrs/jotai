@@ -176,10 +176,10 @@ yarn add jotai react
 - Basics
   - [Concepts](./docs/basics/concepts.mdx)
   - [Primitives](./docs/basics/primitives.mdx)
-  - [Async](./docs/basics/async.mdx)
   - [Comparison](./docs/basics/comparison.mdx)
   - [Showcase](./docs/basics/showcase.mdx)
 - Guides
+  - [Async](./docs/guides/async.mdx)
   - [TypeScript](./docs/guides/typescript.mdx)
   - [Debugging](./docs/guides/debugging.mdx)
   - [Testing](./docs/guides/testing.mdx)
@@ -187,7 +187,6 @@ yarn add jotai react
   - [Next.js](./docs/guides/nextjs.mdx)
   - [React Native](./docs/guides/react-native.mdx)
   - [Resettable](./docs/guides/resettable.mdx)
-  - [No Suspense](./docs/guides/no-suspense.mdx)
   - [Atoms in atom](./docs/guides/atoms-in-atom.mdx)
 - API
   - [Core](./docs/api/core.mdx)

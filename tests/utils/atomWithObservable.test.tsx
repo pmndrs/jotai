@@ -1,19 +1,34 @@
-import { ReactElement, Suspense, useState } from 'react'
-import { act, fireEvent, render } from '@testing-library/react'
-import { BehaviorSubject, Observable, ReplaySubject, Subject } from 'rxjs'
-import { useAtom } from 'jotai'
+import { Component, ReactElement, ReactNode, Suspense, useState } from 'react'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: string }
+> {
+  state = {
+    error: '',
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error: error.message }
+  }
+
+  render() {
+    if (this.state.error) {
+      return <div>Error: {this.state.error}</div>
+    }
+    return this.props.children
+  }
+}
+
 it('count state', async () => {
-  const observableAtom = atomWithObservable(
-    () =>
-      new Observable<number>((subscriber) => {
-        subscriber.next(1)
-      })
-  )
+  const observableAtom = atomWithObservable(() => of(1))
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
@@ -33,17 +48,8 @@ it('count state', async () => {
 })
 
 it('writable count state', async () => {
-  const observableAtom = atomWithObservable(() => {
-    const observable = new Observable<number>((subscriber) => {
-      subscriber.next(1)
-    })
-    const subject = new ReplaySubject<number>()
-    // is this usual to delay the subscription?
-    setTimeout(() => {
-      observable.subscribe(subject)
-    }, 100)
-    return subject
-  })
+  const subject = new BehaviorSubject(1)
+  const observableAtom = atomWithObservable(() => subject)
 
   const Counter = () => {
     const [state, dispatch] = useAtom(observableAtom)
@@ -64,11 +70,169 @@ it('writable count state', async () => {
     </Provider>
   )
 
+  await findByText('count: 1')
+
+  act(() => subject.next(2))
+  await findByText('count: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 9')
+  expect(subject.value).toBe(9)
+
+  expect(subject)
+})
+
+it('writable count state without initial value', async () => {
+  const subject = new Subject<number>()
+  const observableAtom = atomWithObservable(() => subject)
+
+  const CounterValue = () => {
+    const state = useAtomValue(observableAtom)
+
+    return <>count: {state}</>
+  }
+
+  const CounterButton = () => {
+    const dispatch = useSetAtom(observableAtom)
+
+    return <button onClick={() => dispatch(9)}>button</button>
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Suspense fallback="loading">
+          <CounterValue />
+        </Suspense>
+        <CounterButton />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 9')
+
+  act(() => subject.next(3))
+  await findByText('count: 3')
+})
+
+it('writable count state with delayed value', async () => {
+  const subject = new Subject<number>()
+  const observableAtom = atomWithObservable(() => {
+    const observable = of(1).pipe(delay(500))
+    observable.subscribe((n) => subject.next(n))
+    return subject
+  })
+
+  const Counter = () => {
+    const [state, dispatch] = useAtom(observableAtom)
+
+    return (
+      <>
+        count: {state}
+        <button
+          onClick={() => {
+            dispatch(9)
+          }}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
   await findByText('loading')
   await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
   await findByText('count: 9')
+})
+
+it('only subscribe once per atom', async () => {
+  const subject = new Subject()
+  let totalSubscriptions = 0
+  const observable = new Observable((subscriber) => {
+    totalSubscriptions++
+    subject.subscribe(subscriber)
+  })
+  const observableAtom = atomWithObservable(() => observable)
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+
+    return <>count: {state}</>
+  }
+
+  const { findByText, rerender } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+  await findByText('loading')
+  act(() => subject.next(1))
+  await findByText('count: 1')
+
+  rerender(<div />)
+  expect(totalSubscriptions).toEqual(1)
+
+  rerender(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+  act(() => subject.next(2))
+  await findByText('count: 2')
+
+  expect(totalSubscriptions).toEqual(2)
+})
+
+it('cleanup subscription', async () => {
+  const subject = new Subject()
+  let activeSubscriptions = 0
+  const observable = new Observable((subscriber) => {
+    activeSubscriptions++
+    subject.subscribe(subscriber)
+    return () => {
+      activeSubscriptions--
+    }
+  })
+  const observableAtom = atomWithObservable(() => observable)
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+
+    return <>count: {state}</>
+  }
+
+  const { findByText, rerender } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+
+  act(() => subject.next(1))
+  await findByText('count: 1')
+
+  expect(activeSubscriptions).toEqual(1)
+  rerender(<div />)
+  await waitFor(() => expect(activeSubscriptions).toEqual(0))
 })
 
 it('resubscribe on remount', async () => {
@@ -136,20 +300,8 @@ it("count state with initialValue doesn't suspend", async () => {
 })
 
 it('writable count state with initialValue', async () => {
-  const observableAtom = atomWithObservable(
-    () => {
-      const observable = new Observable<number>((subscriber) => {
-        subscriber.next(1)
-      })
-      const subject = new Subject<number>()
-      // is this usual to delay the subscription?
-      setTimeout(() => {
-        observable.subscribe(subject)
-      }, 100)
-      return subject
-    },
-    { initialValue: 5 }
-  )
+  const subject = new Subject<number>()
+  const observableAtom = atomWithObservable(() => subject, { initialValue: 5 })
 
   const Counter = () => {
     const [state, dispatch] = useAtom(observableAtom)
@@ -171,21 +323,46 @@ it('writable count state with initialValue', async () => {
   )
 
   await findByText('count: 5')
-
+  act(() => subject.next(1))
   await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
   await findByText('count: 9')
 })
 
-it('with initial value and synchronous subscription', async () => {
-  const observableAtom = atomWithObservable(
-    () =>
-      new Observable<number>((subscriber) => {
-        subscriber.next(1)
-      }),
-    { initialValue: 5 }
+it('writable count state with error', async () => {
+  const subject = new Subject<number>()
+  const observableAtom = atomWithObservable(() => subject)
+
+  const Counter = () => {
+    const [state, dispatch] = useAtom(observableAtom)
+
+    return (
+      <>
+        count: {state}
+        <button onClick={() => dispatch(9)}>button</button>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <ErrorBoundary>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </ErrorBoundary>
+    </Provider>
   )
+
+  await findByText('loading')
+
+  act(() => subject.error(new Error('Test Error')))
+  findByText('Error: Test Error')
+})
+
+it('synchronous subscription with initial value', async () => {
+  const observableAtom = atomWithObservable(() => of(1), { initialValue: 5 })
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
@@ -202,14 +379,70 @@ it('with initial value and synchronous subscription', async () => {
   await findByText('count: 1')
 })
 
-it('behaviour subject', async () => {
-  const subject$ = new BehaviorSubject(1)
-  const observableAtom = atomWithObservable(() => subject$)
+it('synchronous subscription with BehaviorSubject', async () => {
+  const observableAtom = atomWithObservable(() => new BehaviorSubject(1))
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
 
     return <>count: {state}</>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 1')
+})
+
+it('synchronous subscription with already emitted value', async () => {
+  const observableAtom = atomWithObservable(() => of(1))
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+
+    return <>count: {state}</>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 1')
+})
+
+it('with falsy initial value', async () => {
+  const observableAtom = atomWithObservable(() => new Subject<number>(), {
+    initialValue: 0,
+  })
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+
+    return <>count: {state}</>
+  }
+
+  const { findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+})
+
+it('with initially emitted undefined value', async () => {
+  const subject = new Subject<number | undefined | null>()
+  const observableAtom = atomWithObservable(() => subject)
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+
+    return <>count: {state === undefined ? '-' : state}</>
   }
 
   const { findByText } = render(
@@ -220,5 +453,46 @@ it('behaviour subject', async () => {
     </Provider>
   )
 
+  await findByText('loading')
+  act(() => subject.next(undefined))
+  await findByText('count: -')
+  act(() => subject.next(1))
   await findByText('count: 1')
+})
+
+it("don't omit values emitted between init and mount", async () => {
+  const subject = new Subject<number>()
+  const observableAtom = atomWithObservable(() => subject)
+
+  const Counter = () => {
+    const [state, dispatch] = useAtom(observableAtom)
+
+    return (
+      <>
+        count: {state}
+        <button
+          onClick={() => {
+            dispatch(9)
+          }}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </Provider>
+  )
+
+  await findByText('loading')
+  act(() => subject.next(1))
+  act(() => subject.next(2))
+  await findByText('count: 2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 9')
 })

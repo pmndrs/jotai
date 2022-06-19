@@ -30,7 +30,7 @@ The setter function can have an optional argument to force a particular state, s
 
 Here is how it's used.
 
-```ts
+```js
 import { atomWithToggle } from 'XXX'
 
 // will have an initial value set to true
@@ -39,7 +39,7 @@ const isActiveAtom = atomWithToggle(true)
 
 And in a component:
 
-```tsx
+```jsx
 const Toggle = () => {
   const [isActive, toggle] = useAtom(isActiveAtom)
 
@@ -85,7 +85,7 @@ export function atomWithToggleAndStorage(
 
 And how it's used:
 
-```ts
+```js
 import { atomWithToggleAndStorage } from 'XXX'
 
 // will have an initial value set to false & get stored in localStorage under the key "isActive"
@@ -134,7 +134,7 @@ const styleAtom = atomWithCompare<CSSProperties>(
 
 In a component:
 
-```ts
+```jsx
 const StylePreview = () => {
   const [styles, setStyles] = useAtom(styleAtom)
 
@@ -184,7 +184,7 @@ export function atomWithRefresh<T>(fn: (get: Getter) => T) {
 
 Here's how you'd use it to implement an refresh-able source of data:
 
-```ts
+```js
 import { atomWithRefresh } from 'XXX'
 
 const postsAtom = atomWithRefresh((get) =>
@@ -194,14 +194,14 @@ const postsAtom = atomWithRefresh((get) =>
 
 In a component:
 
-```ts
+```jsx
 const PostsList = () => {
   const [posts, refreshPosts] = useAtom(postsAtom)
 
   return (
     <div>
       <ul>
-        {posts.map((post: any) => (
+        {posts.map((post) => (
           <li key={post.id}>{post.title}</li>
         ))}
       </ul>
@@ -269,7 +269,7 @@ export function atomWithListeners<Value>(initialValue: Value) {
 
 In a component:
 
-```ts
+```jsx
 const [countAtom, useCountListener] = atomWithListeners(0)
 
 function EvenCounter() {

@@ -17,7 +17,7 @@ Jotai relies heavily on type inferences and requires `strictNullChecks` to be en
 
 ### Primitive atoms are basically type inferred
 
-```ts
+```js
 const numAtom = atom(0) // primitive number atom
 const strAtom = atom('') // primitive string atom
 ```
@@ -43,7 +43,7 @@ const readWriteAtom = atom<string, number>(
 
 ### useAtom is typed based on atom types
 
-```ts
+```js
 const [num, setNum] = useAtom(primitiveNumAtom)
 const [num] = useAtom(readOnlyNumAtom)
 const [, setNum] = useAtom(writeOnlyNumAtom)

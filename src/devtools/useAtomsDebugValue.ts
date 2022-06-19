@@ -1,13 +1,13 @@
-import { useDebugValue, useEffect, useState } from 'react'
-import type { Atom } from './atom'
-import type { ScopeContainer } from './contexts'
+import { useContext, useDebugValue, useEffect, useState } from 'react'
+import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
+import type { Atom, Scope } from '../core/atom'
 import {
   DEV_GET_ATOM_STATE,
   DEV_GET_MOUNTED,
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
-} from './store'
-import type { AtomState, Store } from './store'
+} from '../core/store'
+import type { AtomState, Store } from '../core/store'
 
 const atomToPrintable = (atom: Atom<unknown>) =>
   atom.debugLabel || atom.toString()
@@ -35,18 +35,28 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
     })
   )
 
-// We keep a reference to the atoms in Provider's registeredAtoms in dev mode,
+interface Options {
+  scope?: Scope
+  enabled?: boolean
+}
+
+// We keep a reference to the atoms,
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
-export const useDebugState = (scopeContainer: ScopeContainer) => {
-  const { s: store } = scopeContainer
+export const useAtomsDebugValue = (options?: Options) => {
+  const enabled = options?.enabled ?? __DEV__
+  const ScopeContext = getScopeContext(options?.scope)
+  const { s: store } = useContext(ScopeContext)
   const [atoms, setAtoms] = useState<Atom<unknown>[]>([])
   useEffect(() => {
+    if (!enabled) {
+      return
+    }
     const callback = () => {
       setAtoms(Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || []))
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()
     return unsubscribe
-  }, [store])
+  }, [enabled, store])
   useDebugValue([store, atoms], stateToPrintable)
 }

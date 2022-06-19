@@ -7,8 +7,6 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
-jest.mock('../../src/core/useDebugState.ts')
-
 const consoleWarn = console.warn
 const consoleError = console.error
 beforeEach(() => {
@@ -339,7 +337,7 @@ it('large atom count', async () => {
     </StrictMode>
   )
 
-  waitFor(() => {
+  await waitFor(() => {
     expect(result).toEqual(createArray(passingCount))
   })
 
@@ -352,7 +350,24 @@ it('large atom count', async () => {
     </StrictMode>
   )
 
-  waitFor(() => {
+  await waitFor(() => {
     expect(result).toEqual(createArray(failingCount))
   })
+})
+
+it('works with an empty list (#1177)', async () => {
+  const Component = () => {
+    useAtom(waitForAll([]))
+    return <div>works!</div>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Component />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('works!')
 })

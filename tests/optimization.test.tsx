@@ -1,35 +1,250 @@
+import { useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
-import { getTestProvider } from './testUtils'
+import { getTestProvider, itSkipIfVersionedWrite } from './testUtils'
 
 const Provider = getTestProvider()
 
-it('only relevant render function called (#156)', async () => {
-  const count1Atom = atom(0)
-  const count2Atom = atom(0)
+itSkipIfVersionedWrite(
+  'only relevant render function called (#156)',
+  async () => {
+    const count1Atom = atom(0)
+    const count2Atom = atom(0)
+
+    let renderCount1 = 0
+    let renderCount2 = 0
+
+    const Counter1 = () => {
+      const [count, setCount] = useAtom(count1Atom)
+      ++renderCount1
+      return (
+        <>
+          <div>count1: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button1</button>
+        </>
+      )
+    }
+
+    const Counter2 = () => {
+      const [count, setCount] = useAtom(count2Atom)
+      ++renderCount2
+      return (
+        <>
+          <div>count2: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button2</button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <Provider>
+        <Counter1 />
+        <Counter2 />
+      </Provider>
+    )
+
+    await waitFor(() => {
+      getByText('count1: 0')
+      getByText('count2: 0')
+    })
+    const renderCount1AfterMount = renderCount1
+    const renderCount2AfterMount = renderCount2
+
+    fireEvent.click(getByText('button1'))
+    await waitFor(() => {
+      getByText('count1: 1')
+      getByText('count2: 0')
+    })
+    expect(renderCount1).toBe(renderCount1AfterMount + 1)
+    expect(renderCount2).toBe(renderCount2AfterMount + 0)
+
+    fireEvent.click(getByText('button2'))
+    await waitFor(() => {
+      getByText('count1: 1')
+      getByText('count2: 1')
+    })
+    expect(renderCount1).toBe(renderCount1AfterMount + 1)
+    expect(renderCount2).toBe(renderCount2AfterMount + 1)
+  }
+)
+
+itSkipIfVersionedWrite(
+  'only render once using atoms with write-only atom',
+  async () => {
+    const count1Atom = atom(0)
+    const count2Atom = atom(0)
+    const incrementAtom = atom(null, (_get, set, _arg) => {
+      set(count1Atom, (c) => c + 1)
+      set(count2Atom, (c) => c + 1)
+    })
+
+    let renderCount = 0
+
+    const Counter = () => {
+      const [count1] = useAtom(count1Atom)
+      const [count2] = useAtom(count2Atom)
+      ++renderCount
+      return (
+        <div>
+          count1: {count1}, count2: {count2}
+        </div>
+      )
+    }
+
+    const Control = () => {
+      const [, increment] = useAtom(incrementAtom)
+      return <button onClick={increment}>button</button>
+    }
+
+    const { getByText, findByText } = render(
+      <Provider>
+        <Counter />
+        <Control />
+      </Provider>
+    )
+
+    await findByText('count1: 0, count2: 0')
+    const renderCountAfterMount = renderCount
+
+    fireEvent.click(getByText('button'))
+    await findByText('count1: 1, count2: 1')
+    expect(renderCount).toBe(renderCountAfterMount + 1)
+
+    fireEvent.click(getByText('button'))
+    await findByText('count1: 2, count2: 2')
+    expect(renderCount).toBe(renderCountAfterMount + 2)
+  }
+)
+
+itSkipIfVersionedWrite(
+  'useless re-renders with static atoms (#355)',
+  async () => {
+    // check out https://codesandbox.io/s/m82r5 to see the expected re-renders
+    const countAtom = atom(0)
+    const unrelatedAtom = atom(0)
+
+    let renderCount = 0
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      useAtom(unrelatedAtom)
+      ++renderCount
+
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('count: 0')
+    const renderCountAfterMount = renderCount
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 1')
+    expect(renderCount).toBe(renderCountAfterMount + 1)
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 2')
+    expect(renderCount).toBe(renderCountAfterMount + 2)
+  }
+)
+
+itSkipIfVersionedWrite(
+  'does not re-render if value is the same (#1158)',
+  async () => {
+    const countAtom = atom(0)
+
+    let renderCount = 0
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      ++renderCount
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c)}>noop</button>
+          <button onClick={() => setCount((c) => c + 1)}>inc</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('count: 0')
+    const renderCountAfterMount = renderCount
+
+    fireEvent.click(getByText('noop'))
+    await findByText('count: 0')
+    expect(renderCount).toBe(renderCountAfterMount + 0)
+
+    fireEvent.click(getByText('inc'))
+    await findByText('count: 1')
+    expect(renderCount).toBe(renderCountAfterMount + 1)
+
+    fireEvent.click(getByText('noop'))
+    await findByText('count: 1')
+    expect(renderCount).toBe(renderCountAfterMount + 1)
+
+    fireEvent.click(getByText('inc'))
+    await findByText('count: 2')
+    expect(renderCount).toBe(renderCountAfterMount + 2)
+  }
+)
+
+it('no extra rerenders after commit with derived atoms (#1213)', async () => {
+  const baseAtom = atom({ count1: 0, count2: 0 })
+  const count1Atom = atom((get) => get(baseAtom).count1)
+  const count2Atom = atom((get) => get(baseAtom).count2)
 
   let renderCount1 = 0
-  let renderCount2 = 0
+  let renderCount1AfterCommit = 0
 
   const Counter1 = () => {
-    const [count, setCount] = useAtom(count1Atom)
+    const [count1] = useAtom(count1Atom)
     ++renderCount1
-    return (
-      <>
-        <div>count1: {count}</div>
-        <button onClick={() => setCount((c) => c + 1)}>button1</button>
-      </>
-    )
+    useEffect(() => {
+      renderCount1AfterCommit = renderCount1
+    })
+    return <div>count1: {count1}</div>
   }
 
+  let renderCount2 = 0
+  let renderCount2AfterCommit = 0
+
   const Counter2 = () => {
-    const [count, setCount] = useAtom(count2Atom)
+    const [count2] = useAtom(count2Atom)
     ++renderCount2
+    useEffect(() => {
+      renderCount2AfterCommit = renderCount2
+    })
+    return <div>count2: {count2}</div>
+  }
+
+  const Control = () => {
+    const [, setValue] = useAtom(baseAtom)
+    const inc1 = () => {
+      setValue((prev) => ({ ...prev, count1: prev.count1 + 1 }))
+    }
+    const inc2 = () => {
+      setValue((prev) => ({ ...prev, count2: prev.count2 + 1 }))
+    }
     return (
-      <>
-        <div>count2: {count}</div>
-        <button onClick={() => setCount((c) => c + 1)}>button2</button>
-      </>
+      <div>
+        <button onClick={inc1}>inc1</button>
+        <button onClick={inc2}>inc2</button>
+      </div>
     )
   }
 
@@ -37,6 +252,7 @@ it('only relevant render function called (#156)', async () => {
     <Provider>
       <Counter1 />
       <Counter2 />
+      <Control />
     </Provider>
   )
 
@@ -44,148 +260,27 @@ it('only relevant render function called (#156)', async () => {
     getByText('count1: 0')
     getByText('count2: 0')
   })
-  const renderCount1AfterMount = renderCount1
-  const renderCount2AfterMount = renderCount2
+  expect(renderCount1 > 0).toBe(true)
+  expect(renderCount2 > 0).toBe(true)
 
-  fireEvent.click(getByText('button1'))
+  fireEvent.click(getByText('inc1'))
   await waitFor(() => {
     getByText('count1: 1')
     getByText('count2: 0')
   })
-  expect(renderCount1).toBe(renderCount1AfterMount + 1)
-  expect(renderCount2).toBe(renderCount2AfterMount + 0)
+  expect(renderCount1).toBe(renderCount1AfterCommit)
 
-  fireEvent.click(getByText('button2'))
+  fireEvent.click(getByText('inc2'))
   await waitFor(() => {
     getByText('count1: 1')
     getByText('count2: 1')
   })
-  expect(renderCount1).toBe(renderCount1AfterMount + 1)
-  expect(renderCount2).toBe(renderCount2AfterMount + 1)
-})
+  expect(renderCount2).toBe(renderCount2AfterCommit)
 
-it('only render once using atoms with write-only atom', async () => {
-  const count1Atom = atom(0)
-  const count2Atom = atom(0)
-  const incrementAtom = atom(null, (_get, set, _arg) => {
-    set(count1Atom, (c) => c + 1)
-    set(count2Atom, (c) => c + 1)
+  fireEvent.click(getByText('inc1'))
+  await waitFor(() => {
+    getByText('count1: 2')
+    getByText('count2: 1')
   })
-
-  let renderCount = 0
-
-  const Counter = () => {
-    const [count1] = useAtom(count1Atom)
-    const [count2] = useAtom(count2Atom)
-    ++renderCount
-    return (
-      <div>
-        count1: {count1}, count2: {count2}
-      </div>
-    )
-  }
-
-  const Control = () => {
-    const [, increment] = useAtom(incrementAtom)
-    return <button onClick={increment}>button</button>
-  }
-
-  const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-      <Control />
-    </Provider>
-  )
-
-  await findByText('count1: 0, count2: 0')
-  const renderCountAfterMount = renderCount
-
-  fireEvent.click(getByText('button'))
-  await findByText('count1: 1, count2: 1')
-  expect(renderCount).toBe(renderCountAfterMount + 1)
-
-  fireEvent.click(getByText('button'))
-  await findByText('count1: 2, count2: 2')
-  expect(renderCount).toBe(renderCountAfterMount + 2)
-})
-
-it('useless re-renders with static atoms (#355)', async () => {
-  // check out https://codesandbox.io/s/m82r5 to see the expected re-renders
-  const countAtom = atom(0)
-  const unrelatedAtom = atom(0)
-
-  let renderCount = 0
-
-  const Counter = () => {
-    const [count, setCount] = useAtom(countAtom)
-    useAtom(unrelatedAtom)
-    ++renderCount
-
-    return (
-      <>
-        <div>count: {count}</div>
-        <button onClick={() => setCount((c) => c + 1)}>button</button>
-      </>
-    )
-  }
-
-  const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
-  )
-
-  await findByText('count: 0')
-  const renderCountAfterMount = renderCount
-
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  expect(renderCount).toBe(renderCountAfterMount + 1)
-
-  fireEvent.click(getByText('button'))
-  await findByText('count: 2')
-  expect(renderCount).toBe(renderCountAfterMount + 2)
-})
-
-it('does not re-render if value is the same (#1158)', async () => {
-  const countAtom = atom(0)
-
-  let renderCount = 0
-
-  const Counter = () => {
-    const [count, setCount] = useAtom(countAtom)
-    ++renderCount
-    return (
-      <>
-        <div>count: {count}</div>
-        <button onClick={() => setCount((c) => c)}>noop</button>
-        <button onClick={() => setCount((c) => c + 1)}>inc</button>
-      </>
-    )
-  }
-
-  const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
-  )
-
-  await findByText('count: 0')
-  const renderCountAfterMount = renderCount
-
-  fireEvent.click(getByText('noop'))
-  await findByText('count: 0')
-  expect(renderCount).toBe(renderCountAfterMount + 0)
-
-  fireEvent.click(getByText('inc'))
-  await findByText('count: 1')
-  expect(renderCount).toBe(renderCountAfterMount + 1)
-
-  fireEvent.click(getByText('noop'))
-  await findByText('count: 1')
-  expect(renderCount).toBe(renderCountAfterMount + 1)
-
-  fireEvent.click(getByText('inc'))
-  await findByText('count: 2')
-  expect(renderCount).toBe(renderCountAfterMount + 2)
+  expect(renderCount1).toBe(renderCount1AfterCommit)
 })

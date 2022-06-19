@@ -1,4 +1,3 @@
-import React from 'react'
 import { MDXProvider } from '@mdx-js/react'
 import { Provider as JotaiProvider } from 'jotai'
 import { countAtom, menuAtom, textAtom } from './src/atoms'
@@ -12,6 +11,7 @@ import {
   H5,
   InlineCode,
   Stackblitz,
+  TOC,
 } from './src/components'
 
 const components = {
@@ -19,6 +19,7 @@ const components = {
   inlineCode: InlineCode,
   CodeSandbox,
   Stackblitz,
+  TOC,
   h2: H2,
   h3: H3,
   h4: H4,

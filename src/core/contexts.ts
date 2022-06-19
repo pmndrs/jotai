@@ -6,7 +6,7 @@ import type { Store } from './store'
 
 type VersionedWrite = (write: (version?: object) => void) => void
 
-export type ScopeContainer = {
+export interface ScopeContainer {
   s: Store
   w?: VersionedWrite
 }
