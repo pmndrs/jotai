@@ -89,15 +89,13 @@ export function atomWithQuery<
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
 
-      let settlePromise:
-        | ((data: TData | undefined, err?: TError) => void)
-        | null = null
+      let resolvePromise: (data: TData) => void = () => {}
+      let rejectPromise: (err: TError) => void = () => {}
 
       const getInitialData = () => {
         let data: Data | undefined = queryClient.getQueryData<TData>(
           options.queryKey
         )
-
         if (data === undefined && options.initialData) {
           data =
             typeof options.initialData === 'function'
@@ -113,68 +111,65 @@ export function atomWithQuery<
       const dataAtom = atom<Data | Promise<Data> | undefined>(
         initialData === undefined && options.enabled !== false
           ? new Promise<TData>((resolve, reject) => {
-              settlePromise = (data, err) => {
-                if (err !== undefined) {
-                  reject(err)
-                } else {
-                  resolve(data as TData)
-                }
-              }
+              resolvePromise = resolve
+              rejectPromise = reject
             })
           : initialData
       )
-      let setError: (error: TError | undefined) => void = () => {
-        throw new Error('atomWithQuery: setting error without mount')
+      let setError: ((error: TError | undefined) => void) | null = null
+      let setData: ((data: TData | Promise<TData> | undefined) => void) | null =
+        null
+      const results: QueryObserverResult<TData, TError>[] = []
+      const flushResults = () => {
+        if (setError && setData) {
+          results.forEach((result) => {
+            if (result.isError) {
+              ;(setError as NonNullable<typeof setError>)(result.error)
+            } else if (result.data !== undefined) {
+              ;(setData as NonNullable<typeof setData>)(result.data)
+            }
+          })
+          results.splice(0)
+        }
       }
-      let setData: (data: TData | Promise<TData> | undefined) => void = () => {
-        throw new Error('atomWithQuery: setting data without mount')
-      }
-      const listener = (
-        result:
-          | QueryObserverResult<TData, TError>
-          | { data?: undefined; error: TError }
-      ) => {
-        if (result.error) {
-          if (settlePromise) {
-            settlePromise(undefined, result.error)
-            settlePromise = null
-          } else {
-            setError(result.error)
-          }
+      const listener = (result: QueryObserverResult<TData, TError>) => {
+        if (result.isFetching) {
           return
         }
-        if (result.data === undefined) {
-          return
+        if (result.isError) {
+          rejectPromise(result.error)
+        } else if (result.data !== undefined) {
+          resolvePromise(result.data)
         }
-        if (settlePromise) {
-          settlePromise(result.data)
-          settlePromise = null
-        } else {
-          setError(undefined)
-          setData(result.data)
-        }
+        results.push(result)
+        flushResults()
       }
       const defaultedOptions = queryClient.defaultQueryObserverOptions(options)
-      if (initialData === undefined && options.enabled !== false) {
-        if (typeof defaultedOptions.staleTime !== 'number') {
-          defaultedOptions.staleTime = 1000
-        }
-      }
       const observer = new QueryObserver(queryClient, defaultedOptions)
+      let unsubscribe: (() => void) | null = null
+      const timer = setTimeout(() => {
+        unsubscribe?.()
+        unsubscribe = null
+      }, 1000)
       if (initialData === undefined && options.enabled !== false) {
-        observer
-          .fetchOptimistic(defaultedOptions)
-          .then(listener)
-          .catch((error) => listener({ error }))
+        unsubscribe = observer.subscribe(listener)
       }
       errorAtom.onMount = (update) => {
         setError = update
+        flushResults()
       }
       dataAtom.onMount = (update) => {
-        setData = update
-        if (options.enabled !== false) {
-          return observer.subscribe(listener)
+        clearTimeout(timer)
+        if (options.enabled !== false && !unsubscribe) {
+          unsubscribe = observer.subscribe(listener)
+          const result = observer.getCurrentResult()
+          if (result) {
+            results.push(result)
+          }
         }
+        setData = update
+        flushResults()
+        return () => unsubscribe?.()
       }
       return { errorAtom, dataAtom, observer }
     },
