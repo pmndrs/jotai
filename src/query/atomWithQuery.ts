@@ -95,7 +95,7 @@ export function atomWithQuery<
         typeof defaultedOptions.staleTime !== 'number'
       ) {
         // FIXME We don't want to depend on this config
-        defaultedOptions.staleTime = 500
+        defaultedOptions.staleTime = 1000
       }
       const observer = new QueryObserver(queryClient, defaultedOptions)
       const initialResult = observer.getCurrentResult()

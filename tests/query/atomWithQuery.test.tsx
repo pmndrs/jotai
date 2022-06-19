@@ -286,6 +286,7 @@ it('query with enabled 2', async () => {
       queryFn: async () => {
         return await mockFetch({ slug: `hello-${slug}` }, false, 500)
       },
+      staleTime: 100, // FIXME This doesn't seem ideal.
     }
   })
 
