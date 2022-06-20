@@ -110,9 +110,7 @@ it('query refetch', async () => {
   await findByText('count: 0')
   expect(mockFetch).toBeCalledTimes(1)
 
-  await act(async () => {
-    await new Promise((r) => setTimeout(r, 100))
-  })
+  await act(() => new Promise((r) => setTimeout(r, 100)))
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 1')
@@ -335,14 +333,11 @@ it('query with enabled 2', async () => {
   expect(mockFetch).toHaveBeenCalledTimes(1)
   await findByText('slug: hello-first')
 
-  await act(async () => {
-    await new Promise((r) => setTimeout(r, 100))
-  })
+  await act(() => new Promise((r) => setTimeout(r, 100)))
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
-  await act(async () => {
-    await new Promise((r) => setTimeout(r, 500 + 100))
-  })
+
+  await act(() => new Promise((r) => setTimeout(r, 100)))
   await findByText('slug: hello-first')
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
@@ -612,9 +607,7 @@ describe('error handling', () => {
     await findByText('loading')
     await findByText('count: 1')
 
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 100))
-    })
+    await act(() => new Promise((r) => setTimeout(r, 100)))
     fireEvent.click(getByText('refetch'))
     await findByText('loading')
     await findByText('errored')
