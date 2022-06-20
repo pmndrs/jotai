@@ -846,6 +846,7 @@ export const createStore = (
     versionedAtomStateMap.forEach((atomState, atom) => {
       const prevAtomState = committedAtomStateMap.get(atom)
       if (
+        !prevAtomState ||
         atomState.r > (prevAtomState?.r || 0) ||
         ('v' in atomState &&
           atomState.r === prevAtomState?.r &&

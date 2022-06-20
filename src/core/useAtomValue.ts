@@ -18,7 +18,7 @@ export function useAtomValue<Value>(
   scope?: Scope
 ): Awaited<Value> {
   const ScopeContext = getScopeContext(scope)
-  const { s: store } = useContext(ScopeContext)
+  const { s: store, i: initialVersion } = useContext(ScopeContext)
 
   const getAtomValue = useCallback(
     (version?: VersionObject) => {
@@ -45,7 +45,7 @@ export function useAtomValue<Value>(
       readonly [VersionObject | undefined, Awaited<Value>, Atom<Value>],
       VersionObject | undefined
     >,
-    undefined
+    VersionObject | undefined
   >(
     useCallback(
       (prev, nextVersion) => {
@@ -57,26 +57,24 @@ export function useAtomValue<Value>(
       },
       [getAtomValue, atom]
     ),
-    undefined,
-    () => {
-      // NOTE should/could branch on mount?
-      const initialVersion = undefined
+    initialVersion,
+    (initialVersion) => {
       const initialValue = getAtomValue(initialVersion)
       return [initialVersion, initialValue, atom]
     }
   )
 
   if (atomFromUseReducer !== atom) {
-    rerenderIfChanged(undefined)
+    rerenderIfChanged(initialVersion)
   }
 
   useEffect(() => {
     // Call `rerenderIfChanged` whenever this atom is invalidated. Note
     // that derived atoms may not be recomputed yet.
     const unsubscribe = store[SUBSCRIBE_ATOM](atom, rerenderIfChanged)
-    rerenderIfChanged(undefined)
+    rerenderIfChanged(initialVersion)
     return unsubscribe
-  }, [store, atom])
+  }, [store, atom, initialVersion])
 
   useEffect(() => {
     store[COMMIT_ATOM](atom, version)

@@ -49,11 +49,12 @@ export const Provider = ({
     if (unstable_enableVersionedWrite) {
       scopeContainerRef.current.w = (write) => {
         setVersion((parentVersion) => {
-          const nextVersion = parentVersion ? { p: parentVersion } : {}
+          const nextVersion = { p: parentVersion }
           write(nextVersion)
           return nextVersion
         })
       }
+      scopeContainerRef.current.i = version // initial version object
     }
   }
 
