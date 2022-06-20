@@ -1,5 +1,5 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { Atom } from 'jotai'
 import { getTestProvider, itSkipIfVersionedWrite } from './testUtils'
@@ -131,6 +131,7 @@ it('does not show async stale result on derived atom', async () => {
     getByText('derived value: null')
   })
 
+  await act(() => new Promise((r) => setTimeout(r, 100)))
   fireEvent.click(getByText('button'))
 
   await waitFor(() => {
@@ -189,6 +190,7 @@ it('works with async get with extra deps', async () => {
     getByText('delayedCount: 0')
   })
 
+  await act(() => new Promise((r) => setTimeout(r, 100)))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await waitFor(() => {
@@ -1025,6 +1027,7 @@ it('async atom double chain with setTimeout', async () => {
 
   await findByText('async: init')
 
+  await act(() => new Promise((r) => setTimeout(r, 100)))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('async: ready')

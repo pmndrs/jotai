@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
@@ -76,6 +76,7 @@ it('works a primitive atom and a dependent async atom', async () => {
   await findByText('loading')
   await findByText('count: 1, doubled: 2')
 
+  await act(() => new Promise((r) => setTimeout(r, 100)))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('count: 2, doubled: 4')

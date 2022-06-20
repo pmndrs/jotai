@@ -847,10 +847,10 @@ export const createStore = (
       const prevAtomState = committedAtomStateMap.get(atom)
       if (
         !prevAtomState ||
-        atomState.r > (prevAtomState?.r || 0) ||
+        atomState.r > prevAtomState.r ||
         ('v' in atomState &&
-          atomState.r === prevAtomState?.r &&
-          atomState.d !== prevAtomState?.d)
+          atomState.r === prevAtomState.r &&
+          atomState.d !== prevAtomState.d)
       ) {
         committedAtomStateMap.set(atom, atomState)
         if (atomState.d !== prevAtomState?.d) {
