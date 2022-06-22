@@ -1,6 +1,6 @@
 const SUSPENSE_PROMISE = Symbol()
 
-type SuspensePromiseExtra = {
+interface SuspensePromiseExtra {
   b: Promise<unknown> // base promise
   o: Promise<void> // original promise
   c: (() => void) | null // cancel promise (null if already cancelled)
