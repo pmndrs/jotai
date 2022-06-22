@@ -21,7 +21,7 @@ export const Button = ({
       ? 'space-x-4 rounded-md px-6 py-3 text-base shadow-md sm:rounded-lg'
       : 'space-x-2 rounded px-3 py-1.5 text-xs shadow-sm sm:rounded-md',
     !dark
-      ? 'border-gray-200 bg-gray-100 text-black hover:bg-blue-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300'
+      ? 'border-gray-200 bg-gray-100 text-black hover:bg-blue-100 dark:border-gray-800 dark:bg-gray-900 dark:hover:!border-teal-800 dark:hover:bg-teal-950 dark:text-gray-300'
       : 'border-gray-800 bg-gray-900 text-gray-300',
     !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
     className
