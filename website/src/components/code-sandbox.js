@@ -1,9 +1,9 @@
 export const CodeSandbox = ({ id, tests }) => {
   return (
-    <div className="mb-8 overflow-hidden shadow-lg !dark:shadow-none rounded-md sm:rounded-lg border-b border-gray-200 dark:border-gray-800">
+    <div className="mb-8 overflow-hidden rounded-md border-b border-gray-200 shadow-lg dark:border-gray-800 dark:!shadow-none sm:rounded-lg">
       <iframe
         title={id}
-        className="w-full h-[400px]"
+        className="h-[400px] w-full"
         src={`https://codesandbox.io/embed/${id}?codemirror=1&fontsize=14&hidenavigation=1&theme=light&hidedevtools=1${
           tests ? '&previewwindow=tests' : ''
         }`}
@@ -12,5 +12,5 @@ export const CodeSandbox = ({ id, tests }) => {
         loading="lazy"
       />
     </div>
-  )
-}
+  );
+};
