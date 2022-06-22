@@ -33,11 +33,11 @@ export const Layout = ({ showDocs = false, children }) => {
   return (
     <>
       <Wrapper>
-        <header className="absolute lg:fixed top-0 right-0">
+        <header className="absolute top-0 right-0 lg:fixed">
           <button
             type="button"
             onClick={darkMode.toggle}
-            className="relative inline-flex justify-center items-center m-4 w-7 h-7 rounded-full text-black dark:text-gray-400">
+            className="relative m-4 inline-flex h-7 w-7 items-center justify-center rounded-full text-black dark:text-gray-400">
             <div className="relative">
               <Icon icon="sun" className={lightModeIconClassNames} />
               <Icon icon="moon" className={darkModeIconClassNames} />

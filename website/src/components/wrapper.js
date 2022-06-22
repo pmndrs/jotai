@@ -1,7 +1,7 @@
 export const Wrapper = ({ children, ...rest }) => {
   return (
     <div
-      className="relative flex flex-col lg:flex-row lg:justify-around lg:max-w-[1920px] lg:mx-auto"
+      className="relative flex flex-col lg:mx-auto lg:max-w-[1920px] lg:flex-row lg:justify-around"
       {...rest}>
       {children}
     </div>

@@ -146,7 +146,8 @@
     "singleQuote": true,
     "bracketSameLine": true,
     "tabWidth": 2,
-    "printWidth": 80
+    "printWidth": 80,
+    "tailwindConfig": "./website/tailwind.config.js"
   },
   "repository": {
     "type": "git",

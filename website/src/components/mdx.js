@@ -55,5 +55,5 @@ export const A = ({ href, children, ...rest }) => {
 }
 
 const getAnchor = (value) => {
-  return typeof value === 'string' ? kebabCase(value) : ''
+  return typeof value === 'string' ? kebabCase(value.replaceAll("'", '')) : ''
 }

@@ -10,7 +10,7 @@ export const CoreDemo = () => {
       <input
         value={text}
         onChange={(event) => setText(event.target.value)}
-        className="w-full focus:!ring-transparent bg-transparent"
+        className="w-full bg-transparent focus:!ring-transparent"
       />
     )
   }
@@ -58,7 +58,7 @@ const App = () => {
   return (
     <>
       <div className="py-8 text-sm">
-        <div className="flex items-center px-4 py-2 focus-within:ring border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 text-lg">
+        <div className="flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg focus-within:ring focus-within:ring-blue-400 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:ring-teal-700">
           <Input />
           <Uppercase />
         </div>

@@ -103,6 +103,7 @@ module.exports = {
     },
   ],
   jsxRuntime: 'automatic',
+  polyfill: false,
   trailingSlash: 'never',
   flags: {
     FAST_DEV: true,

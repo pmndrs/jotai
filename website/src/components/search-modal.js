@@ -28,7 +28,7 @@ export const SearchModal = () => {
         <Results>
           <Hits
             hitComponent={Hit}
-            className="max-h-[400px] px-8 overflow-y-scroll"
+            className="max-h-[400px] overflow-y-scroll px-8"
           />
         </Results>
       </InstantSearch>
@@ -36,7 +36,7 @@ export const SearchModal = () => {
         <Button
           icon="close"
           onClick={() => setIsSearchOpen(false)}
-          className="w-full lg:w-auto font-bold tracking-wider uppercase"
+          className="w-full font-bold uppercase tracking-wider lg:w-auto"
           dark>
           Close
         </Button>
@@ -51,7 +51,7 @@ const SearchBox = ({ currentRefinement, refine }) => (
     placeholder="Search here..."
     value={currentRefinement}
     onChange={(event) => refine(event.currentTarget.value)}
-    className="flex items-center w-full px-4 py-2 ring-0 border border-gray-300 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-950 text-lg text-black dark:text-gray-200"
+    className="flex w-full items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg text-black ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
   />
 )
 
@@ -66,9 +66,9 @@ const Results = connectStateResults(
     ) : (
       <div className="flex items-center space-x-3 p-8">
         <div>
-          <Icon icon="warning" className="w-6 h-6 fill-current text-red-400" />
+          <Icon icon="warning" className="h-6 w-6 fill-current text-red-400" />
         </div>
-        <div className="font-semibold text-lg">
+        <div className="text-lg font-semibold">
           No results have been found for “{searchState.query}”. Please revise
           your query.
         </div>
@@ -86,21 +86,21 @@ const Hit = ({ hit }) => {
     <Link
       onClick={() => setIsSearchOpen(false)}
       to={`/docs/${slug}`}
-      className="flex my-6 space-x-3 group">
+      className="group my-6 flex space-x-3">
       <div>
         <Icon
           icon="file"
-          className="w-6 h-6 fill-current text-blue-400 dark:text-teal-600"
+          className="h-6 w-6 fill-current text-blue-400 dark:text-teal-600"
         />
       </div>
       <div>
-        <div className="font-semibold text-xl dark:text-gray-200">{title}</div>
+        <div className="text-xl font-semibold dark:text-gray-200">{title}</div>
         {excerpt && (
-          <div className="mt-1 text-sm text-gray-500 leading-snug">
+          <div className="mt-1 text-sm leading-snug text-gray-500">
             {excerpt}
           </div>
         )}
-        <div className="mt-1 font-medium text-xs text-gray-400 tracking-wider group-hover:underline">
+        <div className="mt-1 text-xs font-medium tracking-wider text-gray-400 group-hover:underline">
           jotai.org/docs/{slug}
         </div>
       </div>

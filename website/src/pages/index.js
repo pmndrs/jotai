@@ -7,7 +7,7 @@ export default function HomePage() {
       <Head />
       <Layout>
         <Intro />
-        <div className="mt-8 lg:mt-16 space-y-8 lg:space-y-16">
+        <div className="mt-8 space-y-8 lg:mt-16 lg:space-y-16">
           <section>
             <h2>Introduction</h2>
             <p>
@@ -67,10 +67,10 @@ export default function HomePage() {
               href="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
               target="_blank"
               rel="noopener"
-              className="block mt-4">
+              className="mt-4 block">
               <img
                 src="https://storage.googleapis.com/candycode/jotai/jotai-course-banner.jpg"
-                className="block shadow-lg dark:!shadow-none rounded-md sm:rounded-lg"
+                className="block rounded-md shadow-lg dark:!shadow-none sm:rounded-lg"
                 alt="Jotai course"
                 title="Jotai course"
               />

@@ -1,9 +1,9 @@
 export const Stackblitz = ({ id, file }) => {
   return (
-    <div className="mb-8 overflow-hidden shadow-lg dark:!shadow-none rounded-md sm:rounded-lg border-b border-gray-200">
+    <div className="mb-8 overflow-hidden rounded-md border-b border-gray-200 shadow-lg dark:!shadow-none sm:rounded-lg">
       <iframe
         title={id}
-        className="w-full h-[400px]"
+        className="h-[400px] w-full"
         src={`https://stackblitz.com/edit/${id}?embed=1${
           file ? `&file=${file}` : ''
         }&terminal=dev`}

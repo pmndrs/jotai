@@ -28,8 +28,8 @@ export const Button = ({
   )
 
   const iconClassNames = cx(
-    'flex-shrink-0 object-contain fill-current',
-    !small ? 'w-6 h-6' : 'w-4 h-4',
+    'flex-shrink-0 fill-current object-contain',
+    !small ? 'h-6 w-6' : 'h-4 w-4',
     !dark ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300'
   )
 

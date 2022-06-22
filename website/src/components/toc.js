@@ -8,9 +8,9 @@ export const TOC = ({ section = '' }) => {
   const sectionLinks = parseDocs(docs, section)
 
   const sectionClassNames = cx(
-    'mt-4 grid gap-4',
+    'mt-4 grid gap-4 text-sm',
     sectionLinks.length <= 16
-      ? 'sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+      ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 text-sm md:text-base'
       : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 text-sm'
   )
 
@@ -19,7 +19,7 @@ export const TOC = ({ section = '' }) => {
       {sectionLinks.map((sectionLink) => (
         <Link
           to={`/docs/${sectionLink.slug}`}
-          className="inline-flex justify-center items-center p-2 border rounded-md sm:rounded-lg border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 hover:bg-blue-100 !text-black dark:!text-gray-300 text-center leading-snug aspect-video !no-underline">
+          className="inline-flex aspect-video items-center justify-center rounded-md border border-gray-200 bg-gray-100 p-2 text-center leading-snug !text-black !no-underline hover:bg-blue-100 dark:border-gray-800 dark:bg-gray-900 dark:!text-gray-300 sm:rounded-lg">
           {sectionLink.meta.title}
         </Link>
       ))}
