@@ -7,5 +7,5 @@ export const searchAtom = atom(false)
 
 export const textAtom = atom('hello')
 export const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
-export const darkModeAtom = atomWithStorage('darkMode', false)
+export const darkModeAtom = atomWithStorage('darkModeDemo', false)
 export const countAtom = atomWithImmer(0)
