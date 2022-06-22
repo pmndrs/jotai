@@ -45,10 +45,15 @@ export const H5 = ({ children }) => {
 };
 
 export const A = ({ href, children, ...rest }) => {
-  const newHref = href.replace('.mdx', '');
+  if (href.startsWith('http')) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" {...rest}>
+        {children}
+      </a>
+    );
+  }
 
-  // @TODO remove console.info for href
-  console.info('href:', href);
+  const newHref = href.replace('.mdx', '');
 
   return (
     <a href={newHref} {...rest}>

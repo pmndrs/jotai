@@ -57,7 +57,7 @@ export default function HomePage() {
             <a
               href="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
               target="_blank"
-              rel="noopener"
+              rel="noreferrer"
               className="mt-4 block"
             >
               <img

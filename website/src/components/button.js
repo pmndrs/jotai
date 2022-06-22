@@ -55,7 +55,7 @@ export const Button = ({
     );
   } else if (to && external) {
     return (
-      <a href={to} target="_blank" rel="noopener" className={buttonClassNames} {...rest}>
+      <a href={to} target="_blank" rel="noreferrer" className={buttonClassNames} {...rest}>
         {icon && <Icon icon={icon} className={iconClassNames} />}
         <span>{children}</span>
       </a>
