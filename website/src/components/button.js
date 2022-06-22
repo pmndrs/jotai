@@ -16,12 +16,12 @@ export const Button = ({
   ...rest
 }) => {
   const buttonClassNames = cx(
-    'inline-flex items-center border dark:!shadow-none select-none',
+    'inline-flex select-none items-center border dark:!shadow-none',
     !small
-      ? 'px-6 py-3 space-x-4 shadow-md rounded-md sm:rounded-lg text-base'
-      : 'px-3 py-1.5 space-x-2 shadow-sm rounded sm:rounded-md text-xs',
+      ? 'space-x-4 rounded-md px-6 py-3 text-base shadow-md sm:rounded-lg'
+      : 'space-x-2 rounded px-3 py-1.5 text-xs shadow-sm sm:rounded-md',
     !dark
-      ? 'border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 hover:bg-blue-100 text-black dark:text-gray-300'
+      ? 'border-gray-200 bg-gray-100 text-black hover:bg-blue-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300'
       : 'border-gray-800 bg-gray-900 text-gray-300',
     !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
     className

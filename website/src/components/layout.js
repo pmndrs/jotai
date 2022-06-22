@@ -22,12 +22,12 @@ export const Layout = ({ showDocs = false, children }) => {
 
   const lightModeIconClassNames = cx(
     darkMode.value ? 'opacity-100' : 'opacity-0',
-    'w-5 h-5 fill-current transition-opacity ease-in-out duration-300'
+    'h-5 w-5 fill-current transition-opacity duration-300 ease-in-out'
   )
 
   const darkModeIconClassNames = cx(
     darkMode.value ? 'opacity-0' : 'opacity-100',
-    'absolute left-0 top-0 w-5 h-5 fill-current transition-opacity ease-in-out duration-300'
+    'absolute left-0 top-0 h-5 w-5 fill-current transition-opacity duration-300 ease-in-out'
   )
 
   return (

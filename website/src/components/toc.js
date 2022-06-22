@@ -10,8 +10,8 @@ export const TOC = ({ section = '' }) => {
   const sectionClassNames = cx(
     'mt-4 grid gap-4 text-sm',
     sectionLinks.length <= 16
-      ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 text-sm md:text-base'
-      : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 text-sm'
+      ? 'grid-cols-2 text-sm md:grid-cols-3 md:text-base lg:grid-cols-4'
+      : 'grid-cols-2 text-sm sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5'
   )
 
   return (
