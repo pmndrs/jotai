@@ -1,34 +1,16 @@
-import cx from 'classnames'
-import useDarkMode from 'use-dark-mode'
-import {
-  Footer,
-  Icon,
-  Main,
-  Menu,
-  SearchModal,
-  Sidebar,
-  Wrapper,
-} from '../components'
+import cx from 'classnames';
+import useDarkMode from 'use-dark-mode';
+import { Footer, Icon, Main, Menu, SearchModal, Sidebar, Wrapper } from '../components';
 
-const INITIAL_STATE = false
+const INITIAL_STATE = false;
 
 const DARK_MODE_CONFIG = {
   classNameDark: 'dark',
   classNameLight: 'light',
-}
+};
 
 export const Layout = ({ showDocs = false, children }) => {
-  const darkMode = useDarkMode(INITIAL_STATE, DARK_MODE_CONFIG)
-
-  const lightModeIconClassNames = cx(
-    darkMode.value ? 'opacity-100' : 'opacity-0',
-    'h-5 w-5 fill-current transition-opacity duration-300 ease-in-out'
-  )
-
-  const darkModeIconClassNames = cx(
-    darkMode.value ? 'opacity-0' : 'opacity-100',
-    'absolute left-0 top-0 h-5 w-5 fill-current transition-opacity duration-300 ease-in-out'
-  )
+  const darkMode = useDarkMode(INITIAL_STATE, DARK_MODE_CONFIG);
 
   return (
     <>
@@ -37,10 +19,23 @@ export const Layout = ({ showDocs = false, children }) => {
           <button
             type="button"
             onClick={darkMode.toggle}
-            className="relative m-4 inline-flex h-7 w-7 items-center justify-center rounded-full text-black dark:text-gray-400">
+            className="relative m-4 inline-flex h-7 w-7 items-center justify-center rounded-full text-black dark:text-gray-400"
+          >
             <div className="relative">
-              <Icon icon="sun" className={lightModeIconClassNames} />
-              <Icon icon="moon" className={darkModeIconClassNames} />
+              <Icon
+                icon="sun"
+                className={cx(
+                  darkMode.value ? 'opacity-100' : 'opacity-0',
+                  'h-5 w-5 fill-current transition-opacity duration-300 ease-in-out',
+                )}
+              />
+              <Icon
+                icon="moon"
+                className={cx(
+                  darkMode.value ? 'opacity-0' : 'opacity-100',
+                  'absolute left-0 top-0 h-5 w-5 fill-current transition-opacity duration-300 ease-in-out',
+                )}
+              />
             </div>
           </button>
         </header>
@@ -53,5 +48,5 @@ export const Layout = ({ showDocs = false, children }) => {
       <Menu />
       <SearchModal />
     </>
-  )
-}
+  );
+};

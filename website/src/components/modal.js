@@ -1,4 +1,4 @@
-import * as Dialog from '@radix-ui/react-dialog'
+import * as Dialog from '@radix-ui/react-dialog';
 
 export const Modal = ({ isOpen, onOpenChange, children, ...rest }) => (
   <Dialog.Root open={isOpen} onOpenChange={onOpenChange} {...rest}>
@@ -15,4 +15,4 @@ export const Modal = ({ isOpen, onOpenChange, children, ...rest }) => (
       </Dialog.Overlay>
     </Dialog.Portal>
   </Dialog.Root>
-)
+);

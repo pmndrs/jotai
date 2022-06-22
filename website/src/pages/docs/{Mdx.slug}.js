@@ -1,11 +1,11 @@
-import { graphql } from 'gatsby'
-import { MDXRenderer } from 'gatsby-plugin-mdx'
-import { Head, Jotai, Layout } from '../../components'
+import { graphql } from 'gatsby';
+import { MDXRenderer } from 'gatsby-plugin-mdx';
+import { Head, Jotai, Layout } from '../../components';
 
 export default function DocsPage({ data }) {
-  const { slug, frontmatter, body } = data.mdx
-  const { title, description } = frontmatter
-  const uri = `docs/${slug}`
+  const { slug, frontmatter, body } = data.mdx;
+  const { title, description } = frontmatter;
+  const uri = `docs/${slug}`;
 
   return (
     <>
@@ -18,7 +18,7 @@ export default function DocsPage({ data }) {
         <MDXRenderer>{body}</MDXRenderer>
       </Layout>
     </>
-  )
+  );
 }
 
 export const pageQuery = graphql`
@@ -32,4 +32,4 @@ export const pageQuery = graphql`
       body
     }
   }
-`
+`;

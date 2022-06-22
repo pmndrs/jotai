@@ -1,10 +1,10 @@
-import cx from 'classnames'
-import { useAtom } from 'jotai'
-import { menuAtom } from '../atoms'
-import { Button, Docs, SearchButton } from '../components'
+import cx from 'classnames';
+import { useAtom } from 'jotai';
+import { menuAtom } from '../atoms';
+import { Button, Docs, SearchButton } from '../components';
 
 export const Menu = () => {
-  const [isMenuOpen, setIsMenuOpen] = useAtom(menuAtom)
+  const [isMenuOpen, setIsMenuOpen] = useAtom(menuAtom);
 
   return (
     <>
@@ -16,7 +16,8 @@ export const Menu = () => {
             external
             className="font-bold uppercase tracking-wider"
             dark
-            small>
+            small
+          >
             GitHub
           </Button>
           <Button
@@ -25,7 +26,8 @@ export const Menu = () => {
             external
             className="font-bold uppercase tracking-wider"
             dark
-            small>
+            small
+          >
             npm
           </Button>
           <Button
@@ -33,7 +35,8 @@ export const Menu = () => {
             onClick={() => setIsMenuOpen(true)}
             className="font-bold uppercase tracking-wider"
             dark
-            small>
+            small
+          >
             Docs
           </Button>
         </div>
@@ -44,8 +47,9 @@ export const Menu = () => {
           isMenuOpen
             ? 'pointer-events-auto opacity-100 lg:pointer-events-none lg:opacity-0'
             : 'pointer-events-none opacity-0',
-          'fixed inset-0 z-50 flex max-h-screen items-end bg-black/75 p-4 transition duration-300 ease-in-out sm:p-6'
-        )}>
+          'fixed inset-0 z-50 flex max-h-screen items-end bg-black/75 p-4 transition duration-300 ease-in-out sm:p-6',
+        )}
+      >
         <div className="max-h-full w-full overflow-y-scroll !overscroll-none rounded-lg border border-gray-300 bg-white p-8 shadow-2xl dark:border-gray-800 dark:bg-gray-950 dark:!shadow-none">
           <div className="px-3 pb-16 sm:pb-0">
             <div className="-mx-3 mb-6">
@@ -58,12 +62,13 @@ export const Menu = () => {
               icon="close"
               onClick={() => setIsMenuOpen(false)}
               className="w-full font-bold uppercase tracking-wider"
-              dark>
+              dark
+            >
               Close
             </Button>
           </div>
         </div>
       </div>
     </>
-  )
-}
+  );
+};

@@ -1,4 +1,4 @@
-import { Jotai } from '../components'
+import { Jotai } from '../components';
 
 export const Intro = () => {
   return (
@@ -13,15 +13,15 @@ export const Intro = () => {
         />
         <div className="speech-bubble relative w-2/3 space-y-4 rounded-xl bg-gray-100 p-4 text-sm leading-snug text-gray-700 dark:bg-gray-900 dark:text-gray-300 sm:text-base md:text-lg lg:w-3/4 lg:p-8 lg:leading-normal">
           <div>
-            No extra re-renders, state resides within React, and you get the
-            full benefits from suspense and concurrent features.
+            No extra re-renders, state resides within React, and you get the full benefits from
+            suspense and concurrent features.
           </div>
           <div>
-            It’s scalable from a simple React.useState replacement to a
-            large-scale application with complex requirements.
+            It’s scalable from a simple React.useState replacement to a large-scale application with
+            complex requirements.
           </div>
         </div>
       </div>
     </header>
-  )
-}
+  );
+};

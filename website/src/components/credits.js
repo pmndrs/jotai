@@ -1,4 +1,4 @@
-import { Button } from '../components'
+import { Button } from '../components';
 
 export const Credits = () => {
   return (
@@ -10,7 +10,8 @@ export const Credits = () => {
         style={{ width: 175 }}
         dark
         small
-        external>
+        external
+      >
         mascot by Jessie Waters
       </Button>
       <Button
@@ -20,7 +21,8 @@ export const Credits = () => {
         style={{ width: 175, height: 28 }}
         dark
         small
-        external>
+        external
+      >
         <div className="inline-flex items-center space-x-1">
           <span className="whitespace-nowrap">website by</span>
           <img
@@ -31,5 +33,5 @@ export const Credits = () => {
         </div>
       </Button>
     </>
-  )
-}
+  );
+};

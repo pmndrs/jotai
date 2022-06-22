@@ -1,4 +1,4 @@
-import { Button, Credits, Docs, Jotai, SearchButton } from '../components'
+import { Button, Credits, Docs, Jotai, SearchButton } from '../components';
 
 export const Sidebar = ({ showDocs = false }) => {
   return (
@@ -30,13 +30,15 @@ export const Sidebar = ({ showDocs = false }) => {
           <Button
             icon="cap"
             to="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
-            external>
+            external
+          >
             Course
           </Button>
           <Button
             icon="chalkboard"
             to="https://daishi.gumroad.com/l/learn-jotai/website_qpiwdj8"
-            external>
+            external
+          >
             Walkthrough
           </Button>
           <Button icon="discord" to="https://discord.gg/poimandres" external>
@@ -51,5 +53,5 @@ export const Sidebar = ({ showDocs = false }) => {
         <Credits />
       </div>
     </aside>
-  )
-}
+  );
+};

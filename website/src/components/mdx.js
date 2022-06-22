@@ -1,59 +1,62 @@
-import kebabCase from 'just-kebab-case'
+import kebabCase from 'just-kebab-case';
 
 export const H2 = ({ children }) => {
-  const anchor = getAnchor(children)
-  const link = `#${anchor}`
+  const anchor = getAnchor(children);
+  const link = `#${anchor}`;
 
   return (
     <h2 id={anchor}>
       <a href={link}>{children}</a>
     </h2>
-  )
-}
+  );
+};
 
 export const H3 = ({ children }) => {
-  const anchor = getAnchor(children)
-  const link = `#${anchor}`
+  const anchor = getAnchor(children);
+  const link = `#${anchor}`;
 
   return (
     <h3 id={anchor}>
       <a href={link}>{children}</a>
     </h3>
-  )
-}
+  );
+};
 
 export const H4 = ({ children }) => {
-  const anchor = getAnchor(children)
-  const link = `#${anchor}`
+  const anchor = getAnchor(children);
+  const link = `#${anchor}`;
 
   return (
     <h4 id={anchor}>
       <a href={link}>{children}</a>
     </h4>
-  )
-}
+  );
+};
 
 export const H5 = ({ children }) => {
-  const anchor = getAnchor(children)
-  const link = `#${anchor}`
+  const anchor = getAnchor(children);
+  const link = `#${anchor}`;
 
   return (
     <h5 id={anchor}>
       <a href={link}>{children}</a>
     </h5>
-  )
-}
+  );
+};
 
 export const A = ({ href, children, ...rest }) => {
-  const newHref = href.replace('.mdx', '')
+  const newHref = href.replace('.mdx', '');
+
+  // @TODO remove console.info for href
+  console.info('href:', href);
 
   return (
     <a href={newHref} {...rest}>
       {children}
     </a>
-  )
-}
+  );
+};
 
 const getAnchor = (value) => {
-  return typeof value === 'string' ? kebabCase(value.replaceAll("'", '')) : ''
-}
+  return typeof value === 'string' ? kebabCase(value.replaceAll("'", '')) : '';
+};
