@@ -135,7 +135,7 @@
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
-    "patch-readme": "sed -i '4d' ./dist/readme.md"
+    "patch-readme": "shx sed -i 's/.*dark mode.*//' dist/readme.md"
   },
   "engines": {
     "node": ">=12.7.0"
@@ -146,8 +146,7 @@
     "singleQuote": true,
     "bracketSameLine": true,
     "tabWidth": 2,
-    "printWidth": 80,
-    "tailwindConfig": "./website/tailwind.config.js"
+    "printWidth": 80
   },
   "repository": {
     "type": "git",
