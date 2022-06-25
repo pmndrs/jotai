@@ -30,13 +30,8 @@ export const Provider = ({
 }>) => {
   const [version, setVersion] = useState<VersionObject>({})
   useEffect(() => {
-    if (version) {
-      ;(scopeContainerRef.current as ScopeContainer).s[COMMIT_ATOM](
-        null,
-        version
-      )
-      delete version.p
-    }
+    ;(scopeContainerRef.current as ScopeContainer).s[COMMIT_ATOM](null, version)
+    delete version.p
   }, [version])
 
   const scopeContainerRef = useRef<ScopeContainer>()
