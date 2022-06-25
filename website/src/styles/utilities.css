@@ -18,10 +18,4 @@
   border-right-color: #171717 !important;
 }
 
-@supports (-moz-appearance: none) {
-  .moz\:-bottom-1 {
-    @apply -bottom-1;
-  }
-}
-
 @tailwind utilities;
