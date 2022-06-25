@@ -26,7 +26,7 @@ it('[DEV-ONLY] should register newly added atoms', async () => {
   }
 
   const RegisteredAtomsCount = () => {
-    const [atoms] = useAtomsSnapshot()
+    const atoms = useAtomsSnapshot().values
 
     return <p>atom count: {atoms.size}</p>
   }
@@ -56,7 +56,7 @@ it('[DEV-ONLY] should let you access atoms and their state', async () => {
   }
 
   const SimpleDevtools = () => {
-    const [atoms] = useAtomsSnapshot()
+    const atoms = useAtomsSnapshot().values
 
     return (
       <div>
@@ -91,7 +91,7 @@ it('[DEV-ONLY] should contain initial values', async () => {
   }
 
   const SimpleDevtools = () => {
-    const [atoms] = useAtomsSnapshot()
+    const atoms = useAtomsSnapshot().values
 
     return (
       <div>
@@ -143,7 +143,7 @@ it('[DEV-ONLY] conditional dependencies + updating state should call devtools.se
   }
 
   const SimpleDevtools = () => {
-    const [, dependents] = useAtomsSnapshot()
+    const { dependents } = useAtomsSnapshot()
 
     const obj: Record<string, string[]> = {}
 

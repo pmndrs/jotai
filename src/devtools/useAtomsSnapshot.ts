@@ -7,11 +7,16 @@ import {
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
 } from '../core/store'
-import type { AtomState, Mounted, Store } from '../core/store'
+import type { AtomState, Store } from '../core/store'
 
-type AtomsValues = Map<Atom<unknown>, unknown>
-type AtomsDependants = Map<Atom<unknown>, Set<Atom<unknown>>>
-type AtomsSnapshot = readonly [AtomsValues, AtomsDependants]
+type AnyAtomValue = unknown
+type AnyAtom = Atom<AnyAtomValue>
+type AtomsValues = Map<AnyAtom, AnyAtomValue> // immutable
+type AtomsDependents = Map<AnyAtom, Set<AnyAtom>> // immutable
+type AtomsSnapshot = Readonly<{
+  values: AtomsValues
+  dependents: AtomsDependents
+}>
 
 const createAtomsSnapshot = (
   store: Store,
@@ -22,11 +27,11 @@ const createAtomsSnapshot = (
     return [atom, 'v' in atomState ? atomState.v : undefined]
   })
   const dependants = atoms.map<[Atom<unknown>, Set<Atom<unknown>>]>((atom) => {
-    const mounted = store[DEV_GET_MOUNTED]?.(atom) ?? ({} as Mounted)
-    return [atom, mounted.t]
+    const mounted = store[DEV_GET_MOUNTED]?.(atom)
+    return [atom, mounted?.t ?? new Set()]
   })
 
-  return [new Map(tuples), new Map(dependants)]
+  return { values: new Map(tuples), dependents: new Map(dependants) }
 }
 
 export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
@@ -38,10 +43,10 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
     throw new Error('useAtomsSnapshot can only be used in dev mode.')
   }
 
-  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => [
-    new Map(),
-    new Map(),
-  ])
+  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => ({
+    values: new Map(),
+    dependents: new Map(),
+  }))
 
   useEffect(() => {
     const callback = () => {
