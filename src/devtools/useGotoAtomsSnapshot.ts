@@ -24,6 +24,9 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
   return useCallback(
     (values: Iterable<readonly [Atom<unknown>, unknown]> | AtomsSnapshot) => {
       if (isIterable(values)) {
+        if (__DEV__) {
+          console.warn('snapshot as iterable is no longer supported. use an object instead.')
+        }
         store[RESTORE_ATOMS](values)
         return
       }
