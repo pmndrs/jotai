@@ -25,10 +25,10 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should modify atoms snapshot', async () => {
     return (
       <button
         onClick={() => {
-          const newSnapshot = new Map(snapshot)
-          newSnapshot.set(petAtom, 'dog')
-          newSnapshot.set(colorAtom, 'green')
-          goToSnapshot(newSnapshot)
+          const newSnapshot = { ...snapshot, values: new Map(snapshot.values) }
+          newSnapshot.values.set(petAtom, 'dog')
+          newSnapshot.values.set(colorAtom, 'green')
+          goToSnapshot(newSnapshot.values) // `values` for testing backward compatibility
         }}>
         click
       </button>
@@ -70,8 +70,8 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with derived atoms', async () =>
     return (
       <button
         onClick={() => {
-          const newSnapshot = new Map(snapshot)
-          newSnapshot.set(priceAtom, 20)
+          const newSnapshot = { ...snapshot, values: new Map(snapshot.values) }
+          newSnapshot.values.set(priceAtom, 20)
           goToSnapshot(newSnapshot)
         }}>
         click
@@ -121,8 +121,8 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with async derived atoms', async
     return (
       <button
         onClick={() => {
-          const newSnapshot = new Map(snapshot)
-          newSnapshot.set(priceAtom, 20)
+          const newSnapshot = { ...snapshot, values: new Map(snapshot.values) }
+          newSnapshot.values.set(priceAtom, 20)
           goToSnapshot(newSnapshot)
         }}>
         click
@@ -173,9 +173,9 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with original snapshot', async (
     const snapshot = useAtomsSnapshot()
     const snapshotRef = useRef<Map<Atom<unknown>, unknown>>()
     useEffect(() => {
-      if (snapshot.size && !snapshotRef.current) {
+      if (snapshot.values.size && !snapshotRef.current) {
         // save first snapshot
-        snapshotRef.current = snapshot
+        snapshotRef.current = snapshot.values
       }
     })
     const goToSnapshot = useGotoAtomsSnapshot()
@@ -185,7 +185,10 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with original snapshot', async (
           if (!snapshotRef.current) {
             throw new Error('snapshot is not ready yet')
           }
-          const newSnapshot = new Map(snapshotRef.current)
+          const newSnapshot = {
+            ...snapshot,
+            values: new Map(snapshotRef.current),
+          }
           goToSnapshot(newSnapshot)
         }}>
         snapshot
@@ -231,8 +234,8 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should respect atom scope', async () => {
     return (
       <button
         onClick={() => {
-          const newSnapshot = new Map(snapshot)
-          newSnapshot.set(petAtom, 'dog')
+          const newSnapshot = { ...snapshot, values: new Map(snapshot.values) }
+          newSnapshot.values.set(petAtom, 'dog')
           goToSnapshot(newSnapshot)
         }}>
         click
