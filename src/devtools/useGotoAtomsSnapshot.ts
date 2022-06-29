@@ -26,7 +26,7 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
       if (isIterable(values)) {
         if (__DEV__) {
           console.warn(
-            'snapshot as iterable is no longer supported. use an object instead.'
+            'snapshot as iterable is deprecated. use an object instead.'
           )
         }
         store[RESTORE_ATOMS](values)
