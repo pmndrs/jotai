@@ -11,12 +11,12 @@ pre[class*='language-'] {
   tab-size: 2;
   hyphens: none;
   font-size: 0.9em;
-  @apply shadow-lg dark:!shadow-none rounded-md sm:rounded-lg text-[#e4f0fb] text-left break-normal leading-normal;
+  @apply break-normal rounded-md text-left leading-normal text-[#e4f0fb] shadow-lg dark:!shadow-none sm:rounded-lg;
 }
 
 /* Code blocks */
 pre[class*='language-'] {
-  @apply overflow-x-auto my-4 p-6 sm:p-8 whitespace-pre;
+  @apply my-4 overflow-x-auto whitespace-pre p-6 sm:p-8;
 }
 
 :not(pre) > code[class*='language-'],
@@ -31,7 +31,7 @@ pre[class*='language-'] {
 
 /* Inline code */
 :not(pre) > code[class*='language-'] {
-  @apply p-3 shadow-lg dark:!shadow-none rounded-md whitespace-normal;
+  @apply whitespace-normal rounded-md p-3 shadow-lg dark:!shadow-none;
 }
 
 .token.comment,

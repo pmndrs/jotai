@@ -40,34 +40,37 @@ export function useAtomValue<Value>(
   )
 
   // Pull the atoms's state from the store into React state.
-  const [[version, value, atomFromUseReducer], rerenderIfChanged] = useReducer<
-    Reducer<
-      readonly [VersionObject | undefined, Awaited<Value>, Atom<Value>],
-      VersionObject | undefined
-    >,
-    undefined
-  >(
-    useCallback(
-      (prev, nextVersion) => {
-        const nextValue = getAtomValue(nextVersion)
-        if (Object.is(prev[1], nextValue) && prev[2] === atom) {
-          return prev // bail out
-        }
-        return [nextVersion, nextValue, atom]
-      },
-      [getAtomValue, atom]
-    ),
-    undefined,
-    () => {
-      // NOTE should/could branch on mount?
-      const initialVersion = undefined
-      const initialValue = getAtomValue(initialVersion)
-      return [initialVersion, initialValue, atom]
-    }
-  )
+  const [[version, valueFromReducer, atomFromReducer], rerenderIfChanged] =
+    useReducer<
+      Reducer<
+        readonly [VersionObject | undefined, Awaited<Value>, Atom<Value>],
+        VersionObject | undefined
+      >,
+      undefined
+    >(
+      useCallback(
+        (prev, nextVersion) => {
+          const nextValue = getAtomValue(nextVersion)
+          if (Object.is(prev[1], nextValue) && prev[2] === atom) {
+            return prev // bail out
+          }
+          return [nextVersion, nextValue, atom]
+        },
+        [getAtomValue, atom]
+      ),
+      undefined,
+      () => {
+        // NOTE should/could branch on mount?
+        const initialVersion = undefined
+        const initialValue = getAtomValue(initialVersion)
+        return [initialVersion, initialValue, atom]
+      }
+    )
 
-  if (atomFromUseReducer !== atom) {
+  let value = valueFromReducer
+  if (atomFromReducer !== atom) {
     rerenderIfChanged(undefined)
+    value = getAtomValue()
   }
 
   useEffect(() => {

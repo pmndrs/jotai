@@ -1,3 +1,3 @@
-import './src/styles/index.css'
+import './src/styles/index.css';
 
-export * from './gatsby-ssr'
+export * from './gatsby-ssr';

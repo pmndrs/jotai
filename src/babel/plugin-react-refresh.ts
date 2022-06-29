@@ -1,6 +1,8 @@
 import babel, { PluginObj } from '@babel/core'
-import templateBuilder from '@babel/template'
+import _templateBuilder from '@babel/template'
 import { isAtom } from './utils'
+
+const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 
 export default function reactRefreshPlugin({
   types: t,
