@@ -9,7 +9,7 @@ import {
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import ReactDOM, { unstable_batchedUpdates } from 'react-dom'
 import { atom, useAtom } from 'jotai'
-import type { WritableAtom } from 'jotai'
+import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
@@ -226,7 +226,10 @@ it('only re-renders if value has changed', async () => {
   const count2Atom = atom(0)
   const productAtom = atom((get) => get(count1Atom) * get(count2Atom))
 
-  type Props = { countAtom: typeof count1Atom; name: string }
+  interface Props {
+    countAtom: typeof count1Atom
+    name: string
+  }
   const Counter = ({ countAtom, name }: Props) => {
     const [count, setCount] = useAtom(countAtom)
     return (
@@ -1017,4 +1020,34 @@ it('onMount is not called when atom value is accessed from writeGetter in derive
 
   expect(onMount).not.toBeCalled()
   expect(onUnmount).not.toBeCalled()
+})
+
+it('useAtom returns consistent value with input with changing atoms (#1235)', async () => {
+  const countAtom = atom(0)
+  const valueAtoms = [atom(0), atom(1)]
+
+  const Counter = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [value] = useAtom(valueAtoms[count] as PrimitiveAtom<number>)
+    if (count !== value) {
+      throw new Error('value mismatch')
+    }
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
 })

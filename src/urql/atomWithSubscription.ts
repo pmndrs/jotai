@@ -20,7 +20,7 @@ const isOperationResultWithData = <Data, Variables>(
   result: OperationResult<Data, Variables>
 ): result is OperationResultWithData<Data, Variables> => 'data' in result
 
-type SubscriptionArgs<Data, Variables extends object> = {
+interface SubscriptionArgs<Data, Variables extends object> {
   query: TypedDocumentNode<Data, Variables> | string
   variables?: Variables
   context?: Partial<OperationContext>

@@ -7,11 +7,11 @@
 }
 
 .prose h1 {
-  @apply font-extrabold text-4xl lg:text-5xl text-black dark:text-gray-50 tracking-tight lg:tracking-tighter leading-tight;
+  @apply text-4xl font-extrabold leading-tight tracking-tight text-black dark:text-gray-50 lg:text-5xl lg:tracking-tighter;
 }
 
 .prose h2 {
-  @apply font-bold text-2xl lg:text-3xl text-gray-350 dark:text-gray-200 leading-tight;
+  @apply text-2xl font-bold leading-tight text-gray-350 dark:text-gray-200 lg:text-3xl;
 }
 
 .prose h2 a code {
@@ -24,7 +24,7 @@
 }
 
 .prose h3 {
-  @apply mt-6 lg:mt-8 font-semibold text-lg lg:text-xl text-gray-700 dark:text-gray-300 leading-tight;
+  @apply mt-6 text-lg font-semibold leading-tight text-gray-700 dark:text-gray-300 lg:mt-8 lg:text-xl;
 }
 
 .prose h3 a code {
@@ -33,7 +33,7 @@
 }
 
 .prose h4 {
-  @apply mt-8 font-semibold text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-tight;
+  @apply mt-8 text-base font-semibold leading-tight text-gray-600 dark:text-gray-400 lg:text-lg;
 }
 
 .prose h4 a code {
@@ -61,7 +61,7 @@
 
 .prose ol,
 .prose ul {
-  @apply my-2 pl-5 space-y-1 font-normal text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-500 leading-normal;
+  @apply my-2 space-y-1 pl-5 text-sm font-normal leading-normal text-gray-600 dark:text-gray-500 sm:text-base lg:text-lg;
 }
 
 .prose ol {
@@ -77,7 +77,7 @@
 }
 
 .prose p {
-  @apply mt-1 text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-500 leading-normal;
+  @apply mt-1 text-sm leading-normal text-gray-600 dark:text-gray-500 sm:text-base lg:text-lg;
 }
 
 .prose p + p {
@@ -89,7 +89,7 @@
 }
 
 .prose a {
-  @apply text-blue-600 dark:text-teal-400 underline;
+  @apply text-blue-600 underline dark:text-teal-400;
 }
 
 .dark .prose h1 a,
@@ -105,7 +105,7 @@
 }
 
 .prose blockquote {
-  @apply my-4 px-4 py-2 rounded-md sm:rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900;
+  @apply my-4 rounded-md border border-gray-200 bg-gray-100 px-4 py-2 dark:border-gray-800 dark:bg-gray-900 sm:rounded-lg;
 }
 
 .prose blockquote a {
@@ -121,7 +121,7 @@
 }
 
 .prose hr {
-  @apply w-full h-px my-8 border-none bg-gray-300 dark:bg-gray-700;
+  @apply my-8 h-px w-full border-none bg-gray-300 dark:bg-gray-700;
 }
 
 @tailwind components;
