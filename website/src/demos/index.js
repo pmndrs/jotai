@@ -1,3 +1,3 @@
-export * from './core'
-export * from './integrations'
-export * from './utilities'
+export * from './core';
+export * from './integrations';
+export * from './utilities';
