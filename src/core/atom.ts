@@ -37,7 +37,7 @@ type Write<Update, Result extends void | Promise<void>> = (
   update: Update
 ) => Result
 
-interface WithInitialValue<Value> {
+export interface WithInitialValue<Value> {
   init: Value
 }
 
