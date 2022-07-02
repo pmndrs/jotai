@@ -37,10 +37,6 @@ type Write<Update, Result extends void | Promise<void>> = (
   update: Update
 ) => Result
 
-type WithInitialValue<Value> = {
-  init: Value
-}
-
 export type Scope = symbol | string | number
 
 // Not exported for public API
@@ -74,9 +70,19 @@ export interface WritableAtom<
   onMount?: OnMount<Update, Result>
 }
 
+type WritableAtomWithInitialValue<
+  Value,
+  Update,
+  Result extends void | Promise<void> = void
+> = WritableAtom<Value, Update, Result> & { init: Value }
+
 type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
 export type PrimitiveAtom<Value> = WritableAtom<Value, SetStateAction<Value>>
+
+type PrimitiveAtomWithInitialValue<Value> = PrimitiveAtom<Value> & {
+  init: Value
+}
 
 let keyCount = 0 // global key count for all atoms
 
@@ -96,12 +102,12 @@ export function atom(invalidFunction: (...args: any) => any, write?: any): never
 export function atom<Value, Update, Result extends void | Promise<void> = void>(
   initialValue: Value,
   write: Write<Update, Result>
-): WritableAtom<Value, Update, Result> & WithInitialValue<Value>
+): WritableAtomWithInitialValue<Value, Update, Result>
 
 // primitive atom
 export function atom<Value>(
   initialValue: Value
-): PrimitiveAtom<Value> & WithInitialValue<Value>
+): PrimitiveAtomWithInitialValue<Value>
 
 export function atom<Value, Update, Result extends void | Promise<void>>(
   read: Value | Read<Value>,
