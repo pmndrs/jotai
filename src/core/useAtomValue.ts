@@ -77,7 +77,7 @@ export function useAtomValue<Value>(
 
   let value = valueFromReducer
   if (atomFromReducer !== atom) {
-    rerenderIfChanged(undefined)
+    rerenderIfChanged(version)
     value = getAtomValue()
   }
 
