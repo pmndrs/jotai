@@ -4,7 +4,6 @@ import {
   useDebugValue,
   useEffect,
   useReducer,
-  useRef,
 } from 'react'
 import type { Reducer } from 'react'
 import type { Atom, Scope } from './atom'
@@ -19,11 +18,12 @@ export function useAtomValue<Value>(
   scope?: Scope
 ): Awaited<Value> {
   const ScopeContext = getScopeContext(scope)
+  const scopeContainer = useContext(ScopeContext)
   const {
     s: store,
     v: versionFromProvider,
     l: versionListeners,
-  } = useContext(ScopeContext)
+  } = scopeContainer
 
   // TODO is useCallback hook necessary?
   const getAtomValue = useCallback(
@@ -59,7 +59,7 @@ export function useAtomValue<Value>(
           // null = pending version, just trigger re-render
           return [...prev]
         }
-        if (prev[0] === nextVersion && nextVersion !== versionFromProvider) {
+        if (prev[0] === nextVersion && nextVersion === versionFromProvider) {
           return prev // already up-to-date
         }
         const nextValue = getAtomValue(nextVersion)
@@ -89,14 +89,13 @@ export function useAtomValue<Value>(
       }
     }
   }, [versionListeners])
-  const initialVersionRef = useRef(versionFromProvider)
   useEffect(() => {
     // Call `rerenderIfChanged` whenever this atom is invalidated. Note
     // that derived atoms may not be recomputed yet.
     const unsubscribe = store[SUBSCRIBE_ATOM](atom, rerenderIfChanged)
-    rerenderIfChanged(initialVersionRef.current)
+    rerenderIfChanged(scopeContainer.v)
     return unsubscribe
-  }, [store, atom])
+  }, [store, atom, scopeContainer])
 
   useEffect(() => {
     store[COMMIT_ATOM](atom, version)
