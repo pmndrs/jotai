@@ -48,7 +48,8 @@ export function useAtomValue<Value>(
         if (
           nextVersion &&
           nextVersion === prev[0] &&
-          nextVersion === versionFromProvider
+          nextVersion === versionFromProvider &&
+          atom === prev[2]
         ) {
           return prev // bail out
         }
