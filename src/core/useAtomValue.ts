@@ -4,6 +4,7 @@ import {
   useDebugValue,
   useEffect,
   useReducer,
+  useRef,
 } from 'react'
 import type { Reducer } from 'react'
 import type { Atom, Scope } from './atom'
@@ -18,7 +19,11 @@ export function useAtomValue<Value>(
   scope?: Scope
 ): Awaited<Value> {
   const ScopeContext = getScopeContext(scope)
-  const { s: store, i: initialVersion } = useContext(ScopeContext)
+  const {
+    s: store,
+    v: versionFromProvider,
+    l: versionListeners,
+  } = useContext(ScopeContext)
 
   const getAtomValue = useCallback(
     (version?: VersionObject) => {
@@ -44,12 +49,16 @@ export function useAtomValue<Value>(
     useReducer<
       Reducer<
         readonly [VersionObject | undefined, Awaited<Value>, Atom<Value>],
-        VersionObject | undefined
+        VersionObject | undefined | null
       >,
       VersionObject | undefined
     >(
       useCallback(
         (prev, nextVersion) => {
+          if (nextVersion === null) {
+            // null = pending version, just trigger re-render
+            return [...prev]
+          }
           const nextValue = getAtomValue(nextVersion)
           if (Object.is(prev[1], nextValue) && prev[2] === atom) {
             return prev // bail out
@@ -58,7 +67,7 @@ export function useAtomValue<Value>(
         },
         [getAtomValue, atom]
       ),
-      initialVersion,
+      versionFromProvider,
       (initialVersion) => {
         const initialValue = getAtomValue(initialVersion)
         return [initialVersion, initialValue, atom]
@@ -72,12 +81,21 @@ export function useAtomValue<Value>(
   }
 
   useEffect(() => {
+    if (versionListeners) {
+      versionListeners.add(rerenderIfChanged)
+      return () => {
+        versionListeners.delete(rerenderIfChanged)
+      }
+    }
+  }, [versionListeners])
+  const initialVersionRef = useRef(versionFromProvider)
+  useEffect(() => {
     // Call `rerenderIfChanged` whenever this atom is invalidated. Note
     // that derived atoms may not be recomputed yet.
     const unsubscribe = store[SUBSCRIBE_ATOM](atom, rerenderIfChanged)
-    rerenderIfChanged(initialVersion)
+    rerenderIfChanged(initialVersionRef.current)
     return unsubscribe
-  }, [store, atom, initialVersion])
+  }, [store, atom])
 
   useEffect(() => {
     store[COMMIT_ATOM](atom, version)

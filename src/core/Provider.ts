@@ -1,4 +1,4 @@
-import { createElement, useEffect, useRef, useState } from 'react'
+import { createElement, useLayoutEffect, useRef, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import type { Atom, Scope } from './atom'
 import { createScopeContainer, getScopeContext } from './contexts'
@@ -29,9 +29,14 @@ export const Provider = ({
   unstable_enableVersionedWrite?: boolean
 }>) => {
   const [version, setVersion] = useState<VersionObject>({})
-  useEffect(() => {
-    ;(scopeContainerRef.current as ScopeContainer).s[COMMIT_ATOM](null, version)
-    delete version.p
+  useLayoutEffect(() => {
+    const scopeContainer = scopeContainerRef.current as ScopeContainer
+    if (scopeContainer.l) {
+      scopeContainer.v = version
+      scopeContainer.l.forEach((listener) => listener(version))
+      scopeContainer.s[COMMIT_ATOM](null, version) // TODO is this necessary?
+      delete version.p
+    }
   }, [version])
 
   const scopeContainerRef = useRef<ScopeContainer>()
@@ -42,14 +47,17 @@ export const Provider = ({
       unstable_createStore
     )
     if (unstable_enableVersionedWrite) {
+      const listeners = new Set<(v: object | null) => void>()
       scopeContainerRef.current.w = (write) => {
+        listeners.forEach((listener) => listener(null)) // null = pending version
         setVersion((parentVersion) => {
           const nextVersion = { p: parentVersion }
           write(nextVersion)
           return nextVersion
         })
       }
-      scopeContainerRef.current.i = version // initial version object
+      scopeContainerRef.current.v = version
+      scopeContainerRef.current.l = listeners
     }
   }
 
