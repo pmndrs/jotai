@@ -257,9 +257,6 @@ export const createStore = (
       if (!atomState) {
         atomState = getAtomState(version.p, atom)
         if (atomState) {
-          if ('p' in atomState) {
-            atomState.p.then(() => versionedAtomStateMap.delete(atom))
-          }
           versionedAtomStateMap.set(atom, atomState)
         }
       }
