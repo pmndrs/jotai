@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useContext,
-  useDebugValue,
-  useEffect,
-  useReducer,
-} from 'react'
+import { useContext, useDebugValue, useEffect, useReducer } from 'react'
 import type { Reducer } from 'react'
 import type { Atom, Scope } from './atom'
 import { getScopeContext } from './contexts'
@@ -25,25 +19,21 @@ export function useAtomValue<Value>(
     l: versionListeners,
   } = scopeContainer
 
-  // TODO is useCallback hook necessary?
-  const getAtomValue = useCallback(
-    (version?: VersionObject) => {
-      // This call to READ_ATOM is the place where derived atoms will actually be
-      // recomputed if needed.
-      const atomState = store[READ_ATOM](atom, version)
-      if ('e' in atomState) {
-        throw atomState.e // read error
-      }
-      if ('p' in atomState) {
-        throw atomState.p // read promise
-      }
-      if ('v' in atomState) {
-        return atomState.v as Awaited<Value>
-      }
-      throw new Error('no atom value')
-    },
-    [store, atom]
-  )
+  const getAtomValue = (version?: VersionObject) => {
+    // This call to READ_ATOM is the place where derived atoms will actually be
+    // recomputed if needed.
+    const atomState = store[READ_ATOM](atom, version)
+    if ('e' in atomState) {
+      throw atomState.e // read error
+    }
+    if ('p' in atomState) {
+      throw atomState.p // read promise
+    }
+    if ('v' in atomState) {
+      return atomState.v as Awaited<Value>
+    }
+    throw new Error('no atom value')
+  }
 
   // Pull the atoms's state from the store into React state.
   const [[version, valueFromReducer, atomFromReducer], rerenderIfChanged] =
@@ -78,7 +68,7 @@ export function useAtomValue<Value>(
   let value = valueFromReducer
   if (atomFromReducer !== atom) {
     rerenderIfChanged(version)
-    value = getAtomValue()
+    value = getAtomValue(version)
   }
 
   useEffect(() => {
@@ -89,6 +79,7 @@ export function useAtomValue<Value>(
       }
     }
   }, [versionListeners])
+
   useEffect(() => {
     // Call `rerenderIfChanged` whenever this atom is invalidated. Note
     // that derived atoms may not be recomputed yet.
