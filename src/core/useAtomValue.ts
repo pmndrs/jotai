@@ -50,17 +50,17 @@ export function useAtomValue<Value>(
     useReducer<
       Reducer<
         readonly [VersionObject | undefined, Awaited<Value>, Atom<Value>],
-        VersionObject | undefined | null
+        VersionObject | undefined
       >,
       VersionObject | undefined
     >(
       (prev, nextVersion) => {
-        if (nextVersion === null) {
-          // null = pending version, just trigger re-render
-          return [...prev]
-        }
-        if (prev[0] === nextVersion && nextVersion === versionFromProvider) {
-          return prev // already up-to-date
+        if (
+          nextVersion &&
+          nextVersion === prev[0] &&
+          nextVersion === versionFromProvider
+        ) {
+          return prev // bail out
         }
         const nextValue = getAtomValue(nextVersion)
         if (Object.is(prev[1], nextValue) && prev[2] === atom) {

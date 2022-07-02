@@ -10,7 +10,7 @@ export interface ScopeContainer {
   s: Store
   w?: VersionedWrite
   v?: object // version object
-  l?: Set<(v: object | null) => void> // version object listeners
+  l?: Set<(v: object) => void> // version object listeners
 }
 
 export const createScopeContainer = (
