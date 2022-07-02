@@ -49,7 +49,7 @@ export const Provider = ({
     if (unstable_enableVersionedWrite) {
       const listeners = new Set<(v: object | null) => void>()
       scopeContainerRef.current.w = (write) => {
-        listeners.forEach((listener) => listener(null)) // null = pending version
+        // listeners.forEach((listener) => listener(null)) // null = pending version
         setVersion((parentVersion) => {
           const nextVersion = { p: parentVersion }
           write(nextVersion)

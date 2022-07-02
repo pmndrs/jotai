@@ -25,6 +25,7 @@ export function useAtomValue<Value>(
     l: versionListeners,
   } = useContext(ScopeContext)
 
+  // TODO is useCallback hook necessary?
   const getAtomValue = useCallback(
     (version?: VersionObject) => {
       // This call to READ_ATOM is the place where derived atoms will actually be
@@ -53,20 +54,20 @@ export function useAtomValue<Value>(
       >,
       VersionObject | undefined
     >(
-      useCallback(
-        (prev, nextVersion) => {
-          if (nextVersion === null) {
-            // null = pending version, just trigger re-render
-            return [...prev]
-          }
-          const nextValue = getAtomValue(nextVersion)
-          if (Object.is(prev[1], nextValue) && prev[2] === atom) {
-            return prev // bail out
-          }
-          return [nextVersion, nextValue, atom]
-        },
-        [getAtomValue, atom]
-      ),
+      (prev, nextVersion) => {
+        if (nextVersion === null) {
+          // null = pending version, just trigger re-render
+          return [...prev]
+        }
+        if (prev[0] === nextVersion && nextVersion !== versionFromProvider) {
+          return prev // already up-to-date
+        }
+        const nextValue = getAtomValue(nextVersion)
+        if (Object.is(prev[1], nextValue) && prev[2] === atom) {
+          return prev // bail out
+        }
+        return [nextVersion, nextValue, atom]
+      },
       versionFromProvider,
       (initialVersion) => {
         const initialValue = getAtomValue(initialVersion)
