@@ -82,10 +82,12 @@ export function useAtomValue<Value>(
   }, [versionListeners])
 
   useEffect(() => {
+    const { v: versionFromProvider } = scopeContainer
+    store[COMMIT_ATOM](atom, versionFromProvider)
     // Call `rerenderIfChanged` whenever this atom is invalidated. Note
     // that derived atoms may not be recomputed yet.
     const unsubscribe = store[SUBSCRIBE_ATOM](atom, rerenderIfChanged)
-    rerenderIfChanged(scopeContainer.v)
+    rerenderIfChanged(versionFromProvider)
     return unsubscribe
   }, [store, atom, scopeContainer])
 

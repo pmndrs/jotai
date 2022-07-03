@@ -32,10 +32,10 @@ export const Provider = ({
   useLayoutEffect(() => {
     const scopeContainer = scopeContainerRef.current as ScopeContainer
     if (scopeContainer.l) {
+      scopeContainer.s[COMMIT_ATOM](null, version)
+      delete version.p
       scopeContainer.v = version
       scopeContainer.l.forEach((listener) => listener(version))
-      scopeContainer.s[COMMIT_ATOM](null, version) // TODO is this necessary?
-      delete version.p
     }
   }, [version])
 
