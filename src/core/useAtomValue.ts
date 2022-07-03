@@ -87,7 +87,10 @@ export function useAtomValue<Value>(
     // Call `rerenderIfChanged` whenever this atom is invalidated. Note
     // that derived atoms may not be recomputed yet.
     const unsubscribe = store[SUBSCRIBE_ATOM](atom, rerenderIfChanged)
-    rerenderIfChanged(versionFromProvider)
+    if (versionFromProvider) {
+      rerenderIfChanged(versionFromProvider)
+    }
+    rerenderIfChanged(undefined) // for onMount
     return unsubscribe
   }, [store, atom, scopeContainer])
 
