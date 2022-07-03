@@ -346,9 +346,10 @@ export const createStore = (
         nextAtomState.d = new Map(nextAtomState.d).set(atom, nextAtomState.r)
       }
     } else if (
-      nextAtomState.d !== atomState.d &&
-      (nextAtomState.d.size !== atomState.d.size ||
-        !Array.from(nextAtomState.d.keys()).every((a) => atomState.d.has(a)))
+      'i' in atomState ||
+      (nextAtomState.d !== atomState.d &&
+        (nextAtomState.d.size !== atomState.d.size ||
+          !Array.from(nextAtomState.d.keys()).every((a) => atomState.d.has(a))))
     ) {
       changed = true
       // value is not changed, but dependencies are changed
