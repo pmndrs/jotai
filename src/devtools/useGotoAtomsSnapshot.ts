@@ -14,8 +14,7 @@ type AtomsSnapshot = Readonly<{
 
 export function useGotoAtomsSnapshot(scope?: Scope) {
   const ScopeContext = getScopeContext(scope)
-  const scopeContainer = useContext(ScopeContext)
-  const store = scopeContainer.s
+  const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
   if (!store[DEV_SUBSCRIBE_STATE]) {
     throw new Error('useGotoAtomsSnapshot can only be used in dev mode.')
@@ -23,18 +22,27 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
 
   return useCallback(
     (values: Iterable<readonly [Atom<unknown>, unknown]> | AtomsSnapshot) => {
+      const writeStore = (value: any) => {
+        if (versionedWrite) {
+          versionedWrite((version) => {
+            store[RESTORE_ATOMS](value, version)
+          })
+        } else {
+          store[RESTORE_ATOMS](value)
+        }
+      }
       if (isIterable(values)) {
         if (__DEV__) {
           console.warn(
             'snapshot as iterable is deprecated. use an object instead.'
           )
         }
-        store[RESTORE_ATOMS](values)
+        writeStore(values)
         return
       }
-      store[RESTORE_ATOMS](values.values)
+      writeStore(values.values)
     },
-    [store]
+    [store, versionedWrite]
   )
 }
 
