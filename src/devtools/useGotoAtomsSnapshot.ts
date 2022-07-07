@@ -21,26 +21,28 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
   }
 
   return useCallback(
-    (values: Iterable<readonly [Atom<unknown>, unknown]> | AtomsSnapshot) => {
-      const writeStore = (value: any) => {
+    (snapshot: Iterable<readonly [Atom<unknown>, unknown]> | AtomsSnapshot) => {
+      const restoreAtoms = (
+        values: Iterable<readonly [Atom<unknown>, unknown]>
+      ) => {
         if (versionedWrite) {
           versionedWrite((version) => {
-            store[RESTORE_ATOMS](value, version)
+            store[RESTORE_ATOMS](values, version)
           })
         } else {
-          store[RESTORE_ATOMS](value)
+          store[RESTORE_ATOMS](values)
         }
       }
-      if (isIterable(values)) {
+      if (isIterable(snapshot)) {
         if (__DEV__) {
           console.warn(
             'snapshot as iterable is deprecated. use an object instead.'
           )
         }
-        writeStore(values)
+        restoreAtoms(snapshot)
         return
       }
-      writeStore(values.values)
+      restoreAtoms(snapshot.values)
     },
     [store, versionedWrite]
   )
