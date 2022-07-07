@@ -255,7 +255,7 @@
     "typescript": "^4.7.4",
     "valtio": "^1.6.1",
     "wonka": "^4.0.15",
-    "xstate": "4.28.1",
+    "xstate": "^4.32.1",
     "zustand": "^3.7.2"
   },
   "resolutions": {
