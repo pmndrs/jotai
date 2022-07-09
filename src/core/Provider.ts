@@ -1,4 +1,4 @@
-import { createElement, useLayoutEffect, useRef, useState } from 'react'
+import { createElement, useEffect, useRef, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import type { Atom, Scope } from './atom'
 import { createScopeContainer, getScopeContext } from './contexts'
@@ -29,7 +29,7 @@ export const Provider = ({
   unstable_enableVersionedWrite?: boolean
 }>) => {
   const [version, setVersion] = useState<VersionObject>({})
-  useLayoutEffect(() => {
+  useEffect(() => {
     const scopeContainer = scopeContainerRef.current as ScopeContainer
     if (scopeContainer.l) {
       scopeContainer.s[COMMIT_ATOM](null, version)

@@ -847,7 +847,7 @@ it('combine two promise atom values (#442)', async () => {
   await findByText('count: 3')
 })
 
-// FIXME will revisit this after react 18, feel free to tackle this
+// It passes with React 18 though
 itSkipIfVersionedWrite('set two promise atoms at once', async () => {
   const count1Atom = atom(new Promise<number>(() => {}))
   const count2Atom = atom(new Promise<number>(() => {}))
