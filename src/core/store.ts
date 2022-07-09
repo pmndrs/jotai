@@ -737,6 +737,7 @@ export const createStore = (
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const setAtom = (update: unknown) => writeAtom(atom, update, version)
       const onUnmount = atom.onMount(setAtom)
+      version = undefined
       if (onUnmount) {
         mounted.u = onUnmount
       }
@@ -886,6 +887,7 @@ export const createStore = (
     listeners.add(callback)
     return () => {
       listeners.delete(callback)
+      // TODO should version be `undefined` for delAtom?
       delAtom(version, atom)
     }
   }
