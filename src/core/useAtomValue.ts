@@ -86,7 +86,11 @@ export function useAtomValue<Value>(
     store[COMMIT_ATOM](atom, versionFromProvider)
     // Call `rerenderIfChanged` whenever this atom is invalidated. Note
     // that derived atoms may not be recomputed yet.
-    const unsubscribe = store[SUBSCRIBE_ATOM](atom, rerenderIfChanged)
+    const unsubscribe = store[SUBSCRIBE_ATOM](
+      atom,
+      rerenderIfChanged,
+      versionFromProvider
+    )
     if (versionFromProvider) {
       rerenderIfChanged(versionFromProvider)
     }
