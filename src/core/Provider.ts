@@ -31,11 +31,11 @@ export const Provider = ({
   const [version, setVersion] = useState<VersionObject>({})
   useEffect(() => {
     const scopeContainer = scopeContainerRef.current as ScopeContainer
-    if (scopeContainer.l) {
+    if (scopeContainer.v) {
       scopeContainer.s[COMMIT_ATOM](null, version)
       delete version.p
       scopeContainer.v = version
-      scopeContainer.l.forEach((listener) => listener(version))
+      // scopeContainer.l.forEach((listener) => listener(version))
     }
   }, [version])
 
@@ -55,6 +55,7 @@ export const Provider = ({
         })
       }
       scopeContainerRef.current.v = version
+      // TODO this might not be necessary
       scopeContainerRef.current.l = new Set()
     }
   }
