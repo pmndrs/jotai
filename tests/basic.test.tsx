@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import ReactDOM, { unstable_batchedUpdates } from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { PrimitiveAtom, WritableAtom } from 'jotai'
@@ -346,12 +346,10 @@ it('works with async get', async () => {
   await findByText('loading')
   await findByText('commits: 1, count: 0, delayedCount: 0')
 
-  await act(() => new Promise((r) => setTimeout(r, 100)))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('commits: 2, count: 1, delayedCount: 1')
 
-  await act(() => new Promise((r) => setTimeout(r, 100)))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('commits: 3, count: 2, delayedCount: 2')
