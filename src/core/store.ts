@@ -737,7 +737,7 @@ export const createStore = (
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const setAtom = (update: unknown) => writeAtom(atom, update, version)
       const onUnmount = atom.onMount(setAtom)
-      // version = undefined
+      version = undefined
       if (onUnmount) {
         mounted.u = onUnmount
       }
