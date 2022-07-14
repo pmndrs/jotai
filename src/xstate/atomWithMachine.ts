@@ -130,6 +130,7 @@ export function atomWithMachine<
       })
       service.start()
       registerCleanup(() => {
+        const { service } = get(machineAtom)
         service.stop()
       })
     }
@@ -166,8 +167,11 @@ export function atomWithMachine<
         service.stop()
         set(cachedMachineAtom, null)
         set(machineAtom, null)
-        set(machineStateAtom, () => void 0)
-        service.start()
+        const { service: newService } = get(machineAtom)
+        newService.onTransition((nextState: any) => {
+          set(cachedMachineStateAtom, nextState)
+        })
+        newService.start()
       } else {
         service.send(event)
       }
