@@ -77,7 +77,7 @@ it('query refetch', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count3',
     queryFn: async () => {
-      const response = await mockFetch({ count }, false, 500)
+      const response = await mockFetch({ count }, false, 750)
       count++
       return response
     },
