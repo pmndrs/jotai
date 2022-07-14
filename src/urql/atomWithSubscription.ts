@@ -5,6 +5,7 @@ import type {
   TypedDocumentNode,
 } from '@urql/core'
 import { pipe, subscribe } from 'wonka'
+import type { Subscription } from 'wonka'
 import { atom } from 'jotai'
 import type { Atom, Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
@@ -68,38 +69,37 @@ export function atomWithSubscription<Data, Variables extends object>(
     let setResult: (result: OperationResult<Data, Variables>) => void = () => {
       throw new Error('setting result without mount')
     }
+    let isMounted = false
+    let subscription: Subscription | null = null
     const listener = (result: OperationResult<Data, Variables>) => {
       if (!isOperationResultWithData(result)) {
         throw new Error('result does not have data')
       }
       if (resolve) {
+        if (!isMounted) {
+          subscription?.unsubscribe()
+          subscription = null
+        }
         resolve(result)
         resolve = null
       } else {
         setResult(result)
       }
     }
-    const subscriptionInRender = pipe(
+    subscription = pipe(
       client.subscription(args.query, args.variables, args.context),
       subscribe(listener)
     )
-    let timer: NodeJS.Timeout | null = setTimeout(() => {
-      timer = null
-      subscriptionInRender.unsubscribe()
-    }, 1000)
     resultAtom.onMount = (update) => {
       setResult = update
-      let subscription: typeof subscriptionInRender
-      if (timer) {
-        clearTimeout(timer)
-        subscription = subscriptionInRender
-      } else {
+      isMounted = true
+      if (!subscription) {
         subscription = pipe(
           client.subscription(args.query, args.variables, args.context),
           subscribe(listener)
         )
       }
-      return () => subscription.unsubscribe()
+      return () => subscription?.unsubscribe()
     }
     return { resultAtom, args }
   })
