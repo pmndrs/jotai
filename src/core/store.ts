@@ -690,7 +690,6 @@ export const createStore = (
     }
     const promiseOrVoid = atom.write(writeGetter, setter, update)
     isSync = false
-    // version = undefined
     return promiseOrVoid
   }
 
