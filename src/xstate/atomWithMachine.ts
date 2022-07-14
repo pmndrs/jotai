@@ -13,7 +13,8 @@ import type {
 } from 'xstate'
 import type { Atom, Getter, WritableAtom } from 'jotai'
 import { atom } from 'jotai'
-import { RESET } from 'jotai/utils'
+
+export const RESTART = Symbol()
 
 export interface MachineAtomOptions<TContext, TEvent extends EventObject> {
   /**
@@ -57,7 +58,7 @@ export function atomWithMachine<
   getOptions?: Options<TMachine> | ((get: Getter) => Options<TMachine>)
 ): WritableAtom<
   StateFrom<TMachine>,
-  MaybeParam<Prop<TInterpreter, 'send'>> | typeof RESET,
+  MaybeParam<Prop<TInterpreter, 'send'>> | typeof RESTART,
   void
 > {
   const cachedMachineAtom = atom<{
@@ -155,15 +156,17 @@ export function atomWithMachine<
 
   const machineStateWithServiceAtom = atom(
     (get) => get(machineStateAtom),
-    (get, set, event: Parameters<AnyInterpreter['send']>[0] | typeof RESET) => {
+    (
+      get,
+      set,
+      event: Parameters<AnyInterpreter['send']>[0] | typeof RESTART
+    ) => {
       const { service } = get(machineAtom)
-      if (event === RESET) {
+      if (event === RESTART) {
         service.stop()
         set(cachedMachineAtom, null)
         set(machineAtom, null)
-        set(machineStateAtom, () => {
-          return
-        })
+        set(machineStateAtom, () => void 0)
         service.start()
       } else {
         service.send(event)
