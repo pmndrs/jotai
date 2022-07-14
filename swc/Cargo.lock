@@ -553,6 +553,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "react_refresh"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "swc_plugin",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
