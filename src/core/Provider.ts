@@ -35,7 +35,6 @@ export const Provider = ({
       scopeContainer.s[COMMIT_ATOM](null, version)
       delete version.p
       scopeContainer.v = version
-      // scopeContainer.l.forEach((listener) => listener(version))
     }
   }, [version])
 
@@ -55,8 +54,6 @@ export const Provider = ({
         })
       }
       scopeContainerRef.current.v = version
-      // TODO this might not be necessary
-      scopeContainerRef.current.l = new Set()
     }
   }
 

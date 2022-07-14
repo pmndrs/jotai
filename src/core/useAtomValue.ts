@@ -13,11 +13,7 @@ export function useAtomValue<Value>(
 ): Awaited<Value> {
   const ScopeContext = getScopeContext(scope)
   const scopeContainer = useContext(ScopeContext)
-  const {
-    s: store,
-    v: versionFromProvider,
-    l: versionListeners,
-  } = scopeContainer
+  const { s: store, v: versionFromProvider } = scopeContainer
 
   const getAtomValue = (version?: VersionObject) => {
     // This call to READ_ATOM is the place where derived atoms will actually be
@@ -71,15 +67,6 @@ export function useAtomValue<Value>(
     rerenderIfChanged(version)
     value = getAtomValue(version)
   }
-
-  useEffect(() => {
-    if (versionListeners) {
-      versionListeners.add(rerenderIfChanged)
-      return () => {
-        versionListeners.delete(rerenderIfChanged)
-      }
-    }
-  }, [versionListeners])
 
   useEffect(() => {
     const { v: versionFromProvider } = scopeContainer
