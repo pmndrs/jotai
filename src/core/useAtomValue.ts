@@ -41,14 +41,6 @@ export function useAtomValue<Value>(
       VersionObject | undefined
     >(
       (prev, nextVersion) => {
-        if (
-          nextVersion &&
-          nextVersion === prev[0] &&
-          nextVersion === versionFromProvider &&
-          atom === prev[2]
-        ) {
-          // return prev // bail out
-        }
         const nextValue = getAtomValue(nextVersion)
         if (Object.is(prev[1], nextValue) && prev[2] === atom) {
           return prev // bail out
