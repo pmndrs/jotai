@@ -47,6 +47,8 @@ jobs:
         mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
         exclude:
           - { react: 16.8.6, mode: VERSIONED_WRITE }
+          - { react: 16.9.0, mode: VERSIONED_WRITE }
+          - { react: 17.0.0, mode: VERSIONED_WRITE }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
