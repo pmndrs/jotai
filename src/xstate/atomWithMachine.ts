@@ -160,6 +160,10 @@ export function atomWithMachine<
       if (event === RESET) {
         service.stop()
         set(cachedMachineAtom, null)
+        set(machineAtom, null)
+        set(machineStateAtom, () => {
+          return
+        })
         service.start()
       } else {
         service.send(event)
