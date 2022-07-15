@@ -1,21 +1,21 @@
 import {
   StrictMode,
   Suspense,
+  version as reactVersion,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import ReactDOM, { unstable_batchedUpdates } from 'react-dom'
+import { unstable_batchedUpdates } from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
-// FIXME this is a hacky workaround temporarily
-const IS_REACT18 = !!(ReactDOM as any).createRoot
+const IS_REACT18 = /^18\./.test(reactVersion)
 
 const batchedUpdates = (fn: () => void) => {
   if (IS_REACT18) {
