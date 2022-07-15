@@ -5,7 +5,7 @@ import type {
   RequestPolicy,
   TypedDocumentNode,
 } from '@urql/core'
-import { pipe, skip, subscribe } from 'wonka'
+import { pipe, subscribe } from 'wonka'
 import type { Subscription } from 'wonka'
 import { atom } from 'jotai'
 import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
@@ -96,6 +96,7 @@ export function atomWithQuery<Data, Variables extends object>(
         setResult(result)
         return
       }
+      // TODO error handling
       if (!isOperationResultWithData(result)) {
         throw new Error('result does not have data')
       }
@@ -128,7 +129,6 @@ export function atomWithQuery<Data, Variables extends object>(
             ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
             ...args.context,
           }),
-          skip(1), // handled by toPromise
           subscribe(listener)
         )
         set(subscriptionAtom, subscription)

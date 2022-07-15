@@ -9,6 +9,7 @@ type VersionedWrite = (write: (version?: object) => void) => void
 export interface ScopeContainer {
   s: Store
   w?: VersionedWrite
+  v?: object // version object
 }
 
 export const createScopeContainer = (

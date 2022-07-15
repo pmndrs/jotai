@@ -14,6 +14,8 @@ import type {
 import type { Atom, Getter, WritableAtom } from 'jotai'
 import { atom } from 'jotai'
 
+export const RESTART = Symbol()
+
 export interface MachineAtomOptions<TContext, TEvent extends EventObject> {
   /**
    * If provided, will be merged with machine's `context`.
@@ -56,7 +58,7 @@ export function atomWithMachine<
   getOptions?: Options<TMachine> | ((get: Getter) => Options<TMachine>)
 ): WritableAtom<
   StateFrom<TMachine>,
-  MaybeParam<Prop<TInterpreter, 'send'>>,
+  MaybeParam<Prop<TInterpreter, 'send'>> | typeof RESTART,
   void
 > {
   const cachedMachineAtom = atom<{
@@ -128,6 +130,7 @@ export function atomWithMachine<
       })
       service.start()
       registerCleanup(() => {
+        const { service } = get(machineAtom)
         service.stop()
       })
     }
@@ -154,9 +157,24 @@ export function atomWithMachine<
 
   const machineStateWithServiceAtom = atom(
     (get) => get(machineStateAtom),
-    (get, _set, event: Parameters<AnyInterpreter['send']>[0]) => {
+    (
+      get,
+      set,
+      event: Parameters<AnyInterpreter['send']>[0] | typeof RESTART
+    ) => {
       const { service } = get(machineAtom)
-      service.send(event)
+      if (event === RESTART) {
+        service.stop()
+        set(cachedMachineAtom, null)
+        set(machineAtom, null)
+        const { service: newService } = get(machineAtom)
+        newService.onTransition((nextState: any) => {
+          set(cachedMachineStateAtom, nextState)
+        })
+        newService.start()
+      } else {
+        service.send(event)
+      }
     }
   )
 

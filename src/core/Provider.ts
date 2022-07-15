@@ -30,31 +30,32 @@ export const Provider = ({
 }>) => {
   const [version, setVersion] = useState<VersionObject>({})
   useEffect(() => {
-    if (version) {
-      ;(scopeContainerRef.current as ScopeContainer).s[COMMIT_ATOM](
-        null,
-        version
-      )
+    const scopeContainer = scopeContainerRef.current as ScopeContainer
+    if (scopeContainer.w) {
+      scopeContainer.s[COMMIT_ATOM](null, version)
       delete version.p
+      scopeContainer.v = version
     }
   }, [version])
 
   const scopeContainerRef = useRef<ScopeContainer>()
   if (!scopeContainerRef.current) {
     // lazy initialization
-    scopeContainerRef.current = createScopeContainer(
+    const scopeContainer = createScopeContainer(
       initialValues,
       unstable_createStore
     )
     if (unstable_enableVersionedWrite) {
-      scopeContainerRef.current.w = (write) => {
+      scopeContainer.w = (write) => {
         setVersion((parentVersion) => {
-          const nextVersion = parentVersion ? { p: parentVersion } : {}
+          const nextVersion = { p: parentVersion }
           write(nextVersion)
           return nextVersion
         })
       }
+      scopeContainer.v = version
     }
+    scopeContainerRef.current = scopeContainer
   }
 
   const ScopeContainerContext = getScopeContext(scope)

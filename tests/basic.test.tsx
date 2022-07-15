@@ -1,21 +1,21 @@
 import {
   StrictMode,
   Suspense,
+  version as reactVersion,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import ReactDOM, { unstable_batchedUpdates } from 'react-dom'
+import { unstable_batchedUpdates } from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
-// FIXME this is a hacky workaround temporarily
-const IS_REACT18 = !!(ReactDOM as any).createRoot
+const IS_REACT18 = /^18\./.test(reactVersion)
 
 const batchedUpdates = (fn: () => void) => {
   if (IS_REACT18) {
@@ -317,7 +317,7 @@ it('re-renders a time delayed derived atom with the same initial value (#947)', 
 it('works with async get', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 500))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
 
@@ -346,10 +346,12 @@ it('works with async get', async () => {
   await findByText('loading')
   await findByText('commits: 1, count: 0, delayedCount: 0')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('commits: 2, count: 1, delayedCount: 1')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('commits: 3, count: 2, delayedCount: 2')
@@ -787,10 +789,7 @@ it('set atom right after useEffect (#208)', async () => {
   )
 
   await findByText('count: 2')
-  if (!IS_REACT18) {
-    // can't guarantee in concurrent rendering
-    expect(effectFn).lastCalledWith(2)
-  }
+  expect(effectFn).lastCalledWith(2)
 })
 
 it('changes atom from parent (#273, #275)', async () => {
