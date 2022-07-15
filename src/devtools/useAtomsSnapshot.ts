@@ -23,29 +23,26 @@ const createAtomsSnapshot = (
   atoms: Atom<unknown>[]
 ): AtomsSnapshot => {
   const invalidatedAtoms: AnyAtom[] = []
-  const tuples = atoms
-    .map<[Atom<unknown>, unknown] | undefined>((atom) => {
-      const atomState = store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
-      // ignore if there are any invalidated atoms
-      if (atomState.r === atomState.i) {
-        invalidatedAtoms.push(atom)
-        return
-      }
-      return [atom, 'v' in atomState ? atomState.v : undefined]
-    })
-    .filter((tuple) => Array.isArray(tuple)) as [Atom<unknown>, unknown][]
-  const dependants = atoms
-    .map<[Atom<unknown>, Set<Atom<unknown>>] | undefined>((atom) => {
-      if (invalidatedAtoms.includes(atom)) {
-        return
-      }
-      const mounted = store[DEV_GET_MOUNTED]?.(atom)
-      return [atom, mounted?.t ?? new Set()]
-    })
-    .filter((tuple) => Array.isArray(tuple)) as [
-    Atom<unknown>,
-    Set<Atom<unknown>>
-  ][]
+
+  const tuples: [Atom<unknown>, unknown][] = []
+  atoms.forEach((atom) => {
+    const atomState = store[DEV_GET_ATOM_STATE]?.(atom) ?? ({} as AtomState)
+    // ignore if there are any invalidated atoms
+    if (atomState.r === atomState.i) {
+      invalidatedAtoms.push(atom)
+      return
+    }
+    tuples.push([atom, 'v' in atomState ? atomState.v : undefined])
+  })
+
+  const dependants: [Atom<unknown>, Set<Atom<unknown>>][] = []
+  atoms.forEach((atom) => {
+    if (invalidatedAtoms.includes(atom)) {
+      return
+    }
+    const mounted = store[DEV_GET_MOUNTED]?.(atom)
+    dependants.push([atom, mounted?.t ?? new Set()])
+  })
 
   return { values: new Map(tuples), dependents: new Map(dependants) }
 }
