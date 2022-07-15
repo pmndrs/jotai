@@ -70,8 +70,8 @@ export function atomWithSubscription<Data, Variables extends object>(
       throw new Error('setting result without mount')
     }
     let isMounted = false
-    let subscription: Subscription | null = null
     const listener = (result: OperationResult<Data, Variables>) => {
+      // TODO error handling
       if (!isOperationResultWithData(result)) {
         throw new Error('result does not have data')
       }
@@ -86,7 +86,7 @@ export function atomWithSubscription<Data, Variables extends object>(
         setResult(result)
       }
     }
-    subscription = pipe(
+    let subscription: Subscription | null = pipe(
       client.subscription(args.query, args.variables, args.context),
       subscribe(listener)
     )

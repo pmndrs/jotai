@@ -96,6 +96,7 @@ export function atomWithQuery<Data, Variables extends object>(
         setResult(result)
         return
       }
+      // TODO error handling
       if (!isOperationResultWithData(result)) {
         throw new Error('result does not have data')
       }
