@@ -133,7 +133,6 @@ it('does not show async stale result on derived atom', async () => {
 
   await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('button'))
-
   await waitFor(() => {
     getByText('count: 1')
     getByText('loading async value')
@@ -192,7 +191,6 @@ it('works with async get with extra deps', async () => {
 
   await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('button'))
-
   await findByText('loading')
   await waitFor(() => {
     getByText('count: 1')

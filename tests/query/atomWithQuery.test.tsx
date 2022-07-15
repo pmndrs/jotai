@@ -77,7 +77,7 @@ it('query refetch', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: 'count3',
     queryFn: async () => {
-      const response = await mockFetch({ count }, false, 750)
+      const response = await mockFetch({ count }, false, 500)
       count++
       return response
     },
@@ -109,7 +109,9 @@ it('query refetch', async () => {
   await findByText('count: 0')
   expect(mockFetch).toBeCalledTimes(1)
 
+  await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('refetch'))
+
   await findByText('loading')
   await findByText('count: 1')
   expect(mockFetch).toBeCalledTimes(2)
@@ -207,10 +209,12 @@ it('query loading 2', async () => {
   await findByText('loading')
   await findByText('count: 0')
 
+  await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 1')
 
+  await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
   await findByText('count: 2')
