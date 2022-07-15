@@ -48,7 +48,7 @@ it('works with 2 level dependencies', async () => {
 it('works a primitive atom and a dependent async atom', async () => {
   const countAtom = atom(1)
   const doubledAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 500))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom) * 2
   })
 
@@ -76,10 +76,12 @@ it('works a primitive atom and a dependent async atom', async () => {
   await findByText('loading')
   await findByText('count: 1, doubled: 2')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('count: 2, doubled: 4')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('count: 3, doubled: 6')
