@@ -239,7 +239,7 @@ it('handles scope', async () => {
       setTimeout(() => {
         isAsyncAtomRunning = false
         resolve(true)
-      }, 500)
+      }, 100)
     })
     return get(valueAtom)
   })
@@ -250,7 +250,7 @@ it('handles scope', async () => {
       setTimeout(() => {
         isAnotherAsyncAtomRunning = false
         resolve(true)
-      }, 500)
+      }, 100)
     })
     return '2'
   })
@@ -293,7 +293,7 @@ it('handles scope', async () => {
     expect(isAnotherAsyncAtomRunning).toBe(false)
   })
 
-  await new Promise((r) => setTimeout(r, 500))
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('increment'))
   await findByText('loading')
   await findByText('num1: 2, num2: 2')
