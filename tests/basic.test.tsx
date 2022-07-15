@@ -317,7 +317,7 @@ it('re-renders a time delayed derived atom with the same initial value (#947)', 
 it('works with async get', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 500))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
 
@@ -346,10 +346,12 @@ it('works with async get', async () => {
   await findByText('loading')
   await findByText('commits: 1, count: 0, delayedCount: 0')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('commits: 2, count: 1, delayedCount: 1')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('commits: 3, count: 2, delayedCount: 2')
