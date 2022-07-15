@@ -143,9 +143,16 @@ export function atomWithObservable<TData>(
 
       return get(dataAtom)
     },
-    (get, _set, data: TData) => {
-      const { observable } = get(observableResultAtom)
+    (get, set, data: TData) => {
+      const { dataAtom, observable } = get(observableResultAtom)
       if ('next' in observable) {
+        // FIXME one-time subscription is only necessary if not mounted yet
+        let subscription: Subscription | null = null
+        const callback = (data: TData) => {
+          set(dataAtom, data)
+          subscription?.unsubscribe()
+        }
+        subscription = observable.subscribe(callback)
         observable.next(data)
       } else {
         throw new Error('observable is not subject')

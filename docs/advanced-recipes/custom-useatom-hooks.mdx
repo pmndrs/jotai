@@ -65,7 +65,7 @@ export function useFocusAtom(anAtom, keyFn) {
 // how to use it
 useFocusAtom(anAtom) {
     useMemo(() => atom(initValue), [initValue]),
-    useCallBack((optic) => optic.prop('key'), [])
+    useCallback((optic) => optic.prop('key'), [])
 }
 ```
 
