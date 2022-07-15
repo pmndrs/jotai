@@ -92,10 +92,12 @@ it('infinite query next page test', async () => {
   await findByText('page count: 1')
   expect(mockFetch).toBeCalledTimes(1)
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('next'))
   await findByText('page count: 2')
   expect(mockFetch).toBeCalledTimes(2)
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('prev'))
   await findByText('page count: 3')
   expect(mockFetch).toBeCalledTimes(3)
@@ -145,6 +147,8 @@ it('infinite query with enabled', async () => {
   )
 
   await findByText('not enabled')
+
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set slug'))
   await findByText('loading')
   await findByText('slug: hello-world')
@@ -210,9 +214,13 @@ it('infinite query with enabled 2', async () => {
 
   await findByText('loading')
   await findByText('slug: hello-first')
+
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
   await findByText('slug: hello-first')
+
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
 })
@@ -276,15 +284,17 @@ it('should be able to refetch only specific pages when refetchPages is provided'
   await findByText('length: 1')
   await findByText('page 1: 10')
 
-  await new Promise((r) => setTimeout(r, 100)) // not sure how this helps or not
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('fetch next page'))
   await findByText('length: 2')
   await findByText('page 2: 11')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('fetch next page'))
   await findByText('length: 3')
   await findByText('page 3: 12')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch page 1'))
   await findByText('length: 3')
   await findByText('page 1: 20')

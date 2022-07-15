@@ -45,6 +45,7 @@ describeWithUseTransition('useTransition', () => {
 
     await findByText('delayed: 0')
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     await findByText('delayed: 1')
 

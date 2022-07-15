@@ -1,1 +1,1 @@
-export { atomWithMachine } from './xstate/atomWithMachine'
+export { atomWithMachine, RESTART } from './xstate/atomWithMachine'
