@@ -77,7 +77,7 @@ it('does not show async stale result on derived atom', async () => {
   const countAtom = atom(0)
   const asyncAlwaysNullAtom = atom(async (get) => {
     get(countAtom)
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 500))
     return null
   })
   const derivedAtom = atom((get) => get(asyncAlwaysNullAtom))
