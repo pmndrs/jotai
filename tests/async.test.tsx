@@ -77,7 +77,7 @@ it('does not show async stale result on derived atom', async () => {
   const countAtom = atom(0)
   const asyncAlwaysNullAtom = atom(async (get) => {
     get(countAtom)
-    await new Promise((r) => setTimeout(r, 750))
+    await new Promise((r) => setTimeout(r, 500))
     return null
   })
   const derivedAtom = atom((get) => get(asyncAlwaysNullAtom))
@@ -131,6 +131,7 @@ it('does not show async stale result on derived atom', async () => {
     getByText('derived value: null')
   })
 
+  await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('button'))
 
   await waitFor(() => {
@@ -153,7 +154,7 @@ it('works with async get with extra deps', async () => {
   const anotherAtom = atom(-1)
   const asyncCountAtom = atom(async (get) => {
     get(anotherAtom)
-    await new Promise((r) => setTimeout(r, 750))
+    await new Promise((r) => setTimeout(r, 500))
     return get(countAtom)
   })
 
@@ -189,7 +190,9 @@ it('works with async get with extra deps', async () => {
     getByText('delayedCount: 0')
   })
 
+  await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('button'))
+
   await findByText('loading')
   await waitFor(() => {
     getByText('count: 1')
