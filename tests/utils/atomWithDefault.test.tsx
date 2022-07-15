@@ -45,7 +45,7 @@ it('simple sync get default', async () => {
 it('simple async get default', async () => {
   const count1Atom = atom(1)
   const count2Atom = atomWithDefault(async (get) => {
-    await new Promise((r) => setTimeout(r, 500))
+    await new Promise((r) => setTimeout(r, 100))
     return get(count1Atom) * 2
   })
 
@@ -74,6 +74,7 @@ it('simple async get default', async () => {
   await findByText('loading')
   await findByText('count1: 1, count2: 2')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button1'))
   await findByText('loading')
   await findByText('count1: 2, count2: 4')
@@ -131,7 +132,7 @@ it('refresh sync atoms to default values', async () => {
 it('refresh async atoms to default values', async () => {
   const count1Atom = atom(1)
   const count2Atom = atomWithDefault(async (get) => {
-    await new Promise((r) => setTimeout(r, 500))
+    await new Promise((r) => setTimeout(r, 100))
     return get(count1Atom) * 2
   })
 
@@ -161,6 +162,7 @@ it('refresh async atoms to default values', async () => {
   await findByText('loading')
   await findByText('count1: 1, count2: 2')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button1'))
   await findByText('loading')
   await findByText('count1: 2, count2: 4')
