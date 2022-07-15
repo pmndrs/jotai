@@ -41,20 +41,21 @@ export const Provider = ({
   const scopeContainerRef = useRef<ScopeContainer>()
   if (!scopeContainerRef.current) {
     // lazy initialization
-    scopeContainerRef.current = createScopeContainer(
+    const scopeContainer = createScopeContainer(
       initialValues,
       unstable_createStore
     )
     if (unstable_enableVersionedWrite) {
-      scopeContainerRef.current.w = (write) => {
+      scopeContainer.w = (write) => {
         setVersion((parentVersion) => {
           const nextVersion = { p: parentVersion }
           write(nextVersion)
           return nextVersion
         })
       }
-      scopeContainerRef.current.v = version
+      scopeContainer.v = version
     }
+    scopeContainerRef.current = scopeContainer
   }
 
   const ScopeContainerContext = getScopeContext(scope)
