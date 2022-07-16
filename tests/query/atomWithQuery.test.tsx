@@ -1,6 +1,6 @@
 import { Component, Suspense, useState } from 'react'
 import type { ReactNode } from 'react'
-import { act, fireEvent, render } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom, useSetAtom } from 'jotai'
 import { atomWithQuery } from 'jotai/query'
 import { getTestProvider } from '../testUtils'
@@ -339,11 +339,10 @@ it('query with enabled 2', async () => {
   expect(mockFetch).toHaveBeenCalledTimes(1)
   await findByText('slug: hello-first')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
 
-  await act(() => new Promise((r) => setTimeout(r, 100)))
+  await new Promise((r) => setTimeout(r, 100))
   await findByText('slug: hello-first')
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
@@ -570,7 +569,7 @@ describe('error handling', () => {
       queryKey: ['error test', 'count2'],
       retry: false,
       queryFn: () => {
-        const promise = fakeFetch({ count }, willThrowError, 500)
+        const promise = fakeFetch({ count }, willThrowError, 100)
         willThrowError = !willThrowError
         ++count
         return promise
@@ -613,15 +612,17 @@ describe('error handling', () => {
     await findByText('loading')
     await findByText('errored')
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('retry'))
     await findByText('loading')
     await findByText('count: 1')
 
-    await act(() => new Promise((r) => setTimeout(r, 100)))
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('refetch'))
     await findByText('loading')
     await findByText('errored')
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('retry'))
     await findByText('loading')
     await findByText('count: 3')
