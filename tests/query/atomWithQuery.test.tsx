@@ -1,12 +1,24 @@
-import { Component, Suspense, useState } from 'react'
+import { Component, Suspense, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom, useSetAtom } from 'jotai'
+import {
+  atom,
+  SECRET_INTERNAL_getScopeContext as getScopeContext,
+  useAtom,
+  useSetAtom,
+} from 'jotai'
 import { atomWithQuery } from 'jotai/query'
 import { getTestProvider } from '../testUtils'
 import fakeFetch from './fakeFetch'
 
 const Provider = getTestProvider()
+
+// This is only used to pass tests with unstable_enableVersionedWrite
+const useRetryFromError = (scope?: symbol | string | number) => {
+  const ScopeContext = getScopeContext(scope)
+  const { r: retryFromError } = useContext(ScopeContext)
+  return retryFromError || ((fn) => fn())
+}
 
 it('query basic test', async () => {
   const countAtom = atomWithQuery(() => ({
@@ -593,7 +605,12 @@ describe('error handling', () => {
 
     const App = () => {
       const dispatch = useSetAtom(countAtom)
-      const retry = () => dispatch({ type: 'refetch' })
+      const retryFromError = useRetryFromError()
+      const retry = () => {
+        retryFromError(() => {
+          dispatch({ type: 'refetch' })
+        })
+      }
       return (
         <ErrorBoundary retry={retry}>
           <Suspense fallback="loading">
