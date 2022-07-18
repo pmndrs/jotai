@@ -43,7 +43,7 @@ export function atomWithQuery<
 ): WritableAtom<
   TData | TQueryData | undefined,
   AtomWithQueryAction,
-  Promise<void>
+  void | Promise<void>
 >
 
 export function atomWithQuery<
@@ -56,7 +56,7 @@ export function atomWithQuery<
     AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
   >,
   getQueryClient?: GetQueryClient
-): WritableAtom<TData | TQueryData, AtomWithQueryAction, Promise<void>>
+): WritableAtom<TData, AtomWithQueryAction, Promise<void>>
 
 export function atomWithQuery<
   TQueryFnData,
@@ -68,12 +68,7 @@ export function atomWithQuery<
     AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
   >,
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
-): WritableAtom<
-  TData | TQueryData | undefined,
-  AtomWithQueryAction,
-  Promise<void>
-> {
-  type Data = TData | TQueryData
+): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
   type Result = QueryObserverResult<TData, TError>
   interface State {
     isMounted: boolean
@@ -87,7 +82,7 @@ export function atomWithQuery<
       state: State
     },
     AtomWithQueryAction,
-    Promise<void>
+    void | Promise<void>
   > = atom(
     (get) => {
       const queryClient = getQueryClient(get)
@@ -133,11 +128,13 @@ export function atomWithQuery<
           setResult(result)
         }
       }
-      state.unsubscribe = observer.subscribe(listener)
+      if (options.enabled !== false) {
+        state.unsubscribe = observer.subscribe(listener)
+      }
       resultAtom.onMount = (update) => {
         setResult = update
         state.isMounted = true
-        if (!state.unsubscribe) {
+        if (options.enabled !== false && !state.unsubscribe) {
           state.unsubscribe = observer.subscribe(listener)
           listener(observer.getCurrentResult())
         }
@@ -154,19 +151,23 @@ export function atomWithQuery<
             state.unsubscribe?.()
             state.unsubscribe = null
           }
-          const p = observer.refetch({ cancelRefetch: true }).then((result) => {
-            if (options.enabled !== false) {
+          if (options.enabled !== false) {
+            return observer.refetch({ cancelRefetch: true }).then((result) => {
               set(resultAtom, result)
-            }
-          })
-          return p
+            })
+          }
+          return
         }
         default:
           throw new Error('no action')
       }
     }
   )
-  const queryAtom = atom<Data | undefined, AtomWithQueryAction, Promise<void>>(
+  const queryAtom = atom<
+    TData | undefined,
+    AtomWithQueryAction,
+    void | Promise<void>
+  >(
     (get) => {
       const { resultAtom } = get(queryDataAtom)
       const result = get(resultAtom)
