@@ -144,6 +144,9 @@ export function atomWithQuery<
     },
     (get, set, action) => {
       const { options, resultAtom, observer, state } = get(queryDataAtom)
+      if (options.enabled === false) {
+        return
+      }
       switch (action.type) {
         case 'refetch': {
           set(resultAtom, new Promise<never>(() => {})) // infinite pending
@@ -151,15 +154,10 @@ export function atomWithQuery<
             state.unsubscribe?.()
             state.unsubscribe = null
           }
-          if (options.enabled !== false) {
-            return observer.refetch({ cancelRefetch: true }).then((result) => {
-              set(resultAtom, result)
-            })
-          }
-          return
+          return observer.refetch({ cancelRefetch: true }).then((result) => {
+            set(resultAtom, result)
+          })
         }
-        default:
-          throw new Error('no action')
       }
     }
   )
