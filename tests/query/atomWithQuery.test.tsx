@@ -302,7 +302,6 @@ it('query with enabled 2', async () => {
       queryFn: async () => {
         return await mockFetch({ slug: `hello-${slug}` }, false, 100)
       },
-      staleTime: 100, // FIXME This doesn't seem ideal.
     }
   })
 
@@ -544,7 +543,7 @@ describe('error handling', () => {
       queryKey: ['error test', 'count1'],
       retry: false,
       queryFn: async () => {
-        return await fakeFetch({ count: 0 }, true, 500)
+        return await fakeFetch({ count: 0 }, true, 100)
       },
     }))
     const Counter = () => {
@@ -580,8 +579,9 @@ describe('error handling', () => {
     const countAtom = atomWithQuery(() => ({
       queryKey: ['error test', 'count2'],
       retry: false,
+      staleTime: 200,
       queryFn: () => {
-        const promise = fakeFetch({ count }, willThrowError, 100)
+        const promise = fakeFetch({ count }, willThrowError, 200)
         willThrowError = !willThrowError
         ++count
         return promise

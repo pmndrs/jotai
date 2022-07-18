@@ -75,11 +75,16 @@ export function atomWithQuery<
 > {
   type Data = TData | TQueryData
   type Result = QueryObserverResult<TData, TError>
+  interface State {
+    isMounted: boolean
+    unsubscribe: (() => void) | null
+  }
   const queryDataAtom: WritableAtom<
     {
       options: AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
       resultAtom: PrimitiveAtom<Result | Promise<Result>>
       observer: QueryObserver<TQueryFnData, TError, TData, TQueryData>
+      state: State
     },
     AtomWithQueryAction,
     Promise<void>
@@ -90,50 +95,70 @@ export function atomWithQuery<
         typeof createQuery === 'function' ? createQuery(get) : createQuery
 
       const defaultedOptions = queryClient.defaultQueryOptions(options)
-      if (
-        options.enabled !== false &&
-        typeof defaultedOptions.staleTime !== 'number'
-      ) {
-        // FIXME We don't want to depend on this config
-        defaultedOptions.staleTime = 1000
-      }
       const observer = new QueryObserver(queryClient, defaultedOptions)
       const initialResult = observer.getCurrentResult()
 
+      let resolve: ((result: Result) => void) | null = null
       const resultAtom = atom<Result | Promise<Result>>(
         initialResult.data === undefined && options.enabled !== false
-          ? observer.fetchOptimistic(options)
+          ? new Promise<Result>((r) => {
+              resolve = r
+            })
           : initialResult
       )
-      resultAtom.onMount = (setResult) => {
-        if (options.enabled !== false) {
-          const listener = (result: Result) => {
-            if (result.isFetching) {
-              return
+      let setResult: (result: Result) => void = () => {
+        throw new Error('setting result without mount')
+      }
+      const state: State = {
+        isMounted: false,
+        unsubscribe: null,
+      }
+      const listener = (result: Result) => {
+        if (
+          result.isFetching ||
+          (!result.isError && result.data === undefined)
+        ) {
+          return
+        }
+        if (resolve) {
+          setTimeout(() => {
+            if (!state.isMounted) {
+              state.unsubscribe?.()
+              state.unsubscribe = null
             }
-            if (result.isError || result.data !== undefined) {
-              setResult(result)
-            }
-          }
-          const unsubscribe = observer.subscribe(listener)
-          listener(observer.getCurrentResult())
-          return unsubscribe
+          }, 1000)
+          resolve(result)
+          resolve = null
+        } else {
+          setResult(result)
         }
       }
-      return { options, resultAtom, observer }
+      state.unsubscribe = observer.subscribe(listener)
+      resultAtom.onMount = (update) => {
+        setResult = update
+        state.isMounted = true
+        if (!state.unsubscribe) {
+          state.unsubscribe = observer.subscribe(listener)
+          listener(observer.getCurrentResult())
+        }
+        return () => state.unsubscribe?.()
+      }
+      return { options, resultAtom, observer, state }
     },
     (get, set, action) => {
-      const { options, resultAtom, observer } = get(queryDataAtom)
+      const { options, resultAtom, observer, state } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
           set(resultAtom, new Promise<never>(() => {})) // infinite pending
-          const p = Promise.resolve()
-            .then(() => observer.refetch({ cancelRefetch: true }))
-            .then((result) => {
-              if (options.enabled !== false && !observer.hasListeners()) {
-                set(resultAtom, result)
-              }
-            })
+          if (!state.isMounted) {
+            state.unsubscribe?.()
+            state.unsubscribe = null
+          }
+          const p = observer.refetch({ cancelRefetch: true }).then((result) => {
+            if (options.enabled !== false) {
+              set(resultAtom, result)
+            }
+          })
           return p
         }
         default:
