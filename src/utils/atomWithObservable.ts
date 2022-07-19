@@ -7,17 +7,17 @@ declare global {
   }
 }
 
-interface Subscription {
+type Subscription = {
   unsubscribe: () => void
 }
 
-interface Observer<T> {
+type Observer<T> = {
   next: (value: T) => void
   error: (error: unknown) => void
   complete: () => void
 }
 
-interface ObservableLike<T> {
+type ObservableLike<T> = {
   subscribe(observer: Observer<T>): Subscription
   subscribe(
     next: (value: T) => void,
@@ -31,7 +31,7 @@ type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
 type InitialValueFunction<T> = () => T | undefined
 
-interface AtomWithObservableOptions<TData> {
+type AtomWithObservableOptions<TData> = {
   initialValue?: TData | InitialValueFunction<TData>
 }
 

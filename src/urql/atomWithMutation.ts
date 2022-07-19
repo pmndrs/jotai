@@ -8,7 +8,7 @@ import { atom } from 'jotai'
 import type { Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-interface MutationAction<Data, Variables extends object> {
+type MutationAction<Data, Variables extends object> = {
   variables?: Variables
   context?: Partial<OperationContext>
   callback?: (result: OperationResult<Data, Variables>) => void

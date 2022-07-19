@@ -10,7 +10,7 @@ import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
 
-export interface AtomWithQueryAction {
+type AtomWithQueryAction = {
   type: 'refetch'
 }
 
