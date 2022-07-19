@@ -92,7 +92,7 @@ export function atomWithInfiniteQuery<
   AtomWithInfiniteQueryAction<TQueryFnData>
 > {
   type Result = QueryObserverResult<InfiniteData<TData>, TError>
-  interface State {
+  type State = {
     isMounted: boolean
     unsubscribe: (() => void) | null
   }

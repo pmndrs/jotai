@@ -70,7 +70,7 @@ export function atomWithQuery<
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
   type Result = QueryObserverResult<TData, TError>
-  interface State {
+  type State = {
     isMounted: boolean
     unsubscribe: (() => void) | null
   }
