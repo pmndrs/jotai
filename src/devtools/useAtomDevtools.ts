@@ -4,7 +4,7 @@ import type { Atom, WritableAtom } from 'jotai'
 import type { Scope, SetAtom } from '../core/atom'
 import { Message } from './types'
 
-interface DevtoolOptions {
+type DevtoolOptions = {
   name?: string
   scope?: Scope
   enabled?: boolean

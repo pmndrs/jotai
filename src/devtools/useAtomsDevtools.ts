@@ -55,7 +55,7 @@ const getDevtoolsState = (atomsSnapshot: AtomsSnapshot) => {
   }
 }
 
-interface DevtoolsOptions {
+type DevtoolsOptions = {
   scope?: Scope
   enabled?: boolean
 }
