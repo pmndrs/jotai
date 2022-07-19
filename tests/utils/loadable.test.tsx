@@ -215,7 +215,7 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
   await findByText('Data: 5')
 })
 
-interface LoadableComponentProps {
+type LoadableComponentProps = {
   asyncAtom: Atom<Promise<number> | Promise<string> | string | number>
   effectCallback?: (loadableValue: any) => void
 }

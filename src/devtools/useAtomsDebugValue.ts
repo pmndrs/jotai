@@ -35,7 +35,7 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
     })
   )
 
-interface Options {
+type Options = {
   scope?: Scope
   enabled?: boolean
 }

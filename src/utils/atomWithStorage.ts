@@ -4,7 +4,7 @@ import { RESET } from './constants'
 
 type Unsubscribe = () => void
 
-interface AsyncStorage<Value> {
+export interface AsyncStorage<Value> {
   getItem: (key: string) => Promise<Value>
   setItem: (key: string, newValue: Value) => Promise<void>
   removeItem: (key: string) => Promise<void>
@@ -12,7 +12,7 @@ interface AsyncStorage<Value> {
   subscribe?: (key: string, callback: (value: Value) => void) => Unsubscribe
 }
 
-interface SyncStorage<Value> {
+export interface SyncStorage<Value> {
   getItem: (key: string) => Value
   setItem: (key: string, newValue: Value) => void
   removeItem: (key: string) => void
@@ -20,13 +20,13 @@ interface SyncStorage<Value> {
   subscribe?: (key: string, callback: (value: Value) => void) => Unsubscribe
 }
 
-interface AsyncStringStorage {
+export interface AsyncStringStorage {
   getItem: (key: string) => Promise<string | null>
   setItem: (key: string, newValue: string) => Promise<void>
   removeItem: (key: string) => Promise<void>
 }
 
-interface SyncStringStorage {
+export interface SyncStringStorage {
   getItem: (key: string) => string | null
   setItem: (key: string, newValue: string) => void
   removeItem: (key: string) => void
