@@ -92,16 +92,23 @@ const UserData = () => {
 }
 ```
 
-### SSR support
+## SSR support
 
 Both atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://react-query.tanstack.com/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://react-query.tanstack.com/guides/ssr#using-hydration) or [`initialData`](https://react-query.tanstack.com/guides/ssr#using-initialdata).
 
-### Examples
+## Error handling
 
-#### Basic demo
+Fetch error will be thrown and can be caught with ErrorBoundary.
+Refetching may recover from a temporary error.
+
+See [a working example](https://codesandbox.io/s/04mepx) to learn more.
+
+## Examples
+
+### Basic demo
 
 <CodeSandbox id="ij2sd" />
 
-#### Hackernews
+### Hackernews
 
 <CodeSandbox id="u4sli" />
