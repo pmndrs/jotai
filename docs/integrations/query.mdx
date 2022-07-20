@@ -94,15 +94,15 @@ const UserData = () => {
 
 ### Referencing the same instance of Query Client in your project
 
-Perhaps you have some functions in your project that utilises the `useQueryClient()` hook to obtain the `QueryClient` object and call its methods.
+Perhaps you have some custom hooks in your project that utilises the `useQueryClient()` hook to obtain the `QueryClient` object and call its methods.
 
 To ensure that you reference the same `QueryClient` object, be sure to wrap the root of your project in a `<Provider>` and initialise `queryClientAtom` with the same `queryClient` value you provided to `QueryClientProvider`.
 
-Without this step, `useQueryAtom` will reference a seperate `QueryClient` from any queries/mutations that utilise the `useQueryClient()` hook to get the queryClient.
+Without this step, `useQueryAtom` will reference a seperate `QueryClient` from any hooks that utilise the `useQueryClient()` hook to get the queryClient.
 
 #### Example
 
-In the example below, we have a mutation, `useTodoMutation` and a query `todosAtom`.
+In the example below, we have a mutation hook, `useTodoMutation` and a query `todosAtom`.
 
 Although they reference methods same query keys (`'todos'`), should `useTodoMutation` be called and invalidate the query without the `Provider` initialisation step, `todosAtom` will not be prompted to refetch and will continue showing stale data.
 
