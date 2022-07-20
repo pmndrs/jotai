@@ -10,31 +10,31 @@ Jotai is based on object references and not keys (like Recoil). This means there
 
 However, this can quickly become cumbersome to add a `debugLabel` to every atom.
 
-This `babel` plugin adds a `debugLabel` to every atom, based on its identifer.
+This `babel` plugin adds a `debugLabel` to every atom, based on its identifier.
 
 The plugin transforms this code:
 
-```ts
+```js
 export const countAtom = atom(0)
 ```
 
 Into:
 
-```ts
+```js
 export const countAtom = atom(0)
 countAtom.debugLabel = 'countAtom'
 ```
 
 Default exports are also handled, based on the file naming:
 
-```ts
+```js
 // countAtom.ts
 export default atom(0)
 ```
 
 Which transform into:
 
-```ts
+```js
 // countAtom.ts
 const countAtom = atom(0)
 countAtom.debugLabel = 'countAtom'

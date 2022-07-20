@@ -4,12 +4,69 @@ description: This doc describes `jotai/devtool` bundle.
 nav: 2.03
 ---
 
+## useAtomsDebugValue
+
+`useAtomsDebugValue` is a React hook that will show all atom values in React Devtools.
+
+```ts
+function useAtomsDebugValue(options?: {
+  scope?: Scope
+  enabled?: boolean
+}): void
+```
+
+Internally, it uses `useDebugValue` which is only effective in DEV mode.
+It will catch all atoms that are accessible from the place the hook is located.
+
+### Example
+
+```jsx
+import { useAtomsDebugValue } from 'jotai/devtools'
+
+const textAtom = atom('hello')
+textAtom.debugLabel = 'textAtom'
+
+const lenAtom = atom((get) => get(textAtom).length)
+lenAtom.debugLabel = 'lenAtom'
+
+const TextBox = () => {
+  const [text, setText] = useAtom(textAtom)
+  const [len] = useAtom(lenAtom)
+  return (
+    <span>
+      <input value={text} onChange={(e) => setText(e.target.value)} />({len})
+    </span>
+  )
+}
+
+const DebugAtoms = () => {
+  useAtomsDebugValue()
+  return null
+}
+
+const App = () => (
+  <Provider>
+    <DebugAtoms />
+    <TextBox />
+  </Provider>
+)
+```
+
+<CodeSandbox id="vvp12f" />
+
 ## useAtomDevtools
 
 `useAtomDevtools` is a React hook that manages ReduxDevTools integration for a particular atom.
 
 ```ts
-function useAtomDevtools<Value>(anAtom: WritableAtom<Value, Value>, name?: string): void
+function useAtomDevtools<Value>(
+  anAtom: WritableAtom<Value, Value>,
+  options?: {
+    name?: string
+    scope?: Scope
+    enabled?: boolean
+  }
+): void
 ```
 
 The `useAtomDevtools` hook accepts a generic type parameter (mirroring the type stored in the atom). Additionally, the hook accepts two invocation parameters, `anAtom` and `name`.
@@ -17,7 +74,7 @@ The `useAtomDevtools` hook accepts a generic type parameter (mirroring the type 
 
 ### Example
 
-```typescript
+```ts
 import { useAtomDevtools } from 'jotai/devtools'
 
 // The interface for the type stored in the atom.
@@ -50,16 +107,25 @@ export const useTasksDevtools = () => {
 ⚠️ Note: This hook is experimental (feedbacks are welcome) and only works in a `process.env.NODE_ENV !== 'production'` environment.
 
 `useAtomsDevtools` is a catch-all version of `useAtomDevtools` where it shows all atoms in the store instead of showing a specific one.
+
 ```ts
-function useAtomsDevtools(name: string, scope?: Scope): void
+function useAtomsDevtools(
+  name: string,
+  options?: {
+    scope?: Scope
+    enabled?: boolean
+  }
+): void
 ```
+
 It takes a `name` parameter that is needed for naming the Redux devtools instance and a `scope` parameter if the hook is used for a specific scope of atoms.
 
 As a limitation for this API, we need to put `useAtomsDevtools` in a component where the consumed atoms should be in a lower place of the React tree than that component (`AtomsDevtools` in the below example).
 `AtomsDevtools` component can be considered as a best practice for our apps.
 
 ### Example
-```ts
+
+```jsx
 const countAtom = atom(0);
 const doubleCountAtom = atom((get) => get(countAtom) * 2);
 
@@ -70,7 +136,7 @@ function Counter() {
   ...
 }
 
-const AtomsDevtools = ({ children }: { children: ReactElement }) => {
+const AtomsDevtools = ({ children }) => {
   useAtomsDevtools('demo')
   return children
 }
@@ -83,6 +149,7 @@ export default function App()  {
   )
  }
 ```
+
 <CodeSandbox id="3xobn" />
 
 ## useAtomsSnapshot
@@ -102,7 +169,7 @@ Be careful using this hook because it will cause the component to re-render for 
 
 ### Example
 
-```ts
+```jsx
 import { Provider } from 'jotai'
 import { useAtomsSnapshot } from 'jotai/devtools'
 
@@ -145,14 +212,14 @@ This hook is primarily meant for debugging and devtools use cases.
 
 ### Example
 
-```ts
+```jsx
 import { Provider } from 'jotai'
 import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
 
 const petAtom = atom('cat')
 const colorAtom = atom('blue')
 
-const UpdateSnapshot: React.FC = () => {
+const UpdateSnapshot = () => {
   const snapshot = useAtomsSnapshot()
   const goToSnapshot = useGotoAtomsSnapshot()
   return (
@@ -162,8 +229,7 @@ const UpdateSnapshot: React.FC = () => {
         newSnapshot.set(petAtom, 'dog')
         newSnapshot.set(colorAtom, 'green')
         goToSnapshot(newSnapshot)
-      }}
-    >
+      }}>
       Go to snapshot
     </button>
   )

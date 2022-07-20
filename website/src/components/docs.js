@@ -1,22 +1,22 @@
-import cx from 'classnames'
-import { Link, graphql, useStaticQuery } from 'gatsby'
-import { useUpdateAtom } from 'jotai/utils'
-import { menuAtom } from '../atoms'
+import cx from 'classnames';
+import { Link, graphql, useStaticQuery } from 'gatsby';
+import { useUpdateAtom } from 'jotai/utils';
+import { menuAtom } from '../atoms';
 
 export const Docs = ({ className = '', ...rest }) => {
-  const data = useStaticQuery(staticQuery)
+  const data = useStaticQuery(staticQuery);
 
-  const setIsMenuOpen = useUpdateAtom(menuAtom)
+  const setIsMenuOpen = useUpdateAtom(menuAtom);
 
-  const allDocs = data.allMdx.nodes.filter(checkDocs).sort(sortDocs)
-  const navLinks = parseDocs(allDocs)
+  const allDocs = data.allMdx.nodes.filter(checkDocs).sort(sortDocs);
+  const navLinks = parseDocs(allDocs);
 
   return (
     <div className={cx('space-y-8', className)} {...rest}>
       {navLinks.map((section, index) => (
         <div key={index}>
           {section.title && (
-            <div className="relative -left-0.5 font-bold text-gray-350 dark:text-gray-650 text-sm uppercase tracking-widest">
+            <div className="relative -left-0.5 text-sm font-bold uppercase tracking-widest text-gray-350 dark:text-gray-650">
               {section.title}
             </div>
           )}
@@ -26,9 +26,10 @@ export const Docs = ({ className = '', ...rest }) => {
                 <Link
                   to={`/docs/${doc.slug}`}
                   onClick={() => setIsMenuOpen(false)}
-                  className="relative -left-3 inline-block px-2 py-1 border border-transparent hover:!border-blue-200 dark:hover:!border-teal-800 hover:bg-blue-100 dark:hover:bg-teal-950 rounded text-lg"
+                  className="relative -left-3 inline-block rounded border border-transparent px-2 py-1 text-lg hover:!border-blue-200 hover:bg-blue-100 dark:hover:!border-teal-800 dark:hover:bg-teal-950"
                   activeClassName="!border-blue-200 dark:!border-teal-900 bg-blue-100 dark:bg-teal-950"
-                  partiallyActive>
+                  partiallyActive
+                >
                   {doc.meta.title}
                 </Link>
               </li>
@@ -37,8 +38,8 @@ export const Docs = ({ className = '', ...rest }) => {
         </div>
       ))}
     </div>
-  )
-}
+  );
+};
 
 const staticQuery = graphql`
   query {
@@ -52,31 +53,31 @@ const staticQuery = graphql`
       }
     }
   }
-`
+`;
 
-const checkDocs = (doc) => doc.meta?.nav !== null
+const checkDocs = (doc) => doc.meta?.nav !== null;
 
-const sortDocs = (a, b) => a.meta.nav - b.meta.nav
+const sortDocs = (a, b) => a.meta.nav - b.meta.nav;
 
 const parseDocs = (docs) => {
-  let directories = []
-  let newDocs = []
+  let directories = [];
+  let newDocs = [];
 
   docs.forEach(({ slug }) => {
-    const hasParent = slug.includes('/')
+    const hasParent = slug.includes('/');
 
-    let parent = undefined
+    let parent = undefined;
 
     if (hasParent) {
-      parent = slug.split('/')[0]
+      parent = slug.split('/')[0];
 
       if (!directories.includes(parent)) {
-        directories = [...directories, parent]
+        directories = [...directories, parent];
       }
     }
-  })
+  });
 
-  newDocs = [{ contents: [...docs.filter((doc) => !doc.slug.includes('/'))] }]
+  newDocs = [{ contents: [...docs.filter((doc) => !doc.slug.includes('/'))] }];
 
   directories.forEach((directory) => {
     newDocs = [
@@ -85,8 +86,8 @@ const parseDocs = (docs) => {
         title: directory.replace('-', ' '),
         contents: [...docs.filter((doc) => doc.slug.startsWith(directory))],
       },
-    ]
-  })
+    ];
+  });
 
-  return newDocs
-}
+  return newDocs;
+};

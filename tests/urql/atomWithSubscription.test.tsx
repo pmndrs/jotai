@@ -102,11 +102,13 @@ it('subscription change client at runtime', async () => {
   await findByText('first count: 0')
   await findByText('first count: 1')
   await findByText('first count: 2')
+
   fireEvent.click(getByText('second'))
   await findByText('loading')
   await findByText('second count: 0')
   await findByText('second count: 1')
   await findByText('second count: 2')
+
   fireEvent.click(getByText('first'))
   await findByText('loading')
   await findByText('first count: 0')
@@ -215,13 +217,16 @@ it('null client suspense', async () => {
   )
 
   await findByText('no data')
+
   fireEvent.click(getByText('set'))
   await findByText('loading')
   await findByText('default count: 0')
   await findByText('default count: 1')
   await findByText('default count: 2')
+
   fireEvent.click(getByText('unset'))
   await findByText('no data')
+
   fireEvent.click(getByText('set'))
   await findByText('default count: 0')
   await findByText('default count: 1')

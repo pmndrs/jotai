@@ -15,7 +15,7 @@ Here's an example using [React testing library](https://github.com/testing-libra
 
 `Counter.tsx`:
 
-```tsx
+```jsx
 import { atom, useAtom } from 'jotai'
 
 const countAtom = atom(0)
@@ -31,11 +31,11 @@ export function Counter() {
 }
 ```
 
-`Counter.test.tsx`:
+`Counter.test.ts`:
 
-```tsx
+```jsx
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { Counter } from './Counter'
 
 test('should increment counter', () => {
@@ -51,6 +51,36 @@ test('should increment counter', () => {
 })
 ```
 
+## Injected Values
+
+You may want to inject arbitrary values to your atom before starting some tests.
+Maybe the counter should be limited to 100. Let's see how to test that it doesn't increase after reaching 100.
+In order to do that, simply use a [Provider](..api/core#provider), and export your atom to be filled-in.
+
+```tsx
+import React from 'react'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { countAtom, Counter } from './Counter'
+import { Provider } from 'jotai'
+
+const CounterProvider = () => {
+  return (
+    <Provider initialValues={[[countAtom, 100]]}>
+      <Counter />
+    </Provider>
+  )
+}
+
+test('should not increment on max (100)', () => {
+  render(<CounterProvider />)
+
+  const counter = screen.getByText('100')
+  const incrementButton = screen.getByText('one up')
+  fireEvent.click(incrementButton)
+  expect(counter.textContent).toEqual('100')
+})
+```
+
 ## Custom hooks
 
 If you have complex atoms, sometimes you want to test them in isolation.
@@ -60,7 +90,7 @@ Here's an example below:
 
 `countAtom.ts`:
 
-```tsx
+```ts
 import { useAtom } from 'jotai'
 import { atomWithReducer } from 'jotai/utils'
 
@@ -79,7 +109,7 @@ export const countAtom = atomWithReducer(0, reducer)
 
 `countAtom.test.ts`:
 
-```tsx
+```ts
 import { renderHook, act } from '@testing-library/react-hooks'
 import { useAtom } from 'jotai'
 import { countAtom } from './countAtom'
@@ -92,5 +122,26 @@ test('should increment counter', () => {
   })
 
   expect(result.current[0]).toBe(1)
+})
+```
+
+## Example with React-Native
+
+Of course, you can test React-Native components too the same way, with or without `Provider`.
+
+```tsx
+import React from 'react'
+import { render, fireEvent } from '@testing-library/react-native'
+import { Counter } from './counter'
+
+test('should increment counter', () => {
+  // Arrange
+  const { getByText } = render(<Counter />)
+  const counter = getByText('0')
+  const incrementButton = getByText('one up')
+  // Act
+  fireEvent.press(incrementButton)
+  // Assert
+  expect(counter.props.children.toString()).toEqual('1')
 })
 ```

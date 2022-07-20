@@ -10,19 +10,20 @@ const withPromise = (source$: any) => {
   source$.toPromise = () => pipe(source$, take(1), toPromise)
   return source$
 }
-const clientMock = {
-  query: () =>
-    withPromise(
-      pipe(
-        interval(100),
-        map((i: number) => ({ data: { count: i } }))
-      )
-    ),
-} as unknown as Client
-
 const generateClient = (id: string) =>
   ({
     query: () => withPromise(fromValue({ data: { id } })),
+  } as unknown as Client)
+
+const generateContinuousClient = () =>
+  ({
+    query: () =>
+      withPromise(
+        pipe(
+          interval(100),
+          map((i: number) => ({ data: { count: i } }))
+        )
+      ),
   } as unknown as Client)
 
 const Provider = getTestProvider()
@@ -32,7 +33,7 @@ it('query basic test', async () => {
     () => ({
       query: '{ count }',
     }),
-    () => clientMock
+    () => generateContinuousClient()
   )
 
   const Counter = () => {
@@ -54,6 +55,8 @@ it('query basic test', async () => {
 
   await findByText('loading')
   await findByText('count: 0')
+  await findByText('count: 1')
+  await findByText('count: 2')
 })
 
 it('query dependency test', async () => {
@@ -69,7 +72,7 @@ it('query dependency test', async () => {
         dummy: get(dummyAtom),
       },
     }),
-    () => clientMock
+    () => generateContinuousClient()
   )
 
   const Counter = () => {
@@ -100,6 +103,7 @@ it('query dependency test', async () => {
   await findByText('count: 1')
   await findByText('count: 2')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('dummy'))
   await findByText('loading')
   await findByText('count: 0')
@@ -148,9 +152,13 @@ it('query change client at runtime', async () => {
 
   await findByText('loading')
   await findByText('id: first')
+
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('second'))
   await findByText('loading')
   await findByText('id: second')
+
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('first'))
   await findByText('loading')
   await findByText('id: first')
@@ -163,7 +171,7 @@ it('pause test', async () => {
       query: '{ count }',
       pause: !get(enabledAtom),
     }),
-    () => clientMock
+    () => generateContinuousClient()
   )
 
   const Counter = () => {
@@ -191,6 +199,7 @@ it('pause test', async () => {
 
   await findByText('count: paused')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('toggle'))
   await findByText('loading')
   await findByText('count: 0')
@@ -201,7 +210,7 @@ it('reexecute test', async () => {
     () => ({
       query: '{ count }',
     }),
-    () => clientMock
+    () => generateContinuousClient()
   )
 
   const Counter = () => {
@@ -224,10 +233,15 @@ it('reexecute test', async () => {
 
   await findByText('loading')
   await findByText('count: 0')
+  await findByText('count: 1')
+  await findByText('count: 2')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  await findByText('count: 0')
   await findByText('count: 1')
+  await findByText('count: 2')
 })
 
 it('query null client suspense', async () => {
@@ -275,11 +289,18 @@ it('query null client suspense', async () => {
   )
 
   await findByText('no data')
+
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set'))
   await findByText('loading')
   await findByText('client is set')
+
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('unset'))
   await findByText('no data')
+
+  await new Promise((r) => setTimeout(r, 100))
+  fireEvent.click(getByText('unset'))
   fireEvent.click(getByText('set'))
   await findByText('loading')
   await findByText('client is set')

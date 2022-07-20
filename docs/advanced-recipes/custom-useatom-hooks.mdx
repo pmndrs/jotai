@@ -3,26 +3,25 @@ title: Custom useAtom hooks
 nav: 5.03
 ---
 
-
 This page shows the ways of creating different utility functions. Utility functions save your time on coding, and you can preserve your base atom for other usage.
 
 ## utils
 
 ### useSelectAtom
 
-```ts
+```js
 import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
 export function useSelectAtom(anAtom, keyFn) {
-    return useAtomValue(selectAtom(anAtom, keyFn))
+  return useAtomValue(selectAtom(anAtom, keyFn))
 }
 
 // how to use it
 useSelectAtom(
-    useMemo(() => atom(initValue), [initValue]),
-    useCallBack((state) => state.prop, [])
+  useMemo(() => atom(initValue), [initValue]),
+  useCallBack((state) => state.prop, [])
 )
 ```
 
@@ -30,23 +29,23 @@ Please note that in this case `keyFn` must be stable, either define outside rend
 
 ### useFreezeAtom
 
-```ts
+```js
 import { useAtom } from 'jotai'
 import { freezeAtom } from 'jotai/utils'
 
 export function useFreezeAtom(anAtom) {
-    return useAtom(freezeAtom(anAtom))
+  return useAtom(freezeAtom(anAtom))
 }
 ```
 
 ### useSplitAtom
 
-```ts
+```js
 import { useAtom } from 'jotai'
 import { splitAtom } from 'jotai/utils'
 
 export function useSplitAtom(anAtom) {
-    return useAtom(splitAtom(anAtom))
+  return useAtom(splitAtom(anAtom))
 }
 ```
 
@@ -54,7 +53,7 @@ export function useSplitAtom(anAtom) {
 
 ### useFocusAtom
 
-```ts
+```js
 import { useAtom } from 'jotai'
 import { focusAtom } from 'jotai/optics'
 
@@ -66,7 +65,7 @@ export function useFocusAtom(anAtom, keyFn) {
 // how to use it
 useFocusAtom(anAtom) {
     useMemo(() => atom(initValue), [initValue]),
-    useCallBack((optic) => optic.prop('key'), [])
+    useCallback((optic) => optic.prop('key'), [])
 }
 ```
 
