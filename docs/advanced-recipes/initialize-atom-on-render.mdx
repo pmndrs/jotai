@@ -17,14 +17,14 @@ Consider a basic example where you have a reusable `TextDisplay` component that 
 
 This component has two child components, `PrettyText` and `UpdateTextInput`.
 
-- `PrettyText` is displays the text in blue.
+- `PrettyText` displays the text in blue.
 - `UpdateTextInput` is an input field which updates the text value.
 
 As opposed to passing `text` as a prop in the two child components, you decided that the `text` state should be shared between components as an atom.
 
-To make `TextDisplay` component reusable, it must take in a prop, `initialTextValue`, which determines the initial state of the `text` atom.
+To make `TextDisplay` component reusable, we take in a prop `initialTextValue`, which determines the initial state of the `text` atom.
 
-To achieve this, we do so by wrapping the child components in a `Provider`. Then, we populate the `initialValues` array of atom tuples with the initial values.
+To tie `initialTextValue` to `textAtom`, we wrap the child components in a `Provider`. Then, we populate the `initialValues` array of atom tuples with the initial values.
 
 ```jsx
 const textAtom = atom('')
@@ -57,7 +57,7 @@ const UpdateTextInput = () => {
 
 export const TextDisplay = ({ initialTextValue }) => {
   return (
-    // initialising on demand here
+    // initialising on state with prop on render here
     <Provider initialValues={[[textAtom, initialTextValue]]}>
       <PrettyText />
       <br />
