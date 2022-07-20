@@ -92,7 +92,7 @@ const UserData = () => {
 }
 ```
 
-### Referencing the same instance of Query Client in your project
+## Referencing the same instance of Query Client in your project
 
 Perhaps you have some custom hooks in your project that utilises the `useQueryClient()` hook to obtain the `QueryClient` object and call its methods.
 
@@ -100,7 +100,7 @@ To ensure that you reference the same `QueryClient` object, be sure to wrap the 
 
 Without this step, `useQueryAtom` will reference a seperate `QueryClient` from any hooks that utilise the `useQueryClient()` hook to get the queryClient.
 
-#### Example
+### Example
 
 In the example below, we have a mutation hook, `useTodoMutation` and a query `todosAtom`.
 
