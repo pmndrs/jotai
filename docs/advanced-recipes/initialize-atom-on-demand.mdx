@@ -9,7 +9,7 @@ Below is a basic example of illustrating how you can use `Provider` and its prop
 
 ### Basic Example
 
-> CodeSandbox link for your reference: [codesandbox](https://codesandbox.io/s/strange-tdd-gb1eo0?file=/src/App.js).
+> CodeSandbox link: [codesandbox](https://codesandbox.io/s/strange-tdd-gb1eo0?file=/src/App.js).
 
 Consider a basic example where you have a reusable `TextDisplay` component that allows you to display and update plain text.
 
@@ -66,6 +66,18 @@ export const TextDisplay = ({ initialTextValue }) => {
 ```
 
 Now, we can easily resue `TextDisplay` component with different initial text values despite them referencing the "same" atom.
+
+```jsx
+export default function App() {
+  return (
+    <div className="App">
+      <TextDisplay initialTextValue="initial text value 1" />
+
+      <TextDisplay initialTextValue="initial text value 2" />
+    </div>
+  )
+}
+```
 
 This is due to our child components looking for the lowest commmon ancestor `Provider` to derive its value.
 
