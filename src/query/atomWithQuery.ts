@@ -1,9 +1,9 @@
-import { QueryObserver } from '@tanstack/react-query'
+import { QueryObserver } from '@tanstack/query-core'
 import type {
   QueryKey,
   QueryObserverOptions,
   QueryObserverResult,
-} from '@tanstack/react-query'
+} from '@tanstack/query-core'
 import { atom } from 'jotai'
 import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'

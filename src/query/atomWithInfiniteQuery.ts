@@ -1,4 +1,4 @@
-import { InfiniteQueryObserver, isCancelledError } from '@tanstack/react-query'
+import { InfiniteQueryObserver, isCancelledError } from '@tanstack/query-core'
 import type {
   InfiniteData,
   InfiniteQueryObserverOptions,
@@ -6,7 +6,7 @@ import type {
   QueryObserverResult,
   RefetchOptions,
   RefetchQueryFilters,
-} from '@tanstack/react-query'
+} from '@tanstack/query-core'
 import { atom } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
