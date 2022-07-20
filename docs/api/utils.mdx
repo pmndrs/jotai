@@ -40,9 +40,9 @@ This is an overview of the atom creators/hooks utilities that can be found under
 
    Use this hook to update an atom value with a reducer function.
 
-9.  [atomWithReducer](../utils/atom-with-reducer.mdx)
+9. [atomWithReducer](../utils/atom-with-reducer.mdx)
 
-    This is a function to create an atom with an embeded reducer function to update the value.
+   This is a function to create an atom with an embedded reducer function to update the value.
 
 10. [atomWithDefault](../utils/atom-with-default.mdx)
 
@@ -83,3 +83,7 @@ This is an overview of the atom creators/hooks utilities that can be found under
 19. [useHydrateAtoms](../utils/use-hydrate-atoms.mdx)
 
     The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an initial value is e.g. fetched on the server, which can be passed to a component by props.
+
+20. [loadable](../utils/loadable.mdx)
+
+    The `loadable` API will allow you to bypass the inherent suspending happening at the core of asynchronous flows in Jotai. Wrap your atoms with `loadable` and you directly get the results of your async atoms as an object with a state to tell you if the Promise has resolved or even failed.

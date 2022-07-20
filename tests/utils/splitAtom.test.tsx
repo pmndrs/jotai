@@ -495,9 +495,7 @@ it('no error with cached atoms (fix 510)', async () => {
     return prevAtoms.current
   }
 
-  type NumItemProps = {
-    atom: Atom<number>
-  }
+  type NumItemProps = { atom: Atom<number> }
 
   const NumItem = ({ atom }: NumItemProps) => {
     const [readOnlyItem] = useAtom(atom)

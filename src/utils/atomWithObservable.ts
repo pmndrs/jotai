@@ -56,24 +56,76 @@ export function atomWithObservable<TData>(
       observable = itself
     }
 
-    const dataAtom = atom(
-      options?.initialValue
-        ? getInitialValue(options)
-        : firstValueFrom(observable)
-    )
-    let setData: (data: TData | Promise<TData>) => void = () => {
-      throw new Error('setting data without mount')
+    // To differentiate beetwen no value was emitted and `undefined` was emitted,
+    // this symbol is used
+    const EMPTY = Symbol()
+
+    let resolveEmittedInitialValue:
+      | ((data: TData | Promise<TData>) => void)
+      | null = null
+    let initialEmittedValue: Promise<TData> | TData | undefined =
+      options?.initialValue === undefined
+        ? new Promise((resolve) => {
+            resolveEmittedInitialValue = resolve
+          })
+        : undefined
+    let initialValueWasEmitted = false
+
+    let emittedValueBeforeMount: TData | Promise<TData> | typeof EMPTY = EMPTY
+    let isSync = true
+    let setData: (data: TData | Promise<TData>) => void = (data) => {
+      // First we set the initial value (if not other initialValue was provided)
+      // All the following data is saved in a variable so it doesn't get lost before the mount
+      if (options?.initialValue === undefined && !initialValueWasEmitted) {
+        if (isSync) {
+          initialEmittedValue = data
+        }
+        resolveEmittedInitialValue?.(data)
+        initialValueWasEmitted = true
+        resolveEmittedInitialValue = null
+      } else {
+        emittedValueBeforeMount = data
+      }
     }
+
     const dataListener = (data: TData) => {
       setData(data)
     }
+
     const errorListener = (error: unknown) => {
       setData(Promise.reject<TData>(error))
     }
-    let subscription: Subscription | null = null
 
+    let subscription: Subscription | null = null
+    let initialValue:
+      | TData
+      | Promise<TData>
+      | InitialValueFunction<TData>
+      | undefined
+    if (options?.initialValue !== undefined) {
+      initialValue = getInitialValue(options)
+    } else {
+      // FIXME
+      // There is the potential for memory leaks in this implementation.
+      //
+      // If the observable doesn't emit an initial value before the component that uses the atom gets destroyed,
+      // the onMount function never gets called and therefore the subscription never gets cleaned up.
+      //
+      // Unfortunately, currently there is no good way to prevent this issue (as of 2022-05-23).
+      // Timeouts may lead to an endless loading state, if the subscription get's cleaned up too quickly.
+      //
+      // Discussion: https://github.com/pmndrs/jotai/pull/1170
+      subscription = observable.subscribe(dataListener, errorListener)
+      initialValue = initialEmittedValue
+    }
+    isSync = false
+
+    const dataAtom = atom(initialValue)
     dataAtom.onMount = (update) => {
       setData = update
+      if (emittedValueBeforeMount !== EMPTY) {
+        update(emittedValueBeforeMount)
+      }
       if (!subscription) {
         subscription = observable.subscribe(dataListener, errorListener)
       }
@@ -82,6 +134,7 @@ export function atomWithObservable<TData>(
         subscription = null
       }
     }
+
     return { dataAtom, observable }
   })
   const observableAtom = atom(
@@ -90,9 +143,16 @@ export function atomWithObservable<TData>(
 
       return get(dataAtom)
     },
-    (get, _set, data: TData) => {
-      const { observable } = get(observableResultAtom)
+    (get, set, data: TData) => {
+      const { dataAtom, observable } = get(observableResultAtom)
       if ('next' in observable) {
+        // FIXME one-time subscription is only necessary if not mounted yet
+        let subscription: Subscription | null = null
+        const callback = (data: TData) => {
+          set(dataAtom, data)
+          subscription?.unsubscribe()
+        }
+        subscription = observable.subscribe(callback)
         observable.next(data)
       } else {
         throw new Error('observable is not subject')
@@ -105,39 +165,4 @@ export function atomWithObservable<TData>(
 function getInitialValue<TData>(options: AtomWithObservableOptions<TData>) {
   const initialValue = options.initialValue
   return initialValue instanceof Function ? initialValue() : initialValue
-}
-
-// FIXME There are two fatal issues in the current implememtation.
-// See also: https://github.com/pmndrs/jotai/pull/1058
-// - There's a risk of memory leaks.
-//   Unless the source emit a new value,
-//   the subscription will never be destroyed.
-//   atom `read` function can be called multiple times without mounting.
-//   This issue has existed even before #1058.
-// - The second value before mounting the atom is dropped.
-//   There's no guarantee that `onMount` is invoked in a short period.
-//   So, by the time we invoke `subscribe`, the value can be changed.
-//   Before #1058, an error was thrown, but currently it's silently dropped.
-function firstValueFrom<T>(source: ObservableLike<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    let resolved = false
-    const subscription = source.subscribe({
-      next: (value) => {
-        resolve(value)
-        resolved = true
-        if (subscription) {
-          subscription.unsubscribe()
-        }
-      },
-      error: reject,
-      complete: () => {
-        reject()
-      },
-    })
-
-    if (resolved) {
-      // If subscription was resolved synchronously
-      subscription.unsubscribe()
-    }
-  })
 }

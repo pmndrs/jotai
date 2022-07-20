@@ -59,17 +59,17 @@ type OnMount<Update, Result extends void | Promise<void>> = <
   setAtom: S
 ) => OnUnmount | void
 
-export type Atom<Value> = {
+export interface Atom<Value> {
   toString: () => string
   debugLabel?: string
   read: Read<Value>
 }
 
-export type WritableAtom<
+export interface WritableAtom<
   Value,
   Update,
   Result extends void | Promise<void> = void
-> = Atom<Value> & {
+> extends Atom<Value> {
   write: Write<Update, Result>
   onMount?: OnMount<Update, Result>
 }

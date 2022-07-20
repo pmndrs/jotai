@@ -7,8 +7,6 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
-jest.mock('../../src/core/useDebugState.ts')
-
 const consoleWarn = console.warn
 const consoleError = console.error
 beforeEach(() => {
@@ -241,7 +239,7 @@ it('handles scope', async () => {
       setTimeout(() => {
         isAsyncAtomRunning = false
         resolve(true)
-      }, 500)
+      }, 100)
     })
     return get(valueAtom)
   })
@@ -252,7 +250,7 @@ it('handles scope', async () => {
       setTimeout(() => {
         isAnotherAsyncAtomRunning = false
         resolve(true)
-      }, 500)
+      }, 100)
     })
     return '2'
   })
@@ -295,7 +293,7 @@ it('handles scope', async () => {
     expect(isAnotherAsyncAtomRunning).toBe(false)
   })
 
-  await new Promise((r) => setTimeout(r, 500))
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('increment'))
   await findByText('loading')
   await findByText('num1: 2, num2: 2')
@@ -339,7 +337,7 @@ it('large atom count', async () => {
     </StrictMode>
   )
 
-  waitFor(() => {
+  await waitFor(() => {
     expect(result).toEqual(createArray(passingCount))
   })
 
@@ -352,7 +350,24 @@ it('large atom count', async () => {
     </StrictMode>
   )
 
-  waitFor(() => {
+  await waitFor(() => {
     expect(result).toEqual(createArray(failingCount))
   })
+})
+
+it('works with an empty list (#1177)', async () => {
+  const Component = () => {
+    useAtom(waitForAll([]))
+    return <div>works!</div>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Component />
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('works!')
 })

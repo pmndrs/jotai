@@ -1,13 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const colors = require('tailwindcss/colors')
+const colors = require('tailwindcss/colors');
 
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './src/**/*.js',
-    './src/**/*.jsx',
-    './src/**/*.ts',
-    './src/**/*.tsx',
-  ],
+  content: ['./src/**/*.js', './src/**/*.jsx', './src/**/*.ts', './src/**/*.tsx'],
   darkMode: 'class',
   theme: {
     colors: {
@@ -24,14 +20,13 @@ module.exports = {
       blue: { ...colors.blue, 950: '#0f1d45' },
       red: { ...colors.red, 950: '#400f0f' },
       teal: { ...colors.teal, 950: '#0a2725' },
-      yellow: { ...colors.yellow, 950: '#392009' },
     },
     fontSize: {
-      xs: ['0.75rem'],
-      sm: ['0.875rem'],
-      base: ['1rem'],
-      lg: ['1.125rem'],
-      xl: ['1.25rem'],
+      'xs': ['0.75rem'],
+      'sm': ['0.875rem'],
+      'base': ['1rem'],
+      'lg': ['1.125rem'],
+      'xl': ['1.25rem'],
       '2xl': ['1.5rem'],
       '3xl': ['1.875rem'],
       '4xl': ['2.25rem'],
@@ -43,4 +38,4 @@ module.exports = {
     },
   },
   plugins: [require('@tailwindcss/forms')],
-}
+};

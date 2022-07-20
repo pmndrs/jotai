@@ -12,7 +12,6 @@ From the [React Query docs](https://react-query.tanstack.com/overview):
 
 Jotai with `react-query` provides a wonderful interface with all of the `react-query` features, providing you the ability to use those features in combination with your existing Jotai state.
 
-
 ## Install
 
 In addition to `jotai`, you have to install `react-query` to make use of this bundle and its functions.
@@ -27,7 +26,7 @@ yarn add react-query
 
 > A query is a declarative dependency on an asynchronous source of data that is tied to a unique key. A query can be used with any Promise based method (including GET and POST methods) to fetch data from a server.
 
-```js
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithQuery } from 'jotai/query'
 
@@ -54,7 +53,7 @@ const UserData = () => {
 
 A notable difference between a standard query atom is the additional option `getNextPageParam` and `getPreviousPageParam`, which is what you'll use to instruct the query on how to fetch any additional pages.
 
-```js
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithInfiniteQuery } from 'jotai/query'
 
@@ -71,7 +70,9 @@ const userAtom = atomWithInfiniteQuery((get) => ({
 
 const UserData = () => {
   const [data] = useAtom(userAtom)
-  return data.pages.map((userData, index) => <div key={index}>{JSON.stringify(userData)}</div>)
+  return data.pages.map((userData, index) => (
+    <div key={index}>{JSON.stringify(userData)}</div>
+  ))
 }
 ```
 
@@ -91,17 +92,23 @@ const UserData = () => {
 }
 ```
 
+## SSR support
 
-### SSR support
+Both atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://react-query.tanstack.com/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://react-query.tanstack.com/guides/ssr#using-hydration) or [`initialData`](https://react-query.tanstack.com/guides/ssr#using-initialdata).
 
-Both atoms can be used within the context of a server side rendered app, such as a next.js app or gastby app. You can [use both options](https://react-query.tanstack.com/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://react-query.tanstack.com/guides/ssr#using-hydration) or [`initialData`](https://react-query.tanstack.com/guides/ssr#using-initialdata).
+## Error handling
 
-### Examples
+Fetch error will be thrown and can be caught with ErrorBoundary.
+Refetching may recover from a temporary error.
 
-#### Basic demo
+See [a working example](https://codesandbox.io/s/04mepx) to learn more.
+
+## Examples
+
+### Basic demo
 
 <CodeSandbox id="ij2sd" />
 
-#### Hackernews
+### Hackernews
 
 <CodeSandbox id="u4sli" />

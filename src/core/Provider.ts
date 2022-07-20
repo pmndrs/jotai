@@ -5,7 +5,6 @@ import { createScopeContainer, getScopeContext } from './contexts'
 import type { ScopeContainer } from './contexts'
 import { COMMIT_ATOM, createStoreForExport } from './store'
 import type { VersionObject } from './store'
-import { useDebugState } from './useDebugState'
 
 export const Provider = ({
   children,
@@ -29,39 +28,40 @@ export const Provider = ({
    */
   unstable_enableVersionedWrite?: boolean
 }>) => {
-  const [version, setVersion] = useState<VersionObject>()
+  const [version, setVersion] = useState<VersionObject>({})
   useEffect(() => {
-    if (version) {
-      ;(scopeContainerRef.current as ScopeContainer).s[COMMIT_ATOM](
-        null,
-        version
-      )
+    const scopeContainer = scopeContainerRef.current as ScopeContainer
+    if (scopeContainer.w) {
+      scopeContainer.s[COMMIT_ATOM](null, version)
       delete version.p
+      scopeContainer.v = version
     }
   }, [version])
 
   const scopeContainerRef = useRef<ScopeContainer>()
   if (!scopeContainerRef.current) {
     // lazy initialization
-    scopeContainerRef.current = createScopeContainer(
+    const scopeContainer = createScopeContainer(
       initialValues,
       unstable_createStore
     )
     if (unstable_enableVersionedWrite) {
-      scopeContainerRef.current.w = (write) => {
+      let retrying = 0
+      scopeContainer.w = (write) => {
         setVersion((parentVersion) => {
-          const nextVersion = parentVersion ? { p: parentVersion } : {}
+          const nextVersion = retrying ? parentVersion : { p: parentVersion }
           write(nextVersion)
           return nextVersion
         })
       }
+      scopeContainer.v = version
+      scopeContainer.r = (fn) => {
+        ++retrying
+        fn()
+        --retrying
+      }
     }
-  }
-
-  // LIMITATION: useDebugState prevents to work versioned write properly
-  if (__DEV__ && !unstable_enableVersionedWrite) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useDebugState(scopeContainerRef.current)
+    scopeContainerRef.current = scopeContainer
   }
 
   const ScopeContainerContext = getScopeContext(scope)

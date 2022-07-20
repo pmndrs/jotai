@@ -1,7 +1,6 @@
-import React from 'react'
-import { MDXProvider } from '@mdx-js/react'
-import { Provider as JotaiProvider } from 'jotai'
-import { countAtom, menuAtom, textAtom } from './src/atoms'
+import { MDXProvider } from '@mdx-js/react';
+import { Provider as JotaiProvider } from 'jotai';
+import { countAtom, menuAtom, textAtom } from './src/atoms';
 import {
   A,
   Code,
@@ -12,19 +11,21 @@ import {
   H5,
   InlineCode,
   Stackblitz,
-} from './src/components'
+  TOC,
+} from './src/components';
 
 const components = {
   code: Code,
   inlineCode: InlineCode,
   CodeSandbox,
   Stackblitz,
+  TOC,
   h2: H2,
   h3: H3,
   h4: H4,
   h5: H5,
   a: A,
-}
+};
 
 export const wrapRootElement = ({ element }) => (
   <JotaiProvider
@@ -32,7 +33,8 @@ export const wrapRootElement = ({ element }) => (
       [menuAtom, false],
       [textAtom, 'hello'],
       [countAtom, 0],
-    ]}>
+    ]}
+  >
     <MDXProvider components={components}>{element}</MDXProvider>
   </JotaiProvider>
-)
+);

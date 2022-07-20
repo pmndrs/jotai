@@ -5,7 +5,8 @@ import type {
   RequestPolicy,
   TypedDocumentNode,
 } from '@urql/core'
-import { pipe, skip, subscribe } from 'wonka'
+import { pipe, subscribe } from 'wonka'
+import type { Subscription } from 'wonka'
 import { atom } from 'jotai'
 import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
@@ -24,7 +25,8 @@ type OperationResultWithData<Data, Variables> = OperationResult<
 
 const isOperationResultWithData = <Data, Variables>(
   result: OperationResult<Data, Variables>
-): result is OperationResultWithData<Data, Variables> => 'data' in result
+): result is OperationResultWithData<Data, Variables> =>
+  'data' in result && !result.error
 
 type QueryArgs<Data, Variables extends object> = {
   query: TypedDocumentNode<Data, Variables> | string
@@ -61,18 +63,16 @@ export function atomWithQuery<Data, Variables extends object>(
     | OperationResultWithData<Data, Variables>
     | Promise<OperationResultWithData<Data, Variables>>
   >
-  // TODO we should revisit this for a better solution than refAtom
-  const refAtom = atom(() => ({} as { resultAtom?: ResultAtom }))
-  const createResultAtom = (
-    ref: { resultAtom?: ResultAtom },
-    client: Client,
-    args: QueryArgs<Data, Variables>,
-    opts?: Partial<OperationContext>
-  ) => {
+  const queryResultAtom = atom((get) => {
+    const args = createQueryArgs(get)
+    if ((args as { pause?: boolean }).pause) {
+      return null
+    }
+    const client = getClient(get)
     let resolve:
       | ((result: OperationResultWithData<Data, Variables>) => void)
       | null = null
-    const resultAtom: ResultAtom = atom<
+    const baseResultAtom: ResultAtom = atom<
       | OperationResultWithData<Data, Variables>
       | Promise<OperationResultWithData<Data, Variables>>
     >(
@@ -80,17 +80,23 @@ export function atomWithQuery<Data, Variables extends object>(
         resolve = r
       })
     )
-    ref.resultAtom = resultAtom // FIXME this is too hacky, may not work in some edge cases
     let setResult: (
-      result: OperationResultWithData<Data, Variables>
+      result:
+        | OperationResultWithData<Data, Variables>
+        | Promise<OperationResultWithData<Data, Variables>>
     ) => void = () => {
       throw new Error('setting result without mount')
     }
-    const listener = (result: OperationResult<Data, Variables>) => {
-      if (resultAtom !== ref.resultAtom) {
-        // New subscription is working, ignoring old one
+    const listener = (
+      result:
+        | OperationResult<Data, Variables>
+        | Promise<OperationResultWithData<Data, Variables>>
+    ) => {
+      if (result instanceof Promise) {
+        setResult(result)
         return
       }
+      // TODO error handling
       if (!isOperationResultWithData(result)) {
         throw new Error('result does not have data')
       }
@@ -105,52 +111,46 @@ export function atomWithQuery<Data, Variables extends object>(
       .query(args.query, args.variables, {
         ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
         ...args.context,
-        ...opts,
       })
       .toPromise()
       .then(listener)
       .catch(() => {
         // TODO error handling
       })
-    resultAtom.onMount = (update) => {
+    baseResultAtom.onMount = (update) => {
       setResult = update
-      const subscription = pipe(
-        client.query(args.query, args.variables, {
-          ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
-          ...args.context,
-          ...opts,
-        }),
-        skip(1), // handled by toPromise
-        subscribe(listener)
-      )
-      return () => subscription.unsubscribe()
     }
-    return resultAtom
-  }
-  const queryResultAtom = atom((get) => {
-    const args = createQueryArgs(get)
-    if ((args as { pause?: boolean }).pause) {
-      return null
+    const subscriptionAtom = atom<Subscription | null>(null)
+    const resultAtom = atom(
+      (get) => get(baseResultAtom),
+      (get, set, callback: (cleanup: () => void) => void) => {
+        const subscription = pipe(
+          client.query(args.query, args.variables, {
+            ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
+            ...args.context,
+          }),
+          subscribe(listener)
+        )
+        set(subscriptionAtom, subscription)
+        callback(() => get(subscriptionAtom)?.unsubscribe())
+      }
+    )
+    resultAtom.onMount = (init) => {
+      let cleanup: (() => void) | undefined
+      init((c) => {
+        cleanup = c
+      })
+      return cleanup
     }
-    const client = getClient(get)
-    const resultAtom = createResultAtom(get(refAtom), client, args)
-    return { resultAtom, client, args }
+    return { args, client, resultAtom, subscriptionAtom, listener }
   })
-  const overwrittenResultAtom = atom<{
-    oldResultAtom: ResultAtom
-    newResultAtom: ResultAtom
-  } | null>(null)
   const queryAtom = atom(
     (get) => {
       const queryResult = get(queryResultAtom)
       if (!queryResult) {
         return null
       }
-      let { resultAtom } = queryResult
-      const overwrittenResult = get(overwrittenResultAtom)
-      if (overwrittenResult && overwrittenResult.oldResultAtom === resultAtom) {
-        resultAtom = overwrittenResult.newResultAtom
-      }
+      const { resultAtom } = queryResult
       return get(resultAtom)
     },
     (get, set, action: AtomWithQueryAction) => {
@@ -160,16 +160,19 @@ export function atomWithQuery<Data, Variables extends object>(
           if (!queryResult) {
             throw new Error('query is paused')
           }
-          const { resultAtom, client, args } = queryResult
-          set(overwrittenResultAtom, {
-            oldResultAtom: resultAtom,
-            newResultAtom: createResultAtom(
-              get(refAtom),
-              client,
-              args,
-              action.opts
-            ),
-          })
+          const { args, client, subscriptionAtom, listener } = queryResult
+          listener(new Promise<never>(() => {})) // infinite pending
+          const newSubscription = pipe(
+            client.query(args.query, args.variables, {
+              ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
+              ...args.context,
+              ...action.opts,
+            }),
+            subscribe(listener)
+          )
+          const oldSubscription = get(subscriptionAtom)
+          oldSubscription?.unsubscribe()
+          set(subscriptionAtom, newSubscription)
         }
       }
     }

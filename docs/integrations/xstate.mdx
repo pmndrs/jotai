@@ -28,7 +28,7 @@ It receives a function `getMachine` to create a new machine.
 `getMachine` is invoked at the first use with `get` argument,
 with which you can read other atom values.
 
-```js
+```tsx
 import { useAtom } from 'jotai'
 import { atomWithMachine } from 'jotai/xstate'
 import { assign, createMachine } from 'xstate'
@@ -68,12 +68,14 @@ const editableMachineAtom = atomWithMachine((get) =>
   createEditableMachine(get(defaultTextAtom))
 )
 
-const Toggle: React.FC = () => {
+const Toggle = () => {
   const [state, send] = useAtom(editableMachineAtom)
 
   return (
     <div>
-      {state.matches('reading') && <strong onDoubleClick={send}>{state.context.value}</strong>}
+      {state.matches('reading') && (
+        <strong onDoubleClick={send}>{state.context.value}</strong>
+      )}
       {state.matches('editing') && (
         <input
           autoFocus
@@ -92,8 +94,8 @@ const Toggle: React.FC = () => {
       <br />
       <br />
       <div>
-        Double-click to edit. Blur the input or press <code>enter</code> to commit. Press{' '}
-        <code>esc</code> to cancel.
+        Double-click to edit. Blur the input or press <code>enter</code> to
+        commit. Press <code>esc</code> to cancel.
       </div>
     </div>
   )

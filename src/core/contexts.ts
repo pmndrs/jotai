@@ -5,10 +5,13 @@ import { createStore, createStoreForExport } from './store'
 import type { Store } from './store'
 
 type VersionedWrite = (write: (version?: object) => void) => void
+type RetryFromError = (fn: () => void) => void
 
-export type ScopeContainer = {
+export interface ScopeContainer {
   s: Store
   w?: VersionedWrite
+  v?: object // version object
+  r?: RetryFromError
 }
 
 export const createScopeContainer = (
