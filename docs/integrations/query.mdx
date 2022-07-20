@@ -92,6 +92,59 @@ const UserData = () => {
 }
 ```
 
+### Referencing the same instance of Query Client in your project
+
+Perhaps you have some functions in your project that utilises the `useQueryClient()` hook to obtain the `QueryClient` object and call its methods.
+
+To ensure that you reference the same `QueryClient` object, be sure to wrap the root of your project in a `<Provider>` and initialise `queryClientAtom` with the same `queryClient` value you provided to `QueryClientProvider`.
+
+Without this step, `useQueryAtom` will reference a seperate `QueryClient` from any queries/mutations that utilise the `useQueryClient()` hook to get the queryClient.
+
+#### Example
+
+In the example below, we have a mutation, `useTodoMutation` and a query `todosAtom`.
+
+Although they reference methods same query keys (`'todos'`), should `useTodoMutation` be called and invalidate the query without the `Provider` initialisation step, `todosAtom` will not be prompted to refetch and will continue showing stale data.
+
+```js
+const queryClient = new QueryClient()
+export const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* This Provider initalization step is needed so that we reference the same
+      queryClient in both atomWithQuery and other parts of the app. Without this,
+      our useQueryClient() hook will point to a different QueryClient singleton obj */}
+      <Provider initialValues={[[queryClientAtom, queryClient]]}>
+        <App />
+      </Provider>
+    </QueryClientProvider>
+  )
+}
+
+export const todosAtom = atomWithQuery((get) => {
+  return {
+    queryKey: ['todos'],
+    queryFn: () => fetch('/todos'),
+  }
+})
+
+export const useTodoMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation(
+    async (body: todo) => {
+      await fetch('/todo', { Method: 'POST', Body: body })
+    },
+    {
+      onSuccess: () => {
+        void queryClient.invalidateQueries(['todos'])
+      },
+      onError,
+    }
+  )
+}
+```
+
 ## SSR support
 
 Both atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://react-query.tanstack.com/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://react-query.tanstack.com/guides/ssr#using-hydration) or [`initialData`](https://react-query.tanstack.com/guides/ssr#using-initialdata).
