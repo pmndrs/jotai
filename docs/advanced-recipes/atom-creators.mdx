@@ -314,10 +314,11 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
   const broadcastAtom = atom<Value, { fromOnMessage: boolean; value: Value }>(
     (get) => get(baseAtom),
     (get, set, update) => {
-      if (!update.fromOnMessage) {
-        channel.postMessage(update.value);
-      }
       set(baseAtom, update.value);
+
+      if (!update.fromOnMessage) {
+        channel.postMessage(get(baseAtom));
+      }
     }
   );
   broadcastAtom.onMount = (setAtom) => {
@@ -329,8 +330,11 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
       listeners.forEach((l) => l(event));
     };
     return () => {
-      channel.close();
       listeners.delete(listener);
+
+      if (listeners.size === 0) {
+        channel.close();
+      }
     };
   };
   const returnedAtom = atom<Value, Value>(
