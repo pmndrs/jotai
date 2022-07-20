@@ -142,7 +142,7 @@ const getAtomState = (atom) => {
 
 // If atom is primitive, we return it's value.
 // If atom is derived, we read the parent atom's value
-// and add current atom to parent's the dependent set (recursivly).
+// and add current atom to parent's the dependent set (recursively).
 const readAtom = (atom) => {
   const atomState = getAtomState(atom)
   const get = (a) => {
@@ -158,7 +158,7 @@ const readAtom = (atom) => {
   return value
 }
 
-// if atomState is modified, we need to notify all the dependent atoms (recursivly)
+// if atomState is modified, we need to notify all the dependent atoms (recursively)
 // now run callbacks for all the components that are dependent on this atom
 const notify = (atom) => {
   const atomState = getAtomState(atom)
@@ -179,7 +179,7 @@ const writeAtom = (atom, value) => {
   }
 
   // if 'a' is the same as atom, update the value, notify that atom and return
-  // else calls writeAtom for 'a' (recursivly)
+  // else calls writeAtom for 'a' (recursively)
   const set = (a, v) => {
     if (a === atom) {
       atomState.value = v

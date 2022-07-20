@@ -1,21 +1,21 @@
 import {
   StrictMode,
   Suspense,
+  version as reactVersion,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import ReactDOM, { unstable_batchedUpdates } from 'react-dom'
+import { unstable_batchedUpdates } from 'react-dom'
 import { atom, useAtom } from 'jotai'
-import type { WritableAtom } from 'jotai'
+import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
-// FIXME this is a hacky workaround temporarily
-const IS_REACT18 = !!(ReactDOM as any).createRoot
+const IS_REACT18 = /^18\./.test(reactVersion)
 
 const batchedUpdates = (fn: () => void) => {
   if (IS_REACT18) {
@@ -226,10 +226,7 @@ it('only re-renders if value has changed', async () => {
   const count2Atom = atom(0)
   const productAtom = atom((get) => get(count1Atom) * get(count2Atom))
 
-  interface Props {
-    countAtom: typeof count1Atom
-    name: string
-  }
+  type Props = { countAtom: typeof count1Atom; name: string }
   const Counter = ({ countAtom, name }: Props) => {
     const [count, setCount] = useAtom(countAtom)
     return (
@@ -317,7 +314,7 @@ it('re-renders a time delayed derived atom with the same initial value (#947)', 
 it('works with async get', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 500))
+    await new Promise((r) => setTimeout(r, 100))
     return get(countAtom)
   })
 
@@ -346,10 +343,12 @@ it('works with async get', async () => {
   await findByText('loading')
   await findByText('commits: 1, count: 0, delayedCount: 0')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('commits: 2, count: 1, delayedCount: 1')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('commits: 3, count: 2, delayedCount: 2')
@@ -787,10 +786,7 @@ it('set atom right after useEffect (#208)', async () => {
   )
 
   await findByText('count: 2')
-  if (!IS_REACT18) {
-    // can't guarantee in concurrent rendering
-    expect(effectFn).lastCalledWith(2)
-  }
+  expect(effectFn).lastCalledWith(2)
 })
 
 it('changes atom from parent (#273, #275)', async () => {
@@ -1020,4 +1016,34 @@ it('onMount is not called when atom value is accessed from writeGetter in derive
 
   expect(onMount).not.toBeCalled()
   expect(onUnmount).not.toBeCalled()
+})
+
+it('useAtom returns consistent value with input with changing atoms (#1235)', async () => {
+  const countAtom = atom(0)
+  const valueAtoms = [atom(0), atom(1)]
+
+  const Counter = () => {
+    const [count, setCount] = useAtom(countAtom)
+    const [value] = useAtom(valueAtoms[count] as PrimitiveAtom<number>)
+    if (count !== value) {
+      throw new Error('value mismatch')
+    }
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <Provider>
+      <Counter />
+    </Provider>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
 })

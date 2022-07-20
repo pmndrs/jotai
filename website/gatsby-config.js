@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-require('dotenv').config()
+require('dotenv').config();
 
 const DOCS_QUERY = `
   query {
@@ -18,7 +18,7 @@ const DOCS_QUERY = `
       }
     }
   }
-`
+`;
 
 const queries = [
   {
@@ -32,9 +32,9 @@ const queries = [
           description: item.meta.description,
           excerpt: item.excerpt,
           body: item.rawBody.replace(/(<([^>]+)>)/gi, ''),
-        }
+        };
 
-        return transformedNode
+        return transformedNode;
       }),
     indexName: 'Docs',
     settings: {
@@ -43,7 +43,7 @@ const queries = [
     },
     mergeSettings: false,
   },
-]
+];
 
 module.exports = {
   siteMetadata: {
@@ -103,8 +103,9 @@ module.exports = {
     },
   ],
   jsxRuntime: 'automatic',
+  polyfill: false,
   trailingSlash: 'never',
   flags: {
     FAST_DEV: true,
   },
-}
+};

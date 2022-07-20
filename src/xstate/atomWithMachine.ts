@@ -1,37 +1,70 @@
 import { interpret } from 'xstate'
 import type {
+  AnyInterpreter,
+  AnyStateMachine,
+  AreAllImplementationsAssumedToBeProvided,
   EventObject,
-  Interpreter,
+  InternalMachineOptions,
+  InterpreterFrom,
   InterpreterOptions,
-  MachineOptions,
-  State,
-  StateMachine,
-  Typestate,
+  Prop,
+  StateConfig,
+  StateFrom,
 } from 'xstate'
+import type { Atom, Getter, WritableAtom } from 'jotai'
 import { atom } from 'jotai'
-import type { Atom, Getter } from 'jotai'
+
+export const RESTART = Symbol()
+
+export interface MachineAtomOptions<TContext, TEvent extends EventObject> {
+  /**
+   * If provided, will be merged with machine's `context`.
+   */
+  context?: Partial<TContext>
+  /**
+   * The state to rehydrate the machine to. The machine will
+   * start at this state instead of its `initialState`.
+   */
+  state?: StateConfig<TContext, TEvent>
+}
+
+type Options<TMachine extends AnyStateMachine> =
+  AreAllImplementationsAssumedToBeProvided<
+    TMachine['__TResolvedTypesMeta']
+  > extends false
+    ? InterpreterOptions &
+        MachineAtomOptions<TMachine['__TContext'], TMachine['__TEvent']> &
+        InternalMachineOptions<
+          TMachine['__TContext'],
+          TMachine['__TEvent'],
+          TMachine['__TResolvedTypesMeta'],
+          true
+        >
+    : InterpreterOptions &
+        MachineAtomOptions<TMachine['__TContext'], TMachine['__TEvent']> &
+        InternalMachineOptions<
+          TMachine['__TContext'],
+          TMachine['__TEvent'],
+          TMachine['__TResolvedTypesMeta']
+        >
+
+type MaybeParam<T> = T extends (v: infer V) => unknown ? V : never
 
 export function atomWithMachine<
-  TContext,
-  TEvent extends EventObject,
-  TTypestate extends Typestate<TContext> = { value: any; context: TContext }
+  TMachine extends AnyStateMachine,
+  TInterpreter = InterpreterFrom<TMachine>
 >(
-  getMachine:
-    | StateMachine<TContext, any, TEvent, TTypestate>
-    | ((get: Getter) => StateMachine<TContext, any, TEvent, TTypestate>),
-  getOptions?:
-    | (Partial<InterpreterOptions> & Partial<MachineOptions<TContext, TEvent>>)
-    | ((
-        get: Getter
-      ) => Partial<InterpreterOptions> &
-        Partial<MachineOptions<TContext, TEvent>>)
-) {
-  type Machine = StateMachine<TContext, any, TEvent, TTypestate>
-  type Service = Interpreter<TContext, any, TEvent, TTypestate>
-  type MachineState = State<TContext, TEvent, any, TTypestate>
-  const cachedMachineAtom = atom<{ machine: Machine; service: Service } | null>(
-    null
-  )
+  getMachine: TMachine | ((get: Getter) => TMachine),
+  getOptions?: Options<TMachine> | ((get: Getter) => Options<TMachine>)
+): WritableAtom<
+  StateFrom<TMachine>,
+  MaybeParam<Prop<TInterpreter, 'send'>> | typeof RESTART,
+  void
+> {
+  const cachedMachineAtom = atom<{
+    machine: AnyStateMachine
+    service: AnyInterpreter
+  } | null>(null)
   const machineAtom = atom(
     (get) => {
       const cachedMachine = get(cachedMachineAtom)
@@ -45,30 +78,33 @@ export function atomWithMachine<
         }
         throw new Error('get not allowed after initialization')
       }
-      const machine =
-        typeof getMachine === 'function' ? getMachine(safeGet) : getMachine
-      const options =
-        typeof getOptions === 'function' ? getOptions(safeGet) : getOptions
+      const machine = isGetter(getMachine) ? getMachine(safeGet) : getMachine
+      const options = isGetter(getOptions) ? getOptions(safeGet) : getOptions
       initializing = false
       const {
         guards,
         actions,
-        activities,
         services,
         delays,
+        context,
         ...interpreterOptions
       } = options || {}
+
       const machineConfig = {
         ...(guards && { guards }),
         ...(actions && { actions }),
-        ...(activities && { activities }),
         ...(services && { services }),
         ...(delays && { delays }),
       }
+
       const machineWithConfig = machine.withConfig(
-        machineConfig,
-        machine.context
+        machineConfig as any,
+        () => ({
+          ...machine.context,
+          ...context,
+        })
       )
+
       const service = interpret(machineWithConfig, interpreterOptions)
       return { machine: machineWithConfig, service }
     },
@@ -76,26 +112,33 @@ export function atomWithMachine<
       set(cachedMachineAtom, get(machineAtom))
     }
   )
+
   machineAtom.onMount = (commit) => {
     commit()
   }
-  const cachedMachineStateAtom = atom<MachineState | null>(null)
+
+  const cachedMachineStateAtom = atom<StateFrom<TMachine> | null>(null)
+
   const machineStateAtom = atom(
     (get) =>
-      get(cachedMachineStateAtom) ?? get(machineAtom).machine.initialState,
+      get(cachedMachineStateAtom) ??
+      (get(machineAtom).machine.initialState as StateFrom<TMachine>),
     (get, set, registerCleanup: (cleanup: () => void) => void) => {
       const { service } = get(machineAtom)
-      service.onTransition((nextState) => {
+      service.onTransition((nextState: any) => {
         set(cachedMachineStateAtom, nextState)
       })
       service.start()
       registerCleanup(() => {
+        const { service } = get(machineAtom)
         service.stop()
       })
     }
   )
+
   machineStateAtom.onMount = (initialize) => {
     let unsub: (() => void) | undefined | false
+
     initialize((cleanup) => {
       if (unsub === false) {
         cleanup()
@@ -103,6 +146,7 @@ export function atomWithMachine<
         unsub = cleanup
       }
     })
+
     return () => {
       if (unsub) {
         unsub()
@@ -110,12 +154,32 @@ export function atomWithMachine<
       unsub = false
     }
   }
+
   const machineStateWithServiceAtom = atom(
     (get) => get(machineStateAtom),
-    (get, _set, event: Parameters<Service['send']>[0]) => {
+    (
+      get,
+      set,
+      event: Parameters<AnyInterpreter['send']>[0] | typeof RESTART
+    ) => {
       const { service } = get(machineAtom)
-      service.send(event)
+      if (event === RESTART) {
+        service.stop()
+        set(cachedMachineAtom, null)
+        set(machineAtom, null)
+        const { service: newService } = get(machineAtom)
+        newService.onTransition((nextState: any) => {
+          set(cachedMachineStateAtom, nextState)
+        })
+        newService.start()
+      } else {
+        service.send(event)
+      }
     }
   )
+
   return machineStateWithServiceAtom
 }
+
+const isGetter = <T>(v: T | ((get: Getter) => T)): v is (get: Getter) => T =>
+  typeof v === 'function'

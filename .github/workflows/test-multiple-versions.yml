@@ -42,11 +42,13 @@ jobs:
           - 18.0.0
           - 18.1.0
           - 18.2.0
-          - 18.2.0-next-4ddd8b455-20220606
-          - 0.0.0-experimental-4ddd8b455-20220606
+          - 18.3.0-next-992911981-20220718
+          - 0.0.0-experimental-992911981-20220718
         mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
         exclude:
           - { react: 16.8.6, mode: VERSIONED_WRITE }
+          - { react: 16.9.0, mode: VERSIONED_WRITE }
+          - { react: 17.0.0, mode: VERSIONED_WRITE }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2

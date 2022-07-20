@@ -1,10 +1,10 @@
-import cx from 'classnames'
-import { useAtom } from 'jotai'
-import { darkModeAtom } from '../atoms'
-import { ClientOnly, Code } from '../components'
+import cx from 'classnames';
+import { useAtom } from 'jotai';
+import { darkModeAtom } from '../atoms';
+import { ClientOnly, Code } from '../components';
 
 export const UtilitiesDemo = () => {
-  const [darkMode, setDarkMode] = useAtom(darkModeAtom)
+  const [darkMode, setDarkMode] = useAtom(darkModeAtom);
 
   const code = `import { useAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
@@ -22,7 +22,7 @@ const Page = () => {
       <button onClick={toggleDarkMode}>toggle theme</button>
     </>
   )
-}`
+}`;
 
   return (
     <>
@@ -30,35 +30,34 @@ const Page = () => {
         <ClientOnly>
           <div
             className={cx(
-              darkMode
-                ? 'bg-gray-900 text-gray-100'
-                : 'bg-gray-100 text-gray-900',
-              'flex items-center p-4 lg:p-8 space-x-4 lg:space-x-8 rounded-xl transition duration-300 ease-in-out'
-            )}>
+              darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900',
+              'flex items-center space-x-4 rounded-xl p-4 transition duration-300 ease-in-out lg:space-x-8 lg:p-8',
+            )}
+          >
             <div>
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={cx(
                   darkMode ? 'bg-gray-700' : 'bg-gray-300',
-                  'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none '
-                )}>
+                  'dark:focus-teal-700 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-opacity duration-200 ease-in-out focus:outline-none focus:ring focus:ring-blue-400',
+                )}
+              >
                 <span
                   className={cx(
                     darkMode ? 'translate-x-5' : 'translate-x-0',
-                    'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200'
+                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
                   )}
                   aria-hidden="true"
                 />
               </button>
             </div>
-            <div className="text-sm lg:text-lg leading-relaxed">
-              This toggle will be persisted between user sessions via
-              localStorage.
+            <div className="text-sm leading-relaxed lg:text-lg">
+              This toggle will be persisted between user sessions via localStorage.
             </div>
           </div>
         </ClientOnly>
       </div>
       <Code>{code}</Code>
     </>
-  )
-}
+  );
+};

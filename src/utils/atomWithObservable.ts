@@ -7,17 +7,17 @@ declare global {
   }
 }
 
-interface Subscription {
+type Subscription = {
   unsubscribe: () => void
 }
 
-interface Observer<T> {
+type Observer<T> = {
   next: (value: T) => void
   error: (error: unknown) => void
   complete: () => void
 }
 
-interface ObservableLike<T> {
+type ObservableLike<T> = {
   subscribe(observer: Observer<T>): Subscription
   subscribe(
     next: (value: T) => void,
@@ -31,7 +31,7 @@ type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
 type InitialValueFunction<T> = () => T | undefined
 
-interface AtomWithObservableOptions<TData> {
+type AtomWithObservableOptions<TData> = {
   initialValue?: TData | InitialValueFunction<TData>
 }
 
@@ -143,9 +143,16 @@ export function atomWithObservable<TData>(
 
       return get(dataAtom)
     },
-    (get, _set, data: TData) => {
-      const { observable } = get(observableResultAtom)
+    (get, set, data: TData) => {
+      const { dataAtom, observable } = get(observableResultAtom)
       if ('next' in observable) {
+        // FIXME one-time subscription is only necessary if not mounted yet
+        let subscription: Subscription | null = null
+        const callback = (data: TData) => {
+          set(dataAtom, data)
+          subscription?.unsubscribe()
+        }
+        subscription = observable.subscribe(callback)
         observable.next(data)
       } else {
         throw new Error('observable is not subject')

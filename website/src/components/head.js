@@ -1,26 +1,24 @@
-import { graphql, useStaticQuery } from 'gatsby'
-import { Helmet } from 'react-helmet'
+import { graphql, useStaticQuery } from 'gatsby';
+import { Helmet } from 'react-helmet';
 
 export const Head = ({ lang = 'en', title, description, uri }) => {
-  const data = useStaticQuery(staticQuery)
+  const data = useStaticQuery(staticQuery);
 
-  const { site } = data
+  const { site } = data;
 
   const htmlAttributes = {
     lang,
-  }
+  };
 
-  const siteTitle = site.siteMetadata.title
-  const siteUrl = site.siteMetadata.siteUrl
-  const siteIcon = `/favicon.svg`
-  const socialMediaCardImage = `https://storage.googleapis.com/candycode/jotai/jotai-opengraph.png`
-  const shortName = site.siteMetadata.shortName
+  const siteTitle = site.siteMetadata.title;
+  const siteUrl = site.siteMetadata.siteUrl;
+  const siteIcon = `/favicon.svg`;
+  const socialMediaCardImage = `https://storage.googleapis.com/candycode/jotai/jotai-opengraph.png`;
+  const shortName = site.siteMetadata.shortName;
 
-  const pageTitle = title
-    ? `${title} — ${title.length <= 10 ? siteTitle : shortName}`
-    : siteTitle
-  const pageDescription = description || site.siteMetadata.description
-  const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl
+  const pageTitle = title ? `${title} — ${title.length <= 10 ? siteTitle : shortName}` : siteTitle;
+  const pageDescription = description || site.siteMetadata.description;
+  const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl;
 
   return (
     <Helmet htmlAttributes={htmlAttributes} defer={false}>
@@ -41,8 +39,8 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
       <link rel="icon" type="image/svg+xml" href={siteIcon} />
       <link rel="canonical" href={pageUrl} />
     </Helmet>
-  )
-}
+  );
+};
 
 const staticQuery = graphql`
   query {
@@ -55,4 +53,4 @@ const staticQuery = graphql`
       }
     }
   }
-`
+`;

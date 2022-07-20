@@ -1,6 +1,6 @@
 type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 
-interface Getter {
+type Getter = {
   <Value>(atom: Atom<Value | Promise<Value>>): Value
   <Value>(atom: Atom<Promise<Value>>): Value
   <Value>(atom: Atom<Value>): Awaited<Value>
@@ -19,7 +19,7 @@ type WriteGetter = Getter & {
     | Awaited<Value>
 }
 
-interface Setter {
+type Setter = {
   <Value, Result extends void | Promise<void>>(
     atom: WritableAtom<Value, undefined, Result>
   ): Result
@@ -37,7 +37,7 @@ type Write<Update, Result extends void | Promise<void>> = (
   update: Update
 ) => Result
 
-interface WithInitialValue<Value> {
+type WithInitialValue<Value> = {
   init: Value
 }
 

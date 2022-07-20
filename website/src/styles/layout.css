@@ -10,7 +10,7 @@ body {
 }
 
 #___gatsby {
-  @apply bg-white dark:bg-gray-950 text-black dark:text-gray-50;
+  @apply bg-white text-black dark:bg-gray-950 dark:text-gray-50;
 }
 
 pre,
@@ -21,12 +21,12 @@ code span {
 }
 
 ::selection {
-  @apply bg-black dark:bg-gray-50 text-white dark:text-gray-950;
+  @apply bg-black text-white dark:bg-gray-50 dark:text-gray-950;
 }
 
 a,
 button {
-  @apply transition-all ease-in-out duration-300;
+  @apply transition-all duration-300 ease-in-out;
 }
 
 *:focus {
@@ -46,11 +46,11 @@ button:focus,
 input:focus,
 select:focus,
 textarea:focus {
-  @apply z-10 ring;
+  @apply z-10 ring-blue-400 dark:!ring-teal-700;
 }
 
 *::-webkit-scrollbar {
-  @apply w-4 h-full bg-white dark:bg-gray-950;
+  @apply h-full w-4 bg-white dark:bg-gray-950;
 }
 
 body.dark::-webkit-scrollbar {
@@ -66,7 +66,7 @@ body.dark::-webkit-scrollbar-track {
 }
 
 *::-webkit-scrollbar-thumb {
-  @apply border-4 border-solid border-white dark:border-gray-950 bg-gray-350 dark:bg-gray-800 rounded-2xl;
+  @apply rounded-2xl border-4 border-solid border-white bg-gray-350 dark:border-gray-950 dark:bg-gray-800;
 }
 
 body.dark::-webkit-scrollbar-thumb {
