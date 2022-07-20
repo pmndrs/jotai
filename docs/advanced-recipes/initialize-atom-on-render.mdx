@@ -1,11 +1,13 @@
 ---
-title: Initialising Atom State on Demand with Providers
+title: Initializing Atom State on Render
 nav: 5.04
 ---
 
-There are times when you need to create an reusable component whose initial state has to be created on demand.
+There are times when you need to create an reusable component which uses atoms.
 
-Below is a basic example of illustrating how you can use `Provider` and its prop, `initialValues`, to achieve this.
+These atoms' initial state is determined by the props passed to the component.
+
+Below is a basic example of illustrating how you can use `Provider` and its prop, `initialValues`, to achieve initialize state.
 
 ### Basic Example
 
@@ -79,6 +81,6 @@ export default function App() {
 }
 ```
 
-This is due to our child components looking for the lowest commmon ancestor `Provider` to derive its value.
+This behavior is due to our child components looking for the lowest commmon `Provider` ancestor to derive its value.
 
-For more information on `Provider`, please read the `Provider` docs [here](https://jotai.org/docs/api/core#provider).
+For more information on `Provider` behavior, please read the docs [here](https://jotai.org/docs/api/core#provider).
