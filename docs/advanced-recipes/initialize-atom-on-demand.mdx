@@ -1,0 +1,72 @@
+---
+title: Initialising Atom State on Demand with Providers
+nav: 5.04
+---
+
+There are times when you need to create an reusable component whose initial state has to be created on demand.
+
+Below is a basic example of illustrating how you can use `Provider` and its prop, `initialValues`, to achieve this.
+
+### Basic Example
+
+> CodeSandbox link for your reference: [codesandbox](https://codesandbox.io/s/strange-tdd-gb1eo0?file=/src/App.js).
+
+Consider a basic example where you have a reusable `TextDisplay` component that allows you to display and update plain text.
+
+This component has two child components, `PrettyText` and `UpdateTextInput`.
+
+- `PrettyText` is displays the text in blue.
+- `UpdateTextInput` is an input field which updates the text value.
+
+As opposed to passing `text` as a prop in the two child components, you decided that the `text` state should be shared between components as an atom.
+
+To make `TextDisplay` component reusable, it must take in a prop, `initialTextValue`, which determines the initial state of the `text` atom.
+
+To achieve this, we do so by wrapping the child components in a `Provider`. Then, we populate the `initialValues` array of atom tuples with the initial values.
+
+```jsx
+const textAtom = atom('')
+
+const PrettyText = () => {
+  const [text] = useAtom(textAtom)
+  return (
+    <>
+      <text
+        style={{
+          color: 'blue',
+        }}>
+        {text}
+      </text>
+    </>
+  )
+}
+
+const UpdateTextInput = () => {
+  const [text, setText] = useAtom(textAtom)
+  const handleInputChange = (e) => {
+    setText(e.target.value)
+  }
+  return (
+    <>
+      <input onChange={handleInputChange} value={text} />
+    </>
+  )
+}
+
+export const TextDisplay = ({ initialTextValue }) => {
+  return (
+    // initialising on demand here
+    <Provider initialValues={[[textAtom, initialTextValue]]}>
+      <PrettyText />
+      <br />
+      <UpdateTextInput />
+    </Provider>
+  )
+}
+```
+
+Now, we can easily resue `TextDisplay` component with different initial text values despite them referencing the "same" atom.
+
+This is due to our child components looking for the lowest commmon ancestor `Provider` to derive its value.
+
+For more information on `Provider`, please read the `Provider` docs [here](https://jotai.org/docs/api/core#provider).
