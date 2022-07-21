@@ -12,7 +12,7 @@ import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
-export type AtomWithInfiniteQueryAction<TQueryFnData> =
+type AtomWithInfiniteQueryAction<TQueryFnData> =
   | {
       type: 'refetch'
       payload: Partial<RefetchOptions & RefetchQueryFilters<TQueryFnData>>
