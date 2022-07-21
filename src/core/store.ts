@@ -336,7 +336,7 @@ export const createStore = (
       r: atomState?.r || 0,
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
-    let changed = false
+    let changed = !atomState || 'i' in atomState
     if (
       !atomState ||
       !('v' in atomState) || // new value, or
@@ -348,10 +348,10 @@ export const createStore = (
         nextAtomState.d = new Map(nextAtomState.d).set(atom, nextAtomState.r)
       }
     } else if (
-      'i' in atomState ||
-      (nextAtomState.d !== atomState.d &&
-        (nextAtomState.d.size !== atomState.d.size ||
-          !Array.from(nextAtomState.d.keys()).every((a) => atomState.d.has(a))))
+      // 'i' in atomState ||
+      nextAtomState.d !== atomState.d &&
+      (nextAtomState.d.size !== atomState.d.size ||
+        !Array.from(nextAtomState.d.keys()).every((a) => atomState.d.has(a)))
     ) {
       changed = true
       // value is not changed, but dependencies are changed
@@ -408,6 +408,10 @@ export const createStore = (
     if (atomState && 'p' in atomState) {
       if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
         // the same promise, not updating
+        if ('i' in atomState) {
+          const { i: _removed, ...rest } = atomState
+          return rest
+        }
         return atomState
       }
       cancelSuspensePromise(atomState.p)
@@ -530,6 +534,10 @@ export const createStore = (
             )
           })
         ) {
+          if ('i' in atomState) {
+            const { i: _removed, ...rest } = atomState
+            return rest
+          }
           return atomState
         }
       }
@@ -679,7 +687,17 @@ export const createStore = (
         })
         const prevAtomState = getAtomState(version, a)
         const nextAtomState = setAtomPromiseOrValue(version, a, v)
-        if (prevAtomState !== nextAtomState) {
+        if (
+          /*
+          // TODO refactor
+          !prevAtomState ||
+          prevAtomState.r !== nextAtomState.r ||
+          prevAtomState.d !== nextAtomState.d ||
+          // prevAtomState.i !== nextAtomState.i ||
+          !Object.keys(prevAtomState).every((k) => k in nextAtomState)
+          */
+          prevAtomState !== nextAtomState
+        ) {
           invalidateDependents(version, a)
         }
       } else {
