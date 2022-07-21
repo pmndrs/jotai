@@ -19,6 +19,9 @@ export function useAtomValue<Value>(
     // This call to READ_ATOM is the place where derived atoms will actually be
     // recomputed if needed.
     const atomState = store[READ_ATOM](atom, version)
+    if (__DEV__ && 'i' in atomState) {
+      throw new Error('should not be invalidated')
+    }
     if ('e' in atomState) {
       throw atomState.e // read error
     }
