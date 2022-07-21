@@ -521,7 +521,8 @@ export const createStore = (
               // Dependency is mounted.
               const aState = getAtomState(version, a)
               if (
-                !aState?.y // non-existent or invalidated
+                aState &&
+                !aState.y // invalidated
               ) {
                 readAtomState(version, a)
               }
@@ -848,7 +849,8 @@ export const createStore = (
           mountDependencies(undefined, atom, atomState, prevAtomState?.d)
         }
         if (
-          !prevAtomState?.y && // non-existent or invalidated
+          prevAtomState &&
+          !prevAtomState.y && // invalidated
           atomState?.y // existent and not invalidated
         ) {
           // We don't want to notify listeners
