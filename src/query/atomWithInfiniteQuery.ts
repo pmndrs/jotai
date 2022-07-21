@@ -194,8 +194,7 @@ export function atomWithInfiniteQuery<
             state.unsubscribe?.()
             state.unsubscribe = null
           }
-          const { type: _type, payload } = action
-          observer.refetch(payload).then((result) => {
+          observer.refetch(action.payload).then((result) => {
             set(resultAtom, result)
           })
           return
