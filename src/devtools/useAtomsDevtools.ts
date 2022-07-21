@@ -112,7 +112,7 @@ export function useAtomsDevtools(
       for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
         const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
         if (atomState) {
-          if (atomState.r === atomState.i) {
+          if (!atomState.y) {
             // ignore if there are any invalidated atoms
             return
           }
