@@ -738,9 +738,7 @@ it('Should bail for derived async chains (#877)', async () => {
 it('update correctly with async updates (#1250)', async () => {
   const countAtom = atom(0)
 
-  const countIsGreaterThanOneAtom = atom((get) => {
-    return get(countAtom) > 1
-  })
+  const countIsGreaterThanOneAtom = atom((get) => get(countAtom) > 1)
 
   const alsoCountAtom = atom((get) => {
     const count = get(countAtom)
@@ -752,8 +750,7 @@ it('update correctly with async updates (#1250)', async () => {
     const setCount = useSetAtom(countAtom)
     const alsoCount = useAtomValue(alsoCountAtom)
     const countIsGreaterThanOne = useAtomValue(countIsGreaterThanOneAtom)
-
-    function incrementCountTwice() {
+    const incrementCountTwice = () => {
       setTimeout(() => {
         setCount((count) => count + 1)
       })
@@ -761,12 +758,9 @@ it('update correctly with async updates (#1250)', async () => {
         setCount((count) => count + 1)
       })
     }
-
     return (
       <div>
-        <div>
-          <button onClick={incrementCountTwice}>Increment Count Twice</button>
-        </div>
+        <button onClick={incrementCountTwice}>Increment Count Twice</button>
         <div>alsoCount: {alsoCount}</div>
         <div>countIsGreaterThanOne: {countIsGreaterThanOne.toString()}</div>
       </div>
