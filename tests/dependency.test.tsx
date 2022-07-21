@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
@@ -733,4 +733,54 @@ it('Should bail for derived async chains (#877)', async () => {
 
   await findByText('My very long data')
   expect(syncAtomCount).toBe(1)
+})
+
+it('update correctly with async updates (#1250)', async () => {
+  const countAtom = atom(0)
+
+  const countIsGreaterThanOneAtom = atom((get) => get(countAtom) > 1)
+
+  const alsoCountAtom = atom((get) => {
+    const count = get(countAtom)
+    get(countIsGreaterThanOneAtom)
+    return count
+  })
+
+  const App = () => {
+    const setCount = useSetAtom(countAtom)
+    const alsoCount = useAtomValue(alsoCountAtom)
+    const countIsGreaterThanOne = useAtomValue(countIsGreaterThanOneAtom)
+    const incrementCountTwice = () => {
+      setTimeout(() => {
+        setCount((count) => count + 1)
+      })
+      setTimeout(() => {
+        setCount((count) => count + 1)
+      })
+    }
+    return (
+      <div>
+        <button onClick={incrementCountTwice}>Increment Count Twice</button>
+        <div>alsoCount: {alsoCount}</div>
+        <div>countIsGreaterThanOne: {countIsGreaterThanOne.toString()}</div>
+      </div>
+    )
+  }
+
+  const { getByText } = render(
+    <Provider>
+      <App />
+    </Provider>
+  )
+
+  await waitFor(() => {
+    getByText('alsoCount: 0')
+    getByText('countIsGreaterThanOne: false')
+  })
+
+  fireEvent.click(getByText('Increment Count Twice'))
+  await waitFor(() => {
+    getByText('alsoCount: 2')
+    getByText('countIsGreaterThanOne: true')
+  })
 })
