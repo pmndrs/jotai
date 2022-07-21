@@ -311,19 +311,19 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
   const baseAtom = atom(initialValue);
   const listeners = new Set<(event: MessageEvent<any>) => void>();
 
-  const broadcastAtom = atom<Value, { fromOnMessage: boolean; value: Value }>(
+  const broadcastAtom = atom<Value, { isEvent: boolean; value: Value }>(
     (get) => get(baseAtom),
     (get, set, update) => {
       set(baseAtom, update.value);
 
-      if (!update.fromOnMessage) {
+      if (!update.isEvent) {
         channel.postMessage(get(baseAtom));
       }
     }
   );
   broadcastAtom.onMount = (setAtom) => {
     const listener = (event: MessageEvent<any>) => {
-      setAtom({ fromOnMessage: true, value: event.data });
+      setAtom({ isEvent: true, value: event.data });
     };
     listeners.add(listener);
     channel.onmessage = (event) => {
@@ -340,7 +340,7 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
   const returnedAtom = atom<Value, Value>(
     (get) => get(broadcastAtom),
     (get, set, update) => {
-      set(broadcastAtom, { fromOnMessage: false, value: update });
+      set(broadcastAtom, { isEvent: false, value: update });
     }
   );
   return returnedAtom;
