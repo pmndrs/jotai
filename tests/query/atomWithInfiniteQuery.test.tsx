@@ -1,11 +1,24 @@
-import { Suspense, useCallback } from 'react'
+import { Component, Suspense, useCallback, useContext } from 'react'
+import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
+import {
+  atom,
+  SECRET_INTERNAL_getScopeContext as getScopeContext,
+  useAtom,
+  useSetAtom,
+} from 'jotai'
 import { atomWithInfiniteQuery } from 'jotai/query'
 import { getTestProvider } from '../testUtils'
 import fakeFetch from './fakeFetch'
 
 const Provider = getTestProvider()
+
+// This is only used to pass tests with unstable_enableVersionedWrite
+const useRetryFromError = (scope?: symbol | string | number) => {
+  const ScopeContext = getScopeContext(scope)
+  const { r: retryFromError } = useContext(ScopeContext)
+  return retryFromError || ((fn) => fn())
+}
 
 it('infinite query basic test', async () => {
   const countAtom = atomWithInfiniteQuery<
@@ -262,9 +275,9 @@ it('should be able to refetch only specific pages when refetchPages is provided'
     return (
       <>
         <div>length: {state.pages.length}</div>
-        <div>page 1: {state.pages?.[0] || null}</div>
-        <div>page 2: {state.pages?.[1] || null}</div>
-        <div>page 3: {state.pages?.[2] || null}</div>
+        <div>page 1: {state.pages[0] || null}</div>
+        <div>page 2: {state.pages[1] || null}</div>
+        <div>page 3: {state.pages[2] || null}</div>
         <button onClick={fetchNextPage}>fetch next page</button>
         <button onClick={() => refetchPage(0)}>refetch page 1</button>
       </>
@@ -298,4 +311,138 @@ it('should be able to refetch only specific pages when refetchPages is provided'
   fireEvent.click(getByText('refetch page 1'))
   await findByText('length: 3')
   await findByText('page 1: 20')
+})
+
+describe('error handling', () => {
+  class ErrorBoundary extends Component<
+    { message?: string; retry?: () => void; children: ReactNode },
+    { hasError: boolean }
+  > {
+    constructor(props: { message?: string; children: ReactNode }) {
+      super(props)
+      this.state = { hasError: false }
+    }
+    static getDerivedStateFromError() {
+      return { hasError: true }
+    }
+    render() {
+      return this.state.hasError ? (
+        <div>
+          {this.props.message || 'errored'}
+          {this.props.retry && (
+            <button
+              onClick={() => {
+                this.props.retry?.()
+                this.setState({ hasError: false })
+              }}>
+              retry
+            </button>
+          )}
+        </div>
+      ) : (
+        this.props.children
+      )
+    }
+  }
+
+  it('can catch error in error boundary', async () => {
+    const countAtom = atomWithInfiniteQuery(() => ({
+      queryKey: ['error test', 'count1Infinite'],
+      retry: false,
+      queryFn: async () => {
+        return await fakeFetch({ count: 0 }, true, 100)
+      },
+    }))
+    const Counter = () => {
+      const [{ pages }] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {pages[0]?.response.count}</div>
+        </>
+      )
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <ErrorBoundary>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('errored')
+  })
+
+  it('can recover from error', async () => {
+    let count = 0
+    let willThrowError = true
+    const countAtom = atomWithInfiniteQuery<
+      { response: { count: number } },
+      void
+    >(() => ({
+      queryKey: ['error test', 'count2Infinite'],
+      retry: false,
+      staleTime: 200,
+      queryFn: () => {
+        const promise = fakeFetch({ count }, willThrowError, 100)
+        willThrowError = !willThrowError
+        ++count
+        return promise
+      },
+    }))
+    const Counter = () => {
+      const [{ pages }, dispatch] = useAtom(countAtom)
+      const refetch = () => dispatch({ type: 'refetch' })
+      return (
+        <>
+          <div>count: {pages[0]?.response.count}</div>
+          <button onClick={refetch}>refetch</button>
+        </>
+      )
+    }
+
+    const App = () => {
+      const dispatch = useSetAtom(countAtom)
+      const retryFromError = useRetryFromError()
+      const retry = () => {
+        retryFromError(() => {
+          dispatch({ type: 'refetch' })
+        })
+      }
+      return (
+        <ErrorBoundary retry={retry}>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <App />
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('errored')
+
+    await new Promise((r) => setTimeout(r, 100))
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 1')
+
+    await new Promise((r) => setTimeout(r, 100))
+    fireEvent.click(getByText('refetch'))
+    await findByText('loading')
+    await findByText('errored')
+
+    await new Promise((r) => setTimeout(r, 100))
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 3')
+  })
 })

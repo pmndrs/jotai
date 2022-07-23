@@ -60,8 +60,10 @@ export type AtomState<Value = AnyAtomValue> = {
  *
  * While a new version is being built, we read atom previous state from the
  * previous version.
+ *
+ * This is an INTERNAL type alias.
  */
-export interface VersionObject {
+export type VersionObject = {
   /**
    * "p"arent version.
    *
@@ -84,7 +86,7 @@ type Dependents = Set<AnyAtom>
  *
  * The mounted state of an atom is freed once it is no longer mounted.
  */
-interface Mounted {
+type Mounted = {
   /** The list of subscriber functions. */
   l: Listeners
   /** Atoms that depend on *this* atom. Used to fan out invalidation. */

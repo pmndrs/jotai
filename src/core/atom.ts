@@ -1,6 +1,6 @@
 type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 
-interface Getter {
+type Getter = {
   <Value>(atom: Atom<Value | Promise<Value>>): Value
   <Value>(atom: Atom<Promise<Value>>): Value
   <Value>(atom: Atom<Value>): Awaited<Value>
@@ -19,7 +19,7 @@ type WriteGetter = Getter & {
     | Awaited<Value>
 }
 
-interface Setter {
+type Setter = {
   <Value, Result extends void | Promise<void>>(
     atom: WritableAtom<Value, undefined, Result>
   ): Result
@@ -36,6 +36,10 @@ type Write<Update, Result extends void | Promise<void>> = (
   set: Setter,
   update: Update
 ) => Result
+
+type WithInitialValue<Value> = {
+  init: Value
+}
 
 export type Scope = symbol | string | number
 
@@ -70,19 +74,9 @@ export interface WritableAtom<
   onMount?: OnMount<Update, Result>
 }
 
-type WritableAtomWithInitialValue<
-  Value,
-  Update,
-  Result extends void | Promise<void> = void
-> = WritableAtom<Value, Update, Result> & { init: Value }
-
 type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
 export type PrimitiveAtom<Value> = WritableAtom<Value, SetStateAction<Value>>
-
-type PrimitiveAtomWithInitialValue<Value> = PrimitiveAtom<Value> & {
-  init: Value
-}
 
 let keyCount = 0 // global key count for all atoms
 
@@ -102,12 +96,12 @@ export function atom(invalidFunction: (...args: any) => any, write?: any): never
 export function atom<Value, Update, Result extends void | Promise<void> = void>(
   initialValue: Value,
   write: Write<Update, Result>
-): WritableAtomWithInitialValue<Value, Update, Result>
+): WritableAtom<Value, Update, Result> & WithInitialValue<Value>
 
 // primitive atom
 export function atom<Value>(
   initialValue: Value
-): PrimitiveAtomWithInitialValue<Value>
+): PrimitiveAtom<Value> & WithInitialValue<Value>
 
 export function atom<Value, Update, Result extends void | Promise<void>>(
   read: Value | Read<Value>,

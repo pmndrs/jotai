@@ -6,7 +6,7 @@ import { getTestProvider } from './testUtils'
 const Provider = getTestProvider()
 
 it('remove an item, then add another', async () => {
-  interface Item {
+  type Item = {
     text: string
     checked: boolean
   }
@@ -93,7 +93,7 @@ it('remove an item, then add another', async () => {
 })
 
 it('add an item with filtered list', async () => {
-  interface Item {
+  type Item = {
     text: string
     checked: boolean
   }
