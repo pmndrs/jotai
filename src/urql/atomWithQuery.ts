@@ -11,7 +11,7 @@ import { atom } from 'jotai'
 import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-interface AtomWithQueryAction {
+type AtomWithQueryAction = {
   type: 'reexecute'
   opts?: Partial<OperationContext>
 }
@@ -28,7 +28,7 @@ const isOperationResultWithData = <Data, Variables>(
 ): result is OperationResultWithData<Data, Variables> =>
   'data' in result && !result.error
 
-interface QueryArgs<Data, Variables extends object> {
+type QueryArgs<Data, Variables extends object> = {
   query: TypedDocumentNode<Data, Variables> | string
   variables?: Variables
   requestPolicy?: RequestPolicy
