@@ -1,7 +1,7 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "1.7.5",
+  "version": "1.7.6",
   "description": "👻 Next gen state management that will spook you",
   "main": "./index.js",
   "types": "./index.d.ts",
@@ -200,31 +200,32 @@
     ]
   },
   "devDependencies": {
-    "@babel/core": "^7.18.6",
+    "@babel/core": "^7.18.9",
     "@babel/plugin-transform-react-jsx": "^7.18.6",
     "@babel/plugin-transform-typescript": "^7.18.8",
-    "@babel/preset-env": "^7.18.6",
+    "@babel/preset-env": "^7.18.9",
     "@babel/template": "^7.18.6",
-    "@babel/types": "^7.18.8",
+    "@babel/types": "^7.18.9",
     "@redux-devtools/extension": "^3.2.2",
     "@rollup/plugin-babel": "^5.3.1",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-replace": "^4.0.0",
     "@rollup/plugin-typescript": "^8.3.3",
-    "@swc/core": "^1.2.215",
-    "@swc/jest": "^0.2.21",
+    "@swc/core": "^1.2.218",
+    "@swc/jest": "^0.2.22",
+    "@tanstack/query-core": "^4.0.5",
     "@testing-library/react": "^13.3.0",
-    "@types/jest": "^28.1.5",
+    "@types/jest": "^28.1.6",
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
-    "@typescript-eslint/eslint-plugin": "^5.30.6",
-    "@typescript-eslint/parser": "^5.30.6",
+    "@typescript-eslint/eslint-plugin": "^5.30.7",
+    "@typescript-eslint/parser": "^5.30.7",
     "@urql/core": "^2.6.0",
     "benny": "^3.7.1",
-    "concurrently": "^7.2.2",
+    "concurrently": "^7.3.0",
     "downlevel-dts": "^0.10.0",
     "esbuild": "^0.14.49",
-    "eslint": "^8.19.0",
+    "eslint": "^8.20.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.26.0",
@@ -242,7 +243,6 @@
     "prettier": "^2.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-query": "^3.39.1",
     "redux": "^4.2.0",
     "rollup": "^2.77.0",
     "rollup-plugin-esbuild": "^4.9.1",
@@ -253,7 +253,7 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "typescript": "^4.7.4",
-    "valtio": "^1.6.2",
+    "valtio": "^1.6.3",
     "wonka": "^4.0.15",
     "xstate": "^4.32.1",
     "zustand": "^3.7.2"
@@ -264,11 +264,11 @@
   "peerDependencies": {
     "@babel/core": "*",
     "@babel/template": "*",
+    "@tanstack/query-core": "*",
     "@urql/core": "*",
     "immer": "*",
     "optics-ts": "*",
     "react": ">=16.8",
-    "react-query": "*",
     "valtio": "*",
     "wonka": "*",
     "xstate": "*"
@@ -289,7 +289,7 @@
     "optics-ts": {
       "optional": true
     },
-    "react-query": {
+    "@tanstack/query-core": {
       "optional": true
     },
     "valtio": {

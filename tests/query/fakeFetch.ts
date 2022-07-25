@@ -5,7 +5,7 @@ async function fakeFetch<Response>(
 ): Promise<{ response: Response }> {
   await new Promise((r) => setTimeout(r, time))
   if (error) {
-    throw new Error()
+    throw new Error('fetch error')
   }
   return { response }
 }

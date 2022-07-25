@@ -32,7 +32,7 @@ const applyChanges = <T extends object>(proxyObject: T, prev: T, next: T) => {
   })
 }
 
-interface Options {
+type Options = {
   sync?: boolean
 }
 

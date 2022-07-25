@@ -46,14 +46,20 @@ export const Provider = ({
       unstable_createStore
     )
     if (unstable_enableVersionedWrite) {
+      let retrying = 0
       scopeContainer.w = (write) => {
         setVersion((parentVersion) => {
-          const nextVersion = { p: parentVersion }
+          const nextVersion = retrying ? parentVersion : { p: parentVersion }
           write(nextVersion)
           return nextVersion
         })
       }
       scopeContainer.v = version
+      scopeContainer.r = (fn) => {
+        ++retrying
+        fn()
+        --retrying
+      }
     }
     scopeContainerRef.current = scopeContainer
   }
