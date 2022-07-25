@@ -1,4 +1,4 @@
-import { InfiniteQueryObserver, isCancelledError } from 'react-query'
+import { InfiniteQueryObserver, isCancelledError } from '@tanstack/query-core'
 import type {
   InfiniteData,
   InfiniteQueryObserverOptions,
@@ -6,16 +6,17 @@ import type {
   QueryObserverResult,
   RefetchOptions,
   RefetchQueryFilters,
-} from 'react-query'
+} from '@tanstack/query-core'
 import { atom } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
 type AtomWithInfiniteQueryAction<TQueryFnData> =
-  | ({ type: 'refetch' } & Partial<
-      RefetchOptions & RefetchQueryFilters<TQueryFnData>
-    >)
+  | {
+      type: 'refetch'
+      payload: Partial<RefetchOptions & RefetchQueryFilters<TQueryFnData>>
+    }
   | { type: 'fetchNextPage' }
   | { type: 'fetchPreviousPage' }
 
@@ -23,23 +24,32 @@ export interface AtomWithInfiniteQueryOptions<
   TQueryFnData,
   TError,
   TData,
-  TQueryData
+  TQueryData,
+  TQueryKey extends QueryKey
 > extends InfiniteQueryObserverOptions<
     TQueryFnData,
     TError,
     TData,
-    TQueryData
+    TQueryData,
+    TQueryKey
   > {
-  queryKey: QueryKey
+  queryKey: TQueryKey
 }
 
 export interface AtomWithInfiniteQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
   TData,
-  TQueryData
+  TQueryData,
+  TQueryKey extends QueryKey
 > extends Omit<
-    AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>,
+    AtomWithInfiniteQueryOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >,
     'enabled'
   > {
   enabled: boolean
@@ -49,14 +59,16 @@ export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
     AtomWithInfiniteQueryOptionsWithEnabled<
       TQueryFnData,
       TError,
       TData,
-      TQueryData
+      TQueryData,
+      TQueryKey
     >
   >,
   getQueryClient?: GetQueryClient
@@ -69,10 +81,17 @@ export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithInfiniteQueryOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<InfiniteData<TData>, AtomWithInfiniteQueryAction<TQueryFnData>>
@@ -81,10 +100,17 @@ export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithInfiniteQueryOptions<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >
   >,
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<
@@ -168,8 +194,7 @@ export function atomWithInfiniteQuery<
             state.unsubscribe?.()
             state.unsubscribe = null
           }
-          const { type: _type, ...rest } = action
-          observer.refetch(rest).then((result) => {
+          observer.refetch(action.payload).then((result) => {
             set(resultAtom, result)
           })
           return
