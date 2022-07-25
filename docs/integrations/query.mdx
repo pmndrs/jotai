@@ -4,25 +4,25 @@ description: This doc describes `jotai/query` bundle.
 nav: 4.03
 ---
 
-This is the Jotai integration with [`react-query`](https://react-query.tanstack.com/), a set of hooks and tools for managing async state (typically external data).
+This is the Jotai integration with [TanStack Query v4](https://tanstack.com/query/v4), a set of hooks and tools for managing async state (typically external data).
 
-From the [React Query docs](https://react-query.tanstack.com/overview):
+From the [Overview docs](https://tanstack.com/query/v4/docs/overview):
 
 > React Query is often described as the missing data-fetching library for React, but in more technical terms, it makes **fetching, caching, synchronizing and updating server state** in your React applications a breeze.
 
-Jotai with `react-query` provides a wonderful interface with all of the `react-query` features, providing you the ability to use those features in combination with your existing Jotai state.
+Jotai with TanStack Query provides a wonderful interface with all of the TanStack Query features, providing you the ability to use those features in combination with your existing Jotai state.
 
 ## Install
 
-In addition to `jotai`, you have to install `react-query` to make use of this bundle and its functions.
+In addition to `jotai`, you have to install `@tanstack/query-core` to make use of this bundle and its functions.
 
 ```bash
-yarn add react-query
+yarn add @tanstack/query-core
 ```
 
 ## atomWithQuery
 
-`atomWithQuery` creates a new atom that implements a standard [`Query`](https://react-query.tanstack.com/guides/queries) from `react-query`. This function combines both Jotai `atom` features and `useQuery` features in a single atom. This atom supports all features you'd expect to find when using the standard `react-query` package.
+`atomWithQuery` creates a new atom that implements a standard [`Query`](https://tanstack.com/query/v4/docs/guides/queries) from TanStack Query. This function combines both Jotai `atom` features and `useQuery` features in a single atom. This atom supports all features you'd expect to find when using the standard `@tanstack/react-query` package.
 
 > A query is a declarative dependency on an asynchronous source of data that is tied to a unique key. A query can be used with any Promise based method (including GET and POST methods) to fetch data from a server.
 
@@ -47,7 +47,7 @@ const UserData = () => {
 
 ## atomWithInfiniteQuery
 
-`atomWithInfiniteQuery` is very similar to `atomWithQuery`, however it creates an `InfiniteQuery`, which is used for data that is meant to be paginated. You can [read more about Infinite Queries here](https://react-query.tanstack.com/guides/infinite-queries). This atom supports all features you'd expect to find when using the standard `react-query` package.
+`atomWithInfiniteQuery` is very similar to `atomWithQuery`, however it creates an `InfiniteQuery`, which is used for data that is meant to be paginated. You can [read more about Infinite Queries here](https://tanstack.com/query/v4/docs/guides/infinite-queries). This atom supports all features you'd expect to find when using the standard `@tanstack/react-query` package.
 
 > Rendering lists that can additively "load more" data onto an existing set of data or "infinite scroll" is also a very common UI pattern. React Query supports a useful version of useQuery called useInfiniteQuery for querying these types of lists.
 
@@ -78,7 +78,7 @@ const UserData = () => {
 
 ### Fetching pages and refetching
 
-Using the same atom as in the above example, we can use the `update` method returned from `useAtom` to call different `react-query` methods:
+Using the same atom as in the above example, we can use the `update` method returned from `useAtom` to call different `@tanstack/react-query` methods:
 
 ```js
 const UserData = () => {
@@ -116,7 +116,7 @@ import {
   useQueryClient,
   QueryClient,
   QueryClientProvider,
-} from 'react-query'
+} from '@tanstack/react-query'
 import { atomWithQuery } from 'jotai/query'
 
 const queryClient = new QueryClient()
@@ -159,7 +159,7 @@ export const useTodoMutation = () => {
 
 ## SSR support
 
-Both atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://react-query.tanstack.com/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://react-query.tanstack.com/guides/ssr#using-hydration) or [`initialData`](https://react-query.tanstack.com/guides/ssr#using-initialdata).
+Both atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://tanstack.com/query/v4/docs/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://tanstack.com/query/v4/docs/guides/ssr#using-hydration) or [`initialData`](https://tanstack.com/query/v4/docs/guides/ssr#using-initialdata).
 
 ## Error handling
 
