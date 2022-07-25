@@ -397,7 +397,7 @@ describe('error handling', () => {
     }))
     const Counter = () => {
       const [{ pages }, dispatch] = useAtom(countAtom)
-      const refetch = () => dispatch({ type: 'refetch' })
+      const refetch = () => dispatch({ type: 'refetch', payload: {} })
       return (
         <>
           <div>count: {pages[0]?.response.count}</div>
@@ -411,7 +411,7 @@ describe('error handling', () => {
       const retryFromError = useRetryFromError()
       const retry = () => {
         retryFromError(() => {
-          dispatch({ type: 'refetch' })
+          dispatch({ type: 'refetch', payload: {} })
         })
       }
       return (
