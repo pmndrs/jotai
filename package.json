@@ -213,6 +213,7 @@
     "@rollup/plugin-typescript": "^8.3.3",
     "@swc/core": "^1.2.218",
     "@swc/jest": "^0.2.22",
+    "@tanstack/query-core": "^4.0.5",
     "@testing-library/react": "^13.3.0",
     "@types/jest": "^28.1.6",
     "@types/react": "^18.0.15",
@@ -242,7 +243,6 @@
     "prettier": "^2.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-query": "^3.39.2",
     "redux": "^4.2.0",
     "rollup": "^2.77.0",
     "rollup-plugin-esbuild": "^4.9.1",
@@ -264,11 +264,11 @@
   "peerDependencies": {
     "@babel/core": "*",
     "@babel/template": "*",
+    "@tanstack/query-core": "*",
     "@urql/core": "*",
     "immer": "*",
     "optics-ts": "*",
     "react": ">=16.8",
-    "react-query": "*",
     "valtio": "*",
     "wonka": "*",
     "xstate": "*"
@@ -289,7 +289,7 @@
     "optics-ts": {
       "optional": true
     },
-    "react-query": {
+    "@tanstack/query-core": {
       "optional": true
     },
     "valtio": {

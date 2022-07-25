@@ -22,7 +22,7 @@ const useRetryFromError = (scope?: symbol | string | number) => {
 
 it('query basic test', async () => {
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count1',
+    queryKey: ['count1'],
     queryFn: async () => {
       return await fakeFetch({ count: 0 }, false, 100)
     },
@@ -54,7 +54,7 @@ it('query basic test', async () => {
 
 it('query basic test with object instead of function', async () => {
   const countAtom = atomWithQuery({
-    queryKey: 'count2',
+    queryKey: ['count2'],
     queryFn: async () => {
       return await fakeFetch({ count: 0 }, false, 100)
     },
@@ -88,7 +88,7 @@ it('query refetch', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count3',
+    queryKey: ['count3'],
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 100)
       ++count
@@ -134,7 +134,7 @@ it('query loading', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count4',
+    queryKey: ['count4'],
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 100)
       ++count
@@ -191,7 +191,7 @@ it('query loading 2', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'count5',
+    queryKey: ['count5'],
     queryFn: async () => {
       const response = await mockFetch({ count }, false, 100)
       ++count
@@ -369,7 +369,7 @@ it('query with enabled (#500)', async () => {
     const enabled = get(enabledAtom)
     return {
       enabled,
-      queryKey: 'count_500_issue',
+      queryKey: ['count_500_issue'],
       queryFn: async () => {
         return await fakeFetch({ count: 1 }, false, 100)
       },
@@ -426,7 +426,7 @@ it('query with initialData test', async () => {
   const mockFetch = jest.fn(fakeFetch)
 
   const countAtom = atomWithQuery(() => ({
-    queryKey: 'initialData_count1',
+    queryKey: ['initialData_count1'],
     queryFn: async () => {
       return await mockFetch({ count: 10 })
     },
