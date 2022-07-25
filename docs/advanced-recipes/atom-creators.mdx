@@ -307,9 +307,12 @@ create a component or iframes) and workers on the same origin. According to the 
 import { atom } from "jotai";
 
 export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
-  const channel = new BroadcastChannel(key);
   const baseAtom = atom(initialValue);
   const listeners = new Set<(event: MessageEvent<any>) => void>();
+  const channel = new BroadcastChannel(key);
+  channel.onmessage = (event) => {
+    listeners.forEach((l) => l(event));
+  };
 
   const broadcastAtom = atom<Value, { isEvent: boolean; value: Value }>(
     (get) => get(baseAtom),
