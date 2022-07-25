@@ -306,7 +306,6 @@ create a component or iframes) and workers on the same origin. According to the 
 ```tsx
 import { atom } from "jotai";
 
-const channelCache = new Map<string, BroadcastChannel>();
 export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
  let channel: BroadcastChannel;
   if (channelCache.has(key)) {
