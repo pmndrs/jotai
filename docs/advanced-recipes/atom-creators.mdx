@@ -329,9 +329,6 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
       setAtom({ isEvent: true, value: event.data });
     };
     listeners.add(listener);
-    channel.onmessage = (event) => {
-      listeners.forEach((l) => l(event));
-    };
     return () => {
       listeners.delete(listener);
     };
