@@ -1,9 +1,9 @@
-import { QueryObserver } from 'react-query'
+import { QueryObserver } from '@tanstack/query-core'
 import type {
   QueryKey,
   QueryObserverOptions,
   QueryObserverResult,
-} from 'react-query'
+} from '@tanstack/query-core'
 import { atom } from 'jotai'
 import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
@@ -13,18 +13,30 @@ type AtomWithQueryAction = {
   type: 'refetch'
 }
 
-export interface AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
-  extends QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> {
-  queryKey: QueryKey
+export interface AtomWithQueryOptions<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryData,
+  TQueryKey extends QueryKey
+> extends QueryObserverOptions<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  > {
+  queryKey: TQueryKey
 }
 
 export interface AtomWithQueryOptionsWithEnabled<
   TQueryFnData,
   TError,
   TData,
-  TQueryData
+  TQueryData,
+  TQueryKey extends QueryKey
 > extends Omit<
-    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>,
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
     'enabled'
   > {
   enabled: boolean
@@ -34,10 +46,17 @@ export function atomWithQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithQueryOptionsWithEnabled<TQueryFnData, TError, TData, TQueryData>
+    AtomWithQueryOptionsWithEnabled<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<
@@ -50,10 +69,11 @@ export function atomWithQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<TData, AtomWithQueryAction, Promise<void>>
@@ -62,10 +82,11 @@ export function atomWithQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >,
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
@@ -76,9 +97,21 @@ export function atomWithQuery<
   }
   const queryDataAtom: WritableAtom<
     {
-      options: AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
+      options: AtomWithQueryOptions<
+        TQueryFnData,
+        TError,
+        TData,
+        TQueryData,
+        TQueryKey
+      >
       resultAtom: PrimitiveAtom<Result | Promise<Result>>
-      observer: QueryObserver<TQueryFnData, TError, TData, TQueryData>
+      observer: QueryObserver<
+        TQueryFnData,
+        TError,
+        TData,
+        TQueryData,
+        TQueryKey
+      >
       state: State
     },
     AtomWithQueryAction,
