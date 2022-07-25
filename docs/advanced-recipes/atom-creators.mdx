@@ -306,8 +306,15 @@ create a component or iframes) and workers on the same origin. According to the 
 ```tsx
 import { atom } from "jotai";
 
+const channelCache = new Map<string, BroadcastChannel>();
 export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
-  const channel = new BroadcastChannel(key);
+ let channel: BroadcastChannel;
+  if (channelCache.has(key)) {
+    channel = channelCache.get(key)!;
+  } else {
+    channel = new BroadcastChannel(key);
+    channelCache.set(key, channel);
+  }
   const baseAtom = atom(initialValue);
   const listeners = new Set<(event: MessageEvent<any>) => void>();
 
@@ -331,10 +338,6 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
     };
     return () => {
       listeners.delete(listener);
-
-      if (listeners.size === 0) {
-        channel.close();
-      }
     };
   };
   const returnedAtom = atom<Value, Value>(
