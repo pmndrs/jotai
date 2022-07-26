@@ -1,6 +1,8 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
-use swc_plugin::{ast::*, plugin_transform, TransformPluginProgramMetadata};
+use swc_plugin::{
+    ast::*, plugin_transform, syntax_pos::DUMMY_SP, utils::StmtLike, TransformPluginProgramMetadata,
+};
 
 static ATOM_IMPORTS: &[&str] = &[
     "atom",
@@ -17,13 +19,29 @@ static ATOM_IMPORTS: &[&str] = &[
 ];
 
 struct DebugLabelTransformVisitor {
-    current_var_declarator: Option<String>,
+    current_var_declarator: Option<JsWord>,
+    debug_label_expr: Option<Expr>,
 }
 
 impl DebugLabelTransformVisitor {
     pub fn new() -> Self {
         Self {
             current_var_declarator: None,
+            debug_label_expr: None,
+        }
+    }
+}
+
+impl DebugLabelTransformVisitor {
+    fn visit_mut_stmt_like<T>(&mut self, stmts: &mut Vec<T>)
+    where
+        Vec<T>: VisitMutWith<Self>,
+        T: StmtLike,
+    {
+        stmts.visit_mut_children_with(self);
+
+        if self.debug_label_expr.is_none() {
+            return;
         }
     }
 }
@@ -36,7 +54,7 @@ impl VisitMut for DebugLabelTransformVisitor {
 
         self.current_var_declarator =
             if let Pat::Ident(BindingIdent { id, .. }) = &var_declarator.name {
-                Some(id.sym.to_string())
+                Some(id.sym.clone())
             } else {
                 None
             };
@@ -53,13 +71,44 @@ impl VisitMut for DebugLabelTransformVisitor {
 
         call_expr.visit_mut_children_with(self);
 
+        let atom_name = self.current_var_declarator.as_ref().unwrap();
+
         if let Callee::Expr(expr) = &call_expr.callee {
             if let Expr::Ident(id) = &**expr {
                 if ATOM_IMPORTS.contains(&&*id.sym) {
-
+                    self.debug_label_expr = Some(Expr::Assign(AssignExpr {
+                        left: PatOrExpr::Expr(Box::new(Expr::Member(MemberExpr {
+                            obj: Box::new(Expr::Ident(Ident {
+                                sym: atom_name.clone(),
+                                span: DUMMY_SP,
+                                optional: false,
+                            })),
+                            prop: MemberProp::Ident(Ident {
+                                sym: "debugLabel".into(),
+                                span: DUMMY_SP,
+                                optional: false,
+                            }),
+                            span: DUMMY_SP,
+                        }))),
+                        right: Box::new(Expr::Lit(Lit::Str(Str {
+                            value: atom_name.clone(),
+                            span: DUMMY_SP,
+                            raw: None,
+                        }))),
+                        op: op!("="),
+                        span: DUMMY_SP,
+                    }))
                 }
             }
         }
+    }
+
+    fn visit_mut_module_items(&mut self, items: &mut Vec<ModuleItem>) {
+        self.visit_mut_stmt_like(items);
+    }
+
+    fn visit_mut_stmts(&mut self, stmts: &mut Vec<Stmt>) {
+        self.visit_mut_stmt_like(stmts);
     }
 }
 
