@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense } from 'react'
 import type { ReactElement } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
@@ -392,6 +392,126 @@ it('[DEV-ONLY] conditional dependencies + updating state should call devtools.se
         ]),
         [`${countAtom}`]: expect.arrayContaining([`${countAtom}`, `${anAtom}`]),
         [`${anAtom}`]: [],
+      }),
+    })
+  )
+})
+
+it('[DEV-ONLY] with atoms invalidated after mount', async () => {
+  __DEV__ = true
+  const countAtom = atom(1)
+  const doubleCountAtom = atom((get) => get(countAtom) * 2)
+  const derivedAtom = atom((get) => {
+    const count = get(countAtom)
+    if (count % 2 === 0) {
+      throw new Promise<never>(() => {})
+    }
+    return count
+  })
+  const Component = () => {
+    const [derived] = useAtom(derivedAtom)
+    const [doubleCount] = useAtom(doubleCountAtom)
+    return (
+      <div>
+        <div>derived: {derived}</div>
+        <div>doubleCount: {doubleCount}</div>
+      </div>
+    )
+  }
+  const App = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <div className="App">
+        <h1>count: {count}</h1>
+        <button onClick={() => setCount((c) => c + 1)}>change</button>
+        <Suspense fallback="loading">
+          <Component />
+        </Suspense>
+      </div>
+    )
+  }
+
+  extension.send.mockClear()
+  const { getByText } = render(
+    <StrictMode>
+      <Provider>
+        <AtomsDevtools>
+          <App />
+        </AtomsDevtools>
+      </Provider>
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('derived: 1')
+  })
+  expect(extension.send).toBeCalledTimes(1)
+  expect(extension.send).lastCalledWith(
+    expect.objectContaining({ type: '1' }),
+    expect.objectContaining({
+      values: expect.objectContaining({
+        [`${countAtom}`]: 1,
+        [`${derivedAtom}`]: 1,
+        [`${doubleCountAtom}`]: 2,
+      }),
+      dependents: expect.objectContaining({
+        [`${countAtom}`]: expect.arrayContaining([
+          `${countAtom}`,
+          `${derivedAtom}`,
+          `${doubleCountAtom}`,
+        ]),
+        [`${doubleCountAtom}`]: [],
+        [`${derivedAtom}`]: [],
+      }),
+    })
+  )
+
+  fireEvent.click(getByText('change'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('loading')
+  })
+  expect(extension.send).toBeCalledTimes(2)
+  expect(extension.send).lastCalledWith(
+    expect.objectContaining({ type: '2' }),
+    expect.objectContaining({
+      values: expect.objectContaining({
+        [`${countAtom}`]: 2,
+      }),
+      dependents: expect.objectContaining({
+        [`${countAtom}`]: expect.arrayContaining([
+          `${countAtom}`,
+          `${derivedAtom}`,
+          `${doubleCountAtom}`,
+        ]),
+        [`${derivedAtom}`]: [],
+      }),
+    })
+  )
+
+  fireEvent.click(getByText('change'))
+  await waitFor(() => {
+    getByText('count: 3')
+    getByText('derived: 3')
+  })
+  expect(extension.send).toBeCalledTimes(3)
+  expect(extension.send).lastCalledWith(
+    expect.objectContaining({ type: '3' }),
+    expect.objectContaining({
+      values: expect.objectContaining({
+        [`${countAtom}`]: 3,
+        [`${derivedAtom}`]: 3,
+        [`${doubleCountAtom}`]: 6,
+      }),
+      dependents: expect.objectContaining({
+        [`${countAtom}`]: expect.arrayContaining([
+          `${countAtom}`,
+          `${derivedAtom}`,
+          `${doubleCountAtom}`,
+        ]),
+        [`${doubleCountAtom}`]: [],
+        [`${derivedAtom}`]: [],
       }),
     })
   )
