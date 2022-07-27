@@ -5,7 +5,7 @@ import type {
   QueryObserverResult,
 } from '@tanstack/query-core'
 import { atom } from 'jotai'
-import type { PrimitiveAtom, WritableAtom } from 'jotai'
+import type { PrimitiveAtom, WritableAtom, Atom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
 
@@ -77,7 +77,6 @@ export function atomWithQuery<
   >,
   getQueryClient?: GetQueryClient
 ): WritableAtom<TData, AtomWithQueryAction, Promise<void>>
-
 export function atomWithQuery<
   TQueryFnData,
   TError,
@@ -95,6 +94,15 @@ export function atomWithQuery<
     isMounted: boolean
     unsubscribe: (() => void) | null
   }
+  const observerRefAtom: Atom<{
+    value: QueryObserver<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    > | null
+  }> = atom({ value: null })
   const queryDataAtom: WritableAtom<
     {
       options: AtomWithQueryOptions<
@@ -123,7 +131,13 @@ export function atomWithQuery<
         typeof createQuery === 'function' ? createQuery(get) : createQuery
 
       const defaultedOptions = queryClient.defaultQueryOptions(options)
-      const observer = new QueryObserver(queryClient, defaultedOptions)
+      const observerRef = get(observerRefAtom)
+      if (observerRef.value) {
+        observerRef.value.setOptions(defaultedOptions, { listeners: false })
+      } else {
+        observerRef.value = new QueryObserver(queryClient, defaultedOptions)
+      }
+      const observer = observerRef.value
       const initialResult = observer.getCurrentResult()
 
       let resolve: ((result: Result) => void) | null = null
