@@ -135,7 +135,6 @@ export function atomWithQuery<
       if (observerRef.value) {
         observerRef.value.setOptions(defaultedOptions, {
           listeners: false,
-          cache: true,
         })
       } else {
         observerRef.value = new QueryObserver(queryClient, defaultedOptions)
