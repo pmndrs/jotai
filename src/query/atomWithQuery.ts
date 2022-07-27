@@ -133,7 +133,7 @@ export function atomWithQuery<
       const defaultedOptions = queryClient.defaultQueryOptions(options)
       const observerRef = get(observerRefAtom)
       if (observerRef.value) {
-        observerRef.value.setOptions(defaultedOptions, { listeners: true })
+        observerRef.value.setOptions(defaultedOptions, { listeners: false })
       } else {
         observerRef.value = new QueryObserver(queryClient, defaultedOptions)
       }
