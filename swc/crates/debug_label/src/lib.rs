@@ -43,6 +43,11 @@ impl DebugLabelTransformVisitor {
         if self.debug_label_expr.is_none() {
             return;
         }
+
+        stmts.push(T::from_stmt(Stmt::Expr(ExprStmt {
+            span: DUMMY_SP,
+            expr: Box::new(self.debug_label_expr.take().unwrap()),
+        })))
     }
 }
 
@@ -72,7 +77,6 @@ impl VisitMut for DebugLabelTransformVisitor {
         call_expr.visit_mut_children_with(self);
 
         let atom_name = self.current_var_declarator.as_ref().unwrap();
-
         if let Callee::Expr(expr) = &call_expr.callee {
             if let Expr::Ident(id) = &**expr {
                 if ATOM_IMPORTS.contains(&&*id.sym) {
