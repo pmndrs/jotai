@@ -7,4 +7,9 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-swc_plugin = "0.71.0"
+swc_plugin = "0.88.1"
+
+[dev-dependencies]
+swc_ecma_parser = "0.116.0"
+swc_ecma_transforms_base = "0.102.0"
+swc_ecma_transforms_testing = "0.104.0"

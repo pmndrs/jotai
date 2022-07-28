@@ -1,7 +1,8 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 use swc_plugin::{
-    ast::*, plugin_transform, syntax_pos::DUMMY_SP, utils::StmtLike, TransformPluginProgramMetadata,
+    ast::*, metadata::TransformPluginProgramMetadata, plugin_transform, syntax_pos::DUMMY_SP,
+    utils::StmtLike,
 };
 
 static ATOM_IMPORTS: &[&str] = &[
@@ -117,6 +118,36 @@ impl VisitMut for DebugLabelTransformVisitor {
 }
 
 #[plugin_transform]
-pub fn process_transform(program: Program, _metadata: TransformPluginProgramMetadata) -> Program {
+pub fn debug_label_transform(
+    program: Program,
+    _metadata: TransformPluginProgramMetadata,
+) -> Program {
     program.fold_with(&mut as_folder(DebugLabelTransformVisitor::new()))
+}
+
+#[cfg(test)]
+mod tests {
+    use swc_ecma_parser::*;
+    use swc_ecma_transforms_base::resolver;
+    use swc_ecma_transforms_testing::test;
+    use swc_plugin::{syntax_pos::Mark, *};
+
+    use super::*;
+
+    fn transform() -> impl Fold {
+        chain!(
+            resolver(Mark::new(), Mark::new(), false),
+            as_folder(DebugLabelTransformVisitor::new())
+        )
+    }
+
+    test!(
+        Syntax::default(),
+        |_| transform(),
+        basic,
+        "const countAtom = atom(0);",
+        r#"const countAtom = atom(0);
+countAtom.debugLabel = "countAtom";
+        "#
+    );
 }
