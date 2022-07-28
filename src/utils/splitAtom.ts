@@ -34,6 +34,8 @@ type SplitAtomAction<Item> =
 
 type DeprecatedAtomToRemove<Item> = PrimitiveAtom<Item>
 
+type AtomWithPrev<Value, Prev = Value> = Atom<Value> & { prev?: Prev }
+
 export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], Item[]>,
   keyExtractor?: (item: Item) => Key
@@ -80,7 +82,7 @@ export function splitAtom<Item, Key>(
             return
           }
           const read = (get: Getter) => {
-            const ref = get(refAtom)
+            const ref = splittedAtom as AtomWithPrev<ItemAtom[], Item[]>
             const currArr = get(arrAtom)
             const mapping = getMapping(currArr, ref.prev)
             const index = mapping.keyList.indexOf(key)
@@ -99,7 +101,7 @@ export function splitAtom<Item, Key>(
             set: Setter,
             update: SetStateAction<Item>
           ) => {
-            const ref = get(refAtom)
+            const ref = splittedAtom as AtomWithPrev<ItemAtom[], Item[]>
             const arr = get(arrAtom)
             const mapping = getMapping(arr, ref.prev)
             const index = mapping.keyList.indexOf(key)
@@ -130,10 +132,8 @@ export function splitAtom<Item, Key>(
         mappingCache.set(arr, mapping)
         return mapping
       }
-      // TODO we should revisit this for a better solution than refAtom
-      const refAtom = atom(() => ({} as { prev?: Item[] }))
       const read = (get: Getter) => {
-        const ref = get(refAtom)
+        const ref = splittedAtom as AtomWithPrev<ItemAtom[], Item[]>
         const arr = get(arrAtom)
         const mapping = getMapping(arr, ref.prev)
         ref.prev = arr

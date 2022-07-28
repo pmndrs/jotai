@@ -4,6 +4,8 @@ import { createMemoizeAtom } from './weakCache'
 
 type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
 
+type AtomWithPrev<Value, Prev = Value> = Atom<Value> & { prev?: Prev }
+
 const memoizeAtom = createMemoizeAtom()
 
 export function selectAtom<Value, Slice>(
@@ -12,11 +14,9 @@ export function selectAtom<Value, Slice>(
   equalityFn: (a: Slice, b: Slice) => boolean = Object.is
 ): Atom<Slice> {
   return memoizeAtom(() => {
-    // TODO we should revisit this for a better solution than refAtom
-    const refAtom = atom(() => ({} as { prev?: Slice }))
     const derivedAtom = atom((get) => {
       const slice = selector(get(anAtom) as Awaited<Value>)
-      const ref = get(refAtom)
+      const ref = derivedAtom as AtomWithPrev<Slice>
       if ('prev' in ref && equalityFn(ref.prev as Slice, slice)) {
         return ref.prev as Slice
       }
