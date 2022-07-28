@@ -55,7 +55,7 @@ it('restartable machine', async () => {
       id: 'toggle',
       initial: 'inactive',
       context: { counter: 0 },
-      // schema: { context: {} as { counter: number } },
+      schema: { context: {} as { counter: number } },
       on: { DISABLE: '.final' },
       states: {
         inactive: {
