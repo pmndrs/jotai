@@ -5,7 +5,7 @@ import type {
   QueryObserverResult,
 } from '@tanstack/query-core'
 import { atom } from 'jotai'
-import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai'
+import type { PrimitiveAtom, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
 
