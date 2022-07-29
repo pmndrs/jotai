@@ -101,7 +101,7 @@ export function atomWithQuery<
     TData,
     TQueryData,
     TQueryKey
-  > | null = null
+  >
   const queryDataAtom: WritableAtom<
     {
       options: AtomWithQueryOptions<
