@@ -517,7 +517,6 @@ it('query dependency test', async () => {
   const countAtom = atomWithQuery((get) => ({
     queryKey: ['count_with_dependency', get(baseCountAtom)],
     queryFn: async () => {
-      console.log(get(baseCountAtom))
       return await fakeFetch({ count: get(baseCountAtom) }, false, 100)
     },
   }))
