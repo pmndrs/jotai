@@ -95,15 +95,13 @@ export function atomWithQuery<
     unsubscribe: (() => void) | null
   }
 
-  const observerRefAtom: Atom<{
-    value: QueryObserver<
-      TQueryFnData,
-      TError,
-      TData,
-      TQueryData,
-      TQueryKey
-    > | null
-  }> = atom({ value: null })
+  let observer: QueryObserver<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  > | null = null
   const queryDataAtom: WritableAtom<
     {
       options: AtomWithQueryOptions<
@@ -132,16 +130,14 @@ export function atomWithQuery<
         typeof createQuery === 'function' ? createQuery(get) : createQuery
 
       const defaultedOptions = queryClient.defaultQueryOptions(options)
-      const observerRef = get(observerRefAtom)
 
-      if (observerRef.value) {
-        observerRef.value.setOptions(defaultedOptions, {
+      if (observer) {
+        observer.setOptions(defaultedOptions, {
           listeners: false,
         })
       } else {
-        observerRef.value = new QueryObserver(queryClient, defaultedOptions)
+        observer = new QueryObserver(queryClient, defaultedOptions)
       }
-      const observer = observerRef.value
       const initialResult = observer.getOptimisticResult(defaultedOptions)
 
       let resolve: ((result: Result) => void) | null = null
