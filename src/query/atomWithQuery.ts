@@ -127,24 +127,22 @@ export function atomWithQuery<
     void | Promise<void>
   > = atom(
     (get) => {
-
       const queryClient = getQueryClient(get)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
 
       const defaultedOptions = queryClient.defaultQueryOptions(options)
-      console.log('here', defaultedOptions.queryKey)
       const observerRef = get(observerRefAtom)
 
       if (observerRef.value) {
         observerRef.value.setOptions(defaultedOptions, {
-          // listeners: false,
+          listeners: false,
         })
       } else {
         observerRef.value = new QueryObserver(queryClient, defaultedOptions)
       }
       const observer = observerRef.value
-      const initialResult = observer.getCurrentResult()
+      const initialResult = observer.getOptimisticResult(defaultedOptions)
 
       let resolve: ((result: Result) => void) | null = null
       const resultAtom = atom<Result | Promise<Result>>(
@@ -168,7 +166,6 @@ export function atomWithQuery<
         ) {
           return
         }
-        console.log('resolve', resolve, result)
         if (resolve) {
           setTimeout(() => {
             if (!state.isMounted) {
@@ -177,10 +174,8 @@ export function atomWithQuery<
             }
           }, 1000)
           resolve(result)
-          resolve = null
         } else {
           setResult(result)
-          console.log('setResult')
         }
       }
       if (options.enabled !== false) {
@@ -191,7 +186,7 @@ export function atomWithQuery<
         state.isMounted = true
         if (options.enabled !== false && !state.unsubscribe) {
           state.unsubscribe = observer.subscribe(listener)
-          listener(observer.getCurrentResult())
+          listener(observer.getOptimisticResult(defaultedOptions))
         }
         return () => state.unsubscribe?.()
       }
@@ -227,7 +222,6 @@ export function atomWithQuery<
       if (result.isError) {
         throw result.error
       }
-      console.log('result', result)
       return result.data
     },
     (_get, set, action) => set(queryDataAtom, action) // delegate action
