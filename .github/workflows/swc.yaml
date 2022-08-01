@@ -6,6 +6,10 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+defaults:
+  run:
+    working-directory: swc
+
 env:
   CARGO_INCREMENTAL: 0
 
