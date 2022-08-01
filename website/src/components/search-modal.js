@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import algoliasearch from 'algoliasearch/lite';
 import { Link } from 'gatsby';
 import { atom, useAtom, useSetAtom } from 'jotai';
@@ -70,9 +71,16 @@ const CustomSearchBox = (props) => {
 
   const { refine } = useSearchBox(props);
 
-  const debouncedRefine = debounce((value) => refine(value), 500);
+  const debouncedRefine = useMemo(() => debounce((value) => refine(value), 500), [refine]);
 
-  debouncedRefine(query);
+  const onChange = useCallback(
+    (event) => {
+      const newQuery = event.currentTarget.value;
+      setQuery(newQuery);
+      debouncedRefine(newQuery);
+    },
+    [debouncedRefine, setQuery],
+  );
 
   return (
     <div className="relative flex items-center">
@@ -80,7 +88,7 @@ const CustomSearchBox = (props) => {
         type="search"
         placeholder="Search here..."
         value={query}
-        onChange={(event) => setQuery(event.currentTarget.value)}
+        onChange={onChange}
         className="flex w-full items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg text-black ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
       />
       <img
