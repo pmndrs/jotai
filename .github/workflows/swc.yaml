@@ -6,16 +6,15 @@ on:
   pull_request:
     types: [opened, synchronize]
 
-defaults:
-  run:
-    working-directory: swc
-
 env:
   CARGO_INCREMENTAL: 0
 
 jobs:
   fmt:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: swc
     steps:
       - uses: actions/checkout@v3
       - name: Install Rust
@@ -27,6 +26,9 @@ jobs:
         run: cargo fmt --all -- --check
   clippy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: swc
     steps:
       - uses: actions/checkout@v3
       - name: Install Rust
@@ -38,6 +40,9 @@ jobs:
         run: cargo clippy --all
   check:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: swc
     steps:
       - uses: actions/checkout@v3
       - name: Install Rust
@@ -49,6 +54,9 @@ jobs:
         run: cargo check
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: swc
     steps:
       - uses: actions/checkout@v3
       - name: Install Rust
