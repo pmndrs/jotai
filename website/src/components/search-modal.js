@@ -71,7 +71,7 @@ const CustomSearchBox = (props) => {
 
   const { refine } = useSearchBox(props);
 
-  const debouncedRefine = useMemo(() => debounce((value) => refine(value), 500), [refine]);
+  const debouncedRefine = useMemo(() => debounce((value) => refine(value), 200), [refine]);
 
   const onChange = useCallback(
     (event) => {
