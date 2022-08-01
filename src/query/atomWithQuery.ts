@@ -133,9 +133,8 @@ export function atomWithQuery<
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       const defaultedOptions = queryClient.defaultQueryOptions(options)
       const observer = get(observerAtom)
-      observer.setOptions(defaultedOptions, {
-        listeners: false,
-      })
+      observer.destroy()
+      observer.setOptions(defaultedOptions)
       const initialResult = observer.getCurrentResult()
 
       let resolve: ((result: Result) => void) | null = null
@@ -162,9 +161,7 @@ export function atomWithQuery<
           return
         }
         if (resolve) {
-          setTimeout(() => {
-            unsubIfNotMounted()
-          }, 1000)
+          setTimeout(unsubIfNotMounted, 1000)
           resolve(result)
           resolve = null
         } else if (setResult) {
@@ -182,7 +179,10 @@ export function atomWithQuery<
           unsubscribe = observer.subscribe(listener)
           listener(observer.getCurrentResult())
         }
-        return () => unsubscribe?.()
+        return () => {
+          setResult = null
+          unsubscribe?.()
+        }
       }
       return { options, resultAtom, unsubIfNotMounted }
     },
