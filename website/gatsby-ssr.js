@@ -1,6 +1,6 @@
 import { MDXProvider } from '@mdx-js/react';
 import { Provider as JotaiProvider } from 'jotai';
-import { countAtom, menuAtom, textAtom } from './src/atoms';
+import { countAtom, menuAtom, searchAtom, textAtom } from './src/atoms';
 import {
   A,
   Code,
@@ -30,9 +30,10 @@ const components = {
 export const wrapRootElement = ({ element }) => (
   <JotaiProvider
     initialValues={[
-      [menuAtom, false],
-      [textAtom, 'hello'],
       [countAtom, 0],
+      [menuAtom, false],
+      [searchAtom, false],
+      [textAtom, 'hello'],
     ]}
   >
     <MDXProvider components={components}>{element}</MDXProvider>
