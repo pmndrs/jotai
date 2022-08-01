@@ -235,6 +235,57 @@ it('query loading 2', async () => {
   await findByText('count: 2')
 })
 
+it('query no-loading with keepPreviousData', async () => {
+  const dataAtom = atom(0)
+  const mockFetch = jest.fn(fakeFetch)
+  const countAtom = atomWithQuery((get) => ({
+    queryKey: ['keepPreviousData', get(dataAtom)],
+    keepPreviousData: true,
+    queryFn: async () => {
+      const response = await mockFetch({ count: get(dataAtom) }, false, 100)
+      return response
+    },
+  }))
+  const Counter = () => {
+    const [
+      {
+        response: { count },
+      },
+    ] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+      </>
+    )
+  }
+  const RefreshButton = () => {
+    const [data, setData] = useAtom(dataAtom)
+    return <button onClick={() => setData(data + 1)}>refetch</button>
+  }
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+      <RefreshButton />
+    </Provider>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0')
+
+  await new Promise((r) => setTimeout(r, 100))
+  fireEvent.click(getByText('refetch'))
+  await expect(() => findByText('loading')).rejects.toThrow()
+  await findByText('count: 1')
+
+  await new Promise((r) => setTimeout(r, 100))
+  fireEvent.click(getByText('refetch'))
+  await expect(() => findByText('loading')).rejects.toThrow()
+  await findByText('count: 2')
+})
+
 it('query with enabled', async () => {
   const slugAtom = atom<string | null>(null)
   const mockFetch = jest.fn(fakeFetch)
