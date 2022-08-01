@@ -7,7 +7,7 @@
     "keywords": ["swc-plugin"],
     "main": "target/wasm32-wasi/release/react_refresh.wasm",
     "scripts": {
-        "prepublishOnly": "cargo build --release"
+        "prepublishOnly": "cargo build --target wasm32-wasi"
     },
     "files": []
 }
