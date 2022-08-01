@@ -2,12 +2,7 @@ import algoliasearch from 'algoliasearch/lite';
 import { Link } from 'gatsby';
 import { useAtom } from 'jotai';
 import { useUpdateAtom } from 'jotai/utils';
-import {
-  Hits,
-  InstantSearch,
-  connectSearchBox,
-  connectStateResults,
-} from 'react-instantsearch-dom';
+import { Hits, InstantSearch, useInstantSearch, useSearchBox } from 'react-instantsearch-hooks-web';
 import { searchAtom } from '../atoms';
 import { Button, Icon, Modal } from '../components';
 
@@ -22,14 +17,16 @@ export const SearchModal = () => {
   return (
     <Modal isOpen={isSearchOpen} onOpenChange={setIsSearchOpen}>
       <InstantSearch searchClient={searchClient} indexName="Docs">
-        <div className="p-8 pb-2">
+        <div className="p-8">
           <CustomSearchBox />
         </div>
-        <Results>
-          <Hits hitComponent={Hit} className="max-h-[400px] overflow-y-scroll px-8" />
-        </Results>
+        <Boundary fallback={null}>
+          <div className="-my-8 p-8">
+            <Hits hitComponent={Hit} className="max-h-[400px] overflow-y-scroll" />
+          </div>
+        </Boundary>
       </InstantSearch>
-      <div className="flex justify-end p-8">
+      <div className="flex justify-end p-8 lg:hidden">
         <Button
           icon="close"
           onClick={() => setIsSearchOpen(false)}
@@ -43,45 +40,60 @@ export const SearchModal = () => {
   );
 };
 
-const SearchBox = ({ currentRefinement, refine }) => (
-  <input
-    type="search"
-    placeholder="Search here..."
-    value={currentRefinement}
-    onChange={(event) => refine(event.currentTarget.value)}
-    className="flex w-full items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg text-black ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
-  />
-);
+const Boundary = ({ children, fallback }) => {
+  const { indexUiState, results } = useInstantSearch();
 
-const CustomSearchBox = connectSearchBox(SearchBox);
+  if (!indexUiState.query) {
+    return fallback;
+  }
 
-const Results = connectStateResults(({ searchState, searchResults, children }) => {
-  if (searchState && !searchState.query) return null;
-
-  return searchResults && searchResults.nbHits !== 0 ? (
-    children
-  ) : (
-    <div className="flex items-center space-x-3 p-8">
-      <div>
-        <Icon icon="warning" className="h-6 w-6 fill-current text-red-400" />
+  if (results.nbHits === 0) {
+    return (
+      <div className="-mt-8 flex items-center space-x-3 p-8">
+        <div>
+          <Icon icon="warning" className="h-6 w-6 fill-current text-red-400" />
+        </div>
+        <div className="text-lg font-semibold text-black dark:text-white">
+          No results have been found for “{indexUiState.query}”. Please revise your query.
+        </div>
       </div>
-      <div className="text-lg font-semibold">
-        No results have been found for “{searchState.query}”. Please revise your query.
-      </div>
+    );
+  }
+
+  return children;
+};
+
+const CustomSearchBox = (props) => {
+  const { query, refine } = useSearchBox(props);
+
+  return (
+    <div className="relative flex items-center">
+      <input
+        type="search"
+        placeholder="Search here..."
+        value={query}
+        onChange={(event) => refine(event.currentTarget.value)}
+        className="flex w-full items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg text-black ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+      />
+      <img
+        src="/search-by-algolia.svg"
+        alt="Search by Algolia"
+        className="pointer-events-none absolute right-4 z-10 block"
+        aria-hidden
+      />
     </div>
   );
-});
+};
 
 const Hit = ({ hit }) => {
   const { title, excerpt, slug } = hit;
-
   const setIsSearchOpen = useUpdateAtom(searchAtom);
 
   return (
     <Link
-      onClick={() => setIsSearchOpen(false)}
       to={`/docs/${slug}`}
-      className="group my-6 flex space-x-3"
+      onClick={() => setIsSearchOpen(false)}
+      className="group mb-8 flex space-x-3"
     >
       <div>
         <Icon icon="file" className="h-6 w-6 fill-current text-blue-400 dark:text-teal-600" />

@@ -3,8 +3,7 @@
 }
 
 body {
-  @apply overflow-x-clip overflow-y-scroll bg-black leading-none;
-  overscroll-behavior: none;
+  @apply overflow-x-clip overflow-y-scroll overscroll-none bg-black leading-none;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
 }
@@ -47,6 +46,13 @@ input:focus,
 select:focus,
 textarea:focus {
   @apply z-10 ring-blue-400 dark:!ring-teal-700;
+}
+
+input[type='search']::-webkit-search-decoration,
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-results-button,
+input[type='search']::-webkit-search-results-decoration {
+  @apply appearance-none;
 }
 
 *::-webkit-scrollbar {

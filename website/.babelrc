@@ -9,5 +9,6 @@
         }
       }
     ]
-  ]
+  ],
+  "plugins": ["jotai/babel/plugin-react-refresh"]
 }
