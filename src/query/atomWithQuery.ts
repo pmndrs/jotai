@@ -98,10 +98,6 @@ export function atomWithQuery<
     TQueryKey
   >
   type Result = QueryObserverResult<TData, TError>
-  type State = {
-    isMounted: boolean
-    unsubscribe: (() => void) | null
-  }
 
   const observerAtom = atom((get) => {
     const queryClient = getQueryClient(get)
@@ -126,7 +122,7 @@ export function atomWithQuery<
     {
       options: Options
       resultAtom: PrimitiveAtom<Result | Promise<Result>>
-      state: State
+      unsubIfNotMounted: () => void
     },
     AtomWithQueryAction,
     void | Promise<void>
@@ -140,7 +136,7 @@ export function atomWithQuery<
       observer.setOptions(defaultedOptions, {
         listeners: false,
       })
-      const initialResult = observer.getOptimisticResult(defaultedOptions)
+      const initialResult = observer.getCurrentResult()
 
       let resolve: ((result: Result) => void) | null = null
       const resultAtom = atom<Result | Promise<Result>>(
@@ -150,12 +146,13 @@ export function atomWithQuery<
             })
           : initialResult
       )
-      let setResult: (result: Result) => void = () => {
-        throw new Error('setting result without mount')
-      }
-      const state: State = {
-        isMounted: false,
-        unsubscribe: null,
+      let setResult: ((result: Result) => void) | null = null
+      let unsubscribe: (() => void) | null = null
+      const unsubIfNotMounted = () => {
+        if (!setResult) {
+          unsubscribe?.()
+          unsubscribe = null
+        }
       }
       const listener = (result: Result) => {
         if (
@@ -166,44 +163,39 @@ export function atomWithQuery<
         }
         if (resolve) {
           setTimeout(() => {
-            if (!state.isMounted) {
-              state.unsubscribe?.()
-              state.unsubscribe = null
-            }
+            unsubIfNotMounted()
           }, 1000)
           resolve(result)
           resolve = null
-        } else {
+        } else if (setResult) {
           setResult(result)
+        } else {
+          throw new Error('setting result without mount')
         }
       }
       if (options.enabled !== false) {
-        state.unsubscribe = observer.subscribe(listener)
+        unsubscribe = observer.subscribe(listener)
       }
       resultAtom.onMount = (update) => {
         setResult = update
-        state.isMounted = true
-        if (options.enabled !== false && !state.unsubscribe) {
-          state.unsubscribe = observer.subscribe(listener)
-          listener(observer.getOptimisticResult(defaultedOptions))
+        if (options.enabled !== false && !unsubscribe) {
+          unsubscribe = observer.subscribe(listener)
+          listener(observer.getCurrentResult())
         }
-        return () => state.unsubscribe?.()
+        return () => unsubscribe?.()
       }
-      return { options, resultAtom, state }
+      return { options, resultAtom, unsubIfNotMounted }
     },
     (get, set, action) => {
       const observer = get(observerAtom)
-      const { options, resultAtom, state } = get(queryDataAtom)
+      const { options, resultAtom, unsubIfNotMounted } = get(queryDataAtom)
       if (options.enabled === false) {
         return
       }
       switch (action.type) {
         case 'refetch': {
           set(resultAtom, new Promise<never>(() => {})) // infinite pending
-          if (!state.isMounted) {
-            state.unsubscribe?.()
-            state.unsubscribe = null
-          }
+          unsubIfNotMounted()
           return observer.refetch({ cancelRefetch: true }).then((result) => {
             set(resultAtom, result)
           })
