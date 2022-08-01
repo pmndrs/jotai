@@ -34,9 +34,7 @@ import { atomWithMachine } from 'jotai/xstate'
 import { assign, createMachine } from 'xstate'
 
 const createEditableMachine = (value: string) =>
-  createMachine <
-  { value: string } >
-  {
+  createMachine<{ value: string }>({
     id: 'editable',
     initial: 'reading',
     context: {
@@ -60,7 +58,7 @@ const createEditableMachine = (value: string) =>
         },
       },
     },
-  }
+  })
 
 const defaultTextAtom = atom('edit me')
 const editableMachineAtom = atomWithMachine((get) =>
@@ -102,8 +100,35 @@ const Toggle = () => {
 }
 ```
 
+## Restartable machine stored in a global Provider (provider-less mode)
+
+When your machine reaches its final state it cannot receive any more events.
+If your atomWithMachine is initialized in global scope (aka provider-less mode),
+to restart it you need to send a `RESTART` event to your machine like so:
+
+```tsx
+import { RESTART } from 'jotai/xstate'
+
+const YourComponent = () => {
+  const [current, send] = useAtom(yourMachineAtom)
+
+  const isFinalState = current.matches('myFinalState')
+
+  useEffect(() => {
+    // restart globally initialized machine on component unmount
+    return () => {
+      if (isFinalState) send(RESTART)
+    }
+  }, [isFinalState])
+}
+```
+
 ### Examples
 
 Check examples with atomWithMachine:
 
 <CodeSandbox id="gxwnx" />
+
+Restartable machine:
+
+<CodeSandbox id="zur3wg" />
