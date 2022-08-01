@@ -8,13 +8,11 @@ on:
 
 env:
   CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
 
 jobs:
   fmt:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: swc
     steps:
       - uses: actions/checkout@v3
       - name: Install Rust
@@ -26,9 +24,6 @@ jobs:
         run: cargo fmt --all -- --check
   clippy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: swc
     steps:
       - uses: actions/checkout@v3
       - name: Install Rust
@@ -40,9 +35,6 @@ jobs:
         run: cargo clippy --all
   check:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: swc
     steps:
       - uses: actions/checkout@v3
       - name: Install Rust
@@ -54,9 +46,6 @@ jobs:
         run: cargo check
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: swc
     steps:
       - uses: actions/checkout@v3
       - name: Install Rust
@@ -65,4 +54,4 @@ jobs:
           profile: minimal
           target: wasm32-wasi
       - name: Run cargo test
-        run: cargo test --color always
+        run: cargo test

@@ -7,5 +7,4 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-serde = "1"
-swc_plugin = "*"
+swc_plugin = "0.88.1"

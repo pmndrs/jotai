@@ -1,4 +1,4 @@
-use swc_plugin::{ast::*, plugin_transform, TransformPluginProgramMetadata};
+use swc_plugin::{ast::*, metadata::TransformPluginProgramMetadata, plugin_transform};
 
 pub struct TransformVisitor;
 
