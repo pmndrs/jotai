@@ -1,7 +1,8 @@
+import { useCallback, useMemo } from 'react';
 import algoliasearch from 'algoliasearch/lite';
 import { Link } from 'gatsby';
-import { useAtom } from 'jotai';
-import { useUpdateAtom } from 'jotai/utils';
+import { atom, useAtom, useSetAtom } from 'jotai';
+import debounce from 'just-debounce-it';
 import { Hits, InstantSearch, useInstantSearch, useSearchBox } from 'react-instantsearch-hooks-web';
 import { searchAtom } from '../atoms';
 import { Button, Icon, Modal } from '../components';
@@ -63,8 +64,23 @@ const Boundary = ({ children, fallback }) => {
   return children;
 };
 
+const queryAtom = atom('');
+
 const CustomSearchBox = (props) => {
-  const { query, refine } = useSearchBox(props);
+  const [query, setQuery] = useAtom(queryAtom);
+
+  const { refine } = useSearchBox(props);
+
+  const debouncedRefine = useMemo(() => debounce((value) => refine(value), 200), [refine]);
+
+  const onChange = useCallback(
+    (event) => {
+      const newQuery = event.currentTarget.value;
+      setQuery(newQuery);
+      debouncedRefine(newQuery);
+    },
+    [debouncedRefine, setQuery],
+  );
 
   return (
     <div className="relative flex items-center">
@@ -72,7 +88,7 @@ const CustomSearchBox = (props) => {
         type="search"
         placeholder="Search here..."
         value={query}
-        onChange={(event) => refine(event.currentTarget.value)}
+        onChange={onChange}
         className="flex w-full items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg text-black ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
       />
       <img
@@ -87,7 +103,7 @@ const CustomSearchBox = (props) => {
 
 const Hit = ({ hit }) => {
   const { title, excerpt, slug } = hit;
-  const setIsSearchOpen = useUpdateAtom(searchAtom);
+  const setIsSearchOpen = useSetAtom(searchAtom);
 
   return (
     <Link

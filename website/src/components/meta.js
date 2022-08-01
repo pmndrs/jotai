@@ -1,14 +1,9 @@
 import { graphql, useStaticQuery } from 'gatsby';
-import { Helmet } from 'react-helmet';
 
-export const Head = ({ lang = 'en', title, description, uri }) => {
+export const Meta = ({ lang = 'en', title, description, uri }) => {
   const data = useStaticQuery(staticQuery);
 
   const { site } = data;
-
-  const htmlAttributes = {
-    lang,
-  };
 
   const siteTitle = site.siteMetadata.title;
   const siteUrl = site.siteMetadata.siteUrl;
@@ -21,7 +16,7 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
   const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl;
 
   return (
-    <Helmet htmlAttributes={htmlAttributes} defer={false}>
+    <>
       <title>{pageTitle}</title>
       <meta property="description" content={pageDescription} />
       <meta property="og:locale" content={lang} />
@@ -38,7 +33,10 @@ export const Head = ({ lang = 'en', title, description, uri }) => {
       <meta property="twitter:card" content="summary_large_image" />
       <link rel="icon" type="image/svg+xml" href={siteIcon} />
       <link rel="canonical" href={pageUrl} />
-    </Helmet>
+      <link rel="dns-prefetch" href="appid-dsn.algolia.net" />
+      <link rel="preconnect" href="https://98qz5x9lgr-dsn.algolia.net" crossOrigin />
+      <link rel="preconnect" href="https://storage.googleapis.com" crossOrigin />
+    </>
   );
 };
 
