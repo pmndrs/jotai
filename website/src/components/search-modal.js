@@ -1,8 +1,8 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import algoliasearch from 'algoliasearch/lite';
 import cx from 'classnames';
 import { Link } from 'gatsby';
-import { atom, useAtom, useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import throttle from 'just-throttle';
 import { Hits, InstantSearch, useInstantSearch, useSearchBox } from 'react-instantsearch-hooks-web';
 import { searchAtom } from '../atoms';
@@ -66,10 +66,8 @@ const Boundary = ({ children, fallback }) => {
   return children;
 };
 
-const queryAtom = atom('');
-
 const CustomSearchBox = (props) => {
-  const [query, setQuery] = useAtom(queryAtom);
+  const [query, setQuery] = useState('');
 
   const { refine } = useSearchBox(props);
 
@@ -84,7 +82,7 @@ const CustomSearchBox = (props) => {
       setQuery(newQuery);
       throttledRefine(newQuery);
     },
-    [throttledRefine, setQuery],
+    [throttledRefine],
   );
 
   return (
