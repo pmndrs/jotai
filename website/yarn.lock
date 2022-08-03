@@ -8217,15 +8217,15 @@ jsonfile@^6.0.1:
     array-includes "^3.1.5"
     object.assign "^4.1.2"
 
-just-debounce-it@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/just-debounce-it/-/just-debounce-it-3.0.1.tgz#8c8a4c9327c9523366ec79ac9a959a938153bd2f"
-  integrity sha512-6EQWOpRV8fm/ame6XvGBSxvsjoMbqj7JS9TV/4Q9aOXt9DQw22GBfTGP6gTAqcBNN/PbzlwtwH7jtM0k9oe9pg==
-
 just-kebab-case@^4.0.3:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/just-kebab-case/-/just-kebab-case-4.0.3.tgz#e69186bc9de484372c6831eb8a3fafdc8cb8b189"
   integrity sha512-T1afsOXLXs1ezkWq02qrJwJLh6eib5ISr8/jkh56k5YnDhDuOvyd++QlMO9YUofwVbAi9JRTEms2yTs+WZ8TLQ==
+
+just-throttle@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/just-throttle/-/just-throttle-4.0.1.tgz#10132a9ca787e248e744f8e96c595596b14e86b7"
+  integrity sha512-BC3LgilNVj4WQt2vj4//4n/UHSQtkl5P5fz+aOZ+c0t1sjIzBeIFL2+5T32MhTs4YrKjAgNo2DT/VRh/NwQOZA==
 
 keyv@^3.0.0:
   version "3.1.0"

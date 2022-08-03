@@ -34,8 +34,8 @@ export const Meta = ({ lang = 'en', title, description, uri }) => {
       <link rel="icon" type="image/svg+xml" href={siteIcon} />
       <link rel="canonical" href={pageUrl} />
       <link rel="dns-prefetch" href="appid-dsn.algolia.net" />
-      <link rel="preconnect" href="https://98qz5x9lgr-dsn.algolia.net" crossOrigin />
-      <link rel="preconnect" href="https://storage.googleapis.com" crossOrigin />
+      <link rel="preconnect" href="https://98qz5x9lgr-dsn.algolia.net" crossOrigin="true" />
+      <link rel="preconnect" href="https://storage.googleapis.com" crossOrigin="true" />
     </>
   );
 };
