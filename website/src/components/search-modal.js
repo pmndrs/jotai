@@ -1,8 +1,9 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import algoliasearch from 'algoliasearch/lite';
+import cx from 'classnames';
 import { Link } from 'gatsby';
-import { atom, useAtom, useSetAtom } from 'jotai';
-import debounce from 'just-debounce-it';
+import { useAtom, useSetAtom } from 'jotai';
+import throttle from 'just-throttle';
 import { Hits, InstantSearch, useInstantSearch, useSearchBox } from 'react-instantsearch-hooks-web';
 import { searchAtom } from '../atoms';
 import { Button, Icon, Modal } from '../components';
@@ -18,12 +19,13 @@ export const SearchModal = () => {
   return (
     <Modal isOpen={isSearchOpen} onOpenChange={setIsSearchOpen}>
       <InstantSearch searchClient={searchClient} indexName="Docs">
-        <div className="p-8">
-          <CustomSearchBox />
-        </div>
+        <CustomSearchBox />
         <Boundary fallback={null}>
-          <div className="-my-8 p-8">
-            <Hits hitComponent={Hit} className="max-h-[400px] overflow-y-scroll" />
+          <div className="overflow-hidden rounded-b-lg">
+            <Hits
+              hitComponent={Hit}
+              className="max-h-[400px] overflow-y-scroll border-l border-r border-b border-gray-300 bg-white p-8 pb-0 dark:border-gray-800 dark:bg-gray-950"
+            />
           </div>
         </Boundary>
       </InstantSearch>
@@ -50,7 +52,7 @@ const Boundary = ({ children, fallback }) => {
 
   if (results.nbHits === 0) {
     return (
-      <div className="-mt-8 flex items-center space-x-3 p-8">
+      <div className="flex items-center space-x-3 rounded-b-lg border-l border-r border-b border-gray-300 bg-white p-8 dark:border-gray-800 dark:bg-gray-950">
         <div>
           <Icon icon="warning" className="h-6 w-6 fill-current text-red-400" />
         </div>
@@ -64,22 +66,23 @@ const Boundary = ({ children, fallback }) => {
   return children;
 };
 
-const queryAtom = atom('');
-
 const CustomSearchBox = (props) => {
-  const [query, setQuery] = useAtom(queryAtom);
+  const [query, setQuery] = useState('');
 
   const { refine } = useSearchBox(props);
 
-  const debouncedRefine = useMemo(() => debounce((value) => refine(value), 200), [refine]);
+  const throttledRefine = useMemo(
+    () => throttle((value) => refine(value), 200, { leading: true, trailing: true }),
+    [refine],
+  );
 
   const onChange = useCallback(
     (event) => {
       const newQuery = event.currentTarget.value;
       setQuery(newQuery);
-      debouncedRefine(newQuery);
+      throttledRefine(newQuery);
     },
-    [debouncedRefine, setQuery],
+    [throttledRefine],
   );
 
   return (
@@ -89,14 +92,20 @@ const CustomSearchBox = (props) => {
         placeholder="Search here..."
         value={query}
         onChange={onChange}
-        className="flex w-full items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg text-black ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200"
+        autoFocus
+        className={cx(
+          query.length === 0 ? 'rounded-lg' : 'rounded-t-lg',
+          'dark:focus-border-gray-800 flex w-full items-center border border-gray-300 bg-white px-6 py-3 text-lg text-black ring-0 focus:border-gray-300 focus:ring-0 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200',
+        )}
       />
-      <img
-        src="/search-by-algolia.svg"
-        alt="Search by Algolia"
-        className="pointer-events-none absolute right-4 z-10 block"
-        aria-hidden
-      />
+      <a
+        href="https://algolia.com"
+        target="_blank"
+        rel="noreferrer"
+        className="absolute right-4 z-10 block"
+      >
+        <img src="/search-by-algolia.svg" alt="Search by Algolia" aria-hidden />
+      </a>
     </div>
   );
 };
