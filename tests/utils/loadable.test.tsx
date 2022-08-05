@@ -215,6 +215,25 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
   await findByText('Data: 5')
 })
 
+it('loadable of a derived async atom with error does not trigger infinite loop (#1330)', async () => {
+  const baseAtom = atom(() => {
+    throw new Error('thrown in baseAtom')
+  })
+  const asyncAtom = atom(async (get) => {
+    get(baseAtom)
+    return ''
+  })
+
+  const { findByText, getByText } = render(
+    <Provider>
+      <LoadableComponent asyncAtom={asyncAtom} />
+    </Provider>
+  )
+
+  getByText('Loading...')
+  await findByText('Error: thrown in baseAtom')
+})
+
 type LoadableComponentProps = {
   asyncAtom: Atom<Promise<number> | Promise<string> | string | number>
   effectCallback?: (loadableValue: any) => void
