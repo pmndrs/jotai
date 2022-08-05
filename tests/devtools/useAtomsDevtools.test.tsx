@@ -473,7 +473,6 @@ it('[DEV-ONLY] with atoms invalidated after mount', async () => {
     getByText('count: 2')
     getByText('loading')
   })
-  /*
   expect(extension.send).toBeCalledTimes(2)
   expect(extension.send).lastCalledWith(
     expect.objectContaining({ type: '2' }),
@@ -491,7 +490,6 @@ it('[DEV-ONLY] with atoms invalidated after mount', async () => {
       }),
     })
   )
-  */
 
   fireEvent.click(getByText('change'))
   await waitFor(() => {
@@ -499,7 +497,6 @@ it('[DEV-ONLY] with atoms invalidated after mount', async () => {
     getByText('derived: 3')
     getByText('doubleCount: 6')
   })
-  /*
   expect(extension.send).toBeCalledTimes(3)
   expect(extension.send).lastCalledWith(
     expect.objectContaining({ type: '3' }),
@@ -520,7 +517,6 @@ it('[DEV-ONLY] with atoms invalidated after mount', async () => {
       }),
     })
   )
-  */
 })
 
 describe('when it receives an message of type...', () => {
