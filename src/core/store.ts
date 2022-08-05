@@ -391,7 +391,7 @@ export const createStore = (
     }
     const nextAtomState: AtomState<Value> = {
       e: error, // set read error
-      r: atomState?.r || 0,
+      r: (atomState?.r || 0) + 1,
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
     setAtomState(version, atom, nextAtomState)
@@ -415,7 +415,7 @@ export const createStore = (
     addSuspensePromiseToCache(version, atom, suspensePromise)
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
-      r: atomState?.r || 0,
+      r: atomState?.r || 0, // TODO we prorably want to increment
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
     setAtomState(version, atom, nextAtomState)
@@ -525,7 +525,7 @@ export const createStore = (
             const aState = getAtomState(version, a)
             return (
               aState &&
-              'v' in aState && // has value
+              !('p' in aState) && // has no suspense promise
               aState.r === r // revision is equal to the last one
             )
           })
@@ -629,7 +629,7 @@ export const createStore = (
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
       options?: {
-        unstable_promise: boolean
+        unstable_promise: true
       }
     ) => {
       const aState = readAtomState(version, a)
@@ -639,8 +639,8 @@ export const createStore = (
       if ('p' in aState) {
         if (options?.unstable_promise) {
           return aState.p.then(() =>
-            writeGetter(a as unknown as Atom<Promise<unknown>>, options as any)
-          ) as Promise<Awaited<V>> // FIXME proper typing
+            writeGetter(a as unknown as Atom<Promise<V>>, options)
+          )
         }
         if (__DEV__) {
           console.info(
