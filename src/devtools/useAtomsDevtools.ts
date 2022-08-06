@@ -106,15 +106,22 @@ export function useAtomsDevtools(
     if (!extension) {
       return
     }
+    let prevValues: AtomsValues = new Map()
+    let prevDependents: AtomsDependents = new Map()
+    let prevInvalidatedAtoms = new Set<AnyAtom>()
     const callback = () => {
       const values: AtomsValues = new Map()
       const dependents: AtomsDependents = new Map()
+      const invalidatedAtoms = new Set(prevInvalidatedAtoms)
       for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
         const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
         if (atomState) {
           if (!atomState.y) {
-            // ignore if there are any invalidated atoms
-            return
+            if (invalidatedAtoms.has(atom)) {
+              invalidatedAtoms.delete(atom)
+            } else {
+              invalidatedAtoms.add(atom)
+            }
           }
           if ('v' in atomState) {
             values.set(atom, atomState.v)
@@ -125,16 +132,21 @@ export function useAtomsDevtools(
           dependents.set(atom, mounted.t)
         }
       }
-      setAtomsSnapshot((prev) => {
-        if (
-          isEqualAtomsValues(prev.values, values) &&
-          isEqualAtomsDependents(prev.dependents, dependents)
-        ) {
-          // bail out
-          return prev
-        }
-        return { values, dependents }
-      })
+      if (invalidatedAtoms.size) {
+        // ignore entirely because there are some invalidated atoms
+        return
+      }
+      if (
+        isEqualAtomsValues(prevValues, values) &&
+        isEqualAtomsDependents(prevDependents, dependents)
+      ) {
+        // not changed
+        return
+      }
+      prevValues = values
+      prevDependents = dependents
+      prevInvalidatedAtoms = new Set()
+      setAtomsSnapshot({ values, dependents })
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()

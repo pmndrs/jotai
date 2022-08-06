@@ -473,7 +473,9 @@ it('[DEV-ONLY] with atoms invalidated after mount', async () => {
     getByText('count: 2')
     getByText('loading')
   })
-  expect(extension.send).toBeCalledTimes(2)
+  await waitFor(() => {
+    expect(extension.send).toBeCalledTimes(2)
+  })
   expect(extension.send).lastCalledWith(
     expect.objectContaining({ type: '2' }),
     expect.objectContaining({
