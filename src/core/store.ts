@@ -415,7 +415,7 @@ export const createStore = (
     addSuspensePromiseToCache(version, atom, suspensePromise)
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
-      r: atomState?.r || 0, // TODO we prorably want to increment
+      r: (atomState?.r || 0) + 1,
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
     setAtomState(version, atom, nextAtomState)
@@ -859,9 +859,7 @@ export const createStore = (
       if (
         !prevAtomState ||
         atomState.r > prevAtomState.r ||
-        ('v' in atomState &&
-          atomState.r === prevAtomState.r &&
-          atomState.d !== prevAtomState.d)
+        (atomState.r === prevAtomState.r && atomState.d !== prevAtomState.d)
       ) {
         committedAtomStateMap.set(atom, atomState)
         if (atomState.d !== prevAtomState?.d) {
