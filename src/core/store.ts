@@ -395,7 +395,7 @@ export const createStore = (
     }
     const nextAtomState: AtomState<Value> = {
       e: error, // set read error
-      r: atomState?.r || 0,
+      r: (atomState?.r || 0) + 1,
       y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
@@ -425,7 +425,7 @@ export const createStore = (
     addSuspensePromiseToCache(version, atom, suspensePromise)
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
-      r: atomState?.r || 0,
+      r: (atomState?.r || 0) + 1,
       y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
@@ -536,7 +536,7 @@ export const createStore = (
             const aState = getAtomState(version, a)
             return (
               aState &&
-              'v' in aState && // has value
+              !('p' in aState) && // has no suspense promise
               aState.r === r // revision is equal to the last one
             )
           })
@@ -645,7 +645,7 @@ export const createStore = (
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
       options?: {
-        unstable_promise: boolean
+        unstable_promise: true
       }
     ) => {
       const aState = readAtomState(version, a)
@@ -655,8 +655,8 @@ export const createStore = (
       if ('p' in aState) {
         if (options?.unstable_promise) {
           return aState.p.then(() =>
-            writeGetter(a as unknown as Atom<Promise<unknown>>, options as any)
-          ) as Promise<Awaited<V>> // FIXME proper typing
+            writeGetter(a as unknown as Atom<Promise<V>>, options)
+          )
         }
         if (__DEV__) {
           console.info(
@@ -874,9 +874,7 @@ export const createStore = (
       if (
         !prevAtomState ||
         atomState.r > prevAtomState.r ||
-        ('v' in atomState &&
-          atomState.r === prevAtomState.r &&
-          atomState.d !== prevAtomState.d)
+        (atomState.r === prevAtomState.r && atomState.d !== prevAtomState.d)
       ) {
         committedAtomStateMap.set(atom, atomState)
         if (atomState.d !== prevAtomState?.d) {

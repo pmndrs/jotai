@@ -1,12 +1,12 @@
 import cx from 'classnames';
 import { Link, graphql, useStaticQuery } from 'gatsby';
-import { useUpdateAtom } from 'jotai/utils';
+import { useSetAtom } from 'jotai';
 import { menuAtom } from '../atoms';
 
 export const Docs = ({ className = '', ...rest }) => {
   const data = useStaticQuery(staticQuery);
 
-  const setIsMenuOpen = useUpdateAtom(menuAtom);
+  const setIsMenuOpen = useSetAtom(menuAtom);
 
   const allDocs = data.allMdx.nodes.filter(checkDocs).sort(sortDocs);
   const navLinks = parseDocs(allDocs);
