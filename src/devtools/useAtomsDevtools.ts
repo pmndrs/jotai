@@ -117,6 +117,10 @@ export function useAtomsDevtools(
         const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
         if (atomState) {
           if (!atomState.y) {
+            if ('p' in atomState) {
+              // ignore entirely if we have invalidated promise atoms
+              return
+            }
             if (!invalidatedAtoms.has(atom)) {
               invalidatedAtoms.add(atom)
               hasNewInvalidatedAtoms = true
@@ -132,7 +136,7 @@ export function useAtomsDevtools(
         }
       }
       if (hasNewInvalidatedAtoms) {
-        // ignore entirely because there are some invalidated atoms
+        // ignore entirely if we have new invalidated atoms
         return
       }
       if (
