@@ -542,7 +542,7 @@ export const createStore = (
           })
         ) {
           if (
-            !atomState.y // not invalidated
+            !atomState.y // invalidated
           ) {
             return { ...atomState, y: true }
           }
