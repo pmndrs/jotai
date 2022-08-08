@@ -53,7 +53,6 @@ module.exports = {
     shortName: `Jotai`,
   },
   plugins: [
-    `gatsby-plugin-react-helmet`,
     {
       resolve: `gatsby-source-filesystem`,
       options: {
