@@ -39,3 +39,7 @@ export const wrapRootElement = ({ element }) => (
     <MDXProvider components={components}>{element}</MDXProvider>
   </JotaiProvider>
 );
+
+export const onRenderBody = ({ setHtmlAttributes }) => {
+  setHtmlAttributes({ lang: 'en' });
+};
