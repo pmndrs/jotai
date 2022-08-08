@@ -106,15 +106,25 @@ export function useAtomsDevtools(
     if (!extension) {
       return
     }
+    let prevValues: AtomsValues = new Map()
+    let prevDependents: AtomsDependents = new Map()
+    const invalidatedAtoms = new Set<AnyAtom>()
     const callback = () => {
       const values: AtomsValues = new Map()
       const dependents: AtomsDependents = new Map()
+      let hasNewInvalidatedAtoms = false
       for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
         const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
         if (atomState) {
-          if (atomState.r === atomState.i) {
-            // ignore if there are any invalidated atoms
-            return
+          if (!atomState.y) {
+            if ('p' in atomState) {
+              // ignore entirely if we have invalidated promise atoms
+              return
+            }
+            if (!invalidatedAtoms.has(atom)) {
+              invalidatedAtoms.add(atom)
+              hasNewInvalidatedAtoms = true
+            }
           }
           if ('v' in atomState) {
             values.set(atom, atomState.v)
@@ -125,16 +135,21 @@ export function useAtomsDevtools(
           dependents.set(atom, mounted.t)
         }
       }
-      setAtomsSnapshot((prev) => {
-        if (
-          isEqualAtomsValues(prev.values, values) &&
-          isEqualAtomsDependents(prev.dependents, dependents)
-        ) {
-          // bail out
-          return prev
-        }
-        return { values, dependents }
-      })
+      if (hasNewInvalidatedAtoms) {
+        // ignore entirely if we have new invalidated atoms
+        return
+      }
+      if (
+        isEqualAtomsValues(prevValues, values) &&
+        isEqualAtomsDependents(prevDependents, dependents)
+      ) {
+        // not changed
+        return
+      }
+      prevValues = values
+      prevDependents = dependents
+      invalidatedAtoms.clear()
+      setAtomsSnapshot({ values, dependents })
     }
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()

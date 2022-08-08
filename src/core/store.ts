@@ -24,7 +24,6 @@ const hasInitialValue = <T extends Atom<AnyAtomValue>>(
 
 type ReadError = unknown
 type Revision = number
-type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 
 /**
@@ -37,10 +36,10 @@ export type AtomState<Value = AnyAtomValue> = {
    */
   r: Revision
   /**
-   * Marks the revision of this atom when a transitive dependency was invalidated.
-   * Mounted atoms are considered invalidated when `r === i`.
+   * Validit(y) of the atom state.
+   * Mounted atoms are considered invalidated when `y === false`.
    */
-  i?: InvalidatedRevision
+  y: boolean
   /**
    * Maps from a dependency to the dependency's revision when it was last read.
    * We can skip recomputation of an atom by comparing the ReadDependencies revision
@@ -183,7 +182,12 @@ export const createStore = (
 
   if (initialValues) {
     for (const [atom, value] of initialValues) {
-      const atomState: AtomState = { v: value, r: 0, d: new Map() }
+      const atomState: AtomState = {
+        v: value,
+        r: 0,
+        y: true, // not invalidated
+        d: new Map(),
+      }
       if (__DEV__) {
         Object.freeze(atomState)
         if (!hasInitialValue(atom)) {
@@ -334,9 +338,10 @@ export const createStore = (
     const nextAtomState: AtomState<Value> = {
       v: value,
       r: atomState?.r || 0,
+      y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
-    let changed = false
+    let changed = !atomState?.y // non-existent or invalidated
     if (
       !atomState ||
       !('v' in atomState) || // new value, or
@@ -348,10 +353,9 @@ export const createStore = (
         nextAtomState.d = new Map(nextAtomState.d).set(atom, nextAtomState.r)
       }
     } else if (
-      'i' in atomState ||
-      (nextAtomState.d !== atomState.d &&
-        (nextAtomState.d.size !== atomState.d.size ||
-          !Array.from(nextAtomState.d.keys()).every((a) => atomState.d.has(a))))
+      nextAtomState.d !== atomState.d &&
+      (nextAtomState.d.size !== atomState.d.size ||
+        !Array.from(nextAtomState.d.keys()).every((a) => atomState.d.has(a)))
     ) {
       changed = true
       // value is not changed, but dependencies are changed
@@ -391,7 +395,8 @@ export const createStore = (
     }
     const nextAtomState: AtomState<Value> = {
       e: error, // set read error
-      r: atomState?.r || 0,
+      r: (atomState?.r || 0) + 1,
+      y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
     setAtomState(version, atom, nextAtomState)
@@ -408,6 +413,11 @@ export const createStore = (
     if (atomState && 'p' in atomState) {
       if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
         // the same promise, not updating
+        if (
+          !atomState.y // invalidated
+        ) {
+          return { ...atomState, y: true }
+        }
         return atomState
       }
       cancelSuspensePromise(atomState.p)
@@ -415,7 +425,8 @@ export const createStore = (
     addSuspensePromiseToCache(version, atom, suspensePromise)
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
-      r: atomState?.r || 0,
+      r: (atomState?.r || 0) + 1,
+      y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
     setAtomState(version, atom, nextAtomState)
@@ -471,7 +482,7 @@ export const createStore = (
     if (atomState) {
       const nextAtomState: AtomState<Value> = {
         ...atomState, // copy everything
-        i: atomState.r, // set invalidated revision
+        y: false, // invalidated
       }
       setAtomState(version, atom, nextAtomState)
     } else if (__DEV__) {
@@ -490,7 +501,7 @@ export const createStore = (
       if (atomState) {
         // First, check if we already have suspending promise
         if (
-          atomState.r !== atomState.i && // revision is not invalidated
+          atomState.y && // not invalidated
           'p' in atomState &&
           !isSuspensePromiseAlreadyCancelled(atomState.p)
         ) {
@@ -511,7 +522,7 @@ export const createStore = (
               const aState = getAtomState(version, a)
               if (
                 aState &&
-                aState.r === aState.i // revision is invalidated
+                !aState.y // invalidated
               ) {
                 readAtomState(version, a)
               }
@@ -525,11 +536,16 @@ export const createStore = (
             const aState = getAtomState(version, a)
             return (
               aState &&
-              'v' in aState && // has value
+              !('p' in aState) && // has no suspense promise
               aState.r === r // revision is equal to the last one
             )
           })
         ) {
+          if (
+            !atomState.y // invalidated
+          ) {
+            return { ...atomState, y: true }
+          }
           return atomState
         }
       }
@@ -629,7 +645,7 @@ export const createStore = (
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
       options?: {
-        unstable_promise: boolean
+        unstable_promise: true
       }
     ) => {
       const aState = readAtomState(version, a)
@@ -639,8 +655,8 @@ export const createStore = (
       if ('p' in aState) {
         if (options?.unstable_promise) {
           return aState.p.then(() =>
-            writeGetter(a as unknown as Atom<Promise<unknown>>, options as any)
-          ) as Promise<Awaited<V>> // FIXME proper typing
+            writeGetter(a as unknown as Atom<Promise<V>>, options)
+          )
         }
         if (__DEV__) {
           console.info(
@@ -834,9 +850,8 @@ export const createStore = (
         }
         if (
           prevAtomState &&
-          'i' in prevAtomState &&
-          atomState &&
-          !('i' in atomState)
+          !prevAtomState.y && // invalidated
+          atomState?.y // existent and not invalidated
         ) {
           // We don't want to notify listeners
           // to avoid flushing a promise again (#1151)
@@ -859,9 +874,8 @@ export const createStore = (
       if (
         !prevAtomState ||
         atomState.r > prevAtomState.r ||
-        ('v' in atomState &&
-          atomState.r === prevAtomState.r &&
-          atomState.d !== prevAtomState.d)
+        atomState.y !== prevAtomState.y ||
+        (atomState.r === prevAtomState.r && atomState.d !== prevAtomState.d)
       ) {
         committedAtomStateMap.set(atom, atomState)
         if (atomState.d !== prevAtomState?.d) {
