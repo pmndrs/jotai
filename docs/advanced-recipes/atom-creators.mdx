@@ -414,4 +414,8 @@ export function atomWithDebounce<Value>(
 
 ### Example Usage
 
+The sandbox link below shows how we would use a derived atom to fetch state based on the value of `debouncedValue`.
+
+When typing a pokemon's name in `<SearchInput>`, we do not fire a fetch on every letter, but only after `delayMilliseconds` has passed since the last text input.
+
 [CodeSandbox](https://codesandbox.io/s/withered-tdd-cjrz2y?file=/src/App.tsx)
