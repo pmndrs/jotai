@@ -356,3 +356,62 @@ const ListOfThings = () => {
 ```
 
 <CodeSandbox id="ugkzm0" />
+
+## atomWithDebounce
+
+> `atomWithDebounce` helps with creating an atom where state set should be debounced.
+
+This can be especially useful for text search inputs, where you would like to fire an action only after the user has stopped typing for a delay, instead of firing an action on every keystroke.
+
+```tsx
+export function atomWithDebounce<Value>(
+  initialValue: Value,
+  delayMilliseconds = 500,
+  shouldDebounceOnReset = false
+) {
+  let timeout: NodeJS.Timeout
+
+  // DO NOT EXPORT currentValueAtom as using this atom to set state can cause
+  // inconsistent state between currentValueAtom and debouncedValueAtom
+  const currentValueAtom = atom(initialValue)
+
+  const debouncedValueAtom = atom(
+    initialValue,
+    (get, set, update: SetStateAction<Value>) => {
+      clearTimeout(timeout)
+      const prevValue = get(currentValueAtom)
+      const nextValue =
+        typeof update === 'function'
+          ? (update as (prev: Value) => Value)(prevValue)
+          : update
+
+      set(currentValueAtom, nextValue)
+
+      if (!shouldDebounceOnReset && nextValue === initialValue) {
+        set(debouncedValueAtom, nextValue)
+        return
+      }
+
+      set(currentValueAtom, nextValue)
+
+      timeout = setTimeout(() => {
+        set(debouncedValueAtom, nextValue)
+      }, delayMilliseconds)
+    }
+  )
+
+  const isDebouncingAtom = atom(
+    (get) => get(currentValueAtom) !== get(debouncedValueAtom)
+  )
+
+  return {
+    readOnlyCurrentValueAtom: atom((get) => get(currentValueAtom)),
+    isDebouncingAtom,
+    debouncedValueAtom,
+  }
+}
+```
+
+### Example Usage
+
+[CodeSandbox](https://codesandbox.io/s/withered-tdd-cjrz2y?file=/src/App.tsx)
