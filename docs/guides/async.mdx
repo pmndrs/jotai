@@ -87,9 +87,10 @@ const asyncIncrementAtom = atom(null, async (get, set) => {
 
 const Component = () => {
   const [, increment] = useAtom(asyncIncrementAtom)
-  React.useEffect(() => {
+  const handleClick = () => {
     increment()
-  }, [])
+  }
+  // ...
 }
 ```
 
@@ -102,9 +103,10 @@ const request = async () => fetch('https://...').then((res) => res.json())
 const baseAtom = atom(0)
 const Component = () => {
   const [value, setValue] = useAtom(baseAtom)
-  React.useEffect(() => {
+  const handleClick = () => {
     setValue(request()) // Will suspend until request resolves
-  }, [])
+  }
+  // ...
 }
 ```
 
