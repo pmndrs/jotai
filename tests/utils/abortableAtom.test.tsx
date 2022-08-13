@@ -6,13 +6,12 @@ import { getTestProvider, itSkipIfVersionedWrite } from '../testUtils'
 
 const Provider = getTestProvider()
 
-describe('abortable atom test', () => {
-  if (reactVersion === '16.8.6') {
-    // Doesn't work with 16.8.6 maybe because of some React bugs?
-    // Curious, though. Feel free to dig into it if someone get interested.
-    return
-  }
+// Doesn't work with 16.8.6 maybe because of some React bugs?
+// Curious, though. Feel free to dig into it if someone gets interested.
+const describeExceptFor1686 =
+  reactVersion !== '16.8.6' ? describe : describe.skip
 
+describeExceptFor1686('abortable atom test', () => {
   itSkipIfVersionedWrite('can abort with signal.aborted', async () => {
     const countAtom = atom(0)
     let abortedCount = 0
