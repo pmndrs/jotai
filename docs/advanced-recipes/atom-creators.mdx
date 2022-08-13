@@ -355,19 +355,11 @@ const ListOfThings = () => {
 }
 ```
 
-<CodeSandbox id="ugkzm0" />
-
 ## atomWithDebounce
 
 > `atomWithDebounce` helps with creating an atom where state set should be debounced.
 
 This util is useful for text search inputs, where you would like to call **functions in derived atoms only once** after waiting for a duration, instead of firing an action on every keystroke.
-
-### Caveat
-
-Please note that this atom has different objectives from concurrent features in React 18 such as `useTransition` and `useDeferredValue` whose main aim is to prevent blocking of interaction with the page for expensive updates.
-
-For more info, please read this github discussion https://github.com/reactwg/react-18/discussions/41 under How is it different from setTimeout?
 
 ```tsx
 import { atom, Getter, PrimitiveAtom, Setter } from 'jotai'
@@ -450,6 +442,12 @@ export default function atomWithDebounce<T>(
 }
 ```
 
+### Caveat
+
+Please note that this atom has different objectives from concurrent features in React 18 such as `useTransition` and `useDeferredValue` whose main aim is to prevent blocking of interaction with the page for expensive updates.
+
+For more info, please read this github discussion https://github.com/reactwg/react-18/discussions/41 under the section titled **"How is it different from setTimeout?"**
+
 ### Example Usage
 
 The sandbox link below shows how we would use a derived atom to fetch state based on the value of `debouncedValueAtom`.
@@ -458,4 +456,4 @@ When typing a pokemon's name in `<SearchInput>`, we do not send a get request on
 
 This reduces the number of backend requests to the server.
 
-[CodeSandbox](https://codesandbox.io/s/withered-tdd-cjrz2y?file=/src/App.tsx)
+<CodeSandbox id="cjrz2y" />
