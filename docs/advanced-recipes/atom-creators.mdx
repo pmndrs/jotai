@@ -432,7 +432,6 @@ export default function atomWithDebounce<T>(
   const clearTimeoutAtom = atom(null, (get, set, _arg) => {
     clearTimeoutId(get, set, prevTimeoutAtom)
     set(isDebouncingAtom, false)
-    set(_currentValueAtom, get(debouncedValueAtom))
   })
 
   return {
