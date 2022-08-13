@@ -361,52 +361,90 @@ const ListOfThings = () => {
 
 > `atomWithDebounce` helps with creating an atom where state set should be debounced.
 
-This can be especially useful for text search inputs, where you would like to fire an action only after the user has stopped typing for a delay, instead of firing an action on every keystroke.
+This util is useful for text search inputs, where you would like to call **functions in derived atoms only once** after waiting for a duration, instead of firing an action on every keystroke.
+
+### Caveat
+
+Please note that this atom has different objectives from concurrent features in React 18 such as `useTransition` and `useDeferredValue` whose main aim is to prevent blocking of interaction with the page for expensive updates.
+
+For more info, please read this github discussion https://github.com/reactwg/react-18/discussions/41 under How is it different from setTimeout?
 
 ```tsx
-export function atomWithDebounce<Value>(
-  initialValue: Value,
+import { atom, Getter, PrimitiveAtom, Setter } from 'jotai'
+import { SetStateAction } from 'react'
+
+export default function atomWithDebounce<T>(
+  initialValue: T,
   delayMilliseconds = 500,
   shouldDebounceOnReset = false
 ) {
-  let timeout: NodeJS.Timeout
+  const prevTimeoutAtom = atom<ReturnType<typeof setTimeout> | null>(null)
 
   // DO NOT EXPORT currentValueAtom as using this atom to set state can cause
   // inconsistent state between currentValueAtom and debouncedValueAtom
-  const currentValueAtom = atom(initialValue)
+  const _currentValueAtom = atom(initialValue)
+  const isDebouncingAtom = atom(false)
+
+  const clearTimeoutId = (
+    get: Getter,
+    set: Setter,
+    prevTimeoutAtom: PrimitiveAtom<ReturnType<typeof setTimeout> | null>
+  ) => {
+    const prevTimeoutId = get(prevTimeoutAtom)
+    if (prevTimeoutId) {
+      clearTimeout(prevTimeoutId)
+      set(prevTimeoutAtom, null)
+    }
+  }
 
   const debouncedValueAtom = atom(
     initialValue,
-    (get, set, update: SetStateAction<Value>) => {
-      clearTimeout(timeout)
-      const prevValue = get(currentValueAtom)
+    (get, set, update: SetStateAction<T>) => {
+      clearTimeoutId(get, set, prevTimeoutAtom)
+
+      const prevValue = get(_currentValueAtom)
       const nextValue =
         typeof update === 'function'
-          ? (update as (prev: Value) => Value)(prevValue)
+          ? (update as (prev: T) => T)(prevValue)
           : update
 
-      set(currentValueAtom, nextValue)
+      const onDebounceStart = () => {
+        set(_currentValueAtom, nextValue)
+        set(isDebouncingAtom, true)
+      }
+
+      const onDebounceEnd = () => {
+        set(debouncedValueAtom, nextValue)
+        set(isDebouncingAtom, false)
+      }
+
+      onDebounceStart()
 
       if (!shouldDebounceOnReset && nextValue === initialValue) {
-        set(debouncedValueAtom, nextValue)
+        onDebounceEnd()
         return
       }
 
-      set(currentValueAtom, nextValue)
-
-      timeout = setTimeout(() => {
-        set(debouncedValueAtom, nextValue)
+      const nextTimeoutId = setTimeout(() => {
+        onDebounceEnd()
       }, delayMilliseconds)
+
+      // set previous timeout atom in case it needs to get cleared
+      set(prevTimeoutAtom, nextTimeoutId)
     }
   )
 
-  const isDebouncingAtom = atom(
-    (get) => get(currentValueAtom) !== get(debouncedValueAtom)
-  )
+  // exported atom setter to clear timeout if needed
+  const clearTimeoutAtom = atom(null, (get, set, _arg) => {
+    clearTimeoutId(get, set, prevTimeoutAtom)
+    set(isDebouncingAtom, false)
+    set(_currentValueAtom, get(debouncedValueAtom))
+  })
 
   return {
-    readOnlyCurrentValueAtom: atom((get) => get(currentValueAtom)),
+    currentValueAtom: atom((get) => get(_currentValueAtom)),
     isDebouncingAtom,
+    clearTimeoutAtom,
     debouncedValueAtom,
   }
 }
@@ -414,8 +452,10 @@ export function atomWithDebounce<Value>(
 
 ### Example Usage
 
-The sandbox link below shows how we would use a derived atom to fetch state based on the value of `debouncedValue`.
+The sandbox link below shows how we would use a derived atom to fetch state based on the value of `debouncedValueAtom`.
 
-When typing a pokemon's name in `<SearchInput>`, we do not fire a fetch on every letter, but only after `delayMilliseconds` has passed since the last text input.
+When typing a pokemon's name in `<SearchInput>`, we do not send a get request on every letter, but only after `delayMilliseconds` has passed since the last text input.
+
+This reduces the number of backend requests to the server.
 
 [CodeSandbox](https://codesandbox.io/s/withered-tdd-cjrz2y?file=/src/App.tsx)
