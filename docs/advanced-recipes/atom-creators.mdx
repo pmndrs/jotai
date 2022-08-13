@@ -364,7 +364,7 @@ const ListOfThings = () => {
 This util is useful for text search inputs, where you would like to call **functions in derived atoms only once** after waiting for a duration, instead of firing an action on every keystroke.
 
 ```tsx
-import { atom, Getter, PrimitiveAtom, Setter } from 'jotai'
+import { atom } from 'jotai'
 import { SetStateAction } from 'react'
 
 export default function atomWithDebounce<T>(
@@ -372,29 +372,19 @@ export default function atomWithDebounce<T>(
   delayMilliseconds = 500,
   shouldDebounceOnReset = false
 ) {
-  const prevTimeoutAtom = atom<ReturnType<typeof setTimeout> | null>(null)
+  const prevTimeoutAtom = atom<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  )
 
   // DO NOT EXPORT currentValueAtom as using this atom to set state can cause
   // inconsistent state between currentValueAtom and debouncedValueAtom
   const _currentValueAtom = atom(initialValue)
   const isDebouncingAtom = atom(false)
 
-  const clearTimeoutId = (
-    get: Getter,
-    set: Setter,
-    prevTimeoutAtom: PrimitiveAtom<ReturnType<typeof setTimeout> | null>
-  ) => {
-    const prevTimeoutId = get(prevTimeoutAtom)
-    if (prevTimeoutId) {
-      clearTimeout(prevTimeoutId)
-      set(prevTimeoutAtom, null)
-    }
-  }
-
   const debouncedValueAtom = atom(
     initialValue,
     (get, set, update: SetStateAction<T>) => {
-      clearTimeoutId(get, set, prevTimeoutAtom)
+      clearTimeout(get(prevTimeoutAtom))
 
       const prevValue = get(_currentValueAtom)
       const nextValue =
@@ -430,7 +420,7 @@ export default function atomWithDebounce<T>(
 
   // exported atom setter to clear timeout if needed
   const clearTimeoutAtom = atom(null, (get, set, _arg) => {
-    clearTimeoutId(get, set, prevTimeoutAtom)
+    clearTimeout(get(prevTimeoutAtom))
     set(isDebouncingAtom, false)
   })
 
