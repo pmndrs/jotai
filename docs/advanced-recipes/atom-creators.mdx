@@ -364,8 +364,7 @@ const ListOfThings = () => {
 This util is useful for text search inputs, where you would like to call **functions in derived atoms only once** after waiting for a duration, instead of firing an action on every keystroke.
 
 ```tsx
-import { atom } from 'jotai'
-import { SetStateAction } from 'react'
+import { atom, SetStateAction } from 'jotai'
 
 export default function atomWithDebounce<T>(
   initialValue: T,
