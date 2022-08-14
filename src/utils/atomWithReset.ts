@@ -15,12 +15,7 @@ export function atomWithReset<Value>(initialValue: Value) {
         ? (update as (prev: Value) => Value | typeof RESET)(get(anAtom))
         : update
 
-    if (nextValue === RESET) {
-      set(anAtom, initialValue)
-      return
-    }
-
-    set(anAtom, nextValue)
+    set(anAtom, nextValue === RESET ? initialValue : nextValue)
   })
   return anAtom as WritableAtom<Value, Update>
 }
