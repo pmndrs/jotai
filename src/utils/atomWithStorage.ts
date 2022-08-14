@@ -150,18 +150,18 @@ export function atomWithStorage<Value>(
   const anAtom = atom(
     (get) => get(baseAtom),
     (get, set, update: SetStateActionWithReset<Value>) => {
-      const newValue =
+      const nextValue =
         typeof update === 'function'
           ? (update as (prev: Value) => Value | typeof RESET)(get(baseAtom))
           : update
 
-      if (newValue === RESET) {
+      if (nextValue === RESET) {
         set(baseAtom, initialValue)
         return storage.removeItem(key)
       }
 
-      set(baseAtom, newValue)
-      return storage.setItem(key, newValue)
+      set(baseAtom, nextValue)
+      return storage.setItem(key, nextValue)
     }
   )
 
