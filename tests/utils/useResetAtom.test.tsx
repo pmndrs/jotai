@@ -57,7 +57,7 @@ it('atomWithReset resets to its first value', async () => {
   await findByText('count: 13')
 })
 
-it('atomWithReset with previous value conditional reset', async () => {
+it('atomWithReset reset based on previous value', async () => {
   const countAtom = atomWithReset(0)
 
   const Parent = () => {
@@ -69,7 +69,7 @@ it('atomWithReset with previous value conditional reset', async () => {
           onClick={() =>
             setValue((oldValue) => (oldValue === 3 ? RESET : oldValue + 1))
           }>
-          increment count with ceiling of 3
+          increment till 3, then reset
         </button>
       </>
     )
@@ -83,14 +83,14 @@ it('atomWithReset with previous value conditional reset', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('increment count with ceiling of 3'))
+  fireEvent.click(getByText('increment till 3, then reset'))
   await findByText('count: 1')
-  fireEvent.click(getByText('increment count with ceiling of 3'))
+  fireEvent.click(getByText('increment till 3, then reset'))
   await findByText('count: 2')
-  fireEvent.click(getByText('increment count with ceiling of 3'))
+  fireEvent.click(getByText('increment till 3, then reset'))
   await findByText('count: 3')
 
-  fireEvent.click(getByText('increment count with ceiling of 3'))
+  fireEvent.click(getByText('increment till 3, then reset'))
   await findByText('count: 0')
 })
 
