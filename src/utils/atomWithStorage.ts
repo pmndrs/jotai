@@ -6,6 +6,7 @@ type Unsubscribe = () => void
 
 type SetStateActionWithReset<Value> =
   | Value
+  | typeof RESET
   | ((prev: Value) => Value | typeof RESET)
 
 export interface AsyncStorage<Value> {
@@ -156,7 +157,7 @@ export function atomWithStorage<Value>(
 
   const anAtom = atom(
     (get) => get(baseAtom),
-    (get, set, update: SetStateActionWithReset<Value> | typeof RESET) => {
+    (get, set, update: SetStateActionWithReset<Value>) => {
       const newValue =
         typeof update === 'function'
           ? (update as (prev: Value) => Value | typeof RESET)(get(baseAtom))
