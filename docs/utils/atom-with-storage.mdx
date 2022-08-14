@@ -53,7 +53,10 @@ The suggested workaround for this issue is to only render the content dependent 
 For the case you want to delete an item from storage,
 the atom created with `atomWithStorage` accepts the `RESET` symbol on write.
 
-See the following example for the usage:
+See the following example for RESET usage:
+
+- The button resets text to 'hello'
+- The second input element exemplifies how you could use a previous value to conditionally trigger a reset
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -68,6 +71,11 @@ const TextBox = () => {
     <>
       <input value={text} onChange={(e) => setText(e.target.value)} />
       <button onClick={() => setText(RESET)}>Reset (to 'hello')</button>
+
+      {/* 
+        trigger a reset based on the previous value. If input text is reset, we
+        will reset value to 'hello' 
+      */}
       <input
         value={text}
         onChange={(e) =>
