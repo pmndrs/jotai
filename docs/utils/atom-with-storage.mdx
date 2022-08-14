@@ -55,8 +55,9 @@ the atom created with `atomWithStorage` accepts the `RESET` symbol on write.
 
 See the following example for RESET usage:
 
-- The button resets text to 'hello'
-- The second input element exemplifies how you could use a previous value to conditionally trigger a reset
+- The input element exemplifies how you could use a previous value to conditionally trigger a reset based on previous value.
+  - In the example, `text` will be reset to `hello` if previous atom value === 'reset'
+- The button resets text to 'hello' when clicked.
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -69,19 +70,13 @@ const TextBox = () => {
 
   return (
     <>
-      <input value={text} onChange={(e) => setText(e.target.value)} />
-      <button onClick={() => setText(RESET)}>Reset (to 'hello')</button>
-
-      {/* 
-        trigger a reset based on the previous value. If input text is reset, we
-        will reset value to 'hello' 
-      */}
       <input
         value={text}
         onChange={(e) =>
           setText((prev) => (prev === 'reset' ? RESET : e.target.value))
         }
       />
+      <button onClick={() => setText(RESET)}>Reset (to 'hello')</button>
     </>
   )
 }
