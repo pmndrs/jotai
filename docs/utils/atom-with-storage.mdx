@@ -53,11 +53,7 @@ The suggested workaround for this issue is to only render the content dependent 
 For the case you want to delete an item from storage,
 the atom created with `atomWithStorage` accepts the `RESET` symbol on write.
 
-See the following example for RESET usage:
-
-- The input element exemplifies how you could use a previous value to conditionally trigger a reset based on previous value.
-  - In the example, `text` will be reset to `hello` if previous atom value === 'reset'
-- The button resets text to 'hello' when clicked.
+See the following example for the usage:
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -70,13 +66,32 @@ const TextBox = () => {
 
   return (
     <>
-      <input
-        value={text}
-        onChange={(e) =>
-          setText((prev) => (prev === 'reset' ? RESET : e.target.value))
-        }
-      />
+      <input value={text} onChange={(e) => setText(e.target.value)} />
       <button onClick={() => setText(RESET)}>Reset (to 'hello')</button>
+    </>
+  )
+}
+```
+
+If needed, you can also do conditional resets based on previous value.
+
+This can be particularly useful if you wish to clear keys in localStorage if previous values meet a condition.
+
+Below exemplifies this usage that clears the `visible` key whenever the previous value is `true`.
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithStorage, RESET } from 'jotai/utils'
+
+const isVisibleAtom = atomWithStorage('visible', false)
+
+const TextBox = () => {
+  const [isVisible, setIsVisible] = useAtom(isVisibleAtom)
+
+  return (
+    <>
+      { isVisible && <h1>Header is visible!</h1> }
+      <button onClick={() => setIsVisible((prev) => prev ? RESET : true))}>Toggle visible</button>
     </>
   )
 }
