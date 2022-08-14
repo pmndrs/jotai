@@ -89,32 +89,24 @@ export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage: AsyncStorage<Value> & { delayInit: true }
-): WritableAtom<
-  Value,
-  SetStateActionWithReset<Value> | typeof RESET,
-  Promise<void>
->
+): WritableAtom<Value, SetStateActionWithReset<Value>, Promise<void>>
 
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage: AsyncStorage<Value>
-): WritableAtom<
-  Promise<Value>,
-  SetStateActionWithReset<Value> | typeof RESET,
-  Promise<void>
->
+): WritableAtom<Promise<Value>, SetStateActionWithReset<Value>, Promise<void>>
 
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage: SyncStorage<Value>
-): WritableAtom<Value, SetStateActionWithReset<Value> | typeof RESET>
+): WritableAtom<Value, SetStateActionWithReset<Value>>
 
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value
-): WritableAtom<Value, SetStateActionWithReset<Value> | typeof RESET>
+): WritableAtom<Value, SetStateActionWithReset<Value>>
 
 export function atomWithStorage<Value>(
   key: string,
@@ -188,7 +180,7 @@ export function atomWithHash<Value>(
     replaceState?: boolean
     subscribe?: (callback: () => void) => () => void
   }
-): WritableAtom<Value, SetStateActionWithReset<Value> | typeof RESET> {
+): WritableAtom<Value, SetStateActionWithReset<Value>> {
   const serialize = options?.serialize || JSON.stringify
   const deserialize = options?.deserialize || JSON.parse
   const subscribe =
