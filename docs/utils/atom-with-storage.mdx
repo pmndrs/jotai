@@ -68,8 +68,8 @@ const TextBox = () => {
     <>
       <input value={text} onChange={(e) => setText(e.target.value)} />
       <button onClick={() => setText(RESET)}>Reset (to 'hello')</button>
-      <button
-        onClick={(e) =>
+      <input value={text}
+        onChange={(e) =>
           setText((prev) => (prev === 'reset' ? RESET : e.target.value))
         }>
         Reset value if input text === reset
