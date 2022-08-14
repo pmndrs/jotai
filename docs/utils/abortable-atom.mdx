@@ -4,6 +4,7 @@ title: abortableAtom
 
 The `abortableAtom` utility is to define a derived atom with abortability.
 It uses [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) so that you can abort async functions.
+Abort is triggered before new calculation (invoking `read` function) is started.
 
 How to use it:
 
