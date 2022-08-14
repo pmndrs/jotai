@@ -1,20 +1,26 @@
 import { atom } from 'jotai'
-import type { SetStateAction, WritableAtom } from 'jotai'
+import type { WritableAtom } from 'jotai'
 import { RESET } from './constants'
 
+type SetStateActionWithReset<Value> =
+  | Value
+  | typeof RESET
+  | ((prev: Value) => Value | typeof RESET)
+
 export function atomWithReset<Value>(initialValue: Value) {
-  type Update = SetStateAction<Value> | typeof RESET
+  type Update = SetStateActionWithReset<Value>
   const anAtom = atom<Value, Update>(initialValue, (get, set, update) => {
-    if (update === RESET) {
+    const nextValue =
+      typeof update === 'function'
+        ? (update as (prev: Value) => Value | typeof RESET)(get(anAtom))
+        : update
+
+    if (nextValue === RESET) {
       set(anAtom, initialValue)
-    } else {
-      set(
-        anAtom,
-        typeof update === 'function'
-          ? (update as (prev: Value) => Value)(get(anAtom))
-          : update
-      )
+      return
     }
+
+    set(anAtom, nextValue)
   })
   return anAtom as WritableAtom<Value, Update>
 }
