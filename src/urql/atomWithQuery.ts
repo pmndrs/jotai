@@ -97,9 +97,9 @@ export function atomWithQuery<Data, Variables extends object>(
         return
       }
       // TODO error handling
-      if (!isOperationResultWithData(result)) {
-        throw new Error('result does not have data')
-      }
+      // if (!isOperationResultWithData(result)) {
+      //   throw new Error('result does not have data')
+      // }
       if (resolve) {
         resolve(result)
         resolve = null
@@ -161,7 +161,7 @@ export function atomWithQuery<Data, Variables extends object>(
             throw new Error('query is paused')
           }
           const { args, client, subscriptionAtom, listener } = queryResult
-          listener(new Promise<never>(() => {})) // infinite pending
+          listener(new Promise<never>(() => { })) // infinite pending
           const newSubscription = pipe(
             client.query(args.query, args.variables, {
               ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),

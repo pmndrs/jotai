@@ -72,9 +72,9 @@ export function atomWithSubscription<Data, Variables extends object>(
     let isMounted = false
     const listener = (result: OperationResult<Data, Variables>) => {
       // TODO error handling
-      if (!isOperationResultWithData(result)) {
-        throw new Error('result does not have data')
-      }
+      // if (!isOperationResultWithData(result)) {
+      //   throw new Error('result does not have data')
+      // }
       if (resolve) {
         if (!isMounted) {
           subscription?.unsubscribe()
