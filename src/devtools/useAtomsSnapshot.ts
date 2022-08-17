@@ -7,7 +7,6 @@ import {
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
 } from '../core/store'
-import type { AtomState, Store } from '../core/store'
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
