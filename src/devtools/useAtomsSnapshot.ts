@@ -96,10 +96,6 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
       invalidatedAtoms.clear()
       setAtomsSnapshot({ values, dependents })
     }
-    /* const callback = () => {
-      const atoms = Array.from(store[DEV_GET_MOUNTED_ATOMS]?.() || [])
-      setAtomsSnapshot(createAtomsSnapshot(store, atoms))
-    } */
     const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
     callback()
     return unsubscribe
