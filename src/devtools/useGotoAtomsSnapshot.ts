@@ -12,6 +12,11 @@ type AtomsSnapshot = Readonly<{
   dependents: AtomsDependents
 }>
 
+/**
+ * @deprecated use object snapshot instead
+ */
+type DeprecatedIterableSnapshot = Iterable<readonly [AnyAtom, AnyAtomValue]>
+
 export function useGotoAtomsSnapshot(scope?: Scope) {
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
@@ -21,9 +26,9 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
   }
 
   return useCallback(
-    (snapshot: Iterable<readonly [Atom<unknown>, unknown]> | AtomsSnapshot) => {
+    (snapshot: AtomsSnapshot | DeprecatedIterableSnapshot) => {
       const restoreAtoms = (
-        values: Iterable<readonly [Atom<unknown>, unknown]>
+        values: Iterable<readonly [AnyAtom, AnyAtomValue]>
       ) => {
         if (versionedWrite) {
           versionedWrite((version) => {
@@ -48,6 +53,6 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
   )
 }
 
-function isIterable(item: any): item is Iterable<any> {
+const isIterable = (item: any): item is Iterable<any> => {
   return typeof item[Symbol.iterator] === 'function'
 }
