@@ -1,7 +1,7 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "1.7.8",
+  "version": "1.8.0",
   "description": "👻 Next gen state management that will spook you",
   "main": "./index.js",
   "types": "./index.d.ts",
