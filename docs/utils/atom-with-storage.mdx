@@ -73,6 +73,30 @@ const TextBox = () => {
 }
 ```
 
+If needed, you can also do conditional resets based on previous value.
+
+This can be particularly useful if you wish to clear keys in localStorage if previous values meet a condition.
+
+Below exemplifies this usage that clears the `visible` key whenever the previous value is `true`.
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithStorage, RESET } from 'jotai/utils'
+
+const isVisibleAtom = atomWithStorage('visible', false)
+
+const TextBox = () => {
+  const [isVisible, setIsVisible] = useAtom(isVisibleAtom)
+
+  return (
+    <>
+      { isVisible && <h1>Header is visible!</h1> }
+      <button onClick={() => setIsVisible((prev) => prev ? RESET : true))}>Toggle visible</button>
+    </>
+  )
+}
+```
+
 ## React-Native implementation
 
 You can use any library that implements `getItem`, `setItem` & `removeItem`.

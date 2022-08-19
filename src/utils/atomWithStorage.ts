@@ -1,8 +1,13 @@
 import { atom } from 'jotai'
-import type { SetStateAction, WritableAtom } from 'jotai'
+import type { WritableAtom } from 'jotai'
 import { RESET } from './constants'
 
 type Unsubscribe = () => void
+
+type SetStateActionWithReset<Value> =
+  | Value
+  | typeof RESET
+  | ((prev: Value) => Value | typeof RESET)
 
 export interface AsyncStorage<Value> {
   getItem: (key: string) => Promise<Value>
@@ -84,28 +89,24 @@ export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage: AsyncStorage<Value> & { delayInit: true }
-): WritableAtom<Value, SetStateAction<Value> | typeof RESET, Promise<void>>
+): WritableAtom<Value, SetStateActionWithReset<Value>, Promise<void>>
 
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage: AsyncStorage<Value>
-): WritableAtom<
-  Promise<Value>,
-  SetStateAction<Value> | typeof RESET,
-  Promise<void>
->
+): WritableAtom<Promise<Value>, SetStateActionWithReset<Value>, Promise<void>>
 
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage: SyncStorage<Value>
-): WritableAtom<Value, SetStateAction<Value> | typeof RESET>
+): WritableAtom<Value, SetStateActionWithReset<Value>>
 
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value
-): WritableAtom<Value, SetStateAction<Value> | typeof RESET>
+): WritableAtom<Value, SetStateActionWithReset<Value>>
 
 export function atomWithStorage<Value>(
   key: string,
@@ -148,17 +149,19 @@ export function atomWithStorage<Value>(
 
   const anAtom = atom(
     (get) => get(baseAtom),
-    (get, set, update: SetStateAction<Value> | typeof RESET) => {
-      if (update === RESET) {
+    (get, set, update: SetStateActionWithReset<Value>) => {
+      const nextValue =
+        typeof update === 'function'
+          ? (update as (prev: Value) => Value | typeof RESET)(get(baseAtom))
+          : update
+
+      if (nextValue === RESET) {
         set(baseAtom, initialValue)
         return storage.removeItem(key)
       }
-      const newValue =
-        typeof update === 'function'
-          ? (update as (prev: Value) => Value)(get(baseAtom))
-          : update
-      set(baseAtom, newValue)
-      return storage.setItem(key, newValue)
+
+      set(baseAtom, nextValue)
+      return storage.setItem(key, nextValue)
     }
   )
 
@@ -177,7 +180,7 @@ export function atomWithHash<Value>(
     replaceState?: boolean
     subscribe?: (callback: () => void) => () => void
   }
-): WritableAtom<Value, SetStateAction<Value> | typeof RESET> {
+): WritableAtom<Value, SetStateActionWithReset<Value>> {
   const serialize = options?.serialize || JSON.stringify
   const deserialize = options?.deserialize || JSON.parse
   const subscribe =

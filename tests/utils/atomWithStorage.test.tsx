@@ -137,6 +137,9 @@ describe('with sync string storage', () => {
           <div>count: {count}</div>
           <button onClick={() => setCount((c) => c + 1)}>button</button>
           <button onClick={() => setCount(RESET)}>reset</button>
+          <button onClick={() => setCount((c) => (c === 2 ? RESET : c + 1))}>
+            conditional reset
+          </button>
         </>
       )
     }
@@ -154,6 +157,14 @@ describe('with sync string storage', () => {
     expect(storageData.count).toBe('11')
 
     fireEvent.click(getByText('reset'))
+    await findByText('count: 1')
+    expect(storageData.count).toBeUndefined()
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 2')
+    expect(storageData.count).toBe('2')
+
+    fireEvent.click(getByText('conditional reset'))
     await findByText('count: 1')
     expect(storageData.count).toBeUndefined()
   })
@@ -361,6 +372,47 @@ describe('atomWithHash', () => {
 
     fireEvent.click(getByText('reset'))
     await findByText('count: 1')
+    expect(window.location.hash).toEqual('')
+  })
+
+  it('returning reset from state dispatcher', async () => {
+    const isVisibleAtom = atomWithHash('isVisible', true)
+
+    const Counter = () => {
+      const [isVisible, setIsVisible] = useAtom(isVisibleAtom)
+      return (
+        <>
+          {isVisible && <div id="visible">visible</div>}
+          <button onClick={() => setIsVisible((prev) => !prev)}>button</button>
+          <button onClick={() => setIsVisible(RESET)}>reset</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText, queryByText } = render(
+      <Provider>
+        <Counter />
+      </Provider>
+    )
+
+    await findByText('visible')
+
+    fireEvent.click(getByText('button'))
+
+    await waitFor(() => {
+      expect(queryByText('visible')).toBeNull()
+    })
+
+    expect(window.location.hash).toEqual('#isVisible=false')
+
+    fireEvent.click(getByText('button'))
+    await findByText('visible')
+    expect(window.location.hash).toEqual('#isVisible=true')
+
+    fireEvent.click(getByText('button'))
+
+    fireEvent.click(getByText('reset'))
+    await findByText('visible')
     expect(window.location.hash).toEqual('')
   })
 })
