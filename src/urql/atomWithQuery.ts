@@ -128,7 +128,7 @@ export function atomWithQuery<Data, Variables extends object>(
           client.query(args.query, args.variables, {
             ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
             ...args.context,
-          }),
+          }) as any, // FIXME can anyone fix typing without any?
           subscribe(listener)
         )
         set(subscriptionAtom, subscription)
@@ -167,7 +167,7 @@ export function atomWithQuery<Data, Variables extends object>(
               ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
               ...args.context,
               ...action.opts,
-            }),
+            }) as any, // FIXME can anyone fix typing without any?
             subscribe(listener)
           )
           const oldSubscription = get(subscriptionAtom)
