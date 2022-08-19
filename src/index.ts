@@ -18,3 +18,9 @@ export type {
  * It can change without notice. Do not use it in application code.
  */
 export { getScopeContext as SECRET_INTERNAL_getScopeContext } from './core/contexts'
+
+/**
+ * This is exported for internal use only.
+ * It can change without notice. Do not use it in application code.
+ */
+export { registerPromiseAbort as SECRET_INTERNAL_registerPromiseAbort } from './core/suspensePromise'
