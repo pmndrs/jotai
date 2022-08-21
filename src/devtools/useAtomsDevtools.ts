@@ -1,13 +1,7 @@
-import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
 import type { Atom, Scope } from '../core/atom'
-import {
-  DEV_GET_ATOM_STATE,
-  DEV_GET_MOUNTED,
-  DEV_GET_MOUNTED_ATOMS,
-  DEV_SUBSCRIBE_STATE,
-  RESTORE_ATOMS,
-} from '../core/store'
+import { DEV_SUBSCRIBE_STATE } from '../core/store'
 import { Message } from './types'
 import { useAtomsSnapshot } from './useAtomsSnapshot'
 import { useGotoAtomsSnapshot } from './useGotoAtomsSnapshot'
@@ -20,24 +14,6 @@ type AtomsSnapshot = Readonly<{
   values: AtomsValues
   dependents: AtomsDependents
 }>
-
-const isEqualAtomsValues = (left: AtomsValues, right: AtomsValues) =>
-  left.size === right.size &&
-  Array.from(left).every(([left, v]) => Object.is(right.get(left), v))
-
-const isEqualAtomsDependents = (
-  left: AtomsDependents,
-  right: AtomsDependents
-) =>
-  left.size === right.size &&
-  Array.from(left).every(([a, dLeft]) => {
-    const dRight = right.get(a)
-    return (
-      dRight &&
-      dLeft.size === dRight.size &&
-      Array.from(dLeft).every((d) => dRight.has(d))
-    )
-  })
 
 const atomToPrintable = (atom: AnyAtom) =>
   atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
@@ -79,7 +55,7 @@ export function useAtomsDevtools(
   }
   const { enabled, scope } = options || {}
   const ScopeContext = getScopeContext(scope)
-  const { s: store, w: versionedWrite } = useContext(ScopeContext)
+  const { s: store } = useContext(ScopeContext)
 
   let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
 
