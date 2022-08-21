@@ -9,6 +9,8 @@ import {
   RESTORE_ATOMS,
 } from '../core/store'
 import { Message } from './types'
+import { useAtomsSnapshot } from './useAtomsSnapshot'
+import { useGotoAtomsSnapshot } from './useGotoAtomsSnapshot'
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
@@ -97,78 +99,12 @@ export function useAtomsDevtools(
     throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
-  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => ({
-    values: new Map(),
-    dependents: new Map(),
-  }))
+  if (!__DEV__ && enabled) {
+    return
+  }
 
-  useEffect(() => {
-    if (!extension) {
-      return
-    }
-    let prevValues: AtomsValues = new Map()
-    let prevDependents: AtomsDependents = new Map()
-    const invalidatedAtoms = new Set<AnyAtom>()
-    const callback = () => {
-      const values: AtomsValues = new Map()
-      const dependents: AtomsDependents = new Map()
-      let hasNewInvalidatedAtoms = false
-      for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
-        const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
-        if (atomState) {
-          if (!atomState.y) {
-            if ('p' in atomState) {
-              // ignore entirely if we have invalidated promise atoms
-              return
-            }
-            if (!invalidatedAtoms.has(atom)) {
-              invalidatedAtoms.add(atom)
-              hasNewInvalidatedAtoms = true
-            }
-          }
-          if ('v' in atomState) {
-            values.set(atom, atomState.v)
-          }
-        }
-        const mounted = store[DEV_GET_MOUNTED]?.(atom)
-        if (mounted) {
-          dependents.set(atom, mounted.t)
-        }
-      }
-      if (hasNewInvalidatedAtoms) {
-        // ignore entirely if we have new invalidated atoms
-        return
-      }
-      if (
-        isEqualAtomsValues(prevValues, values) &&
-        isEqualAtomsDependents(prevDependents, dependents)
-      ) {
-        // not changed
-        return
-      }
-      prevValues = values
-      prevDependents = dependents
-      invalidatedAtoms.clear()
-      setAtomsSnapshot({ values, dependents })
-    }
-    const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
-    callback()
-    return unsubscribe
-  }, [extension, store])
-
-  const goToSnapshot = useCallback(
-    (snapshot: AtomsSnapshot) => {
-      const { values } = snapshot
-      if (versionedWrite) {
-        versionedWrite((version) => {
-          store[RESTORE_ATOMS](values, version)
-        })
-      } else {
-        store[RESTORE_ATOMS](values)
-      }
-    },
-    [store, versionedWrite]
-  )
+  const atomsSnapshot = useAtomsSnapshot(scope)
+  const goToSnapshot = useGotoAtomsSnapshot(scope)
 
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)
