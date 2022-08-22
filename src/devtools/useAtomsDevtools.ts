@@ -1,7 +1,5 @@
-import { useContext, useEffect, useRef } from 'react'
-import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
+import { useEffect, useRef } from 'react'
 import type { Atom, Scope } from '../core/atom'
-import { DEV_SUBSCRIBE_STATE } from '../core/store'
 import { Message } from './types'
 import { useAtomsSnapshot } from './useAtomsSnapshot'
 import { useGotoAtomsSnapshot } from './useGotoAtomsSnapshot'
@@ -54,8 +52,6 @@ export function useAtomsDevtools(
     options = { scope: options }
   }
   const { enabled, scope } = options || {}
-  const ScopeContext = getScopeContext(scope)
-  const { s: store } = useContext(ScopeContext)
 
   let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
 
@@ -69,10 +65,6 @@ export function useAtomsDevtools(
     if (__DEV__ && enabled) {
       console.warn('Please install/enable Redux devtools extension')
     }
-  }
-
-  if (extension && !store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useAtomsDevtools can only be used in dev mode.')
   }
 
   if (!__DEV__ && enabled) {
