@@ -59,10 +59,6 @@ export function useAtomsSnapshot(options?: Options | Scope): AtomsSnapshot {
   const scopeContainer = useContext(ScopeContext)
   const store = scopeContainer.s
 
-  if (enabled && !store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useAtomsSnapshot can only be used in dev mode.')
-  }
-
   const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => ({
     values: new Map(),
     dependents: new Map(),
