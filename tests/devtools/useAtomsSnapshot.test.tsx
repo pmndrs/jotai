@@ -4,6 +4,7 @@ import { Provider, atom, useAtom } from 'jotai'
 import { useAtomsSnapshot } from 'jotai/devtools'
 
 it('[DEV-ONLY] should register newly added atoms', async () => {
+  __DEV__ = true
   const countAtom = atom(1)
   const petAtom = atom('cat')
 
@@ -44,6 +45,7 @@ it('[DEV-ONLY] should register newly added atoms', async () => {
 })
 
 it('[DEV-ONLY] should let you access atoms and their state', async () => {
+  __DEV__ = true
   const countAtom = atom(1)
   countAtom.debugLabel = 'countAtom'
   const petAtom = atom('cat')
@@ -79,6 +81,7 @@ it('[DEV-ONLY] should let you access atoms and their state', async () => {
 })
 
 it('[DEV-ONLY] should contain initial values', async () => {
+  __DEV__ = true
   const countAtom = atom(1)
   countAtom.debugLabel = 'countAtom'
   const petAtom = atom('cat')
