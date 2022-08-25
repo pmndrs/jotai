@@ -35,26 +35,7 @@ const isEqualAtomsDependents = (
     )
   })
 
-type Options = {
-  scope?: Scope
-  enabled?: boolean
-}
-
-export function useAtomsSnapshot(options?: Options): AtomsSnapshot
-
-/*
- * @deprecated Please use object options (DevtoolsOptions)
- */
-export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot
-
-export function useAtomsSnapshot(options?: Options | Scope): AtomsSnapshot {
-  if (typeof options !== 'undefined' && typeof options !== 'object') {
-    console.warn('DEPRECATED [useAtomsSnapshot] use Options')
-    options = { scope: options }
-  }
-
-  const { enabled, scope } = options || {}
-
+export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
   const ScopeContext = getScopeContext(scope)
   const scopeContainer = useContext(ScopeContext)
   const store = scopeContainer.s
@@ -63,10 +44,6 @@ export function useAtomsSnapshot(options?: Options | Scope): AtomsSnapshot {
     values: new Map(),
     dependents: new Map(),
   }))
-
-  if (!__DEV__ && enabled) {
-    return atomsSnapshot
-  }
 
   useEffect(() => {
     let prevValues: AtomsValues = new Map()
