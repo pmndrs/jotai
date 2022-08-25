@@ -21,12 +21,10 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
   const ScopeContext = getScopeContext(scope)
   const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
-  if (!store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useGotoAtomsSnapshot can only be used in dev mode.')
-  }
-
   return useCallback(
     (snapshot: AtomsSnapshot | DeprecatedIterableSnapshot) => {
+      if (!__DEV__) return
+
       const restoreAtoms = (
         values: Iterable<readonly [AnyAtom, AnyAtomValue]>
       ) => {

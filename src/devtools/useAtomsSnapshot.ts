@@ -47,6 +47,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
 
   useEffect(() => {
     if (!__DEV__) return
+
     let prevValues: AtomsValues = new Map()
     let prevDependents: AtomsDependents = new Map()
     const invalidatedAtoms = new Set<AnyAtom>()
