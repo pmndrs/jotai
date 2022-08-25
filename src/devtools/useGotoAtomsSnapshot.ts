@@ -23,7 +23,7 @@ export function useGotoAtomsSnapshot(scope?: Scope) {
 
   return useCallback(
     (snapshot: AtomsSnapshot | DeprecatedIterableSnapshot) => {
-      if (!__DEV__) return
+      if (!store[DEV_SUBSCRIBE_STATE]) return
 
       const restoreAtoms = (
         values: Iterable<readonly [AnyAtom, AnyAtomValue]>

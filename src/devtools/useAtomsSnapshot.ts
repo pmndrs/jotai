@@ -46,7 +46,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
   }))
 
   useEffect(() => {
-    if (!__DEV__) return
+    if (!store[DEV_SUBSCRIBE_STATE]) return
 
     let prevValues: AtomsValues = new Map()
     let prevDependents: AtomsDependents = new Map()
