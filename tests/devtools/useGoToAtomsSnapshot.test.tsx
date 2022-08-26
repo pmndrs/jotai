@@ -5,6 +5,7 @@ import type { Atom } from 'jotai'
 import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
 
 it('[DEV-ONLY] useGotoAtomsSnapshot should modify atoms snapshot', async () => {
+  __DEV__ = true
   const petAtom = atom('cat')
   const colorAtom = atom('blue')
 
@@ -51,6 +52,7 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should modify atoms snapshot', async () => {
 })
 
 it('[DEV-ONLY] useGotoAtomsSnapshot should work with derived atoms', async () => {
+  __DEV__ = true
   const priceAtom = atom(10)
   const taxAtom = atom((get) => get(priceAtom) * 0.2)
 
@@ -100,6 +102,7 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with derived atoms', async () =>
 })
 
 it('[DEV-ONLY] useGotoAtomsSnapshot should work with async derived atoms', async () => {
+  __DEV__ = true
   const priceAtom = atom(10)
   const taxAtom = atom(async (get) => {
     await new Promise((r) => setTimeout(r, 100))
@@ -156,6 +159,7 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with async derived atoms', async
 })
 
 it('[DEV-ONLY] useGotoAtomsSnapshot should work with original snapshot', async () => {
+  __DEV__ = true
   const priceAtom = atom(10)
   const taxAtom = atom((get) => get(priceAtom) * 0.2)
 
@@ -226,6 +230,7 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with original snapshot', async (
 })
 
 it('[DEV-ONLY] useGotoAtomsSnapshot should respect atom scope', async () => {
+  __DEV__ = true
   const scope = Symbol()
   const petAtom = atom('cat')
 

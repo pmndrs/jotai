@@ -40,16 +40,14 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
   const scopeContainer = useContext(ScopeContext)
   const store = scopeContainer.s
 
-  if (!store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useAtomsSnapshot can only be used in dev mode.')
-  }
-
   const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => ({
     values: new Map(),
     dependents: new Map(),
   }))
 
   useEffect(() => {
+    if (!store[DEV_SUBSCRIBE_STATE]) return
+
     let prevValues: AtomsValues = new Map()
     let prevDependents: AtomsDependents = new Map()
     const invalidatedAtoms = new Set<AnyAtom>()
@@ -57,8 +55,8 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
       const values: AtomsValues = new Map()
       const dependents: AtomsDependents = new Map()
       let hasNewInvalidatedAtoms = false
-      for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
-        const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
+      for (const atom of store[DEV_GET_MOUNTED_ATOMS]() || []) {
+        const atomState = store[DEV_GET_ATOM_STATE](atom)
         if (atomState) {
           if (!atomState.y) {
             if ('p' in atomState) {
@@ -74,7 +72,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
             values.set(atom, atomState.v)
           }
         }
-        const mounted = store[DEV_GET_MOUNTED]?.(atom)
+        const mounted = store[DEV_GET_MOUNTED](atom)
         if (mounted) {
           dependents.set(atom, mounted.t)
         }
@@ -95,7 +93,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
       invalidatedAtoms.clear()
       setAtomsSnapshot({ values, dependents })
     }
-    const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
+    const unsubscribe = store[DEV_SUBSCRIBE_STATE](callback)
     callback()
     return unsubscribe
   }, [store])
