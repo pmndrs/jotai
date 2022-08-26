@@ -57,24 +57,24 @@ it('creates atoms', () => {
     sumCountAtom,
     decrementCountAtom,
   }).toMatchInlineSnapshot(`
-    Object {
-      "countAtom": Object {
+    {
+      "countAtom": {
         "init": 0,
         "read": [Function],
         "toString": [Function],
         "write": [Function],
       },
-      "decrementCountAtom": Object {
+      "decrementCountAtom": {
         "init": null,
         "read": [Function],
         "toString": [Function],
         "write": [Function],
       },
-      "doubledCountAtom": Object {
+      "doubledCountAtom": {
         "read": [Function],
         "toString": [Function],
       },
-      "sumCountAtom": Object {
+      "sumCountAtom": {
         "read": [Function],
         "toString": [Function],
         "write": [Function],
