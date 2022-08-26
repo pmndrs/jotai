@@ -13,6 +13,7 @@ export { splitAtom } from './utils/splitAtom'
 export { atomWithDefault } from './utils/atomWithDefault'
 export { waitForAll } from './utils/waitForAll'
 export {
+  NO_STORAGE_VALUE as unstable_NO_STORAGE_VALUE,
   atomWithStorage,
   atomWithHash,
   createJSONStorage,

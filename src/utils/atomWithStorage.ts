@@ -2,6 +2,8 @@ import { atom } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import { RESET } from './constants'
 
+export const NO_STORAGE_VALUE = Symbol()
+
 type Unsubscribe = () => void
 
 type SetStateActionWithReset<Value> =
@@ -10,7 +12,7 @@ type SetStateActionWithReset<Value> =
   | ((prev: Value) => Value | typeof RESET)
 
 export interface AsyncStorage<Value> {
-  getItem: (key: string) => Promise<Value>
+  getItem: (key: string) => Promise<Value | typeof NO_STORAGE_VALUE>
   setItem: (key: string, newValue: Value) => Promise<void>
   removeItem: (key: string) => Promise<void>
   delayInit?: boolean
@@ -18,7 +20,7 @@ export interface AsyncStorage<Value> {
 }
 
 export interface SyncStorage<Value> {
-  getItem: (key: string) => Value
+  getItem: (key: string) => Value | typeof NO_STORAGE_VALUE
   setItem: (key: string, newValue: Value) => void
   removeItem: (key: string) => void
   delayInit?: boolean
@@ -46,44 +48,55 @@ export function createJSONStorage<Value>(
 ): SyncStorage<Value>
 
 export function createJSONStorage<Value>(
-  getStringStorage: () => AsyncStringStorage | SyncStringStorage
+  getStringStorage: () => AsyncStringStorage | SyncStringStorage | undefined
 ): AsyncStorage<Value> | SyncStorage<Value> {
   let lastStr: string | undefined
   let lastValue: any
-  return {
+  const storage: AsyncStorage<Value> | SyncStorage<Value> = {
     getItem: (key) => {
       const parse = (str: string | null) => {
         str = str || ''
         if (lastStr !== str) {
-          lastValue = JSON.parse(str)
+          try {
+            lastValue = JSON.parse(str)
+          } catch {
+            return NO_STORAGE_VALUE
+          }
           lastStr = str
         }
         return lastValue
       }
-      const str = getStringStorage().getItem(key)
+      const str = getStringStorage()?.getItem(key) ?? null
       if (str instanceof Promise) {
         return str.then(parse)
       }
       return parse(str)
     },
     setItem: (key, newValue) =>
-      getStringStorage().setItem(key, JSON.stringify(newValue)),
-    removeItem: (key) => getStringStorage().removeItem(key),
+      getStringStorage()?.setItem(key, JSON.stringify(newValue)),
+    removeItem: (key) => getStringStorage()?.removeItem(key),
   }
-}
-
-const defaultStorage = createJSONStorage(() => localStorage)
-defaultStorage.subscribe = (key, callback) => {
-  const storageEventCallback = (e: StorageEvent) => {
-    if (e.key === key && e.newValue) {
-      callback(JSON.parse(e.newValue))
+  if (typeof window !== 'undefined') {
+    storage.subscribe = (key, callback) => {
+      const storageEventCallback = (e: StorageEvent) => {
+        if (e.key === key && e.newValue) {
+          callback(JSON.parse(e.newValue))
+        }
+      }
+      window.addEventListener('storage', storageEventCallback)
+      return () => {
+        window.removeEventListener('storage', storageEventCallback)
+      }
     }
   }
-  window.addEventListener('storage', storageEventCallback)
-  return () => {
-    window.removeEventListener('storage', storageEventCallback)
-  }
+  return storage
 }
+
+const defaultStorage = createJSONStorage(() =>
+  typeof window !== 'undefined'
+    ? window.localStorage
+    : (undefined as unknown as Storage)
+)
 
 export function atomWithStorage<Value>(
   key: string,
@@ -116,15 +129,11 @@ export function atomWithStorage<Value>(
     | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>
 ) {
   const getInitialValue = () => {
-    try {
-      const value = storage.getItem(key)
-      if (value instanceof Promise) {
-        return value.catch(() => initialValue)
-      }
-      return value
-    } catch {
-      return initialValue
+    const value = storage.getItem(key)
+    if (value instanceof Promise) {
+      return value.then((v) => (v === NO_STORAGE_VALUE ? initialValue : v))
     }
+    return value === NO_STORAGE_VALUE ? initialValue : value
   }
 
   const baseAtom = atom(storage.delayInit ? initialValue : getInitialValue())
@@ -175,14 +184,22 @@ export function atomWithHash<Value>(
   initialValue: Value,
   options?: {
     serialize?: (val: Value) => string
-    deserialize?: (str: string) => Value
+    deserialize?: (str: string | null) => Value | typeof NO_STORAGE_VALUE
     delayInit?: boolean
     replaceState?: boolean
     subscribe?: (callback: () => void) => () => void
   }
 ): WritableAtom<Value, SetStateActionWithReset<Value>> {
   const serialize = options?.serialize || JSON.stringify
-  const deserialize = options?.deserialize || JSON.parse
+  const deserialize =
+    options?.deserialize ||
+    ((str) => {
+      try {
+        return JSON.parse(str || '')
+      } catch {
+        return NO_STORAGE_VALUE
+      }
+    })
   const subscribe =
     options?.subscribe ||
     ((callback) => {
@@ -195,9 +212,6 @@ export function atomWithHash<Value>(
     getItem: (key) => {
       const searchParams = new URLSearchParams(location.hash.slice(1))
       const storedValue = searchParams.get(key)
-      if (storedValue === null) {
-        throw new Error('no value stored')
-      }
       return deserialize(storedValue)
     },
     setItem: (key, newValue) => {
