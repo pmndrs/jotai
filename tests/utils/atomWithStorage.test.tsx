@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai'
 import {
-  NO_STORAGE_VALUE,
+  unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE,
   RESET,
   atomWithHash,
   atomWithStorage,
