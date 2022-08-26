@@ -271,3 +271,25 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   await new Promise((r) => setTimeout(r, 10))
   expect(commitCount).toBe(commitCountAfterMount + 2)
 })
+
+it('setShouldRemove with custom equality function', async () => {
+  const myFamily = atomFamily(
+    (num: { index: number }) => atom(num),
+    (l, r) => l.index === r.index
+  )
+  let firstTime = true
+  myFamily.setShouldRemove(() => {
+    if (firstTime) {
+      firstTime = false
+      return true
+    }
+    return false
+  })
+
+  const family1 = myFamily({ index: 0 })
+  const family2 = myFamily({ index: 0 })
+  const family3 = myFamily({ index: 0 })
+
+  expect(family1).not.toBe(family2)
+  expect(family2).toBe(family3)
+})

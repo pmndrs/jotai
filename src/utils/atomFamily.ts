@@ -36,7 +36,7 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
 
     if (item !== undefined) {
       if (shouldRemove?.(item[1], param)) {
-        atoms.delete(param)
+        createAtom.remove(param)
       } else {
         return item[0]
       }
