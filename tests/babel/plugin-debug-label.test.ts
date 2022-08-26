@@ -14,21 +14,21 @@ const transform = (code: string, filename?: string) =>
 it('Should add a debugLabel to an atom', () => {
   expect(transform(`const countAtom = atom(0);`)).toMatchInlineSnapshot(`
     "const countAtom = atom(0);
-    countAtom.debugLabel = \\"countAtom\\";"
+    countAtom.debugLabel = "countAtom";"
   `)
 })
 
 it('Should handle a atom from a default export', () => {
   expect(transform(`const countAtom = jotai.atom(0);`)).toMatchInlineSnapshot(`
     "const countAtom = jotai.atom(0);
-    countAtom.debugLabel = \\"countAtom\\";"
+    countAtom.debugLabel = "countAtom";"
   `)
 })
 
 it('Should handle a atom being exported', () => {
   expect(transform(`export const countAtom = atom(0);`)).toMatchInlineSnapshot(`
     "export const countAtom = atom(0);
-    countAtom.debugLabel = \\"countAtom\\";"
+    countAtom.debugLabel = "countAtom";"
   `)
 })
 
@@ -36,7 +36,7 @@ it('Should handle a default exported atom', () => {
   expect(transform(`export default atom(0);`, 'countAtom.ts'))
     .toMatchInlineSnapshot(`
     "const countAtom = atom(0);
-    countAtom.debugLabel = \\"countAtom\\";
+    countAtom.debugLabel = "countAtom";
     export default countAtom;"
   `)
 })
@@ -45,7 +45,7 @@ it('Should handle a default exported atom in a barrel file', () => {
   expect(transform(`export default atom(0);`, 'atoms/index.ts'))
     .toMatchInlineSnapshot(`
     "const atoms = atom(0);
-    atoms.debugLabel = \\"atoms\\";
+    atoms.debugLabel = "atoms";
     export default atoms;"
   `)
 })
@@ -61,9 +61,9 @@ it('Should handle all types of exports', () => {
     )
   ).toMatchInlineSnapshot(`
     "export const countAtom = atom(0);
-    countAtom.debugLabel = \\"countAtom\\";
+    countAtom.debugLabel = "countAtom";
     const atoms = atom(0);
-    atoms.debugLabel = \\"atoms\\";
+    atoms.debugLabel = "atoms";
     export default atoms;"
   `)
 })
@@ -98,31 +98,31 @@ it('Should handle all atom types', () => {
     )
   ).toMatchInlineSnapshot(`
     "export const countAtom = atom(0);
-    countAtom.debugLabel = \\"countAtom\\";
+    countAtom.debugLabel = "countAtom";
     const myFamily = atomFamily(param => atom(param));
-    myFamily.debugLabel = \\"myFamily\\";
+    myFamily.debugLabel = "myFamily";
     const countAtomWithDefault = atomWithDefault(get => get(countAtom) * 2);
-    countAtomWithDefault.debugLabel = \\"countAtomWithDefault\\";
+    countAtomWithDefault.debugLabel = "countAtomWithDefault";
     const observableAtom = atomWithObservable(() => {});
-    observableAtom.debugLabel = \\"observableAtom\\";
+    observableAtom.debugLabel = "observableAtom";
     const reducerAtom = atomWithReducer(0, () => {});
-    reducerAtom.debugLabel = \\"reducerAtom\\";
+    reducerAtom.debugLabel = "reducerAtom";
     const resetAtom = atomWithReset(0);
-    resetAtom.debugLabel = \\"resetAtom\\";
+    resetAtom.debugLabel = "resetAtom";
     const storageAtom = atomWithStorage('count', 1);
-    storageAtom.debugLabel = \\"storageAtom\\";
+    storageAtom.debugLabel = "storageAtom";
     const freezedAtom = freezeAtom(atom({
       count: 0
     }));
-    freezedAtom.debugLabel = \\"freezedAtom\\";
+    freezedAtom.debugLabel = "freezedAtom";
     const loadedAtom = loadable(countAtom);
-    loadedAtom.debugLabel = \\"loadedAtom\\";
+    loadedAtom.debugLabel = "loadedAtom";
     const selectedValueAtom = selectAtom(atom({
       a: 0,
       b: 'othervalue'
     }), v => v.a);
-    selectedValueAtom.debugLabel = \\"selectedValueAtom\\";
+    selectedValueAtom.debugLabel = "selectedValueAtom";
     const splittedAtom = splitAtom(atom([]));
-    splittedAtom.debugLabel = \\"splittedAtom\\";"
+    splittedAtom.debugLabel = "splittedAtom";"
   `)
 })

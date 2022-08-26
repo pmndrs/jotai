@@ -18,6 +18,7 @@ export function isAtom(
 }
 
 const atomFunctionNames = [
+  'abortableAtom',
   'atom',
   'atomFamily',
   'atomWithDefault',

@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai'
 import {
+  unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE,
   RESET,
   atomWithHash,
   atomWithStorage,
@@ -18,7 +19,7 @@ describe('atomWithStorage (sync)', () => {
   const dummyStorage = {
     getItem: (key: string) => {
       if (!(key in storageData)) {
-        throw new Error('no value stored')
+        return NO_STORAGE_VALUE
       }
       return storageData[key] as number
     },
@@ -195,7 +196,7 @@ describe('atomWithStorage (async)', () => {
     getItem: async (key: string) => {
       await new Promise((r) => setTimeout(r, 100))
       if (!(key in asyncStorageData)) {
-        throw new Error('no value stored')
+        return NO_STORAGE_VALUE
       }
       return asyncStorageData[key] as number
     },
@@ -310,14 +311,12 @@ describe('atomWithStorage (async)', () => {
   })
 })
 
-describe('atomWithStorage (no storage) (#949)', () => {
-  it('can throw in createJSONStorage', async () => {
+describe('atomWithStorage (without localStorage) (#949)', () => {
+  it('createJSONStorage without localStorage', async () => {
     const countAtom = atomWithStorage(
       'count',
       1,
-      createJSONStorage(() => {
-        throw new Error('no storage')
-      })
+      createJSONStorage(() => undefined as any)
     )
 
     const Counter = () => {

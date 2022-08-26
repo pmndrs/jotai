@@ -154,7 +154,7 @@ export default function App()  {
 
 ## useAtomsSnapshot
 
-⚠️ Note: This hook only works in a `process.env.NODE_ENV !== 'production'` environment.
+⚠️ Note: This hook only works in a `process.env.NODE_ENV !== 'production'` environment. And it returns a static empty value in production.
 
 `useAtomsSnapshot` takes a snapshot of the currently mounted atoms and their state.
 
@@ -197,7 +197,7 @@ const App = () => (
 
 ## useGotoAtomsSnapshot
 
-⚠️ Note: This hook only works in a `process.env.NODE_ENV !== 'production'` environment.
+⚠️ Note: This hook only works in a `process.env.NODE_ENV !== 'production'` environment. And it works like an empty function in the production environment.
 
 `useGotoAtomsSnapshot` will update the current Jotai state to match the passed snapshot.
 
