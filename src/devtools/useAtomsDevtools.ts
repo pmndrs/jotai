@@ -67,10 +67,6 @@ export function useAtomsDevtools(
     }
   }
 
-  if (!__DEV__ && enabled) {
-    return
-  }
-
   const atomsSnapshot = useAtomsSnapshot(scope)
   const goToSnapshot = useGotoAtomsSnapshot(scope)
 
