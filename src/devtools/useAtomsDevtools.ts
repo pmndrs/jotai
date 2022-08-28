@@ -67,6 +67,7 @@ export function useAtomsDevtools(
     }
   }
 
+  // This an exception, we don't usually use utils in themselves!
   const atomsSnapshot = useAtomsSnapshot(scope)
   const goToSnapshot = useGotoAtomsSnapshot(scope)
 
