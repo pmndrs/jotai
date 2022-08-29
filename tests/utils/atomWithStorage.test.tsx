@@ -361,11 +361,11 @@ describe('atomWithStorage (in non-browser environment)', () => {
   const addEventListener = window.addEventListener
 
   beforeAll(() => {
-    (window as any).addEventListener = undefined
+    ;(window as any).addEventListener = undefined
   })
 
   afterAll(() => {
-    window.addEventListener = addEventListener;
+    window.addEventListener = addEventListener
   })
 
   it('createJSONStorage with undefined window.addEventListener', async () => {
