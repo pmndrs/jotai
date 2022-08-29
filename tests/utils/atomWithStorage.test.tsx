@@ -339,6 +339,42 @@ describe('atomWithStorage (without localStorage) (#949)', () => {
   })
 })
 
+describe('atomWithStorage (in non-browser environment)', () => {
+  const asyncStorageData: Record<string, string> = {
+    count: '10',
+  }
+  const asyncDummyStorage = {
+    getItem: async (key: string) => {
+      await new Promise((r) => setTimeout(r, 100))
+      return asyncStorageData[key] as string
+    },
+    setItem: async (key: string, newValue: string) => {
+      await new Promise((r) => setTimeout(r, 100))
+      asyncStorageData[key] = newValue
+    },
+    removeItem: async (key: string) => {
+      await new Promise((r) => setTimeout(r, 100))
+      delete asyncStorageData[key]
+    },
+  }
+
+  const addEventListener = window.addEventListener
+
+  beforeAll(() => {
+    (window as any).addEventListener = undefined
+  })
+
+  afterAll(() => {
+    window.addEventListener = addEventListener;
+  })
+
+  it('createJSONStorage with undefined window.addEventListener', async () => {
+    const storage = createJSONStorage(() => asyncDummyStorage)
+
+    expect(storage.subscribe).toBeUndefined()
+  })
+})
+
 describe('atomWithHash', () => {
   it('simple count', async () => {
     const countAtom = atomWithHash('count', 1)

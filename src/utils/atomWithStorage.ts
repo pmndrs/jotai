@@ -76,7 +76,7 @@ export function createJSONStorage<Value>(
       getStringStorage()?.setItem(key, JSON.stringify(newValue)),
     removeItem: (key) => getStringStorage()?.removeItem(key),
   }
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     storage.subscribe = (key, callback) => {
       const storageEventCallback = (e: StorageEvent) => {
         if (e.key === key && e.newValue) {
