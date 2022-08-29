@@ -1,27 +1,46 @@
-import { Suspense } from 'react'
+import { Component, Suspense, useContext } from 'react'
+import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
 import { fromValue, interval, map, pipe, take, toPromise } from 'wonka'
-import { atom, useAtom } from 'jotai'
+import {
+  atom,
+  SECRET_INTERNAL_getScopeContext as getScopeContext,
+  useAtom,
+  useSetAtom,
+} from 'jotai'
 import { atomWithQuery } from 'jotai/urql'
 import { getTestProvider } from '../testUtils'
+
+// This is only used to pass tests with unstable_enableVersionedWrite
+const useRetryFromError = (scope?: symbol | string | number) => {
+  const ScopeContext = getScopeContext(scope)
+  const { r: retryFromError } = useContext(ScopeContext)
+  return retryFromError || ((fn) => fn())
+}
 
 const withPromise = (source$: any) => {
   source$.toPromise = () => pipe(source$, take(1), toPromise)
   return source$
 }
+
 const generateClient = (id: string) =>
   ({
     query: () => withPromise(fromValue({ data: { id } })),
   } as unknown as Client)
 
-const generateContinuousClient = () =>
+const generateContinuousClient = (error?: () => boolean) =>
   ({
     query: () =>
       withPromise(
         pipe(
           interval(100),
-          map((i: number) => ({ data: { count: i } }))
+          map((i: number) => {
+            if (error?.()) {
+              throw new Error('fetch error')
+            }
+            return { data: { count: i } }
+          })
         )
       ),
   } as unknown as Client)
@@ -304,4 +323,135 @@ it('query null client suspense', async () => {
   fireEvent.click(getByText('set'))
   await findByText('loading')
   await findByText('client is set')
+})
+
+describe('error handling', () => {
+  class ErrorBoundary extends Component<
+    { message?: string; retry?: () => void; children: ReactNode },
+    { hasError: boolean }
+  > {
+    constructor(props: { message?: string; children: ReactNode }) {
+      super(props)
+      this.state = { hasError: false }
+    }
+    static getDerivedStateFromError() {
+      return { hasError: true }
+    }
+    render() {
+      return this.state.hasError ? (
+        <div>
+          {this.props.message || 'errored'}
+          {this.props.retry && (
+            <button
+              onClick={() => {
+                this.props.retry?.()
+                this.setState({ hasError: false })
+              }}>
+              retry
+            </button>
+          )}
+        </div>
+      ) : (
+        this.props.children
+      )
+    }
+  }
+
+  it('can catch error in error boundary', async () => {
+    const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
+      () => ({
+        query: '{ count }',
+      }),
+      () => generateContinuousClient(() => true)
+    )
+
+    const Counter = () => {
+      const [{ data }] = useAtom(countAtom)
+      return <div>count: {data.count}</div>
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <ErrorBoundary>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('errored')
+  })
+
+  it('can recover from error', async () => {
+    let willThrowError = false
+    const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
+      () => ({
+        query: '{ count }',
+      }),
+      () =>
+        generateContinuousClient(() => {
+          willThrowError = !willThrowError
+          return willThrowError
+        })
+    )
+
+    const Counter = () => {
+      const [
+        {
+          data: { count },
+        },
+        dispatch,
+      ] = useAtom(countAtom)
+      const refetch = () => dispatch({ type: 'reexecute' })
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={refetch}>refetch</button>
+        </>
+      )
+    }
+
+    const App = () => {
+      const dispatch = useSetAtom(countAtom)
+      const retryFromError = useRetryFromError()
+      const retry = () => {
+        retryFromError(() => {
+          dispatch({ type: 'reexecute' })
+        })
+      }
+      return (
+        <ErrorBoundary retry={retry}>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <App />
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('errored')
+
+    await new Promise((r) => setTimeout(r, 100))
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 1')
+
+    await new Promise((r) => setTimeout(r, 100))
+    fireEvent.click(getByText('refetch'))
+    await findByText('loading')
+    await findByText('errored')
+
+    await new Promise((r) => setTimeout(r, 100))
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 3')
+  })
 })
