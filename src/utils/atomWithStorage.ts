@@ -213,6 +213,9 @@ export function atomWithHash<Value>(
     })
   const hashStorage: SyncStorage<Value> = {
     getItem: (key) => {
+      if (typeof location === 'undefined') {
+        return NO_STORAGE_VALUE
+      }
       const searchParams = new URLSearchParams(location.hash.slice(1))
       const storedValue = searchParams.get(key)
       return deserialize(storedValue)
