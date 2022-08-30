@@ -25,6 +25,7 @@ it('subscription basic test', async () => {
       query: 'subscription Test { count }' as unknown as TypedDocumentNode<{
         count: number
       }>,
+      variables: {},
     }),
     () => clientMock
   )
@@ -60,6 +61,7 @@ it('subscription change client at runtime', async () => {
         id: string
         count: number
       }>,
+      variables: {},
     }),
     (get) => get(clientAtom)
   )
@@ -123,6 +125,7 @@ it('pause test', async () => {
       query: 'subscription Test { count }' as unknown as TypedDocumentNode<{
         count: number
       }>,
+      variables: {},
       pause: !get(enabledAtom),
     }),
     () => clientMock
@@ -168,6 +171,7 @@ it('null client suspense', async () => {
         id: string
         count: number
       }>,
+      variables: {},
     }),
     (get) => get(clientAtom) as Client
   )

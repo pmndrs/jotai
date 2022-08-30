@@ -76,7 +76,10 @@ export function createJSONStorage<Value>(
       getStringStorage()?.setItem(key, JSON.stringify(newValue)),
     removeItem: (key) => getStringStorage()?.removeItem(key),
   }
-  if (typeof window !== 'undefined') {
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.addEventListener === 'function'
+  ) {
     storage.subscribe = (key, callback) => {
       const storageEventCallback = (e: StorageEvent) => {
         if (e.key === key && e.newValue) {
@@ -210,6 +213,9 @@ export function atomWithHash<Value>(
     })
   const hashStorage: SyncStorage<Value> = {
     getItem: (key) => {
+      if (typeof location === 'undefined') {
+        return NO_STORAGE_VALUE
+      }
       const searchParams = new URLSearchParams(location.hash.slice(1))
       const storedValue = searchParams.get(key)
       return deserialize(storedValue)
