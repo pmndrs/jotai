@@ -1,14 +1,8 @@
-import { useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
+import { useEffect, useRef } from 'react'
 import type { Atom, Scope } from '../core/atom'
-import {
-  DEV_GET_ATOM_STATE,
-  DEV_GET_MOUNTED,
-  DEV_GET_MOUNTED_ATOMS,
-  DEV_SUBSCRIBE_STATE,
-  RESTORE_ATOMS,
-} from '../core/store'
 import { Message } from './types'
+import { useAtomsSnapshot } from './useAtomsSnapshot'
+import { useGotoAtomsSnapshot } from './useGotoAtomsSnapshot'
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
@@ -18,24 +12,6 @@ type AtomsSnapshot = Readonly<{
   values: AtomsValues
   dependents: AtomsDependents
 }>
-
-const isEqualAtomsValues = (left: AtomsValues, right: AtomsValues) =>
-  left.size === right.size &&
-  Array.from(left).every(([left, v]) => Object.is(right.get(left), v))
-
-const isEqualAtomsDependents = (
-  left: AtomsDependents,
-  right: AtomsDependents
-) =>
-  left.size === right.size &&
-  Array.from(left).every(([a, dLeft]) => {
-    const dRight = right.get(a)
-    return (
-      dRight &&
-      dLeft.size === dRight.size &&
-      Array.from(dLeft).every((d) => dRight.has(d))
-    )
-  })
 
 const atomToPrintable = (atom: AnyAtom) =>
   atom.debugLabel ? `${atom}:${atom.debugLabel}` : `${atom}`
@@ -76,8 +52,6 @@ export function useAtomsDevtools(
     options = { scope: options }
   }
   const { enabled, scope } = options || {}
-  const ScopeContext = getScopeContext(scope)
-  const { s: store, w: versionedWrite } = useContext(ScopeContext)
 
   let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
 
@@ -93,82 +67,9 @@ export function useAtomsDevtools(
     }
   }
 
-  if (extension && !store[DEV_SUBSCRIBE_STATE]) {
-    throw new Error('useAtomsDevtools can only be used in dev mode.')
-  }
-
-  const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => ({
-    values: new Map(),
-    dependents: new Map(),
-  }))
-
-  useEffect(() => {
-    if (!extension) {
-      return
-    }
-    let prevValues: AtomsValues = new Map()
-    let prevDependents: AtomsDependents = new Map()
-    const invalidatedAtoms = new Set<AnyAtom>()
-    const callback = () => {
-      const values: AtomsValues = new Map()
-      const dependents: AtomsDependents = new Map()
-      let hasNewInvalidatedAtoms = false
-      for (const atom of store[DEV_GET_MOUNTED_ATOMS]?.() || []) {
-        const atomState = store[DEV_GET_ATOM_STATE]?.(atom)
-        if (atomState) {
-          if (!atomState.y) {
-            if ('p' in atomState) {
-              // ignore entirely if we have invalidated promise atoms
-              return
-            }
-            if (!invalidatedAtoms.has(atom)) {
-              invalidatedAtoms.add(atom)
-              hasNewInvalidatedAtoms = true
-            }
-          }
-          if ('v' in atomState) {
-            values.set(atom, atomState.v)
-          }
-        }
-        const mounted = store[DEV_GET_MOUNTED]?.(atom)
-        if (mounted) {
-          dependents.set(atom, mounted.t)
-        }
-      }
-      if (hasNewInvalidatedAtoms) {
-        // ignore entirely if we have new invalidated atoms
-        return
-      }
-      if (
-        isEqualAtomsValues(prevValues, values) &&
-        isEqualAtomsDependents(prevDependents, dependents)
-      ) {
-        // not changed
-        return
-      }
-      prevValues = values
-      prevDependents = dependents
-      invalidatedAtoms.clear()
-      setAtomsSnapshot({ values, dependents })
-    }
-    const unsubscribe = store[DEV_SUBSCRIBE_STATE]?.(callback)
-    callback()
-    return unsubscribe
-  }, [extension, store])
-
-  const goToSnapshot = useCallback(
-    (snapshot: AtomsSnapshot) => {
-      const { values } = snapshot
-      if (versionedWrite) {
-        versionedWrite((version) => {
-          store[RESTORE_ATOMS](values, version)
-        })
-      } else {
-        store[RESTORE_ATOMS](values)
-      }
-    },
-    [store, versionedWrite]
-  )
+  // This an exception, we don't usually use utils in themselves!
+  const atomsSnapshot = useAtomsSnapshot(scope)
+  const goToSnapshot = useGotoAtomsSnapshot(scope)
 
   const isTimeTraveling = useRef(false)
   const isRecording = useRef(true)

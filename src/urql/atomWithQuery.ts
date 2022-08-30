@@ -1,4 +1,5 @@
 import type {
+  AnyVariables,
   Client,
   OperationContext,
   OperationResult,
@@ -28,26 +29,26 @@ const isOperationResultWithData = <Data, Variables>(
 ): result is OperationResultWithData<Data, Variables> =>
   'data' in result && !result.error
 
-type QueryArgs<Data, Variables extends object> = {
+type QueryArgs<Data, Variables extends AnyVariables> = {
   query: TypedDocumentNode<Data, Variables> | string
-  variables?: Variables
+  variables: Variables
   requestPolicy?: RequestPolicy
   context?: Partial<OperationContext>
 }
 
-type QueryArgsWithPause<Data, Variables extends object> = QueryArgs<
+type QueryArgsWithPause<Data, Variables extends AnyVariables> = QueryArgs<
   Data,
   Variables
 > & {
   pause: boolean
 }
 
-export function atomWithQuery<Data, Variables extends object>(
+export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient?: (get: Getter) => Client
 ): WritableAtom<OperationResultWithData<Data, Variables>, AtomWithQueryAction>
 
-export function atomWithQuery<Data, Variables extends object>(
+export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgsWithPause<Data, Variables>,
   getClient?: (get: Getter) => Client
 ): WritableAtom<
@@ -55,7 +56,7 @@ export function atomWithQuery<Data, Variables extends object>(
   AtomWithQueryAction
 >
 
-export function atomWithQuery<Data, Variables extends object>(
+export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
@@ -128,7 +129,7 @@ export function atomWithQuery<Data, Variables extends object>(
           client.query(args.query, args.variables, {
             ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
             ...args.context,
-          }) as any, // FIXME can anyone fix typing without any?
+          }),
           subscribe(listener)
         )
         set(subscriptionAtom, subscription)
@@ -167,7 +168,7 @@ export function atomWithQuery<Data, Variables extends object>(
               ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
               ...args.context,
               ...action.opts,
-            }) as any, // FIXME can anyone fix typing without any?
+            }),
             subscribe(listener)
           )
           const oldSubscription = get(subscriptionAtom)
