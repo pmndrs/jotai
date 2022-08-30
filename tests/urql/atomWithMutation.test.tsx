@@ -23,7 +23,7 @@ it('mutation basic test', async () => {
     () => clientMock
   )
   const mutateAtom = atom(null, (_get, set) => {
-    set(countAtom, {})
+    set(countAtom, { variables: {} })
   })
 
   const Counter = () => {

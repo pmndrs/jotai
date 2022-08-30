@@ -32,6 +32,7 @@ it('query basic test', async () => {
   const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     () => ({
       query: '{ count }',
+      variables: {},
     }),
     () => generateContinuousClient()
   )
@@ -118,6 +119,7 @@ it('query change client at runtime', async () => {
   const idAtom = atomWithQuery<{ id: string }, Record<string, never>>(
     () => ({
       query: '{ id }',
+      variables: {},
     }),
     (get) => get(clientAtom)
   )
@@ -169,6 +171,7 @@ it('pause test', async () => {
   const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     (get) => ({
       query: '{ count }',
+      variables: {},
       pause: !get(enabledAtom),
     }),
     () => generateContinuousClient()
@@ -209,6 +212,7 @@ it('reexecute test', async () => {
   const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     () => ({
       query: '{ count }',
+      variables: {},
     }),
     () => generateContinuousClient()
   )
@@ -250,6 +254,7 @@ it('query null client suspense', async () => {
   const idAtom = atomWithQuery<{ id: string }, Record<string, never>>(
     () => ({
       query: '{ id }',
+      variables: {},
     }),
     (get) => get(clientAtom) as Client
   )
