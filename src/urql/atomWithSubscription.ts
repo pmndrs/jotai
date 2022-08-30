@@ -1,4 +1,5 @@
 import type {
+  AnyVariables,
   Client,
   OperationContext,
   OperationResult,
@@ -21,32 +22,32 @@ const isOperationResultWithData = <Data, Variables>(
   result: OperationResult<Data, Variables>
 ): result is OperationResultWithData<Data, Variables> => 'data' in result
 
-type SubscriptionArgs<Data, Variables extends object> = {
+type SubscriptionArgs<Data, Variables extends AnyVariables> = {
   query: TypedDocumentNode<Data, Variables> | string
-  variables?: Variables
+  variables: Variables
   context?: Partial<OperationContext>
 }
 
 type SubscriptionArgsWithPause<
   Data,
-  Variables extends object
+  Variables extends AnyVariables
 > = SubscriptionArgs<Data, Variables> & {
   pause: boolean
 }
 
-export function atomWithSubscription<Data, Variables extends object>(
+export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
   getClient?: (get: Getter) => Client
 ): Atom<OperationResultWithData<Data, Variables>>
 
-export function atomWithSubscription<Data, Variables extends object>(
+export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (
     get: Getter
   ) => SubscriptionArgsWithPause<Data, Variables>,
   getClient?: (get: Getter) => Client
 ): Atom<OperationResultWithData<Data, Variables> | null>
 
-export function atomWithSubscription<Data, Variables extends object>(
+export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {

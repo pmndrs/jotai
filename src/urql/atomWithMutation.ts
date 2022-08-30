@@ -1,4 +1,5 @@
 import type {
+  AnyVariables,
   Client,
   OperationContext,
   OperationResult,
@@ -8,13 +9,13 @@ import { atom } from 'jotai'
 import type { Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-type MutationAction<Data, Variables extends object> = {
-  variables?: Variables
+type MutationAction<Data, Variables extends AnyVariables> = {
+  variables: Variables
   context?: Partial<OperationContext>
   callback?: (result: OperationResult<Data, Variables>) => void
 }
 
-export function atomWithMutation<Data, Variables extends object>(
+export function atomWithMutation<Data, Variables extends AnyVariables>(
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables> | string,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
