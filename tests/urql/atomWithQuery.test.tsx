@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
 import { fromValue, interval, map, pipe, take, toPromise } from 'wonka'
@@ -47,11 +47,13 @@ it('query basic test', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -91,12 +93,14 @@ it('query dependency test', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -144,12 +148,14 @@ it('query change client at runtime', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Identifier />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Identifier />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -192,12 +198,14 @@ it('pause test', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: paused')
@@ -228,11 +236,13 @@ it('reexecute test', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -285,12 +295,14 @@ it('query null client suspense', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Identifier />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Identifier />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('no data')

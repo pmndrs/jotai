@@ -1,4 +1,4 @@
-import { Component, Suspense, useEffect, useState } from 'react'
+import { Component, StrictMode, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
@@ -61,11 +61,13 @@ it('can throw an initial error in read function', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <ErrorBoundary>
-        <Counter />
-      </ErrorBoundary>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <ErrorBoundary>
+          <Counter />
+        </ErrorBoundary>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('errored')
@@ -93,11 +95,13 @@ it('can throw an error in read function', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <ErrorBoundary>
-        <Counter />
-      </ErrorBoundary>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <ErrorBoundary>
+          <Counter />
+        </ErrorBoundary>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('no error')
@@ -122,11 +126,13 @@ it('can throw an initial chained error in read function', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <ErrorBoundary>
-        <Counter />
-      </ErrorBoundary>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <ErrorBoundary>
+          <Counter />
+        </ErrorBoundary>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('errored')
@@ -155,11 +161,13 @@ it('can throw a chained error in read function', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <ErrorBoundary>
-        <Counter />
-      </ErrorBoundary>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <ErrorBoundary>
+          <Counter />
+        </ErrorBoundary>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('no error')
@@ -183,13 +191,15 @@ it('can throw an initial error in async read function', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <ErrorBoundary>
-        <Suspense fallback={null}>
-          <Counter />
-        </Suspense>
-      </ErrorBoundary>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('errored')
@@ -217,13 +227,15 @@ it('can throw an error in async read function', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <ErrorBoundary>
-        <Suspense fallback={null}>
-          <Counter />
-        </Suspense>
-      </ErrorBoundary>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('no error')
@@ -260,9 +272,11 @@ itSkipIfVersionedWrite('can throw an error in write function', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('no error')
@@ -302,11 +316,13 @@ itSkipIfVersionedWrite(
     }
 
     const { getByText, findByText } = render(
-      <Provider>
-        <Suspense fallback={null}>
-          <Counter />
-        </Suspense>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Suspense fallback={null}>
+            <Counter />
+          </Suspense>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('no error')
@@ -355,9 +371,11 @@ itSkipIfVersionedWrite(
     }
 
     const { getByText, findByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('no error')
@@ -390,11 +408,13 @@ itSkipIfVersionedWrite('throws an error while updating in effect', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <ErrorBoundary>
-        <Counter />
-      </ErrorBoundary>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <ErrorBoundary>
+          <Counter />
+        </ErrorBoundary>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('no error')
@@ -437,11 +457,13 @@ describe('throws an error while updating in effect cleanup', () => {
 
   itSkipIfVersionedWrite('[DEV-ONLY] single setCount', async () => {
     const { getByText, findByText } = render(
-      <Provider>
-        <ErrorBoundary>
-          <Main />
-        </ErrorBoundary>
-      </Provider>
+      <>
+        <Provider>
+          <ErrorBoundary>
+            <Main />
+          </ErrorBoundary>
+        </Provider>
+      </>
     )
 
     await findByText('no error')
@@ -459,11 +481,13 @@ describe('throws an error while updating in effect cleanup', () => {
     doubleSetCount = true
 
     const { getByText, findByText } = render(
-      <Provider>
-        <ErrorBoundary>
-          <Main />
-        </ErrorBoundary>
-      </Provider>
+      <>
+        <Provider>
+          <ErrorBoundary>
+            <Main />
+          </ErrorBoundary>
+        </Provider>
+      </>
     )
 
     await findByText('no error')
@@ -508,12 +532,14 @@ describe('error recovery', () => {
     }
 
     const { getByText, findByText } = render(
-      <Provider>
-        <Counter />
-        <ErrorBoundary>
-          <Display />
-        </ErrorBoundary>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+          <ErrorBoundary>
+            <Display />
+          </ErrorBoundary>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('errored')
@@ -541,14 +567,16 @@ describe('error recovery', () => {
     }
 
     const { getByText, findByText } = render(
-      <Provider>
-        <Counter />
-        <ErrorBoundary>
-          <Suspense fallback={null}>
-            <Display />
-          </Suspense>
-        </ErrorBoundary>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+          <ErrorBoundary>
+            <Suspense fallback={null}>
+              <Display />
+            </Suspense>
+          </ErrorBoundary>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('errored')

@@ -1,4 +1,4 @@
-import { Component, Suspense, useContext, useState } from 'react'
+import { Component, StrictMode, Suspense, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import {
@@ -41,11 +41,13 @@ it('query basic test', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -73,11 +75,13 @@ it('query basic test with object instead of function', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -111,11 +115,13 @@ it('query refetch', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -165,12 +171,14 @@ it('query loading', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <RefreshButton />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <RefreshButton />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -214,11 +222,13 @@ it('query loading 2', async () => {
     )
   }
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -264,12 +274,14 @@ it('query no-loading with keepPreviousData', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <RefreshButton />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <RefreshButton />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -322,11 +334,13 @@ it('query with enabled', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Parent />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Parent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('not enabled')
@@ -391,11 +405,13 @@ it('query with enabled 2', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Parent />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Parent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
   await findByText('loading')
   expect(mockFetch).toHaveBeenCalledTimes(1)
@@ -454,11 +470,13 @@ it('query with enabled (#500)', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Parent />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Parent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -498,9 +516,11 @@ it('query with initialData test', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <>
+      <Provider>
+        <Counter />
+      </Provider>
+    </>
   )
 
   // NOTE: the atom never suspends
@@ -540,12 +560,14 @@ it('query dependency test', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -611,13 +633,15 @@ describe('error handling', () => {
     }
 
     const { findByText } = render(
-      <Provider>
-        <ErrorBoundary>
-          <Suspense fallback="loading">
-            <Counter />
-          </Suspense>
-        </ErrorBoundary>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <ErrorBoundary>
+            <Suspense fallback="loading">
+              <Counter />
+            </Suspense>
+          </ErrorBoundary>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')
@@ -672,9 +696,11 @@ describe('error handling', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <App />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <App />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')

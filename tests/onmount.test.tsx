@@ -1,7 +1,7 @@
-import { Suspense, useState } from 'react'
+import { StrictMode, Suspense, useState } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
-import { getTestProvider } from './testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
@@ -21,9 +21,11 @@ it('one atom, one effect', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <>
+      <Provider>
+        <Counter />
+      </Provider>
+    </>
   )
 
   await findByText('count: 1')
@@ -61,9 +63,11 @@ it('two atoms, one each', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <>
+      <Provider>
+        <Counter />
+      </Provider>
+    </>
   )
 
   await waitFor(() => {
@@ -99,9 +103,11 @@ it('one derived atom, one onMount', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <>
+      <Provider>
+        <Counter />
+      </Provider>
+    </>
   )
 
   await findByText('count: 1')
@@ -135,9 +141,11 @@ it('mount/unmount test', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Display />
-    </Provider>
+    <>
+      <Provider>
+        <Display />
+      </Provider>
+    </>
   )
 
   expect(onMountFn).toBeCalledTimes(1)
@@ -187,9 +195,11 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   }
 
   const { getByText } = render(
-    <Provider>
-      <Display />
-    </Provider>
+    <>
+      <Provider>
+        <Display />
+      </Provider>
+    </>
   )
   expect(derivedOnMountFn).toBeCalledTimes(1)
   expect(derivedOnUnMountFn).toBeCalledTimes(0)
@@ -264,9 +274,11 @@ it('mount/unMount order', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Display />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Display />
+      </Provider>
+    </StrictMode>
   )
   expect(committed).toEqual([0, 0])
 
@@ -328,11 +340,13 @@ it('mount/unmount test with async atom', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Display />
-      </Suspense>
-    </Provider>
+    <>
+      <Provider>
+        <Suspense fallback="loading">
+          <Display />
+        </Suspense>
+      </Provider>
+    </>
   )
 
   await findByText('loading')
@@ -387,9 +401,11 @@ it('subscription usage test', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Display />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Display />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 10')
@@ -454,9 +470,11 @@ it('subscription in base atom test', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictModeUnlessVersionedWrite>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictModeUnlessVersionedWrite>
   )
 
   await findByText('count: 10')
@@ -508,11 +526,13 @@ it('create atom with onMount in async get', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictModeUnlessVersionedWrite>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictModeUnlessVersionedWrite>
   )
 
   await findByText('count: 10')

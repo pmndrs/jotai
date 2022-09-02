@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { StrictMode, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
@@ -21,9 +21,11 @@ it('simple scoped provider with scoped atom', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider scope={scope}>
-      <Display />
-    </Provider>
+    <StrictMode>
+      <Provider scope={scope}>
+        <Display />
+      </Provider>
+    </StrictMode>
   )
   await findByText('count: 0')
   fireEvent.click(getByText('dispatch'))
@@ -56,11 +58,13 @@ it('default provider and atom with scoped provider and scoped atom', async () =>
   }
 
   const { getByText } = render(
-    <Provider>
-      <Provider scope={scope}>
-        <Display />
+    <StrictMode>
+      <Provider>
+        <Provider scope={scope}>
+          <Display />
+        </Provider>
       </Provider>
-    </Provider>
+    </StrictMode>
   )
   await waitFor(() => {
     getByText('count: 0')
@@ -113,7 +117,11 @@ it('keeps scoped atom value when default provider is removed', async () => {
     )
   }
 
-  const { getByText, findByText } = render(<App />)
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  )
   await findByText('scopedCount: 0')
   fireEvent.click(getByText('dispatch'))
   await findByText('scopedCount: 1')
@@ -151,11 +159,13 @@ it('two different scoped providers and scoped atoms', async () => {
   }
 
   const { getByText } = render(
-    <Provider scope={scope}>
-      <Provider scope={secondScope}>
-        <Display />
+    <StrictMode>
+      <Provider scope={scope}>
+        <Provider scope={secondScope}>
+          <Display />
+        </Provider>
       </Provider>
-    </Provider>
+    </StrictMode>
   )
   await waitFor(() => {
     getByText('scopedCount: 0')

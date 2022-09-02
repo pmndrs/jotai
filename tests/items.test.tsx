@@ -1,7 +1,8 @@
+import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { PrimitiveAtom } from 'jotai'
-import { getTestProvider } from './testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
@@ -62,9 +63,11 @@ it('remove an item, then add another', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <List />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <List />
+      </Provider>
+    </StrictMode>
   )
 
   fireEvent.click(getByText('Add'))
@@ -191,9 +194,11 @@ it('add an item with filtered list', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <List />
-    </Provider>
+    <StrictModeUnlessVersionedWrite>
+      <Provider>
+        <List />
+      </Provider>
+    </StrictModeUnlessVersionedWrite>
   )
 
   fireEvent.click(getByText('Checked'))
