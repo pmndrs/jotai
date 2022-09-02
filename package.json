@@ -220,7 +220,7 @@
     "@types/react-dom": "^18.0.6",
     "@typescript-eslint/eslint-plugin": "^5.36.0",
     "@typescript-eslint/parser": "^5.36.0",
-    "@urql/core": "^3.0.2",
+    "@urql/core": "^3.0.3",
     "benny": "^3.7.1",
     "concurrently": "^7.3.0",
     "downlevel-dts": "^0.10.1",
