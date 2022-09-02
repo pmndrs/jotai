@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import type { PrimitiveAtom } from 'jotai'
@@ -63,11 +62,11 @@ it('remove an item, then add another', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <StrictModeUnlessVersionedWrite>
       <Provider>
         <List />
       </Provider>
-    </StrictMode>
+    </StrictModeUnlessVersionedWrite>
   )
 
   fireEvent.click(getByText('Add'))
