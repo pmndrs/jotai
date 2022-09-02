@@ -11,14 +11,14 @@ import { atom } from 'jotai'
 import type { Atom, Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-type OperationResultWithData<Data, Variables> = OperationResult<
+type OperationResultWithData<
   Data,
-  Variables
-> & {
+  Variables extends AnyVariables
+> = OperationResult<Data, Variables> & {
   data: Data
 }
 
-const isOperationResultWithData = <Data, Variables>(
+const isOperationResultWithData = <Data, Variables extends AnyVariables>(
   result: OperationResult<Data, Variables>
 ): result is OperationResultWithData<Data, Variables> => 'data' in result
 
