@@ -17,12 +17,10 @@ type AtomWithQueryAction = {
   opts?: Partial<OperationContext>
 }
 
-type OperationResultWithData<
-  Data,
-  Variables extends AnyVariables
-> = OperationResult<Data, Variables> & {
-  data: Data
-}
+type OperationResultWithData<Data, Variables extends AnyVariables> = Omit<
+  OperationResult<Data, Variables>,
+  'data'
+> & { data: Data }
 
 const isOperationResultWithData = <Data, Variables extends AnyVariables>(
   result: OperationResult<Data, Variables>
@@ -39,9 +37,7 @@ type QueryArgs<Data, Variables extends AnyVariables> = {
 type QueryArgsWithPause<Data, Variables extends AnyVariables> = QueryArgs<
   Data,
   Variables
-> & {
-  pause: boolean
-}
+> & { pause: boolean }
 
 export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
@@ -60,46 +56,27 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  type ResultAtom = PrimitiveAtom<
-    | OperationResultWithData<Data, Variables>
-    | Promise<OperationResultWithData<Data, Variables>>
-  >
+  type Result = OperationResult<Data, Variables>
+  type ResultAtom = PrimitiveAtom<Result | Promise<Result>>
   const queryResultAtom = atom((get) => {
     const args = createQueryArgs(get)
     if ((args as { pause?: boolean }).pause) {
       return null
     }
     const client = getClient(get)
-    let resolve:
-      | ((result: OperationResultWithData<Data, Variables>) => void)
-      | null = null
-    const baseResultAtom: ResultAtom = atom<
-      | OperationResultWithData<Data, Variables>
-      | Promise<OperationResultWithData<Data, Variables>>
-    >(
-      new Promise<OperationResultWithData<Data, Variables>>((r) => {
+    let resolve: ((result: Result) => void) | null = null
+    const baseResultAtom: ResultAtom = atom<Result | Promise<Result>>(
+      new Promise<Result>((r) => {
         resolve = r
       })
     )
-    let setResult: (
-      result:
-        | OperationResultWithData<Data, Variables>
-        | Promise<OperationResultWithData<Data, Variables>>
-    ) => void = () => {
+    let setResult: (result: Result | Promise<Result>) => void = () => {
       throw new Error('setting result without mount')
     }
-    const listener = (
-      result:
-        | OperationResult<Data, Variables>
-        | Promise<OperationResultWithData<Data, Variables>>
-    ) => {
+    const listener = (result: Result | Promise<Result>) => {
       if (result instanceof Promise) {
         setResult(result)
         return
-      }
-      // TODO error handling
-      if (!isOperationResultWithData(result)) {
-        throw new Error('result does not have data')
       }
       if (resolve) {
         resolve(result)
@@ -115,9 +92,6 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
       })
       .toPromise()
       .then(listener)
-      .catch(() => {
-        // TODO error handling
-      })
     baseResultAtom.onMount = (update) => {
       setResult = update
     }
@@ -152,7 +126,12 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
         return null
       }
       const { resultAtom } = queryResult
-      return get(resultAtom)
+      const result = get(resultAtom)
+      if (!isOperationResultWithData(result)) {
+        console.log('throwing', result.error)
+        throw result.error
+      }
+      return result
     },
     (get, set, action: AtomWithQueryAction) => {
       switch (action.type) {
