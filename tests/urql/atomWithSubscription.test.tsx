@@ -1,10 +1,10 @@
-import { Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client, TypedDocumentNode } from '@urql/core'
 import { interval, map, pipe } from 'wonka'
 import { atom, useAtom } from 'jotai'
 import { atomWithSubscription } from 'jotai/urql'
-import { getTestProvider } from '../testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from '../testUtils'
 
 const generateClient = (id = 'default') =>
   ({
@@ -40,11 +40,13 @@ it('subscription basic test', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </>
   )
 
   await findByText('loading')
@@ -92,12 +94,14 @@ it('subscription change client at runtime', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </>
   )
 
   await findByText('loading')
@@ -146,12 +150,14 @@ it('pause test', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: paused')
@@ -212,12 +218,14 @@ it('null client suspense', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictModeUnlessVersionedWrite>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictModeUnlessVersionedWrite>
   )
 
   await findByText('no data')

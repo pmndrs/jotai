@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { StrictMode, useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useAtomCallback } from 'jotai/utils'
-import { getTestProvider } from '../testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
@@ -44,10 +44,12 @@ it('useAtomCallback with get', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-      <Monitor />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+        <Monitor />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('atom count: 0')
@@ -96,10 +98,12 @@ it('useAtomCallback with set and update', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-      <Monitor />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+        <Monitor />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -131,9 +135,11 @@ it('useAtomCallback with set and update and arg', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <App />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <App />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -164,9 +170,11 @@ it('useAtomCallback with sync atom (#1100)', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictModeUnlessVersionedWrite>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictModeUnlessVersionedWrite>
   )
 
   await findByText('atom count: 0')

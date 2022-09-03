@@ -1,4 +1,4 @@
-import { Suspense, version as reactVersion, useState } from 'react'
+import { StrictMode, Suspense, version as reactVersion, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { abortableAtom } from 'jotai/utils'
@@ -39,12 +39,14 @@ describeExceptFor1686('abortable atom test', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Suspense fallback="loading">
-          <Component />
-          <Controls />
-        </Suspense>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Suspense fallback="loading">
+            <Component />
+            <Controls />
+          </Suspense>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')
@@ -90,12 +92,14 @@ describeExceptFor1686('abortable atom test', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Suspense fallback="loading">
-          <Component />
-          <Controls />
-        </Suspense>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Suspense fallback="loading">
+            <Component />
+            <Controls />
+          </Suspense>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')
@@ -142,11 +146,13 @@ describeExceptFor1686('abortable atom test', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Suspense fallback="loading">
-          <Parent />
-        </Suspense>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Suspense fallback="loading">
+            <Parent />
+          </Suspense>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')
@@ -187,12 +193,14 @@ describeExceptFor1686('abortable atom test', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Suspense fallback="loading">
-          <Component />
-          <Controls />
-        </Suspense>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Suspense fallback="loading">
+            <Component />
+            <Controls />
+          </Suspense>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')

@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { withImmer } from 'jotai/immer'
@@ -24,9 +25,11 @@ it('withImmer derived atom with useAtom', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -61,9 +64,11 @@ it('withImmer derived atom with useAtom + scope', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider scope={scope}>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider scope={scope}>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0 0')
@@ -90,9 +95,11 @@ it('withImmer derived atom with WritableAtom<Value, Value> signature', async () 
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')

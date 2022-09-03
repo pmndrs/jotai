@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useSetAtom } from 'jotai'
 import type { Atom, PrimitiveAtom } from 'jotai'
@@ -62,9 +62,11 @@ it('no unnecessary updates when updating atoms', async () => {
   }
 
   const { getByTestId, getByText } = render(
-    <Provider>
-      <TaskList listAtom={todosAtom} />
-    </Provider>
+    <>
+      <Provider>
+        <TaskList listAtom={todosAtom} />
+      </Provider>
+    </>
   )
 
   await waitFor(() => {
@@ -143,9 +145,11 @@ it('removing atoms', async () => {
   }
 
   const { getByTestId, queryByText } = render(
-    <Provider>
-      <TaskList listAtom={todosAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <TaskList listAtom={todosAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -241,9 +245,11 @@ it('inserting atoms', async () => {
   }
 
   const { getByTestId, queryByTestId } = render(
-    <Provider>
-      <TaskList listAtom={todosAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <TaskList listAtom={todosAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -342,9 +348,11 @@ it('moving atoms', async () => {
   }
 
   const { getByTestId, queryByTestId } = render(
-    <Provider>
-      <TaskList listAtom={todosAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <TaskList listAtom={todosAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -407,9 +415,11 @@ it('read-only array atom', async () => {
   }
 
   const { getByTestId } = render(
-    <Provider>
-      <TaskList listAtom={todosAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <TaskList listAtom={todosAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
@@ -457,9 +467,11 @@ it('handles scope', async () => {
   }
 
   const { getByTestId } = render(
-    <Provider scope={scope}>
-      <TaskList listAtom={todosAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider scope={scope}>
+        <TaskList listAtom={todosAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
@@ -524,10 +536,12 @@ it('no error with cached atoms (fix 510)', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Filter />
-      <Filtered />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Filter />
+        <Filtered />
+      </Provider>
+    </StrictMode>
   )
 
   fireEvent.click(getByText('button'))
@@ -557,9 +571,11 @@ it('variable sized splitted atom', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <App />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <App />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('numbers: 1,2,3')

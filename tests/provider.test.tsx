@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
@@ -21,13 +22,15 @@ it('uses initial values from provider', async () => {
   }
 
   const { getByText } = render(
-    <Provider
-      initialValues={[
-        [countAtom, 0],
-        [petAtom, 'dog'],
-      ]}>
-      <Display />
-    </Provider>
+    <StrictMode>
+      <Provider
+        initialValues={[
+          [countAtom, 0],
+          [petAtom, 'dog'],
+        ]}>
+        <Display />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -53,9 +56,11 @@ it('only uses initial value from provider for specific atom', async () => {
   }
 
   const { getByText } = render(
-    <Provider initialValues={[[petAtom, 'dog']]}>
-      <Display />
-    </Provider>
+    <StrictMode>
+      <Provider initialValues={[[petAtom, 'dog']]}>
+        <Display />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -65,5 +70,9 @@ it('only uses initial value from provider for specific atom', async () => {
 })
 
 it('renders correctly without children', () => {
-  render(<Provider />)
+  render(
+    <StrictMode>
+      <Provider />
+    </StrictMode>
+  )
 })
