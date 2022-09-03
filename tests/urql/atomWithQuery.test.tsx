@@ -24,23 +24,28 @@ const withPromise = (source$: any) => {
   return source$
 }
 
-const generateClient = (id: string) =>
+const generateClient = (id: string | number, error?: () => boolean) =>
   ({
-    query: () => withPromise(fromValue({ data: { id } })),
+    query: () => {
+      const source$ = withPromise(
+        fromValue(
+          error?.() ? { error: new Error('fetch error') } : { data: { id } }
+        )
+      )
+      if (typeof id === 'number') {
+        ++id
+      }
+      return source$
+    },
   } as unknown as Client)
 
-const generateContinuousClient = (error?: () => boolean) =>
+const generateContinuousClient = () =>
   ({
     query: () =>
       withPromise(
         pipe(
           interval(100),
-          map((i: number) => {
-            if (error?.()) {
-              return { error: new Error('fetch error') }
-            }
-            return { data: { count: i } }
-          })
+          map((i: number) => ({ data: { count: i } }))
         )
       ),
   } as unknown as Client)
@@ -380,7 +385,7 @@ describe('error handling', () => {
         query: '{ count }',
         variables: {},
       }),
-      () => generateContinuousClient(() => true)
+      () => generateClient(0, () => true)
     )
 
     const Counter = () => {
@@ -410,7 +415,7 @@ describe('error handling', () => {
         variables: {},
       }),
       () =>
-        generateContinuousClient(() => {
+        generateClient(0, () => {
           willThrowError = !willThrowError
           return willThrowError
         })
