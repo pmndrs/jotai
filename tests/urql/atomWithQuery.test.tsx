@@ -2,7 +2,15 @@ import { Component, StrictMode, Suspense, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
-import { fromValue, interval, map, pipe, take, toPromise } from 'wonka'
+import {
+  fromPromise,
+  fromValue,
+  interval,
+  pipe,
+  switchMap,
+  take,
+  toPromise,
+} from 'wonka'
 import {
   atom,
   SECRET_INTERNAL_getScopeContext as getScopeContext,
@@ -35,11 +43,11 @@ const generateContinuousClient = (error?: () => boolean) =>
       withPromise(
         pipe(
           interval(100),
-          map((i: number) => {
+          switchMap((i: number) => {
             if (error?.()) {
-              throw new Error('fetch error')
+              return fromPromise(Promise.reject('fetch error'))
             }
-            return { data: { count: i } }
+            return fromValue({ data: { count: i } })
           })
         )
       ),
