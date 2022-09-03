@@ -117,7 +117,7 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
       })
       return cleanup
     }
-    return { args, client, resultAtom, subscriptionAtom, listener }
+    return { args, client, resultAtom, subscriptionAtom, baseResultAtom }
   })
   const queryAtom = atom(
     (get) => {
@@ -128,7 +128,6 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
       const { resultAtom } = queryResult
       const result = get(resultAtom)
       if (!isOperationResultWithData(result)) {
-        console.log('throwing', result.error)
         throw result.error
       }
       return result
@@ -140,15 +139,17 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
           if (!queryResult) {
             throw new Error('query is paused')
           }
-          const { args, client, subscriptionAtom, listener } = queryResult
-          listener(new Promise<never>(() => {})) // infinite pending
+          const { args, client, subscriptionAtom, baseResultAtom } = queryResult
+          set(baseResultAtom, new Promise<never>(() => {})) // infinite pending
           const newSubscription = pipe(
             client.query(args.query, args.variables, {
               ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
               ...args.context,
               ...action.opts,
             }),
-            subscribe(listener)
+            subscribe((result) => {
+              set(baseResultAtom, result)
+            })
           )
           const oldSubscription = get(subscriptionAtom)
           oldSubscription?.unsubscribe()
