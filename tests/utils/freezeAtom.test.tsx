@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { freezeAtom, freezeAtomCreator } from 'jotai/utils'
@@ -15,9 +16,11 @@ it('freezeAtom basic test', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Component />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Component />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('isFrozen: true')
@@ -34,9 +37,11 @@ it('freezeAtomCreator basic test', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Component />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Component />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('isFrozen: true')

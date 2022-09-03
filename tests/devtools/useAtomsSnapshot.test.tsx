@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { StrictMode, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from 'jotai'
 import { useAtomsSnapshot } from 'jotai/devtools'
@@ -33,10 +33,12 @@ it('[DEV-ONLY] should register newly added atoms', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <DisplayCount />
-      <RegisteredAtomsCount />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <DisplayCount />
+        <RegisteredAtomsCount />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('atom count: 1')
@@ -70,10 +72,12 @@ it('[DEV-ONLY] should let you access atoms and their state', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Displayer />
-      <SimpleDevtools />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Displayer />
+        <SimpleDevtools />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('countAtom: 1')
@@ -106,14 +110,16 @@ it('[DEV-ONLY] should contain initial values', async () => {
   }
 
   const { findByText } = render(
-    <Provider
-      initialValues={[
-        [countAtom, 42],
-        [petAtom, 'dog'],
-      ]}>
-      <Displayer />
-      <SimpleDevtools />
-    </Provider>
+    <StrictMode>
+      <Provider
+        initialValues={[
+          [countAtom, 42],
+          [petAtom, 'dog'],
+        ]}>
+        <Displayer />
+        <SimpleDevtools />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('countAtom: 42')
@@ -158,10 +164,12 @@ it('[DEV-ONLY] conditional dependencies + updating state should call devtools.se
   }
 
   const { getByText } = render(
-    <Provider>
-      <App />
-      <SimpleDevtools />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <App />
+        <SimpleDevtools />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {

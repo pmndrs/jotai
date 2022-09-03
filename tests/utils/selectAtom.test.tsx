@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef } from 'react'
+import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { selectAtom } from 'jotai/utils'
@@ -42,10 +42,12 @@ it('selectAtom works as expected', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-      <Selector />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+        <Selector />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('a: 0')
@@ -87,12 +89,14 @@ it('selectAtom works with async atom', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback={null}>
-        <Parent />
-        <Selector />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback={null}>
+          <Parent />
+          <Selector />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('a: 0')
@@ -142,10 +146,12 @@ it('do not update unless equality function says value has changed', async () => 
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-      <Selector />
-    </Provider>
+    <>
+      <Provider>
+        <Parent />
+        <Selector />
+      </Provider>
+    </>
   )
 
   await findByText('value: {"a":0}')
@@ -209,12 +215,14 @@ it('equality function works even if suspend', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback={null}>
-        <Controls />
-        <Selector />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback={null}>
+          <Controls />
+          <Selector />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('bigValue: {"a":0}')
@@ -258,10 +266,12 @@ it('useSelector with scope', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider scope={scope}>
-      <Parent />
-      <Selector />
-    </Provider>
+    <StrictMode>
+      <Provider scope={scope}>
+        <Parent />
+        <Selector />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('a: 0')

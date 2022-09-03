@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
@@ -19,9 +20,11 @@ it('useAtomValue basic test', async () => {
     )
   }
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')

@@ -1,5 +1,5 @@
-import { Suspense } from 'react'
-import * as rtl from '@testing-library/react'
+import { StrictMode, Suspense } from 'react'
+import { fireEvent, render } from '@testing-library/react'
 import * as O from 'optics-ts'
 import { atom, useAtom } from 'jotai'
 import type { SetStateAction } from 'jotai'
@@ -27,24 +27,26 @@ it('basic derivation using focus works', async () => {
     )
   }
 
-  const { getByText, findByText } = rtl.render(
-    <Provider>
-      <Counter />
-    </Provider>
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
   await findByText('bigAtom: {"a":0}')
 
-  rtl.fireEvent.click(getByText('incr'))
+  fireEvent.click(getByText('incr'))
   await findByText('count: 1')
   await findByText('bigAtom: {"a":1}')
 
-  rtl.fireEvent.click(getByText('incr'))
+  fireEvent.click(getByText('incr'))
   await findByText('count: 2')
   await findByText('bigAtom: {"a":2}')
 
-  rtl.fireEvent.click(getByText('set zero'))
+  fireEvent.click(getByText('set zero'))
   await findByText('count: 0')
   await findByText('bigAtom: {"a":0}')
 })
@@ -65,16 +67,18 @@ it('focus on an atom works', async () => {
     )
   }
 
-  const { getByText, findByText } = rtl.render(
-    <Provider>
-      <Counter />
-    </Provider>
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
   await findByText('bigAtom: {"a":0}')
 
-  rtl.fireEvent.click(getByText('button'))
+  fireEvent.click(getByText('button'))
   await findByText('count: 1')
   await findByText('bigAtom: {"a":1}')
 })
@@ -104,27 +108,29 @@ it('double-focus on an atom works', async () => {
     )
   }
 
-  const { getByText, findByText } = rtl.render(
-    <Provider>
-      <Counter />
-    </Provider>
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('bigAtom: {"a":{"b":0}}')
   await findByText('atomA: {"b":0}')
   await findByText('atomB: 0')
 
-  rtl.fireEvent.click(getByText('inc bigAtom'))
+  fireEvent.click(getByText('inc bigAtom'))
   await findByText('bigAtom: {"a":{"b":1}}')
   await findByText('atomA: {"b":1}')
   await findByText('atomB: 1')
 
-  rtl.fireEvent.click(getByText('inc atomA'))
+  fireEvent.click(getByText('inc atomA'))
   await findByText('bigAtom: {"a":{"b":3}}')
   await findByText('atomA: {"b":3}')
   await findByText('atomB: 3')
 
-  rtl.fireEvent.click(getByText('inc atomB'))
+  fireEvent.click(getByText('inc atomB'))
   await findByText('bigAtom: {"a":{"b":6}}')
   await findByText('atomA: {"b":6}')
   await findByText('atomB: 6')
@@ -161,29 +167,31 @@ it('focus on async atom works', async () => {
     )
   }
 
-  const { getByText, findByText } = rtl.render(
-    <Provider>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Counter />
-      </Suspense>
-    </Provider>
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('baseAtom: {"count":0}')
   await findByText('asyncAtom: {"count":0}')
   await findByText('count: 0')
 
-  rtl.fireEvent.click(getByText('incr count'))
+  fireEvent.click(getByText('incr count'))
   await findByText('baseAtom: {"count":1}')
   await findByText('asyncAtom: {"count":1}')
   await findByText('count: 1')
 
-  rtl.fireEvent.click(getByText('incr async'))
+  fireEvent.click(getByText('incr async'))
   await findByText('baseAtom: {"count":2}')
   await findByText('asyncAtom: {"count":2}')
   await findByText('count: 2')
 
-  rtl.fireEvent.click(getByText('incr base'))
+  fireEvent.click(getByText('incr base'))
   await findByText('baseAtom: {"count":3}')
   await findByText('asyncAtom: {"count":3}')
   await findByText('count: 3')
@@ -206,16 +214,18 @@ it('basic derivation using focus with scope works', async () => {
     )
   }
 
-  const { getByText, findByText } = rtl.render(
-    <Provider scope={scope}>
-      <Counter />
-    </Provider>
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider scope={scope}>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
   await findByText('bigAtom: {"a":0}')
 
-  rtl.fireEvent.click(getByText('incr'))
+  fireEvent.click(getByText('incr'))
   await findByText('count: 1')
   await findByText('bigAtom: {"a":1}')
 })

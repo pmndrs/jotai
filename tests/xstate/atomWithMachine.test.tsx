@@ -2,7 +2,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react'
 import { assign, createMachine } from 'xstate'
 import { useAtom } from 'jotai'
 import { RESTART, atomWithMachine } from 'jotai/xstate'
-import { getTestProvider } from '../testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
@@ -35,9 +35,11 @@ it('toggle machine', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Toggler />
-    </Provider>
+    <StrictModeUnlessVersionedWrite>
+      <Provider>
+        <Toggler />
+      </Provider>
+    </StrictModeUnlessVersionedWrite>
   )
 
   await findByText('Click to activate')
@@ -110,9 +112,11 @@ it('restartable machine', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Toggler />
-    </Provider>
+    <StrictModeUnlessVersionedWrite>
+      <Provider>
+        <Toggler />
+      </Provider>
+    </StrictModeUnlessVersionedWrite>
   )
 
   await findByText('Click to activate')

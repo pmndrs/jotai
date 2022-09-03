@@ -1,4 +1,4 @@
-import { createElement } from 'react'
+import { Fragment, StrictMode, createElement } from 'react'
 import { Provider } from 'jotai'
 
 export function getTestProvider(requiresProvider?: boolean) {
@@ -27,3 +27,6 @@ export function getTestProvider(requiresProvider?: boolean) {
 
 export const itSkipIfVersionedWrite =
   process.env.PROVIDER_MODE === 'VERSIONED_WRITE' ? it.skip : it
+
+export const StrictModeUnlessVersionedWrite =
+  process.env.PROVIDER_MODE === 'VERSIONED_WRITE' ? Fragment : StrictMode
