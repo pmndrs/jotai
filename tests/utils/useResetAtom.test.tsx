@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import {
@@ -29,9 +30,11 @@ it('atomWithReset resets to its first value', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -76,9 +79,11 @@ it('atomWithReset reset based on previous value', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -114,9 +119,11 @@ it('atomWithReset through read-write atom', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -153,9 +160,11 @@ it('useResetAtom with custom atom', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -190,9 +199,11 @@ it('useResetAtom with scope', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider scope={scope}>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider scope={scope}>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')

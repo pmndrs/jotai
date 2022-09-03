@@ -1,7 +1,7 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { getTestProvider } from './testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from './testUtils'
 
 const Provider = getTestProvider()
 
@@ -34,9 +34,11 @@ it('works with 2 level dependencies', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <>
+      <Provider>
+        <Counter />
+      </Provider>
+    </>
   )
 
   await findByText('commits: 1, count: 1, doubled: 2, tripled: 6')
@@ -66,11 +68,13 @@ it('works a primitive atom and a dependent async atom', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -125,9 +129,11 @@ it('should keep an atom value even if unmounted', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -188,9 +194,11 @@ it('should keep a dependent atom value even if unmounted', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('derived: 0')
@@ -230,10 +238,12 @@ it('should bail out updating if not changed', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Counter />
-      <DerivedCounter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+        <DerivedCounter />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -285,10 +295,12 @@ it('should bail out updating if not changed, 2 level', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Counter />
-      <DerivedCounter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+        <DerivedCounter />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -334,9 +346,11 @@ it('derived atom to update base atom in callback', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <>
+      <Provider>
+        <Counter />
+      </Provider>
+    </>
   )
 
   await findByText('commits: 1, count: 1, doubled: 2')
@@ -364,9 +378,11 @@ it('can read sync derived atom in write without initializing', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')
@@ -415,9 +431,11 @@ it('can remount atoms with dependency (#490)', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -496,9 +514,11 @@ it('can remount atoms with intermediate atom', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -579,9 +599,11 @@ it('can update dependents with useEffect (#512)', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictModeUnlessVersionedWrite>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictModeUnlessVersionedWrite>
   )
 
   await waitFor(() => {
@@ -628,10 +650,12 @@ it('update unmounted atom with intermediate atom', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <DerivedCounter />
-      <Control />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <DerivedCounter />
+        <Control />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('derived: 2')
@@ -673,10 +697,12 @@ it('Should bail for derived sync chains (#877)', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Input />
-      <ForceValue />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Input />
+        <ForceValue />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('My very long data')
@@ -718,12 +744,14 @@ it('Should bail for derived async chains (#877)', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Input />
-        <ForceValue />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Input />
+          <ForceValue />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('My very long data')
@@ -768,9 +796,11 @@ it('update correctly with async updates (#1250)', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <App />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <App />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
