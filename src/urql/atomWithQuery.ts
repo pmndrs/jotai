@@ -84,13 +84,15 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
     )
     let setResult: ((result: Result) => void) | null = null
     const listener = (result: Result) => {
+      if (!resolve && !setResult) {
+        throw new Error('setting result without mount')
+      }
       if (resolve) {
         resolve(result)
         resolve = null
-      } else if (setResult) {
+      }
+      if (setResult) {
         setResult(result)
-      } else {
-        throw new Error('setting result without mount')
       }
     }
     let subscription: Subscription | null = null
@@ -127,6 +129,7 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
         startQuery()
       }
       return () => {
+        setResult = null
         if (subscription) {
           subscription.unsubscribe()
           subscription = null
@@ -162,12 +165,7 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
             throw new Error('query is paused')
           }
           const { resultAtom, setResolve, startQuery } = queryResult
-          set(
-            resultAtom,
-            new Promise<Result>((r) => {
-              setResolve(r)
-            })
-          )
+          set(resultAtom, new Promise<Result>(setResolve))
           startQuery(action.opts)
           return
         }

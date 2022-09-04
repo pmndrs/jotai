@@ -2,7 +2,7 @@ import { Component, StrictMode, Suspense, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
-import { fromValue, interval, map, pipe, take, toPromise } from 'wonka'
+import { delay, fromValue, interval, map, pipe, take, toPromise } from 'wonka'
 import {
   atom,
   SECRET_INTERNAL_getScopeContext as getScopeContext,
@@ -28,8 +28,11 @@ const generateClient = (id: string | number, error?: () => boolean) =>
   ({
     query: () => {
       const source$ = withPromise(
-        fromValue(
-          error?.() ? { error: new Error('fetch error') } : { data: { id } }
+        pipe(
+          fromValue(
+            error?.() ? { error: new Error('fetch error') } : { data: { id } }
+          ),
+          delay(100)
         )
       )
       if (typeof id === 'number') {
@@ -408,17 +411,13 @@ describe('error handling', () => {
   })
 
   it('can recover from error', async () => {
-    let willThrowError = false
+    let willThrowError = true
     const countAtom = atomWithQuery<{ id: number }, Record<string, never>>(
       () => ({
         query: '{ id }',
         variables: {},
       }),
-      () =>
-        generateClient(0, () => {
-          willThrowError = !willThrowError
-          return willThrowError
-        })
+      () => generateClient(0, () => willThrowError)
     )
 
     const Counter = () => {
@@ -464,16 +463,19 @@ describe('error handling', () => {
     await findByText('errored')
 
     await new Promise((r) => setTimeout(r, 100))
+    willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')
     await findByText('count: 1')
 
     await new Promise((r) => setTimeout(r, 100))
+    willThrowError = true
     fireEvent.click(getByText('refetch'))
     await findByText('loading')
     await findByText('errored')
 
     await new Promise((r) => setTimeout(r, 100))
+    willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')
     await findByText('count: 3')
