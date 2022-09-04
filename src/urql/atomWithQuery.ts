@@ -76,12 +76,11 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
     }
     const client = getClient(get)
     let resolve: ((result: Result) => void) | null = null
-    const setResolve = (r: (result: Result) => void) => {
-      resolve = r
-    }
-    const resultAtom = atom<Result | Promise<Result>>(
-      new Promise<Result>(setResolve)
-    )
+    const makePending = () =>
+      new Promise<Result>((r) => {
+        resolve = r
+      })
+    const resultAtom = atom<Result | Promise<Result>>(makePending())
     let setResult: ((result: Result) => void) | null = null
     const listener = (result: Result) => {
       if (!resolve && !setResult) {
@@ -136,7 +135,7 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
         }
       }
     }
-    return { resultAtom, setResolve, startQuery }
+    return { resultAtom, makePending, startQuery }
   })
   const queryAtom = atom(
     (get) => {
@@ -164,8 +163,8 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
           if (!queryResult) {
             throw new Error('query is paused')
           }
-          const { resultAtom, setResolve, startQuery } = queryResult
-          set(resultAtom, new Promise<Result>(setResolve))
+          const { resultAtom, makePending, startQuery } = queryResult
+          set(resultAtom, makePending())
           startQuery(action.opts)
           return
         }
