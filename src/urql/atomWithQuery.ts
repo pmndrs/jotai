@@ -9,13 +9,25 @@ import type {
 import { pipe, subscribe } from 'wonka'
 import type { Subscription } from 'wonka'
 import { atom } from 'jotai'
-import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
+import type { Getter, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-type AtomWithQueryAction = {
+type Timeout = ReturnType<typeof setTimeout>
+
+/*
+ * @deprecated use 'refetch' action
+ */
+type DeprecatedAtomWithQueryAction = {
   type: 'reexecute'
   opts?: Partial<OperationContext>
 }
+
+type AtomWithQueryAction =
+  | {
+      type: 'refetch'
+      opts?: Partial<OperationContext>
+    }
+  | DeprecatedAtomWithQueryAction
 
 type OperationResultWithData<Data, Variables extends AnyVariables> = Omit<
   OperationResult<Data, Variables>,
@@ -57,7 +69,6 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
   type Result = OperationResult<Data, Variables>
-  type ResultAtom = PrimitiveAtom<Result | Promise<Result>>
   const queryResultAtom = atom((get) => {
     const args = createQueryArgs(get)
     if ((args as { pause?: boolean }).pause) {
@@ -65,59 +76,64 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
     }
     const client = getClient(get)
     let resolve: ((result: Result) => void) | null = null
-    const baseResultAtom: ResultAtom = atom<Result | Promise<Result>>(
-      new Promise<Result>((r) => {
-        resolve = r
-      })
-    )
-    let setResult: (result: Result | Promise<Result>) => void = () => {
-      throw new Error('setting result without mount')
+    const setResolve = (r: (result: Result) => void) => {
+      resolve = r
     }
-    const listener = (result: Result | Promise<Result>) => {
-      if (result instanceof Promise) {
-        setResult(result)
-        return
-      }
+    const resultAtom = atom<Result | Promise<Result>>(
+      new Promise<Result>(setResolve)
+    )
+    let setResult: ((result: Result) => void) | null = null
+    const listener = (result: Result) => {
       if (resolve) {
         resolve(result)
         resolve = null
-      } else {
+      } else if (setResult) {
         setResult(result)
+      } else {
+        throw new Error('setting result without mount')
       }
     }
-    client
-      .query(args.query, args.variables, {
-        ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
-        ...args.context,
-      })
-      .toPromise()
-      .then(listener)
-    baseResultAtom.onMount = (update) => {
+    let subscription: Subscription | null = null
+    let timer: Timeout | undefined
+    const startQuery = (opts?: Partial<OperationContext>) => {
+      if (subscription) {
+        clearTimeout(timer)
+        subscription.unsubscribe()
+      }
+      subscription = pipe(
+        client.query(args.query, args.variables, {
+          ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
+          ...args.context,
+          ...opts,
+        }),
+        subscribe(listener)
+      )
+      if (!setResult) {
+        // not mounted yet
+        timer = setTimeout(() => {
+          if (subscription) {
+            subscription.unsubscribe()
+            subscription = null
+          }
+        }, 1000)
+      }
+    }
+    startQuery()
+    resultAtom.onMount = (update) => {
       setResult = update
-    }
-    const subscriptionAtom = atom<Subscription | null>(null)
-    const resultAtom = atom(
-      (get) => get(baseResultAtom),
-      (get, set, callback: (cleanup: () => void) => void) => {
-        const subscription = pipe(
-          client.query(args.query, args.variables, {
-            ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
-            ...args.context,
-          }),
-          subscribe(listener)
-        )
-        set(subscriptionAtom, subscription)
-        callback(() => get(subscriptionAtom)?.unsubscribe())
+      if (subscription) {
+        clearTimeout(timer as Timeout)
+      } else {
+        startQuery()
       }
-    )
-    resultAtom.onMount = (init) => {
-      let cleanup: (() => void) | undefined
-      init((c) => {
-        cleanup = c
-      })
-      return cleanup
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe()
+          subscription = null
+        }
+      }
     }
-    return { args, client, resultAtom, subscriptionAtom, baseResultAtom }
+    return { resultAtom, setResolve, startQuery }
   })
   const queryAtom = atom(
     (get) => {
@@ -133,27 +149,27 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
       return result
     },
     (get, set, action: AtomWithQueryAction) => {
+      if (action.type === 'reexecute') {
+        console.warn(
+          'DEPRECATED [atomWithQuery] use refetch instead of reexecute'
+        )
+        ;(action as AtomWithQueryAction).type = 'refetch'
+      }
       switch (action.type) {
-        case 'reexecute': {
+        case 'refetch': {
           const queryResult = get(queryResultAtom)
           if (!queryResult) {
             throw new Error('query is paused')
           }
-          const { args, client, subscriptionAtom, baseResultAtom } = queryResult
-          set(baseResultAtom, new Promise<never>(() => {})) // infinite pending
-          const newSubscription = pipe(
-            client.query(args.query, args.variables, {
-              ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
-              ...args.context,
-              ...action.opts,
-            }),
-            subscribe((result) => {
-              set(baseResultAtom, result)
+          const { resultAtom, setResolve, startQuery } = queryResult
+          set(
+            resultAtom,
+            new Promise<Result>((r) => {
+              setResolve(r)
             })
           )
-          const oldSubscription = get(subscriptionAtom)
-          oldSubscription?.unsubscribe()
-          set(subscriptionAtom, newSubscription)
+          startQuery(action.opts)
+          return
         }
       }
     }

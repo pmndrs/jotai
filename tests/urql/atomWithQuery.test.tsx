@@ -240,7 +240,7 @@ it('pause test', async () => {
   await findByText('count: 0')
 })
 
-it('reexecute test', async () => {
+it('refetch test', async () => {
   const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     () => ({
       query: '{ count }',
@@ -254,7 +254,7 @@ it('reexecute test', async () => {
     return (
       <>
         <div>count: {data.count}</div>
-        <button onClick={() => dispatch({ type: 'reexecute' })}>button</button>
+        <button onClick={() => dispatch({ type: 'refetch' })}>button</button>
       </>
     )
   }
@@ -428,7 +428,7 @@ describe('error handling', () => {
         },
         dispatch,
       ] = useAtom(countAtom)
-      const refetch = () => dispatch({ type: 'reexecute' })
+      const refetch = () => dispatch({ type: 'refetch' })
       return (
         <>
           <div>count: {count}</div>
@@ -442,7 +442,7 @@ describe('error handling', () => {
       const retryFromError = useRetryFromError()
       const retry = () => {
         retryFromError(() => {
-          dispatch({ type: 'reexecute' })
+          dispatch({ type: 'refetch' })
         })
       }
       return (
