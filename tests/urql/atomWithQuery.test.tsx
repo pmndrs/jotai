@@ -2,7 +2,7 @@ import { Component, StrictMode, Suspense, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
-import { delay, fromValue, interval, map, pipe, take, toPromise } from 'wonka'
+import { delay, fromValue, interval, map, pipe } from 'wonka'
 import {
   atom,
   SECRET_INTERNAL_getScopeContext as getScopeContext,
@@ -19,21 +19,14 @@ const useRetryFromError = (scope?: symbol | string | number) => {
   return retryFromError || ((fn) => fn())
 }
 
-const withPromise = (source$: any) => {
-  source$.toPromise = () => pipe(source$, take(1), toPromise)
-  return source$
-}
-
 const generateClient = (id: string | number, error?: () => boolean) =>
   ({
     query: () => {
-      const source$ = withPromise(
-        pipe(
-          fromValue(
-            error?.() ? { error: new Error('fetch error') } : { data: { id } }
-          ),
-          delay(100)
-        )
+      const source$ = pipe(
+        fromValue(
+          error?.() ? { error: new Error('fetch error') } : { data: { id } }
+        ),
+        delay(100)
       )
       if (typeof id === 'number') {
         ++id
@@ -45,11 +38,9 @@ const generateClient = (id: string | number, error?: () => boolean) =>
 const generateContinuousClient = () =>
   ({
     query: () =>
-      withPromise(
-        pipe(
-          interval(100),
-          map((i: number) => ({ data: { count: i } }))
-        )
+      pipe(
+        interval(100),
+        map((i: number) => ({ data: { count: i } }))
       ),
   } as unknown as Client)
 
