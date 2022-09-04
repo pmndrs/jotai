@@ -380,9 +380,9 @@ describe('error handling', () => {
   }
 
   it('can catch error in error boundary', async () => {
-    const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
+    const countAtom = atomWithQuery<{ id: number }, Record<string, never>>(
       () => ({
-        query: '{ count }',
+        query: '{ id }',
         variables: {},
       }),
       () => generateClient(0, () => true)
@@ -390,7 +390,7 @@ describe('error handling', () => {
 
     const Counter = () => {
       const [{ data }] = useAtom(countAtom)
-      return <div>count: {data.count}</div>
+      return <div>count: {data.id}</div>
     }
 
     const { findByText } = render(
@@ -409,9 +409,9 @@ describe('error handling', () => {
 
   it('can recover from error', async () => {
     let willThrowError = false
-    const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
+    const countAtom = atomWithQuery<{ id: number }, Record<string, never>>(
       () => ({
-        query: '{ count }',
+        query: '{ id }',
         variables: {},
       }),
       () =>
@@ -424,14 +424,14 @@ describe('error handling', () => {
     const Counter = () => {
       const [
         {
-          data: { count },
+          data: { id },
         },
         dispatch,
       ] = useAtom(countAtom)
       const refetch = () => dispatch({ type: 'refetch' })
       return (
         <>
-          <div>count: {count}</div>
+          <div>count: {id}</div>
           <button onClick={refetch}>refetch</button>
         </>
       )
