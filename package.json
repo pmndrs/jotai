@@ -6,7 +6,7 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "typesVersions": {
-    "<4.0": {
+    "<4.1": {
       "esm/*": [
         "ts3.4/*"
       ],
@@ -124,7 +124,7 @@
     "build:babel:plugin-debug-label": "rollup -c --config-babel_plugin-debug-label",
     "build:babel:plugin-react-refresh": "rollup -c --config-babel_plugin-react-refresh",
     "build:babel:preset": "rollup -c --config-babel_preset",
-    "postbuild": "yarn copy && yarn patch-readme",
+    "postbuild": "yarn copy && yarn patch-ts3.4 && yarn patch-readme",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --write",
     "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
     "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
@@ -135,6 +135,7 @@
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
+    "patch-ts3.4": "shx sed -i 's/^declare type Awaited[^;]*;/declare type Awaited<T> = T extends Promise<infer V> ? V : T;/' dist/ts3.4/*.d.ts dist/ts3.4/*/*.d.ts dist/ts3.4/*/*/*.d.ts",
     "patch-readme": "shx sed -i 's/.*dark mode.*//' dist/readme.md"
   },
   "engines": {
