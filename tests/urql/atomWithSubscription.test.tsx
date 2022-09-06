@@ -2,7 +2,7 @@ import { Component, StrictMode, Suspense, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client, TypedDocumentNode } from '@urql/core'
-import { interval, map, pipe } from 'wonka'
+import { delay, fromValue, interval, map, pipe, switchMap } from 'wonka'
 import {
   atom,
   SECRET_INTERNAL_getScopeContext as getScopeContext,
@@ -24,6 +24,7 @@ const generateClient = (id = 'default', error?: () => boolean) =>
     subscription: () =>
       pipe(
         interval(100),
+        switchMap((i: number) => pipe(fromValue(i), delay(i > 2 ? 500 : 0))),
         map((i: number) =>
           error?.()
             ? { error: new Error('fetch error') }
