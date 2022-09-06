@@ -308,7 +308,7 @@ describe('error handling', () => {
         }>,
         variables: {},
       }),
-      () => clientMock
+      () => generateClient(undefined, () => true)
     )
 
     const Counter = () => {
