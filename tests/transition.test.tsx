@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useTransition } from 'react'
+import { StrictMode, Suspense, useEffect, useTransition } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { getTestProvider } from './testUtils'
@@ -36,11 +36,13 @@ describeWithUseTransition('useTransition', () => {
     }
 
     const { getByText, findByText } = render(
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <>
+        <Provider>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </Provider>
+      </>
     )
 
     await findByText('delayed: 0')
@@ -85,11 +87,13 @@ describeWithUseTransition('useTransition', () => {
     }
 
     const { getByText, findByText } = render(
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('count: 0')

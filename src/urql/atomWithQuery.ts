@@ -9,22 +9,32 @@ import type {
 import { pipe, subscribe } from 'wonka'
 import type { Subscription } from 'wonka'
 import { atom } from 'jotai'
-import type { Getter, PrimitiveAtom, WritableAtom } from 'jotai'
+import type { Getter, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-type AtomWithQueryAction = {
+type Timeout = ReturnType<typeof setTimeout>
+
+/*
+ * @deprecated use 'refetch' action
+ */
+type DeprecatedAtomWithQueryAction = {
   type: 'reexecute'
   opts?: Partial<OperationContext>
 }
 
-type OperationResultWithData<Data, Variables> = OperationResult<
-  Data,
-  Variables
-> & {
-  data: Data
-}
+type AtomWithQueryAction =
+  | {
+      type: 'refetch'
+      opts?: Partial<OperationContext>
+    }
+  | DeprecatedAtomWithQueryAction
 
-const isOperationResultWithData = <Data, Variables>(
+type OperationResultWithData<Data, Variables extends AnyVariables> = Omit<
+  OperationResult<Data, Variables>,
+  'data'
+> & { data: Data }
+
+const isOperationResultWithData = <Data, Variables extends AnyVariables>(
   result: OperationResult<Data, Variables>
 ): result is OperationResultWithData<Data, Variables> =>
   'data' in result && !result.error
@@ -39,9 +49,7 @@ type QueryArgs<Data, Variables extends AnyVariables> = {
 type QueryArgsWithPause<Data, Variables extends AnyVariables> = QueryArgs<
   Data,
   Variables
-> & {
-  pause: boolean
-}
+> & { pause: boolean }
 
 export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
@@ -60,90 +68,74 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  type ResultAtom = PrimitiveAtom<
-    | OperationResultWithData<Data, Variables>
-    | Promise<OperationResultWithData<Data, Variables>>
-  >
+  type Result = OperationResult<Data, Variables>
   const queryResultAtom = atom((get) => {
     const args = createQueryArgs(get)
     if ((args as { pause?: boolean }).pause) {
       return null
     }
     const client = getClient(get)
-    let resolve:
-      | ((result: OperationResultWithData<Data, Variables>) => void)
-      | null = null
-    const baseResultAtom: ResultAtom = atom<
-      | OperationResultWithData<Data, Variables>
-      | Promise<OperationResultWithData<Data, Variables>>
-    >(
-      new Promise<OperationResultWithData<Data, Variables>>((r) => {
+    let resolve: ((result: Result) => void) | null = null
+    const makePending = () =>
+      new Promise<Result>((r) => {
         resolve = r
       })
-    )
-    let setResult: (
-      result:
-        | OperationResultWithData<Data, Variables>
-        | Promise<OperationResultWithData<Data, Variables>>
-    ) => void = () => {
-      throw new Error('setting result without mount')
-    }
-    const listener = (
-      result:
-        | OperationResult<Data, Variables>
-        | Promise<OperationResultWithData<Data, Variables>>
-    ) => {
-      if (result instanceof Promise) {
-        setResult(result)
-        return
-      }
-      // TODO error handling
-      if (!isOperationResultWithData(result)) {
-        throw new Error('result does not have data')
+    const resultAtom = atom<Result | Promise<Result>>(makePending())
+    let setResult: ((result: Result) => void) | null = null
+    const listener = (result: Result) => {
+      if (!resolve && !setResult) {
+        throw new Error('setting result without mount')
       }
       if (resolve) {
         resolve(result)
         resolve = null
-      } else {
+      }
+      if (setResult) {
         setResult(result)
       }
     }
-    client
-      .query(args.query, args.variables, {
-        ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
-        ...args.context,
-      })
-      .toPromise()
-      .then(listener)
-      .catch(() => {
-        // TODO error handling
-      })
-    baseResultAtom.onMount = (update) => {
-      setResult = update
-    }
-    const subscriptionAtom = atom<Subscription | null>(null)
-    const resultAtom = atom(
-      (get) => get(baseResultAtom),
-      (get, set, callback: (cleanup: () => void) => void) => {
-        const subscription = pipe(
-          client.query(args.query, args.variables, {
-            ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
-            ...args.context,
-          }),
-          subscribe(listener)
-        )
-        set(subscriptionAtom, subscription)
-        callback(() => get(subscriptionAtom)?.unsubscribe())
+    let subscription: Subscription | null = null
+    let timer: Timeout | undefined
+    const startQuery = (opts?: Partial<OperationContext>) => {
+      if (subscription) {
+        clearTimeout(timer)
+        subscription.unsubscribe()
       }
-    )
-    resultAtom.onMount = (init) => {
-      let cleanup: (() => void) | undefined
-      init((c) => {
-        cleanup = c
-      })
-      return cleanup
+      subscription = pipe(
+        client.query(args.query, args.variables, {
+          ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
+          ...args.context,
+          ...opts,
+        }),
+        subscribe(listener)
+      )
+      if (!setResult) {
+        // not mounted yet
+        timer = setTimeout(() => {
+          if (subscription) {
+            subscription.unsubscribe()
+            subscription = null
+          }
+        }, 1000)
+      }
     }
-    return { args, client, resultAtom, subscriptionAtom, listener }
+    startQuery()
+    resultAtom.onMount = (update) => {
+      setResult = update
+      if (subscription) {
+        clearTimeout(timer as Timeout)
+      } else {
+        startQuery()
+      }
+      return () => {
+        setResult = null
+        if (subscription) {
+          subscription.unsubscribe()
+          subscription = null
+        }
+      }
+    }
+    return { resultAtom, makePending, startQuery }
   })
   const queryAtom = atom(
     (get) => {
@@ -152,28 +144,29 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
         return null
       }
       const { resultAtom } = queryResult
-      return get(resultAtom)
+      const result = get(resultAtom)
+      if (!isOperationResultWithData(result)) {
+        throw result.error
+      }
+      return result
     },
     (get, set, action: AtomWithQueryAction) => {
+      if (action.type === 'reexecute') {
+        console.warn(
+          'DEPRECATED [atomWithQuery] use refetch instead of reexecute'
+        )
+        ;(action as AtomWithQueryAction).type = 'refetch'
+      }
       switch (action.type) {
-        case 'reexecute': {
+        case 'refetch': {
           const queryResult = get(queryResultAtom)
           if (!queryResult) {
             throw new Error('query is paused')
           }
-          const { args, client, subscriptionAtom, listener } = queryResult
-          listener(new Promise<never>(() => {})) // infinite pending
-          const newSubscription = pipe(
-            client.query(args.query, args.variables, {
-              ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
-              ...args.context,
-              ...action.opts,
-            }),
-            subscribe(listener)
-          )
-          const oldSubscription = get(subscriptionAtom)
-          oldSubscription?.unsubscribe()
-          set(subscriptionAtom, newSubscription)
+          const { resultAtom, makePending, startQuery } = queryResult
+          set(resultAtom, makePending())
+          startQuery(action.opts)
+          return
         }
       }
     }

@@ -1,28 +1,46 @@
-import { Suspense } from 'react'
+import { Component, StrictMode, Suspense, useContext } from 'react'
+import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
-import { fromValue, interval, map, pipe, take, toPromise } from 'wonka'
-import { atom, useAtom } from 'jotai'
+import { delay, fromValue, interval, map, pipe } from 'wonka'
+import {
+  atom,
+  SECRET_INTERNAL_getScopeContext as getScopeContext,
+  useAtom,
+  useSetAtom,
+} from 'jotai'
 import { atomWithQuery } from 'jotai/urql'
 import { getTestProvider } from '../testUtils'
 
-const withPromise = (source$: any) => {
-  source$.toPromise = () => pipe(source$, take(1), toPromise)
-  return source$
+// This is only used to pass tests with unstable_enableVersionedWrite
+const useRetryFromError = (scope?: symbol | string | number) => {
+  const ScopeContext = getScopeContext(scope)
+  const { r: retryFromError } = useContext(ScopeContext)
+  return retryFromError || ((fn) => fn())
 }
-const generateClient = (id: string) =>
+
+const generateClient = (id: string | number, error?: () => boolean) =>
   ({
-    query: () => withPromise(fromValue({ data: { id } })),
+    query: () => {
+      const source$ = pipe(
+        fromValue(
+          error?.() ? { error: new Error('fetch error') } : { data: { id } }
+        ),
+        delay(100)
+      )
+      if (typeof id === 'number') {
+        ++id
+      }
+      return source$
+    },
   } as unknown as Client)
 
 const generateContinuousClient = () =>
   ({
     query: () =>
-      withPromise(
-        pipe(
-          interval(100),
-          map((i: number) => ({ data: { count: i } }))
-        )
+      pipe(
+        interval(100),
+        map((i: number) => ({ data: { count: i } }))
       ),
   } as unknown as Client)
 
@@ -47,11 +65,13 @@ it('query basic test', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -91,12 +111,14 @@ it('query dependency test', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -144,12 +166,14 @@ it('query change client at runtime', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Identifier />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Identifier />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -192,12 +216,14 @@ it('pause test', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: paused')
@@ -208,7 +234,7 @@ it('pause test', async () => {
   await findByText('count: 0')
 })
 
-it('reexecute test', async () => {
+it('refetch test', async () => {
   const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     () => ({
       query: '{ count }',
@@ -222,17 +248,19 @@ it('reexecute test', async () => {
     return (
       <>
         <div>count: {data.count}</div>
-        <button onClick={() => dispatch({ type: 'reexecute' })}>button</button>
+        <button onClick={() => dispatch({ type: 'refetch' })}>button</button>
       </>
     )
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -285,12 +313,14 @@ it('query null client suspense', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Identifier />
-      </Suspense>
-      <Controls />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Identifier />
+        </Suspense>
+        <Controls />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('no data')
@@ -309,4 +339,136 @@ it('query null client suspense', async () => {
   fireEvent.click(getByText('set'))
   await findByText('loading')
   await findByText('client is set')
+})
+
+describe('error handling', () => {
+  class ErrorBoundary extends Component<
+    { message?: string; retry?: () => void; children: ReactNode },
+    { hasError: boolean }
+  > {
+    constructor(props: { message?: string; children: ReactNode }) {
+      super(props)
+      this.state = { hasError: false }
+    }
+    static getDerivedStateFromError() {
+      return { hasError: true }
+    }
+    render() {
+      return this.state.hasError ? (
+        <div>
+          {this.props.message || 'errored'}
+          {this.props.retry && (
+            <button
+              onClick={() => {
+                this.props.retry?.()
+                this.setState({ hasError: false })
+              }}>
+              retry
+            </button>
+          )}
+        </div>
+      ) : (
+        this.props.children
+      )
+    }
+  }
+
+  it('can catch error in error boundary', async () => {
+    const countAtom = atomWithQuery<{ id: number }, Record<string, never>>(
+      () => ({
+        query: '{ id }',
+        variables: {},
+      }),
+      () => generateClient(0, () => true)
+    )
+
+    const Counter = () => {
+      const [{ data }] = useAtom(countAtom)
+      return <div>count: {data.id}</div>
+    }
+
+    const { findByText } = render(
+      <Provider>
+        <ErrorBoundary>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('errored')
+  })
+
+  it('can recover from error', async () => {
+    let willThrowError = true
+    const countAtom = atomWithQuery<{ id: number }, Record<string, never>>(
+      () => ({
+        query: '{ id }',
+        variables: {},
+      }),
+      () => generateClient(0, () => willThrowError)
+    )
+
+    const Counter = () => {
+      const [
+        {
+          data: { id },
+        },
+        dispatch,
+      ] = useAtom(countAtom)
+      const refetch = () => dispatch({ type: 'refetch' })
+      return (
+        <>
+          <div>count: {id}</div>
+          <button onClick={refetch}>refetch</button>
+        </>
+      )
+    }
+
+    const App = () => {
+      const dispatch = useSetAtom(countAtom)
+      const retryFromError = useRetryFromError()
+      const retry = () => {
+        retryFromError(() => {
+          dispatch({ type: 'refetch' })
+        })
+      }
+      return (
+        <ErrorBoundary retry={retry}>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <Provider>
+        <App />
+      </Provider>
+    )
+
+    await findByText('loading')
+    await findByText('errored')
+
+    await new Promise((r) => setTimeout(r, 100))
+    willThrowError = false
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 1')
+
+    await new Promise((r) => setTimeout(r, 100))
+    willThrowError = true
+    fireEvent.click(getByText('refetch'))
+    await findByText('loading')
+    await findByText('errored')
+
+    await new Promise((r) => setTimeout(r, 100))
+    willThrowError = false
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 3')
+  })
 })

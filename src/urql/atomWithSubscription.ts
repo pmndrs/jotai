@@ -8,19 +8,24 @@ import type {
 import { pipe, subscribe } from 'wonka'
 import type { Subscription } from 'wonka'
 import { atom } from 'jotai'
-import type { Atom, Getter } from 'jotai'
+import type { Getter, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-type OperationResultWithData<Data, Variables> = OperationResult<
-  Data,
-  Variables
-> & {
-  data: Data
+type Timeout = ReturnType<typeof setTimeout>
+
+type AtomWithSubscriptionAction = {
+  type: 'refetch'
 }
 
-const isOperationResultWithData = <Data, Variables>(
+type OperationResultWithData<Data, Variables extends AnyVariables> = Omit<
+  OperationResult<Data, Variables>,
+  'data'
+> & { data: Data }
+
+const isOperationResultWithData = <Data, Variables extends AnyVariables>(
   result: OperationResult<Data, Variables>
-): result is OperationResultWithData<Data, Variables> => 'data' in result
+): result is OperationResultWithData<Data, Variables> =>
+  'data' in result && !result.error
 
 type SubscriptionArgs<Data, Variables extends AnyVariables> = {
   query: TypedDocumentNode<Data, Variables> | string
@@ -38,75 +43,118 @@ type SubscriptionArgsWithPause<
 export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
   getClient?: (get: Getter) => Client
-): Atom<OperationResultWithData<Data, Variables>>
+): WritableAtom<
+  OperationResultWithData<Data, Variables>,
+  AtomWithSubscriptionAction
+>
 
 export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (
     get: Getter
   ) => SubscriptionArgsWithPause<Data, Variables>,
   getClient?: (get: Getter) => Client
-): Atom<OperationResultWithData<Data, Variables> | null>
+): WritableAtom<
+  OperationResultWithData<Data, Variables> | null,
+  AtomWithSubscriptionAction
+>
 
 export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
+  type Result = OperationResult<Data, Variables>
   const queryResultAtom = atom((get) => {
     const args = createSubscriptionArgs(get)
     if ((args as { pause?: boolean }).pause) {
-      return { args }
+      return null
     }
     const client = getClient(get)
-    let resolve: ((result: OperationResult<Data, Variables>) => void) | null =
-      null
-    const resultAtom = atom<
-      | OperationResult<Data, Variables>
-      | Promise<OperationResult<Data, Variables>>
-    >(
-      new Promise<OperationResult<Data, Variables>>((r) => {
+    let resolve: ((result: Result) => void) | null = null
+    const makePending = () =>
+      new Promise<Result>((r) => {
         resolve = r
       })
-    )
-    let setResult: (result: OperationResult<Data, Variables>) => void = () => {
-      throw new Error('setting result without mount')
-    }
-    let isMounted = false
-    const listener = (result: OperationResult<Data, Variables>) => {
-      // TODO error handling
-      if (!isOperationResultWithData(result)) {
-        throw new Error('result does not have data')
-      }
+    const resultAtom = atom<Result | Promise<Result>>(makePending())
+    let setResult: ((result: Result) => void) | null = null
+    const listener = (result: Result) => {
+      // FIXME having this check make a error recovery test to fail
+      // if (!resolve && !setResult) {
+      //   throw new Error('setting result without mount')
+      // }
       if (resolve) {
-        if (!isMounted) {
-          subscription?.unsubscribe()
-          subscription = null
-        }
         resolve(result)
         resolve = null
-      } else {
+      }
+      if (setResult) {
         setResult(result)
       }
     }
-    let subscription: Subscription | null = pipe(
-      client.subscription(args.query, args.variables, args.context),
-      subscribe(listener)
-    )
+    let subscription: Subscription | null = null
+    let timer: Timeout | undefined
+    const startSub = () => {
+      if (subscription) {
+        clearTimeout(timer)
+        subscription.unsubscribe()
+      }
+      subscription = pipe(
+        client.subscription(args.query, args.variables, args.context),
+        subscribe(listener)
+      )
+      if (!setResult) {
+        // not mounted yet
+        timer = setTimeout(() => {
+          if (subscription) {
+            subscription.unsubscribe()
+            subscription = null
+          }
+        }, 1000)
+      }
+    }
+    startSub()
     resultAtom.onMount = (update) => {
       setResult = update
-      isMounted = true
-      if (!subscription) {
-        subscription = pipe(
-          client.subscription(args.query, args.variables, args.context),
-          subscribe(listener)
-        )
+      if (subscription) {
+        clearTimeout(timer as Timeout)
+      } else {
+        startSub()
       }
-      return () => subscription?.unsubscribe()
+      return () => {
+        setResult = null
+        if (subscription) {
+          subscription.unsubscribe()
+          subscription = null
+        }
+      }
     }
-    return { resultAtom, args }
+    return { resultAtom, makePending, startSub }
   })
-  const queryAtom = atom((get) => {
-    const { resultAtom } = get(queryResultAtom)
-    return resultAtom ? get(resultAtom) : null
-  })
+  const queryAtom = atom(
+    (get) => {
+      const queryResult = get(queryResultAtom)
+      if (!queryResult) {
+        return null
+      }
+      const { resultAtom } = queryResult
+      const result = get(resultAtom)
+      if (!isOperationResultWithData(result)) {
+        throw result.error
+      }
+      return result
+    },
+    (get, set, action: AtomWithSubscriptionAction) => {
+      switch (action.type) {
+        case 'refetch': {
+          const queryResult = get(queryResultAtom)
+          if (!queryResult) {
+            throw new Error('query is paused')
+          }
+          const { resultAtom, makePending, startSub } = queryResult
+          set(resultAtom, makePending())
+          startSub()
+          return
+        }
+      }
+    }
+  )
   return queryAtom
 }

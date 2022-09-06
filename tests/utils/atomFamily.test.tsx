@@ -15,9 +15,11 @@ it('new atomFamily impl', async () => {
     return <div>count: {count}</div>
   }
   const { findByText } = render(
-    <Provider>
-      <Displayer index={'a'} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Displayer index={'a'} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: a')
@@ -86,9 +88,11 @@ it('primitive atomFamily initialized with props', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')
@@ -163,9 +167,11 @@ it('derived atomFamily functionality as usual', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {

@@ -1,4 +1,4 @@
-import { Component, Suspense, useCallback, useContext } from 'react'
+import { Component, StrictMode, Suspense, useCallback, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import {
@@ -42,11 +42,13 @@ it('infinite query basic test', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -94,11 +96,13 @@ it('infinite query next page test', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </>
   )
 
   await findByText('loading')
@@ -152,11 +156,13 @@ it('infinite query with enabled', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Parent />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Parent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('not enabled')
@@ -218,11 +224,13 @@ it('infinite query with enabled 2', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Parent />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Parent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -287,11 +295,13 @@ it('should be able to refetch only specific pages when refetchPages is provided'
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Page />
-      </Suspense>
-    </Provider>
+    <>
+      <Provider>
+        <Suspense fallback="loading">
+          <Page />
+        </Suspense>
+      </Provider>
+    </>
   )
 
   await findByText('loading')
@@ -365,13 +375,15 @@ describe('error handling', () => {
     }
 
     const { findByText } = render(
-      <Provider>
-        <ErrorBoundary>
-          <Suspense fallback="loading">
-            <Counter />
-          </Suspense>
-        </ErrorBoundary>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <ErrorBoundary>
+            <Suspense fallback="loading">
+              <Counter />
+            </Suspense>
+          </ErrorBoundary>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')
@@ -424,9 +436,11 @@ describe('error handling', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <App />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <App />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')

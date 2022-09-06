@@ -1,5 +1,6 @@
+import { StrictMode } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
-import { createStore } from 'redux'
+import { legacy_createStore as createStore } from 'redux'
 import { useAtom } from 'jotai'
 import { atomWithStore } from 'jotai/redux'
 import { getTestProvider } from '../testUtils'
@@ -30,9 +31,11 @@ it('count state', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')

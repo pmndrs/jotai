@@ -1,4 +1,5 @@
-import { Component, ReactElement, ReactNode, Suspense, useState } from 'react'
+import { Component, StrictMode, Suspense, useState } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
@@ -37,11 +38,13 @@ it('count state', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')
@@ -63,11 +66,13 @@ it('writable count state', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')
@@ -99,14 +104,16 @@ it('writable count state without initial value', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
+    <StrictMode>
+      <Provider>
         <Suspense fallback="loading">
-          <CounterValue />
+          <Suspense fallback="loading">
+            <CounterValue />
+          </Suspense>
+          <CounterButton />
         </Suspense>
-        <CounterButton />
-      </Suspense>
-    </Provider>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -143,11 +150,13 @@ it('writable count state with delayed value', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -218,11 +227,13 @@ it('cleanup subscription', async () => {
   }
 
   const { findByText, rerender } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -256,13 +267,15 @@ it('resubscribe on remount', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Toggle>
-          <Counter />
-        </Toggle>
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Toggle>
+            <Counter />
+          </Toggle>
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -287,9 +300,11 @@ it("count state with initialValue doesn't suspend", async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 5')
@@ -315,11 +330,13 @@ it('writable count state with initialValue', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 5')
@@ -346,13 +363,15 @@ it('writable count state with error', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <ErrorBoundary>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </ErrorBoundary>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <ErrorBoundary>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -371,9 +390,11 @@ it('synchronous subscription with initial value', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')
@@ -389,9 +410,11 @@ it('synchronous subscription with BehaviorSubject', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')
@@ -407,9 +430,11 @@ it('synchronous subscription with already emitted value', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')
@@ -427,9 +452,11 @@ it('with falsy initial value', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -446,11 +473,13 @@ it('with initially emitted undefined value', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -481,11 +510,13 @@ it("don't omit values emitted between init and mount", async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')

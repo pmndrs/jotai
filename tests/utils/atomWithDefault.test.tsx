@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { RESET, atomWithDefault } from 'jotai/utils'
@@ -25,9 +25,11 @@ it('simple sync get default', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count1: 1, count2: 2')
@@ -64,11 +66,13 @@ it('simple async get default', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
@@ -106,9 +110,11 @@ it('refresh sync atoms to default values', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count1: 1, count2: 2')
@@ -152,11 +158,13 @@ it('refresh async atoms to default values', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')

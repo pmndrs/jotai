@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
 import create from 'zustand/vanilla'
 import { useAtom } from 'jotai'
@@ -28,9 +29,11 @@ it('count state', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')

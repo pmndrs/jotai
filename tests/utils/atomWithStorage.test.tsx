@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai'
 import {
@@ -59,9 +59,11 @@ describe('atomWithStorage (sync)', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('count: 10')
@@ -89,9 +91,11 @@ describe('atomWithStorage (sync)', () => {
     }
 
     const { findByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('count: 9')
@@ -146,9 +150,11 @@ describe('with sync string storage', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('count: 10')
@@ -179,9 +185,11 @@ describe('with sync string storage', () => {
     }
 
     const { findByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('noentry: -1')
@@ -225,11 +233,13 @@ describe('atomWithStorage (async)', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')
@@ -262,11 +272,13 @@ describe('atomWithStorage (async)', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('loading')
@@ -296,9 +308,11 @@ describe('atomWithStorage (async)', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('count: 30')
@@ -330,9 +344,11 @@ describe('atomWithStorage (without localStorage) (#949)', () => {
     }
 
     const { findByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('count: 1')
@@ -391,9 +407,11 @@ describe('atomWithHash', () => {
     }
 
     const { findByText, getByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('count: 1')
@@ -425,9 +443,11 @@ describe('atomWithHash', () => {
     }
 
     const { findByText, getByText, queryByText } = render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
 
     await findByText('visible')

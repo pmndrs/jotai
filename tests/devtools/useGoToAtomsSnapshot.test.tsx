@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef } from 'react'
+import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { Provider, atom, useAtom } from 'jotai'
 import type { Atom } from 'jotai'
@@ -37,10 +37,12 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should modify atoms snapshot', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <DisplayAtoms />
-      <UpdateSnapshot />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <DisplayAtoms />
+        <UpdateSnapshot />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('cat')
@@ -83,10 +85,12 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with derived atoms', async () =>
   }
 
   const { getByText } = render(
-    <Provider>
-      <DisplayPrice />
-      <UpdateSnapshot />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <DisplayPrice />
+        <UpdateSnapshot />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -136,12 +140,14 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with async derived atoms', async
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <DisplayPrice />
-        <UpdateSnapshot />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <DisplayPrice />
+          <UpdateSnapshot />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -205,10 +211,12 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with original snapshot', async (
   }
 
   const { getByText } = render(
-    <Provider>
-      <DisplayPrice />
-      <UpdateSnapshot />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <DisplayPrice />
+        <UpdateSnapshot />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -255,10 +263,12 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should respect atom scope', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <DisplayAtoms />
-      <UpdateSnapshot />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <DisplayAtoms />
+        <UpdateSnapshot />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('cat')
