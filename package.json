@@ -6,7 +6,7 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "typesVersions": {
-    "<4.1": {
+    "<4.5": {
       "esm/*": [
         "ts3.4/*"
       ],
@@ -135,7 +135,7 @@
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
-    "patch-ts3.4": "shx sed -i 's/^declare type Awaited[^;]*;/declare type Awaited<T> = T extends Promise<infer V> ? V : T;/' dist/ts3.4/*.d.ts dist/ts3.4/*/*.d.ts dist/ts3.4/*/*/*.d.ts",
+    "patch-ts3.4": "node -e \"require('shelljs').find('dist/ts3.4/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
     "patch-readme": "shx sed -i 's/.*dark mode.*//' dist/readme.md"
   },
   "engines": {

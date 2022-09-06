@@ -2,8 +2,6 @@ import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
 import { useAtomValue } from './useAtomValue'
 import { useSetAtom } from './useSetAtom'
 
-type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
-
 export function useAtom<Value, Update, Result extends void | Promise<void>>(
   atom: WritableAtom<Value, Update, Result>,
   scope?: Scope

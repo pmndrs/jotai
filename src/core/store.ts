@@ -8,8 +8,6 @@ import {
 } from './suspensePromise'
 import type { SuspensePromise } from './suspensePromise'
 
-type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
-
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
 type AnyWritableAtom = WritableAtom<AnyAtomValue, unknown, void | Promise<void>>

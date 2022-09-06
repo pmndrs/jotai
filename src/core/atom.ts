@@ -1,5 +1,3 @@
-type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
-
 type Getter = {
   <Value>(atom: Atom<Value | Promise<Value>>): Value
   <Value>(atom: Atom<Promise<Value>>): Value
