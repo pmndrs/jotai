@@ -18,7 +18,7 @@ it('query basic test', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: ['count1'],
     queryFn: async () => {
-      return await fakeFetch({ count: 0 }, false, 100)
+      return await fakeFetch({ count: 0 }, false, 1000)
     },
   }))
 
@@ -52,8 +52,10 @@ it('query basic test', async () => {
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
+
         <CounterStatus />
       </Provider>
+
     </StrictMode>
   )
 

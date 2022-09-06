@@ -1,7 +1,26 @@
-import { QueryClient, QueryKey, QueryObserver } from '@tanstack/query-core'
+import {
+  QueryClient,
+  QueryKey,
+  QueryObserver as _QueryObserver,
+  QueryObserverResult,
+} from '@tanstack/query-core'
 import { Atom, atom } from 'jotai/core/atom'
 import { atomFamily } from 'jotai/utils'
 import { GetQueryClient } from './types'
+
+type Result = QueryObserverResult<unknown, unknown>
+
+type Listener = (result: Result) => void
+
+class QueryObserver<
+  TQueryFnData = unknown,
+  TError = unknown,
+  TData = TQueryFnData,
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
+> extends _QueryObserver<TQueryFnData, TError, TData, TQueryData, TQueryKey> {
+  listeners: Listener[] = []
+}
 
 export const queryObserverFamily = atomFamily<
   [Atom<any>, QueryKey, GetQueryClient],
@@ -10,7 +29,6 @@ export const queryObserverFamily = atomFamily<
   ([_queryDataAtom, _queryKey, getQueryClientAtom]) => {
     return atom((get) => {
       const queryClient = getQueryClientAtom(get) as QueryClient
-
       return new QueryObserver(queryClient, {})
     })
   },
