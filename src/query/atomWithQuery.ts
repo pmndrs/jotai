@@ -6,8 +6,9 @@ import type {
 } from '@tanstack/query-core'
 import { atom } from 'jotai'
 import type { PrimitiveAtom, WritableAtom } from 'jotai'
-import { queryClientAtom } from './queryClientAtom'
+import { defaultGetQueryClient, queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
+import { queryObserverFamily } from './queryObserver'
 
 type AtomWithQueryAction = {
   type: 'refetch'
@@ -88,7 +89,7 @@ export function atomWithQuery<
   createQuery: CreateQueryOptions<
     AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >,
-  getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
+  getQueryClient: GetQueryClient = defaultGetQueryClient
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
   type Options = AtomWithQueryOptions<
     TQueryFnData,
@@ -99,7 +100,7 @@ export function atomWithQuery<
   >
   type Result = QueryObserverResult<TData, TError>
 
-  const observerAtom = atom((get) => {
+  /* const observerAtom = atom((get) => {
     const queryClient = getQueryClient(get)
     const defaultedOptions = queryClient.defaultQueryOptions<
       TQueryFnData,
@@ -116,7 +117,7 @@ export function atomWithQuery<
       TQueryKey
     >(queryClient, defaultedOptions)
     return observer
-  })
+  }) */
 
   const queryDataAtom: WritableAtom<
     {
@@ -132,8 +133,10 @@ export function atomWithQuery<
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       const defaultedOptions = queryClient.defaultQueryOptions(options)
-      const observer = get(observerAtom)
-      observer.destroy()
+      const observer = get(
+        queryObserverFamily([queryDataAtom, options.queryKey, getQueryClient])
+      )
+      // observer.destroy()
       observer.setOptions(defaultedOptions)
       const initialResult = observer.getCurrentResult()
 
@@ -187,8 +190,11 @@ export function atomWithQuery<
       return { options, resultAtom, unsubIfNotMounted }
     },
     (get, set, action) => {
-      const observer = get(observerAtom)
       const { options, resultAtom, unsubIfNotMounted } = get(queryDataAtom)
+      const observer = get(
+        queryObserverFamily([queryDataAtom, options.queryKey, getQueryClient])
+      )
+      // const observer = get(observerAtom)
       if (options.enabled === false) {
         return
       }

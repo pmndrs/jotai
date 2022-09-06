@@ -9,7 +9,7 @@ import type {
 } from '@tanstack/query-core'
 import { atom } from 'jotai'
 import type { WritableAtom } from 'jotai'
-import { queryClientAtom } from './queryClientAtom'
+import { defaultGetQueryClient, queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
 type AtomWithInfiniteQueryAction<TQueryFnData> =
@@ -112,7 +112,7 @@ export function atomWithInfiniteQuery<
       TQueryKey
     >
   >,
-  getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
+  getQueryClient: GetQueryClient = defaultGetQueryClient
 ): WritableAtom<
   InfiniteData<TData | TQueryData> | undefined,
   AtomWithInfiniteQueryAction<TQueryFnData>
