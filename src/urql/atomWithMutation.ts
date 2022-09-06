@@ -26,22 +26,22 @@ export function atomWithMutation<Data, Variables extends AnyVariables>(
   )
   const queryResultAtom = atom(
     (get) => get(operationResultAtom),
-    (get, set, action: MutationAction<Data, Variables>) => {
+    async (get, set, action: MutationAction<Data, Variables>) => {
       set(
         operationResultAtom,
         new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch
       )
       const client = getClient(get)
       const query = createQuery(get)
-      client
+      return client
         .mutation(query, action.variables, action.context)
         .toPromise()
         .then((result) => {
-          set(operationResultAtom, result)
           action.callback?.(result)
-        })
-        .catch(() => {
-          // TODO error handling
+          if (result.error) {
+            throw result.error
+          }
+          set(operationResultAtom, result)
         })
     }
   )

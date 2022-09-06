@@ -8,8 +8,6 @@ import {
 } from './suspensePromise'
 import type { SuspensePromise } from './suspensePromise'
 
-type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
-
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
 type AnyWritableAtom = WritableAtom<AnyAtomValue, unknown, void | Promise<void>>
@@ -658,9 +656,18 @@ export const createStore = (
       }
       if ('p' in aState) {
         if (options?.unstable_promise) {
-          return aState.p.then(() =>
-            writeGetter(a as unknown as Atom<Promise<V>>, options)
-          )
+          return aState.p.then(() => {
+            const s = getAtomState(version, a)
+            if (s && 'p' in s && s.p === aState.p) {
+              // FIXME this is very very hacky
+              // there should be better solutions
+              // with suspensePromise.ts cancel handling
+              return new Promise((resolve) => setTimeout(resolve)).then(() =>
+                writeGetter(a as unknown as Atom<Promise<V>>, options)
+              )
+            }
+            return writeGetter(a as unknown as Atom<Promise<V>>, options)
+          })
         }
         if (__DEV__) {
           console.info(

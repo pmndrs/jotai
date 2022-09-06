@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { StrictMode, Suspense, useEffect } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Atom, atom, useAtomValue, useSetAtom } from 'jotai'
 import { loadable } from 'jotai/utils'
@@ -13,9 +13,11 @@ it('loadable turns suspense into values', async () => {
   })
 
   const { findByText } = render(
-    <Provider>
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('Loading...')
@@ -30,9 +32,11 @@ it('loadable turns errors into values', async () => {
   })
 
   const { findByText } = render(
-    <Provider>
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('Loading...')
@@ -47,9 +51,11 @@ it('loadable turns primitive throws into values', async () => {
   })
 
   const { findByText } = render(
-    <Provider>
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('Loading...')
@@ -77,10 +83,12 @@ it('loadable goes back to loading after re-fetch', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Refresh />
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Refresh />
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   getByText('Loading...')
@@ -116,10 +124,12 @@ it('loadable can recover from error', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Refresh />
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Refresh />
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   getByText('Loading...')
@@ -136,9 +146,14 @@ it('loadable immediately resolves sync values', async () => {
   const effectCallback = jest.fn()
 
   const { getByText } = render(
-    <Provider>
-      <LoadableComponent effectCallback={effectCallback} asyncAtom={syncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent
+          effectCallback={effectCallback}
+          asyncAtom={syncAtom}
+        />
+      </Provider>
+    </StrictMode>
   )
 
   getByText('Data: 5')
@@ -159,22 +174,26 @@ it('loadable can use resolved promises syncronously', async () => {
   }
 
   const { getByText, findByText, rerender } = render(
-    <Provider>
-      <Suspense fallback={null}>
-        <ResolveAtomComponent />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback={null}>
+          <ResolveAtomComponent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('Ready')
 
   rerender(
-    <Provider>
-      <LoadableComponent
-        effectCallback={effectCallback}
-        asyncAtom={asyncAtom}
-      />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent
+          effectCallback={effectCallback}
+          asyncAtom={asyncAtom}
+        />
+      </Provider>
+    </StrictMode>
   )
   getByText('Data: 5')
 
@@ -202,15 +221,17 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Trigger />
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Trigger />
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   getByText('Loading...')
   fireEvent.click(getByText('trigger'))
-  await new Promise((r) => setTimeout(r, 10))
+  await new Promise((r) => setTimeout(r, 100))
   resolveAsync(5)
   await findByText('Data: 5')
 })
@@ -225,9 +246,11 @@ it('loadable of a derived async atom with error does not trigger infinite loop (
   })
 
   const { findByText, getByText } = render(
-    <Provider>
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   getByText('Loading...')

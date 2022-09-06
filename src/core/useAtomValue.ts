@@ -5,8 +5,6 @@ import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM } from './store'
 import type { VersionObject } from './store'
 
-type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
-
 export function useAtomValue<Value>(
   atom: Atom<Value>,
   scope?: Scope
