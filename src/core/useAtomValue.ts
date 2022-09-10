@@ -1,9 +1,11 @@
 import { useContext, useDebugValue, useEffect, useReducer } from 'react'
 import type { Reducer } from 'react'
-import type { Atom, Scope } from './atom'
+import type { Atom } from './atom'
 import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM } from './store'
 import type { VersionObject } from './store'
+
+type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 
 export function useAtomValue<Value>(
   atom: Atom<Value>,
