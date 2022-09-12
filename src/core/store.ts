@@ -387,6 +387,11 @@ export const createStore = (
         // newer async read is running, not updating
         return atomState
       }
+      if ('e' in atomState && Object.is(atomState.e, error)) {
+        // the same error, not updating
+        // avoids infinite loop in atomWithObservable's "writable count state with error" test
+        return atomState
+      }
       if ('p' in atomState) {
         cancelSuspensePromise(atomState.p)
       }
@@ -859,15 +864,15 @@ export const createStore = (
       const pending = Array.from(pendingMap)
       pendingMap.clear()
       pending.forEach(([atom, prevAtomState]) => {
-        const atomState = getAtomState(undefined, atom)
+        let atomState = getAtomState(undefined, atom)
+        if (!atomState || !atomState.y) {
+          atomState = readAtomState(undefined, atom)
+          pendingMap.delete(atom)
+        }
         if (atomState && atomState.d !== prevAtomState?.d) {
           mountDependencies(undefined, atom, atomState, prevAtomState?.d)
         }
-        if (
-          prevAtomState &&
-          !prevAtomState.y && // invalidated
-          atomState?.y // existent and not invalidated
-        ) {
+        if (prevAtomState && prevAtomState?.r === atomState?.r) {
           // We don't want to notify listeners
           // to avoid flushing a promise again (#1151)
           // and avoid extra re-renders (#1213).
