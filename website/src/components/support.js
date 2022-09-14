@@ -124,7 +124,7 @@ export const Support = () => {
                 <input
                   type="text"
                   value={honey}
-                  onChange={(event) => setHoney(event.currentTargetValue)}
+                  onChange={(event) => setHoney(event.currentTarget.value)}
                 />
               </label>
               <div className={cx(hasSubmitted && 'opacity-0')}>
@@ -151,7 +151,7 @@ export const Support = () => {
           >
             <img
               src="https://storage.googleapis.com/candycode/jotai/daishi.png"
-              className="aspect-square h-28 w-28  rounded-full border border-gray-300 bg-white dark:border-gray-800 dark:bg-black"
+              className="aspect-square h-28 w-28 rounded-full border border-gray-300 bg-white dark:border-gray-800 dark:bg-black"
               alt="Daishi Kato"
             />
           </a>
