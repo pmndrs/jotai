@@ -20,5 +20,7 @@ export * from './search-button';
 export * from './search-modal';
 export * from './sidebar';
 export * from './stackblitz';
+export * from './support-modal';
+export * from './support';
 export * from './toc';
 export * from './wrapper';

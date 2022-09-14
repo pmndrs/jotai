@@ -5,7 +5,7 @@ import { Logo } from '../components';
 export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
   return (
     <div {...rest}>
-      <Headline isHomePage={!isDocsPage}>
+      <Headline mainTitle={!isDocsPage}>
         <Link to="/" className="inline-block rounded-lg focus:ring-offset-4">
           <Logo
             className={cx(
@@ -39,6 +39,6 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
   );
 };
 
-const Headline = ({ isHomePage, children, ...rest }) => {
-  return isHomePage ? <h1 {...rest}>{children}</h1> : <h2 {...rest}>{children}</h2>;
+const Headline = ({ mainTitle = false, children, ...rest }) => {
+  return mainTitle ? <h1 {...rest}>{children}</h1> : <h2 {...rest}>{children}</h2>;
 };
