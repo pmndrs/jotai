@@ -1,4 +1,4 @@
-import { QueryObserver } from '@tanstack/query-core'
+import { QueryClient, QueryObserver } from '@tanstack/query-core'
 import type {
   QueryKey,
   QueryObserverOptions,
@@ -99,25 +99,30 @@ export function atomWithQuery<
   >
   type Result = QueryObserverResult<TData, TError>
 
-  const observerAtom = atom((get) => {
-    const queryClient = getQueryClient(get)
-    const defaultedOptions = queryClient.defaultQueryOptions<
+  let observer:
+    | QueryObserver<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+    | undefined
+  function getObserver(
+    queryClient: QueryClient,
+    options?: AtomWithQueryOptions<
       TQueryFnData,
       TError,
       TData,
       TQueryData,
       TQueryKey
-    >()
-    const observer = new QueryObserver<
-      TQueryFnData,
-      TError,
-      TData,
-      TQueryData,
-      TQueryKey
-    >(queryClient, defaultedOptions)
+    >
+  ) {
+    if (!observer) {
+      observer = new QueryObserver<
+        TQueryFnData,
+        TError,
+        TData,
+        TQueryData,
+        TQueryKey
+      >(queryClient, queryClient.defaultQueryOptions(options))
+    }
     return observer
-  })
-
+  }
   const queryDataAtom: WritableAtom<
     {
       options: Options
@@ -131,9 +136,9 @@ export function atomWithQuery<
       const queryClient = getQueryClient(get)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
-      const defaultedOptions = queryClient.defaultQueryOptions(options)
-      const observer = get(observerAtom)
+      const observer = getObserver(queryClient, options)
       observer.destroy()
+      const defaultedOptions = queryClient.defaultQueryOptions(options)
       observer.setOptions(defaultedOptions)
       const initialResult = observer.getCurrentResult()
 
@@ -187,11 +192,12 @@ export function atomWithQuery<
       return { options, resultAtom, unsubIfNotMounted }
     },
     (get, set, action) => {
-      const observer = get(observerAtom)
       const { options, resultAtom, unsubIfNotMounted } = get(queryDataAtom)
       if (options.enabled === false) {
         return
       }
+      const queryClient = getQueryClient(get)
+      const observer = getObserver(queryClient, options)
       switch (action.type) {
         case 'refetch': {
           set(resultAtom, new Promise<never>(() => {})) // infinite pending

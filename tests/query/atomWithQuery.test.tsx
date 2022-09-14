@@ -1,5 +1,13 @@
-import { Component, StrictMode, Suspense, useContext, useState } from 'react'
+import {
+  Component,
+  StrictMode,
+  Suspense,
+  useContext,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import type { ReactNode } from 'react'
+import { QueryClient } from '@tanstack/query-core'
 import { fireEvent, render } from '@testing-library/react'
 import {
   atom,
@@ -721,4 +729,48 @@ describe('error handling', () => {
     await findByText('loading')
     await findByText('count: 3')
   })
+})
+
+it('query expected QueryCache test', async () => {
+  const queryClient = new QueryClient()
+  const countAtom = atomWithQuery(
+    () => ({
+      queryKey: ['count6'],
+      queryFn: async () => {
+        return await fakeFetch({ count: 0 }, false, 100)
+      },
+    }),
+    () => queryClient
+  )
+  const Counter = () => {
+    const [
+      {
+        response: { count },
+      },
+    ] = useAtom(countAtom)
+    const cachedQueries = useSyncExternalStore(
+      queryClient.getQueryCache().subscribe,
+      () => queryClient.getQueryCache().getAll()
+    )
+    return (
+      <>
+        <div>count: {count}</div>
+        <div>queries in cache: {cachedQueries.length}</div>
+      </>
+    )
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0')
+  await findByText('queries in cache: 1')
 })
