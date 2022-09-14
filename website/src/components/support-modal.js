@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { helpAtom } from '../atoms';
-import { Modal, Support } from '.';
+import { Modal, Support } from '../components';
 
 export const SupportModal = () => {
   const [showHelp, setShowHelp] = useAtom(helpAtom);
