@@ -101,10 +101,19 @@ module.exports = {
       },
     },
   ],
+  flags: {
+    DEV_SSR: false,
+    QUERY_ON_DEMAND: true,
+    LAZY_IMAGES: true,
+    PRESERVE_WEBPACK_CACHE: true,
+    DEV_WEBPACK_CACHE: true,
+    PRESERVE_FILE_DOWNLOAD_CACHE: true,
+    PARALLEL_SOURCING: true,
+    LMDB_STORE: true,
+    PARALLEL_QUERY_RUNNING: true,
+  },
+  graphqlTypegen: false,
   jsxRuntime: 'automatic',
   polyfill: false,
   trailingSlash: 'never',
-  flags: {
-    FAST_DEV: true,
-  },
 };
