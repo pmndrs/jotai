@@ -748,14 +748,10 @@ it('query expected QueryCache test', async () => {
         response: { count },
       },
     ] = useAtom(countAtom)
-    const cachedQueries = useSyncExternalStore(
-      queryClient.getQueryCache().subscribe,
-      () => queryClient.getQueryCache().getAll()
-    )
+
     return (
       <>
         <div>count: {count}</div>
-        <div>queries in cache: {cachedQueries.length}</div>
       </>
     )
   }
@@ -772,5 +768,5 @@ it('query expected QueryCache test', async () => {
 
   await findByText('loading')
   await findByText('count: 0')
-  await findByText('queries in cache: 1')
+  expect(queryClient.getQueryCache().getAll().length).toBe(1)
 })
