@@ -1,11 +1,4 @@
-import {
-  Component,
-  StrictMode,
-  Suspense,
-  useContext,
-  useState,
-  useSyncExternalStore,
-} from 'react'
+import { Component, StrictMode, Suspense, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import { QueryClient } from '@tanstack/query-core'
 import { fireEvent, render } from '@testing-library/react'
