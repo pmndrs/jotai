@@ -1,4 +1,4 @@
-import { QueryObserver } from '@tanstack/query-core'
+import { QueryClient, QueryObserver } from '@tanstack/query-core'
 import type {
   QueryKey,
   QueryObserverOptions,
@@ -99,29 +99,41 @@ export function atomWithQuery<
   >
   type Result = QueryObserverResult<TData, TError>
 
-  const queryKeyAtom = atom((get) => {
-    const options =
+  const initialOptionsRefAtom = atom(
+    () =>
+      ({} as {
+        prev?: {
+          queryClient: QueryClient
+          initialOptions: Options
+        }
+      })
+  )
+
+  const initialOptionsAtom = atom((get) => {
+    const queryClient = getQueryClient(get)
+    const ref = get(initialOptionsRefAtom)
+    if ('prev' in ref && Object.is(queryClient, ref.prev.queryClient)) {
+      return ref.prev.initialOptions
+    }
+    const initialOptions =
       typeof createQuery === 'function' ? createQuery(get) : createQuery
-    return options.queryKey
+    ref.prev = {
+      queryClient,
+      initialOptions,
+    }
+    return initialOptions
   })
 
   const observerAtom = atom((get) => {
     const queryClient = getQueryClient(get)
-    const queryKey = get(queryKeyAtom)
-    const defaultedOptions = queryClient.defaultQueryOptions<
-      TQueryFnData,
-      TError,
-      TData,
-      TQueryData,
-      TQueryKey
-    >({ queryKey })
+    const initialOptions = get(initialOptionsAtom)
     const observer = new QueryObserver<
       TQueryFnData,
       TError,
       TData,
       TQueryData,
       TQueryKey
-    >(queryClient, defaultedOptions)
+    >(queryClient, initialOptions)
     return observer
   })
 
@@ -135,13 +147,11 @@ export function atomWithQuery<
     void | Promise<void>
   > = atom(
     (get) => {
-      const queryClient = getQueryClient(get)
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
-      const defaultedOptions = queryClient.defaultQueryOptions(options)
       const observer = get(observerAtom)
       observer.destroy()
-      observer.setOptions(defaultedOptions)
+      observer.setOptions(options)
       const initialResult = observer.getCurrentResult()
 
       let resolve: ((result: Result) => void) | null = null
