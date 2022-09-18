@@ -150,7 +150,6 @@ export function atomWithQuery<
         throw new Error('setting result without mount')
       }
       if (resolve) {
-        setTimeout(unsubIfNotMounted, 1000)
         resolve(result)
         resolve = null
       }
@@ -160,7 +159,15 @@ export function atomWithQuery<
     }
     let unsubscribe: (() => void) | null = null
     let timer: Timeout | undefined
-    const startQuery = () => {
+    const startQuery = (refetch?: boolean) => {
+      if (refetch) {
+        if (options.enabled === false) {
+          return
+        }
+        unsubIfNotMounted()
+        observer.refetch({ cancelRefetch: true }).then(listener)
+        return
+      }
       if (unsubscribe) {
         clearTimeout(timer)
         unsubscribe()
@@ -187,16 +194,17 @@ export function atomWithQuery<
     }
     resultAtom.onMount = (update) => {
       setResult = update
-      if (options.enabled !== false && !unsubscribe) {
-        unsubscribe = observer.subscribe(listener)
-        listener(observer.getCurrentResult())
+      if (unsubscribe) {
+        clearTimeout(timer)
+      } else {
+        startQuery()
       }
       return () => {
         setResult = null
         unsubscribe?.()
       }
     }
-    return { options, resultAtom, unsubIfNotMounted }
+    return { options, resultAtom, makePending, startQuery, unsubIfNotMounted }
   })
 
   const queryAtom = atom(
@@ -209,19 +217,11 @@ export function atomWithQuery<
       return result.data
     },
     (get, set, action: AtomWithQueryAction) => {
-      const { options, resultAtom, unsubIfNotMounted } = get(queryDataAtom)
-      if (options.enabled === false) {
-        return
-      }
-      const queryClient = getQueryClient(get)
-      const observer = createObserver(queryClient, options)
+      const { resultAtom, makePending, startQuery } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
-          set(resultAtom, new Promise<never>(() => {})) // infinite pending
-          unsubIfNotMounted()
-          return observer.refetch({ cancelRefetch: true }).then((result) => {
-            set(resultAtom, result)
-          })
+          set(resultAtom, makePending())
+          startQuery(true)
         }
       }
     }
