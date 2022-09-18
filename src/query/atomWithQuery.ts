@@ -180,8 +180,8 @@ export function atomWithQuery<
     }
     startQuery()
     const unsubIfNotMounted = () => {
-      if (!setResult) {
-        unsubscribe?.()
+      if (!setResult && unsubscribe) {
+        unsubscribe()
         unsubscribe = null
       }
     }
@@ -193,10 +193,14 @@ export function atomWithQuery<
       }
       return () => {
         setResult = null
-        unsubscribe?.()
+        if (unsubscribe) {
+          unsubscribe()
+          // FIXME why does this fail?
+          // unsubscribe = null
+        }
       }
     }
-    return { options, resultAtom, unsubIfNotMounted }
+    return { options, resultAtom, makePending, unsubIfNotMounted }
   })
 
   const queryAtom = atom(
@@ -209,7 +213,8 @@ export function atomWithQuery<
       return result.data
     },
     (get, set, action: AtomWithQueryAction) => {
-      const { options, resultAtom, unsubIfNotMounted } = get(queryDataAtom)
+      const { options, resultAtom, makePending, unsubIfNotMounted } =
+        get(queryDataAtom)
       if (options.enabled === false) {
         return
       }
@@ -217,7 +222,7 @@ export function atomWithQuery<
       const observer = createObserver(queryClient, options)
       switch (action.type) {
         case 'refetch': {
-          set(resultAtom, new Promise<never>(() => {})) // infinite pending
+          set(resultAtom, makePending())
           unsubIfNotMounted()
           return observer.refetch({ cancelRefetch: true }).then((result) => {
             set(resultAtom, result)
