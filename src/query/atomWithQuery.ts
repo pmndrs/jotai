@@ -150,6 +150,7 @@ export function atomWithQuery<
         throw new Error('setting result without mount')
       }
       if (resolve) {
+        setTimeout(unsubIfNotMounted, 1000)
         resolve(result)
         resolve = null
       }
@@ -159,15 +160,7 @@ export function atomWithQuery<
     }
     let unsubscribe: (() => void) | null = null
     let timer: Timeout | undefined
-    const startQuery = (refetch?: boolean) => {
-      if (refetch) {
-        if (options.enabled === false) {
-          return
-        }
-        unsubIfNotMounted()
-        observer.refetch({ cancelRefetch: true }).then(listener)
-        return
-      }
+    const startQuery = () => {
       if (unsubscribe) {
         clearTimeout(timer)
         unsubscribe()
@@ -194,17 +187,16 @@ export function atomWithQuery<
     }
     resultAtom.onMount = (update) => {
       setResult = update
-      if (unsubscribe) {
-        clearTimeout(timer)
-      } else {
-        startQuery()
+      if (options.enabled !== false && !unsubscribe) {
+        unsubscribe = observer.subscribe(listener)
+        listener(observer.getCurrentResult())
       }
       return () => {
         setResult = null
         unsubscribe?.()
       }
     }
-    return { options, resultAtom, makePending, startQuery, unsubIfNotMounted }
+    return { options, resultAtom, unsubIfNotMounted }
   })
 
   const queryAtom = atom(
@@ -217,11 +209,19 @@ export function atomWithQuery<
       return result.data
     },
     (get, set, action: AtomWithQueryAction) => {
-      const { resultAtom, makePending, startQuery } = get(queryDataAtom)
+      const { options, resultAtom, unsubIfNotMounted } = get(queryDataAtom)
+      if (options.enabled === false) {
+        return
+      }
+      const queryClient = getQueryClient(get)
+      const observer = createObserver(queryClient, options)
       switch (action.type) {
         case 'refetch': {
-          set(resultAtom, makePending())
-          startQuery(true)
+          set(resultAtom, new Promise<never>(() => {})) // infinite pending
+          unsubIfNotMounted()
+          return observer.refetch({ cancelRefetch: true }).then((result) => {
+            set(resultAtom, result)
+          })
         }
       }
     }
