@@ -150,7 +150,6 @@ export function atomWithQuery<
         throw new Error('setting result without mount')
       }
       if (resolve) {
-        setTimeout(unsubIfNotMounted, 1000)
         resolve(result)
         resolve = null
       }
@@ -162,8 +161,12 @@ export function atomWithQuery<
     let timer: Timeout | undefined
     const startQuery = (refetch?: boolean) => {
       if (refetch) {
-        unsubIfNotMounted()
-        return observer.refetch({ cancelRefetch: true }).then(listener)
+        if (!setResult && unsubscribe) {
+          unsubscribe()
+          unsubscribe = null
+          return observer.refetch({ cancelRefetch: true }).then(listener)
+        }
+        return observer.refetch({ cancelRefetch: true })
       }
       if (unsubscribe) {
         clearTimeout(timer)
@@ -183,12 +186,6 @@ export function atomWithQuery<
       }
     }
     startQuery()
-    const unsubIfNotMounted = () => {
-      if (!setResult && unsubscribe) {
-        unsubscribe()
-        unsubscribe = null
-      }
-    }
     resultAtom.onMount = (update) => {
       setResult = update
       if (options.enabled !== false && !unsubscribe) {
