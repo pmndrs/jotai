@@ -166,7 +166,9 @@ export function atomWithQuery<
           unsubscribe = null
           return observer.refetch({ cancelRefetch: true }).then(listener)
         }
-        return observer.refetch({ cancelRefetch: true })
+        return observer.refetch({ cancelRefetch: true }).then((result) => {
+          setResult?.(result)
+        })
       }
       if (unsubscribe) {
         clearTimeout(timer)
