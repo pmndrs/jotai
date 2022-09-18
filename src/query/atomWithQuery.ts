@@ -96,41 +96,11 @@ export function atomWithQuery<
 
   const previousDataCache = new WeakMap<QueryClient, TData>()
 
-  const observerCache = new WeakMap<
-    QueryClient,
-    QueryObserver<TQueryFnData, TError, TData, TQueryData, TQueryKey>
-  >()
-  const createObserver = (
-    queryClient: QueryClient,
-    options: QueryObserverOptions<
-      TQueryFnData,
-      TError,
-      TData,
-      TQueryData,
-      TQueryKey
-    >
-  ) => {
-    let observer = observerCache.get(queryClient)
-    if (!observer) {
-      observer = new QueryObserver<
-        TQueryFnData,
-        TError,
-        TData,
-        TQueryData,
-        TQueryKey
-      >(queryClient, options)
-      // observerCache.set(queryClient, observer)
-    }
-    return observer
-  }
-
   const queryDataAtom = atom((get) => {
+    const queryClient = getQueryClient(get)
     const options =
       typeof createQuery === 'function' ? createQuery(get) : createQuery
-    const queryClient = getQueryClient(get)
-    const observer = createObserver(queryClient, options)
-    observer.destroy()
-    observer.setOptions(options)
+    const observer = new QueryObserver(queryClient, options)
     const initialResult = observer.getCurrentResult()
     if (
       initialResult.data === undefined &&
