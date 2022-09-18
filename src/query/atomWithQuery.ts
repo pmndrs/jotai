@@ -161,14 +161,18 @@ export function atomWithQuery<
     let timer: Timeout | undefined
     const startQuery = (refetch?: boolean) => {
       if (refetch) {
-        if (!setResult && unsubscribe) {
-          unsubscribe()
-          unsubscribe = null
-          return observer.refetch({ cancelRefetch: true }).then(listener)
+        if (options.enabled !== false) {
+          if (!setResult && unsubscribe) {
+            unsubscribe()
+            unsubscribe = null
+            observer.refetch({ cancelRefetch: true }).then(listener)
+          } else {
+            observer.refetch({ cancelRefetch: true }).then((result) => {
+              setResult?.(result)
+            })
+          }
         }
-        return observer.refetch({ cancelRefetch: true }).then((result) => {
-          setResult?.(result)
-        })
+        return
       }
       if (unsubscribe) {
         clearTimeout(timer)
@@ -203,7 +207,7 @@ export function atomWithQuery<
         }
       }
     }
-    return { options, resultAtom, makePending, startQuery }
+    return { resultAtom, makePending, startQuery }
   })
 
   const queryAtom = atom(
@@ -216,11 +220,7 @@ export function atomWithQuery<
       return result.data
     },
     (get, set, action: AtomWithQueryAction) => {
-      const { options, resultAtom, makePending, startQuery } =
-        get(queryDataAtom)
-      if (options.enabled === false) {
-        return
-      }
+      const { resultAtom, makePending, startQuery } = get(queryDataAtom)
       switch (action.type) {
         case 'refetch': {
           set(resultAtom, makePending())
