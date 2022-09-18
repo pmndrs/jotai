@@ -161,19 +161,23 @@ export function atomWithQuery<
     let timer: Timeout | undefined
     const startQuery = (refetch?: boolean) => {
       if (refetch) {
-        if (options.enabled === false) {
-          return
+        if (options.enabled !== false) {
+          if (!setResult && unsubscribe) {
+            unsubscribe()
+            unsubscribe = null
+          }
+          observer.refetch({ cancelRefetch: true }).then(listener)
         }
-        unsubIfNotMounted()
-        observer.refetch({ cancelRefetch: true }).then(listener)
         return
       }
       if (unsubscribe) {
         clearTimeout(timer)
         unsubscribe()
+        unsubscribe = null
       }
       if (options.enabled !== false) {
         unsubscribe = observer.subscribe(listener)
+        listener(observer.getCurrentResult())
       }
       if (!setResult) {
         // not mounted yet
@@ -186,12 +190,6 @@ export function atomWithQuery<
       }
     }
     startQuery()
-    const unsubIfNotMounted = () => {
-      if (!setResult) {
-        unsubscribe?.()
-        unsubscribe = null
-      }
-    }
     resultAtom.onMount = (update) => {
       setResult = update
       if (unsubscribe) {
@@ -201,10 +199,14 @@ export function atomWithQuery<
       }
       return () => {
         setResult = null
-        unsubscribe?.()
+        if (unsubscribe) {
+          unsubscribe()
+          // FIXME why does this fail?
+          // unsubscribe = null
+        }
       }
     }
-    return { options, resultAtom, makePending, startQuery, unsubIfNotMounted }
+    return { options, resultAtom, makePending, startQuery }
   })
 
   const queryAtom = atom(
