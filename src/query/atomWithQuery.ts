@@ -177,9 +177,11 @@ export function atomWithQuery<
       if (unsubscribe) {
         clearTimeout(timer)
         unsubscribe()
+        unsubscribe = null
       }
       if (options.enabled !== false) {
         unsubscribe = observer.subscribe(listener)
+        listener(observer.getCurrentResult())
       }
       if (!setResult) {
         // not mounted yet
@@ -194,9 +196,10 @@ export function atomWithQuery<
     startQuery()
     resultAtom.onMount = (update) => {
       setResult = update
-      if (options.enabled !== false && !unsubscribe) {
-        unsubscribe = observer.subscribe(listener)
-        listener(observer.getCurrentResult())
+      if (unsubscribe) {
+        clearTimeout(timer as Timeout)
+      } else {
+        startQuery()
       }
       return () => {
         setResult = null
