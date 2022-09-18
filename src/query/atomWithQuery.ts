@@ -61,11 +61,7 @@ export function atomWithQuery<
     >
   >,
   getQueryClient?: GetQueryClient
-): WritableAtom<
-  TData | TQueryData | undefined,
-  AtomWithQueryAction,
-  void | Promise<void>
->
+): WritableAtom<TData | undefined, AtomWithQueryAction>
 
 export function atomWithQuery<
   TQueryFnData,
@@ -78,7 +74,7 @@ export function atomWithQuery<
     AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >,
   getQueryClient?: GetQueryClient
-): WritableAtom<TData, AtomWithQueryAction, Promise<void>>
+): WritableAtom<TData, AtomWithQueryAction>
 
 export function atomWithQuery<
   TQueryFnData,
@@ -154,7 +150,6 @@ export function atomWithQuery<
       }
       if (options.enabled !== false) {
         unsubscribe = observer.subscribe(listener)
-        listener(observer.getCurrentResult())
       }
       if (!setResult) {
         // not mounted yet
@@ -200,7 +195,7 @@ export function atomWithQuery<
       switch (action.type) {
         case 'refetch': {
           set(resultAtom, makePending())
-          return startQuery(true)
+          startQuery(true)
         }
       }
     }
