@@ -164,8 +164,7 @@ export function atomWithQuery<
         if (options.enabled !== false) {
           if (!setResult && unsubscribe) {
             unsubscribe()
-            unsubscribe = null
-            observer.refetch({ cancelRefetch: true }).then(listener)
+            unsubscribe = observer.subscribe(listener)
           } else {
             observer.refetch({ cancelRefetch: true }).then((result) => {
               setResult?.(result)
@@ -197,7 +196,7 @@ export function atomWithQuery<
     resultAtom.onMount = (update) => {
       setResult = update
       if (unsubscribe) {
-        clearTimeout(timer as Timeout)
+        clearTimeout(timer)
       } else {
         startQuery()
       }
