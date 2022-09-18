@@ -5,9 +5,11 @@ import type {
   QueryObserverResult,
 } from '@tanstack/query-core'
 import { atom } from 'jotai'
-import type { PrimitiveAtom, WritableAtom } from 'jotai'
+import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
+
+type Timeout = ReturnType<typeof setTimeout>
 
 type AtomWithQueryAction = {
   type: 'refetch'
@@ -90,13 +92,6 @@ export function atomWithQuery<
   >,
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
-  type Options = AtomWithQueryOptions<
-    TQueryFnData,
-    TError,
-    TData,
-    TQueryData,
-    TQueryKey
-  >
   type Result = QueryObserverResult<TData, TError>
 
   const observerCache = new WeakMap<
@@ -127,74 +122,93 @@ export function atomWithQuery<
     return observer
   }
 
-  const queryDataAtom: WritableAtom<
-    {
-      options: Options
-      resultAtom: PrimitiveAtom<Result | Promise<Result>>
-      unsubIfNotMounted: () => void
-    },
-    AtomWithQueryAction,
-    void | Promise<void>
-  > = atom(
-    (get) => {
-      const options =
-        typeof createQuery === 'function' ? createQuery(get) : createQuery
-      const queryClient = getQueryClient(get)
-      const observer = createObserver(queryClient, options)
-      observer.destroy()
-      observer.setOptions(options)
-      const initialResult = observer.getCurrentResult()
+  const queryDataAtom = atom((get) => {
+    const options =
+      typeof createQuery === 'function' ? createQuery(get) : createQuery
+    const queryClient = getQueryClient(get)
+    const observer = createObserver(queryClient, options)
+    observer.destroy()
+    observer.setOptions(options)
+    const initialResult = observer.getCurrentResult()
 
-      let resolve: ((result: Result) => void) | null = null
-      const resultAtom = atom<Result | Promise<Result>>(
-        initialResult.data === undefined && options.enabled !== false
-          ? new Promise<Result>((r) => {
-              resolve = r
-            })
-          : initialResult
-      )
-      let setResult: ((result: Result) => void) | null = null
-      let unsubscribe: (() => void) | null = null
-      const unsubIfNotMounted = () => {
-        if (!setResult) {
-          unsubscribe?.()
-          unsubscribe = null
-        }
+    let resolve: ((result: Result) => void) | null = null
+    const makePending = () =>
+      new Promise<Result>((r) => {
+        resolve = r
+      })
+    const resultAtom = atom<Result | Promise<Result>>(
+      initialResult.data === undefined && options.enabled !== false
+        ? makePending()
+        : initialResult
+    )
+    let setResult: ((result: Result) => void) | null = null
+    const listener = (result: Result) => {
+      if (result.isFetching || (!result.isError && result.data === undefined)) {
+        return
       }
-      const listener = (result: Result) => {
-        if (
-          result.isFetching ||
-          (!result.isError && result.data === undefined)
-        ) {
-          return
-        }
-        if (resolve) {
-          setTimeout(unsubIfNotMounted, 1000)
-          resolve(result)
-          resolve = null
-        } else if (setResult) {
-          setResult(result)
-        } else {
-          throw new Error('setting result without mount')
-        }
+      if (!resolve && !setResult) {
+        throw new Error('setting result without mount')
+      }
+      if (resolve) {
+        setTimeout(unsubIfNotMounted, 1000)
+        resolve(result)
+        resolve = null
+      }
+      if (setResult) {
+        setResult(result)
+      }
+    }
+    let unsubscribe: (() => void) | null = null
+    let timer: Timeout | undefined
+    const startQuery = () => {
+      if (unsubscribe) {
+        clearTimeout(timer)
+        unsubscribe()
       }
       if (options.enabled !== false) {
         unsubscribe = observer.subscribe(listener)
       }
-      resultAtom.onMount = (update) => {
-        setResult = update
-        if (options.enabled !== false && !unsubscribe) {
-          unsubscribe = observer.subscribe(listener)
-          listener(observer.getCurrentResult())
-        }
-        return () => {
-          setResult = null
-          unsubscribe?.()
-        }
+      if (!setResult) {
+        // not mounted yet
+        timer = setTimeout(() => {
+          if (unsubscribe) {
+            unsubscribe()
+            unsubscribe = null
+          }
+        }, 1000)
       }
-      return { options, resultAtom, unsubIfNotMounted }
+    }
+    startQuery()
+    const unsubIfNotMounted = () => {
+      if (!setResult) {
+        unsubscribe?.()
+        unsubscribe = null
+      }
+    }
+    resultAtom.onMount = (update) => {
+      setResult = update
+      if (options.enabled !== false && !unsubscribe) {
+        unsubscribe = observer.subscribe(listener)
+        listener(observer.getCurrentResult())
+      }
+      return () => {
+        setResult = null
+        unsubscribe?.()
+      }
+    }
+    return { options, resultAtom, unsubIfNotMounted }
+  })
+
+  const queryAtom = atom(
+    (get) => {
+      const { resultAtom } = get(queryDataAtom)
+      const result = get(resultAtom)
+      if (result.isError) {
+        throw result.error
+      }
+      return result.data
     },
-    (get, set, action) => {
+    (get, set, action: AtomWithQueryAction) => {
       const { options, resultAtom, unsubIfNotMounted } = get(queryDataAtom)
       if (options.enabled === false) {
         return
@@ -211,22 +225,6 @@ export function atomWithQuery<
         }
       }
     }
-  )
-
-  const queryAtom = atom<
-    TData | undefined,
-    AtomWithQueryAction,
-    void | Promise<void>
-  >(
-    (get) => {
-      const { resultAtom } = get(queryDataAtom)
-      const result = get(resultAtom)
-      if (result.isError) {
-        throw result.error
-      }
-      return result.data
-    },
-    (_get, set, action) => set(queryDataAtom, action) // delegate action
   )
 
   return queryAtom
