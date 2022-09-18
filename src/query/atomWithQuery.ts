@@ -141,16 +141,9 @@ export function atomWithQuery<
     let unsubscribe: (() => void) | null = null
     let timer: Timeout | undefined
     const startQuery = (refetch?: boolean) => {
-      if (refetch) {
+      if (refetch && setResult) {
         if (options.enabled !== false) {
-          if (!setResult && unsubscribe) {
-            unsubscribe()
-            unsubscribe = observer.subscribe(listener)
-          } else {
-            observer.refetch({ cancelRefetch: true }).then((result) => {
-              setResult?.(result)
-            })
-          }
+          observer.refetch({ cancelRefetch: true }).then(setResult)
         }
         return
       }
