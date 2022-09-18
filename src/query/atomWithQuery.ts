@@ -99,11 +99,11 @@ export function atomWithQuery<
   >
   type Result = QueryObserverResult<TData, TError>
 
-  const observerMap = new WeakMap<
+  const observerCache = new WeakMap<
     QueryClient,
     QueryObserver<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >()
-  const getObserver = (
+  const createObserver = (
     queryClient: QueryClient,
     options: QueryObserverOptions<
       TQueryFnData,
@@ -113,7 +113,7 @@ export function atomWithQuery<
       TQueryKey
     >
   ) => {
-    let observer = observerMap.get(queryClient)
+    let observer = observerCache.get(queryClient)
     if (!observer) {
       observer = new QueryObserver<
         TQueryFnData,
@@ -122,7 +122,7 @@ export function atomWithQuery<
         TQueryData,
         TQueryKey
       >(queryClient, options)
-      observerMap.set(queryClient, observer)
+      observerCache.set(queryClient, observer)
     }
     return observer
   }
@@ -140,7 +140,7 @@ export function atomWithQuery<
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
       const queryClient = getQueryClient(get)
-      const observer = getObserver(queryClient, options)
+      const observer = createObserver(queryClient, options)
       observer.destroy()
       observer.setOptions(options)
       const initialResult = observer.getCurrentResult()
@@ -200,7 +200,7 @@ export function atomWithQuery<
         return
       }
       const queryClient = getQueryClient(get)
-      const observer = getObserver(queryClient, options)
+      const observer = createObserver(queryClient, options)
       switch (action.type) {
         case 'refetch': {
           set(resultAtom, new Promise<never>(() => {})) // infinite pending
