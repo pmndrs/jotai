@@ -94,6 +94,8 @@ export function atomWithQuery<
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
   type Result = QueryObserverResult<TData, TError>
 
+  const previousDataCache = new WeakMap<QueryClient, TData>()
+
   const observerCache = new WeakMap<
     QueryClient,
     QueryObserver<TQueryFnData, TError, TData, TQueryData, TQueryKey>
@@ -117,7 +119,7 @@ export function atomWithQuery<
         TQueryData,
         TQueryKey
       >(queryClient, options)
-      observerCache.set(queryClient, observer)
+      // observerCache.set(queryClient, observer)
     }
     return observer
   }
@@ -130,6 +132,12 @@ export function atomWithQuery<
     observer.destroy()
     observer.setOptions(options)
     const initialResult = observer.getCurrentResult()
+    if (
+      initialResult.data === undefined &&
+      previousDataCache.has(queryClient)
+    ) {
+      initialResult.data = previousDataCache.get(queryClient)
+    }
 
     let resolve: ((result: Result) => void) | null = null
     const makePending = () =>
@@ -155,6 +163,9 @@ export function atomWithQuery<
       }
       if (setResult) {
         setResult(result)
+      }
+      if (options.keepPreviousData && result.data !== undefined) {
+        previousDataCache.set(queryClient, result.data)
       }
     }
     let unsubscribe: (() => void) | null = null
