@@ -18,12 +18,13 @@ type PostData = {
 }
 
 const postId = atom(9001)
-const postData = atom<PostData>(async (get) => {
+const postData = atom(async (get) => {
   const id = get(postId)
   const response = await fetch(
     `https://hacker-news.firebaseio.com/v0/item/${id}.json`
   )
-  return await response.json()
+  const data: PostData = await response.json()
+  return data
 })
 
 function Id() {
