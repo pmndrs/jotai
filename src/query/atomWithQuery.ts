@@ -99,43 +99,33 @@ export function atomWithQuery<
   >
   type Result = QueryObserverResult<TData, TError>
 
-  const initialOptionsRefAtom = atom(
-    () =>
-      ({} as {
-        prev?: {
-          queryClient: QueryClient
-          initialOptions: Options
-        }
-      })
-  )
-
-  const initialOptionsAtom = atom((get) => {
-    const queryClient = getQueryClient(get)
-    const ref = get(initialOptionsRefAtom)
-    if ('prev' in ref && Object.is(queryClient, ref.prev.queryClient)) {
-      return ref.prev.initialOptions
-    }
-    const initialOptions =
-      typeof createQuery === 'function' ? createQuery(get) : createQuery
-    ref.prev = {
-      queryClient,
-      initialOptions,
-    }
-    return initialOptions
-  })
-
-  const observerAtom = atom((get) => {
-    const queryClient = getQueryClient(get)
-    const initialOptions = get(initialOptionsAtom)
-    const observer = new QueryObserver<
+  const observerMap = new WeakMap<
+    QueryClient,
+    QueryObserver<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+  >()
+  const getObserver = (
+    queryClient: QueryClient,
+    options: QueryObserverOptions<
       TQueryFnData,
       TError,
       TData,
       TQueryData,
       TQueryKey
-    >(queryClient, initialOptions)
+    >
+  ) => {
+    let observer = observerMap.get(queryClient)
+    if (!observer) {
+      observer = new QueryObserver<
+        TQueryFnData,
+        TError,
+        TData,
+        TQueryData,
+        TQueryKey
+      >(queryClient, options)
+      observerMap.set(queryClient, observer)
+    }
     return observer
-  })
+  }
 
   const queryDataAtom: WritableAtom<
     {
@@ -149,7 +139,8 @@ export function atomWithQuery<
     (get) => {
       const options =
         typeof createQuery === 'function' ? createQuery(get) : createQuery
-      const observer = get(observerAtom)
+      const queryClient = getQueryClient(get)
+      const observer = getObserver(queryClient, options)
       observer.destroy()
       observer.setOptions(options)
       const initialResult = observer.getCurrentResult()
@@ -204,11 +195,12 @@ export function atomWithQuery<
       return { options, resultAtom, unsubIfNotMounted }
     },
     (get, set, action) => {
-      const observer = get(observerAtom)
       const { options, resultAtom, unsubIfNotMounted } = get(queryDataAtom)
       if (options.enabled === false) {
         return
       }
+      const queryClient = getQueryClient(get)
+      const observer = getObserver(queryClient, options)
       switch (action.type) {
         case 'refetch': {
           set(resultAtom, new Promise<never>(() => {})) // infinite pending
