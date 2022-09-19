@@ -34,7 +34,7 @@ type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
 type Options<Data> = {
   initialValue?: Data | (() => Data)
-  timeout?: number
+  unstable_timeout?: number
 }
 
 export function atomWithObservable<Data>(
@@ -59,7 +59,7 @@ export function atomWithObservable<Data>(
     }
 
     type Result = { d: Data } | { e: AnyError }
-    let resolve: ((result: Result) => void) | null = null
+    let resolve: ((result: Result) => void) | undefined
     const makePending = () =>
       new Promise<Result>((r) => {
         resolve = r
@@ -74,7 +74,7 @@ export function atomWithObservable<Data>(
           }
         : makePending()
 
-    let setResult: ((result: Result) => void) | null = null
+    let setResult: ((result: Result) => void) | undefined
     let lastResult: Result | undefined
     const listener = (result: Result) => {
       lastResult = result
@@ -82,7 +82,7 @@ export function atomWithObservable<Data>(
       setResult?.(result)
     }
 
-    let subscription: Subscription | null = null
+    let subscription: Subscription | undefined
     let timer: Timeout | undefined
     const isNotMounted = () => !setResult
     const start = () => {
@@ -94,13 +94,13 @@ export function atomWithObservable<Data>(
         (d) => listener({ d }),
         (e) => listener({ e })
       )
-      if (isNotMounted() && options?.timeout) {
+      if (isNotMounted() && options?.unstable_timeout) {
         timer = setTimeout(() => {
           if (subscription) {
             subscription.unsubscribe()
-            subscription = null
+            subscription = undefined
           }
-        }, options.timeout)
+        }, options.unstable_timeout)
       }
     }
     start()
@@ -117,10 +117,10 @@ export function atomWithObservable<Data>(
         start()
       }
       return () => {
-        setResult = null
+        setResult = undefined
         if (subscription) {
           subscription.unsubscribe()
-          subscription = null
+          subscription = undefined
         }
       }
     }
