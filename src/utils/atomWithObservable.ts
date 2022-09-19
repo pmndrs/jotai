@@ -22,7 +22,7 @@ type Observer<T> = {
 
 type ObservableLike<T> = {
   subscribe(observer: Partial<Observer<T>>): Subscription
-  subscribe(next: (value: T) => void): void // Just to make typing happy
+  subscribe(next: (value: T) => void): Subscription // Just to make typing happy
   [Symbol.observable]?: () => ObservableLike<T> | undefined
 }
 
