@@ -1,9 +1,11 @@
 import { useCallback, useContext } from 'react'
-import type { Scope, SetAtom, WritableAtom } from './atom'
+import type { SetAtom, WritableAtom } from './atom'
 import { getScopeContext } from './contexts'
 import { WRITE_ATOM } from './store'
 import type { VersionObject } from './store'
 import type { ExtractAtomResult, ExtractAtomUpdate } from './typeUtils'
+
+type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 
 export function useSetAtom<Value, Update, Result extends void | Promise<void>>(
   atom: WritableAtom<Value, Update, Result>,

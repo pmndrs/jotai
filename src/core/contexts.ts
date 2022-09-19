@@ -1,9 +1,10 @@
 import { createContext } from 'react'
 import type { Context } from 'react'
-import type { Atom, Scope } from './atom'
+import type { Atom } from './atom'
 import { createStore, createStoreForExport } from './store'
 import type { Store } from './store'
 
+type Scope = symbol | string | number
 type VersionedWrite = (write: (version?: object) => void) => void
 type RetryFromError = (fn: () => void) => void
 

@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
 import { useAtom } from 'jotai'
 import type { PrimitiveAtom } from 'jotai'
-import type { Scope } from '../core/atom'
+
+type Scope = NonNullable<Parameters<typeof useAtom>[1]>
 
 /* this doesn't seem to work as expected in TS4.1
 export function useReducerAtom<Value, Action>(
