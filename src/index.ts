@@ -10,6 +10,7 @@ export type {
   Setter,
   ExtractAtomValue,
   ExtractAtomUpdate,
+  ExtractAtomResult,
   SetStateAction,
 } from './core/typeUtils'
 

@@ -4,13 +4,26 @@ import type { Atom } from './atom'
 import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM } from './store'
 import type { VersionObject } from './store'
+import type { ExtractAtomValue } from './typeUtils'
 
 type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 
 export function useAtomValue<Value>(
+  atom: Atom<Promise<Value>>,
+  scope?: Scope
+): Value
+
+export function useAtomValue<Value>(
   atom: Atom<Value>,
   scope?: Scope
-): Awaited<Value> {
+): Awaited<Value>
+
+export function useAtomValue<AtomType extends Atom<any>>(
+  atom: AtomType,
+  scope?: Scope
+): Awaited<ExtractAtomValue<AtomType>>
+
+export function useAtomValue<Value>(atom: Atom<Value>, scope?: Scope) {
   const ScopeContext = getScopeContext(scope)
   const scopeContainer = useContext(ScopeContext)
   const { s: store, v: versionFromProvider } = scopeContainer
