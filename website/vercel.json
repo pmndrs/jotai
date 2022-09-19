@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "api/*.js": {
+      "memory": 128,
+      "maxDuration": 30
+    }
+  },
+  "trailingSlash": false
+}
