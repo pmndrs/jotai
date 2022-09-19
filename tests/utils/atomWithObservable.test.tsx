@@ -9,7 +9,7 @@ import {
   useAtomValue,
   useSetAtom,
 } from 'jotai'
-import { RESET, atomWithObservable } from 'jotai/utils'
+import { atomWithObservable } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
@@ -139,7 +139,7 @@ it('writable count state without initial value', async () => {
 it('writable count state with delayed value', async () => {
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => {
-    const observable = of(1).pipe(delay(500))
+    const observable = of(1).pipe(delay(100))
     observable.subscribe((n) => subject.next(n))
     return subject
   })
@@ -603,81 +603,17 @@ describe('error handling', () => {
     await findByText('errored')
   })
 
-  it('can recover from error', async () => {
-    const subject = new Subject<number>()
-    const countAtom = atomWithObservable(() => subject)
-
-    const Counter = () => {
-      const [count, dispatch] = useAtom(countAtom)
-      const refetch = () => dispatch(RESET)
-      return (
-        <>
-          <div>count: {count}</div>
-          <button onClick={refetch}>refetch</button>
-        </>
-      )
-    }
-
-    const App = () => {
-      const dispatch = useSetAtom(countAtom)
-      const retryFromError = useRetryFromError()
-      const retry = () => {
-        retryFromError(() => {
-          dispatch(RESET)
-        })
-      }
-      return (
-        <ErrorBoundary retry={retry}>
-          <Suspense fallback="loading">
-            <Counter />
-          </Suspense>
-        </ErrorBoundary>
-      )
-    }
-
-    const { findByText, getByText } = render(
-      <StrictMode>
-        <Provider>
-          <App />
-        </Provider>
-      </StrictMode>
-    )
-
-    await findByText('loading')
-    act(() => subject.error(new Error('Test Error')))
-    await findByText('errored')
-
-    await new Promise((r) => setTimeout(r, 100))
-    fireEvent.click(getByText('retry'))
-    await findByText('loading')
-    act(() => subject.next(1))
-    await findByText('count: 1')
-
-    await new Promise((r) => setTimeout(r, 100))
-    fireEvent.click(getByText('retry'))
-    await findByText('loading')
-    act(() => subject.error(new Error('Test Error')))
-    await findByText('errored')
-
-    await new Promise((r) => setTimeout(r, 100))
-    fireEvent.click(getByText('retry'))
-    await findByText('loading')
-    act(() => subject.next(1))
-    await findByText('count: 3')
-  })
-
   it('can recover from error with dependency', async () => {
     const baseAtom = atom(0)
     const countAtom = atomWithObservable((get) => {
       const base = get(baseAtom)
       if (base % 2 === 0) {
         const subject = new Subject<number>()
-        setTimeout(() => {
-          subject.error(new Error('Test Error'))
-        }, 100)
+        const observable = of(1).pipe(delay(100))
+        observable.subscribe(() => subject.error(new Error('Test Error')))
         return subject
       }
-      const observable = of(base).pipe(delay(500))
+      const observable = of(base).pipe(delay(100))
       return observable
     })
 
