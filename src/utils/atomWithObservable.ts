@@ -21,12 +21,8 @@ type Observer<T> = {
 }
 
 type ObservableLike<T> = {
-  subscribe(observer: Observer<T>): Subscription
-  subscribe(
-    next: (value: T) => void,
-    error?: (error: AnyError) => void,
-    complete?: () => void
-  ): Subscription
+  subscribe(observer: Partial<Observer<T>>): Subscription
+  subscribe(next: (value: T) => void): void // Just to make typing happy
   [Symbol.observable]?: () => ObservableLike<T> | undefined
 }
 
@@ -90,10 +86,10 @@ export function atomWithObservable<Data>(
         clearTimeout(timer)
         subscription.unsubscribe()
       }
-      subscription = observable.subscribe(
-        (d) => listener({ d }),
-        (e) => listener({ e })
-      )
+      subscription = observable.subscribe({
+        next: (d) => listener({ d }),
+        error: (e) => listener({ e }),
+      })
       if (isNotMounted() && options?.unstable_timeout) {
         timer = setTimeout(() => {
           if (subscription) {
