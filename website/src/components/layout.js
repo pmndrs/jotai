@@ -1,6 +1,15 @@
 import cx from 'classnames';
 import useDarkMode from 'use-dark-mode';
-import { Footer, Icon, Main, Menu, SearchModal, Sidebar, Wrapper } from '../components';
+import {
+  Footer,
+  Icon,
+  Main,
+  Menu,
+  SearchModal,
+  Sidebar,
+  SupportModal,
+  Wrapper,
+} from '../components';
 
 const INITIAL_STATE = false;
 
@@ -47,6 +56,7 @@ export const Layout = ({ showDocs = false, children }) => {
       </Wrapper>
       <Menu />
       <SearchModal />
+      <SupportModal />
     </>
   );
 };
