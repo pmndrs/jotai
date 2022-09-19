@@ -120,11 +120,9 @@ it('writable count state without initial value', async () => {
     <StrictMode>
       <Provider>
         <Suspense fallback="loading">
-          <Suspense fallback="loading">
-            <CounterValue />
-          </Suspense>
-          <CounterButton />
+          <CounterValue />
         </Suspense>
+        <CounterButton />
       </Provider>
     </StrictMode>
   )
@@ -533,8 +531,10 @@ it("don't omit values emitted between init and mount", async () => {
   )
 
   await findByText('loading')
-  act(() => subject.next(1))
-  act(() => subject.next(2))
+  act(() => {
+    subject.next(1)
+    subject.next(2)
+  })
   await findByText('count: 2')
 
   fireEvent.click(getByText('button'))
