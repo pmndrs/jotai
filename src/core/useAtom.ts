@@ -1,6 +1,8 @@
-import type { Atom, Scope, SetAtom, WritableAtom } from './atom'
+import type { Atom, SetAtom, WritableAtom } from './atom'
 import { useAtomValue } from './useAtomValue'
 import { useSetAtom } from './useSetAtom'
+
+type Scope = NonNullable<Parameters<typeof useAtomValue>[1]>
 
 export function useAtom<Value, Update, Result extends void | Promise<void>>(
   atom: WritableAtom<Value, Update, Result>,

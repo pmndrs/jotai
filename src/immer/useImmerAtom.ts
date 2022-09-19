@@ -3,7 +3,8 @@ import { produce } from 'immer'
 import type { Draft } from 'immer'
 import { useAtom } from 'jotai'
 import type { WritableAtom } from 'jotai'
-import type { Scope } from '../core/atom'
+
+type Scope = NonNullable<Parameters<typeof useAtom>[1]>
 
 export function useImmerAtom<Value, Result extends void | Promise<void>>(
   anAtom: WritableAtom<Value, (draft: Draft<Value>) => void, Result>,

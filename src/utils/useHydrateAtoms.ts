@@ -1,8 +1,10 @@
 import { useContext } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
-import type { Atom, Scope } from '../core/atom'
+import type { Atom } from '../core/atom'
 import type { ScopeContainer } from '../core/contexts'
 import { RESTORE_ATOMS } from '../core/store'
+
+type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 
 const hydratedMap: WeakMap<
   ScopeContainer,

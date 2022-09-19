@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react'
-import type { Atom, Scope } from '../core/atom'
+import type { Atom } from '../core/atom'
 import { Message } from './types'
 import { useAtomsSnapshot } from './useAtomsSnapshot'
 import { useGotoAtomsSnapshot } from './useGotoAtomsSnapshot'
+
+type Scope = NonNullable<Parameters<typeof useAtomsSnapshot>[0]>
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
