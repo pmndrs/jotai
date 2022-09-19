@@ -4,11 +4,13 @@ import type { Atom, Scope } from './atom'
 import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM } from './store'
 import type { VersionObject } from './store'
+import type { ExtractAtomValue } from './typeUtils'
 
-export function useAtomValue<Value>(
-  atom: Atom<Value>,
+export function useAtomValue<AtomType extends Atom<any>>(
+  atom: AtomType,
   scope?: Scope
-): Awaited<Value> {
+): Awaited<ExtractAtomValue<AtomType>> {
+  type AwaitedValue = Awaited<ExtractAtomValue<AtomType>>
   const ScopeContext = getScopeContext(scope)
   const scopeContainer = useContext(ScopeContext)
   const { s: store, v: versionFromProvider } = scopeContainer
@@ -27,7 +29,7 @@ export function useAtomValue<Value>(
       throw atomState.p // read promise
     }
     if ('v' in atomState) {
-      return atomState.v as Awaited<Value>
+      return atomState.v as AwaitedValue
     }
     throw new Error('no atom value')
   }
@@ -36,7 +38,7 @@ export function useAtomValue<Value>(
   const [[version, valueFromReducer, atomFromReducer], rerenderIfChanged] =
     useReducer<
       Reducer<
-        readonly [VersionObject | undefined, Awaited<Value>, Atom<Value>],
+        readonly [VersionObject | undefined, AwaitedValue, AtomType],
         VersionObject | undefined
       >,
       VersionObject | undefined
