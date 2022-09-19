@@ -6,12 +6,12 @@ import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM } from './store'
 import type { VersionObject } from './store'
 import type { ExtractAtomValue } from './typeUtils'
 
+type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
+
 export function useAtomValue<Value>(
   atom: Atom<Promise<Value>>,
   scope?: Scope
 ): Value
-
-type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 
 export function useAtomValue<Value>(
   atom: Atom<Value>,
