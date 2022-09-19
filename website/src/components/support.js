@@ -34,9 +34,6 @@ export const Support = () => {
 
     const response = await fetch(endpoint, options);
 
-    // @TODO remove console.info
-    console.info('response:', response);
-
     if (response.status === 200) {
       setHasReceived(true);
       setName('');
