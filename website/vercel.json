@@ -1,5 +1,9 @@
 {
   "functions": {
+    "api/*.js": {
+      "memory": 128,
+      "maxDuration": 30
+    },
     "src/api/*.js": {
       "memory": 128,
       "maxDuration": 30
