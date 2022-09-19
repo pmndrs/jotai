@@ -90,6 +90,8 @@ export function atomWithQuery<
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
   type Result = QueryObserverResult<TData, TError>
 
+  // HACK: having state in atom creator function is not ideal
+  // because, unlike hooks, it's shared by multiple providers.
   const previousDataCache = new WeakMap<QueryClient, TData>()
 
   const queryDataAtom = atom((get) => {
@@ -100,6 +102,7 @@ export function atomWithQuery<
     const initialResult = observer.getCurrentResult()
     if (
       initialResult.data === undefined &&
+      options.keepPreviousData &&
       previousDataCache.has(queryClient)
     ) {
       initialResult.data = previousDataCache.get(queryClient)
@@ -130,26 +133,24 @@ export function atomWithQuery<
       if (setResult) {
         setResult(result)
       }
-      if (options.keepPreviousData && result.data !== undefined) {
+      if (result.data !== undefined) {
         previousDataCache.set(queryClient, result.data)
       }
     }
     let unsubscribe: (() => void) | null = null
     let timer: Timeout | undefined
-    const startQuery = (refetch?: boolean) => {
-      if (refetch && setResult) {
-        if (options.enabled !== false) {
-          observer.refetch({ cancelRefetch: true }).then(setResult)
-        }
-        return
-      }
-      if (unsubscribe) {
+    const startQuery = () => {
+      if (!setResult && unsubscribe) {
         clearTimeout(timer)
         unsubscribe()
         unsubscribe = null
       }
       if (options.enabled !== false) {
-        unsubscribe = observer.subscribe(listener)
+        if (setResult) {
+          observer.refetch({ cancelRefetch: true }).then(setResult)
+        } else {
+          unsubscribe = observer.subscribe(listener)
+        }
       }
       if (!setResult) {
         // not mounted yet
@@ -195,7 +196,7 @@ export function atomWithQuery<
       switch (action.type) {
         case 'refetch': {
           set(resultAtom, makePending())
-          startQuery(true)
+          startQuery()
         }
       }
     }
