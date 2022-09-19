@@ -1,12 +1,25 @@
-import { Component, StrictMode, Suspense, useState } from 'react'
+import { Component, StrictMode, Suspense, useContext, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import {
+  atom,
+  SECRET_INTERNAL_getScopeContext as getScopeContext,
+  useAtom,
+  useAtomValue,
+  useSetAtom,
+} from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
+
+// This is only used to pass tests with unstable_enableVersionedWrite
+const useRetryFromError = (scope?: symbol | string | number) => {
+  const ScopeContext = getScopeContext(scope)
+  const { r: retryFromError } = useContext(ScopeContext)
+  return retryFromError || ((fn) => fn())
+}
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -107,11 +120,9 @@ it('writable count state without initial value', async () => {
     <StrictMode>
       <Provider>
         <Suspense fallback="loading">
-          <Suspense fallback="loading">
-            <CounterValue />
-          </Suspense>
-          <CounterButton />
+          <CounterValue />
         </Suspense>
+        <CounterButton />
       </Provider>
     </StrictMode>
   )
@@ -128,7 +139,7 @@ it('writable count state without initial value', async () => {
 it('writable count state with delayed value', async () => {
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => {
-    const observable = of(1).pipe(delay(500))
+    const observable = of(1).pipe(delay(100))
     observable.subscribe((n) => subject.next(n))
     return subject
   })
@@ -520,10 +531,144 @@ it("don't omit values emitted between init and mount", async () => {
   )
 
   await findByText('loading')
-  act(() => subject.next(1))
-  act(() => subject.next(2))
+  act(() => {
+    subject.next(1)
+    subject.next(2)
+  })
   await findByText('count: 2')
 
   fireEvent.click(getByText('button'))
   await findByText('count: 9')
+})
+
+describe('error handling', () => {
+  class ErrorBoundary extends Component<
+    { message?: string; retry?: () => void; children: ReactNode },
+    { hasError: boolean }
+  > {
+    constructor(props: { message?: string; children: ReactNode }) {
+      super(props)
+      this.state = { hasError: false }
+    }
+    static getDerivedStateFromError() {
+      return { hasError: true }
+    }
+    render() {
+      return this.state.hasError ? (
+        <div>
+          {this.props.message || 'errored'}
+          {this.props.retry && (
+            <button
+              onClick={() => {
+                this.props.retry?.()
+                this.setState({ hasError: false })
+              }}>
+              retry
+            </button>
+          )}
+        </div>
+      ) : (
+        this.props.children
+      )
+    }
+  }
+
+  it('can catch error in error boundary', async () => {
+    const subject = new Subject<number>()
+    const countAtom = atomWithObservable(() => subject)
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+        </>
+      )
+    }
+
+    const { findByText } = render(
+      <StrictMode>
+        <Provider>
+          <ErrorBoundary>
+            <Suspense fallback="loading">
+              <Counter />
+            </Suspense>
+          </ErrorBoundary>
+        </Provider>
+      </StrictMode>
+    )
+
+    await findByText('loading')
+    act(() => subject.error(new Error('Test Error')))
+    await findByText('errored')
+  })
+
+  it('can recover from error with dependency', async () => {
+    const baseAtom = atom(0)
+    const countAtom = atomWithObservable((get) => {
+      const base = get(baseAtom)
+      if (base % 2 === 0) {
+        const subject = new Subject<number>()
+        const observable = of(1).pipe(delay(100))
+        observable.subscribe(() => subject.error(new Error('Test Error')))
+        return subject
+      }
+      const observable = of(base).pipe(delay(100))
+      return observable
+    })
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom)
+      const setBase = useSetAtom(baseAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setBase((v) => v + 1)}>next</button>
+        </>
+      )
+    }
+
+    const App = () => {
+      const setBase = useSetAtom(baseAtom)
+      const retryFromError = useRetryFromError()
+      const retry = () => {
+        retryFromError(() => {
+          setBase((c) => c + 1)
+        })
+      }
+      return (
+        <ErrorBoundary retry={retry}>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Provider>
+          <App />
+        </Provider>
+      </StrictMode>
+    )
+
+    await findByText('loading')
+    await findByText('errored')
+
+    await new Promise((r) => setTimeout(r, 100))
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 1')
+
+    await new Promise((r) => setTimeout(r, 100))
+    fireEvent.click(getByText('next'))
+    await findByText('loading')
+    await findByText('errored')
+
+    await new Promise((r) => setTimeout(r, 100))
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    await findByText('count: 3')
+  })
 })
