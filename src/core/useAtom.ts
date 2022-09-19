@@ -8,6 +8,16 @@ import { useAtomValue } from './useAtomValue'
 import { useSetAtom } from './useSetAtom'
 
 export function useAtom<Value, Update, Result extends void | Promise<void>>(
+  atom: WritableAtom<Promise<Value>, Update, Result>,
+  scope?: Scope
+): [Value, SetAtom<Update, Result>]
+
+export function useAtom<Value>(
+  atom: Atom<Promise<Value>>,
+  scope?: Scope
+): [Value, never]
+
+export function useAtom<Value, Update, Result extends void | Promise<void>>(
   atom: WritableAtom<Value, Update, Result>,
   scope?: Scope
 ): [Awaited<Value>, SetAtom<Update, Result>]

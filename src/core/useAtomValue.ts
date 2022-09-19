@@ -7,6 +7,11 @@ import type { VersionObject } from './store'
 import type { ExtractAtomValue } from './typeUtils'
 
 export function useAtomValue<Value>(
+  atom: Atom<Promise<Value>>,
+  scope?: Scope
+): Value
+
+export function useAtomValue<Value>(
   atom: Atom<Value>,
   scope?: Scope
 ): Awaited<Value>
