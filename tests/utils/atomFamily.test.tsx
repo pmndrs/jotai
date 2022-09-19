@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, useEffect, useState } from 'react'
+import { StrictMode, Suspense, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useSetAtom } from 'jotai'
 import type { SetStateAction, WritableAtom } from 'jotai'
@@ -232,14 +232,9 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   )
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
-  let commitCount = 0
-
   const Counter = () => {
     const setCount = useSetAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
-    useEffect(() => {
-      ++commitCount
-    })
     return (
       <>
         <div>derived: {derived}</div>
@@ -260,22 +255,16 @@ it('a derived atom from an async atomFamily (#351)', async () => {
 
   await findByText('loading')
   await findByText('derived: 11')
-  await new Promise((r) => setTimeout(r, 10))
-  const commitCountAfterMount = commitCount
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 12')
-  await new Promise((r) => setTimeout(r, 10))
-  expect(commitCount).toBe(commitCountAfterMount + 1)
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 13')
-  await new Promise((r) => setTimeout(r, 10))
-  expect(commitCount).toBe(commitCountAfterMount + 2)
 })
 
 it('setShouldRemove with custom equality function', async () => {
