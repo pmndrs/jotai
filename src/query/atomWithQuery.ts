@@ -1,5 +1,6 @@
 import type { QueryKey, QueryObserverOptions } from '@tanstack/query-core'
 import { atomsWithTanstackQuery } from 'jotai-tanstack-query'
+import { atom } from 'jotai'
 import type { WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
@@ -84,5 +85,12 @@ export function atomWithQuery<
   const getOptions =
     typeof createQuery === 'function' ? createQuery : () => createQuery
   const [dataAtom] = atomsWithTanstackQuery(getOptions, getQueryClient)
-  return dataAtom
+  return atom(
+    (get) => get(dataAtom),
+    (_get, set, action: AtomWithQueryAction) => {
+      if (action.type === 'refetch') {
+        set(dataAtom, { type: 'refetch', unstable_pending: true })
+      }
+    }
+  )
 }
