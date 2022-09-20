@@ -18,13 +18,15 @@ export default async function handler(request, response) {
   `;
 
   try {
-    client.sendEmail({
+    const result = await client.sendEmail({
       From: 'noreply@jotai.org',
       To: process.env.EMAIL_RECIPIENTS,
       Subject: subject,
       ReplyTo: body.email,
       TextBody: message,
     });
+
+    console.log(result);
 
     response.status(200).json({ status: 'Sent' });
   } catch (error) {
