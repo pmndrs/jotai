@@ -18,7 +18,7 @@ export default async function handler(request, response) {
   `;
 
   try {
-    client.sendEmail({
+    await client.sendEmail({
       From: 'noreply@jotai.org',
       To: process.env.EMAIL_RECIPIENTS,
       Subject: subject,
