@@ -1,7 +1,7 @@
 import type { QueryKey, QueryObserverOptions } from '@tanstack/query-core'
 import { atomsWithTanstackQuery } from 'jotai-tanstack-query'
 import { atom } from 'jotai'
-import type { WritableAtom } from 'jotai'
+import type { Getter, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
 
@@ -83,24 +83,27 @@ export function atomWithQuery<
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
   const getOptions =
-    typeof createQuery === 'function' ? createQuery : () => createQuery
+    typeof createQuery === 'function'
+      ? (get: Getter) => ({
+          ...createQuery(get),
+          refetchOnMount: false,
+        })
+      : () => ({
+          ...createQuery,
+          refetchOnMount: false,
+        })
   const [dataAtom] = atomsWithTanstackQuery(getOptions, getQueryClient)
-  const pendingAtom = atom<Promise<never> | null>(null)
   return atom(
     (get) => {
-      const data = get(dataAtom)
-      const pending = get(pendingAtom)
-      if (pending) {
-        throw pending
+      const options = getOptions(get)
+      if (options.enabled === false) {
+        return options.initialData as TData | undefined
       }
-      return data
+      return get(dataAtom)
     },
     (_get, set, action: AtomWithQueryAction) => {
       if (action.type === 'refetch') {
-        set(pendingAtom, new Promise<never>(() => {}))
-        Promise.resolve(set(dataAtom, { type: 'refetch' })).finally(() => {
-          set(pendingAtom, null)
-        })
+        return set(dataAtom, { type: 'refetch' })
       }
     }
   )
