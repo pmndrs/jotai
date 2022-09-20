@@ -85,11 +85,22 @@ export function atomWithQuery<
   const getOptions =
     typeof createQuery === 'function' ? createQuery : () => createQuery
   const [dataAtom] = atomsWithTanstackQuery(getOptions, getQueryClient)
+  const pendingAtom = atom<Promise<never> | null>(null)
   return atom(
-    (get) => get(dataAtom),
+    (get) => {
+      const data = get(dataAtom)
+      const pending = get(pendingAtom)
+      if (pending) {
+        throw pending
+      }
+      return data
+    },
     (_get, set, action: AtomWithQueryAction) => {
       if (action.type === 'refetch') {
-        set(dataAtom, { type: 'refetch', unstable_pending: true })
+        set(pendingAtom, new Promise<never>(() => {}))
+        Promise.resolve(set(dataAtom, { type: 'refetch' })).finally(() => {
+          set(pendingAtom, null)
+        })
       }
     }
   )
