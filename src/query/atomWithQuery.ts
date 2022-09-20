@@ -7,6 +7,7 @@ import type { CreateQueryOptions, GetQueryClient } from './types'
 
 type AtomWithQueryAction = {
   type: 'refetch'
+  force?: boolean
 }
 
 export interface AtomWithQueryOptions<
@@ -82,16 +83,10 @@ export function atomWithQuery<
   >,
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
-  const getOptions =
-    typeof createQuery === 'function'
-      ? (get: Getter) => ({
-          ...createQuery(get),
-          refetchOnMount: false,
-        })
-      : () => ({
-          ...createQuery,
-          refetchOnMount: false,
-        })
+  const getOptions = (get: Getter) => ({
+    ...(typeof createQuery === 'function' ? createQuery(get) : createQuery),
+    refetchOnMount: false,
+  })
   const [dataAtom] = atomsWithTanstackQuery(getOptions, getQueryClient)
   return atom(
     (get) => {
@@ -101,10 +96,6 @@ export function atomWithQuery<
       }
       return get(dataAtom)
     },
-    (_get, set, action: AtomWithQueryAction) => {
-      if (action.type === 'refetch') {
-        return set(dataAtom, { type: 'refetch' })
-      }
-    }
+    (_get, set, action: AtomWithQueryAction) => set(dataAtom, action)
   )
 }

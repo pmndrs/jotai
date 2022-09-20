@@ -246,7 +246,7 @@ it('query loading 2', async () => {
   await findByText('count: 2')
 })
 
-it.skip('query no-loading with keepPreviousData', async () => {
+it('query no-loading with keepPreviousData', async () => {
   const dataAtom = atom(0)
   const mockFetch = jest.fn(fakeFetch)
   const countAtom = atomWithQuery((get) => ({
@@ -354,7 +354,7 @@ it('query with enabled', async () => {
   expect(mockFetch).toHaveBeenCalledTimes(1)
 })
 
-it.skip('query with enabled 2', async () => {
+it('query with enabled 2', async () => {
   const mockFetch = jest.fn(fakeFetch)
   const enabledAtom = atom<boolean>(true)
   const slugAtom = atom<string | null>('first')
@@ -650,11 +650,10 @@ describe('error handling', () => {
   })
 
   it('can recover from error', async () => {
-    const retiesAtom = atom(0)
     let count = 0
     let willThrowError = true
-    const countAtom = atomWithQuery((get) => ({
-      queryKey: ['error test', 'count2', get(retiesAtom)],
+    const countAtom = atomWithQuery(() => ({
+      queryKey: ['error test', 'count2'],
       retry: false,
       staleTime: 200,
       queryFn: () => {
@@ -681,11 +680,11 @@ describe('error handling', () => {
     }
 
     const App = () => {
-      const setRetires = useSetAtom(retiesAtom)
+      const dispatch = useSetAtom(countAtom)
       const retryFromError = useRetryFromError()
       const retry = () => {
         retryFromError(() => {
-          setRetires((c) => c + 1)
+          dispatch({ type: 'refetch', force: true })
         })
       }
       return (
