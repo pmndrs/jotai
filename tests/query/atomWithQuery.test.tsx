@@ -517,11 +517,11 @@ it('query with initialData test', async () => {
   }
 
   const { findByText } = render(
-    <>
+    <StrictMode>
       <Provider>
         <Counter />
       </Provider>
-    </>
+    </StrictMode>
   )
 
   // NOTE: the atom never suspends
@@ -684,7 +684,7 @@ describe('error handling', () => {
       const retryFromError = useRetryFromError()
       const retry = () => {
         retryFromError(() => {
-          dispatch({ type: 'refetch', force: true })
+          dispatch({ type: 'refetch' })
         })
       }
       return (
