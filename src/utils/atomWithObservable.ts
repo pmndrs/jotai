@@ -34,21 +34,21 @@ type Options<Data> = {
 }
 
 export function atomWithObservable<Data>(
-  createObservable: (get: Getter) => SubjectLike<Data>,
+  getObservable: (get: Getter) => SubjectLike<Data>,
   options?: Options<Data>
 ): WritableAtom<Data, Data>
 
 export function atomWithObservable<Data>(
-  createObservable: (get: Getter) => ObservableLike<Data>,
+  getObservable: (get: Getter) => ObservableLike<Data>,
   options?: Options<Data>
 ): Atom<Data>
 
 export function atomWithObservable<Data>(
-  createObservable: (get: Getter) => ObservableLike<Data> | SubjectLike<Data>,
+  getObservable: (get: Getter) => ObservableLike<Data> | SubjectLike<Data>,
   options?: Options<Data>
 ) {
   const observableResultAtom = atom((get) => {
-    let observable = createObservable(get)
+    let observable = getObservable(get)
     const itself = observable[Symbol.observable]?.()
     if (itself) {
       observable = itself
