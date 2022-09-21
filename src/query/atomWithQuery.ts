@@ -7,7 +7,6 @@ import type { CreateQueryOptions, GetQueryClient } from './types'
 
 type AtomWithQueryAction = {
   type: 'refetch'
-  force?: boolean
 }
 
 export interface AtomWithQueryOptions<
@@ -96,6 +95,10 @@ export function atomWithQuery<
       }
       return get(dataAtom)
     },
-    (_get, set, action: AtomWithQueryAction) => set(dataAtom, action)
+    (_get, set, action: AtomWithQueryAction) => {
+      if (action.type === 'refetch') {
+        return set(dataAtom, { type: 'refetch', force: true })
+      }
+    }
   )
 }
