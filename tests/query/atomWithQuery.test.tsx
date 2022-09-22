@@ -305,7 +305,7 @@ it('query with enabled', async () => {
     const slug = get(slugAtom)
     return {
       enabled: !!slug,
-      queryKey: ['disabled_until_value'],
+      queryKey: ['disabled_until_value', slug],
       queryFn: async () => {
         return await mockFetch({ slug: `hello-${slug}` }, false, 100)
       },
@@ -353,7 +353,7 @@ it('query with enabled', async () => {
   expect(mockFetch).toHaveBeenCalledTimes(1)
 })
 
-it('query with enabled 2', async () => {
+it.skip('query with enabled 2', async () => {
   const mockFetch = jest.fn(fakeFetch)
   const enabledAtom = atom<boolean>(true)
   const slugAtom = atom<string | null>('first')

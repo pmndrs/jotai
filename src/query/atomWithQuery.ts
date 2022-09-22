@@ -91,7 +91,8 @@ export function atomWithQuery<
     (get) => {
       const options = getOptions(get)
       if (options.enabled === false) {
-        return options.initialData as TData | undefined
+        const queryClient = getQueryClient(get)
+        return queryClient.getQueryData<TData>(options.queryKey)
       }
       return get(dataAtom)
     },
