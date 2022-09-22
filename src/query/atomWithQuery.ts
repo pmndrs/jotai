@@ -83,8 +83,8 @@ export function atomWithQuery<
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
   const getOptions = (get: Getter) => ({
+    staleTime: 500,
     ...(typeof createQuery === 'function' ? createQuery(get) : createQuery),
-    refetchOnMount: false,
   })
   const [dataAtom] = atomsWithTanstackQuery(getOptions, getQueryClient)
   return atom(

@@ -131,8 +131,7 @@ it('query refetch', async () => {
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
-
-  // await findByText('loading')
+  await findByText('loading')
   await findByText('count: 1')
   expect(mockFetch).toBeCalledTimes(2)
 })
@@ -187,12 +186,12 @@ it('query loading', async () => {
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
-  // await findByText('loading')
+  await findByText('loading')
   await findByText('count: 1')
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
-  // await findByText('loading')
+  await findByText('loading')
   await findByText('count: 2')
 })
 
@@ -237,12 +236,12 @@ it('query loading 2', async () => {
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
-  // await findByText('loading')
+  await findByText('loading')
   await findByText('count: 1')
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
-  // await findByText('loading')
+  await findByText('loading')
   await findByText('count: 2')
 })
 
@@ -306,7 +305,7 @@ it('query with enabled', async () => {
     const slug = get(slugAtom)
     return {
       enabled: !!slug,
-      queryKey: ['disabled_until_value', slug],
+      queryKey: ['disabled_until_value'],
       queryFn: async () => {
         return await mockFetch({ slug: `hello-${slug}` }, false, 100)
       },
@@ -576,7 +575,7 @@ it('query dependency test', async () => {
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('increment'))
-  await findByText('loading')
+  // await findByText('loading')
   await findByText('count: 1')
 })
 
@@ -655,7 +654,6 @@ describe('error handling', () => {
     const countAtom = atomWithQuery(() => ({
       queryKey: ['error test', 'count2'],
       retry: false,
-      staleTime: 200,
       queryFn: () => {
         const promise = fakeFetch({ count }, willThrowError, 200)
         willThrowError = !willThrowError
@@ -709,17 +707,17 @@ describe('error handling', () => {
 
     await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('retry'))
-    // await findByText('loading')
+    await findByText('loading')
     await findByText('count: 1')
 
     await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('refetch'))
-    // await findByText('loading')
+    await findByText('loading')
     await findByText('errored')
 
     await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('retry'))
-    // await findByText('loading')
+    await findByText('loading')
     await findByText('count: 3')
   })
 })
