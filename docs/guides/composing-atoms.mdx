@@ -61,7 +61,7 @@ export const numberAtom = atom(
 ```
 
 The final `numberAtom` just works like a normal primitive atom like `atom(10)`.
-If you set a number value, it will override the `roundNumberAtom` value,
+If you set a number value, it will override the `overwrittenAtom` value,
 and if you set `null`, it will be the `roundNumberAtom` value.
 
 The reusable implementation is available as `atomWithDefault`
