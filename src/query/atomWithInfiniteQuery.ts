@@ -135,7 +135,7 @@ export function atomWithInfiniteQuery<
         return set(dataAtom, {
           type: 'refetch',
           force: true,
-          options: action.payload,
+          options: action.payload as any,
         })
       }
       return set(dataAtom, action)

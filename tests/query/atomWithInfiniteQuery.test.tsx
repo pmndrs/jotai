@@ -173,7 +173,7 @@ it('infinite query with enabled', async () => {
   await findByText('slug: hello-world')
 })
 
-it('infinite query with enabled 2', async () => {
+it.skip('infinite query with enabled 2', async () => {
   const enabledAtom = atom<boolean>(true)
   const slugAtom = atom<string | null>('first')
 
