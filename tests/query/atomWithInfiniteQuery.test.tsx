@@ -173,7 +173,7 @@ it('infinite query with enabled', async () => {
   await findByText('slug: hello-world')
 })
 
-it.skip('infinite query with enabled 2', async () => {
+it('infinite query with enabled 2', async () => {
   const enabledAtom = atom<boolean>(true)
   const slugAtom = atom<string | null>('first')
 
@@ -182,7 +182,7 @@ it.skip('infinite query with enabled 2', async () => {
     const isEnabled = get(enabledAtom)
     return {
       enabled: isEnabled,
-      queryKey: ['enabled_toggle', slug],
+      queryKey: ['enabled_toggle'],
       queryFn: async () => {
         return await fakeFetch({ slug: `hello-${slug}` }, false, 100)
       },
