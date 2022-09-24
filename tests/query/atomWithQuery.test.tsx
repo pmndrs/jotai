@@ -353,7 +353,7 @@ it('query with enabled', async () => {
   expect(mockFetch).toHaveBeenCalledTimes(1)
 })
 
-it.skip('query with enabled 2', async () => {
+it('query with enabled 2', async () => {
   const mockFetch = jest.fn(fakeFetch)
   const enabledAtom = atom<boolean>(true)
   const slugAtom = atom<string | null>('first')
@@ -363,7 +363,7 @@ it.skip('query with enabled 2', async () => {
     const isEnabled = get(enabledAtom)
     return {
       enabled: isEnabled,
-      queryKey: ['enabled_toggle'],
+      queryKey: ['enabled_toggle', slug],
       queryFn: async () => {
         return await mockFetch({ slug: `hello-${slug}` }, false, 100)
       },
@@ -575,7 +575,7 @@ it('query dependency test', async () => {
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('increment'))
-  // await findByText('loading')
+  await findByText('loading')
   await findByText('count: 1')
 })
 
