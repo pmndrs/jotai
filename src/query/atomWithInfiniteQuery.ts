@@ -117,7 +117,7 @@ export function atomWithInfiniteQuery<
   AtomWithInfiniteQueryAction<TQueryFnData>
 > {
   const getOptions = (get: Getter) => ({
-    refetchOnMount: false,
+    staleTime: 200,
     ...(typeof createQuery === 'function' ? createQuery(get) : createQuery),
   })
   const [dataAtom] = atomsWithTanstackInfiniteQuery(getOptions, getQueryClient)
