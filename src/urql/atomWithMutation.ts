@@ -19,17 +19,33 @@ export function atomWithMutation<Data, Variables extends AnyVariables>(
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables> | string,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  const operationResultAtom = atom<
-    OperationResult<Data, Variables> | Promise<OperationResult<Data, Variables>>
-  >(
-    new Promise<OperationResult<Data, Variables>>(() => {}) // infinite pending
-  )
+  type Result = OperationResult<Data, Variables>
+  const operationResultAtom = atom((get) => {
+    let resolve: ((result: Result) => void) | null = null
+    const makePending = () => 
+      new Promise<Result>((r) => {
+        resolve = r
+      })
+
+    const resultAtom = atom<Result | Promise<Result>>(makePending())
+    return { resultAtom, makePending }
+  })
   const queryResultAtom = atom(
-    (get) => get(operationResultAtom),
+    (get) => {
+      const queryResult = get(operationResultAtom)
+      if(!queryResult) {
+        return null
+      }
+      const { resultAtom } = queryResult
+      const result = get(resultAtom)
+      return result
+    },
     async (get, set, action: MutationAction<Data, Variables>) => {
+      const queryResult = get(queryResultAtom)
+      const { resultAtom, makePending } = queryResult
       set(
-        operationResultAtom,
-        new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch
+        resultAtom,
+        makePending()
       )
       const client = getClient(get)
       const query = createQuery(get)
@@ -41,7 +57,7 @@ export function atomWithMutation<Data, Variables extends AnyVariables>(
           if (result.error) {
             throw result.error
           }
-          set(operationResultAtom, result)
+          set(resultAtom, result)
         })
     }
   )
