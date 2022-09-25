@@ -21,10 +21,16 @@ type Observer<T> = {
 }
 
 type ObservableLike<T> = {
-  subscribe(observer: Partial<Observer<T>>): Subscription
-  subscribe(next: (value: T) => void): Subscription // Just to make typing happy
   [Symbol.observable]?: () => ObservableLike<T> | undefined
-}
+} & (
+  | {
+      subscribe(observer: Partial<Observer<T>>): Subscription
+    }
+  | {
+      subscribe(observer: Partial<Observer<T>>): Subscription
+      subscribe(next: (value: T) => void): Subscription // To make typing happy
+    }
+)
 
 type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
