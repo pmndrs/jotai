@@ -96,6 +96,7 @@ export function atomWithObservable<Data>(
       subscription = observable.subscribe({
         next: (d) => listener({ d }),
         error: (e) => listener({ e }),
+        complete: () => {},
       })
       if (isNotMounted() && options?.unstable_timeout) {
         timer = setTimeout(() => {
