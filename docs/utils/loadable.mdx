@@ -21,7 +21,7 @@ const asyncAtom = atom(async (get) => ...)
 const loadableAtom = loadable(asyncAtom)
 // Does not need to be wrapped by a <Suspense> element
 const Component = () => {
-  const value = useAtom(loadableAtom)
+  const [value] = useAtom(loadableAtom)
   if (value.state === 'hasError') return <Text>{value.error}</Text>
   if (value.state === 'loading') {
     return <Text>Loading...</Text>
