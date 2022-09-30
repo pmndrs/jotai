@@ -19,12 +19,7 @@ const extension = {
   init: jest.fn(),
   error: jest.fn(),
 }
-const extensionConnector = { connect: jest.fn(() => extension) }
-;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
-
-const savedDev = __DEV__
-
-beforeEach(() => {
+const disconnect = () => {
   extensionConnector.connect.mockClear()
   extension.subscribe.mockClear()
   extension.unsubscribe.mockClear()
@@ -32,7 +27,14 @@ beforeEach(() => {
   extension.init.mockClear()
   extension.error.mockClear()
   extensionSubscriber = undefined
-})
+}
+
+const extensionConnector = { connect: jest.fn(() => extension), disconnect: jest.fn(disconnect)  }
+;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
+
+const savedDev = __DEV__
+
+beforeEach(disconnect)
 
 afterEach(() => {
   __DEV__ = savedDev
@@ -183,6 +185,43 @@ it('[DEV-ONLY] updating state should call devtools.send', async () => {
     </StrictMode>
   )
 
+  await findByText('count: 0')
+  expect(extension.send).toBeCalledTimes(1)
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
+  expect(extension.send).toBeCalledTimes(2)
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 2')
+  expect(extension.send).toBeCalledTimes(3)
+})
+
+it('[DEV-ONLY] updating state should call devtools.send once in StrictMode', async () => {
+  __DEV__ = true
+  const countAtom = atom(0)
+  const Counter = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button</button>
+      </>
+    )
+  }
+
+  extension.init.mockClear()
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <AtomsDevtools>
+          <Counter />
+        </AtomsDevtools>
+      </Provider>
+    </StrictMode>
+  )
+
+  expect(extension.init).toBeCalledTimes(1)
   await findByText('count: 0')
   expect(extension.send).toBeCalledTimes(1)
 
