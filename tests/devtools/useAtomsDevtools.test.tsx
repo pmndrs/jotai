@@ -224,6 +224,7 @@ it('[DEV-ONLY] updating state should call devtools.send once in StrictMode', asy
     </StrictMode>
   )
 
+  expect(extensionConnector.disconnect).toBeCalledTimes(1)
   expect(extension.init).toBeCalledTimes(1)
 })
 
