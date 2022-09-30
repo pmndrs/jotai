@@ -214,7 +214,7 @@ it('[DEV-ONLY] updating state should call devtools.send once in StrictMode', asy
   }
 
   extension.init.mockClear()
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Provider>
         <AtomsDevtools>
@@ -225,16 +225,6 @@ it('[DEV-ONLY] updating state should call devtools.send once in StrictMode', asy
   )
 
   expect(extension.init).toBeCalledTimes(1)
-  await findByText('count: 0')
-  expect(extension.send).toBeCalledTimes(1)
-
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  expect(extension.send).toBeCalledTimes(2)
-
-  fireEvent.click(getByText('button'))
-  await findByText('count: 2')
-  expect(extension.send).toBeCalledTimes(3)
 })
 
 it('[DEV-ONLY] dependencies + updating state should call devtools.send', async () => {
