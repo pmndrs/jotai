@@ -29,7 +29,10 @@ const disconnect = () => {
   extensionSubscriber = undefined
 }
 
-const extensionConnector = { connect: jest.fn(() => extension), disconnect: jest.fn(disconnect)  }
+const extensionConnector = {
+  connect: jest.fn(() => extension),
+  disconnect: jest.fn(disconnect),
+}
 ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
 
 const savedDev = __DEV__

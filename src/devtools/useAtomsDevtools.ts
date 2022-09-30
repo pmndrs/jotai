@@ -135,9 +135,8 @@ export function useAtomsDevtools(
     devtools.current = connection
     devtools.current.shouldInit = true
     return () => {
-      (extension as any).disconnect()
+      ;(extension as any).disconnect()
       devtoolsUnsubscribe?.()
-
     }
   }, [extension, goToSnapshot, name])
 
