@@ -21,14 +21,17 @@ type Observer<T> = {
 }
 
 type ObservableLike<T> = {
-  subscribe(observer: Observer<T>): Subscription
-  subscribe(
-    next: (value: T) => void,
-    error?: (error: AnyError) => void,
-    complete?: () => void
-  ): Subscription
   [Symbol.observable]?: () => ObservableLike<T> | undefined
-}
+} & (
+  | {
+      subscribe(observer: Partial<Observer<T>>): Subscription
+    }
+  | {
+      subscribe(observer: Partial<Observer<T>>): Subscription
+      // Overload function to make typing happy
+      subscribe(next: (value: T) => void): Subscription
+    }
+)
 
 type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
@@ -38,21 +41,21 @@ type Options<Data> = {
 }
 
 export function atomWithObservable<Data>(
-  createObservable: (get: Getter) => SubjectLike<Data>,
+  getObservable: (get: Getter) => SubjectLike<Data>,
   options?: Options<Data>
 ): WritableAtom<Data, Data>
 
 export function atomWithObservable<Data>(
-  createObservable: (get: Getter) => ObservableLike<Data>,
+  getObservable: (get: Getter) => ObservableLike<Data>,
   options?: Options<Data>
 ): Atom<Data>
 
 export function atomWithObservable<Data>(
-  createObservable: (get: Getter) => ObservableLike<Data> | SubjectLike<Data>,
+  getObservable: (get: Getter) => ObservableLike<Data> | SubjectLike<Data>,
   options?: Options<Data>
 ) {
   const observableResultAtom = atom((get) => {
-    let observable = createObservable(get)
+    let observable = getObservable(get)
     const itself = observable[Symbol.observable]?.()
     if (itself) {
       observable = itself
@@ -90,10 +93,11 @@ export function atomWithObservable<Data>(
         clearTimeout(timer)
         subscription.unsubscribe()
       }
-      subscription = observable.subscribe(
-        (d) => listener({ d }),
-        (e) => listener({ e })
-      )
+      subscription = observable.subscribe({
+        next: (d) => listener({ d }),
+        error: (e) => listener({ e }),
+        complete: () => {},
+      })
       if (isNotMounted() && options?.unstable_timeout) {
         timer = setTimeout(() => {
           if (subscription) {

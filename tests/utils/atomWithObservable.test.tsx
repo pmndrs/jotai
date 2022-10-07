@@ -2,6 +2,7 @@ import { Component, StrictMode, Suspense, useContext, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
+import { fromValue, pipe, toObservable } from 'wonka'
 import {
   atom,
   SECRET_INTERNAL_getScopeContext as getScopeContext,
@@ -69,7 +70,6 @@ it('writable count state', async () => {
 
   const Counter = () => {
     const [state, dispatch] = useAtom(observableAtom)
-
     return (
       <>
         count: {state}
@@ -106,13 +106,11 @@ it('writable count state without initial value', async () => {
 
   const CounterValue = () => {
     const state = useAtomValue(observableAtom)
-
     return <>count: {state}</>
   }
 
   const CounterButton = () => {
     const dispatch = useSetAtom(observableAtom)
-
     return <button onClick={() => dispatch(9)}>button</button>
   }
 
@@ -146,7 +144,6 @@ it('writable count state with delayed value', async () => {
 
   const Counter = () => {
     const [state, dispatch] = useAtom(observableAtom)
-
     return (
       <>
         count: {state}
@@ -188,7 +185,6 @@ it('only subscribe once per atom', async () => {
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
-
     return <>count: {state}</>
   }
 
@@ -233,7 +229,6 @@ it('cleanup subscription', async () => {
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
-
     return <>count: {state}</>
   }
 
@@ -263,7 +258,6 @@ it('resubscribe on remount', async () => {
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
-
     return <>count: {state}</>
   }
 
@@ -306,7 +300,6 @@ it("count state with initialValue doesn't suspend", async () => {
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
-
     return <>count: {state}</>
   }
 
@@ -331,7 +324,6 @@ it('writable count state with initialValue', async () => {
 
   const Counter = () => {
     const [state, dispatch] = useAtom(observableAtom)
-
     return (
       <>
         count: {state}
@@ -364,7 +356,6 @@ it('writable count state with error', async () => {
 
   const Counter = () => {
     const [state, dispatch] = useAtom(observableAtom)
-
     return (
       <>
         count: {state}
@@ -396,7 +387,6 @@ it('synchronous subscription with initial value', async () => {
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
-
     return <>count: {state}</>
   }
 
@@ -416,7 +406,6 @@ it('synchronous subscription with BehaviorSubject', async () => {
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
-
     return <>count: {state}</>
   }
 
@@ -458,7 +447,6 @@ it('with falsy initial value', async () => {
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
-
     return <>count: {state}</>
   }
 
@@ -479,7 +467,6 @@ it('with initially emitted undefined value', async () => {
 
   const Counter = () => {
     const [state] = useAtom(observableAtom)
-
     return <>count: {state === undefined ? '-' : state}</>
   }
 
@@ -506,7 +493,6 @@ it("don't omit values emitted between init and mount", async () => {
 
   const Counter = () => {
     const [state, dispatch] = useAtom(observableAtom)
-
     return (
       <>
         count: {state}
@@ -670,5 +656,30 @@ describe('error handling', () => {
     fireEvent.click(getByText('retry'))
     await findByText('loading')
     await findByText('count: 3')
+  })
+})
+
+describe('wonka', () => {
+  it('count state', async () => {
+    const source = fromValue(1)
+    const observable = pipe(source, toObservable)
+    const observableAtom = atomWithObservable(() => observable)
+
+    const Counter = () => {
+      const [state] = useAtom(observableAtom)
+      return <>count: {state}</>
+    }
+
+    const { findByText } = render(
+      <StrictMode>
+        <Provider>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </Provider>
+      </StrictMode>
+    )
+
+    await findByText('count: 1')
   })
 })
