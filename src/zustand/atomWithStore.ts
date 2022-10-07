@@ -1,8 +1,8 @@
-import type { State, StoreApi } from 'zustand/vanilla'
+import type { StoreApi } from 'zustand/vanilla'
 import { atom } from 'jotai'
 import type { SetStateAction } from 'jotai'
 
-export function atomWithStore<T extends State>(store: StoreApi<T>) {
+export function atomWithStore<T>(store: StoreApi<T>) {
   const baseAtom = atom(store.getState())
   baseAtom.onMount = (setValue) => {
     const callback = () => {
