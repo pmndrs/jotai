@@ -1,8 +1,9 @@
 import { useCallback, useContext } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
-import type { Atom, Scope } from '../core/atom'
+import type { Atom } from '../core/atom'
 import { DEV_SUBSCRIBE_STATE, RESTORE_ATOMS } from '../core/store'
 
+type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
 type AtomsValues = Map<AnyAtom, AnyAtomValue> // immutable

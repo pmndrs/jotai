@@ -14,4 +14,12 @@ export type ExtractAtomUpdate<AtomType> = AtomType extends WritableAtom<
   ? Update
   : never
 
+export type ExtractAtomResult<AtomType> = AtomType extends WritableAtom<
+  unknown,
+  unknown,
+  infer Result
+>
+  ? Result
+  : never
+
 export type SetStateAction<Value> = ExtractAtomUpdate<PrimitiveAtom<Value>>

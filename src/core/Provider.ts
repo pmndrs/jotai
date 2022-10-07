@@ -1,10 +1,12 @@
 import { createElement, useEffect, useRef, useState } from 'react'
 import type { PropsWithChildren } from 'react'
-import type { Atom, Scope } from './atom'
+import type { Atom } from './atom'
 import { createScopeContainer, getScopeContext } from './contexts'
 import type { ScopeContainer } from './contexts'
 import { COMMIT_ATOM, createStoreForExport } from './store'
 import type { VersionObject } from './store'
+
+type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 
 export const Provider = ({
   children,

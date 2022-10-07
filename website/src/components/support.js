@@ -34,7 +34,7 @@ export const Support = () => {
 
     const response = await fetch(endpoint, options);
 
-    if (response.status === 'Sent') {
+    if (response.status === 200) {
       setHasReceived(true);
       setName('');
       setEmail('');
@@ -136,7 +136,7 @@ export const Support = () => {
           </div>
           {hasSubmitted && (
             <div className="absolute inset-0 z-10 flex h-full w-full items-center justify-center bg-gray-100 text-3xl font-bold leading-tight text-gray-350 dark:bg-gray-900 dark:text-gray-200 lg:text-4xl">
-              <span>Thanks!</span>
+              {hasReceived ? <span>Thanks!</span> : <span>Sending...</span>}
             </div>
           )}
         </div>
