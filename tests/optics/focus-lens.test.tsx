@@ -181,16 +181,19 @@ it('focus on async atom works', async () => {
   await findByText('asyncAtom: {"count":0}')
   await findByText('count: 0')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('incr count'))
   await findByText('baseAtom: {"count":1}')
   await findByText('asyncAtom: {"count":1}')
   await findByText('count: 1')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('incr async'))
   await findByText('baseAtom: {"count":2}')
   await findByText('asyncAtom: {"count":2}')
   await findByText('count: 2')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('incr base'))
   await findByText('baseAtom: {"count":3}')
   await findByText('asyncAtom: {"count":3}')
