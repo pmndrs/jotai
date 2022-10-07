@@ -53,11 +53,13 @@ describeExceptFor1686('abortable atom test', () => {
     await findByText('count: 0')
     expect(abortedCount).toBe(0)
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('button'))
     await findByText('count: 2')
     expect(abortedCount).toBe(1)
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     await findByText('count: 3')
     expect(abortedCount).toBe(1)
@@ -106,11 +108,13 @@ describeExceptFor1686('abortable atom test', () => {
     await findByText('count: 0')
     expect(abortedCount).toBe(0)
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('button'))
     await findByText('count: 2')
     expect(abortedCount).toBe(1)
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     await findByText('count: 3')
     expect(abortedCount).toBe(1)
@@ -159,6 +163,7 @@ describeExceptFor1686('abortable atom test', () => {
     await findByText('count: 0')
     expect(abortedCount).toBe(0)
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('toggle'))
     await findByText('hidden')
@@ -206,10 +211,12 @@ describeExceptFor1686('abortable atom test', () => {
     await findByText('loading')
     await findByText('count: 0')
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('button'))
     await findByText('count: 2')
 
+    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     await findByText('count: 3')
   })
