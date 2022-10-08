@@ -1,7 +1,13 @@
 import { expectType } from 'ts-expect'
 import { atom, useAtom } from 'jotai'
 import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai'
-import type { SetAtom } from '../src/core/atom'
+
+type SetAtom<
+  Update,
+  Result extends void | Promise<void>
+> = undefined extends Update
+  ? (update?: Update) => Result
+  : (update: Update) => Result
 
 it('atom() should return the correct types', () => {
   function Component() {
