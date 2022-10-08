@@ -56,5 +56,5 @@ jobs:
       - name: Test ${{ matrix.typescript }}
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
-          rm -r node_modules/@types/jsdom node_modules/parse5
+          rm -r node_modules/@types/jsdom node_modules/parse5 node_modules/@types/jest/node_modules/jest-diff
           yarn tsc --noEmit
