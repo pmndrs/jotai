@@ -56,5 +56,5 @@ jobs:
       - name: Test ${{ matrix.typescript }}
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
-          rm -fr node_modules/@types/jsdom node_modules/parse5 node_modules/**/node_modules/pretty-format
+          rm -fr node_modules/@types/jsdom node_modules/parse5 node_modules/@types/prettier node_modules/**/node_modules/pretty-format
           yarn tsc --noEmit
