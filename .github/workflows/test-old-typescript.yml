@@ -46,7 +46,7 @@ jobs:
           sed -i~ "s/\"jotai\": \[\"\.\/src\/index\.ts\"\],/\"jotai\": [\".\/dist\/ts3.4\/index.d.ts\"],/" tsconfig.json
           sed -i~ "s/\"jotai\/\*\": \[\"\.\/src\/\*\.ts\"\]/\"jotai\/*\": [\".\/dist\/ts3.4\/*.d.ts\"]/" tsconfig.json
           sed -i~ "s/\"include\": .*/\"include\": [\"src\/types.d.ts\", \"dist\/**\/*\", \"tests\/**\/*\"],/" tsconfig.json
-          sed -i~ "s/\"types\": \"index\.d\.ts\",/\"types\": \"dist\/types\/index.d.ts\",/" node_modules/rxjs/package.json
+          sed -i~ "s/\">=4.2\": {/\">=3.4\": {/" node_modules/rxjs/package.json
       - name: Test ${{ matrix.typescript }}
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
