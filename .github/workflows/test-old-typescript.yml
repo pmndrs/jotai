@@ -38,8 +38,8 @@ jobs:
       - run: yarn build
       - name: Patch for Old TS
         run: |
-          sed -i~ '1s/^/import React from "react";/' tests/*.tsx
-          sed -i~ "s/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//" tests/*.tsx
+          sed -i~ '1s/^/import React from "react";/' tests/*.tsx tests/*/*.tsx
+          sed -i~ "s/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//" tests/*.tsx tests/*/*.tsx
           sed -i~ "s/\"jsx\": \"react-jsx\",/\"jsx\": \"react\",/" tsconfig.json
           sed -i~ "s/\"noUncheckedIndexedAccess\": true,//" tsconfig.json
           sed -i~ "s/\"exactOptionalPropertyTypes\": true,//" tsconfig.json
