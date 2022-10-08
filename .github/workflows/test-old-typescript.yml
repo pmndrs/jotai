@@ -52,7 +52,7 @@ jobs:
           sed -i~ "s/\"noUncheckedIndexedAccess\": true,//" tsconfig.json
           sed -i~ "s/^import type /import /" tests/*.tsx tests/*/*.tsx
           yarn add -D @types/jest@27.4.1 @types/prettier@2.4.4
-          rm -r tests/query tests/urql tests/optics tests/valtio tests/zustand tests/utils/atomWithObservable.test.tsx tests/utils/waitForAll.test.tsx
+          rm -r tests/query tests/urql tests/optics tests/valtio tests/zustand tests/utils/atomWithObservable.* tests/utils/waitForAll.*
       - name: Test ${{ matrix.typescript }}
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
