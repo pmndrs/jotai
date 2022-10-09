@@ -52,8 +52,8 @@ jobs:
           sed -i~ "s/\"noUncheckedIndexedAccess\": true,//" tsconfig.json
           sed -i~ "s/^import type /import /" tests/*.tsx tests/*/*.tsx
           sed -i~ "s/^.* from '\.\/utils\/waitForAll';//" dist/ts3.4/utils.d.ts
-          yarn json -I -f package.json -e "this.resolutions['@types/jest']='27.4.1'; this.resolutions['pretty-format']='27.5.1'; this.resolutions['@types/prettier']='2.4.4';"
-          yarn add -D @types/jest@27.4.1 pretty-format@27.5.1 @types/prettier@2.4.4
+          yarn json -I -f package.json -e "this.resolutions['@types/jest']='26.0.14'; this.resolutions['pretty-format']='26.6.2'; this.resolutions['@types/prettier']='2.4.2';"
+          yarn add -D @types/jest@26.0.14 pretty-format@26.6.2 @types/prettier@2.4.2
           rm -r tests/query tests/urql tests/optics tests/xstate tests/valtio tests/zustand tests/utils/atomWithObservable.* tests/utils/waitForAll.*
       - name: Test ${{ matrix.typescript }}
         run: |
