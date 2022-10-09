@@ -53,9 +53,10 @@ jobs:
           sed -i~ "s/^import type /import /" tests/*.tsx tests/*/*.tsx
           sed -i~ "s/^.* from '\.\/utils\/waitForAll';//" dist/ts3.4/utils.d.ts
           yarn json -I -f package.json -e "this.resolutions['@types/jest']='27.4.1'; this.resolutions['pretty-format']='27.5.1';"
+          yarn add -D @types/jest@27.4.1 pretty-format@27.5.1
           rm -r tests/query tests/urql tests/optics tests/valtio tests/zustand tests/utils/atomWithObservable.* tests/utils/waitForAll.*
       - name: Test ${{ matrix.typescript }}
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
-          rm -fr node_modules/@types/jsdom node_modules/parse5 node_modules/@types/prettier
+          rm -r node_modules/@types/jsdom node_modules/parse5 node_modules/@types/prettier
           yarn tsc --noEmit
