@@ -41,7 +41,6 @@ jobs:
           sed -i~ "s/\"jotai\": \[\"\.\/src\/index\.ts\"\],/\"jotai\": [\".\/dist\/ts3.4\/index.d.ts\"],/" tsconfig.json
           sed -i~ "s/\"jotai\/\*\": \[\"\.\/src\/\*\.ts\"\]/\"jotai\/*\": [\".\/dist\/ts3.4\/*.d.ts\"]/" tsconfig.json
           sed -i~ "s/\"include\": .*/\"include\": [\"src\/types.d.ts\", \"dist\/**\/*\", \"tests\/**\/*\"],/" tsconfig.json
-          sed -i~ "s/\"types\": \"index\.d\.ts\"/\"types\": \"dist\/types\/index.d.ts\"/" node_modules/rxjs/package.json
       - name: Patch for Older TS
         if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
@@ -57,4 +56,5 @@ jobs:
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
           rm -r node_modules/@types/jsdom node_modules/parse5
+          sed -i~ "s/\"types\": \"index\.d\.ts\"/\"types\": \"dist\/types\/index.d.ts\"/" node_modules/rxjs/package.json
           yarn tsc --noEmit
