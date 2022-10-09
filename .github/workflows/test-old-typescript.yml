@@ -56,5 +56,5 @@ jobs:
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
           rm -r node_modules/@types/jsdom node_modules/parse5
-          sed -i~ "s/\"types\": \"index\.d\.ts\"/\"types\": \"dist\/types\/index.d.ts\"/" node_modules/rxjs/package.json
+          sed -i~ "s/\">=4.2\": {/\">=4.1\": {/" node_modules/rxjs/package.json
           yarn tsc --noEmit
