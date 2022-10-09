@@ -41,7 +41,6 @@ jobs:
           sed -i~ "s/\"jotai\": \[\"\.\/src\/index\.ts\"\],/\"jotai\": [\".\/dist\/ts3.4\/index.d.ts\"],/" tsconfig.json
           sed -i~ "s/\"jotai\/\*\": \[\"\.\/src\/\*\.ts\"\]/\"jotai\/*\": [\".\/dist\/ts3.4\/*.d.ts\"]/" tsconfig.json
           sed -i~ "s/\"include\": .*/\"include\": [\"src\/types.d.ts\", \"dist\/**\/*\", \"tests\/**\/*\"],/" tsconfig.json
-          sed -i~ "s/\"paths\": {/\"paths\": { \"rxjs\": [\".\/node_modules\/rxjs\/dist\/types\/index.d.ts\"],/" tsconfig.json
       - name: Patch for Older TS
         if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
