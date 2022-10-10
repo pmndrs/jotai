@@ -42,9 +42,14 @@ export function atomWithMutation<Data, Variables extends AnyVariables>(
         action.context || {},
       ] as const
       await set(statusAtom, args)
-      if (action.callback) {
-        action.callback(get(statusAtom))
-      }
+      return Promise.resolve(get(statusAtom, { unstable_promise: true })).then(
+        (status) => {
+          action.callback?.(status)
+          if (status.error) {
+            throw status.error
+          }
+        }
+      )
     }
   )
 }
