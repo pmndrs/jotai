@@ -25,13 +25,15 @@ export function atomWithMutation<Data, Variables extends AnyVariables>(
   )
   return atom(
     (get) => {
-      try {
-        get(statusAtom) // HACK to mark it as used
-      } catch {
-        // ignore
+      const status = get(statusAtom)
+      if (status.error) {
+        throw status.error
       }
-      get(dataAtom)
-      return get(statusAtom)
+      if ('data' in status) {
+        return status
+      }
+      get(dataAtom) // To wait for initial result
+      return status
     },
     async (get, set, action: MutationAction<Data, Variables>) => {
       const args = [
@@ -39,7 +41,7 @@ export function atomWithMutation<Data, Variables extends AnyVariables>(
         action.variables,
         action.context || {},
       ] as const
-      await set(dataAtom, args)
+      await set(statusAtom, args)
       if (action.callback) {
         action.callback(get(statusAtom))
       }

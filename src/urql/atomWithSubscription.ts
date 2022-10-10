@@ -69,18 +69,20 @@ export function atomWithSubscription<Data, Variables extends AnyVariables>(
       if ((subscriptionArgs as { pause?: boolean }).pause) {
         return null
       }
-      try {
-        get(statusAtom) // HACK to mark it as used
-      } catch {
-        // ignore
+      const status = get(statusAtom)
+      if (status.error) {
+        throw status.error
       }
-      get(dataAtom)
-      return get(statusAtom)
+      if ('data' in status) {
+        return status
+      }
+      get(dataAtom) // To wait for initial result
+      return status
     },
     (_get, set, action: AtomWithSubscriptionAction) => {
       switch (action.type) {
         case 'refetch': {
-          return set(dataAtom, action)
+          return set(statusAtom, action)
         }
       }
     }
