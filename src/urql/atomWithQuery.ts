@@ -84,6 +84,11 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
       if ((queryArgs as { pause?: boolean }).pause) {
         return null
       }
+      try {
+        get(statusAtom) // HACK to mark it as used
+      } catch {
+        // ignore
+      }
       get(dataAtom)
       return get(statusAtom)
     },

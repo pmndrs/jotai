@@ -69,6 +69,11 @@ export function atomWithSubscription<Data, Variables extends AnyVariables>(
       if ((subscriptionArgs as { pause?: boolean }).pause) {
         return null
       }
+      try {
+        get(statusAtom) // HACK to mark it as used
+      } catch {
+        // ignore
+      }
       get(dataAtom)
       return get(statusAtom)
     },

@@ -272,7 +272,6 @@
     "optics-ts": "*",
     "react": ">=16.8",
     "valtio": "*",
-    "wonka": "*",
     "xstate": "*"
   },
   "peerDependenciesMeta": {
@@ -295,9 +294,6 @@
       "optional": true
     },
     "valtio": {
-      "optional": true
-    },
-    "wonka": {
       "optional": true
     },
     "xstate": {
