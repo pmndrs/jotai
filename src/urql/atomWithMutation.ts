@@ -5,6 +5,7 @@ import type {
   OperationResult,
   TypedDocumentNode,
 } from '@urql/core'
+import { atomsWithUrqlMutation } from 'jotai-urql'
 import { atom } from 'jotai'
 import type { Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
@@ -19,31 +20,24 @@ export function atomWithMutation<Data, Variables extends AnyVariables>(
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables> | string,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  const operationResultAtom = atom<
-    OperationResult<Data, Variables> | Promise<OperationResult<Data, Variables>>
-  >(
-    new Promise<OperationResult<Data, Variables>>(() => {}) // infinite pending
+  const [dataAtom, statusAtom] = atomsWithUrqlMutation<Data, Variables>(
+    getClient
   )
-  const queryResultAtom = atom(
-    (get) => get(operationResultAtom),
+  return atom(
+    (get) => {
+      get(dataAtom)
+      return get(statusAtom)
+    },
     async (get, set, action: MutationAction<Data, Variables>) => {
-      set(
-        operationResultAtom,
-        new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch
-      )
-      const client = getClient(get)
-      const query = createQuery(get)
-      return client
-        .mutation(query, action.variables, action.context)
-        .toPromise()
-        .then((result) => {
-          action.callback?.(result)
-          if (result.error) {
-            throw result.error
-          }
-          set(operationResultAtom, result)
-        })
+      const args = [
+        createQuery(get),
+        action.variables,
+        action.context || {},
+      ] as const
+      await set(dataAtom, args)
+      if (action.callback) {
+        action.callback(get(statusAtom))
+      }
     }
   )
-  return queryResultAtom
 }
