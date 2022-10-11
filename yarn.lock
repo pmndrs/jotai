@@ -3931,9 +3931,10 @@ jest@^29.1.2:
     import-local "^3.0.2"
     jest-cli "^29.1.2"
 
-"jotai-urql@https://pkg.csb.dev/jotai-labs/jotai-urql/commit/bfc3b84a/jotai-urql":
-  version "0.0.1"
-  resolved "https://pkg.csb.dev/jotai-labs/jotai-urql/commit/bfc3b84a/jotai-urql#6b8b0cd2fd5b95a5957b6de62561bc8faeaa11d9"
+jotai-urql@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jotai-urql/-/jotai-urql-0.1.0.tgz#0378628eb7cba78843e48621a9d3f2d2b62a999d"
+  integrity sha512-Wo5T1f+QPNvWDLJdhxJoPQ7ewVNhQZrNcmaTjAZj5+UDpaEXzsYrgG0rFwy/likOgYWNcvDXJX4J3UTBz3iGMg==
 
 joycon@^3.0.1:
   version "3.1.1"
