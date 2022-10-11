@@ -20,19 +20,10 @@ export function atomWithMutation<Data, Variables extends AnyVariables>(
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables> | string,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  const [dataAtom, statusAtom] = atomsWithUrqlMutation<Data, Variables>(
-    getClient
-  )
+  const [, statusAtom] = atomsWithUrqlMutation<Data, Variables>(getClient)
   return atom(
     (get) => {
       const status = get(statusAtom)
-      if (status.error) {
-        throw status.error
-      }
-      if ('data' in status) {
-        return status
-      }
-      get(dataAtom) // To wait for initial result
       return status
     },
     async (get, set, action: MutationAction<Data, Variables>) => {
