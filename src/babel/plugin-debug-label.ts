@@ -1,20 +1,21 @@
 import path from 'path'
 import babel, { PluginObj } from '@babel/core'
 import _templateBuilder from '@babel/template'
-import { isAtom } from './utils'
+import { PluginOptions, isAtom } from './utils'
 
 const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 
-export default function debugLabelPlugin({
-  types: t,
-}: typeof babel): PluginObj {
+export default function debugLabelPlugin(
+  { types: t }: typeof babel,
+  options?: PluginOptions
+): PluginObj {
   return {
     visitor: {
       ExportDefaultDeclaration(nodePath, state) {
         const { node } = nodePath
         if (
           t.isCallExpression(node.declaration) &&
-          isAtom(t, node.declaration.callee)
+          isAtom(t, node.declaration.callee, options?.customAtomNames)
         ) {
           const filename = state.filename || 'unknown'
 
@@ -40,7 +41,7 @@ export default function debugLabelPlugin({
         if (
           t.isIdentifier(path.node.id) &&
           t.isCallExpression(path.node.init) &&
-          isAtom(t, path.node.init.callee)
+          isAtom(t, path.node.init.callee, options?.customAtomNames)
         ) {
           path.parentPath.insertAfter(
             t.expressionStatement(

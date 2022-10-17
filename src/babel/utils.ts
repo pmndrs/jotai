@@ -1,8 +1,13 @@
 import { types } from '@babel/core'
 
+export interface PluginOptions {
+  customAtomNames?: string[]
+}
+
 export function isAtom(
   t: typeof types,
-  callee: babel.types.Expression | babel.types.V8IntrinsicIdentifier
+  callee: babel.types.Expression | babel.types.V8IntrinsicIdentifier,
+  customAtomNames: PluginOptions['customAtomNames'] | undefined = []
 ) {
   if (t.isIdentifier(callee) && atomFunctionNames.includes(callee.name)) {
     return true
@@ -10,7 +15,10 @@ export function isAtom(
 
   if (t.isMemberExpression(callee)) {
     const { property } = callee
-    if (t.isIdentifier(property) && atomFunctionNames.includes(property.name)) {
+    if (
+      t.isIdentifier(property) &&
+      [...atomFunctionNames, ...customAtomNames].includes(property.name)
+    ) {
       return true
     }
   }

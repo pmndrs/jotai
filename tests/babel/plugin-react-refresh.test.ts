@@ -3,13 +3,17 @@ import { transformSync } from '@babel/core'
 
 const plugin = path.join(__dirname, '../../src/babel/plugin-react-refresh')
 
-const transform = (code: string, filename?: string) =>
+const transform = (
+  code: string,
+  filename?: string,
+  customAtomNames?: string[]
+) =>
   transformSync(code, {
     babelrc: false,
     configFile: false,
     filename,
     root: '.',
-    plugins: [[plugin]],
+    plugins: [[plugin, { customAtomNames }]],
   })?.code
 
 it('Should add a cache for a single atom', () => {
@@ -180,5 +184,28 @@ it('Should handle atoms returned from functions (#891)', () => {
     const countAtom = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/countAtom", atom(0));
     const countAtom2 = createAtom("countAtom2");
     const countAtom3 = createAtom("countAtom3");"
+  `)
+})
+
+it('Should handle custom atom names', () => {
+  expect(
+    transform(`const mySpecialThing = atom(0);`, '/src/atoms/index.ts', [
+      'mySpecialThing',
+    ])
+  ).toMatchInlineSnapshot(`
+    "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
+      cache: new Map(),
+
+      get(name, inst) {
+        if (this.cache.has(name)) {
+          return this.cache.get(name);
+        }
+
+        this.cache.set(name, inst);
+        return inst;
+      }
+
+    };
+    const mySpecialThing = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/mySpecialThing", atom(0));"
   `)
 })
