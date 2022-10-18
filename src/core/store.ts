@@ -260,6 +260,13 @@ export const createStore = (
         | undefined
       if (!atomState) {
         atomState = getAtomState(version.p, atom)
+        if (
+          atomState &&
+          'p' in atomState &&
+          isSuspensePromiseAlreadyCancelled(atomState.p)
+        ) {
+          atomState = undefined
+        }
         if (atomState) {
           versionedAtomStateMap.set(atom, atomState)
         }

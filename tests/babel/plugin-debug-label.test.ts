@@ -3,12 +3,16 @@ import { transformSync } from '@babel/core'
 
 const plugin = path.join(__dirname, '../../src/babel/plugin-debug-label')
 
-const transform = (code: string, filename?: string) =>
+const transform = (
+  code: string,
+  filename?: string,
+  customAtomNames?: string[]
+) =>
   transformSync(code, {
     babelrc: false,
     configFile: false,
     filename,
-    plugins: [[plugin]],
+    plugins: [[plugin, { customAtomNames }]],
   })?.code
 
 it('Should add a debugLabel to an atom', () => {
@@ -124,5 +128,14 @@ it('Should handle all atom types', () => {
     selectedValueAtom.debugLabel = "selectedValueAtom";
     const splittedAtom = splitAtom(atom([]));
     splittedAtom.debugLabel = "splittedAtom";"
+  `)
+})
+
+it('Handles custom atom names a debugLabel to an atom', () => {
+  expect(
+    transform(`const mySpecialThing = atom(0);`, undefined, ['mySpecialThing'])
+  ).toMatchInlineSnapshot(`
+    "const mySpecialThing = atom(0);
+    mySpecialThing.debugLabel = "mySpecialThing";"
   `)
 })

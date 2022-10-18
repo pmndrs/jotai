@@ -51,6 +51,16 @@ With a `babel` configuration file:
 }
 ```
 
+You can also supply your atom names to the plugin:
+
+```json
+{
+  "plugins": [
+    ["jotai/babel/plugin-debug-label", { "customAtomNames": ["customAtom"] }]
+  ]
+}
+```
+
 Examples can be found below.
 
 ## plugin-react-refresh
@@ -67,6 +77,16 @@ With a `babel` configuration file:
 }
 ```
 
+You can also supply your atom names to the plugin:
+
+```json
+{
+  "plugins": [
+    ["jotai/babel/plugin-react-refresh", { "customAtomNames": ["customAtom"] }]
+  ]
+}
+```
+
 Examples can be found below.
 
 ## preset
@@ -80,6 +100,14 @@ With a `babel` configuration file:
 ```json
 {
   "presets": ["jotai/babel/preset"]
+}
+```
+
+You can also supply your atom names to the preset:
+
+```json
+{
+  "presets": [["jotai/babel/preset", { "customAtomNames": ["customAtom"] }]]
 }
 ```
 

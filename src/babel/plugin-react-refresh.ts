@@ -1,12 +1,14 @@
 import babel, { PluginObj } from '@babel/core'
 import _templateBuilder from '@babel/template'
 import { isAtom } from './utils'
+import type { PluginOptions } from './utils'
 
 const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 
-export default function reactRefreshPlugin({
-  types: t,
-}: typeof babel): PluginObj {
+export default function reactRefreshPlugin(
+  { types: t }: typeof babel,
+  options?: PluginOptions
+): PluginObj {
   return {
     pre({ opts }) {
       if (!opts.filename) {
@@ -34,7 +36,7 @@ export default function reactRefreshPlugin({
         const { node } = nodePath
         if (
           t.isCallExpression(node.declaration) &&
-          isAtom(t, node.declaration.callee)
+          isAtom(t, node.declaration.callee, options?.customAtomNames)
         ) {
           const filename = state.filename || 'unknown'
           const atomKey = `${filename}/defaultExport`
@@ -53,7 +55,7 @@ export default function reactRefreshPlugin({
         if (
           t.isIdentifier(nodePath.node.id) &&
           t.isCallExpression(nodePath.node.init) &&
-          isAtom(t, nodePath.node.init.callee) &&
+          isAtom(t, nodePath.node.init.callee, options?.customAtomNames) &&
           // Make sure atom declaration is in module scope
           (nodePath.parentPath.parentPath?.isProgram() ||
             nodePath.parentPath.parentPath?.isExportNamedDeclaration())

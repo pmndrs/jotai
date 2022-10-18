@@ -2,7 +2,7 @@ import { Component, StrictMode, Suspense, useContext, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
-import { fromValue, pipe, toObservable } from 'wonka'
+import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
 import {
   atom,
   SECRET_INTERNAL_getScopeContext as getScopeContext,
@@ -666,8 +666,8 @@ describe('wonka', () => {
     const observableAtom = atomWithObservable(() => observable)
 
     const Counter = () => {
-      const [state] = useAtom(observableAtom)
-      return <>count: {state}</>
+      const [count] = useAtom(observableAtom)
+      return <>count: {count}</>
     }
 
     const { findByText } = render(
@@ -680,6 +680,44 @@ describe('wonka', () => {
       </StrictMode>
     )
 
+    await findByText('count: 1')
+  })
+
+  it('make subject', async () => {
+    const subject = makeSubject<number>()
+    const observable = pipe(subject.source, toObservable)
+    const observableAtom = atomWithObservable(() => observable)
+    const countAtom = atom(
+      (get) => get(observableAtom),
+      (_get, _set, nextValue: number) => {
+        subject.next(nextValue)
+      }
+    )
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom)
+      return <>count: {count}</>
+    }
+
+    const Controls = () => {
+      const setCount = useSetAtom(countAtom)
+      return <button onClick={() => setCount(1)}>button</button>
+    }
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Provider>
+          <Controls />
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </Provider>
+      </StrictMode>
+    )
+
+    await findByText('loading')
+
+    fireEvent.click(getByText('button'))
     await findByText('count: 1')
   })
 })
