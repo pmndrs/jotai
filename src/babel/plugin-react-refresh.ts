@@ -1,6 +1,7 @@
 import babel, { PluginObj } from '@babel/core'
 import _templateBuilder from '@babel/template'
-import { PluginOptions, isAtom } from './utils'
+import { isAtom } from './utils'
+import type { PluginOptions } from './utils'
 
 const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 
