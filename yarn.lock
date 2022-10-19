@@ -3908,10 +3908,9 @@ jest@^29.2.0:
     import-local "^3.0.2"
     jest-cli "^29.2.0"
 
-jotai-tanstack-query@^0.3.0:
+"jotai-tanstack-query@https://pkg.csb.dev/jotai-labs/jotai-tanstack-query/commit/4114db09/jotai-tanstack-query":
   version "0.3.0"
-  resolved "https://registry.yarnpkg.com/jotai-tanstack-query/-/jotai-tanstack-query-0.3.0.tgz#6cb5caf90fb3ba635553c56c4055e1ea043a808a"
-  integrity sha512-KUKcH99VoFXuSUyQDWT1nSZ85e2C/wHPsZChVJdAL4nGCiGlw6Y3/fZuTXq5nzphUrj4J4vGq+zAKCy7CwJ6Wg==
+  resolved "https://pkg.csb.dev/jotai-labs/jotai-tanstack-query/commit/4114db09/jotai-tanstack-query#cd8272b10d4dbbd310a49d1d1688cfc8e34da97c"
 
 joycon@^3.0.1:
   version "3.1.1"
