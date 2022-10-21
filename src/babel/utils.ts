@@ -9,16 +9,14 @@ export function isAtom(
   callee: babel.types.Expression | babel.types.V8IntrinsicIdentifier,
   customAtomNames: PluginOptions['customAtomNames'] = []
 ) {
-  if (t.isIdentifier(callee) && atomFunctionNames.includes(callee.name)) {
+  const atomNames = [...atomFunctionNames, ...customAtomNames]
+  if (t.isIdentifier(callee) && atomNames.includes(callee.name)) {
     return true
   }
 
   if (t.isMemberExpression(callee)) {
     const { property } = callee
-    if (
-      t.isIdentifier(property) &&
-      [...atomFunctionNames, ...customAtomNames].includes(property.name)
-    ) {
+    if (t.isIdentifier(property) && atomNames.includes(property.name)) {
       return true
     }
   }
