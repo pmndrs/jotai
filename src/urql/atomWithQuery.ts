@@ -6,7 +6,7 @@ import type {
   RequestPolicy,
   TypedDocumentNode,
 } from '@urql/core'
-import { atomsWithUrqlQuery } from 'jotai-urql'
+import { atomsWithQuery } from 'jotai-urql'
 import { atom } from 'jotai'
 import type { Getter, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
@@ -77,7 +77,7 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
       },
     ] as const
   }
-  const [dataAtom, statusAtom] = atomsWithUrqlQuery(getArgs, getClient)
+  const [dataAtom, statusAtom] = atomsWithQuery(getArgs, getClient)
   return atom(
     (get) => {
       const queryArgs = createQueryArgs(get)

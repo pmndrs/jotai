@@ -5,7 +5,7 @@ import type {
   OperationResult,
   TypedDocumentNode,
 } from '@urql/core'
-import { atomsWithUrqlMutation } from 'jotai-urql'
+import { atomsWithMutation } from 'jotai-urql'
 import { atom } from 'jotai'
 import type { Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
@@ -20,7 +20,7 @@ export function atomWithMutation<Data, Variables extends AnyVariables>(
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables> | string,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  const [, statusAtom] = atomsWithUrqlMutation<Data, Variables>(getClient)
+  const [, statusAtom] = atomsWithMutation<Data, Variables>(getClient)
   return atom(
     (get) => {
       const status = get(statusAtom)

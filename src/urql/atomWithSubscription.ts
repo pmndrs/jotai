@@ -5,7 +5,7 @@ import type {
   OperationResult,
   TypedDocumentNode,
 } from '@urql/core'
-import { atomsWithUrqlSubscription } from 'jotai-urql'
+import { atomsWithSubscription } from 'jotai-urql'
 import { atom } from 'jotai'
 import type { Getter, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
@@ -62,7 +62,7 @@ export function atomWithSubscription<Data, Variables extends AnyVariables>(
       subscriptionArgs.context || {},
     ] as const
   }
-  const [dataAtom, statusAtom] = atomsWithUrqlSubscription(getArgs, getClient)
+  const [dataAtom, statusAtom] = atomsWithSubscription(getArgs, getClient)
   return atom(
     (get) => {
       const subscriptionArgs = createSubscriptionArgs(get)
