@@ -5,7 +5,7 @@ import type {
   RefetchOptions,
   RefetchQueryFilters,
 } from '@tanstack/query-core'
-import { atomsWithTanstackInfiniteQuery } from 'jotai-tanstack-query'
+import { atomsWithInfiniteQuery } from 'jotai-tanstack-query'
 import { atom } from 'jotai'
 import type { Getter, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
@@ -120,7 +120,7 @@ export function atomWithInfiniteQuery<
     staleTime: 200,
     ...(typeof createQuery === 'function' ? createQuery(get) : createQuery),
   })
-  const [dataAtom] = atomsWithTanstackInfiniteQuery(getOptions, getQueryClient)
+  const [dataAtom] = atomsWithInfiniteQuery(getOptions, getQueryClient)
   return atom(
     (get) => {
       const options = getOptions(get)

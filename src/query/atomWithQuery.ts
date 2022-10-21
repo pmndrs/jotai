@@ -1,5 +1,5 @@
 import type { QueryKey, QueryObserverOptions } from '@tanstack/query-core'
-import { atomsWithTanstackQuery } from 'jotai-tanstack-query'
+import { atomsWithQuery } from 'jotai-tanstack-query'
 import { atom } from 'jotai'
 import type { Getter, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
@@ -86,7 +86,7 @@ export function atomWithQuery<
     staleTime: 200,
     ...(typeof createQuery === 'function' ? createQuery(get) : createQuery),
   })
-  const [dataAtom] = atomsWithTanstackQuery(getOptions, getQueryClient)
+  const [dataAtom] = atomsWithQuery(getOptions, getQueryClient)
   return atom(
     (get) => {
       const options = getOptions(get)
