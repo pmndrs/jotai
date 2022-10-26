@@ -31,9 +31,10 @@ const generateClient = (error?: () => boolean) =>
 const Provider = getTestProvider()
 
 it('mutation basic test', async () => {
+  const client = generateClient()
   const countAtom = atomWithMutation<{ count: number }, Record<string, never>>(
     () => 'mutation Test { count }',
-    () => generateClient()
+    () => client
   )
   const mutateAtom = atom(null, (_get, set) =>
     set(countAtom, { variables: {} })
@@ -73,12 +74,13 @@ it('mutation basic test', async () => {
 
 describe('error handling', () => {
   itSkipIfVersionedWrite('mutation error test', async () => {
+    const client = generateClient(() => true)
     const countAtom = atomWithMutation<
       { count: number },
       Record<string, never>
     >(
       () => 'mutation Test { count }',
-      () => generateClient(() => true)
+      () => client
     )
     const mutateAtom = atom(null, (_get, set) =>
       set(countAtom, { variables: {} })

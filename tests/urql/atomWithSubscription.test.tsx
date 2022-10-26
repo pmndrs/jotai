@@ -302,6 +302,7 @@ describe('error handling', () => {
   }
 
   it('can catch error in error boundary', async () => {
+    const client = generateClient(undefined, () => true)
     const countAtom = atomWithSubscription(
       () => ({
         query: 'subscription Test { count }' as unknown as TypedDocumentNode<{
@@ -309,7 +310,7 @@ describe('error handling', () => {
         }>,
         variables: {},
       }),
-      () => generateClient(undefined, () => true)
+      () => client
     )
 
     const Counter = () => {
@@ -333,6 +334,7 @@ describe('error handling', () => {
 
   it('can recover from error', async () => {
     let willThrowError = true
+    const client = generateClient(undefined, () => willThrowError)
     const countAtom = atomWithSubscription(
       () => ({
         query: 'subscription Test { count }' as unknown as TypedDocumentNode<{
@@ -340,7 +342,7 @@ describe('error handling', () => {
         }>,
         variables: {},
       }),
-      () => generateClient(undefined, () => willThrowError)
+      () => client
     )
 
     const Counter = () => {
