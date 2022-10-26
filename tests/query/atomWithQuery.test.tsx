@@ -131,7 +131,6 @@ it('query refetch', async () => {
 
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
-
   await findByText('loading')
   await findByText('count: 1')
   expect(mockFetch).toBeCalledTimes(2)
@@ -418,6 +417,7 @@ it('query with enabled 2', async () => {
   expect(mockFetch).toHaveBeenCalledTimes(1)
   await findByText('slug: hello-first')
 
+  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
 
@@ -517,11 +517,11 @@ it('query with initialData test', async () => {
   }
 
   const { findByText } = render(
-    <>
+    <StrictMode>
       <Provider>
         <Counter />
       </Provider>
-    </>
+    </StrictMode>
   )
 
   // NOTE: the atom never suspends
@@ -655,7 +655,6 @@ describe('error handling', () => {
     const countAtom = atomWithQuery(() => ({
       queryKey: ['error test', 'count2'],
       retry: false,
-      staleTime: 200,
       queryFn: () => {
         const promise = fakeFetch({ count }, willThrowError, 200)
         willThrowError = !willThrowError
