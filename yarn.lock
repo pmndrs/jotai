@@ -3908,6 +3908,11 @@ jest@^29.2.0:
     import-local "^3.0.2"
     jest-cli "^29.2.0"
 
+jotai-tanstack-query@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/jotai-tanstack-query/-/jotai-tanstack-query-0.4.0.tgz#f8568160efb76f884156dc61a584fabafa5c5651"
+  integrity sha512-K3++3iIKGm34hyHm0i+8cMM7c2agDq/GdE7xJ2Asa+VwyEBQVRudfdGEv3HCYLp6smNcqWUxn7iQddue/DXe8g==
+
 jotai-urql@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/jotai-urql/-/jotai-urql-0.2.0.tgz#e41244142924c5a1d6682032c0a8d11493b67de3"

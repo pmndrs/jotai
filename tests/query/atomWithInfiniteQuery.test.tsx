@@ -239,6 +239,8 @@ it('infinite query with enabled 2', async () => {
   await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
+
+  await new Promise((r) => setTimeout(r, 100))
   await findByText('slug: hello-first')
 
   await new Promise((r) => setTimeout(r, 100))

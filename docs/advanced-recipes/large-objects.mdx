@@ -56,7 +56,7 @@ const peopleAtom = focusAtom(dataAtom, (optic) => optic.prop('people'))
 
 `focusAtom` returns `WritableAtom` which means it's possible to change the `peopleAtom` data.
 
-If we change the `film` property of the above data example, the `peopleAtom` won't cause a re-render, so that's one of the benefits of using `focusAtom`.
+If we change the `films` property of the above data example, the `peopleAtom` won't cause a re-render, so that's one of the benefits of using `focusAtom`.
 
 ## splitAtom
 
