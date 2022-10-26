@@ -18,87 +18,129 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "import": {
+        "types": "./esm/index.d.mts",
+        "default": "./esm/index.mjs"
+      },
       "types": "./index.d.ts",
       "module": "./esm/index.js",
-      "import": "./esm/index.mjs",
       "default": "./index.js"
     },
     "./utils": {
+      "import": {
+        "types": "./esm/utils.d.mts",
+        "default": "./esm/utils.mjs"
+      },
       "types": "./utils.d.ts",
       "module": "./esm/utils.js",
-      "import": "./esm/utils.mjs",
       "default": "./utils.js"
     },
     "./devtools": {
+      "import": {
+        "types": "./esm/devtools.d.mts",
+        "default": "./esm/devtools.mjs"
+      },
       "types": "./devtools.d.ts",
       "module": "./esm/devtools.js",
-      "import": "./esm/devtools.mjs",
       "default": "./devtools.js"
     },
     "./immer": {
+      "import": {
+        "types": "./esm/immer.d.mts",
+        "default": "./esm/immer.mjs"
+      },
       "types": "./immer.d.ts",
       "module": "./esm/immer.js",
-      "import": "./esm/immer.mjs",
       "default": "./immer.js"
     },
     "./optics": {
+      "import": {
+        "types": "./esm/optics.d.mts",
+        "default": "./esm/optics.mjs"
+      },
       "types": "./optics.d.ts",
       "module": "./esm/optics.js",
-      "import": "./esm/optics.mjs",
       "default": "./optics.js"
     },
     "./query": {
+      "import": {
+        "types": "./esm/query.d.mts",
+        "default": "./esm/query.mjs"
+      },
       "types": "./query.d.ts",
       "module": "./esm/query.js",
-      "import": "./esm/query.mjs",
       "default": "./query.js"
     },
     "./xstate": {
+      "import": {
+        "types": "./esm/xstate.d.mts",
+        "default": "./esm/xstate.mjs"
+      },
       "types": "./xstate.d.ts",
       "module": "./esm/xstate.js",
-      "import": "./esm/xstate.mjs",
       "default": "./xstate.js"
     },
     "./valtio": {
+      "import": {
+        "types": "./esm/valtio.d.mts",
+        "default": "./esm/valtio.mjs"
+      },
       "types": "./valtio.d.ts",
       "module": "./esm/valtio.js",
-      "import": "./esm/valtio.mjs",
       "default": "./valtio.js"
     },
     "./zustand": {
+      "import": {
+        "types": "./esm/zustand.d.mts",
+        "default": "./esm/zustand.mjs"
+      },
       "types": "./zustand.d.ts",
       "module": "./esm/zustand.js",
-      "import": "./esm/zustand.mjs",
       "default": "./zustand.js"
     },
     "./redux": {
+      "import": {
+        "types": "./esm/redux.d.mts",
+        "default": "./esm/redux.mjs"
+      },
       "types": "./redux.d.ts",
       "module": "./esm/redux.js",
-      "import": "./esm/redux.mjs",
       "default": "./redux.js"
     },
     "./urql": {
+      "import": {
+        "types": "./esm/urql.d.mts",
+        "default": "./esm/urql.mjs"
+      },
       "types": "./urql.d.ts",
       "module": "./esm/urql.js",
-      "import": "./esm/urql.mjs",
       "default": "./urql.js"
     },
     "./babel/plugin-debug-label": {
+      "import": {
+        "types": "./esm/babel/plugin-debug-label.d.mts",
+        "default": "./esm/babel/plugin-debug-label.mjs"
+      },
       "types": "./babel/plugin-debug-label.d.ts",
       "module": "./esm/babel/plugin-debug-label.js",
-      "import": "./esm/babel/plugin-debug-label.mjs",
       "default": "./babel/plugin-debug-label.js"
     },
     "./babel/plugin-react-refresh": {
+      "import": {
+        "types": "./esm/babel/plugin-react-refresh.d.mts",
+        "default": "./esm/babel/plugin-react-refresh.mjs"
+      },
       "types": "./babel/plugin-react-refresh.d.ts",
       "module": "./esm/babel/plugin-react-refresh.js",
-      "import": "./esm/babel/plugin-react-refresh.mjs",
       "default": "./babel/plugin-react-refresh.js"
     },
     "./babel/preset": {
+      "import": {
+        "types": "./esm/babel/preset.d.mts",
+        "default": "./esm/babel/preset.mjs"
+      },
       "types": "./babel/preset.d.ts",
       "module": "./esm/babel/preset.js",
-      "import": "./esm/babel/preset.mjs",
       "default": "./babel/preset.js"
     }
   },
@@ -124,7 +166,7 @@
     "build:babel:plugin-debug-label": "rollup -c --config-babel_plugin-debug-label",
     "build:babel:plugin-react-refresh": "rollup -c --config-babel_plugin-react-refresh",
     "build:babel:preset": "rollup -c --config-babel_preset",
-    "postbuild": "yarn copy && yarn patch-ts3.4 && yarn patch-readme",
+    "postbuild": "yarn copy && yarn patch-ts3.4 && yarn patch-esm-ts && yarn patch-readme",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --write",
     "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
     "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
@@ -136,6 +178,7 @@
     "test:coverage:watch": "jest --watch",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
     "patch-ts3.4": "node -e \"require('shelljs').find('dist/ts3.4/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
+    "patch-esm-ts": "node -e \"require('shelljs').find('dist/esm/**/*.d.ts').forEach(f=>require('fs').copyFileSync(f,f.replace(/\\.ts$/,'.mts')))\"; shx sed -i \"s/ from '(\\..*)';$/ from '\\$1.mjs';/\" 'dist/esm/**/*.d.mts'; shx sed -i \"s/^declare module '(\\..*)'/declare module '\\$1.mjs'/\" 'dist/esm/**/*.d.mts'",
     "patch-readme": "shx sed -i 's/.*dark mode.*//' dist/readme.md"
   },
   "engines": {
