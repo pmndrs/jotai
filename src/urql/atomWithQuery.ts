@@ -6,26 +6,27 @@ import type {
   RequestPolicy,
   TypedDocumentNode,
 } from '@urql/core'
-import { pipe, subscribe } from 'wonka'
-import type { Subscription } from 'wonka'
+import { atomsWithQuery } from 'jotai-urql'
 import { atom } from 'jotai'
 import type { Getter, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-type Timeout = ReturnType<typeof setTimeout>
-
 /*
- * @deprecated use 'refetch' action
+ * @deprecated use simple 'refetch' action
  */
-type DeprecatedAtomWithQueryAction = {
-  type: 'reexecute'
-  opts?: Partial<OperationContext>
-}
+type DeprecatedAtomWithQueryAction =
+  | {
+      type: 'reexecute'
+      opts?: Partial<OperationContext>
+    }
+  | {
+      type: 'refetch'
+      opts?: Partial<OperationContext>
+    }
 
 type AtomWithQueryAction =
   | {
       type: 'refetch'
-      opts?: Partial<OperationContext>
     }
   | DeprecatedAtomWithQueryAction
 
@@ -33,11 +34,6 @@ type OperationResultWithData<Data, Variables extends AnyVariables> = Omit<
   OperationResult<Data, Variables>,
   'data'
 > & { data: Data }
-
-const isOperationResultWithData = <Data, Variables extends AnyVariables>(
-  result: OperationResult<Data, Variables>
-): result is OperationResultWithData<Data, Variables> =>
-  'data' in result && !result.error
 
 type QueryArgs<Data, Variables extends AnyVariables> = {
   query: TypedDocumentNode<Data, Variables> | string
@@ -68,108 +64,51 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  type Result = OperationResult<Data, Variables>
-  const queryResultAtom = atom((get) => {
-    const args = createQueryArgs(get)
-    if ((args as { pause?: boolean }).pause) {
-      return null
-    }
-    const client = getClient(get)
-    let resolve: ((result: Result) => void) | null = null
-    const makePending = () =>
-      new Promise<Result>((r) => {
-        resolve = r
-      })
-    const resultAtom = atom<Result | Promise<Result>>(makePending())
-    let setResult: ((result: Result) => void) | null = null
-    const listener = (result: Result) => {
-      if (!resolve && !setResult) {
-        throw new Error('setting result without mount')
-      }
-      if (resolve) {
-        resolve(result)
-        resolve = null
-      }
-      if (setResult) {
-        setResult(result)
-      }
-    }
-    let subscription: Subscription | null = null
-    let timer: Timeout | undefined
-    const startQuery = (opts?: Partial<OperationContext>) => {
-      if (subscription) {
-        clearTimeout(timer)
-        subscription.unsubscribe()
-      }
-      subscription = pipe(
-        client.query(args.query, args.variables, {
-          ...(args.requestPolicy && { requestPolicy: args.requestPolicy }),
-          ...args.context,
-          ...opts,
+  const getArgs = (get: Getter) => {
+    const queryArgs = createQueryArgs(get)
+    return [
+      queryArgs.query,
+      queryArgs.variables,
+      {
+        ...(queryArgs.requestPolicy && {
+          requestPolicy: queryArgs.requestPolicy,
         }),
-        subscribe(listener)
-      )
-      if (!setResult) {
-        // not mounted yet
-        timer = setTimeout(() => {
-          if (subscription) {
-            subscription.unsubscribe()
-            subscription = null
-          }
-        }, 1000)
-      }
-    }
-    startQuery()
-    resultAtom.onMount = (update) => {
-      setResult = update
-      if (subscription) {
-        clearTimeout(timer as Timeout)
-      } else {
-        startQuery()
-      }
-      return () => {
-        setResult = null
-        if (subscription) {
-          subscription.unsubscribe()
-          subscription = null
-        }
-      }
-    }
-    return { resultAtom, makePending, startQuery }
-  })
-  const queryAtom = atom(
+        ...queryArgs.context,
+      },
+    ] as const
+  }
+  const [dataAtom, statusAtom] = atomsWithQuery(getArgs, getClient)
+  return atom(
     (get) => {
-      const queryResult = get(queryResultAtom)
-      if (!queryResult) {
+      const queryArgs = createQueryArgs(get)
+      if ((queryArgs as { pause?: boolean }).pause) {
         return null
       }
-      const { resultAtom } = queryResult
-      const result = get(resultAtom)
-      if (!isOperationResultWithData(result)) {
-        throw result.error
+      const status = get(statusAtom)
+      if (status.error) {
+        throw status.error
       }
-      return result
+      if ('data' in status) {
+        return status
+      }
+      get(dataAtom) // To wait for initial result
+      return status
     },
-    (get, set, action: AtomWithQueryAction) => {
+    (_get, set, action: AtomWithQueryAction) => {
       if (action.type === 'reexecute') {
         console.warn(
           'DEPRECATED [atomWithQuery] use refetch instead of reexecute'
         )
         ;(action as AtomWithQueryAction).type = 'refetch'
       }
+      if ('opts' in action) {
+        console.warn('DEPRECATED [atomWithQuery] action.opts is no longer used')
+      }
       switch (action.type) {
         case 'refetch': {
-          const queryResult = get(queryResultAtom)
-          if (!queryResult) {
-            throw new Error('query is paused')
-          }
-          const { resultAtom, makePending, startQuery } = queryResult
-          set(resultAtom, makePending())
-          startQuery(action.opts)
-          return
+          return set(statusAtom, action)
         }
       }
     }
   )
-  return queryAtom
 }

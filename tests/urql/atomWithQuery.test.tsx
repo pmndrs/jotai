@@ -374,12 +374,13 @@ describe('error handling', () => {
   }
 
   it('can catch error in error boundary', async () => {
+    const client = generateClient(0, () => true)
     const countAtom = atomWithQuery<{ id: number }, Record<string, never>>(
       () => ({
         query: '{ id }',
         variables: {},
       }),
-      () => generateClient(0, () => true)
+      () => client
     )
 
     const Counter = () => {
@@ -403,12 +404,13 @@ describe('error handling', () => {
 
   it('can recover from error', async () => {
     let willThrowError = true
+    const client = generateClient(0, () => willThrowError)
     const countAtom = atomWithQuery<{ id: number }, Record<string, never>>(
       () => ({
         query: '{ id }',
         variables: {},
       }),
-      () => generateClient(0, () => willThrowError)
+      () => client
     )
 
     const Counter = () => {

@@ -1,14 +1,13 @@
-import { InfiniteQueryObserver, isCancelledError } from '@tanstack/query-core'
 import type {
   InfiniteData,
   InfiniteQueryObserverOptions,
   QueryKey,
-  QueryObserverResult,
   RefetchOptions,
   RefetchQueryFilters,
 } from '@tanstack/query-core'
+import { atomsWithInfiniteQuery } from 'jotai-tanstack-query'
 import { atom } from 'jotai'
-import type { WritableAtom } from 'jotai'
+import type { Getter, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import { CreateQueryOptions, GetQueryClient } from './types'
 
@@ -117,113 +116,29 @@ export function atomWithInfiniteQuery<
   InfiniteData<TData | TQueryData> | undefined,
   AtomWithInfiniteQueryAction<TQueryFnData>
 > {
-  type Result = QueryObserverResult<InfiniteData<TData>, TError>
-  type State = {
-    isMounted: boolean
-    unsubscribe: (() => void) | null
-  }
-  const queryDataAtom = atom(
+  const getOptions = (get: Getter) => ({
+    staleTime: 200,
+    ...(typeof createQuery === 'function' ? createQuery(get) : createQuery),
+  })
+  const [dataAtom] = atomsWithInfiniteQuery(getOptions, getQueryClient)
+  return atom(
     (get) => {
-      const queryClient = getQueryClient(get)
-      const options =
-        typeof createQuery === 'function' ? createQuery(get) : createQuery
-
-      const defaultedOptions = queryClient.defaultQueryOptions(options)
-      const observer = new InfiniteQueryObserver(queryClient, defaultedOptions)
-      const initialResult = observer.getCurrentResult()
-
-      let resolve: ((result: Result) => void) | null = null
-      const resultAtom = atom<Result | Promise<Result>>(
-        initialResult.data === undefined && options.enabled !== false
-          ? new Promise<Result>((r) => {
-              resolve = r
-            })
-          : initialResult
-      )
-      let setResult: (result: Result) => void = () => {
-        throw new Error('setting result without mount')
-      }
-      const state: State = {
-        isMounted: false,
-        unsubscribe: null,
-      }
-      const listener = (result: Result) => {
-        if (
-          result.isFetching ||
-          (!result.isError && result.data === undefined) ||
-          (result.isError && isCancelledError(result.error))
-        ) {
-          return
-        }
-        if (resolve) {
-          setTimeout(() => {
-            if (!state.isMounted) {
-              state.unsubscribe?.()
-              state.unsubscribe = null
-            }
-          }, 1000)
-          resolve(result)
-          resolve = null
-        } else {
-          setResult(result)
-        }
-      }
-      if (options.enabled !== false) {
-        state.unsubscribe = observer.subscribe(listener)
-      }
-      resultAtom.onMount = (update) => {
-        setResult = update
-        state.isMounted = true
-        if (options.enabled !== false && !state.unsubscribe) {
-          state.unsubscribe = observer.subscribe(listener)
-          listener(observer.getCurrentResult())
-        }
-        return () => state.unsubscribe?.()
-      }
-      return { options, resultAtom, observer, state }
-    },
-    (get, set, action: AtomWithInfiniteQueryAction<TQueryFnData>) => {
-      const { options, resultAtom, observer, state } = get(queryDataAtom)
+      const options = getOptions(get)
       if (options.enabled === false) {
-        return
+        const queryClient = getQueryClient(get)
+        return queryClient.getQueryData<InfiniteData<TData>>(options.queryKey)
       }
-      switch (action.type) {
-        case 'refetch': {
-          set(resultAtom, new Promise<never>(() => {})) // infinite pending
-          if (!state.isMounted) {
-            state.unsubscribe?.()
-            state.unsubscribe = null
-          }
-          observer.refetch(action.payload).then((result) => {
-            set(resultAtom, result)
-          })
-          return
-        }
-        case 'fetchPreviousPage': {
-          observer.fetchPreviousPage()
-          return
-        }
-        case 'fetchNextPage': {
-          observer.fetchNextPage()
-          return
-        }
+      return get(dataAtom)
+    },
+    (_get, set, action: AtomWithInfiniteQueryAction<TQueryFnData>) => {
+      if (action.type === 'refetch') {
+        return set(dataAtom, {
+          type: 'refetch',
+          force: true,
+          options: action.payload as any,
+        })
       }
+      return set(dataAtom, action)
     }
   )
-
-  const queryAtom = atom<
-    InfiniteData<TData> | undefined,
-    AtomWithInfiniteQueryAction<TQueryFnData>
-  >(
-    (get) => {
-      const { resultAtom } = get(queryDataAtom)
-      const result = get(resultAtom)
-      if (result.isError) {
-        throw result.error
-      }
-      return result.data
-    },
-    (_get, set, action) => set(queryDataAtom, action) // delegate action
-  )
-  return queryAtom
 }
