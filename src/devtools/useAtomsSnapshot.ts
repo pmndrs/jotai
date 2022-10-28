@@ -6,6 +6,8 @@ import {
   DEV_GET_MOUNTED,
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
+  FULFILLED,
+  PENDING,
 } from '../core/store'
 
 type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
@@ -60,7 +62,7 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
         const atomState = store[DEV_GET_ATOM_STATE](atom)
         if (atomState) {
           if (!atomState.y) {
-            if ('p' in atomState) {
+            if (atomState.status === PENDING) {
               // ignore entirely if we have invalidated promise atoms
               return
             }
@@ -69,8 +71,8 @@ export function useAtomsSnapshot(scope?: Scope): AtomsSnapshot {
               hasNewInvalidatedAtoms = true
             }
           }
-          if ('v' in atomState) {
-            values.set(atom, atomState.v)
+          if (atomState.status === FULFILLED) {
+            values.set(atom, atomState.value)
           }
         }
         const mounted = store[DEV_GET_MOUNTED](atom)

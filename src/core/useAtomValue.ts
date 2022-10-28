@@ -1,12 +1,27 @@
-import { useContext, useDebugValue, useEffect, useReducer } from 'react'
+/// <reference types="react/experimental" />
+
+import ReactExports, {
+  useContext,
+  useDebugValue,
+  useEffect,
+  useReducer,
+} from 'react'
 import type { Reducer } from 'react'
 import type { Atom } from './atom'
 import { getScopeContext } from './contexts'
-import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM } from './store'
+import {
+  COMMIT_ATOM,
+  PENDING,
+  READ_ATOM,
+  REJECTED,
+  SUBSCRIBE_ATOM,
+} from './store'
 import type { VersionObject } from './store'
 import type { ExtractAtomValue } from './typeUtils'
 
 type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
+
+const { use } = ReactExports
 
 export function useAtomValue<Value>(
   atom: Atom<Promise<Value>>,
@@ -35,16 +50,16 @@ export function useAtomValue<Value>(atom: Atom<Value>, scope?: Scope) {
     if (__DEV__ && !atomState.y) {
       throw new Error('should not be invalidated')
     }
-    if ('e' in atomState) {
-      throw atomState.e // read error
+    if (atomState.status === REJECTED) {
+      throw atomState.reason
     }
-    if ('p' in atomState) {
-      throw atomState.p // read promise
+    if (atomState.status === PENDING) {
+      if (use) {
+        return use(atomState)
+      }
+      throw atomState
     }
-    if ('v' in atomState) {
-      return atomState.v as Awaited<Value>
-    }
-    throw new Error('no atom value')
+    return atomState.value
   }
 
   // Pull the atoms's state from the store into React state.

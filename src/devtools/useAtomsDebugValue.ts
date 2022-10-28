@@ -6,6 +6,9 @@ import {
   DEV_GET_MOUNTED,
   DEV_GET_MOUNTED_ATOMS,
   DEV_SUBSCRIBE_STATE,
+  FULFILLED,
+  PENDING,
+  REJECTED,
 } from '../core/store'
 import type { AtomState, Store } from '../core/store'
 
@@ -27,9 +30,11 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
         [
           atomToPrintable(atom),
           {
-            ...('e' in atomState && { error: atomState.e }),
-            ...('p' in atomState && { promise: atomState.p }),
-            ...('v' in atomState && { value: atomState.v }),
+            ...(atomState.status === REJECTED && { error: atomState.reason }),
+            ...(atomState.status === PENDING && {
+              promise: new Promise(atomState.then),
+            }),
+            ...(atomState.status === FULFILLED && { value: atomState.value }),
             dependents: Array.from(dependents).map(atomToPrintable),
           },
         ],

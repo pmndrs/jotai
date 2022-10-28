@@ -1,12 +1,4 @@
 import type { Atom, WritableAtom } from './atom'
-import {
-  cancelSuspensePromise,
-  createSuspensePromise,
-  isEqualSuspensePromise,
-  isSuspensePromise,
-  isSuspensePromiseAlreadyCancelled,
-} from './suspensePromise'
-import type { SuspensePromise } from './suspensePromise'
 
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
@@ -20,31 +12,56 @@ const hasInitialValue = <T extends Atom<AnyAtomValue>>(
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
-type ReadError = unknown
 type Revision = number
 type ReadDependencies = Map<AnyAtom, Revision>
+type Reason = unknown
+
+export const FULFILLED = 'fulfilled'
+export const PENDING = 'pending'
+export const REJECTED = 'rejected'
+const CANCELLED = Symbol() // for rejected reason
+
+type Then<Value> = (
+  onFulfill: (value: Value) => void,
+  onReject: (error: Reason) => void
+) => void
 
 /**
- * Immutable atom state, tracked for both mounted and unmounted atoms in a store.
+ * Atom state, tracked for both mounted and unmounted atoms in a store.
+ * Mutable only if a promise is settled.
  * @private This is for internal use and not considered part of the public API.
  */
 export type AtomState<Value = AnyAtomValue> = {
   /**
    * Counts number of times atom has actually changed or recomputed.
    */
-  r: Revision
+  readonly r: Revision
   /**
    * Validit(y) of the atom state.
    * Mounted atoms are considered invalidated when `y === false`.
    */
-  y: boolean
+  readonly y: boolean
   /**
    * Maps from a dependency to the dependency's revision when it was last read.
    * We can skip recomputation of an atom by comparing the ReadDependencies revision
    * of each dependency to that dependencies's current revision.
    */
-  d: ReadDependencies
-} & ({ e: ReadError } | { p: SuspensePromise } | { v: Awaited<Value> })
+  readonly d: ReadDependencies
+} & (
+  | {
+      status: typeof PENDING
+      readonly then: Then<Awaited<Value>>
+      readonly c: () => void // cancel promise
+    }
+  | {
+      status: typeof FULFILLED
+      readonly value: Awaited<Value>
+    }
+  | {
+      status: typeof REJECTED
+      readonly reason: Reason | typeof CANCELLED
+    }
+)
 
 /**
  * Represents a version of a store. A version contains a state for every atom
@@ -181,13 +198,13 @@ export const createStore = (
   if (initialValues) {
     for (const [atom, value] of initialValues) {
       const atomState: AtomState = {
-        v: value,
         r: 0,
         y: true, // not invalidated
         d: new Map(),
+        status: FULFILLED,
+        value,
       }
       if (__DEV__) {
-        Object.freeze(atomState)
         if (!hasInitialValue(atom)) {
           console.warn(
             'Found initial value for derived atom which can cause unexpected behavior',
@@ -197,43 +214,6 @@ export const createStore = (
       }
       committedAtomStateMap.set(atom, atomState)
     }
-  }
-
-  type SuspensePromiseCache = Map<VersionObject | undefined, SuspensePromise>
-  const suspensePromiseCacheMap = new WeakMap<AnyAtom, SuspensePromiseCache>()
-  const addSuspensePromiseToCache = (
-    version: VersionObject | undefined,
-    atom: AnyAtom,
-    suspensePromise: SuspensePromise
-  ): void => {
-    let cache = suspensePromiseCacheMap.get(atom)
-    if (!cache) {
-      cache = new Map()
-      suspensePromiseCacheMap.set(atom, cache)
-    }
-    suspensePromise.then(() => {
-      if ((cache as SuspensePromiseCache).get(version) === suspensePromise) {
-        ;(cache as SuspensePromiseCache).delete(version)
-        if (!(cache as SuspensePromiseCache).size) {
-          suspensePromiseCacheMap.delete(atom)
-        }
-      }
-    })
-    cache.set(version, suspensePromise)
-  }
-  const cancelAllSuspensePromiseInCache = (
-    atom: AnyAtom
-  ): Set<VersionObject | undefined> => {
-    const versionSet = new Set<VersionObject | undefined>()
-    const cache = suspensePromiseCacheMap.get(atom)
-    if (cache) {
-      suspensePromiseCacheMap.delete(atom)
-      cache.forEach((suspensePromise, version) => {
-        cancelSuspensePromise(suspensePromise)
-        versionSet.add(version)
-      })
-    }
-    return versionSet
   }
 
   const versionedAtomStateMapMap = new WeakMap<
@@ -260,13 +240,6 @@ export const createStore = (
         | undefined
       if (!atomState) {
         atomState = getAtomState(version.p, atom)
-        if (
-          atomState &&
-          'p' in atomState &&
-          isSuspensePromiseAlreadyCancelled(atomState.p)
-        ) {
-          atomState = undefined
-        }
         if (atomState) {
           versionedAtomStateMap.set(atom, atomState)
         }
@@ -281,9 +254,6 @@ export const createStore = (
     atom: Atom<Value>,
     atomState: AtomState<Value>
   ): void => {
-    if (__DEV__) {
-      Object.freeze(atomState)
-    }
     if (version) {
       const versionedAtomStateMap = getVersionedAtomStateMap(version)
       versionedAtomStateMap.set(atom, atomState)
@@ -323,44 +293,29 @@ export const createStore = (
     version: VersionObject | undefined,
     atom: Atom<Value>,
     value: Awaited<Value>,
-    dependencies?: Set<AnyAtom>,
-    suspensePromise?: SuspensePromise
+    dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
-    if (atomState) {
-      if (
-        suspensePromise &&
-        (!('p' in atomState) ||
-          !isEqualSuspensePromise(atomState.p, suspensePromise))
-      ) {
-        // newer async read is running, not updating
-        return atomState
-      }
-      if ('p' in atomState) {
-        cancelSuspensePromise(atomState.p)
-      }
+    if (atomState && atomState.status === PENDING) {
+      atomState.c() // cancel promise
     }
-    const nextAtomState: AtomState<Value> = {
-      v: value,
-      r: atomState?.r || 0,
-      y: true, // not invalidated
-      d: createReadDependencies(version, atomState?.d, dependencies),
-    }
+    let nextRev = atomState?.r || 0
+    let nextDep = createReadDependencies(version, atomState?.d, dependencies)
     let changed = !atomState?.y // non-existent or invalidated
     if (
       !atomState ||
-      !('v' in atomState) || // new value, or
-      !Object.is(atomState.v, value) // different value
+      atomState.status !== FULFILLED || // new value, or
+      !Object.is(atomState.value, value) // different value
     ) {
       changed = true
-      ++nextAtomState.r // increment revision
-      if (nextAtomState.d.has(atom)) {
-        nextAtomState.d = new Map(nextAtomState.d).set(atom, nextAtomState.r)
+      ++nextRev // increment revision
+      if (nextDep.has(atom)) {
+        nextDep = new Map(nextDep).set(atom, nextRev)
       }
     } else if (
-      nextAtomState.d !== atomState.d &&
-      (nextAtomState.d.size !== atomState.d.size ||
-        !Array.from(nextAtomState.d.keys()).every((a) => atomState.d.has(a)))
+      nextDep !== atomState.d &&
+      (nextDep.size !== atomState.d.size ||
+        !Array.from(nextDep.keys()).every((a) => atomState.d.has(a)))
     ) {
       changed = true
       // value is not changed, but dependencies are changed
@@ -373,6 +328,13 @@ export const createStore = (
     if (atomState && !changed) {
       return atomState
     }
+    const nextAtomState: AtomState<Value> = {
+      r: nextRev,
+      y: true, // not invalidated
+      d: nextDep,
+      status: FULFILLED,
+      value,
+    }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
   }
@@ -380,104 +342,68 @@ export const createStore = (
   const setAtomReadError = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
-    error: ReadError,
-    dependencies?: Set<AnyAtom>,
-    suspensePromise?: SuspensePromise
+    reason: Reason,
+    dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
-    if (atomState) {
-      if (
-        suspensePromise &&
-        (!('p' in atomState) ||
-          !isEqualSuspensePromise(atomState.p, suspensePromise))
-      ) {
-        // newer async read is running, not updating
-        return atomState
-      }
-      if ('p' in atomState) {
-        cancelSuspensePromise(atomState.p)
-      }
+    if (atomState && atomState.status === PENDING) {
+      atomState.c() // cancel promise
     }
     const nextAtomState: AtomState<Value> = {
-      e: error, // set read error
       r: (atomState?.r || 0) + 1,
       y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
+      status: REJECTED,
+      reason,
     }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
   }
 
-  const setAtomSuspensePromise = <Value>(
+  const setAtomPromise = <Value>(
     version: VersionObject | undefined,
     atom: Atom<Value>,
-    suspensePromise: SuspensePromise,
+    promise: Promise<Awaited<Value>>,
     dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
-    if (atomState && 'p' in atomState) {
-      if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
-        // the same promise, not updating
-        if (
-          !atomState.y // invalidated
-        ) {
-          return { ...atomState, y: true }
-        }
-        return atomState
-      }
-      cancelSuspensePromise(atomState.p)
+    if (atomState && atomState.status === PENDING) {
+      atomState.c() // cancel promise
     }
-    addSuspensePromiseToCache(version, atom, suspensePromise)
     const nextAtomState: AtomState<Value> = {
-      p: suspensePromise,
       r: (atomState?.r || 0) + 1,
       y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
-    }
-    setAtomState(version, atom, nextAtomState)
-    return nextAtomState
-  }
-
-  const setAtomPromiseOrValue = <Value>(
-    version: VersionObject | undefined,
-    atom: Atom<Value>,
-    promiseOrValue: Value,
-    dependencies?: Set<AnyAtom>
-  ): AtomState<Value> => {
-    if (promiseOrValue instanceof Promise) {
-      const suspensePromise = createSuspensePromise(
-        promiseOrValue,
-        promiseOrValue
-          .then((value: Awaited<Value>) => {
-            setAtomValue(version, atom, value, dependencies, suspensePromise)
-          })
-          .catch((e) => {
-            if (e instanceof Promise) {
-              if (isSuspensePromise(e)) {
-                // schedule another read later
-                // FIXME not 100% confident with this code
-                return e.then(() => {
-                  readAtomState(version, atom, true)
-                })
-              }
-              return e
+      status: PENDING,
+      then: (onFulfill, onReject) => {
+        promise
+          .then((value) => {
+            if (nextAtomState.status === PENDING) {
+              ;(nextAtomState as any).status = FULFILLED
+              ;(nextAtomState as any).value = value
+              delete (nextAtomState as any).then
+              onFulfill(value)
             }
-            setAtomReadError(version, atom, e, dependencies, suspensePromise)
           })
-      )
-      return setAtomSuspensePromise(
-        version,
-        atom,
-        suspensePromise,
-        dependencies
-      )
+          .catch((reason) => {
+            if (nextAtomState.status === PENDING) {
+              ;(nextAtomState as any).status = REJECTED
+              ;(nextAtomState as any).reason = reason
+              delete (nextAtomState as any).then
+              onReject(reason)
+            }
+          })
+      },
+      c: () => {
+        if (nextAtomState.status === PENDING) {
+          ;(nextAtomState as any).status = REJECTED
+          ;(nextAtomState as any).reason = CANCELLED
+          delete (nextAtomState as any).then
+        }
+      },
     }
-    return setAtomValue(
-      version,
-      atom,
-      promiseOrValue as Awaited<Value>,
-      dependencies
-    )
+    setAtomState(version, atom, nextAtomState)
+    return nextAtomState
   }
 
   const setAtomInvalidated = <Value>(
@@ -508,8 +434,7 @@ export const createStore = (
         // First, check if we already have suspending promise
         if (
           atomState.y && // not invalidated
-          'p' in atomState &&
-          !isSuspensePromiseAlreadyCancelled(atomState.p)
+          atomState.status === PENDING
         ) {
           return atomState
         }
@@ -542,7 +467,7 @@ export const createStore = (
             const aState = getAtomState(version, a)
             return (
               aState &&
-              !('p' in aState) && // has no suspense promise
+              aState.status !== PENDING && // not pending
               aState.r === r // revision is equal to the last one
             )
           })
@@ -566,13 +491,10 @@ export const createStore = (
             ? getAtomState(version, a)
             : readAtomState(version, a)
         if (aState) {
-          if ('e' in aState) {
-            throw aState.e // read error
+          if (aState.status === FULFILLED) {
+            return aState.value
           }
-          if ('p' in aState) {
-            throw aState.p // suspense promise
-          }
-          return aState.v as Awaited<V> // value
+          throw aState
         }
         if (hasInitialValue(a)) {
           return a.init
@@ -580,21 +502,49 @@ export const createStore = (
         // NOTE invalid derived atoms can reach here
         throw new Error('no atom init')
       })
-      return setAtomPromiseOrValue(version, atom, promiseOrValue, dependencies)
-    } catch (errorOrPromise) {
-      if (errorOrPromise instanceof Promise) {
-        const suspensePromise = createSuspensePromise(
-          errorOrPromise,
-          errorOrPromise
-        )
-        return setAtomSuspensePromise(
+      if (promiseOrValue instanceof Promise) {
+        return setAtomPromise(version, atom, promiseOrValue, dependencies)
+      }
+      return setAtomValue(
+        version,
+        atom,
+        promiseOrValue as Awaited<Value>,
+        dependencies
+      )
+    } catch (thrown) {
+      if (
+        thrown &&
+        (thrown as { status?: unknown }).status === PENDING &&
+        typeof (thrown as { then: unknown }).then === 'function'
+      ) {
+        const promise = new Promise<Awaited<Value>>((resolve, reject) => {
+          ;(thrown as { then: Then<unknown> }).then(() => {
+            const atomState = readAtomState(version, atom)
+            if (atomState.status === PENDING) {
+              atomState.then(resolve, reject)
+            } else if (atomState.status === FULFILLED) {
+              resolve(atomState.value)
+            } else {
+              // atomState.status === REJECTED
+              reject(atomState.reason)
+            }
+          }, reject)
+        })
+        return setAtomPromise(version, atom, promise, dependencies)
+      }
+      if (
+        thrown &&
+        (thrown as { status?: unknown }).status === REJECTED &&
+        'reason' in thrown
+      ) {
+        return setAtomReadError(
           version,
           atom,
-          suspensePromise,
+          (thrown as { reason: Reason }).reason,
           dependencies
         )
       }
-      return setAtomReadError(version, atom, errorOrPromise, dependencies)
+      return setAtomReadError(version, atom, thrown, dependencies)
     }
   }
 
@@ -658,42 +608,23 @@ export const createStore = (
       }
     ) => {
       const aState = readAtomState(version, a)
-      if ('e' in aState) {
-        throw aState.e // read error
+      if (aState.status === FULFILLED) {
+        return aState.value
       }
-      if ('p' in aState) {
-        if (options?.unstable_promise) {
-          return aState.p.then(() => {
-            const s = getAtomState(version, a)
-            if (s && 'p' in s && s.p === aState.p) {
-              // FIXME this is very very hacky
-              // there should be better solutions
-              // with suspensePromise.ts cancel handling
-              return new Promise((resolve) => setTimeout(resolve)).then(() =>
-                writeGetter(a as unknown as Atom<Promise<V>>, options)
-              )
-            }
-            return writeGetter(a as unknown as Atom<Promise<V>>, options)
-          })
-        }
-        if (__DEV__) {
-          console.info(
-            'Reading pending atom state in write operation. We throw a promise for now.',
-            a
-          )
-        }
-        throw aState.p // suspense promise
+      if (aState.status === REJECTED) {
+        throw aState
       }
-      if ('v' in aState) {
-        return aState.v as Awaited<V> // value
+      // aState.status === PENDING
+      if (options?.unstable_promise) {
+        return new Promise<Awaited<V>>(aState.then)
       }
       if (__DEV__) {
-        console.warn(
-          '[Bug] no value found while reading atom in write operation. This is probably a bug.',
+        console.info(
+          'Reading pending atom state in write operation. We throw a promise for now.',
           a
         )
       }
-      throw new Error('no value found')
+      throw aState
     }
     const setter: Setter = <V, U, R extends void | Promise<void>>(
       a: WritableAtom<V, U, R>,
@@ -705,14 +636,11 @@ export const createStore = (
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
-        const versionSet = cancelAllSuspensePromiseInCache(a)
-        versionSet.forEach((cancelledVersion) => {
-          if (cancelledVersion !== version) {
-            setAtomPromiseOrValue(cancelledVersion, a, v)
-          }
-        })
         const prevAtomState = getAtomState(version, a)
-        const nextAtomState = setAtomPromiseOrValue(version, a, v)
+        const nextAtomState =
+          v instanceof Promise
+            ? setAtomPromise(version, a, v)
+            : setAtomValue(version, a, v as Awaited<V>)
         if (prevAtomState !== nextAtomState) {
           invalidateDependents(version, a)
         }
@@ -796,9 +724,8 @@ export const createStore = (
     // unmount read dependencies afterward
     const atomState = getAtomState(version, atom)
     if (atomState) {
-      // cancel suspense promise (and abort base promise)
-      if ('p' in atomState) {
-        cancelSuspensePromise(atomState.p)
+      if (atomState.status === PENDING) {
+        atomState.c() // cancel promise
       }
       atomState.d.forEach((_, a) => {
         if (a !== atom) {
@@ -935,7 +862,11 @@ export const createStore = (
   ): void => {
     for (const [atom, value] of values) {
       if (hasInitialValue(atom)) {
-        setAtomPromiseOrValue(version, atom, value)
+        if (value instanceof Promise) {
+          setAtomPromise(version, atom, value)
+        } else {
+          setAtomValue(version, atom, value)
+        }
         invalidateDependents(version, atom)
       }
     }
@@ -977,23 +908,23 @@ export const createStoreForExport = (
   const store = createStore(initialValues)
   const get = <Value>(atom: Atom<Value>) => {
     const atomState = store[READ_ATOM](atom)
-    if ('e' in atomState) {
-      throw atomState.e // read error
+    if (atomState.status === REJECTED) {
+      throw atomState.reason // read error
     }
-    if ('p' in atomState) {
+    if (atomState.status === PENDING) {
       return undefined // suspended
     }
-    return atomState.v
+    return atomState.value
   }
   const asyncGet = <Value>(atom: Atom<Value>) =>
     new Promise<Awaited<Value>>((resolve, reject) => {
       const atomState = store[READ_ATOM](atom)
-      if ('e' in atomState) {
-        reject(atomState.e) // read error
-      } else if ('p' in atomState) {
-        resolve(atomState.p.then(() => asyncGet(atom))) // retry later
+      if (atomState.status === REJECTED) {
+        reject(atomState.reason) // read error
+      } else if (atomState.status === PENDING) {
+        atomState.then(resolve, reject) // retry later
       } else {
-        resolve(atomState.v)
+        resolve(atomState.value)
       }
     })
   const set = <Value, Update, Result extends void | Promise<void>>(
