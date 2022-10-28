@@ -227,7 +227,7 @@ export function atomWithHash<Value>(
         history.replaceState(
           null,
           '',
-          location.pathname + '#' + searchParams.toString()
+          location.pathname + location.search + '#' + searchParams.toString()
         )
       } else {
         location.hash = searchParams.toString()
@@ -240,7 +240,7 @@ export function atomWithHash<Value>(
         history.replaceState(
           null,
           '',
-          location.pathname + '#' + searchParams.toString()
+          location.pathname + location.search + '#' + searchParams.toString()
         )
       } else {
         location.hash = searchParams.toString()
