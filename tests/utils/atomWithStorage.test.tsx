@@ -1,5 +1,6 @@
 import { StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import { useAtom } from 'jotai'
 import {
   unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE,
@@ -469,5 +470,57 @@ describe('atomWithHash', () => {
     fireEvent.click(getByText('reset'))
     await findByText('visible')
     expect(window.location.hash).toEqual('')
+  })
+
+  it('keeping current path', async () => {
+    const countAtom = atomWithHash('count', 1, { replaceState: true })
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <Link to="/another">Go to AnotherPage</Link>
+        </>
+      )
+    }
+
+    const Dummy = () => {
+      return (
+        <div>
+          <h1>another page</h1>
+          <button onClick={() => window.history.back()}>History back</button>
+        </div>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Provider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Counter />} />
+              <Route path="/another" element={<Dummy />} />
+            </Routes>
+          </BrowserRouter>
+        </Provider>
+      </StrictMode>
+    )
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 2')
+    expect(window.location.hash).toEqual('#count=2')
+
+    fireEvent.click(getByText('Go to AnotherPage'))
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/another')
+    })
+
+    fireEvent.click(getByText('History back'))
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/')
+      expect(window.location.hash).toEqual('#count=2')
+    })
   })
 })
