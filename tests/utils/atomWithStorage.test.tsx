@@ -471,7 +471,9 @@ describe('atomWithHash', () => {
     await findByText('visible')
     expect(window.location.hash).toEqual('')
   })
+})
 
+describe('atomWithHash with react-router-dom', () => {
   it('keeping current path', async () => {
     const countAtom = atomWithHash('count', 1, { replaceState: true })
 
