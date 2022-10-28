@@ -57,7 +57,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, scope?: Scope) {
       if (use) {
         return use(atomState)
       }
-      throw atomState
+      throw new Promise(atomState.then)
     }
     return atomState.value
   }

@@ -293,7 +293,8 @@ export const createStore = (
     version: VersionObject | undefined,
     atom: Atom<Value>,
     value: Awaited<Value>,
-    dependencies?: Set<AnyAtom>
+    dependencies?: Set<AnyAtom>,
+    force?: boolean
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
     if (atomState && atomState.status === PENDING) {
@@ -303,6 +304,7 @@ export const createStore = (
     let nextDep = createReadDependencies(version, atomState?.d, dependencies)
     let changed = !atomState?.y // non-existent or invalidated
     if (
+      force ||
       !atomState ||
       atomState.status !== FULFILLED || // new value, or
       !Object.is(atomState.value, value) // different value
@@ -376,30 +378,66 @@ export const createStore = (
       d: createReadDependencies(version, atomState?.d, dependencies),
       status: PENDING,
       then: (onFulfill, onReject) => {
-        promise
-          .then((value) => {
-            if (nextAtomState.status === PENDING) {
-              ;(nextAtomState as any).status = FULFILLED
-              ;(nextAtomState as any).value = value
-              delete (nextAtomState as any).then
-              onFulfill(value)
-            }
-          })
-          .catch((reason) => {
-            if (nextAtomState.status === PENDING) {
-              ;(nextAtomState as any).status = REJECTED
-              ;(nextAtomState as any).reason = reason
-              delete (nextAtomState as any).then
-              onReject(reason)
-            }
-          })
+        const resolve = (value: Awaited<Value>) => {
+          if (nextAtomState.status === PENDING) {
+            // FIXME better partially mutable typing?
+            ;(nextAtomState as any).status = FULFILLED
+            ;(nextAtomState as any).value = value
+            delete (nextAtomState as any).then
+            delete (nextAtomState as any).c
+            onFulfill(value)
+            setAtomValue(version, atom, value, dependencies, true)
+          }
+        }
+        const reject = (reason: Reason) => {
+          if (nextAtomState.status === PENDING) {
+            // FIXME better partially mutable typing?
+            ;(nextAtomState as any).status = REJECTED
+            ;(nextAtomState as any).reason = reason
+            delete (nextAtomState as any).then
+            delete (nextAtomState as any).c
+            onReject(reason)
+            setAtomReadError(version, atom, reason, dependencies)
+          }
+        }
+        promise.then(resolve, (thrown: unknown) => {
+          if (
+            // TODO use symbol to check type
+            (thrown as any)?.status === PENDING &&
+            typeof (thrown as any).then === 'function'
+          ) {
+            ;(thrown as { then: Then<unknown> }).then(() => {
+              const atomState = readAtomState(version, atom, true)
+              if (atomState.status === PENDING) {
+                atomState.then(resolve, reject)
+              } else if (atomState.status === FULFILLED) {
+                resolve(atomState.value)
+              } else {
+                // atomState.status === REJECTED
+                reject(atomState.reason)
+              }
+            }, reject)
+            return
+          }
+          if (
+            // TODO use symbol to check type
+            (thrown as any)?.status === REJECTED
+          ) {
+            reject((thrown as { reason: Reason }).reason)
+          }
+          reject(thrown)
+        })
       },
       c: () => {
+        /* FIXME no need to cancel?
         if (nextAtomState.status === PENDING) {
+          // FIXME better partially mutable typing?
           ;(nextAtomState as any).status = REJECTED
           ;(nextAtomState as any).reason = CANCELLED
           delete (nextAtomState as any).then
+          delete (nextAtomState as any).c
         }
+        */
       },
     }
     setAtomState(version, atom, nextAtomState)
@@ -513,29 +551,16 @@ export const createStore = (
       )
     } catch (thrown) {
       if (
-        thrown &&
-        (thrown as { status?: unknown }).status === PENDING &&
-        typeof (thrown as { then: unknown }).then === 'function'
+        // TODO use symbol to check type
+        (thrown as any)?.status === PENDING &&
+        typeof (thrown as any).then === 'function'
       ) {
-        const promise = new Promise<Awaited<Value>>((resolve, reject) => {
-          ;(thrown as { then: Then<unknown> }).then(() => {
-            const atomState = readAtomState(version, atom)
-            if (atomState.status === PENDING) {
-              atomState.then(resolve, reject)
-            } else if (atomState.status === FULFILLED) {
-              resolve(atomState.value)
-            } else {
-              // atomState.status === REJECTED
-              reject(atomState.reason)
-            }
-          }, reject)
-        })
+        const promise = Promise.reject(thrown)
         return setAtomPromise(version, atom, promise, dependencies)
       }
       if (
-        thrown &&
-        (thrown as { status?: unknown }).status === REJECTED &&
-        'reason' in thrown
+        // TODO use symbol to check type
+        (thrown as any)?.status === REJECTED
       ) {
         return setAtomReadError(
           version,
