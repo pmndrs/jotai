@@ -224,7 +224,11 @@ export function atomWithHash<Value>(
       const searchParams = new URLSearchParams(location.hash.slice(1))
       searchParams.set(key, serialize(newValue))
       if (options?.replaceState) {
-        history.replaceState(null, '', '#' + searchParams.toString())
+        history.replaceState(
+          null,
+          '',
+          location.pathname + '#' + searchParams.toString()
+        )
       } else {
         location.hash = searchParams.toString()
       }
@@ -233,7 +237,11 @@ export function atomWithHash<Value>(
       const searchParams = new URLSearchParams(location.hash.slice(1))
       searchParams.delete(key)
       if (options?.replaceState) {
-        history.replaceState(null, '', '#' + searchParams.toString())
+        history.replaceState(
+          null,
+          '',
+          location.pathname + '#' + searchParams.toString()
+        )
       } else {
         location.hash = searchParams.toString()
       }
