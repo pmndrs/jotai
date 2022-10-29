@@ -37,7 +37,7 @@ const CANCELLED = Symbol() // for rejected reason
 
 type Then<Value> = (
   onFulfill: (value: Value) => void,
-  onReject: (error: Reason) => void
+  onReject: (error: Reason | typeof CANCELLED) => void
 ) => void
 
 /**
@@ -398,6 +398,7 @@ export const createStore = (
     if (atomState && atomState.status === PENDING) {
       atomState.c() // cancel promise
     }
+    let cancel: (() => void) | undefined
     const nextAtomState: AtomState<Value> = {
       t: ATOM_STATE,
       r: (atomState?.r || 0) + 1,
@@ -416,51 +417,51 @@ export const createStore = (
           }
           onFulfill(value)
         }
-        const reject = (reason: Reason) => {
+        const reject = (reason: Reason | typeof CANCELLED) => {
           if (nextAtomState.status === PENDING) {
             // FIXME better partially mutable typing?
             ;(nextAtomState as any).status = REJECTED
             ;(nextAtomState as any).reason = reason
             delete (nextAtomState as any).then
             delete (nextAtomState as any).c
-            setAtomReadError(version, atom, reason, dependencies)
+            if (reason !== CANCELLED) {
+              setAtomReadError(version, atom, reason, dependencies)
+            }
           }
           onReject(reason)
         }
+        cancel = () => reject(CANCELLED)
         promise.then(resolve, (thrown: unknown) => {
           if (isAtomState(thrown)) {
+            const retry = () => {
+              const atomState = readAtomState(version, atom, true)
+              if (atomState.status === PENDING) {
+                atomState.then(resolve, reject)
+              } else if (atomState.status === FULFILLED) {
+                resolve(atomState.value)
+              } else {
+                // atomState.status === REJECTED
+                reject(atomState.reason)
+              }
+            }
             if (thrown.status === PENDING) {
-              thrown.then(() => {
-                const atomState = readAtomState(version, atom, true)
-                if (atomState.status === PENDING) {
-                  atomState.then(resolve, reject)
-                } else if (atomState.status === FULFILLED) {
-                  resolve(atomState.value)
-                } else {
-                  // atomState.status === REJECTED
-                  reject(atomState.reason)
-                }
-              }, reject)
+              thrown.then(retry, reject)
               return
             }
-            if (thrown.status === REJECTED) {
-              reject(thrown.reason)
+            if (thrown.status === FULFILLED) {
+              retry()
               return
             }
-            throw new Error('should not reach here')
+            // thrown.status === REJECTED
+            reject(thrown.reason)
+            return
           }
           reject(thrown)
         })
       },
       c: () => {
         cancelPromise(promise)
-        if (nextAtomState.status === PENDING) {
-          // FIXME better partially mutable typing?
-          ;(nextAtomState as any).status = REJECTED
-          ;(nextAtomState as any).reason = CANCELLED
-          delete (nextAtomState as any).then
-          delete (nextAtomState as any).c
-        }
+        cancel?.()
       },
     }
     setAtomState(version, atom, nextAtomState)
