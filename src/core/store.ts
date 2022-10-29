@@ -477,6 +477,9 @@ export const createStore = (
         ...atomState, // copy everything
         y: false, // invalidated
       }
+      if (atomState.status === PENDING) {
+        atomState.c() // cancel promise
+      }
       setAtomState(version, atom, nextAtomState)
     } else if (__DEV__) {
       console.warn('[Bug] could not invalidate non existing atom', atom)

@@ -13,20 +13,17 @@ const LOADING: Loadable<unknown> = { state: 'loading' }
 
 export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
   return memoizeAtom(() => {
-    const loadableAtomCache = new WeakMap<
-      Promise<void>,
-      Atom<Loadable<Value>>
-    >()
+    const loadableAtomCache = new WeakMap<object, Atom<Loadable<Value>>>()
 
     const catchAtom = atom((get) => {
-      let promise: Promise<void>
+      let thenable: object
       try {
         const data = get(anAtom) as Awaited<Value>
         const loadableAtom = atom({ state: 'hasData', data } as Loadable<Value>)
         return loadableAtom
       } catch (error) {
-        if (error instanceof Promise) {
-          promise = error
+        if (typeof (error as any)?.then === 'function') {
+          thenable = error as object
         } else {
           const loadableAtom = atom({
             state: 'hasError',
@@ -35,7 +32,7 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
           return loadableAtom
         }
       }
-      const cached = loadableAtomCache.get(promise)
+      const cached = loadableAtomCache.get(thenable)
       if (cached) {
         return cached
       }
@@ -53,7 +50,7 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
       loadableAtom.onMount = (init) => {
         init()
       }
-      loadableAtomCache.set(promise, loadableAtom)
+      loadableAtomCache.set(thenable, loadableAtom)
       return loadableAtom
     })
 
