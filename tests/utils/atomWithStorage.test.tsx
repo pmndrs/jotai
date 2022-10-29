@@ -470,9 +470,7 @@ describe('atomWithHash', () => {
     await findByText('visible')
     expect(window.location.hash).toEqual('')
   })
-})
 
-describe('atomWithHash with page move', () => {
   it('keeping current path', async () => {
     const countAtom = atomWithHash('count', 1, { replaceState: true })
 
