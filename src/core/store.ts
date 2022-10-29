@@ -12,13 +12,14 @@ const hasInitialValue = <T extends Atom<AnyAtomValue>>(
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
+const ATOM_STATE = Symbol() // for tag
 type Revision = number
 type ReadDependencies = Map<AnyAtom, Revision>
-type Reason = unknown
 
 export const FULFILLED = 'fulfilled'
 export const PENDING = 'pending'
 export const REJECTED = 'rejected'
+type Reason = unknown
 const CANCELLED = Symbol() // for rejected reason
 
 type Then<Value> = (
@@ -32,6 +33,10 @@ type Then<Value> = (
  * @private This is for internal use and not considered part of the public API.
  */
 export type AtomState<Value = AnyAtomValue> = {
+  /**
+   * tag
+   */
+  readonly t: typeof ATOM_STATE
   /**
    * Counts number of times atom has actually changed or recomputed.
    */
@@ -62,6 +67,8 @@ export type AtomState<Value = AnyAtomValue> = {
       readonly reason: Reason | typeof CANCELLED
     }
 )
+
+const isAtomState = (x: unknown): x is AtomState => (x as any)?.t === ATOM_STATE
 
 /**
  * Represents a version of a store. A version contains a state for every atom
@@ -198,6 +205,7 @@ export const createStore = (
   if (initialValues) {
     for (const [atom, value] of initialValues) {
       const atomState: AtomState = {
+        t: ATOM_STATE,
         r: 0,
         y: true, // not invalidated
         d: new Map(),
@@ -331,6 +339,7 @@ export const createStore = (
       return atomState
     }
     const nextAtomState: AtomState<Value> = {
+      t: ATOM_STATE,
       r: nextRev,
       y: true, // not invalidated
       d: nextDep,
@@ -352,6 +361,7 @@ export const createStore = (
       atomState.c() // cancel promise
     }
     const nextAtomState: AtomState<Value> = {
+      t: ATOM_STATE,
       r: (atomState?.r || 0) + 1,
       y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
@@ -373,6 +383,7 @@ export const createStore = (
       atomState.c() // cancel promise
     }
     const nextAtomState: AtomState<Value> = {
+      t: ATOM_STATE,
       r: (atomState?.r || 0) + 1,
       y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
@@ -385,9 +396,9 @@ export const createStore = (
             ;(nextAtomState as any).value = value
             delete (nextAtomState as any).then
             delete (nextAtomState as any).c
-            onFulfill(value)
             setAtomValue(version, atom, value, dependencies, true)
           }
+          onFulfill(value)
         }
         const reject = (reason: Reason) => {
           if (nextAtomState.status === PENDING) {
@@ -396,40 +407,37 @@ export const createStore = (
             ;(nextAtomState as any).reason = reason
             delete (nextAtomState as any).then
             delete (nextAtomState as any).c
-            onReject(reason)
             setAtomReadError(version, atom, reason, dependencies)
           }
+          onReject(reason)
         }
         promise.then(resolve, (thrown: unknown) => {
-          if (
-            // TODO use symbol to check type
-            (thrown as any)?.status === PENDING &&
-            typeof (thrown as any).then === 'function'
-          ) {
-            ;(thrown as { then: Then<unknown> }).then(() => {
-              const atomState = readAtomState(version, atom, true)
-              if (atomState.status === PENDING) {
-                atomState.then(resolve, reject)
-              } else if (atomState.status === FULFILLED) {
-                resolve(atomState.value)
-              } else {
-                // atomState.status === REJECTED
-                reject(atomState.reason)
-              }
-            }, reject)
-            return
-          }
-          if (
-            // TODO use symbol to check type
-            (thrown as any)?.status === REJECTED
-          ) {
-            reject((thrown as { reason: Reason }).reason)
+          if (isAtomState(thrown)) {
+            if (thrown.status === PENDING) {
+              thrown.then(() => {
+                const atomState = readAtomState(version, atom, true)
+                if (atomState.status === PENDING) {
+                  atomState.then(resolve, reject)
+                } else if (atomState.status === FULFILLED) {
+                  resolve(atomState.value)
+                } else {
+                  // atomState.status === REJECTED
+                  reject(atomState.reason)
+                }
+              }, reject)
+              return
+            }
+            if (thrown.status === REJECTED) {
+              reject(thrown.reason)
+              return
+            }
+            throw new Error('should not reach here')
           }
           reject(thrown)
         })
       },
       c: () => {
-        /* FIXME no need to cancel?
+        /* TODO no need to cancel?
         if (nextAtomState.status === PENDING) {
           // FIXME better partially mutable typing?
           ;(nextAtomState as any).status = REJECTED
@@ -550,24 +558,20 @@ export const createStore = (
         dependencies
       )
     } catch (thrown) {
-      if (
-        // TODO use symbol to check type
-        (thrown as any)?.status === PENDING &&
-        typeof (thrown as any).then === 'function'
-      ) {
-        const promise = Promise.reject(thrown)
-        return setAtomPromise(version, atom, promise, dependencies)
-      }
-      if (
-        // TODO use symbol to check type
-        (thrown as any)?.status === REJECTED
-      ) {
-        return setAtomReadError(
-          version,
-          atom,
-          (thrown as { reason: Reason }).reason,
-          dependencies
-        )
+      if (isAtomState(thrown)) {
+        if (thrown.status === PENDING) {
+          const promise = Promise.reject(thrown)
+          return setAtomPromise(version, atom, promise, dependencies)
+        }
+        if (thrown.status === REJECTED) {
+          return setAtomReadError(
+            version,
+            atom,
+            (thrown as { reason: Reason }).reason,
+            dependencies
+          )
+        }
+        throw new Error('should not reach here')
       }
       return setAtomReadError(version, atom, thrown, dependencies)
     }
