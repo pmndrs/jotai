@@ -321,9 +321,6 @@ export const createStore = (
     force?: boolean
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
-    if (atomState && atomState.status === PENDING) {
-      atomState.c() // cancel promise
-    }
     let nextRev = atomState?.r || 0
     let nextDep = createReadDependencies(version, atomState?.d, dependencies)
     let changed = !atomState || !isValidAtomState(atomState)
@@ -363,6 +360,9 @@ export const createStore = (
       value,
     }
     setAtomState(version, atom, nextAtomState)
+    if (atomState?.status === PENDING) {
+      atomState.c() // cancel promise
+    }
     return nextAtomState
   }
 
@@ -373,9 +373,6 @@ export const createStore = (
     dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
-    if (atomState && atomState.status === PENDING) {
-      atomState.c() // cancel promise
-    }
     const nextAtomState: AtomState<Value> = {
       t: ATOM_STATE,
       r: (atomState?.r || 0) + 1,
@@ -385,6 +382,9 @@ export const createStore = (
       reason,
     }
     setAtomState(version, atom, nextAtomState)
+    if (atomState?.status === PENDING) {
+      atomState.c() // cancel promise
+    }
     return nextAtomState
   }
 
@@ -395,9 +395,6 @@ export const createStore = (
     dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
-    if (atomState && atomState.status === PENDING) {
-      atomState.c() // cancel promise
-    }
     let cancel: (() => void) | undefined
     const nextAtomState: AtomState<Value> = {
       t: ATOM_STATE,
@@ -465,6 +462,9 @@ export const createStore = (
       },
     }
     setAtomState(version, atom, nextAtomState)
+    if (atomState?.status === PENDING) {
+      atomState.c() // cancel promise
+    }
     return nextAtomState
   }
 
@@ -478,10 +478,10 @@ export const createStore = (
         ...atomState, // copy everything
         y: false, // invalidated
       }
+      setAtomState(version, atom, nextAtomState)
       if (atomState.status === PENDING) {
         atomState.c() // cancel promise
       }
-      setAtomState(version, atom, nextAtomState)
     } else if (__DEV__) {
       console.warn('[Bug] could not invalidate non existing atom', atom)
     }
