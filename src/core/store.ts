@@ -82,6 +82,9 @@ export type AtomState<Value = AnyAtomValue> = {
 )
 
 const isAtomState = (x: unknown): x is AtomState => (x as any)?.t === ATOM_STATE
+const isValidAtomState = (atomState: AtomState) =>
+  atomState.y &&
+  (atomState.status !== REJECTED || atomState.reason !== CANCELLED)
 
 /**
  * Represents a version of a store. A version contains a state for every atom
@@ -323,7 +326,7 @@ export const createStore = (
     }
     let nextRev = atomState?.r || 0
     let nextDep = createReadDependencies(version, atomState?.d, dependencies)
-    let changed = !atomState?.y // non-existent or invalidated
+    let changed = !atomState || !isValidAtomState(atomState)
     if (
       force ||
       !atomState ||
@@ -490,10 +493,7 @@ export const createStore = (
       const atomState = getAtomState(version, atom)
       if (atomState) {
         // First, check if we already have suspending promise
-        if (
-          atomState.y && // not invalidated
-          atomState.status === PENDING
-        ) {
+        if (isValidAtomState(atomState) && atomState.status === PENDING) {
           return atomState
         }
         // Second, ensure that each atom we depend on is up to date.
@@ -509,10 +509,7 @@ export const createStore = (
             } else {
               // Dependency is mounted.
               const aState = getAtomState(version, a)
-              if (
-                aState &&
-                !aState.y // invalidated
-              ) {
+              if (aState && !isValidAtomState(aState)) {
                 readAtomState(version, a)
               }
             }
@@ -530,9 +527,7 @@ export const createStore = (
             )
           })
         ) {
-          if (
-            !atomState.y // invalidated
-          ) {
+          if (!isValidAtomState(atomState)) {
             return { ...atomState, y: true }
           }
           return atomState
@@ -840,8 +835,9 @@ export const createStore = (
         }
         if (
           prevAtomState &&
-          !prevAtomState.y && // invalidated
-          atomState?.y // existent and not invalidated
+          !isValidAtomState(prevAtomState) &&
+          atomState &&
+          isValidAtomState(atomState)
         ) {
           // We don't want to notify listeners
           // to avoid flushing a promise again (#1151)
