@@ -77,14 +77,12 @@ export type AtomState<Value = AnyAtomValue> = {
     }
   | {
       status: typeof REJECTED
-      readonly reason: Reason | typeof CANCELLED
+      readonly reason: Reason
     }
 )
 
 const isAtomState = (x: unknown): x is AtomState => (x as any)?.t === ATOM_STATE
-const isValidAtomState = (atomState: AtomState) =>
-  atomState.y &&
-  (atomState.status !== REJECTED || atomState.reason !== CANCELLED)
+const isValidAtomState = (atomState: AtomState) => atomState.y
 
 /**
  * Represents a version of a store. A version contains a state for every atom
@@ -394,8 +392,69 @@ export const createStore = (
     promise: Promise<Awaited<Value>>,
     dependencies?: Set<AnyAtom>
   ): AtomState<Value> => {
+    const onFulfills: ((value: Awaited<Value>) => void)[] = []
+    const onRejects: ((error: Reason | typeof CANCELLED) => void)[] = []
+    let cancelled = false
+    const cancel = () => {
+      if (!cancelled && nextAtomState.status === PENDING) {
+        cancelled = true
+        onRejects.splice(0).forEach((fn) => fn(CANCELLED))
+      }
+    }
+    const retry = () => {
+      const atomState = readAtomState(version, atom, true)
+      if (atomState.status === PENDING) {
+        atomState.then(resolve, retry)
+      } else if (atomState.status === FULFILLED) {
+        resolve(atomState.value)
+      } else {
+        // atomState.status === REJECTED
+        if (__DEV__ && isAtomState(atomState.reason)) {
+          throw new Error('should not reach here')
+        }
+        reject(atomState.reason)
+      }
+    }
+    const resolve = (value: Awaited<Value>) => {
+      if (cancelled) {
+        return
+      }
+      if (__DEV__ && nextAtomState.status !== PENDING) {
+        throw new Error('should not reach here')
+      }
+      // FIXME better partially mutable typing?
+      ;(nextAtomState as any).status = FULFILLED
+      ;(nextAtomState as any).value = value
+      delete (nextAtomState as any).then
+      delete (nextAtomState as any).c
+      setAtomValue(version, atom, value, dependencies, true)
+      onFulfills.splice(0).forEach((fn) => fn(value))
+    }
+    const reject = (reason: Reason) => {
+      if (cancelled) {
+        return
+      }
+      if (isAtomState(reason)) {
+        if (reason.status === PENDING) {
+          reason.then(retry, retry)
+        } else {
+          Promise.resolve().then(retry)
+        }
+        return
+      }
+      if (__DEV__ && nextAtomState.status !== PENDING) {
+        throw new Error('should not reach here')
+      }
+      // FIXME better partially mutable typing?
+      ;(nextAtomState as any).status = REJECTED
+      ;(nextAtomState as any).reason = reason
+      delete (nextAtomState as any).then
+      delete (nextAtomState as any).c
+      setAtomReadError(version, atom, reason, dependencies)
+      onRejects.splice(0).forEach((fn) => fn(reason))
+    }
+    promise.then(resolve, reject)
     const atomState = getAtomState(version, atom)
-    let cancel: (() => void) | undefined
     const nextAtomState: AtomState<Value> = {
       t: ATOM_STATE,
       r: (atomState?.r || 0) + 1,
@@ -403,62 +462,20 @@ export const createStore = (
       d: createReadDependencies(version, atomState?.d, dependencies),
       status: PENDING,
       then: (onFulfill, onReject) => {
-        const resolve = (value: Awaited<Value>) => {
-          if (nextAtomState.status === PENDING) {
-            // FIXME better partially mutable typing?
-            ;(nextAtomState as any).status = FULFILLED
-            ;(nextAtomState as any).value = value
-            delete (nextAtomState as any).then
-            delete (nextAtomState as any).c
-            setAtomValue(version, atom, value, dependencies, true)
-          }
-          onFulfill(value)
+        if (cancelled) {
+          onRejects.splice(0).forEach((fn) => fn(CANCELLED))
+        } else if (nextAtomState.status === FULFILLED) {
+          onFulfill(nextAtomState.value)
+        } else if (nextAtomState.status === REJECTED) {
+          onReject(nextAtomState.reason)
+        } else {
+          onFulfills.push(onFulfill)
+          onRejects.push(onReject)
         }
-        const reject = (reason: Reason | typeof CANCELLED) => {
-          if (nextAtomState.status === PENDING) {
-            // FIXME better partially mutable typing?
-            ;(nextAtomState as any).status = REJECTED
-            ;(nextAtomState as any).reason = reason
-            delete (nextAtomState as any).then
-            delete (nextAtomState as any).c
-            if (reason !== CANCELLED) {
-              setAtomReadError(version, atom, reason, dependencies)
-            }
-          }
-          onReject(reason)
-        }
-        cancel = () => reject(CANCELLED)
-        promise.then(resolve, (thrown: unknown) => {
-          if (isAtomState(thrown)) {
-            const retry = () => {
-              const atomState = readAtomState(version, atom, true)
-              if (atomState.status === PENDING) {
-                atomState.then(resolve, reject)
-              } else if (atomState.status === FULFILLED) {
-                resolve(atomState.value)
-              } else {
-                // atomState.status === REJECTED
-                reject(atomState.reason)
-              }
-            }
-            if (thrown.status === PENDING) {
-              thrown.then(retry, reject)
-              return
-            }
-            if (thrown.status === FULFILLED) {
-              retry()
-              return
-            }
-            // thrown.status === REJECTED
-            reject(thrown.reason)
-            return
-          }
-          reject(thrown)
-        })
       },
       c: () => {
         cancelPromise(promise)
-        cancel?.()
+        cancel()
       },
     }
     setAtomState(version, atom, nextAtomState)
@@ -575,14 +592,11 @@ export const createStore = (
           return setAtomPromise(version, atom, promise, dependencies)
         }
         if (thrown.status === REJECTED) {
-          return setAtomReadError(
-            version,
-            atom,
-            (thrown as { reason: Reason }).reason,
-            dependencies
-          )
+          return setAtomReadError(version, atom, thrown.reason, dependencies)
         }
-        throw new Error('should not reach here')
+        if (__DEV__) {
+          throw new Error('should not reach here')
+        }
       }
       return setAtomReadError(version, atom, thrown, dependencies)
     }
