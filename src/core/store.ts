@@ -12,6 +12,19 @@ const hasInitialValue = <T extends Atom<AnyAtomValue>>(
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
+const promiseAbortMap = new WeakMap<Promise<unknown>, () => void>()
+
+export const registerPromiseAbort = (
+  promise: Promise<unknown>,
+  abort: () => void
+) => {
+  promiseAbortMap.set(promise, abort)
+}
+
+const cancelPromise = (promise: Promise<unknown>) => {
+  promiseAbortMap.get(promise)?.()
+}
+
 const ATOM_STATE = Symbol() // for tag
 type Revision = number
 type ReadDependencies = Map<AnyAtom, Revision>
@@ -437,7 +450,7 @@ export const createStore = (
         })
       },
       c: () => {
-        /* TODO no need to cancel?
+        cancelPromise(promise)
         if (nextAtomState.status === PENDING) {
           // FIXME better partially mutable typing?
           ;(nextAtomState as any).status = REJECTED
@@ -445,7 +458,6 @@ export const createStore = (
           delete (nextAtomState as any).then
           delete (nextAtomState as any).c
         }
-        */
       },
     }
     setAtomState(version, atom, nextAtomState)
