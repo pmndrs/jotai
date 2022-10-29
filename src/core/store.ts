@@ -656,7 +656,24 @@ export const createStore = (
       }
       // aState.status === PENDING
       if (options?.unstable_promise) {
-        return new Promise<Awaited<V>>(aState.then)
+        return new Promise<Awaited<V>>((resolve, reject) => {
+          const onReject = (reason: unknown) => {
+            if (reason === CANCELLED) {
+              const aState = readAtomState(version, a, true)
+              if (aState.status === FULFILLED) {
+                return aState.value
+              }
+              if (aState.status === REJECTED) {
+                throw aState
+              }
+              // aState.status === PENDING
+              aState.then(resolve, onReject)
+            } else {
+              reject(reason)
+            }
+          }
+          aState.then(resolve, onReject)
+        })
       }
       if (__DEV__) {
         console.info(
@@ -963,7 +980,10 @@ export const createStoreForExport = (
       if (atomState.status === REJECTED) {
         reject(atomState.reason) // read error
       } else if (atomState.status === PENDING) {
-        atomState.then(resolve, reject) // retry later
+        // retry later
+        new Promise(atomState.then).finally(() => {
+          resolve(asyncGet(atom))
+        })
       } else {
         resolve(atomState.value)
       }
