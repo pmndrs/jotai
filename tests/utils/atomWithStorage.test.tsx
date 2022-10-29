@@ -1,6 +1,5 @@
 import { StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import { useAtom } from 'jotai'
 import {
   unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE,
@@ -473,7 +472,7 @@ describe('atomWithHash', () => {
   })
 })
 
-describe('atomWithHash with react-router-dom', () => {
+describe('atomWithHash with page move', () => {
   it('keeping current path', async () => {
     const countAtom = atomWithHash('count', 1, { replaceState: true })
 
@@ -483,45 +482,35 @@ describe('atomWithHash with react-router-dom', () => {
         <>
           <div>count: {count}</div>
           <button onClick={() => setCount((c) => c + 1)}>button</button>
-          <Link to="/another">Go to AnotherPage</Link>
         </>
-      )
-    }
-
-    const Dummy = () => {
-      return (
-        <div>
-          <h1>another page</h1>
-          <button onClick={() => window.history.back()}>History back</button>
-        </div>
       )
     }
 
     const { findByText, getByText } = render(
       <StrictMode>
         <Provider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Counter />} />
-              <Route path="/another" element={<Dummy />} />
-            </Routes>
-          </BrowserRouter>
+          <Counter />
         </Provider>
       </StrictMode>
     )
 
+    window.history.pushState(null, '', '/?q=foo')
+
     fireEvent.click(getByText('button'))
     await findByText('count: 2')
+    expect(window.location.pathname).toEqual('/')
+    expect(window.location.search).toEqual('?q=foo')
     expect(window.location.hash).toEqual('#count=2')
 
-    fireEvent.click(getByText('Go to AnotherPage'))
+    window.history.pushState(null, '', '/another')
     await waitFor(() => {
       expect(window.location.pathname).toEqual('/another')
     })
 
-    fireEvent.click(getByText('History back'))
+    window.history.back()
     await waitFor(() => {
       expect(window.location.pathname).toEqual('/')
+      expect(window.location.search).toEqual('?q=foo')
       expect(window.location.hash).toEqual('#count=2')
     })
   })
