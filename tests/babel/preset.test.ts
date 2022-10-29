@@ -141,8 +141,8 @@ it('Should fail if no filename is available', () => {
 
 it('Should handle custom atom names', () => {
   expect(
-    transform(`const mySpecialThing = atom(0);`, '/src/atoms.ts', [
-      'mySpecialThing',
+    transform(`const mySpecialThing = myCustomAtom(0);`, '/src/atoms.ts', [
+      'myCustomAtom',
     ])
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
@@ -155,7 +155,7 @@ it('Should handle custom atom names', () => {
         return inst;
       }
     };
-    const mySpecialThing = globalThis.jotaiAtomCache.get("/src/atoms.ts/mySpecialThing", atom(0));
+    const mySpecialThing = globalThis.jotaiAtomCache.get("/src/atoms.ts/mySpecialThing", myCustomAtom(0));
     mySpecialThing.debugLabel = "mySpecialThing";"
   `)
 })
