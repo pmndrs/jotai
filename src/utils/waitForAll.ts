@@ -31,8 +31,8 @@ export function waitForAll<
         try {
           return get(anAtom)
         } catch (e) {
-          if (e instanceof Promise) {
-            promises[index] = e
+          if (typeof (e as any)?.then === 'function') {
+            promises[index] = new Promise((e as any).then)
           } else {
             throw e
           }
