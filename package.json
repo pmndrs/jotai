@@ -246,10 +246,10 @@
   "devDependencies": {
     "@babel/core": "^7.19.6",
     "@babel/plugin-transform-react-jsx": "^7.19.0",
-    "@babel/plugin-transform-typescript": "^7.19.3",
+    "@babel/plugin-transform-typescript": "^7.20.0",
     "@babel/preset-env": "^7.19.4",
     "@babel/template": "^7.18.10",
-    "@babel/types": "^7.19.4",
+    "@babel/types": "^7.20.0",
     "@redux-devtools/extension": "^3.2.3",
     "@rollup/plugin-babel": "^6.0.2",
     "@rollup/plugin-node-resolve": "^15.0.1",
@@ -257,7 +257,7 @@
     "@rollup/plugin-typescript": "^9.0.2",
     "@swc/core": "^1.3.11",
     "@swc/jest": "^0.2.23",
-    "@tanstack/query-core": "^4.13.0",
+    "@tanstack/query-core": "^4.13.4",
     "@testing-library/react": "^13.4.0",
     "@types/jest": "^29.2.0",
     "@types/react": "^18.0.24",
@@ -299,9 +299,9 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
     "typescript": "^4.8.4",
-    "valtio": "^1.7.4",
+    "valtio": "^1.7.5",
     "wonka": "^6.1.0",
-    "xstate": "^4.33.6",
+    "xstate": "^4.34.0",
     "zustand": "^4.1.3"
   },
   "resolutions": {
