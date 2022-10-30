@@ -19,9 +19,9 @@ import {
 import type { VersionObject } from './store'
 import type { ExtractAtomValue } from './typeUtils'
 
-type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
-
 const { use } = ReactExports
+
+type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 
 export function useAtomValue<Value>(
   atom: Atom<Promise<Value>>,
