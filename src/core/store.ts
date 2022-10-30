@@ -432,15 +432,20 @@ export const createStore = (
       onRejects.splice(0)
       setAtomValue(version, atom, value, dependencies, true)
     }
-    const reject = (reason: Reason) => {
+    const reject = (reason: Reason | typeof CANCELLED) => {
       if (cancelled) {
+        return
+      }
+      if (reason === CANCELLED) {
+        cancelPromise(promise)
+        cancel()
         return
       }
       if (isAtomState(reason)) {
         if (reason.status === PENDING) {
           reason.then(retry, retry)
         } else {
-          Promise.resolve().then(retry)
+          retry()
         }
         return
       }
@@ -465,18 +470,15 @@ export const createStore = (
       d: createReadDependencies(version, atomState?.d, dependencies),
       status: PENDING,
       then: (onFulfill, onReject) => {
-        if (nextAtomState.status === FULFILLED) {
+        if (cancelled) {
+          onReject(CANCELLED)
+        } else if (nextAtomState.status === FULFILLED) {
           onFulfill(nextAtomState.value)
         } else if (nextAtomState.status === REJECTED) {
           onReject(nextAtomState.reason)
         } else {
           onFulfills.push(onFulfill)
           onRejects.push(onReject)
-          if (cancelled) {
-            // TODO seems really bad
-            cancelled = false
-            retry()
-          }
         }
       },
       c: () => {
@@ -539,14 +541,10 @@ export const createStore = (
         // If a dependency's revision changed since this atom was last computed,
         // then we're out of date and need to recompute.
         if (
-          Array.from(atomState.d).every(([a, r]) => {
-            const aState = getAtomState(version, a)
-            return (
-              aState &&
-              aState.status !== PENDING && // not pending
-              aState.r === r // revision is equal to the last one
-            )
-          })
+          Array.from(atomState.d).every(
+            // revision is equal to the last one
+            ([a, r]) => getAtomState(version, a)?.r === r
+          )
         ) {
           if (!isValidAtomState(atomState)) {
             return { ...atomState, y: true }
@@ -671,11 +669,7 @@ export const createStore = (
       // aState.status === PENDING
       if (options?.unstable_promise) {
         return new Promise((resolve) => {
-          const retry = (x: unknown) => {
-            // TODO too hacky
-            if (x === CANCELLED) {
-              readAtomState(version, a, true)
-            }
+          const retry = () => {
             // FIXME this is very very hacky
             setTimeout(() => resolve(writeGetter(a, options) as any))
           }
