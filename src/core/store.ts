@@ -285,6 +285,9 @@ export const createStore = (
       if (!pendingMap.has(atom)) {
         pendingMap.set(atom, prevAtomState)
       }
+      if (prevAtomState?.status === PENDING) {
+        prevAtomState.c() // cancel promise
+      }
     }
   }
 
@@ -358,9 +361,6 @@ export const createStore = (
       value,
     }
     setAtomState(version, atom, nextAtomState)
-    if (atomState?.status === PENDING) {
-      atomState.c() // cancel promise
-    }
     return nextAtomState
   }
 
@@ -380,9 +380,6 @@ export const createStore = (
       reason,
     }
     setAtomState(version, atom, nextAtomState)
-    if (atomState?.status === PENDING) {
-      atomState.c() // cancel promise
-    }
     return nextAtomState
   }
 
@@ -398,6 +395,7 @@ export const createStore = (
     const cancel = () => {
       if (!cancelled && nextAtomState.status === PENDING) {
         cancelled = true
+        onFulfills.splice(0)
         onRejects.splice(0).forEach((fn) => fn(CANCELLED))
       }
     }
@@ -430,8 +428,9 @@ export const createStore = (
       ;(nextAtomState as any).value = value
       delete (nextAtomState as any).then
       delete (nextAtomState as any).c
-      setAtomValue(version, atom, value, dependencies, true)
       onFulfills.splice(0).forEach((fn) => fn(value))
+      onRejects.splice(0)
+      setAtomValue(version, atom, value, dependencies, true)
     }
     const reject = (reason: Reason) => {
       if (cancelled) {
@@ -453,8 +452,9 @@ export const createStore = (
       ;(nextAtomState as any).reason = reason
       delete (nextAtomState as any).then
       delete (nextAtomState as any).c
-      setAtomReadError(version, atom, reason, dependencies)
+      onFulfills.splice(0)
       onRejects.splice(0).forEach((fn) => fn(reason))
+      setAtomReadError(version, atom, reason, dependencies)
     }
     promise.then(resolve, reject)
     const atomState = getAtomState(version, atom)
@@ -465,15 +465,18 @@ export const createStore = (
       d: createReadDependencies(version, atomState?.d, dependencies),
       status: PENDING,
       then: (onFulfill, onReject) => {
-        if (cancelled) {
-          onReject(CANCELLED)
-        } else if (nextAtomState.status === FULFILLED) {
+        if (nextAtomState.status === FULFILLED) {
           onFulfill(nextAtomState.value)
         } else if (nextAtomState.status === REJECTED) {
           onReject(nextAtomState.reason)
         } else {
           onFulfills.push(onFulfill)
           onRejects.push(onReject)
+          if (cancelled) {
+            // TODO seems really bad
+            cancelled = false
+            retry()
+          }
         }
       },
       c: () => {
@@ -482,9 +485,6 @@ export const createStore = (
       },
     }
     setAtomState(version, atom, nextAtomState)
-    if (atomState?.status === PENDING) {
-      atomState.c() // cancel promise
-    }
     return nextAtomState
   }
 
@@ -499,9 +499,6 @@ export const createStore = (
         y: false, // invalidated
       }
       setAtomState(version, atom, nextAtomState)
-      if (atomState.status === PENDING) {
-        atomState.c() // cancel promise
-      }
     } else if (__DEV__) {
       console.warn('[Bug] could not invalidate non existing atom', atom)
     }
@@ -673,9 +670,17 @@ export const createStore = (
       }
       // aState.status === PENDING
       if (options?.unstable_promise) {
-        return new Promise((r) => aState.then(r, r)).then(() =>
-          writeGetter(a, options)
-        )
+        return new Promise((resolve) => {
+          const retry = (x: unknown) => {
+            // TODO too hacky
+            if (x === CANCELLED) {
+              readAtomState(version, a, true)
+            }
+            // FIXME this is very very hacky
+            setTimeout(() => resolve(writeGetter(a, options) as any))
+          }
+          aState.then(retry, retry)
+        })
       }
       if (__DEV__) {
         console.info(
