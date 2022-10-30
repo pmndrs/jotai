@@ -391,16 +391,20 @@ export const createStore = (
   ): AtomState<Value> => {
     const onFulfills: ((value: Awaited<Value>) => void)[] = []
     const onRejects: ((error: Reason | typeof CANCELLED) => void)[] = []
-    let cancelled = false
+    let settled = false
     const cancel = () => {
-      if (!cancelled && nextAtomState.status === PENDING) {
-        cancelled = true
+      if (!settled) {
+        if (__DEV__ && nextAtomState.status !== PENDING) {
+          throw new Error('should not reach here')
+        }
+        settled = true
+        cancelPromise(promise)
         onFulfills.splice(0)
         onRejects.splice(0).forEach((fn) => fn(CANCELLED))
       }
     }
     const retry = () => {
-      if (cancelled) {
+      if (settled) {
         return
       }
       const atomState = readAtomState(version, atom, true)
@@ -417,12 +421,14 @@ export const createStore = (
       }
     }
     const resolve = (value: Awaited<Value>) => {
-      if (cancelled) {
+      if (settled) {
         return
       }
       if (__DEV__ && nextAtomState.status !== PENDING) {
         throw new Error('should not reach here')
       }
+      settled = true
+      setAtomValue(version, atom, value, dependencies, true)
       // FIXME better partially mutable typing?
       ;(nextAtomState as any).status = FULFILLED
       ;(nextAtomState as any).value = value
@@ -430,15 +436,13 @@ export const createStore = (
       delete (nextAtomState as any).c
       onFulfills.splice(0).forEach((fn) => fn(value))
       onRejects.splice(0)
-      setAtomValue(version, atom, value, dependencies, true)
     }
     const reject = (reason: Reason | typeof CANCELLED) => {
-      if (cancelled) {
+      if (settled) {
         return
       }
       if (reason === CANCELLED) {
-        cancelPromise(promise)
-        cancel()
+        retry()
         return
       }
       if (isAtomState(reason)) {
@@ -452,6 +456,8 @@ export const createStore = (
       if (__DEV__ && nextAtomState.status !== PENDING) {
         throw new Error('should not reach here')
       }
+      settled = true
+      setAtomReadError(version, atom, reason, dependencies)
       // FIXME better partially mutable typing?
       ;(nextAtomState as any).status = REJECTED
       ;(nextAtomState as any).reason = reason
@@ -459,7 +465,6 @@ export const createStore = (
       delete (nextAtomState as any).c
       onFulfills.splice(0)
       onRejects.splice(0).forEach((fn) => fn(reason))
-      setAtomReadError(version, atom, reason, dependencies)
     }
     promise.then(resolve, reject)
     const atomState = getAtomState(version, atom)
@@ -470,21 +475,18 @@ export const createStore = (
       d: createReadDependencies(version, atomState?.d, dependencies),
       status: PENDING,
       then: (onFulfill, onReject) => {
-        if (cancelled) {
-          onReject(CANCELLED)
-        } else if (nextAtomState.status === FULFILLED) {
+        if (nextAtomState.status === FULFILLED) {
           onFulfill(nextAtomState.value)
         } else if (nextAtomState.status === REJECTED) {
           onReject(nextAtomState.reason)
+        } else if (settled) {
+          onReject(CANCELLED)
         } else {
           onFulfills.push(onFulfill)
           onRejects.push(onReject)
         }
       },
-      c: () => {
-        cancelPromise(promise)
-        cancel()
-      },
+      c: cancel,
     }
     setAtomState(version, atom, nextAtomState)
     return nextAtomState
@@ -669,10 +671,7 @@ export const createStore = (
       // aState.status === PENDING
       if (options?.unstable_promise) {
         return new Promise((resolve) => {
-          const retry = () => {
-            // FIXME this is very very hacky
-            setTimeout(() => resolve(writeGetter(a, options) as any))
-          }
+          const retry = () => resolve(writeGetter(a, options) as any)
           aState.then(retry, retry)
         })
       }
