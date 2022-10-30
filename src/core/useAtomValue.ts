@@ -33,6 +33,17 @@ export function useAtomValue<AtomType extends Atom<any>>(
 ): Awaited<ExtractAtomValue<AtomType>>
 
 export function useAtomValue<Value>(atom: Atom<Value>, scope?: Scope) {
+  try {
+    return useAtomValueInternal(atom, scope)
+  } catch (e) {
+    if (use && e instanceof Promise) {
+      use(e)
+    }
+    throw e
+  }
+}
+
+function useAtomValueInternal<Value>(atom: Atom<Value>, scope?: Scope) {
   const ScopeContext = getScopeContext(scope)
   const scopeContainer = useContext(ScopeContext)
   const { s: store, v: versionFromProvider } = scopeContainer
@@ -48,9 +59,6 @@ export function useAtomValue<Value>(atom: Atom<Value>, scope?: Scope) {
       throw atomState.e // read error
     }
     if ('p' in atomState) {
-      if (use) {
-        use(atomState.p)
-      }
       throw atomState.p // read promise
     }
     if ('v' in atomState) {
