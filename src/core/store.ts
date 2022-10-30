@@ -402,9 +402,12 @@ export const createStore = (
       }
     }
     const retry = () => {
+      if (cancelled) {
+        return
+      }
       const atomState = readAtomState(version, atom, true)
       if (atomState.status === PENDING) {
-        atomState.then(resolve, retry)
+        atomState.then(resolve, reject)
       } else if (atomState.status === FULFILLED) {
         resolve(atomState.value)
       } else {
@@ -463,7 +466,7 @@ export const createStore = (
       status: PENDING,
       then: (onFulfill, onReject) => {
         if (cancelled) {
-          onRejects.splice(0).forEach((fn) => fn(CANCELLED))
+          onReject(CANCELLED)
         } else if (nextAtomState.status === FULFILLED) {
           onFulfill(nextAtomState.value)
         } else if (nextAtomState.status === REJECTED) {
@@ -670,24 +673,9 @@ export const createStore = (
       }
       // aState.status === PENDING
       if (options?.unstable_promise) {
-        return new Promise<Awaited<V>>((resolve, reject) => {
-          const onReject = (reason: unknown) => {
-            if (reason === CANCELLED) {
-              const aState = readAtomState(version, a, true)
-              if (aState.status === FULFILLED) {
-                return aState.value
-              }
-              if (aState.status === REJECTED) {
-                throw aState
-              }
-              // aState.status === PENDING
-              aState.then(resolve, onReject)
-            } else {
-              reject(reason)
-            }
-          }
-          aState.then(resolve, onReject)
-        })
+        return new Promise((r) => aState.then(r, r)).then(() =>
+          writeGetter(a, options)
+        )
       }
       if (__DEV__) {
         console.info(
