@@ -1,10 +1,19 @@
-import { useContext, useDebugValue, useEffect, useReducer } from 'react'
+/// <reference types="react/experimental" />
+
+import ReactExports, {
+  useContext,
+  useDebugValue,
+  useEffect,
+  useReducer,
+} from 'react'
 import type { Reducer } from 'react'
 import type { Atom } from './atom'
 import { getScopeContext } from './contexts'
 import { COMMIT_ATOM, READ_ATOM, SUBSCRIBE_ATOM } from './store'
 import type { VersionObject } from './store'
 import type { ExtractAtomValue } from './typeUtils'
+
+const { use } = ReactExports
 
 type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 
@@ -39,6 +48,9 @@ export function useAtomValue<Value>(atom: Atom<Value>, scope?: Scope) {
       throw atomState.e // read error
     }
     if ('p' in atomState) {
+      if (use) {
+        use(atomState.p)
+      }
       throw atomState.p // read promise
     }
     if ('v' in atomState) {
