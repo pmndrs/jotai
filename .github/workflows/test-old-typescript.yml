@@ -52,6 +52,10 @@ jobs:
           yarn json -I -f package.json -e "this.resolutions['@types/jest']='26.0.14'; this.resolutions['pretty-format']='25.5.0'; this.resolutions['@types/prettier']='2.4.2';"
           yarn add -D @types/jest@26.0.14 pretty-format@25.5.0 @types/prettier@2.4.2
           rm -r tests/query tests/urql tests/optics tests/xstate tests/valtio tests/zustand tests/utils/atomWithObservable.* tests/utils/waitForAll.*
+      - name: Ignore Async API tests for Older TS
+        if: ${{ matrix.typescript == '3.7.5' }}
+        run: |
+          rm -r tests/vanilla tests/react
       - name: Test ${{ matrix.typescript }}
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
