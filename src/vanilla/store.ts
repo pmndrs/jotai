@@ -275,7 +275,6 @@ export const createStore = (
         const promise = new Promise<Awaited<Value>>((resolve, reject) => {
           value.then(resolve, reject).finally(() => {
             setAtomValue(atom, value, depSet)
-            flushPending()
           })
           continuePromise = (next) => resolve(next)
         })
