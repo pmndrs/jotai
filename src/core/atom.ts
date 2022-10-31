@@ -1,3 +1,5 @@
+import { unstable_atom as vanillaAtom } from 'jotai/vanilla'
+
 type Getter = {
   <Value>(atom: Atom<Value | Promise<Value>>): Value
   <Value>(atom: Atom<Promise<Value>>): Value
@@ -74,8 +76,6 @@ type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
 export type PrimitiveAtom<Value> = WritableAtom<Value, SetStateAction<Value>>
 
-let keyCount = 0 // global key count for all atoms
-
 // writable derived atom
 export function atom<Value, Update, Result extends void | Promise<void> = void>(
   read: Read<Value>,
@@ -99,24 +99,6 @@ export function atom<Value>(
   initialValue: Value
 ): PrimitiveAtom<Value> & WithInitialValue<Value>
 
-export function atom<Value, Update, Result extends void | Promise<void>>(
-  read: Value | Read<Value>,
-  write?: Write<Update, Result>
-) {
-  const key = `atom${++keyCount}`
-  const config = {
-    toString: () => key,
-  } as WritableAtom<Value, Update, Result> & { init?: Value }
-  if (typeof read === 'function') {
-    config.read = read as Read<Value>
-  } else {
-    config.init = read
-    config.read = (get) => get(config)
-    config.write = (get, set, update) =>
-      set(config, typeof update === 'function' ? update(get(config)) : update)
-  }
-  if (write) {
-    config.write = write
-  }
-  return config
+export function atom(read: any, write?: any) {
+  return vanillaAtom(read, write) as any
 }
