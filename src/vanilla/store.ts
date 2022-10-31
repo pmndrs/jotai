@@ -13,18 +13,22 @@ const hasInitialValue = <T extends Atom<AnyValue>>(
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
-const promiseAbortMap = new WeakMap<Promise<unknown>, () => void>()
+type CancelPromise = (next?: Promise<unknown>) => void
+const cancelPromiseMap = new WeakMap<Promise<unknown>, CancelPromise>()
 
-const registerPromiseAbort = (promise: Promise<unknown>, abort: () => void) => {
-  promiseAbortMap.set(promise, abort)
-  promise.finally(() => promiseAbortMap.delete(promise))
+const registerCancelPromise = (
+  promise: Promise<unknown>,
+  cancel: CancelPromise
+) => {
+  cancelPromiseMap.set(promise, cancel)
+  promise.finally(() => cancelPromiseMap.delete(promise))
 }
 
-const cancelPromise = (promise: Promise<unknown>) => {
-  const abort = promiseAbortMap.get(promise)
-  if (abort) {
-    promiseAbortMap.delete(promise)
-    abort()
+const cancelPromise = (promise: Promise<unknown>, next?: Promise<unknown>) => {
+  const cancel = cancelPromiseMap.get(promise)
+  if (cancel) {
+    cancelPromiseMap.delete(promise)
+    cancel(next)
   }
 }
 
@@ -142,7 +146,13 @@ export const createStore = (
       'v' in prevAtomState &&
       prevAtomState.v instanceof Promise
     ) {
-      cancelPromise(prevAtomState.v)
+      const next =
+        'v' in atomState
+          ? atomState.v instanceof Promise
+            ? atomState.v
+            : Promise.resolve(atomState.v)
+          : Promise.reject(atomState.e)
+      cancelPromise(prevAtomState.v, next)
     }
   }
 
@@ -261,11 +271,21 @@ export const createStore = (
     try {
       const value = atom.read(getter, { signal: controller.signal })
       if (value instanceof Promise) {
-        registerPromiseAbort(value, () => controller.abort())
-        value.finally(() => {
-          setAtomValue(atom, value, depSet)
-          flushPending()
+        let continuePromise: (next: Promise<Awaited<Value>>) => void
+        const promise = new Promise<Awaited<Value>>((resolve, reject) => {
+          value.then(resolve, reject).finally(() => {
+            setAtomValue(atom, value, depSet)
+            flushPending()
+          })
+          continuePromise = (next) => resolve(next)
         })
+        registerCancelPromise(promise, (next) => {
+          if (next) {
+            continuePromise(next as Promise<Awaited<Value>>)
+          }
+          controller.abort()
+        })
+        return setAtomValue(atom, promise as Value, depSet)
       }
       return setAtomValue(atom, value, depSet)
     } catch (error) {
@@ -564,4 +584,13 @@ export const createStore = (
   }
 }
 
-export type Store = ReturnType<typeof createStore>
+type Store = ReturnType<typeof createStore>
+
+let defaultStore: Store | undefined
+
+export const getDefaultStore = () => {
+  if (!defaultStore) {
+    defaultStore = createStore()
+  }
+  return defaultStore
+}

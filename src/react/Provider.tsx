@@ -1,18 +1,13 @@
 import { createContext, useContext, useRef } from 'react'
 import type { ReactNode } from 'react'
-import { createStore } from '../vanilla/store'
-import type { Store } from '../vanilla/store'
+import {
+  unstable_createStore as createStore,
+  unstable_getDeaultStore as getDefaultStore,
+} from 'jotai/vanilla'
+
+type Store = ReturnType<typeof createStore>
 
 const StoreContext = createContext<Store | undefined>(undefined)
-
-let defaultStore: Store | undefined
-
-const getDefaultStore = () => {
-  if (!defaultStore) {
-    defaultStore = createStore()
-  }
-  return defaultStore
-}
 
 type Options = {
   store?: Store
