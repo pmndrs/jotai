@@ -16,18 +16,20 @@ const useCommitCount = () => {
 
 it('does not show async stale result', async () => {
   const countAtom = atom(0)
+  let resolve2 = () => {}
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve2 = r))
     return get(countAtom)
   })
 
   const committed: number[] = []
 
+  let resolve1 = () => {}
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     const onClick = async () => {
       setCount((c) => c + 1)
-      await new Promise((r) => setTimeout(r, 10))
+      await new Promise<void>((r) => (resolve1 = r))
       setCount((c) => c + 1)
     }
     return (
@@ -58,15 +60,18 @@ it('does not show async stale result', async () => {
   )
 
   await findByText('loading')
+  resolve1()
+  resolve2()
   await waitFor(() => {
     getByText('count: 0')
     getByText('delayedCount: 0')
     expect(committed).toEqual([0])
   })
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve1()
+  resolve2()
   await waitFor(() => {
     getByText('count: 2')
     getByText('delayedCount: 2')
@@ -76,9 +81,10 @@ it('does not show async stale result', async () => {
 
 it('does not show async stale result on derived atom', async () => {
   const countAtom = atom(0)
+  let resolve = () => {}
   const asyncAlwaysNullAtom = atom(async (get) => {
     get(countAtom)
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return null
   })
   const derivedAtom = atom((get) => get(asyncAlwaysNullAtom))
@@ -123,6 +129,7 @@ it('does not show async stale result on derived atom', async () => {
     getByText('loading async value')
     getByText('loading derived value')
   })
+  resolve()
   await waitFor(() => {
     expect(queryByText('loading async value')).toBeNull()
     expect(queryByText('loading derived value')).toBeNull()
@@ -132,13 +139,13 @@ it('does not show async stale result on derived atom', async () => {
     getByText('derived value: null')
   })
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 1')
     getByText('loading async value')
     getByText('loading derived value')
   })
+  resolve()
   await waitFor(() => {
     expect(queryByText('loading async value')).toBeNull()
     expect(queryByText('loading derived value')).toBeNull()
@@ -152,9 +159,10 @@ it('does not show async stale result on derived atom', async () => {
 it('works with async get with extra deps', async () => {
   const countAtom = atom(0)
   const anotherAtom = atom(-1)
+  let resolve = () => {}
   const asyncCountAtom = atom(async (get) => {
     get(anotherAtom)
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return get(countAtom)
   })
 
@@ -185,14 +193,15 @@ it('works with async get with extra deps', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await waitFor(() => {
     getByText('count: 0')
     getByText('delayedCount: 0')
   })
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await waitFor(() => {
     getByText('count: 1')
     getByText('delayedCount: 1')
@@ -201,9 +210,10 @@ it('works with async get with extra deps', async () => {
 
 it('reuses promises on initial read', async () => {
   let invokeCount = 0
+  let resolve = () => {}
   const asyncAtom = atom(async () => {
     invokeCount += 1
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return 'ready'
   })
 
@@ -224,17 +234,19 @@ it('reuses promises on initial read', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findAllByText('ready')
   expect(invokeCount).toBe(1)
 })
 
 it('uses multiple async atoms at once', async () => {
+  const resolve: (() => void)[] = []
   const someAtom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => resolve.push(r))
     return 'ready'
   })
   const someAtom2 = atom(async () => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => resolve.push(r))
     return 'ready2'
   })
 
@@ -261,13 +273,19 @@ it('uses multiple async atoms at once', async () => {
   )
 
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('ready ready2')
 })
 
 it('uses async atom in the middle of dependency chain', async () => {
   const countAtom = atom(0)
+  let resolve = () => {}
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return get(countAtom)
   })
   const delayedCountAtom = atom((get) => get(asyncCountAtom))
@@ -296,11 +314,12 @@ it('uses async atom in the middle of dependency chain', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0, delayed: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
-  // no loading
+  await findByText('loading')
+  resolve()
   await findByText('count: 1, delayed: 1')
 })
 
@@ -342,11 +361,9 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
 
   await findByText('count: 1')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('no child')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('count: 2')
 })
@@ -354,13 +371,14 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
 it('updates an async atom in child useEffect on remount', async () => {
   const toggleAtom = atom(true)
   const countAtom = atom(0)
+  const resolve: (() => void)[] = []
   const asyncCountAtom = atom(
     async (get) => {
-      await new Promise((r) => setTimeout(r, 1))
+      await new Promise<void>((r) => resolve.push(r))
       return get(countAtom)
     },
     async (get, set) => {
-      await new Promise((r) => setTimeout(r, 1))
+      await new Promise<void>((r) => resolve.push(r))
       set(countAtom, get(countAtom) + 1)
     }
   )
@@ -393,14 +411,22 @@ it('updates an async atom in child useEffect on remount', async () => {
     </>
   )
 
+  await findByText('loading')
+
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('count: 1')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('no child')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('count: 2')
 })
 
@@ -492,7 +518,6 @@ it('async get with another dep and useEffect on parent', async () => {
     getByText('async: 1')
   })
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 2')
@@ -502,11 +527,12 @@ it('async get with another dep and useEffect on parent', async () => {
 
 it('set promise atom value on write (#304)', async () => {
   const countAtom = atom(Promise.resolve(0))
+  let resolve = () => {}
   const asyncAtom = atom(null, (get, set, _arg) => {
     set(
       countAtom,
       Promise.resolve(get(countAtom)).then(
-        (c) => new Promise((r) => setTimeout(() => r(c + 1), 100))
+        (c) => new Promise((r) => (resolve = () => r(c + 1)))
       )
     )
   })
@@ -539,16 +565,17 @@ it('set promise atom value on write (#304)', async () => {
   await findByText('loading')
   await findByText('count: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('count: 1')
 })
 
 it('uses async atom double chain (#306)', async () => {
   const countAtom = atom(0)
+  let resolve = () => {}
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return get(countAtom)
   })
   const delayedCountAtom = atom(async (get) => {
@@ -579,17 +606,19 @@ it('uses async atom double chain (#306)', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0, delayed: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('count: 1, delayed: 1')
 })
 
 it('uses an async atom that depends on another async atom', async () => {
+  let resolve = () => {}
   const asyncAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     get(anotherAsyncAtom)
     return 1
   })
@@ -613,6 +642,7 @@ it('uses an async atom that depends on another async atom', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('num: 1')
 })
 
@@ -624,7 +654,6 @@ it('a derived atom from a newly created async atom (#351)', async () => {
       atomCache.set(
         n,
         atom(async () => {
-          await new Promise((r) => setTimeout(r, 100))
           return n + 10
         })
       )
@@ -659,12 +688,10 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   await findByText('loading')
   await findByText('derived: 11, commits: 1')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 12, commits: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 13, commits: 3')
@@ -673,11 +700,12 @@ it('a derived atom from a newly created async atom (#351)', async () => {
 it('Handles synchronously invoked async set (#375)', async () => {
   const loadingAtom = atom(false)
   const documentAtom = atom<string | undefined>(undefined)
+  let resolve = () => {}
   const loadDocumentAtom = atom(null, (_get, set) => {
     const fetch = async () => {
       set(loadingAtom, true)
-      const response = await new Promise<string>((resolve) =>
-        setTimeout(() => resolve('great document'), 100)
+      const response = await new Promise<string>(
+        (r) => (resolve = () => r('great document'))
       )
       set(documentAtom, response)
       set(loadingAtom, false)
@@ -711,13 +739,15 @@ it('Handles synchronously invoked async set (#375)', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('great document')
 })
 
 it('async write self atom', async () => {
+  let resolve = () => {}
   const countAtom = atom(0, async (get, set, _arg) => {
     set(countAtom, get(countAtom) + 1)
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise<void>((r) => (resolve = r))
     set(countAtom, -1)
   })
 
@@ -741,8 +771,8 @@ it('async write self atom', async () => {
 
   await findByText('count: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
+  resolve()
   await findByText('count: -1')
 })
 
@@ -774,7 +804,6 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
 
   await findByText('count: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
   await findByText('count: -1')
@@ -809,7 +838,6 @@ it('should override promise as atom value (#430)', async () => {
 
   await findByText('loading')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
 })
@@ -823,10 +851,10 @@ it('combine two promise atom values (#442)', async () => {
   const initAtom = atom(null, (_get, set) => {
     setTimeout(() => {
       set(count1Atom, Promise.resolve(1))
-    }, 100)
+    }, 1)
     setTimeout(() => {
       set(count2Atom, Promise.resolve(2))
-    }, 100)
+    }, 1)
   })
   initAtom.onMount = (init) => {
     init()
@@ -891,21 +919,22 @@ it('set two promise atoms at once', async () => {
 
   await findByText('loading')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('count: 3')
 })
 
 it('async write chain', async () => {
   const countAtom = atom(0)
+  let resolve1 = () => {}
   const asyncWriteAtom = atom(null, async (_get, set, _arg) => {
-    await new Promise((r) => setTimeout(r, 10))
+    await new Promise<void>((r) => (resolve1 = r))
     set(countAtom, 2)
   })
+  let resolve2 = () => {}
   const controlAtom = atom(null, async (_get, set, _arg) => {
     set(countAtom, 1)
     await set(asyncWriteAtom, null)
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise<void>((r) => (resolve2 = r))
     set(countAtom, 3)
   })
 
@@ -930,21 +959,23 @@ it('async write chain', async () => {
 
   await findByText('count: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
+  resolve1()
   await findByText('count: 2')
+  resolve2()
   await findByText('count: 3')
 })
 
 it('async atom double chain without setTimeout (#751)', async () => {
   const enabledAtom = atom(false)
+  let resolve = () => {}
   const asyncAtom = atom(async (get) => {
     const enabled = get(enabledAtom)
     if (!enabled) {
       return 'init'
     }
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return 'ready'
   })
   const derivedAsyncAtom = atom(async (get) => get(asyncAtom))
@@ -983,28 +1014,29 @@ it('async atom double chain without setTimeout (#751)', async () => {
 
   await findByText('async: init')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('async: ready')
 })
 
 it('async atom double chain with setTimeout', async () => {
   const enabledAtom = atom(false)
+  const resolve: (() => void)[] = []
   const asyncAtom = atom(async (get) => {
     const enabled = get(enabledAtom)
     if (!enabled) {
       return 'init'
     }
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => resolve.push(r))
     return 'ready'
   })
   const derivedAsyncAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => resolve.push(r))
     return get(asyncAtom)
   })
   const anotherAsyncAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => resolve.push(r))
     return get(derivedAsyncAtom)
   })
 
@@ -1039,11 +1071,15 @@ it('async atom double chain with setTimeout', async () => {
     </StrictMode>
   )
 
+  resolve.splice(0).forEach((fn) => fn())
+  await findByText('loading')
+
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('async: init')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('async: ready')
 })
 
@@ -1051,6 +1087,7 @@ it('update unmounted async atom with intermediate atom', async () => {
   const enabledAtom = atom(true)
   const countAtom = atom(1)
 
+  const resolve: (() => void)[] = []
   const intermediateAtom = atom((get) => {
     const count = get(countAtom)
     const enabled = get(enabledAtom)
@@ -1058,7 +1095,7 @@ it('update unmounted async atom with intermediate atom', async () => {
       if (!enabled) {
         return -1
       }
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       return count * 2
     })
     return tmpAtom
@@ -1096,16 +1133,16 @@ it('update unmounted async atom with intermediate atom', async () => {
   )
 
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('toggle enabled'))
   fireEvent.click(getByText('increment count'))
   await findByText('derived: -1')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('toggle enabled'))
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 4')
 })
 

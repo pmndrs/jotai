@@ -1,10 +1,13 @@
 import { useCallback } from 'react'
-import type { WritableAtom } from '../vanilla/atom'
-import type { Store } from '../vanilla/store'
-import type { ExtractAtomArgs, ExtractAtomResult } from '../vanilla/typeUtils'
+import type {
+  ExtractAtomArgs,
+  ExtractAtomResult,
+  WritableAtom,
+} from 'jotai/vanilla'
 import { useStore } from './Provider'
 
 type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
+type Store = ReturnType<typeof useStore>
 
 type Options = {
   store?: Store

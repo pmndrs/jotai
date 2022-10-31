@@ -1,14 +1,16 @@
-import type { Atom, WritableAtom } from '../vanilla/atom'
-import type { Store } from '../vanilla/store'
 import type {
+  Atom,
   ExtractAtomArgs,
   ExtractAtomResult,
   ExtractAtomValue,
-} from '../vanilla/typeUtils'
+  WritableAtom,
+} from 'jotai/vanilla'
+import { useStore } from './Provider'
 import { useAtomValue } from './useAtomValue'
 import { useSetAtom } from './useSetAtom'
 
 type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
+type Store = ReturnType<typeof useStore>
 
 type Options = {
   store?: Store

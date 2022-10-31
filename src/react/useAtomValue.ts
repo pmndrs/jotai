@@ -2,10 +2,10 @@
 
 import ReactExports, { useDebugValue, useEffect, useReducer } from 'react'
 import type { ReducerWithoutAction } from 'react'
-import type { Atom } from '../vanilla/atom'
-import type { Store } from '../vanilla/store'
-import type { ExtractAtomValue } from '../vanilla/typeUtils'
+import type { Atom, ExtractAtomValue } from 'jotai/vanilla'
 import { useStore } from './Provider'
+
+type Store = ReturnType<typeof useStore>
 
 const isPromise = (x: unknown): x is Promise<unknown> => x instanceof Promise
 
