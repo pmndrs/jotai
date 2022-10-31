@@ -29,16 +29,12 @@ const cancelPromise = (promise: Promise<unknown>) => {
 }
 
 /**
- * A value to indicate that atom is self dependent
- */
-const SELF = 'SELF'
-
-/**
- * Maps from a dependency to the dependency's atom state when it was last read.
+ * Immutable map from a dependency to the dependency's atom state
+ * when it was last read.
  * We can skip recomputation of an atom by comparing the atom state
  * of each dependency to that dependencies's current revision.
  */
-type Dependencies = Map<AnyAtom, AtomState | typeof SELF>
+type Dependencies = Map<AnyAtom, AtomState>
 
 /**
  * Immutable atom state,
@@ -150,15 +146,41 @@ export const createStore = (
     }
   }
 
+  const updateDependencies = <Value>(
+    atom: Atom<Value>,
+    nextAtomState: AtomState<Value>,
+    depSet: Set<AnyAtom>
+  ): void => {
+    const dependencies: Dependencies = new Map()
+    let changed = false
+    depSet.forEach((a) => {
+      const aState = a === atom ? nextAtomState : getAtomState(a)
+      if (aState) {
+        dependencies.set(a, aState)
+        if (nextAtomState.d.get(a) !== aState) {
+          changed = true
+        }
+      } else if (__DEV__) {
+        console.warn('[Bug] atom state not found')
+      }
+    })
+    if (changed || nextAtomState.d.size !== dependencies.size) {
+      nextAtomState.d = dependencies
+    }
+  }
+
   const setAtomValue = <Value>(
     atom: Atom<Value>,
     value: Value,
-    dependencies?: Dependencies
+    depSet?: Set<AnyAtom>
   ): AtomState<Value> => {
     const prevAtomState = getAtomState(atom)
     const nextAtomState: AtomState<Value> = {
-      d: dependencies || prevAtomState?.d || new Map(),
+      d: prevAtomState?.d || new Map(),
       v: value,
+    }
+    if (depSet) {
+      updateDependencies(atom, nextAtomState, depSet)
     }
     if (
       prevAtomState &&
@@ -176,12 +198,15 @@ export const createStore = (
   const setAtomError = <Value>(
     atom: Atom<Value>,
     error: AnyError,
-    dependencies?: Dependencies
+    depSet?: Set<AnyAtom>
   ): AtomState<Value> => {
     const prevAtomState = getAtomState(atom)
     const nextAtomState: AtomState<Value> = {
-      d: dependencies || prevAtomState?.d || new Map(),
+      d: prevAtomState?.d || new Map(),
       e: error,
+    }
+    if (depSet) {
+      updateDependencies(atom, nextAtomState, depSet)
     }
     if (
       prevAtomState &&
@@ -215,17 +240,12 @@ export const createStore = (
       }
     }
     // Compute a new state for this atom.
-    const dependencies: Dependencies = new Map()
+    const depSet = new Set<AnyAtom>()
     const controller = new AbortController()
     const getter: Getter = <V>(a: Atom<V>) => {
-      let aState: AtomState<V> | undefined
-      if ((a as AnyAtom) === atom) {
-        aState = getAtomState(a)
-        dependencies.set(a, SELF)
-      } else {
-        aState = readAtomState(a)
-        dependencies.set(a, aState)
-      }
+      depSet.add(a)
+      const aState =
+        (a as AnyAtom) === atom ? getAtomState(a) : readAtomState(a)
       if (aState) {
         if ('e' in aState) {
           throw aState.e
@@ -242,10 +262,14 @@ export const createStore = (
       const value = atom.read(getter, { signal: controller.signal })
       if (value instanceof Promise) {
         registerPromiseAbort(value, () => controller.abort())
+        value.finally(() => {
+          setAtomValue(atom, value, depSet)
+          flushPending()
+        })
       }
-      return setAtomValue(atom, value, dependencies)
+      return setAtomValue(atom, value, depSet)
     } catch (error) {
-      return setAtomError(atom, error, dependencies)
+      return setAtomError(atom, error, depSet)
     }
   }
 
