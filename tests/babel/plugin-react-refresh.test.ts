@@ -169,9 +169,11 @@ it('Should handle atoms returned from functions (#891)', () => {
 
 it('Should handle custom atom names', () => {
   expect(
-    transform(`const mySpecialThing = atom(0);`, '/src/atoms/index.ts', [
-      'mySpecialThing',
-    ])
+    transform(
+      `const mySpecialThing = myCustomAtom(0);`,
+      '/src/atoms/index.ts',
+      ['myCustomAtom']
+    )
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),
@@ -183,6 +185,6 @@ it('Should handle custom atom names', () => {
         return inst;
       }
     };
-    const mySpecialThing = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/mySpecialThing", atom(0));"
+    const mySpecialThing = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/mySpecialThing", myCustomAtom(0));"
   `)
 })
