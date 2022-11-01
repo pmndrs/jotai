@@ -1,7 +1,7 @@
 import { StrictMode, Suspense, useEffect, useTransition } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { getTestProvider } from './testUtils'
+import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 

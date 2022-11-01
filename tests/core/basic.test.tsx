@@ -11,7 +11,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react'
 import { unstable_batchedUpdates } from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { PrimitiveAtom, WritableAtom } from 'jotai'
-import { StrictModeUnlessVersionedWrite, getTestProvider } from './testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 

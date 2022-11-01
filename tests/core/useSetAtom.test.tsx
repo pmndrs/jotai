@@ -2,7 +2,7 @@ import { StrictMode, useEffect, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useSetAtom } from 'jotai'
-import { getTestProvider } from './testUtils'
+import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 

@@ -1,7 +1,7 @@
 import { StrictMode, Suspense, useState } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
-import { StrictModeUnlessVersionedWrite, getTestProvider } from './testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
