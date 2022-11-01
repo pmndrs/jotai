@@ -140,7 +140,6 @@ it('does not show async stale result on derived atom', async () => {
   })
 
   fireEvent.click(getByText('button'))
-  resolve()
   await waitFor(() => {
     getByText('count: 1')
     getByText('loading async value')
@@ -423,6 +422,8 @@ it('updates an async atom in child useEffect on remount', async () => {
   await findByText('no child')
 
   fireEvent.click(getByText('button'))
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
   resolve.splice(0).forEach((fn) => fn())
   await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
   resolve.splice(0).forEach((fn) => fn())
