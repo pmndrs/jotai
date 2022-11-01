@@ -470,4 +470,46 @@ describe('atomWithHash', () => {
     await findByText('visible')
     expect(window.location.hash).toEqual('')
   })
+
+  it('keeping current path', async () => {
+    const countAtom = atomWithHash('count', 1, { replaceState: true })
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
+    )
+
+    window.history.pushState(null, '', '/?q=foo')
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 2')
+    expect(window.location.pathname).toEqual('/')
+    expect(window.location.search).toEqual('?q=foo')
+    expect(window.location.hash).toEqual('#count=2')
+
+    window.history.pushState(null, '', '/another')
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/another')
+    })
+
+    window.history.back()
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/')
+      expect(window.location.search).toEqual('?q=foo')
+      expect(window.location.hash).toEqual('#count=2')
+    })
+  })
 })
