@@ -140,6 +140,7 @@ it('does not show async stale result on derived atom', async () => {
   })
 
   fireEvent.click(getByText('button'))
+  resolve()
   await waitFor(() => {
     getByText('count: 1')
     getByText('loading async value')
