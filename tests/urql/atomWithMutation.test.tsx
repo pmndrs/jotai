@@ -21,7 +21,7 @@ const generateClient = (error?: () => boolean) =>
               ? { error: new Error('fetch error') }
               : { data: { count: 1 } }
           ),
-          delay(100)
+          delay(100) // FIXME we want to use fake timer
         )
       )
       return source$

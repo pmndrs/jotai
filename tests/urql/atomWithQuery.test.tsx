@@ -26,7 +26,7 @@ const generateClient = (id: string | number, error?: () => boolean) =>
         fromValue(
           error?.() ? { error: new Error('fetch error') } : { data: { id } }
         ),
-        delay(100)
+        delay(100) // FIXME we want to use fake timer
       )
       if (typeof id === 'number') {
         ++id
@@ -39,7 +39,7 @@ const generateContinuousClient = () =>
   ({
     query: () =>
       pipe(
-        interval(100),
+        interval(100), // FIXME we want to use fake timer
         map((i: number) => ({ data: { count: i } }))
       ),
   } as unknown as Client)

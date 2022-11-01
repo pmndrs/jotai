@@ -22,10 +22,12 @@ const useRetryFromError = (scope?: symbol | string | number) => {
 }
 
 it('query basic test', async () => {
+  let resolve = () => {}
   const countAtom = atomWithQuery(() => ({
     queryKey: ['count1'],
     queryFn: async () => {
-      return await fakeFetch({ count: 0 }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      return fakeFetch({ count: 0 }, false)
     },
   }))
   const Counter = () => {
@@ -52,14 +54,17 @@ it('query basic test', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0')
 })
 
 it('query basic test with object instead of function', async () => {
+  let resolve = () => {}
   const countAtom = atomWithQuery({
     queryKey: ['count2'],
     queryFn: async () => {
-      return await fakeFetch({ count: 0 }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      return fakeFetch({ count: 0 }, false)
     },
   })
   const Counter = () => {
@@ -86,16 +91,19 @@ it('query basic test with object instead of function', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0')
 })
 
 it('query refetch', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
+  let resolve = () => {}
   const countAtom = atomWithQuery(() => ({
     queryKey: ['count3'],
     queryFn: async () => {
-      const response = await mockFetch({ count }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      const response = await mockFetch({ count }, false)
       ++count
       return response
     },
@@ -126,12 +134,13 @@ it('query refetch', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0')
   expect(mockFetch).toBeCalledTimes(1)
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
+  resolve()
   await findByText('count: 1')
   expect(mockFetch).toBeCalledTimes(2)
 })
@@ -139,10 +148,12 @@ it('query refetch', async () => {
 it('query loading', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
+  let resolve = () => {}
   const countAtom = atomWithQuery(() => ({
     queryKey: ['count4'],
     queryFn: async () => {
-      const response = await mockFetch({ count }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      const response = await mockFetch({ count }, false)
       ++count
       return response
     },
@@ -182,26 +193,29 @@ it('query loading', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
+  resolve()
   await findByText('count: 1')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
+  resolve()
   await findByText('count: 2')
 })
 
 it('query loading 2', async () => {
   let count = 0
   const mockFetch = jest.fn(fakeFetch)
+  let resolve = () => {}
   const countAtom = atomWithQuery(() => ({
     queryKey: ['count5'],
     queryFn: async () => {
-      const response = await mockFetch({ count }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      const response = await mockFetch({ count }, false)
       ++count
       return response
     },
@@ -232,27 +246,30 @@ it('query loading 2', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
+  resolve()
   await findByText('count: 1')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
   await findByText('loading')
+  resolve()
   await findByText('count: 2')
 })
 
 it('query no-loading with keepPreviousData', async () => {
   const dataAtom = atom(0)
   const mockFetch = jest.fn(fakeFetch)
+  let resolve = () => {}
   const countAtom = atomWithQuery((get) => ({
     queryKey: ['keepPreviousData', get(dataAtom)],
     keepPreviousData: true,
     queryFn: async () => {
-      const response = await mockFetch({ count: get(dataAtom) }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      const response = await mockFetch({ count: get(dataAtom) }, false)
       return response
     },
   }))
@@ -285,29 +302,32 @@ it('query no-loading with keepPreviousData', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
   await expect(() => findByText('loading')).rejects.toThrow()
+  resolve()
   await findByText('count: 1')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch'))
   await expect(() => findByText('loading')).rejects.toThrow()
+  resolve()
   await findByText('count: 2')
 })
 
 it('query with enabled', async () => {
   const slugAtom = atom<string | null>(null)
   const mockFetch = jest.fn(fakeFetch)
+  let resolve = () => {}
   const slugQueryAtom = atomWithQuery((get) => {
     const slug = get(slugAtom)
     return {
       enabled: !!slug,
       queryKey: ['disabled_until_value', slug],
       queryFn: async () => {
-        return await mockFetch({ slug: `hello-${slug}` }, false, 100)
+        await new Promise<void>((r) => (resolve = r))
+        return mockFetch({ slug: `hello-${slug}` }, false)
       },
     }
   })
@@ -346,9 +366,9 @@ it('query with enabled', async () => {
   await findByText('not enabled')
   expect(mockFetch).toHaveBeenCalledTimes(0)
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set slug'))
   await findByText('loading')
+  resolve()
   await findByText('slug: hello-world')
   expect(mockFetch).toHaveBeenCalledTimes(1)
 })
@@ -365,7 +385,8 @@ it('query with enabled 2', async () => {
       enabled: isEnabled,
       queryKey: ['enabled_toggle'],
       queryFn: async () => {
-        return await mockFetch({ slug: `hello-${slug}` }, false, 100)
+        await new Promise<void>((r) => setTimeout(r, 100)) // FIXME
+        return mockFetch({ slug: `hello-${slug}` }, false)
       },
     }
   })
@@ -413,19 +434,20 @@ it('query with enabled 2', async () => {
       </Provider>
     </StrictMode>
   )
+
+  await new Promise((r) => setTimeout(r, 100)) // FIXME
   await findByText('loading')
   expect(mockFetch).toHaveBeenCalledTimes(1)
   await findByText('slug: hello-first')
 
-  await new Promise((r) => setTimeout(r, 100))
+  await new Promise((r) => setTimeout(r, 100)) // FIXME
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
 
-  await new Promise((r) => setTimeout(r, 100))
   await findByText('slug: hello-first')
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
-  await new Promise((r) => setTimeout(r, 100))
+  await new Promise((r) => setTimeout(r, 100)) // FIXME
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
   expect(mockFetch).toHaveBeenCalledTimes(2)
@@ -433,13 +455,15 @@ it('query with enabled 2', async () => {
 
 it('query with enabled (#500)', async () => {
   const enabledAtom = atom(true)
+  let resolve = () => {}
   const countAtom = atomWithQuery((get) => {
     const enabled = get(enabledAtom)
     return {
       enabled,
       queryKey: ['count_500_issue'],
       queryFn: async () => {
-        return await fakeFetch({ count: 1 }, false, 100)
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ count: 1 }, false)
       },
     }
   })
@@ -481,14 +505,15 @@ it('query with enabled (#500)', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 1')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('toggle'))
+  resolve()
   await findByText('hidden')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('toggle'))
+  resolve()
   await findByText('count: 1')
 })
 
@@ -498,7 +523,7 @@ it('query with initialData test', async () => {
   const countAtom = atomWithQuery(() => ({
     queryKey: ['initialData_count1'],
     queryFn: async () => {
-      return await mockFetch({ count: 10 })
+      return mockFetch({ count: 10 })
     },
     initialData: { response: { count: 0 } },
     refetchInterval: 100,
@@ -535,10 +560,12 @@ it('query dependency test', async () => {
   const incrementAtom = atom(null, (_get, set) =>
     set(baseCountAtom, (c) => c + 1)
   )
+  let resolve = () => {}
   const countAtom = atomWithQuery((get) => ({
     queryKey: ['count_with_dependency', get(baseCountAtom)],
     queryFn: async () => {
-      return await fakeFetch({ count: get(baseCountAtom) }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      return fakeFetch({ count: get(baseCountAtom) }, false)
     },
   }))
 
@@ -572,11 +599,12 @@ it('query dependency test', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('increment'))
   await findByText('loading')
+  resolve()
   await findByText('count: 1')
 })
 
@@ -613,11 +641,13 @@ describe('error handling', () => {
   }
 
   it('can catch error in error boundary', async () => {
+    let resolve = () => {}
     const countAtom = atomWithQuery(() => ({
       queryKey: ['error test', 'count1'],
       retry: false,
       queryFn: async () => {
-        return await fakeFetch({ count: 0 }, true, 100)
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ count: 0 }, true)
       },
     }))
     const Counter = () => {
@@ -646,17 +676,24 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
+    resolve()
     await findByText('errored')
   })
 
   it('can recover from error', async () => {
     let count = 0
     let willThrowError = true
+    let resolve = () => {}
     const countAtom = atomWithQuery(() => ({
       queryKey: ['error test', 'count2'],
       retry: false,
       queryFn: () => {
-        const promise = fakeFetch({ count }, willThrowError, 200)
+        const promise = new Promise<{ response: { count: number } }>(
+          (res, rej) => {
+            const promise = fakeFetch({ count }, willThrowError)
+            resolve = () => promise.then(res, rej)
+          }
+        )
         willThrowError = !willThrowError
         ++count
         return promise
@@ -704,32 +741,35 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
+    resolve()
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    resolve()
     await findByText('count: 1')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('refetch'))
     await findByText('loading')
+    resolve()
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    resolve()
     await findByText('count: 3')
   })
 })
 
 it('query expected QueryCache test', async () => {
   const queryClient = new QueryClient()
+  let resolve = () => {}
   const countAtom = atomWithQuery(
     () => ({
       queryKey: ['count6'],
       queryFn: async () => {
-        return await fakeFetch({ count: 0 }, false, 100)
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ count: 0 }, false)
       },
     }),
     () => queryClient
@@ -759,6 +799,7 @@ it('query expected QueryCache test', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 0')
   expect(queryClient.getQueryCache().getAll().length).toBe(1)
 })

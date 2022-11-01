@@ -23,7 +23,7 @@ const generateClient = (id = 'default', error?: () => boolean) =>
   ({
     subscription: () =>
       pipe(
-        interval(100),
+        interval(100), // FIXME we want to use fake timer
         switchMap((i: number) => pipe(fromValue(i), delay(i > 2 ? 500 : 0))),
         map((i: number) =>
           error?.()
