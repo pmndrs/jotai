@@ -21,7 +21,7 @@ const registerCancelPromise = (
   cancel: CancelPromise
 ) => {
   cancelPromiseMap.set(promise, cancel)
-  promise.finally(() => cancelPromiseMap.delete(promise))
+  promise.catch(() => {}).finally(() => cancelPromiseMap.delete(promise))
 }
 
 const cancelPromise = (promise: Promise<unknown>, next?: Promise<unknown>) => {
@@ -288,7 +288,7 @@ export const createStore = (
         let continuePromise: (next: Promise<Awaited<Value>>) => void
         const promise = new Promise<Awaited<Value>>((resolve, reject) => {
           value.then(resolve, reject).finally(() => {
-            setAtomValue(atom, value, depSet)
+            setAtomValue(atom, promise as Value, depSet)
           })
           continuePromise = (next) => resolve(next)
         })

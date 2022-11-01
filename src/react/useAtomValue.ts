@@ -25,6 +25,7 @@ const use =
     } else if (promise.status === 'rejected') {
       throw promise.reason
     } else {
+      promise.status = 'pending'
       promise.then(
         (v) => {
           promise.status = 'fulfilled'
