@@ -1,7 +1,7 @@
 import { StrictMode, Suspense, useState } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
-import { StrictModeUnlessVersionedWrite, getTestProvider } from './testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
@@ -308,9 +308,10 @@ it('mount/unMount order', async () => {
 })
 
 it('mount/unmount test with async atom', async () => {
+  let resolve = () => {}
   const countAtom = atom(
     async () => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => (resolve = r))
       return 0
     },
     () => {}
@@ -350,6 +351,7 @@ it('mount/unmount test with async atom', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await waitFor(() => {
     getByText('count: 0')
     expect(onMountFn).toBeCalledTimes(1)
