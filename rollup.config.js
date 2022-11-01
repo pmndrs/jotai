@@ -51,15 +51,14 @@ function createDeclarationConfig(input, output) {
 function createESMConfig(input, output) {
   return {
     input,
-    output: [
-      { file: `${output}.js`, format: 'esm' },
-      { file: `${output}.mjs`, format: 'esm' },
-    ],
+    output: { file: output, format: 'esm' },
     external,
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: '(import.meta.env&&import.meta.env.MODE)!=="production"',
+        __DEV__: output.endsWith('.mjs')
+          ? '((import.meta.env&&import.meta.env.MODE)!=="production")'
+          : '(process.env.NODE_ENV!=="production")',
         preventAssignment: true,
       }),
       getEsbuild('node12'),
@@ -70,12 +69,12 @@ function createESMConfig(input, output) {
 function createCommonJSConfig(input, output) {
   return {
     input,
-    output: { file: `${output}.js`, format: 'cjs', exports: 'named' },
+    output: { file: `${output}.js`, format: 'cjs' },
     external,
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: 'process.env.NODE_ENV!=="production"',
+        __DEV__: '(process.env.NODE_ENV!=="production")',
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
@@ -90,7 +89,6 @@ function createUMDConfig(input, output, env) {
     output: {
       file: `${output}.${env}.js`,
       format: 'umd',
-      exports: 'named',
       name:
         c === 'index'
           ? 'jotai'
@@ -118,7 +116,6 @@ function createSystemConfig(input, output, env) {
     output: {
       file: `${output}.${env}.js`,
       format: 'system',
-      exports: 'named',
     },
     external,
     plugins: [
@@ -142,7 +139,8 @@ module.exports = function (args) {
   return [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
     createCommonJSConfig(`src/${c}.ts`, `dist/${c}`),
-    createESMConfig(`src/${c}.ts`, `dist/esm/${c}`),
+    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.js`),
+    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
     createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development'),
     createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production'),
     createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'development'),
