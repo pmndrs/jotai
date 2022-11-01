@@ -50,6 +50,7 @@ export function useAtomValue<AtomType extends Atom<any>>(
 ): Awaited<ExtractAtomValue<AtomType>> {
   type Value = ExtractAtomValue<AtomType>
   const store = useStore(options)
+
   const [[valueFromReducer, storeFromReducer, atomFromReducer], rerender] =
     useReducer<
       ReducerWithoutAction<readonly [Value, Store, AtomType]>,
@@ -57,7 +58,11 @@ export function useAtomValue<AtomType extends Atom<any>>(
     >(
       (prev) => {
         const nextValue = store.get(atom)
-        if (Object.is(prev[0], nextValue)) {
+        if (
+          Object.is(prev[0], nextValue) &&
+          prev[1] === store &&
+          prev[2] === atom
+        ) {
           return prev
         }
         return [nextValue, store, atom]
@@ -65,16 +70,19 @@ export function useAtomValue<AtomType extends Atom<any>>(
       undefined,
       () => [store.get(atom), store, atom]
     )
-  useEffect(() => {
-    const unsub = store.sub(atom, rerender)
-    rerender()
-    return unsub
-  }, [store, atom])
+
   let value = valueFromReducer
   if (storeFromReducer !== store || atomFromReducer !== atom) {
     rerender()
     value = store.get(atom)
   }
+
+  useEffect(() => {
+    const unsub = store.sub(atom, rerender)
+    rerender()
+    return unsub
+  }, [store, atom])
+
   useDebugValue(value)
   return isPromise(value) ? use(value) : (value as Awaited<Value>)
 }
