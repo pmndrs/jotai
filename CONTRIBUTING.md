@@ -16,7 +16,7 @@ If you would like to contribute by fixing an open issue or developing a new feat
 
 - Fork this repository.
 - Create a new feature branch based off the `main` branch.
-- Install dependencies by running `$ yarn`.
+- Install dependencies by running `$ yarn`. [(version 1)](https://classic.yarnpkg.com/lang/en/docs/install)
 - Create failing tests for your fix or new feature.
 - Implement your changes and confirm that all test are passing. You can run the tests continuously during development via the `$ yarn test:dev` command.
 - If you want to test it in a React project you can either use `$ yarn link` or `yalc` package.

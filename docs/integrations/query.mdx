@@ -66,7 +66,7 @@ const UserData = () => {
 }
 ```
 
-## `atomsWithTansackInfiniteQuery` usage
+## `atomsWithInfiniteQuery` usage
 
 `atomsWithInfiniteQuery` is very similar to `atomsWithQuery`, however it is for an `InfiniteQuery`, which is used for data that is meant to be paginated. You can [read more about Infinite Queries here](https://tanstack.com/query/v4/docs/guides/infinite-queries).
 
@@ -109,9 +109,9 @@ const UserData = () => {
 }
 ```
 
-## `atomsWithTansackMutation` usage
+## `atomsWithMutation` usage
 
-`atomsWithMutation` creates new atoms that implement a standard [`Mutatioin`](https://tanstack.com/query/v4/docs/guides/mutations) from TanStack Query.
+`atomsWithMutation` creates new atoms that implement a standard [`Mutation`](https://tanstack.com/query/v4/docs/guides/mutations) from TanStack Query.
 
 > Unlike queries, mutations are typically used to create/update/delete data or perform server side-effects.
 
@@ -179,7 +179,7 @@ const queryClient = new QueryClient()
 export const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      {/* This Provider initalization step is needed so that we reference the same
+      {/* This Provider initialisation step is needed so that we reference the same
       queryClient in both atomWithQuery and other parts of the app. Without this,
       our useQueryClient() hook will return a different QueryClient object */}
       <Provider initialValues={[[queryClientAtom, queryClient]]}>
