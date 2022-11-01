@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { unstable_useAtom as useAtom } from 'jotai/react'
-import { unstable_atom as atom } from 'jotai/vanilla'
+import { useAtom } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
 
 it('only relevant render function called (#156)', async () => {
   const count1Atom = atom(0)

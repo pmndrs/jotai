@@ -1,13 +1,7 @@
 import { StrictMode } from 'react'
 import { render, waitFor } from '@testing-library/react'
-import {
-  unstable_Provider as Provider,
-  unstable_useAtom as useAtom,
-} from 'jotai/react'
-import {
-  unstable_atom as atom,
-  unstable_createStore as createStore,
-} from 'jotai/vanilla'
+import { Provider, useAtom } from 'jotai/react'
+import { atom, createStore } from 'jotai/vanilla'
 
 it('uses initial values from provider', async () => {
   const countAtom = atom(1)

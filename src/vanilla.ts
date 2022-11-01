@@ -1,9 +1,10 @@
-export { atom as unstable_atom } from './vanilla/atom'
+/**
+ * These APIs are still unstable.
+ * See: https://github.com/pmndrs/jotai/discussions/1514
+ */
+export { atom } from './vanilla/atom'
 export type { Atom, WritableAtom, PrimitiveAtom } from './vanilla/atom'
-export {
-  createStore as unstable_createStore,
-  getDefaultStore as unstable_getDeaultStore,
-} from './vanilla/store'
+export { createStore, getDefaultStore } from './vanilla/store'
 export type {
   Getter,
   Setter,

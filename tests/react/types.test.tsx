@@ -1,6 +1,6 @@
 import { expectType } from 'ts-expect'
-import { unstable_useAtom as useAtom } from 'jotai/react'
-import { unstable_atom as atom } from 'jotai/vanilla'
+import { useAtom } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
 
 it('useAtom should return the correct types', () => {
   function Component() {

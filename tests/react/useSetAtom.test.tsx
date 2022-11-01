@@ -1,11 +1,8 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import {
-  unstable_useAtomValue as useAtomValue,
-  unstable_useSetAtom as useSetAtom,
-} from 'jotai/react'
-import { unstable_atom as atom } from 'jotai/vanilla'
+import { useAtomValue, useSetAtom } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)

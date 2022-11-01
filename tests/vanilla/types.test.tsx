@@ -1,5 +1,5 @@
 import { expectType } from 'ts-expect'
-import { unstable_atom as atom } from 'jotai/vanilla'
+import { atom } from 'jotai/vanilla'
 import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai/vanilla'
 
 it('atom() should return the correct types', () => {

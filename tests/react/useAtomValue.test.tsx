@@ -1,10 +1,7 @@
 import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import {
-  unstable_useAtomValue as useAtomValue,
-  unstable_useSetAtom as useSetAtom,
-} from 'jotai/react'
-import { unstable_atom as atom } from 'jotai/vanilla'
+import { useAtomValue, useSetAtom } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
 
 it('useAtomValue basic test', async () => {
   const countAtom = atom(0)

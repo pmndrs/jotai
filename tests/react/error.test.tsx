@@ -1,8 +1,8 @@
 import { Component, StrictMode, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { unstable_useAtom as useAtom } from 'jotai/react'
-import { unstable_atom as atom } from 'jotai/vanilla'
+import { useAtom } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
 
 const consoleError = console.error
 const errorMessages: string[] = []

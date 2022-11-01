@@ -1,9 +1,6 @@
 import { createContext, useContext, useRef } from 'react'
 import type { ReactNode } from 'react'
-import {
-  unstable_createStore as createStore,
-  unstable_getDeaultStore as getDefaultStore,
-} from 'jotai/vanilla'
+import { createStore, getDefaultStore } from 'jotai/vanilla'
 
 type Store = ReturnType<typeof createStore>
 

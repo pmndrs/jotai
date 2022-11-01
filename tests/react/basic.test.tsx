@@ -9,8 +9,8 @@ import {
 } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { unstable_batchedUpdates } from 'react-dom'
-import { unstable_useAtom as useAtom } from 'jotai/react'
-import { unstable_atom as atom } from 'jotai/vanilla'
+import { useAtom } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
 
 const IS_REACT18 = /^18\./.test(reactVersion)

@@ -1,4 +1,4 @@
-import { unstable_atom as vanillaAtom } from 'jotai/vanilla'
+import { atom as vanillaAtom } from 'jotai/vanilla'
 
 type Getter = {
   <Value>(atom: Atom<Value | Promise<Value>>): Value

@@ -1,4 +1,4 @@
-import { unstable_atom as atom } from 'jotai/vanilla'
+import { atom } from 'jotai/vanilla'
 
 it('creates atoms', () => {
   // primitive atom
