@@ -11,8 +11,9 @@ const describeWithUseTransition =
 describeWithUseTransition('useTransition', () => {
   it('no extra commit with useTransition (#1125)', async () => {
     const countAtom = atom(0)
+    let resolve = () => {}
     const delayedAtom = atom(async (get) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => (resolve = r))
       return get(countAtom)
     })
 
@@ -45,13 +46,13 @@ describeWithUseTransition('useTransition', () => {
       </>
     )
 
+    resolve()
     await findByText('delayed: 0')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
+    resolve()
     await findByText('delayed: 1')
 
-    await new Promise((r) => setTimeout(r, 100))
     expect(commited).toEqual([
       { pending: false, delayed: 0 },
       { pending: true, delayed: 0 },

@@ -46,8 +46,9 @@ it('simple sync get default', async () => {
 
 it('simple async get default', async () => {
   const count1Atom = atom(1)
+  let resolve = () => {}
   const count2Atom = atomWithDefault(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return get(count1Atom) * 2
   })
 
@@ -76,17 +77,20 @@ it('simple async get default', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count1: 1, count2: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button1'))
   await findByText('loading')
+  resolve()
   await findByText('count1: 2, count2: 4')
 
   fireEvent.click(getByText('button2'))
+  resolve()
   await findByText('count1: 2, count2: 5')
 
   fireEvent.click(getByText('button1'))
+  resolve()
   await findByText('count1: 3, count2: 5')
 })
 
@@ -137,8 +141,9 @@ it('refresh sync atoms to default values', async () => {
 
 it('refresh async atoms to default values', async () => {
   const count1Atom = atom(1)
+  let resolve = () => {}
   const count2Atom = atomWithDefault(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return get(count1Atom) * 2
   })
 
@@ -168,22 +173,27 @@ it('refresh async atoms to default values', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count1: 1, count2: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button1'))
   await findByText('loading')
+  resolve()
   await findByText('count1: 2, count2: 4')
 
   fireEvent.click(getByText('button2'))
+  resolve()
   await findByText('count1: 2, count2: 5')
 
   fireEvent.click(getByText('button1'))
+  resolve()
   await findByText('count1: 3, count2: 5')
 
   fireEvent.click(getByText('Refresh count2'))
+  resolve()
   await findByText('count1: 3, count2: 6')
 
   fireEvent.click(getByText('button1'))
+  resolve()
   await findByText('count1: 4, count2: 8')
 })

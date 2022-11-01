@@ -15,9 +15,10 @@ describeExceptFor1686('abortable atom test', () => {
   itSkipIfVersionedWrite('can abort with signal.aborted', async () => {
     const countAtom = atom(0)
     let abortedCount = 0
+    const resolve: (() => void)[] = []
     const derivedAtom = abortableAtom(async (get, { signal }) => {
       const count = get(countAtom)
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       if (signal.aborted) {
         ++abortedCount
       }
@@ -50,17 +51,18 @@ describeExceptFor1686('abortable atom test', () => {
     )
 
     await findByText('loading')
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 0')
     expect(abortedCount).toBe(0)
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 2')
     expect(abortedCount).toBe(1)
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 3')
     expect(abortedCount).toBe(1)
   })
@@ -68,13 +70,14 @@ describeExceptFor1686('abortable atom test', () => {
   itSkipIfVersionedWrite('can abort with event listener', async () => {
     const countAtom = atom(0)
     let abortedCount = 0
+    const resolve: (() => void)[] = []
     const derivedAtom = abortableAtom(async (get, { signal }) => {
       const count = get(countAtom)
       const callback = () => {
         ++abortedCount
       }
       signal.addEventListener('abort', callback)
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       signal.removeEventListener('abort', callback)
       return count
     })
@@ -105,17 +108,18 @@ describeExceptFor1686('abortable atom test', () => {
     )
 
     await findByText('loading')
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 0')
     expect(abortedCount).toBe(0)
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 2')
     expect(abortedCount).toBe(1)
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 3')
     expect(abortedCount).toBe(1)
   })
@@ -123,9 +127,10 @@ describeExceptFor1686('abortable atom test', () => {
   itSkipIfVersionedWrite('can abort on unmount', async () => {
     const countAtom = atom(0)
     let abortedCount = 0
+    const resolve: (() => void)[] = []
     const derivedAtom = abortableAtom(async (get, { signal }) => {
       const count = get(countAtom)
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       if (signal.aborted) {
         ++abortedCount
       }
@@ -160,13 +165,14 @@ describeExceptFor1686('abortable atom test', () => {
     )
 
     await findByText('loading')
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 0')
     expect(abortedCount).toBe(0)
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('toggle'))
     await findByText('hidden')
+    resolve.splice(0).forEach((fn) => fn())
     await waitFor(() => {
       expect(abortedCount).toBe(1)
     })
@@ -174,9 +180,10 @@ describeExceptFor1686('abortable atom test', () => {
 
   it('throws aborted error (like fetch)', async () => {
     const countAtom = atom(0)
+    const resolve: (() => void)[] = []
     const derivedAtom = abortableAtom(async (get, { signal }) => {
       const count = get(countAtom)
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       if (signal.aborted) {
         throw new Error('aborted')
       }
@@ -209,15 +216,16 @@ describeExceptFor1686('abortable atom test', () => {
     )
 
     await findByText('loading')
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 0')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 2')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 3')
   })
 })
