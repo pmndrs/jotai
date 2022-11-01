@@ -108,8 +108,9 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with derived atoms', async () =>
 it('[DEV-ONLY] useGotoAtomsSnapshot should work with async derived atoms', async () => {
   __DEV__ = true
   const priceAtom = atom(10)
+  let resolve = () => {}
   const taxAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return get(priceAtom) * 0.2
   })
 
@@ -150,14 +151,16 @@ it('[DEV-ONLY] useGotoAtomsSnapshot should work with async derived atoms', async
     </StrictMode>
   )
 
+  await findByText('loading')
+  resolve()
   await waitFor(() => {
     getByText('price: 10')
     getByText('tax: 2')
   })
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('click'))
   await findByText('loading')
+  resolve()
   await waitFor(() => {
     getByText('price: 20')
     getByText('tax: 4')
