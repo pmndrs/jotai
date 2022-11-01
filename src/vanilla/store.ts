@@ -48,6 +48,19 @@ type AtomState<Value = AnyValue> = {
   d: Dependencies
 } & ({ e: AnyError } | { v: Value })
 
+const isEqualAtomValue = <Value>(a: AtomState<Value>, b: AtomState<Value>) =>
+  'v' in a && 'v' in b && Object.is(a.v, b.v)
+
+const isEqualAtomError = <Value>(a: AtomState<Value>, b: AtomState<Value>) =>
+  'e' in a && 'e' in b && Object.is(a.e, b.e)
+
+const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
+  if ('e' in atomState) {
+    throw atomState.e
+  }
+  return atomState.v
+}
+
 type Listeners = Set<() => void>
 type Dependents = Set<AnyAtom>
 
@@ -194,8 +207,7 @@ export const createStore = (
     }
     if (
       prevAtomState &&
-      'v' in prevAtomState &&
-      Object.is(prevAtomState.v, value) &&
+      isEqualAtomValue(prevAtomState, nextAtomState) &&
       prevAtomState.d === nextAtomState.d
     ) {
       // bail out
@@ -220,8 +232,7 @@ export const createStore = (
     }
     if (
       prevAtomState &&
-      'e' in prevAtomState &&
-      Object.is(prevAtomState.e, error) &&
+      isEqualAtomError(prevAtomState, nextAtomState) &&
       prevAtomState.d === nextAtomState.d
     ) {
       // bail out
@@ -256,19 +267,20 @@ export const createStore = (
     const controller = new AbortController()
     const getter: Getter = <V>(a: Atom<V>) => {
       depSet.add(a)
-      const aState =
-        (a as AnyAtom) === atom ? getAtomState(a) : readAtomState(a)
-      if (aState) {
-        if ('e' in aState) {
-          throw aState.e
+      if ((a as AnyAtom) === atom) {
+        const aState = getAtomState(a)
+        if (aState) {
+          return returnAtomValue(aState)
         }
-        return aState.v
+        if (hasInitialValue(a)) {
+          return a.init
+        }
+        // NOTE invalid derived atoms can reach here
+        throw new Error('no atom init')
       }
-      if (hasInitialValue(a)) {
-        return a.init
-      }
-      // NOTE invalid derived atoms can reach here
-      throw new Error('no atom init')
+      // a !== atom
+      const aState = readAtomState(a)
+      return returnAtomValue(aState)
     }
     try {
       const value = atom.read(getter, { signal: controller.signal })
@@ -294,13 +306,8 @@ export const createStore = (
     }
   }
 
-  const readAtom = <Value>(atom: Atom<Value>): Value => {
-    const atomState = readAtomState(atom)
-    if ('e' in atomState) {
-      throw atomState.e
-    }
-    return atomState.v
-  }
+  const readAtom = <Value>(atom: Atom<Value>): Value =>
+    returnAtomValue(readAtomState(atom))
 
   const addAtom = (atom: AnyAtom): Mounted => {
     let mounted = mountedMap.get(atom)
@@ -322,16 +329,13 @@ export const createStore = (
     }
   }
 
-  const isEqualValue = <Value>(a: AtomState<Value>, b: AtomState<Value>) =>
-    'v' in a && 'v' in b && Object.is(a.v, b.v)
-
   const recomputeDependents = <Value>(atom: Atom<Value>): void => {
     const mounted = mountedMap.get(atom)
     mounted?.t.forEach((dependent) => {
       if (dependent !== atom) {
         const prevAtomState = getAtomState(dependent)
         const nextAtomState = readAtomState(dependent)
-        if (!prevAtomState || !isEqualValue(prevAtomState, nextAtomState)) {
+        if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
           recomputeDependents(dependent)
         }
       }
@@ -343,13 +347,7 @@ export const createStore = (
     ...args: Args
   ): Result => {
     let isSync = true
-    const getter: Getter = <V>(a: Atom<V>) => {
-      const aState = readAtomState(a)
-      if ('e' in aState) {
-        throw aState.e
-      }
-      return aState.v
-    }
+    const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
@@ -362,7 +360,7 @@ export const createStore = (
         }
         const prevAtomState = getAtomState(a)
         const nextAtomState = setAtomValue(a, args[0] as V)
-        if (!prevAtomState || !isEqualValue(prevAtomState, nextAtomState)) {
+        if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
           recomputeDependents(a)
         }
       } else {
