@@ -22,7 +22,7 @@ export const Provider = ({
   children,
   store,
 }: {
-  children: ReactNode
+  children?: ReactNode
   store?: Store
 }) => {
   const storeRef = useRef<Store>()
