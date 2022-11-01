@@ -426,6 +426,8 @@ it('updates an async atom in child useEffect on remount', async () => {
   resolve.splice(0).forEach((fn) => fn())
   await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
   resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('count: 2')
 })
 
