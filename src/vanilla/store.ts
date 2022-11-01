@@ -241,6 +241,8 @@ export const createStore = (
           readAtomState(a)
         }
       })
+      // If a dependency changed since this atom was last computed,
+      // then we're out of date and need to recompute.
       if (
         Array.from(atomState.d).every(
           ([a, s]) => a === atom || getAtomState(a) === s
@@ -320,12 +322,18 @@ export const createStore = (
     }
   }
 
+  const isEqualValue = <Value>(a: AtomState<Value>, b: AtomState<Value>) =>
+    'v' in a && 'v' in b && Object.is(a.v, b.v)
+
   const recomputeDependents = <Value>(atom: Atom<Value>): void => {
     const mounted = mountedMap.get(atom)
     mounted?.t.forEach((dependent) => {
       if (dependent !== atom) {
-        readAtomState(dependent)
-        recomputeDependents(dependent)
+        const prevAtomState = getAtomState(dependent)
+        const nextAtomState = readAtomState(dependent)
+        if (!prevAtomState || !isEqualValue(prevAtomState, nextAtomState)) {
+          recomputeDependents(dependent)
+        }
       }
     })
   }
@@ -354,7 +362,7 @@ export const createStore = (
         }
         const prevAtomState = getAtomState(a)
         const nextAtomState = setAtomValue(a, args[0] as V)
-        if (prevAtomState !== nextAtomState) {
+        if (!prevAtomState || !isEqualValue(prevAtomState, nextAtomState)) {
           recomputeDependents(a)
         }
       } else {
