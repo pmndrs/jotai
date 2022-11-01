@@ -240,3 +240,66 @@ FIXME: Update demo
 FIXME: Update demo
 
 <CodeSandbox id="u4sli" />
+
+## Devtools
+
+In order to use the Devtools, you need to install it additionally.
+
+```bash
+$ npm i @tanstack/react-query-devtools
+# or
+$ pnpm add @tanstack/react-query-devtools
+# or
+$ yarn add @tanstack/react-query-devtools
+```
+
+All you have to do is put the `<ReactQueryDevtools />` in the `<QueryClientProvider />`.
+
+```tsx
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { queryClientAtom } from 'jotai-tanstack-query'
+
+export const App = () => {
+  const queryClient = useAtomValue(queryClientAtom)
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools />
+      <Provider>
+        <App />
+      </Provider>
+    </QueryClientProvider>
+  )
+}
+```
+
+If you want to use your own `queryClient` set by your [options](https://tanstack.com/query/v4/docs/reference/QueryClient) instead of default options, you can also do it as below.
+
+```tsx
+import {
+  QueryClientProvider,
+  QueryClient,
+  QueryCache,
+} from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { queryClientAtom } from 'jotai-tanstack-query'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: Infinity,
+    },
+  },
+})
+export const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools />
+      <Provider initialValues={[[queryClientAtom, queryClient]] as const}>
+        <App />
+      </Provider>
+    </QueryClientProvider>
+  )
+}
+```
