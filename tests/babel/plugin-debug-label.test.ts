@@ -133,9 +133,11 @@ it('Should handle all atom types', () => {
 
 it('Handles custom atom names a debugLabel to an atom', () => {
   expect(
-    transform(`const mySpecialThing = atom(0);`, undefined, ['mySpecialThing'])
+    transform(`const mySpecialThing = myCustomAtom(0);`, undefined, [
+      'myCustomAtom',
+    ])
   ).toMatchInlineSnapshot(`
-    "const mySpecialThing = atom(0);
+    "const mySpecialThing = myCustomAtom(0);
     mySpecialThing.debugLabel = "mySpecialThing";"
   `)
 })
