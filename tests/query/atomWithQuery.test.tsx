@@ -688,15 +688,12 @@ describe('error handling', () => {
       queryKey: ['error test', 'count2'],
       retry: false,
       queryFn: () => {
-        const promise = new Promise<{ response: { count: number } }>(
-          (res, rej) => {
-            const promise = fakeFetch({ count }, willThrowError)
-            resolve = () => promise.then(res, rej)
-          }
-        )
+        const promise = fakeFetch({ count }, willThrowError)
         willThrowError = !willThrowError
         ++count
-        return promise
+        return new Promise<{ response: { count: number } }>(
+          (r) => (resolve = () => r(promise))
+        )
       },
     }))
     const Counter = () => {

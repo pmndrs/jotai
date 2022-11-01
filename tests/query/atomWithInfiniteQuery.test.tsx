@@ -413,15 +413,10 @@ describe('error handling', () => {
       retry: false,
       staleTime: 200,
       queryFn: () => {
-        const promise = new Promise<{ response: { count: number } }>(
-          (res, rej) => {
-            const promise = fakeFetch({ count }, willThrowError)
-            resolve = () => promise.then(res, rej)
-          }
-        )
+        const promise = fakeFetch({ count }, willThrowError)
         willThrowError = !willThrowError
         ++count
-        return promise
+        return new Promise((r) => (resolve = () => r(promise)))
       },
     }))
     const Counter = () => {
