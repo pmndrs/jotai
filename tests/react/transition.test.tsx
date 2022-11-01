@@ -1,4 +1,4 @@
-import { Fragment, StrictMode, Suspense, useEffect, useTransition } from 'react'
+import { StrictMode, Suspense, useEffect, useTransition } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import {
   unstable_useAtom as useAtom,
@@ -6,8 +6,6 @@ import {
   unstable_useSetAtom as useSetAtom,
 } from 'jotai/react'
 import { unstable_atom as atom } from 'jotai/vanilla'
-
-const Provider = Fragment
 
 const describeWithUseTransition =
   typeof useTransition === 'function' ? describe : describe.skip
@@ -42,11 +40,9 @@ describeWithUseTransition('useTransition', () => {
 
     const { getByText, findByText } = render(
       <>
-        <Provider>
-          <Suspense fallback="loading">
-            <Counter />
-          </Suspense>
-        </Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
       </>
     )
 
@@ -93,11 +89,9 @@ describeWithUseTransition('useTransition', () => {
 
     const { getByText, findByText } = render(
       <StrictMode>
-        <Provider>
-          <Suspense fallback="loading">
-            <Counter />
-          </Suspense>
-        </Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
       </StrictMode>
     )
 

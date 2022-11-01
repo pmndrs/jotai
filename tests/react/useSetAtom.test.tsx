@@ -1,4 +1,4 @@
-import { Fragment, StrictMode, useEffect, useRef } from 'react'
+import { StrictMode, useEffect, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
@@ -6,8 +6,6 @@ import {
   unstable_useSetAtom as useSetAtom,
 } from 'jotai/react'
 import { unstable_atom as atom } from 'jotai/vanilla'
-
-const Provider = Fragment
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -54,9 +52,7 @@ it('useSetAtom does not trigger rerender in component', async () => {
 
   const { getByText } = render(
     <>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </>
   )
 
@@ -111,9 +107,7 @@ it('useSetAtom with write without an argument', async () => {
   }
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </StrictMode>
   )
 

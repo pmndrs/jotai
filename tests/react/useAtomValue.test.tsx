@@ -1,12 +1,10 @@
-import { Fragment, StrictMode } from 'react'
+import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import {
   unstable_useAtomValue as useAtomValue,
   unstable_useSetAtom as useSetAtom,
 } from 'jotai/react'
 import { unstable_atom as atom } from 'jotai/vanilla'
-
-const Provider = Fragment
 
 it('useAtomValue basic test', async () => {
   const countAtom = atom(0)
@@ -24,9 +22,7 @@ it('useAtomValue basic test', async () => {
   }
   const { findByText, getByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 

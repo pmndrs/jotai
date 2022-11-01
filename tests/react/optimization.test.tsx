@@ -1,9 +1,7 @@
-import { Fragment, useEffect } from 'react'
+import { useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { unstable_useAtom as useAtom } from 'jotai/react'
 import { unstable_atom as atom } from 'jotai/vanilla'
-
-const Provider = Fragment
 
 it('only relevant render function called (#156)', async () => {
   const count1Atom = atom(0)
@@ -35,10 +33,10 @@ it('only relevant render function called (#156)', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
+    <>
       <Counter1 />
       <Counter2 />
-    </Provider>
+    </>
   )
 
   await waitFor(() => {
@@ -92,10 +90,10 @@ it('only render once using atoms with write-only atom', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
+    <>
       <Counter />
       <Control />
-    </Provider>
+    </>
   )
 
   await findByText('count1: 0, count2: 0')
@@ -131,9 +129,9 @@ it('useless re-renders with static atoms (#355)', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
+    <>
       <Counter />
-    </Provider>
+    </>
   )
 
   await findByText('count: 0')
@@ -166,9 +164,9 @@ it('does not re-render if value is the same (#1158)', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
+    <>
       <Counter />
-    </Provider>
+    </>
   )
 
   await findByText('count: 0')
@@ -237,11 +235,11 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
+    <>
       <Counter1 />
       <Counter2 />
       <Control />
-    </Provider>
+    </>
   )
 
   await waitFor(() => {

@@ -1,5 +1,4 @@
 import {
-  Fragment,
   StrictMode,
   Suspense,
   version as reactVersion,
@@ -13,8 +12,6 @@ import { unstable_batchedUpdates } from 'react-dom'
 import { unstable_useAtom as useAtom } from 'jotai/react'
 import { unstable_atom as atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
-
-const Provider = Fragment
 
 const IS_REACT18 = /^18\./.test(reactVersion)
 
@@ -49,9 +46,7 @@ it('uses a primitive atom', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -79,9 +74,7 @@ it('uses a read-only derived atom', async () => {
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -117,9 +110,7 @@ it('uses a read-write derived atom', async () => {
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -161,10 +152,8 @@ it('uses a write-only derived atom', async () => {
 
   const { getByText } = render(
     <>
-      <Provider>
-        <Counter />
-        <Control />
-      </Provider>
+      <Counter />
+      <Control />
     </>
   )
 
@@ -211,11 +200,9 @@ it('only re-renders if value has changed', async () => {
 
   const { getByText } = render(
     <>
-      <Provider>
-        <Counter countAtom={count1Atom} name="count1" />
-        <Counter countAtom={count2Atom} name="count2" />
-        <Product />
-      </Provider>
+      <Counter countAtom={count1Atom} name="count1" />
+      <Counter countAtom={count2Atom} name="count2" />
+      <Product />
     </>
   )
 
@@ -265,9 +252,7 @@ it('re-renders a time delayed derived atom with the same initial value (#947)', 
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <App />
-      </Provider>
+      <App />
     </StrictMode>
   )
 
@@ -298,11 +283,9 @@ it('works with async get', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </>
   )
 
@@ -342,11 +325,9 @@ it('works with async get without setTimeout', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </StrictMode>
   )
 
@@ -389,9 +370,7 @@ it('uses atoms with tree dependencies', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </>
   )
 
@@ -429,9 +408,7 @@ it('runs update only once in StrictMode', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -469,9 +446,7 @@ it('uses an async write-only atom', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </>
   )
 
@@ -501,9 +476,7 @@ it('uses a writable atom without read function', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -527,9 +500,7 @@ it('can write an atom value on useEffect', async () => {
 
   const { findByText } = render(
     <>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </>
   )
 
@@ -563,9 +534,7 @@ it('can write an atom value on useEffect in children', async () => {
 
   const { findByText } = render(
     <>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </>
   )
 
@@ -598,9 +567,7 @@ it('only invoke read function on use atom', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </>
   )
 
@@ -645,9 +612,7 @@ it('uses a read-write derived atom with two primitive atoms', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -690,9 +655,7 @@ it('updates a derived atom in useEffect with two primitive atoms', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </>
   )
 
@@ -729,9 +692,7 @@ it('updates two atoms in child useEffect', async () => {
 
   const { getByText } = render(
     <>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </>
   )
 
@@ -772,9 +733,7 @@ it('set atom right after useEffect (#208)', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </StrictMode>
   )
 
@@ -809,9 +768,7 @@ it('changes atom from parent (#273, #275)', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <App />
-      </Provider>
+      <App />
     </>
   )
 
@@ -851,9 +808,7 @@ it('should be able to use a double derived atom twice and useEffect (#373)', asy
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <App />
-      </Provider>
+      <App />
     </StrictMode>
   )
 
@@ -879,9 +834,7 @@ it('write self atom (undocumented usage)', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -915,11 +868,9 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
   }
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </StrictMode>
   )
 
@@ -950,9 +901,7 @@ it('sync re-renders with useState re-renders (#827)', async () => {
   }
   const { findByText, getByText } = render(
     <>
-      <Provider>
-        <App />
-      </Provider>
+      <App />
     </>
   )
 
@@ -984,9 +933,7 @@ it('chained derive atom with onMount and useEffect (#897)', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -1014,9 +961,7 @@ it('onMount is not called when atom value is accessed from writeGetter in derive
 
   render(
     <StrictMode>
-      <Provider>
-        <App />
-      </Provider>
+      <App />
     </StrictMode>
   )
 
@@ -1044,9 +989,7 @@ it('useAtom returns consistent value with input with changing atoms (#1235)', as
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 

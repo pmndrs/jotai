@@ -1,10 +1,8 @@
-import { Fragment, StrictMode } from 'react'
+import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { unstable_useAtom as useAtom } from 'jotai/react'
 import { unstable_atom as atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
-
-const Provider = Fragment
 
 it('remove an item, then add another', async () => {
   type Item = {
@@ -64,9 +62,7 @@ it('remove an item, then add another', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <List />
-      </Provider>
+      <List />
     </StrictMode>
   )
 
@@ -195,9 +191,7 @@ it('add an item with filtered list', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <List />
-      </Provider>
+      <List />
     </StrictMode>
   )
 

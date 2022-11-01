@@ -1,11 +1,4 @@
-import {
-  Fragment,
-  StrictMode,
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import {
   unstable_useAtom as useAtom,
@@ -13,8 +6,6 @@ import {
   unstable_useSetAtom as useSetAtom,
 } from 'jotai/react'
 import { unstable_atom as atom } from 'jotai/vanilla'
-
-const Provider = Fragment
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -46,9 +37,7 @@ it('works with 2 level dependencies', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </>
   )
 
@@ -80,11 +69,9 @@ it('works a primitive atom and a dependent async atom', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </StrictMode>
   )
 
@@ -139,9 +126,7 @@ it('should keep an atom value even if unmounted', async () => {
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </StrictMode>
   )
 
@@ -204,9 +189,7 @@ it('should keep a dependent atom value even if unmounted', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </StrictMode>
   )
 
@@ -248,10 +231,8 @@ it('should bail out updating if not changed', async () => {
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-        <DerivedCounter />
-      </Provider>
+      <Counter />
+      <DerivedCounter />
     </StrictMode>
   )
 
@@ -305,10 +286,8 @@ it('should bail out updating if not changed, 2 level', async () => {
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-        <DerivedCounter />
-      </Provider>
+      <Counter />
+      <DerivedCounter />
     </StrictMode>
   )
 
@@ -356,9 +335,7 @@ it('derived atom to update base atom in callback', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </>
   )
 
@@ -388,9 +365,7 @@ it('can read sync derived atom in write without initializing', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -441,9 +416,7 @@ it('can remount atoms with dependency (#490)', async () => {
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </StrictMode>
   )
 
@@ -524,9 +497,7 @@ it('can remount atoms with intermediate atom', async () => {
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </StrictMode>
   )
 
@@ -609,9 +580,7 @@ it('can update dependents with useEffect (#512)', async () => {
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </StrictMode>
   )
 
@@ -660,10 +629,8 @@ it('update unmounted atom with intermediate atom', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <DerivedCounter />
-        <Control />
-      </Provider>
+      <DerivedCounter />
+      <Control />
     </StrictMode>
   )
 
@@ -707,10 +674,8 @@ it('Should bail for derived sync chains (#877)', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Input />
-        <ForceValue />
-      </Provider>
+      <Input />
+      <ForceValue />
     </StrictMode>
   )
 
@@ -754,12 +719,10 @@ it('Should bail for derived async chains (#877)', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Input />
-          <ForceValue />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Input />
+        <ForceValue />
+      </Suspense>
     </StrictMode>
   )
 
@@ -806,9 +769,7 @@ it('update correctly with async updates (#1250)', async () => {
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <App />
-      </Provider>
+      <App />
     </StrictMode>
   )
 

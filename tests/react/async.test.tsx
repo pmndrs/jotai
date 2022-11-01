@@ -1,10 +1,8 @@
-import { Fragment, StrictMode, Suspense, useEffect, useRef } from 'react'
+import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { unstable_useAtom as useAtom } from 'jotai/react'
 import { unstable_atom as atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
-
-const Provider = Fragment
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -50,12 +48,10 @@ it('does not show async stale result', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Counter />
-        <Suspense fallback="loading">
-          <DelayedCounter />
-        </Suspense>
-      </Provider>
+      <Counter />
+      <Suspense fallback="loading">
+        <DelayedCounter />
+      </Suspense>
     </>
   )
 
@@ -118,9 +114,7 @@ it('does not show async stale result on derived atom', async () => {
 
   const { getByText, queryByText } = render(
     <StrictMode>
-      <Provider>
-        <Test />
-      </Provider>
+      <Test />
     </StrictMode>
   )
 
@@ -183,12 +177,10 @@ it('works with async get with extra deps', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-          <DelayedCounter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+        <DelayedCounter />
+      </Suspense>
     </StrictMode>
   )
 
@@ -224,12 +216,10 @@ it('reuses promises on initial read', async () => {
 
   const { findByText, findAllByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Child />
-          <Child />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Child />
+        <Child />
+      </Suspense>
     </StrictMode>
   )
 
@@ -264,11 +254,9 @@ it('uses multiple async atoms at once', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Component />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Component />
+      </Suspense>
     </StrictMode>
   )
 
@@ -305,11 +293,9 @@ it('uses async atom in the middle of dependency chain', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </StrictMode>
   )
 
@@ -351,11 +337,9 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Suspense fallback="loading">
-          <Parent />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
     </>
   )
 
@@ -403,11 +387,9 @@ it('updates an async atom in child useEffect on remount', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Suspense fallback="loading">
-          <Parent />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
     </>
   )
 
@@ -459,11 +441,9 @@ it('async get and useEffect on parent', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Suspense fallback="loading">
-          <Parent />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
     </>
   )
 
@@ -504,11 +484,9 @@ it('async get with another dep and useEffect on parent', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Suspense fallback="loading">
-          <Parent />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
     </>
   )
 
@@ -554,11 +532,9 @@ it('set promise atom value on write (#304)', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Parent />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Parent />
+      </Suspense>
     </StrictMode>
   )
 
@@ -597,11 +573,9 @@ it('uses async atom double chain (#306)', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </StrictMode>
   )
 
@@ -633,11 +607,9 @@ it('uses an async atom that depends on another async atom', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </StrictMode>
   )
 
@@ -677,11 +649,9 @@ it('a derived atom from a newly created async atom (#351)', async () => {
 
   const { getByText, findByText } = render(
     <>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </>
   )
 
@@ -732,9 +702,7 @@ it('Handles synchronously invoked async set (#375)', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <ListDocuments />
-      </Provider>
+      <ListDocuments />
     </StrictMode>
   )
 
@@ -763,9 +731,7 @@ it('async write self atom', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -796,9 +762,7 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -827,12 +791,10 @@ it('should override promise as atom value (#430)', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-        <Control />
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+      <Control />
     </StrictMode>
   )
 
@@ -872,12 +834,10 @@ it('combine two promise atom values (#442)', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-        <Control />
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+      <Control />
     </StrictMode>
   )
 
@@ -908,12 +868,10 @@ it('set two promise atoms at once', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-        <Control />
-      </Provider>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+      <Control />
     </StrictMode>
   )
 
@@ -950,10 +908,8 @@ it('async write chain', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-        <Control />
-      </Provider>
+      <Counter />
+      <Control />
     </StrictMode>
   )
 
@@ -1006,9 +962,7 @@ it('async atom double chain without setTimeout (#751)', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </StrictMode>
   )
 
@@ -1065,9 +1019,7 @@ it('async atom double chain with setTimeout', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Parent />
-      </Provider>
+      <Parent />
     </StrictMode>
   )
 
@@ -1123,12 +1075,10 @@ it('update unmounted async atom with intermediate atom', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback="loading">
-          <DerivedCounter />
-        </Suspense>
-        <Control />
-      </Provider>
+      <Suspense fallback="loading">
+        <DerivedCounter />
+      </Suspense>
+      <Control />
     </StrictMode>
   )
 
@@ -1180,9 +1130,7 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
 
   const { getByText } = render(
     <StrictMode>
-      <Provider>
-        <App />
-      </Provider>
+      <App />
     </StrictMode>
   )
 

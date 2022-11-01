@@ -1,17 +1,8 @@
-import {
-  Component,
-  Fragment,
-  StrictMode,
-  Suspense,
-  useEffect,
-  useState,
-} from 'react'
+import { Component, StrictMode, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { unstable_useAtom as useAtom } from 'jotai/react'
 import { unstable_atom as atom } from 'jotai/vanilla'
-
-const Provider = Fragment
 
 const consoleError = console.error
 const errorMessages: string[] = []
@@ -69,11 +60,9 @@ it('can throw an initial error in read function', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <ErrorBoundary>
-          <Counter />
-        </ErrorBoundary>
-      </Provider>
+      <ErrorBoundary>
+        <Counter />
+      </ErrorBoundary>
     </StrictMode>
   )
 
@@ -103,11 +92,9 @@ it('can throw an error in read function', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <ErrorBoundary>
-          <Counter />
-        </ErrorBoundary>
-      </Provider>
+      <ErrorBoundary>
+        <Counter />
+      </ErrorBoundary>
     </StrictMode>
   )
 
@@ -134,11 +121,9 @@ it('can throw an initial chained error in read function', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <ErrorBoundary>
-          <Counter />
-        </ErrorBoundary>
-      </Provider>
+      <ErrorBoundary>
+        <Counter />
+      </ErrorBoundary>
     </StrictMode>
   )
 
@@ -169,11 +154,9 @@ it('can throw a chained error in read function', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <ErrorBoundary>
-          <Counter />
-        </ErrorBoundary>
-      </Provider>
+      <ErrorBoundary>
+        <Counter />
+      </ErrorBoundary>
     </StrictMode>
   )
 
@@ -199,13 +182,11 @@ it('can throw an initial error in async read function', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <ErrorBoundary>
-          <Suspense fallback={null}>
-            <Counter />
-          </Suspense>
-        </ErrorBoundary>
-      </Provider>
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <Counter />
+        </Suspense>
+      </ErrorBoundary>
     </StrictMode>
   )
 
@@ -235,13 +216,11 @@ it('can throw an error in async read function', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <ErrorBoundary>
-          <Suspense fallback={null}>
-            <Counter />
-          </Suspense>
-        </ErrorBoundary>
-      </Provider>
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <Counter />
+        </Suspense>
+      </ErrorBoundary>
     </StrictMode>
   )
 
@@ -280,9 +259,7 @@ it('can throw an error in write function', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -322,11 +299,9 @@ it('can throw an error in async write function', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Suspense fallback={null}>
-          <Counter />
-        </Suspense>
-      </Provider>
+      <Suspense fallback={null}>
+        <Counter />
+      </Suspense>
     </StrictMode>
   )
 
@@ -374,9 +349,7 @@ it('can throw a chained error in write function', async () => {
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Provider>
-        <Counter />
-      </Provider>
+      <Counter />
     </StrictMode>
   )
 
@@ -410,11 +383,9 @@ it('throws an error while updating in effect', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Provider>
-        <ErrorBoundary>
-          <Counter />
-        </ErrorBoundary>
-      </Provider>
+      <ErrorBoundary>
+        <Counter />
+      </ErrorBoundary>
     </StrictMode>
   )
 
@@ -459,11 +430,9 @@ describe('throws an error while updating in effect cleanup', () => {
   it('[DEV-ONLY] single setCount', async () => {
     const { getByText, findByText } = render(
       <>
-        <Provider>
-          <ErrorBoundary>
-            <Main />
-          </ErrorBoundary>
-        </Provider>
+        <ErrorBoundary>
+          <Main />
+        </ErrorBoundary>
       </>
     )
 
@@ -483,11 +452,9 @@ describe('throws an error while updating in effect cleanup', () => {
 
     const { getByText, findByText } = render(
       <>
-        <Provider>
-          <ErrorBoundary>
-            <Main />
-          </ErrorBoundary>
-        </Provider>
+        <ErrorBoundary>
+          <Main />
+        </ErrorBoundary>
       </>
     )
 
@@ -534,12 +501,10 @@ describe('error recovery', () => {
 
     const { getByText, findByText } = render(
       <StrictMode>
-        <Provider>
-          <Counter />
-          <ErrorBoundary>
-            <Display />
-          </ErrorBoundary>
-        </Provider>
+        <Counter />
+        <ErrorBoundary>
+          <Display />
+        </ErrorBoundary>
       </StrictMode>
     )
 
@@ -568,14 +533,12 @@ describe('error recovery', () => {
 
     const { getByText, findByText } = render(
       <StrictMode>
-        <Provider>
-          <Counter />
-          <ErrorBoundary>
-            <Suspense fallback={null}>
-              <Display />
-            </Suspense>
-          </ErrorBoundary>
-        </Provider>
+        <Counter />
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <Display />
+          </Suspense>
+        </ErrorBoundary>
       </StrictMode>
     )
 
