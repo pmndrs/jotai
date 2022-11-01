@@ -503,7 +503,6 @@ it('[DEV-ONLY] with atoms invalidated after mount', async () => {
   )
 
   fireEvent.click(getByText('change'))
-  resolve()
   await waitFor(() => {
     getByText('count: 2')
     getByText('loading')
@@ -529,6 +528,7 @@ it('[DEV-ONLY] with atoms invalidated after mount', async () => {
   )
 
   fireEvent.click(getByText('change'))
+  resolve()
   await waitFor(() => {
     getByText('count: 3')
     getByText('derived: 3')

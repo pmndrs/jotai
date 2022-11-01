@@ -126,7 +126,6 @@ it('query dependency test', async () => {
   await findByText('count: 1')
   await findByText('count: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('dummy'))
   await findByText('loading')
   await findByText('count: 0')
@@ -179,12 +178,10 @@ it('query change client at runtime', async () => {
   await findByText('loading')
   await findByText('id: first')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('second'))
   await findByText('loading')
   await findByText('id: second')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('first'))
   await findByText('loading')
   await findByText('id: first')
@@ -228,7 +225,6 @@ it('pause test', async () => {
 
   await findByText('count: paused')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('toggle'))
   await findByText('loading')
   await findByText('count: 0')
@@ -268,7 +264,6 @@ it('refetch test', async () => {
   await findByText('count: 1')
   await findByText('count: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('count: 0')
@@ -325,16 +320,13 @@ it('query null client suspense', async () => {
 
   await findByText('no data')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set'))
   await findByText('loading')
   await findByText('client is set')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('unset'))
   await findByText('no data')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('unset'))
   fireEvent.click(getByText('set'))
   await findByText('loading')
@@ -455,19 +447,16 @@ describe('error handling', () => {
     await findByText('loading')
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')
     await findByText('count: 1')
 
-    await new Promise((r) => setTimeout(r, 100))
     willThrowError = true
     fireEvent.click(getByText('refetch'))
     await findByText('loading')
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')

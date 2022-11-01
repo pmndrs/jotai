@@ -67,7 +67,6 @@ it('mutation basic test', async () => {
 
   await findByText('loading')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('mutate'))
   await findByText('count: 1')
 })
@@ -121,7 +120,6 @@ describe('error handling', () => {
 
     await findByText('loading')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('mutate'))
     await waitFor(() => {
       expect(errored).toBe(true)

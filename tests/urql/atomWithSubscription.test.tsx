@@ -127,14 +127,12 @@ it('subscription change client at runtime', async () => {
   await findByText('first count: 1')
   await findByText('first count: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('second'))
   await findByText('loading')
   await findByText('second count: 0')
   await findByText('second count: 1')
   await findByText('second count: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('first'))
   await findByText('loading')
   await findByText('first count: 0')
@@ -182,7 +180,6 @@ it('pause test', async () => {
 
   await findByText('count: paused')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('toggle'))
   await findByText('loading')
   await findByText('count: 0')
@@ -251,18 +248,15 @@ it('null client suspense', async () => {
 
   await findByText('no data')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set'))
   await findByText('loading')
   await findByText('default count: 0')
   await findByText('default count: 1')
   await findByText('default count: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('unset'))
   await findByText('no data')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set'))
   await findByText('default count: 0')
   await findByText('default count: 1')
@@ -387,7 +381,6 @@ describe('error handling', () => {
     await findByText('loading')
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')
@@ -395,13 +388,11 @@ describe('error handling', () => {
     await findByText('count: 1')
     await findByText('count: 2')
 
-    await new Promise((r) => setTimeout(r, 100))
     willThrowError = true
     fireEvent.click(getByText('refetch'))
     await findByText('loading')
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')
