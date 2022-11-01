@@ -140,7 +140,7 @@ it('does not show async stale result on derived atom', async () => {
   })
 
   fireEvent.click(getByText('button'))
-  resolve()
+  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
   await waitFor(() => {
     getByText('count: 1')
     getByText('loading async value')

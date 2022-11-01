@@ -224,9 +224,10 @@ it('custom equality function work', async () => {
 
 it('a derived atom from an async atomFamily (#351)', async () => {
   const countAtom = atom(1)
+  const resolve: (() => void)[] = []
   const getAsyncAtom = atomFamily((n: number) =>
     atom(async () => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       return n + 10
     })
   )
@@ -254,16 +255,17 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   )
 
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 11')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 12')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 13')
 })
 
