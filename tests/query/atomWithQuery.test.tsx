@@ -692,7 +692,7 @@ describe('error handling', () => {
         willThrowError = !willThrowError
         ++count
         return new Promise<{ response: { count: number } }>(
-          (res, rej) => (resolve = () => promise.then(res, rej))
+          (r) => (resolve = () => r(promise))
         )
       },
     }))
