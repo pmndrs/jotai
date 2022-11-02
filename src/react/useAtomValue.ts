@@ -42,6 +42,7 @@ const use =
 
 type Options = {
   store?: Store
+  sync?: boolean
 }
 
 export function useAtomValue<AtomType extends Atom<any>>(
@@ -77,11 +78,24 @@ export function useAtomValue<AtomType extends Atom<any>>(
     value = store.get(atom)
   }
 
+  const sync = options?.sync
   useEffect(() => {
-    const unsub = store.sub(atom, rerender)
+    const unsub = store.sub(atom, () => {
+      try {
+        const v = store.get(atom)
+        if (!sync && v instanceof Promise) {
+          // delay one tick
+          setTimeout(rerender)
+          return
+        }
+      } catch (e) {
+        // ignored
+      }
+      rerender()
+    })
     rerender()
     return unsub
-  }, [store, atom])
+  }, [store, atom, sync])
 
   useDebugValue(value)
   return isPromise(value) ? use(value) : (value as Awaited<Value>)

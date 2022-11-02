@@ -14,6 +14,7 @@ type Store = ReturnType<typeof useStore>
 
 type Options = {
   store?: Store
+  sync?: boolean
 }
 
 export function useAtom<AtomType extends WritableAtom<any, any[], any>>(
