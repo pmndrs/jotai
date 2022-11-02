@@ -435,8 +435,8 @@ it('query with enabled 2', async () => {
     </StrictMode>
   )
 
-  await new Promise((r) => setTimeout(r, 100)) // FIXME
   await findByText('loading')
+  await new Promise((r) => setTimeout(r, 100)) // FIXME
   expect(mockFetch).toHaveBeenCalledTimes(1)
   await findByText('slug: hello-first')
 
