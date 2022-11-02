@@ -681,19 +681,17 @@ describe('error handling', () => {
   })
 
   it('can recover from error', async () => {
-    let count = 0
-    let willThrowError = true
+    let count = -1
+    let willThrowError = false
     let resolve = () => {}
     const countAtom = atomWithQuery(() => ({
       queryKey: ['error test', 'count2'],
       retry: false,
-      queryFn: () => {
-        const promise = fakeFetch({ count }, willThrowError)
+      queryFn: async () => {
         willThrowError = !willThrowError
         ++count
-        return new Promise<{ response: { count: number } }>(
-          (r) => (resolve = () => r(promise))
-        )
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ count }, willThrowError)
       },
     }))
     const Counter = () => {
