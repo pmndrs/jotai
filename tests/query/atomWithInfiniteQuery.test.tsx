@@ -416,7 +416,9 @@ describe('error handling', () => {
         const promise = fakeFetch({ count }, willThrowError)
         willThrowError = !willThrowError
         ++count
-        return new Promise((r) => (resolve = () => r(promise)))
+        return new Promise(
+          (res, rej) => (resolve = () => promise.then(res, rej))
+        )
       },
     }))
     const Counter = () => {
