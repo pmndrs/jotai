@@ -191,6 +191,8 @@ it('refresh async atoms to default values', async () => {
 
   fireEvent.click(getByText('Refresh count2'))
   resolve()
+  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
+  resolve()
   await findByText('count1: 3, count2: 6')
 
   fireEvent.click(getByText('button1'))
