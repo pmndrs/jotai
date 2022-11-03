@@ -2,6 +2,7 @@ import type { Atom, WritableAtom } from './atom'
 import {
   cancelSuspensePromise,
   createSuspensePromise,
+  getOriginalPromise,
   isEqualSuspensePromise,
   isSuspensePromise,
   isSuspensePromiseAlreadyCancelled,
@@ -799,6 +800,12 @@ export const createStore = (
       // cancel suspense promise (and abort base promise)
       if ('p' in atomState) {
         cancelSuspensePromise(atomState.p)
+        setAtomPromiseOrValue(
+          version,
+          atom,
+          getOriginalPromise(atomState.p) as Value,
+          new Set(atomState.d.keys())
+        )
       }
       atomState.d.forEach((_, a) => {
         if (a !== atom) {
