@@ -246,6 +246,12 @@ export const createStore = (
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
     if (atomState) {
+      // Ensure that each atom we depend on is up to date.
+      atomState.d.forEach((_, a) => {
+        if (a !== atom) {
+          readAtomState(a)
+        }
+      })
       // If a dependency changed since this atom was last computed,
       // then we're out of date and need to recompute.
       if (
