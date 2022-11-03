@@ -215,6 +215,8 @@ describeExceptFor1686('abortable atom test', () => {
     resolve.splice(0).forEach((fn) => fn())
     await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
     resolve.splice(0).forEach((fn) => fn())
+    await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 2')
 
     fireEvent.click(getByText('button'))
