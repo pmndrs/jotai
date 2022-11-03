@@ -246,12 +246,6 @@ export const createStore = (
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
     if (atomState) {
-      // Ensure that each atom we depend on is up to date.
-      atomState.d.forEach((_, a) => {
-        if (a !== atom) {
-          readAtomState(a)
-        }
-      })
       // If a dependency changed since this atom was last computed,
       // then we're out of date and need to recompute.
       if (
@@ -434,9 +428,8 @@ export const createStore = (
     if (__DEV__) {
       mountedAtoms.add(atom)
     }
-    // mount read dependencies before onMount
-    const atomState = readAtomState(atom)
-    atomState.d.forEach((_, a) => {
+    // mount dependencies before onMount
+    readAtomState(atom).d.forEach((_, a) => {
       const aMounted = mountedMap.get(a)
       if (aMounted) {
         aMounted.t.add(atom) // add dependent
@@ -446,6 +439,8 @@ export const createStore = (
         }
       }
     })
+    // recompute atom state
+    readAtomState(atom)
     // onMount
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const onUnmount = atom.onMount((...args) => writeAtom(atom, ...args))
@@ -466,7 +461,7 @@ export const createStore = (
     if (__DEV__) {
       mountedAtoms.delete(atom)
     }
-    // unmount read dependencies afterward
+    // unmount dependencies afterward
     const atomState = getAtomState(atom)
     if (atomState) {
       // cancel promise
