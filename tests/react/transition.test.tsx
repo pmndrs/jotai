@@ -19,7 +19,7 @@ describeWithUseTransition('useTransition', () => {
 
     const Counter = () => {
       const setCount = useSetAtom(countAtom)
-      const delayed = useAtomValue(delayedAtom)
+      const delayed = useAtomValue(delayedAtom, { sync: true })
       const [pending, startTransition] = useTransition()
       useEffect(() => {
         commited.push({ pending, delayed })
@@ -69,7 +69,7 @@ describeWithUseTransition('useTransition', () => {
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
       const toggle = useSetAtom(toggleAtom)
-      useAtomValue(pendingAtom)
+      useAtomValue(pendingAtom, { sync: true })
       const [pending, startTransition] = useTransition()
       return (
         <>
