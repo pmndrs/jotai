@@ -81,15 +81,17 @@ export function useAtomValue<AtomType extends Atom<any>>(
   const sync = options?.sync
   useEffect(() => {
     const unsub = store.sub(atom, () => {
-      try {
-        const v = store.get(atom)
-        if (!sync && v instanceof Promise) {
-          // delay one tick
-          setTimeout(rerender)
-          return
+      if (!sync) {
+        try {
+          const v = store.get(atom)
+          if (v instanceof Promise && (v as any).status === 'pending') {
+            // delay one tick
+            setTimeout(rerender)
+            return
+          }
+        } catch (e) {
+          // ignored
         }
-      } catch (e) {
-        // ignored
       }
       rerender()
     })
