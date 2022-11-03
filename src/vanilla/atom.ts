@@ -5,7 +5,12 @@ type Setter = <Value, Args extends unknown[], Result>(
   ...args: Args
 ) => Result
 
-type Read<Value> = (get: Getter, options: { signal: AbortSignal }) => Value
+type Retry = () => void
+
+type Read<Value> = (
+  get: Getter,
+  options: { signal: AbortSignal; retry: Retry }
+) => Value
 
 type Write<Args extends unknown[], Result> = (
   get: Getter,

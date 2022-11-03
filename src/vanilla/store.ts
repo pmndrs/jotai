@@ -265,6 +265,19 @@ export const createStore = (
     // Compute a new state for this atom.
     const depSet = new Set<AnyAtom>()
     const controller = new AbortController()
+    let isSync = true
+    const retry = () => {
+      if (!isSync) {
+        const prevAtomState = getAtomState(atom)
+        const nextAtomState = readAtomState(atom)
+        if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
+          recomputeDependents(atom)
+        }
+        flushPending()
+      } else if (__DEV__) {
+        console.warn('retry function cannot be called in sync')
+      }
+    }
     const getter: Getter = <V>(a: Atom<V>) => {
       depSet.add(a)
       if ((a as AnyAtom) === atom) {
@@ -283,7 +296,7 @@ export const createStore = (
       return returnAtomValue(aState)
     }
     try {
-      const value = atom.read(getter, { signal: controller.signal })
+      const value = atom.read(getter, { signal: controller.signal, retry })
       if (value instanceof Promise) {
         let continuePromise: (next: Promise<Awaited<Value>>) => void
         const promise: Promise<Awaited<Value>> & {
@@ -321,6 +334,8 @@ export const createStore = (
       return setAtomValue(atom, value, depSet)
     } catch (error) {
       return setAtomError(atom, error, depSet)
+    } finally {
+      isSync = false
     }
   }
 
