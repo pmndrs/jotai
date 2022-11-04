@@ -26,6 +26,7 @@ beforeEach(() => {
   jest.useFakeTimers()
 })
 afterEach(() => {
+  jest.runAllTimers()
   jest.useRealTimers()
 })
 
