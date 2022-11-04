@@ -22,6 +22,13 @@ const useRetryFromError = (scope?: symbol | string | number) => {
   return retryFromError || ((fn) => fn())
 }
 
+beforeEach(() => {
+  jest.useFakeTimers()
+})
+afterEach(() => {
+  jest.useRealTimers()
+})
+
 class ErrorBoundary extends Component<
   { children: ReactNode },
   { error: string }
@@ -137,7 +144,7 @@ it('writable count state without initial value', async () => {
 it('writable count state with delayed value', async () => {
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => {
-    const observable = of(1).pipe(delay(100))
+    const observable = of(1).pipe(delay(10 * 1000))
     observable.subscribe((n) => subject.next(n))
     return subject
   })
@@ -168,6 +175,7 @@ it('writable count state with delayed value', async () => {
   )
 
   await findByText('loading')
+  jest.runOnlyPendingTimers()
   await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
@@ -379,7 +387,7 @@ it('writable count state with error', async () => {
   await findByText('loading')
 
   act(() => subject.error(new Error('Test Error')))
-  findByText('Error: Test Error')
+  await findByText('Error: Test Error')
 })
 
 it('synchronous subscription with initial value', async () => {
@@ -595,11 +603,11 @@ describe('error handling', () => {
       const base = get(baseAtom)
       if (base % 2 === 0) {
         const subject = new Subject<number>()
-        const observable = of(1).pipe(delay(100))
+        const observable = of(1).pipe(delay(10 * 1000))
         observable.subscribe(() => subject.error(new Error('Test Error')))
         return subject
       }
-      const observable = of(base).pipe(delay(100))
+      const observable = of(base).pipe(delay(10 * 1000))
       return observable
     })
 
@@ -640,18 +648,22 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
+    jest.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    jest.runOnlyPendingTimers()
     await findByText('count: 1')
 
     fireEvent.click(getByText('next'))
     await findByText('loading')
+    jest.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    jest.runOnlyPendingTimers()
     await findByText('count: 3')
   })
 })
