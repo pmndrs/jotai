@@ -943,11 +943,11 @@ it('write self atom (undocumented usage)', async () => {
 
 it('async chain for multiple sync and async atoms (#443)', async () => {
   const num1Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r))
     return 1
   })
   const num2Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r))
     return 2
   })
 

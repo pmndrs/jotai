@@ -845,8 +845,8 @@ it('combine two promise atom values (#442)', async () => {
   const count2Atom = atom(new Promise<number>(() => {}))
   const derivedAtom = atom((get) => get(count1Atom) + get(count2Atom))
   const initAtom = atom(null, (_get, set) => {
-    setTimeout(() => set(count1Atom, Promise.resolve(1)), 1)
-    setTimeout(() => set(count2Atom, Promise.resolve(2)), 1)
+    setTimeout(() => set(count1Atom, Promise.resolve(1)))
+    setTimeout(() => set(count2Atom, Promise.resolve(2)))
   })
   initAtom.onMount = (init) => {
     init()
@@ -1148,7 +1148,7 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
   const responseAtom = atom(
     (get) => get(responseBaseAtom),
     (_get, set) => {
-      setTimeout(() => set(responseBaseAtom, response1), 1)
+      setTimeout(() => set(responseBaseAtom, response1))
     }
   )
   responseAtom.onMount = (init) => {

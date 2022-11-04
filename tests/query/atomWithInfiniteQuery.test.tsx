@@ -192,7 +192,7 @@ it('infinite query with enabled 2', async () => {
       enabled: isEnabled,
       queryKey: ['enabled_toggle'],
       queryFn: async () => {
-        await new Promise<void>((r) => setTimeout(r, 100)) // FIXME
+        await new Promise<void>((r) => setTimeout(r, 100)) // FIXME can avoid?
         return fakeFetch({ slug: `hello-${slug}` }, false)
       },
     }
@@ -245,14 +245,14 @@ it('infinite query with enabled 2', async () => {
   await findByText('loading')
   await findByText('slug: hello-first')
 
-  await new Promise((r) => setTimeout(r, 100)) // FIXME
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
 
-  await new Promise((r) => setTimeout(r, 100)) // FIXME
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   await findByText('slug: hello-first')
 
-  await new Promise((r) => setTimeout(r, 100)) // FIXME
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
 })

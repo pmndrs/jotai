@@ -385,7 +385,7 @@ it('query with enabled 2', async () => {
       enabled: isEnabled,
       queryKey: ['enabled_toggle'],
       queryFn: async () => {
-        await new Promise<void>((r) => setTimeout(r, 100)) // FIXME
+        await new Promise<void>((r) => setTimeout(r, 100)) // FIXME can avoid?
         return mockFetch({ slug: `hello-${slug}` }, false)
       },
     }
@@ -436,18 +436,18 @@ it('query with enabled 2', async () => {
   )
 
   await findByText('loading')
-  await new Promise((r) => setTimeout(r, 100)) // FIXME
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   expect(mockFetch).toHaveBeenCalledTimes(1)
   await findByText('slug: hello-first')
 
-  await new Promise((r) => setTimeout(r, 100)) // FIXME
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
 
   await findByText('slug: hello-first')
   expect(mockFetch).toHaveBeenCalledTimes(1)
 
-  await new Promise((r) => setTimeout(r, 100)) // FIXME
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
   expect(mockFetch).toHaveBeenCalledTimes(2)
