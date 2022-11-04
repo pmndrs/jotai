@@ -1,5 +1,5 @@
 import { StrictMode, Suspense, useEffect, useTransition } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { getTestProvider } from '../testUtils'
 
@@ -50,10 +50,10 @@ describeWithUseTransition('useTransition', () => {
     await findByText('delayed: 0')
 
     fireEvent.click(getByText('button'))
-    resolve()
-    await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-    resolve()
-    await findByText('delayed: 1')
+    await waitFor(() => {
+      resolve()
+      getByText('delayed: 1')
+    })
 
     expect(commited).toEqual([
       { pending: false, delayed: 0 },

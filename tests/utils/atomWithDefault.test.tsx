@@ -1,5 +1,5 @@
 import { StrictMode, Suspense } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { RESET, atomWithDefault } from 'jotai/utils'
 import { getTestProvider } from '../testUtils'
@@ -190,10 +190,10 @@ it('refresh async atoms to default values', async () => {
   await findByText('count1: 3, count2: 5')
 
   fireEvent.click(getByText('Refresh count2'))
-  resolve()
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve()
-  await findByText('count1: 3, count2: 6')
+  await waitFor(() => {
+    resolve()
+    getByText('count1: 3, count2: 6')
+  })
 
   fireEvent.click(getByText('button1'))
   resolve()
