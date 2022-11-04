@@ -248,13 +248,16 @@ it('pause test', async () => {
 })
 
 it('refetch test', async () => {
-  const subject = makeSubject<number>()
+  let subject = makeSubject<number>()
   const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     () => ({
       query: '{ count }',
       variables: {},
     }),
-    () => generateContinuousClient(subject.source)
+    () => {
+      subject = makeSubject<number>()
+      return generateContinuousClient(subject.source)
+    }
   )
 
   const Counter = () => {
