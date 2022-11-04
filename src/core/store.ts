@@ -803,8 +803,7 @@ export const createStore = (
         setAtomPromiseOrValue(
           version,
           atom,
-          getBasePromise(atomState.p) as Value,
-          new Set(atomState.d.keys())
+          getBasePromise(atomState.p) as Value
         )
       }
       atomState.d.forEach((_, a) => {
