@@ -258,20 +258,7 @@ export const createStore = (
     }
     // Compute a new state for this atom.
     const depSet = new Set<AnyAtom>()
-    const controller = new AbortController()
     let isSync = true
-    const retry = () => {
-      if (!isSync) {
-        const prevAtomState = getAtomState(atom)
-        const nextAtomState = readAtomState(atom)
-        if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
-          recomputeDependents(atom)
-        }
-        flushPending()
-      } else if (__DEV__) {
-        console.warn('retry function cannot be called in sync')
-      }
-    }
     const getter: Getter = <V>(a: Atom<V>) => {
       depSet.add(a)
       if ((a as AnyAtom) === atom) {
@@ -289,8 +276,38 @@ export const createStore = (
       const aState = readAtomState(a)
       return returnAtomValue(aState)
     }
+    let controller: AbortController | undefined
+    let retry: (() => void) | undefined
+    const options = {
+      get signal() {
+        if (!controller) {
+          controller = new AbortController()
+        }
+        return controller.signal
+      },
+      get retry() {
+        if (!retry) {
+          retry = () => {
+            if (!isSync) {
+              const prevAtomState = getAtomState(atom)
+              const nextAtomState = readAtomState(atom)
+              if (
+                !prevAtomState ||
+                !isEqualAtomValue(prevAtomState, nextAtomState)
+              ) {
+                recomputeDependents(atom)
+              }
+              flushPending()
+            } else if (__DEV__) {
+              console.warn('retry function cannot be called in sync')
+            }
+          }
+        }
+        return retry
+      },
+    }
     try {
-      const value = atom.read(getter, { signal: controller.signal, retry })
+      const value = atom.read(getter, options)
       if (value instanceof Promise) {
         let continuePromise: (next: Promise<Awaited<Value>>) => void
         const promise: Promise<Awaited<Value>> & {
@@ -321,7 +338,7 @@ export const createStore = (
           if (next) {
             continuePromise(next as Promise<Awaited<Value>>)
           }
-          controller.abort()
+          controller?.abort()
         })
         return setAtomValue(atom, promise as Value, depSet)
       }
