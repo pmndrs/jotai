@@ -745,6 +745,7 @@ describe('error handling', () => {
     await findByText('count: 1')
 
     fireEvent.click(getByText('refetch'))
+    resolve()
     await findByText('loading')
     resolve()
     await findByText('errored')
