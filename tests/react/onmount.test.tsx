@@ -142,11 +142,10 @@ it('mount/unmount test', async () => {
   expect(onUnMountFn).toBeCalledTimes(0)
 
   fireEvent.click(getByText('button'))
-  // FIXME is there a better way?
-  await waitFor(() => {})
-
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onUnMountFn).toBeCalledTimes(1)
+  await waitFor(() => {
+    expect(onMountFn).toBeCalledTimes(1)
+    expect(onUnMountFn).toBeCalledTimes(1)
+  })
 })
 
 it('one derived atom, one onMount for the derived one, and one for the regular atom + onUnMount', async () => {
@@ -195,13 +194,12 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   expect(onUnMountFn).toBeCalledTimes(0)
 
   fireEvent.click(getByText('button'))
-  // FIXME is there a better way?
-  await waitFor(() => {})
-
-  expect(derivedOnMountFn).toBeCalledTimes(1)
-  expect(derivedOnUnMountFn).toBeCalledTimes(1)
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onUnMountFn).toBeCalledTimes(1)
+  await waitFor(() => {
+    expect(derivedOnMountFn).toBeCalledTimes(1)
+    expect(derivedOnUnMountFn).toBeCalledTimes(1)
+    expect(onMountFn).toBeCalledTimes(1)
+    expect(onUnMountFn).toBeCalledTimes(1)
+  })
 })
 
 it('mount/unMount order', async () => {
@@ -269,28 +267,24 @@ it('mount/unMount order', async () => {
   expect(committed).toEqual([0, 0])
 
   fireEvent.click(getByText('button'))
-  // FIXME is there a better way?
-  await waitFor(() => {})
-
-  expect(committed).toEqual([1, 0])
-
-  fireEvent.click(getByText('derived atom'))
-  // FIXME is there a better way?
-  await waitFor(() => {})
-
-  expect(committed).toEqual([1, 1])
+  await waitFor(() => {
+    expect(committed).toEqual([1, 0])
+  })
 
   fireEvent.click(getByText('derived atom'))
-  // FIXME is there a better way?
-  await waitFor(() => {})
+  await waitFor(() => {
+    expect(committed).toEqual([1, 1])
+  })
 
-  expect(committed).toEqual([1, 0])
+  fireEvent.click(getByText('derived atom'))
+  await waitFor(() => {
+    expect(committed).toEqual([1, 0])
+  })
 
   fireEvent.click(getByText('button'))
-  // FIXME is there a better way?
-  await waitFor(() => {})
-
-  expect(committed).toEqual([0, 0])
+  await waitFor(() => {
+    expect(committed).toEqual([0, 0])
+  })
 })
 
 it('mount/unmount test with async atom', async () => {
