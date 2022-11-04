@@ -2,7 +2,7 @@ import type { Atom, WritableAtom } from './atom'
 import {
   cancelSuspensePromise,
   createSuspensePromise,
-  getOriginalPromise,
+  getBasePromise,
   isEqualSuspensePromise,
   isSuspensePromise,
   isSuspensePromiseAlreadyCancelled,
@@ -803,7 +803,7 @@ export const createStore = (
         setAtomPromiseOrValue(
           version,
           atom,
-          getOriginalPromise(atomState.p) as Value,
+          getBasePromise(atomState.p) as Value,
           new Set(atomState.d.keys())
         )
       }

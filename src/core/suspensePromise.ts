@@ -63,7 +63,7 @@ export const createSuspensePromise = (
   return suspensePromise
 }
 
-export const getOriginalPromise = (suspensePromise: SuspensePromise) => {
+export const getBasePromise = (suspensePromise: SuspensePromise) => {
   return suspensePromise[SUSPENSE_PROMISE].b
 }
 
