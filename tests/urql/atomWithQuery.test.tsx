@@ -89,7 +89,7 @@ it('query dependency test', async () => {
   const setDummyAtom = atom(null, (_get, set, update: Update) =>
     set(dummyAtom, update)
   )
-  const subject = makeSubject<number>()
+  let subject = makeSubject<number>()
   const countAtom = atomWithQuery<{ count: number }, { dummy: number }>(
     (get) => ({
       query: '{ count }',
@@ -97,7 +97,10 @@ it('query dependency test', async () => {
         dummy: get(dummyAtom),
       },
     }),
-    () => generateContinuousClient(subject.source)
+    () => {
+      subject = makeSubject<number>()
+      return generateContinuousClient(subject.source)
+    }
   )
 
   const Counter = () => {
