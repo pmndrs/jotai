@@ -780,12 +780,8 @@ it('update correctly with async updates (#1250)', async () => {
     const alsoCount = useAtomValue(alsoCountAtom)
     const countIsGreaterThanOne = useAtomValue(countIsGreaterThanOneAtom)
     const incrementCountTwice = () => {
-      setTimeout(() => {
-        setCount((count) => count + 1)
-      })
-      setTimeout(() => {
-        setCount((count) => count + 1)
-      })
+      setTimeout(() => setCount((count) => count + 1))
+      setTimeout(() => setCount((count) => count + 1))
     }
     return (
       <div>

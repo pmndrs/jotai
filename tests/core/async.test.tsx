@@ -779,9 +779,7 @@ it('async write self atom', async () => {
 it('non suspense async write self atom with setTimeout (#389)', async () => {
   const countAtom = atom(0, (get, set, _arg) => {
     set(countAtom, get(countAtom) + 1)
-    setTimeout(() => {
-      set(countAtom, -1)
-    }, 0)
+    setTimeout(() => set(countAtom, -1))
   })
 
   const Counter = () => {
@@ -847,12 +845,8 @@ it('combine two promise atom values (#442)', async () => {
   const count2Atom = atom(new Promise<number>(() => {}))
   const derivedAtom = atom((get) => get(count1Atom) + get(count2Atom))
   const initAtom = atom(null, (_get, set) => {
-    setTimeout(() => {
-      set(count1Atom, Promise.resolve(1))
-    }, 1)
-    setTimeout(() => {
-      set(count2Atom, Promise.resolve(2))
-    }, 1)
+    setTimeout(() => set(count1Atom, Promise.resolve(1)), 1)
+    setTimeout(() => set(count2Atom, Promise.resolve(2)), 1)
   })
   initAtom.onMount = (init) => {
     init()
@@ -1150,12 +1144,11 @@ it('update unmounted async atom with intermediate atom', async () => {
 it('multiple derived atoms with dependency chaining and async write (#813)', async () => {
   const responseBaseAtom = atom<{ name: string }[] | null>(null)
 
+  const response1 = [{ name: 'alpha' }, { name: 'beta' }]
   const responseAtom = atom(
     (get) => get(responseBaseAtom),
     (_get, set) => {
-      setTimeout(() => {
-        set(responseBaseAtom, [{ name: 'alpha' }, { name: 'beta' }])
-      }, 1)
+      setTimeout(() => set(responseBaseAtom, response1), 1)
     }
   )
   responseAtom.onMount = (init) => {

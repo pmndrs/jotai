@@ -290,9 +290,7 @@ it('only re-renders if value has changed', async () => {
 it('re-renders a time delayed derived atom with the same initial value (#947)', async () => {
   const aAtom = atom(false)
   aAtom.onMount = (set) => {
-    setTimeout(() => {
-      set(true)
-    })
+    setTimeout(() => set(true))
   }
 
   const bAtom = atom(1)
