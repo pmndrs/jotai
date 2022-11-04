@@ -49,8 +49,9 @@ it('works with 2 level dependencies', async () => {
 
 it('works a primitive atom and a dependent async atom', async () => {
   const countAtom = atom(1)
+  let resolve = () => {}
   const doubledAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise<void>((r) => (resolve = r))
     return get(countAtom) * 2
   })
 
@@ -78,14 +79,17 @@ it('works a primitive atom and a dependent async atom', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 1, doubled: 2')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('count: 2, doubled: 4')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('count: 3, doubled: 6')
 })
 
@@ -718,7 +722,6 @@ it('Should bail for derived async chains (#877)', async () => {
 
   const asyncAtom = atom(async (get) => {
     get(textAtom)
-    await new Promise((r) => setTimeout(r, 1))
     syncAtomCount++
     return 'My very long data'
   })
