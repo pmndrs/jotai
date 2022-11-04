@@ -51,6 +51,8 @@ describeWithUseTransition('useTransition', () => {
 
     fireEvent.click(getByText('button'))
     resolve()
+    await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
+    resolve()
     await findByText('delayed: 1')
 
     expect(commited).toEqual([
