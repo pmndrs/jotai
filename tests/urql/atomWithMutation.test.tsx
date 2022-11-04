@@ -1,7 +1,7 @@
 import { StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import type { Client } from '@urql/core'
-import { delay, fromValue, pipe, take, toPromise } from 'wonka'
+import { fromValue, pipe, take, toPromise } from 'wonka'
 import { atom, useAtom } from 'jotai'
 import { atomWithMutation } from 'jotai/urql'
 import { getTestProvider, itSkipIfVersionedWrite } from '../testUtils'
@@ -15,13 +15,10 @@ const generateClient = (error?: () => boolean) =>
   ({
     mutation: () => {
       const source$ = withPromise(
-        pipe(
-          fromValue(
-            error?.()
-              ? { error: new Error('fetch error') }
-              : { data: { count: 1 } }
-          ),
-          delay(100) // FIXME we want to use fake timer
+        fromValue(
+          error?.()
+            ? { error: new Error('fetch error') }
+            : { data: { count: 1 } }
         )
       )
       return source$
