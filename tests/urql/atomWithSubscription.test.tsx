@@ -2,7 +2,7 @@ import { Component, StrictMode, Suspense, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client, TypedDocumentNode } from '@urql/core'
-import { delay, fromValue, makeSubject, map, pipe, switchMap } from 'wonka'
+import { makeSubject, map, pipe } from 'wonka'
 import type { Source } from 'wonka'
 import {
   atom,
@@ -29,7 +29,6 @@ const generateClient = (
     subscription: () =>
       pipe(
         source,
-        switchMap((i: number) => pipe(fromValue(i), delay(i > 2 ? 500 : 0))),
         map((i: number) =>
           error?.()
             ? { error: new Error('fetch error') }
