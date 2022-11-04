@@ -290,9 +290,7 @@ it('only re-renders if value has changed', async () => {
 it('re-renders a time delayed derived atom with the same initial value (#947)', async () => {
   const aAtom = atom(false)
   aAtom.onMount = (set) => {
-    setTimeout(() => {
-      set(true)
-    })
+    setTimeout(() => set(true))
   }
 
   const bAtom = atom(1)
@@ -945,11 +943,11 @@ it('write self atom (undocumented usage)', async () => {
 
 it('async chain for multiple sync and async atoms (#443)', async () => {
   const num1Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r))
     return 1
   })
   const num2Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 1))
+    await new Promise((r) => setTimeout(r))
     return 2
   })
 

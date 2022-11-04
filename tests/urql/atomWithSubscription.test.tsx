@@ -2,7 +2,8 @@ import { Component, StrictMode, Suspense, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client, TypedDocumentNode } from '@urql/core'
-import { delay, fromValue, interval, map, pipe, switchMap } from 'wonka'
+import { makeSubject, map, pipe } from 'wonka'
+import type { Source } from 'wonka'
 import {
   atom,
   SECRET_INTERNAL_getScopeContext as getScopeContext,
@@ -19,12 +20,15 @@ const useRetryFromError = (scope?: symbol | string | number) => {
   return retryFromError || ((fn) => fn())
 }
 
-const generateClient = (id = 'default', error?: () => boolean) =>
+const generateClient = (
+  source: Source<number>,
+  id = 'default',
+  error?: () => boolean
+) =>
   ({
     subscription: () =>
       pipe(
-        interval(100),
-        switchMap((i: number) => pipe(fromValue(i), delay(i > 2 ? 500 : 0))),
+        source,
         map((i: number) =>
           error?.()
             ? { error: new Error('fetch error') }
@@ -33,11 +37,12 @@ const generateClient = (id = 'default', error?: () => boolean) =>
       ),
   } as unknown as Client)
 
-const clientMock = generateClient()
-
 const Provider = getTestProvider()
 
 it('subscription basic test', async () => {
+  const subject = makeSubject<number>()
+  const clientMock = generateClient(subject.source)
+
   const countAtom = atomWithSubscription(
     () => ({
       query: 'subscription Test { count }' as unknown as TypedDocumentNode<{
@@ -68,13 +73,17 @@ it('subscription basic test', async () => {
   )
 
   await findByText('loading')
+  subject.next(0)
   await findByText('count: 0')
+  subject.next(1)
   await findByText('count: 1')
+  subject.next(2)
   await findByText('count: 2')
 })
 
 it('subscription change client at runtime', async () => {
-  const clientAtom = atom(generateClient('first'))
+  let subject = makeSubject<number>()
+  const clientAtom = atom(generateClient(subject.source, 'first'))
   const countAtom = atomWithSubscription(
     () => ({
       query: 'subscription Test { id, count }' as unknown as TypedDocumentNode<{
@@ -101,10 +110,18 @@ it('subscription change client at runtime', async () => {
     const [, setClient] = useAtom(clientAtom)
     return (
       <>
-        <button onClick={() => setClient(generateClient('first'))}>
+        <button
+          onClick={() => {
+            subject = makeSubject<number>()
+            setClient(generateClient(subject.source, 'first'))
+          }}>
           first
         </button>
-        <button onClick={() => setClient(generateClient('second'))}>
+        <button
+          onClick={() => {
+            subject = makeSubject<number>()
+            setClient(generateClient(subject.source, 'second'))
+          }}>
           second
         </button>
       </>
@@ -123,26 +140,36 @@ it('subscription change client at runtime', async () => {
   )
 
   await findByText('loading')
+  subject.next(0)
   await findByText('first count: 0')
+  subject.next(1)
   await findByText('first count: 1')
+  subject.next(2)
   await findByText('first count: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('second'))
   await findByText('loading')
+  subject.next(0)
   await findByText('second count: 0')
+  subject.next(1)
   await findByText('second count: 1')
+  subject.next(2)
   await findByText('second count: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('first'))
   await findByText('loading')
+  subject.next(0)
   await findByText('first count: 0')
+  subject.next(1)
   await findByText('first count: 1')
+  subject.next(2)
   await findByText('first count: 2')
 })
 
 it('pause test', async () => {
+  const subject = makeSubject<number>()
+  const clientMock = generateClient(subject.source)
+
   const enabledAtom = atom(false)
   const countAtom = atomWithSubscription(
     (get) => ({
@@ -182,15 +209,19 @@ it('pause test', async () => {
 
   await findByText('count: paused')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('toggle'))
   await findByText('loading')
+  subject.next(0)
   await findByText('count: 0')
+  subject.next(1)
   await findByText('count: 1')
+  subject.next(2)
   await findByText('count: 2')
 })
 
 it('null client suspense', async () => {
+  let subject = makeSubject<number>()
+
   const clientAtom = atom<Client | null>(null)
   const countAtom = atomWithSubscription(
     () => ({
@@ -232,7 +263,13 @@ it('null client suspense', async () => {
     const [, setClient] = useAtom(clientAtom)
     return (
       <>
-        <button onClick={() => setClient(generateClient())}>set</button>
+        <button
+          onClick={() => {
+            subject = makeSubject<number>()
+            setClient(generateClient(subject.source))
+          }}>
+          set
+        </button>
         <button onClick={() => setClient(null)}>unset</button>
       </>
     )
@@ -251,21 +288,24 @@ it('null client suspense', async () => {
 
   await findByText('no data')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set'))
   await findByText('loading')
+  subject.next(0)
   await findByText('default count: 0')
+  subject.next(1)
   await findByText('default count: 1')
+  subject.next(2)
   await findByText('default count: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('unset'))
   await findByText('no data')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set'))
+  subject.next(0)
   await findByText('default count: 0')
+  subject.next(1)
   await findByText('default count: 1')
+  subject.next(2)
   await findByText('default count: 2')
 })
 
@@ -302,7 +342,8 @@ describe('error handling', () => {
   }
 
   it('can catch error in error boundary', async () => {
-    const client = generateClient(undefined, () => true)
+    const subject = makeSubject<number>()
+    const client = generateClient(subject.source, undefined, () => true)
     const countAtom = atomWithSubscription(
       () => ({
         query: 'subscription Test { count }' as unknown as TypedDocumentNode<{
@@ -329,12 +370,18 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
+    subject.next(0)
     await findByText('errored')
   })
 
   it('can recover from error', async () => {
+    const subject = makeSubject<number>()
     let willThrowError = true
-    const client = generateClient(undefined, () => willThrowError)
+    const client = generateClient(
+      subject.source,
+      undefined,
+      () => willThrowError
+    )
     const countAtom = atomWithSubscription(
       () => ({
         query: 'subscription Test { count }' as unknown as TypedDocumentNode<{
@@ -385,28 +432,33 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
+    subject.next(0)
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    subject.next(0)
     await findByText('count: 0')
+    subject.next(1)
     await findByText('count: 1')
+    subject.next(2)
     await findByText('count: 2')
 
-    await new Promise((r) => setTimeout(r, 100))
     willThrowError = true
     fireEvent.click(getByText('refetch'))
     await findByText('loading')
+    subject.next(0)
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    subject.next(0)
     await findByText('count: 0')
+    subject.next(1)
     await findByText('count: 1')
+    subject.next(2)
     await findByText('count: 2')
   })
 })

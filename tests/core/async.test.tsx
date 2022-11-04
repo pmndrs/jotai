@@ -265,7 +265,7 @@ it('uses multiple async atoms at once', async () => {
     )
   }
 
-  const { findByText } = render(
+  const { getByText, findByText } = render(
     <StrictMode>
       <Provider>
         <Suspense fallback="loading">
@@ -276,12 +276,10 @@ it('uses multiple async atoms at once', async () => {
   )
 
   await findByText('loading')
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await findByText('ready ready2')
+  await waitFor(() => {
+    resolve.splice(0).forEach((fn) => fn())
+    getByText('ready ready2')
+  })
 })
 
 it('uses async atom in the middle of dependency chain', async () => {
@@ -415,22 +413,19 @@ it('updates an async atom in child useEffect on remount', async () => {
   )
 
   resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await findByText('count: 1')
+  await waitFor(() => {
+    resolve.splice(0).forEach((fn) => fn())
+    getByText('count: 1')
+  })
 
   fireEvent.click(getByText('button'))
   await findByText('no child')
 
   fireEvent.click(getByText('button'))
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await findByText('count: 2')
+  await waitFor(() => {
+    resolve.splice(0).forEach((fn) => fn())
+    getByText('count: 2')
+  })
 })
 
 it('async get and useEffect on parent', async () => {
@@ -634,7 +629,7 @@ it('uses an async atom that depends on another async atom', async () => {
     return <div>num: {num}</div>
   }
 
-  const { findByText } = render(
+  const { getByText, findByText } = render(
     <StrictMode>
       <Provider>
         <Suspense fallback="loading">
@@ -645,10 +640,10 @@ it('uses an async atom that depends on another async atom', async () => {
   )
 
   await findByText('loading')
-  resolve()
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve()
-  await findByText('num: 1')
+  await waitFor(() => {
+    resolve()
+    getByText('num: 1')
+  })
 })
 
 it('a derived atom from a newly created async atom (#351)', async () => {
@@ -784,9 +779,7 @@ it('async write self atom', async () => {
 it('non suspense async write self atom with setTimeout (#389)', async () => {
   const countAtom = atom(0, (get, set, _arg) => {
     set(countAtom, get(countAtom) + 1)
-    setTimeout(() => {
-      set(countAtom, -1)
-    }, 0)
+    setTimeout(() => set(countAtom, -1))
   })
 
   const Counter = () => {
@@ -852,12 +845,8 @@ it('combine two promise atom values (#442)', async () => {
   const count2Atom = atom(new Promise<number>(() => {}))
   const derivedAtom = atom((get) => get(count1Atom) + get(count2Atom))
   const initAtom = atom(null, (_get, set) => {
-    setTimeout(() => {
-      set(count1Atom, Promise.resolve(1))
-    }, 1)
-    setTimeout(() => {
-      set(count2Atom, Promise.resolve(2))
-    }, 1)
+    setTimeout(() => set(count1Atom, Promise.resolve(1)))
+    setTimeout(() => set(count2Atom, Promise.resolve(2)))
   })
   initAtom.onMount = (init) => {
     init()
@@ -1076,20 +1065,17 @@ it('async atom double chain with setTimeout', async () => {
   await findByText('loading')
 
   resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await findByText('async: init')
+  await waitFor(() => {
+    resolve.splice(0).forEach((fn) => fn())
+    getByText('async: init')
+  })
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r, 10)) // FIXME can we remove this?
-  resolve.splice(0).forEach((fn) => fn())
-  await findByText('async: ready')
+  await waitFor(() => {
+    resolve.splice(0).forEach((fn) => fn())
+    getByText('async: ready')
+  })
 })
 
 it('update unmounted async atom with intermediate atom', async () => {
@@ -1158,12 +1144,11 @@ it('update unmounted async atom with intermediate atom', async () => {
 it('multiple derived atoms with dependency chaining and async write (#813)', async () => {
   const responseBaseAtom = atom<{ name: string }[] | null>(null)
 
+  const response1 = [{ name: 'alpha' }, { name: 'beta' }]
   const responseAtom = atom(
     (get) => get(responseBaseAtom),
     (_get, set) => {
-      setTimeout(() => {
-        set(responseBaseAtom, [{ name: 'alpha' }, { name: 'beta' }])
-      }, 1)
+      setTimeout(() => set(responseBaseAtom, response1))
     }
   )
   responseAtom.onMount = (init) => {
