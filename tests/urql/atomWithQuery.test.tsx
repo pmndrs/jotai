@@ -2,7 +2,7 @@ import { Component, StrictMode, Suspense, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
-import { makeSubject, map, pipe } from 'wonka'
+import { delay, fromValue, makeSubject, map, pipe } from 'wonka'
 import type { Source } from 'wonka'
 import {
   atom,
@@ -30,7 +30,8 @@ const generateClient = (
         source,
         map((id) =>
           error?.() ? { error: new Error('fetch error') } : { data: { id } }
-        )
+        ),
+        delay(1) // FIXME we want to eliminate this
       ),
   } as unknown as Client)
 
@@ -302,8 +303,7 @@ it('refetch test', async () => {
 })
 
 it('query null client suspense', async () => {
-  const subject = makeSubject<string>()
-  const client = generateClient(subject.source)
+  const client = generateClient(fromValue('client is set'))
   const clientAtom = atom<Client | null>(null)
   const idAtom = atomWithQuery<{ id: string }, Record<string, never>>(
     () => ({
@@ -353,8 +353,6 @@ it('query null client suspense', async () => {
 
   fireEvent.click(getByText('set'))
   await findByText('loading')
-  subject.next('client is set')
-  subject.complete()
   await findByText('client is set')
 
   fireEvent.click(getByText('unset'))
@@ -363,8 +361,6 @@ it('query null client suspense', async () => {
   fireEvent.click(getByText('unset'))
   fireEvent.click(getByText('set'))
   await findByText('loading')
-  subject.next('client is set')
-  subject.complete()
   await findByText('client is set')
 })
 
