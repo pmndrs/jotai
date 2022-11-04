@@ -354,6 +354,7 @@ it('query null client suspense', async () => {
   fireEvent.click(getByText('set'))
   await findByText('loading')
   subject.next('client is set')
+  subject.complete()
   await findByText('client is set')
 
   fireEvent.click(getByText('unset'))
@@ -363,6 +364,7 @@ it('query null client suspense', async () => {
   fireEvent.click(getByText('set'))
   await findByText('loading')
   subject.next('client is set')
+  subject.complete()
   await findByText('client is set')
 })
 
