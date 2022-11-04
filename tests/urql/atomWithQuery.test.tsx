@@ -2,7 +2,8 @@ import { Component, StrictMode, Suspense, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import type { Client } from '@urql/core'
-import { delay, fromValue, interval, map, pipe } from 'wonka'
+import { makeSubject, map, pipe } from 'wonka'
+import type { Source } from 'wonka'
 import {
   atom,
   SECRET_INTERNAL_getScopeContext as getScopeContext,
@@ -19,27 +20,25 @@ const useRetryFromError = (scope?: symbol | string | number) => {
   return retryFromError || ((fn) => fn())
 }
 
-const generateClient = (id: string | number, error?: () => boolean) =>
-  ({
-    query: () => {
-      const source$ = pipe(
-        fromValue(
-          error?.() ? { error: new Error('fetch error') } : { data: { id } }
-        ),
-        delay(100) // FIXME we want to use fake timer
-      )
-      if (typeof id === 'number') {
-        ++id
-      }
-      return source$
-    },
-  } as unknown as Client)
-
-const generateContinuousClient = () =>
+const generateClient = (
+  source: Source<string | number>,
+  error?: () => boolean
+) =>
   ({
     query: () =>
       pipe(
-        interval(100), // FIXME we want to use fake timer
+        source,
+        map((id) =>
+          error?.() ? { error: new Error('fetch error') } : { data: { id } }
+        )
+      ),
+  } as unknown as Client)
+
+const generateContinuousClient = (source: Source<number>) =>
+  ({
+    query: () =>
+      pipe(
+        source,
         map((i: number) => ({ data: { count: i } }))
       ),
   } as unknown as Client)
@@ -47,12 +46,13 @@ const generateContinuousClient = () =>
 const Provider = getTestProvider()
 
 it('query basic test', async () => {
+  const subject = makeSubject<number>()
   const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     () => ({
       query: '{ count }',
       variables: {},
     }),
-    () => generateContinuousClient()
+    () => generateContinuousClient(subject.source)
   )
 
   const Counter = () => {
@@ -75,8 +75,11 @@ it('query basic test', async () => {
   )
 
   await findByText('loading')
+  subject.next(0)
   await findByText('count: 0')
+  subject.next(1)
   await findByText('count: 1')
+  subject.next(2)
   await findByText('count: 2')
 })
 
@@ -86,6 +89,7 @@ it('query dependency test', async () => {
   const setDummyAtom = atom(null, (_get, set, update: Update) =>
     set(dummyAtom, update)
   )
+  const subject = makeSubject<number>()
   const countAtom = atomWithQuery<{ count: number }, { dummy: number }>(
     (get) => ({
       query: '{ count }',
@@ -93,7 +97,7 @@ it('query dependency test', async () => {
         dummy: get(dummyAtom),
       },
     }),
-    () => generateContinuousClient()
+    () => generateContinuousClient(subject.source)
   )
 
   const Counter = () => {
@@ -122,20 +126,28 @@ it('query dependency test', async () => {
   )
 
   await findByText('loading')
+  subject.next(0)
   await findByText('count: 0')
+  subject.next(1)
   await findByText('count: 1')
+  subject.next(2)
   await findByText('count: 2')
 
   fireEvent.click(getByText('dummy'))
   await findByText('loading')
+  subject.next(0)
   await findByText('count: 0')
+  subject.next(1)
   await findByText('count: 1')
+  subject.next(2)
   await findByText('count: 2')
 })
 
 it('query change client at runtime', async () => {
-  const firstClient = generateClient('first')
-  const secondClient = generateClient('second')
+  const firstSubject = makeSubject<string>()
+  const secondSubject = makeSubject<string>()
+  const firstClient = generateClient(firstSubject.source)
+  const secondClient = generateClient(secondSubject.source)
   const clientAtom = atom(firstClient)
   const idAtom = atomWithQuery<{ id: string }, Record<string, never>>(
     () => ({
@@ -176,26 +188,30 @@ it('query change client at runtime', async () => {
   )
 
   await findByText('loading')
+  firstSubject.next('first')
   await findByText('id: first')
 
   fireEvent.click(getByText('second'))
   await findByText('loading')
+  secondSubject.next('second')
   await findByText('id: second')
 
   fireEvent.click(getByText('first'))
   await findByText('loading')
+  firstSubject.next('first')
   await findByText('id: first')
 })
 
 it('pause test', async () => {
   const enabledAtom = atom(false)
+  const subject = makeSubject<number>()
   const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     (get) => ({
       query: '{ count }',
       variables: {},
       pause: !get(enabledAtom),
     }),
-    () => generateContinuousClient()
+    () => generateContinuousClient(subject.source)
   )
 
   const Counter = () => {
@@ -227,16 +243,18 @@ it('pause test', async () => {
 
   fireEvent.click(getByText('toggle'))
   await findByText('loading')
+  subject.next(0)
   await findByText('count: 0')
 })
 
 it('refetch test', async () => {
+  const subject = makeSubject<number>()
   const countAtom = atomWithQuery<{ count: number }, Record<string, never>>(
     () => ({
       query: '{ count }',
       variables: {},
     }),
-    () => generateContinuousClient()
+    () => generateContinuousClient(subject.source)
   )
 
   const Counter = () => {
@@ -260,19 +278,26 @@ it('refetch test', async () => {
   )
 
   await findByText('loading')
+  subject.next(0)
   await findByText('count: 0')
+  subject.next(1)
   await findByText('count: 1')
+  subject.next(2)
   await findByText('count: 2')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  subject.next(0)
   await findByText('count: 0')
+  subject.next(1)
   await findByText('count: 1')
+  subject.next(2)
   await findByText('count: 2')
 })
 
 it('query null client suspense', async () => {
-  const client = generateClient('client is set')
+  const subject = makeSubject<string>()
+  const client = generateClient(subject.source)
   const clientAtom = atom<Client | null>(null)
   const idAtom = atomWithQuery<{ id: string }, Record<string, never>>(
     () => ({
@@ -322,6 +347,7 @@ it('query null client suspense', async () => {
 
   fireEvent.click(getByText('set'))
   await findByText('loading')
+  subject.next('client is set')
   await findByText('client is set')
 
   fireEvent.click(getByText('unset'))
@@ -330,6 +356,7 @@ it('query null client suspense', async () => {
   fireEvent.click(getByText('unset'))
   fireEvent.click(getByText('set'))
   await findByText('loading')
+  subject.next('client is set')
   await findByText('client is set')
 })
 
@@ -366,7 +393,8 @@ describe('error handling', () => {
   }
 
   it('can catch error in error boundary', async () => {
-    const client = generateClient(0, () => true)
+    const subject = makeSubject<number>()
+    const client = generateClient(subject.source, () => true)
     const countAtom = atomWithQuery<{ id: number }, Record<string, never>>(
       () => ({
         query: '{ id }',
@@ -391,12 +419,14 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
+    subject.next(0)
     await findByText('errored')
   })
 
   it('can recover from error', async () => {
     let willThrowError = true
-    const client = generateClient(0, () => willThrowError)
+    const subject = makeSubject<number>()
+    const client = generateClient(subject.source, () => willThrowError)
     const countAtom = atomWithQuery<{ id: number }, Record<string, never>>(
       () => ({
         query: '{ id }',
@@ -445,21 +475,25 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
+    subject.next(0)
     await findByText('errored')
 
     willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    subject.next(1)
     await findByText('count: 1')
 
     willThrowError = true
     fireEvent.click(getByText('refetch'))
     await findByText('loading')
+    subject.next(2)
     await findByText('errored')
 
     willThrowError = false
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    subject.next(3)
     await findByText('count: 3')
   })
 })
