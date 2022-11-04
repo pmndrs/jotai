@@ -434,10 +434,11 @@ it('[DEV-ONLY] with atoms invalidated after mount', async () => {
   __DEV__ = true
   const countAtom = atom(1)
   const doubleCountAtom = atom((get) => get(countAtom) * 2)
+  let resolve = () => {}
   const derivedAtom = atom((get) => {
     const count = get(countAtom)
     if (count % 2 === 0) {
-      return new Promise<number>((r) => setTimeout(() => r(count - 1), 100))
+      return new Promise<number>((r) => (resolve = () => r(count - 1)))
     }
     return count
   })
@@ -527,6 +528,7 @@ it('[DEV-ONLY] with atoms invalidated after mount', async () => {
   )
 
   fireEvent.click(getByText('change'))
+  resolve()
   await waitFor(() => {
     getByText('count: 3')
     getByText('derived: 3')
