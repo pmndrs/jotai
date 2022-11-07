@@ -60,6 +60,7 @@
     "build:babel:preset": "rollup -c --config-babel_preset",
     "build:vanilla": "rollup -c --config-vanilla",
     "build:react": "rollup -c --config-react",
+    "build:react:devtools": "rollup -c --config-react_devtools",
     "postbuild": "yarn copy && yarn patch-ts3.4 && yarn patch-esm-ts && yarn patch-readme",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --write",
     "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
