@@ -223,20 +223,60 @@ With `dataAtom`,
 Fetch error will be thrown and can be caught with ErrorBoundary.
 Refetching may recover from a temporary error.
 
-FIXME: Update example
+See [a working example](https://codesandbox.io/s/joer59) to learn more.
 
-See [a working example](https://codesandbox.io/s/04mepx) to learn more.
+## Devtools
+
+In order to use the Devtools, you need to install it additionally.
+
+```bash
+$ npm i @tanstack/react-query-devtools
+# or
+$ pnpm add @tanstack/react-query-devtools
+# or
+$ yarn add @tanstack/react-query-devtools
+```
+
+All you have to do is put the `<ReactQueryDevtools />` in the `<QueryClientProvider />`.
+
+```tsx
+import {
+  QueryClientProvider,
+  QueryClient,
+  QueryCache,
+} from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { queryClientAtom } from 'jotai-tanstack-query'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: Infinity,
+    },
+  },
+})
+export const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Provider initialValues={[[queryClientAtom, queryClient]] as const}>
+        <App />
+      </Provider>
+      <ReactQueryDevtools />
+    </QueryClientProvider>
+  )
+}
+```
 
 ## Examples
 
 ### Basic demo
 
-FIXME: Update demo
+<CodeSandbox id="vg6e6u" />
 
-<CodeSandbox id="ij2sd" />
+### Devtools demo
+
+<CodeSandbox id="99blcz" />
 
 ### Hackernews
 
-FIXME: Update demo
-
-<CodeSandbox id="u4sli" />
+<CodeSandbox id="rvrjxg" />
