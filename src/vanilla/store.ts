@@ -290,6 +290,7 @@ export const createStore = (
           retry = () => {
             if (!isSync) {
               const prevAtomState = getAtomState(atom)
+              atomStateMap.delete(atom)
               const nextAtomState = readAtomState(atom)
               if (
                 !prevAtomState ||
