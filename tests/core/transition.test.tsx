@@ -1,7 +1,7 @@
 import { StrictMode, Suspense, useEffect, useTransition } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { getTestProvider } from './testUtils'
+import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
@@ -11,8 +11,9 @@ const describeWithUseTransition =
 describeWithUseTransition('useTransition', () => {
   it('no extra commit with useTransition (#1125)', async () => {
     const countAtom = atom(0)
+    let resolve = () => {}
     const delayedAtom = atom(async (get) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => (resolve = r))
       return get(countAtom)
     })
 
@@ -45,13 +46,15 @@ describeWithUseTransition('useTransition', () => {
       </>
     )
 
+    resolve()
     await findByText('delayed: 0')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('button'))
-    await findByText('delayed: 1')
+    await waitFor(() => {
+      resolve()
+      getByText('delayed: 1')
+    })
 
-    await new Promise((r) => setTimeout(r, 100))
     expect(commited).toEqual([
       { pending: false, delayed: 0 },
       { pending: true, delayed: 0 },

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
-import { getTestProvider, itSkipIfVersionedWrite } from './testUtils'
+import { getTestProvider, itSkipIfVersionedWrite } from '../testUtils'
 
 const Provider = getTestProvider()
 

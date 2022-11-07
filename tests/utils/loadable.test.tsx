@@ -231,7 +231,6 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
 
   getByText('Loading...')
   fireEvent.click(getByText('trigger'))
-  await new Promise((r) => setTimeout(r, 100))
   resolveAsync(5)
   await findByText('Data: 5')
 })
