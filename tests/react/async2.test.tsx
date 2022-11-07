@@ -37,7 +37,6 @@ describe('useAtom sync option test', () => {
       </StrictMode>
     )
 
-    await findByText('loading')
     await findByText('count: 0')
 
     fireEvent.click(getByText('button'))
