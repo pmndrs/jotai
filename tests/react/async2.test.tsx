@@ -6,7 +6,13 @@ import { atom } from 'jotai/vanilla'
 describe('useAtom sync option test', () => {
   it('suspend for Promise.resovle without delay option', async () => {
     const countAtom = atom(0)
-    const asyncAtom = atom((get) => Promise.resolve(get(countAtom)))
+    const asyncAtom = atom((get) => {
+      const count = get(countAtom)
+      if (count === 0) {
+        return 0
+      }
+      return Promise.resolve(count)
+    })
 
     const Component = () => {
       const count = useAtomValue(asyncAtom)
@@ -41,7 +47,13 @@ describe('useAtom sync option test', () => {
 
   it('do not suspend for Promise.resovle with delay option', async () => {
     const countAtom = atom(0)
-    const asyncAtom = atom((get) => Promise.resolve(get(countAtom)))
+    const asyncAtom = atom((get) => {
+      const count = get(countAtom)
+      if (count === 0) {
+        return 0
+      }
+      return Promise.resolve(count)
+    })
 
     const Component = () => {
       const count = useAtomValue(asyncAtom, { delay: 0 })
