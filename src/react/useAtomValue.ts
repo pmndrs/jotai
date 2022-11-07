@@ -85,8 +85,8 @@ export function useAtomValue<AtomType extends Atom<any>>(
         try {
           const v = store.get(atom)
           if (v instanceof Promise && (v as any).status === 'pending') {
-            // delay one tick
-            setTimeout(rerender)
+            // delay rerendering to wait a promise possibly to resolve
+            setTimeout(rerender, 1) // `1` is a magic number
             return
           }
         } catch (e) {
