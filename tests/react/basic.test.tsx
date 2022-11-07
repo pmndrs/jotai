@@ -269,7 +269,7 @@ it('works with async get', async () => {
 
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
-    const [delayedCount] = useAtom(asyncCountAtom, { sync: true })
+    const [delayedCount] = useAtom(asyncCountAtom)
     return (
       <>
         <div>

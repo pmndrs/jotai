@@ -633,7 +633,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
 
   const Counter = () => {
     const [, setCount] = useAtom(countAtom)
-    const [derived] = useAtom(derivedAtom, { sync: true })
+    const [derived] = useAtom(derivedAtom)
     return (
       <>
         <div>

@@ -4,12 +4,12 @@ import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 describe('useAtom sync option test', () => {
-  it('suspend for Promise.resovle with sync=true', async () => {
+  it('suspend for Promise.resovle without delay option', async () => {
     const countAtom = atom(0)
     const asyncAtom = atom((get) => Promise.resolve(get(countAtom)))
 
     const Component = () => {
-      const count = useAtomValue(asyncAtom, { sync: true })
+      const count = useAtomValue(asyncAtom)
       return <div>count: {count}</div>
     }
 
@@ -39,12 +39,12 @@ describe('useAtom sync option test', () => {
     await findByText('count: 1')
   })
 
-  it('do not suspend for Promise.resovle with sync=false', async () => {
+  it('do not suspend for Promise.resovle with delay option', async () => {
     const countAtom = atom(0)
     const asyncAtom = atom((get) => Promise.resolve(get(countAtom)))
 
     const Component = () => {
-      const count = useAtomValue(asyncAtom, { sync: false })
+      const count = useAtomValue(asyncAtom, { delay: 0 })
       return <div>count: {count}</div>
     }
 

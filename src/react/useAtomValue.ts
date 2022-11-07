@@ -42,7 +42,7 @@ const use =
 
 type Options = {
   store?: Store
-  sync?: boolean
+  delay?: number
 }
 
 export function useAtomValue<AtomType extends Atom<any>>(
@@ -78,26 +78,19 @@ export function useAtomValue<AtomType extends Atom<any>>(
     value = store.get(atom)
   }
 
-  const sync = options?.sync
+  const delay = options?.delay
   useEffect(() => {
     const unsub = store.sub(atom, () => {
-      if (!sync) {
-        try {
-          const v = store.get(atom)
-          if (v instanceof Promise && (v as any).status === 'pending') {
-            // delay rerendering to wait a promise possibly to resolve
-            setTimeout(rerender, 1) // `1` is a magic number
-            return
-          }
-        } catch (e) {
-          // ignored
-        }
+      if (typeof delay === 'number') {
+        // delay rerendering to wait a promise possibly to resolve
+        setTimeout(rerender, delay)
+        return
       }
       rerender()
     })
     rerender()
     return unsub
-  }, [store, atom, sync])
+  }, [store, atom, delay])
 
   useDebugValue(value)
   return isPromise(value) ? use(value) : (value as Awaited<Value>)

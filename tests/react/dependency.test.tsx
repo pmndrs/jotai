@@ -53,7 +53,7 @@ it('works a primitive atom and a dependent async atom', async () => {
 
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
-    const [doubledCount] = useAtom(doubledAtom, { sync: true })
+    const [doubledCount] = useAtom(doubledAtom)
     return (
       <>
         <div>
