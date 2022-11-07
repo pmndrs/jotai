@@ -51,19 +51,25 @@ describeExceptFor1686('abortable atom test', () => {
     )
 
     await findByText('loading')
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 0')
+    await waitFor(() => {
+      resolve.splice(0).forEach((fn) => fn())
+      getByText('count: 0')
+    })
     expect(abortedCount).toBe(0)
 
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 2')
+    await waitFor(() => {
+      resolve.splice(0).forEach((fn) => fn())
+      getByText('count: 2')
+    })
     expect(abortedCount).toBe(1)
 
     fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 3')
+    await waitFor(() => {
+      resolve.splice(0).forEach((fn) => fn())
+      getByText('count: 3')
+    })
     expect(abortedCount).toBe(1)
   })
 
