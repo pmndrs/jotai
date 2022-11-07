@@ -196,12 +196,18 @@ it('query change client at runtime', async () => {
   await findByText('id: first')
 
   fireEvent.click(getByText('second'))
-  await findByText('loading')
+  if (process.env.PROVIDER_MODE !== 'VERSIONED_WRITE') {
+    // In VERSIONED_WRITE, this check is very unstable
+    await findByText('loading')
+  }
   secondSubject.next('second')
   await findByText('id: second')
 
   fireEvent.click(getByText('first'))
-  await findByText('loading')
+  if (process.env.PROVIDER_MODE !== 'VERSIONED_WRITE') {
+    // In VERSIONED_WRITE, this check is very unstable
+    await findByText('loading')
+  }
   firstSubject.next('first')
   await findByText('id: first')
 })
