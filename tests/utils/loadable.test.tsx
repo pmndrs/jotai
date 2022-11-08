@@ -282,7 +282,7 @@ it('does not repeatedly attempt to get the value of an unresolved promise atom w
   callsToGetBaseAtom = 0
   resolve(5)
   await findByText('Data: 5')
-  expect(callsToGetBaseAtom).toBe(1)
+  expect(callsToGetBaseAtom).toBeLessThanOrEqual(2)
 })
 
 type LoadableComponentProps = {
