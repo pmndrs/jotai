@@ -257,8 +257,12 @@ it('loadable of a derived async atom with error does not trigger infinite loop (
 })
 
 it('does not repeatedly attempt to get the value of an unresolved promise atom wrapped in a loadable', async () => {
-  // Base atom holds a promise that never resolves
-  const baseAtom = atom(new Promise<number>(() => {}))
+  let resolveAsync: (value: number) => void
+  const baseAtom = atom(
+    new Promise<number>((resolve) => {
+      resolveAsync = resolve
+    })
+  )
 
   let callsToGetBaseAtom = 0
   const derivedAtom = atom((get) => {
@@ -266,7 +270,7 @@ it('does not repeatedly attempt to get the value of an unresolved promise atom w
     return get(baseAtom)
   })
 
-  render(
+  const { findByText } = render(
     <StrictMode>
       <Provider>
         <LoadableComponent asyncAtom={derivedAtom} />
@@ -274,12 +278,15 @@ it('does not repeatedly attempt to get the value of an unresolved promise atom w
     </StrictMode>
   )
 
-  // wait some time to see how many calls are made to get the base atom
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
   // depending on provider-less mode or versioned-write mode, there will be
-  // either 2 or 3 calls
+  // either 2 or 3 calls.
+  await findByText('Loading...')
   expect(callsToGetBaseAtom).toBeLessThanOrEqual(3)
+
+  callsToGetBaseAtom = 0
+  resolveAsync!(5)
+  await findByText('Data: 5')
+  expect(callsToGetBaseAtom).toBe(1)
 })
 
 type LoadableComponentProps = {
