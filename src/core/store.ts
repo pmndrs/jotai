@@ -1,8 +1,8 @@
 import type { Atom, WritableAtom } from './atom'
 import {
   cancelSuspensePromise,
+  copySuspensePromise,
   createSuspensePromise,
-  getBasePromise,
   isEqualSuspensePromise,
   isSuspensePromise,
   isSuspensePromiseAlreadyCancelled,
@@ -417,7 +417,10 @@ export const createStore = (
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
     if (atomState && 'p' in atomState) {
-      if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
+      if (
+        isEqualSuspensePromise(atomState.p, suspensePromise) &&
+        !isSuspensePromiseAlreadyCancelled(atomState.p)
+      ) {
         // the same promise, not updating
         if (
           !atomState.y // invalidated
@@ -584,10 +587,11 @@ export const createStore = (
       return setAtomPromiseOrValue(version, atom, promiseOrValue, dependencies)
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
-        const suspensePromise = createSuspensePromise(
-          errorOrPromise,
-          errorOrPromise
-        )
+        const suspensePromise =
+          isSuspensePromise(errorOrPromise) &&
+          isSuspensePromiseAlreadyCancelled(errorOrPromise)
+            ? copySuspensePromise(errorOrPromise)
+            : createSuspensePromise(errorOrPromise, errorOrPromise)
         return setAtomSuspensePromise(
           version,
           atom,
@@ -800,11 +804,6 @@ export const createStore = (
       // cancel suspense promise (and abort base promise)
       if ('p' in atomState) {
         cancelSuspensePromise(atomState.p)
-        setAtomPromiseOrValue(
-          version,
-          atom,
-          getBasePromise(atomState.p) as Value
-        )
       }
       atomState.d.forEach((_, a) => {
         if (a !== atom) {
