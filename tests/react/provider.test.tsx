@@ -19,10 +19,9 @@ it('uses initial values from provider', async () => {
     )
   }
 
-  const store = createStore([
-    [countAtom, 0],
-    [petAtom, 'dog'],
-  ])
+  const store = createStore()
+  store.set(countAtom, 0)
+  store.set(petAtom, 'dog')
 
   const { getByText } = render(
     <StrictMode>
@@ -54,7 +53,8 @@ it('only uses initial value from provider for specific atom', async () => {
     )
   }
 
-  const store = createStore([[petAtom, 'dog']])
+  const store = createStore()
+  store.set(petAtom, 'dog')
 
   const { getByText } = render(
     <StrictMode>

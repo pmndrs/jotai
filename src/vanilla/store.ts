@@ -98,15 +98,9 @@ type MountedAtoms = Set<AnyAtom>
  * type Store = Map<VersionObject, Map<Atom, AtomState>>
  * ```
  *
- * @param initialValues An iterable where item is a pair of [an atom, its
- *   initial value]. Use to set initial state of writable atoms; useful for
- *   testing.
- *
  * @returns A store.
  */
-export const createStore = (
-  initialValues?: Iterable<readonly [AnyAtom, AnyValue]>
-) => {
+export const createStore = () => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingMap = new Map<
@@ -118,25 +112,6 @@ export const createStore = (
   if (__DEV__) {
     stateListeners = new Set()
     mountedAtoms = new Set()
-  }
-
-  if (initialValues) {
-    for (const [atom, value] of initialValues) {
-      const atomState: AtomState = {
-        d: new Map(),
-        v: value,
-      }
-      if (__DEV__) {
-        Object.freeze(atomState)
-        if (!hasInitialValue(atom)) {
-          console.warn(
-            'Found initial value for derived atom which can cause unexpected behavior',
-            atom
-          )
-        }
-      }
-      atomStateMap.set(atom, atomState)
-    }
   }
 
   const getAtomState = <Value>(atom: Atom<Value>) =>

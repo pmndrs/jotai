@@ -106,10 +106,9 @@ it('[DEV-ONLY] should contain initial values', async () => {
     )
   }
 
-  const store = createStore([
-    [countAtom, 42],
-    [petAtom, 'dog'],
-  ])
+  const store = createStore()
+  store.set(countAtom, 42)
+  store.set(petAtom, 'dog')
 
   const { findByText } = render(
     <StrictMode>
