@@ -1,6 +1,7 @@
 import type { Atom, WritableAtom } from './atom'
 import {
   cancelSuspensePromise,
+  copySuspensePromise,
   createSuspensePromise,
   isEqualSuspensePromise,
   isSuspensePromise,
@@ -416,7 +417,10 @@ export const createStore = (
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
     if (atomState && 'p' in atomState) {
-      if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
+      if (
+        isEqualSuspensePromise(atomState.p, suspensePromise) &&
+        !isSuspensePromiseAlreadyCancelled(atomState.p)
+      ) {
         // the same promise, not updating
         if (
           !atomState.y // invalidated
@@ -583,10 +587,11 @@ export const createStore = (
       return setAtomPromiseOrValue(version, atom, promiseOrValue, dependencies)
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
-        const suspensePromise = createSuspensePromise(
-          errorOrPromise,
-          errorOrPromise
-        )
+        const suspensePromise =
+          isSuspensePromise(errorOrPromise) &&
+          isSuspensePromiseAlreadyCancelled(errorOrPromise)
+            ? copySuspensePromise(errorOrPromise)
+            : createSuspensePromise(errorOrPromise, errorOrPromise)
         return setAtomSuspensePromise(
           version,
           atom,
