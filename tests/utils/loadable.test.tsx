@@ -256,9 +256,8 @@ it('loadable of a derived async atom with error does not trigger infinite loop (
   await findByText('Error: thrown in baseAtom')
 })
 
-it('does not repeatedly attempt to get the value of an unresolved promise atom wrapped in a loadable', async () => {
-  let resolve: (value: number) => void = () => {}
-  const baseAtom = atom(new Promise<number>((r) => (resolve = r)))
+it('does not repeatedly attempt to get the value of an unresolved promise atom wrapped in a loadable (#1481)', async () => {
+  const baseAtom = atom(new Promise<number>(() => {}))
 
   let callsToGetBaseAtom = 0
   const derivedAtom = atom((get) => {
@@ -274,6 +273,7 @@ it('does not repeatedly attempt to get the value of an unresolved promise atom w
     </StrictMode>
   )
 
+  // we need a small delay to reproduce the issue
   await new Promise((r) => setTimeout(r, 10))
   // depending on provider-less mode or versioned-write mode, there will be
   // either 2 or 3 calls.
