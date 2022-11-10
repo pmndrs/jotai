@@ -2,7 +2,7 @@ import { Component, StrictMode, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
-import { getTestProvider, itSkipIfVersionedWrite } from './testUtils'
+import { getTestProvider, itSkipIfVersionedWrite } from '../testUtils'
 
 const Provider = getTestProvider()
 
@@ -551,9 +551,10 @@ describe('error recovery', () => {
 
   it('recovers from async errors', async () => {
     const { counterAtom, Counter } = createCounter()
+    let resolve = () => {}
     const asyncAtom = atom(async (get) => {
       const value = get(counterAtom)
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => (resolve = r))
 
       if (value === 0) {
         throw new Error('An error occurred')
@@ -579,10 +580,12 @@ describe('error recovery', () => {
       </StrictMode>
     )
 
+    resolve()
     await findByText('errored')
 
     fireEvent.click(getByText('increment'))
     fireEvent.click(getByText('retry'))
+    resolve()
     await findByText('Value: 1')
   })
 })

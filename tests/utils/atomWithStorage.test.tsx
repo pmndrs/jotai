@@ -12,6 +12,8 @@ import { getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
+const resolve: (() => void)[] = []
+
 describe('atomWithStorage (sync)', () => {
   const storageData: Record<string, number> = {
     count: 10,
@@ -202,18 +204,18 @@ describe('atomWithStorage (async)', () => {
   }
   const asyncDummyStorage = {
     getItem: async (key: string) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       if (!(key in asyncStorageData)) {
         return NO_STORAGE_VALUE
       }
       return asyncStorageData[key] as number
     },
     setItem: async (key: string, newValue: number) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       asyncStorageData[key] = newValue
     },
     removeItem: async (key: string) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       delete asyncStorageData[key]
     },
   }
@@ -243,15 +245,18 @@ describe('atomWithStorage (async)', () => {
     )
 
     await findByText('loading')
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 10')
 
     fireEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 11')
     await waitFor(() => {
       expect(asyncStorageData.count).toBe(11)
     })
 
     fireEvent.click(getByText('reset'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 1')
     await waitFor(() => {
       expect(asyncStorageData.count).toBeUndefined()
@@ -282,9 +287,11 @@ describe('atomWithStorage (async)', () => {
     )
 
     await findByText('loading')
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 20')
 
     fireEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 21')
     await waitFor(() => {
       expect(asyncStorageData.count2).toBe(21)
@@ -318,6 +325,7 @@ describe('atomWithStorage (async)', () => {
     await findByText('count: 30')
 
     fireEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 31')
     await waitFor(() => {
       expect(asyncStorageData.count3).toBe(31)
@@ -361,15 +369,15 @@ describe('atomWithStorage (in non-browser environment)', () => {
   }
   const asyncDummyStorage = {
     getItem: async (key: string) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       return asyncStorageData[key] as string
     },
     setItem: async (key: string, newValue: string) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       asyncStorageData[key] = newValue
     },
     removeItem: async (key: string) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => resolve.push(r))
       delete asyncStorageData[key]
     },
   }

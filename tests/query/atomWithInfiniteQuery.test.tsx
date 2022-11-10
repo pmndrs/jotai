@@ -21,6 +21,7 @@ const useRetryFromError = (scope?: symbol | string | number) => {
 }
 
 it('infinite query basic test', async () => {
+  let resolve = () => {}
   const countAtom = atomWithInfiniteQuery<
     { response: { count: number } },
     void
@@ -28,7 +29,8 @@ it('infinite query basic test', async () => {
     queryKey: ['count1Infinite'],
     queryFn: async (context) => {
       const count = context.pageParam ? parseInt(context.pageParam) : 0
-      return fakeFetch({ count }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      return fakeFetch({ count }, false)
     },
   }))
 
@@ -52,19 +54,22 @@ it('infinite query basic test', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('page count: 1')
 })
 
 it('infinite query next page test', async () => {
   const mockFetch = jest.fn(fakeFetch)
+  let resolve = () => {}
   const countAtom = atomWithInfiniteQuery<
     { response: { count: number } },
     void
   >(() => ({
     queryKey: ['nextPageAtom'],
-    queryFn: (context) => {
+    queryFn: async (context) => {
       const count = context.pageParam ? parseInt(context.pageParam) : 0
-      return mockFetch({ count }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      return mockFetch({ count }, false)
     },
     getNextPageParam: (lastPage) => {
       const {
@@ -106,16 +111,17 @@ it('infinite query next page test', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('page count: 1')
   expect(mockFetch).toBeCalledTimes(1)
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('next'))
+  resolve()
   await findByText('page count: 2')
   expect(mockFetch).toBeCalledTimes(2)
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('prev'))
+  resolve()
   await findByText('page count: 3')
   expect(mockFetch).toBeCalledTimes(3)
 })
@@ -123,13 +129,15 @@ it('infinite query next page test', async () => {
 it('infinite query with enabled', async () => {
   const slugAtom = atom<string | null>(null)
 
+  let resolve = () => {}
   const slugQueryAtom = atomWithInfiniteQuery((get) => {
     const slug = get(slugAtom)
     return {
       enabled: !!slug,
       queryKey: ['disabled_until_value', slug],
       queryFn: async () => {
-        return await fakeFetch({ slug: `hello-${slug}` }, false, 100)
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ slug: `hello-${slug}` }, false)
       },
     }
   })
@@ -167,9 +175,9 @@ it('infinite query with enabled', async () => {
 
   await findByText('not enabled')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('set slug'))
   await findByText('loading')
+  resolve()
   await findByText('slug: hello-world')
 })
 
@@ -184,7 +192,8 @@ it('infinite query with enabled 2', async () => {
       enabled: isEnabled,
       queryKey: ['enabled_toggle'],
       queryFn: async () => {
-        return await fakeFetch({ slug: `hello-${slug}` }, false, 100)
+        await new Promise<void>((r) => setTimeout(r, 100)) // FIXME can avoid?
+        return fakeFetch({ slug: `hello-${slug}` }, false)
       },
     }
   })
@@ -236,14 +245,14 @@ it('infinite query with enabled 2', async () => {
   await findByText('loading')
   await findByText('slug: hello-first')
 
-  await new Promise((r) => setTimeout(r, 100))
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
 
-  await new Promise((r) => setTimeout(r, 100))
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   await findByText('slug: hello-first')
 
-  await new Promise((r) => setTimeout(r, 100))
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
 })
@@ -311,17 +320,14 @@ it('should be able to refetch only specific pages when refetchPages is provided'
   await findByText('length: 1')
   await findByText('page 1: 10')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('fetch next page'))
   await findByText('length: 2')
   await findByText('page 2: 11')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('fetch next page'))
   await findByText('length: 3')
   await findByText('page 3: 12')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('refetch page 1'))
   await findByText('length: 3')
   await findByText('page 1: 20')
@@ -360,11 +366,13 @@ describe('error handling', () => {
   }
 
   it('can catch error in error boundary', async () => {
+    let resolve = () => {}
     const countAtom = atomWithInfiniteQuery(() => ({
       queryKey: ['error test', 'count1Infinite'],
       retry: false,
       queryFn: async () => {
-        return await fakeFetch({ count: 0 }, true, 100)
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ count: 0 }, true)
       },
     }))
     const Counter = () => {
@@ -389,12 +397,14 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
+    resolve()
     await findByText('errored')
   })
 
   it('can recover from error', async () => {
-    let count = 0
-    let willThrowError = true
+    let count = -1
+    let willThrowError = false
+    let resolve = () => {}
     const countAtom = atomWithInfiniteQuery<
       { response: { count: number } },
       void
@@ -402,11 +412,11 @@ describe('error handling', () => {
       queryKey: ['error test', 'count2Infinite'],
       retry: false,
       staleTime: 200,
-      queryFn: () => {
-        const promise = fakeFetch({ count }, willThrowError, 100)
+      queryFn: async () => {
         willThrowError = !willThrowError
         ++count
-        return promise
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ count }, willThrowError)
       },
     }))
     const Counter = () => {
@@ -446,21 +456,23 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
+    resolve()
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    resolve()
     await findByText('count: 1')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('refetch'))
+    resolve()
     await findByText('loading')
+    resolve()
     await findByText('errored')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('retry'))
     await findByText('loading')
+    resolve()
     await findByText('count: 3')
   })
 })
