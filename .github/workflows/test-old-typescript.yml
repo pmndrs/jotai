@@ -42,7 +42,7 @@ jobs:
           sed -i~ "s/\"jotai\/\*\": \[\"\.\/src\/\*\.ts\"\]/\"jotai\/*\": [\".\/dist\/ts3.4\/*.d.ts\"]/" tsconfig.json
           sed -i~ "s/\"include\": .*/\"include\": [\"src\/types.d.ts\", \"dist\/**\/*\", \"tests\/**\/*\"],/" tsconfig.json
       - name: Patch for Older TS
-        if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
+        if: ${{ matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
           sed -i~ '1s/^/import React from "react";/' tests/*/*.tsx
           sed -i~ "s/\"jsx\": \"react-jsx\",/\"jsx\": \"react\",/" tsconfig.json
