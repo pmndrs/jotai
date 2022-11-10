@@ -425,11 +425,10 @@ it('read-only array atom', async () => {
   const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
   const dragonBox = getByTestId('get dragon food-checkbox') as HTMLInputElement
 
-  // FIXME is there a better way?
-  await waitFor(() => {})
-
-  expect(catBox.checked).toBe(false)
-  expect(dragonBox.checked).toBe(false)
+  await waitFor(() => {
+    expect(catBox.checked).toBe(false)
+    expect(dragonBox.checked).toBe(false)
+  })
 })
 
 it('handles scope', async () => {
@@ -482,11 +481,10 @@ it('handles scope', async () => {
 
   fireEvent.click(catBox)
 
-  // FIXME is there a better way?
-  await waitFor(() => {})
-
-  expect(catBox.checked).toBe(true)
-  expect(dragonBox.checked).toBe(false)
+  await waitFor(() => {
+    expect(catBox.checked).toBe(true)
+    expect(dragonBox.checked).toBe(false)
+  })
 })
 
 it('no error with cached atoms (fix 510)', async () => {

@@ -1,7 +1,7 @@
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { StrictModeUnlessVersionedWrite, getTestProvider } from './testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
@@ -49,8 +49,9 @@ it('works with 2 level dependencies', async () => {
 
 it('works a primitive atom and a dependent async atom', async () => {
   const countAtom = atom(1)
+  let resolve = () => {}
   const doubledAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return get(countAtom) * 2
   })
 
@@ -78,16 +79,17 @@ it('works a primitive atom and a dependent async atom', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('count: 1, doubled: 2')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('count: 2, doubled: 4')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('count: 3, doubled: 6')
 })
 
@@ -720,7 +722,6 @@ it('Should bail for derived async chains (#877)', async () => {
 
   const asyncAtom = atom(async (get) => {
     get(textAtom)
-    await new Promise((r) => setTimeout(r, 1))
     syncAtomCount++
     return 'My very long data'
   })
@@ -779,12 +780,8 @@ it('update correctly with async updates (#1250)', async () => {
     const alsoCount = useAtomValue(alsoCountAtom)
     const countIsGreaterThanOne = useAtomValue(countIsGreaterThanOneAtom)
     const incrementCountTwice = () => {
-      setTimeout(() => {
-        setCount((count) => count + 1)
-      })
-      setTimeout(() => {
-        setCount((count) => count + 1)
-      })
+      setTimeout(() => setCount((count) => count + 1))
+      setTimeout(() => setCount((count) => count + 1))
     }
     return (
       <div>

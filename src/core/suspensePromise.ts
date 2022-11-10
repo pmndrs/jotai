@@ -63,6 +63,12 @@ export const createSuspensePromise = (
   return suspensePromise
 }
 
+export const copySuspensePromise = (suspensePromise: SuspensePromise) =>
+  createSuspensePromise(
+    suspensePromise[SUSPENSE_PROMISE].b,
+    suspensePromise[SUSPENSE_PROMISE].o
+  )
+
 const promiseAbortMap = new WeakMap<Promise<unknown>, () => void>()
 
 export const registerPromiseAbort = (

@@ -11,7 +11,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react'
 import { unstable_batchedUpdates } from 'react-dom'
 import { atom, useAtom } from 'jotai'
 import type { PrimitiveAtom, WritableAtom } from 'jotai'
-import { StrictModeUnlessVersionedWrite, getTestProvider } from './testUtils'
+import { StrictModeUnlessVersionedWrite, getTestProvider } from '../testUtils'
 
 const Provider = getTestProvider()
 
@@ -290,9 +290,7 @@ it('only re-renders if value has changed', async () => {
 it('re-renders a time delayed derived atom with the same initial value (#947)', async () => {
   const aAtom = atom(false)
   aAtom.onMount = (set) => {
-    setTimeout(() => {
-      set(true)
-    })
+    setTimeout(() => set(true))
   }
 
   const bAtom = atom(1)
@@ -325,8 +323,9 @@ it('re-renders a time delayed derived atom with the same initial value (#947)', 
 
 it('works with async get', async () => {
   const countAtom = atom(0)
+  let resolve = () => {}
   const asyncCountAtom = atom(async (get) => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise<void>((r) => (resolve = r))
     return get(countAtom)
   })
 
@@ -355,16 +354,17 @@ it('works with async get', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('commits: 1, count: 0, delayedCount: 0')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('commits: 2, count: 1, delayedCount: 1')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('commits: 3, count: 2, delayedCount: 2')
 })
 
@@ -410,10 +410,11 @@ it('works with async get without setTimeout', async () => {
 it('uses atoms with tree dependencies', async () => {
   const topAtom = atom(0)
   const leftAtom = atom((get) => get(topAtom))
+  let resolve = () => {}
   const rightAtom = atom(
     (get) => get(topAtom),
     async (get, set, update: (prev: number) => number) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => (resolve = r))
       batchedUpdates(() => {
         set(topAtom, update(get(topAtom)))
       })
@@ -444,9 +445,11 @@ it('uses atoms with tree dependencies', async () => {
   await findByText('commits: 1, count: 0')
 
   fireEvent.click(getByText('button'))
+  resolve()
   await findByText('commits: 2, count: 1')
 
   fireEvent.click(getByText('button'))
+  resolve()
   await findByText('commits: 3, count: 2')
 })
 
@@ -489,10 +492,11 @@ it('runs update only once in StrictMode', async () => {
 
 it('uses an async write-only atom', async () => {
   const countAtom = atom(0)
+  let resolve = () => {}
   const asyncCountAtom = atom(
     null,
     async (get, set, update: (prev: number) => number) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => (resolve = r))
       set(countAtom, update(get(countAtom)))
     }
   )
@@ -521,14 +525,16 @@ it('uses an async write-only atom', async () => {
   await findByText('commits: 1, count: 0')
 
   fireEvent.click(getByText('button'))
+  resolve()
   await findByText('commits: 2, count: 1')
 })
 
 it('uses a writable atom without read function', async () => {
+  let resolve = () => {}
   const countAtom: WritableAtom<number, number> = atom(
     1,
     async (get, set, v) => {
-      await new Promise((r) => setTimeout(r, 100))
+      await new Promise<void>((r) => (resolve = r))
       set(countAtom, get(countAtom) + 10 * v)
     }
   )
@@ -554,6 +560,7 @@ it('uses a writable atom without read function', async () => {
   await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
+  resolve()
   await findByText('count: 11')
 })
 
@@ -933,13 +940,14 @@ it('write self atom (undocumented usage)', async () => {
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
 })
+
 it('async chain for multiple sync and async atoms (#443)', async () => {
   const num1Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r))
     return 1
   })
   const num2Atom = atom(async () => {
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r))
     return 2
   })
 

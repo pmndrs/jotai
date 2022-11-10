@@ -92,12 +92,9 @@ it('nested count state', async () => {
 })
 
 it('state with a promise', async () => {
+  let resolve = () => {}
   const getAsyncStatus = (status: string) =>
-    new Promise<string>((resolve) => {
-      setTimeout(() => {
-        resolve(status)
-      }, 500)
-    })
+    new Promise<string>((r) => (resolve = () => r(status)))
 
   const proxyState = proxy({
     status: getAsyncStatus('done'),
@@ -136,9 +133,12 @@ it('state with a promise', async () => {
   )
 
   await findByText('loading')
+  resolve()
   await findByText('status: done')
+
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('status: modified')
 })
 

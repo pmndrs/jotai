@@ -1,7 +1,7 @@
 import { StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import type { Client } from '@urql/core'
-import { delay, fromValue, pipe, take, toPromise } from 'wonka'
+import { fromValue, pipe, take, toPromise } from 'wonka'
 import { atom, useAtom } from 'jotai'
 import { atomWithMutation } from 'jotai/urql'
 import { getTestProvider, itSkipIfVersionedWrite } from '../testUtils'
@@ -15,13 +15,10 @@ const generateClient = (error?: () => boolean) =>
   ({
     mutation: () => {
       const source$ = withPromise(
-        pipe(
-          fromValue(
-            error?.()
-              ? { error: new Error('fetch error') }
-              : { data: { count: 1 } }
-          ),
-          delay(100)
+        fromValue(
+          error?.()
+            ? { error: new Error('fetch error') }
+            : { data: { count: 1 } }
         )
       )
       return source$
@@ -67,7 +64,6 @@ it('mutation basic test', async () => {
 
   await findByText('loading')
 
-  await new Promise((r) => setTimeout(r, 100))
   fireEvent.click(getByText('mutate'))
   await findByText('count: 1')
 })
@@ -121,7 +117,6 @@ describe('error handling', () => {
 
     await findByText('loading')
 
-    await new Promise((r) => setTimeout(r, 100))
     fireEvent.click(getByText('mutate'))
     await waitFor(() => {
       expect(errored).toBe(true)

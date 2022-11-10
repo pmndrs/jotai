@@ -193,6 +193,7 @@ yarn add jotai react
   - [Utils](./docs/api/utils.mdx)
   - [Devtools](./docs/api/devtools.mdx)
   - [Babel](./docs/api/babel.mdx)
+  - [SWC](./docs/api/swc.mdx)
 - Integrations
   - [Immer](./docs/integrations/immer.mdx)
   - [Optics](./docs/integrations/optics.mdx)

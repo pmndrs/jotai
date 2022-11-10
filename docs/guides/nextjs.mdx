@@ -48,6 +48,10 @@ const postData = atom((get) => {
 
 Because of the nature of SSR, your app can have more instances existing in JS memory in the same time. You need to wrap your app inside a `Provider` (view more details [in the Core section](../api/core.mdx)) so that each instance has its own state and will not interfere with previous values from a default store (provider-less mode).
 
+## SWC plugins
+
+Jotai provides SWC plugins for better DX while developing with Next.js. [Find more info in the SWC section.](../api/swc.mdx)
+
 ## Examples
 
 ### Clock
