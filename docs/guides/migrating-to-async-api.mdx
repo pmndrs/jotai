@@ -19,7 +19,7 @@ Unfortunately, there are some breaking changes along with new features.
 Jotai comes with vanilla (non-React) functions
 and React functions separately.
 
-### Store I/F
+### Store API
 
 Jotai exposes store interface so that you can directly manipulate atom values.
 
@@ -154,6 +154,9 @@ const store = createStore()
 
 ### `abortableAtom` util
 
+You no longer need the previous `abortableAtom` util,
+because it's now supported with the normal `atom`.
+
 #### Previous API
 
 ```js
@@ -171,6 +174,9 @@ const asyncAtom = atom(async (get, { signal }) => {
 ```
 
 ### `waitForAll` util
+
+You no longer need the previous `waitForAll` util,
+because we can use native Promise APIs.
 
 #### Previous API
 
