@@ -779,3 +779,130 @@ it('update correctly with async updates (#1250)', async () => {
     getByText('countIsGreaterThanOne: true')
   })
 })
+
+describe('glitch free', () => {
+  it('basic', async () => {
+    const baseAtom = atom(0)
+    const derived1Atom = atom((get) => get(baseAtom))
+    const derived2Atom = atom((get) => get(derived1Atom))
+    const computeValue = jest.fn((get) => {
+      const v0 = get(baseAtom)
+      const v1 = get(derived1Atom)
+      const v2 = get(derived2Atom)
+      return `v0: ${v0}, v1: ${v1}, v2: ${v2}`
+    })
+    const derived3Atom = atom(computeValue)
+
+    const App = () => {
+      const value = useAtomValue(derived3Atom)
+      return <div>value: {value}</div>
+    }
+
+    const Control = () => {
+      const setCount = useSetAtom(baseAtom)
+      return (
+        <>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <App />
+        <Control />
+      </StrictMode>
+    )
+
+    await findByText('value: v0: 0, v1: 0, v2: 0')
+    expect(computeValue).toBeCalledTimes(1)
+
+    fireEvent.click(getByText('button'))
+    await findByText('value: v0: 1, v1: 1, v2: 1')
+    expect(computeValue).toBeCalledTimes(2)
+  })
+
+  it('same value', async () => {
+    const baseAtom = atom(0)
+    const derived1Atom = atom((get) => get(baseAtom) * 0)
+    const derived2Atom = atom((get) => get(derived1Atom) * 0)
+    const computeValue = jest.fn((get) => {
+      const v0 = get(baseAtom)
+      const v1 = get(derived1Atom)
+      const v2 = get(derived2Atom)
+      return v0 + (v1 - v2)
+    })
+    const derived3Atom = atom(computeValue)
+
+    const App = () => {
+      const value = useAtomValue(derived3Atom)
+      return <div>value: {value}</div>
+    }
+
+    const Control = () => {
+      const setCount = useSetAtom(baseAtom)
+      return (
+        <>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <App />
+        <Control />
+      </StrictMode>
+    )
+
+    await findByText('value: 0')
+    expect(computeValue).toBeCalledTimes(1)
+
+    fireEvent.click(getByText('button'))
+    await findByText('value: 1')
+    expect(computeValue).toBeCalledTimes(2)
+  })
+
+  it('double chain', async () => {
+    const baseAtom = atom(0)
+    const derived1Atom = atom((get) => get(baseAtom))
+    const derived2Atom = atom((get) => get(derived1Atom))
+    const derived3Atom = atom((get) => get(derived2Atom))
+    const computeValue = jest.fn((get) => {
+      const v0 = get(baseAtom)
+      const v1 = get(derived1Atom)
+      const v2 = get(derived2Atom)
+      const v3 = get(derived3Atom)
+      return v0 + (v1 - v2) + v3 * 0
+    })
+    const derived4Atom = atom(computeValue)
+
+    const App = () => {
+      const value = useAtomValue(derived4Atom)
+      return <div>value: {value}</div>
+    }
+
+    const Control = () => {
+      const setCount = useSetAtom(baseAtom)
+      return (
+        <>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <App />
+        <Control />
+      </StrictMode>
+    )
+
+    await findByText('value: 0')
+    expect(computeValue).toBeCalledTimes(1)
+
+    fireEvent.click(getByText('button'))
+    await findByText('value: 1')
+    expect(computeValue).toBeCalledTimes(2)
+  })
+})

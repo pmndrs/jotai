@@ -217,18 +217,23 @@ export const createStore = () => {
     return nextAtomState
   }
 
-  const readAtomState = <Value>(atom: Atom<Value>): AtomState<Value> => {
-    // See if we can skip recomputing this atom.
-    const atomState = getAtomState(atom)
-    if (atomState) {
-      // If a dependency changed since this atom was last computed,
-      // then we're out of date and need to recompute.
-      if (
-        Array.from(atomState.d).every(
-          ([a, s]) => a === atom || getAtomState(a) === s
-        )
-      ) {
-        return atomState
+  const readAtomState = <Value>(
+    atom: Atom<Value>,
+    force?: boolean
+  ): AtomState<Value> => {
+    if (!force) {
+      // See if we can skip recomputing this atom.
+      const atomState = getAtomState(atom)
+      if (atomState) {
+        // If a dependency changed since this atom was last computed,
+        // then we're out of date and need to recompute.
+        if (
+          Array.from(atomState.d).every(
+            ([a, s]) => a === atom || getAtomState(a) === s
+          )
+        ) {
+          return atomState
+        }
       }
     }
     // Compute a new state for this atom.
@@ -265,8 +270,7 @@ export const createStore = () => {
           retry = () => {
             if (!isSync) {
               const prevAtomState = getAtomState(atom)
-              atomStateMap.delete(atom)
-              const nextAtomState = readAtomState(atom)
+              const nextAtomState = readAtomState(atom, true)
               if (
                 !prevAtomState ||
                 !isEqualAtomValue(prevAtomState, nextAtomState)
@@ -574,38 +578,9 @@ export const createStore = () => {
     }
   }
   return {
-    /**
-     * Read an atom's [AtomState], an internal data structure that is not considered
-     * part of the public API. See [useAtom] for more details.
-     *
-     * Derived atom states may be recomputed if they are invalidated and any of
-     * their transitive dependencies have changed.
-     */
     get: readAtom,
-    /**
-     * Invoke an atom's [WritableAtom.write] method with an update value.
-     * That `write` method may set one or more atoms.
-     * The default `write` method of primitive atoms just sets the atom itself to
-     * the update value.
-     */
     set: writeAtom,
-    /**
-     * Add a subscriber function to an atom. Returns a function that removes the
-     * subscriber.
-     *
-     * The subscriber is called in two cases:
-     *
-     * - For writable atoms, the subscriber is called whenever the atom is directly
-     *   changed by `atom.write`.
-     * - For derived atoms, the subscriber is called whenever the atom is
-     *   *invalidated* (i.e. when it's possibly transitive dependencies change or
-     *   become invalidated), **not** when the actual Value of the atom changes.
-     *   Derived atoms are only recomputed on read.
-     */
     sub: subscribeAtom,
-    /**
-     * Bulk-apply new values to atoms.
-     */
     res: restoreAtoms,
   }
 }
