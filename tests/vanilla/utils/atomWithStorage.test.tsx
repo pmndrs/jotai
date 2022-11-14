@@ -6,7 +6,6 @@ import { useAtom } from 'jotai/react'
 import {
   unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE,
   RESET,
-  atomWithAsyncStorage,
   atomWithStorage,
   createJSONStorage,
 } from 'jotai/vanilla/utils'
@@ -212,7 +211,7 @@ describe('atomWithStorage (async)', () => {
   }
 
   it('async count', async () => {
-    const countAtom = atomWithAsyncStorage('count', 1, asyncDummyStorage)
+    const countAtom = atomWithStorage('count', 1, asyncDummyStorage)
 
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -233,7 +232,6 @@ describe('atomWithStorage (async)', () => {
       </StrictMode>
     )
 
-    await findByText('loading')
     resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 10')
 
@@ -253,7 +251,7 @@ describe('atomWithStorage (async)', () => {
   })
 
   it('async new count', async () => {
-    const countAtom = atomWithAsyncStorage('count2', 20, asyncDummyStorage)
+    const countAtom = atomWithStorage('count2', 20, asyncDummyStorage)
 
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
@@ -273,8 +271,6 @@ describe('atomWithStorage (async)', () => {
       </StrictMode>
     )
 
-    await findByText('loading')
-    resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 20')
 
     fireEvent.click(getByText('button'))
@@ -284,51 +280,14 @@ describe('atomWithStorage (async)', () => {
       expect(asyncStorageData.count2).toBe(21)
     })
   })
-
-  it('async new count with delayInit', async () => {
-    const countAtom = atomWithAsyncStorage('count3', 30, {
-      ...asyncDummyStorage,
-      delayInit: true,
-    })
-
-    const Counter = () => {
-      const [count, setCount] = useAtom(countAtom)
-      return (
-        <>
-          <div>count: {count}</div>
-          <button onClick={() => setCount((c) => c + 1)}>button</button>
-        </>
-      )
-    }
-
-    const { findByText, getByText } = render(
-      <StrictMode>
-        <Counter />
-      </StrictMode>
-    )
-
-    await findByText('count: 30')
-
-    fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 31')
-    await waitFor(() => {
-      expect(asyncStorageData.count3).toBe(31)
-    })
-  })
 })
 
 describe('atomWithStorage (without localStorage) (#949)', () => {
   it('createJSONStorage without localStorage', async () => {
-    const dummyStorage = {
-      getItem: () => 'dummy',
-      setItem: () => {},
-      removeItem: () => {},
-    }
     const countAtom = atomWithStorage(
       'count',
       1,
-      createJSONStorage(() => dummyStorage)
+      createJSONStorage(() => undefined as any)
     )
 
     const Counter = () => {
