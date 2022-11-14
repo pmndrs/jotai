@@ -135,7 +135,7 @@ it('derived atomFamily functionality as usual', async () => {
     countAtom,
   }: {
     index: number
-    countAtom: WritableAtom<number, SetStateAction<number>>
+    countAtom: WritableAtom<number, [SetStateAction<number>], void>
   }) => {
     const [count, setCount] = useAtom(countAtom)
     return (
