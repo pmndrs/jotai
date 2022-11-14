@@ -119,8 +119,8 @@
     },
     "moduleNameMapper": {
       "^jotai$": "<rootDir>/src/index.ts",
-      "^jotai/(.*)$": "<rootDir>/src/$1.ts",
-      "^jotai/(.*)/(.*)$": "<rootDir>/src/$1/$2.ts"
+      "^jotai/(.*)/(.*)$": "<rootDir>/src/$1/$2.ts",
+      "^jotai/(.*)$": "<rootDir>/src/$1.ts"
     },
     "modulePathIgnorePatterns": [
       "dist"
