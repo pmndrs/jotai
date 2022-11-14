@@ -45,16 +45,22 @@ type Options = {
   delay?: number
 }
 
-export function useAtomValue<AtomType extends Atom<any>>(
+export function useAtomValue<Value>(
+  atom: Atom<Value>,
+  options?: Options
+): Awaited<Value>
+
+export function useAtomValue<AtomType extends Atom<unknown>>(
   atom: AtomType,
   options?: Options
-): Awaited<ExtractAtomValue<AtomType>> {
-  type Value = ExtractAtomValue<AtomType>
+): Awaited<ExtractAtomValue<AtomType>>
+
+export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   const store = useStore(options)
 
   const [[valueFromReducer, storeFromReducer, atomFromReducer], rerender] =
     useReducer<
-      ReducerWithoutAction<readonly [Value, Store, AtomType]>,
+      ReducerWithoutAction<readonly [Value, Store, typeof atom]>,
       undefined
     >(
       (prev) => {
