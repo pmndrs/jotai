@@ -32,6 +32,21 @@ store.set(fooAtom, 'foo')
 
 You can also create your own React Context to pass a store.
 
+### More flexible atom `write` function
+
+The write function can accept multiple arguments,
+and return a value.
+
+```js
+atom(
+  (get) => get(...),
+  (get, set, arg1, arg2, ...) => {
+    ...
+    return someValue
+  }
+)
+```
+
 ## What are breaking
 
 ### Import statements
@@ -63,6 +78,18 @@ import { useAtom } from 'jotai' // is same as 'jotai/react'
 Async atoms are just normal atoms with promise values.
 Atoms getter functions don't resolve promises.
 On the other hand, `useAtom` hook continues to resolve promises.
+
+### Writable atom type is changed (TypeScript only)
+
+```ts
+// Old
+WritableAtom<Value, Arg, Result extends void | Promise<void>>
+
+// New
+WritableAtom<Value, Args extends unknown[], Result>
+```
+
+In general, we should avoid using `WritableAtom` type directly.
 
 ### Some functions are dropped
 
@@ -190,3 +217,7 @@ const allAtom = waitForAll([fooAtom, barAtom])
 ```js
 const allAtom = atom((get) => Promise.all([get(fooAtom), get(barAtom)]))
 ```
+
+## Some other changes
+
+- `atomWithStorage` util's `delayInit` is removed as being default.
