@@ -8,7 +8,6 @@ export { splitAtom } from './utils/splitAtom'
 export { atomWithDefault } from './utils/atomWithDefault'
 export {
   NO_STORAGE_VALUE as unstable_NO_STORAGE_VALUE,
-  atomWithAsyncStorage,
   atomWithStorage,
   createJSONStorage,
 } from './utils/atomWithStorage'

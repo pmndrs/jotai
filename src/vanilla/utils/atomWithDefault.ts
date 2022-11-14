@@ -4,25 +4,27 @@ import { RESET } from './constants'
 
 type Read<Value> = Atom<Value>['read']
 
-export function atomWithDefault<Value>(
-  getDefault: Read<Value | Promise<Value>>
-): WritableAtom<Value, [SetStateAction<Value> | typeof RESET], void>
-
-export function atomWithDefault<Value>(
-  getDefault: Read<Promise<Value>>
-): WritableAtom<Value, [SetStateAction<Value> | typeof RESET], void>
+const updateValue = <Value>(
+  prevValue: Value,
+  update: SetStateAction<Value>
+): Value =>
+  typeof update === 'function'
+    ? (update as (prev: Value) => Value)(prevValue)
+    : update
 
 export function atomWithDefault<Value>(
   getDefault: Read<Value>
-): WritableAtom<Value, [SetStateAction<Value> | typeof RESET], void>
-
-export function atomWithDefault<Value>(getDefault: Read<Value>) {
+): WritableAtom<
+  Value,
+  [SetStateAction<Awaited<Value>> | typeof RESET],
+  void | Promise<void>
+> {
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
   const anAtom: WritableAtom<
     Value,
-    [SetStateAction<Value> | typeof RESET],
-    void
+    [SetStateAction<Awaited<Value>> | typeof RESET],
+    void | Promise<void>
   > = atom(
     (get, options) => {
       const overwritten = get(overwrittenAtom)
@@ -31,15 +33,19 @@ export function atomWithDefault<Value>(getDefault: Read<Value>) {
       }
       return getDefault(get, options)
     },
-    (get, set, update: SetStateAction<Value> | typeof RESET) => {
+    (get, set, update) => {
       if (update === RESET) {
         return set(overwrittenAtom, EMPTY)
       }
+      const prevValue = get(anAtom)
+      if (prevValue instanceof Promise) {
+        return prevValue.then((v) =>
+          set(overwrittenAtom, updateValue(v, update))
+        )
+      }
       return set(
         overwrittenAtom,
-        typeof update === 'function'
-          ? (update as (prev: Value) => Value)(get(anAtom))
-          : update
+        updateValue(prevValue as Awaited<Value>, update)
       )
     }
   )

@@ -69,6 +69,14 @@ export function atomWithObservable<Data>(
   getObservable: (get: Getter) => ObservableLike<Data> | SubjectLike<Data>,
   options?: Options<Data>
 ) {
+  type Result = { d: Data } | { e: AnyError }
+  const returnResultData = (result: Result) => {
+    if ('e' in result) {
+      throw result.e
+    }
+    return result.d
+  }
+
   const observableResultAtom = atom((get) => {
     let observable = getObservable(get)
     const itself = observable[Symbol.observable]?.()
@@ -76,7 +84,6 @@ export function atomWithObservable<Data>(
       observable = itself
     }
 
-    type Result = { d: Data } | { e: AnyError }
     let resolve: ((result: Result) => void) | undefined
     const makePending = () =>
       new Promise<Result>((r) => {
@@ -151,17 +158,9 @@ export function atomWithObservable<Data>(
       const [resultAtom] = get(observableResultAtom)
       const result = get(resultAtom)
       if (result instanceof Promise) {
-        return result.then((r) => {
-          if ('d' in r) {
-            return r.d
-          }
-          throw r.e
-        })
+        return result.then(returnResultData)
       }
-      if ('e' in result) {
-        throw result.e
-      }
-      return result.d
+      return returnResultData(result)
     },
     (get, set, data: Data) => {
       const [resultAtom, observable, makePending, start, isNotMounted] =
