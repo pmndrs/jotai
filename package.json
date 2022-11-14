@@ -59,7 +59,9 @@
     "build:babel:plugin-react-refresh": "rollup -c --config-babel_plugin-react-refresh",
     "build:babel:preset": "rollup -c --config-babel_preset",
     "build:vanilla": "rollup -c --config-vanilla",
+    "build:vanilla:utils": "rollup -c --config-vanilla_utils",
     "build:react": "rollup -c --config-react",
+    "build:react:utils": "rollup -c --config-react_utils",
     "build:react:devtools": "rollup -c --config-react_devtools",
     "postbuild": "yarn copy && yarn patch-ts3.4 && yarn patch-esm-ts && yarn patch-readme",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --write",
@@ -119,7 +121,6 @@
     },
     "moduleNameMapper": {
       "^jotai$": "<rootDir>/src/index.ts",
-      "^jotai/(.*)/(.*)$": "<rootDir>/src/$1/$2.ts",
       "^jotai/(.*)$": "<rootDir>/src/$1.ts"
     },
     "modulePathIgnorePatterns": [
