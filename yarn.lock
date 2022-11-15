@@ -3999,6 +3999,11 @@ jotai-valtio@^0.1.0:
   resolved "https://registry.yarnpkg.com/jotai-valtio/-/jotai-valtio-0.1.0.tgz#3c6f6c064122ef6aa366a84ebc3824ca3d387dc3"
   integrity sha512-II6/e6MZPdhv1OUhlhF1mIdRE+dzxhecZjYnZcL8X6TA+To7OggK6Dd49F1gye75V1N6HagHc6Zs/BusyrEp0g==
 
+jotai-xstate@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jotai-xstate/-/jotai-xstate-0.1.0.tgz#ada27caff14e89b1ebdbab92c9c6c2ad42dedf5c"
+  integrity sha512-nZUWz5+vgjDHu3Zc4qMy/KlFha0vl/jsZ6MkvPUXSh56msPs6zkxe9GuvPtI2E4yrGEuYumpmE9KsBvfw0B2SA==
+
 jotai-zustand@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/jotai-zustand/-/jotai-zustand-0.1.0.tgz#eb7829b82f85be6d9a7cc1d862ae81bb6d7170e6"

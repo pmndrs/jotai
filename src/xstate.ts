@@ -1,1 +1,1 @@
-export { atomWithMachine, RESTART } from './xstate/atomWithMachine'
+export { atomWithMachine, RESTART } from 'jotai-xstate'
