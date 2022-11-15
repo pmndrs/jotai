@@ -3989,6 +3989,11 @@ jotai-urql@^0.2.0:
   resolved "https://registry.yarnpkg.com/jotai-urql/-/jotai-urql-0.2.0.tgz#e41244142924c5a1d6682032c0a8d11493b67de3"
   integrity sha512-sXgBjqpjIvl2Mz+cH5OreTJZm08YA7gqwtQi+23T/cEEyuTiGsLAYa9YoxVMp9nV67BhlMVQBRIblMkmM6FF+w==
 
+jotai-valtio@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jotai-valtio/-/jotai-valtio-0.1.0.tgz#3c6f6c064122ef6aa366a84ebc3824ca3d387dc3"
+  integrity sha512-II6/e6MZPdhv1OUhlhF1mIdRE+dzxhecZjYnZcL8X6TA+To7OggK6Dd49F1gye75V1N6HagHc6Zs/BusyrEp0g==
+
 joycon@^3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/joycon/-/joycon-3.1.1.tgz#bce8596d6ae808f8b68168f5fc69280996894f03"

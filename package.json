@@ -283,6 +283,7 @@
     "jest-environment-jsdom": "^29.3.1",
     "jotai-tanstack-query": "^0.4.0",
     "jotai-urql": "^0.2.0",
+    "jotai-valtio": "^0.1.0",
     "json": "^11.0.0",
     "optics-ts": "^2.4.0",
     "postinstall-postinstall": "^2.1.0",
@@ -311,8 +312,8 @@
     "@babel/core": "*",
     "@babel/template": "*",
     "immer": "*",
-    "jotai-tanstack-query": "*",
     "jotai-urql": "*",
+    "jotai-valtio": "*",
     "optics-ts": "*",
     "react": ">=16.8",
     "valtio": "*",
@@ -328,10 +329,13 @@
     "immer": {
       "optional": true
     },
+    "jotai-tanstack-query": {
+      "optional": true
+    },
     "jotai-urql": {
       "optional": true
     },
-    "jotai-tanstack-query": {
+    "jotai-valtio": {
       "optional": true
     },
     "optics-ts": {
