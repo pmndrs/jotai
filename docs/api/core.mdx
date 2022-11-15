@@ -266,7 +266,7 @@ export default function App() {
 
 In case you need to update a value of an atom without reading it, you can use `useSetAtom()`.
 
-This is especially useful when the performance is a concern, as the `const [, setValue] = useAtom(valueAtom)` will cause unnecessary rerenders on each `valueAtom` update. This can be a problem in case of large components when the atom value changes often.
+This is especially useful when the performance is a concern, as the `const [, setValue] = useAtom(valueAtom)` will cause unnecessary rerenders on each `valueAtom` update.
 
 ## useAtomValue
 
