@@ -1,6 +1,6 @@
 ---
 title: Redux
-description: This doc describes `jotai/redux` bundle.
+description: This doc describes Redux integration.
 nav: 4.07
 ---
 
@@ -12,12 +12,12 @@ and sync with atoms in Jotai.
 
 ## Install
 
-You have to install `redux` to access this bundle and its functions.
+You have to install `redux` and `jotai-redux` to use this feature.
 
 ```
-npm install redux
+npm install redux jotai-redux
 # or
-yarn add redux
+yarn add redux jotai-redux
 ```
 
 ## atomWithStore
@@ -27,7 +27,7 @@ It's two-way binding and you can change the value from both ends.
 
 ```jsx
 import { useAtom } from 'jotai'
-import { atomWithStore } from 'jotai/redux'
+import { atomWithStore } from 'jotai-redux'
 import { createStore } from 'redux'
 
 const initialState = { count: 0 }
@@ -54,4 +54,4 @@ const Counter = () => {
 
 ### Examples
 
-<CodeSandbox id="cmlu5" />
+<CodeSandbox id="487792" />
