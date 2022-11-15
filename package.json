@@ -282,6 +282,7 @@
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
     "jotai-immer": "^0.1.0",
+    "jotai-optics": "^0.2.0",
     "jotai-redux": "^0.1.0",
     "jotai-tanstack-query": "^0.4.0",
     "jotai-urql": "^0.2.0",
@@ -316,13 +317,13 @@
     "@babel/core": "*",
     "@babel/template": "*",
     "jotai-immer": "*",
+    "jotai-optics": "*",
     "jotai-redux": "*",
     "jotai-tanstack-query": "*",
     "jotai-urql": "*",
     "jotai-valtio": "*",
     "jotai-xstate": "*",
     "jotai-zustand": "*",
-    "optics-ts": "*",
     "react": ">=16.8"
   },
   "peerDependenciesMeta": {
@@ -333,6 +334,9 @@
       "optional": true
     },
     "jotai-immer": {
+      "optional": true
+    },
+    "jotai-optics": {
       "optional": true
     },
     "jotai-redux": {
@@ -351,9 +355,6 @@
       "optional": true
     },
     "jotai-xstate": {
-      "optional": true
-    },
-    "optics-ts": {
       "optional": true
     }
   }
