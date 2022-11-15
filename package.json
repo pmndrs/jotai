@@ -284,6 +284,7 @@
     "jotai-tanstack-query": "^0.4.0",
     "jotai-urql": "^0.2.0",
     "jotai-valtio": "^0.1.0",
+    "jotai-zustand": "^0.1.0",
     "json": "^11.0.0",
     "optics-ts": "^2.4.0",
     "postinstall-postinstall": "^2.1.0",
@@ -312,6 +313,8 @@
     "@babel/core": "*",
     "@babel/template": "*",
     "immer": "*",
+    "jotai-jotai-zustand": "*",
+    "jotai-tanstack-query": "*",
     "jotai-urql": "*",
     "jotai-valtio": "*",
     "optics-ts": "*",
@@ -336,6 +339,9 @@
       "optional": true
     },
     "jotai-valtio": {
+      "optional": true
+    },
+    "jotai-zustand": {
       "optional": true
     },
     "optics-ts": {

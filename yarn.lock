@@ -3994,6 +3994,11 @@ jotai-valtio@^0.1.0:
   resolved "https://registry.yarnpkg.com/jotai-valtio/-/jotai-valtio-0.1.0.tgz#3c6f6c064122ef6aa366a84ebc3824ca3d387dc3"
   integrity sha512-II6/e6MZPdhv1OUhlhF1mIdRE+dzxhecZjYnZcL8X6TA+To7OggK6Dd49F1gye75V1N6HagHc6Zs/BusyrEp0g==
 
+jotai-zustand@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jotai-zustand/-/jotai-zustand-0.1.0.tgz#eb7829b82f85be6d9a7cc1d862ae81bb6d7170e6"
+  integrity sha512-cR+53DnP4dGx/A35yGzyuR/hF4ifh+/l9+7bBteOek0oOwtpoZQkQ/4ml1hbY9TV1HKSrTh0FOlatqt64TEmiw==
+
 joycon@^3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/joycon/-/joycon-3.1.1.tgz#bce8596d6ae808f8b68168f5fc69280996894f03"
