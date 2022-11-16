@@ -1,8 +1,9 @@
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
-import { createMemoizeAtom } from './weakCache'
 
-const memoizeAtom = createMemoizeAtom()
+const cache1 = new WeakMap()
+const memo1 = <T>(create: () => T, dep1: object): T =>
+  (cache1.has(dep1) ? cache1 : cache1.set(dep1, create())).get(dep1)
 
 type Loadable<Value> =
   | { state: 'loading' }
@@ -12,7 +13,7 @@ type Loadable<Value> =
 const LOADING: Loadable<unknown> = { state: 'loading' }
 
 export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
-  return memoizeAtom(() => {
+  return memo1(() => {
     const loadableCache = new WeakMap<Promise<void>, Loadable<Value>>()
     const derivedAtom = atom((get, { retry }) => {
       const promise = get(anAtom)
@@ -37,5 +38,5 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
       return LOADING as Loadable<Value>
     })
     return derivedAtom
-  }, [anAtom])
+  }, anAtom)
 }

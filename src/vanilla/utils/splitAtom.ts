@@ -7,9 +7,15 @@ import type {
   Setter,
   WritableAtom,
 } from 'jotai/vanilla'
-import { createMemoizeAtom } from './weakCache'
 
-const memoizeAtom = createMemoizeAtom()
+const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
+  (m.has(k) ? m : m.set(k, c())).get(k) as T
+const cache1 = new WeakMap()
+const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
+  const cache2 = getCached(() => new WeakMap(), cache1, dep1)
+  return getCached(create, cache2, dep2)
+}
+const cacheKeyForEmptyKeyExtractor = {}
 
 const isWritable = <Value, Args extends unknown[], Result>(
   atom: Atom<Value> | WritableAtom<Value, Args, Result>
@@ -52,7 +58,7 @@ export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], [Item[]], void> | Atom<Item[]>,
   keyExtractor?: (item: Item) => Key
 ) {
-  return memoizeAtom(
+  return memo2(
     () => {
       type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
       type Mapping = {
@@ -205,6 +211,7 @@ export function splitAtom<Item, Key>(
       const splittedAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
       return splittedAtom
     },
-    keyExtractor ? [arrAtom, keyExtractor] : [arrAtom]
+    arrAtom,
+    keyExtractor || cacheKeyForEmptyKeyExtractor
   )
 }
