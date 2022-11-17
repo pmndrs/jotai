@@ -13,7 +13,7 @@ export function useHydrateAtoms(
   const store = useStore(options)
 
   const hydratedSet = getHydratedSet(store)
-  const tuplesToRestore = []
+  const tuplesToRestore: (readonly [Atom<unknown>, unknown])[] = []
   for (const tuple of values) {
     const atom = tuple[0]
     if (!hydratedSet.has(atom)) {
