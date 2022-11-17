@@ -1,17 +1,17 @@
 ---
 title: Optics
-description: This doc describes `jotai/optics` bundle.
+description: This doc describes Optics-ts integration.
 nav: 4.02
 ---
 
 ## Install
 
-You have to install `optics-ts` to access this bundle and its functions.
+You have to install `optics-ts` and `jotai-optics` to use this feature.
 
 ```
-npm install optics-ts
+npm install optics-ts jotai-optics
 # or
-yarn add optics-ts
+yarn add optics-ts jotai-optics
 ```
 
 ## focusAtom
@@ -37,7 +37,7 @@ To see more advanced optics, please see the example at: https://github.com/akher
 
 ```jsx
 import { atom } from 'jotai'
-import { focusAtom } from 'jotai/optics'
+import { focusAtom } from 'jotai-optics'
 
 const objectAtom = atom({ a: 5, b: 10 })
 const aAtom = focusAtom(objectAtom, (optic) => optic.prop('a'))
@@ -59,4 +59,4 @@ const Controls = () => {
 
 ### Codesandbox
 
-<CodeSandbox id="y5wef8" />
+<CodeSandbox id="nsy4u8" />

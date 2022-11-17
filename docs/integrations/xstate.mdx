@@ -1,10 +1,8 @@
 ---
 title: XState
-description: This doc describes `jotai/xstate` bundle.
+description: This doc describes XState integration.
 nav: 4.04
 ---
-
-This doc describes `jotai/xstate` bundle.
 
 Jotai's state management is primitive and flexible,
 but that sometimes means too free.
@@ -13,12 +11,12 @@ a better and safer abstraction for state management.
 
 ## Install
 
-You have to install `xstate` to access this bundle and its functions.
+You have to install `xstate` and `jotai-xstate` to use this feature.
 
 ```
-npm install xstate
+npm install xstate jotai-xstate
 # or
-yarn add xstate
+yarn add xstate jotai-xstate
 ```
 
 ## atomWithMachine
@@ -30,7 +28,7 @@ with which you can read other atom values.
 
 ```tsx
 import { useAtom } from 'jotai'
-import { atomWithMachine } from 'jotai/xstate'
+import { atomWithMachine } from 'jotai-xstate'
 import { assign, createMachine } from 'xstate'
 
 const createEditableMachine = (value: string) =>
@@ -107,7 +105,7 @@ If your atomWithMachine is initialized in global scope (aka provider-less mode),
 to restart it you need to send a `RESTART` event to your machine like so:
 
 ```tsx
-import { RESTART } from 'jotai/xstate'
+import { RESTART } from 'jotai-xstate'
 
 const YourComponent = () => {
   const [current, send] = useAtom(yourMachineAtom)
@@ -123,12 +121,20 @@ const YourComponent = () => {
 }
 ```
 
-### Examples
+## Examples
 
 Check examples with atomWithMachine:
 
-<CodeSandbox id="gxwnx" />
+<CodeSandbox id="fxtoe3" />
 
 Restartable machine:
 
-<CodeSandbox id="zur3wg" />
+<CodeSandbox id="n179xd" />
+
+## Tutorials
+
+Check out a course about Jotai and XState.
+
+[Complex State Management in React with Jotai and XState](https://egghead.io/courses/complex-state-management-in-react-with-jotai-and-xstate-3be0a740)
+
+(Note: In the course, it uses `jotai/xstate` which is supersede by `jotai-xstate`.)
