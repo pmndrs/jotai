@@ -3979,6 +3979,11 @@ jest@^29.3.1:
     import-local "^3.0.2"
     jest-cli "^29.3.1"
 
+jotai-location@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/jotai-location/-/jotai-location-0.2.0.tgz#9d7bde74a2211b4f4203b4dadc7ba988466c252a"
+  integrity sha512-SS4HyCf+PUKtyUZ7ge820ti92NUDRx4AvSuINTFx8kuAxbusMYjNSntcTJy2Fg+R0YPO2RtvV5INzzlUQ+1oGw==
+
 jotai-tanstack-query@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/jotai-tanstack-query/-/jotai-tanstack-query-0.4.0.tgz#f8568160efb76f884156dc61a584fabafa5c5651"
