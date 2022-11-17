@@ -38,16 +38,10 @@ type SplitAtomAction<Item> =
       before?: PrimitiveAtom<Item>
     }
 
-type DeprecatedAtomToRemove<Item> = PrimitiveAtom<Item>
-
 export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], [Item[]], void>,
   keyExtractor?: (item: Item) => Key
-): WritableAtom<
-  PrimitiveAtom<Item>[],
-  [SplitAtomAction<Item> | DeprecatedAtomToRemove<Item>],
-  void
->
+): WritableAtom<PrimitiveAtom<Item>[], [SplitAtomAction<Item>], void>
 
 export function splitAtom<Item, Key>(
   arrAtom: Atom<Item[]>,
@@ -151,10 +145,6 @@ export function splitAtom<Item, Key>(
         set: Setter,
         action: SplitAtomAction<Item>
       ) => {
-        if ('read' in action) {
-          console.warn('atomToRemove is deprecated. use action with type')
-          action = { type: 'remove', atom: action }
-        }
         switch (action.type) {
           case 'remove': {
             const index = get(splittedAtom).indexOf(action.atom)
