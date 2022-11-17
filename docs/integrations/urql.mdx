@@ -21,11 +21,16 @@ yarn add jotai-urql @urql/core wonka
 All three functions follow the same signature.
 
 ```ts
-const [dataAtom, statusAtom] = atomsWithSomething(getArgs, getClient)
+const [dataAtom, statusAtom] = atomsWithSomething(
+  query,
+  getVariables,
+  getContext,
+  getClient
+)
 ```
 
-The first `getArgs` parameter is a function that returns an array of arguments to those functions.
-The second optional `getClient` parameter is a function that returns [Client](https://formidable.com/open-source/urql/docs/api/core/#client).
+The first three parameters will be arguments to those functions (For mutation, it's empty).
+The last optional `getClient` parameter is a function that returns [Client](https://formidable.com/open-source/urql/docs/api/core/#client).
 
 The return values have two atoms.
 The first one is called `dataAtom` and it's an atom for the data from the observer. `dataAtom` requires Suspense.
@@ -46,10 +51,9 @@ const client = createClient({ url: '...' })
 
 const idAtom = atom(1)
 const [userAtom] = atomsWithQuery(
-  (get) => ({
-    query: '{ user { first_name last_name } }',
-    variables: { id: get(idAtom) },
-  }),
+  '{ user { first_name last_name } }', // query
+  (get) => ({ id: get(idAtom) }), // variables
+  undefined, // context
   () => client
 )
 
@@ -78,16 +82,19 @@ import { atomsWithMutation } from 'jotai-urql'
 
 const client = createClient({ url: '...' })
 
-const [fooAtom] = atomsWithMutation(
-  () => 'mutation Foo { text }',
-  () => client
-)
+const [fooAtom] = atomsWithMutation(() => client)
 
 const FooData = () => {
   const [{ data }, mutate] = useAtom(fooAtom)
   return (
     <div>
-      {JSON.stringify(data)} <button onClick={mutate}>Click me</button>
+      {JSON.stringify(data)}{' '}
+      <button
+        onClick={() =>
+          mutate({ query: 'mutation Foo { text }', variables: {} })
+        }>
+        Click me
+      </button>
     </div>
   )
 }
@@ -109,7 +116,9 @@ import { atomsWithSubscription } from 'jotai-urql'
 const client = createClient({ url: '...' })
 
 const [fooAtom] = atomsWithSubscription(
-  () => 'subscription Foo { text }',
+  'subscription Foo { text }', // query
+  () => ({}), // variables
+  undefined, // context
   () => client
 )
 

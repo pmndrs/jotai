@@ -1,6 +1,6 @@
 ---
 title: Valtio
-description: This doc describes `jotai/valtio` bundle.
+description: This doc describes Valtio integration.
 nav: 4.05
 ---
 
@@ -14,12 +14,12 @@ This only uses the vanilla api of valtio.
 
 ## Install
 
-You have to install `valtio` to access this bundle and its functions.
+You have to install `valtio` and `jotai-valtio` to use this feature.
 
 ```
-npm install valtio
+npm install valtio jotai-valtio
 # or
-yarn add valtio
+yarn add valtio jotai-valtio
 ```
 
 ## atomWithProxy
@@ -29,7 +29,7 @@ It's two-way binding and you can change the value from both ends.
 
 ```jsx
 import { useAtom } from 'jotai'
-import { atomWithProxy } from 'jotai/valtio'
+import { atomWithProxy } from 'jotai-valtio'
 import { proxy } from 'valtio/vanilla'
 
 const proxyState = proxy({ count: 0 })
@@ -67,4 +67,4 @@ atomWithProxy(proxyObject, { sync: true })
 
 ### Examples
 
-<CodeSandbox id="f5u4l" />
+<CodeSandbox id="ew98ll" />

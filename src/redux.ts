@@ -1,1 +1,1 @@
-export { atomWithStore } from './redux/atomWithStore'
+export { atomWithStore } from 'jotai-redux'

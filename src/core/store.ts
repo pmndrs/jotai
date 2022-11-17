@@ -13,8 +13,8 @@ type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
 type AnyWritableAtom = WritableAtom<AnyAtomValue, unknown, void | Promise<void>>
 type OnUnmount = () => void
-type WriteGetter = Parameters<WritableAtom<AnyAtomValue, unknown>['write']>[0]
-type Setter = Parameters<WritableAtom<AnyAtomValue, unknown>['write']>[1]
+type WriteGetter = Parameters<AnyWritableAtom['write']>[0]
+type Setter = Parameters<AnyWritableAtom['write']>[1]
 
 const hasInitialValue = <T extends Atom<AnyAtomValue>>(
   atom: T

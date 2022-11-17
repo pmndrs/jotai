@@ -1,0 +1,165 @@
+---
+title: Location
+description: This doc describes window.location integration.
+nav: 4.09
+---
+
+To deal with `window.location`, we have some functions to create atoms.
+
+## Install
+
+You have to install `jotai-location` to use this feature.
+
+```
+yarn add jotai-location
+```
+
+## atomWithLocation
+
+```js
+atomWithLocation(options): PrimitiveAtom
+```
+
+`atomWithLocation` creates a new atom that links to `window.location`.
+
+### Parameters
+
+**options** (optional): an object of options to customize the behavior of the atom
+
+### Options
+
+**preloaded** (optional): preloaded location value to avoid getting location at initialization.
+
+**replace** (optional): a boolean to indicate to use `replaceState` instead of `pushState`.
+
+**getLocation** (optional): a custom function to get location value.
+
+**applyLocation** (optional): a custom function to set location value.
+
+**subscribe** (optional): a custom function to subscribe to location change.
+
+### Examples
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithLocation } from 'jotai-location'
+
+const locationAtom = atomWithLocation()
+
+const App = () => {
+  const [loc, setLoc] = useAtom(locationAtom)
+  return (
+    <ul>
+      <li>
+        <button
+          style={{
+            fontWeight: loc.pathname === '/' ? 'bold' : 'normal',
+          }}
+          onClick={() => setLoc((prev) => ({ ...prev, pathname: '/' }))}>
+          Home
+        </button>
+      </li>
+      <li>
+        <button
+          style={{
+            fontWeight:
+              loc.pathname === '/foo' && !loc.searchParams?.get('bar')
+                ? 'bold'
+                : 'normal',
+          }}
+          onClick={() =>
+            setLoc((prev) => ({
+              ...prev,
+              pathname: '/foo',
+              searchParams: new URLSearchParams(),
+            }))
+          }>
+          Foo
+        </button>
+      </li>
+      <li>
+        <button
+          style={{
+            fontWeight:
+              loc.pathname === '/foo' && loc.searchParams?.get('bar') === '1'
+                ? 'bold'
+                : 'normal',
+          }}
+          onClick={() =>
+            setLoc((prev) => ({
+              ...prev,
+              pathname: '/foo',
+              searchParams: new URLSearchParams([['bar', '1']]),
+            }))
+          }>
+          Foo?bar=1
+        </button>
+      </li>
+    </ul>
+  )
+}
+```
+
+### Codesandbox
+
+<CodeSandbox id="kism55" />
+
+## atomWithHash
+
+```js
+atomWithHash(key, initialValue, options): PrimitiveAtom
+```
+
+This creates a new atom that is connected with URL hash.
+The hash must be in the URLSearchParams format.
+It's a two-way binding: changing the atom value will change the hash and
+changing the hash will change the atom value.
+This function works only with DOM.
+
+### Parameters
+
+**key** (required): a unique string used as the key when syncing state with localStorage, sessionStorage, or AsyncStorage
+
+**initialValue** (required): the initial value of the atom
+
+**options** (optional): an object of options to customize the behavior of the atom
+
+### Options
+
+**serialize** (optional): a custom function to serialize the atom value to the hash. Defaults to `JSON.stringify`.
+
+**deserialize** (optional): a custom function to deserialize the hash to the atom value. Defaults to `JSON.parse`.
+
+**delayInit** (optional): delay initialization of the atom to when `onMount` is called. See [#739](https://github.com/pmndrs/jotai/issues/739#issuecomment-929260696). Defaults to `false`.
+
+**replaceState** (optional): when the atom value is changed, replace the current history entry instead of adding a new one. See [#660](https://github.com/pmndrs/jotai/issues/660). Defaults to `false`.
+
+**subscribe** (optional): custom hash change subscribe function
+
+### Examples
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithHash } from 'jotai-location'
+
+const countAtom = atomWithHash('count', 1)
+
+const Counter = () => {
+  const [count, setCount] = useAtom(countAtom)
+  return (
+    <div>
+      <div>count: {count}</div>
+      <button onClick={() => setCount((c) => c + 1)}>+1</button>
+    </div>
+  )
+}
+```
+
+### Codesandbox
+
+<CodeSandbox id="2mocd1" />
+
+### Deleting Item
+
+Please refer [atomWithStorage](../utils/atom-with-storage.mdx)
+for the usage about deleting items.
