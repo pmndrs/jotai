@@ -57,5 +57,5 @@ jobs:
           yarn add -D typescript@${{ matrix.typescript }}
           rm -r node_modules/@types/jsdom node_modules/parse5
           sed -i~ "s/\">=4.2\": {/\">=4.1\": {/" node_modules/rxjs/package.json
-          sed -i~ "s/^import type /import /" node_modules/jotai-redux/dist/src/atomWithStore.d.ts node_modules/jotai-immer/dist/src/*.d.ts node_modules/jotai-location/dist/src/atomWithHash.d.ts
+          sed -i~ "s/^import type /import /" node_modules/jotai-redux/dist/src/*.d.ts node_modules/jotai-immer/dist/src/*.d.ts node_modules/jotai-location/dist/src/*.d.ts
           yarn tsc --noEmit
