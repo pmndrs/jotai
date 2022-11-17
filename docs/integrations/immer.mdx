@@ -1,17 +1,17 @@
 ---
 title: Immer
-description: This doc describes `jotai/immer` bundle.
+description: This doc describes Immer integration.
 nav: 4.01
 ---
 
 ## Install
 
-You have to install `immer` to access this bundle and its functions.
+You have to install `immer` and `jotai-immer` to use this feature.
 
 ```
-npm install immer
+npm install immer jotai-immer
 # or
-yarn add immer
+yarn add immer jotai-immer
 ```
 
 ## atomWithImmer
@@ -21,7 +21,7 @@ The signature of writeFunction is `(get, set, update: (draft: Draft<Value>) => v
 
 ```jsx
 import { useAtom } from 'jotai'
-import { atomWithImmer } from 'jotai/immer'
+import { atomWithImmer } from 'jotai-immer'
 
 const countAtom = atomWithImmer(0)
 
@@ -42,7 +42,7 @@ const Controls = () => {
 
 Check this example with atomWithImmer:
 
-<CodeSandbox id="vtp3j" />
+<CodeSandbox id="4xnr17" />
 
 ## withImmer
 
@@ -50,7 +50,7 @@ Check this example with atomWithImmer:
 
 ```jsx
 import { useAtom, atom } from 'jotai'
-import { withImmer } from 'jotai/immer'
+import { withImmer } from 'jotai-immer'
 
 const primitiveAtom = atom(0)
 const countAtom = withImmer(primitiveAtom)
@@ -68,13 +68,19 @@ const Controls = () => {
 }
 ```
 
+### Examples
+
+Check this example with withImmer:
+
+<CodeSandbox id="9188j1" />
+
 ## useImmerAtom
 
 This hook takes an atom and replaces the atom's `writeFunction` with the new immer-like `writeFunction` like the previous helpers.
 
 ```jsx
 import { useAtom } from 'jotai'
-import { useImmerAtom } from 'jotai/immer'
+import { useImmerAtom } from 'jotai-immer'
 
 const primitiveAtom = atom(0)
 
@@ -93,6 +99,14 @@ const Controls = () => {
 
 It would be better if you don't use `withImmer` and `atomWithImmer` with `useImmerAtom` because they provide the immer-like `writeFunction` and we don't need to create a new one.
 
-## Codesandbox
+### Examples
+
+Check this example with useImmerAtom:
+
+<CodeSandbox id="tyivk0" />
+
+## Demo
+
+FIXME: update this demo
 
 <CodeSandbox id="ms9pv" />

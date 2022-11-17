@@ -1,6 +1,6 @@
 ---
 title: Zustand
-description: This doc describes `jotai/zustand` bundle.
+description: This doc describes Zustand integration.
 nav: 4.06
 ---
 
@@ -14,12 +14,12 @@ This only uses the vanilla api of zustand.
 
 ## Install
 
-You have to install `zustand` to access this bundle and its functions.
+You have to install `zustand` and `jotai-zustand` to use this feature.
 
 ```
-npm install zustand
+npm install zustand jotai-zusntand
 # or
-yarn add zustand
+yarn add zustand jotai-zusntand
 ```
 
 ## atomWithStore
@@ -29,7 +29,7 @@ It's two-way binding and you can change the value from both ends.
 
 ```jsx
 import { useAtom } from 'jotai'
-import { atomWithStore } from 'jotai/zustand'
+import { atomWithStore } from 'jotai-zustand'
 import create from 'zustand/vanilla'
 
 const store = create(() => ({ count: 0 }))
@@ -53,4 +53,4 @@ const Counter = () => {
 
 ### Examples
 
-<CodeSandbox id="c6zi9" />
+<CodeSandbox id="mqtugt" />

@@ -3979,10 +3979,27 @@ jest@^29.3.1:
     import-local "^3.0.2"
     jest-cli "^29.3.1"
 
+<<<<<<< HEAD
 jotai-location@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/jotai-location/-/jotai-location-0.2.0.tgz#9d7bde74a2211b4f4203b4dadc7ba988466c252a"
   integrity sha512-SS4HyCf+PUKtyUZ7ge820ti92NUDRx4AvSuINTFx8kuAxbusMYjNSntcTJy2Fg+R0YPO2RtvV5INzzlUQ+1oGw==
+=======
+jotai-immer@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jotai-immer/-/jotai-immer-0.1.0.tgz#cfdec8909a5f6a985fdf026da8c182057dbf66d6"
+  integrity sha512-TwiPKgrf/V0tSh2CSEEilhhCHm0LSgIrZmIXvQRp7+aKT+cATNFUBJeSBUb42wMnTh43DoveGSUiTN1oyTv6Wg==
+
+jotai-optics@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/jotai-optics/-/jotai-optics-0.2.0.tgz#d09870f8f6d4f70072775a252aa36c83ef9feb1a"
+  integrity sha512-/vYSIPc9Sfl2pIlk1wQRFwZw+JnxHnB0WNREE4AYgv1D1RwCUbmEF37SQQrqfojA2fUkgcqK4oFVhkEF7FFBSA==
+
+jotai-redux@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jotai-redux/-/jotai-redux-0.1.0.tgz#20e0967be73d4650c05cd49e8c58d4923e92db82"
+  integrity sha512-5pI9CtSKRJL1Bp2wLiS4VXshBgDaoiJmBZFo2x04HKuBdfTYKbV/CJcITbzSGyajtNc9gzj0Sjpq3XGlg0x86w==
+>>>>>>> main
 
 jotai-tanstack-query@^0.4.0:
   version "0.4.0"
@@ -3993,6 +4010,21 @@ jotai-urql@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/jotai-urql/-/jotai-urql-0.2.0.tgz#e41244142924c5a1d6682032c0a8d11493b67de3"
   integrity sha512-sXgBjqpjIvl2Mz+cH5OreTJZm08YA7gqwtQi+23T/cEEyuTiGsLAYa9YoxVMp9nV67BhlMVQBRIblMkmM6FF+w==
+
+jotai-valtio@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jotai-valtio/-/jotai-valtio-0.1.0.tgz#3c6f6c064122ef6aa366a84ebc3824ca3d387dc3"
+  integrity sha512-II6/e6MZPdhv1OUhlhF1mIdRE+dzxhecZjYnZcL8X6TA+To7OggK6Dd49F1gye75V1N6HagHc6Zs/BusyrEp0g==
+
+jotai-xstate@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jotai-xstate/-/jotai-xstate-0.1.0.tgz#ada27caff14e89b1ebdbab92c9c6c2ad42dedf5c"
+  integrity sha512-nZUWz5+vgjDHu3Zc4qMy/KlFha0vl/jsZ6MkvPUXSh56msPs6zkxe9GuvPtI2E4yrGEuYumpmE9KsBvfw0B2SA==
+
+jotai-zustand@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jotai-zustand/-/jotai-zustand-0.1.0.tgz#eb7829b82f85be6d9a7cc1d862ae81bb6d7170e6"
+  integrity sha512-cR+53DnP4dGx/A35yGzyuR/hF4ifh+/l9+7bBteOek0oOwtpoZQkQ/4ml1hbY9TV1HKSrTh0FOlatqt64TEmiw==
 
 joycon@^3.1.1:
   version "3.1.1"
