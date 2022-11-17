@@ -3984,11 +3984,6 @@ jotai-immer@^0.1.0:
   resolved "https://registry.yarnpkg.com/jotai-immer/-/jotai-immer-0.1.0.tgz#cfdec8909a5f6a985fdf026da8c182057dbf66d6"
   integrity sha512-TwiPKgrf/V0tSh2CSEEilhhCHm0LSgIrZmIXvQRp7+aKT+cATNFUBJeSBUb42wMnTh43DoveGSUiTN1oyTv6Wg==
 
-jotai-location@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/jotai-location/-/jotai-location-0.2.0.tgz#9d7bde74a2211b4f4203b4dadc7ba988466c252a"
-  integrity sha512-SS4HyCf+PUKtyUZ7ge820ti92NUDRx4AvSuINTFx8kuAxbusMYjNSntcTJy2Fg+R0YPO2RtvV5INzzlUQ+1oGw==
-
 jotai-optics@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/jotai-optics/-/jotai-optics-0.2.0.tgz#d09870f8f6d4f70072775a252aa36c83ef9feb1a"
