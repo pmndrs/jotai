@@ -1,1 +1,1 @@
-export { atomWithProxy } from './valtio/atomWithProxy'
+export { atomWithProxy } from 'jotai-valtio'

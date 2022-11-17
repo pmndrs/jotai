@@ -146,7 +146,7 @@ export function splitAtom<Item, Key>(
       ) => {
         if ('read' in action) {
           console.warn('atomToRemove is deprecated. use action with type')
-          action = { type: 'remove', atom: action }
+          action = { type: 'remove', atom: action as any }
         }
         switch (action.type) {
           case 'remove': {

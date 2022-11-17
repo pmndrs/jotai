@@ -183,6 +183,9 @@ export function atomWithStorage<Value>(
 
 // atomWithHash is implemented with atomWithStorage
 
+/**
+ * @deprecated Please `import { atomWithHash } from 'jotai-location'`
+ */
 export function atomWithHash<Value>(
   key: string,
   initialValue: Value,
