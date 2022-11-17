@@ -1,1 +1,1 @@
-export const RESET = Symbol()
+export { RESET } from 'jotai/vanilla/utils'
