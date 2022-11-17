@@ -1,5 +1,5 @@
 import { atom, createStore } from 'jotai/vanilla'
-import { unwrapAtom } from 'jotai/vanilla/utils'
+import { unstable_unwrapAtom as unwrapAtom } from 'jotai/vanilla/utils'
 
 describe('unwrapAtom', () => {
   it('should unwrap a promise', async () => {

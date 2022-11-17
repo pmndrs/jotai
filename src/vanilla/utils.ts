@@ -13,4 +13,4 @@ export {
 } from './utils/atomWithStorage'
 export { atomWithObservable } from './utils/atomWithObservable'
 export { loadable } from './utils/loadable'
-export { unwrapAtom } from './utils/unwrapAtom'
+export { unwrapAtom as unstable_unwrapAtom } from './utils/unwrapAtom'
