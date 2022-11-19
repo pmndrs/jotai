@@ -54,6 +54,11 @@ const isEqualAtomValue = <Value>(a: AtomState<Value>, b: AtomState<Value>) =>
 const isEqualAtomError = <Value>(a: AtomState<Value>, b: AtomState<Value>) =>
   'e' in a && 'e' in b && Object.is(a.e, b.e)
 
+const hasPromiseAtomValue = <Value>(
+  a: AtomState<Value>
+): a is AtomState<Value> & { v: Value & Promise<unknown> } =>
+  'v' in a && a.v instanceof Promise
+
 const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
   if ('e' in atomState) {
     throw atomState.e
@@ -129,11 +134,7 @@ export const createStore = () => {
     if (!pendingMap.has(atom)) {
       pendingMap.set(atom, prevAtomState)
     }
-    if (
-      prevAtomState &&
-      'v' in prevAtomState &&
-      prevAtomState.v instanceof Promise
-    ) {
+    if (prevAtomState && hasPromiseAtomValue(prevAtomState)) {
       const next =
         'v' in atomState
           ? atomState.v instanceof Promise
@@ -473,7 +474,7 @@ export const createStore = () => {
     const atomState = getAtomState(atom)
     if (atomState) {
       // cancel promise
-      if ('v' in atomState && atomState.v instanceof Promise) {
+      if (hasPromiseAtomValue(atomState)) {
         cancelPromise(atomState.v)
       }
       atomState.d.forEach((_, a) => {
