@@ -6,7 +6,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
 beforeEach(() => {
@@ -675,5 +675,28 @@ describe('wonka', () => {
 
     fireEvent.click(getByText('button'))
     await findByText('count: 1')
+  })
+})
+
+describe('atomWithObservable vanilla tests', () => {
+  it('can propagate updates with async atom chains', async () => {
+    const store = createStore()
+
+    const subject = new BehaviorSubject(1)
+    const countAtom = atomWithObservable(() => subject)
+    const asyncAtom = atom(async (get) => get(countAtom))
+    const async2Atom = atom((get) => get(asyncAtom))
+
+    const unsub = store.sub(async2Atom, () => {})
+
+    await expect(store.get(async2Atom)).resolves.toBe(1)
+
+    subject.next(2)
+    await expect(store.get(async2Atom)).resolves.toBe(2)
+
+    subject.next(3)
+    await expect(store.get(async2Atom)).resolves.toBe(3)
+
+    unsub()
   })
 })
