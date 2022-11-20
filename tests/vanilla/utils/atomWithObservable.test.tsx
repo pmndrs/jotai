@@ -1,5 +1,3 @@
-// TODO make test in vanilla
-
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
@@ -608,6 +606,86 @@ describe('error handling', () => {
     await findByText('count: 1')
 
     fireEvent.click(getByText('next'))
+    await findByText('loading')
+    jest.runOnlyPendingTimers()
+    await findByText('errored')
+
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    jest.runOnlyPendingTimers()
+    await findByText('count: 3')
+  })
+
+  it.only('can recover with intermediate atom', async () => {
+    let count = -1
+    let willThrowError = false
+    const refreshAtom = atom(0)
+    const countObservableAtom = atom((get) => {
+      get(refreshAtom)
+      const observableAtom = atomWithObservable(() => {
+        willThrowError = !willThrowError
+        count += 1
+        if (willThrowError) {
+          const errorSubject = new Subject<number>()
+          setTimeout(() => {
+            errorSubject.error(new Error('Test Error'))
+          }, 10 * 1000)
+          return errorSubject
+        }
+        const subject = new Subject<number>()
+        setTimeout(() => {
+          subject.next(count)
+        }, 10 * 1000)
+        return subject
+      })
+      return observableAtom
+    })
+    const derivedAtom = atom((get) => {
+      const observableAtom = get(countObservableAtom)
+      return get(observableAtom)
+    })
+
+    const Counter = () => {
+      const [count] = useAtom(derivedAtom)
+      const refresh = useSetAtom(refreshAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => refresh((c) => c + 1)}>error</button>
+        </>
+      )
+    }
+
+    const App = () => {
+      const refresh = useSetAtom(refreshAtom)
+      const retry = () => {
+        refresh((c) => c + 1)
+      }
+      return (
+        <ErrorBoundary retry={retry}>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <App />
+      </StrictMode>
+    )
+
+    await findByText('loading')
+    jest.runOnlyPendingTimers()
+    await findByText('errored')
+
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    jest.runOnlyPendingTimers()
+    await findByText('count: 1')
+
+    fireEvent.click(getByText('error'))
     await findByText('loading')
     jest.runOnlyPendingTimers()
     await findByText('errored')

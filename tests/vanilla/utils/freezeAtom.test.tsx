@@ -1,5 +1,3 @@
-// TODO make test in vanilla
-
 import { StrictMode } from 'react'
 import { render } from '@testing-library/react'
 import { useAtom } from 'jotai/react'

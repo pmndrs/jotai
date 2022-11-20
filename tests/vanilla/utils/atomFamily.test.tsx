@@ -1,5 +1,3 @@
-// TODO make test in vanilla
-
 import { StrictMode, Suspense, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom, useSetAtom } from 'jotai/react'
