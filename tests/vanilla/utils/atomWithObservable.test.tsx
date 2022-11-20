@@ -616,7 +616,7 @@ describe('error handling', () => {
     await findByText('count: 3')
   })
 
-  it.only('can recover with intermediate atom', async () => {
+  it('can recover with intermediate atom', async () => {
     let count = -1
     let willThrowError = false
     const refreshAtom = atom(0)
@@ -651,7 +651,7 @@ describe('error handling', () => {
       return (
         <>
           <div>count: {count}</div>
-          <button onClick={() => refresh((c) => c + 1)}>error</button>
+          <button onClick={() => refresh((c) => c + 1)}>refresh</button>
         </>
       )
     }
@@ -685,7 +685,7 @@ describe('error handling', () => {
     jest.runOnlyPendingTimers()
     await findByText('count: 1')
 
-    fireEvent.click(getByText('error'))
+    fireEvent.click(getByText('refresh'))
     await findByText('loading')
     jest.runOnlyPendingTimers()
     await findByText('errored')
