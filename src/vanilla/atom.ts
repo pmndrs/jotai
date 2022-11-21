@@ -9,7 +9,7 @@ type Retry = () => void
 
 type Read<Value> = (
   get: Getter,
-  options: { signal: AbortSignal; retry: Retry }
+  options: { readonly signal: AbortSignal; readonly retry: Retry }
 ) => Value
 
 type Write<Args extends unknown[], Result> = (
