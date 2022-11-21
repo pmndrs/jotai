@@ -624,17 +624,14 @@ describe('error handling', () => {
       get(refreshAtom)
       const observableAtom = atomWithObservable(() => {
         willThrowError = !willThrowError
-        count += 1
-        if (willThrowError) {
-          const errorSubject = new Subject<number>()
-          setTimeout(() => {
-            errorSubject.error(new Error('Test Error'))
-          }, 10 * 1000)
-          return errorSubject
-        }
-        const subject = new Subject<number>()
+        ++count
+        const subject = new Subject<{ data: number } | { error: Error }>()
         setTimeout(() => {
-          subject.next(count)
+          if (willThrowError) {
+            subject.next({ error: new Error('Test Error') })
+          } else {
+            subject.next({ data: count })
+          }
         }, 10 * 1000)
         return subject
       })
@@ -642,7 +639,19 @@ describe('error handling', () => {
     })
     const derivedAtom = atom((get) => {
       const observableAtom = get(countObservableAtom)
-      return get(observableAtom)
+      const result = get(observableAtom)
+      if (result instanceof Promise) {
+        return result.then((result) => {
+          if ('error' in result) {
+            throw result.error
+          }
+          return result.data
+        })
+      }
+      if ('error' in result) {
+        throw result.error
+      }
+      return result.data
     })
 
     const Counter = () => {
