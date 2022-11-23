@@ -123,8 +123,6 @@ const asyncAtom = atom(async () => 'hello')
 const derivedAtom = atom(async (get) => (await get(asyncAtom)).toUppercase())
 ```
 
-TODO: provide `unwrap` util
-
 ### Provider's `initialValues` prop
 
 #### Previous API
