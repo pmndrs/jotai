@@ -110,6 +110,14 @@ const Component = () => {
 }
 ```
 
+### Usage in TypeScript
+
+In TypeScript `atom(0)` is inferred as `PrimitiveAtom<number>`. It cannot accept `Promise<number>` as a value so preceding code would not typecheck. To accomodate for that you need to type your atom explicitly and add `Promise<number>` as accepted value.
+
+```ts
+const baseAtom = atom<number | Promise<number>>(0) // Will accept sync and async values
+```
+
 ## Async forever
 
 Sometimes you may want to suspend until an unpredetermined moment (or never).
