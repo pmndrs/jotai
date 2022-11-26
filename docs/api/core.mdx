@@ -264,11 +264,9 @@ export default function App() {
 }
 ```
 
-In case you create a write only atom where the value never changes you can use the `useSetAtom` hook.
-`useSetAtom` is premature optimization in this scenario.
+In case you need to update a value of an atom without reading it, you can use `useSetAtom()`.
 
-For primitive values if you use `const [, setValue] = useAtom(valueAtom)` it can cause unnecessary re-renders,
-so `useSetAtom` helps to avoid those extra re-renders.
+This is especially useful when the performance is a concern, as the `const [, setValue] = useAtom(valueAtom)` will cause unnecessary rerenders on each `valueAtom` update.
 
 ## useAtomValue
 
