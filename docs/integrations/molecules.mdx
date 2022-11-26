@@ -4,11 +4,12 @@ description: This doc describes molecules integration.
 nav: 4.11
 ---
 
-Jotai atoms provide primitive function to optimize re-renders.
+Jotai atoms provide a basic solution to optimize re-renders.
 Atoms defined globally can depend on other atoms,
 but they can't depend on props and state within a component tree.
 It's possible to define atoms within a component tree,
-but then you would need to pass those atoms in some ways.
+but then you would need to pass those atoms in some ways
+(for example, [atoms-in-atom](../guides/atoms-in-atom.mdx).)
 
 [jotai-molecules](https://github.com/saasquatch/jotai-molecules) is
 a third-party library to help such use cases.
