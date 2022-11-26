@@ -34,9 +34,9 @@ const idAtom = atom('foo')
 const queryAtom = trpc.bar.baz.atomWithQuery((get) => get(idAtom))
 ```
 
-## atomsWithQuery
+## atomWithQuery
 
-`...atomsWithQuery` creates a new atom with "query". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...query` procedure.
+`...atomWithQuery` creates a new atom with "query". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...query` procedure.
 
 ```jsx
 import { atom, useAtom } from 'jotai'
@@ -88,14 +88,14 @@ const Pokemon = () => {
 
 <CodeSandbox id="j1vhcg" />
 
-## atomsWithMutation
+## atomWithMutation
 
-`...atomsWithMutation` creates a new atom with "mutate". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...mutate` procedure.
+`...atomWithMutation` creates a new atom with "mutate". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...mutate` procedure.
 
 FIXME: add code example and codesandbox
 
-## atomsWithSubscription
+## atomWithSubscription
 
-`...atomsWithSubscription` creates a new atom with "subscribe". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...subscribe` procedure.
+`...atomWithSubscription` creates a new atom with "subscribe". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...subscribe` procedure.
 
 FIXME: add code example and codesandbox
