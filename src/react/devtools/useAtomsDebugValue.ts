@@ -32,7 +32,7 @@ const stateToPrintable = ([store, atoms]: [Store, Atom<unknown>[]]) =>
     })
   )
 
-type Options = {
+type Options = Parameters<typeof useStore>[0] & {
   enabled?: boolean
 }
 
@@ -40,7 +40,7 @@ type Options = {
 // so atoms aren't garbage collected by the WeakMap of mounted atoms
 export const useAtomsDebugValue = (options?: Options) => {
   const enabled = options?.enabled ?? __DEV__
-  const store = useStore()
+  const store = useStore(options)
   const [atoms, setAtoms] = useState<Atom<unknown>[]>([])
   useEffect(() => {
     if (!enabled) {

@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useStore } from 'jotai/react'
 import type { Atom } from 'jotai/vanilla'
 
+type Options = Parameters<typeof useStore>[0]
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
 type AtomsValues = Map<AnyAtom, AnyAtomValue> // immutable
@@ -11,8 +12,8 @@ type AtomsSnapshot = Readonly<{
   dependents: AtomsDependents
 }>
 
-export function useGotoAtomsSnapshot() {
-  const store = useStore()
+export function useGotoAtomsSnapshot(options?: Options) {
+  const store = useStore(options)
   return useCallback(
     (snapshot: AtomsSnapshot) => {
       if (store.dev_subscribe_state) {

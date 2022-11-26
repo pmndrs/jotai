@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from 'jotai/react'
 import type { Atom } from 'jotai/vanilla'
 
+type Options = Parameters<typeof useStore>[0]
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
 type AtomsValues = Map<AnyAtom, AnyAtomValue> // immutable
@@ -29,8 +30,8 @@ const isEqualAtomsDependents = (
     )
   })
 
-export function useAtomsSnapshot(): AtomsSnapshot {
-  const store = useStore()
+export function useAtomsSnapshot(options?: Options): AtomsSnapshot {
+  const store = useStore(options)
 
   const [atomsSnapshot, setAtomsSnapshot] = useState<AtomsSnapshot>(() => ({
     values: new Map(),
