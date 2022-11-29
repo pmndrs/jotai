@@ -41,13 +41,13 @@ const initialData = {
 
 ## focusAtom
 
-> `focusAtom` creates a new atom, based on the focus that you pass to it. [jotai/optics](../integrations/optics.mdx#focus-atom)
+> `focusAtom` creates a new atom, based on the focus that you pass to it. [jotai-optics](../integrations/optics.mdx#focus-atom)
 
 We use this utility to focus an atom and create an atom from a specific part of the data. For example we may need to consume the people property of the above data, Here's how we do it:
 
 ```js
 import { atom } from 'jotai'
-import { focusAtom } from 'jotai/optics'
+import { focusAtom } from 'jotai-optics'
 
 const dataAtom = atom(initialData)
 
