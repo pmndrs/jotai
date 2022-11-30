@@ -170,7 +170,7 @@ const MyContext = createContext()
 const store = createStore()
 
   // Parent component
-  <MyContext.Provider store={store}>
+  <MyContext.Provider value={store}>
     ...
   </MyContext.Provider>
 
