@@ -50,7 +50,7 @@ jobs:
           sed -i~ "s/^import type /import /" tests/*/*.tsx tests/*/*/*.tsx
           sed -i~ "s/^.* from '\.\/utils\/waitForAll';//" dist/ts3.4/utils.d.ts
           yarn json -I -f package.json -e "this.resolutions['@types/jest']='26.0.14'; this.resolutions['pretty-format']='25.5.0'; this.resolutions['@types/prettier']='2.4.2';"
-          yarn add -D @types/jest@26.0.14 pretty-format@25.5.0 @types/prettier@2.4.2
+          yarn add -D @types/jest@26.0.14 pretty-format@25.5.0 @types/prettier@2.4.2 @types/yargs@17.0.13 @types/babel__traverse@7.18.2
           rm -r tests/query tests/urql tests/optics tests/xstate tests/valtio tests/zustand tests/utils/atomWithObservable.* tests/utils/waitForAll.* tests/vanilla/utils/atomWithObservable.*
       - name: Ignore Async API tests for Older TS
         if: ${{ matrix.typescript == '3.7.5' }}
@@ -59,7 +59,7 @@ jobs:
       - name: Test ${{ matrix.typescript }}
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
-          rm -r node_modules/@types/jsdom node_modules/parse5
+          rm -r node_modules/@types/jsdom node_modules/parse5 node_modules/@types/babel__core/node_modules
           sed -i~ "s/\">=4.2\": {/\">=4.1\": {/" node_modules/rxjs/package.json
           sed -i~ "s/^import type /import /" node_modules/jotai-redux/dist/src/*.d.ts node_modules/jotai-immer/dist/src/*.d.ts
           yarn tsc --noEmit
