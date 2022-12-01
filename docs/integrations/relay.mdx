@@ -1,0 +1,97 @@
+---
+title: Relay
+description: This doc describes Relay integration.
+nav: 4.12
+---
+
+You can use Jotai with [Relay](https://relay.dev).
+
+## Install
+
+You have to install `jotai-relay` and `relay-runtime`.
+
+```
+yarn add jotai-relay relay-runtime
+```
+
+## Usage
+
+See [Relay Docs](https://relay.dev/docs/) to
+learn about basics and how to use compiler in advance.
+
+## atomWithQuery
+
+`atomWithQuery` creates a new atom with [fetchQuery](https://relay.dev/docs/api-reference/fetch-query/).
+
+```jsx
+import React, { Suspense } from 'react'
+import { Provider, useAtom } from 'jotai'
+import { environmentAtom, atomWithQuery } from 'jotai-relay'
+import { Environment, Network, RecordSource, Store } from 'relay-runtime'
+import graphql from 'babel-plugin-relay/macro'
+
+const myEnvironment = new Environment({
+  network: Network.create(async (params, variables) => {
+    const response = await fetch('https://countries.trevorblades.com/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: params.text,
+        variables,
+      }),
+    })
+    return response.json()
+  }),
+  store: new Store(new RecordSource()),
+})
+
+const countriesAtom = atomWithQuery(
+  graphql`
+    query AppCountriesQuery {
+      countries {
+        name
+      }
+    }
+  `,
+  () => ({})
+)
+
+const Main = () => {
+  const [data] = useAtom(countriesAtom)
+  return (
+    <ul>
+      {data.countries.map(({ name }) => (
+        <li key={name}>{name}</li>
+      ))}
+    </ul>
+  )
+}
+
+const App = () => {
+  return (
+    <Provider initialValues={[[environmentAtom, myEnvironment]]}>
+      <Suspense fallback="Loading...">
+        <Main />
+      </Suspense>
+    </Provider>
+  )
+}
+```
+
+### Examples
+
+<CodeSandbox id="cxc6p5" />
+
+## atomWithMutation
+
+`atomWithMutation` creates a new atom with [commitMutation](https://relay.dev/docs/api-reference/commit-mutation/).
+
+FIXME: add code example and codesandbox
+
+## atomWithSubscription
+
+`atomWithSubscription` creates a new atom with [requestSubscription](https://relay.dev/docs/api-reference/request-subscription/).
+
+FIXME: add code example and codesandbox
