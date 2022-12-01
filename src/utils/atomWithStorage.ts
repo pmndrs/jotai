@@ -1,8 +1,9 @@
 import { atom } from 'jotai'
 import type { WritableAtom } from 'jotai'
+import { unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE } from 'jotai/vanilla/utils'
 import { RESET } from './constants'
 
-export const NO_STORAGE_VALUE = Symbol()
+export { unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE } from 'jotai/vanilla/utils'
 
 type Unsubscribe = () => void
 

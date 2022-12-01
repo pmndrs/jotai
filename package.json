@@ -26,122 +26,14 @@
       "module": "./esm/index.js",
       "default": "./index.js"
     },
-    "./utils": {
+    "./*": {
       "import": {
-        "types": "./esm/utils.d.mts",
-        "default": "./esm/utils.mjs"
+        "types": "./esm/*.d.mts",
+        "default": "./esm/*.mjs"
       },
-      "types": "./utils.d.ts",
-      "module": "./esm/utils.js",
-      "default": "./utils.js"
-    },
-    "./devtools": {
-      "import": {
-        "types": "./esm/devtools.d.mts",
-        "default": "./esm/devtools.mjs"
-      },
-      "types": "./devtools.d.ts",
-      "module": "./esm/devtools.js",
-      "default": "./devtools.js"
-    },
-    "./immer": {
-      "import": {
-        "types": "./esm/immer.d.mts",
-        "default": "./esm/immer.mjs"
-      },
-      "types": "./immer.d.ts",
-      "module": "./esm/immer.js",
-      "default": "./immer.js"
-    },
-    "./optics": {
-      "import": {
-        "types": "./esm/optics.d.mts",
-        "default": "./esm/optics.mjs"
-      },
-      "types": "./optics.d.ts",
-      "module": "./esm/optics.js",
-      "default": "./optics.js"
-    },
-    "./query": {
-      "import": {
-        "types": "./esm/query.d.mts",
-        "default": "./esm/query.mjs"
-      },
-      "types": "./query.d.ts",
-      "module": "./esm/query.js",
-      "default": "./query.js"
-    },
-    "./xstate": {
-      "import": {
-        "types": "./esm/xstate.d.mts",
-        "default": "./esm/xstate.mjs"
-      },
-      "types": "./xstate.d.ts",
-      "module": "./esm/xstate.js",
-      "default": "./xstate.js"
-    },
-    "./valtio": {
-      "import": {
-        "types": "./esm/valtio.d.mts",
-        "default": "./esm/valtio.mjs"
-      },
-      "types": "./valtio.d.ts",
-      "module": "./esm/valtio.js",
-      "default": "./valtio.js"
-    },
-    "./zustand": {
-      "import": {
-        "types": "./esm/zustand.d.mts",
-        "default": "./esm/zustand.mjs"
-      },
-      "types": "./zustand.d.ts",
-      "module": "./esm/zustand.js",
-      "default": "./zustand.js"
-    },
-    "./redux": {
-      "import": {
-        "types": "./esm/redux.d.mts",
-        "default": "./esm/redux.mjs"
-      },
-      "types": "./redux.d.ts",
-      "module": "./esm/redux.js",
-      "default": "./redux.js"
-    },
-    "./urql": {
-      "import": {
-        "types": "./esm/urql.d.mts",
-        "default": "./esm/urql.mjs"
-      },
-      "types": "./urql.d.ts",
-      "module": "./esm/urql.js",
-      "default": "./urql.js"
-    },
-    "./babel/plugin-debug-label": {
-      "import": {
-        "types": "./esm/babel/plugin-debug-label.d.mts",
-        "default": "./esm/babel/plugin-debug-label.mjs"
-      },
-      "types": "./babel/plugin-debug-label.d.ts",
-      "module": "./esm/babel/plugin-debug-label.js",
-      "default": "./babel/plugin-debug-label.js"
-    },
-    "./babel/plugin-react-refresh": {
-      "import": {
-        "types": "./esm/babel/plugin-react-refresh.d.mts",
-        "default": "./esm/babel/plugin-react-refresh.mjs"
-      },
-      "types": "./babel/plugin-react-refresh.d.ts",
-      "module": "./esm/babel/plugin-react-refresh.js",
-      "default": "./babel/plugin-react-refresh.js"
-    },
-    "./babel/preset": {
-      "import": {
-        "types": "./esm/babel/preset.d.mts",
-        "default": "./esm/babel/preset.mjs"
-      },
-      "types": "./babel/preset.d.ts",
-      "module": "./esm/babel/preset.js",
-      "default": "./babel/preset.js"
+      "types": "./*.d.ts",
+      "module": "./esm/*.js",
+      "default": "./*.js"
     }
   },
   "files": [
@@ -166,6 +58,11 @@
     "build:babel:plugin-debug-label": "rollup -c --config-babel_plugin-debug-label",
     "build:babel:plugin-react-refresh": "rollup -c --config-babel_plugin-react-refresh",
     "build:babel:preset": "rollup -c --config-babel_preset",
+    "build:vanilla": "rollup -c --config-vanilla",
+    "build:vanilla:utils": "rollup -c --config-vanilla_utils",
+    "build:react": "rollup -c --config-react",
+    "build:react:utils": "rollup -c --config-react_utils",
+    "build:react:devtools": "rollup -c --config-react_devtools",
     "postbuild": "yarn copy && yarn patch-ts3.4 && yarn patch-esm-ts && yarn patch-readme",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --write",
     "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
@@ -182,7 +79,7 @@
     "patch-readme": "shx sed -i 's/.*dark mode.*//' dist/readme.md"
   },
   "engines": {
-    "node": ">=12.7.0"
+    "node": ">=12.20.0"
   },
   "prettier": {
     "semi": false,
