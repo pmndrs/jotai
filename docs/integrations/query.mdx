@@ -48,7 +48,7 @@ so if you don't use Suspense, you don't need to use `dataAtom`.
 > A query is a declarative dependency on an asynchronous source of data that is tied to a unique key. A query can be used with any Promise based method (including GET and POST methods) to fetch data from a server.
 
 ```jsx
-import { useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 import { atomsWithQuery } from 'jotai-tanstack-query'
 
 const idAtom = atom(1)
@@ -75,7 +75,7 @@ const UserData = () => {
 A notable difference between a standard query atom is the additional option `getNextPageParam` and `getPreviousPageParam`, which is what you'll use to instruct the query on how to fetch any additional pages.
 
 ```jsx
-import { useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 import { atomsWithInfiniteQuery } from 'jotai-tanstack-query'
 
 const idAtom = atom(1)
@@ -116,7 +116,7 @@ const UserData = () => {
 > Unlike queries, mutations are typically used to create/update/delete data or perform server side-effects.
 
 ```jsx
-import { useAtom } from 'jotai'
+import { atom, useAtom } from 'jotai'
 import { atomsWithMutation } from 'jotai-tanstack-query'
 
 const idAtom = atom(1)
