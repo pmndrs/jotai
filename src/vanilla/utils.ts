@@ -1,3 +1,7 @@
+/**
+ * These APIs are still unstable.
+ * See: https://github.com/pmndrs/jotai/discussions/1514
+ */
 export { RESET } from './utils/constants'
 export { atomWithReset } from './utils/atomWithReset'
 export { atomWithReducer } from './utils/atomWithReducer'
