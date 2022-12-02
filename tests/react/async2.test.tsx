@@ -82,27 +82,34 @@ describe('useAtom delay option test', () => {
   })
 })
 
-describe('atom read function retry option test', () => {
-  it('do not suspend with promise resolving with retry', async () => {
+describe('atom read function setSelf option test', () => {
+  it('do not suspend with promise resolving with setSelf', async () => {
     const countAtom = atom(0)
     let resolve = () => {}
     const asyncAtom = atom(async () => {
       await new Promise<void>((r) => (resolve = r))
       return 'hello'
     })
-    const promiseCache = new WeakMap()
-    const derivedAtom = atom((get, { retry }) => {
-      const count = get(countAtom)
-      const promise = get(asyncAtom)
-      if (promiseCache.has(promise)) {
-        return promiseCache.get(promise) + count
+    const refreshAtom = atom(0)
+    const promiseCache = new WeakMap<object, string>()
+    const derivedAtom = atom(
+      (get, { setSelf }) => {
+        get(refreshAtom)
+        const count = get(countAtom)
+        const promise = get(asyncAtom)
+        if (promiseCache.has(promise)) {
+          return (promiseCache.get(promise) as string) + count
+        }
+        promise.then((v) => {
+          promiseCache.set(promise, v)
+          setSelf()
+        })
+        return 'pending' + count
+      },
+      (_get, set) => {
+        set(refreshAtom, (c) => c + 1)
       }
-      promise.then((v) => {
-        promiseCache.set(promise, v)
-        retry()
-      })
-      return 'pending' + count
-    })
+    )
 
     const Component = () => {
       const text = useAtomValue(derivedAtom)

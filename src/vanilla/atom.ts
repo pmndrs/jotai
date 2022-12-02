@@ -5,11 +5,13 @@ type Setter = <Value, Args extends unknown[], Result>(
   ...args: Args
 ) => Result
 
-type Retry = () => void
+type SetAtom<Args extends unknown[], Result> = <A extends Args>(
+  ...args: A
+) => Result
 
-type Read<Value> = (
+type Read<Value, SetSelf = never> = (
   get: Getter,
-  options: { readonly signal: AbortSignal; readonly retry: Retry }
+  options: { readonly signal: AbortSignal; readonly setSelf: SetSelf }
 ) => Value
 
 type Write<Args extends unknown[], Result> = (
@@ -21,8 +23,6 @@ type Write<Args extends unknown[], Result> = (
 type WithInitialValue<Value> = {
   init: Value
 }
-
-type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
 
 type OnUnmount = () => void
 
@@ -40,6 +40,7 @@ export interface Atom<Value> {
 
 export interface WritableAtom<Value, Args extends unknown[], Result>
   extends Atom<Value> {
+  read: Read<Value, SetAtom<Args, Result>>
   write: Write<Args, Result>
   onMount?: OnMount<Args, Result>
 }
@@ -56,7 +57,7 @@ let keyCount = 0 // global key count for all atoms
 
 // writable derived atom
 export function atom<Value, Args extends unknown[], Result>(
-  read: Read<Value>,
+  read: Read<Value, SetAtom<Args, Result>>,
   write: Write<Args, Result>
 ): WritableAtom<Value, Args, Result>
 
@@ -75,7 +76,7 @@ export function atom<Value>(
 ): PrimitiveAtom<Value> & WithInitialValue<Value>
 
 export function atom<Value, Args extends unknown[], Result>(
-  read: Value | Read<Value>,
+  read: Value | Read<Value, SetAtom<Args, Result>>,
   write?: Write<Args, Result>
 ) {
   const key = `atom${++keyCount}`
@@ -83,7 +84,7 @@ export function atom<Value, Args extends unknown[], Result>(
     toString: () => key,
   } as WritableAtom<Value, Args, Result> & { init?: Value }
   if (typeof read === 'function') {
-    config.read = read as Read<Value>
+    config.read = read as Read<Value, SetAtom<Args, Result>>
   } else {
     config.init = read
     config.read = (get) => get(config)

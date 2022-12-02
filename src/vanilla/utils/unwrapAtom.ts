@@ -14,26 +14,33 @@ export function unwrapAtom<Value>(
     const refAtom = atom(
       () => ({} as { p?: Promise<Value>; v?: Awaited<Value>; e?: unknown })
     )
-    const derivedAtom = atom((get, { retry }) => {
-      const ref = get(refAtom)
-      const promise = get(anAtom)
-      if (ref.p !== promise) {
-        promise
-          .then(
-            (v) => (ref.v = v as Awaited<Value>),
-            (e) => (ref.e = e)
-          )
-          .finally(retry)
-        ref.p = promise
+    const refreshAtom = atom(0)
+    const derivedAtom = atom(
+      (get, { setSelf }) => {
+        get(refreshAtom)
+        const ref = get(refAtom)
+        const promise = get(anAtom)
+        if (ref.p !== promise) {
+          promise
+            .then(
+              (v) => (ref.v = v as Awaited<Value>),
+              (e) => (ref.e = e)
+            )
+            .finally(setSelf)
+          ref.p = promise
+        }
+        if ('e' in ref) {
+          throw ref.e
+        }
+        if ('v' in ref) {
+          return ref.v
+        }
+        return defaultValue
+      },
+      (_get, set) => {
+        set(refreshAtom, (c) => c + 1)
       }
-      if ('e' in ref) {
-        throw ref.e
-      }
-      if ('v' in ref) {
-        return ref.v
-      }
-      return defaultValue
-    })
-    return derivedAtom
+    )
+    return atom((get) => get(derivedAtom))
   }, anAtom)
 }

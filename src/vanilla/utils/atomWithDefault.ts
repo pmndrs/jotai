@@ -1,8 +1,12 @@
 import { atom } from 'jotai/vanilla'
-import type { Atom, SetStateAction, WritableAtom } from 'jotai/vanilla'
+import type { SetStateAction, WritableAtom } from 'jotai/vanilla'
 import { RESET } from './constants'
 
-type Read<Value> = Atom<Value>['read']
+type Read<Value, Args extends unknown[], Result> = WritableAtom<
+  Value,
+  Args,
+  Result
+>['read']
 
 const updateValue = <Value>(
   prevValue: Value,
@@ -13,7 +17,11 @@ const updateValue = <Value>(
     : update
 
 export function atomWithDefault<Value>(
-  getDefault: Read<Value>
+  getDefault: Read<
+    Value,
+    [SetStateAction<Awaited<Value>> | typeof RESET],
+    void | Promise<void>
+  >
 ): WritableAtom<
   Value,
   [SetStateAction<Awaited<Value>> | typeof RESET],
