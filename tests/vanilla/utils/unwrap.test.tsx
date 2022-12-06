@@ -1,7 +1,7 @@
 import { atom, createStore } from 'jotai/vanilla'
-import { unstable_unwrapAtom as unwrapAtom } from 'jotai/vanilla/utils'
+import { unstable_unwrap as unwrap } from 'jotai/vanilla/utils'
 
-describe('unwrapAtom', () => {
+describe('unwrap', () => {
   it('should unwrap a promise', async () => {
     const store = createStore()
     const countAtom = atom(1)
@@ -11,7 +11,7 @@ describe('unwrapAtom', () => {
       await new Promise<void>((r) => (resolve = r))
       return count * 2
     })
-    const syncAtom = unwrapAtom(asyncAtom, 0)
+    const syncAtom = unwrap(asyncAtom, 0)
     expect(store.get(syncAtom)).toBe(0)
     resolve()
     await new Promise((r) => setTimeout(r)) // wait a tick

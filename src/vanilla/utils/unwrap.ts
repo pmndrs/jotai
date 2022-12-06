@@ -5,7 +5,7 @@ const cache1 = new WeakMap()
 const memo1 = <T>(create: () => T, dep1: object): T =>
   (cache1.has(dep1) ? cache1 : cache1.set(dep1, create())).get(dep1)
 
-export function unwrapAtom<Value>(
+export function unwrap<Value>(
   anAtom: Atom<Promise<Value>>,
   defaultValue: Awaited<Value>
 ): Atom<Awaited<Value>> {
