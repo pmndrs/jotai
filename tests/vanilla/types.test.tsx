@@ -25,7 +25,7 @@ it('atom() should return the correct types', () => {
     const writeonlyDerivedAtom = atom(null, (get, set) => {
       set(primitiveAtom, get(primitiveAtom) - 1)
     })
-    expectType<WritableAtom<null, [number], void>>(writeonlyDerivedAtom)
+    expectType<WritableAtom<null, [], void>>(writeonlyDerivedAtom)
   }
   Component
 })

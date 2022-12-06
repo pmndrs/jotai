@@ -13,6 +13,9 @@ const hasInitialValue = <T extends Atom<AnyValue>>(
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
+const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
+  !!(atom as AnyWritableAtom).write
+
 type CancelPromise = (next?: Promise<unknown>) => void
 const cancelPromiseMap = new WeakMap<Promise<unknown>, CancelPromise>()
 
@@ -269,7 +272,7 @@ export const createStore = () => {
       return returnAtomValue(aState)
     }
     let controller: AbortController | undefined
-    let retry: (() => void) | undefined
+    let setSelf: ((...args: unknown[]) => unknown) | undefined
     const options = {
       get signal() {
         if (!controller) {
@@ -277,29 +280,25 @@ export const createStore = () => {
         }
         return controller.signal
       },
-      get retry() {
-        if (!retry) {
-          retry = () => {
+      get setSelf() {
+        if (__DEV__ && !isActuallyWritableAtom(atom)) {
+          console.warn('setSelf function cannot be used with read-only atom')
+        }
+        if (!setSelf && isActuallyWritableAtom(atom)) {
+          setSelf = (...args) => {
+            if (__DEV__ && isSync) {
+              console.warn('setSelf function cannot be called in sync')
+            }
             if (!isSync) {
-              const prevAtomState = getAtomState(atom)
-              const nextAtomState = readAtomState(atom, true)
-              if (
-                !prevAtomState ||
-                !isEqualAtomValue(prevAtomState, nextAtomState)
-              ) {
-                recomputeDependents(atom)
-              }
-              flushPending()
-            } else if (__DEV__) {
-              console.warn('retry function cannot be called in sync')
+              return writeAtom(atom, ...args)
             }
           }
         }
-        return retry
+        return setSelf
       },
     }
     try {
-      const value = atom.read(getter, options)
+      const value = atom.read(getter, options as any)
       if (value instanceof Promise) {
         let continuePromise: (next: Promise<Awaited<Value>>) => void
         const promise: Promise<Awaited<Value>> & {
@@ -420,9 +419,6 @@ export const createStore = () => {
     flushPending()
     return result
   }
-
-  const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
-    !!(atom as AnyWritableAtom).write
 
   const mountAtom = <Value>(
     atom: Atom<Value>,
