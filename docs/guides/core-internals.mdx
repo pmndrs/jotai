@@ -39,7 +39,7 @@ export const useAtom = (atom) => {
     const callback = () => setValue(atomState.value)
 
     // same atom can be used at multiple components, so we need to
-    // keep listening for atom's state change till component is mounted.
+    // keep listening for atom's state change till component is unmounted.
     atomState.listeners.add(callback)
     callback()
     return () => atomState.listeners.delete(callback)
