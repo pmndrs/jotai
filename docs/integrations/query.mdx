@@ -37,7 +37,7 @@ The second optional `getQueryClient` parameter is a function that return [QueryC
 
 The return values have two atoms.
 The first one is called `dataAtom` and it's an atom for the data from the observer. `dataAtom` requires Suspense.
-The second one is called `statusAtom` and it's an atom for the full result from the observer. `statusAtom` doesn't require Suspnse.
+The second one is called `statusAtom` and it's an atom for the full result from the observer. `statusAtom` doesn't require Suspense.
 The data from the observer is also included in `statusAtom`,
 so if you don't use Suspense, you don't need to use `dataAtom`.
 
@@ -152,7 +152,7 @@ Perhaps you have some custom hooks in your project that utilises the `useQueryCl
 
 To ensure that you reference the same `QueryClient` object, be sure to wrap the root of your project in a `<Provider>` and initialise `queryClientAtom` with the same `queryClient` value you provided to `QueryClientProvider`.
 
-Without this step, `useQueryAtom` will reference a seperate `QueryClient` from any hooks that utilise the `useQueryClient()` hook to get the queryClient.
+Without this step, `useQueryAtom` will reference a separate `QueryClient` from any hooks that utilise the `useQueryClient()` hook to get the queryClient.
 
 Alternatively, you can specify your `queryClient` with `getQueryClient` parameter.
 
