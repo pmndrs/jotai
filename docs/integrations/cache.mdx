@@ -1,0 +1,119 @@
+---
+title: Cache
+description: This doc describes cache integration.
+nav: 4.13
+---
+
+Jotai provides primitive functions to optimize re-renders.
+It's designed to hold only "current" atom values,
+and it doesn't cache older values.
+
+Caching is sometimes useful. For example, if an async atom
+triggers network requests, we may want to cache the responses.
+
+[jotai-cache](https://github.com/jotai-labs/jotai-cache) is
+a third-party library to help such use cases.
+
+## Install
+
+```
+yarn add jotai-cache
+```
+
+## atomWithCache
+
+```js
+atomWithCache(read, options): Atom
+```
+
+`atomWithCache` creates a new read-only atom with cache.
+
+### Parameters
+
+**read**: read function to define the read-only atom.
+
+**options** (optional): an object of options to customize the behavior of the atom
+
+### Options
+
+**size** (optional): maximum size of cache items.
+
+**shouldRemove** (optional): a function to check if cache items should be removed.
+
+**areEqual** (optional): a function to compare atom values.
+
+### Examples
+
+```jsx
+import { atom, useAtom } from 'jotai'
+import { atomWithCache } from 'jotai-cache'
+
+const idAtom = atom(1)
+
+const normalAtom = atom(async (get) => {
+  const id = get(idAtom)
+  const response = await fetch(`https://reqres.in/api/users/${id}?delay=1`)
+  return response.json()
+})
+
+const cachedAtom = atomWithCache(async (get) => {
+  const id = get(idAtom)
+  const response = await fetch(`https://reqres.in/api/users/${id}?delay=1`)
+  return response.json()
+})
+
+const NormalUser = () => {
+  const [{ data }] = useAtom(normalAtom)
+  return (
+    <div>
+      <h1>User (normal atom)</h1>
+      <ul>
+        <li>ID: {data.id}</li>
+        <li>First name: {data.first_name}</li>
+        <li>Last name: {data.last_name}</li>
+      </ul>
+    </div>
+  )
+}
+
+const CachedUser = () => {
+  const [{ data }] = useAtom(cachedAtom)
+  return (
+    <div>
+      <h1>User (cached atom)</h1>
+      <ul>
+        <li>ID: {data.id}</li>
+        <li>First name: {data.first_name}</li>
+        <li>Last name: {data.last_name}</li>
+      </ul>
+    </div>
+  )
+}
+
+const App = () => {
+  const [id, setId] = useAtom(idAtom)
+  return (
+    <div>
+      ID: {id}{' '}
+      <button type="button" onClick={() => setId((c) => c - 1)}>
+        Prev
+      </button>{' '}
+      <button type="button" onClick={() => setId((c) => c + 1)}>
+        Next
+      </button>
+      <hr />
+      <Suspense fallback="Loading...">
+        <CachedUser />
+      </Suspense>
+      <hr />
+      <Suspense fallback="Loading...">
+        <NormalUser />
+      </Suspense>
+    </div>
+  )
+}
+```
+
+### Codesandbox
+
+<CodeSandbox id="h09znd" />

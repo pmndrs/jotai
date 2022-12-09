@@ -41,23 +41,24 @@ class ErrorBoundary extends Component<
 it('waits for two async atoms', async () => {
   let isAsyncAtomRunning = false
   let isAnotherAsyncAtomRunning = false
+  const resolve: (() => void)[] = []
   const asyncAtom = atom(async () => {
     isAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
+    await new Promise<void>((r) => {
+      resolve.push(() => {
         isAsyncAtomRunning = false
-        resolve(true)
-      }, 100)
+        r()
+      })
     })
     return 1
   })
   const anotherAsyncAtom = atom(async () => {
     isAnotherAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
+    await new Promise<void>((r) => {
+      resolve.push(() => {
         isAnotherAsyncAtomRunning = false
-        resolve(true)
-      }, 100)
+        r()
+      })
     })
     return 'a'
   })
@@ -87,6 +88,7 @@ it('waits for two async atoms', async () => {
     expect(isAnotherAsyncAtomRunning).toBe(true)
   })
 
+  resolve.splice(0).forEach((fn) => fn())
   await waitFor(() => {
     getByText('num: 1, str: a')
     expect(isAsyncAtomRunning).toBe(false)
@@ -97,23 +99,24 @@ it('waits for two async atoms', async () => {
 it('can use named atoms in derived atom', async () => {
   let isAsyncAtomRunning = false
   let isAnotherAsyncAtomRunning = false
+  const resolve: (() => void)[] = []
   const asyncAtom = atom(async () => {
     isAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
+    await new Promise<void>((r) => {
+      resolve.push(() => {
         isAsyncAtomRunning = false
-        resolve(true)
-      }, 100)
+        r()
+      })
     })
     return 1
   })
   const anotherAsyncAtom = atom(async () => {
     isAnotherAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
+    await new Promise<void>((r) => {
+      resolve.push(() => {
         isAnotherAsyncAtomRunning = false
-        resolve(true)
-      }, 100)
+        r()
+      })
     })
     return 'a'
   })
@@ -153,6 +156,7 @@ it('can use named atoms in derived atom', async () => {
     expect(isAnotherAsyncAtomRunning).toBe(true)
   })
 
+  resolve.splice(0).forEach((fn) => fn())
   await waitFor(() => {
     getByText('num: 1, str: a')
     expect(isAsyncAtomRunning).toBe(false)
@@ -163,23 +167,24 @@ it('can use named atoms in derived atom', async () => {
 it('can handle errors', async () => {
   let isAsyncAtomRunning = false
   let isErrorAtomRunning = false
+  const resolve: (() => void)[] = []
   const asyncAtom = atom(async () => {
     isAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
+    await new Promise<void>((r) => {
+      resolve.push(() => {
         isAsyncAtomRunning = false
-        resolve(true)
-      }, 100)
+        r()
+      })
     })
     return 1
   })
   const errorAtom = atom(async () => {
     isErrorAtomRunning = true
-    await new Promise((_, reject) => {
-      setTimeout(() => {
+    await new Promise<void>((_, reject) => {
+      resolve.push(() => {
         isErrorAtomRunning = false
         reject(false)
-      }, 100)
+      })
     })
     return 'a'
   })
@@ -221,6 +226,7 @@ it('can handle errors', async () => {
     expect(isErrorAtomRunning).toBe(true)
   })
 
+  resolve.splice(0).forEach((fn) => fn())
   await waitFor(() => {
     getByText('errored')
     expect(isAsyncAtomRunning).toBe(false)
@@ -232,25 +238,26 @@ it('handles scope', async () => {
   const scope = Symbol()
   let isAsyncAtomRunning = false
   let isAnotherAsyncAtomRunning = false
+  const resolve: (() => void)[] = []
   const valueAtom = atom(1)
   const asyncAtom = atom(async (get) => {
     isAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
+    await new Promise<void>((r) => {
+      resolve.push(() => {
         isAsyncAtomRunning = false
-        resolve(true)
-      }, 500)
+        r()
+      })
     })
     return get(valueAtom)
   })
 
   const anotherAsyncAtom = atom(async () => {
     isAnotherAsyncAtomRunning = true
-    await new Promise((resolve) => {
-      setTimeout(() => {
+    await new Promise<void>((r) => {
+      resolve.push(() => {
         isAnotherAsyncAtomRunning = false
-        resolve(true)
-      }, 500)
+        r()
+      })
     })
     return '2'
   })
@@ -287,15 +294,16 @@ it('handles scope', async () => {
     expect(isAnotherAsyncAtomRunning).toBe(true)
   })
 
+  resolve.splice(0).forEach((fn) => fn())
   await waitFor(() => {
     getByText('num1: 1, num2: 2')
     expect(isAsyncAtomRunning).toBe(false)
     expect(isAnotherAsyncAtomRunning).toBe(false)
   })
 
-  await new Promise((r) => setTimeout(r, 500))
   fireEvent.click(getByText('increment'))
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('num1: 2, num2: 2')
 })
 

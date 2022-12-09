@@ -1,0 +1,101 @@
+---
+title: tRPC
+description: This doc describes tRPC integration.
+nav: 4.10
+---
+
+You can use Jotai with [tRPC](https://trpc.io).
+
+## Install
+
+You have to install `jotai-trpc`, `@trpc/client` and `@trpc/server` to use the integration.
+
+```
+yarn add jotai-trpc @trpc/client @trpc/server
+```
+
+## Usage
+
+```js
+import { createTRPCJotai } from 'jotai-trpc'
+
+const trpc =
+  createTRPCJotai <
+  MyRouter >
+  {
+    links: [
+      httpLink({
+        url: myUrl,
+      }),
+    ],
+  }
+
+const idAtom = atom('foo')
+const queryAtom = trpc.bar.baz.atomWithQuery((get) => get(idAtom))
+```
+
+## atomWithQuery
+
+`...atomWithQuery` creates a new atom with "query". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...query` procedure.
+
+```jsx
+import { atom, useAtom } from 'jotai'
+import { httpLink } from '@trpc/client'
+import { createTRPCJotai } from 'jotai-trpc'
+import { trpcPokemonUrl } from 'trpc-pokemon'
+import type { PokemonRouter } from 'trpc-pokemon'
+
+const trpc =
+  createTRPCJotai <
+  PokemonRouter >
+  {
+    links: [
+      httpLink({
+        url: trpcPokemonUrl,
+      }),
+    ],
+  }
+
+const NAMES = [
+  'bulbasaur',
+  'ivysaur',
+  'venusaur',
+  'charmander',
+  'charmeleon',
+  'charizard',
+  'squirtle',
+  'wartortle',
+  'blastoise',
+]
+
+const nameAtom = atom(NAMES[0])
+
+const pokemonAtom = trpc.pokemon.byId.atomWithQuery((get) => get(nameAtom))
+
+const Pokemon = () => {
+  const [data] = useAtom(pokemonAtom)
+  return (
+    <div>
+      <div>ID: {data.id}</div>
+      <div>Height: {data.height}</div>
+      <div>Weight: {data.weight}</div>
+    </div>
+  )
+}
+```
+
+### Examples
+
+<CodeSandbox id="j1vhcg" />
+
+## atomWithMutation
+
+`...atomWithMutation` creates a new atom with "mutate". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...mutate` procedure.
+
+FIXME: add code example and codesandbox
+
+## atomWithSubscription
+
+`...atomWithSubscription` creates a new atom with "subscribe". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...subscribe` procedure.
+
+FIXME: add code example and codesandbox

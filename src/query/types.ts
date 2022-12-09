@@ -1,4 +1,4 @@
-import { QueryClient } from 'react-query'
+import { QueryClient } from '@tanstack/query-core'
 import { Getter } from 'jotai'
 
 export type CreateQueryOptions<Options> = Options | ((get: Getter) => Options)

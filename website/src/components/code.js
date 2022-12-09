@@ -1,7 +1,7 @@
-import Highlight, { defaultProps } from 'prism-react-renderer'
+import Highlight, { defaultProps } from 'prism-react-renderer';
 
 export const Code = ({ children }) => {
-  const code = children.trim()
+  const code = children.trim();
 
   return (
     <Highlight {...defaultProps} language="jsx" code={code} theme={undefined}>
@@ -17,5 +17,5 @@ export const Code = ({ children }) => {
         </pre>
       )}
     </Highlight>
-  )
-}
+  );
+};

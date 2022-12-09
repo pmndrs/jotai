@@ -13,6 +13,7 @@ export { splitAtom } from './utils/splitAtom'
 export { atomWithDefault } from './utils/atomWithDefault'
 export { waitForAll } from './utils/waitForAll'
 export {
+  NO_STORAGE_VALUE as unstable_NO_STORAGE_VALUE,
   atomWithStorage,
   atomWithHash,
   createJSONStorage,
@@ -20,3 +21,4 @@ export {
 export { atomWithObservable } from './utils/atomWithObservable'
 export { useHydrateAtoms } from './utils/useHydrateAtoms'
 export { loadable } from './utils/loadable'
+export { abortableAtom } from './utils/abortableAtom'

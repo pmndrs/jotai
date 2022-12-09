@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { StrictMode, Suspense, useEffect } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { Atom, atom, useAtomValue, useSetAtom } from 'jotai'
 import { loadable } from 'jotai/utils'
@@ -7,62 +7,68 @@ import { getTestProvider } from '../testUtils'
 const Provider = getTestProvider()
 
 it('loadable turns suspense into values', async () => {
-  let resolveAsync!: (x: number) => void
+  let resolve: (x: number) => void = () => {}
   const asyncAtom = atom(() => {
-    return new Promise<number>((resolve) => (resolveAsync = resolve))
+    return new Promise<number>((r) => (resolve = r))
   })
 
   const { findByText } = render(
-    <Provider>
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('Loading...')
-  resolveAsync(5)
+  resolve(5)
   await findByText('Data: 5')
 })
 
 it('loadable turns errors into values', async () => {
-  let rejectAsync!: (error: unknown) => void
+  let reject: (error: unknown) => void = () => {}
   const asyncAtom = atom(() => {
-    return new Promise<number>((_resolve, reject) => (rejectAsync = reject))
+    return new Promise<number>((_res, rej) => (reject = rej))
   })
 
   const { findByText } = render(
-    <Provider>
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('Loading...')
-  rejectAsync(new Error('An error occurred'))
+  reject(new Error('An error occurred'))
   await findByText('Error: An error occurred')
 })
 
 it('loadable turns primitive throws into values', async () => {
-  let rejectAsync!: (error: unknown) => void
+  let reject: (error: unknown) => void = () => {}
   const asyncAtom = atom(() => {
-    return new Promise<number>((_resolve, reject) => (rejectAsync = reject))
+    return new Promise<number>((_res, rej) => (reject = rej))
   })
 
   const { findByText } = render(
-    <Provider>
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('Loading...')
-  rejectAsync('An error occurred')
+  reject('An error occurred')
   await findByText('An error occurred')
 })
 
 it('loadable goes back to loading after re-fetch', async () => {
-  let resolveAsync!: (x: number) => void
+  let resolve: (x: number) => void = () => {}
   const refreshAtom = atom(0)
   const asyncAtom = atom((get) => {
     get(refreshAtom)
-    return new Promise<number>((resolve) => (resolveAsync = resolve))
+    return new Promise<number>((r) => (resolve = r))
   })
 
   const Refresh = () => {
@@ -77,30 +83,32 @@ it('loadable goes back to loading after re-fetch', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Refresh />
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Refresh />
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   getByText('Loading...')
-  resolveAsync(5)
+  resolve(5)
   await findByText('Data: 5')
   fireEvent.click(getByText('refresh'))
   await findByText('Loading...')
-  resolveAsync(6)
+  resolve(6)
   await findByText('Data: 6')
 })
 
 it('loadable can recover from error', async () => {
-  let resolveAsync!: (x: number) => void
-  let rejectAsync!: (error: unknown) => void
+  let resolve: (x: number) => void = () => {}
+  let reject: (error: unknown) => void = () => {}
   const refreshAtom = atom(0)
   const asyncAtom = atom((get) => {
     get(refreshAtom)
-    return new Promise<number>((resolve, reject) => {
-      resolveAsync = resolve
-      rejectAsync = reject
+    return new Promise<number>((res, rej) => {
+      resolve = res
+      reject = rej
     })
   })
 
@@ -116,18 +124,20 @@ it('loadable can recover from error', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Refresh />
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Refresh />
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   getByText('Loading...')
-  rejectAsync(new Error('An error occurred'))
+  reject(new Error('An error occurred'))
   await findByText('Error: An error occurred')
   fireEvent.click(getByText('refresh'))
   await findByText('Loading...')
-  resolveAsync(6)
+  resolve(6)
   await findByText('Data: 6')
 })
 
@@ -136,9 +146,14 @@ it('loadable immediately resolves sync values', async () => {
   const effectCallback = jest.fn()
 
   const { getByText } = render(
-    <Provider>
-      <LoadableComponent effectCallback={effectCallback} asyncAtom={syncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent
+          effectCallback={effectCallback}
+          asyncAtom={syncAtom}
+        />
+      </Provider>
+    </StrictMode>
   )
 
   getByText('Data: 5')
@@ -159,22 +174,26 @@ it('loadable can use resolved promises syncronously', async () => {
   }
 
   const { getByText, findByText, rerender } = render(
-    <Provider>
-      <Suspense fallback={null}>
-        <ResolveAtomComponent />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback={null}>
+          <ResolveAtomComponent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('Ready')
 
   rerender(
-    <Provider>
-      <LoadableComponent
-        effectCallback={effectCallback}
-        asyncAtom={asyncAtom}
-      />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <LoadableComponent
+          effectCallback={effectCallback}
+          asyncAtom={asyncAtom}
+        />
+      </Provider>
+    </StrictMode>
   )
   getByText('Data: 5')
 
@@ -185,11 +204,11 @@ it('loadable can use resolved promises syncronously', async () => {
 })
 
 it('loadable of a derived async atom does not trigger infinite loop (#1114)', async () => {
-  let resolveAsync!: (x: number) => void
+  let resolve: (x: number) => void = () => {}
   const baseAtom = atom(0)
   const asyncAtom = atom((get) => {
     get(baseAtom)
-    return new Promise<number>((resolve) => (resolveAsync = resolve))
+    return new Promise<number>((r) => (resolve = r))
   })
 
   const Trigger = () => {
@@ -202,20 +221,66 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Trigger />
-      <LoadableComponent asyncAtom={asyncAtom} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Trigger />
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
   )
 
   getByText('Loading...')
   fireEvent.click(getByText('trigger'))
-  await new Promise((r) => setTimeout(r, 10))
-  resolveAsync(5)
+  resolve(5)
   await findByText('Data: 5')
 })
 
-interface LoadableComponentProps {
+it('loadable of a derived async atom with error does not trigger infinite loop (#1330)', async () => {
+  const baseAtom = atom(() => {
+    throw new Error('thrown in baseAtom')
+  })
+  const asyncAtom = atom(async (get) => {
+    get(baseAtom)
+    return ''
+  })
+
+  const { findByText, getByText } = render(
+    <StrictMode>
+      <Provider>
+        <LoadableComponent asyncAtom={asyncAtom} />
+      </Provider>
+    </StrictMode>
+  )
+
+  getByText('Loading...')
+  await findByText('Error: thrown in baseAtom')
+})
+
+it('does not repeatedly attempt to get the value of an unresolved promise atom wrapped in a loadable (#1481)', async () => {
+  const baseAtom = atom(new Promise<number>(() => {}))
+
+  let callsToGetBaseAtom = 0
+  const derivedAtom = atom((get) => {
+    callsToGetBaseAtom++
+    return get(baseAtom)
+  })
+
+  render(
+    <StrictMode>
+      <Provider>
+        <LoadableComponent asyncAtom={derivedAtom} />
+      </Provider>
+    </StrictMode>
+  )
+
+  // we need a small delay to reproduce the issue
+  await new Promise((r) => setTimeout(r, 10))
+  // depending on provider-less mode or versioned-write mode, there will be
+  // either 2 or 3 calls.
+  expect(callsToGetBaseAtom).toBeLessThanOrEqual(3)
+})
+
+type LoadableComponentProps = {
   asyncAtom: Atom<Promise<number> | Promise<string> | string | number>
   effectCallback?: (loadableValue: any) => void
 }

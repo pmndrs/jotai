@@ -1,1 +1,1 @@
-export { focusAtom } from './optics/focusAtom'
+export { focusAtom } from 'jotai-optics'

@@ -2,7 +2,7 @@ import type { Atom } from 'jotai'
 
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
-type AtomFamily<Param, AtomType> = {
+export interface AtomFamily<Param, AtomType> {
   (param: Param): AtomType
   remove(param: Param): void
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
@@ -36,7 +36,7 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
 
     if (item !== undefined) {
       if (shouldRemove?.(item[1], param)) {
-        atoms.delete(param)
+        createAtom.remove(param)
       } else {
         return item[0]
       }

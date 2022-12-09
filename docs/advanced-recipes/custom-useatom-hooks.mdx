@@ -9,7 +9,7 @@ This page shows the ways of creating different utility functions. Utility functi
 
 ### useSelectAtom
 
-```ts
+```js
 import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
@@ -25,11 +25,11 @@ useSelectAtom(
 )
 ```
 
-Please note that in this case `keyFn` must be stable, either define outside render or warp with `useCallback`.
+Please note that in this case `keyFn` must be stable, either define outside render or wrap with `useCallback`.
 
 ### useFreezeAtom
 
-```ts
+```js
 import { useAtom } from 'jotai'
 import { freezeAtom } from 'jotai/utils'
 
@@ -40,7 +40,7 @@ export function useFreezeAtom(anAtom) {
 
 ### useSplitAtom
 
-```ts
+```js
 import { useAtom } from 'jotai'
 import { splitAtom } from 'jotai/utils'
 
@@ -53,9 +53,9 @@ export function useSplitAtom(anAtom) {
 
 ### useFocusAtom
 
-```ts
+```js
 import { useAtom } from 'jotai'
-import { focusAtom } from 'jotai/optics'
+import { focusAtom } from 'jotai-optics'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
 export function useFocusAtom(anAtom, keyFn) {
@@ -65,7 +65,7 @@ export function useFocusAtom(anAtom, keyFn) {
 // how to use it
 useFocusAtom(anAtom) {
     useMemo(() => atom(initValue), [initValue]),
-    useCallBack((optic) => optic.prop('key'), [])
+    useCallback((optic) => optic.prop('key'), [])
 }
 ```
 
@@ -73,4 +73,4 @@ useFocusAtom(anAtom) {
 
 <CodeSandbox id="y5wef8" />
 
-Please note that in this case `keyFn` must be stable, either define outside render or warp with `useCallback`.
+Please note that in this case `keyFn` must be stable, either define outside render or wrap with `useCallback`.

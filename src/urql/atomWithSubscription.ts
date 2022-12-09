@@ -1,111 +1,90 @@
 import type {
+  AnyVariables,
   Client,
   OperationContext,
   OperationResult,
   TypedDocumentNode,
 } from '@urql/core'
-import { pipe, subscribe } from 'wonka'
+import { atomsWithSubscription } from 'jotai-urql'
 import { atom } from 'jotai'
-import type { Atom, Getter } from 'jotai'
+import type { Getter, WritableAtom } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-type OperationResultWithData<Data, Variables> = OperationResult<
-  Data,
-  Variables
-> & {
-  data: Data
+type AtomWithSubscriptionAction = {
+  type: 'refetch'
 }
 
-const isOperationResultWithData = <Data, Variables>(
-  result: OperationResult<Data, Variables>
-): result is OperationResultWithData<Data, Variables> => 'data' in result
+type OperationResultWithData<Data, Variables extends AnyVariables> = Omit<
+  OperationResult<Data, Variables>,
+  'data'
+> & { data: Data }
 
-type SubscriptionArgs<Data, Variables extends object> = {
+type SubscriptionArgs<Data, Variables extends AnyVariables> = {
   query: TypedDocumentNode<Data, Variables> | string
-  variables?: Variables
+  variables: Variables
   context?: Partial<OperationContext>
 }
 
 type SubscriptionArgsWithPause<
   Data,
-  Variables extends object
+  Variables extends AnyVariables
 > = SubscriptionArgs<Data, Variables> & {
   pause: boolean
 }
 
-export function atomWithSubscription<Data, Variables extends object>(
+export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
   getClient?: (get: Getter) => Client
-): Atom<OperationResultWithData<Data, Variables>>
+): WritableAtom<
+  OperationResultWithData<Data, Variables>,
+  AtomWithSubscriptionAction
+>
 
-export function atomWithSubscription<Data, Variables extends object>(
+export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (
     get: Getter
   ) => SubscriptionArgsWithPause<Data, Variables>,
   getClient?: (get: Getter) => Client
-): Atom<OperationResultWithData<Data, Variables> | null>
+): WritableAtom<
+  OperationResultWithData<Data, Variables> | null,
+  AtomWithSubscriptionAction
+>
 
-export function atomWithSubscription<Data, Variables extends object>(
+export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  const queryResultAtom = atom((get) => {
-    const args = createSubscriptionArgs(get)
-    if ((args as { pause?: boolean }).pause) {
-      return { args }
-    }
-    const client = getClient(get)
-    let resolve: ((result: OperationResult<Data, Variables>) => void) | null =
-      null
-    const resultAtom = atom<
-      | OperationResult<Data, Variables>
-      | Promise<OperationResult<Data, Variables>>
-    >(
-      new Promise<OperationResult<Data, Variables>>((r) => {
-        resolve = r
-      })
-    )
-    let setResult: (result: OperationResult<Data, Variables>) => void = () => {
-      throw new Error('setting result without mount')
-    }
-    const listener = (result: OperationResult<Data, Variables>) => {
-      if (!isOperationResultWithData(result)) {
-        throw new Error('result does not have data')
+  const getArgs = (get: Getter) => {
+    const subscriptionArgs = createSubscriptionArgs(get)
+    return [
+      subscriptionArgs.query,
+      subscriptionArgs.variables,
+      subscriptionArgs.context || {},
+    ] as const
+  }
+  const [dataAtom, statusAtom] = atomsWithSubscription(getArgs, getClient)
+  return atom(
+    (get) => {
+      const subscriptionArgs = createSubscriptionArgs(get)
+      if ((subscriptionArgs as { pause?: boolean }).pause) {
+        return null
       }
-      if (resolve) {
-        resolve(result)
-        resolve = null
-      } else {
-        setResult(result)
+      const status = get(statusAtom)
+      if (status.error) {
+        throw status.error
+      }
+      if ('data' in status) {
+        return status
+      }
+      get(dataAtom) // To wait for initial result
+      return status
+    },
+    (_get, set, action: AtomWithSubscriptionAction) => {
+      switch (action.type) {
+        case 'refetch': {
+          return set(statusAtom, action)
+        }
       }
     }
-    const subscriptionInRender = pipe(
-      client.subscription(args.query, args.variables, args.context),
-      subscribe(listener)
-    )
-    let timer: NodeJS.Timeout | null = setTimeout(() => {
-      timer = null
-      subscriptionInRender.unsubscribe()
-    }, 1000)
-    resultAtom.onMount = (update) => {
-      setResult = update
-      let subscription: typeof subscriptionInRender
-      if (timer) {
-        clearTimeout(timer)
-        subscription = subscriptionInRender
-      } else {
-        subscription = pipe(
-          client.subscription(args.query, args.variables, args.context),
-          subscribe(listener)
-        )
-      }
-      return () => subscription.unsubscribe()
-    }
-    return { resultAtom, args }
-  })
-  const queryAtom = atom((get) => {
-    const { resultAtom } = get(queryResultAtom)
-    return resultAtom ? get(resultAtom) : null
-  })
-  return queryAtom
+  )
 }

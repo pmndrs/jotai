@@ -17,7 +17,7 @@ Jotai relies heavily on type inferences and requires `strictNullChecks` to be en
 
 ### Primitive atoms are basically type inferred
 
-```ts
+```js
 const numAtom = atom(0) // primitive number atom
 const strAtom = atom('') // primitive string atom
 ```
@@ -33,17 +33,17 @@ const arrAtom = atom<string[]>([])
 ### Derived atoms are also type inferred and explicitly typed
 
 ```ts
-const asyncStrAtom = atom(async () => "foo")
-const writeOnlyAtom = atom(null, (_get, set, str: string) => set(fooAtom, str)
+const asyncStrAtom = atom(async () => 'foo')
+const writeOnlyAtom = atom(null, (_get, set, str: string) => set(fooAtom, str))
 const readWriteAtom = atom<string, number>(
-  get => get(strAtom),
+  (get) => get(strAtom),
   (_get, set, num) => set(strAtom, String(num))
 )
 ```
 
 ### useAtom is typed based on atom types
 
-```ts
+```js
 const [num, setNum] = useAtom(primitiveNumAtom)
 const [num] = useAtom(readOnlyNumAtom)
 const [, setNum] = useAtom(writeOnlyNumAtom)

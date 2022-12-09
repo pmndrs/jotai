@@ -1,6 +1,6 @@
-import { MDXProvider } from '@mdx-js/react'
-import { Provider as JotaiProvider } from 'jotai'
-import { countAtom, menuAtom, textAtom } from './src/atoms'
+import { MDXProvider } from '@mdx-js/react';
+import { Provider as JotaiProvider } from 'jotai';
+import { countAtom, menuAtom, searchAtom, textAtom } from './src/atoms';
 import {
   A,
   Code,
@@ -12,7 +12,7 @@ import {
   InlineCode,
   Stackblitz,
   TOC,
-} from './src/components'
+} from './src/components';
 
 const components = {
   code: Code,
@@ -25,15 +25,21 @@ const components = {
   h4: H4,
   h5: H5,
   a: A,
-}
+};
 
 export const wrapRootElement = ({ element }) => (
   <JotaiProvider
     initialValues={[
-      [menuAtom, false],
-      [textAtom, 'hello'],
       [countAtom, 0],
-    ]}>
+      [menuAtom, false],
+      [searchAtom, false],
+      [textAtom, 'hello'],
+    ]}
+  >
     <MDXProvider components={components}>{element}</MDXProvider>
   </JotaiProvider>
-)
+);
+
+export const onRenderBody = ({ setHtmlAttributes }) => {
+  setHtmlAttributes({ lang: 'en' });
+};

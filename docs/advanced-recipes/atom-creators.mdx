@@ -30,7 +30,7 @@ The setter function can have an optional argument to force a particular state, s
 
 Here is how it's used.
 
-```ts
+```js
 import { atomWithToggle } from 'XXX'
 
 // will have an initial value set to true
@@ -39,7 +39,7 @@ const isActiveAtom = atomWithToggle(true)
 
 And in a component:
 
-```tsx
+```jsx
 const Toggle = () => {
   const [isActive, toggle] = useAtom(isActiveAtom)
 
@@ -85,7 +85,7 @@ export function atomWithToggleAndStorage(
 
 And how it's used:
 
-```ts
+```js
 import { atomWithToggleAndStorage } from 'XXX'
 
 // will have an initial value set to false & get stored in localStorage under the key "isActive"
@@ -134,7 +134,7 @@ const styleAtom = atomWithCompare<CSSProperties>(
 
 In a component:
 
-```ts
+```jsx
 const StylePreview = () => {
   const [styles, setStyles] = useAtom(styleAtom)
 
@@ -184,7 +184,7 @@ export function atomWithRefresh<T>(fn: (get: Getter) => T) {
 
 Here's how you'd use it to implement an refresh-able source of data:
 
-```ts
+```js
 import { atomWithRefresh } from 'XXX'
 
 const postsAtom = atomWithRefresh((get) =>
@@ -194,14 +194,14 @@ const postsAtom = atomWithRefresh((get) =>
 
 In a component:
 
-```ts
+```jsx
 const PostsList = () => {
   const [posts, refreshPosts] = useAtom(postsAtom)
 
   return (
     <div>
       <ul>
-        {posts.map((post: any) => (
+        {posts.map((post) => (
           <li key={post.id}>{post.title}</li>
         ))}
       </ul>
@@ -269,7 +269,7 @@ export function atomWithListeners<Value>(initialValue: Value) {
 
 In a component:
 
-```ts
+```jsx
 const [countAtom, useCountListener] = atomWithListeners(0)
 
 function EvenCounter() {
@@ -291,3 +291,159 @@ function EvenCounter() {
   return <>Count was set to an even number {evenCount} times.</>
 }
 ```
+
+## atomWithBroadcast
+
+> `atomWithBroadcast` creates an atom. The atom will be shared between
+> browser tabs and frames, similar to `atomWithStorage` but with the
+> initialization limitation.
+
+This can be useful when you want the state to interact with each other without
+the use of localStorage and that by just using The Broadcast Channel API allows
+basic communication between browsing contexts (that is, windows, tabs, frames,
+create a component or iframes) and workers on the same origin. According to the MDN documentation receiving a message in initialization is not supported in broadcast and if we want to support that we may need to add extra stuff to atomWithBroadcast (like local storage).
+
+```tsx
+import { atom } from 'jotai'
+
+export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
+  const baseAtom = atom(initialValue)
+  const listeners = new Set<(event: MessageEvent<any>) => void>()
+  const channel = new BroadcastChannel(key)
+  channel.onmessage = (event) => {
+    listeners.forEach((l) => l(event))
+  }
+
+  const broadcastAtom = atom<Value, { isEvent: boolean; value: Value }>(
+    (get) => get(baseAtom),
+    (get, set, update) => {
+      set(baseAtom, update.value)
+
+      if (!update.isEvent) {
+        channel.postMessage(get(baseAtom))
+      }
+    }
+  )
+  broadcastAtom.onMount = (setAtom) => {
+    const listener = (event: MessageEvent<any>) => {
+      setAtom({ isEvent: true, value: event.data })
+    }
+    listeners.add(listener)
+    return () => {
+      listeners.delete(listener)
+    }
+  }
+  const returnedAtom = atom<Value, Value>(
+    (get) => get(broadcastAtom),
+    (get, set, update) => {
+      set(broadcastAtom, { isEvent: false, value: update })
+    }
+  )
+  return returnedAtom
+}
+const broadAtom = atomWithBroadcast('count', 0)
+
+const ListOfThings = () => {
+  const [count, setCount] = useAtom(broadAtom)
+
+  return (
+    <div>
+      {count}
+      <button onClick={() => setCount(count + 1)}>+1</button>
+    </div>
+  )
+}
+```
+
+<CodeSandbox id="ugkzm0" />
+
+## atomWithDebounce
+
+> `atomWithDebounce` helps with creating an atom where state set should be debounced.
+
+This util is useful for text search inputs, where you would like to call **functions in derived atoms only once** after waiting for a duration, instead of firing an action on every keystroke.
+
+```tsx
+import { atom, SetStateAction } from 'jotai'
+
+export default function atomWithDebounce<T>(
+  initialValue: T,
+  delayMilliseconds = 500,
+  shouldDebounceOnReset = false
+) {
+  const prevTimeoutAtom = atom<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  )
+
+  // DO NOT EXPORT currentValueAtom as using this atom to set state can cause
+  // inconsistent state between currentValueAtom and debouncedValueAtom
+  const _currentValueAtom = atom(initialValue)
+  const isDebouncingAtom = atom(false)
+
+  const debouncedValueAtom = atom(
+    initialValue,
+    (get, set, update: SetStateAction<T>) => {
+      clearTimeout(get(prevTimeoutAtom))
+
+      const prevValue = get(_currentValueAtom)
+      const nextValue =
+        typeof update === 'function'
+          ? (update as (prev: T) => T)(prevValue)
+          : update
+
+      const onDebounceStart = () => {
+        set(_currentValueAtom, nextValue)
+        set(isDebouncingAtom, true)
+      }
+
+      const onDebounceEnd = () => {
+        set(debouncedValueAtom, nextValue)
+        set(isDebouncingAtom, false)
+      }
+
+      onDebounceStart()
+
+      if (!shouldDebounceOnReset && nextValue === initialValue) {
+        onDebounceEnd()
+        return
+      }
+
+      const nextTimeoutId = setTimeout(() => {
+        onDebounceEnd()
+      }, delayMilliseconds)
+
+      // set previous timeout atom in case it needs to get cleared
+      set(prevTimeoutAtom, nextTimeoutId)
+    }
+  )
+
+  // exported atom setter to clear timeout if needed
+  const clearTimeoutAtom = atom(null, (get, set, _arg) => {
+    clearTimeout(get(prevTimeoutAtom))
+    set(isDebouncingAtom, false)
+  })
+
+  return {
+    currentValueAtom: atom((get) => get(_currentValueAtom)),
+    isDebouncingAtom,
+    clearTimeoutAtom,
+    debouncedValueAtom,
+  }
+}
+```
+
+### Caveat
+
+Please note that this atom has different objectives from concurrent features in React 18 such as `useTransition` and `useDeferredValue` whose main aim is to prevent blocking of interaction with the page for expensive updates.
+
+For more info, please read this github discussion https://github.com/reactwg/react-18/discussions/41 under the section titled **"How is it different from setTimeout?"**
+
+### Example Usage
+
+The sandbox link below shows how we would use a derived atom to fetch state based on the value of `debouncedValueAtom`.
+
+When typing a pokemon's name in `<SearchInput>`, we do not send a get request on every letter, but only after `delayMilliseconds` has passed since the last text input.
+
+This reduces the number of backend requests to the server.
+
+<CodeSandbox id="cjrz2y" />

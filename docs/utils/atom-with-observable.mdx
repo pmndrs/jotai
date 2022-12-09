@@ -6,7 +6,7 @@ Ref: https://github.com/pmndrs/jotai/pull/341
 
 ## Usage
 
-```ts
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithObservable } from 'jotai/utils'
 import { interval } from 'rxjs'
@@ -30,7 +30,7 @@ To use this atom, you need to wrap your component with `<Suspense>`. Check out [
 
 `atomWithObservable` takes second optional parameter `{ initialValue }` that allows to specify initial value for the atom. If `initialValue` is provided then `atomWithObservable` will not suspend and will show initial value before receiving first value from observable. `initialValue` can be either a value or a function that returns a value
 
-```ts
+```js
 const counterAtom = atomWithObservable(() => counterSubject, {
   initialValue: 10,
 })

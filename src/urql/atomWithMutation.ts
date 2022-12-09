@@ -1,48 +1,46 @@
 import type {
+  AnyVariables,
   Client,
   OperationContext,
   OperationResult,
   TypedDocumentNode,
 } from '@urql/core'
+import { atomsWithMutation } from 'jotai-urql'
 import { atom } from 'jotai'
 import type { Getter } from 'jotai'
 import { clientAtom } from './clientAtom'
 
-type MutationAction<Data, Variables extends object> = {
-  variables?: Variables
+type MutationAction<Data, Variables extends AnyVariables> = {
+  variables: Variables
   context?: Partial<OperationContext>
   callback?: (result: OperationResult<Data, Variables>) => void
 }
 
-export function atomWithMutation<Data, Variables extends object>(
+export function atomWithMutation<Data, Variables extends AnyVariables>(
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables> | string,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
-  const operationResultAtom = atom<
-    OperationResult<Data, Variables> | Promise<OperationResult<Data, Variables>>
-  >(
-    new Promise<OperationResult<Data, Variables>>(() => {}) // infinite pending
-  )
-  const queryResultAtom = atom(
-    (get) => get(operationResultAtom),
-    (get, set, action: MutationAction<Data, Variables>) => {
-      set(
-        operationResultAtom,
-        new Promise<OperationResult<Data, Variables>>(() => {}) // new fetch
+  const [, statusAtom] = atomsWithMutation<Data, Variables>(getClient)
+  return atom(
+    (get) => {
+      const status = get(statusAtom)
+      return status
+    },
+    async (get, set, action: MutationAction<Data, Variables>) => {
+      const args = [
+        createQuery(get),
+        action.variables,
+        action.context || {},
+      ] as const
+      await set(statusAtom, args)
+      return Promise.resolve(get(statusAtom, { unstable_promise: true })).then(
+        (status) => {
+          action.callback?.(status)
+          if (status.error) {
+            throw status.error
+          }
+        }
       )
-      const client = getClient(get)
-      const query = createQuery(get)
-      client
-        .mutation(query, action.variables, action.context)
-        .toPromise()
-        .then((result) => {
-          set(operationResultAtom, result)
-          action.callback?.(result)
-        })
-        .catch(() => {
-          // TODO error handling
-        })
     }
   )
-  return queryResultAtom
 }

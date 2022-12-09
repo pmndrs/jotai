@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useAtomDevtools } from 'jotai/devtools'
@@ -46,9 +46,11 @@ it('[DEV-ONLY] connects to the extension by initializing', () => {
     )
   }
   render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   expect(extension.init).toHaveBeenLastCalledWith(0)
@@ -81,9 +83,11 @@ describe('If there is no extension installed...', () => {
     __DEV__ = false
     expect(() => {
       render(
-        <Provider>
-          <Counter />
-        </Provider>
+        <StrictMode>
+          <Provider>
+            <Counter />
+          </Provider>
+        </StrictMode>
       )
     }).not.toThrow()
   })
@@ -111,9 +115,11 @@ describe('If there is no extension installed...', () => {
     console.warn = jest.fn()
 
     render(
-      <Provider>
-        <Counter enabled={true} />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter enabled={true} />
+        </Provider>
+      </StrictMode>
     )
 
     expect(console.warn).not.toHaveBeenLastCalledWith(
@@ -129,9 +135,11 @@ describe('If there is no extension installed...', () => {
     const consoleWarn = jest.spyOn(console, 'warn')
 
     render(
-      <Provider>
-        <Counter />
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Counter />
+        </Provider>
+      </StrictMode>
     )
     expect(consoleWarn).not.toBeCalled()
 
@@ -156,9 +164,11 @@ it('[DEV-ONLY] updating state should call devtools.send', async () => {
 
   extension.send.mockClear()
   const { getByText, findByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   expect(extension.send).toBeCalledTimes(0)
@@ -188,11 +198,13 @@ describe('when it receives an message of type...', () => {
 
     extension.send.mockClear()
     const { getByText, findByText } = render(
-      <Provider>
-        <Suspense fallback={'loading'}>
-          <Counter />
-        </Suspense>
-      </Provider>
+      <StrictMode>
+        <Provider>
+          <Suspense fallback={'loading'}>
+            <Counter />
+          </Suspense>
+        </Provider>
+      </StrictMode>
     )
 
     expect(extension.send).toBeCalledTimes(0)
@@ -227,9 +239,11 @@ describe('when it receives an message of type...', () => {
 
       extension.send.mockClear()
       const { getByText, findByText } = render(
-        <Provider>
-          <Counter />
-        </Provider>
+        <StrictMode>
+          <Provider>
+            <Counter />
+          </Provider>
+        </StrictMode>
       )
 
       expect(extension.send).toBeCalledTimes(0)
@@ -265,9 +279,11 @@ describe('when it receives an message of type...', () => {
 
       extension.send.mockClear()
       const { getByText, findByText } = render(
-        <Provider>
-          <Counter />
-        </Provider>
+        <StrictMode>
+          <Provider>
+            <Counter />
+          </Provider>
+        </StrictMode>
       )
 
       const nextLiftedState = {
@@ -307,9 +323,11 @@ describe('when it receives an message of type...', () => {
 
         extension.send.mockClear()
         const { getByText, findByText } = render(
-          <Provider>
-            <Counter />
-          </Provider>
+          <StrictMode>
+            <Provider>
+              <Counter />
+            </Provider>
+          </StrictMode>
         )
 
         expect(extension.send).toBeCalledTimes(0)

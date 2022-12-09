@@ -1,0 +1,71 @@
+---
+title: Molecules
+description: This doc describes molecules integration.
+nav: 4.11
+---
+
+Jotai atoms provide a basic solution to optimize re-renders.
+Atoms defined globally can depend on other atoms,
+but they can't depend on props and state within a component tree.
+It's possible to define atoms within a component tree,
+but then you would need to pass those atoms in some ways
+(for example, [atoms-in-atom](../guides/atoms-in-atom.mdx).)
+
+[jotai-molecules](https://github.com/saasquatch/jotai-molecules) is
+a third-party library to help such use cases.
+
+See [Motivation](https://github.com/saasquatch/jotai-molecules#motivation) for more details.
+
+## Install
+
+```
+yarn add jotai-molecules
+```
+
+## Counter Example
+
+```jsx
+import { atom, useAtom } from 'jotai'
+import {
+  molecule,
+  useMolecule,
+  createScope,
+  ScopeProvider,
+} from 'jotai-molecules'
+
+const InitialCountScope = createScope(0)
+const countMolecule = molecule((getMol, getScope) => {
+  const initialCont = getScope(InitialCountScope)
+  return atom(initialCont)
+})
+
+const Counter = () => {
+  const countAtom = useMolecule(countMolecule)
+  const [count, setCount] = useAtom(countAtom)
+  return (
+    <div>
+      {count} <button onClick={() => setCount((c) => c + 1)}>+1</button>
+    </div>
+  )
+}
+
+const App = () => (
+  <div>
+    <h1>With initial value 1</h1>
+    <ScopeProvider scope={InitialCountScope} value={1}>
+      <Counter />
+      <Counter />
+    </ScopeProvider>
+    <h1>With initial value 2</h1>
+    <ScopeProvider scope={InitialCountScope} value={2}>
+      <Counter />
+      <Counter />
+    </ScopeProvider>
+    <h1>Default</h1>
+    <Counter />
+    <Counter />
+  </div>
+)
+```
+
+<CodeSandbox id="6dvlzf" />

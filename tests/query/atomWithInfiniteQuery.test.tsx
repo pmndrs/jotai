@@ -1,21 +1,36 @@
-import { Suspense, useCallback } from 'react'
+import { Component, StrictMode, Suspense, useCallback, useContext } from 'react'
+import type { ReactNode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { atom, useAtom } from 'jotai'
+import {
+  atom,
+  SECRET_INTERNAL_getScopeContext as getScopeContext,
+  useAtom,
+  useSetAtom,
+} from 'jotai'
 import { atomWithInfiniteQuery } from 'jotai/query'
 import { getTestProvider } from '../testUtils'
 import fakeFetch from './fakeFetch'
 
 const Provider = getTestProvider()
 
+// This is only used to pass tests with unstable_enableVersionedWrite
+const useRetryFromError = (scope?: symbol | string | number) => {
+  const ScopeContext = getScopeContext(scope)
+  const { r: retryFromError } = useContext(ScopeContext)
+  return retryFromError || ((fn) => fn())
+}
+
 it('infinite query basic test', async () => {
+  let resolve = () => {}
   const countAtom = atomWithInfiniteQuery<
     { response: { count: number } },
     void
   >(() => ({
-    queryKey: 'count1Infinite',
+    queryKey: ['count1Infinite'],
     queryFn: async (context) => {
       const count = context.pageParam ? parseInt(context.pageParam) : 0
-      return fakeFetch({ count }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      return fakeFetch({ count }, false)
     },
   }))
 
@@ -29,27 +44,32 @@ it('infinite query basic test', async () => {
   }
 
   const { findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
+  resolve()
   await findByText('page count: 1')
 })
 
 it('infinite query next page test', async () => {
   const mockFetch = jest.fn(fakeFetch)
+  let resolve = () => {}
   const countAtom = atomWithInfiniteQuery<
     { response: { count: number } },
     void
   >(() => ({
-    queryKey: 'nextPageAtom',
-    queryFn: (context) => {
+    queryKey: ['nextPageAtom'],
+    queryFn: async (context) => {
       const count = context.pageParam ? parseInt(context.pageParam) : 0
-      return mockFetch({ count }, false, 100)
+      await new Promise<void>((r) => (resolve = r))
+      return mockFetch({ count }, false)
     },
     getNextPageParam: (lastPage) => {
       const {
@@ -81,22 +101,27 @@ it('infinite query next page test', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </Provider>
+    <>
+      <Provider>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </Provider>
+    </>
   )
 
   await findByText('loading')
+  resolve()
   await findByText('page count: 1')
   expect(mockFetch).toBeCalledTimes(1)
 
   fireEvent.click(getByText('next'))
+  resolve()
   await findByText('page count: 2')
   expect(mockFetch).toBeCalledTimes(2)
 
   fireEvent.click(getByText('prev'))
+  resolve()
   await findByText('page count: 3')
   expect(mockFetch).toBeCalledTimes(3)
 })
@@ -104,13 +129,15 @@ it('infinite query next page test', async () => {
 it('infinite query with enabled', async () => {
   const slugAtom = atom<string | null>(null)
 
+  let resolve = () => {}
   const slugQueryAtom = atomWithInfiniteQuery((get) => {
     const slug = get(slugAtom)
     return {
       enabled: !!slug,
       queryKey: ['disabled_until_value', slug],
       queryFn: async () => {
-        return await fakeFetch({ slug: `hello-${slug}` }, false, 100)
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ slug: `hello-${slug}` }, false)
       },
     }
   })
@@ -137,16 +164,20 @@ it('infinite query with enabled', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Parent />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Parent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('not enabled')
+
   fireEvent.click(getByText('set slug'))
   await findByText('loading')
+  resolve()
   await findByText('slug: hello-world')
 })
 
@@ -161,7 +192,8 @@ it('infinite query with enabled 2', async () => {
       enabled: isEnabled,
       queryKey: ['enabled_toggle'],
       queryFn: async () => {
-        return await fakeFetch({ slug: `hello-${slug}` }, false, 100)
+        await new Promise<void>((r) => setTimeout(r, 100)) // FIXME can avoid?
+        return fakeFetch({ slug: `hello-${slug}` }, false)
       },
     }
   })
@@ -201,25 +233,33 @@ it('infinite query with enabled 2', async () => {
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Parent />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Parent />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
   await findByText('slug: hello-first')
+
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   fireEvent.click(getByText('set disabled'))
   fireEvent.click(getByText('set slug'))
+
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   await findByText('slug: hello-first')
+
+  await new Promise((r) => setTimeout(r, 100)) // FIXME we want to avoid this
   fireEvent.click(getByText('set enabled'))
   await findByText('slug: hello-world')
 })
 
 // adapted from https://github.com/tannerlinsley/react-query/commit/f9b23fcae9c5d45e3985df4519dd8f78a9fa364e#diff-121ad879f17e2b996ac2c01b4250996c79ffdb6b7efcb5f1ddf719ac00546d14R597
 it('should be able to refetch only specific pages when refetchPages is provided', async () => {
-  const key = 'refetch_given_page'
+  const key = ['refetch_given_page']
   const states: any[] = []
 
   let multiplier = 1
@@ -245,7 +285,9 @@ it('should be able to refetch only specific pages when refetchPages is provided'
         multiplier = 2
         setState({
           type: 'refetch',
-          refetchPage: (_, index) => index === value,
+          payload: {
+            refetchPage: (_, index) => index === value,
+          },
         })
       },
       [setState]
@@ -254,9 +296,9 @@ it('should be able to refetch only specific pages when refetchPages is provided'
     return (
       <>
         <div>length: {state.pages.length}</div>
-        <div>page 1: {state.pages?.[0] || null}</div>
-        <div>page 2: {state.pages?.[1] || null}</div>
-        <div>page 3: {state.pages?.[2] || null}</div>
+        <div>page 1: {state.pages[0] || null}</div>
+        <div>page 2: {state.pages[1] || null}</div>
+        <div>page 3: {state.pages[2] || null}</div>
         <button onClick={fetchNextPage}>fetch next page</button>
         <button onClick={() => refetchPage(0)}>refetch page 1</button>
       </>
@@ -264,11 +306,13 @@ it('should be able to refetch only specific pages when refetchPages is provided'
   }
 
   const { getByText, findByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Page />
-      </Suspense>
-    </Provider>
+    <>
+      <Provider>
+        <Suspense fallback="loading">
+          <Page />
+        </Suspense>
+      </Provider>
+    </>
   )
 
   await findByText('loading')
@@ -276,7 +320,6 @@ it('should be able to refetch only specific pages when refetchPages is provided'
   await findByText('length: 1')
   await findByText('page 1: 10')
 
-  await new Promise((r) => setTimeout(r, 100)) // not sure how this helps or not
   fireEvent.click(getByText('fetch next page'))
   await findByText('length: 2')
   await findByText('page 2: 11')
@@ -288,4 +331,148 @@ it('should be able to refetch only specific pages when refetchPages is provided'
   fireEvent.click(getByText('refetch page 1'))
   await findByText('length: 3')
   await findByText('page 1: 20')
+})
+
+describe('error handling', () => {
+  class ErrorBoundary extends Component<
+    { message?: string; retry?: () => void; children: ReactNode },
+    { hasError: boolean }
+  > {
+    constructor(props: { message?: string; children: ReactNode }) {
+      super(props)
+      this.state = { hasError: false }
+    }
+    static getDerivedStateFromError() {
+      return { hasError: true }
+    }
+    render() {
+      return this.state.hasError ? (
+        <div>
+          {this.props.message || 'errored'}
+          {this.props.retry && (
+            <button
+              onClick={() => {
+                this.props.retry?.()
+                this.setState({ hasError: false })
+              }}>
+              retry
+            </button>
+          )}
+        </div>
+      ) : (
+        this.props.children
+      )
+    }
+  }
+
+  it('can catch error in error boundary', async () => {
+    let resolve = () => {}
+    const countAtom = atomWithInfiniteQuery(() => ({
+      queryKey: ['error test', 'count1Infinite'],
+      retry: false,
+      queryFn: async () => {
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ count: 0 }, true)
+      },
+    }))
+    const Counter = () => {
+      const [{ pages }] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {pages[0]?.response.count}</div>
+        </>
+      )
+    }
+
+    const { findByText } = render(
+      <StrictMode>
+        <Provider>
+          <ErrorBoundary>
+            <Suspense fallback="loading">
+              <Counter />
+            </Suspense>
+          </ErrorBoundary>
+        </Provider>
+      </StrictMode>
+    )
+
+    await findByText('loading')
+    resolve()
+    await findByText('errored')
+  })
+
+  it('can recover from error', async () => {
+    let count = -1
+    let willThrowError = false
+    let resolve = () => {}
+    const countAtom = atomWithInfiniteQuery<
+      { response: { count: number } },
+      void
+    >(() => ({
+      queryKey: ['error test', 'count2Infinite'],
+      retry: false,
+      staleTime: 200,
+      queryFn: async () => {
+        willThrowError = !willThrowError
+        ++count
+        await new Promise<void>((r) => (resolve = r))
+        return fakeFetch({ count }, willThrowError)
+      },
+    }))
+    const Counter = () => {
+      const [{ pages }, dispatch] = useAtom(countAtom)
+      const refetch = () => dispatch({ type: 'refetch', payload: {} })
+      return (
+        <>
+          <div>count: {pages[0]?.response.count}</div>
+          <button onClick={refetch}>refetch</button>
+        </>
+      )
+    }
+
+    const App = () => {
+      const dispatch = useSetAtom(countAtom)
+      const retryFromError = useRetryFromError()
+      const retry = () => {
+        retryFromError(() => {
+          dispatch({ type: 'refetch', payload: {} })
+        })
+      }
+      return (
+        <ErrorBoundary retry={retry}>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Provider>
+          <App />
+        </Provider>
+      </StrictMode>
+    )
+
+    await findByText('loading')
+    resolve()
+    await findByText('errored')
+
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    resolve()
+    await findByText('count: 1')
+
+    fireEvent.click(getByText('refetch'))
+    resolve()
+    await findByText('loading')
+    resolve()
+    await findByText('errored')
+
+    fireEvent.click(getByText('retry'))
+    await findByText('loading')
+    resolve()
+    await findByText('count: 3')
+  })
 })
