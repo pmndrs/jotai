@@ -4,8 +4,8 @@ description: This doc describes core `jotai` bundle.
 nav: 2.01
 ---
 
-- [Basic APIs](/docs/api/core.mdx#basic-apis)
-- [Additional APIs](/docs/api/core.mdx#additional-apis)
+- [Basic APIs](#basic-apis)
+- [Additional APIs](#additional-apis)
 
 ## Basic APIs
 
@@ -15,7 +15,7 @@ The `atom` function is to create an atom config.
 We call it "atom config" as it's just a definition and it doesn't yet hold a value.
 We may also call it just "atom" if the context is clear.
 
-An atom config is an immutable object. The atom config object doesn't hold a value. The atom value exists in a Provider store.
+An atom config is an immutable object. The atom config object doesn't hold a value. The atom value exists in a store.
 
 To create a primitive atom (config), all you need is to provide an initial value.
 
@@ -57,7 +57,7 @@ const readWriteAtom = atom(
 It's reactive and read dependencies are tracked.
 
 `get` in the write function is also to read atom value, but it's not tracked.
-Furthermore, it can't read unresolved async values.
+Furthermore, it can't read unresolved async values in Jotai v1 API.
 For async behavior, please refer to the [async](../guides/async.mdx) doc.
 
 `set` in the write function is to write atom value.
@@ -166,10 +166,10 @@ When an atom is no longer used, meaning all the components using it are unmounte
 and the atom config no longer exists, the value in the state is garbage collected.
 
 ```js
-const [value, updateValue] = useAtom(anAtom)
+const [value, setValue] = useAtom(anAtom)
 ```
 
-The `updateValue` takes just one argument, which will be passed
+The `setValue` takes just one argument, which will be passed
 to the third argument of the write function of the atom.
 The behavior depends on how the write function is implemented.
 
@@ -208,10 +208,10 @@ function useAtom<Value>(atom: Atom<Value>, scope?: Scope): [Value, never]
 The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it are unmounted, and the atom config no longer exists, the value is removed from the Provider.
 
 ```js
-const [value, updateValue] = useAtom(anAtom)
+const [value, setValue] = useAtom(anAtom)
 ```
 
-The `updateValue` takes one argument, which will be passed to the third argument of writeFunction of the atom. The behavior depends on how the writeFunction is implemented.
+The `setValue` takes one argument, which will be passed to the third argument of writeFunction of the atom. The behavior depends on how the writeFunction is implemented.
 
 ---
 
