@@ -38,8 +38,7 @@ const App = () => {
 
 Alternatively, you could avoid the inherent suspending that Jotai does for you, by wrapping your atoms with the [`loadable` API](../utils/loadable.mdx).
 
-**Note**: An atom becomes async not only if the atom read function is async,
-but also if one or more of its dependencies are async.
+**Note**: In Jotai v1 API, an atom becomes async not only if the atom read function is async, but also if one or more of its dependencies are async.
 
 ```js
 const anotherAtom = atom((get) => get(asyncAtom) / 2)
@@ -47,7 +46,9 @@ const anotherAtom = atom((get) => get(asyncAtom) / 2)
 // it's a read async atom because `asyncAtom` is async.
 ```
 
-**Note**: You cannot get the value of an async atom in a write-atom (whether the write function is async or not) before its value has been resolved
+(In Jotai v2 API, that doesn't hold; atoms whose dependencies includes async atoms will be async.)
+
+**Note**: In Jotai v1 API, you cannot get the value of an async atom in a write-atom (whether the write function is async or not) before its value has been resolved
 
 ```js
 const asyncAtom = atom(async (get) => ...)
@@ -56,7 +57,9 @@ const writeAtom = atom(null, (get, set, payload) => {
 })
 ```
 
-If you want to make sure the action will never fail, you could preload atoms at root level of your app directly:
+(In Jotai v2 API, that doesn't hold; you can read an async atom in a write-atom and it will return a promise.)
+
+In Jotai v1 API, if you want to make sure the action will never fail, you could preload atoms at root level of your app directly:
 
 ```jsx
 const Preloader = () => {
