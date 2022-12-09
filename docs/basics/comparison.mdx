@@ -3,6 +3,101 @@ title: Comparison
 nav: 1.04
 ---
 
+Jotai was born to solve extra re-render issues in React.
+An extra re-render is when the render process produces the same UI result,
+where users won't see any differences.
+
+To tackle this issue with React context (useContext + useState),
+one would require many contexts and face some issues.
+
+- Provider hell: It's likely that your root component has many context providers, which is technically okay, and sometimes desirable to provide context in different subtree.
+- Dynamic addition/deletion: Adding a new context at runtime is not very nice, because you need to add a new provider and its children will be re-mounted.
+
+Traditionally, a top-down solution to this is to use a selector interface.
+The [use-context-selector](https://github.com/dai-shi/use-context-selector) library is one example.
+The issue with this approach is the selector function needs to return
+referentially equal values to prevent re-renders, and this often requires a memoization technique.
+
+Jotai takes a bottom-up approach with the atomic model, inspired by [Recoil](https://recoiljs.org/).
+One can build state combining atoms, and optimize renders based on atom dependency.
+This avoids the need for memoization.
+
+Jotai has two principles.
+
+- Primitive: Its basic interface is simple, like `useState`.
+- Flexible: Derived atoms can combine other atoms and enable `useReducer` style with side effects.
+
+## How is Jotai different from useContext of React?
+
+Jotai's core API is minimalistic and makes it easy to build utilities based upon it.
+
+### Analogy
+
+You can view Jotai as a drop-in replacement to `useContext`, as it actually uses it in the core. Except Jotai is aiming for simplicity, minimalistic API and can do much more than `useContext` & `useState`.
+
+### Usage difference
+
+We can see how we used to share data to children, compared to how we do it with Jotai. But let's use a real-world example where we have multiple `Context` in our app.
+
+```jsx
+// 1. useState local state
+const Component = () => {
+  const [state, setState] = useState(0)
+}
+
+// 2. Lift local state up and share it via context
+const StateContext = createContext()
+const Parent = ({ children }) => {
+  return (
+    <StateContext.Provider value={useState(0)}>
+      {children}
+    </StateContext.Provider>
+  )
+}
+const Component = () => {
+  const [state, setState] = useContext(StateContext)
+}
+
+// 3. Have multiple states and contexts
+const State1Context = createContext()
+const State2Context = createContext()
+const Parent = ({ children }) => (
+  <State1Context.Provider value={useState(0)}>
+    <State2Context.Provider value={useState(0)}>
+      {children}
+    </State2Context.Provider>
+  </State1Context.Provider>
+)
+const Component1 = () => {
+  const [state, setState] = useContext(State1Context)
+}
+const Component2 = () => {
+  const [state, setState] = useContext(State2Context)
+}
+```
+
+Now let's see how Jotai simplify it for us. You can just use atoms instead of multiple `Context`.
+
+```jsx
+import { Provider, atom, useAtom } from 'jotai'
+const atom1 = atom(0)
+const atom2 = atom(0)
+// Optional: you can use Provider's just like useContext,
+// ...but if you only need one,
+// ...you can just omit it and Jotai will use a default one (called Provider-less mode).
+const Parent = ({ children }) => {
+  return <Provider>{children}</Provider>
+}
+const Component1 = () => {
+  const [state, setState] = useAtom(atom1)
+}
+const Component2 = () => {
+  const [state, setState] = useAtom(atom2)
+}
+```
+
+---
+
 ## How is Jotai different from Zustand?
 
 ### Name
