@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom } from 'jotai'
 import { useReducerAtom } from 'jotai/utils'
@@ -20,9 +21,11 @@ it('useReducerAtom with no action argument', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -60,9 +63,11 @@ it('useReducerAtom with optional action argument', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -100,9 +105,11 @@ it('useReducerAtom with non-optional action argument', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')

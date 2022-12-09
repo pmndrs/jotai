@@ -1,29 +1,40 @@
-import { QueryObserver } from 'react-query'
-import type {
-  InitialDataFunction,
-  QueryKey,
-  QueryObserverOptions,
-  QueryObserverResult,
-} from 'react-query'
+import type { QueryKey, QueryObserverOptions } from '@tanstack/query-core'
+import { atomsWithQuery } from 'jotai-tanstack-query'
 import { atom } from 'jotai'
-import type { PrimitiveAtom, WritableAtom } from 'jotai'
+import type { Getter, WritableAtom } from 'jotai'
 import { queryClientAtom } from './queryClientAtom'
 import type { CreateQueryOptions, GetQueryClient } from './types'
 
-export type AtomWithQueryAction = { type: 'refetch' }
-export type AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData> =
-  QueryObserverOptions<TQueryFnData, TError, TData, TQueryData> & {
-    queryKey: QueryKey
-  }
-export type AtomWithQueryOptionsWithEnabled<
+type AtomWithQueryAction = {
+  type: 'refetch'
+}
+
+export interface AtomWithQueryOptions<
   TQueryFnData,
   TError,
   TData,
-  TQueryData
-> = Omit<
-  AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>,
-  'enabled'
-> & {
+  TQueryData,
+  TQueryKey extends QueryKey
+> extends QueryObserverOptions<
+    TQueryFnData,
+    TError,
+    TData,
+    TQueryData,
+    TQueryKey
+  > {
+  queryKey: TQueryKey
+}
+
+export interface AtomWithQueryOptionsWithEnabled<
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryData,
+  TQueryKey extends QueryKey
+> extends Omit<
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>,
+    'enabled'
+  > {
   enabled: boolean
 }
 
@@ -31,167 +42,64 @@ export function atomWithQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithQueryOptionsWithEnabled<TQueryFnData, TError, TData, TQueryData>
+    AtomWithQueryOptionsWithEnabled<
+      TQueryFnData,
+      TError,
+      TData,
+      TQueryData,
+      TQueryKey
+    >
   >,
   getQueryClient?: GetQueryClient
-): WritableAtom<
-  TData | TQueryData | undefined,
-  AtomWithQueryAction,
-  Promise<void>
->
+): WritableAtom<TData | undefined, AtomWithQueryAction>
 
 export function atomWithQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >,
   getQueryClient?: GetQueryClient
-): WritableAtom<TData | TQueryData, AtomWithQueryAction, Promise<void>>
+): WritableAtom<TData, AtomWithQueryAction>
 
 export function atomWithQuery<
   TQueryFnData,
   TError,
   TData = TQueryFnData,
-  TQueryData = TQueryFnData
+  TQueryData = TQueryFnData,
+  TQueryKey extends QueryKey = QueryKey
 >(
   createQuery: CreateQueryOptions<
-    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData>
+    AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   >,
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
-): WritableAtom<
-  TData | TQueryData | undefined,
-  AtomWithQueryAction,
-  Promise<void>
-> {
-  const queryDataAtom: WritableAtom<
-    {
-      dataAtom: PrimitiveAtom<
-        TData | TQueryData | Promise<TData | TQueryData> | undefined
-      >
-      observer: QueryObserver<TQueryFnData, TError, TData, TQueryData>
-    },
-    AtomWithQueryAction,
-    Promise<void>
-  > = atom(
+): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
+  const getOptions = (get: Getter) => ({
+    staleTime: 200,
+    ...(typeof createQuery === 'function' ? createQuery(get) : createQuery),
+  })
+  const [dataAtom] = atomsWithQuery(getOptions, getQueryClient)
+  return atom(
     (get) => {
-      const queryClient = getQueryClient(get)
-      const options =
-        typeof createQuery === 'function' ? createQuery(get) : createQuery
-
-      let settlePromise:
-        | ((data: TData | undefined, err?: TError) => void)
-        | null = null
-
-      const getInitialData = () => {
-        let data: TQueryData | TData | undefined =
-          queryClient.getQueryData<TData>(options.queryKey)
-
-        if (data === undefined && options.initialData) {
-          data =
-            typeof options.initialData === 'function'
-              ? (options.initialData as InitialDataFunction<TQueryData>)()
-              : options.initialData
-        }
-        return data
+      const options = getOptions(get)
+      if (options.enabled === false) {
+        const queryClient = getQueryClient(get)
+        return queryClient.getQueryData<TData>(options.queryKey)
       }
-
-      const initialData = getInitialData()
-
-      const dataAtom = atom<
-        TData | TQueryData | Promise<TData | TQueryData> | undefined
-      >(
-        initialData === undefined && options.enabled !== false
-          ? new Promise<TData>((resolve, reject) => {
-              settlePromise = (data, err) => {
-                if (err) {
-                  reject(err)
-                } else {
-                  resolve(data as TData)
-                }
-              }
-            })
-          : initialData
-      )
-      let setData: (data: TData | Promise<TData> | undefined) => void = () => {
-        throw new Error('atomWithQuery: setting data without mount')
-      }
-      const listener = (
-        result:
-          | QueryObserverResult<TData, TError>
-          | { data?: undefined; error: TError }
-      ) => {
-        if (result.error) {
-          if (settlePromise) {
-            settlePromise(undefined, result.error)
-            settlePromise = null
-          } else {
-            setData(Promise.reject<TData>(result.error))
-          }
-          return
-        }
-        if (result.data === undefined) {
-          return
-        }
-        if (settlePromise) {
-          settlePromise(result.data)
-          settlePromise = null
-        } else {
-          setData(result.data)
-        }
-      }
-      const defaultedOptions = queryClient.defaultQueryObserverOptions(options)
-      if (initialData === undefined && options.enabled !== false) {
-        if (typeof defaultedOptions.staleTime !== 'number') {
-          defaultedOptions.staleTime = 1000
-        }
-      }
-      const observer = new QueryObserver(queryClient, defaultedOptions)
-      if (initialData === undefined && options.enabled !== false) {
-        observer
-          .fetchOptimistic(defaultedOptions)
-          .then(listener)
-          .catch((error) => listener({ error }))
-      }
-      dataAtom.onMount = (update) => {
-        setData = update
-        if (options.enabled !== false) {
-          return observer.subscribe(listener)
-        }
-      }
-      return { dataAtom, observer }
+      return get(dataAtom)
     },
-    (get, set, action: AtomWithQueryAction) => {
-      switch (action.type) {
-        case 'refetch': {
-          const { dataAtom, observer } = get(queryDataAtom)
-          set(dataAtom, new Promise<TData>(() => {})) // infinite pending
-          const p = Promise.resolve()
-            .then(() => observer.refetch({ cancelRefetch: true }))
-            .then(() => {})
-          return p
-        }
-        default:
-          throw new Error('no action')
+    (_get, set, action: AtomWithQueryAction) => {
+      if (action.type === 'refetch') {
+        return set(dataAtom, { type: 'refetch', force: true })
       }
     }
   )
-  const queryAtom = atom<
-    TData | TQueryData | undefined,
-    AtomWithQueryAction,
-    Promise<void>
-  >(
-    (get) => {
-      const { dataAtom } = get(queryDataAtom)
-      return get(dataAtom)
-    },
-    (_get, set, action) => set(queryDataAtom, action) // delegate action
-  )
-  return queryAtom
 }

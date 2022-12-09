@@ -1,6 +1,7 @@
 import type { Atom, WritableAtom } from './atom'
 import {
   cancelSuspensePromise,
+  copySuspensePromise,
   createSuspensePromise,
   isEqualSuspensePromise,
   isSuspensePromise,
@@ -8,14 +9,12 @@ import {
 } from './suspensePromise'
 import type { SuspensePromise } from './suspensePromise'
 
-type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
-
 type AnyAtomValue = unknown
 type AnyAtom = Atom<AnyAtomValue>
 type AnyWritableAtom = WritableAtom<AnyAtomValue, unknown, void | Promise<void>>
 type OnUnmount = () => void
-type WriteGetter = Parameters<WritableAtom<AnyAtomValue, unknown>['write']>[0]
-type Setter = Parameters<WritableAtom<AnyAtomValue, unknown>['write']>[1]
+type WriteGetter = Parameters<AnyWritableAtom['write']>[0]
+type Setter = Parameters<AnyWritableAtom['write']>[1]
 
 const hasInitialValue = <T extends Atom<AnyAtomValue>>(
   atom: T
@@ -24,7 +23,6 @@ const hasInitialValue = <T extends Atom<AnyAtomValue>>(
 
 type ReadError = unknown
 type Revision = number
-type InvalidatedRevision = number
 type ReadDependencies = Map<AnyAtom, Revision>
 
 /**
@@ -37,10 +35,10 @@ export type AtomState<Value = AnyAtomValue> = {
    */
   r: Revision
   /**
-   * Marks the revision of this atom when a transitive dependency was invalidated.
-   * Mounted atoms are considered invalidated when `r === i`.
+   * Validit(y) of the atom state.
+   * Mounted atoms are considered invalidated when `y === false`.
    */
-  i?: InvalidatedRevision
+  y: boolean
   /**
    * Maps from a dependency to the dependency's revision when it was last read.
    * We can skip recomputation of an atom by comparing the ReadDependencies revision
@@ -60,6 +58,8 @@ export type AtomState<Value = AnyAtomValue> = {
  *
  * While a new version is being built, we read atom previous state from the
  * previous version.
+ *
+ * This is an INTERNAL type alias.
  */
 export type VersionObject = {
   /**
@@ -181,7 +181,12 @@ export const createStore = (
 
   if (initialValues) {
     for (const [atom, value] of initialValues) {
-      const atomState: AtomState = { v: value, r: 0, d: new Map() }
+      const atomState: AtomState = {
+        v: value,
+        r: 0,
+        y: true, // not invalidated
+        d: new Map(),
+      }
       if (__DEV__) {
         Object.freeze(atomState)
         if (!hasInitialValue(atom)) {
@@ -256,10 +261,14 @@ export const createStore = (
         | undefined
       if (!atomState) {
         atomState = getAtomState(version.p, atom)
+        if (
+          atomState &&
+          'p' in atomState &&
+          isSuspensePromiseAlreadyCancelled(atomState.p)
+        ) {
+          atomState = undefined
+        }
         if (atomState) {
-          if ('p' in atomState) {
-            atomState.p.then(() => versionedAtomStateMap.delete(atom))
-          }
           versionedAtomStateMap.set(atom, atomState)
         }
       }
@@ -335,9 +344,10 @@ export const createStore = (
     const nextAtomState: AtomState<Value> = {
       v: value,
       r: atomState?.r || 0,
+      y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
-    let changed = false
+    let changed = !atomState?.y // non-existent or invalidated
     if (
       !atomState ||
       !('v' in atomState) || // new value, or
@@ -391,7 +401,8 @@ export const createStore = (
     }
     const nextAtomState: AtomState<Value> = {
       e: error, // set read error
-      r: atomState?.r || 0,
+      r: (atomState?.r || 0) + 1,
+      y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
     setAtomState(version, atom, nextAtomState)
@@ -406,8 +417,16 @@ export const createStore = (
   ): AtomState<Value> => {
     const atomState = getAtomState(version, atom)
     if (atomState && 'p' in atomState) {
-      if (isEqualSuspensePromise(atomState.p, suspensePromise)) {
+      if (
+        isEqualSuspensePromise(atomState.p, suspensePromise) &&
+        !isSuspensePromiseAlreadyCancelled(atomState.p)
+      ) {
         // the same promise, not updating
+        if (
+          !atomState.y // invalidated
+        ) {
+          return { ...atomState, y: true }
+        }
         return atomState
       }
       cancelSuspensePromise(atomState.p)
@@ -415,7 +434,8 @@ export const createStore = (
     addSuspensePromiseToCache(version, atom, suspensePromise)
     const nextAtomState: AtomState<Value> = {
       p: suspensePromise,
-      r: atomState?.r || 0,
+      r: (atomState?.r || 0) + 1,
+      y: true, // not invalidated
       d: createReadDependencies(version, atomState?.d, dependencies),
     }
     setAtomState(version, atom, nextAtomState)
@@ -430,6 +450,7 @@ export const createStore = (
   ): AtomState<Value> => {
     if (promiseOrValue instanceof Promise) {
       const suspensePromise = createSuspensePromise(
+        promiseOrValue,
         promiseOrValue
           .then((value: Awaited<Value>) => {
             setAtomValue(version, atom, value, dependencies, suspensePromise)
@@ -471,7 +492,7 @@ export const createStore = (
     if (atomState) {
       const nextAtomState: AtomState<Value> = {
         ...atomState, // copy everything
-        i: atomState.r, // set invalidated revision
+        y: false, // invalidated
       }
       setAtomState(version, atom, nextAtomState)
     } else if (__DEV__) {
@@ -490,7 +511,7 @@ export const createStore = (
       if (atomState) {
         // First, check if we already have suspending promise
         if (
-          atomState.r !== atomState.i && // revision is not invalidated
+          atomState.y && // not invalidated
           'p' in atomState &&
           !isSuspensePromiseAlreadyCancelled(atomState.p)
         ) {
@@ -511,7 +532,7 @@ export const createStore = (
               const aState = getAtomState(version, a)
               if (
                 aState &&
-                aState.r === aState.i // revision is invalidated
+                !aState.y // invalidated
               ) {
                 readAtomState(version, a)
               }
@@ -525,11 +546,16 @@ export const createStore = (
             const aState = getAtomState(version, a)
             return (
               aState &&
-              'v' in aState && // has value
+              !('p' in aState) && // has no suspense promise
               aState.r === r // revision is equal to the last one
             )
           })
         ) {
+          if (
+            !atomState.y // invalidated
+          ) {
+            return { ...atomState, y: true }
+          }
           return atomState
         }
       }
@@ -561,7 +587,11 @@ export const createStore = (
       return setAtomPromiseOrValue(version, atom, promiseOrValue, dependencies)
     } catch (errorOrPromise) {
       if (errorOrPromise instanceof Promise) {
-        const suspensePromise = createSuspensePromise(errorOrPromise)
+        const suspensePromise =
+          isSuspensePromise(errorOrPromise) &&
+          isSuspensePromiseAlreadyCancelled(errorOrPromise)
+            ? copySuspensePromise(errorOrPromise)
+            : createSuspensePromise(errorOrPromise, errorOrPromise)
         return setAtomSuspensePromise(
           version,
           atom,
@@ -581,10 +611,13 @@ export const createStore = (
     return atomState
   }
 
-  const addAtom = (addingAtom: AnyAtom): Mounted => {
+  const addAtom = (
+    version: VersionObject | undefined,
+    addingAtom: AnyAtom
+  ): Mounted => {
     let mounted = mountedMap.get(addingAtom)
     if (!mounted) {
-      mounted = mountAtom(addingAtom)
+      mounted = mountAtom(version, addingAtom)
     }
     return mounted
   }
@@ -594,10 +627,13 @@ export const createStore = (
     !mounted.l.size &&
     (!mounted.t.size || (mounted.t.size === 1 && mounted.t.has(atom)))
 
-  const delAtom = (deletingAtom: AnyAtom): void => {
+  const delAtom = (
+    version: VersionObject | undefined,
+    deletingAtom: AnyAtom
+  ): void => {
     const mounted = mountedMap.get(deletingAtom)
     if (mounted && canUnmountAtom(deletingAtom, mounted)) {
-      unmountAtom(deletingAtom)
+      unmountAtom(version, deletingAtom)
     }
   }
 
@@ -623,7 +659,7 @@ export const createStore = (
     const writeGetter: WriteGetter = <V>(
       a: Atom<V>,
       options?: {
-        unstable_promise: boolean
+        unstable_promise: true
       }
     ) => {
       const aState = readAtomState(version, a)
@@ -632,9 +668,18 @@ export const createStore = (
       }
       if ('p' in aState) {
         if (options?.unstable_promise) {
-          return aState.p.then(() =>
-            writeGetter(a as unknown as Atom<Promise<unknown>>, options as any)
-          ) as Promise<Awaited<V>> // FIXME proper typing
+          return aState.p.then(() => {
+            const s = getAtomState(version, a)
+            if (s && 'p' in s && s.p === aState.p) {
+              // FIXME this is very very hacky
+              // there should be better solutions
+              // with suspensePromise.ts cancel handling
+              return new Promise((resolve) => setTimeout(resolve)).then(() =>
+                writeGetter(a as unknown as Atom<Promise<V>>, options)
+              )
+            }
+            return writeGetter(a as unknown as Atom<Promise<V>>, options)
+          })
         }
         if (__DEV__) {
           console.info(
@@ -686,7 +731,6 @@ export const createStore = (
     }
     const promiseOrVoid = atom.write(writeGetter, setter, update)
     isSync = false
-    version = undefined
     return promiseOrVoid
   }
 
@@ -704,6 +748,7 @@ export const createStore = (
     !!(atom as AnyWritableAtom).write
 
   const mountAtom = <Value>(
+    version: VersionObject | undefined,
     atom: Atom<Value>,
     initialDependent?: AnyAtom
   ): Mounted => {
@@ -724,14 +769,15 @@ export const createStore = (
         aMounted.t.add(atom) // add dependent
       } else {
         if (a !== atom) {
-          mountAtom(a, atom)
+          mountAtom(version, a, atom)
         }
       }
     })
     // onMount
     if (isActuallyWritableAtom(atom) && atom.onMount) {
-      const setAtom = (update: unknown) => writeAtom(atom, update)
+      const setAtom = (update: unknown) => writeAtom(atom, update, version)
       const onUnmount = atom.onMount(setAtom)
+      version = undefined
       if (onUnmount) {
         mounted.u = onUnmount
       }
@@ -739,7 +785,10 @@ export const createStore = (
     return mounted
   }
 
-  const unmountAtom = <Value>(atom: Atom<Value>): void => {
+  const unmountAtom = <Value>(
+    version: VersionObject | undefined,
+    atom: Atom<Value>
+  ): void => {
     // unmount self
     const onUnmount = mountedMap.get(atom)?.u
     if (onUnmount) {
@@ -750,15 +799,19 @@ export const createStore = (
       mountedAtoms.delete(atom)
     }
     // unmount read dependencies afterward
-    const atomState = getAtomState(undefined, atom)
+    const atomState = getAtomState(version, atom)
     if (atomState) {
+      // cancel suspense promise (and abort base promise)
+      if ('p' in atomState) {
+        cancelSuspensePromise(atomState.p)
+      }
       atomState.d.forEach((_, a) => {
         if (a !== atom) {
           const mounted = mountedMap.get(a)
           if (mounted) {
             mounted.t.delete(atom)
             if (canUnmountAtom(a, mounted)) {
-              unmountAtom(a)
+              unmountAtom(version, a)
             }
           }
         }
@@ -769,6 +822,7 @@ export const createStore = (
   }
 
   const mountDependencies = <Value>(
+    version: VersionObject | undefined,
     atom: Atom<Value>,
     atomState: AtomState<Value>,
     prevReadDependencies?: ReadDependencies
@@ -784,7 +838,7 @@ export const createStore = (
       if (mounted) {
         mounted.t.delete(atom) // delete from dependents
         if (canUnmountAtom(a, mounted)) {
-          unmountAtom(a)
+          unmountAtom(version, a)
         }
       }
     })
@@ -796,7 +850,7 @@ export const createStore = (
         // we mount dependencies only when atom is already mounted
         // Note: we should revisit this when you find other issues
         // https://github.com/pmndrs/jotai/issues/942
-        mountAtom(a, atom)
+        mountAtom(version, a, atom)
       }
     })
   }
@@ -819,11 +873,16 @@ export const createStore = (
       pending.forEach(([atom, prevAtomState]) => {
         const atomState = getAtomState(undefined, atom)
         if (atomState && atomState.d !== prevAtomState?.d) {
-          mountDependencies(atom, atomState, prevAtomState?.d)
+          mountDependencies(undefined, atom, atomState, prevAtomState?.d)
         }
-        if (atomState && 'p' in atomState && atomState.r === prevAtomState?.i) {
-          // We want to avoid flushing a promise again (#1151)
-          // TODO There should be better implementations
+        if (
+          prevAtomState &&
+          !prevAtomState.y && // invalidated
+          atomState?.y // existent and not invalidated
+        ) {
+          // We don't want to notify listeners
+          // to avoid flushing a promise again (#1151)
+          // and avoid extra re-renders (#1213).
           return
         }
         const mounted = mountedMap.get(atom)
@@ -840,14 +899,14 @@ export const createStore = (
     versionedAtomStateMap.forEach((atomState, atom) => {
       const prevAtomState = committedAtomStateMap.get(atom)
       if (
-        atomState.r > (prevAtomState?.r || 0) ||
-        ('v' in atomState &&
-          atomState.r === prevAtomState?.r &&
-          atomState.d !== prevAtomState?.d)
+        !prevAtomState ||
+        atomState.r > prevAtomState.r ||
+        atomState.y !== prevAtomState.y ||
+        (atomState.r === prevAtomState.r && atomState.d !== prevAtomState.d)
       ) {
         committedAtomStateMap.set(atom, atomState)
         if (atomState.d !== prevAtomState?.d) {
-          mountDependencies(atom, atomState, prevAtomState?.d)
+          mountDependencies(version, atom, atomState, prevAtomState?.d)
         }
       }
     })
@@ -862,14 +921,16 @@ export const createStore = (
 
   const subscribeAtom = (
     atom: AnyAtom,
-    callback: (version?: VersionObject) => void
+    callback: (version?: VersionObject) => void,
+    version?: VersionObject
   ) => {
-    const mounted = addAtom(atom)
+    const mounted = addAtom(version, atom)
     const listeners = mounted.l
     listeners.add(callback)
     return () => {
       listeners.delete(callback)
-      delAtom(atom)
+      // TODO should version be `undefined` for delAtom?
+      delAtom(version, atom)
     }
   }
 

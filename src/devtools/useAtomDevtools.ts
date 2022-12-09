@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { useAtom } from 'jotai'
 import type { Atom, WritableAtom } from 'jotai'
-import type { Scope, SetAtom } from '../core/atom'
+import type { SetAtom } from '../core/atom'
 import { Message } from './types'
 
-interface DevtoolOptions {
+type Scope = NonNullable<Parameters<typeof useAtom>[1]>
+
+type DevtoolOptions = {
   name?: string
   scope?: Scope
   enabled?: boolean

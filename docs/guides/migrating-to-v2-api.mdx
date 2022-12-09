@@ -1,0 +1,222 @@
+---
+title: Migrating to Jotai v2 API
+description: New "Async" API
+nav: 3.13
+---
+
+RFC: https://github.com/pmndrs/jotai/discussions/1514
+
+Jotai v1 is released at June 2022, and there has been various feedbacks.
+React also proposes first-class support for promises.
+Jotai v2 will have a new API.
+
+Unfortunately, there are some breaking changes along with new features.
+
+## What are new features
+
+### Vanilla library
+
+Jotai comes with vanilla (non-React) functions
+and React functions separately.
+
+### Store API
+
+Jotai exposes store interface so that you can directly manipulate atom values.
+
+```js
+import { createStore } from 'jotai/vanilla'
+
+const store = createStore()
+store.set(fooAtom, 'foo')
+```
+
+You can also create your own React Context to pass a store.
+
+### More flexible atom `write` function
+
+The write function can accept multiple arguments,
+and return a value.
+
+```js
+atom(
+  (get) => get(...),
+  (get, set, arg1, arg2, ...) => {
+    ...
+    return someValue
+  }
+)
+```
+
+## What are breaking
+
+### Import statements
+
+The new API is provided from different entry points:
+
+- `jotai/vanilla`
+- `jotai/vanilla/utils`
+- `jotai/react`
+- `jotai/react/devtools`
+- `jotai/react/utils`
+
+```js
+import { atom } from 'jotai/vanilla'
+import { useAtom } from 'jotai/react'
+```
+
+These new entry points are added in v1.11.0 as pre-release, which will continue to work after v2.0.0 release.
+
+In v2.0.0, they are the defaults and old entry points simply refer to the new ones.
+
+```js
+// v2
+import { atom } from 'jotai' // is same as 'jotai/vanilla'
+import { useAtom } from 'jotai' // is same as 'jotai/react'
+```
+
+### Async atoms are no longer special
+
+Async atoms are just normal atoms with promise values.
+Atoms getter functions don't resolve promises.
+On the other hand, `useAtom` hook continues to resolve promises.
+
+### Writable atom type is changed (TypeScript only)
+
+```ts
+// Old
+WritableAtom<Value, Arg, Result extends void | Promise<void>>
+
+// New
+WritableAtom<Value, Args extends unknown[], Result>
+```
+
+In general, we should avoid using `WritableAtom` type directly.
+
+### Some functions are dropped
+
+- Provider's `initialValues` prop is removed, because `store` is more flexible.
+- Provider's scope props is removed, because you can create own context.
+- `abortableAtom` util is removed, becuase the feature is included by default
+- `waitForAll` util is removed, because `Promise.all` just works
+
+## Migration guides
+
+### Async atoms
+
+`get` function for read function of async atoms
+doesn't resolve promises, so you have to put `await`.
+
+In short, the change is something like the following.
+(If you are TypeScript users, types will tell where to changes.)
+
+#### Previous API
+
+```js
+const asyncAtom = atom(async () => 'hello')
+const derivedAtom = atom((get) => get(asyncAtom).toUppercase())
+```
+
+#### New API
+
+```js
+const asyncAtom = atom(async () => 'hello')
+const derivedAtom = atom(async (get) => (await get(asyncAtom)).toUppercase())
+```
+
+### Provider's `initialValues` prop
+
+#### Previous API
+
+```jsx
+const countAtom = atom(0)
+
+  <Provider initialValues={[[countAtom, 1]]}>
+    ...
+  </Provider>
+```
+
+#### New API
+
+```jsx
+const countAtom = atom(0)
+const store = createStore()
+store.set(countAtom, 1)
+
+  <Provider store={store}>
+    ...
+  </Provider>
+```
+
+### Provider's `scope` prop
+
+#### Previous API
+
+```jsx
+const myScope = Symbol()
+
+  // Parent component
+  <Provider scope={myScope}>
+    ...
+  </Provider>
+
+  // Child component
+  useAtom(..., myScope)
+```
+
+#### New API
+
+```jsx
+const MyContext = createContext()
+const store = createStore()
+
+  // Parent component
+  <MyContext.Provider value={store}>
+    ...
+  </MyContext.Provider>
+
+  // Child Component
+  const store = useContext(MyContext)
+  useAtom(..., { store })
+```
+
+### `abortableAtom` util
+
+You no longer need the previous `abortableAtom` util,
+because it's now supported with the normal `atom`.
+
+#### Previous API
+
+```js
+const asyncAtom = abortableAtom(async (get, { signal }) => {
+ ...
+}
+```
+
+#### New API
+
+```js
+const asyncAtom = atom(async (get, { signal }) => {
+  ...
+}
+```
+
+### `waitForAll` util
+
+You no longer need the previous `waitForAll` util,
+because we can use native Promise APIs.
+
+#### Previous API
+
+```js
+const allAtom = waitForAll([fooAtom, barAtom])
+```
+
+#### New API
+
+```js
+const allAtom = atom((get) => Promise.all([get(fooAtom), get(barAtom)]))
+```
+
+## Some other changes
+
+- `atomWithStorage` util's `delayInit` is removed as being default.

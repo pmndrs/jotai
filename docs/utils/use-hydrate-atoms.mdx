@@ -6,7 +6,7 @@ Ref: https://github.com/pmndrs/jotai/issues/340
 
 ## Usage
 
-```tsx
+```js
 import { atom, useAtom } from 'jotai'
 import { useHydrateAtoms } from 'jotai/utils'
 
@@ -30,7 +30,7 @@ function useHydrateAtoms(
 
 The hook takes an iterable of tuples containing `[atom, value]` as an argument and optionally scope.
 
-```ts
+```js
 // Usage with an array, specifying a scope
 useHydrateAtoms(
   [
@@ -48,7 +48,7 @@ Atoms can only be hydrated once per scope. Therefore, if the initial value used 
 
 If there's a need to hydrate in multiple scopes, use multiple `useHydrateAtoms` hooks to achieve that.
 
-```ts
+```js
 useHydrateAtoms([
   [countAtom, 42],
   [frameworkAtom, 'Next.js'],

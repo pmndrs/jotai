@@ -41,11 +41,14 @@ jobs:
           - 17.0.0
           - 18.0.0
           - 18.1.0
-          - 18.2.0-next-d2c9e834a-20220601
-          - 0.0.0-experimental-d2c9e834a-20220601
+          - 18.2.0
+          - 18.3.0-next-65e32e58b-20221019
+          - 0.0.0-experimental-65e32e58b-20221019
         mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
         exclude:
           - { react: 16.8.6, mode: VERSIONED_WRITE }
+          - { react: 16.9.0, mode: VERSIONED_WRITE }
+          - { react: 17.0.0, mode: VERSIONED_WRITE }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -60,9 +63,13 @@ jobs:
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
-          sed -i~ '1s/^/import React from "react";/' tests/*.tsx tests/*/*.tsx
+          sed -i~ '1s/^/import React from "react";/' tests/*/*.tsx src/*/*.tsx
           sed -i~ 's/automatic/classic/' babel.config.js
           sed -i~ 's/automatic/classic/' .swcrc
+      - name: Ignore Async API tests for Older React
+        if: ${{ matrix.react == '16.8.6' }} || ${{ matrix.mode != 'NORMAL' }}
+        run: |
+          rm -r tests/vanilla tests/react
       - name: Test ${{ matrix.react }} ${{ matrix.mode }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}

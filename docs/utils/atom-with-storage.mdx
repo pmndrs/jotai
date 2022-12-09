@@ -4,7 +4,7 @@ title: atomWithStorage
 
 Ref: https://github.com/pmndrs/jotai/pull/394
 
-```ts
+```jsx
 import { useAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 
@@ -32,7 +32,7 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 
 **storage** (optional): an object with:
 
-- `getItem` and `setItem` methods for storing/retreiving persisted state; defaults to using `localStorage` for storage/retreival and `JSON.stringify()`/`JSON.parse()` for serialization/deserialization.
+- `getItem` and `setItem` methods for storing/retrieving persisted state; defaults to using `localStorage` for storage/retrieval and `JSON.stringify()`/`JSON.parse()` for serialization/deserialization.
 - Optionally, the storage has a `subscribe` property, which can be used to synchronize storage. The default `localStorage` handles `storage` events for cross-tab synchronization.
 - Optionally, the storage has a `delayInit` (`boolean`) property, which can be used to tell jotai whether to use Suspense
   - `delayInit: true` will not suspend when first reading the value of your atom
@@ -73,12 +73,36 @@ const TextBox = () => {
 }
 ```
 
+If needed, you can also do conditional resets based on previous value.
+
+This can be particularly useful if you wish to clear keys in localStorage if previous values meet a condition.
+
+Below exemplifies this usage that clears the `visible` key whenever the previous value is `true`.
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithStorage, RESET } from 'jotai/utils'
+
+const isVisibleAtom = atomWithStorage('visible', false)
+
+const TextBox = () => {
+  const [isVisible, setIsVisible] = useAtom(isVisibleAtom)
+
+  return (
+    <>
+      { isVisible && <h1>Header is visible!</h1> }
+      <button onClick={() => setIsVisible((prev) => prev ? RESET : true))}>Toggle visible</button>
+    </>
+  )
+}
+```
+
 ## React-Native implementation
 
 You can use any library that implements `getItem`, `setItem` & `removeItem`.
 Let's say you would use the standard AsyncStorage provided by the community.
 
-```jsx
+```js
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 

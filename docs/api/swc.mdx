@@ -1,0 +1,133 @@
+---
+title: SWC
+description: This doc describes SWC plugins for Jotai.
+nav: 2.05
+---
+
+⚠️ Note: These plugins are experimental. Feedback is welcome in the [Github repo](https://github.com/pmndrs/swc-jotai). Please file issues in the separate repo instead of `jotai` repo.
+
+## @swc-jotai/debug-label
+
+Jotai is based on object references and not keys (like Recoil). This means there's no identifier for atoms. To identify atoms, it's possible to add a `debugLabel` to an atom, which can be found in React devtools.
+
+However, this can quickly become cumbersome to add a `debugLabel` to every atom.
+
+This `SWC` plugin adds a `debugLabel` to every atom, based on its identifier.
+
+The plugin transforms this code:
+
+```js
+export const countAtom = atom(0)
+```
+
+Into:
+
+```js
+export const countAtom = atom(0)
+countAtom.debugLabel = 'countAtom'
+```
+
+Default exports are also handled, based on the file naming:
+
+```js
+// countAtom.ts
+export default atom(0)
+```
+
+Which transform into:
+
+```js
+// countAtom.ts
+const countAtom = atom(0)
+countAtom.debugLabel = 'countAtom'
+export default countAtom
+```
+
+### Usage
+
+Install it with:
+
+```sh
+npm install --save-dev @swc-jotai/debug-label
+```
+
+You can add the plugin to `.swcrc`:
+
+```json
+{
+  "jsc": {
+    "experimental": {
+      "plugins": [["@swc-jotai/debug-label", {}]]
+    }
+  }
+}
+```
+
+Or you can use the plugin with the [experimental SWC plugins feature](https://nextjs.org/docs/advanced-features/compiler#swc-plugins-experimental) in Next.js.
+
+```js
+module.exports = {
+  experimental: {
+    swcPlugins: [['@swc-jotai/debug-label', {}]],
+  },
+}
+```
+
+Examples can be found below.
+
+## @swc-jotai/react-refresh
+
+This plugin adds support for React Refresh for Jotai atoms. This makes sure that state isn't reset, when developing using React Refresh.
+
+### Usage
+
+Install it with:
+
+```sh
+npm install --save-dev @swc-jotai/react-refresh
+```
+
+You can add the plugin to `.swcrc`:
+
+```json
+{
+  "jsc": {
+    "experimental": {
+      "plugins": [["@swc-jotai/react-refresh", {}]]
+    }
+  }
+}
+```
+
+You can use the plugin with the [experimental SWC plugins feature](https://nextjs.org/docs/advanced-features/compiler#swc-plugins-experimental) in Next.js.
+
+```js
+module.exports = {
+  experimental: {
+    swcPlugins: [['@swc-jotai/react-refresh', {}]],
+  },
+}
+```
+
+Examples can be found below.
+
+## Custom atom names
+
+You can enable the plugins for your custom atoms. You can supply them to the plugins like below:
+
+```js
+module.exports = {
+  experimental: {
+    swcPlugins: [
+      ['@swc-jotai/debug-label', { atomNames: ['customAtom'] }],
+      ['@swc-jotai/react-refresh', { atomNames: ['customAtom'] }],
+    ],
+  },
+}
+```
+
+## Examples
+
+### Next.js
+
+<CodeSandbox id="ygiuzm" />

@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot } from 'valtio/vanilla'
 import { atom, useAtom } from 'jotai'
@@ -29,9 +29,11 @@ it('count state', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')
@@ -69,9 +71,11 @@ it('nested count state', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -88,12 +92,9 @@ it('nested count state', async () => {
 })
 
 it('state with a promise', async () => {
+  let resolve = () => {}
   const getAsyncStatus = (status: string) =>
-    new Promise<string>((resolve) => {
-      setTimeout(() => {
-        resolve(status)
-      }, 500)
-    })
+    new Promise<string>((r) => (resolve = () => r(status)))
 
   const proxyState = proxy({
     status: getAsyncStatus('done'),
@@ -122,17 +123,22 @@ it('state with a promise', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Suspense fallback="loading">
-        <Status />
-      </Suspense>
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Suspense fallback="loading">
+          <Status />
+        </Suspense>
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('loading')
+  resolve()
   await findByText('status: done')
+
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve()
   await findByText('status: modified')
 })
 
@@ -172,9 +178,11 @@ it('synchronous atomWithProxy and regular atom ', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Elements />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Elements />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('selected element: none')
@@ -198,9 +206,11 @@ it('array.length state', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('array0: 0')

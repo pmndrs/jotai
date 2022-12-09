@@ -20,7 +20,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 ```
 
-> Jotai provides a babel plugin that adds a debugLabel automatically to every atom, which makes things easier for us. for more info check out [jotai/babel](https://github.com/pmndrs/jotai/blob/main/docs/api/babel.mdx#plugin-debug-label)
+Jotai provides both a Babel and a SWC plugin, that adds a debugLabel automatically to every atom, which makes things easier for us. For more info, check out [jotai/babel](https://github.com/pmndrs/jotai/blob/main/docs/api/babel.mdx#plugin-debug-label) and [@swc-jotai/debug-label](https://github.com/pmndrs/jotai/blob/main/docs/api/swc.mdx)
 
 ## Using React Dev Tools
 
@@ -65,8 +65,8 @@ to inspect atoms, with many features like Time-travelling and value dispatching.
 
 If you have a specific atom in mind that you may want to debug, `useAtomDevtools` can be a good option.
 
-```ts
-const  countAtom = atom(0)
+```js
+const countAtom = atom(0)
 // setting countAtom.debugLabel is recommended if we have more atoms
 
 function Counter() {
@@ -103,7 +103,7 @@ This would set the `countAtoms`'s value to `5`.
 
 We'd recommend this hook if you want to keep track of all of your atoms in one place. It means every action on every atom that is placed in the bottom of this hook (in the React tree) will be catched by the Redux Dev Tools.
 
-Every feature of `useAtomDevtools` is supported in this hook, but there's an extra feature, which includes giving more information about atoms dependants like:
+Every feature of `useAtomDevtools` is supported in this hook, but there's an extra feature, which includes giving more information about atoms dependents like:
 
 ```json
 {

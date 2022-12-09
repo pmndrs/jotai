@@ -1,4 +1,5 @@
-import * as rtl from '@testing-library/react'
+import { StrictMode } from 'react'
+import { fireEvent, render } from '@testing-library/react'
 import * as O from 'optics-ts'
 import { atom, useAtom } from 'jotai'
 import { focusAtom } from 'jotai/optics'
@@ -23,16 +24,18 @@ it('updates traversals', async () => {
     )
   }
 
-  const { getByText, findByText } = rtl.render(
-    <Provider>
-      <Counter />
-    </Provider>
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Provider>
+        <Counter />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 5,6')
   await findByText('bigAtom: [{"a":5},{},{"a":6}]')
 
-  rtl.fireEvent.click(getByText('button'))
+  fireEvent.click(getByText('button'))
   await findByText('count: 6,7')
   await findByText('bigAtom: [{"a":6},{},{"a":7}]')
 })

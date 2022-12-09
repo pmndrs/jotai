@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react'
 import { atom, useSetAtom } from 'jotai'
 import type { Setter, WritableAtom } from 'jotai'
-import type { Scope } from '../core/atom'
 
+type Scope = NonNullable<Parameters<typeof useSetAtom>[1]>
 type WriteGetter = Parameters<WritableAtom<unknown, unknown>['write']>[0]
 
 type Callback<Result, Arg> = undefined extends Arg

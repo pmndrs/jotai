@@ -3,30 +3,28 @@ title: Concepts
 nav: 1.01
 ---
 
-Jotai was born to solve extra re-render issues in React.
-An extra re-render is when the render process produces the same UI result,
-where users won't see any differences.
+Jotai is a library that will make you return to the basics of React development & keep everything simple.
 
-To tackle this issue with React context (useContext + useState),
-one would require many contexts and face some issues.
+### From scratch
 
-- Provider hell: It's likely that your root component has many context providers, which is technically okay, and sometimes desirable to provide context in different subtree.
-- Dynamic addition/deletion: Adding a new context at runtime is not very nice, because you need to add a new provider and its children will be re-mounted.
+Before trying to compare Jotai with what we may have known previously, let's just dive straight into something very simple.
 
-Traditionally, a top-down solution to this is to use a selector interface.
-The [use-context-selector](https://github.com/dai-shi/use-context-selector) library is one example.
-The issue with this approach is the selector function needs to return
-referentially equal values to prevent re-renders, and this often requires a memoization technique.
+The React world is very much like our world, it's a big set of small entities, we call them components, and we know that they have their own state. Structuring your components to interact altogether will create your app.
 
-Jotai takes a bottom-up approach with the atomic model, inspired by [Recoil](https://recoiljs.org/).
-One can build state combining atoms, and optimize renders based on atom dependency.
-This avoids the need for memoization.
+Now, the Jotai world also has its small entities, atoms, and they also have their state. Composing atoms will create your app state!
 
-Jotai has two principles.
+Jotai considers anything to be an atom, so you may say: `Huh, I need objects and arrays, filter them and then sort them out`.
+And here's the beauty of it, Jotai gracefully lets you create dumb atoms derivated from even more dumb atoms.
 
-- Primitive: Its basic interface is simple, like `useState`.
-- Flexible: Derived atoms can combine other atoms and enable `useReducer` style with side effects.
+If, for example, I have a page with 2 tabs: online friends and offline friends.
+I will have 2 atoms simply derivating from a common, dumber source.
 
-Jotai's core API is minimalistic and makes it easy to build utilities based upon it.
+```js
+const dumbAtom = atom([{ name: 'Friend 1', online: false }])
+const onlineAtom = atom((get) => get(dumbAtom).filter((item) => item.online))
+const offlineAtom = atom((get) => get(dumbAtom).filter((item) => item.online))
+```
 
-Check out [comparison doc](../basics/comparison.mdx) to see some differences with other libraries.
+And you could keep going on complexity forever.
+
+Another incredible feature of Jotai is the built-in ability to suspend when using asynchronous atoms. This is a relatively new features that yet needs to get experimented more, but definitely the future of how we build React apps. [Check out the docs](https://reactjs.org/blog/2022/03/29/react-v18.html#new-suspense-features) for more info.

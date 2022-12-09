@@ -25,7 +25,7 @@ const centsAtom = atom(
     set(dollarsAtom, newValue === RESET ? newValue : newValue / 100)
 )
 
-const ResetExample: React.FC = () => {
+const ResetExample = () => {
   const setDollars = useUpdateAtom(dollarsAtom)
   const resetCents = useResetAtom(centsAtom)
 

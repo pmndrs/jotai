@@ -10,31 +10,31 @@ Jotai is based on object references and not keys (like Recoil). This means there
 
 However, this can quickly become cumbersome to add a `debugLabel` to every atom.
 
-This `babel` plugin adds a `debugLabel` to every atom, based on its identifer.
+This `babel` plugin adds a `debugLabel` to every atom, based on its identifier.
 
 The plugin transforms this code:
 
-```ts
+```js
 export const countAtom = atom(0)
 ```
 
 Into:
 
-```ts
+```js
 export const countAtom = atom(0)
 countAtom.debugLabel = 'countAtom'
 ```
 
 Default exports are also handled, based on the file naming:
 
-```ts
+```js
 // countAtom.ts
 export default atom(0)
 ```
 
 Which transform into:
 
-```ts
+```js
 // countAtom.ts
 const countAtom = atom(0)
 countAtom.debugLabel = 'countAtom'
@@ -48,6 +48,16 @@ With a `babel` configuration file:
 ```json
 {
   "plugins": ["jotai/babel/plugin-debug-label"]
+}
+```
+
+You can also supply your atom names to the plugin:
+
+```json
+{
+  "plugins": [
+    ["jotai/babel/plugin-debug-label", { "customAtomNames": ["customAtom"] }]
+  ]
 }
 ```
 
@@ -67,6 +77,16 @@ With a `babel` configuration file:
 }
 ```
 
+You can also supply your atom names to the plugin:
+
+```json
+{
+  "plugins": [
+    ["jotai/babel/plugin-react-refresh", { "customAtomNames": ["customAtom"] }]
+  ]
+}
+```
+
 Examples can be found below.
 
 ## preset
@@ -80,6 +100,14 @@ With a `babel` configuration file:
 ```json
 {
   "presets": ["jotai/babel/preset"]
+}
+```
+
+You can also supply your atom names to the preset:
+
+```json
+{
+  "presets": [["jotai/babel/preset", { "customAtomNames": ["customAtom"] }]]
 }
 ```
 

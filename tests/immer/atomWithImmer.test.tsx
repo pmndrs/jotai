@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtom } from 'jotai'
 import { atomWithImmer } from 'jotai/immer'
@@ -24,9 +25,11 @@ it('atomWithImmer with useAtom', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')
@@ -53,9 +56,11 @@ it('atomWithImmer with WritableAtom<Value, Value> signature', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 0')

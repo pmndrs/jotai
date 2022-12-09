@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, useEffect, useState } from 'react'
+import { StrictMode, Suspense, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useSetAtom } from 'jotai'
 import type { SetStateAction, WritableAtom } from 'jotai'
@@ -15,9 +15,11 @@ it('new atomFamily impl', async () => {
     return <div>count: {count}</div>
   }
   const { findByText } = render(
-    <Provider>
-      <Displayer index={'a'} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Displayer index={'a'} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: a')
@@ -86,9 +88,11 @@ it('primitive atomFamily initialized with props', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 1')
@@ -163,9 +167,11 @@ it('derived atomFamily functionality as usual', async () => {
   }
 
   const { getByText } = render(
-    <Provider>
-      <Parent />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Parent />
+      </Provider>
+    </StrictMode>
   )
 
   await waitFor(() => {
@@ -218,22 +224,18 @@ it('custom equality function work', async () => {
 
 it('a derived atom from an async atomFamily (#351)', async () => {
   const countAtom = atom(1)
+  const resolve: (() => void)[] = []
   const getAsyncAtom = atomFamily((n: number) =>
     atom(async () => {
-      await new Promise((r) => setTimeout(r, 500))
+      await new Promise<void>((r) => resolve.push(r))
       return n + 10
     })
   )
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
-  let commitCount = 0
-
   const Counter = () => {
     const setCount = useSetAtom(countAtom)
     const [derived] = useAtom(derivedAtom)
-    useEffect(() => {
-      ++commitCount
-    })
     return (
       <>
         <div>derived: {derived}</div>
@@ -253,19 +255,38 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   )
 
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 11')
-  await new Promise((r) => setTimeout(r, 10))
-  const commitCountAfterMount = commitCount
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 12')
-  await new Promise((r) => setTimeout(r, 10))
-  expect(commitCount).toBe(commitCountAfterMount + 1)
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 13')
-  await new Promise((r) => setTimeout(r, 10))
-  expect(commitCount).toBe(commitCountAfterMount + 2)
+})
+
+it('setShouldRemove with custom equality function', async () => {
+  const myFamily = atomFamily(
+    (num: { index: number }) => atom(num),
+    (l, r) => l.index === r.index
+  )
+  let firstTime = true
+  myFamily.setShouldRemove(() => {
+    if (firstTime) {
+      firstTime = false
+      return true
+    }
+    return false
+  })
+
+  const family1 = myFamily({ index: 0 })
+  const family2 = myFamily({ index: 0 })
+  const family3 = myFamily({ index: 0 })
+
+  expect(family1).not.toBe(family2)
+  expect(family2).toBe(family3)
 })

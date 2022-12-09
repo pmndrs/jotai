@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { atom, useAtom } from 'jotai'
 import { useHydrateAtoms } from 'jotai/utils'
@@ -21,9 +21,11 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
     )
   }
   const { findByText, getByText, rerender } = render(
-    <Provider>
-      <Counter initialCount={42} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter initialCount={42} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 42')
@@ -31,9 +33,11 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
   await findByText('count: 43')
 
   rerender(
-    <Provider>
-      <Counter initialCount={65} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter initialCount={65} />
+      </Provider>
+    </StrictMode>
   )
   await findByText('count: 43')
 })
@@ -58,9 +62,11 @@ it('useHydrateAtoms should not trigger unnessesary rerenders', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter initialCount={42} />
-    </Provider>
+    <>
+      <Provider>
+        <Counter initialCount={42} />
+      </Provider>
+    </>
   )
 
   await findByText('count: 42')
@@ -88,9 +94,11 @@ it('useHydrateAtoms should work with derived atoms', async () => {
   }
 
   const { findByText, getByText } = render(
-    <Provider>
-      <Counter initialCount={42} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter initialCount={42} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 42')
@@ -126,9 +134,11 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     )
   }
   const { findByText, getByText, rerender } = render(
-    <Provider>
-      <Counter initialCount={42} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter initialCount={42} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 42')
@@ -136,9 +146,11 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   await findByText('count: 43')
 
   rerender(
-    <Provider>
-      <Counter2 count={65} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter2 count={65} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 43')
@@ -172,9 +184,11 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     )
   }
   const { findByText, getByText, rerender } = render(
-    <Provider>
-      <Counter initialCount={42} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter initialCount={42} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 42')
@@ -182,9 +196,11 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   await findByText('count: 43')
 
   rerender(
-    <Provider>
-      <Counter2 count={65} />
-    </Provider>
+    <StrictMode>
+      <Provider>
+        <Counter2 count={65} />
+      </Provider>
+    </StrictMode>
   )
 
   await findByText('count: 43')
@@ -204,9 +220,11 @@ it('useHydrateAtoms should respect onMount', async () => {
     return <div>count: {countValue}</div>
   }
   const { findByText } = render(
-    <Provider>
-      <Counter initialCount={42} />
-    </Provider>
+    <>
+      <Provider>
+        <Counter initialCount={42} />
+      </Provider>
+    </>
   )
 
   await findByText('count: 42')
@@ -242,14 +260,14 @@ it('useHydrateAtoms should let you hydrate an atom once per scope', async () => 
     )
   }
   const { findByText, getByText } = render(
-    <>
+    <StrictMode>
       <Provider>
         <Counter initialCount={42} />
       </Provider>
       <Provider scope={scope}>
         <Counter2 initialCount={65} />
       </Provider>
-    </>
+    </StrictMode>
   )
 
   await findByText('count: 42')

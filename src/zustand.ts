@@ -1,1 +1,1 @@
-export { atomWithStore } from './zustand/atomWithStore'
+export { atomWithStore } from 'jotai-zustand'

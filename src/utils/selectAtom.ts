@@ -2,8 +2,6 @@ import { atom } from 'jotai'
 import type { Atom } from 'jotai'
 import { createMemoizeAtom } from './weakCache'
 
-type Awaited<T> = T extends Promise<infer V> ? Awaited<V> : T
-
 const memoizeAtom = createMemoizeAtom()
 
 export function selectAtom<Value, Slice>(

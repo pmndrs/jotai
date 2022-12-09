@@ -4,7 +4,7 @@ title: waitForAll
 
 Sometimes you have multiple async atoms in your components:
 
-```tsx
+```js
 const dogsAtom = atom(async (get) => {
   const response = await fetch('/dogs')
   return await response.json()
@@ -25,7 +25,7 @@ However, this will start fetching one at the time, which is not optimal - It wou
 
 The `waitForAll` utility is a concurrency helper, which allows us to evaluate multiple async atoms:
 
-```tsx
+```js
 const dogsAtom = atom(async (get) => {
   const response = await fetch('/dogs')
   return await response.json()
@@ -45,7 +45,7 @@ const App = () => {
 
 You can also use `waitForAll` inside an atom - It's also possible to name them for readability:
 
-```tsx
+```js
 const dogsAtom = atom(async (get) => {
   const response = await fetch('/dogs')
   return await response.json()

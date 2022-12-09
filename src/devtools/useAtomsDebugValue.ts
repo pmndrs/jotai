@@ -1,6 +1,6 @@
 import { useContext, useDebugValue, useEffect, useState } from 'react'
 import { SECRET_INTERNAL_getScopeContext as getScopeContext } from 'jotai'
-import type { Atom, Scope } from '../core/atom'
+import type { Atom } from '../core/atom'
 import {
   DEV_GET_ATOM_STATE,
   DEV_GET_MOUNTED,
@@ -8,6 +8,8 @@ import {
   DEV_SUBSCRIBE_STATE,
 } from '../core/store'
 import type { AtomState, Store } from '../core/store'
+
+type Scope = NonNullable<Parameters<typeof getScopeContext>[0]>
 
 const atomToPrintable = (atom: Atom<unknown>) =>
   atom.debugLabel || atom.toString()

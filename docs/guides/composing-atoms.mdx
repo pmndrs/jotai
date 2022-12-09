@@ -61,7 +61,7 @@ export const numberAtom = atom(
 ```
 
 The final `numberAtom` just works like a normal primitive atom like `atom(10)`.
-If you set a number value, it will override the `roundNumberAtom` value,
+If you set a number value, it will override the `overwrittenAtom` value,
 and if you set `null`, it will be the `roundNumberAtom` value.
 
 The reusable implementation is available as `atomWithDefault`
@@ -101,7 +101,7 @@ So, if we use this atom in two different Providers,
 There will be an inconsistency between the two `persistedAtom` values.
 This could be solved if the external value had a subscription mechanism.
 
-For example, `atomWithProxy` in `jotai/valtio` comes with subscription,
+For example, `atomWithProxy` in `jotai-valtio` comes with subscription,
 so we don't have such a limitation. Values in different Providers
 will be in sync.
 

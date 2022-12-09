@@ -1,0 +1,65 @@
+name: Test Old TypeScript
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  test_matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        typescript:
+          - 4.8.4
+          - 4.7.4
+          - 4.6.4
+          - 4.5.5
+          - 4.4.4
+          - 4.3.5
+          - 4.2.3
+          - 4.1.5
+          - 4.0.5
+          - 3.9.7
+          - 3.8.3
+          - 3.7.5
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          cache: yarn
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - run: yarn install --frozen-lockfile --check-files
+      - run: yarn build
+      - name: Patch for Old TS
+        run: |
+          sed -i~ "s/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//" tests/*/*.tsx tests/*/*/*.tsx
+          sed -i~ "s/\"exactOptionalPropertyTypes\": true,//" tsconfig.json
+          sed -i~ "s/\"jotai\": \[\"\.\/src\/index\.ts\"\],/\"jotai\": [\".\/dist\/ts3.4\/index.d.ts\"],/" tsconfig.json
+          sed -i~ "s/\"jotai\/\*\": \[\"\.\/src\/\*\.ts\"\]/\"jotai\/*\": [\".\/dist\/ts3.4\/*.d.ts\"]/" tsconfig.json
+          sed -i~ "s/\"include\": .*/\"include\": [\"src\/types.d.ts\", \"dist\/**\/*\", \"tests\/**\/*\"],/" tsconfig.json
+      - name: Patch for Older TS
+        if: ${{ matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
+        run: |
+          sed -i~ '1s/^/import React from "react";/' tests/*/*.tsx tests/*/*/*.tsx
+          sed -i~ "s/\"jsx\": \"react-jsx\",/\"jsx\": \"react\",/" tsconfig.json
+          sed -i~ "s/\"noUncheckedIndexedAccess\": true,//" tsconfig.json
+          sed -i~ "s/^import type /import /" tests/*/*.tsx tests/*/*/*.tsx
+          sed -i~ "s/^.* from '\.\/utils\/waitForAll';//" dist/ts3.4/utils.d.ts
+          yarn json -I -f package.json -e "this.resolutions['@types/jest']='26.0.14'; this.resolutions['pretty-format']='25.5.0'; this.resolutions['@types/prettier']='2.4.2';"
+          yarn add -D @types/jest@26.0.14 pretty-format@25.5.0 @types/prettier@2.4.2 @types/yargs@17.0.13 @types/babel__traverse@7.18.2
+          rm -r tests/query tests/urql tests/optics tests/xstate tests/valtio tests/zustand tests/utils/atomWithObservable.* tests/utils/waitForAll.* tests/vanilla/utils/atomWithObservable.*
+      - name: Ignore Async API tests for Older TS
+        if: ${{ matrix.typescript == '3.7.5' }}
+        run: |
+          rm -r tests/vanilla tests/react
+      - name: Test ${{ matrix.typescript }}
+        run: |
+          yarn add -D typescript@${{ matrix.typescript }}
+          rm -r node_modules/@types/jsdom node_modules/parse5 node_modules/@types/babel__core/node_modules
+          sed -i~ "s/\">=4.2\": {/\">=4.1\": {/" node_modules/rxjs/package.json
+          sed -i~ "s/^import type /import /" node_modules/jotai-redux/dist/src/*.d.ts node_modules/jotai-immer/dist/src/*.d.ts
+          yarn tsc --noEmit

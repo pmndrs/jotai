@@ -9,7 +9,7 @@ Sometimes we have nested data we need to store in atoms, and we may need to chan
 
 Consider this example:
 
-```jsx
+```js
 const initialData = {
   people: [
     {
@@ -41,13 +41,13 @@ const initialData = {
 
 ## focusAtom
 
-> `focusAtom` creates a new atom, based on the focus that you pass to it. [jotai/optics](../integrations/optics.mdx#focus-atom)
+> `focusAtom` creates a new atom, based on the focus that you pass to it. [jotai-optics](../integrations/optics.mdx#focus-atom)
 
 We use this utility to focus an atom and create an atom from a specific part of the data. For example we may need to consume the people property of the above data, Here's how we do it:
 
-```jsx
+```js
 import { atom } from 'jotai'
-import { focusAtom } from 'jotai/optics'
+import { focusAtom } from 'jotai-optics'
 
 const dataAtom = atom(initialData)
 
@@ -56,7 +56,7 @@ const peopleAtom = focusAtom(dataAtom, (optic) => optic.prop('people'))
 
 `focusAtom` returns `WritableAtom` which means it's possible to change the `peopleAtom` data.
 
-If we change the `film` property of the above data example, the `peopleAtom` won't cause a re-render, so that's one of the benefits of using `focusAtom`.
+If we change the `films` property of the above data example, the `peopleAtom` won't cause a re-render, so that's one of the benefits of using `focusAtom`.
 
 ## splitAtom
 
@@ -64,7 +64,7 @@ If we change the `film` property of the above data example, the `peopleAtom` won
 
 We use this utility for atoms that return arrays as their values. For example, the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array. If the array atom is writable, `splitAtom` returned atoms are going to be writable, if the array atom is read-only, the returned atoms will be read-only too.
 
-```jsx
+```js
 import { splitAtom } from 'jotai/utils'
 
 const peopleAtomsAtom = splitAtom(peopleAtom)
@@ -93,7 +93,7 @@ This utility is like `focusAtom`, but we use it when we have a read-only atom to
 
 Assume we want to consume the info data, and its data is always unchangeable. We can make a read-only atom from it and select that created atom.
 
-```jsx
+```js
 // first we create a read-only atom based on initialData.info
 const readOnlyInfoAtom = atom((get) => get(dataAtom).info)
 ```
