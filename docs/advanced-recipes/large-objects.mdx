@@ -104,8 +104,9 @@ Then we use it in our component:
 import { atom, useAtom } from 'jotai'
 import { selectAtom, splitAtom } from 'jotai/utils'
 
+const tagsSelector = (s) => s.tags
 const Tags = () => {
-  const tagsAtom = selectAtom(readOnlyInfoAtom, (s) => s.tags)
+  const tagsAtom = selectAtom(readOnlyInfoAtom, tagsSelector)
   const tagsAtomsAtom = splitAtom(tagsAtom)
   const [tagAtoms] = useAtom(tagsAtomsAtom)
   return (

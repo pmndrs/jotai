@@ -1,0 +1,168 @@
+---
+title: Performance
+description: How to limit extra re-renders
+nav: 3.12
+---
+
+:**Note**: This guide has room for improvement. Consider it as FYI for now.
+
+Jotai & React gives us quite a few tools to manage the re-renders that happen in the app lifecycle.
+First, please read about the difference [between render & commit](https://reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html#browsing-commits), because that's very important to understand before going further.
+
+### Cheap renders
+
+As seen in the [core section](../api/core.mdx), due to React 18 default behaviour (but overall good practice), you have to make sure your component functions are _idempotent_.
+They will be called multiple times during the render phase, even at mount. So we need to keep our renders cheap at all cost!
+
+#### Heavy computation
+
+Always make heavy computation outside of the React lifecycle (in actions for example)
+
+Dont's:
+
+```js
+// Heavy computation for each item
+const selector = (s) => s.filter(heavyComputation)
+const Profile = () => {
+  const [computed] = useAtom(selectAtom(friendsAtom, selector))
+}
+```
+
+Do's:
+
+```js
+const friendsAtom = atom([])
+const fetchFriendsAtom = atom(null, async (get, set, payload) => {
+  // Fetch all friends
+  const res = await fetch('https://...')
+  // Make heavy computation once only
+  const computed = res.filter(heavyComputation)
+  set(friendsAtom, computed)
+})
+// Usage in components
+const Profile = () => {
+  const [friends] = useAtom(friendsAtom)
+}
+```
+
+#### Small components
+
+Observed atoms should only re-render small parts of your application that required an update. The less comparison React has to make, the shorter your render time will be.
+
+Dont's:
+
+```jsx
+const Profile = () => {
+  const [name] = useAtom(nameAtom)
+  const [ageAtom] = useAtom(ageAtom)
+  return (
+    <>
+      <div>{name}</div>
+      <div>{age}</div>
+    </>
+  )
+}
+```
+
+Do's:
+
+```jsx
+const NameComponent = () => {
+  const [name] = useAtom(nameAtom)
+  return <div>{name}</div>
+}
+const AgeComponent = () => {
+  const [age] = useAtom(ageAtom)
+  return <div>{age}</div>
+}
+const Profile = () => {
+  return (
+    <>
+      <NameComponent />
+      <AgeComponent />
+    </>
+  )
+}
+```
+
+### Render on demand
+
+Usually, the main performance overhead will come from re-rendering parts of your app that did not need to, or way more than they should.
+
+We have a few tools to deal with "when" React should render our components. If you have not seen the usage of `useMemo` and `useCallback`, please check the offcial React documentation for more info before going further.
+They are of great use to reduce un-necessary renders where your app is not fluid.
+
+But Jotai also provides its set of tools to handle the "when" our atoms should trigger a re-render.
+
+- Out of the box, Jotai encourages you to split your data into atomic parts, hence each atom is stored separately and will only trigger a re-render when their own value change
+- `selectAtom` allows you to subscribe to specific part of a large object and only re-render on value change
+- `focusAtom` same as selectAtom, but creating a new atom for the part, giving a setter to update that specific part easily
+- `splitAtom` does the work of selectAtom/focus atom for a dynamic list
+
+While this seems simplistic, it is simple to reason about. That was the goal, let's keep it simple to keep it fast.
+
+#### Frequent or rare updates
+
+Ask yourself whether your atom is usually going to be frequently update or more rarely.
+Let's imagine an atom containing an object that changes almost every second, it may not be best suited to "focus" on a specific properties of this object using `focusAtom`, because anyway they will all re-render in the same time, so best adding no overhead and not create any more atoms.
+
+On the other hand, if your object has properties that rarely change, and most importantly, that change independently from the other properties, then you may want to use `focusAtom` or `selectAtom` to prevent un-necessary renders.
+
+## "Stop observing" pattern
+
+An example of pattern that can be interesting is to use `useMemo` to read an atom value only once, in order to prevent further renders even if the atom changes down the line.
+
+Let's imagine a case, you have a list of toggles. Let's view 2 approaches for it:
+
+### Standard pattern
+
+We create our store of 3 toggles set to false
+
+```tsx
+const togglesAtom = atom([false, false, false])
+```
+
+Then, when the user clicks one toggle, we update it
+
+```tsx
+const Item = ({ index, val }) => {
+  const setToggles = useSetAtom(togglesAtom)
+  const onPress = () => {
+    setToggles(old => [...old, [index]: !val])
+  }
+}
+
+const List = () => {
+  const [toggles] = useAtom(togglesAtom)
+  return toggles.map((val, index) => <Item id={index} val={val} />)
+}
+```
+
+With this approach, updating any toggle will cause all `<Item />` to re-render.
+
+### Memoized pattern
+
+Now let's try to memoize the value on the first render
+
+```tsx
+const List = () => {
+  const [toggles] = useMemo(() => useAtom(togglesAtom), [])
+  return toggles.map((val, index) => <Item id={index} initialValue={val} />)
+}
+```
+
+But now it means we have to handle the changes locally in each `Item`
+
+```tsx
+const Item = ({ index, initialValue }) => {
+  const setToggles = useSetAtom(togglesAtom)
+  const [toggle, setToggle] = React.useMemo() => useAtom(atom(val)), [])
+
+  const onPress = () => {
+    setToggle(!toggle) // Update locally
+    setToggles(old => [...old, [index]: !val]) // Update the main atom
+  }
+}
+```
+
+Now if you update one toggle, it will only re-render the corresponding `<Item />`

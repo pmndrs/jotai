@@ -65,7 +65,7 @@ You have multiple options in order to satisfy these constraints:
 
 ```js
 const baseAtom = atom(0) // Stable
-const selector = (v) => v // Stable
+const baseSelector = (v) => v // Stable
 const Component = () => {
   // Solution 1: Memoize the whole resulting atom with "useMemo"
   const [value] = useAtom(useMemo(() => selectAtom(baseAtom, (v) => v), []))
@@ -79,7 +79,7 @@ const Component = () => {
   )
 
   // Solution 3: All constraints are already satisfied
-  const [value] = useAtom(selectAtom(baseAtom, selector))
+  const [value] = useAtom(selectAtom(baseAtom, baseSelector))
 }
 ```
 
