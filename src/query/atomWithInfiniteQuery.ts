@@ -54,6 +54,9 @@ export interface AtomWithInfiniteQueryOptionsWithEnabled<
   enabled: boolean
 }
 
+/**
+ * @deprecated use `jotai-tanstack-query` instead
+ */
 export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
@@ -76,6 +79,9 @@ export function atomWithInfiniteQuery<
   AtomWithInfiniteQueryAction<TQueryFnData>
 >
 
+/**
+ * @deprecated use `jotai-tanstack-query` instead
+ */
 export function atomWithInfiniteQuery<
   TQueryFnData,
   TError,
@@ -116,6 +122,7 @@ export function atomWithInfiniteQuery<
   InfiniteData<TData | TQueryData> | undefined,
   AtomWithInfiniteQueryAction<TQueryFnData>
 > {
+  console.warn('[DEPRECATED] use `jotai-tanstack-query` instead.')
   const getOptions = (get: Getter) => ({
     staleTime: 200,
     ...(typeof createQuery === 'function' ? createQuery(get) : createQuery),
