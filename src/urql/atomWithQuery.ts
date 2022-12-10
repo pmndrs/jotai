@@ -47,11 +47,17 @@ type QueryArgsWithPause<Data, Variables extends AnyVariables> = QueryArgs<
   Variables
 > & { pause: boolean }
 
+/**
+ * @deprecated use `jotai-urql` instead
+ */
 export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient?: (get: Getter) => Client
 ): WritableAtom<OperationResultWithData<Data, Variables>, AtomWithQueryAction>
 
+/**
+ * @deprecated use `jotai-urql` instead
+ */
 export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgsWithPause<Data, Variables>,
   getClient?: (get: Getter) => Client
@@ -64,6 +70,7 @@ export function atomWithQuery<Data, Variables extends AnyVariables>(
   createQueryArgs: (get: Getter) => QueryArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
+  console.warn('[DEPRECATED] use `jotai-urql` instead.')
   const getArgs = (get: Getter) => {
     const queryArgs = createQueryArgs(get)
     return [
