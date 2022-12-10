@@ -56,6 +56,7 @@ export function splitAtom<Item, Key>(
     () => {
       type ItemAtom = PrimitiveAtom<Item> | Atom<Item>
       type Mapping = {
+        arr: Item[]
         atomList: ItemAtom[]
         keyList: Key[]
       }
@@ -81,9 +82,9 @@ export function splitAtom<Item, Key>(
             return
           }
           const read = (get: Getter) => {
-            const ref = get(refAtom)
+            const prev = get(mappingAtom) as Mapping | undefined
             const currArr = get(arrAtom)
-            const mapping = getMapping(currArr, ref.prev)
+            const mapping = getMapping(currArr, prev?.arr)
             const index = mapping.keyList.indexOf(key)
             if (index < 0 || index >= currArr.length) {
               // returning a stale value to avoid errors for use cases such as react-spring
@@ -100,9 +101,9 @@ export function splitAtom<Item, Key>(
             set: Setter,
             update: SetStateAction<Item>
           ) => {
-            const ref = get(refAtom)
+            const prev = get(mappingAtom) as Mapping | undefined
             const arr = get(arrAtom)
-            const mapping = getMapping(arr, ref.prev)
+            const mapping = getMapping(arr, prev?.arr)
             const index = mapping.keyList.indexOf(key)
             if (index < 0 || index >= arr.length) {
               throw new Error('splitAtom: index out of bounds for write')
@@ -126,79 +127,80 @@ export function splitAtom<Item, Key>(
           // not changed
           mapping = prevMapping
         } else {
-          mapping = { atomList, keyList }
+          mapping = { arr, atomList, keyList }
         }
         mappingCache.set(arr, mapping)
         return mapping
       }
-      // TODO we should revisit this for a better solution than refAtom
-      const refAtom = atom(() => ({} as { prev?: Item[] }))
-      const read = (get: Getter) => {
-        const ref = get(refAtom)
+      const mappingAtom: Atom<Mapping> & {
+        init?: undefined
+      } = atom((get) => {
+        const prev = get(mappingAtom) as Mapping | undefined
         const arr = get(arrAtom)
-        const mapping = getMapping(arr, ref.prev)
-        ref.prev = arr
-        return mapping.atomList
-      }
-      const write = (
-        get: Getter,
-        set: Setter,
-        action: SplitAtomAction<Item>
-      ) => {
-        switch (action.type) {
-          case 'remove': {
-            const index = get(splittedAtom).indexOf(action.atom)
-            if (index >= 0) {
-              const arr = get(arrAtom)
-              set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
-                ...arr.slice(0, index),
-                ...arr.slice(index + 1),
-              ])
-            }
-            break
-          }
-          case 'insert': {
-            const index = action.before
-              ? get(splittedAtom).indexOf(action.before)
-              : get(splittedAtom).length
-            if (index >= 0) {
-              const arr = get(arrAtom)
-              set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
-                ...arr.slice(0, index),
-                action.value,
-                ...arr.slice(index),
-              ])
-            }
-            break
-          }
-          case 'move': {
-            const index1 = get(splittedAtom).indexOf(action.atom)
-            const index2 = action.before
-              ? get(splittedAtom).indexOf(action.before)
-              : get(splittedAtom).length
-            if (index1 >= 0 && index2 >= 0) {
-              const arr = get(arrAtom)
-              if (index1 < index2) {
-                set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
-                  ...arr.slice(0, index1),
-                  ...arr.slice(index1 + 1, index2),
-                  arr[index1] as Item,
-                  ...arr.slice(index2),
-                ])
-              } else {
-                set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
-                  ...arr.slice(0, index2),
-                  arr[index1] as Item,
-                  ...arr.slice(index2, index1),
-                  ...arr.slice(index1 + 1),
-                ])
+        const mapping = getMapping(arr, prev?.arr)
+        return mapping
+      })
+      // HACK to read mapping atom before initialization
+      mappingAtom.init = undefined
+      const splittedAtom = isWritable(arrAtom)
+        ? atom(
+            (get) => get(mappingAtom).atomList,
+            (get, set, action: SplitAtomAction<Item>) => {
+              switch (action.type) {
+                case 'remove': {
+                  const index = get(splittedAtom).indexOf(action.atom)
+                  if (index >= 0) {
+                    const arr = get(arrAtom)
+                    set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
+                      ...arr.slice(0, index),
+                      ...arr.slice(index + 1),
+                    ])
+                  }
+                  break
+                }
+                case 'insert': {
+                  const index = action.before
+                    ? get(splittedAtom).indexOf(action.before)
+                    : get(splittedAtom).length
+                  if (index >= 0) {
+                    const arr = get(arrAtom)
+                    set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
+                      ...arr.slice(0, index),
+                      action.value,
+                      ...arr.slice(index),
+                    ])
+                  }
+                  break
+                }
+                case 'move': {
+                  const index1 = get(splittedAtom).indexOf(action.atom)
+                  const index2 = action.before
+                    ? get(splittedAtom).indexOf(action.before)
+                    : get(splittedAtom).length
+                  if (index1 >= 0 && index2 >= 0) {
+                    const arr = get(arrAtom)
+                    if (index1 < index2) {
+                      set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
+                        ...arr.slice(0, index1),
+                        ...arr.slice(index1 + 1, index2),
+                        arr[index1] as Item,
+                        ...arr.slice(index2),
+                      ])
+                    } else {
+                      set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
+                        ...arr.slice(0, index2),
+                        arr[index1] as Item,
+                        ...arr.slice(index2, index1),
+                        ...arr.slice(index1 + 1),
+                      ])
+                    }
+                  }
+                  break
+                }
               }
             }
-            break
-          }
-        }
-      }
-      const splittedAtom = isWritable(arrAtom) ? atom(read, write) : atom(read)
+          )
+        : atom((get) => get(mappingAtom).atomList) // read-only atom
       return splittedAtom
     },
     arrAtom,
