@@ -1,5 +1,5 @@
 import { atom } from 'jotai/vanilla'
-import type { Atom } from 'jotai/vanilla'
+import type { Atom, WritableAtom } from 'jotai/vanilla'
 
 const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
   (m.has(k) ? m : m.set(k, c())).get(k) as T
@@ -26,43 +26,57 @@ export function unwrap<Value, PendingValue>(
 ): Atom<Awaited<Value> | PendingValue> {
   return memo2(
     () => {
-      // TODO we should revisit this for a better solution than refAtom
-      const refAtom = atom(
-        () => ({} as { p?: Promise<Value>; v?: Awaited<Value>; e?: unknown })
+      type PromiseAndValue = { readonly p: Promise<Value> } & (
+        | { readonly v: Awaited<Value> }
+        | { readonly f: PendingValue }
       )
+      const promiseErrorCache = new WeakMap<Promise<Value>, unknown>()
+      const promiseResultCache = new WeakMap<Promise<Value>, Awaited<Value>>()
       const refreshAtom = atom(0)
-      const derivedAtom = atom(
+      const promiseAndValueAtom: WritableAtom<PromiseAndValue, [], void> & {
+        init?: undefined
+      } = atom(
         (get, { setSelf }) => {
           get(refreshAtom)
-          const ref = get(refAtom)
+          const prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
           const promise = get(anAtom)
-          if (ref.p === promise) {
-            if ('e' in ref) {
-              throw ref.e
+          if (promise === prev?.p) {
+            if (promiseErrorCache.has(promise)) {
+              throw promiseErrorCache.get(promise)
             }
-            if ('v' in ref) {
-              return ref.v
+            if (promiseResultCache.has(promise)) {
+              return {
+                p: promise,
+                v: promiseResultCache.get(promise) as Awaited<Value>,
+              }
             }
           }
-          if (ref.p !== promise) {
+          if (promise !== prev?.p) {
             promise
               .then(
-                (v) => (ref.v = v as Awaited<Value>),
-                (e) => (ref.e = e)
+                (v) => promiseResultCache.set(promise, v as Awaited<Value>),
+                (e) => promiseErrorCache.set(promise, e)
               )
               .finally(setSelf)
-            ref.p = promise
           }
-          if ('v' in ref) {
-            return fallback(ref.v)
+          if (prev && 'v' in prev) {
+            return { p: promise, f: fallback(prev.v) }
           }
-          return fallback()
+          return { p: promise, f: fallback() }
         },
         (_get, set) => {
           set(refreshAtom, (c) => c + 1)
         }
       )
-      return atom((get) => get(derivedAtom))
+      // HACK to read PromiseAndValue atom before initialization
+      promiseAndValueAtom.init = undefined
+      return atom((get) => {
+        const state = get(promiseAndValueAtom)
+        if ('v' in state) {
+          return state.v
+        }
+        return state.f
+      })
     },
     anAtom,
     fallback
