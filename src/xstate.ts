@@ -2,6 +2,9 @@ export { RESTART } from 'jotai-xstate'
 
 import * as JotaiXstate from 'jotai-xstate'
 
+/**
+ * @deprecated use `jotai-xstate` instead
+ */
 export const atomWithMachine: typeof JotaiXstate.atomWithMachine = (
   ...args: any[]
 ) => {
