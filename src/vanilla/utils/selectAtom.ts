@@ -1,7 +1,4 @@
-import {
-  unstable_NoAtomInitError as NoAtomInitError,
-  atom,
-} from 'jotai/vanilla'
+import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
 
 const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
@@ -48,22 +45,18 @@ export function selectAtom<Value, Slice>(
         }
         return slice
       }
-      const derivedAtom: Atom<Slice | Promise<Slice>> = atom((get) => {
-        let prev: Slice | Promise<Slice> | typeof EMPTY = EMPTY
-        try {
-          prev = get(derivedAtom)
-        } catch (e) {
-          // we ignore NoAtomInitError intentionally
-          if (e !== NoAtomInitError) {
-            throw e
-          }
-        }
+      const derivedAtom: Atom<Slice | Promise<Slice> | typeof EMPTY> & {
+        init?: typeof EMPTY
+      } = atom((get) => {
+        const prev = get(derivedAtom)
         const value = get(anAtom)
         if (value instanceof Promise || prev instanceof Promise) {
           return Promise.all([value, prev] as const).then(selectValue)
         }
         return selectValue([value as Awaited<Value>, prev] as const)
       })
+      // HACK to read derived atom before initialization
+      derivedAtom.init = EMPTY
       return derivedAtom
     },
     anAtom,
