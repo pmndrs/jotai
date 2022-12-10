@@ -1,4 +1,7 @@
-import { atom } from 'jotai/vanilla'
+import {
+  unstable_NoAtomInitError as NoAtomInitError,
+  atom,
+} from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
 
 const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
@@ -34,22 +37,32 @@ export function selectAtom<Value, Slice>(
 ) {
   return memo3(
     () => {
-      // TODO we should revisit this for a better solution than refAtom
-      const refAtom = atom(() => ({} as { prev?: Slice }))
-      const derivedAtom = atom((get) => {
-        const ref = get(refAtom)
-        const selectValue = (value: Awaited<Value>) => {
-          const slice = selector(value)
-          if ('prev' in ref && equalityFn(ref.prev as Slice, slice)) {
-            return ref.prev as Slice
+      const EMPTY = Symbol()
+      const selectValue = ([value, prevSlice]: readonly [
+        Awaited<Value>,
+        Slice | typeof EMPTY
+      ]) => {
+        const slice = selector(value)
+        if (prevSlice !== EMPTY && equalityFn(prevSlice, slice)) {
+          return prevSlice
+        }
+        return slice
+      }
+      const derivedAtom: Atom<Slice | Promise<Slice>> = atom((get) => {
+        let prev: Slice | Promise<Slice> | typeof EMPTY = EMPTY
+        try {
+          prev = get(derivedAtom)
+        } catch (e) {
+          // we ignore NoAtomInitError intentionally
+          if (e !== NoAtomInitError) {
+            throw e
           }
-          return (ref.prev = slice)
         }
         const value = get(anAtom)
-        if (value instanceof Promise) {
-          return value.then(selectValue)
+        if (value instanceof Promise || prev instanceof Promise) {
+          return Promise.all([value, prev] as const).then(selectValue)
         }
-        return selectValue(value as Awaited<Value>)
+        return selectValue([value as Awaited<Value>, prev] as const)
       })
       return derivedAtom
     },

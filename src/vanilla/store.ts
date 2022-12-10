@@ -8,6 +8,8 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
+export const NoAtomInitError = new Error('no atom init')
+
 const hasInitialValue = <T extends Atom<AnyValue>>(
   atom: T
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
@@ -265,7 +267,7 @@ export const createStore = () => {
           return a.init
         }
         // NOTE invalid derived atoms can reach here
-        throw new Error('no atom init')
+        throw NoAtomInitError
       }
       // a !== atom
       const aState = readAtomState(a)
