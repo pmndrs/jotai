@@ -221,34 +221,29 @@ export const createStore = () => {
     return nextAtomState
   }
 
-  const readAtomState = <Value>(
-    atom: Atom<Value>,
-    force?: boolean
-  ): AtomState<Value> => {
-    if (!force) {
-      // See if we can skip recomputing this atom.
-      const atomState = getAtomState(atom)
-      if (atomState) {
-        // Ensure that each atom we depend on is up to date.
-        // Recursive calls to `readAtomState(a)` will recompute `a` if
-        // it's out of date thus increment its revision number if it changes.
-        atomState.d.forEach((_, a) => {
-          if (a !== atom && !mountedMap.has(a)) {
-            // Dependency is new or unmounted.
-            // Recomputing doesn't touch unmounted atoms, so we need to recurse
-            // into this dependency in case it needs to update.
-            readAtomState(a)
-          }
-        })
-        // If a dependency changed since this atom was last computed,
-        // then we're out of date and need to recompute.
-        if (
-          Array.from(atomState.d).every(
-            ([a, s]) => a === atom || getAtomState(a) === s
-          )
-        ) {
-          return atomState
+  const readAtomState = <Value>(atom: Atom<Value>): AtomState<Value> => {
+    // See if we can skip recomputing this atom.
+    const atomState = getAtomState(atom)
+    if (atomState) {
+      // Ensure that each atom we depend on is up to date.
+      // Recursive calls to `readAtomState(a)` will recompute `a` if
+      // it's out of date thus increment its revision number if it changes.
+      atomState.d.forEach((_, a) => {
+        if (a !== atom && !mountedMap.has(a)) {
+          // Dependency is new or unmounted.
+          // Recomputing doesn't touch unmounted atoms, so we need to recurse
+          // into this dependency in case it needs to update.
+          readAtomState(a)
         }
+      })
+      // If a dependency changed since this atom was last computed,
+      // then we're out of date and need to recompute.
+      if (
+        Array.from(atomState.d).every(
+          ([a, s]) => a === atom || getAtomState(a) === s
+        )
+      ) {
+        return atomState
       }
     }
     // Compute a new state for this atom.
