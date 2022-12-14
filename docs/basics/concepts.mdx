@@ -22,7 +22,7 @@ I will have 2 atoms simply derivating from a common, dumber source.
 ```js
 const dumbAtom = atom([{ name: 'Friend 1', online: false }])
 const onlineAtom = atom((get) => get(dumbAtom).filter((item) => item.online))
-const offlineAtom = atom((get) => get(dumbAtom).filter((item) => item.online))
+const offlineAtom = atom((get) => get(dumbAtom).filter((item) => !item.online))
 ```
 
 And you could keep going on complexity forever.
