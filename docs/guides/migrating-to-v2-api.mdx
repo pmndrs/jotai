@@ -220,3 +220,4 @@ const allAtom = atom((get) => Promise.all([get(fooAtom), get(barAtom)]))
 ## Some other changes
 
 - `atomWithStorage` util's `delayInit` is removed as being default.
+- `useHydrateAtoms` can only accept writable atoms.
