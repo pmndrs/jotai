@@ -13,6 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         typescript:
+          - 4.9.4
           - 4.8.4
           - 4.7.4
           - 4.6.4
@@ -49,7 +50,7 @@ jobs:
           sed -i~ "s/\"noUncheckedIndexedAccess\": true,//" tsconfig.json
           sed -i~ "s/^import type /import /" tests/*/*.tsx tests/*/*/*.tsx
           sed -i~ "s/^.* from '\.\/utils\/waitForAll';//" dist/ts3.4/utils.d.ts
-          yarn json -I -f package.json -e "this.resolutions['@types/jest']='26.0.14'; this.resolutions['pretty-format']='25.5.0'; this.resolutions['@types/prettier']='2.4.2';"
+          yarn json -I -f package.json -e "this.resolutions={}; this.resolutions['@types/jest']='26.0.14'; this.resolutions['pretty-format']='25.5.0'; this.resolutions['@types/prettier']='2.4.2';"
           yarn add -D @types/jest@26.0.14 pretty-format@25.5.0 @types/prettier@2.4.2 @types/yargs@17.0.13 @types/babel__traverse@7.18.2
           rm -r tests/utils/atomWithObservable.* tests/utils/waitForAll.* tests/vanilla/utils/atomWithObservable.*
       - name: Ignore Async API tests for Older TS
