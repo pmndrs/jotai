@@ -38,6 +38,9 @@ export interface AtomWithQueryOptionsWithEnabled<
   enabled: boolean
 }
 
+/**
+ * @deprecated use `jotai-tanstack-query` instead
+ */
 export function atomWithQuery<
   TQueryFnData,
   TError,
@@ -57,6 +60,9 @@ export function atomWithQuery<
   getQueryClient?: GetQueryClient
 ): WritableAtom<TData | undefined, AtomWithQueryAction>
 
+/**
+ * @deprecated use `jotai-tanstack-query` instead
+ */
 export function atomWithQuery<
   TQueryFnData,
   TError,
@@ -82,6 +88,7 @@ export function atomWithQuery<
   >,
   getQueryClient: GetQueryClient = (get) => get(queryClientAtom)
 ): WritableAtom<TData | undefined, AtomWithQueryAction, void | Promise<void>> {
+  console.warn('[DEPRECATED] use `jotai-tanstack-query` instead.')
   const getOptions = (get: Getter) => ({
     staleTime: 200,
     ...(typeof createQuery === 'function' ? createQuery(get) : createQuery),

@@ -1,6 +1,4 @@
 export { RESET } from './utils/constants'
-export { useSetAtom as useUpdateAtom } from 'jotai'
-export { useAtomValue } from 'jotai'
 export { atomWithReset } from './utils/atomWithReset'
 export { useResetAtom } from './utils/useResetAtom'
 export { useReducerAtom } from './utils/useReducerAtom'
@@ -22,3 +20,21 @@ export { atomWithObservable } from './utils/atomWithObservable'
 export { useHydrateAtoms } from './utils/useHydrateAtoms'
 export { loadable } from './utils/loadable'
 export { abortableAtom } from './utils/abortableAtom'
+
+import * as Jotai from 'jotai'
+
+/**
+ * @deprecated use `useAtomValue` from `jotai` instead
+ */
+export const useAtomValue: typeof Jotai.useAtomValue = (...args: any[]) => {
+  console.warn('[DEPRECATED]: use `useAtomValue` from `jotai` instead.')
+  return (Jotai.useAtomValue as any)(...args)
+}
+
+/**
+ * @deprecated use `useSetAtom` from `jotai` instead
+ */
+export const useUpdateAtom: typeof Jotai.useSetAtom = (...args: any[]) => {
+  console.warn('[DEPRECATED]: use `useSetAtom` from `jotai` instead.')
+  return (Jotai.useSetAtom as any)(...args)
+}

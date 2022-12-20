@@ -16,10 +16,14 @@ type MutationAction<Data, Variables extends AnyVariables> = {
   callback?: (result: OperationResult<Data, Variables>) => void
 }
 
+/**
+ * @deprecated use `jotai-urql` instead
+ */
 export function atomWithMutation<Data, Variables extends AnyVariables>(
   createQuery: (get: Getter) => TypedDocumentNode<Data, Variables> | string,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
+  console.warn('[DEPRECATED] use `jotai-urql` instead.')
   const [, statusAtom] = atomsWithMutation<Data, Variables>(getClient)
   return atom(
     (get) => {

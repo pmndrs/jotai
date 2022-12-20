@@ -32,6 +32,9 @@ type SubscriptionArgsWithPause<
   pause: boolean
 }
 
+/**
+ * @deprecated use `jotai-urql` instead
+ */
 export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
   getClient?: (get: Getter) => Client
@@ -40,6 +43,9 @@ export function atomWithSubscription<Data, Variables extends AnyVariables>(
   AtomWithSubscriptionAction
 >
 
+/**
+ * @deprecated use `jotai-urql` instead
+ */
 export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (
     get: Getter
@@ -54,6 +60,7 @@ export function atomWithSubscription<Data, Variables extends AnyVariables>(
   createSubscriptionArgs: (get: Getter) => SubscriptionArgs<Data, Variables>,
   getClient: (get: Getter) => Client = (get) => get(clientAtom)
 ) {
+  console.warn('[DEPRECATED] use `jotai-urql` instead.')
   const getArgs = (get: Getter) => {
     const subscriptionArgs = createSubscriptionArgs(get)
     return [
