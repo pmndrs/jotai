@@ -550,24 +550,11 @@ export const createStore = () => {
     }
   }
 
-  const restoreAtoms = (
-    values: Iterable<readonly [AnyAtom, AnyValue]>
-  ): void => {
-    for (const [atom, value] of values) {
-      if (hasInitialValue(atom)) {
-        setAtomValue(atom, value)
-        recomputeDependents(atom)
-      }
-    }
-    flushPending()
-  }
-
   if (__DEV__) {
     return {
       get: readAtom,
       set: writeAtom,
       sub: subscribeAtom,
-      res: restoreAtoms,
       // store dev methods (these are tentative and subject to change)
       dev_subscribe_state: (l: StateListener) => {
         stateListeners.add(l)
@@ -578,13 +565,21 @@ export const createStore = () => {
       dev_get_mounted_atoms: () => mountedAtoms.values(),
       dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
       dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
+      dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => {
+        for (const [atom, value] of values) {
+          if (hasInitialValue(atom)) {
+            setAtomValue(atom, value)
+            recomputeDependents(atom)
+          }
+        }
+        flushPending()
+      },
     }
   }
   return {
     get: readAtom,
     set: writeAtom,
     sub: subscribeAtom,
-    res: restoreAtoms,
   }
 }
 

@@ -1,28 +1,24 @@
 import { useStore } from 'jotai/react'
-import type { Atom } from 'jotai/vanilla'
+import type { WritableAtom } from 'jotai/vanilla'
 
 type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0]
+type AnyWritableAtom = WritableAtom<unknown, any[], any>
 
-const hydratedMap: WeakMap<Store, WeakSet<Atom<unknown>>> = new WeakMap()
+const hydratedMap: WeakMap<Store, WeakSet<AnyWritableAtom>> = new WeakMap()
 
 export function useHydrateAtoms(
-  values: Iterable<readonly [Atom<unknown>, unknown]>,
+  values: Iterable<readonly [AnyWritableAtom, unknown]>,
   options?: Options
 ) {
   const store = useStore(options)
 
   const hydratedSet = getHydratedSet(store)
-  const tuplesToRestore: (readonly [Atom<unknown>, unknown])[] = []
-  for (const tuple of values) {
-    const atom = tuple[0]
+  for (const [atom, value] of values) {
     if (!hydratedSet.has(atom)) {
       hydratedSet.add(atom)
-      tuplesToRestore.push(tuple)
+      store.set(atom, value)
     }
-  }
-  if (tuplesToRestore.length) {
-    store.res(tuplesToRestore)
   }
 }
 
