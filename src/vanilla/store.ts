@@ -555,9 +555,9 @@ export const createStore = () => {
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
     const mounted = addAtom(atom)
+    flushPending()
     const listeners = mounted.l
     listeners.add(listener)
-    flushPending()
     return () => {
       listeners.delete(listener)
       delAtom(atom)
