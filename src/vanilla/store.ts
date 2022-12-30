@@ -528,7 +528,21 @@ export const createStore = () => {
             mountDependencies(atom, atomState, prevAtomState?.d)
           }
           const mounted = mountedMap.get(atom)
-          mounted?.l.forEach((listener) => listener())
+          if (
+            mounted &&
+            !(
+              // TODO This seems pretty hacky. Hope to fix it.
+              // Maybe we could `mountDependencies` in `setAtomState`?
+              (
+                prevAtomState &&
+                !hasPromiseAtomValue(prevAtomState) &&
+                (isEqualAtomValue(prevAtomState, atomState) ||
+                  isEqualAtomError(prevAtomState, atomState))
+              )
+            )
+          ) {
+            mounted.l.forEach((listener) => listener())
+          }
         } else if (__DEV__) {
           console.warn('[Bug] no atom state to flush')
         }
