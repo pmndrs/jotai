@@ -19,7 +19,7 @@ assignees: ''
 
 Please do not ask questions in issues.
 
-- [ ] I understand this is not a question.
+- [ ] I've already opened a [discussion](https://github.com/pmndrs/jotai/discussions) before opening this issue.
 
 Please include a minimal reproduction.
 
