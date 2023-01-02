@@ -16,19 +16,16 @@ yarn add jotai-trpc @trpc/client @trpc/server
 
 ## Usage
 
-```js
+```ts
 import { createTRPCJotai } from 'jotai-trpc'
 
-const trpc =
-  createTRPCJotai <
-  MyRouter >
-  {
-    links: [
-      httpLink({
-        url: myUrl,
-      }),
-    ],
-  }
+const trpc = createTRPCJotai<MyRouter>({
+  links: [
+    httpLink({
+      url: myUrl,
+    }),
+  ],
+})
 
 const idAtom = atom('foo')
 const queryAtom = trpc.bar.baz.atomWithQuery((get) => get(idAtom))
@@ -38,23 +35,20 @@ const queryAtom = trpc.bar.baz.atomWithQuery((get) => get(idAtom))
 
 `...atomWithQuery` creates a new atom with "query". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...query` procedure.
 
-```jsx
+```tsx
 import { atom, useAtom } from 'jotai'
 import { httpLink } from '@trpc/client'
 import { createTRPCJotai } from 'jotai-trpc'
 import { trpcPokemonUrl } from 'trpc-pokemon'
 import type { PokemonRouter } from 'trpc-pokemon'
 
-const trpc =
-  createTRPCJotai <
-  PokemonRouter >
-  {
-    links: [
-      httpLink({
-        url: trpcPokemonUrl,
-      }),
-    ],
-  }
+const trpc = createTRPCJotai<PokemonRouter>({
+  links: [
+    httpLink({
+      url: trpcPokemonUrl,
+    }),
+  ],
+})
 
 const NAMES = [
   'bulbasaur',
