@@ -27,3 +27,23 @@ it('can propagate updates with async atom chains', async () => {
   resolve()
   await expect(store.get(async3Atom)).resolves.toBe(3)
 })
+
+it('can get async atom with deps more than once before resolving (#1668)', async () => {
+  const countAtom = atom(0)
+
+  const resolve: (() => void)[] = []
+  const asyncAtom = atom(async (get) => {
+    const count = get(countAtom)
+    await new Promise<void>((r) => resolve.push(r))
+    return count
+  })
+
+  const store = createStore()
+
+  store.set(countAtom, (c) => c + 1)
+  store.get(asyncAtom)
+  store.set(countAtom, (c) => c + 1)
+  resolve.forEach((fn) => fn())
+  const count = await store.get(asyncAtom)
+  expect(count).toBe(2)
+})
