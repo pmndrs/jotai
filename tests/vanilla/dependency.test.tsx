@@ -44,6 +44,8 @@ it('can get async atom with deps more than once before resolving (#1668)', async
   store.get(asyncAtom)
   store.set(countAtom, (c) => c + 1)
   resolve.forEach((fn) => fn())
-  const count = await store.get(asyncAtom)
+  const promise = store.get(asyncAtom)
+  resolve.forEach((fn) => fn())
+  const count = await promise
   expect(count).toBe(2)
 })
