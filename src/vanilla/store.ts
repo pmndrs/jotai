@@ -339,6 +339,7 @@ export const createStore = () => {
             resolve(next)
           }
         })
+        promise.status = 'pending'
         registerCancelPromise(promise, (next) => {
           if (next) {
             continuePromise(next as Promise<Awaited<Value>>)
