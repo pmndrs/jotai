@@ -35,6 +35,25 @@ const cancelPromise = (promise: Promise<unknown>, next?: Promise<unknown>) => {
   }
 }
 
+type PromiseMeta<T> = {
+  status?: 'pending' | 'fulfilled' | 'rejected'
+  value?: T
+  reason?: AnyError
+}
+
+const resolvePromise = <T>(promise: Promise<T> & PromiseMeta<T>, value: T) => {
+  promise.status = 'fulfilled'
+  promise.value = value
+}
+
+const rejectPromise = <T>(
+  promise: Promise<T> & PromiseMeta<T>,
+  e: AnyError
+) => {
+  promise.status = 'rejected'
+  promise.reason = e
+}
+
 /**
  * Immutable map from a dependency to the dependency's atom state
  * when it was last read.
@@ -296,52 +315,41 @@ export const createStore = () => {
       const value = atom.read(getter, options as any)
       if (value instanceof Promise) {
         let continuePromise: (next: Promise<Awaited<Value>>) => void
-        const promise: Promise<Awaited<Value>> & {
-          status?: 'pending' | 'fulfilled' | 'rejected'
-          value?: Awaited<Value>
-          reason?: AnyError
-        } = new Promise((resolve, reject) => {
-          let settled = false
-          value
-            .then(
-              (v) => {
-                if (!settled) {
-                  promise.status = 'fulfilled'
-                  promise.value = v
-                  resolve(v)
-                }
-              },
-              (e) => {
-                if (!settled) {
-                  promise.status = 'rejected'
-                  promise.reason = e
-                  reject(e)
-                }
-              }
-            )
-            .finally(() => {
-              if (!settled) {
-                settled = true
-                setAtomValue(atom, promise as Value, depSet)
-              }
-            })
-          continuePromise = (next) => {
-            if (!settled) {
-              settled = true
-              next.then(
+        const promise: Promise<Awaited<Value>> & PromiseMeta<Awaited<Value>> =
+          new Promise((resolve, reject) => {
+            let settled = false
+            value
+              .then(
                 (v) => {
-                  promise.status = 'fulfilled'
-                  promise.value = v
+                  if (!settled) {
+                    resolvePromise(promise, v)
+                    resolve(v)
+                  }
                 },
                 (e) => {
-                  promise.status = 'rejected'
-                  promise.reason = e
+                  if (!settled) {
+                    rejectPromise(promise, e)
+                    reject(e)
+                  }
                 }
               )
-              resolve(next)
+              .finally(() => {
+                if (!settled) {
+                  settled = true
+                  setAtomValue(atom, promise as Value, depSet)
+                }
+              })
+            continuePromise = (next) => {
+              if (!settled) {
+                settled = true
+                next.then(
+                  (v) => resolvePromise(promise, v),
+                  (e) => rejectPromise(promise, e)
+                )
+                resolve(next)
+              }
             }
-          }
-        })
+          })
         promise.status = 'pending'
         registerCancelPromise(promise, (next) => {
           if (next) {
