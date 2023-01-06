@@ -301,18 +301,18 @@ export const createStore = () => {
           value?: Awaited<Value>
           reason?: AnyError
         } = new Promise((resolve, reject) => {
-          let cancelled = false
+          let settled = false
           value
             .then(
               (v) => {
-                if (!cancelled) {
+                if (!settled) {
                   promise.status = 'fulfilled'
                   promise.value = v
                   resolve(v)
                 }
               },
               (e) => {
-                if (!cancelled) {
+                if (!settled) {
                   promise.status = 'rejected'
                   promise.reason = e
                   reject(e)
@@ -320,23 +320,26 @@ export const createStore = () => {
               }
             )
             .finally(() => {
-              if (!cancelled) {
+              if (!settled) {
+                settled = true
                 setAtomValue(atom, promise as Value, depSet)
               }
             })
           continuePromise = (next) => {
-            cancelled = true
-            next.then(
-              (v) => {
-                promise.status = 'fulfilled'
-                promise.value = v
-              },
-              (e) => {
-                promise.status = 'rejected'
-                promise.reason = e
-              }
-            )
-            resolve(next)
+            if (!settled) {
+              settled = true
+              next.then(
+                (v) => {
+                  promise.status = 'fulfilled'
+                  promise.value = v
+                },
+                (e) => {
+                  promise.status = 'rejected'
+                  promise.reason = e
+                }
+              )
+              resolve(next)
+            }
           }
         })
         promise.status = 'pending'
