@@ -296,30 +296,25 @@ export const createStore = () => {
       const value = atom.read(getter, options as any)
       if (value instanceof Promise) {
         let continuePromise: (next: Promise<Awaited<Value>>) => void
-        const promise: Promise<Awaited<Value>> & {
-          status?: 'pending' | 'fulfilled' | 'rejected'
-          value?: Awaited<Value>
-          reason?: AnyError
-        } = new Promise((resolve, reject) => {
-          value
-            .then(
-              (v) => {
-                promise.status = 'fulfilled'
-                promise.value = v
-                resolve(v)
-              },
-              (e) => {
-                promise.status = 'rejected'
-                promise.reason = e
-                reject(e)
-              }
-            )
-            .finally(() => {
-              setAtomValue(atom, promise as Value, depSet)
-            })
-          continuePromise = (next) => resolve(next)
-        })
-        promise.status = 'pending'
+        const promise: Promise<Awaited<Value>> = new Promise(
+          (resolve, reject) => {
+            let cancelled = false
+            value
+              .then(
+                (v) => resolve(v),
+                (e) => reject(e)
+              )
+              .finally(() => {
+                if (!cancelled) {
+                  setAtomValue(atom, promise as Value, depSet)
+                }
+              })
+            continuePromise = (next) => {
+              cancelled = true
+              resolve(next)
+            }
+          }
+        )
         registerCancelPromise(promise, (next) => {
           if (next) {
             continuePromise(next as Promise<Awaited<Value>>)
