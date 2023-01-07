@@ -19,16 +19,8 @@ jobs:
       - run: yarn install --frozen-lockfile --check-files
       - name: Test Build # we don't have any other workflows to test build
         run: yarn build
-      - name: Test Default with Provider
+      - name: Test Default
         run: yarn test:ci
-      - name: Test Default without Provider
-        run: yarn test:ci
-        env:
-          PROVIDER_MODE: 'PROVIDER_LESS'
-      - name: Test Default with Versioned Write
-        run: yarn test:ci
-        env:
-          PROVIDER_MODE: 'VERSIONED_WRITE'
 
   test_matrix:
     runs-on: ubuntu-latest
@@ -36,7 +28,6 @@ jobs:
       fail-fast: false
       matrix:
         react:
-          - 16.8.6
           - 16.9.0
           - 17.0.0
           - 18.0.0
@@ -44,11 +35,6 @@ jobs:
           - 18.2.0
           - 18.3.0-next-65e32e58b-20221019
           - 0.0.0-experimental-65e32e58b-20221019
-        mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
-        exclude:
-          - { react: 16.8.6, mode: VERSIONED_WRITE }
-          - { react: 16.9.0, mode: VERSIONED_WRITE }
-          - { react: 17.0.0, mode: VERSIONED_WRITE }
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -66,13 +52,7 @@ jobs:
           sed -i~ '1s/^/import React from "react";/' tests/*/*.tsx src/*/*.tsx
           sed -i~ 's/automatic/classic/' babel.config.js
           sed -i~ 's/automatic/classic/' .swcrc
-      - name: Ignore Async API tests for Older React
-        if: ${{ matrix.react == '16.8.6' }} || ${{ matrix.mode != 'NORMAL' }}
-        run: |
-          rm -r tests/vanilla tests/react
-      - name: Test ${{ matrix.react }} ${{ matrix.mode }}
+      - name: Test ${{ matrix.react }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
           yarn test:ci
-        env:
-          PROVIDER_MODE: ${{ matrix.mode }}
