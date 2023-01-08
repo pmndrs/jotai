@@ -121,7 +121,8 @@
     },
     "moduleNameMapper": {
       "^jotai$": "<rootDir>/src/index.ts",
-      "^jotai/(.*)$": "<rootDir>/src/$1.ts"
+      "^jotai/(.*)$": "<rootDir>/src/$1.ts",
+      "^jotai-devtools$": "<rootDir>/node_modules/jotai-devtools/dist/index.umd.js"
     },
     "modulePathIgnorePatterns": [
       "dist"
@@ -178,6 +179,7 @@
     "immer": "^9.0.16",
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
+    "jotai-devtools": "https://pkg.csb.dev/jotai-labs/jotai-devtools/commit/2dc4fa61/jotai-devtools",
     "jotai-immer": "^0.1.0",
     "jotai-optics": "^0.2.0",
     "jotai-redux": "^0.1.0",
@@ -210,6 +212,7 @@
   "peerDependencies": {
     "@babel/core": "*",
     "@babel/template": "*",
+    "jotai-devtools": "*",
     "jotai-immer": "*",
     "jotai-optics": "*",
     "jotai-redux": "*",
@@ -225,6 +228,9 @@
       "optional": true
     },
     "@babel/template": {
+      "optional": true
+    },
+    "jotai-devtools": {
       "optional": true
     },
     "jotai-immer": {

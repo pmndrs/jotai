@@ -3989,6 +3989,12 @@ jest@^29.3.1:
     import-local "^3.0.2"
     jest-cli "^29.3.1"
 
+"jotai-devtools@https://pkg.csb.dev/jotai-labs/jotai-devtools/commit/2dc4fa61/jotai-devtools":
+  version "0.0.1"
+  resolved "https://pkg.csb.dev/jotai-labs/jotai-devtools/commit/2dc4fa61/jotai-devtools#1f89a91b02134ec41899c188aac3ee807ea447fb"
+  dependencies:
+    "@redux-devtools/extension" "^3.2.3"
+
 jotai-immer@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/jotai-immer/-/jotai-immer-0.1.0.tgz#cfdec8909a5f6a985fdf026da8c182057dbf66d6"
