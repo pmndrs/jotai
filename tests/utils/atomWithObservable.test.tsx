@@ -23,7 +23,7 @@ const useRetryFromError = (scope?: symbol | string | number) => {
 }
 
 // Avoid using fake timers for now: https://github.com/pmndrs/jotai/issues/1498
-const FAKE_TIMEOUT = 50
+const FAKE_TIMEOUT = 200
 // beforeEach(() => {
 //   jest.useFakeTimers()
 // })

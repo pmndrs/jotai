@@ -8,7 +8,7 @@ import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
 // Avoid using fake timers for now: https://github.com/pmndrs/jotai/issues/1498
-const FAKE_TIMEOUT = 50
+const FAKE_TIMEOUT = 200
 // beforeEach(() => {
 //   jest.useFakeTimers()
 // })
