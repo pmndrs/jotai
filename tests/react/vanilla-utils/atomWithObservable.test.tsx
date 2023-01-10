@@ -7,13 +7,15 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
-beforeEach(() => {
-  jest.useFakeTimers()
-})
-afterEach(() => {
-  jest.runAllTimers()
-  jest.useRealTimers()
-})
+// Avoid using fake timers for now: https://github.com/pmndrs/jotai/issues/1498
+const FAKE_TIMEOUT = 200
+// beforeEach(() => {
+//   jest.useFakeTimers()
+// })
+// afterEach(() => {
+//   jest.runAllTimers()
+//   jest.useRealTimers()
+// })
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -124,7 +126,7 @@ it('writable count state without initial value', async () => {
 it('writable count state with delayed value', async () => {
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => {
-    const observable = of(1).pipe(delay(10 * 1000))
+    const observable = of(1).pipe(delay(10 * 1000 && FAKE_TIMEOUT / 2))
     observable.subscribe((n) => subject.next(n))
     return subject
   })
@@ -153,7 +155,7 @@ it('writable count state with delayed value', async () => {
   )
 
   await findByText('loading')
-  jest.runOnlyPendingTimers()
+  await new Promise((r) => setTimeout(r, FAKE_TIMEOUT)) // jest.runOnlyPendingTimers()
   await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
@@ -557,11 +559,11 @@ describe('error handling', () => {
       const base = get(baseAtom)
       if (base % 2 === 0) {
         const subject = new Subject<number>()
-        const observable = of(1).pipe(delay(10 * 1000))
+        const observable = of(1).pipe(delay(10 * 1000 && FAKE_TIMEOUT / 2))
         observable.subscribe(() => subject.error(new Error('Test Error')))
         return subject
       }
-      const observable = of(base).pipe(delay(10 * 1000))
+      const observable = of(base).pipe(delay(10 * 1000 && FAKE_TIMEOUT / 2))
       return observable
     })
 
@@ -597,22 +599,22 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    await new Promise((r) => setTimeout(r, FAKE_TIMEOUT)) // jest.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    await new Promise((r) => setTimeout(r, FAKE_TIMEOUT)) // jest.runOnlyPendingTimers()
     await findByText('count: 1')
 
     fireEvent.click(getByText('next'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    await new Promise((r) => setTimeout(r, FAKE_TIMEOUT)) // jest.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    await new Promise((r) => setTimeout(r, FAKE_TIMEOUT)) // jest.runOnlyPendingTimers()
     await findByText('count: 3')
   })
 
@@ -632,7 +634,7 @@ describe('error handling', () => {
           } else {
             subject.next({ data: count })
           }
-        }, 10 * 1000)
+        }, 10 * 1000 && FAKE_TIMEOUT / 2)
         return subject
       })
       return observableAtom
@@ -686,22 +688,22 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    await new Promise((r) => setTimeout(r, FAKE_TIMEOUT)) // jest.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    await new Promise((r) => setTimeout(r, FAKE_TIMEOUT)) // jest.runOnlyPendingTimers()
     await findByText('count: 1')
 
     fireEvent.click(getByText('refresh'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    await new Promise((r) => setTimeout(r, FAKE_TIMEOUT)) // jest.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    await new Promise((r) => setTimeout(r, FAKE_TIMEOUT)) // jest.runOnlyPendingTimers()
     await findByText('count: 3')
   })
 })

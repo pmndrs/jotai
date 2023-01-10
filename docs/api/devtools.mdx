@@ -1,8 +1,18 @@
 ---
 title: Devtools
-description: This doc describes `jotai/devtool` bundle.
+description: This doc describes Devtools for Jotai.
 nav: 2.03
 ---
+
+## Install
+
+You have to install `jotai-devtools` to use this feature.
+
+```
+npm install jotai-devtools
+# or
+yarn add jotai-devtools
+```
 
 ## useAtomsDebugValue
 
@@ -21,7 +31,7 @@ It will catch all atoms that are accessible from the place the hook is located.
 ### Example
 
 ```jsx
-import { useAtomsDebugValue } from 'jotai/devtools'
+import { useAtomsDebugValue } from 'jotai-devtools'
 
 const textAtom = atom('hello')
 textAtom.debugLabel = 'textAtom'
@@ -75,7 +85,7 @@ The `useAtomDevtools` hook accepts a generic type parameter (mirroring the type 
 ### Example
 
 ```ts
-import { useAtomDevtools } from 'jotai/devtools'
+import { useAtomDevtools } from 'jotai-devtools'
 
 // The interface for the type stored in the atom.
 export interface Task {
@@ -171,7 +181,7 @@ Be careful using this hook because it will cause the component to re-render for 
 
 ```jsx
 import { Provider } from 'jotai'
-import { useAtomsSnapshot } from 'jotai/devtools'
+import { useAtomsSnapshot } from 'jotai-devtools'
 
 const RegisteredAtoms = () => {
   const atoms = useAtomsSnapshot()
@@ -214,7 +224,7 @@ This hook is primarily meant for debugging and devtools use cases.
 
 ```jsx
 import { Provider } from 'jotai'
-import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai/devtools'
+import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai-devtools'
 
 const petAtom = atom('cat')
 const colorAtom = atom('blue')
