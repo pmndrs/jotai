@@ -3989,9 +3989,10 @@ jest@^29.3.1:
     import-local "^3.0.2"
     jest-cli "^29.3.1"
 
-"jotai-devtools@https://pkg.csb.dev/jotai-labs/jotai-devtools/commit/8694486e/jotai-devtools":
+jotai-devtools@^0.1.0:
   version "0.1.0"
-  resolved "https://pkg.csb.dev/jotai-labs/jotai-devtools/commit/8694486e/jotai-devtools#505a0e3fdaaf64662baf61cf29f8c17af4f493ed"
+  resolved "https://registry.yarnpkg.com/jotai-devtools/-/jotai-devtools-0.1.0.tgz#db7c1f26136ed15ed8906bb1bedd92204ec06efc"
+  integrity sha512-tHo22cXxl1mljcOJ2k17tOj25/0myvMdVAtAM6jiw3MsD5e9YoHAGNVFbTO3LrZhviDH4rcR/NknsNAI2XH28A==
   dependencies:
     "@redux-devtools/extension" "^3.2.3"
 
