@@ -41,7 +41,7 @@ export function useAtomsDevtools(
 ): void {
   const { enabled } = options || {}
 
-  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
+  let extension: (typeof window)['__REDUX_DEVTOOLS_EXTENSION__'] | false
 
   try {
     extension = (enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__
@@ -63,7 +63,7 @@ export function useAtomsDevtools(
   const isRecording = useRef(true)
   const devtools = useRef<
     ReturnType<
-      NonNullable<typeof window['__REDUX_DEVTOOLS_EXTENSION__']>['connect']
+      NonNullable<(typeof window)['__REDUX_DEVTOOLS_EXTENSION__']>['connect']
     > & {
       shouldInit?: boolean
     }
