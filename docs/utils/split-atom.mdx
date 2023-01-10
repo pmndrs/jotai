@@ -40,7 +40,7 @@ const initialState = [
 const todosAtom = atom(initialState)
 const todoAtomsAtom = splitAtom(todosAtom)
 
-type TodoType = typeof initialState[number]
+type TodoType = (typeof initialState)[number]
 
 const TodoItem = ({
   todoAtom,

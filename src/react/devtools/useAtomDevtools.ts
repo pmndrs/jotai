@@ -14,7 +14,7 @@ export function useAtomDevtools<Value, Result>(
 ): void {
   const { enabled, name } = options || {}
 
-  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
+  let extension: (typeof window)['__REDUX_DEVTOOLS_EXTENSION__'] | false
 
   try {
     extension = (enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__
@@ -34,7 +34,7 @@ export function useAtomDevtools<Value, Result>(
   const isTimeTraveling = useRef(false)
   const devtools = useRef<
     ReturnType<
-      NonNullable<typeof window['__REDUX_DEVTOOLS_EXTENSION__']>['connect']
+      NonNullable<(typeof window)['__REDUX_DEVTOOLS_EXTENSION__']>['connect']
     > & {
       shouldInit?: boolean
     }

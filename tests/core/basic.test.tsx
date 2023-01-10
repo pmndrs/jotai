@@ -988,7 +988,9 @@ it('sync re-renders with useState re-renders (#827)', async () => {
     const rotateAtoms = () => {
       setCurrentAtomIndex((prev) => (prev + 1) % atoms.length)
     }
-    const [atomValue] = useAtom(atoms[currentAtomIndex] as typeof atoms[number])
+    const [atomValue] = useAtom(
+      atoms[currentAtomIndex] as (typeof atoms)[number]
+    )
 
     return (
       <>
