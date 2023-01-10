@@ -23,7 +23,7 @@ const useRetryFromError = (scope?: symbol | string | number) => {
 }
 
 // Avoid using fake timers for now: https://github.com/pmndrs/jotai/issues/1498
-const FAKE_TIMEOUT = 50
+const FAKE_TIMEOUT = 200
 // beforeEach(() => {
 //   jest.useFakeTimers()
 // })
@@ -147,7 +147,7 @@ it('writable count state without initial value', async () => {
 it('writable count state with delayed value', async () => {
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => {
-    const observable = of(1).pipe(delay(10 * 1000 && FAKE_TIMEOUT))
+    const observable = of(1).pipe(delay(10 * 1000 && FAKE_TIMEOUT / 2))
     observable.subscribe((n) => subject.next(n))
     return subject
   })
@@ -606,11 +606,11 @@ describe('error handling', () => {
       const base = get(baseAtom)
       if (base % 2 === 0) {
         const subject = new Subject<number>()
-        const observable = of(1).pipe(delay(10 * 1000 && FAKE_TIMEOUT))
+        const observable = of(1).pipe(delay(10 * 1000 && FAKE_TIMEOUT / 2))
         observable.subscribe(() => subject.error(new Error('Test Error')))
         return subject
       }
-      const observable = of(base).pipe(delay(10 * 1000 && FAKE_TIMEOUT))
+      const observable = of(base).pipe(delay(10 * 1000 && FAKE_TIMEOUT / 2))
       return observable
     })
 
