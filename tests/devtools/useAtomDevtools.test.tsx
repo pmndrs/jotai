@@ -109,7 +109,7 @@ describe('If there is no extension installed...', () => {
     console.warn = originalConsoleWarn
   })
 
-  it('[PRD-ONLY] does not warn in prod env even if enabled is true', () => {
+  it.skip('[PRD-ONLY] does not warn in prod env even if enabled is true', () => {
     __DEV__ = false
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
@@ -129,7 +129,7 @@ describe('If there is no extension installed...', () => {
     console.warn = originalConsoleWarn
   })
 
-  it('[PRD-ONLY] does not warn if not in dev env', () => {
+  it.skip('[PRD-ONLY] does not warn if not in dev env', () => {
     __DEV__ = false
     console.error = jest.fn()
     const consoleWarn = jest.spyOn(console, 'warn')

@@ -178,6 +178,7 @@
     "immer": "^9.0.16",
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
+    "jotai-devtools": "^0.1.0",
     "jotai-immer": "^0.1.0",
     "jotai-optics": "^0.2.0",
     "jotai-redux": "^0.1.0",
@@ -210,6 +211,7 @@
   "peerDependencies": {
     "@babel/core": "*",
     "@babel/template": "*",
+    "jotai-devtools": "*",
     "jotai-immer": "*",
     "jotai-optics": "*",
     "jotai-redux": "*",
@@ -225,6 +227,9 @@
       "optional": true
     },
     "@babel/template": {
+      "optional": true
+    },
+    "jotai-devtools": {
       "optional": true
     },
     "jotai-immer": {
