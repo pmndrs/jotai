@@ -46,7 +46,6 @@
     "build-watch": "concurrently -n watch: 'yarn:build:* --watch'",
     "build:base": "rollup -c",
     "build:utils": "rollup -c --config-utils",
-    "build:devtools": "rollup -c --config-devtools",
     "build:babel:plugin-debug-label": "rollup -c --config-babel_plugin-debug-label",
     "build:babel:plugin-react-refresh": "rollup -c --config-babel_plugin-react-refresh",
     "build:babel:preset": "rollup -c --config-babel_preset",
