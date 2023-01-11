@@ -53,7 +53,10 @@ function Counter() {
   return (
     <h1>
       {count}
-      <button onClick={() => setCount(c => c + 1)}>one up</button>
+      <button onClick={() => setCount((c) => c + 1)}>one up</button>
+    </h1>
+  )
+}
 ```
 
 ### Create derived atoms with computed values
@@ -68,6 +71,7 @@ const doubledCountAtom = atom((get) => get(countAtom) * 2)
 function DoubleCounter() {
   const [doubledCount] = useAtom(doubledCountAtom)
   return <h2>{doubledCount}</h2>
+}
 ```
 
 ## Recipes
@@ -96,17 +100,16 @@ const sum = atom((get) => atoms.map(get).reduce((acc, count) => acc + count))
 You can make the read function an async function too.
 
 ```jsx
-const urlAtom = atom("https://json.host.com")
-const fetchUrlAtom = atom(
-  async (get) => {
-    const response = await fetch(get(urlAtom))
-    return await response.json()
-  }
-)
+const urlAtom = atom('https://json.host.com')
+const fetchUrlAtom = atom(async (get) => {
+  const response = await fetch(get(urlAtom))
+  return await response.json()
+})
 
 function Status() {
   // Re-renders the component after urlAtom changed and the async function above concludes
   const [json] = useAtom(fetchUrlAtom)
+}
 ```
 
 ### You can create a writable derived atom
@@ -117,7 +120,7 @@ value of an atom. `set` will update an atoms value.
 ```jsx
 const decrementCountAtom = atom(
   (get) => get(countAtom),
-  (get, set, _arg) => set(countAtom, get(countAtom) - 1),
+  (get, set, _arg) => set(countAtom, get(countAtom) - 1)
 )
 
 function Counter() {
@@ -126,6 +129,9 @@ function Counter() {
     <h1>
       {count}
       <button onClick={decrement}>Decrease</button>
+    </h1>
+  )
+}
 ```
 
 ### Write only atoms
@@ -133,11 +139,14 @@ function Counter() {
 Just do not define a read function.
 
 ```jsx
-const multiplyCountAtom = atom(null, (get, set, by) => set(countAtom, get(countAtom) * by))
+const multiplyCountAtom = atom(null, (get, set, by) =>
+  set(countAtom, get(countAtom) * by)
+)
 
 function Controls() {
   const [, multiply] = useAtom(multiplyCountAtom)
   return <button onClick={() => multiply(3)}>triple</button>
+}
 ```
 
 ### Async actions
@@ -155,7 +164,10 @@ const fetchCountAtom = atom(
 
 function Controls() {
   const [count, compute] = useAtom(fetchCountAtom)
-  return <button onClick={() => compute("http://count.host.com")}>compute</button>
+  return (
+    <button onClick={() => compute('http://count.host.com')}>compute</button>
+  )
+}
 ```
 
 ## Installation notes
