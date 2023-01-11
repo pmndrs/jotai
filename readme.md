@@ -53,7 +53,7 @@ function Counter() {
   return (
     <h1>
       {count}
-      <button onClick={() => setCount(c => c + 1)}>one up</button>
+      <button onClick={() => setCount((c) => c + 1)}>one up</button>
     </h1>
   )
 }
@@ -100,13 +100,11 @@ const sum = atom((get) => atoms.map(get).reduce((acc, count) => acc + count))
 You can make the read function an async function too.
 
 ```jsx
-const urlAtom = atom("https://json.host.com")
-const fetchUrlAtom = atom(
-  async (get) => {
-    const response = await fetch(get(urlAtom))
-    return await response.json()
-  }
-)
+const urlAtom = atom('https://json.host.com')
+const fetchUrlAtom = atom(async (get) => {
+  const response = await fetch(get(urlAtom))
+  return await response.json()
+})
 
 function Status() {
   // Re-renders the component after urlAtom changed and the async function above concludes
@@ -122,7 +120,7 @@ value of an atom. `set` will update an atoms value.
 ```jsx
 const decrementCountAtom = atom(
   (get) => get(countAtom),
-  (get, set, _arg) => set(countAtom, get(countAtom) - 1),
+  (get, set, _arg) => set(countAtom, get(countAtom) - 1)
 )
 
 function Counter() {
@@ -141,7 +139,9 @@ function Counter() {
 Just do not define a read function.
 
 ```jsx
-const multiplyCountAtom = atom(null, (get, set, by) => set(countAtom, get(countAtom) * by))
+const multiplyCountAtom = atom(null, (get, set, by) =>
+  set(countAtom, get(countAtom) * by)
+)
 
 function Controls() {
   const [, multiply] = useAtom(multiplyCountAtom)
@@ -164,7 +164,9 @@ const fetchCountAtom = atom(
 
 function Controls() {
   const [count, compute] = useAtom(fetchCountAtom)
-  return <button onClick={() => compute("http://count.host.com")}>compute</button>
+  return (
+    <button onClick={() => compute('http://count.host.com')}>compute</button>
+  )
 }
 ```
 
