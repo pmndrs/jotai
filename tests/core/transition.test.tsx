@@ -1,3 +1,5 @@
+/// <reference types="react/experimental" />
+
 import { StrictMode, Suspense, use, useEffect, useTransition } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
