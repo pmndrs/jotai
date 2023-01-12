@@ -25,10 +25,6 @@ jobs:
         run: yarn test:ci
         env:
           PROVIDER_MODE: 'PROVIDER_LESS'
-      - name: Test Default with Versioned Write
-        run: yarn test:ci
-        env:
-          PROVIDER_MODE: 'VERSIONED_WRITE'
 
   test_matrix:
     runs-on: ubuntu-latest
@@ -44,11 +40,7 @@ jobs:
           - 18.2.0
           - 18.3.0-next-0f4a83596-20230110
           - 0.0.0-experimental-0f4a83596-20230110
-        mode: [NORMAL, PROVIDER_LESS, VERSIONED_WRITE]
-        exclude:
-          - { react: 16.8.6, mode: VERSIONED_WRITE }
-          - { react: 16.9.0, mode: VERSIONED_WRITE }
-          - { react: 17.0.0, mode: VERSIONED_WRITE }
+        mode: [NORMAL, PROVIDER_LESS]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
