@@ -160,8 +160,9 @@ const fetchCountAtom = atom(
 
 function Controls() {
   const [count, compute] = useAtom(fetchCountAtom)
-  return <button onClick={() => compute('http://count.host.com')}>compute</button>
-}
+  return (
+    <button onClick={() => compute('http://count.host.com')}>compute</button>
+    ...
 ```
 
 ## Installation notes
