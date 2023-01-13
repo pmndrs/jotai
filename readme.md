@@ -54,9 +54,7 @@ function Counter() {
     <h1>
       {count}
       <button onClick={() => setCount((c) => c + 1)}>one up</button>
-    </h1>
-  )
-}
+      ...
 ```
 
 ### Create derived atoms with computed values
@@ -109,7 +107,7 @@ const fetchUrlAtom = atom(async (get) => {
 function Status() {
   // Re-renders the component after urlAtom changed and the async function above concludes
   const [json] = useAtom(fetchUrlAtom)
-}
+  ...
 ```
 
 ### You can create a writable derived atom
@@ -129,9 +127,7 @@ function Counter() {
     <h1>
       {count}
       <button onClick={decrement}>Decrease</button>
-    </h1>
-  )
-}
+      ...
 ```
 
 ### Write only atoms
@@ -164,9 +160,7 @@ const fetchCountAtom = atom(
 
 function Controls() {
   const [count, compute] = useAtom(fetchCountAtom)
-  return (
-    <button onClick={() => compute('http://count.host.com')}>compute</button>
-  )
+  return <button onClick={() => compute('http://count.host.com')}>compute</button>
 }
 ```
 
