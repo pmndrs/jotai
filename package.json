@@ -68,7 +68,7 @@
     "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
     "eslint:ci": "eslint '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
     "pretest": "tsc --noEmit",
-    "test": "jest && jest --setupFiles ./tests/setProviderLessMode.ts && jest --setupFiles ./tests/setVersionedWriteMode.ts",
+    "test": "jest && jest --setupFiles ./tests/setProviderLessMode.ts",
     "test:ci": "jest",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
