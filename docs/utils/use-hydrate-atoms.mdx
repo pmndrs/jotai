@@ -24,29 +24,29 @@ The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an i
 // Definition
 function useHydrateAtoms(
   values: Iterable<readonly [Atom<unknown>, unknown]>,
-  scope?: Scope
+  options?: { store?: Store }
 ): void
 ```
 
-The hook takes an iterable of tuples containing `[atom, value]` as an argument and optionally scope.
+The hook takes an iterable of tuples containing `[atom, value]` as an argument and optional options.
 
 ```js
-// Usage with an array, specifying a scope
+// Usage with an array, specifying a store
 useHydrateAtoms(
   [
     [countAtom, 42],
     [frameworkAtom, 'Next.js'],
   ],
-  myScope
+  { store: myStore }
 )
 // Or with a map
 const [initialValues] = useState(() => new Map([[count, 42]]))
 useHydrateAtoms(initialValues)
 ```
 
-Atoms can only be hydrated once per scope. Therefore, if the initial value used is changed during rerenders, it won't update the atom value.
+Atoms can only be hydrated once per store. Therefore, if the initial value used is changed during rerenders, it won't update the atom value.
 
-If there's a need to hydrate in multiple scopes, use multiple `useHydrateAtoms` hooks to achieve that.
+If there's a need to hydrate in multiple stores, use multiple `useHydrateAtoms` hooks to achieve that.
 
 ```js
 useHydrateAtoms([
@@ -58,7 +58,7 @@ useHydrateAtoms(
     [countAtom, 17],
     [frameworkAtom, 'Gatsby'],
   ],
-  myScope
+  { store: myStore }
 )
 ```
 

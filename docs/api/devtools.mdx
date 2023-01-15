@@ -20,7 +20,7 @@ yarn add jotai-devtools
 
 ```ts
 function useAtomsDebugValue(options?: {
-  scope?: Scope
+  store?: Store
   enabled?: boolean
 }): void
 ```
@@ -72,8 +72,8 @@ const App = () => (
 function useAtomDevtools<Value>(
   anAtom: WritableAtom<Value, Value>,
   options?: {
+    store?: Store
     name?: string
-    scope?: Scope
     enabled?: boolean
   }
 ): void
@@ -122,13 +122,13 @@ export const useTasksDevtools = () => {
 function useAtomsDevtools(
   name: string,
   options?: {
-    scope?: Scope
+    store?: Store
     enabled?: boolean
   }
 ): void
 ```
 
-It takes a `name` parameter that is needed for naming the Redux devtools instance and a `scope` parameter if the hook is used for a specific scope of atoms.
+It takes a `name` parameter that is needed for naming the Redux devtools instance and a `store` parameter.
 
 As a limitation for this API, we need to put `useAtomsDevtools` in a component where the consumed atoms should be in a lower place of the React tree than that component (`AtomsDevtools` in the below example).
 `AtomsDevtools` component can be considered as a best practice for our apps.
@@ -169,10 +169,10 @@ export default function App()  {
 `useAtomsSnapshot` takes a snapshot of the currently mounted atoms and their state.
 
 ```ts
-function useAtomsSnapshot(scope?: Scope): AtomsSnapshot
+function useAtomsSnapshot(options?: { store?: Store }): AtomsSnapshot
 ```
 
-It accepts an atom `scope` parameter and will return an `AtomsSnapshot`, which is basically a `Map<AnyAtom, unknown>`. You can use the `Map` API to iterate over atoms and their state.
+It accepts a `store` parameter and will return an `AtomsSnapshot`, which is basically a `Map<AnyAtom, unknown>`. You can use the `Map` API to iterate over atoms and their state.
 This hook is primarily meant for debugging and devtools use cases.
 
 Be careful using this hook because it will cause the component to re-render for all state changes.
@@ -212,12 +212,12 @@ const App = () => (
 `useGotoAtomsSnapshot` will update the current Jotai state to match the passed snapshot.
 
 ```ts
-function useGotoAtomsSnapshot(
-  scope?: Scope
-): (values: Iterable<readonly [AnyAtom, unknown]>) => void
+function useGotoAtomsSnapshot(options?: {
+  store?: Store
+}): (values: Iterable<readonly [AnyAtom, unknown]>) => void
 ```
 
-This hook returns a callback, which takes a `snapshot` from the `useAtomsSnapshot` hook and will update the Jotai state. It accepts an atom `scope` parameter and will error if the atoms have mixed scopes.
+This hook returns a callback, which takes a `snapshot` from the `useAtomsSnapshot` hook and will update the Jotai state. It accepts a `store` parameter.
 This hook is primarily meant for debugging and devtools use cases.
 
 ### Example

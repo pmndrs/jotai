@@ -101,7 +101,7 @@ const Toggle = () => {
 ## Restartable machine stored in a global Provider (provider-less mode)
 
 When your machine reaches its final state it cannot receive any more events.
-If your atomWithMachine is initialized in global scope (aka provider-less mode),
+If your atomWithMachine is initialized in global store (aka provider-less mode),
 to restart it you need to send a `RESTART` event to your machine like so:
 
 ```tsx
