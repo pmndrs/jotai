@@ -10,6 +10,12 @@ import {
   createStore,
 } from '../src/core/store'
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __DEV__: boolean
+}
+globalThis.__DEV__ = false
+
 const cleanupFns = new Set<() => void>()
 const cleanup = () => {
   cleanupFns.forEach((fn) => fn())

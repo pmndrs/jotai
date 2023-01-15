@@ -5,6 +5,12 @@ import { atom } from '../src/core/atom'
 import type { PrimitiveAtom } from '../src/core/atom'
 import { WRITE_ATOM, createStore } from '../src/core/store'
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __DEV__: boolean
+}
+globalThis.__DEV__ = false
+
 const createStateWithAtoms = (n: number) => {
   let targetAtom: PrimitiveAtom<number> | undefined
   const initialValues = new Map()
