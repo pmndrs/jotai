@@ -38,8 +38,8 @@ jobs:
           - 18.0.0
           - 18.1.0
           - 18.2.0
-          - 18.3.0-next-0f4a83596-20230110
-          - 0.0.0-experimental-0f4a83596-20230110
+          - 18.3.0-next-555ece0cd-20230112
+          - 0.0.0-experimental-555ece0cd-20230112
         mode: [NORMAL, PROVIDER_LESS]
     steps:
       - uses: actions/checkout@v2
