@@ -1,14 +1,15 @@
 #!/usr/bin/env npx ts-node
 
 import { add, complete, cycle, save, suite } from 'benny'
-import { atom } from '../src/core/atom'
-import type { PrimitiveAtom } from '../src/core/atom'
-import {
-  READ_ATOM,
-  SUBSCRIBE_ATOM,
-  WRITE_ATOM,
-  createStore,
-} from '../src/core/store'
+import { atom } from '../src/vanilla/atom'
+import type { PrimitiveAtom } from '../src/vanilla/atom'
+import { createStore } from '../src/vanilla/store'
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __DEV__: boolean
+}
+globalThis.__DEV__ = false
 
 const cleanupFns = new Set<() => void>()
 const cleanup = () => {
@@ -24,9 +25,9 @@ const createStateWithAtoms = (n: number) => {
     if (!targetAtom) {
       targetAtom = a
     }
-    store[READ_ATOM](a)
-    const unsub = store[SUBSCRIBE_ATOM](a, () => {
-      store[READ_ATOM](a)
+    store.get(a)
+    const unsub = store.sub(a, () => {
+      store.get(a)
     })
     cleanupFns.add(unsub)
   }
@@ -43,7 +44,7 @@ const main = async () => {
       add(`atoms=${10 ** n}`, () => {
         cleanup()
         const [store, targetAtom] = createStateWithAtoms(10 ** n)
-        return () => store[WRITE_ATOM](targetAtom, (c) => c + 1)
+        return () => store.set(targetAtom, (c) => c + 1)
       }),
       cycle(),
       complete(),
