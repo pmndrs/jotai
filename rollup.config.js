@@ -2,9 +2,9 @@ const path = require('path')
 const babelPlugin = require('@rollup/plugin-babel')
 const resolve = require('@rollup/plugin-node-resolve')
 const replace = require('@rollup/plugin-replace')
+const terser = require('@rollup/plugin-terser')
 const typescript = require('@rollup/plugin-typescript')
 const { default: esbuild } = require('rollup-plugin-esbuild')
-const { terser } = require('rollup-plugin-terser')
 const createBabelConfig = require('./babel.config')
 
 const extensions = ['.js', '.ts', '.tsx']
