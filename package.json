@@ -6,13 +6,16 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "typesVersions": {
-    "<4.5": {
-      "esm/*": [
-        "ts3.4/*"
-      ],
-      "*": [
-        "ts3.4/*"
-      ]
+    ">=4.5": {
+      "esm/*": ["esm/*"],
+      "*": ["*"]
+    },
+    ">=3.8": {
+      "esm/*": ["ts3.8/*"],
+      "*": ["ts3.8/*"]
+    },
+    "*": {
+      "*": ["minimum_ts_version_is_3.8"]
     }
   },
   "exports": {
@@ -53,7 +56,7 @@
     "build:vanilla:utils": "rollup -c --config-vanilla_utils",
     "build:react": "rollup -c --config-react",
     "build:react:utils": "rollup -c --config-react_utils",
-    "postbuild": "yarn copy && yarn patch-ts3.4 && yarn patch-esm-ts && yarn patch-readme",
+    "postbuild": "yarn copy && yarn patch-ts3.8 && yarn patch-esm-ts && yarn patch-readme",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --write",
     "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
     "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
@@ -63,8 +66,8 @@
     "test:ci": "jest",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
-    "patch-ts3.4": "node -e \"require('shelljs').find('dist/ts3.4/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
+    "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.8 --to=3.8 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
+    "patch-ts3.8": "node -e \"require('shelljs').find('dist/ts3.8/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
     "patch-esm-ts": "node -e \"require('shelljs').find('dist/esm/**/*.d.ts').forEach(f=>require('fs').copyFileSync(f,f.replace(/\\.ts$/,'.mts')))\"; shx sed -i \"s/ from '(\\..*)';$/ from '\\$1.mjs';/\" 'dist/esm/**/*.d.mts'; shx sed -i \"s/^declare module '(\\..*)'/declare module '\\$1.mjs'/\" 'dist/esm/**/*.d.mts'",
     "patch-readme": "shx sed -i 's/.*dark mode.*//' dist/readme.md"
   },
