@@ -47,8 +47,10 @@ describe('abortable atom test', () => {
 
     fireEvent.click(getByText('button'))
     fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 2')
+    await waitFor(() => {
+      resolve.splice(0).forEach((fn) => fn())
+      getByText('count: 2')
+    })
     expect(abortedCount).toBe(1)
 
     fireEvent.click(getByText('button'))
