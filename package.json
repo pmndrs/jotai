@@ -7,15 +7,25 @@
   "types": "./index.d.ts",
   "typesVersions": {
     ">=4.5": {
-      "esm/*": ["esm/*"],
-      "*": ["*"]
+      "esm/*": [
+        "esm/*"
+      ],
+      "*": [
+        "*"
+      ]
     },
     ">=3.8": {
-      "esm/*": ["ts3.8/*"],
-      "*": ["ts3.8/*"]
+      "esm/*": [
+        "ts3.8/*"
+      ],
+      "*": [
+        "ts3.8/*"
+      ]
     },
     "*": {
-      "*": ["minimum_ts_version_is_3.8"]
+      "*": [
+        "minimum_ts_version_is_3.8"
+      ]
     }
   },
   "exports": {
