@@ -49,21 +49,19 @@ const [num] = useAtom(readOnlyNumAtom)
 const [, setNum] = useAtom(writeOnlyNumAtom)
 ```
 
-### Access to the return type of an atom
+### Access to the value type of an atom
 
 ```ts
-import { ExtractAtomValue, useAtomValue } from "jotai"
-import { userAtom } from "state"
-import { useQuery } from "@tanstack/react-query"
-
+import { ExtractAtomValue, useAtomValue } from 'jotai'
+import { userAtom } from 'state'
+import { useQuery } from '@tanstack/react-query'
 
 export default function WriteReview(hid) {
-    const user = useAtomValue(userAtom)
-    const res = useGetReviewQuery(user)
+  const user = useAtomValue(userAtom)
+  const res = useGetReviewQuery(user)
 }
 
 function useGetReviewQuery(user: ExtractAtomValue<typeof userAtom>) {
-     return fetch('/api/user/' + user.id + '/review')
+  return fetch('/api/user/' + user.id + '/review')
 }
-
 ```
