@@ -38,43 +38,20 @@ const App = () => {
 
 Alternatively, you could avoid the inherent suspending that Jotai does for you, by wrapping your atoms with the [`loadable` API](../utils/loadable.mdx).
 
-**Note**: In Jotai v1 API, an atom becomes async not only if the atom read function is async, but also if one or more of its dependencies are async.
+If another atom uses an async atom, it will return a promise. So, we need to make the atom also async.
 
 ```js
-const anotherAtom = atom((get) => get(asyncAtom) / 2)
-// even though this atom doesn't return a promise,
-// it's a read async atom because `asyncAtom` is async.
+const anotherAtom = atom(async (get) => (await get(asyncAtom)) / 2)
 ```
 
-(In Jotai v2 API, that doesn't hold; atoms whose dependencies includes async atoms will be async.)
-
-**Note**: In Jotai v1 API, you cannot get the value of an async atom in a write-atom (whether the write function is async or not) before its value has been resolved
+This also applies to an atom with write function.
 
 ```js
 const asyncAtom = atom(async (get) => ...)
-const writeAtom = atom(null, (get, set, payload) => {
-  get(asyncAtom) // This throws an error if "asyncAtom" is still in pending state
+const writeAtom = atom(null, async (get, set, payload) => {
+  await get(asyncAtom)
+  // ...
 })
-```
-
-(In Jotai v2 API, that doesn't hold; you can read an async atom in a write-atom and it will return a promise.)
-
-In Jotai v1 API, if you want to make sure the action will never fail, you could preload atoms at root level of your app directly:
-
-```jsx
-const Preloader = () => {
-  useAtomValue(asyncAtom) // The value will be pre-loaded
-  return null
-}
-
-const Root = () => {
-  return (
-    <Suspense fallback={<Text>Loading...<Text>}>
-      <Preloader /> {/* Wait for atoms to preload */}
-      <App /> {/* Rest of your app */}
-    </Suspense>
-  )
-}
 ```
 
 ## Async write atom
@@ -150,50 +127,3 @@ const App = () => (
 ```
 
 Having more `<Suspense>`s in the component tree is also possible and must be considered to profit from Jotai inherent handling at best.
-
-<details>
-<summary>Async write atom behavior until v1.3.9</summary>
-
-(This is no longer the case since v1.4.0.)
-
-### Triggering `Suspense` fallback of write atom
-
-This section applies only for "async write atom" not "async read atom", which works differently with `Suspense`.
-
-**A write atom will trigger the `Suspense` fallback if:**
-
-    * the atom's write argument (2nd one) is async
-    * the awaited call is made directly, and not from inside another containing function
-
-This _will_ trigger the `Suspense` fallback:
-
-```ts
-const writeAtom = atom(null, async (get, set) => {
-  const response = await new Promise<string>((resolve, _reject) => {
-    setTimeout(() => {
-      resolve('some returned value')
-    }, 2000)
-  })
-  set(somePrimitiveAtom, 'The returned value is: ' + response)
-})
-```
-
-This _will not_ trigger the `Suspense` fallback:
-
-```ts
-const writeAtom = atom(null, (get, set) => {
-  const getResponse = async () => {
-    const response = await new Promise<string>((resolve, _reject) => {
-      setTimeout(() => {
-        resolve('some returned value')
-      }, 2000)
-    })
-    set(somePrimitiveAtom, 'The returned value is: ' + response)
-  }
-  getResponse()
-})
-```
-
-But **_both_** of the above will still set `somePrimitiveAtom` to the correct values.
-
-</details>
