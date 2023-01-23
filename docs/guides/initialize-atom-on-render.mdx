@@ -25,7 +25,7 @@ As opposed to passing `text` as a prop in the two child components, you decided 
 
 To make `TextDisplay` component reusable, we take in a prop `initialTextValue`, which determines the initial state of the `text` atom.
 
-To tie `initialTextValue` to `textAtom`, we wrap the child components in a `Provider`. Then, we populate the `initialValues` array of atom tuples with the initial values.
+To tie `initialTextValue` to `textAtom`, we wrap the child components in a component where we create a new store and pass it to a `Provider` component.
 
 ```jsx
 const textAtom = atom('')
@@ -57,9 +57,14 @@ const UpdateTextInput = () => {
 }
 
 export const TextDisplay = ({ initialTextValue }) => {
-  return (
+  const storeRef = useRef()
+  if (!storeRef.current) {
     // initialising on state with prop on render here
-    <Provider initialValues={[[textAtom, initialTextValue]]}>
+    storeRef.current = createStore()
+    storeRef.current.set(textAtom, initialTextValue)
+  }
+  return (
+    <Provider store={storeRef.current}>
       <PrettyText />
       <br />
       <UpdateTextInput />
