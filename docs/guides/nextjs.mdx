@@ -46,7 +46,26 @@ const postData = atom((get) => {
 
 ## Provider
 
-Because of the nature of SSR, your app can have more instances existing in JS memory in the same time. You need to wrap your app inside a `Provider` (view more details [in the Core section](../api/core.mdx)) so that each instance has its own state and will not interfere with previous values from a default store (provider-less mode).
+By default, Jotai uses an implicit global store to keep track of atom values. This is what is referred to as "provider-less" mode. This becomes an issue in SSR scenario because this global store is kept alive and is shared between multiple requests, which can lead to bugs and security risks.
+
+To limit the lifetime of the store to the scope of one request, you need to use a [Provider](../api/core.mdx#provider) at the root of your app (or a subtree if you're using Jotai only for a part of your application).
+
+```typescript
+import { Provider } from 'jotai'
+
+function App({ Component, pageProps }: AppProps) {
+  return (
+    <Provider>
+      <Component {...pageProps} />
+    </Provider>
+  )
+}
+```
+
+In this case:
+
+1. `Provider` will hold the state of the atoms used in its subtree instead of the global store.
+2. `Provider`'s lifetime will be the same as the app itself, and since the app is recreated on each SSR request we essentially limit the lifetime of the store to a single request as well.
 
 ## SWC plugins
 
