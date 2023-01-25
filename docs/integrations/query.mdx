@@ -167,6 +167,8 @@ Although they reference methods same query key (`'todos'`), the `onSuccess` inva
 This will result in `todosAtom` showing stale data as it was not prompted to refetch.
 
 ```jsx
+import { createStore } from 'jotai/vanilla'
+import { Provider } from 'jotai/react'
 import {
   useMutation,
   useQueryClient,
@@ -177,12 +179,17 @@ import { atomsWithQuery, queryClientAtom } from 'jotai-tanstack-query'
 
 const queryClient = new QueryClient()
 export const App = () => {
+  // This Provider initialisation step is needed so that we reference the same
+  // queryClient in both atomWithQuery and other parts of the app. Without this,
+  // our useQueryClient() hook will return a different QueryClient object
+  const storeRef = useRef()
+  if (!storeRef.current) {
+    storeRef.current = createStore()
+    storeRef.current.set(queryclientAtom, queryClient)
+  }
   return (
     <QueryClientProvider client={queryClient}>
-      {/* This Provider initialisation step is needed so that we reference the same
-      queryClient in both atomWithQuery and other parts of the app. Without this,
-      our useQueryClient() hook will return a different QueryClient object */}
-      <Provider initialValues={[[queryClientAtom, queryClient]]}>
+      <Provider store={storeRef.current}>
         <App />
       </Provider>
     </QueryClientProvider>
@@ -256,9 +263,14 @@ const queryClient = new QueryClient({
   },
 })
 export const App = () => {
+  const storeRef = useRef()
+  if (!storeRef.current) {
+    storeRef.current = createStore()
+    storeRef.current.set(queryclientAtom, queryClient)
+  }
   return (
     <QueryClientProvider client={queryClient}>
-      <Provider initialValues={[[queryClientAtom, queryClient]] as const}>
+      <Provider store={storeRef.current}>
         <App />
       </Provider>
       <ReactQueryDevtools />
