@@ -132,7 +132,7 @@ TODO: create example
 
 ## Refferencing the same instance of the client for both atoms and urql provider
 
-To ensure that you reference the same urqlClient object, be sure to wrap the root of your project in a <Provider> and initialise clientAtom with the same urqlClient value you provided to UrqlProvider.
+To ensure that you reference the same urqlClient object, be sure to wrap the root of your project in a `<Provider>` and initialise clientAtom with the same urqlClient value you provided to UrqlProvider.
 
 Without this step, you may end up specifying client each time when you use `atomsWithQuery`. Now you can just ignore the optional `getClient` parameter, and it will use the client from the context.
 
