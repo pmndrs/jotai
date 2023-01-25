@@ -129,3 +129,43 @@ const FooData = () => {
 ### Examples
 
 TODO: create example
+
+## Refferencing the same instance of the client for both atoms and urql provider
+
+To ensure that you reference the same urqlClient object, be sure to wrap the root of your project in a `<Provider>` and initialise clientAtom with the same urqlClient value you provided to UrqlProvider.
+
+Without this step, you may end up specifying client each time when you use `atomsWithQuery`. Now you can just ignore the optional `getClient` parameter, and it will use the client from the context.
+
+```jsx
+import { Suspense } from 'react'
+import { Provider } from 'jotai'
+import { clientAtom } from 'jotai-urql'
+
+import {
+  createClient,
+  dedupExchange,
+  cacheExchange,
+  fetchExchange,
+  Provider as UrqlProvider,
+} from 'urql'
+
+const urqlClient = createClient({
+  url: 'https://countries.trevorblades.com/',
+  exchanges: [dedupExchange, cacheExchange, fetchExchange],
+  fetchOptions: () => {
+    return { headers: {} }
+  },
+})
+
+export default function MyApp({ Component, pageProps }) {
+  return (
+    <UrqlProvider value={urqlClient}>
+      <Provider initialValues={[[clientAtom, urqlClient]]}>
+        <Suspense fallback="Loading...">
+          <Component {...pageProps} />
+        </Suspense>
+      </Provider>
+    </UrqlProvider>
+  )
+}
+```

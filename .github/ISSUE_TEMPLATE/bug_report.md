@@ -1,6 +1,6 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: Confirmed bug report
+about: Create a confirmed bug report. Please open a discussion otherwise.
 title: ''
 labels: ''
 assignees: ''
@@ -19,7 +19,7 @@ assignees: ''
 
 Please do not ask questions in issues.
 
-- [ ] I've already opened a [discussion](https://github.com/pmndrs/jotai/discussions) before opening this issue.
+- [ ] I've already opened a [discussion](https://github.com/pmndrs/jotai/discussions) before opening this issue, or already discussed in other media.
 
 Please include a minimal reproduction.
 
