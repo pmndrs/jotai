@@ -8,7 +8,7 @@ export const Meta = ({ lang = 'en', title, description, uri }) => {
   const siteTitle = site.siteMetadata.title;
   const siteUrl = site.siteMetadata.siteUrl;
   const siteIcon = `/favicon.svg`;
-  const socialMediaCardImage = `https://storage.googleapis.com/candycode/jotai/jotai-opengraph.png`;
+  const socialMediaCardImage = `https://storage.googleapis.com/candycode/jotai/jotai-opengraph-v2.png`;
   const shortName = site.siteMetadata.shortName;
 
   const pageTitle = title ? `${title} — ${title.length <= 10 ? siteTitle : shortName}` : siteTitle;

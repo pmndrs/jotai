@@ -1,6 +1,8 @@
 import { graphql } from 'gatsby';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
-import { Jotai, Layout, Meta } from '../../components';
+import { Jotai } from '../../components/jotai';
+import { Layout } from '../../components/layout';
+import { Meta } from '../../components/meta';
 
 export default function DocsPage({ data }) {
   const { frontmatter, body } = data.mdx;

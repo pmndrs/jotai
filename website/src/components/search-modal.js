@@ -6,7 +6,9 @@ import { useAtom, useSetAtom } from 'jotai';
 import throttle from 'just-throttle';
 import { Hits, InstantSearch, useInstantSearch, useSearchBox } from 'react-instantsearch-hooks-web';
 import { searchAtom } from '../atoms';
-import { Button, Icon, Modal } from '../components';
+import { Button } from '../components/button';
+import { Icon } from '../components/icon';
+import { Modal } from '../components/modal';
 
 const searchClient = algoliasearch(
   process.env.GATSBY_ALGOLIA_APP_ID,
@@ -16,8 +18,12 @@ const searchClient = algoliasearch(
 export const SearchModal = () => {
   const [isSearchOpen, setIsSearchOpen] = useAtom(searchAtom);
 
+  const onClose = useCallback(() => {
+    setIsSearchOpen(false);
+  }, [setIsSearchOpen]);
+
   return (
-    <Modal isOpen={isSearchOpen} onOpenChange={setIsSearchOpen}>
+    <Modal isOpen={isSearchOpen} onClose={onClose}>
       <InstantSearch searchClient={searchClient} indexName="Docs">
         <CustomSearchBox />
         <Boundary fallback={null}>

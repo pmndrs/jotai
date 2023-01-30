@@ -14,6 +14,10 @@
   @apply text-2xl font-bold leading-tight text-gray-350 dark:text-gray-200 lg:text-3xl;
 }
 
+.prose .tabs h2 {
+  @apply text-black dark:text-gray-200;
+}
+
 .prose h2 a code {
   @apply px-2 py-1 !text-black dark:!text-white;
   font-size: 0.7em;

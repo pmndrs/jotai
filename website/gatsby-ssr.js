@@ -1,18 +1,12 @@
 import { MDXProvider } from '@mdx-js/react';
 import { Provider as JotaiProvider } from 'jotai';
 import { countAtom, menuAtom, searchAtom, textAtom } from './src/atoms';
-import {
-  A,
-  Code,
-  CodeSandbox,
-  H2,
-  H3,
-  H4,
-  H5,
-  InlineCode,
-  Stackblitz,
-  TOC,
-} from './src/components';
+import { Code } from './src/components/code';
+import { CodeSandbox } from './src/components/code-sandbox';
+import { InlineCode } from './src/components/inline-code';
+import { A, H2, H3, H4, H5 } from './src/components/mdx';
+import { Stackblitz } from './src/components/stackblitz';
+import { TOC } from './src/components/toc';
 
 const components = {
   code: Code,
