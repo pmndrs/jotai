@@ -17,10 +17,10 @@ export const Intro = () => {
           </div>
         </div>
         <div className="speech-bubble relative w-2/3 space-y-4 rounded-xl bg-gray-100 p-4 text-sm leading-snug text-gray-800 dark:bg-gray-900 dark:text-gray-300 sm:text-base md:text-lg lg:w-3/4 lg:p-8 lg:leading-normal">
+          <div>Welcome to Jotai v2!</div>
           <div>
-            Welcome to Jotai v2! Fully compatible with React 18 and the upcoming{' '}
-            <InlineCode dark>use</InlineCode> hook. Now with a global store provider that is
-            accessible outside of React.
+            Fully compatible with React 18 and the upcoming <InlineCode dark>use</InlineCode> hook.
+            Now with a store interface that can be used outside of React.
           </div>
           <div>Enjoy the new “Getting started” experience below!</div>
         </div>
