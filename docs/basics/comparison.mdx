@@ -13,7 +13,7 @@ one would require many contexts and face some issues.
 - Provider hell: It's likely that your root component has many context providers, which is technically okay, and sometimes desirable to provide context in different subtree.
 - Dynamic addition/deletion: Adding a new context at runtime is not very nice, because you need to add a new provider and its children will be re-mounted.
 
-Traditionally, a top-down solution to this is to use a selector interface.
+Traditionally, a top-down solution to this is to use a selector function.
 The [use-context-selector](https://github.com/dai-shi/use-context-selector) library is one example.
 The issue with this approach is the selector function needs to return
 referentially equal values to prevent re-renders, and this often requires a memoization technique.
@@ -24,8 +24,8 @@ This avoids the need for memoization.
 
 Jotai has two principles.
 
-- Primitive: Its basic interface is simple, like `useState`.
-- Flexible: Derived atoms can combine other atoms and enable `useReducer` style with side effects.
+- Primitive: Its basic API is simple, like `useState`.
+- Flexible: Atoms can derive another atom and form a graph. Atoms can also be updated by another arbitrary atom. It allows to abstract complex state model.
 
 ## How is Jotai different from useContext of React?
 
@@ -33,7 +33,7 @@ Jotai's core API is minimalistic and makes it easy to build utilities based upon
 
 ### Analogy
 
-You can view Jotai as a drop-in replacement to `useContext`, as it actually uses it in the core. Except Jotai is aiming for simplicity, minimalistic API and can do much more than `useContext` & `useState`.
+You can view Jotai as a drop-in replacement to `useContext`. Except Jotai is aiming for simplicity, minimalistic API and can do much more than `useContext` & `useState`.
 
 ### Usage difference
 
@@ -112,8 +112,10 @@ Zustand is like Redux.
 
 ### Where state resides
 
-Jotai state is within React component tree.
-Zustand state is in the store outside React.
+To hold states,
+Both have stores that can exist either at module level or at context level.
+Jotai is designed to be context first, and module second.
+Zustand is designed to be module first, and context second.
 
 ### How to structure state
 
@@ -124,14 +126,10 @@ Zustand state is one object (i.e. top-down).
 
 The major difference is the state model. Zustand is a single store (although you could create multiple separate stores), while Jotai consists of primitive atoms and allows composing them together. In this sense, it's the matter of programming mental model.
 
-Jotai can be a replacement for useState+useContext. Instead of creating multiple contexts, atoms share one big context.
-
-Zustand is an external store and the hook is to connect the external world to the React world.
-
 ### When to use which
 
 - If you need a replacement for useState+useContext, Jotai fits well.
-- If you want to update state outside React, Zustand works better.
+- If you want a simple module state, Zustand fits well.
 - If code splitting is important, Jotai should perform well.
 - If you prefer Redux devtools, Zustand is good to go.
 - If you want to make use of Suspense, Jotai is the one.
@@ -150,7 +148,7 @@ Zustand is an external store and the hook is to connect the external world to th
 ### Basis
 
 - Jotai is focusing on primitive APIs for easy learning, and it's unopinionated. (The same philosophy with Zustand)
-- Recoil is full featured for big apps with complex requirements.
+- Recoil is all-in-one, and it has various cache strategies.
 
 ### Technical difference
 
@@ -161,7 +159,7 @@ Zustand is an external store and the hook is to connect the external world to th
 
 - If you want to learn something new, either should work.
 - If you like Zustand, Jotai would also be pleasant.
-- If your app heavily requires state serialization (storing state in storage, server, or URL), Recoil comes with good features.
 - If you need React Context alternatives, Jotai comes with enough features.
+- If you need to read and write atoms outside React, Jotai provides store API.
 - If you would try to create a new library, Jotai might give good primitives.
 - Otherwise, both are pretty similar about the general goals and basic techniques, so please try both and share your feedback with us.

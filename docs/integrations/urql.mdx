@@ -138,7 +138,8 @@ Without this step, you may end up specifying client each time when you use `atom
 
 ```jsx
 import { Suspense } from 'react'
-import { Provider } from 'jotai'
+import { createStore } from 'jotai/vanilla'
+import { Provider } from 'jotai/react'
 import { clientAtom } from 'jotai-urql'
 
 import {
@@ -158,9 +159,14 @@ const urqlClient = createClient({
 })
 
 export default function MyApp({ Component, pageProps }) {
+  const storeRef = useRef()
+  if (!storeRef.current) {
+    storeRef.current = createStore()
+    storeRef.current.set(clientAtom, urqlClient)
+  }
   return (
     <UrqlProvider value={urqlClient}>
-      <Provider initialValues={[[clientAtom, urqlClient]]}>
+      <Provider store={storeRef.current}>
         <Suspense fallback="Loading...">
           <Component {...pageProps} />
         </Suspense>
