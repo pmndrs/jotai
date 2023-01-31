@@ -65,7 +65,7 @@
 
 .prose ol,
 .prose ul {
-  @apply my-2 space-y-1 pl-5 text-sm font-normal leading-normal text-gray-600 dark:text-gray-500 sm:text-base lg:text-lg;
+  @apply my-2 space-y-1 pl-5 text-sm font-normal leading-normal text-gray-600 dark:text-gray-400 sm:text-base lg:text-lg;
 }
 
 .prose ol {
@@ -73,7 +73,7 @@
 }
 
 .prose ul {
-  @apply list-disc marker:text-gray-400 dark:marker:text-gray-700;
+  @apply list-disc marker:text-gray-400 dark:marker:text-gray-600;
 }
 
 .prose li {
@@ -81,7 +81,7 @@
 }
 
 .prose p {
-  @apply mt-1 text-sm leading-normal text-gray-600 dark:text-gray-500 sm:text-base lg:text-lg;
+  @apply mt-1 text-sm leading-normal text-gray-600 dark:text-gray-400 sm:text-base lg:text-lg;
 }
 
 .prose p + p {
