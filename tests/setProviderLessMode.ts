@@ -1,1 +1,0 @@
-process.env.PROVIDER_MODE = 'PROVIDER_LESS'
