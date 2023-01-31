@@ -296,31 +296,27 @@ const AnimeApp = () => {
     <section>
       <h2>Server-side rendering</h2>
       <p>
-        If server-side rendering with a framework such as Next.js or Gatsby, initialize an atom
-        store with a global provider.
+        If server-side rendering with a framework such as Next.js or Gatsby, make sure to use at
+        least one Provider component at the root.
       </p>
-      <Code>{`import { createStore, Provider } from 'jotai'
-
-const countAtom = atom(0)
-const store = createStore()
-store.set(countAtom, 1)
+      <Code>{`import { Provider } from 'jotai'
 
 // Placement is framework-specific (see below)
-<Provider store={store}>
+<Provider>
   {...}
 </Provider>
 `}</Code>
       <h3>Next.js (app directory)</h3>
       <p>
-        Create the store and provider in a separate client component. Then import the provider into
-        the root <InlineCode>layout.js</InlineCode> server component.
+        Create the provider in a separate client component. Then import the provider into the root{' '}
+        <InlineCode>layout.js</InlineCode> server component.
       </p>
       <Code>{`// providers.js (app directory)
 'use client'
 
 export default function Providers({ children }) {
   return (
-    <Provider store={store}>
+    <Provider>
       {children}
     </Provider>
   )
@@ -344,12 +340,12 @@ export default function RootLayout({ children }) {
 `}</Code>
       <h3>Next.js (pages directory)</h3>
       <p>
-        Create the store and provider in <InlineCode>_app.js</InlineCode>.
+        Create the provider in <InlineCode>_app.js</InlineCode>.
       </p>
       <Code>{`// _app.js (pages directory)
 export default function App({ Component, pageProps }) {
   return (
-    <Provider store={store}>
+    <Provider>
       <Component {...pageProps} />
     </Provider>
   )
@@ -357,8 +353,8 @@ export default function App({ Component, pageProps }) {
 `}</Code>
       <h3>Gatsby</h3>
       <p>
-        Create the store and provider in a <InlineCode>gatsby-shared.js</InlineCode> file to share
-        code between <InlineCode>gatsby-browser.js</InlineCode> and{' '}
+        Create the provider in a <InlineCode>gatsby-shared.js</InlineCode> file to share code
+        between <InlineCode>gatsby-browser.js</InlineCode> and{' '}
         <InlineCode>gatsby-ssr.js</InlineCode>.
       </p>
       <p>
@@ -368,7 +364,7 @@ export default function App({ Component, pageProps }) {
 // gatsby-shared.js
 export const wrapRootElement = ({ element }) => {
   return (
-    <Provider store={store}>
+    <Provider>
       {element}
     </Provider>
   )
