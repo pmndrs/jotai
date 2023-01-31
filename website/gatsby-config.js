@@ -31,6 +31,7 @@ const queries = [
           title: item.meta.title,
           description: item.meta.description,
           excerpt: item.excerpt,
+          headings: item.headings.map((heading) => heading.value).join(' '),
           body: item.rawBody.replace(/(<([^>]+)>)/gi, ''),
         };
 
@@ -38,7 +39,7 @@ const queries = [
       }),
     indexName: 'Docs',
     settings: {
-      searchableAttributes: ['title', 'description', 'slug', 'excerpt', 'body'],
+      searchableAttributes: ['title', 'description', 'slug', 'excerpt', 'headings', 'body'],
       indexLanguages: ['en'],
     },
     mergeSettings: false,
@@ -48,7 +49,7 @@ const queries = [
 module.exports = {
   siteMetadata: {
     title: `Jotai, primitive and flexible state management for React`,
-    description: `Jotai takes a bottom-up approach to React state management with an atomic model inspired by Recoil. One can build state by combining atoms and renders are optimized based on atom dependency. This solves the extra re-render issue of React context and avoids requiring the memoization technique.`,
+    description: `Jotai takes a bottom-up approach to global React state management with an atomic model inspired by Recoil. One can build state by combining atoms and renders are optimized based on atom dependency. This solves the extra re-render issue of React context and eliminates the need for memoization.`,
     siteUrl: `https://jotai.org`,
     shortName: `Jotai`,
   },
@@ -73,7 +74,7 @@ module.exports = {
         classNameDark: 'dark',
         classNameLight: 'light',
         storageKey: 'darkMode',
-        minify: true,
+        minify: false,
       },
     },
     {
@@ -82,7 +83,7 @@ module.exports = {
         appId: process.env.GATSBY_ALGOLIA_APP_ID,
         apiKey: process.env.ALGOLIA_ADMIN_KEY,
         queries,
-        skipIndexing: process.env.ALGOLIA_SKIP_INDEXING,
+        skipIndexing: process.env.ALGOLIA_SKIP_INDEXING === 'true',
       },
     },
     `gatsby-plugin-sitemap`,
