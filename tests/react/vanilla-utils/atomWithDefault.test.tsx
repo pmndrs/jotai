@@ -169,10 +169,7 @@ it('refresh async atoms to default values', async () => {
   })
 
   fireEvent.click(getByText('button1'))
-  if (process.env.PROVIDER_MODE !== 'VERSIONED_WRITE') {
-    // In VERSIONED_WRITE, this check is very unstable
-    await findByText('loading')
-  }
+  await findByText('loading')
   await waitFor(() => {
     resolve()
     getByText('count1: 2, count2: 4')
