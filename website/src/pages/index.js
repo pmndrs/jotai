@@ -180,12 +180,12 @@ const citiesAtom = atom(['Tokyo', 'Kyoto', 'Osaka'])
 
 const animeAtom = atom([
   {
-    title: 'Ghost in the Shell')
+    title: 'Ghost in the Shell',
     year: 1995,
     watched: true
   },
   {
-    title: 'Serial Experiments Lain')
+    title: 'Serial Experiments Lain',
     year: 1998,
     watched: false
   }
