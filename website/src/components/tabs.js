@@ -20,9 +20,9 @@ export const Tabs = ({ orientation = 'horizontal', tabs = {} }) => {
       <Tab.Group
         as="div"
         vertical={vertical}
-        className={cx('tabs relative hidden w-full lg:flex', !vertical ? 'flex-col' : 'gap-8')}
+        className={cx('tabs relative hidden w-full lg:flex', !vertical && 'flex-col')}
       >
-        <div className={cx('relative mb-4 flex-shrink-0', vertical && 'w-1/4 ')}>
+        <div className={cx('relative mb-4 flex-shrink-0', vertical && 'w-1/4 pr-4 ')}>
           <Tab.List
             as="div"
             className={cx(
@@ -49,7 +49,7 @@ export const Tabs = ({ orientation = 'horizontal', tabs = {} }) => {
             ))}
           </Tab.List>
         </div>
-        <Tab.Panels className={cx('flex-shrink-0', !vertical ? 'w-full' : 'w-3/4')}>
+        <Tab.Panels className={cx('flex-shrink-0', !vertical ? 'w-full' : 'w-3/4 pl-4')}>
           {tabContents.map((content, index) => (
             <Tab.Panel key={index}>{content}</Tab.Panel>
           ))}
