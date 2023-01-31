@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import cx from 'classnames';
-import { Button } from '../components';
+import { Button } from '../components/button';
 
 export const Support = () => {
   const [hasSubmitted, setHasSubmitted] = useState(false);

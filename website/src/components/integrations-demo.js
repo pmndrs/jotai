@@ -1,6 +1,7 @@
 import { useAtom } from 'jotai';
 import { countAtom } from '../atoms';
-import { Button, Code } from '../components';
+import { Button } from '../components/button';
+import { Code } from '../components/code';
 
 export const IntegrationsDemo = () => {
   const [count, setCount] = useAtom(countAtom);
@@ -8,7 +9,7 @@ export const IntegrationsDemo = () => {
   const increment = () => setCount((c) => (c = c + 1));
 
   const code = `import { useAtom } from 'jotai'
-import { atomWithImmer } from 'jotai/immer'
+import { atomWithImmer } from 'jotai-immer'
 
 // Create a new atom with an immer-based write function
 const countAtom = atomWithImmer(0)

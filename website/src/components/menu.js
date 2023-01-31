@@ -1,7 +1,9 @@
 import cx from 'classnames';
 import { useAtom } from 'jotai';
 import { menuAtom } from '../atoms';
-import { Button, Docs, SearchButton } from '../components';
+import { Button } from '../components/button';
+import { Docs } from '../components/docs';
+import { SearchButton } from '../components/search-button';
 
 export const Menu = () => {
   const [isMenuOpen, setIsMenuOpen] = useAtom(menuAtom);

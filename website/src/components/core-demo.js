@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { textAtom, uppercaseAtom } from '../atoms';
-import { Code } from '../components';
+import { Code } from '../components/code';
 
 export const CoreDemo = () => {
   const Input = () => {

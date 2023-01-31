@@ -2,6 +2,11 @@
   font-family: 'Inter Var', 'Inter', sans-serif;
 }
 
+html {
+  overflow: visible !important;
+  padding-right: 0 !important;
+}
+
 body {
   @apply overflow-x-clip overflow-y-scroll overscroll-none bg-black leading-none;
   text-rendering: optimizeLegibility;

@@ -1,10 +1,10 @@
 import Highlight, { defaultProps } from 'prism-react-renderer';
 
-export const Code = ({ children }) => {
+export const Code = ({ language = 'jsx', children }) => {
   const code = children.trim();
 
   return (
-    <Highlight {...defaultProps} language="jsx" code={code} theme={undefined}>
+    <Highlight {...defaultProps} language={language} code={code} theme={undefined}>
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <pre className={className} style={style}>
           {tokens.map((line, i) => (

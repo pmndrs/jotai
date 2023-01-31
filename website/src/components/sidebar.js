@@ -1,6 +1,10 @@
 import { useSetAtom } from 'jotai';
 import { helpAtom } from '../atoms';
-import { Button, Credits, Docs, Jotai, SearchButton } from '../components';
+import { Button } from '../components/button';
+import { Credits } from '../components/credits';
+import { Docs } from '../components/docs';
+import { Jotai } from '../components/jotai';
+import { SearchButton } from '../components/search-button';
 
 export const Sidebar = ({ showDocs = false }) => {
   const setShowHelp = useSetAtom(helpAtom);
