@@ -37,18 +37,18 @@ jobs:
       - name: Patch for Old TS
         if: ${{ matrix.typescript == '4.7.4' || matrix.typescript == '4.6.4' || matrix.typescript == '4.5.5' ||   matrix.typescript == '4.4.4' || matrix.typescript == '4.3.5' || matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
-          sed -i~ "s/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//" tests/*/*.tsx tests/*/*/*.tsx
-          sed -i~ "s/\"exactOptionalPropertyTypes\": true,//" tsconfig.json
-          sed -i~ "s/\"jotai\": \[\"\.\/src\/index\.ts\"\],/\"jotai\": [\".\/dist\/ts3.8\/index.d.ts\"],/" tsconfig.json
-          sed -i~ "s/\"jotai\/\*\": \[\"\.\/src\/\*\.ts\"\]/\"jotai\/*\": [\".\/dist\/ts3.8\/*.d.ts\"]/" tsconfig.json
-          sed -i~ "s/\"include\": .*/\"include\": [\"src\/types.d.ts\", \"dist\/**\/*\", \"tests\/**\/*\"],/" tsconfig.json
+          sed -i~ 's/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//' tests/*/*.tsx tests/*/*/*.tsx
+          sed -i~ 's/"exactOptionalPropertyTypes": true,//' tsconfig.json
+          sed -i~ 's/"jotai": \["\.\/src\/index\.ts"\],/"jotai": [".\/dist\/ts3.8\/index.d.ts"],/' tsconfig.json
+          sed -i~ 's/"jotai\/\*": \["\.\/src\/\*\.ts"\]/"jotai\/*": [".\/dist\/ts3.8\/*.d.ts"]/' tsconfig.json
+          sed -i~ 's/"include": .*/"include": ["src\/types.d.ts", "dist\/**\/*", "tests\/**\/*"],/' tsconfig.json
       - name: Patch for Older TS
         if: ${{ matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
           sed -i~ '1s/^/\/\/\/ <reference types="react\/experimental" \/>\nimport React from "react";/' tests/*/*.tsx tests/*/*/*.tsx
-          sed -i~ "s/\"jsx\": \"react-jsx\",/\"jsx\": \"react\",/" tsconfig.json
-          sed -i~ "s/\"noUncheckedIndexedAccess\": true,//" tsconfig.json
-          sed -i~ "s/^import type /import /" tests/*/*.tsx tests/*/*/*.tsx
+          sed -i~ 's/"jsx": "react-jsx",/"jsx": "react",/' tsconfig.json
+          sed -i~ 's/"noUncheckedIndexedAccess": true,//' tsconfig.json
+          sed -i~ 's/^import type /import /' tests/*/*.tsx tests/*/*/*.tsx
           yarn json -I -f package.json -e "this.resolutions={}; this.resolutions['@types/jest']='26.0.14'; this.resolutions['pretty-format']='25.5.0'; this.resolutions['@types/prettier']='2.4.2';"
           yarn add -D @types/jest@26.0.14 pretty-format@25.5.0 @types/prettier@2.4.2 @types/yargs@17.0.13 @types/babel__traverse@7.18.2
           rm -r tests/react/vanilla-utils/atomWithObservable.*
@@ -56,5 +56,5 @@ jobs:
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
           rm -r node_modules/@types/jsdom node_modules/parse5 node_modules/@types/babel__core/node_modules
-          sed -i~ "s/\">=4.2\": {/\">=4.1\": {/" node_modules/rxjs/package.json
+          sed -i~ 's/">=4.2": {/">=4.1": {/' node_modules/rxjs/package.json
           yarn tsc --noEmit
