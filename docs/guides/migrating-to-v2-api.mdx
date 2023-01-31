@@ -25,7 +25,7 @@ They are provided from alternate entry points like `jotai/vanilla`.
 Jotai exposes store interface so that you can directly manipulate atom values.
 
 ```js
-import { createStore } from 'jotai/vanilla'
+import { createStore } from 'jotai' // or from 'jotai/vanilla'
 
 const store = createStore()
 store.set(fooAtom, 'foo')
@@ -35,6 +35,7 @@ console.log(store.get(fooAtom)) // prints "foo"
 const unsub = store.sub(fooAtom, () => {
   console.log('fooAtom value in store is changed')
 })
+// call unsub() to unsubscribe.
 ```
 
 You can also create your own React Context to pass a store.
