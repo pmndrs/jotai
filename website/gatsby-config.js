@@ -69,15 +69,6 @@ module.exports = {
     },
     `gatsby-plugin-postcss`,
     {
-      resolve: 'gatsby-plugin-use-dark-mode',
-      options: {
-        classNameDark: 'dark',
-        classNameLight: 'light',
-        storageKey: 'darkMode',
-        minify: false,
-      },
-    },
-    {
       resolve: `gatsby-plugin-algolia`,
       options: {
         appId: process.env.GATSBY_ALGOLIA_APP_ID,
@@ -104,9 +95,7 @@ module.exports = {
   ],
   flags: {
     DEV_SSR: false,
-    QUERY_ON_DEMAND: true,
     LAZY_IMAGES: true,
-    DEV_WEBPACK_CACHE: true,
     PRESERVE_FILE_DOWNLOAD_CACHE: true,
     PARALLEL_SOURCING: true,
   },
