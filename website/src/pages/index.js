@@ -31,11 +31,6 @@ export default function HomePage() {
           <p>Jotai is trusted in production by teams at innovative companies like these.</p>
           <LogoCloud />
         </div>
-        <div className="hidden space-y-4">
-          <Headline>Jotai in production</Headline>
-          {/* <p>Jotai is trusted by innovative brands like these.</p>
-          <LogoCloud /> */}
-        </div>
         <div className="space-y-4">
           <Headline>Getting started</Headline>
           <p className="!mb-8">
