@@ -63,5 +63,5 @@ export const A = ({ href, children, ...rest }) => {
 };
 
 const getAnchor = (value) => {
-  return typeof value === 'string' ? kebabCase(value.replaceAll("'", '')) : '';
+  return typeof value === 'string' ? kebabCase(value.toLowerCase().replaceAll("'", '')) : '';
 };

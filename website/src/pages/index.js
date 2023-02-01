@@ -202,7 +202,7 @@ const animeAtom = atom([
       <p>A derived atom can read from other atoms before returning its own value.</p>
       <Code>{`const progressAtom = atom((get) => {
   const anime = get(animeAtom)
-  return anime.filter(item => item.watched).length / anime.length
+  return anime.filter((item) => item.watched).length / anime.length
 })`}</Code>
     </section>
   ),
@@ -223,12 +223,12 @@ const AnimeApp = () => {
   return (
     <>
       <ul>
-        {anime.map(item => (
+        {anime.map((item) => (
           <li key={item.title}>{item.title}</li>
         ))}
       </ul>
       <button onClick={() => {
-        setAnime(anime => [
+        setAnime((anime) => [
           ...anime,
           {
             title: 'Cowboy Bebop',
@@ -255,7 +255,7 @@ const AnimeList = () => {
 
   return (
     <ul>
-      {anime.map(item => (
+      {anime.map((item) => (
         <li key={item.title}>{item.title}</li>
       ))}
     </ul>
@@ -267,7 +267,7 @@ const AddAnime = () => {
 
   return (
     <button onClick={() => {
-      setAnime(anime => [
+      setAnime((anime) => [
         ...anime,
         {
           title: 'Cowboy Bebop',
