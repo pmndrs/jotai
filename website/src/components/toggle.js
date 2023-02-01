@@ -2,15 +2,11 @@ import cx from 'classnames';
 import useDarkMode from 'use-dark-mode';
 import { Icon } from '../components/icon';
 
-const INITIAL_STATE = false;
-
-const DARK_MODE_CONFIG = {
-  classNameDark: 'dark',
-  classNameLight: 'light',
-};
-
 export const Toggle = () => {
-  const darkMode = useDarkMode(INITIAL_STATE, DARK_MODE_CONFIG);
+  const darkMode = useDarkMode(false, {
+    classNameDark: 'dark',
+    classNameLight: 'light',
+  });
 
   return (
     <div className="absolute top-0 right-0 lg:fixed">

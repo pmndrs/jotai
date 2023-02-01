@@ -2,7 +2,7 @@
   "name": "jotai",
   "private": true,
   "version": "2.0.0",
-  "description": "👻 Next gen state management that will spook you",
+  "description": "👻 Primitive and flexible state management for React",
   "main": "./index.js",
   "types": "./index.d.ts",
   "typesVersions": {

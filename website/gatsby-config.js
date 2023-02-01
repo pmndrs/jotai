@@ -104,9 +104,7 @@ module.exports = {
   ],
   flags: {
     DEV_SSR: false,
-    QUERY_ON_DEMAND: true,
     LAZY_IMAGES: true,
-    DEV_WEBPACK_CACHE: true,
     PRESERVE_FILE_DOWNLOAD_CACHE: true,
     PARALLEL_SOURCING: true,
   },

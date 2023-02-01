@@ -5,11 +5,12 @@ import { InlineCode } from '../components/inline-code';
 import { IntegrationsDemo } from '../components/integrations-demo';
 import { Intro } from '../components/intro';
 import { Layout } from '../components/layout';
+import { LogoCloud } from '../components/logo-cloud';
 import { Meta } from '../components/meta';
 import { Tabs } from '../components/tabs';
 import { UtilitiesDemo } from '../components/utilities-demo';
 
-export default function HomePageV2() {
+export default function HomePage() {
   return (
     <Layout>
       <Intro />
@@ -27,6 +28,13 @@ export default function HomePageV2() {
             an enterprise TypeScript application with complex requirements. Plus there are plenty of
             built-in utilities and officially maintained integrations to help you along the way!
           </p>
+          <p>Jotai is trusted in production by teams at innovative companies like these.</p>
+          <LogoCloud />
+        </div>
+        <div className="hidden space-y-4">
+          <Headline>Jotai in production</Headline>
+          {/* <p>Jotai is trusted by innovative brands like these.</p>
+          <LogoCloud /> */}
         </div>
         <div className="space-y-4">
           <Headline>Getting started</Headline>
@@ -158,7 +166,12 @@ npm install --save-dev babel-preset-gatsby
   "presets": ["babel-preset-gatsby"],
   "plugins": ["jotai/babel/plugin-react-refresh"]
 }
-      `}</Code>
+
+# gatsby-config.js
+flags: {
+  DEV_SSR: false,
+}
+`}</Code>
     </section>
   ),
   'Create atoms': (

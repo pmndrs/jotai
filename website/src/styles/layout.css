@@ -60,6 +60,10 @@ input[type='search']::-webkit-search-results-decoration {
   @apply appearance-none;
 }
 
+svg:not([fill]) {
+  fill: currentColor;
+}
+
 *::-webkit-scrollbar {
   @apply h-full w-4 bg-white dark:bg-gray-950;
 }

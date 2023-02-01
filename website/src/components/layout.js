@@ -1,3 +1,4 @@
+import { ClientOnly } from '../components/client-only';
 import { Footer } from '../components/footer';
 import { Main } from '../components/main';
 import { Menu } from '../components/menu';
@@ -18,7 +19,9 @@ export const Layout = ({ showDocs = false, children }) => {
         </Main>
       </Wrapper>
       <Menu />
-      <Toggle />
+      <ClientOnly>
+        <Toggle />
+      </ClientOnly>
       <SearchModal />
       <SupportModal />
     </>
