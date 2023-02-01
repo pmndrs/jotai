@@ -9,6 +9,7 @@ const DOCS_QUERY = `
         meta: frontmatter {
           title
           description
+          keywords
         }
         headings(depth: h2) {
           value
@@ -30,6 +31,7 @@ const queries = [
           slug: item.slug,
           title: item.meta.title,
           description: item.meta.description,
+          keywords: item.meta?.keywords?.split(',') ?? [],
           excerpt: item.excerpt,
           headings: item.headings.map((heading) => heading.value).join(' '),
           body: item.rawBody.replace(/(<([^>]+)>)/gi, ''),
@@ -39,7 +41,15 @@ const queries = [
       }),
     indexName: 'Docs',
     settings: {
-      searchableAttributes: ['title', 'description', 'slug', 'excerpt', 'headings', 'body'],
+      searchableAttributes: [
+        'slug',
+        'title',
+        'description',
+        'keywords',
+        'excerpt',
+        'headings',
+        'body',
+      ],
       indexLanguages: ['en'],
     },
     mergeSettings: false,
