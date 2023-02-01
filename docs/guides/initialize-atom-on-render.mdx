@@ -56,21 +56,21 @@ const UpdateTextInput = () => {
   )
 }
 
-export const TextDisplay = ({ initialTextValue }) => {
-  const storeRef = useRef()
-  if (!storeRef.current) {
-    // initialising on state with prop on render here
-    storeRef.current = createStore()
-    storeRef.current.set(textAtom, initialTextValue)
-  }
-  return (
-    <Provider store={storeRef.current}>
+const HydrateAtoms = ({ initialValues, children }) => {
+  // initialising on state with prop on render here
+  useHydrateAtoms(initialValues)
+  return children
+}
+
+export const TextDisplay = ({ initialTextValue }) => (
+  <Provider store={storeRef.current}>
+    <HydrateAtoms initialValues={[[textAtom, initialTextValue]]}>
       <PrettyText />
       <br />
       <UpdateTextInput />
-    </Provider>
-  )
-}
+    </HydrateAtoms>
+  </Provider>
+)
 ```
 
 Now, we can easily resue `TextDisplay` component with different initial text values despite them referencing the "same" atom.
