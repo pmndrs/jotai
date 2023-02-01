@@ -8,13 +8,13 @@ export const LogoCloud = () => {
         <img
           src="https://storage.googleapis.com/candycode/jotai/logos/ping-current.svg"
           alt="Ping Labs"
-          className="aspect-[4/1.5] w-full opacity-50 transition duration-300 ease-in-out dark:invert"
+          className="aspect-[24/9] w-full opacity-50 transition duration-300 ease-in-out dark:invert"
         />
         <HoverLogo>
           <img
             src="https://storage.googleapis.com/candycode/jotai/logos/ping-color.svg"
             alt=""
-            className="aspect-[4/1.5] w-full"
+            className="aspect-[24/9] w-full"
             aria-hidden
           />
         </HoverLogo>
@@ -23,13 +23,13 @@ export const LogoCloud = () => {
         <img
           src="https://storage.googleapis.com/candycode/jotai/logos/candycode-current.svg"
           alt="candycode alternative graphic design web development agency"
-          className="aspect-video w-full opacity-50 transition duration-300 ease-in-out dark:invert"
+          className="aspect-[16/9] w-full opacity-50 transition duration-300 ease-in-out dark:invert"
         />
         <HoverLogo>
           <img
             src="https://storage.googleapis.com/candycode/jotai/logos/candycode-color.svg"
             alt=""
-            className="aspect-video w-full"
+            className="aspect-[16/9] w-full"
             aria-hidden
           />
         </HoverLogo>
@@ -38,13 +38,13 @@ export const LogoCloud = () => {
         <img
           src="https://storage.googleapis.com/candycode/jotai/logos/adobe-current.svg"
           alt="Adobe"
-          className="aspect-video w-full opacity-50 transition duration-300 ease-in-out dark:invert"
+          className="w-full px-1 opacity-50 transition duration-300 ease-in-out dark:invert lg:px-2"
         />
         <HoverLogo>
           <img
             src="https://storage.googleapis.com/candycode/jotai/logos/adobe-color.svg"
             alt=""
-            className="aspect-video w-full"
+            className="w-full px-1 lg:px-2"
             aria-hidden
           />
         </HoverLogo>
@@ -53,13 +53,13 @@ export const LogoCloud = () => {
         <img
           src="https://storage.googleapis.com/candycode/jotai/logos/uniswap-current.svg"
           alt="Uniswap"
-          className="aspect-video w-full opacity-50 transition duration-300 ease-in-out dark:invert"
+          className="aspect-[16/9] w-full opacity-50 transition duration-300 ease-in-out dark:invert"
         />
         <HoverLogo>
           <img
             src="https://storage.googleapis.com/candycode/jotai/logos/uniswap-color.svg"
             alt=""
-            className="aspect-video w-full"
+            className="aspect-[16/9] w-full"
             aria-hidden
           />
         </HoverLogo>
