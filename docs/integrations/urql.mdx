@@ -138,8 +138,8 @@ Without this step, you may end up specifying client each time when you use `atom
 
 ```jsx
 import { Suspense } from 'react'
-import { createStore } from 'jotai/vanilla'
 import { Provider } from 'jotai/react'
+import { useHydrateAtoms } from 'jotai/react/utils'
 import { clientAtom } from 'jotai-urql'
 
 import {
@@ -158,18 +158,20 @@ const urqlClient = createClient({
   },
 })
 
+const HydrateAtoms = ({ children }) => {
+  useHydrateAtoms([[clientAtom, urqlClient]])
+  return children
+}
+
 export default function MyApp({ Component, pageProps }) {
-  const storeRef = useRef()
-  if (!storeRef.current) {
-    storeRef.current = createStore()
-    storeRef.current.set(clientAtom, urqlClient)
-  }
   return (
     <UrqlProvider value={urqlClient}>
       <Provider store={storeRef.current}>
-        <Suspense fallback="Loading...">
-          <Component {...pageProps} />
-        </Suspense>
+        <HydrateAtoms>
+          <Suspense fallback="Loading...">
+            <Component {...pageProps} />
+          </Suspense>
+        </HydrateAtoms>
       </Provider>
     </UrqlProvider>
   )

@@ -87,7 +87,7 @@ In general, we should avoid using `WritableAtom` type directly.
 ### Async atoms
 
 `get` function for read function of async atoms
-doesn't resolve promises, so you have to put `await`.
+doesn't resolve promises, so you have to put `await` or `.then()`.
 
 In short, the change is something like the following.
 (If you are TypeScript users, types will tell where to changes.)
@@ -104,6 +104,8 @@ const derivedAtom = atom((get) => get(asyncAtom).toUppercase())
 ```js
 const asyncAtom = atom(async () => 'hello')
 const derivedAtom = atom(async (get) => (await get(asyncAtom)).toUppercase())
+// or
+const derivedAtom = atom((get) => get(asyncAtom).then((x) => x.toUppercase()))
 ```
 
 ### Provider's `initialValues` prop
@@ -122,12 +124,15 @@ const countAtom = atom(0)
 
 ```jsx
 const countAtom = atom(0)
-const store = createStore()
-store.set(countAtom, 1)
 
-  <Provider store={store}>
-    ...
-  </Provider>
+const HydrateAtoms = ({ children }) => {
+  useHydrateAtoms([[countAtom, 1]])
+  return children
+}
+
+;<Provider>
+  <HydrateAtoms>...</HydrateAtoms>
+</Provider>
 ```
 
 ### Provider's `scope` prop
