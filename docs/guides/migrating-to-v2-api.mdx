@@ -115,9 +115,9 @@ const derivedAtom = atom((get) => get(asyncAtom).then((x) => x.toUppercase()))
 ```jsx
 const countAtom = atom(0)
 
+  // in component
   <Provider initialValues={[[countAtom, 1]]}>
     ...
-  </Provider>
 ```
 
 #### New API
@@ -125,14 +125,15 @@ const countAtom = atom(0)
 ```jsx
 const countAtom = atom(0)
 
-const HydrateAtoms = ({ children }) => {
-  useHydrateAtoms([[countAtom, 1]])
+const HydrateAtoms = ({ initialValues, children }) => {
+  useHydrateAtoms(initialValues)
   return children
 }
 
-;<Provider>
-  <HydrateAtoms>...</HydrateAtoms>
-</Provider>
+  // in component
+  <Provider>
+    <HydrateAtoms initialValues={[[countAtom, 1]]}>
+      ...
 ```
 
 ### Provider's `scope` prop
