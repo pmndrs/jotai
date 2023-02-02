@@ -12,13 +12,13 @@
       "permanent": false
     },
     {
-      "source": "/docs/utils/*",
-      "destination": "/docs/utilities/*",
+      "source": "/docs/utils/:slug",
+      "destination": "/docs/utilities/:slug",
       "permanent": false
     },
     {
-      "source": "/docs/advanced-recipes/*",
-      "destination": "/docs/recipes/*",
+      "source": "/docs/advanced-recipes/:slug",
+      "destination": "/docs/recipes/:slug",
       "permanent": false
     },
     {
