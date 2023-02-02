@@ -20,11 +20,8 @@ Jotai scales from a simple useState replacement to an enterprise TypeScript appl
 - Many utilities and integrations
 - No string keys (compared to Recoil)
 
-Live demos:
-[Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) |
-[Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d).
-
-## Basics
+Examples: [Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) |
+[Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d)
 
 ### First create a primitive atom
 
@@ -71,8 +68,6 @@ function DoubleCounter() {
   return <h2>{doubledCount}</h2>
 }
 ```
-
-## Recipes
 
 ### Creating an atom from multiple atoms
 
@@ -170,7 +165,3 @@ function Controls() {
 - [website](https://jotai.org)
 - [documentation](https://jotai.org/docs)
 - [course](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0)
-- [repository](https://github.com/pmndrs/jotai)
-- [package](https://www.npmjs.com/package/jotai)
-- [community](https://discord.gg/poimandres)
-- [updates](https://twitter.com/jotaijs)
