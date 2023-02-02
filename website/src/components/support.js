@@ -53,7 +53,7 @@ export const Support = () => {
           <div className="mt-4 flex flex-col gap-4">
             <Button
               to="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
-              className="w-full dark:!bg-gray-950"
+              className="w-full dark:!bg-gray-950 dark:hover:!bg-teal-950"
               bold
               external
             >
@@ -64,7 +64,7 @@ export const Support = () => {
             </Button>
             <Button
               to="https://daishi.gumroad.com/l/learn-jotai/website_qpiwdj8"
-              className="w-full dark:!bg-gray-950"
+              className="w-full dark:!bg-gray-950 dark:hover:!bg-teal-950"
               bold
               external
             >
@@ -72,7 +72,7 @@ export const Support = () => {
             </Button>
             <Button
               to="https://daishi.gumroad.com/l/philosophy-of-jotai-1"
-              className="w-full dark:!bg-gray-950"
+              className="w-full dark:!bg-gray-950 dark:hover:!bg-teal-950"
               bold
               external
             >
@@ -96,7 +96,7 @@ export const Support = () => {
                   type="text"
                   value={name}
                   onChange={(event) => setName(event.currentTarget.value)}
-                  className="form-input w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg focus-within:ring focus-within:ring-blue-400 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:ring-teal-700"
+                  className="form-input w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg focus-within:ring focus-within:ring-blue-400 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:ring-teal-700 dark:hover:!bg-teal-950"
                   required
                 />
               </label>
@@ -106,7 +106,7 @@ export const Support = () => {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.currentTarget.value)}
-                  className="form-input w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg focus-within:ring focus-within:ring-blue-400 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:ring-teal-700"
+                  className="form-input w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg focus-within:ring focus-within:ring-blue-400 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:ring-teal-700 dark:hover:!bg-teal-950"
                   required
                 />
               </label>
@@ -116,7 +116,7 @@ export const Support = () => {
                   value={message}
                   onChange={(event) => setMessage(event.currentTarget.value)}
                   rows={5}
-                  className="form-input w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg focus-within:ring focus-within:ring-blue-400 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:ring-teal-700"
+                  className="form-input w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-lg focus-within:ring focus-within:ring-blue-400 dark:border-gray-800 dark:bg-gray-950 dark:focus-within:ring-teal-700 dark:hover:!bg-teal-950"
                 />
               </label>
               <label className="sr-only">
