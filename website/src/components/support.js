@@ -53,7 +53,7 @@ export const Support = () => {
           <div className="mt-4 flex flex-col gap-4">
             <Button
               to="https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0"
-              className="w-full"
+              className="w-full dark:!bg-gray-950"
               bold
               external
             >
@@ -64,7 +64,7 @@ export const Support = () => {
             </Button>
             <Button
               to="https://daishi.gumroad.com/l/learn-jotai/website_qpiwdj8"
-              className="w-full"
+              className="w-full dark:!bg-gray-950"
               bold
               external
             >
@@ -72,7 +72,7 @@ export const Support = () => {
             </Button>
             <Button
               to="https://daishi.gumroad.com/l/philosophy-of-jotai-1"
-              className="w-full"
+              className="w-full dark:!bg-gray-950"
               bold
               external
             >
@@ -128,7 +128,7 @@ export const Support = () => {
                 />
               </label>
               <div className={cx(hasSubmitted && 'opacity-0')}>
-                <Button icon="message" onClick={handleSubmit} dark bold>
+                <Button icon="message" onClick={handleSubmit} dark bold className="dark:!bg-black">
                   Send inquiry
                 </Button>
               </div>
