@@ -1,6 +1,7 @@
 ---
 title: Atom creators
-nav: 5.02
+nav: 8.02
+keywords: creators
 ---
 
 ## atomWithToggle
@@ -57,7 +58,7 @@ const Toggle = () => {
 
 ## atomWithToggleAndStorage
 
-> `atomWithToggleAndStorage` is like [`atomWithToggle`](#atom-with-toggle) but also persist the state anytime it changes in given storage using [`atomWithStorage`](../api/utils.mdx#atom-with-storage).
+> `atomWithToggleAndStorage` is like `atomWithToggle` but also persist the state anytime it changes in given storage using [`atomWithStorage`](../utilities/storage.mdx).
 
 Here is the source:
 
@@ -92,7 +93,7 @@ import { atomWithToggleAndStorage } from 'XXX'
 const isActiveAtom = atomWithToggleAndStorage('isActive')
 ```
 
-The usage in a component is also the same as [`atomWithToggle`](#atom-with-toggle).
+The usage in a component is also the same as `atomWithToggle`.
 
 ## atomWithCompare
 

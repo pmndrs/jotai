@@ -1,12 +1,13 @@
 ---
 title: Next.js
 description: How to use Jotai with Next.js
-nav: 3.04
+nav: 7.03
+keywords: next,nextjs
 ---
 
 ## Hydration
 
-Jotai has support for hydration of atoms with `useHydrateAtoms`. The documentation for the hook can be seen [here](../utils/use-hydrate-atoms.mdx).
+Jotai has support for hydration of atoms with `useHydrateAtoms`. The documentation for the hook can be seen [here](../utilities/ssr.mdx).
 
 ## Sync with router
 
@@ -48,7 +49,7 @@ const postData = atom((get) => {
 
 By default, Jotai uses an implicit global store to keep track of atom values. This is what is referred to as "provider-less" mode. This becomes an issue in SSR scenario because this global store is kept alive and is shared between multiple requests, which can lead to bugs and security risks.
 
-To limit the lifetime of the store to the scope of one request, you need to use a [Provider](../api/core.mdx#provider) at the root of your app (or a subtree if you're using Jotai only for a part of your application).
+To limit the lifetime of the store to the scope of one request, you need to use a [Provider](../core/provider.mdx) at the root of your app (or a subtree if you're using Jotai only for a part of your application).
 
 ```typescript
 import { Provider } from 'jotai'
@@ -69,7 +70,7 @@ In this case:
 
 ## SWC plugins
 
-Jotai provides SWC plugins for better DX while developing with Next.js. [Find more info in the SWC section.](../api/swc.mdx)
+Jotai provides SWC plugins for better DX while developing with Next.js. [Find more info in the SWC section.](../tools/swc.mdx)
 
 ## Examples
 

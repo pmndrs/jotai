@@ -1,10 +1,47 @@
 ---
-title: atomWithObservable
+title: Async
+nav: 3.03
+keywords: load,loadable,observable
 ---
+
+All atoms support async behavior such as async read or async write. However there are APIs for more control described here.
+
+## loadable
+
+If you don't want async atoms to suspend or throw to an error boundary (for example, for finer-grained control of loading and error logic), you can use the `loadable` util.
+
+It would work the same way for any atom. Simply wrap your atoms with the `loadable` util. It returns a value with one of three states: `loading`, `hasData` and `hasError`.
+
+```ts
+{
+	state: 'loading' | 'hasData' | 'hasError',
+	data?: any,
+	error?: any,
+}
+```
+
+```jsx
+import { loadable } from "jotai/utils"
+
+const asyncAtom = atom(async (get) => ...)
+const loadableAtom = loadable(asyncAtom)
+// Does not need to be wrapped by a <Suspense> element
+const Component = () => {
+  const [value] = useAtom(loadableAtom)
+  if (value.state === 'hasError') return <Text>{value.error}</Text>
+  if (value.state === 'loading') {
+    return <Text>Loading...</Text>
+  }
+  console.log(value.data) // Results of the Promise
+  return <Text>Value: {value.data}</Text>
+}
+```
+
+## atomWithObservable
 
 Ref: https://github.com/pmndrs/jotai/pull/341
 
-## Usage
+### Usage
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -26,7 +63,7 @@ Its value will be last value emitted from the stream.
 
 To use this atom, you need to wrap your component with `<Suspense>`. Check out [guides/async](../guides/async.mdx).
 
-## Initial value
+### Initial value
 
 `atomWithObservable` takes second optional parameter `{ initialValue }` that allows to specify initial value for the atom. If `initialValue` is provided then `atomWithObservable` will not suspend and will show initial value before receiving first value from observable. `initialValue` can be either a value or a function that returns a value
 

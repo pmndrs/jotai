@@ -1,6 +1,11 @@
 ---
-title: selectAtom
+title: Select
+nav: 3.99
+keywords: select
+published: false
 ---
+
+## selectAtom
 
 Ref: https://github.com/pmndrs/jotai/issues/36
 
@@ -19,7 +24,7 @@ only if `equalityFn` reports that the derived value has changed.
 By default, `equalityFn` is reference equality, but you can supply your favorite deep-equals
 function to stabilize the derived value where necessary.
 
-## Examples
+### Examples
 
 ```js
 const defaultPerson = {
@@ -52,7 +57,7 @@ const nameAtom = selectAtom(personAtom, (person) => person.name)
 const birthAtom = selectAtom(personAtom, (person) => person.birth, deepEquals)
 ```
 
-## Hold stable references
+### Hold stable references
 
 As always, to prevent an infinite loop when using `useAtom` in render cycle, you must provide `useAtom` a stable reference of your atoms.
 For `selectAtom`, we need **both** the base atom and the selector to be stable.
@@ -83,6 +88,6 @@ const Component = () => {
 }
 ```
 
-## CodeSandbox
+### CodeSandbox
 
 <CodeSandbox id="8czek" />

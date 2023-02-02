@@ -1,6 +1,7 @@
 ---
 title: Large objects
-nav: 5.01
+nav: 8.01
+keywords: large,object
 ---
 
 > The examples and descriptions below are based on this [codesandbox](https://codesandbox.io/s/zealous-sun-f2qnl?file=/src/App.tsx), so it will give you a better understanding if you check it out along with these examples.
@@ -60,7 +61,7 @@ If we change the `films` property of the above data example, the `peopleAtom` wo
 
 ## splitAtom
 
-> The `splitAtom` utility is useful when you want to get an atom for each element in a list. [jotai/utils](../api/utils.mdx#split-atom)
+> The `splitAtom` utility is useful when you want to get an atom for each element in a list. [jotai/utils](../utilities/split.mdx)
 
 We use this utility for atoms that return arrays as their values. For example, the `peopleAtom` we made above returns the people property array, so we can return an atom for each item of that array. If the array atom is writable, `splitAtom` returned atoms are going to be writable, if the array atom is read-only, the returned atoms will be read-only too.
 
@@ -87,7 +88,7 @@ const People = () => {
 
 ## selectAtom
 
-> This function creates a derived atom whose value is a function of the original atom's value. [jotai/utils](../api/utils.mdx#select-atom)
+> This function creates a derived atom whose value is a function of the original atom's value. [jotai/utils](../utilities/select.mdx)
 
 This utility is like `focusAtom`, but we use it when we have a read-only atom to select part of it, and it always returns a read-only atom.
 

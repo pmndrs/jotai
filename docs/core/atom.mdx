@@ -1,0 +1,145 @@
+---
+title: atom
+description: This doc describes core `jotai` bundle.
+nav: 2.01
+keywords: atom,primitive,derived,debug,label,onmount
+---
+
+## atom
+
+The `atom` function is to create an atom config.
+We call it "atom config" as it's just a definition and it doesn't yet hold a value.
+We may also call it just "atom" if the context is clear.
+
+An atom config is an immutable object. The atom config object doesn't hold a value. The atom value exists in a store.
+
+To create a primitive atom (config), all you need is to provide an initial value.
+
+```js
+import { atom } from 'jotai'
+
+const priceAtom = atom(10)
+const messageAtom = atom('hello')
+const productAtom = atom({ id: 12, name: 'good stuff' })
+```
+
+You can also create derived atoms. We have three patterns:
+
+- Read-only atom
+- Write-only atom
+- Read-Write atom
+
+To create derived atoms, we pass a read function and an optional write function.
+
+```js
+const readOnlyAtom = atom((get) => get(priceAtom) * 2)
+const writeOnlyAtom = atom(
+  null, // it's a convention to pass `null` for the first argument
+  (get, set, update) => {
+    // `update` is any single value we receive for updating this atom
+    set(priceAtom, get(priceAtom) - update.discount)
+  }
+)
+const readWriteAtom = atom(
+  (get) => get(priceAtom) * 2,
+  (get, set, newPrice) => {
+    set(priceAtom, newPrice / 2)
+    // you can set as many atoms as you want at the same time
+  }
+)
+```
+
+`get` in the read function is to read the atom value.
+It's reactive and read dependencies are tracked.
+
+`get` in the write function is also to read atom value, but it's not tracked.
+Furthermore, it can't read unresolved async values in Jotai v1 API.
+
+`set` in the write function is to write atom value.
+It will invoke the write function of the target atom.
+
+**Note**: Atom configs can be created anywhere, but referential equality is important.
+They can be created dynamically too.
+To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memoization, use `useMemo`.
+
+```js
+const Component = ({ value }) => {
+  const valueAtom = useMemo(() => atom({ value }), [value])
+  // ...
+}
+```
+
+### Signatures
+
+```ts
+// primitive atom
+function atom<Value>(initialValue: Value): PrimitiveAtom<Value>
+
+// read-only atom
+function atom<Value>(read: (get: Getter) => Value | Promise<Value>): Atom<Value>
+
+// writable derived atom
+function atom<Value, Update>(
+  read: (get: Getter) => Value | Promise<Value>,
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): WritableAtom<Value, Update>
+
+// write-only derived atom
+function atom<Value, Update>(
+  read: Value,
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): WritableAtom<Value, Update>
+```
+
+- `initialValue`: the initial value that the atom will return until its value is changed.
+- `read`: a function that's called on every re-render. The signature of `read` is `(get) => Value | Promise<Value>`, and `get` is a function that takes an atom config and returns its value stored in Provider as described below. Dependency is tracked, so if `get` is used for an atom at least once, the `read` will be reevaluated whenever the atom value is changed.
+- `write`: a function mostly used for mutating atom's values, for a better description; it gets called whenever we call the second value of the returned pair of `useAtom`, the `useAtom()[1]`. The default value of this function in the primitive atom will change the value of that atom. The signature of `write` is `(get, set, update) => void | Promise<void>`. `get` is similar to the one described above, but it doesn't track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `update` is an arbitrary value that we receive from the updating function returned by `useAtom` described below.
+
+```js
+const primitiveAtom = atom(initialValue)
+const derivedAtomWithRead = atom(read)
+const derivedAtomWithReadWrite = atom(read, write)
+const derivedAtomWithWriteOnly = atom(null, write)
+```
+
+There are two kinds of atoms: a writable atom and a read-only atom. Primitive atoms are always writable. Derived atoms are writable if the `write` is specified. The `write` of primitive atoms is equivalent to the `setState` of `React.useState`.
+
+### `debugLabel` property
+
+The created atom config can have an optional property `debugLabel`. The debug label is used to display the atom in debugging. See [Debugging guide](../guides/debugging.mdx) for more information.
+
+Note: While, the debug labels don’t have to be unique, it’s generally recommended to make them distinguishable.
+
+### `onMount` property
+
+The created atom config can have an optional property `onMount`. `onMount` is a function which takes a function `setAtom` and returns `onUnmount` function optionally.
+
+The `onMount` function is called when the atom is first used in a provider, and `onUnmount` is called when it’s no longer used. In some edge cases, an atom can be unmounted and then mounted immediately.
+
+```js
+const anAtom = atom(1)
+anAtom.onMount = (setAtom) => {
+  console.log('atom is mounted in provider')
+  setAtom(c => c + 1) // increment count on mount
+  return () => { ... } // return optional onUnmount function
+}
+```
+
+Calling `setAtom` function will invoke the atom’s `write`. Customizing `write` allows changing the behavior.
+
+```js
+const countAtom = atom(1)
+const derivedAtom = atom(
+  (get) => get(countAtom),
+  (get, set, action) => {
+    if (action.type === 'init') {
+      set(countAtom, 10)
+    } else if (action.type === 'inc') {
+      set(countAtom, (c) => c + 1)
+    }
+  }
+)
+derivedAtom.onMount = (setAtom) => {
+  setAtom({ type: 'init' })
+}
+```
