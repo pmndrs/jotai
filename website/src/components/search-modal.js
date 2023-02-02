@@ -78,7 +78,7 @@ const CustomSearchBox = (props) => {
   const { refine } = useSearchBox(props);
 
   const throttledRefine = useMemo(
-    () => throttle((value) => refine(value), 200, { leading: true, trailing: true }),
+    () => throttle((value) => refine(value), 200, { trailing: true }),
     [refine],
   );
 
