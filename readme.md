@@ -14,14 +14,11 @@ visit [jotai.org](https://jotai.org) or `npm i jotai`
 [![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=ffffff)](https://discord.gg/poimandres)
 [![Open Collective](https://img.shields.io/opencollective/all/jotai?style=flat&colorA=000000&colorB=000000)](https://opencollective.com/jotai)
 
-Jotai scales from a simple `useState` replacement to an enterprise React application.
-
-#### How does Jotai differ from Recoil?
+Jotai scales from a simple useState replacement to an enterprise TypeScript application.
 
 - Minimal core API (2kb)
-- Extra utils and integrations
-- No string keys
-- TypeScript oriented
+- Many utilities and integrations
+- No string keys (compared to Recoil)
 
 Live demos:
 [Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) |
