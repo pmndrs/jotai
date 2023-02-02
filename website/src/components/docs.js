@@ -18,7 +18,7 @@ export const Docs = ({ className = '', ...rest }) => {
         <div key={section.title} className="space-y-2">
           {section.title && (
             <div className="relative -left-0.5 flex items-center gap-1">
-              <span className="text-base font-bold uppercase tracking-widest text-gray-350 dark:text-gray-650">
+              <span className="text-base font-bold uppercase tracking-widest text-gray-350 dark:text-white">
                 {section.title}
               </span>
               <span className="relative top-px">
@@ -32,7 +32,7 @@ export const Docs = ({ className = '', ...rest }) => {
                 <Link
                   to={`/docs/${doc.slug}`}
                   onClick={() => setIsMenuOpen(false)}
-                  className="relative -left-3 inline-block whitespace-nowrap rounded border border-transparent px-2 py-1 text-base hover:!border-blue-200 hover:bg-blue-100 dark:hover:!border-teal-800 dark:hover:bg-teal-950"
+                  className="relative -left-3 inline-block whitespace-nowrap rounded border border-transparent px-2 py-1 text-base text-black hover:!border-blue-200 hover:bg-blue-100 dark:text-gray-300 dark:hover:!border-teal-800 dark:hover:bg-teal-950"
                   activeClassName="!border-blue-200 dark:!border-teal-900 bg-blue-100 dark:bg-teal-950"
                   partiallyActive
                 >
