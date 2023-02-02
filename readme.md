@@ -165,61 +165,57 @@ function Controls() {
     ...
 ```
 
-## Installation notes
-
-This package requires some peer dependencies, which you need to install by
-yourself.
-
-```bash
-yarn add jotai react
-```
-
 ## Learn Jotai
 
 [![free egghead Jotai introduction course by Daishi](./img/jotai-course-banner.jpg)](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0?utm_source=github&utm_medium=cta&utm_term=jotai)
 
 ## More documents
 
-- Basics
+- Core
+  - [atom](./docs/core/atom.mdx)
+  - [useAtom](./docs/core/use-atom.mdx)
+  - [Store](./docs/core/store.mdx)
+  - [Provider](./docs/core/provider.mdx)
+- Utilities
+  - [Storage](./docs/utilities/storage.mdx)
+  - [SSR](./docs/utilities/ssr.mdx)
+  - [Async](./docs/utilities/async.mdx)
+  - [Resettable](./docs/utilities/resettable.mdx)
+  - [Family](./docs/utilities/family.mdx)
+- Integrations
+  - [tRPC](./docs/integrations/trpc.mdx)
+  - [Query](./docs/integrations/query.mdx)
+  - [URQL](./docs/integrations/urql.mdx)
+  - [Immer](./docs/integrations/immer.mdx)
+  - [XState](./docs/integrations/xstate.mdx)
+  - [Location](./docs/integrations/location.mdx)
+  - [Cache](./docs/integrations/cache.mdx)
+  - [Molecules](./docs/integrations/molecules.mdx)
+  - [Optics](./docs/integrations/optics.mdx)
+- Tools
+  - [SWC](./docs/tools/swc.mdx)
+  - [Babel](./docs/tools/babel.mdx)
+  - [Devtools](./docs/tools/devtools.mdx)
+  - Basics
   - [Concepts](./docs/basics/concepts.mdx)
   - [Comparison](./docs/basics/comparison.mdx)
   - [Showcase](./docs/basics/showcase.mdx)
 - Guides
-  - [Async](./docs/guides/async.mdx)
+  - [v2 API migration](./docs/guides/migrating-to-v2-api.mdx)
   - [TypeScript](./docs/guides/typescript.mdx)
-  - [Debugging](./docs/guides/debugging.mdx)
-  - [Persistence](./docs/guides/persistence.mdx)
   - [Next.js](./docs/guides/nextjs.mdx)
+  - [Gatsby](./docs/guides/gatsby.mdx)
+  - [Remix](./docs/guides/remix.mdx)
   - [React Native](./docs/guides/react-native.mdx)
-  - [Resettable](./docs/guides/resettable.mdx)
-  - [Atoms in atom](./docs/guides/atoms-in-atom.mdx)
-  - [Testing](./docs/guides/testing.mdx)
-  - [Vite](./docs/guides/vite.mdx)
-  - [Core Internals](./docs/guides/core-internals.mdx)
-  - [Initializing Atom State on Render](./docs/guides/initialize-atom-on-render.mdx)
+  - [Debugging](./docs/guides/debugging.mdx)
   - [Performance](./docs/guides/performance.mdx)
-  - [Migratiing to Jotai v2 API](./docs/guides/migrating-to-v2-api.mdx)
-- API
-  - [Core](./docs/api/core.mdx)
-  - [Utils](./docs/api/utils.mdx)
-  - [Devtools](./docs/api/devtools.mdx)
-  - [Babel](./docs/api/babel.mdx)
-  - [SWC](./docs/api/swc.mdx)
-- Integrations
-  - [Immer](./docs/integrations/immer.mdx)
-  - [Optics](./docs/integrations/optics.mdx)
-  - [TanStack Query](./docs/integrations/query.mdx)
-  - [XState](./docs/integrations/xstate.mdx)
-  - [Valtio](./docs/integrations/valtio.mdx)
-  - [Zustand](./docs/integrations/zustand.mdx)
-  - [Redux](./docs/integrations/redux.mdx)
-  - [URQL](./docs/integrations/urql.mdx)
-  - [Location](./docs/integrations/location.mdx)
-  - [tRPC](./docs/integrations/trpc.mdx)
-  - [Molecules](./docs/integrations/molecules.mdx)
-  - [Relay](./docs/integrations/relay.mdx)
-  - [Cache](./docs/integrations/cache.mdx)
-- Advanced Recipes
-  - [Large Objects](./docs/advanced-recipes/large-objects.mdx)
-  - [Atom Creators](./docs/advanced-recipes/atom-creators.mdx)
+  - [Testing](./docs/guides/testing.mdx)
+  - [Core internals](./docs/guides/core-internals.mdx)
+  - [Composing atoms](./docs/guides/composing-atoms.mdx)
+  - [Atoms in atom](./docs/guides/atoms-in-atom.mdx)
+  - [Initializing state on render](./docs/guides/initialize-atom-on-render.mdx)
+  - [Persistence](./docs/guides/persistence.mdx)
+- Recipes
+  - [Large objects](./docs/advanced-recipes/large-objects.mdx)
+  - [Atom creators](./docs/advanced-recipes/atom-creators.mdx)
   - [Custom useAtom hooks](./docs/advanced-recipes/custom-useatom-hooks.mdx)

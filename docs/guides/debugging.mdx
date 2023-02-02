@@ -1,6 +1,7 @@
 ---
 title: Debugging
-nav: 3.02
+nav: 7.07
+keywords: debug,labels,devtools,freeze
 ---
 
 In basic apps, `console.log` can be our best friend for debugging atoms, but when applications get bigger and we have more atoms to use, logging would not be a good way of debugging atoms.
@@ -97,7 +98,7 @@ This would set the `countAtoms`'s value to `5`.
 
 > We should note that the value will be parsed by JSON.parse, so pass supported values.
 
-### [useAtomsDevtools](https://jotai.org/docs/api/devtools#use-atoms-devtools)
+### [useAtomsDevtools](../tools/devtools.mdx)
 
 > `useAtomsDevtools` is a catch-all version of `useAtomDevtools` where it shows all atoms in the store instead of showing a specific one.
 
@@ -125,6 +126,44 @@ Every feature of `useAtomDevtools` is supported in this hook, but there's an ext
 ## Frozen Atoms
 
 To find bugs where you accidentally tried to mutate objects stored in atoms you
-could use [`freezeAtom`](../utils/freeze-atom.mdx) or
-[`freezeAtomCreator`](../utils/freeze-atom-creator.mdx#) from `jotai/utils` bundle.
+could use `freezeAtom` or `freezeAtomCreator`from `jotai/utils` bundle.
 Which returns atoms value that is deeply freezed with `Object.freeze`.
+
+### freezeAtom
+
+```ts
+freezeAtom(anAtom): AtomType
+```
+
+`freezeAtom` takes an existing atom and returns a new derived "frozen" atom.
+The atom will be deeply frozen by `Object.freeze`.
+It is useful to find bugs where you unintentionally tried
+to change objects (states) which can lead to unexpected behavior.
+You may use `freezeAtom` with all atoms to prevent this situation.
+
+#### Parameters
+
+**anAtom** (required): An atom you wish to freeze.
+
+#### Examples
+
+```js
+import { atom } from 'jotai'
+import { freezeAtom } from 'jotai/utils'
+
+const objAtom = freezeAtom(atom({ count: 0 }))
+```
+
+### freezeAtomCreator
+
+```js
+import { atom } from 'jotai'
+import { freezeAtomCreator } from 'jotai/utils'
+
+const createFrozenAtom = freezeAtomCreator(atom)
+const objAtom = createFrozenAtom({ count: 0 })
+```
+
+Instead of create a frozen atom from an existing atom,
+`freezeAtomCreator` takes an atom creator function and returns a new function.
+You can use this not only for `atom`, but also for other `atomWith*` creators such as `atomWithReduer`.

@@ -1,7 +1,8 @@
 ---
 title: Performance
 description: How to limit extra re-renders
-nav: 3.12
+nav: 7.08
+keywords: performance
 ---
 
 **Note**: This guide has room for improvement. Consider it as FYI for now.
@@ -11,7 +12,7 @@ First, please read about the difference [between render & commit](https://reactj
 
 ### Cheap renders
 
-As seen in the [core section](../api/core.mdx), due to React 18 default behaviour (but overall good practice), you have to make sure your component functions are _idempotent_.
+As seen in the [core section](../core/atom.mdx), due to React 18 default behaviour (but overall good practice), you have to make sure your component functions are _idempotent_.
 They will be called multiple times during the render phase, even at mount. So we need to keep our renders cheap at all cost!
 
 #### Heavy computation

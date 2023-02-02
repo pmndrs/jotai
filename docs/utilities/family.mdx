@@ -1,10 +1,14 @@
 ---
-title: atomFamily
+title: Family
+nav: 3.5
+keywords: family
 ---
+
+## atomFamily
 
 Ref: https://github.com/pmndrs/jotai/issues/23
 
-## Usage
+### Usage
 
 ```js
 atomFamily(initializeAtom, areEqual): (param) => Atom
@@ -26,7 +30,7 @@ import deepEqual from 'fast-deep-equal'
 const fooFamily = atomFamily((param) => atom(param), deepEqual)
 ```
 
-## TypeScript
+### TypeScript
 
 The atom family types will be inferred from initializeAtom. Here's a typical usage with a primitive atom.
 
@@ -70,7 +74,7 @@ There are two ways to remove params.
   - shouldRemove is a function that takes two arguments `createdAt` in milliseconds and `param`, and returns a boolean value.
   - setting `null` will remove the previously registered function.
 
-## Examples
+### Examples
 
 ```js
 import { atom } from 'jotai'
@@ -107,6 +111,6 @@ const todoFamily = atomFamily(
 )
 ```
 
-## Codesandbox
+### Codesandbox
 
 <CodeSandbox id="8zfrn" />

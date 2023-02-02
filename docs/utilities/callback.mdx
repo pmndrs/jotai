@@ -1,10 +1,14 @@
 ---
-title: useAtomCallback
+title: Callback
+nav: 3.99
+keywords: callback
+published: false
 ---
 
+## useAtomCallback
 Ref: https://github.com/pmndrs/jotai/issues/60
 
-## Usage
+### Usage
 
 ```ts
 useAtomCallback(
@@ -18,7 +22,7 @@ and returns a function that returns a promise.
 
 The callback to pass in the hook must be stable (should be wrapped with useCallback).
 
-## Examples
+### Examples
 
 ```jsx
 import { useEffect, useState, useCallback } from 'react'
@@ -57,6 +61,6 @@ const Monitor = () => {
 }
 ```
 
-## Codesandbox
+### Codesandbox
 
 <CodeSandbox id="6ur43" />

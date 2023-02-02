@@ -1,10 +1,10 @@
 ---
 title: Persistence
 description: How to persist atoms
-nav: 3.03
+nav: 7.14
 ---
 
-Jotai has an [atomWithStorage function in the utils bundle](../api/utils.mdx#atom-with-storage) for persistence that supports persisting state in `sessionStorage`, `localStorage`, `AsyncStorage`, or the URL hash.
+Jotai has an [atomWithStorage function in the utils bundle](../utilities/storage.mdx) for persistence that supports persisting state in `sessionStorage`, `localStorage`, `AsyncStorage`, or the URL hash.
 
 There are also several alternate implementations here:
 
@@ -51,7 +51,7 @@ const atomWithLocalStorage = (key, initialValue) => {
 
 ## A helper function with AsyncStorage and JSON parse
 
-This requires [onMount](../api/core.mdx#on-mount).
+This requires [onMount](../core/atom.mdx#on-mount).
 
 ```js
 const atomWithAsyncStorage = (key, initialValue) => {
@@ -75,14 +75,14 @@ const atomWithAsyncStorage = (key, initialValue) => {
 }
 ```
 
-Don't forget to check out the [Async documentation](./async) for more details on how to use async atoms.
+Don't forget to check out the [Async documentation](../guides/async.mdx) for more details on how to use async atoms.
 
 ### Usage in Async actions
 
 When using an asynchronous storage, the reading of the created atoms are asynchronous too. That comes with some limitations. Before `useAtom` has been called at least once, the value is not set.
 This can cause an issue, for example, if you want to retrieve the value of your stored atom in an async action (write-only atom).
 
-Let's use the [atomWithStorage function in the utils bundle](../api/utils.mdx#atom-with-storage) for the examples, so that we have more options available.
+Let's use the [atomWithStorage function in the utils bundle](../utilities/storage.mdx) for the examples, so that we have more options available.
 
 ```js
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'

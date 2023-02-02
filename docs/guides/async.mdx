@@ -1,7 +1,9 @@
 ---
 title: Async
 description: This doc describes about the behavior with async.
-nav: 1.03
+nav: 7.99
+keywords: async
+published: false
 ---
 
 Using async atoms, you gain access to real-world data while still managing them directly from your atoms and with incredible ease.
@@ -36,7 +38,7 @@ const App = () => {
 }
 ```
 
-Alternatively, you could avoid the inherent suspending that Jotai does for you, by wrapping your atoms with the [`loadable` API](../utils/loadable.mdx).
+Alternatively, you could avoid the inherent suspending that Jotai does for you, by wrapping your atoms with the [`loadable` API](../utilities/async.mdx).
 
 If another atom uses an async atom, it will return a promise. So, we need to make the atom also async.
 
@@ -110,7 +112,7 @@ const baseAtom = atom(new Promise(() => {})) // Will be suspend until set otherw
 
 Async support is first class in Jotai. It fully leverages React Suspense at its core.
 
-> Technically, Suspense usage other than React.lazy is still unsupported / undocumented in React 17. If this is blocking, so you can still use the [`loadable` API](../utils/loadable.mdx) to avoid suspending
+> Technically, Suspense usage other than React.lazy is still unsupported / undocumented in React 17. If this is blocking, so you can still use the [`loadable` API](../utilities/async.mdx) to avoid suspending
 
 To use async atoms, you need to wrap your component tree with `<Suspense>`.
 

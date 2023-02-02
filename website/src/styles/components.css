@@ -7,7 +7,7 @@
 }
 
 .prose h1 {
-  @apply text-4xl font-extrabold leading-tight tracking-tight text-black dark:text-gray-50 lg:text-5xl lg:tracking-tighter;
+  @apply text-4xl font-extrabold leading-tight tracking-tight text-black dark:text-gray-50 lg:text-7xl lg:tracking-tighter;
 }
 
 .prose h2 {

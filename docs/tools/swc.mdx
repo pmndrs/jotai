@@ -1,10 +1,47 @@
 ---
 title: SWC
 description: This doc describes SWC plugins for Jotai.
-nav: 2.05
+nav: 5.01
+keywords: swc,next,nextjs,fast,refresh
 ---
 
 ⚠️ Note: These plugins are experimental. Feedback is welcome in the [Github repo](https://github.com/pmndrs/swc-jotai). Please file issues in the separate repo instead of `jotai` repo.
+
+## @swc-jotai/react-refresh
+
+This plugin adds support for React Refresh for Jotai atoms. This makes sure that state isn't reset, when developing using React Refresh.
+
+### Usage
+
+Install it with:
+
+```sh
+npm install --save-dev @swc-jotai/react-refresh
+```
+
+You can add the plugin to `.swcrc`:
+
+```json
+{
+  "jsc": {
+    "experimental": {
+      "plugins": [["@swc-jotai/react-refresh", {}]]
+    }
+  }
+}
+```
+
+You can use the plugin with the [experimental SWC plugins feature](https://nextjs.org/docs/advanced-features/compiler#swc-plugins-experimental) in Next.js.
+
+```js
+module.exports = {
+  experimental: {
+    swcPlugins: [['@swc-jotai/react-refresh', {}]],
+  },
+}
+```
+
+Examples can be found below.
 
 ## @swc-jotai/debug-label
 
@@ -69,42 +106,6 @@ Or you can use the plugin with the [experimental SWC plugins feature](https://ne
 module.exports = {
   experimental: {
     swcPlugins: [['@swc-jotai/debug-label', {}]],
-  },
-}
-```
-
-Examples can be found below.
-
-## @swc-jotai/react-refresh
-
-This plugin adds support for React Refresh for Jotai atoms. This makes sure that state isn't reset, when developing using React Refresh.
-
-### Usage
-
-Install it with:
-
-```sh
-npm install --save-dev @swc-jotai/react-refresh
-```
-
-You can add the plugin to `.swcrc`:
-
-```json
-{
-  "jsc": {
-    "experimental": {
-      "plugins": [["@swc-jotai/react-refresh", {}]]
-    }
-  }
-}
-```
-
-You can use the plugin with the [experimental SWC plugins feature](https://nextjs.org/docs/advanced-features/compiler#swc-plugins-experimental) in Next.js.
-
-```js
-module.exports = {
-  experimental: {
-    swcPlugins: [['@swc-jotai/react-refresh', {}]],
   },
 }
 ```

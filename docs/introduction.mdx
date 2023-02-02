@@ -4,19 +4,18 @@ description: Table of contents
 nav: 0
 ---
 
-Welcome to the Jotai documentation! Jotai is a primitive and flexible state management library for React. It takes a bottom-up approach with an atomic model inspired by Recoil.
+Welcome to the Jotai documentation! Jotai is a primitive and flexible state management library for React.
+
+It takes a bottom-up approach to global React state management with an atomic model inspired by Recoil. One can build state by combining atoms and renders are optimized based on atom dependency. This solves the extra re-render issue of React context and eliminates the need for memoization.
 
 ## Features
 
 - Minimal API
 - TypeScript oriented
-- Tiny bundle size (3kb)
-- Many extra utils and official integrations
-- Supports Next.js and React Native
-
-## Installation
-
-`npm install jotai` or `yarn add jotai`
+- Tiny core bundle size (2kb)
+- Many extra utilities and integrations
+- Supports Next.js, Gatsby, Remix, and React Native
+- Great developer experience with React Fast Refresh
 
 ## Basics
 
@@ -24,23 +23,17 @@ Learn the basic concepts and primitives of the library, discover how it compares
 
 <TOC section="basics" />
 
-## Guides
+## Core
 
-These guides can help with common use cases such as async behavior, TypeScript, and Next.js.
+Jotai has a very minimal API, exposing only a few exports from the main `jotai` bundle. They are split into four categories below.
 
-<TOC section="guides" />
-
-## API
-
-Jotai has a very minimal API, exposing only a few exports from the main `jotai` bundle. Each is explained in more detail in the Core doc. Jotai also has a nice devtool for debugging and a few helpful Babel and SWC plugins.
-
-<TOC section="api" />
+<TOC section="core" />
 
 ## Utilities
 
 Jotai also includes a `jotai/utils` bundle with a variety of extra utility functions. One example is `atomWithStorage`, which includes localStorage persistence and browser tab synchronization.
 
-<TOC section="utils" />
+<TOC section="utilities" />
 
 ## Integrations
 
@@ -48,8 +41,20 @@ Jotai has separate bundles for many official integrations including `atomWithQue
 
 <TOC section="integrations" />
 
-## Advanced recipes
+## Tools
+
+There are also SWC and Babel compiler plugins for React Fast Refresh support and debugging labels to provide the best developer experience when using Jotai in a React framework such as Next.js or Gatsby.
+
+<TOC section="tools" />
+
+## Guides
+
+These guides can help with use common cases such as TypeScript, React frameworks, and basic patterns.
+
+<TOC section="guides" />
+
+## Recipes
 
 These recipes can help with more advanced patterns.
 
-<TOC section="advanced-recipes" />
+<TOC section="recipes" />

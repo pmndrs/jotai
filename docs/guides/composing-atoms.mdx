@@ -1,6 +1,6 @@
 ---
 title: Composing atoms
-nav: 3.11
+nav: 7.11
 ---
 
 The `atom` function provided by library is very primitive,
@@ -65,7 +65,7 @@ If you set a number value, it will override the `overwrittenAtom` value,
 and if you set `null`, it will be the `roundNumberAtom` value.
 
 The reusable implementation is available as `atomWithDefault`
-in `jotai/utils`. See [atomWithDefault](../utils/atom-with-default.mdx).
+in `jotai/utils`. See [atomWithDefault](../utilities/resettable.mdx).
 
 Next, let's see another example to sync with external value.
 
@@ -93,7 +93,7 @@ The `persistedAtom` works like a primitive atom, but its value
 is persisted in `localStorage`.
 
 The reusable implementation is available as `atomWithStorage`
-in `jotai/utils`. See [atomWithStorage](../utils/atom-with-storage.mdx).
+in `jotai/utils`. See [atomWithStorage](../utilities/storage.mdx).
 
 There is a caveat with this usage. While atom config doesn't hold a value,
 the external value is a singleton value.

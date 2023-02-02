@@ -1,6 +1,10 @@
 ---
-title: atomWithStorage
+title: Storage
+nav: 3.01
+keywords: storage,localstorage,sessionstorage,asyncstorage,persist,persistance
 ---
+
+## atomWithStorage
 
 Ref: https://github.com/pmndrs/jotai/pull/394
 
@@ -24,7 +28,7 @@ const Page = () => {
 
 The `atomWithStorage` function creates an atom with a value persisted in `localStorage` or `sessionStorage` for React or `AsyncStorage` for React Native.
 
-## Parameters
+### Parameters
 
 **key** (required): a unique string used as the key when syncing state with localStorage, sessionStorage, or AsyncStorage
 
@@ -37,7 +41,7 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 
 <CodeSandbox id="vuwi7" />
 
-## Server-side rendering
+### Server-side rendering
 
 Any JSX markup that depends on the value of a stored atom (e.g., a `className` or `style` prop) will use the `initialValue` when rendered on the server (since `localStorage` and `sessionStorage` are not available on the server).
 
@@ -45,7 +49,7 @@ This means that there will be a mismatch between what is originally served to th
 
 The suggested workaround for this issue is to only render the content dependent on the `storedValue` client-side by wrapping it in a [custom `<ClientOnly>` wrapper](https://www.joshwcomeau.com/react/the-perils-of-rehydration/#abstractions), which only renders after rehydration. Alternative solutions are technically possible, but would require a brief "flicker" as the `initialValue` is swapped to the `storedValue`, which can result in an unpleasant user experience, so this solution is advised.
 
-## Deleting an item from storage
+### Deleting an item from storage
 
 For the case you want to delete an item from storage,
 the atom created with `atomWithStorage` accepts the `RESET` symbol on write.
@@ -94,7 +98,7 @@ const TextBox = () => {
 }
 ```
 
-## React-Native implementation
+### React-Native implementation
 
 You can use any library that implements `getItem`, `setItem` & `removeItem`.
 Let's say you would use the standard AsyncStorage provided by the community.

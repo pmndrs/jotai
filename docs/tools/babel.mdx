@@ -1,8 +1,35 @@
 ---
 title: Babel
 description: This doc describes the `jotai/babel` bundle.
-nav: 2.04
+nav: 5.02
+keywords: babel,gatsby,fast,refresh
 ---
+
+## plugin-react-refresh
+
+This plugin adds support for React Refresh for Jotai atoms. This makes sure that state isn't reset, when developing using React Refresh.
+
+### Usage
+
+With a `babel` configuration file:
+
+```json
+{
+  "plugins": ["jotai/babel/plugin-react-refresh"]
+}
+```
+
+You can also supply your atom names to the plugin:
+
+```json
+{
+  "plugins": [
+    ["jotai/babel/plugin-react-refresh", { "customAtomNames": ["customAtom"] }]
+  ]
+}
+```
+
+Examples can be found below.
 
 ## plugin-debug-label
 
@@ -41,7 +68,7 @@ countAtom.debugLabel = 'countAtom'
 export default countAtom
 ```
 
-## Usage
+### Usage
 
 With a `babel` configuration file:
 
@@ -63,37 +90,11 @@ You can also supply your atom names to the plugin:
 
 Examples can be found below.
 
-## plugin-react-refresh
-
-This plugin adds support for React Refresh for Jotai atoms. This makes sure that state isn't reset, when developing using React Refresh.
-
-## Usage
-
-With a `babel` configuration file:
-
-```json
-{
-  "plugins": ["jotai/babel/plugin-react-refresh"]
-}
-```
-
-You can also supply your atom names to the plugin:
-
-```json
-{
-  "plugins": [
-    ["jotai/babel/plugin-react-refresh", { "customAtomNames": ["customAtom"] }]
-  ]
-}
-```
-
-Examples can be found below.
-
 ## preset
 
 Jotai ships with a `babel` containing the plugins created for Jotai.
 
-## Usage
+### Usage
 
 With a `babel` configuration file:
 

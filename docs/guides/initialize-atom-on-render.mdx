@@ -1,7 +1,7 @@
 ---
-title: Initializing Atom State on Render
+title: Initializing state on render
 description: How to initialize atom state on initial render
-nav: 3.12
+nav: 7.13
 ---
 
 There are times when you need to create an reusable component which uses atoms.
@@ -89,6 +89,6 @@ export default function App() {
 
 This behavior is due to our child components looking for the lowest commmon `Provider` ancestor to derive its value.
 
-For more information on `Provider` behavior, please read the docs [here](https://jotai.org/docs/api/core#provider).
+For more information on `Provider` behavior, please read the docs [here](../core/provider.mdx).
 
 For more complex use cases, check out [Molecules integration](../integrations/molecules.mdx).
