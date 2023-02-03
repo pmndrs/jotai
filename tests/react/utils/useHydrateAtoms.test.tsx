@@ -193,7 +193,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
 
 it('useHydrateAtoms should respect onMount', async () => {
   const countAtom = atom(0)
-  const onMountFn = jest.fn<() => void>()
+  const onMountFn = jest.fn(() => {})
   countAtom.onMount = onMountFn
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
