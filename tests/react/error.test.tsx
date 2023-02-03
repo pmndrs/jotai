@@ -16,7 +16,7 @@ const consoleError = console.error
 const errorMessages: string[] = []
 beforeEach(() => {
   errorMessages.splice(0)
-  console.error = jest.fn<(err: string) => void>((err) => {
+  console.error = jest.fn((err: string) => {
     const match = /^(.*?)(\n|$)/.exec(err)
     if (match?.[1]) {
       errorMessages.push(match[1])
