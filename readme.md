@@ -5,7 +5,7 @@
 
 <br>
 
-`npm i jotai` or visit [jotai.org](https://jotai.org)
+visit [jotai.org](https://jotai.org) or `npm i jotai`
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/pmndrs/jotai/lint-and-type.yml?branch=main&style=flat&colorA=000000&colorB=000000)](https://github.com/pmndrs/jotai/actions?query=workflow%3ALint)
 [![Build Size](https://img.shields.io/bundlephobia/minzip/jotai?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=jotai)
@@ -14,17 +14,14 @@
 [![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=ffffff)](https://discord.gg/poimandres)
 [![Open Collective](https://img.shields.io/opencollective/all/jotai?style=flat&colorA=000000&colorB=000000)](https://opencollective.com/jotai)
 
-Jotai is pronounced "joe-tie" and means "state" in Japanese.
+Jotai scales from a simple useState replacement to an enterprise TypeScript application.
 
-You can try live demos in the following:
-[Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) |
-[Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d).
+- Minimal core API (2kb)
+- Many utilities and integrations
+- No string keys (compared to Recoil)
 
-#### How does Jotai differ from Recoil?
-
-- Minimalistic API
-- No string keys
-- TypeScript oriented
+Examples: [Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) |
+[Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d)
 
 ### First create a primitive atom
 
@@ -71,8 +68,6 @@ function DoubleCounter() {
   return <h2>{doubledCount}</h2>
 }
 ```
-
-## Recipes
 
 ### Creating an atom from multiple atoms
 
@@ -165,57 +160,8 @@ function Controls() {
     ...
 ```
 
-## Learn Jotai
+## Links
 
-[![free egghead Jotai introduction course by Daishi](./img/jotai-course-banner.jpg)](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0?utm_source=github&utm_medium=cta&utm_term=jotai)
-
-## More documents
-
-- Core
-  - [atom](./docs/core/atom.mdx)
-  - [useAtom](./docs/core/use-atom.mdx)
-  - [Store](./docs/core/store.mdx)
-  - [Provider](./docs/core/provider.mdx)
-- Utilities
-  - [Storage](./docs/utilities/storage.mdx)
-  - [SSR](./docs/utilities/ssr.mdx)
-  - [Async](./docs/utilities/async.mdx)
-  - [Resettable](./docs/utilities/resettable.mdx)
-  - [Family](./docs/utilities/family.mdx)
-- Integrations
-  - [tRPC](./docs/integrations/trpc.mdx)
-  - [Query](./docs/integrations/query.mdx)
-  - [URQL](./docs/integrations/urql.mdx)
-  - [Immer](./docs/integrations/immer.mdx)
-  - [XState](./docs/integrations/xstate.mdx)
-  - [Location](./docs/integrations/location.mdx)
-  - [Cache](./docs/integrations/cache.mdx)
-  - [Molecules](./docs/integrations/molecules.mdx)
-  - [Optics](./docs/integrations/optics.mdx)
-- Tools
-  - [SWC](./docs/tools/swc.mdx)
-  - [Babel](./docs/tools/babel.mdx)
-  - [Devtools](./docs/tools/devtools.mdx)
-  - Basics
-  - [Concepts](./docs/basics/concepts.mdx)
-  - [Comparison](./docs/basics/comparison.mdx)
-  - [Showcase](./docs/basics/showcase.mdx)
-- Guides
-  - [v2 API migration](./docs/guides/migrating-to-v2-api.mdx)
-  - [TypeScript](./docs/guides/typescript.mdx)
-  - [Next.js](./docs/guides/nextjs.mdx)
-  - [Gatsby](./docs/guides/gatsby.mdx)
-  - [Remix](./docs/guides/remix.mdx)
-  - [React Native](./docs/guides/react-native.mdx)
-  - [Debugging](./docs/guides/debugging.mdx)
-  - [Performance](./docs/guides/performance.mdx)
-  - [Testing](./docs/guides/testing.mdx)
-  - [Core internals](./docs/guides/core-internals.mdx)
-  - [Composing atoms](./docs/guides/composing-atoms.mdx)
-  - [Atoms in atom](./docs/guides/atoms-in-atom.mdx)
-  - [Initializing state on render](./docs/guides/initialize-atom-on-render.mdx)
-  - [Persistence](./docs/guides/persistence.mdx)
-- Recipes
-  - [Large objects](./docs/advanced-recipes/large-objects.mdx)
-  - [Atom creators](./docs/advanced-recipes/atom-creators.mdx)
-  - [Custom useAtom hooks](./docs/advanced-recipes/custom-useatom-hooks.mdx)
+- [website](https://jotai.org)
+- [documentation](https://jotai.org/docs)
+- [course](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0)

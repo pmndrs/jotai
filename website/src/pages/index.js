@@ -18,15 +18,18 @@ export default function HomePage() {
         <div className="space-y-4">
           <Headline>Introduction</Headline>
           <p>
-            Jotai takes a bottom-up approach to global React state management with an atomic model
-            inspired by Recoil. One can build state by combining atoms and renders are optimized
-            based on atom dependency. This solves the extra re-render issue of React context and
-            eliminates the need for memoization.
+            Jotai takes an atomic approach to global React state management with a model inspired by
+            Recoil.
           </p>
           <p>
-            It’s scalable from a simple <InlineCode>useState</InlineCode> replacement all the way to
-            an enterprise TypeScript application with complex requirements. Plus there are plenty of
-            built-in utilities and officially maintained integrations to help you along the way!
+            Build state by combining atoms and renders are automatically optimized based on atom
+            dependency. This solves the extra re-render issue of React context and eliminates the
+            need for memoization.
+          </p>
+          <p>
+            It scales from a simple <InlineCode>useState</InlineCode> replacement to an enterprise
+            TypeScript application with complex requirements. Plus there are plenty of utilities and
+            integrations to help you along the way!
           </p>
           <p>Jotai is trusted in production by teams at innovative companies like these.</p>
           <LogoCloud />

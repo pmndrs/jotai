@@ -5,5 +5,147 @@
       "maxDuration": 30
     }
   },
+  "redirects": [
+    {
+      "source": "/docs",
+      "destination": "/docs/introduction",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/:slug",
+      "destination": "/docs/utilities/:slug",
+      "permanent": false
+    },
+    {
+      "source": "/docs/advanced-recipes/:slug",
+      "destination": "/docs/recipes/:slug",
+      "permanent": false
+    },
+    {
+      "source": "/docs/api/babel",
+      "destination": "/docs/tools/babel",
+      "permanent": false
+    },
+    {
+      "source": "/docs/api/core",
+      "destination": "/docs/core/atom",
+      "permanent": false
+    },
+    {
+      "source": "/docs/api/devtools",
+      "destination": "/docs/tools/devtools",
+      "permanent": false
+    },
+    {
+      "source": "/docs/api/devtools",
+      "destination": "/docs/tools/devtools",
+      "permanent": false
+    },
+    {
+      "source": "/docs/api/swc",
+      "destination": "/docs/tools/swc",
+      "permanent": false
+    },
+    {
+      "source": "/docs/api/utils",
+      "destination": "/docs/tools/introduction",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/atom-family",
+      "destination": "/docs/utilities/family",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/atom-with-default",
+      "destination": "/docs/utilities/resettable",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/atom-with-hash",
+      "destination": "/docs/integrations/location",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/atom-with-observable",
+      "destination": "/docs/utilities/async",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/atom-with-reducer",
+      "destination": "/docs/utilities/reducer",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/atom-with-reset",
+      "destination": "/docs/utilities/resettable",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/atom-with-storage",
+      "destination": "/docs/utilities/storage",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/freeze-atom-creator",
+      "destination": "/docs/tools/devtools",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/freeze-atom",
+      "destination": "/docs/tools/devtools",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/loadable",
+      "destination": "/docs/utilities/async",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/reset",
+      "destination": "/docs/utilities/resettable",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/select-atom",
+      "destination": "/docs/utilities/select",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/split-atom",
+      "destination": "/docs/utilities/split",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/use-atom-callback",
+      "destination": "/docs/utilities/callback",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/use-atom-value",
+      "destination": "/docs/core/use-atom",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/use-hydrate-atoms",
+      "destination": "/docs/utilities/ssr",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/use-reducer-atom",
+      "destination": "/docs/utilities/reducer",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/use-reset-atom",
+      "destination": "/docs/utilities/resttable",
+      "permanent": false
+    },
+    {
+      "source": "/docs/utils/use-update-atom",
+      "destination": "/docs/core/use-atom",
+      "permanent": false
+    }
+  ],
   "trailingSlash": false
 }

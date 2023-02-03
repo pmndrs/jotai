@@ -4,18 +4,15 @@ description: Table of contents
 nav: 0
 ---
 
-Welcome to the Jotai documentation! Jotai is a primitive and flexible state management library for React.
-
-It takes a bottom-up approach to global React state management with an atomic model inspired by Recoil. One can build state by combining atoms and renders are optimized based on atom dependency. This solves the extra re-render issue of React context and eliminates the need for memoization.
+Welcome to the Jotai v2 documentation! Jotai's atomic approach to global React state management scales from a simple `useState` replacement to an enterprise application with complex requirements.
 
 ## Features
 
-- Minimal API
+- Minimal core API (2kb)
+- Many utilities and integrations
 - TypeScript oriented
-- Tiny core bundle size (2kb)
-- Many extra utilities and integrations
-- Supports Next.js, Gatsby, Remix, and React Native
-- Great developer experience with React Fast Refresh
+- Works with Next.js, Gatsby, Remix, and React Native
+- React Fast Refresh with SWC and Babel plugins
 
 ## Core
 
@@ -25,7 +22,7 @@ Jotai has a very minimal API, exposing only a few exports from the main `jotai` 
 
 ## Utilities
 
-Jotai also includes a `jotai/utils` bundle with a variety of extra utility functions. One example is `atomWithStorage`, which includes localStorage persistence and browser tab synchronization.
+Jotai also includes a `jotai/utils` bundle with a variety of extra utility functions. One example is `atomWithStorage`, which includes localStorage persistence and cross browser tab synchronization.
 
 <TOC section="utilities" />
 
@@ -37,7 +34,7 @@ Jotai has separate bundles for many official integrations including `atomWithQue
 
 ## Tools
 
-There are also SWC and Babel compiler plugins for React Fast Refresh support and debugging labels to provide the best developer experience when using Jotai in a React framework such as Next.js or Gatsby.
+There are also SWC and Babel compiler plugins for React Fast Refresh support and debugging labels. This creates the best developer experience when using Jotai with a React framework such as Next.js or Gatsby.
 
 <TOC section="tools" />
 
