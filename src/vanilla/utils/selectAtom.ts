@@ -17,19 +17,19 @@ const memo3 = <T>(
 
 export function selectAtom<Value, Slice>(
   anAtom: Atom<Promise<Value>>,
-  selector: (v: Awaited<Value>) => Slice,
+  selector: (v: Awaited<Value>, prevSlice?: Slice) => Slice,
   equalityFn?: (a: Slice, b: Slice) => boolean
 ): Atom<Promise<Slice>>
 
 export function selectAtom<Value, Slice>(
   anAtom: Atom<Value>,
-  selector: (v: Awaited<Value>) => Slice,
+  selector: (v: Awaited<Value>, prevSlice?: Slice) => Slice,
   equalityFn?: (a: Slice, b: Slice) => boolean
 ): Atom<Slice>
 
 export function selectAtom<Value, Slice>(
   anAtom: Atom<Value>,
-  selector: (v: Awaited<Value>) => Slice,
+  selector: (v: Awaited<Value>, prevSlice?: Slice) => Slice,
   equalityFn: (a: Slice, b: Slice) => boolean = Object.is
 ) {
   return memo3(
@@ -39,11 +39,11 @@ export function selectAtom<Value, Slice>(
         Awaited<Value>,
         Slice | typeof EMPTY
       ]) => {
-        const slice = selector(value)
-        if (prevSlice !== EMPTY && equalityFn(prevSlice, slice)) {
-          return prevSlice
+        if (prevSlice === EMPTY) {
+          return selector(value)
         }
-        return slice
+        const slice = selector(value, prevSlice)
+        return equalityFn(prevSlice, slice) ? prevSlice : slice
       }
       const derivedAtom: Atom<Slice | Promise<Slice> | typeof EMPTY> & {
         init?: typeof EMPTY
