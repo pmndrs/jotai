@@ -4,6 +4,7 @@
     "strict": true,
     "jsx": "react-jsx",
     "esModuleInterop": true,
+    "module": "esnext",
     "moduleResolution": "node",
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
