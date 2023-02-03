@@ -1,3 +1,4 @@
+import { expect, it } from '@jest/globals'
 import { atom } from 'jotai/vanilla'
 
 it('creates atoms', () => {

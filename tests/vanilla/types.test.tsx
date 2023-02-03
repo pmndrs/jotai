@@ -1,3 +1,4 @@
+import { it } from '@jest/globals'
 import { expectType } from 'ts-expect'
 import { atom } from 'jotai/vanilla'
 import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai/vanilla'

@@ -1,7 +1,9 @@
 import path from 'path'
 import { transformSync } from '@babel/core'
+import { expect, it } from '@jest/globals'
 
-const plugin = path.join(__dirname, '../../src/babel/plugin-react-refresh')
+// const plugin = path.resolve('./src/babel/plugin-react-refresh.ts')
+const plugin = path.resolve('./dist/babel/plugin-react-refresh.js')
 
 const transform = (
   code: string,

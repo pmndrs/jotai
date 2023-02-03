@@ -1,7 +1,9 @@
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
+import { describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+import type { Getter } from 'jotai/vanilla'
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -89,7 +91,9 @@ it('works a primitive atom and a dependent async atom', async () => {
 
 it('should keep an atom value even if unmounted', async () => {
   const countAtom = atom(0)
-  const derivedFn = jest.fn().mockImplementation((get) => get(countAtom))
+  const derivedFn = jest
+    .fn<(get: Getter) => number>()
+    .mockImplementation((get) => get(countAtom))
   const derivedAtom = atom(derivedFn)
 
   const Counter = () => {
@@ -159,7 +163,9 @@ it('should keep an atom value even if unmounted', async () => {
 
 it('should keep a dependent atom value even if unmounted', async () => {
   const countAtom = atom(0)
-  const derivedFn = jest.fn().mockImplementation((get) => get(countAtom))
+  const derivedFn = jest
+    .fn<(get: Getter) => number>()
+    .mockImplementation((get) => get(countAtom))
   const derivedAtom = atom(derivedFn)
 
   const Counter = () => {
@@ -211,7 +217,9 @@ it('should keep a dependent atom value even if unmounted', async () => {
 
 it('should bail out updating if not changed', async () => {
   const countAtom = atom(0)
-  const derivedFn = jest.fn().mockImplementation((get) => get(countAtom))
+  const derivedFn = jest
+    .fn<(get: Getter) => number>()
+    .mockImplementation((get) => get(countAtom))
   const derivedAtom = atom(derivedFn)
 
   const Counter = () => {
@@ -253,13 +261,15 @@ it('should bail out updating if not changed', async () => {
 it('should bail out updating if not changed, 2 level', async () => {
   const dataAtom = atom({ count: 1, obj: { anotherCount: 10 } })
   const getDataCountFn = jest
-    .fn()
+    .fn<(get: Getter) => number>()
     .mockImplementation((get) => get(dataAtom).count)
   const countAtom = atom(getDataCountFn)
-  const getDataObjFn = jest.fn().mockImplementation((get) => get(dataAtom).obj)
+  const getDataObjFn = jest
+    .fn<(get: Getter) => any>()
+    .mockImplementation((get) => get(dataAtom).obj)
   const objAtom = atom(getDataObjFn)
   const getAnotherCountFn = jest
-    .fn()
+    .fn<(get: Getter) => number>()
     .mockImplementation((get) => get(objAtom).anotherCount)
   const anotherCountAtom = atom(getAnotherCountFn)
 
@@ -785,7 +795,7 @@ describe('glitch free', () => {
     const baseAtom = atom(0)
     const derived1Atom = atom((get) => get(baseAtom))
     const derived2Atom = atom((get) => get(derived1Atom))
-    const computeValue = jest.fn((get) => {
+    const computeValue = jest.fn<(get: Getter) => string>((get) => {
       const v0 = get(baseAtom)
       const v1 = get(derived1Atom)
       const v2 = get(derived2Atom)
@@ -826,7 +836,7 @@ describe('glitch free', () => {
     const baseAtom = atom(0)
     const derived1Atom = atom((get) => get(baseAtom) * 0)
     const derived2Atom = atom((get) => get(derived1Atom) * 0)
-    const computeValue = jest.fn((get) => {
+    const computeValue = jest.fn<(get: Getter) => number>((get) => {
       const v0 = get(baseAtom)
       const v1 = get(derived1Atom)
       const v2 = get(derived2Atom)
@@ -868,7 +878,7 @@ describe('glitch free', () => {
     const derived1Atom = atom((get) => get(baseAtom))
     const derived2Atom = atom((get) => get(derived1Atom))
     const derived3Atom = atom((get) => get(derived2Atom))
-    const computeValue = jest.fn((get) => {
+    const computeValue = jest.fn<(get: Getter) => number>((get) => {
       const v0 = get(baseAtom)
       const v1 = get(derived1Atom)
       const v2 = get(derived2Atom)

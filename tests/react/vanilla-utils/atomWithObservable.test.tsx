@@ -1,5 +1,6 @@
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
+import { describe, expect, it } from '@jest/globals'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'

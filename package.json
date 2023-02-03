@@ -73,10 +73,10 @@
     "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
     "eslint:ci": "eslint '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
     "pretest": "tsc --noEmit",
-    "test": "jest",
-    "test:ci": "jest",
-    "test:dev": "jest --watch --no-coverage",
-    "test:coverage:watch": "jest --watch",
+    "test": "yarn node --experimental-vm-modules $(yarn bin jest)",
+    "test:ci": "yarn node --experimental-vm-modules $(yarn bin jest)",
+    "test:dev": "yarn node --experimental-vm-modules $(yarn bin jest) --watch --no-coverage",
+    "test:coverage:watch": "yarn node --experimental-vm-modules $(yarn bin jest) --watch",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.8 --to=3.8 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
     "patch-ts3.8": "node -e \"require('shelljs').find('dist/ts3.8/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
     "patch-old-ts": "shx touch dist/ts_version_3.8_and_above_is_required.d.ts",
@@ -116,7 +116,7 @@
   "jest": {
     "rootDir": ".",
     "testEnvironment": "jsdom",
-    "preset": "ts-jest/presets/js-with-ts-esm",
+    "preset": "ts-jest/presets/default-esm",
     "transform": {
       "^.+\\.(t|j)sx?$": [
         "ts-jest",
@@ -125,12 +125,17 @@
         }
       ]
     },
+    "extensionsToTreatAsEsm": [
+      ".ts",
+      ".tsx"
+    ],
     "globals": {
       "__DEV__": true
     },
     "moduleNameMapper": {
       "^jotai$": "<rootDir>/src/index.ts",
-      "^jotai/(.*)$": "<rootDir>/src/$1.ts"
+      "^jotai/(.*)$": "<rootDir>/src/$1.ts",
+      "^rxjs$": "<rootDir>/node_modules/rxjs/dist/cjs/index.js"
     },
     "modulePathIgnorePatterns": [
       "dist"
@@ -163,7 +168,6 @@
     "@rollup/plugin-terser": "^0.4.0",
     "@rollup/plugin-typescript": "^11.0.0",
     "@testing-library/react": "^13.4.0",
-    "@types/jest": "^29.4.0",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
     "@typescript-eslint/eslint-plugin": "^5.49.0",

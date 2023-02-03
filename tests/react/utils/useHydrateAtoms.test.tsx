@@ -1,4 +1,5 @@
 import { StrictMode, useEffect, useRef } from 'react'
+import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtom } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
@@ -192,7 +193,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
 
 it('useHydrateAtoms should respect onMount', async () => {
   const countAtom = atom(0)
-  const onMountFn = jest.fn()
+  const onMountFn = jest.fn<() => void>()
   countAtom.onMount = onMountFn
 
   const Counter = ({ initialCount }: { initialCount: number }) => {

@@ -1,9 +1,17 @@
 /// <reference types="react/experimental" />
 
-import { StrictMode, Suspense, use, useEffect, useTransition } from 'react'
+import ReactExports, {
+  StrictMode,
+  Suspense,
+  useEffect,
+  useTransition,
+} from 'react'
+import { describe, expect, it } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+
+const { use } = ReactExports
 
 const describeWithUseTransition =
   typeof useTransition === 'function' ? describe : describe.skip
