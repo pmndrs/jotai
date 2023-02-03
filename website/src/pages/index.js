@@ -266,7 +266,7 @@ const AnimeList = () => {
 }
 
 const AddAnime = () => {
-  const setAnime = useSetValue(animeAtom)
+  const setAnime = useSetAtom(animeAtom)
 
   return (
     <button onClick={() => {
