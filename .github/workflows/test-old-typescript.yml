@@ -46,7 +46,7 @@ jobs:
       - name: Patch for Older TS
         if: ${{ matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
-          sed -i~ 's/import\.meta\.env/(import.meta.env as any)/' tests/*.tsx
+          sed -i~ 's/import\.meta\.env/(import.meta.env as any)/' tests/*/*.tsx tsts/*/*/*.tsx
           sed -i~ '1s/^/\/\/\/ <reference types="react\/experimental" \/>\nimport React from "react";/' tests/*/*.tsx tests/*/*/*.tsx
           sed -i~ 's/"jsx": "react-jsx",/"jsx": "react",/' tsconfig.json
           sed -i~ 's/"noUncheckedIndexedAccess": true,//' tsconfig.json
