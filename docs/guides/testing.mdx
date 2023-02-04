@@ -64,11 +64,22 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { countAtom, Counter } from './Counter'
 import { Provider } from 'jotai'
 
+const HydrateAtoms = ({ initialValues, children }) => {
+  useHydrateAtoms(initialValues)
+  return children
+}
+
+const TestProvider = ({ initialValues, children }) => (
+  <Provider>
+    <HydrateAtoms initialValues={initialValues}>{children}</HydrateAtoms>
+  </Provider>
+)
+
 const CounterProvider = () => {
   return (
-    <Provider initialValues={[[countAtom, 100]]}>
+    <TestProvider initialValues={[[countAtom, 100]]}>
       <Counter />
-    </Provider>
+    </TestProvider>
   )
 }
 

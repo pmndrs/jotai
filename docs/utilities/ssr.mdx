@@ -44,8 +44,7 @@ useHydrateAtoms(
   { store: myStore }
 )
 // Or with a map
-const [initialValues] = useState(() => new Map([[count, 42]]))
-useHydrateAtoms(initialValues)
+useHydrateAtoms(new Map([[count, 42]]))
 ```
 
 Atoms can only be hydrated once per store. Therefore, if the initial value used is changed during rerenders, it won't update the atom value.

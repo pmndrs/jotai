@@ -28,6 +28,7 @@ learn about basics and how to use compiler in advance.
 ```jsx
 import React, { Suspense } from 'react'
 import { Provider, useAtom } from 'jotai'
+import { useHydrateAtoms } from 'jotai/utils'
 import { environmentAtom, atomWithQuery } from 'jotai-relay'
 import { Environment, Network, RecordSource, Store } from 'relay-runtime'
 import graphql from 'babel-plugin-relay/macro'
@@ -71,12 +72,19 @@ const Main = () => {
   )
 }
 
+const HydrateAtoms = ({ children }) => {
+  useHydrateAtoms([[environmentAtom, myEnvironment]])
+  return children
+}
+
 const App = () => {
   return (
-    <Provider initialValues={[[environmentAtom, myEnvironment]]}>
-      <Suspense fallback="Loading...">
-        <Main />
-      </Suspense>
+    <Provider>
+      <HydrateAtoms>
+        <Suspense fallback="Loading...">
+          <Main />
+        </Suspense>
+      </HydrateAtoms>
     </Provider>
   )
 }
