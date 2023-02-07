@@ -63,6 +63,9 @@ Async atoms are just normal atoms with promise values.
 Atoms getter functions don't resolve promises.
 On the other hand, `useAtom` hook continues to resolve promises.
 
+Some utils like `splitAtom` expects sync atoms,
+and won't work with async atoms.
+
 ### Writable atom type is changed (TypeScript only)
 
 ```ts
@@ -205,6 +208,35 @@ const allAtom = waitForAll([fooAtom, barAtom])
 ```js
 const allAtom = atom((get) => Promise.all([get(fooAtom), get(barAtom)]))
 ```
+
+### `splitAtom` util (or some other utils) with async atoms
+
+`splitAtom` util only accepts sync atoms.
+You need to unwrap async atoms before passing.
+
+This applies to some other utils like `atomsWithQuery` from `jotai-tanstack-query`.
+
+#### Previous API
+
+```js
+const splittedAtom = splitAtom(asyncArrayAtom)
+```
+
+#### New API
+
+```js
+const splittedAtom = splitAtom(unwrap(asyncArrayAtom, () => []))
+```
+
+As of writing, `unwrap` is unstable and not documented.
+You can instead use `loadable`, which gives more controll on loading status.
+If you need to use `<Suspense>`, atoms-in-atom pattern would help.
+
+For more information, refer the following discussions:
+
+- https://github.com/pmndrs/jotai/discussions/1615
+- https://github.com/jotaijs/jotai-tanstack-query/issues/21
+- https://github.com/pmndrs/jotai/discussions/1751
 
 ## Some other changes
 
