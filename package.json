@@ -34,19 +34,19 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "types": "./index.d.ts",
       "import": {
         "types": "./esm/index.d.mts",
         "default": "./esm/index.mjs"
       },
-      "types": "./index.d.ts",
       "default": "./index.js"
     },
     "./*": {
+      "types": "./*.d.ts",
       "import": {
         "types": "./esm/*.d.mts",
         "default": "./esm/*.mjs"
       },
-      "types": "./*.d.ts",
       "default": "./*.js"
     }
   },
