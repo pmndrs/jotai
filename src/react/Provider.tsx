@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef } from 'react'
+import React, { createContext, useContext, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { createStore, getDefaultStore } from 'jotai/vanilla'
 
