@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef } from 'react'
+import { createContext, createElement, useContext, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { createStore, getDefaultStore } from 'jotai/vanilla'
 
@@ -26,9 +26,11 @@ export const Provider = ({
   if (!store && !storeRef.current) {
     storeRef.current = createStore()
   }
-  return (
-    <StoreContext.Provider value={store || storeRef.current}>
-      {children}
-    </StoreContext.Provider>
+  return createElement(
+    StoreContext.Provider,
+    {
+      value: store || storeRef.current,
+    },
+    children
   )
 }
