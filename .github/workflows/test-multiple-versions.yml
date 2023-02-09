@@ -49,7 +49,7 @@ jobs:
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
-          sed -i~ '1s/^/import React from "react";/' tests/*/*.tsx tests/*/*/*.tsx src/*/*.tsx
+          sed -i~ '1s/^/import React from "react";/' tests/*/*.tsx tests/*/*/*.tsx
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' tsconfig.json
           sed -i~ 's/import\.meta\.env[?]\.MODE/"DEVELOPMENT".toLowerCase()/' src/*.ts src/*/*.ts src/*/*/*.ts
           sed -i~ 's/"test:ci":.*,$/"test:ci": "jest",/' package.json
