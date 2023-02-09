@@ -1,11 +1,12 @@
 import { StrictMode, Suspense, useState } from 'react'
+import { expect, it, jest } from '@jest/globals'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 it('one atom, one effect', async () => {
   const countAtom = atom(1)
-  const onMountFn = jest.fn()
+  const onMountFn = jest.fn(() => {})
   countAtom.onMount = onMountFn
 
   const Counter = () => {
@@ -35,8 +36,8 @@ it('one atom, one effect', async () => {
 it('two atoms, one each', async () => {
   const countAtom = atom(1)
   const countAtom2 = atom(1)
-  const onMountFn = jest.fn()
-  const onMountFn2 = jest.fn()
+  const onMountFn = jest.fn(() => {})
+  const onMountFn2 = jest.fn(() => {})
   countAtom.onMount = onMountFn
   countAtom2.onMount = onMountFn2
 
@@ -84,7 +85,7 @@ it('two atoms, one each', async () => {
 it('one derived atom, one onMount', async () => {
   const countAtom = atom(1)
   const countAtom2 = atom((get) => get(countAtom))
-  const onMountFn = jest.fn()
+  const onMountFn = jest.fn(() => {})
   countAtom.onMount = onMountFn
 
   const Counter = () => {

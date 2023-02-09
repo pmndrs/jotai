@@ -1,3 +1,4 @@
+import { expect, it, jest } from '@jest/globals'
 import { atom, createStore } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {

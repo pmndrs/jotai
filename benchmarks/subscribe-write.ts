@@ -5,12 +5,6 @@ import { atom } from '../src/vanilla/atom'
 import type { PrimitiveAtom } from '../src/vanilla/atom'
 import { createStore } from '../src/vanilla/store'
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __DEV__: boolean
-}
-globalThis.__DEV__ = false
-
 const cleanupFns = new Set<() => void>()
 const cleanup = () => {
   cleanupFns.forEach((fn) => fn())

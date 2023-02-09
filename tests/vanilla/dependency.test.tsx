@@ -1,3 +1,4 @@
+import { expect, it } from '@jest/globals'
 import { atom, createStore } from 'jotai/vanilla'
 
 it('can propagate updates with async atom chains', async () => {
