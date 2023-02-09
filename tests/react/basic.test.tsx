@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { unstable_batchedUpdates } from 'react-dom'
 import { useAtom } from 'jotai/react'

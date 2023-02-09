@@ -136,7 +136,7 @@ export const createStore = () => {
   >()
   let stateListeners: Set<StateListener>
   let mountedAtoms: MountedAtoms
-  if (__DEV__) {
+  if (import.meta.env?.MODE !== 'production') {
     stateListeners = new Set()
     mountedAtoms = new Set()
   }
@@ -148,7 +148,7 @@ export const createStore = () => {
     atom: Atom<Value>,
     atomState: AtomState<Value>
   ): void => {
-    if (__DEV__) {
+    if (import.meta.env?.MODE !== 'production') {
       Object.freeze(atomState)
     }
     const prevAtomState = atomStateMap.get(atom)
@@ -181,7 +181,7 @@ export const createStore = () => {
         if (nextAtomState.d.get(a) !== aState) {
           changed = true
         }
-      } else if (__DEV__) {
+      } else if (import.meta.env?.MODE !== 'production') {
         console.warn('[Bug] atom state not found')
       }
     })
@@ -295,12 +295,15 @@ export const createStore = () => {
         return controller.signal
       },
       get setSelf() {
-        if (__DEV__ && !isActuallyWritableAtom(atom)) {
+        if (
+          import.meta.env?.MODE !== 'production' &&
+          !isActuallyWritableAtom(atom)
+        ) {
           console.warn('setSelf function cannot be used with read-only atom')
         }
         if (!setSelf && isActuallyWritableAtom(atom)) {
           setSelf = (...args) => {
-            if (__DEV__ && isSync) {
+            if (import.meta.env?.MODE !== 'production' && isSync) {
               console.warn('setSelf function cannot be called in sync')
             }
             if (!isSync) {
@@ -456,7 +459,7 @@ export const createStore = () => {
       l: new Set(),
     }
     mountedMap.set(atom, mounted)
-    if (__DEV__) {
+    if (import.meta.env?.MODE !== 'production') {
       mountedAtoms.add(atom)
     }
     // mount dependencies before onMount
@@ -489,7 +492,7 @@ export const createStore = () => {
       onUnmount()
     }
     mountedMap.delete(atom)
-    if (__DEV__) {
+    if (import.meta.env?.MODE !== 'production') {
       mountedAtoms.delete(atom)
     }
     // unmount dependencies afterward
@@ -510,7 +513,7 @@ export const createStore = () => {
           }
         }
       })
-    } else if (__DEV__) {
+    } else if (import.meta.env?.MODE !== 'production') {
       console.warn('[Bug] could not find atom state to unmount', atom)
     }
   }
@@ -574,12 +577,12 @@ export const createStore = () => {
           ) {
             mounted.l.forEach((listener) => listener())
           }
-        } else if (__DEV__) {
+        } else if (import.meta.env?.MODE !== 'production') {
           console.warn('[Bug] no atom state to flush')
         }
       })
     }
-    if (__DEV__) {
+    if (import.meta.env?.MODE !== 'production') {
       stateListeners.forEach((l) => l())
     }
   }
@@ -595,7 +598,7 @@ export const createStore = () => {
     }
   }
 
-  if (__DEV__) {
+  if (import.meta.env?.MODE !== 'production') {
     return {
       get: readAtom,
       set: writeAtom,

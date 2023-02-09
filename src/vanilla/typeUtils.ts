@@ -10,16 +10,16 @@ export type ExtractAtomValue<AtomType> = AtomType extends Atom<infer Value>
   : never
 
 export type ExtractAtomArgs<AtomType> = AtomType extends WritableAtom<
-  unknown,
+  any,
   infer Args,
-  unknown
+  any
 >
   ? Args
   : never
 
 export type ExtractAtomResult<AtomType> = AtomType extends WritableAtom<
-  unknown,
-  unknown[],
+  any,
+  any[],
   infer Result
 >
   ? Result
