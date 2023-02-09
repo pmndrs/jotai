@@ -19,7 +19,7 @@ module.exports = (api, targets) => {
       [
         '@babel/plugin-transform-react-jsx',
         {
-          runtime: 'classic',
+          runtime: 'automatic',
         },
       ],
       ['@babel/plugin-transform-typescript', { isTSX: true }],
