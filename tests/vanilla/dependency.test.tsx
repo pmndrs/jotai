@@ -51,3 +51,24 @@ it('can get async atom with deps more than once before resolving (#1668)', async
   const count = await promise
   expect(count).toBe(2)
 })
+
+it('correctly updates async derived atom after get/set update', async () => {
+  const baseAtom = atom(0)
+  const derivedAsyncAtom = atom(
+    async (get) => get(baseAtom) + 1,
+    async (get, set, val) => set(baseAtom, val as number)
+  )
+
+  const store = createStore()
+
+  // NOTE: Have to .set() straight after await on .get(), so that it executes
+  // in the same JS event loop cycle!
+  let derived = await store.get(derivedAsyncAtom)
+  await store.set(derivedAsyncAtom, 2)
+
+  expect(derived).toBe(1)
+  expect(store.get(baseAtom)).toBe(2)
+
+  derived = await store.get(derivedAsyncAtom)
+  expect(derived).toBe(3)
+})
