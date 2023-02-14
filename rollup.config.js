@@ -87,18 +87,26 @@ function createCommonJSConfig(input, output) {
 }
 
 function createUMDConfig(input, output, env) {
-  const c = output.split('/').pop()
+  const c = output.replace(/^dist\/umd\//, '').split(/\W/)
+  const name = c.reduce((acc, itm, idx) => {
+    if (idx === c.length - 1 && itm === 'index') {
+      return acc
+    }
+    return acc + `${itm.slice(0, 1).toUpperCase()}${itm.slice(1)}`
+  }, 'jotai')
   return {
     input,
     output: {
       file: `${output}.${env}.js`,
       format: 'umd',
-      name:
-        c === 'index'
-          ? 'jotai'
-          : `jotai${c.slice(0, 1).toUpperCase()}${c.slice(1)}`,
+      name,
       globals: {
         react: 'React',
+        'jotai/vanilla': 'jotaiVanilla',
+        'jotai/utils': 'jotaiUtils',
+        'jotai/react': 'jotaiReact',
+        'jotai/vanilla/utils': 'jotaiVanillaUtils',
+        'jotai/react/utils': 'jotaiReactUtils',
       },
     },
     external,
