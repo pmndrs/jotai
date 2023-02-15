@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, useState } from 'react'
 import { describe, expect, it } from '@jest/globals'
-import { act, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
