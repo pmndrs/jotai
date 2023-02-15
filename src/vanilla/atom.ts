@@ -33,7 +33,6 @@ type OnMount<Args extends unknown[], Result> = <
 ) => OnUnmount | void
 
 export interface Atom<Value> {
-  toString: () => string
   debugLabel?: string
   read: Read<Value>
 }
@@ -81,8 +80,16 @@ export function atom<Value, Args extends unknown[], Result>(
 ) {
   const key = `atom${++keyCount}`
   const config = {
-    toString: () => key,
-  } as WritableAtom<Value, Args, Result> & { init?: Value }
+    get [Symbol.toStringTag]() {
+      if (import.meta.env?.MODE !== 'production' && config.debugLabel) {
+        return `${key}:${config.debugLabel}`
+      }
+      return key
+    },
+  } as {
+    [Symbol.toStringTag]?: string
+  } & WritableAtom<Value, Args, Result> &
+    WithInitialValue<Value>
   if (typeof read === 'function') {
     config.read = read as Read<Value, SetAtom<Args, Result>>
   } else {
