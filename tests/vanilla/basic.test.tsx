@@ -29,23 +29,23 @@ it('creates atoms', () => {
       "countAtom": {
         "init": 0,
         "read": [Function],
-        "toString": [Function],
         "write": [Function],
+        Symbol(Symbol.toStringTag): "atom1",
       },
       "decrementCountAtom": {
         "init": null,
         "read": [Function],
-        "toString": [Function],
         "write": [Function],
+        Symbol(Symbol.toStringTag): "atom5",
       },
       "doubledCountAtom": {
         "read": [Function],
-        "toString": [Function],
+        Symbol(Symbol.toStringTag): "atom3",
       },
       "sumCountAtom": {
         "read": [Function],
-        "toString": [Function],
         "write": [Function],
+        Symbol(Symbol.toStringTag): "atom4",
       },
     }
   `)
