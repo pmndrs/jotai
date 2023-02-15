@@ -47,7 +47,7 @@ describe('abortable atom test', () => {
     act(() => {
       resolve.splice(0).forEach((fn) => fn())
     })
-    await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
+    expect(await findByText('count: 0')).toBeTruthy()
     expect(abortedCount).toBe(0)
 
     await userEvent.click(getByText('button'))
@@ -55,7 +55,7 @@ describe('abortable atom test', () => {
     act(() => {
       resolve.splice(0).forEach((fn) => fn())
     })
-    await waitFor(() => expect(getByText('count: 2')).toBeTruthy())
+    expect(await findByText('count: 2')).toBeTruthy()
 
     expect(abortedCount).toBe(1)
 
@@ -63,7 +63,7 @@ describe('abortable atom test', () => {
     act(() => {
       resolve.splice(0).forEach((fn) => fn())
     })
-    await waitFor(() => expect(getByText('count: 3')).toBeTruthy())
+    expect(await findByText('count: 3')).toBeTruthy()
     expect(abortedCount).toBe(1)
   })
 
@@ -106,29 +106,21 @@ describe('abortable atom test', () => {
     )
 
     expect(await findByText('loading')).toBeTruthy()
-
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
-    await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
+    resolve.splice(0).forEach((fn) => fn())
+    expect(await findByText('count: 0')).toBeTruthy()
 
     expect(abortedCount).toBe(0)
 
     await userEvent.click(getByText('button'))
     await userEvent.click(getByText('button'))
-
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
-    await waitFor(() => expect(getByText('count: 2')).toBeTruthy())
+    resolve.splice(0).forEach((fn) => fn())
+    expect(await findByText('count: 2')).toBeTruthy()
 
     expect(abortedCount).toBe(1)
 
     await userEvent.click(getByText('button'))
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
-    await waitFor(() => expect(getByText('count: 3')).toBeTruthy())
+    resolve.splice(0).forEach((fn) => fn())
+    expect(await findByText('count: 3')).toBeTruthy()
 
     expect(abortedCount).toBe(1)
   })
@@ -173,10 +165,8 @@ describe('abortable atom test', () => {
 
     expect(await findByText('loading')).toBeTruthy()
 
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
-    await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
+    resolve.splice(0).forEach((fn) => fn())
+    expect(await findByText('count: 0')).toBeTruthy()
     expect(abortedCount).toBe(0)
 
     await userEvent.click(getByText('button'))
@@ -184,9 +174,7 @@ describe('abortable atom test', () => {
 
     expect(await findByText('hidden')).toBeTruthy()
 
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
+    resolve.splice(0).forEach((fn) => fn())
     await waitFor(() => expect(abortedCount).toBe(1))
   })
 
@@ -227,22 +215,16 @@ describe('abortable atom test', () => {
 
     expect(await findByText('loading')).toBeTruthy()
 
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
-    await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
+    resolve.splice(0).forEach((fn) => fn())
+    expect(await findByText('count: 0')).toBeTruthy()
 
     await userEvent.click(getByText('button'))
     await userEvent.click(getByText('button'))
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
-    await waitFor(() => expect(getByText('count: 2')).toBeTruthy())
+    resolve.splice(0).forEach((fn) => fn())
+    expect(await findByText('count: 2')).toBeTruthy()
 
     await userEvent.click(getByText('button'))
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
-    await waitFor(() => expect(getByText('count: 3')).toBeTruthy())
+    resolve.splice(0).forEach((fn) => fn())
+    expect(await findByText('count: 3')).toBeTruthy()
   })
 })
