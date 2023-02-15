@@ -1,6 +1,7 @@
 import { StrictMode, Suspense, useState } from 'react'
 import { describe, expect, it } from '@jest/globals'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { act, render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
@@ -42,21 +43,27 @@ describe('abortable atom test', () => {
     )
 
     await findByText('loading')
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 0')
+
+    act(() => {
+      resolve.splice(0).forEach((fn) => fn())
+    })
+    await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
     expect(abortedCount).toBe(0)
 
-    fireEvent.click(getByText('button'))
-    fireEvent.click(getByText('button'))
-    await waitFor(() => {
+    await userEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
+    act(() => {
       resolve.splice(0).forEach((fn) => fn())
-      getByText('count: 2')
     })
+    await waitFor(() => expect(getByText('count: 2')).toBeTruthy())
+
     expect(abortedCount).toBe(1)
 
-    fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 3')
+    await userEvent.click(getByText('button'))
+    act(() => {
+      resolve.splice(0).forEach((fn) => fn())
+    })
+    await waitFor(() => expect(getByText('count: 3')).toBeTruthy())
     expect(abortedCount).toBe(1)
   })
 
@@ -98,20 +105,31 @@ describe('abortable atom test', () => {
       </StrictMode>
     )
 
-    await findByText('loading')
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 0')
+    expect(await findByText('loading')).toBeTruthy()
+
+    act(() => {
+      resolve.splice(0).forEach((fn) => fn())
+    })
+    await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
+
     expect(abortedCount).toBe(0)
 
-    fireEvent.click(getByText('button'))
-    fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 2')
+    await userEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
+
+    act(() => {
+      resolve.splice(0).forEach((fn) => fn())
+    })
+    await waitFor(() => expect(getByText('count: 2')).toBeTruthy())
+
     expect(abortedCount).toBe(1)
 
-    fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 3')
+    await userEvent.click(getByText('button'))
+    act(() => {
+      resolve.splice(0).forEach((fn) => fn())
+    })
+    await waitFor(() => expect(getByText('count: 3')).toBeTruthy())
+
     expect(abortedCount).toBe(1)
   })
 
@@ -153,18 +171,23 @@ describe('abortable atom test', () => {
       </StrictMode>
     )
 
-    await findByText('loading')
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 0')
+    expect(await findByText('loading')).toBeTruthy()
+
+    act(() => {
+      resolve.splice(0).forEach((fn) => fn())
+    })
+    await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
     expect(abortedCount).toBe(0)
 
-    fireEvent.click(getByText('button'))
-    fireEvent.click(getByText('toggle'))
-    await findByText('hidden')
-    resolve.splice(0).forEach((fn) => fn())
-    await waitFor(() => {
-      expect(abortedCount).toBe(1)
+    await userEvent.click(getByText('button'))
+    await userEvent.click(getByText('toggle'))
+
+    expect(await findByText('hidden')).toBeTruthy()
+
+    act(() => {
+      resolve.splice(0).forEach((fn) => fn())
     })
+    await waitFor(() => expect(abortedCount).toBe(1))
   })
 
   it('throws aborted error (like fetch)', async () => {
@@ -202,19 +225,24 @@ describe('abortable atom test', () => {
       </StrictMode>
     )
 
-    await findByText('loading')
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 0')
+    expect(await findByText('loading')).toBeTruthy()
 
-    fireEvent.click(getByText('button'))
-    fireEvent.click(getByText('button'))
-    await waitFor(() => {
+    act(() => {
       resolve.splice(0).forEach((fn) => fn())
-      getByText('count: 2')
     })
+    await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
 
-    fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 3')
+    await userEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
+    act(() => {
+      resolve.splice(0).forEach((fn) => fn())
+    })
+    await waitFor(() => expect(getByText('count: 2')).toBeTruthy())
+
+    await userEvent.click(getByText('button'))
+    act(() => {
+      resolve.splice(0).forEach((fn) => fn())
+    })
+    await waitFor(() => expect(getByText('count: 3')).toBeTruthy())
   })
 })
