@@ -44,25 +44,19 @@ describe('abortable atom test', () => {
 
     await findByText('loading')
 
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
+    resolve.splice(0).forEach((fn) => fn())
     expect(await findByText('count: 0')).toBeTruthy()
     expect(abortedCount).toBe(0)
 
     await userEvent.click(getByText('button'))
     await userEvent.click(getByText('button'))
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
+    resolve.splice(0).forEach((fn) => fn())
     expect(await findByText('count: 2')).toBeTruthy()
 
     expect(abortedCount).toBe(1)
 
     await userEvent.click(getByText('button'))
-    act(() => {
-      resolve.splice(0).forEach((fn) => fn())
-    })
+    resolve.splice(0).forEach((fn) => fn())
     expect(await findByText('count: 3')).toBeTruthy()
     expect(abortedCount).toBe(1)
   })
