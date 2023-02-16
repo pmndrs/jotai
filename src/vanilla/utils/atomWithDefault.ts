@@ -18,15 +18,23 @@ const updateValue = <Value>(
 
 export function atomWithDefault<Value>(
   getDefault: Read<
-    Value,
+    Promise<Value>,
     [SetStateAction<Awaited<Value>> | typeof RESET],
-    void | Promise<void>
+    void
   >
 ): WritableAtom<
-  Value,
+  Promise<Value> | Value,
   [SetStateAction<Awaited<Value>> | typeof RESET],
   void | Promise<void>
-> {
+>
+
+export function atomWithDefault<Value>(
+  getDefault: Read<Value, [SetStateAction<Awaited<Value>> | typeof RESET], void>
+): WritableAtom<Value, [SetStateAction<Awaited<Value>> | typeof RESET], void>
+
+export function atomWithDefault<Value>(
+  getDefault: Read<Value, [SetStateAction<Awaited<Value>> | typeof RESET], void>
+) {
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
   const anAtom: WritableAtom<

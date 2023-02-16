@@ -321,27 +321,25 @@ export const createStore = () => {
         const promise: Promise<Awaited<Value>> & PromiseMeta<Awaited<Value>> =
           new Promise((resolve, reject) => {
             let settled = false
-            value
-              .then(
-                (v) => {
-                  if (!settled) {
-                    resolvePromise(promise, v)
-                    resolve(v)
-                  }
-                },
-                (e) => {
-                  if (!settled) {
-                    rejectPromise(promise, e)
-                    reject(e)
-                  }
+            value.then(
+              (v) => {
+                if (!settled) {
+                  settled = true
+                  // update dependencies, that could have changed
+                  setAtomValue(atom, promise as Value, depSet)
+                  resolvePromise(promise, v)
+                  resolve(v)
                 }
-              )
-              .finally(() => {
+              },
+              (e) => {
                 if (!settled) {
                   settled = true
                   setAtomValue(atom, promise as Value, depSet)
+                  rejectPromise(promise, e)
+                  reject(e)
                 }
-              })
+              }
+            )
             continuePromise = (next) => {
               if (!settled) {
                 settled = true
