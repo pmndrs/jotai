@@ -24,6 +24,9 @@ type ObservableLike<T> = {
   [Symbol.observable]?: () => ObservableLike<T> | undefined
 } & (
   | {
+      subscribe(observer: Observer<T>): Subscription
+    }
+  | {
       subscribe(observer: Partial<Observer<T>>): Subscription
     }
   | {
