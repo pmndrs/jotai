@@ -2,7 +2,7 @@
 
 import ReactExports, { StrictMode, Suspense, useEffect } from 'react'
 import { describe, expect, it } from '@jest/globals'
-import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -57,7 +57,7 @@ describeWithUseTransition('useTransition', () => {
     await userEvent.click(getByText('button'))
     await waitFor(async () => {
       resolve()
-      expect(await findByText('delayed: 1')).toBeTruthy()
+      return expect(await findByText('delayed: 1')).toBeTruthy()
     })
 
     expect(commited).toEqual([
