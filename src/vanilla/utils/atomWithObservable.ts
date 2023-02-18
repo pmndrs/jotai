@@ -135,6 +135,11 @@ export function atomWithObservable<Data>(
     start()
 
     const resultAtom = atom(lastResult || initialResult)
+
+    if (import.meta.env?.MODE !== 'production') {
+      resultAtom.debugPrivate = true
+    }
+
     resultAtom.onMount = (update) => {
       setResult = update
       if (lastResult) {
@@ -155,6 +160,10 @@ export function atomWithObservable<Data>(
     }
     return [resultAtom, observable, makePending, start, isNotMounted] as const
   })
+
+  if (import.meta.env?.MODE !== 'production') {
+    observableResultAtom.debugPrivate = true
+  }
 
   const observableAtom = atom(
     (get) => {

@@ -50,3 +50,18 @@ it('creates atoms', () => {
     }
   `)
 })
+
+it('should let users mark atoms as private', () => {
+  const internalAtom = atom(0)
+  internalAtom.debugPrivate = true
+
+  expect(internalAtom).toMatchInlineSnapshot(`
+    {
+      "debugPrivate": true,
+      "init": 0,
+      "read": [Function],
+      "toString": [Function],
+      "write": [Function],
+    }
+  `)
+})

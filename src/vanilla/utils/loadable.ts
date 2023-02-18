@@ -16,6 +16,11 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
   return memo1(() => {
     const loadableCache = new WeakMap<Promise<void>, Loadable<Value>>()
     const refreshAtom = atom(0)
+
+    if (import.meta.env?.MODE !== 'production') {
+      refreshAtom.debugPrivate = true
+    }
+
     const derivedAtom = atom(
       (get, { setSelf }) => {
         get(refreshAtom)
@@ -44,6 +49,11 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
         set(refreshAtom, (c) => c + 1)
       }
     )
+
+    if (import.meta.env?.MODE !== 'production') {
+      derivedAtom.debugPrivate = true
+    }
+
     return atom((get) => get(derivedAtom))
   }, anAtom)
 }

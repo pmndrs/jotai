@@ -34,8 +34,13 @@ type OnMount<Args extends unknown[], Result> = <
 
 export interface Atom<Value> {
   toString: () => string
-  debugLabel?: string
   read: Read<Value>
+  debugLabel?: string
+  /**
+   * To ONLY be used by Jotai libraries to mark atoms as private. Subject to change.
+   * @private
+   */
+  debugPrivate?: boolean
 }
 
 export interface WritableAtom<Value, Args extends unknown[], Result>

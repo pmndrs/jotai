@@ -37,6 +37,11 @@ export function atomWithDefault<Value>(
 ) {
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
+
+  if (import.meta.env?.MODE !== 'production') {
+    overwrittenAtom.debugPrivate = true
+  }
+
   const anAtom: WritableAtom<
     Value,
     [SetStateAction<Awaited<Value>> | typeof RESET],
