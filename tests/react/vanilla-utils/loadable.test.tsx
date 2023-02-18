@@ -1,4 +1,5 @@
 import { StrictMode, Suspense, useEffect } from 'react'
+import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'

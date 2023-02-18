@@ -12,7 +12,7 @@ Ref: https://github.com/pmndrs/jotai/issues/36
 ```ts
 function selectAtom<Value, Slice>(
   anAtom: Atom<Value>,
-  selector: (v: Value) => Slice,
+  selector: (v: Value, prevSlice?: Slice) => Slice,
   equalityFn: (a: Slice, b: Slice) => boolean = Object.is
 ): Atom<Slice>
 ```

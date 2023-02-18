@@ -1,6 +1,14 @@
+import { it } from '@jest/globals'
 import { expectType } from 'ts-expect'
 import { atom } from 'jotai/vanilla'
-import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai/vanilla'
+import type {
+  Atom,
+  ExtractAtomArgs,
+  ExtractAtomResult,
+  ExtractAtomValue,
+  PrimitiveAtom,
+  WritableAtom,
+} from 'jotai/vanilla'
 
 it('atom() should return the correct types', () => {
   function Component() {
@@ -26,6 +34,25 @@ it('atom() should return the correct types', () => {
       set(primitiveAtom, get(primitiveAtom) - 1)
     })
     expectType<WritableAtom<null, [], void>>(writeonlyDerivedAtom)
+  }
+  Component
+})
+
+it('type utils should work', () => {
+  function Component() {
+    const readWriteAtom = atom(
+      (_get) => 1 as number,
+      async (_get, _set, _value: string) => {}
+    )
+
+    const value: ExtractAtomValue<typeof readWriteAtom> = 1
+    expectType<number>(value)
+
+    const args: ExtractAtomArgs<typeof readWriteAtom> = ['']
+    expectType<[string]>(args)
+
+    const result: ExtractAtomResult<typeof readWriteAtom> = Promise.resolve()
+    expectType<Promise<void>>(result)
   }
   Component
 })

@@ -1,7 +1,9 @@
 import path from 'path'
 import { transformSync } from '@babel/core'
+import { expect, it } from '@jest/globals'
 
-const preset = path.join(__dirname, '../../src/babel/preset')
+// const preset = path.resolve('./src/babel/preset.ts')
+const preset = path.resolve('./dist/babel/preset.js')
 
 const transform = (
   code: string,

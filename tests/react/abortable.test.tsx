@@ -1,5 +1,7 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { describe, expect, it } from '@jest/globals'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
@@ -41,19 +43,19 @@ describe('abortable atom test', () => {
     )
 
     await findByText('loading')
+
     resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 0')
     expect(abortedCount).toBe(0)
 
-    fireEvent.click(getByText('button'))
-    fireEvent.click(getByText('button'))
-    await waitFor(() => {
-      resolve.splice(0).forEach((fn) => fn())
-      getByText('count: 2')
-    })
+    await userEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
+    await findByText('count: 2')
+
     expect(abortedCount).toBe(1)
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 3')
     expect(abortedCount).toBe(1)
@@ -100,17 +102,20 @@ describe('abortable atom test', () => {
     await findByText('loading')
     resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 0')
+
     expect(abortedCount).toBe(0)
 
-    fireEvent.click(getByText('button'))
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 2')
+
     expect(abortedCount).toBe(1)
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 3')
+
     expect(abortedCount).toBe(1)
   })
 
@@ -153,17 +158,18 @@ describe('abortable atom test', () => {
     )
 
     await findByText('loading')
+
     resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 0')
     expect(abortedCount).toBe(0)
 
-    fireEvent.click(getByText('button'))
-    fireEvent.click(getByText('toggle'))
+    await userEvent.click(getByText('button'))
+    await userEvent.click(getByText('toggle'))
+
     await findByText('hidden')
+
     resolve.splice(0).forEach((fn) => fn())
-    await waitFor(() => {
-      expect(abortedCount).toBe(1)
-    })
+    await waitFor(() => expect(abortedCount).toBe(1))
   })
 
   it('throws aborted error (like fetch)', async () => {
@@ -202,17 +208,16 @@ describe('abortable atom test', () => {
     )
 
     await findByText('loading')
+
     resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 0')
 
-    fireEvent.click(getByText('button'))
-    fireEvent.click(getByText('button'))
-    await waitFor(() => {
-      resolve.splice(0).forEach((fn) => fn())
-      getByText('count: 2')
-    })
+    await userEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
+    resolve.splice(0).forEach((fn) => fn())
+    await findByText('count: 2')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
     await findByText('count: 3')
   })

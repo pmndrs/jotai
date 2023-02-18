@@ -1,5 +1,6 @@
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
+import { describe, expect, it } from '@jest/globals'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
@@ -8,7 +9,7 @@ import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
 // Avoid using fake timers for now: https://github.com/pmndrs/jotai/issues/1498
-const FAKE_TIMEOUT = 200
+const FAKE_TIMEOUT = 400
 // beforeEach(() => {
 //   jest.useFakeTimers()
 // })

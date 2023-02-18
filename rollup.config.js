@@ -56,9 +56,12 @@ function createESMConfig(input, output) {
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: output.endsWith('.mjs')
-          ? '((import.meta.env&&import.meta.env.MODE)!=="production")'
-          : '(process.env.NODE_ENV!=="production")',
+        ...(output.endsWith('.js')
+          ? {
+              'import.meta.env?.MODE': 'process.env.NODE_ENV',
+            }
+          : {}),
+        delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
       getEsbuild('node12'),
@@ -74,7 +77,8 @@ function createCommonJSConfig(input, output) {
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: '(process.env.NODE_ENV!=="production")',
+        'import.meta.env?.MODE': 'process.env.NODE_ENV',
+        delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
@@ -83,25 +87,33 @@ function createCommonJSConfig(input, output) {
 }
 
 function createUMDConfig(input, output, env) {
-  const c = output.split('/').pop()
+  let name = 'jotai'
+  const fileName = output.slice('dist/umd/'.length)
+  const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
+  if (fileName !== 'index') {
+    name += fileName.replace(/(\w+)\W*/g, (_, p) => capitalize(p))
+  }
   return {
     input,
     output: {
       file: `${output}.${env}.js`,
       format: 'umd',
-      name:
-        c === 'index'
-          ? 'jotai'
-          : `jotai${c.slice(0, 1).toUpperCase()}${c.slice(1)}`,
+      name,
       globals: {
         react: 'React',
+        'jotai/vanilla': 'jotaiVanilla',
+        'jotai/utils': 'jotaiUtils',
+        'jotai/react': 'jotaiReact',
+        'jotai/vanilla/utils': 'jotaiVanillaUtils',
+        'jotai/react/utils': 'jotaiReactUtils',
       },
     },
     external,
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: env !== 'production' ? 'true' : 'false',
+        'import.meta.env?.MODE': JSON.stringify(env),
+        delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
@@ -121,7 +133,8 @@ function createSystemConfig(input, output, env) {
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: env !== 'production' ? 'true' : 'false',
+        'import.meta.env?.MODE': JSON.stringify(env),
+        delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
       getEsbuild('node12', env),

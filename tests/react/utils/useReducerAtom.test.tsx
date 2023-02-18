@@ -1,4 +1,5 @@
 import { StrictMode } from 'react'
+import { it } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { useReducerAtom } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'

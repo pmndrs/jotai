@@ -1,4 +1,5 @@
 import { StrictMode, useCallback, useEffect, useState } from 'react'
+import { it } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai/react'
 import { useAtomCallback } from 'jotai/react/utils'

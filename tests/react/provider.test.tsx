@@ -1,4 +1,5 @@
 import { StrictMode } from 'react'
+import { it } from '@jest/globals'
 import { render, waitFor } from '@testing-library/react'
 import { Provider, useAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'

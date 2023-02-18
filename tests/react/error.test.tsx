@@ -1,5 +1,13 @@
 import { Component, StrictMode, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -8,7 +16,7 @@ const consoleError = console.error
 const errorMessages: string[] = []
 beforeEach(() => {
   errorMessages.splice(0)
-  console.error = jest.fn((err) => {
+  console.error = jest.fn((err: string) => {
     const match = /^(.*?)(\n|$)/.exec(err)
     if (match?.[1]) {
       errorMessages.push(match[1])

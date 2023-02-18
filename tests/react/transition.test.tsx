@@ -1,9 +1,13 @@
 /// <reference types="react/experimental" />
 
-import { StrictMode, Suspense, use, useEffect, useTransition } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import ReactExports, { StrictMode, Suspense, useEffect } from 'react'
+import { describe, expect, it } from '@jest/globals'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+
+const { use, useTransition } = ReactExports
 
 const describeWithUseTransition =
   typeof useTransition === 'function' ? describe : describe.skip
@@ -39,7 +43,7 @@ describeWithUseTransition('useTransition', () => {
       )
     }
 
-    const { getByText, findByText } = render(
+    const { getByText } = render(
       <>
         <Suspense fallback="loading">
           <Counter />
@@ -48,13 +52,15 @@ describeWithUseTransition('useTransition', () => {
     )
 
     resolve()
-    await findByText('delayed: 0')
+    await waitFor(() => expect(getByText('delayed: 0')).toBeTruthy())
 
-    fireEvent.click(getByText('button'))
-    await waitFor(() => {
+    await userEvent.click(getByText('button'))
+
+    act(() => {
       resolve()
-      getByText('delayed: 1')
     })
+
+    await waitFor(() => expect(getByText('delayed: 1')).toBeTruthy())
 
     expect(commited).toEqual([
       { pending: false, delayed: 0 },
