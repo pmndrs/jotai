@@ -108,8 +108,7 @@ type Mounted = {
 }
 
 // for debugging purpose only
-type StateListener = () => void
-type StoreListener = () => void
+type StoreListener = () => void // Fired on store.set and store.sub
 type MountedAtoms = Set<AnyAtom>
 
 /**
@@ -135,13 +134,9 @@ export const createStore = () => {
     AnyAtom,
     AtomState /* prevAtomState */ | undefined
   >()
-  // Fired on atom value change
-  let stateListeners: Set<StateListener>
-  // Fired on atom value change, unmount and delete
   let storeListeners: Set<StoreListener>
   let mountedAtoms: MountedAtoms
   if (import.meta.env?.MODE !== 'production') {
-    stateListeners = new Set()
     storeListeners = new Set()
     mountedAtoms = new Set()
   }
@@ -449,6 +444,9 @@ export const createStore = () => {
   ): Result => {
     const result = writeAtomState(atom, ...args)
     flushPending()
+    if (import.meta.env?.MODE !== 'production') {
+      storeListeners.forEach((l) => l())
+    }
     return result
   }
 
@@ -519,10 +517,6 @@ export const createStore = () => {
     } else if (import.meta.env?.MODE !== 'production') {
       console.warn('[Bug] could not find atom state to unmount', atom)
     }
-
-    if (import.meta.env?.MODE !== 'production') {
-      storeListeners.forEach((l) => l())
-    }
   }
 
   const mountDependencies = <Value>(
@@ -589,10 +583,6 @@ export const createStore = () => {
         }
       })
     }
-    if (import.meta.env?.MODE !== 'production') {
-      storeListeners.forEach((l) => l())
-      stateListeners.forEach((l) => l())
-    }
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
@@ -600,9 +590,15 @@ export const createStore = () => {
     flushPending()
     const listeners = mounted.l
     listeners.add(listener)
+    if (import.meta.env?.MODE !== 'production') {
+      storeListeners.forEach((l) => l())
+    }
     return () => {
       listeners.delete(listener)
       delAtom(atom)
+      if (import.meta.env?.MODE !== 'production') {
+        storeListeners.forEach((l) => l())
+      }
     }
   }
 
@@ -611,14 +607,6 @@ export const createStore = () => {
       get: readAtom,
       set: writeAtom,
       sub: subscribeAtom,
-      // store dev methods (these are tentative and subject to change)
-      // @deprecated use `dev_subscribe_state` instead
-      dev_subscribe_state: (l: StateListener) => {
-        stateListeners.add(l)
-        return () => {
-          stateListeners.delete(l)
-        }
-      },
       dev_subscribe_store: (l: StoreListener) => {
         storeListeners.add(l)
         return () => {
