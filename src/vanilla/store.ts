@@ -165,6 +165,9 @@ export const createStore = () => {
           : Promise.reject(atomState.e)
       cancelPromise(prevAtomState.v, next)
     }
+    if (import.meta.env?.MODE !== 'production') {
+      stateListeners.forEach((l) => l())
+    }
   }
 
   const updateDependencies = <Value>(
@@ -579,9 +582,6 @@ export const createStore = () => {
           console.warn('[Bug] no atom state to flush')
         }
       })
-    }
-    if (import.meta.env?.MODE !== 'production') {
-      stateListeners.forEach((l) => l())
     }
   }
 
