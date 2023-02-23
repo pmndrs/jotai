@@ -108,7 +108,7 @@ type Mounted = {
 }
 
 // for debugging purpose only
-type StoreListener = () => void // Fired on store.set and store.sub
+type StateListener = () => void
 type MountedAtoms = Set<AnyAtom>
 
 /**
@@ -134,10 +134,10 @@ export const createStore = () => {
     AnyAtom,
     AtomState /* prevAtomState */ | undefined
   >()
-  let storeListeners: Set<StoreListener>
+  let stateListeners: Set<StateListener>
   let mountedAtoms: MountedAtoms
   if (import.meta.env?.MODE !== 'production') {
-    storeListeners = new Set()
+    stateListeners = new Set()
     mountedAtoms = new Set()
   }
 
@@ -444,9 +444,6 @@ export const createStore = () => {
   ): Result => {
     const result = writeAtomState(atom, ...args)
     flushPending()
-    if (import.meta.env?.MODE !== 'production') {
-      storeListeners.forEach((l) => l())
-    }
     return result
   }
 
@@ -583,6 +580,9 @@ export const createStore = () => {
         }
       })
     }
+    if (import.meta.env?.MODE !== 'production') {
+      stateListeners.forEach((l) => l())
+    }
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
@@ -590,15 +590,9 @@ export const createStore = () => {
     flushPending()
     const listeners = mounted.l
     listeners.add(listener)
-    if (import.meta.env?.MODE !== 'production') {
-      storeListeners.forEach((l) => l())
-    }
     return () => {
       listeners.delete(listener)
       delAtom(atom)
-      if (import.meta.env?.MODE !== 'production') {
-        storeListeners.forEach((l) => l())
-      }
     }
   }
 
@@ -607,10 +601,11 @@ export const createStore = () => {
       get: readAtom,
       set: writeAtom,
       sub: subscribeAtom,
-      dev_subscribe_store: (l: StoreListener) => {
-        storeListeners.add(l)
+      // store dev methods (these are tentative and subject to change)
+      dev_subscribe_state: (l: StateListener) => {
+        stateListeners.add(l)
         return () => {
-          storeListeners.delete(l)
+          stateListeners.delete(l)
         }
       },
       dev_get_mounted_atoms: () => mountedAtoms.values(),
