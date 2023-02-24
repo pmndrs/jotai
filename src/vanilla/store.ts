@@ -496,7 +496,6 @@ export const createStore = () => {
     mountedMap.delete(atom)
     if (import.meta.env?.MODE !== 'production') {
       mountedAtoms.delete(atom)
-      storeListeners.forEach((l) => l('unmount'))
     }
     // unmount dependencies afterward
     const atomState = getAtomState(atom)
@@ -585,6 +584,9 @@ export const createStore = () => {
         }
       })
     }
+    if (import.meta.env?.MODE !== 'production') {
+      storeListeners.forEach((l) => l('state'))
+    }
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
@@ -595,21 +597,28 @@ export const createStore = () => {
     return () => {
       listeners.delete(listener)
       delAtom(atom)
+      // devtools uses this to detect unmount regardless if it _can_ unmount or not
+      // it explicitly calls unmountAtom if its the only component that's subscribed to it
+      if (import.meta.env?.MODE !== 'production') {
+        storeListeners.forEach((l) => l('unmount'))
+      }
     }
   }
 
   if (import.meta.env?.MODE !== 'production') {
+    const dev_subscribe_store = (l: StoreListener) => {
+      storeListeners.add(l)
+      return () => {
+        storeListeners.delete(l)
+      }
+    }
     return {
       get: readAtom,
       set: writeAtom,
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change)
-      dev_subscribe_store: (l: StoreListener) => {
-        storeListeners.add(l)
-        return () => {
-          storeListeners.delete(l)
-        }
-      },
+      dev_subscribe_store,
+      dev_subscribe_state: dev_subscribe_store,
       dev_get_mounted_atoms: () => mountedAtoms.values(),
       dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
       dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
