@@ -108,7 +108,9 @@ type Mounted = {
 }
 
 // for debugging purpose only
-type StoreListener = (type: 'state' | 'mount' | 'unmount') => void
+type StoreListener = (
+  type: 'state' | 'mount' | 'unmount' | 'sub' | 'unsub'
+) => void
 type MountedAtoms = Set<AnyAtom>
 
 /**
@@ -496,6 +498,7 @@ export const createStore = () => {
     mountedMap.delete(atom)
     if (import.meta.env?.MODE !== 'production') {
       mountedAtoms.delete(atom)
+      storeListeners.forEach((l) => l('unmount'))
     }
     // unmount dependencies afterward
     const atomState = getAtomState(atom)
@@ -584,9 +587,6 @@ export const createStore = () => {
         }
       })
     }
-    if (import.meta.env?.MODE !== 'production') {
-      storeListeners.forEach((l) => l('state'))
-    }
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
@@ -594,31 +594,45 @@ export const createStore = () => {
     flushPending()
     const listeners = mounted.l
     listeners.add(listener)
+    if (import.meta.env?.MODE !== 'production') {
+      storeListeners.forEach((l) => l('sub'))
+    }
     return () => {
       listeners.delete(listener)
       delAtom(atom)
-      // devtools uses this to detect unmount regardless if it _can_ unmount or not
-      // it explicitly calls unmountAtom if its the only component that's subscribed to it
       if (import.meta.env?.MODE !== 'production') {
-        storeListeners.forEach((l) => l('unmount'))
+        // devtools uses this to detect if it _can_ unmount or not
+        storeListeners.forEach((l) => l('unsub'))
       }
     }
   }
 
   if (import.meta.env?.MODE !== 'production') {
-    const dev_subscribe_store = (l: StoreListener) => {
-      storeListeners.add(l)
-      return () => {
-        storeListeners.delete(l)
-      }
-    }
     return {
       get: readAtom,
       set: writeAtom,
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change)
-      dev_subscribe_store,
-      dev_subscribe_state: dev_subscribe_store,
+      dev_subscribe_store: (l: StoreListener) => {
+        storeListeners.add(l)
+        return () => {
+          storeListeners.delete(l)
+        }
+      },
+      dev_subscribe_state: (deprecatedListener: () => void) => {
+        console.warn(
+          '[DEPRECATED] dev_subscribe_state is deprecated and will be removed in the next minor version. use dev_subscribe_store instead.'
+        )
+        const l: StoreListener = (type) => {
+          if (type === 'state') {
+            deprecatedListener()
+          }
+        }
+        storeListeners.add(l)
+        return () => {
+          storeListeners.delete(l)
+        }
+      },
       dev_get_mounted_atoms: () => mountedAtoms.values(),
       dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
       dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
