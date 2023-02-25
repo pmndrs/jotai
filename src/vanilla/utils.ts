@@ -12,5 +12,5 @@ export {
   createJSONStorage,
 } from './utils/atomWithStorage'
 export { atomWithObservable } from './utils/atomWithObservable'
-export { loadable } from './utils/loadable'
+export { loadable, Loadable } from './utils/loadable'
 export { unwrap as unstable_unwrap } from './utils/unwrap'

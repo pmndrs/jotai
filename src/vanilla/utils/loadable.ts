@@ -5,7 +5,7 @@ const cache1 = new WeakMap()
 const memo1 = <T>(create: () => T, dep1: object): T =>
   (cache1.has(dep1) ? cache1 : cache1.set(dep1, create())).get(dep1)
 
-type Loadable<Value> =
+export type Loadable<Value> =
   | { state: 'loading' }
   | { state: 'hasError'; error: unknown }
   | { state: 'hasData'; data: Awaited<Value> }
