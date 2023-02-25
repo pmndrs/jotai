@@ -132,7 +132,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
       unsubAtom?.()
     })
 
-    it('should call the unmount when atom is unsubscribed', () => {
+    it('should call unsub only when atom is unsubscribed', () => {
       const store = createStore()
       const callback = jest.fn()
       const unsub = store.dev_subscribe_store?.(callback)
@@ -150,7 +150,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
       unsubAtomSecond?.()
     })
 
-    it('should call the unmount when atom is unsubscribed', () => {
+    it('should call unsub and unmount when atom is unsubscribed', () => {
       const store = createStore()
       const callback = jest.fn()
       const unsub = store.dev_subscribe_store?.(callback)
