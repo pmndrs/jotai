@@ -58,9 +58,12 @@ Furthermore, it can't read unresolved async values in Jotai v1 API.
 `set` in the write function is to write atom value.
 It will invoke the write function of the target atom.
 
-**Note**: Atom configs can be created anywhere, but referential equality is important.
+### Note about creating an atom in render function
+
+Atom configs can be created anywhere, but referential equality is important.
 They can be created dynamically too.
 To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memoization, use `useMemo`.
+Otherwise, it can cause infinite loop with `useAtom`.
 
 ```js
 const Component = ({ value }) => {
