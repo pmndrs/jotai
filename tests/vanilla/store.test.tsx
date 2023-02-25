@@ -33,7 +33,7 @@ it('should not fire subscription if derived atom value is the same', async () =>
   expect(callback).toBeCalledTimes(calledTimes)
 })
 
-describe('dev-only methods', () => {
+describe('[DEV-ONLY] dev-only methods', () => {
   it('should return the values of all mounted atoms', () => {
     const store = createStore()
     const countAtom = atom(0)
