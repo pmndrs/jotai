@@ -108,6 +108,10 @@ export function atomWithStorage<Value>(
 ): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
   const baseAtom = atom(initialValue)
 
+  if (import.meta.env?.MODE !== 'production') {
+    baseAtom.debugPrivate = true
+  }
+
   baseAtom.onMount = (setAtom) => {
     const value = storage.getItem(key)
     if (value instanceof Promise) {
