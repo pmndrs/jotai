@@ -78,6 +78,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
     expect(result).toStrictEqual({ l: new Set([cb]), t: new Set([countAtom]) })
     unsub()
   })
+
   it('should restore atoms and its dependencies correctly', () => {
     const store = createStore()
     const countAtom = atom(0)
@@ -101,6 +102,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
       unsubAtom?.()
     })
   })
+
   describe('dev_subscribe_store', () => {
     it('should call the callback on mount', () => {
       const store = createStore()
@@ -169,7 +171,6 @@ describe('[DEV-ONLY] dev-only methods', () => {
     })
   })
 })
-<<<<<<< HEAD
 
 it('should unmount with store.get', async () => {
   const store = createStore()
@@ -178,8 +179,8 @@ it('should unmount with store.get', async () => {
   const unsub = store.sub(countAtom, callback)
   store.get(countAtom)
   unsub()
-  const mountedAtoms = store.dev_get_mounted_atoms?.() ?? []
-  expect([...mountedAtoms].length).toBe(0)
+  const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
+  expect(result).toEqual([])
 })
 
 it('should unmount dependencies with store.get', async () => {
@@ -190,8 +191,8 @@ it('should unmount dependencies with store.get', async () => {
   const unsub = store.sub(derivedAtom, callback)
   store.get(derivedAtom)
   unsub()
-  const mountedAtoms = store.dev_get_mounted_atoms?.() ?? []
-  expect([...mountedAtoms].length).toBe(0)
+  const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
+  expect(result).toEqual([])
 })
 
 it('should unmount tree dependencies with store.get', async () => {
@@ -200,15 +201,13 @@ it('should unmount tree dependencies with store.get', async () => {
   const derivedAtom = atom((get) => get(countAtom) * 2)
   const anotherDerivedAtom = atom((get) => get(countAtom) * 3)
   const callback = jest.fn()
-
   const unsubStore = store.dev_subscribe_store?.(() => {
     // Comment this line to make the test pass
-    const _ = store.get(derivedAtom)
+    store.get(derivedAtom)
   })
   const unsub = store.sub(anotherDerivedAtom, callback)
   unsub()
   unsubStore?.()
-
   const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
   expect(result).toEqual([])
 })
