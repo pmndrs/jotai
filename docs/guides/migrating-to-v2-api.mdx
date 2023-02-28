@@ -209,6 +209,8 @@ const allAtom = waitForAll([fooAtom, barAtom])
 const allAtom = atom((get) => Promise.all([get(fooAtom), get(barAtom)]))
 ```
 
+Note that creating an atom in render function can cause [infinite loop](../api/atom.mdx#note-about-creating-an-atom-in-render-function)
+
 ### `splitAtom` util (or some other utils) with async atoms
 
 `splitAtom` util only accepts sync atoms.
@@ -242,7 +244,7 @@ For more information, refer the following discussions:
 
 ### Utils
 
-- `atomWithStorage` util's `delayInit` is removed as being default.
+- `atomWithStorage` util's `delayInit` is removed as being default. The new behavior can be breaking in some cases. See https://github.com/pmndrs/jotai/discussions/1737 for more information.
 - `useHydrateAtoms` can only accept writable atoms.
 
 ### Import statements
