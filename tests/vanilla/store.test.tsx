@@ -169,6 +169,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
     })
   })
 })
+<<<<<<< HEAD
 
 it('should unmount with store.get', async () => {
   const store = createStore()
@@ -199,9 +200,15 @@ it('should unmount tree dependencies with store.get', async () => {
   const derivedAtom = atom((get) => get(countAtom) * 2)
   const anotherDerivedAtom = atom((get) => get(countAtom) * 3)
   const callback = jest.fn()
+
+  const unsubStore = store.dev_subscribe_store?.(() => {
+    // Comment this line to make the test pass
+    const _ = store.get(derivedAtom)
+  })
   const unsub = store.sub(anotherDerivedAtom, callback)
-  store.get(derivedAtom)
   unsub()
-  const mountedAtoms = store.dev_get_mounted_atoms?.() ?? []
-  expect([...mountedAtoms].length).toBe(0)
+  unsubStore?.()
+
+  const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
+  expect(result).toEqual([])
 })
