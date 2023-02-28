@@ -18,9 +18,10 @@ const myStore = createStore()
 
 const countAtom = atom(0)
 myStore.set(countAtom, 1)
-myStore.sub(countAtom, () => {
+const unsub = myStore.sub(countAtom, () => {
   console.log('countAtom value is changed to', myStore.get(countAtom))
 })
+// unsub() to unsubscribe
 
 const Root = () => (
   <Provider store={myStore}>
