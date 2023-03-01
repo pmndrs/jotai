@@ -109,9 +109,7 @@ type Mounted = {
 
 // for debugging purpose only
 type StateListener = () => void
-type StoreListener = (
-  type: 'state' | 'mount' | 'unmount' | 'sub' | 'unsub'
-) => void
+type StoreListener = (type: 'state' | 'sub' | 'unsub') => void
 type MountedAtoms = Set<AnyAtom>
 
 /**
@@ -169,9 +167,6 @@ export const createStore = () => {
             : Promise.resolve(atomState.v)
           : Promise.reject(atomState.e)
       cancelPromise(prevAtomState.v, next)
-    }
-    if (import.meta.env?.MODE !== 'production') {
-      storeListeners.forEach((l) => l('state'))
     }
   }
 
@@ -467,7 +462,6 @@ export const createStore = () => {
     mountedMap.set(atom, mounted)
     if (import.meta.env?.MODE !== 'production') {
       mountedAtoms.add(atom)
-      storeListeners.forEach((l) => l('mount'))
     }
     // mount dependencies before onMount
     readAtomState(atom).d.forEach((_, a) => {
@@ -501,7 +495,6 @@ export const createStore = () => {
     mountedMap.delete(atom)
     if (import.meta.env?.MODE !== 'production') {
       mountedAtoms.delete(atom)
-      storeListeners.forEach((l) => l('unmount'))
     }
     // unmount dependencies afterward
     const atomState = getAtomState(atom)
@@ -592,6 +585,7 @@ export const createStore = () => {
     }
     if (import.meta.env?.MODE !== 'production') {
       stateListeners.forEach((l) => l())
+      storeListeners.forEach((l) => l('state'))
     }
   }
 
