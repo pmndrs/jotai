@@ -244,7 +244,7 @@ For more information, refer the following discussions:
 
 ### Utils
 
-- `atomWithStorage` util's `delayInit` is removed as being default. The new behavior can be breaking in some cases. See https://github.com/pmndrs/jotai/discussions/1737 for more information.
+- `atomWithStorage` util's `delayInit` is removed as being default. Also it will always render `initialValue` on first render, and the stored value, if any, on subsequent renders. The new behavior differs from v1. See https://github.com/pmndrs/jotai/discussions/1737 for more information.
 - `useHydrateAtoms` can only accept writable atoms.
 
 ### Import statements
