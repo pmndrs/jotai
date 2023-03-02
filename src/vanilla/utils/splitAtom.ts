@@ -140,6 +140,11 @@ export function splitAtom<Item, Key>(
         const mapping = getMapping(arr, prev?.arr)
         return mapping
       })
+
+      if (import.meta.env?.MODE !== 'production') {
+        mappingAtom.debugPrivate = true
+      }
+
       // HACK to read mapping atom before initialization
       mappingAtom.init = undefined
       const splittedAtom = isWritable(arrAtom)

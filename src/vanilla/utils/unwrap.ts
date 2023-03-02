@@ -33,6 +33,11 @@ export function unwrap<Value, PendingValue>(
       const promiseErrorCache = new WeakMap<Promise<Value>, unknown>()
       const promiseResultCache = new WeakMap<Promise<Value>, Awaited<Value>>()
       const refreshAtom = atom(0)
+
+      if (import.meta.env?.MODE !== 'production') {
+        refreshAtom.debugPrivate = true
+      }
+
       const promiseAndValueAtom: WritableAtom<PromiseAndValue, [], void> & {
         init?: undefined
       } = atom(
@@ -70,6 +75,11 @@ export function unwrap<Value, PendingValue>(
       )
       // HACK to read PromiseAndValue atom before initialization
       promiseAndValueAtom.init = undefined
+
+      if (import.meta.env?.MODE !== 'production') {
+        promiseAndValueAtom.debugPrivate = true
+      }
+
       return atom((get) => {
         const state = get(promiseAndValueAtom)
         if ('v' in state) {
