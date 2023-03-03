@@ -19,7 +19,7 @@ Here's an example using [React testing library](https://github.com/testing-libra
 ```jsx
 import { atom, useAtom } from 'jotai'
 
-const countAtom = atom(0)
+export const countAtom = atom(0)
 
 export function Counter() {
   const [count, setCount] = useAtom(countAtom)
@@ -61,6 +61,7 @@ In order to do that, simply use a [Provider](../core/provider.mdx), and export y
 ```tsx
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { useHydrateAtoms } from 'jotai/utils'
 import { countAtom, Counter } from './Counter'
 import { Provider } from 'jotai'
 
