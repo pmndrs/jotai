@@ -1,7 +1,8 @@
 import { StrictMode, Suspense } from 'react'
-import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai/react'
+import { createStore } from 'jotai/vanilla'
 import {
   unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE,
   RESET,
@@ -342,5 +343,72 @@ describe('atomWithStorage (in non-browser environment)', () => {
     const storage = createJSONStorage(() => asyncDummyStorage)
 
     expect(storage.subscribe).toBeUndefined()
+  })
+})
+
+describe('atomWithStorage (with browser storage)', () => {
+  const addEventListener = window.addEventListener
+  const mockAddEventListener = jest.fn()
+
+  beforeAll(() => {
+    ;(window as any).addEventListener = mockAddEventListener
+  })
+
+  afterAll(() => {
+    window.addEventListener = addEventListener
+  })
+
+  it('createJSONStorage subscribes to specific window storage events', async () => {
+    const store = createStore()
+    const mockNativeStorage = Object.create(window.Storage.prototype)
+    mockNativeStorage.setItem = jest.fn()
+    mockNativeStorage.getItem = jest.fn()
+    mockNativeStorage.removeItem = jest.fn()
+
+    const dummyAtom = atomWithStorage<number>(
+      'dummy',
+      1,
+      createJSONStorage<number>(() => mockNativeStorage)
+    )
+
+    const DummyComponent = () => {
+      const [value] = useAtom(dummyAtom, { store })
+      return (
+        <>
+          <div>{value}</div>
+        </>
+      )
+    }
+
+    render(
+      <StrictMode>
+        <DummyComponent />
+      </StrictMode>
+    )
+
+    expect(mockAddEventListener).toHaveBeenCalledWith(
+      'storage',
+      expect.any(Function)
+    )
+
+    const storageEventHandler = mockAddEventListener.mock.calls
+      .filter(([eventName]) => eventName === 'storage')
+      .pop()?.[1] as (e: StorageEvent) => void
+
+    storageEventHandler?.({
+      key: 'dummy',
+      newValue: '2',
+      storageArea: {},
+    } as StorageEvent)
+
+    expect(store.get(dummyAtom)).toBe(1)
+
+    storageEventHandler?.({
+      key: 'dummy',
+      newValue: '2',
+      storageArea: mockNativeStorage,
+    } as StorageEvent)
+
+    expect(store.get(dummyAtom)).toBe(2)
   })
 })
