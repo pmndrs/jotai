@@ -73,10 +73,15 @@
     "eslint": "eslint --fix '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
     "eslint:ci": "eslint '*.{js,json}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
     "pretest": "tsc --noEmit",
-    "test": "yarn node --experimental-vm-modules $(yarn bin jest)",
-    "test:ci": "yarn node --experimental-vm-modules $(yarn bin jest)",
-    "test:dev": "yarn node --experimental-vm-modules $(yarn bin jest) --watch --no-coverage",
-    "test:coverage:watch": "yarn node --experimental-vm-modules $(yarn bin jest) --watch",
+    "test": "vitest",
+    "test:ui": "yarn run test --ui",
+    "test:coverage": "yarn run test run --coverage",
+    "test:ci": "yarn run test run ",
+    "preold-test": "tsc --noEmit",
+    "old-test": "yarn node --experimental-vm-modules $(yarn bin jest)",
+    "old-test:ci": "yarn node --experimental-vm-modules $(yarn bin jest)",
+    "old-test:dev": "yarn node --experimental-vm-modules $(yarn bin jest) --watch --no-coverage",
+    "old-test:coverage:watch": "yarn node --experimental-vm-modules $(yarn bin jest) --watch",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.8 --to=3.8 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
     "patch-ts3.8": "node -e \"require('shelljs').find('dist/ts3.8/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
     "patch-old-ts": "shx touch dist/ts_version_3.8_and_above_is_required.d.ts",
@@ -137,7 +142,9 @@
     "modulePathIgnorePatterns": [
       "dist"
     ],
-    "testRegex": "test.(js|ts|tsx)$",
+    "testMatch": [
+      "<rootDir>/legacy-tests/**/*.(test).{js,ts,tsx}"
+    ],
     "coverageDirectory": "./coverage/",
     "collectCoverage": true,
     "coverageReporters": [
@@ -148,7 +155,7 @@
     ],
     "collectCoverageFrom": [
       "src/**/*.{js,ts,tsx}",
-      "tests/**/*.{js,ts,tsx}"
+      "legacy-tests/**/*.{js,ts,tsx}"
     ]
   },
   "devDependencies": {
@@ -164,12 +171,15 @@
     "@rollup/plugin-replace": "^5.0.2",
     "@rollup/plugin-terser": "^0.4.0",
     "@rollup/plugin-typescript": "^11.0.0",
-    "@testing-library/react": "^13.4.0",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "@typescript-eslint/parser": "^5.54.0",
+    "@vitest/coverage-c8": "^0.29.2",
+    "@vitest/ui": "^0.29.2",
     "benny": "^3.7.1",
     "concurrently": "^7.6.0",
     "downlevel-dts": "^0.11.0",
@@ -198,6 +208,7 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
     "typescript": "^4.9.5",
+    "vitest": "^0.29.2",
     "wonka": "^6.2.3"
   },
   "peerDependencies": {
