@@ -11,6 +11,7 @@ export default defineConfig({
     name: 'jotai',
     globals: true,
     environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
     dir: 'tests',
     reporters: 'basic',
     coverage: {
