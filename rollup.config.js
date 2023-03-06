@@ -1,14 +1,21 @@
 const path = require('path')
+const alias = require('@rollup/plugin-alias')
 const babelPlugin = require('@rollup/plugin-babel')
 const resolve = require('@rollup/plugin-node-resolve')
 const replace = require('@rollup/plugin-replace')
 const terser = require('@rollup/plugin-terser')
 const typescript = require('@rollup/plugin-typescript')
 const { default: esbuild } = require('rollup-plugin-esbuild')
-const createBabelConfig = require('./babel.config')
+const createBabelConfig = require('./babel.config.js')
 
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
+const entries = [
+  { find: /.*\/vanilla\/utils\.ts$/, replacement: 'jotai/vanilla/utils' },
+  { find: /.*\/react\/utils\.ts$/, replacement: 'jotai/react/utils' },
+  { find: /.*\/vanilla\.ts$/, replacement: 'jotai/vanilla' },
+  { find: /.*\/react\.ts$/, replacement: 'jotai/react' },
+]
 
 function external(id) {
   return !id.startsWith('.') && !id.startsWith(root)
@@ -54,6 +61,7 @@ function createESMConfig(input, output) {
     output: { file: output, format: 'esm' },
     external,
     plugins: [
+      alias({ entries }),
       resolve({ extensions }),
       replace({
         ...(output.endsWith('.js')
@@ -78,6 +86,7 @@ function createCommonJSConfig(input, output) {
     output: { file: `${output}.js`, format: 'cjs' },
     external,
     plugins: [
+      alias({ entries }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': 'process.env.NODE_ENV',
@@ -113,6 +122,7 @@ function createUMDConfig(input, output, env) {
     },
     external,
     plugins: [
+      alias({ entries }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),
@@ -134,6 +144,7 @@ function createSystemConfig(input, output, env) {
     },
     external,
     plugins: [
+      alias({ entries }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),
@@ -162,3 +173,5 @@ module.exports = function (args) {
     createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'production'),
   ]
 }
+
+module.exports.entries = entries

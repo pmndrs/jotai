@@ -1,6 +1,6 @@
-export { atom } from './vanilla/atom'
-export type { Atom, WritableAtom, PrimitiveAtom } from './vanilla/atom'
-export { createStore, getDefaultStore } from './vanilla/store'
+export { atom } from './vanilla/atom.ts'
+export type { Atom, WritableAtom, PrimitiveAtom } from './vanilla/atom.ts'
+export { createStore, getDefaultStore } from './vanilla/store.ts'
 export type {
   Getter,
   Setter,
@@ -8,4 +8,4 @@ export type {
   ExtractAtomArgs,
   ExtractAtomResult,
   SetStateAction,
-} from './vanilla/typeUtils'
+} from './vanilla/typeUtils.ts'

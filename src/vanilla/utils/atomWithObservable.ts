@@ -1,5 +1,5 @@
-import { atom } from 'jotai/vanilla'
-import type { Atom, Getter, WritableAtom } from 'jotai/vanilla'
+import { atom } from '../../vanilla.ts'
+import type { Atom, Getter, WritableAtom } from '../../vanilla.ts'
 
 type Timeout = ReturnType<typeof setTimeout>
 type AnyError = unknown

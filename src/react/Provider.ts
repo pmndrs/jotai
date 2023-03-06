@@ -1,6 +1,6 @@
 import { createContext, createElement, useContext, useRef } from 'react'
 import type { ReactNode } from 'react'
-import { createStore, getDefaultStore } from 'jotai/vanilla'
+import { createStore, getDefaultStore } from '../vanilla.ts'
 
 type Store = ReturnType<typeof createStore>
 

@@ -1,6 +1,6 @@
-import { atom } from 'jotai/vanilla'
-import type { SetStateAction, WritableAtom } from 'jotai/vanilla'
-import { RESET } from './constants'
+import { atom } from '../../vanilla.ts'
+import type { SetStateAction, WritableAtom } from '../../vanilla.ts'
+import { RESET } from './constants.ts'
 
 type Read<Value, Args extends unknown[], Result> = WritableAtom<
   Value,

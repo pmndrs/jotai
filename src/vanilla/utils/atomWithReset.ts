@@ -1,6 +1,6 @@
-import { atom } from 'jotai/vanilla'
-import type { WritableAtom } from 'jotai/vanilla'
-import { RESET } from './constants'
+import { atom } from '../../vanilla.ts'
+import type { WritableAtom } from '../../vanilla.ts'
+import { RESET } from './constants.ts'
 
 type SetStateActionWithReset<Value> =
   | Value
