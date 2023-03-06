@@ -7,13 +7,127 @@ keywords: devtools,debug,snapshot
 
 ## Install
 
-You have to install `jotai-devtools` to use this feature.
+Install `jotai-devtools` to your project to get started
 
-```
-npm install jotai-devtools
-# or
+```sh
+# yarn
 yarn add jotai-devtools
+
+# npm
+npm install jotai-devtools --save
 ```
+
+## Notes
+
+- All the components and the hooks are optimized to be tree-shakable for production builds and **only works in a non-production environment**
+- File issues or ask questions on the [Jotai DevTools GitHub Repo](https://github.com/jotaijs/jotai-devtools/discussions)
+
+## Quick links
+
+- [UI Devtools](#ui-devtools)
+- Hooks
+  - [useAtomsDebugValue](#useatomsdebugvalue)
+  - [useAtomDevtools](#useatomdevtools)
+  - [useAtomsDevtools](#useatomsdevtools)
+  - [useAtomsSnapshot](#useatomssnapshot)
+  - [useGotoAtomsSnapshot](#usegotoatomssnapshot)
+
+## UI DevTools
+
+Enhance your development experience with the UI based Jotai DevTool.
+
+### Usage
+
+#### Babel plugin setup - (_Optional but highly recommended_)
+
+Use Jotai babel plugins for optimal debugging experience. Find the complete guide on the [babel](../tools/babel) page
+
+Eg.
+
+```ts
+{
+  "plugins": [
+    // Enables hot reload for atoms
+    "jotai/babel/plugin-react-refresh",
+    // Automatically adds debug labels to the atoms
+    "jotai/babel/plugin-debug-label"
+  ]
+}
+```
+
+### Next JS setup
+
+_You may skip this section if you're not using [Next.js](https://nextjs.org)._
+
+Enable `transpilePackages` for the UI CSS and components to be transpiled correctly.
+
+```ts
+// next.config.ts
+const nextConfig = {
+  // Learn more here - https://nextjs.org/docs/advanced-features/compiler#module-transpilation
+  // Required for UI css to be transpiled correctly 👇
+  transpilePackages: ['jotai-devtools'],
+}
+module.exports = nextConfig
+```
+
+### Available props
+
+```ts
+type DevToolsProps = {
+  // defaults to false
+  isInitialOpen?: boolean
+  // pass a custom store
+  store?: Store
+  // Defaults to light
+  theme?: 'dark' | 'light'
+  // Custom nonce to allowlist jotai-devtools specific inline styles via CSP
+  nonce?: string
+  options?: {
+    // Private atoms are used internally by atoms like `atomWithStorage`
+    // or `atomWithLocation`, etc. to manage the internal state.
+    // Defaults to `false`
+    shouldShowPrivateAtoms?: boolean
+  }
+}
+```
+
+### Provider-less
+
+```tsx
+import { DevTools } from 'jotai-devtools'
+
+const App = () => {
+  return (
+    <>
+      <DevTools />
+      {/* your app */}
+    </>
+  )
+}
+```
+
+### With Provider
+
+```tsx
+import { createStore } from 'jotai'
+import { DevTools } from 'jotai-devtools'
+
+const customStore = createStore()
+
+const App = () => {
+  return (
+    <Provider store={customStore}>
+      <DevTools store={customStore} />
+      {/* your app */}
+    </Provider>
+  )
+}
+```
+
+### Preview
+
+<CodeSandbox id="k5p12d" />
 
 ## useAtomsDebugValue
 
