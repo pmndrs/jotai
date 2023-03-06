@@ -6,7 +6,7 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "typesVersions": {
-    ">=4.8": {
+    ">=5.0": {
       "esm/*": [
         "esm/*"
       ],
