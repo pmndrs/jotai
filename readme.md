@@ -23,10 +23,10 @@ Jotai scales from a simple useState replacement to an enterprise TypeScript appl
 Examples: [Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) |
 [Demo 2](https://codesandbox.io/s/jotai-demo-forked-x2g5d)
 
-### First create a primitive atom
+### First, create a primitive atom
 
 An atom represents a piece of state. All you need is to specify an initial
-value, which can be primitive values like strings and numbers, objects and
+value, which can be primitive values like strings and numbers, objects, and
 arrays. You can create as many primitive atoms as you want.
 
 ```jsx
@@ -100,7 +100,7 @@ const fetchUrlAtom = atom(async (get) => {
 })
 
 function Status() {
-  // Re-renders the component after urlAtom changed and the async function above concludes
+  // Re-renders the component after urlAtom is changed and the async function above concludes
   const [json] = useAtom(fetchUrlAtom)
   ...
 ```
@@ -108,7 +108,7 @@ function Status() {
 ### You can create a writable derived atom
 
 Specify a write function at the second argument. `get` will return the current
-value of an atom. `set` will update an atoms value.
+value of an atom. `set` will update the value of an atom.
 
 ```jsx
 const decrementCountAtom = atom(
