@@ -76,7 +76,7 @@
     "test": "vitest",
     "test:ui": "yarn run test --ui",
     "test:coverage": "yarn run test run --coverage",
-    "test:ci": "yarn run test run ",
+    "test:ci": "yarn run test run",
     "preold-test": "tsc --noEmit",
     "old-test": "yarn node --experimental-vm-modules $(yarn bin jest)",
     "old-test:ci": "yarn node --experimental-vm-modules $(yarn bin jest)",
