@@ -9,8 +9,8 @@ import type {
   WritableAtom,
 } from 'jotai/vanilla'
 
-describe('types', () => {
-  it('atom() should return the correct types', () => {
+it('atom() should return the correct types', () => {
+  function Component() {
     // primitive atom
     const primitiveAtom = atom(0)
     expectType<PrimitiveAtom<number>>(primitiveAtom)
@@ -32,11 +32,13 @@ describe('types', () => {
     const writeonlyDerivedAtom = atom(null, (get, set) => {
       set(primitiveAtom, get(primitiveAtom) - 1)
     })
-
     expectType<WritableAtom<null, [], void>>(writeonlyDerivedAtom)
-  })
+  }
+  Component
+})
 
-  it('type utils should work', () => {
+it('type utils should work', () => {
+  function Component() {
     const readWriteAtom = atom(
       (_get) => 1 as number,
       async (_get, _set, _value: string) => {}
@@ -50,5 +52,6 @@ describe('types', () => {
 
     const result: ExtractAtomResult<typeof readWriteAtom> = Promise.resolve()
     expectType<Promise<void>>(result)
-  })
+  }
+  Component
 })
