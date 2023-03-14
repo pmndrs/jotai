@@ -301,8 +301,7 @@ those state changes.
 
 ```ts
 import { useEffect } from 'react'
-import { atom, Getter, Setter, SetStateAction } from 'jotai'
-import { useUpdateAtom } from 'jotai/utils'
+import { atom, useSetAtom, Getter, Setter, SetStateAction } from 'jotai'
 
 type Callback<Value> = (
   get: Getter,
@@ -326,7 +325,7 @@ export function atomWithListeners<Value>(initialValue: Value) {
     }
   )
   const useListener = (callback: Callback<Value>) => {
-    const setListeners = useUpdateAtom(listenersAtom)
+    const setListeners = useSetAtom(listenersAtom)
     useEffect(() => {
       setListeners((prev) => [...prev, callback])
       return () =>
