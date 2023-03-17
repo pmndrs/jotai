@@ -1,5 +1,5 @@
 import { createContext, createElement, useContext, useRef } from 'react'
-import type { ReactElement, ReactNode } from 'react'
+import type { FunctionComponentElement, ReactNode } from 'react'
 import { createStore, getDefaultStore } from '../vanilla.ts'
 
 type Store = ReturnType<typeof createStore>
@@ -21,7 +21,7 @@ export const Provider = ({
 }: {
   children?: ReactNode
   store?: Store
-}): ReactElement<{ children?: ReactNode; store?: Store }> => {
+}): FunctionComponentElement<{ value: Store | undefined }> => {
   const storeRef = useRef<Store>()
   if (!store && !storeRef.current) {
     storeRef.current = createStore()
