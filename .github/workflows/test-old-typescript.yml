@@ -34,14 +34,15 @@ jobs:
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
       - run: yarn build
+      - name: Patch for All TS
+          sed -i~ 's/"moduleResolution": "nodenext",/"moduleResolution": "node",/' tsconfig.json
+          sed -i~ 's/"allowImportingTsExtensions": true,//' tsconfig.json
       - name: Patch for Old TS
-        if: ${{ startsWith(matrix.typescript, '4.') || startsWith(matrix.typescript, '3.') }}
+        if: ${{ matrix.typescript == '4.7.4' || matrix.typescript == '4.6.4' || matrix.typescript == '4.5.5' ||   matrix.typescript == '4.4.4' || matrix.typescript == '4.3.5' || matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
           sed -i~ 's/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//' tests/*/*.tsx tests/*/*/*.tsx
           sed -i~ 's/"target":/"skipLibCheck":true,"target":/' tsconfig.json
           sed -i~ 's/"exactOptionalPropertyTypes": true,//' tsconfig.json
-          sed -i~ 's/"moduleResolution": "nodenext",/"moduleResolution": "node",/' tsconfig.json
-          sed -i~ 's/"allowImportingTsExtensions": true,//' tsconfig.json
           sed -i~ 's/"jotai": \["\.\/src\/index\.ts"\],/"jotai": [".\/dist\/ts3.8\/index.d.ts"],/' tsconfig.json
           sed -i~ 's/"jotai\/\*": \["\.\/src\/\*\.ts"\]/"jotai\/*": [".\/dist\/ts3.8\/*.d.ts"]/' tsconfig.json
           sed -i~ 's/"include": .*/"include": ["src\/types.d.ts", "dist\/**\/*", "tests\/**\/*"],/' tsconfig.json
