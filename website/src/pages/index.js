@@ -4,7 +4,6 @@ import { Headline } from '../components/headline';
 import { InlineCode } from '../components/inline-code';
 import { IntegrationsDemo } from '../components/integrations-demo';
 import { Intro } from '../components/intro';
-import { Layout } from '../components/layout';
 import { LogoCloud } from '../components/logo-cloud';
 import { Meta } from '../components/meta';
 import { Tabs } from '../components/tabs';
@@ -12,7 +11,7 @@ import { UtilitiesDemo } from '../components/utilities-demo';
 
 export default function HomePage() {
   return (
-    <Layout>
+    <>
       <Intro />
       <div className="mt-12 space-y-12 lg:mt-24 lg:space-y-24">
         <div className="space-y-4">
@@ -65,7 +64,7 @@ export default function HomePage() {
           </a>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
 
