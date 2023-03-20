@@ -1,4 +1,4 @@
-export { wrapRootElement } from './gatsby-shared';
+export { wrapRootElement, wrapPageElement } from './gatsby-shared';
 
 export const onRenderBody = ({ setHtmlAttributes, setPreBodyComponents }) => {
   setHtmlAttributes({ lang: 'en' });
