@@ -178,3 +178,23 @@ it('should unmount tree dependencies with store.get', async () => {
   const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
   expect(result).toEqual([])
 })
+
+it('should update async atom with delay (#1813)', async () => {
+  const countAtom = atom(0)
+
+  const resolve: (() => void)[] = []
+  const delayedAtom = atom(async (get) => {
+    const count = get(countAtom)
+    await new Promise<void>((r) => resolve.push(r))
+    return count
+  })
+
+  const store = createStore()
+  store.get(delayedAtom)
+  store.set(countAtom, 1)
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise<void>((r) => setTimeout(r)) // wait for one tick
+  const promise = store.get(delayedAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await promise).toBe(1)
+})
