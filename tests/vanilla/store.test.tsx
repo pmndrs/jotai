@@ -199,17 +199,12 @@ it('should update async atom with delay (#1813)', async () => {
   expect(await promise).toBe(1)
 })
 
-it('should return the same promise as set', async () => {
+it('should override a promise by setting', async () => {
   const store = createStore()
-  const promise = Promise.resolve(1)
-  const promiseAtom = atom(Promise.resolve(0))
-  store.set(promiseAtom, promise)
-  expect(store.get(promiseAtom)).toBe(promise)
-})
-
-it('should return the same promise as initial value', async () => {
-  const store = createStore()
-  const promise = Promise.resolve(1)
-  const promiseAtom = atom(promise)
-  expect(store.get(promiseAtom)).toBe(promise)
+  const countAtom = atom(Promise.resolve(0))
+  const infinitePending = new Promise<never>(() => {})
+  store.set(countAtom, infinitePending)
+  const promise = store.get(countAtom)
+  store.set(countAtom, Promise.resolve(1))
+  expect(await promise).toBe(1)
 })
