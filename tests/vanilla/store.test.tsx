@@ -198,3 +198,18 @@ it('should update async atom with delay (#1813)', async () => {
   resolve.splice(0).forEach((fn) => fn())
   expect(await promise).toBe(1)
 })
+
+it('should return the same promise as set', async () => {
+  const store = createStore()
+  const promise = Promise.resolve(1)
+  const promiseAtom = atom(Promise.resolve(0))
+  store.set(promiseAtom, promise)
+  expect(store.get(promiseAtom)).toBe(promise)
+})
+
+it('should return the same promise as initial value', async () => {
+  const store = createStore()
+  const promise = Promise.resolve(1)
+  const promiseAtom = atom(promise)
+  expect(store.get(promiseAtom)).toBe(promise)
+})
