@@ -63,7 +63,7 @@ const HydrateAtoms = ({ initialValues, children }) => {
 }
 
 export const TextDisplay = ({ initialTextValue }) => (
-  <Provider store={storeRef.current}>
+  <Provider>
     <HydrateAtoms initialValues={[[textAtom, initialTextValue]]}>
       <PrettyText />
       <br />
