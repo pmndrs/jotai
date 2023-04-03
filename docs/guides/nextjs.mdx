@@ -29,6 +29,10 @@ const pageAtom = atomWithHash('page', 1, {
 
 This way you have full control over what [router event](https://nextjs.org/docs/api-reference/next/router#routerevents) you want to subscribe to.
 
+> ### In Next.js 13
+>
+> As of Next.js 13 there have been some changes to the `Router.events.on()` which no longer expose events. There are plans in the [App Router Roadmap](https://beta.nextjs.org/docs/app-directory-roadmap#planned-features) for event intercepting and hash handeling however there is no ETA on when this will be available or what it will look like. For now, when trying to the `atomWithHash()` you will not get the atom loading with any data when navigating using the router, only when the page is reloaded or the component is rerendered.
+
 ## You can't return promises in server side rendering
 
 It's important to note that you can't return promises with SSR - However, it's possible to guard against it inside the atom definition.
