@@ -1,7 +1,6 @@
 import { graphql } from 'gatsby';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
 import { Jotai } from '../../components/jotai';
-import { Layout } from '../../components/layout';
 import { Meta } from '../../components/meta';
 
 export default function DocsPage({ data }) {
@@ -9,13 +8,13 @@ export default function DocsPage({ data }) {
   const { title } = frontmatter;
 
   return (
-    <Layout showDocs>
+    <>
       <div className="mb-4 lg:hidden">
         <Jotai isDocsPage small />
       </div>
       <h1>{title}</h1>
       <MDXRenderer>{body}</MDXRenderer>
-    </Layout>
+    </>
   );
 }
 

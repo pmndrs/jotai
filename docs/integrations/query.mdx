@@ -38,9 +38,9 @@ The second optional `getQueryClient` parameter is a function that return [QueryC
 
 The return values have two atoms.
 The first one is called `dataAtom` and it's an atom for the data from the observer. `dataAtom` requires Suspense.
-The second one is called `statusAtom` and it's an atom for the full result from the observer. `statusAtom` doesn't require Suspense.
+The second one is called `statusAtom` and it's an atom for the full result from the observer. `statusAtom` doesn't require Suspense and won't throw errors to Error Boundary.
 The data from the observer is also included in `statusAtom`,
-so if you don't use Suspense, you don't need to use `dataAtom`.
+so if you don't use Suspense and Error Boundary, you don't need to use `dataAtom`.
 
 ## `atomsWithQuery` usage
 

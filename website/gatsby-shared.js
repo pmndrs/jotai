@@ -4,6 +4,7 @@ import { countAtom, menuAtom, searchAtom, textAtom } from './src/atoms';
 import { Code } from './src/components/code';
 import { CodeSandbox } from './src/components/code-sandbox';
 import { InlineCode } from './src/components/inline-code';
+import { Layout } from './src/components/layout';
 import { A, H2, H3, H4, H5 } from './src/components/mdx';
 import { Stackblitz } from './src/components/stackblitz';
 import { TOC } from './src/components/toc';
@@ -33,3 +34,7 @@ export const wrapRootElement = ({ element }) => (
     <MDXProvider components={components}>{element}</MDXProvider>
   </JotaiProvider>
 );
+
+export const wrapPageElement = ({ element, props }) => {
+  return <Layout showDocs={props.path.startsWith('/docs')}>{element}</Layout>;
+};
