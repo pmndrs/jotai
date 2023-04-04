@@ -32,11 +32,6 @@ export function useAtom<
   SetAtom<ExtractAtomArgs<AtomType>, ExtractAtomResult<AtomType>>
 ]
 
-export function useAtom<AtomType extends Atom<unknown>>(
-  atom: AtomType,
-  options?: Options
-): [Awaited<ExtractAtomValue<AtomType>>, never]
-
 export function useAtom<Value, Args extends unknown[], Result>(
   atom: Atom<Value> | WritableAtom<Value, Args, Result>,
   options?: Options
