@@ -1,5 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
+import { it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/vanilla/utils'

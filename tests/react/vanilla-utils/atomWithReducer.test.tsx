@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
+import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atomWithReducer } from 'jotai/vanilla/utils'
 

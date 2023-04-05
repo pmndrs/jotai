@@ -1,4 +1,5 @@
 import { transformSync } from '@babel/core'
+import { expect, it } from 'vitest'
 import plugin from 'jotai/babel/plugin-react-refresh'
 
 const transform = (
@@ -14,7 +15,7 @@ const transform = (
     plugins: [[plugin, { customAtomNames }]],
   })?.code
 
-it('Should add a cache for a single atom', () => {
+it('should add a cache for a single atom', () => {
   expect(transform(`const countAtom = atom(0);`, '/src/atoms/index.ts'))
     .toMatchInlineSnapshot(`
       "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
@@ -31,7 +32,7 @@ it('Should add a cache for a single atom', () => {
     `)
 })
 
-it('Should add a cache for multiple atoms', () => {
+it('should add a cache for multiple atoms', () => {
   expect(
     transform(
       `
@@ -56,7 +57,7 @@ it('Should add a cache for multiple atoms', () => {
   `)
 })
 
-it('Should add a cache for multiple exported atoms', () => {
+it('should add a cache for multiple exported atoms', () => {
   expect(
     transform(
       `
@@ -81,7 +82,7 @@ it('Should add a cache for multiple exported atoms', () => {
   `)
 })
 
-it('Should add a cache for a default exported atom', () => {
+it('should add a cache for a default exported atom', () => {
   expect(transform(`export default atom(0);`, '/src/atoms/index.ts'))
     .toMatchInlineSnapshot(`
       "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
@@ -98,7 +99,7 @@ it('Should add a cache for a default exported atom', () => {
     `)
 })
 
-it('Should add a cache for mixed exports of atoms', () => {
+it('should add a cache for mixed exports of atoms', () => {
   expect(
     transform(
       `
@@ -123,13 +124,13 @@ it('Should add a cache for mixed exports of atoms', () => {
   `)
 })
 
-it('Should fail if no filename is available', () => {
-  expect(() => transform(`const countAtom = atom(0);`)).toThrowError(
+it('should fail if no filename is available', () => {
+  expect(() => transform(`const countAtom = atom(0);`)).toThrow(
     'Filename must be available'
   )
 })
 
-it('Should handle atoms returned from functions (#891)', () => {
+it('should handle atoms returned from functions (#891)', () => {
   expect(
     transform(
       `function createAtom(label) {
@@ -165,7 +166,7 @@ it('Should handle atoms returned from functions (#891)', () => {
   `)
 })
 
-it('Should handle custom atom names', () => {
+it('should handle custom atom names', () => {
   expect(
     transform(
       `const mySpecialThing = myCustomAtom(0);`,

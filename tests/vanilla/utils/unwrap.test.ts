@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import { unstable_unwrap as unwrap } from 'jotai/vanilla/utils'
 

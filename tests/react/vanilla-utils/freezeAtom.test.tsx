@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { render } from '@testing-library/react'
+import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { freezeAtom, freezeAtomCreator } from 'jotai/vanilla/utils'

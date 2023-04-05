@@ -1,5 +1,6 @@
 import { StrictMode, Suspense, useState } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
@@ -25,11 +26,11 @@ it('one atom, one effect', async () => {
   )
 
   await findByText('count: 1')
-  expect(onMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
 
   fireEvent.click(getByText('button'))
   await findByText('count: 2')
-  expect(onMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
 it('two atoms, one each', async () => {
@@ -68,8 +69,8 @@ it('two atoms, one each', async () => {
     getByText('count: 1')
     getByText('count2: 1')
   })
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onMountFn2).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onMountFn2).toHaveBeenCalledTimes(1)
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
@@ -77,8 +78,8 @@ it('two atoms, one each', async () => {
     getByText('count2: 2')
   })
 
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onMountFn2).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onMountFn2).toHaveBeenCalledTimes(1)
 })
 
 it('one derived atom, one onMount', async () => {
@@ -103,7 +104,7 @@ it('one derived atom, one onMount', async () => {
   )
 
   await findByText('count: 1')
-  expect(onMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
 it('mount/unmount test', async () => {
@@ -138,13 +139,13 @@ it('mount/unmount test', async () => {
     </>
   )
 
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onUnMountFn).toBeCalledTimes(0)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
-    expect(onMountFn).toBeCalledTimes(1)
-    expect(onUnMountFn).toBeCalledTimes(1)
+    expect(onMountFn).toHaveBeenCalledTimes(1)
+    expect(onUnMountFn).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -188,17 +189,17 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
       <Display />
     </>
   )
-  expect(derivedOnMountFn).toBeCalledTimes(1)
-  expect(derivedOnUnMountFn).toBeCalledTimes(0)
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onUnMountFn).toBeCalledTimes(0)
+  expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
+  expect(derivedOnUnMountFn).toHaveBeenCalledTimes(0)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
-    expect(derivedOnMountFn).toBeCalledTimes(1)
-    expect(derivedOnUnMountFn).toBeCalledTimes(1)
-    expect(onMountFn).toBeCalledTimes(1)
-    expect(onUnMountFn).toBeCalledTimes(1)
+    expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
+    expect(derivedOnUnMountFn).toHaveBeenCalledTimes(1)
+    expect(onMountFn).toHaveBeenCalledTimes(1)
+    expect(onUnMountFn).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -332,13 +333,13 @@ it('mount/unmount test with async atom', async () => {
   resolve()
   await waitFor(() => {
     getByText('count: 0')
-    expect(onMountFn).toBeCalledTimes(1)
-    expect(onUnMountFn).toBeCalledTimes(0)
+    expect(onMountFn).toHaveBeenCalledTimes(1)
+    expect(onUnMountFn).toHaveBeenCalledTimes(0)
   })
 
   fireEvent.click(getByText('button'))
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onUnMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onUnMountFn).toHaveBeenCalledTimes(1)
 })
 
 it('subscription usage test', async () => {

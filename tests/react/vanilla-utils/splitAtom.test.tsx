@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { expect, it } from 'vitest'
 import { useAtom, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom, PrimitiveAtom } from 'jotai/vanilla'
@@ -74,8 +75,8 @@ it('no unnecessary updates when updating atoms', async () => {
   const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
   const dragonBox = getByTestId('get dragon food-checkbox') as HTMLInputElement
 
-  expect(catBox.checked).toBe(false)
-  expect(dragonBox.checked).toBe(false)
+  expect(catBox.checked).toBeFalsy()
+  expect(dragonBox.checked).toBeFalsy()
 
   fireEvent.click(catBox)
 
@@ -85,8 +86,8 @@ it('no unnecessary updates when updating atoms', async () => {
     getByText('get dragon food commits: 1')
   })
 
-  expect(catBox.checked).toBe(true)
-  expect(dragonBox.checked).toBe(false)
+  expect(catBox.checked).toBeTruthy()
+  expect(dragonBox.checked).toBeFalsy()
 
   fireEvent.click(dragonBox)
 
@@ -96,8 +97,8 @@ it('no unnecessary updates when updating atoms', async () => {
     getByText('get dragon food commits: 2')
   })
 
-  expect(catBox.checked).toBe(true)
-  expect(dragonBox.checked).toBe(true)
+  expect(catBox.checked).toBeTruthy()
+  expect(dragonBox.checked).toBeTruthy()
 })
 
 it('removing atoms', async () => {
@@ -414,8 +415,8 @@ it('read-only array atom', async () => {
   const dragonBox = getByTestId('get dragon food-checkbox') as HTMLInputElement
 
   await waitFor(() => {
-    expect(catBox.checked).toBe(false)
-    expect(dragonBox.checked).toBe(false)
+    expect(catBox.checked).toBeFalsy()
+    expect(dragonBox.checked).toBeFalsy()
   })
 })
 

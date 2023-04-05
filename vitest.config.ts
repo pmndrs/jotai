@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     name: 'jotai',
+    // Keeping globals on let's React Testing Library
     globals: true,
     environment: 'jsdom',
     dir: 'tests',

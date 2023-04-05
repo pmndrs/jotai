@@ -13,8 +13,7 @@
     "paths": {
       "jotai": ["./src/index.ts"],
       "jotai/*": ["./src/*.ts"]
-    },
-    "types": ["vitest/globals"]
+    }
   },
   "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]

@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
+import { expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
@@ -208,5 +209,5 @@ it('useHydrateAtoms should respect onMount', async () => {
   )
 
   await findByText('count: 42')
-  expect(onMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
 })

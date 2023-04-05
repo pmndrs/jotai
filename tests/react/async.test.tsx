@@ -1,5 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
@@ -664,7 +665,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   await findByText('derived: 13, commits: 3')
 })
 
-it('Handles synchronously invoked async set (#375)', async () => {
+it('handles synchronously invoked async set (#375)', async () => {
   const loadingAtom = atom(false)
   const documentAtom = atom<string | undefined>(undefined)
   let resolve = () => {}

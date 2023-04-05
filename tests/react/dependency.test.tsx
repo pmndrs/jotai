@@ -1,5 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Getter } from 'jotai/vanilla'
@@ -641,7 +642,7 @@ it('update unmounted atom with intermediate atom', async () => {
   await findByText('derived: 4')
 })
 
-it('Should bail for derived sync chains (#877)', async () => {
+it('should bail for derived sync chains (#877)', async () => {
   let syncAtomCount = 0
   const textAtom = atom('hello')
 
@@ -685,7 +686,7 @@ it('Should bail for derived sync chains (#877)', async () => {
   expect(syncAtomCount).toBe(1)
 })
 
-it('Should bail for derived async chains (#877)', async () => {
+it('should bail for derived async chains (#877)', async () => {
   let syncAtomCount = 0
   const textAtom = atom('hello')
 
@@ -812,11 +813,11 @@ describe('glitch free', () => {
     )
 
     await findByText('value: v0: 0, v1: 0, v2: 0')
-    expect(computeValue).toBeCalledTimes(1)
+    expect(computeValue).toHaveBeenCalledTimes(1)
 
     fireEvent.click(getByText('button'))
     await findByText('value: v0: 1, v1: 1, v2: 1')
-    expect(computeValue).toBeCalledTimes(2)
+    expect(computeValue).toHaveBeenCalledTimes(2)
   })
 
   it('same value', async () => {
@@ -853,11 +854,11 @@ describe('glitch free', () => {
     )
 
     await findByText('value: 0')
-    expect(computeValue).toBeCalledTimes(1)
+    expect(computeValue).toHaveBeenCalledTimes(1)
 
     fireEvent.click(getByText('button'))
     await findByText('value: 1')
-    expect(computeValue).toBeCalledTimes(2)
+    expect(computeValue).toHaveBeenCalledTimes(2)
   })
 
   it('double chain', async () => {
@@ -896,10 +897,10 @@ describe('glitch free', () => {
     )
 
     await findByText('value: 0')
-    expect(computeValue).toBeCalledTimes(1)
+    expect(computeValue).toHaveBeenCalledTimes(1)
 
     fireEvent.click(getByText('button'))
     await findByText('value: 1')
-    expect(computeValue).toBeCalledTimes(2)
+    expect(computeValue).toHaveBeenCalledTimes(2)
   })
 })

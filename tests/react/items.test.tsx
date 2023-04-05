@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'

@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
@@ -7,8 +8,8 @@ it('should not fire on subscribe', async () => {
   const callback2 = vi.fn()
   store.sub(countAtom, callback1)
   store.sub(countAtom, callback2)
-  expect(callback1).not.toBeCalled()
-  expect(callback2).not.toBeCalled()
+  expect(callback1).not.toHaveBeenCalled()
+  expect(callback2).not.toHaveBeenCalled()
 })
 
 it('should not fire subscription if primitive atom value is the same', async () => {
@@ -18,7 +19,7 @@ it('should not fire subscription if primitive atom value is the same', async () 
   store.sub(countAtom, callback)
   const calledTimes = callback.mock.calls.length
   store.set(countAtom, 0)
-  expect(callback).toBeCalledTimes(calledTimes)
+  expect(callback).toHaveBeenCalledTimes(calledTimes)
 })
 
 it('should not fire subscription if derived atom value is the same', async () => {
@@ -29,7 +30,7 @@ it('should not fire subscription if derived atom value is the same', async () =>
   store.sub(derivedAtom, callback)
   const calledTimes = callback.mock.calls.length
   store.set(countAtom, 1)
-  expect(callback).toBeCalledTimes(calledTimes)
+  expect(callback).toHaveBeenCalledTimes(calledTimes)
 })
 
 describe('[DEV-ONLY] dev-only methods', () => {

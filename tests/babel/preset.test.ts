@@ -1,4 +1,5 @@
 import { transformSync } from '@babel/core'
+import { expect, it } from 'vitest'
 import preset from 'jotai/babel/preset'
 
 const transform = (
@@ -13,7 +14,7 @@ const transform = (
     presets: [[preset, { customAtomNames }]],
   })?.code
 
-it('Should add a debugLabel and cache to an atom', () => {
+it('should add a debugLabel and cache to an atom', () => {
   expect(transform(`const countAtom = atom(0);`, '/src/atoms.ts'))
     .toMatchInlineSnapshot(`
       "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
@@ -31,7 +32,7 @@ it('Should add a debugLabel and cache to an atom', () => {
     `)
 })
 
-it('Should add a debugLabel and cache to multiple atoms', () => {
+it('should add a debugLabel and cache to multiple atoms', () => {
   expect(
     transform(
       `
@@ -57,7 +58,7 @@ it('Should add a debugLabel and cache to multiple atoms', () => {
   `)
 })
 
-it('Should add a cache and debugLabel for multiple exported atoms', () => {
+it('should add a cache and debugLabel for multiple exported atoms', () => {
   expect(
     transform(
       `
@@ -84,7 +85,7 @@ it('Should add a cache and debugLabel for multiple exported atoms', () => {
   `)
 })
 
-it('Should add a cache and debugLabel for a default exported atom', () => {
+it('should add a cache and debugLabel for a default exported atom', () => {
   expect(transform(`export default atom(0);`, '/src/atoms/index.ts'))
     .toMatchInlineSnapshot(`
       "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
@@ -103,7 +104,7 @@ it('Should add a cache and debugLabel for a default exported atom', () => {
     `)
 })
 
-it('Should add a cache and debugLabel for mixed exports of atoms', () => {
+it('should add a cache and debugLabel for mixed exports of atoms', () => {
   expect(
     transform(
       `
@@ -131,13 +132,13 @@ it('Should add a cache and debugLabel for mixed exports of atoms', () => {
   `)
 })
 
-it('Should fail if no filename is available', () => {
-  expect(() => transform(`const countAtom = atom(0);`)).toThrowError(
+it('should fail if no filename is available', () => {
+  expect(() => transform(`const countAtom = atom(0);`)).toThrow(
     'Filename must be available'
   )
 })
 
-it('Should handle custom atom names', () => {
+it('should handle custom atom names', () => {
   expect(
     transform(`const mySpecialThing = myCustomAtom(0);`, '/src/atoms.ts', [
       'myCustomAtom',
