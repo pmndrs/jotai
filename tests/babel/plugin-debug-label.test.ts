@@ -14,28 +14,28 @@ const transform = (
     plugins: [[plugin, { customAtomNames }]],
   })?.code
 
-it('should add a debugLabel to an atom', () => {
+it('Should add a debugLabel to an atom', () => {
   expect(transform(`const countAtom = atom(0);`)).toMatchInlineSnapshot(`
     "const countAtom = atom(0);
     countAtom.debugLabel = \\"countAtom\\";"
   `)
 })
 
-it('should handle a atom from a default export', () => {
+it('Should handle a atom from a default export', () => {
   expect(transform(`const countAtom = jotai.atom(0);`)).toMatchInlineSnapshot(`
     "const countAtom = jotai.atom(0);
     countAtom.debugLabel = \\"countAtom\\";"
   `)
 })
 
-it('should handle a atom being exported', () => {
+it('Should handle a atom being exported', () => {
   expect(transform(`export const countAtom = atom(0);`)).toMatchInlineSnapshot(`
     "export const countAtom = atom(0);
     countAtom.debugLabel = \\"countAtom\\";"
   `)
 })
 
-it('should handle a default exported atom', () => {
+it('Should handle a default exported atom', () => {
   expect(transform(`export default atom(0);`, 'countAtom.ts'))
     .toMatchInlineSnapshot(`
       "const countAtom = atom(0);
@@ -44,7 +44,7 @@ it('should handle a default exported atom', () => {
     `)
 })
 
-it('should handle a default exported atom in a barrel file', () => {
+it('Should handle a default exported atom in a barrel file', () => {
   expect(transform(`export default atom(0);`, 'atoms/index.ts'))
     .toMatchInlineSnapshot(`
       "const atoms = atom(0);
@@ -53,7 +53,7 @@ it('should handle a default exported atom in a barrel file', () => {
     `)
 })
 
-it('should handle all types of exports', () => {
+it('Should handle all types of exports', () => {
   expect(
     transform(
       `
@@ -71,7 +71,7 @@ it('should handle all types of exports', () => {
   `)
 })
 
-it('should handle all atom types', () => {
+it('Should handle all atom types', () => {
   expect(
     transform(
       `
@@ -120,7 +120,7 @@ it('should handle all atom types', () => {
   `)
 })
 
-it('handles custom atom names a debugLabel to an atom', () => {
+it('Handles custom atom names a debugLabel to an atom', () => {
   expect(
     transform(`const mySpecialThing = myCustomAtom(0);`, undefined, [
       'myCustomAtom',

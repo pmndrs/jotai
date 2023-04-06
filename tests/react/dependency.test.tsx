@@ -642,7 +642,7 @@ it('update unmounted atom with intermediate atom', async () => {
   await findByText('derived: 4')
 })
 
-it('should bail for derived sync chains (#877)', async () => {
+it('Should bail for derived sync chains (#877)', async () => {
   let syncAtomCount = 0
   const textAtom = atom('hello')
 
@@ -686,7 +686,7 @@ it('should bail for derived sync chains (#877)', async () => {
   expect(syncAtomCount).toBe(1)
 })
 
-it('should bail for derived async chains (#877)', async () => {
+it('Should bail for derived async chains (#877)', async () => {
   let syncAtomCount = 0
   const textAtom = atom('hello')
 

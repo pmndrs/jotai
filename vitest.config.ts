@@ -9,7 +9,8 @@ export default defineConfig({
   },
   test: {
     name: 'jotai',
-    // Keeping globals on let's React Testing Library
+    // Keeping globals to true triggers React Testing Library's auto cleanup
+    // https://vitest.dev/guide/migration.html
     globals: true,
     environment: 'jsdom',
     dir: 'tests',
