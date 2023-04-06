@@ -218,6 +218,59 @@ export const createStore = () => {
     return nextAtomState
   }
 
+  const setAtomValueOrPromise = <Value>(
+    atom: Atom<Value>,
+    valueOrPromise: Value,
+    depSet?: Set<AnyAtom>,
+    abortPromise?: () => void
+  ): AtomState<Value> => {
+    if (valueOrPromise instanceof Promise) {
+      let continuePromise: (next: Promise<Awaited<Value>>) => void
+      const promise: Promise<Awaited<Value>> & PromiseMeta<Awaited<Value>> =
+        new Promise((resolve, reject) => {
+          let settled = false
+          valueOrPromise.then(
+            (v) => {
+              if (!settled) {
+                settled = true
+                // update dependencies, that could have changed
+                setAtomValue(atom, promise as Value, depSet)
+                resolvePromise(promise, v)
+                resolve(v)
+              }
+            },
+            (e) => {
+              if (!settled) {
+                settled = true
+                setAtomValue(atom, promise as Value, depSet)
+                rejectPromise(promise, e)
+                reject(e)
+              }
+            }
+          )
+          continuePromise = (next) => {
+            if (!settled) {
+              settled = true
+              next.then(
+                (v) => resolvePromise(promise, v),
+                (e) => rejectPromise(promise, e)
+              )
+              resolve(next)
+            }
+          }
+        })
+      promise.status = 'pending'
+      registerCancelPromise(promise, (next) => {
+        if (next) {
+          continuePromise(next as Promise<Awaited<Value>>)
+        }
+        abortPromise?.()
+      })
+      return setAtomValue(atom, promise as Value, depSet)
+    }
+    return setAtomValue(atom, valueOrPromise, depSet)
+  }
+
   const setAtomError = <Value>(
     atom: Atom<Value>,
     error: AnyError,
@@ -318,52 +371,10 @@ export const createStore = () => {
       },
     }
     try {
-      const value = atom.read(getter, options as any)
-      if (value instanceof Promise) {
-        let continuePromise: (next: Promise<Awaited<Value>>) => void
-        const promise: Promise<Awaited<Value>> & PromiseMeta<Awaited<Value>> =
-          new Promise((resolve, reject) => {
-            let settled = false
-            value.then(
-              (v) => {
-                if (!settled) {
-                  settled = true
-                  // update dependencies, that could have changed
-                  setAtomValue(atom, promise as Value, depSet)
-                  resolvePromise(promise, v)
-                  resolve(v)
-                }
-              },
-              (e) => {
-                if (!settled) {
-                  settled = true
-                  setAtomValue(atom, promise as Value, depSet)
-                  rejectPromise(promise, e)
-                  reject(e)
-                }
-              }
-            )
-            continuePromise = (next) => {
-              if (!settled) {
-                settled = true
-                next.then(
-                  (v) => resolvePromise(promise, v),
-                  (e) => rejectPromise(promise, e)
-                )
-                resolve(next)
-              }
-            }
-          })
-        promise.status = 'pending'
-        registerCancelPromise(promise, (next) => {
-          if (next) {
-            continuePromise(next as Promise<Awaited<Value>>)
-          }
-          controller?.abort()
-        })
-        return setAtomValue(atom, promise as Value, depSet)
-      }
-      return setAtomValue(atom, value, depSet)
+      const valueOrPromise = atom.read(getter, options as any)
+      return setAtomValueOrPromise(atom, valueOrPromise, depSet, () => {
+        controller?.abort()
+      })
     } catch (error) {
       return setAtomError(atom, error, depSet)
     } finally {
@@ -424,7 +435,7 @@ export const createStore = () => {
           throw new Error('atom not writable')
         }
         const prevAtomState = getAtomState(a)
-        const nextAtomState = setAtomValue(a, args[0] as V)
+        const nextAtomState = setAtomValueOrPromise(a, args[0] as V)
         if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
           recomputeDependents(a)
         }
@@ -632,9 +643,9 @@ export const createStore = () => {
       dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
       dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
       dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => {
-        for (const [atom, value] of values) {
+        for (const [atom, valueOrPromise] of values) {
           if (hasInitialValue(atom)) {
-            setAtomValue(atom, value)
+            setAtomValueOrPromise(atom, valueOrPromise)
             recomputeDependents(atom)
           }
         }
