@@ -33,8 +33,8 @@ jobs:
           - 18.0.0
           - 18.1.0
           - 18.2.0
-          - 18.3.0-next-703c67560-20230307
-          - 0.0.0-experimental-703c67560-20230307
+          - 18.3.0-next-1528c5ccd-20230306
+          - 0.0.0-experimental-1528c5ccd-20230306
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
