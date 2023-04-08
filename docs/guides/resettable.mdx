@@ -55,7 +55,7 @@ const TodoList = () => {
 ## Derived atom with RESET symbol
 
 ```jsx
-import { atom, useAtom } from 'jotai'
+import { atom, useAtom, useSetAtom } from 'jotai'
 import { atomWithReset, useResetAtom, RESET } from 'jotai/utils'
 
 const dollarsAtom = atomWithReset(0)
@@ -67,7 +67,7 @@ const centsAtom = atom(
 
 const ResetExample = () => {
   const [dollars] = useAtom(dollarsAtom)
-  const setCents = useUpdateAtom(centsAtom)
+  const setCents = useSetAtom(centsAtom)
   const resetCents = useResetAtom(centsAtom)
 
   return (

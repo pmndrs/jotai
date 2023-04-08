@@ -12,7 +12,7 @@ Below is a basic example of illustrating how you can use `Provider` and its prop
 
 ### Basic Example
 
-> CodeSandbox link: [codesandbox](https://codesandbox.io/s/strange-tdd-gb1eo0?file=/src/App.js).
+> CodeSandbox link: [codesandbox](https://codesandbox.io/s/init-atoms-with-usehydrateatoms-nryk1w).
 
 Consider a basic example where you have a reusable `TextDisplay` component that allows you to display and update plain text.
 
@@ -63,7 +63,7 @@ const HydrateAtoms = ({ initialValues, children }) => {
 }
 
 export const TextDisplay = ({ initialTextValue }) => (
-  <Provider store={storeRef.current}>
+  <Provider>
     <HydrateAtoms initialValues={[[textAtom, initialTextValue]]}>
       <PrettyText />
       <br />
