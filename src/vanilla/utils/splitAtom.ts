@@ -1,4 +1,4 @@
-import { atom } from 'jotai/vanilla'
+import { atom } from '../../vanilla.ts'
 import type {
   Atom,
   Getter,
@@ -6,7 +6,7 @@ import type {
   SetStateAction,
   Setter,
   WritableAtom,
-} from 'jotai/vanilla'
+} from '../../vanilla.ts'
 
 const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
   (m.has(k) ? m : m.set(k, c())).get(k) as T

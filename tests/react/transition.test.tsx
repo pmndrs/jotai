@@ -2,7 +2,7 @@
 
 import ReactExports, { StrictMode, Suspense, useEffect } from 'react'
 import { describe, expect, it } from '@jest/globals'
-import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { act, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -106,13 +106,13 @@ describeWithUseTransition('useTransition', () => {
 
     await findByText('count: 0')
 
-    fireEvent.click(getByText('toggle'))
-    await findByText('pending')
+    await userEvent.click(getByText('toggle'))
+    await waitFor(() => expect(findByText('pending')).toBeTruthy())
 
-    fireEvent.click(getByText('increment'))
-    await findByText('count: 1')
+    await userEvent.click(getByText('increment'))
+    await waitFor(() => expect(findByText('count: 1')).toBeTruthy())
 
-    fireEvent.click(getByText('increment'))
-    await findByText('count: 2')
+    await userEvent.click(getByText('increment'))
+    await waitFor(() => expect(findByText('count: 2')).toBeTruthy())
   })
 })

@@ -1,4 +1,4 @@
-import type { Atom, WritableAtom } from './atom'
+import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
 type AnyError = unknown

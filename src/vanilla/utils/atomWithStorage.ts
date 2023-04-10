@@ -1,6 +1,6 @@
-import { atom } from 'jotai/vanilla'
-import type { WritableAtom } from 'jotai/vanilla'
-import { RESET } from './constants'
+import { atom } from '../../vanilla.ts'
+import type { WritableAtom } from '../../vanilla.ts'
+import { RESET } from './constants.ts'
 
 export const NO_STORAGE_VALUE = Symbol()
 
@@ -80,7 +80,11 @@ export function createJSONStorage<Value>(
   ) {
     storage.subscribe = (key, callback) => {
       const storageEventCallback = (e: StorageEvent) => {
-        if (e.key === key && e.newValue) {
+        if (
+          e.storageArea === getStringStorage() &&
+          e.key === key &&
+          e.newValue
+        ) {
           callback(JSON.parse(e.newValue))
         }
       }

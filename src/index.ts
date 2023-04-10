@@ -1,2 +1,2 @@
-export * from 'jotai/vanilla'
-export * from 'jotai/react'
+export * from './vanilla.ts'
+export * from './react.ts'
