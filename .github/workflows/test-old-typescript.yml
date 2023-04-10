@@ -35,6 +35,7 @@ jobs:
       - run: yarn install --frozen-lockfile --check-files
       - run: yarn build
       - name: Patch for All TS
+        run: |
           sed -i~ 's/"moduleResolution": "nodenext",/"moduleResolution": "node",/' tsconfig.json
           sed -i~ 's/"allowImportingTsExtensions": true,//' tsconfig.json
       - name: Patch for Old TS
