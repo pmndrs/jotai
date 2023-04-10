@@ -24,25 +24,41 @@ export function isAtom(
 }
 
 const atomFunctionNames = [
-  'abortableAtom',
+  // Core
   'atom',
   'atomFamily',
   'atomWithDefault',
-  'atomWithHash',
-  'atomWithImmer',
-  'atomWithInfiniteQuery',
-  'atomWithMachine',
-  'atomWithMutation',
   'atomWithObservable',
-  'atomWithProxy',
-  'atomWithQuery',
   'atomWithReducer',
   'atomWithReset',
-  'atomWithSubscription',
   'atomWithStorage',
-  'atomWithStore',
   'freezeAtom',
   'loadable',
   'selectAtom',
   'splitAtom',
+  'unstable_unwrap',
+  // jotai-xstate
+  'atomWithMachine',
+  // jotai-immer
+  'atomWithImmer',
+  // jotai-valtio
+  'atomWithProxy',
+  // jotai-trpc + jotai-relay
+  'atomWithQuery',
+  'atomWithMutation',
+  'atomWithSubscription',
+  // jotai-redux + jotai-zustand
+  'atomWithStore',
+  // jotai-location
+  'atomWithHash',
+  'atomWithLocation',
+  // jotai-optics
+  'focusAtom',
+  // jotai-form
+  'atomWithValidate',
+  'validateAtoms',
+  // jotai-cache
+  'atomWithCache',
+  // jotai-recoil
+  'atomWithRecoilValue',
 ]

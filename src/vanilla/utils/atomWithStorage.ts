@@ -80,7 +80,11 @@ export function createJSONStorage<Value>(
   ) {
     storage.subscribe = (key, callback) => {
       const storageEventCallback = (e: StorageEvent) => {
-        if (e.key === key && e.newValue) {
+        if (
+          e.storageArea === getStringStorage() &&
+          e.key === key &&
+          e.newValue
+        ) {
           callback(JSON.parse(e.newValue))
         }
       }

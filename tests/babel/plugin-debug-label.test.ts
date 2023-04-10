@@ -99,6 +99,27 @@ it('Should handle all atom types', () => {
       const selectedValueAtom = selectAtom(atom({ a: 0, b: 'othervalue' }), (v) => v.a);
 
       const splittedAtom = splitAtom(atom([]));
+
+      const unwrappedAtom = unstable_unwrap(asyncArrayAtom, () => []);
+
+      const someatomWithSubscription = atomWithSubscription(() => {});
+
+      const someAtomWithStore = atomWithStore(() => {});
+
+      const someAtomWithHash = atomWithHash('', '');
+      
+      const someAtomWithLocation = atomWithLocation();
+
+      const someFocusAtom = focusAtom(someAtom, () => {});
+
+      const someAtomWithValidate = atomWithValidate('', {});
+
+      const someValidateAtoms = validateAtoms({}, () => {});
+
+      const someAtomWithCache = atomWithCache(async () => {});
+
+      const someAtomWithRecoilValue = atomWithRecoilValue({});
+      
     `,
       'atoms/index.ts'
     )
@@ -129,7 +150,27 @@ it('Should handle all atom types', () => {
     }), v => v.a);
     selectedValueAtom.debugLabel = "selectedValueAtom";
     const splittedAtom = splitAtom(atom([]));
-    splittedAtom.debugLabel = "splittedAtom";"
+    splittedAtom.debugLabel = "splittedAtom";
+    const unwrappedAtom = unstable_unwrap(asyncArrayAtom, () => []);
+    unwrappedAtom.debugLabel = "unwrappedAtom";
+    const someatomWithSubscription = atomWithSubscription(() => {});
+    someatomWithSubscription.debugLabel = "someatomWithSubscription";
+    const someAtomWithStore = atomWithStore(() => {});
+    someAtomWithStore.debugLabel = "someAtomWithStore";
+    const someAtomWithHash = atomWithHash('', '');
+    someAtomWithHash.debugLabel = "someAtomWithHash";
+    const someAtomWithLocation = atomWithLocation();
+    someAtomWithLocation.debugLabel = "someAtomWithLocation";
+    const someFocusAtom = focusAtom(someAtom, () => {});
+    someFocusAtom.debugLabel = "someFocusAtom";
+    const someAtomWithValidate = atomWithValidate('', {});
+    someAtomWithValidate.debugLabel = "someAtomWithValidate";
+    const someValidateAtoms = validateAtoms({}, () => {});
+    someValidateAtoms.debugLabel = "someValidateAtoms";
+    const someAtomWithCache = atomWithCache(async () => {});
+    someAtomWithCache.debugLabel = "someAtomWithCache";
+    const someAtomWithRecoilValue = atomWithRecoilValue({});
+    someAtomWithRecoilValue.debugLabel = "someAtomWithRecoilValue";"
   `)
 })
 
