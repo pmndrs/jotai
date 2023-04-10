@@ -1,7 +1,6 @@
 /// <reference types="react/experimental" />
 
 import ReactExports, { StrictMode, Suspense, useEffect } from 'react'
-
 import { act, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'

@@ -9,7 +9,7 @@ import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
 beforeEach(() => {
-  vi.useFakeTimers()
+  vi.useFakeTimers({ shouldAdvanceTime: true })
 })
 afterEach(() => {
   vi.runAllTimers()
