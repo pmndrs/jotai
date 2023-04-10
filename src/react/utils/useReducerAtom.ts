@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
-import { useAtom } from 'jotai/react'
-import type { PrimitiveAtom } from 'jotai/vanilla'
+import { useAtom } from '../../react.ts'
+import type { PrimitiveAtom } from '../../vanilla.ts'
 
 type Options = Parameters<typeof useAtom>[1]
 

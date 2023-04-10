@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
-import { useSetAtom } from 'jotai/react'
-import type { WritableAtom } from 'jotai/vanilla'
-import { RESET } from 'jotai/vanilla/utils'
+import { useSetAtom } from '../../react.ts'
+import { RESET } from '../../vanilla/utils.ts'
+import type { WritableAtom } from '../../vanilla.ts'
 
 type Options = Parameters<typeof useSetAtom>[1]
 

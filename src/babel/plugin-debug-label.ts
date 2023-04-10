@@ -1,8 +1,8 @@
 import path from 'path'
 import babel, { PluginObj } from '@babel/core'
 import _templateBuilder from '@babel/template'
-import { isAtom } from './utils'
-import type { PluginOptions } from './utils'
+import { isAtom } from './utils.ts'
+import type { PluginOptions } from './utils.ts'
 
 const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 

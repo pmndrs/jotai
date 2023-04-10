@@ -2,8 +2,8 @@
 
 import ReactExports, { useDebugValue, useEffect, useReducer } from 'react'
 import type { ReducerWithoutAction } from 'react'
-import type { Atom, ExtractAtomValue } from 'jotai/vanilla'
-import { useStore } from './Provider'
+import type { Atom, ExtractAtomValue } from '../vanilla.ts'
+import { useStore } from './Provider.ts'
 
 type Store = ReturnType<typeof useStore>
 

@@ -4,9 +4,9 @@ import type {
   ExtractAtomResult,
   ExtractAtomValue,
   WritableAtom,
-} from 'jotai/vanilla'
-import { useAtomValue } from './useAtomValue'
-import { useSetAtom } from './useSetAtom'
+} from '../vanilla.ts'
+import { useAtomValue } from './useAtomValue.ts'
+import { useSetAtom } from './useSetAtom.ts'
 
 type SetAtom<Args extends any[], Result> = (...args: Args) => Result
 

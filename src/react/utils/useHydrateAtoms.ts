@@ -1,5 +1,5 @@
-import { useStore } from 'jotai/react'
-import type { WritableAtom } from 'jotai/vanilla'
+import { useStore } from '../../react.ts'
+import type { WritableAtom } from '../../vanilla.ts'
 
 type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0]

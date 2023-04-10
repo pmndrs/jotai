@@ -1,9 +1,9 @@
 #!/usr/bin/env npx ts-node
 
 import { add, complete, cycle, save, suite } from 'benny'
-import { atom } from '../src/vanilla/atom'
-import type { PrimitiveAtom } from '../src/vanilla/atom'
-import { createStore } from '../src/vanilla/store'
+import { atom } from '../src/vanilla/atom.ts'
+import type { PrimitiveAtom } from '../src/vanilla/atom.ts'
+import { createStore } from '../src/vanilla/store.ts'
 
 const cleanupFns = new Set<() => void>()
 const cleanup = () => {

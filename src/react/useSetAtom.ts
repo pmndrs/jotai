@@ -3,8 +3,8 @@ import type {
   ExtractAtomArgs,
   ExtractAtomResult,
   WritableAtom,
-} from 'jotai/vanilla'
-import { useStore } from './Provider'
+} from '../vanilla.ts'
+import { useStore } from './Provider.ts'
 
 type SetAtom<Args extends any[], Result> = (...args: Args) => Result
 type Store = ReturnType<typeof useStore>
