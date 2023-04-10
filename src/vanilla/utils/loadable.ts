@@ -1,5 +1,5 @@
-import { atom } from 'jotai/vanilla'
-import type { Atom } from 'jotai/vanilla'
+import { atom } from '../../vanilla.ts'
+import type { Atom } from '../../vanilla.ts'
 
 const cache1 = new WeakMap()
 const memo1 = <T>(create: () => T, dep1: object): T =>

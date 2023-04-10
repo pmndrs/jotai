@@ -1,5 +1,5 @@
-import { atom } from 'jotai/vanilla'
-import type { WritableAtom } from 'jotai/vanilla'
+import { atom } from '../../vanilla.ts'
+import type { WritableAtom } from '../../vanilla.ts'
 
 export function atomWithReducer<Value, Action>(
   initialValue: Value,

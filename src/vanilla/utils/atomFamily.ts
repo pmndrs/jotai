@@ -1,4 +1,4 @@
-import type { Atom } from 'jotai/vanilla'
+import type { Atom } from '../../vanilla.ts'
 
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 

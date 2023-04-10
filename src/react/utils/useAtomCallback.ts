@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { useSetAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
-import type { Getter, Setter } from 'jotai/vanilla'
+import { useSetAtom } from '../../react.ts'
+import { atom } from '../../vanilla.ts'
+import type { Getter, Setter } from '../../vanilla.ts'
 
 type Options = Parameters<typeof useSetAtom>[1]
 

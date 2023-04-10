@@ -1,5 +1,5 @@
-import { atom } from 'jotai/vanilla'
-import type { Atom, WritableAtom } from 'jotai/vanilla'
+import { atom } from '../../vanilla.ts'
+import type { Atom, WritableAtom } from '../../vanilla.ts'
 
 const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
   (m.has(k) ? m : m.set(k, c())).get(k) as T
