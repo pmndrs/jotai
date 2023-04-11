@@ -74,6 +74,6 @@ jobs:
           echo "declare module 'vitest'" >> ./src/types.d.ts
       - name: Test ${{ matrix.typescript }}
         run: |
-          rm -r node_modules/parse5 node_modules/@types/babel__core/node_modules
+          rm -r node_modules/@types/babel__core/node_modules
           sed -i~ 's/">=4.2": {/">=4.1": {/' node_modules/rxjs/package.json
           yarn tsc --noEmit

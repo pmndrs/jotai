@@ -392,7 +392,7 @@ describe('atomWithStorage (with browser storage)', () => {
     )
 
     const storageEventHandler = mockAddEventListener.mock.calls
-      .filter(([eventName]) => eventName === 'storage')
+      .filter(([eventName]: [string]) => eventName === 'storage')
       .pop()?.[1] as (e: StorageEvent) => void
 
     storageEventHandler?.({
