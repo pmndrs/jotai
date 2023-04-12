@@ -157,7 +157,7 @@ But now it means we have to handle the changes locally in each `Item`
 ```tsx
 const Item = ({ index, initialValue }) => {
   const setToggles = useSetAtom(togglesAtom)
-  const [toggle, setToggle] = React.useMemo() => useAtom(atom(val)), [])
+  const [toggle, setToggle] = React.useMemo(() => useAtom(atom(val)), [])
 
   const onPress = () => {
     setToggle(!toggle) // Update locally
