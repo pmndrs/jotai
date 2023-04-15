@@ -3,12 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { useAtom } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
-import {
-  unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE,
-  RESET,
-  atomWithStorage,
-  createJSONStorage,
-} from 'jotai/vanilla/utils'
+import { RESET, atomWithStorage, createJSONStorage } from 'jotai/vanilla/utils'
 
 const resolve: (() => void)[] = []
 
@@ -17,26 +12,32 @@ describe('atomWithStorage (sync)', () => {
     count: 10,
   }
   const dummyStorage = {
-    getItem: (key: string) => {
+    getItem: (key: string, initialValue: number) => {
       if (!(key in storageData)) {
-        return NO_STORAGE_VALUE
+        return initialValue
       }
       return storageData[key] as number
     },
     setItem: (key: string, newValue: number) => {
       storageData[key] = newValue
-      dummyStorage.listeners.forEach((listener) => {
-        listener(key, newValue)
-      })
     },
     removeItem: (key: string) => {
       delete storageData[key]
     },
-    listeners: new Set<(key: string, value: number) => void>(),
-    subscribe: (key: string, callback: (value: number) => void) => {
-      const listener = (k: string, value: number) => {
+    listeners: new Set<(key: string, value: number | null) => void>(),
+    emitStorageEvent: (key: string, newValue: number | null) => {
+      dummyStorage.listeners.forEach((listener) => {
+        listener(key, newValue)
+      })
+    },
+    subscribe: (
+      key: string,
+      callback: (value: number) => void,
+      initialValue: number
+    ) => {
+      const listener = (k: string, value: number | null) => {
         if (k === key) {
-          callback(value)
+          callback(value ?? initialValue)
         }
       }
       dummyStorage.listeners.add(listener)
@@ -82,8 +83,8 @@ describe('atomWithStorage (sync)', () => {
     const Counter = () => {
       const [count] = useAtom(countAtom)
       // emulating updating before mount
-      if (dummyStorage.getItem('count') !== 9) {
-        dummyStorage.setItem('count', 9)
+      if (dummyStorage.getItem('count', 1) !== 9) {
+        dummyStorage.emitStorageEvent('count', 9)
       }
       return <div>count: {count}</div>
     }
@@ -108,20 +109,28 @@ describe('with sync string storage', () => {
     },
     setItem: (key: string, newValue: string) => {
       storageData[key] = newValue
-      stringStorage.listeners.forEach((listener) => {
-        listener(key, newValue)
-      })
     },
     removeItem: (key: string) => {
       delete storageData[key]
     },
-    listeners: new Set<(key: string, value: string) => void>(),
+    listeners: new Set<(key: string, value: string | null) => void>(),
+    emitStorageEvent: (key: string, newValue: string | null) => {
+      stringStorage.listeners.forEach((listener) => {
+        listener(key, newValue)
+      })
+    },
   }
   const dummyStorage = createJSONStorage<number>(() => stringStorage)
-  dummyStorage.subscribe = (key, callback) => {
-    const listener = (k: string, value: string) => {
+  dummyStorage.subscribe = (key, callback, initialValue) => {
+    const listener = (k: string, value: string | null) => {
       if (k === key) {
-        callback(JSON.parse(value))
+        let newValue: number
+        try {
+          newValue = JSON.parse(value ?? '')
+        } catch {
+          newValue = initialValue
+        }
+        callback(newValue)
       }
     }
     stringStorage.listeners.add(listener)
@@ -193,10 +202,10 @@ describe('atomWithStorage (async)', () => {
     count: 10,
   }
   const asyncDummyStorage = {
-    getItem: async (key: string) => {
+    getItem: async (key: string, initialValue: number) => {
       await new Promise<void>((r) => resolve.push(r))
       if (!(key in asyncStorageData)) {
-        return NO_STORAGE_VALUE
+        return initialValue
       }
       return asyncStorageData[key] as number
     },
@@ -361,9 +370,9 @@ describe('atomWithStorage (with browser storage)', () => {
   it('createJSONStorage subscribes to specific window storage events', async () => {
     const store = createStore()
     const mockNativeStorage = Object.create(window.Storage.prototype)
-    mockNativeStorage.setItem = jest.fn()
-    mockNativeStorage.getItem = jest.fn()
-    mockNativeStorage.removeItem = jest.fn()
+    mockNativeStorage.setItem = jest.fn() as Storage['setItem']
+    mockNativeStorage.getItem = jest.fn(() => null) as Storage['getItem']
+    mockNativeStorage.removeItem = jest.fn() as Storage['removeItem']
 
     const dummyAtom = atomWithStorage<number>(
       'dummy',
@@ -395,6 +404,8 @@ describe('atomWithStorage (with browser storage)', () => {
       .filter(([eventName]) => eventName === 'storage')
       .pop()?.[1] as (e: StorageEvent) => void
 
+    expect(store.get(dummyAtom)).toBe(1)
+
     storageEventHandler?.({
       key: 'dummy',
       newValue: '2',
@@ -410,5 +421,62 @@ describe('atomWithStorage (with browser storage)', () => {
     } as StorageEvent)
 
     expect(store.get(dummyAtom)).toBe(2)
+
+    // simulate removeItem() from another window
+    storageEventHandler?.({
+      key: 'dummy',
+      newValue: null,
+      storageArea: mockNativeStorage,
+    } as StorageEvent)
+
+    expect(store.get(dummyAtom)).toBe(1)
+  })
+})
+
+describe('atomWithStorage (with non-browser storage)', () => {
+  const addEventListener = window.addEventListener
+  const mockAddEventListener = jest.fn()
+
+  beforeAll(() => {
+    ;(window as any).addEventListener = mockAddEventListener
+  })
+
+  afterAll(() => {
+    window.addEventListener = addEventListener
+  })
+
+  it('createJSONStorage avoids attaching event handler for non-browser storage', async () => {
+    const store = createStore()
+    const mockNonNativeStorage = {
+      setItem: jest.fn() as Storage['setItem'],
+      getItem: jest.fn(() => null) as Storage['getItem'],
+      removeItem: jest.fn() as Storage['removeItem'],
+    }
+
+    const dummyAtom = atomWithStorage<number>(
+      'dummy',
+      1,
+      createJSONStorage<number>(() => mockNonNativeStorage)
+    )
+
+    const DummyComponent = () => {
+      const [value] = useAtom(dummyAtom, { store })
+      return (
+        <>
+          <div>{value}</div>
+        </>
+      )
+    }
+
+    render(
+      <StrictMode>
+        <DummyComponent />
+      </StrictMode>
+    )
+
+    expect(mockAddEventListener).not.toHaveBeenCalledWith(
+      'storage',
+      expect.any(Function)
+    )
   })
 })

@@ -34,10 +34,14 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 
 **initialValue** (required): the initial value of the atom
 
-**storage** (optional): an object with:
+**storage** (optional): an object with the following methods:
 
-- `getItem`, `setItem` and `removeItem` methods for storing/retrieving/deleting persisted state; defaults to using `localStorage` for storage/retrieval and `JSON.stringify()`/`JSON.parse()` for serialization/deserialization.
-- Optionally, the storage has a `subscribe` property, which can be used to synchronize storage. The default `localStorage` handles `storage` events for cross-tab synchronization.
+- **getItem(key, initialValue)** (required): Reads an item from storage, or falls back to the `intialValue`
+- **setItem(key, value)** (required): Saves an item to storage
+- **removeItem(key)** (required): Deletes the item from storage
+- **subscribe(key, callback, initialValue)** (optional): A method which subscribes to external storage updates.
+
+If not specified, the default storage implementation uses `localStorage` for storage/retrieval, `JSON.stringify()`/`JSON.parse()` for serialization/deserialization, and subscribes to `storage` events for cross-tab synchronization.
 
 <CodeSandbox id="vuwi7" />
 
@@ -110,4 +114,51 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 const storage = createJSONStorage(() => AsyncStorage)
 const content = {} // anything JSON serializable
 const storedAtom = atomWithStorage('stored-key', content, storage)
+```
+
+### Validating stored values
+
+To add runtime validation to your storage atoms, you will need to create a custom implementation of storage.
+
+Below is an example that utilizes Zod to validate values stored in `localStorage` with cross-tab synchronization.
+
+```js
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+import { z } from 'zod'
+
+const myNumberSchema = z.number().int().nonnegative()
+
+const storedNumberAtom = atomWithStorage('my-number', 0, {
+  getItem(key, initialValue) {
+    const storedValue = localStorage.getItem(key)
+    try {
+      return myNumberSchema.parse(JSON.parse(storedValue ?? ''))
+    } catch {
+      return initialValue
+    }
+  },
+  setItem(key, value) {
+    localStorage.setItem(JSON.stringify(value))
+  },
+  removeItem(key) {
+    localStorage.removeItem(key)
+  },
+  subscribe(key, callback, initialValue) {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.addEventListener === 'undefined'
+    ) {
+      return
+    }
+    window.addEventListener('storage', (e) => {
+      if (e.storageArea === localStorage && e.key === key) {
+        try {
+          return myNumberSchema.parse(JSON.parse(e.newValue ?? ''))
+        } catch {
+          return initialValue
+        }
+      }
+    })
+  },
+})
 ```
