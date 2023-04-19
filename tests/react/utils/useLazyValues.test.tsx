@@ -16,8 +16,6 @@ it('useLazyValues smoke test', async () => {
 
     parentRenders += 1
 
-    console.log('parent rendered')
-
     return (
       <>
         <button onClick={() => onClick(cb())}>read</button>
