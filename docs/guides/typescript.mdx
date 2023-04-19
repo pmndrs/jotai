@@ -33,11 +33,31 @@ const arrAtom = atom<string[]>([])
 
 ### Derived atoms can mostly have their types inferred
 
+In general, this is the recommended approach since typing derived
+atoms can get a little confusing, particularly for those who are
+doing it for the first time.
+
 ```ts
-const asyncStrAtom = atom(async () => 'foo')
+
+# Read only derived atoms
+const readOnlyAtom = atom((get) => get(numAtom))
+const asyncReadOnlyAtom = atom(async (get) => await get(someAsyncAtom))
+
+# Write only atoms
 const writeOnlyAtom = atom(null, (_get, set, str: string) => set(fooAtom, str))
+const multipleArgumentsAtom = atom(
+  null,
+  (_get, set, valueOne: number, valueTwo: number) =>
+    set(fooAtom, Math.max(valueOne, valueTwo))
+);
+
+# Read/Write atoms
 const readWriteAtom = atom(
   (get) => get(strAtom),
+  (_get, set, num: number) => set(strAtom, String(num))
+)
+const asyncReadWriteAtom = atom(
+  async (get) => await get(asyncStrAtom),
   (_get, set, num: number) => set(strAtom, String(num))
 )
 ```
