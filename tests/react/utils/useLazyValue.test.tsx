@@ -50,6 +50,6 @@ it('useLazyValue smoke test', async () => {
 
   expect(onClick).toHaveBeenCalledWith(5)
 
-  expect(parentRenders).toBe(2)
   // strict mode renders twice
+  expect(parentRenders).toBe(2)
 })
