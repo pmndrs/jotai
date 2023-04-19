@@ -2,17 +2,17 @@ import { StrictMode } from 'react'
 import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { useAtom } from 'jotai/react'
-import { useLazyValues } from 'jotai/react/utils'
+import { useLazyValue } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
 
-it('useLazyValues smoke test', async () => {
+it('useLazyValue smoke test', async () => {
   const testAtom = atom(0)
   const onClick = jest.fn()
 
   let parentRenders = 0
 
   const Parent = () => {
-    const cb = useLazyValues(testAtom)
+    const cb = useLazyValue(testAtom)
 
     parentRenders += 1
 
@@ -49,7 +49,7 @@ it('useLazyValues smoke test', async () => {
   fireEvent.click(getByText('read'))
 
   expect(onClick).toHaveBeenCalledWith(5)
-  
+
   expect(parentRenders).toBe(2)
   // strict mode renders twice
 })
