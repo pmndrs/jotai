@@ -61,6 +61,7 @@ const rejectPromise = <T>(
  * of each dependency to that dependencies's current revision.
  */
 type Dependencies = Map<AnyAtom, AtomState>
+type NextDependencies = Map<AnyAtom, AtomState | undefined>
 
 /**
  * Immutable atom state,
@@ -173,12 +174,14 @@ export const createStore = () => {
   const updateDependencies = <Value>(
     atom: Atom<Value>,
     nextAtomState: AtomState<Value>,
-    depSet: Set<AnyAtom>
+    nextDependencies: NextDependencies
   ): void => {
     const dependencies: Dependencies = new Map()
     let changed = false
-    depSet.forEach((a) => {
-      const aState = a === atom ? nextAtomState : getAtomState(a)
+    nextDependencies.forEach((aState, a) => {
+      if (!aState && a === atom) {
+        aState = nextAtomState
+      }
       if (aState) {
         dependencies.set(a, aState)
         if (nextAtomState.d.get(a) !== aState) {
@@ -196,15 +199,15 @@ export const createStore = () => {
   const setAtomValue = <Value>(
     atom: Atom<Value>,
     value: Value,
-    depSet?: Set<AnyAtom>
+    nextDependencies?: NextDependencies
   ): AtomState<Value> => {
     const prevAtomState = getAtomState(atom)
     const nextAtomState: AtomState<Value> = {
       d: prevAtomState?.d || new Map(),
       v: value,
     }
-    if (depSet) {
-      updateDependencies(atom, nextAtomState, depSet)
+    if (nextDependencies) {
+      updateDependencies(atom, nextAtomState, nextDependencies)
     }
     if (
       prevAtomState &&
@@ -221,7 +224,7 @@ export const createStore = () => {
   const setAtomValueOrPromise = <Value>(
     atom: Atom<Value>,
     valueOrPromise: Value,
-    depSet?: Set<AnyAtom>,
+    nextDependencies?: NextDependencies,
     abortPromise?: () => void
   ): AtomState<Value> => {
     if (valueOrPromise instanceof Promise) {
@@ -234,7 +237,7 @@ export const createStore = () => {
               if (!settled) {
                 settled = true
                 // update dependencies, that could have changed
-                setAtomValue(atom, promise as Value, depSet)
+                setAtomValue(atom, promise as Value, nextDependencies)
                 resolvePromise(promise, v)
                 resolve(v)
               }
@@ -242,7 +245,7 @@ export const createStore = () => {
             (e) => {
               if (!settled) {
                 settled = true
-                setAtomValue(atom, promise as Value, depSet)
+                setAtomValue(atom, promise as Value, nextDependencies)
                 rejectPromise(promise, e)
                 reject(e)
               }
@@ -266,23 +269,23 @@ export const createStore = () => {
         }
         abortPromise?.()
       })
-      return setAtomValue(atom, promise as Value, depSet)
+      return setAtomValue(atom, promise as Value, nextDependencies)
     }
-    return setAtomValue(atom, valueOrPromise, depSet)
+    return setAtomValue(atom, valueOrPromise, nextDependencies)
   }
 
   const setAtomError = <Value>(
     atom: Atom<Value>,
     error: AnyError,
-    depSet?: Set<AnyAtom>
+    nextDependencies?: NextDependencies
   ): AtomState<Value> => {
     const prevAtomState = getAtomState(atom)
     const nextAtomState: AtomState<Value> = {
       d: prevAtomState?.d || new Map(),
       e: error,
     }
-    if (depSet) {
-      updateDependencies(atom, nextAtomState, depSet)
+    if (nextDependencies) {
+      updateDependencies(atom, nextAtomState, nextDependencies)
     }
     if (
       prevAtomState &&
@@ -322,16 +325,17 @@ export const createStore = () => {
       }
     }
     // Compute a new state for this atom.
-    const depSet = new Set<AnyAtom>()
+    const nextDependencies: NextDependencies = new Map()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      depSet.add(a)
       if ((a as AnyAtom) === atom) {
         const aState = getAtomState(a)
         if (aState) {
+          nextDependencies.set(a, aState)
           return returnAtomValue(aState)
         }
         if (hasInitialValue(a)) {
+          nextDependencies.set(a, undefined)
           return a.init
         }
         // NOTE invalid derived atoms can reach here
@@ -339,6 +343,7 @@ export const createStore = () => {
       }
       // a !== atom
       const aState = readAtomState(a)
+      nextDependencies.set(a, aState)
       return returnAtomValue(aState)
     }
     let controller: AbortController | undefined
@@ -372,11 +377,11 @@ export const createStore = () => {
     }
     try {
       const valueOrPromise = atom.read(getter, options as any)
-      return setAtomValueOrPromise(atom, valueOrPromise, depSet, () => {
+      return setAtomValueOrPromise(atom, valueOrPromise, nextDependencies, () =>
         controller?.abort()
-      })
+      )
     } catch (error) {
-      return setAtomError(atom, error, depSet)
+      return setAtomError(atom, error, nextDependencies)
     } finally {
       isSync = false
     }
