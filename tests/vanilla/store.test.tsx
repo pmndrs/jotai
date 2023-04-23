@@ -90,19 +90,6 @@ describe('[DEV-ONLY] dev-only methods', () => {
     expect(store.get?.(derivedAtom)).toBe(4)
   })
 
-  describe('dev_subscribe_state', () => {
-    it('should call the callback when state change is flushed out', () => {
-      const store = createStore()
-      const callback = jest.fn()
-      const unsub = store.dev_subscribe_state?.(callback)
-      const countAtom = atom(0)
-      const unsubAtom = store.sub(countAtom, jest.fn())
-      expect(callback).toHaveBeenCalledTimes(1)
-      unsub?.()
-      unsubAtom?.()
-    })
-  })
-
   describe('dev_subscribe_store', () => {
     it('should call the callback when state changes', () => {
       const store = createStore()
