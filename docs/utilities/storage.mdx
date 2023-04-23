@@ -152,11 +152,13 @@ const storedNumberAtom = atomWithStorage('my-number', 0, {
     }
     window.addEventListener('storage', (e) => {
       if (e.storageArea === localStorage && e.key === key) {
+        let newValue
         try {
-          return myNumberSchema.parse(JSON.parse(e.newValue ?? ''))
+          newValue = myNumberSchema.parse(JSON.parse(e.newValue ?? ''))
         } catch {
-          return initialValue
+          newValue = initialValue
         }
+        callback(newValue)
       }
     })
   },
