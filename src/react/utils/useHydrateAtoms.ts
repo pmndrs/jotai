@@ -3,7 +3,7 @@ import type { WritableAtom } from '../../vanilla.ts'
 
 type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0]
-type AnyWritableAtom = WritableAtom<unknown, any[], any>
+export type AnyWritableAtom = WritableAtom<unknown, any[], any>
 
 const hydratedMap: WeakMap<Store, WeakSet<AnyWritableAtom>> = new WeakMap()
 
