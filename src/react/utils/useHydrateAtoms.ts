@@ -7,8 +7,8 @@ export type AnyWritableAtom = WritableAtom<unknown, any[], any>
 
 const hydratedMap: WeakMap<Store, WeakSet<AnyWritableAtom>> = new WeakMap()
 
-export function useHydrateAtoms(
-  values: Iterable<readonly [AnyWritableAtom, unknown]>,
+export function useHydrateAtoms<T extends AnyWritableAtom, V = T['read']>(
+  values: Iterable<readonly [T, V]>,
   options?: Options
 ) {
   const store = useStore(options)
