@@ -37,7 +37,7 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
   await findByText('count: 43')
 })
 
-it('useHydrateAtoms should not trigger unnessesary rerenders', async () => {
+it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
   const countAtom = atom(0)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
