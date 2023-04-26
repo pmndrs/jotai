@@ -145,52 +145,6 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   await findByText('count: 44')
 })
 
-it('useHydrateAtoms can only restore an atom once', async () => {
-  const countAtom = atom(0)
-
-  const Counter = ({ initialCount }: { initialCount: number }) => {
-    useHydrateAtoms([[countAtom, initialCount]])
-    const [countValue, setCount] = useAtom(countAtom)
-
-    return (
-      <>
-        <div>count: {countValue}</div>
-        <button onClick={() => setCount((count) => count + 1)}>dispatch</button>
-      </>
-    )
-  }
-  const Counter2 = ({ count }: { count: number }) => {
-    useHydrateAtoms([[countAtom, count]])
-    const [countValue, setCount] = useAtom(countAtom)
-
-    return (
-      <>
-        <div>count: {countValue}</div>
-        <button onClick={() => setCount((count) => count + 1)}>dispatch</button>
-      </>
-    )
-  }
-  const { findByText, getByText, rerender } = render(
-    <StrictMode>
-      <Counter initialCount={42} />
-    </StrictMode>
-  )
-
-  await findByText('count: 42')
-  fireEvent.click(getByText('dispatch'))
-  await findByText('count: 43')
-
-  rerender(
-    <StrictMode>
-      <Counter2 count={65} />
-    </StrictMode>
-  )
-
-  await findByText('count: 43')
-  fireEvent.click(getByText('dispatch'))
-  await findByText('count: 44')
-})
-
 it('useHydrateAtoms should respect onMount', async () => {
   const countAtom = atom(0)
   const onMountFn = jest.fn(() => {})
