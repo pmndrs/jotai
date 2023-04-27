@@ -46,7 +46,7 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
   )
 
   await findByText('count: 42')
-  await findByText('status: 42')
+  await findByText('status: rejected')
   fireEvent.click(getByText('dispatch'))
   fireEvent.click(getByText('update'))
   await findByText('count: 43')
