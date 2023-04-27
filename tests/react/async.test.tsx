@@ -968,7 +968,7 @@ it('async atom double chain without setTimeout (#751)', async () => {
 
 it('async atom double chain with setTimeout', async () => {
   const enabledAtom = atom(false)
-  const resolveMap = new WeakMap<Atom<unknown>, (() => void)[]>
+  const resolveMap = new WeakMap<Atom<unknown>, (() => void)[]>()
   async function addResolve(a: Atom<unknown>) {
     const promiseArray = resolveMap.get(a)
     if (!promiseArray) {
@@ -978,7 +978,10 @@ it('async atom double chain with setTimeout', async () => {
     }
   }
   function flushResolve(a: Atom<unknown>) {
-    resolveMap.get(a)?.splice(0).forEach((fn) => fn())
+    resolveMap
+      .get(a)
+      ?.splice(0)
+      .forEach((fn) => fn())
   }
 
   const asyncAtom = atom(async (get) => {
