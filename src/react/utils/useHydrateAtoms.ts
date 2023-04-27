@@ -11,7 +11,7 @@ type InferAtoms<T extends Iterable<AtomTuple>> = {
     ? A extends AnyWritableAtom
       ? AtomTuple<A, ReturnType<A['read']>>
       : T[K]
-    : never
+    : any
 }
 
 const hydratedMap: WeakMap<Store, WeakSet<AnyWritableAtom>> = new WeakMap()
