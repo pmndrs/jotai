@@ -5,7 +5,6 @@ type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0]
 type AnyWritableAtom = WritableAtom<unknown, any[], any>
 type AtomTuple<A = AnyWritableAtom, V = unknown> = readonly [A, V]
-
 type InferAtoms<T extends Iterable<AtomTuple>> = {
   [K in keyof T]: T[K] extends AtomTuple<infer A>
     ? A extends AnyWritableAtom
