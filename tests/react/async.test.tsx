@@ -968,21 +968,33 @@ it('async atom double chain without setTimeout (#751)', async () => {
 
 it('async atom double chain with setTimeout', async () => {
   const enabledAtom = atom(false)
-  const resolve: (() => void)[] = []
+  const resolveMap = new WeakMap<Atom<unknown>, (() => void)[]>
+  async function addResolve(a: Atom<unknown>) {
+    const promiseArray = resolveMap.get(a)
+    if (!promiseArray) {
+      await new Promise<void>((r) => resolveMap.set(a, [r]))
+    } else {
+      await new Promise<void>((r) => promiseArray.push(r))
+    }
+  }
+  function flushResolve(a: Atom<unknown>) {
+    resolveMap.get(a)?.splice(0).forEach((fn) => fn())
+  }
+
   const asyncAtom = atom(async (get) => {
     const enabled = get(enabledAtom)
     if (!enabled) {
       return 'init'
     }
-    await new Promise<void>((r) => resolve.push(r))
+    await addResolve(asyncAtom)
     return 'ready'
   })
   const derivedAsyncAtom = atom(async (get) => {
-    await new Promise<void>((r) => resolve.push(r))
+    await addResolve(derivedAsyncAtom)
     return get(asyncAtom)
   })
   const anotherAsyncAtom = atom(async (get) => {
-    await new Promise<void>((r) => resolve.push(r))
+    await addResolve(anotherAsyncAtom)
     return get(derivedAsyncAtom)
   })
 
@@ -1015,15 +1027,20 @@ it('async atom double chain with setTimeout', async () => {
     </StrictMode>
   )
 
-  resolve.splice(0).forEach((fn) => fn())
+  flushResolve(anotherAsyncAtom)
   await findByText('loading')
 
-  resolve.splice(0).forEach((fn) => fn())
+  flushResolve(derivedAsyncAtom)
+  await new Promise((r) => setTimeout(r, 50))
+  flushResolve(anotherAsyncAtom)
   await findByText('async: init')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  resolve.splice(0).forEach((fn) => fn())
+  flushResolve(asyncAtom)
+  flushResolve(derivedAsyncAtom)
+  await new Promise((r) => setTimeout(r, 0))
+  flushResolve(anotherAsyncAtom)
   await findByText('async: ready')
 })
 
