@@ -5,20 +5,18 @@ type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0]
 type AnyWritableAtom = WritableAtom<unknown, any[], any>
 type AtomTuple<A = AnyWritableAtom, V = unknown> = readonly [A, V]
-type InferAtoms<
-  T extends Array<AtomTuple>,
-  S extends Array<AtomTuple> = []
-> = S['length'] extends T['length']
-  ? S
-  : T extends Array<AtomTuple<infer A>>
-  ? A extends AnyWritableAtom
-    ? InferAtoms<T, [AtomTuple<A, ReturnType<A['read']>>, ...S]>
-    : T
-  : T
+
+type InferAtoms<T extends Iterable<AtomTuple>> = {
+  [K in keyof T]: T[K] extends AtomTuple<infer A>
+    ? A extends AnyWritableAtom
+      ? AtomTuple<A, ReturnType<A['read']>>
+      : T[K]
+    : never
+}
 
 const hydratedMap: WeakMap<Store, WeakSet<AnyWritableAtom>> = new WeakMap()
 
-export function useHydrateAtoms<T extends Array<AtomTuple>>(
+export function useHydrateAtoms<T extends Iterable<AtomTuple>>(
   values: InferAtoms<T>,
   options?: Options
 ) {
