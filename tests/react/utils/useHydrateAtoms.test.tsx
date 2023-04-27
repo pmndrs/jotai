@@ -7,34 +7,58 @@ import { atom } from 'jotai/vanilla'
 
 it('useHydrateAtoms should only hydrate on first render', async () => {
   const countAtom = atom(0)
+  const statusAtom = atom('fulfilled')
 
-  const Counter = ({ initialCount }: { initialCount: number }) => {
-    useHydrateAtoms([[countAtom, initialCount]])
+  const Counter = ({
+    initialCount,
+    initialStatus,
+  }: {
+    initialCount: number
+    initialStatus: string
+  }) => {
+    useHydrateAtoms([
+      [countAtom, initialCount],
+      [statusAtom, initialStatus],
+    ])
     const [countValue, setCount] = useAtom(countAtom)
+    const [statusValue, setStatus] = useAtom(statusAtom)
 
     return (
       <>
         <div>count: {countValue}</div>
         <button onClick={() => setCount((count) => count + 1)}>dispatch</button>
+        <div>status: {statusValue}</div>
+        <button
+          onClick={() =>
+            setStatus((status) =>
+              status === 'fulfilled' ? 'rejected' : 'fulfilled'
+            )
+          }>
+          update
+        </button>
       </>
     )
   }
   const { findByText, getByText, rerender } = render(
     <StrictMode>
-      <Counter initialCount={42} />
+      <Counter initialCount={42} initialStatus="rejected" />
     </StrictMode>
   )
 
   await findByText('count: 42')
+  await findByText('status: 42')
   fireEvent.click(getByText('dispatch'))
+  fireEvent.click(getByText('update'))
   await findByText('count: 43')
+  await findByText('status: fulfilled')
 
   rerender(
     <StrictMode>
-      <Counter initialCount={65} />
+      <Counter initialCount={65} initialStatus="rejected" />
     </StrictMode>
   )
   await findByText('count: 43')
+  await findByText('status: fulfilled')
 })
 
 it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
