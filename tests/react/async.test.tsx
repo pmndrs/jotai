@@ -968,36 +968,21 @@ it('async atom double chain without setTimeout (#751)', async () => {
 
 it('async atom double chain with setTimeout', async () => {
   const enabledAtom = atom(false)
-  const resolveMap = new WeakMap<Atom<unknown>, (() => void)[]>()
-  async function addResolve(a: Atom<unknown>) {
-    const promiseArray = resolveMap.get(a)
-    if (!promiseArray) {
-      await new Promise<void>((r) => resolveMap.set(a, [r]))
-    } else {
-      await new Promise<void>((r) => promiseArray.push(r))
-    }
-  }
-  function flushResolve(a: Atom<unknown>) {
-    resolveMap
-      .get(a)
-      ?.splice(0)
-      .forEach((fn) => fn())
-  }
-
+  const resolve: (() => void)[] = []
   const asyncAtom = atom(async (get) => {
     const enabled = get(enabledAtom)
     if (!enabled) {
       return 'init'
     }
-    await addResolve(asyncAtom)
+    await new Promise<void>((r) => resolve.push(r))
     return 'ready'
   })
   const derivedAsyncAtom = atom(async (get) => {
-    await addResolve(derivedAsyncAtom)
+    await new Promise<void>((r) => resolve.push(r))
     return get(asyncAtom)
   })
   const anotherAsyncAtom = atom(async (get) => {
-    await addResolve(anotherAsyncAtom)
+    await new Promise<void>((r) => resolve.push(r))
     return get(derivedAsyncAtom)
   })
 
@@ -1030,20 +1015,21 @@ it('async atom double chain with setTimeout', async () => {
     </StrictMode>
   )
 
-  flushResolve(anotherAsyncAtom)
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('loading')
 
-  flushResolve(derivedAsyncAtom)
-  await new Promise((r) => setTimeout(r, 50))
-  flushResolve(anotherAsyncAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('async: init')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
-  flushResolve(asyncAtom)
-  flushResolve(derivedAsyncAtom)
-  await new Promise((r) => setTimeout(r, 0))
-  flushResolve(anotherAsyncAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('async: ready')
 })
 
