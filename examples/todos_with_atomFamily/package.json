@@ -1,6 +1,6 @@
 {
   "name": "todos_with_atomFamily",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Implement a todo list using atomFamily and localStorage, you can store your todo list to localStorage by click Save to localStorage, then remove your todo list and restore them by click Load from localStorage",
   "keywords": [
     "typescript",
@@ -11,7 +11,7 @@
   "dependencies": {
     "@react-spring/web": "^9.2.3",
     "antd": "^4.16.2",
-    "jotai": "^1.13.1",
+    "jotai": "^2.0.4",
     "nanoid": "^3.1.23",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

@@ -99,34 +99,39 @@ const TodoList = () => {
   )
 }
 
-const serializeAtom = atom<
+const serializeAtom = atom(
   null,
-  | { type: 'serialize'; callback: (value: string) => void }
-  | { type: 'deserialize'; value: string }
->(null, (get, set, action) => {
-  if (action.type === 'serialize') {
-    const todos = get(todosAtom)
-    const todoMap: Record<string, { title: string; completed: boolean }> = {}
-    todos.forEach((id) => {
-      todoMap[id] = get(todoAtomFamily({ id }))
-    })
-    const obj = {
-      todos,
-      todoMap,
-      filter: get(filterAtom),
+  (
+    get,
+    set,
+    action:
+      | { type: 'serialize'; callback: (value: string) => void }
+      | { type: 'deserialize'; value: string }
+  ) => {
+    if (action.type === 'serialize') {
+      const todos = get(todosAtom)
+      const todoMap: Record<string, { title: string; completed: boolean }> = {}
+      todos.forEach((id) => {
+        todoMap[id] = get(todoAtomFamily({ id }))
+      })
+      const obj = {
+        todos,
+        todoMap,
+        filter: get(filterAtom),
+      }
+      action.callback(JSON.stringify(obj))
+    } else if (action.type === 'deserialize') {
+      const obj = JSON.parse(action.value)
+      // needs error handling and type checking
+      set(filterAtom, obj.filter)
+      obj.todos.forEach((id: string) => {
+        const todo = obj.todoMap[id]
+        set(todoAtomFamily({ id, ...todo }), todo)
+      })
+      set(todosAtom, obj.todos)
     }
-    action.callback(JSON.stringify(obj))
-  } else if (action.type === 'deserialize') {
-    const obj = JSON.parse(action.value)
-    // needs error handling and type checking
-    set(filterAtom, obj.filter)
-    obj.todos.forEach((id: string) => {
-      const todo = obj.todoMap[id]
-      set(todoAtomFamily({ id, ...todo }), todo)
-    })
-    set(todosAtom, obj.todos)
   }
-})
+)
 
 const Persist = () => {
   const [, dispatch] = useAtom(serializeAtom)
