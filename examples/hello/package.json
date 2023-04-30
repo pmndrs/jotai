@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "dependencies": {
-    "jotai": "^2.0.0",
+    "jotai": "^2.0.4",
     "prismjs": "^1.23.0",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
