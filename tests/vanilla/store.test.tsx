@@ -209,7 +209,7 @@ it('should override a promise by setting', async () => {
   expect(await promise).toBe(1)
 })
 
-it('should notify async atom with deps after await (#1905)', async () => {
+it('should update async atom with deps after await (#1905)', async () => {
   const countAtom = atom(0)
   const resolve: (() => void)[] = []
   const delayedAtom = atom(async (get) => {
@@ -223,17 +223,19 @@ it('should notify async atom with deps after await (#1905)', async () => {
   })
 
   const store = createStore()
-  const cb = jest.fn()
-  const unsub = store.sub(derivedAtom, cb)
+  let lastValue = store.get(derivedAtom)
+  const unsub = store.sub(derivedAtom, () => {
+    lastValue = store.get(derivedAtom)
+  })
   store.set(countAtom, 1)
   resolve.splice(0).forEach((fn) => fn())
   await new Promise<void>((r) => setTimeout(r)) // wait for one tick
   resolve.splice(0).forEach((fn) => fn())
-  expect(cb).toHaveBeenCalledTimes(1)
+  expect(await lastValue).toBe(1)
   store.set(countAtom, 2)
   resolve.splice(0).forEach((fn) => fn())
   await new Promise<void>((r) => setTimeout(r)) // wait for one tick
   resolve.splice(0).forEach((fn) => fn())
-  expect(cb).toHaveBeenCalledTimes(2)
+  expect(await lastValue).toBe(2)
   unsub()
 })
