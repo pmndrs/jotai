@@ -208,3 +208,34 @@ it('should override a promise by setting', async () => {
   store.set(countAtom, Promise.resolve(1))
   expect(await promise).toBe(1)
 })
+
+it('should update async atom with deps after await (#1905)', async () => {
+  const countAtom = atom(0)
+  const resolve: (() => void)[] = []
+  const delayedAtom = atom(async (get) => {
+    await new Promise<void>((r) => resolve.push(r))
+    const count = get(countAtom)
+    return count
+  })
+  const derivedAtom = atom(async (get) => {
+    const count = await get(delayedAtom)
+    return count
+  })
+
+  const store = createStore()
+  const promise0 = store.get(derivedAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await promise0).toBe(0)
+  store.set(countAtom, 1)
+  const promise1 = store.get(derivedAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await promise1).toBe(1)
+  store.set(countAtom, 2)
+  const promise2 = store.get(derivedAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await promise2).toBe(2)
+  store.set(countAtom, 3)
+  const promise3 = store.get(derivedAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await promise3).toBe(3)
+})
