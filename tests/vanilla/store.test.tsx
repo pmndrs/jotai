@@ -229,13 +229,12 @@ it('should update async atom with deps after await (#1905)', async () => {
   })
   store.set(countAtom, 1)
   resolve.splice(0).forEach((fn) => fn())
-  await new Promise<void>((r) => setTimeout(r)) // wait for one tick
-  resolve.splice(0).forEach((fn) => fn())
   expect(await lastValue).toBe(1)
   store.set(countAtom, 2)
   resolve.splice(0).forEach((fn) => fn())
-  await new Promise<void>((r) => setTimeout(r)) // wait for one tick
-  resolve.splice(0).forEach((fn) => fn())
   expect(await lastValue).toBe(2)
+  store.set(countAtom, 3)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await lastValue).toBe(3)
   unsub()
 })

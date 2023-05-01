@@ -236,18 +236,35 @@ export const createStore = () => {
             (v) => {
               if (!settled) {
                 settled = true
+                const prevAtomState = getAtomState(atom)
                 // update dependencies, that could have changed
-                setAtomValue(atom, promise as Value, nextDependencies)
+                const nextAtomState = setAtomValue(
+                  atom,
+                  promise as Value,
+                  nextDependencies
+                )
                 resolvePromise(promise, v)
                 resolve(v)
+                if (prevAtomState?.d !== nextAtomState.d) {
+                  mountDependencies(atom, nextAtomState, prevAtomState?.d)
+                }
               }
             },
             (e) => {
               if (!settled) {
                 settled = true
-                setAtomValue(atom, promise as Value, nextDependencies)
+                const prevAtomState = getAtomState(atom)
+                // update dependencies, that could have changed
+                const nextAtomState = setAtomValue(
+                  atom,
+                  promise as Value,
+                  nextDependencies
+                )
                 rejectPromise(promise, e)
                 reject(e)
+                if (prevAtomState?.d !== nextAtomState.d) {
+                  mountDependencies(atom, nextAtomState, prevAtomState?.d)
+                }
               }
             }
           )
