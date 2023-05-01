@@ -65,6 +65,15 @@ useHydrateAtoms(
 )
 ```
 
+If you are using TypeScript with target `ES5`, you might need `as const` cast on the array to preserve the tuple type.
+
+```ts
+useHydrateAtoms([
+  [countAtom, 42],
+  [frameworkAtom, 'Next.js'],
+])
+```
+
 ### Codesandbox
 
 <CodeSandbox id="snu7n" />
