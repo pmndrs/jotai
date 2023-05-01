@@ -15,127 +15,194 @@ yarn add jotai-urql @urql/core wonka
 
 ## Exported functions
 
-- `atomsWithQuery` for [client.query](https://formidable.com/open-source/urql/docs/api/core/#clientquery)
-- `atomsWithMutation` for [client.mutation](https://formidable.com/open-source/urql/docs/api/core/#clientmutation)
-- `atomsWithSubscription` for [client.subscription](https://formidable.com/open-source/urql/docs/api/core/#clientsubscription)
+- `atomWithQuery` for [client.query](https://formidable.com/open-source/urql/docs/api/core/#clientquery)
+- `atomWithMutation` for [client.mutation](https://formidable.com/open-source/urql/docs/api/core/#clientmutation)
+- `atomWithSubscription` for [client.subscription](https://formidable.com/open-source/urql/docs/api/core/#clientsubscription)
 
-All three functions follow the same signature.
+## Basic usage
 
-```ts
-const [dataAtom, statusAtom] = atomsWithSomething(
-  query,
-  getVariables,
-  getContext,
-  getClient
-)
-```
+### Query:
 
-The first three parameters will be arguments to those functions (For mutation, it's empty).
-The last optional `getClient` parameter is a function that returns [Client](https://formidable.com/open-source/urql/docs/api/core/#client).
-
-The return values have two atoms.
-The first one is called `dataAtom` and it's an atom for the data from the observer. `dataAtom` requires Suspense.
-The second one is called `statusAtom` and it's an atom for the full result from the observer. `statusAtom` doesn't require Suspnse.
-The data from the observer is also included in `statusAtom`,
-so if you don't use Suspense, you don't need to use `dataAtom`.
-
-## atomsWithQuery
-
-`atomsWithQuery` creates new atoms with a query. It internally uses [client.query](https://formidable.com/open-source/urql/docs/api/core/#clientquery).
-
-```jsx
+```tsx
 import { useAtom } from 'jotai'
-import { createClient } from '@urql/core'
-import { atomsWithQuery } from 'jotai-urql'
 
-const client = createClient({ url: '...' })
+const countQueryAtom = atomWithQuery<{ count: number }>({
+  query: 'query Count { count }',
+  getClient: () => client, // This option is optional if `useRehydrateAtom([[clientAtom, client]])` is used globally
+})
 
-const idAtom = atom(1)
-const [userAtom] = atomsWithQuery(
-  '{ user { first_name last_name } }', // query
-  (get) => ({ id: get(idAtom) }), // variables
-  undefined, // context
-  () => client
-)
+const Counter = () => {
+  // Will suspend until first operation result is resolved. Either with error, partial data, data
+  const [operationResult, reexecute] = useAtom(countQueryAtom)
 
-const UserData = () => {
-  const [{ data }] = useAtom(userAtom)
-  return <div>{JSON.stringify(data)}</div>
+  if (operationResult.error) {
+    // This shall be handled in the parent ErrorBoundary above
+    throw operationResult.error
+  }
+
+  // You have to use optional chaining here, as data may be undefined at this point (only in case of error)
+  return <>{operationResult.data?.count}</>
 }
 ```
 
-### Examples
+### Mutation:
 
-#### Basic demo
-
-<CodeSandbox id="5rwunq" />
-
-## atomsWithMutation
-
-`atomsWithMutation` creates new atoms with a mutation. It internally uses [client.mutation](https://formidable.com/open-source/urql/docs/api/core/#clientmutation).
-
-```jsx
+```tsx
 import { useAtom } from 'jotai'
-import { createClient } from '@urql/core'
-import { atomsWithMutation } from 'jotai-urql'
 
-const client = createClient({ url: '...' })
+const incrementMutationAtom = atomWithMutation<{ increment: number }>({
+  query: 'mutation Increment { increment }',
+})
 
-const [fooAtom] = atomsWithMutation(() => client)
-
-const FooData = () => {
-  const [{ data }, mutate] = useAtom(fooAtom)
+const Counter = () => {
+  const [operationResult, executeMutation] = useAtom(incrementMutationAtom)
   return (
     <div>
-      {JSON.stringify(data)}{' '}
       <button
         onClick={() =>
-          mutate({ query: 'mutation Foo { text }', variables: {} })
+          executeMutation().then((it) => console.log(it.data?.increment))
         }>
-        Click me
+        Increment
       </button>
+      <div>{operationResult.data?.increment}</div>
     </div>
   )
 }
 ```
 
-### Examples
+## Simplified type of options passed to functions
 
-TODO: create example
+```tsx
+type AtomWithQueryOptions<
+  Data = unknown,
+  Variables extends AnyVariables = AnyVariables
+> = {
+  // Supports string query, typed-document-node, document node etc.
+  query: DocumentInput<Data, Variables>
+  // Will be enforced dynamically based on generic/typed-document-node types.
+  getVariables?: (get: Getter) => Variables
+  getContext?: (get: Getter) => Partial<OperationContext>
+  getPause?: (get: Getter) => boolean
+  getClient?: (get: Getter) => Client
+}
 
-## atomsWithSubscription
+type AtomWithMutationOptions<
+  Data = unknown,
+  Variables extends AnyVariables = AnyVariables
+> = {
+  query: DocumentInput<Data, Variables>
+  getClient?: (get: Getter) => Client
+}
 
-`atomsWithSubscription` creates new atoms with a subscription. It internally uses [client.subscription](https://formidable.com/open-source/urql/docs/api/core/#clientsubscription).
+// Subscription type is the same as AtomWithQueryOptions
+```
 
-```jsx
-import { useAtom } from 'jotai'
-import { createClient } from '@urql/core'
-import { atomsWithSubscription } from 'jotai-urql'
+## Disable suspense
 
-const client = createClient({ url: '...' })
+Usage of `import { loadable } from "jotai/utils"` is preferred instead as proven more stable. However is you still want that
+here is how you do it:
 
-const [fooAtom] = atomsWithSubscription(
-  'subscription Foo { text }', // query
-  () => ({}), // variables
-  undefined, // context
-  () => client
-)
+```tsx
+import { suspenseAtom } from 'jotai-urql'
 
-const FooData = () => {
-  const [{ data }] = useAtom(fooAtom)
-  return <div>{JSON.stringify(data)}</div>
+export const App = () => {
+  // We disable suspense for the entire app
+  useHydrateAtoms([[suspenseAtom, false]])
+  return <Counter />
 }
 ```
 
-### Examples
+## Useful helper hook
 
-TODO: create example
+Here is the helper hook, to cover one rare corner case, and make use of these bindings similar to `@tanstack/react-query`
+default behavior where errors are treated as errors (in case of Promise reject) and are handled mostly in the nearby
+ErrorBoundaries. Only valid for suspended version.
+
+### useQueryAtomData
+
+Neatly returns `data` after the resolution + handles all the error throwing/reexecute cases/corner cases.
+Note that Type is overridden so `data` it never `undefined` nor `null` (unless that's expected return type of the query itself)
+
+```tsx
+import type { AnyVariables, OperationResult } from '@urql/core'
+import { useAtom } from 'jotai'
+import type { AtomWithQuery } from 'jotai-urql'
+
+export const useQueryAtomData = <
+  Data = unknown,
+  Variables extends AnyVariables = AnyVariables
+>(
+  queryAtom: AtomWithQuery<Data, Variables>
+) => {
+  const [opResult, dispatch] = useAtom(queryAtom)
+
+  if (opResult.error && opResult.stale) {
+    use(
+      // Here we suspend the tree. This will only be triggered in the scenario
+      // when you use `network-only` for refetch in Error Boundary retry logic, in that case tree doesn't suspend
+      // causing possible "throwed - retry in boundary - throwed - retry in boundary" cycle.
+      // (in case of Jotai URQL bindings only).
+      // eslint-disable-next-line promise/avoid-new
+      new Promise((resolve) => {
+        setTimeout(resolve, 10000) // This timeout time is going to cause suspense of this component up until
+        // new operation result will come. After 10 second it will simply try to render component itself and suspend again
+        // in an endless loop
+      })
+    )
+  }
+
+  if (opResult.error) {
+    throw opResult.error
+  }
+
+  if (!opResult.data) {
+    throw Error(
+      'Query data is undefined. Probably you paused the query? In that case use `useQueryAtom` instead.'
+    )
+  }
+  return [opResult.data, dispatch, opResult] as [
+    Exclude<typeof opResult.data, undefined>,
+    typeof dispatch,
+    typeof opResult
+  ]
+}
+
+// Suspense tree while promise is resolving (not going to be needed in next versions of React)
+function use(promise: Promise<any> | any) {
+  if (promise.status === 'fulfilled') {
+    return promise.value
+  }
+  if (promise.status === 'rejected') {
+    throw promise.reason
+  } else if (promise.status === 'pending') {
+    throw promise
+  } else {
+    promise.status = 'pending'
+    // eslint-disable-next-line promise/catch-or-return
+    ;(promise as Promise<any>).then(
+      (result: any) => {
+        promise.status = 'fulfilled'
+        promise.value = result
+      },
+      (reason: any) => {
+        promise.status = 'rejected'
+        promise.reason = reason
+      }
+    )
+    throw promise
+  }
+}
+```
+
+### Basic demo
+
+<CodeSandbox id="5rwunq" />
 
 ## Refferencing the same instance of the client for both atoms and urql provider
 
 To ensure that you reference the same urqlClient object, be sure to wrap the root of your project in a `<Provider>` and initialise clientAtom with the same urqlClient value you provided to UrqlProvider.
 
-Without this step, you may end up specifying client each time when you use `atomsWithQuery`. Now you can just ignore the optional `getClient` parameter, and it will use the client from the context.
+Without this step, you may end up specifying client each time when you use `atomWithQuery`. Now you can just ignore the optional `getClient` parameter, and it will use the client from the context.
 
 ```jsx
 import { Suspense } from 'react'
@@ -145,7 +212,6 @@ import { clientAtom } from 'jotai-urql'
 
 import {
   createClient,
-  dedupExchange,
   cacheExchange,
   fetchExchange,
   Provider as UrqlProvider,
@@ -153,7 +219,7 @@ import {
 
 const urqlClient = createClient({
   url: 'https://countries.trevorblades.com/',
-  exchanges: [dedupExchange, cacheExchange, fetchExchange],
+  exchanges: [cacheExchange, fetchExchange],
   fetchOptions: () => {
     return { headers: {} }
   },
@@ -167,7 +233,7 @@ const HydrateAtoms = ({ children }) => {
 export default function MyApp({ Component, pageProps }) {
   return (
     <UrqlProvider value={urqlClient}>
-      <Provider store={storeRef.current}>
+      <Provider>
         <HydrateAtoms>
           <Suspense fallback="Loading...">
             <Component {...pageProps} />
