@@ -35,7 +35,7 @@ function Id() {
 
 function Next() {
   // Use `useSetAtom` to avoid re-render
-  // const [, set] = useAtom(postId)
+  // const [, setPostId] = useAtom(postId)
   const setPostId = useSetAtom(postId)
   return (
     <button onClick={() => setPostId((id) => id + 1)}>
