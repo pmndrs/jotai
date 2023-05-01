@@ -71,7 +71,7 @@ If you are using TypeScript with target `ES5`, you might need `as const` cast on
 useHydrateAtoms([
   [countAtom, 42],
   [frameworkAtom, 'Next.js'],
-])
+] as const)
 ```
 
 ### Codesandbox
