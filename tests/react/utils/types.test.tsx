@@ -11,6 +11,16 @@ it('useHydrateAtoms should not allow invalid atom types when array is passed', (
       [countAtom, 'foo'],
       [activeAtom, 0],
     ])
+    // @ts-expect-error TS2769
+    useHydrateAtoms([
+      [countAtom, 1],
+      [activeAtom, 0],
+    ])
+    // @ts-expect-error TS2769
+    useHydrateAtoms([
+      [countAtom, true],
+      [activeAtom, false],
+    ])
   }
   Component
 })
