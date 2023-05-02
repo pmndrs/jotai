@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
-import { useAtom } from 'jotai/react'
+import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
 
@@ -63,17 +63,30 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
 
 it('useHydrateAtoms should only hydrate on first render using a Map', async () => {
   const countAtom = atom(0)
+  const activeAtom = atom(true)
 
-  const Counter = ({ initialCount }: { initialCount: number }) => {
+  const Counter = ({
+    initialActive = false,
+    initialCount,
+  }: {
+    initialActive?: boolean
+    initialCount: number
+  }) => {
     useHydrateAtoms(
-      new Map<typeof countAtom, ReturnType<(typeof countAtom)['read']>>([
+      new Map<
+        typeof activeAtom | typeof countAtom,
+        typeof initialActive | typeof initialCount
+      >([
+        [activeAtom, initialActive],
         [countAtom, initialCount],
       ])
     )
+    const activeValue = useAtomValue(activeAtom)
     const [countValue, setCount] = useAtom(countAtom)
 
     return (
       <>
+        <div>is active: {activeValue ? 'yes' : 'no'}</div>
         <div>count: {countValue}</div>
         <button onClick={() => setCount((count) => count + 1)}>dispatch</button>
       </>
@@ -86,15 +99,17 @@ it('useHydrateAtoms should only hydrate on first render using a Map', async () =
   )
 
   await findByText('count: 42')
+  await findByText('is active: no')
   fireEvent.click(getByText('dispatch'))
   await findByText('count: 43')
 
   rerender(
     <StrictMode>
-      <Counter initialCount={65} />
+      <Counter initialCount={65} initialActive={true} />
     </StrictMode>
   )
   await findByText('count: 43')
+  await findByText('is active: no')
 })
 
 it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
