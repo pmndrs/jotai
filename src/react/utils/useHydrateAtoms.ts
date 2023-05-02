@@ -4,17 +4,26 @@ import type { WritableAtom } from '../../vanilla.ts'
 type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0]
 type AnyWritableAtom = WritableAtom<unknown, any[], any>
+type AtomMap<A = AnyWritableAtom, V = unknown> = Map<A, V>
 type AtomTuple<A = AnyWritableAtom, V = unknown> = readonly [A, V]
 type InferAtoms<T extends Iterable<AtomTuple>> = {
   [K in keyof T]: T[K] extends AtomTuple<infer A>
     ? A extends AnyWritableAtom
       ? AtomTuple<A, ReturnType<A['read']>>
       : T[K]
-    : any
+    : never
 }
 
 const hydratedMap: WeakMap<Store, WeakSet<AnyWritableAtom>> = new WeakMap()
 
+export function useHydrateAtoms<T extends AtomMap>(
+  values: T,
+  options?: Options
+): void
+export function useHydrateAtoms<T extends Array<AtomTuple>>(
+  values: InferAtoms<T>,
+  options?: Options
+): void
 export function useHydrateAtoms<T extends Iterable<AtomTuple>>(
   values: InferAtoms<T>,
   options?: Options
