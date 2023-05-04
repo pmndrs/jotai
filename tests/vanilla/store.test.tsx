@@ -178,3 +178,63 @@ it('should unmount tree dependencies with store.get', async () => {
   const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
   expect(result).toEqual([])
 })
+
+it('should update async atom with delay (#1813)', async () => {
+  const countAtom = atom(0)
+
+  const resolve: (() => void)[] = []
+  const delayedAtom = atom(async (get) => {
+    const count = get(countAtom)
+    await new Promise<void>((r) => resolve.push(r))
+    return count
+  })
+
+  const store = createStore()
+  store.get(delayedAtom)
+  store.set(countAtom, 1)
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise<void>((r) => setTimeout(r)) // wait for one tick
+  const promise = store.get(delayedAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await promise).toBe(1)
+})
+
+it('should override a promise by setting', async () => {
+  const store = createStore()
+  const countAtom = atom(Promise.resolve(0))
+  const infinitePending = new Promise<never>(() => {})
+  store.set(countAtom, infinitePending)
+  const promise = store.get(countAtom)
+  store.set(countAtom, Promise.resolve(1))
+  expect(await promise).toBe(1)
+})
+
+it('should update async atom with deps after await (#1905)', async () => {
+  const countAtom = atom(0)
+  const resolve: (() => void)[] = []
+  const delayedAtom = atom(async (get) => {
+    await new Promise<void>((r) => resolve.push(r))
+    const count = get(countAtom)
+    return count
+  })
+  const derivedAtom = atom(async (get) => {
+    const count = await get(delayedAtom)
+    return count
+  })
+
+  const store = createStore()
+  let lastValue = store.get(derivedAtom)
+  const unsub = store.sub(derivedAtom, () => {
+    lastValue = store.get(derivedAtom)
+  })
+  store.set(countAtom, 1)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await lastValue).toBe(1)
+  store.set(countAtom, 2)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await lastValue).toBe(2)
+  store.set(countAtom, 3)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await lastValue).toBe(3)
+  unsub()
+})
