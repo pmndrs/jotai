@@ -99,11 +99,11 @@ const TodoList = () => {
   )
 }
 
-const serializeAtom = atom<
-  null,
+type Action =
   | { type: 'serialize'; callback: (value: string) => void }
   | { type: 'deserialize'; value: string }
->(null, (get, set, action) => {
+
+const serializeAtom = atom(null, (get, set, action: Action) => {
   if (action.type === 'serialize') {
     const todos = get(todosAtom)
     const todoMap: Record<string, { title: string; completed: boolean }> = {}

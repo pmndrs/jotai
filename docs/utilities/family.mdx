@@ -25,6 +25,7 @@ specify a deepEqual function to `areEqual`. For example:
 
 ```js
 import { atom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
 import deepEqual from 'fast-deep-equal'
 
 const fooFamily = atomFamily((param) => atom(param), deepEqual)
@@ -113,4 +114,4 @@ const todoFamily = atomFamily(
 
 ### Codesandbox
 
-<CodeSandbox id="8zfrn" />
+<CodeSandbox id="huxd4i" />

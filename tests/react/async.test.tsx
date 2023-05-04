@@ -1019,10 +1019,16 @@ it('async atom double chain with setTimeout', async () => {
   await findByText('loading')
 
   resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  resolve.splice(0).forEach((fn) => fn())
   await findByText('async: init')
 
   fireEvent.click(getByText('button'))
   await findByText('loading')
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  await new Promise((r) => setTimeout(r)) // wait a tick
   resolve.splice(0).forEach((fn) => fn())
   await findByText('async: ready')
 })

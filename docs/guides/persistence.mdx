@@ -157,11 +157,11 @@ const someAtom = atomWithStorage('some-key', someInitialValue, storage)
 ## A serialize atom pattern
 
 ```tsx
-const serializeAtom = atom<
-  null,
+type Actions =
   | { type: 'serialize'; callback: (value: string) => void }
   | { type: 'deserialize'; value: string }
->(null, (get, set, action) => {
+
+const serializeAtom = atom(null, (get, set, action: Actions) => {
   if (action.type === 'serialize') {
     const obj = {
       todos: get(todosAtom).map(get),
@@ -204,16 +204,16 @@ const Persist = () => {
 
 ### Examples
 
-<CodeSandbox id="ijyxm" />
+<CodeSandbox id="g96xjx" />
 
 ## A pattern with atomFamily
 
 ```tsx
-const serializeAtom = atom<
-  null,
+type Actions =
   | { type: 'serialize'; callback: (value: string) => void }
   | { type: 'deserialize'; value: string }
->(null, (get, set, action) => {
+
+const serializeAtom = atom(null, (get, set, action: Actions) => {
   if (action.type === 'serialize') {
     const todos = get(todosAtom)
     const todoMap: Record<string, { title: string; completed: boolean }> = {}
@@ -265,4 +265,4 @@ const Persist = () => {
 
 ### Examples
 
-<CodeSandbox id="eilkg" />
+<CodeSandbox id="oyiw5r" />
