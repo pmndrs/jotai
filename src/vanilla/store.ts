@@ -109,7 +109,6 @@ type Mounted = {
 }
 
 // for debugging purpose only
-type StateListener = () => void
 type StoreListener = (type: 'state' | 'sub' | 'unsub') => void
 type MountedAtoms = Set<AnyAtom>
 
@@ -136,11 +135,9 @@ export const createStore = () => {
     AnyAtom,
     AtomState /* prevAtomState */ | undefined
   >()
-  let stateListeners: Set<StateListener>
   let storeListeners: Set<StoreListener>
   let mountedAtoms: MountedAtoms
   if (import.meta.env?.MODE !== 'production') {
-    stateListeners = new Set()
     storeListeners = new Set()
     mountedAtoms = new Set()
   }
@@ -617,7 +614,6 @@ export const createStore = () => {
       })
     }
     if (import.meta.env?.MODE !== 'production') {
-      stateListeners.forEach((l) => l())
       storeListeners.forEach((l) => l('state'))
     }
   }
@@ -646,15 +642,6 @@ export const createStore = () => {
       set: writeAtom,
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change without notice)
-      dev_subscribe_state: (l: StateListener) => {
-        console.warn(
-          '[DEPRECATED] dev_subscribe_state is deprecated and will be removed in the next minor version. use dev_subscribe_store instead.'
-        )
-        stateListeners.add(l)
-        return () => {
-          stateListeners.delete(l)
-        }
-      },
       dev_subscribe_store: (l: StoreListener) => {
         storeListeners.add(l)
         return () => {
