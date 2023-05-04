@@ -2,8 +2,6 @@ import { atom } from '../../vanilla.ts'
 import type { WritableAtom } from '../../vanilla.ts'
 import { RESET } from './constants.ts'
 
-export const NO_STORAGE_VALUE = Symbol()
-
 type Unsubscribe = () => void
 
 type SetStateActionWithReset<Value> =
@@ -12,17 +10,25 @@ type SetStateActionWithReset<Value> =
   | ((prev: Value) => Value | typeof RESET)
 
 export interface AsyncStorage<Value> {
-  getItem: (key: string) => Promise<Value | typeof NO_STORAGE_VALUE>
+  getItem: (key: string, initialValue: Value) => Promise<Value>
   setItem: (key: string, newValue: Value) => Promise<void>
   removeItem: (key: string) => Promise<void>
-  subscribe?: (key: string, callback: (value: Value) => void) => Unsubscribe
+  subscribe?: (
+    key: string,
+    callback: (value: Value) => void,
+    initialValue: Value
+  ) => Unsubscribe
 }
 
 export interface SyncStorage<Value> {
-  getItem: (key: string) => Value | typeof NO_STORAGE_VALUE
+  getItem: (key: string, initialValue: Value) => Value
   setItem: (key: string, newValue: Value) => void
   removeItem: (key: string) => void
-  subscribe?: (key: string, callback: (value: Value) => void) => Unsubscribe
+  subscribe?: (
+    key: string,
+    callback: (value: Value) => void,
+    initialValue: Value
+  ) => Unsubscribe
 }
 
 export interface AsyncStringStorage {
@@ -51,14 +57,14 @@ export function createJSONStorage<Value>(
   let lastStr: string | undefined
   let lastValue: any
   const storage: AsyncStorage<Value> | SyncStorage<Value> = {
-    getItem: (key) => {
+    getItem: (key, initialValue) => {
       const parse = (str: string | null) => {
         str = str || ''
         if (lastStr !== str) {
           try {
             lastValue = JSON.parse(str)
           } catch {
-            return NO_STORAGE_VALUE
+            return initialValue
           }
           lastStr = str
         }
@@ -78,14 +84,19 @@ export function createJSONStorage<Value>(
     typeof window !== 'undefined' &&
     typeof window.addEventListener === 'function'
   ) {
-    storage.subscribe = (key, callback) => {
+    storage.subscribe = (key, callback, initialValue) => {
+      if (!(getStringStorage() instanceof window.Storage)) {
+        return () => {}
+      }
       const storageEventCallback = (e: StorageEvent) => {
-        if (
-          e.storageArea === getStringStorage() &&
-          e.key === key &&
-          e.newValue
-        ) {
-          callback(JSON.parse(e.newValue))
+        if (e.storageArea === getStringStorage() && e.key === key) {
+          let newValue: Value
+          try {
+            newValue = JSON.parse(e.newValue || '')
+          } catch {
+            newValue = initialValue
+          }
+          callback(newValue)
         }
       }
       window.addEventListener('storage', storageEventCallback)
@@ -117,15 +128,15 @@ export function atomWithStorage<Value>(
   }
 
   baseAtom.onMount = (setAtom) => {
-    const value = storage.getItem(key)
+    const value = storage.getItem(key, initialValue)
     if (value instanceof Promise) {
-      value.then((v) => setAtom(v === NO_STORAGE_VALUE ? initialValue : v))
+      value.then((v) => setAtom(v))
     } else {
-      setAtom(value === NO_STORAGE_VALUE ? initialValue : value)
+      setAtom(value)
     }
     let unsub: Unsubscribe | undefined
     if (storage.subscribe) {
-      unsub = storage.subscribe(key, setAtom)
+      unsub = storage.subscribe(key, setAtom, initialValue)
     }
     return unsub
   }
