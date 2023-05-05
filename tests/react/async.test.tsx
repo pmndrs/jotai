@@ -1,4 +1,4 @@
-import React, { StrictMode, Suspense, useEffect, useRef } from 'react'
+import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
@@ -411,6 +411,7 @@ it('updates an async atom in child useEffect on remount', async () => {
     resolve.splice(0).forEach((fn) => fn())
     getByText('count: 2')
   })
+  vi.useRealTimers()
 })
 
 it('async get and useEffect on parent', async () => {
@@ -1036,6 +1037,7 @@ it('async atom double chain with setTimeout', async () => {
   await new Promise((r) => setTimeout(r)) // wait a tick
   resolve.splice(0).forEach((fn) => fn())
   await findByText('async: ready')
+  vi.useRealTimers()
 })
 
 it('update unmounted async atom with intermediate atom', async () => {
