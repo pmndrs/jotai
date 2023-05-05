@@ -1,5 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -65,7 +66,7 @@ it('does not show async stale result', async () => {
     expect(committed).toEqual([0])
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve1()
   resolve2()
@@ -134,7 +135,7 @@ it('does not show async stale result on derived atom', async () => {
     getByText('derived value: null')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 1')
     getByText('loading async value')
@@ -192,7 +193,7 @@ it('works with async get with extra deps', async () => {
     getByText('delayedCount: 0')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve()
   await waitFor(() => {
@@ -302,7 +303,7 @@ it('uses async atom in the middle of dependency chain', async () => {
   resolve()
   await findByText('count: 0, delayed: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve()
   await findByText('count: 1, delayed: 1')
@@ -344,10 +345,10 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
 
   await findByText('count: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('no child')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 2')
 })
 
@@ -400,10 +401,10 @@ it('updates an async atom in child useEffect on remount', async () => {
     getByText('count: 1')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('no child')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     resolve.splice(0).forEach((fn) => fn())
     getByText('count: 2')
@@ -494,7 +495,7 @@ it('async get with another dep and useEffect on parent', async () => {
     getByText('async: 1')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 2')
     getByText('async: 2')
@@ -539,7 +540,7 @@ it('set promise atom value on write (#304)', async () => {
   await findByText('loading')
   await findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve()
   await findByText('count: 1')
@@ -581,7 +582,7 @@ it('uses async atom double chain (#306)', async () => {
   resolve()
   await findByText('count: 0, delayed: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve()
   await findByText('count: 1, delayed: 1')
@@ -735,7 +736,7 @@ it('async write self atom', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   resolve()
   await findByText('count: -1')
 })
@@ -796,7 +797,7 @@ it('should override promise as atom value (#430)', async () => {
 
   await findByText('loading')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 1')
 })
 
@@ -869,7 +870,7 @@ it('set two promise atoms at once', async () => {
 
   await findByText('loading')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 3')
 })
 
@@ -907,7 +908,7 @@ it('async write chain', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 1')
   resolve1()
   await findByText('count: 2')
@@ -960,7 +961,7 @@ it('async atom double chain without setTimeout (#751)', async () => {
 
   await findByText('async: init')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve()
   await findByText('async: ready')
@@ -1024,7 +1025,7 @@ it('async atom double chain with setTimeout', async () => {
   resolve.splice(0).forEach((fn) => fn())
   await findByText('async: init')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve.splice(0).forEach((fn) => fn())
   await new Promise((r) => setTimeout(r)) // wait a tick
@@ -1084,11 +1085,11 @@ it('update unmounted async atom with intermediate atom', async () => {
   resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 2')
 
-  fireEvent.click(getByText('toggle enabled'))
-  fireEvent.click(getByText('increment count'))
+  await userEvent.click(getByText('toggle enabled'))
+  await userEvent.click(getByText('increment count'))
   await findByText('derived: -1')
 
-  fireEvent.click(getByText('toggle enabled'))
+  await userEvent.click(getByText('toggle enabled'))
   await findByText('loading')
   resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 4')
