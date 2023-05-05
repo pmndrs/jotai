@@ -1,12 +1,12 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { expect, it, jest } from '@jest/globals'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 it('one atom, one effect', async () => {
   const countAtom = atom(1)
-  const onMountFn = jest.fn(() => {})
+  const onMountFn = vi.fn(() => {})
   countAtom.onMount = onMountFn
 
   const Counter = () => {
@@ -26,18 +26,18 @@ it('one atom, one effect', async () => {
   )
 
   await findByText('count: 1')
-  expect(onMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
 
   fireEvent.click(getByText('button'))
   await findByText('count: 2')
-  expect(onMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
 it('two atoms, one each', async () => {
   const countAtom = atom(1)
   const countAtom2 = atom(1)
-  const onMountFn = jest.fn(() => {})
-  const onMountFn2 = jest.fn(() => {})
+  const onMountFn = vi.fn(() => {})
+  const onMountFn2 = vi.fn(() => {})
   countAtom.onMount = onMountFn
   countAtom2.onMount = onMountFn2
 
@@ -69,8 +69,8 @@ it('two atoms, one each', async () => {
     getByText('count: 1')
     getByText('count2: 1')
   })
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onMountFn2).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onMountFn2).toHaveBeenCalledTimes(1)
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
@@ -78,14 +78,14 @@ it('two atoms, one each', async () => {
     getByText('count2: 2')
   })
 
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onMountFn2).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onMountFn2).toHaveBeenCalledTimes(1)
 })
 
 it('one derived atom, one onMount', async () => {
   const countAtom = atom(1)
   const countAtom2 = atom((get) => get(countAtom))
-  const onMountFn = jest.fn(() => {})
+  const onMountFn = vi.fn(() => {})
   countAtom.onMount = onMountFn
 
   const Counter = () => {
@@ -104,14 +104,14 @@ it('one derived atom, one onMount', async () => {
   )
 
   await findByText('count: 1')
-  expect(onMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
 it('mount/unmount test', async () => {
   const countAtom = atom(1)
 
-  const onUnMountFn = jest.fn()
-  const onMountFn = jest.fn(() => onUnMountFn)
+  const onUnMountFn = vi.fn()
+  const onMountFn = vi.fn(() => onUnMountFn)
   countAtom.onMount = onMountFn
 
   const Counter = () => {
@@ -139,13 +139,13 @@ it('mount/unmount test', async () => {
     </>
   )
 
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onUnMountFn).toBeCalledTimes(0)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
-    expect(onMountFn).toBeCalledTimes(1)
-    expect(onUnMountFn).toBeCalledTimes(1)
+    expect(onMountFn).toHaveBeenCalledTimes(1)
+    expect(onUnMountFn).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -158,11 +158,11 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
       set(derivedAtom, update)
     }
   )
-  const onUnMountFn = jest.fn()
-  const onMountFn = jest.fn(() => onUnMountFn)
+  const onUnMountFn = vi.fn()
+  const onMountFn = vi.fn(() => onUnMountFn)
   countAtom.onMount = onMountFn
-  const derivedOnUnMountFn = jest.fn()
-  const derivedOnMountFn = jest.fn(() => derivedOnUnMountFn)
+  const derivedOnUnMountFn = vi.fn()
+  const derivedOnMountFn = vi.fn(() => derivedOnUnMountFn)
   derivedAtom.onMount = derivedOnMountFn
 
   const Counter = () => {
@@ -189,17 +189,17 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
       <Display />
     </>
   )
-  expect(derivedOnMountFn).toBeCalledTimes(1)
-  expect(derivedOnUnMountFn).toBeCalledTimes(0)
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onUnMountFn).toBeCalledTimes(0)
+  expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
+  expect(derivedOnUnMountFn).toHaveBeenCalledTimes(0)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
-    expect(derivedOnMountFn).toBeCalledTimes(1)
-    expect(derivedOnUnMountFn).toBeCalledTimes(1)
-    expect(onMountFn).toBeCalledTimes(1)
-    expect(onUnMountFn).toBeCalledTimes(1)
+    expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
+    expect(derivedOnUnMountFn).toHaveBeenCalledTimes(1)
+    expect(onMountFn).toHaveBeenCalledTimes(1)
+    expect(onUnMountFn).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -213,18 +213,18 @@ it('mount/unMount order', async () => {
       set(derivedAtom, update)
     }
   )
-  const onUnMountFn = jest.fn(() => {
+  const onUnMountFn = vi.fn(() => {
     committed[0] = 0
   })
-  const onMountFn = jest.fn(() => {
+  const onMountFn = vi.fn(() => {
     committed[0] = 1
     return onUnMountFn
   })
   countAtom.onMount = onMountFn
-  const derivedOnUnMountFn = jest.fn(() => {
+  const derivedOnUnMountFn = vi.fn(() => {
     committed[1] = 0
   })
-  const derivedOnMountFn = jest.fn(() => {
+  const derivedOnMountFn = vi.fn(() => {
     committed[1] = 1
     return derivedOnUnMountFn
   })
@@ -298,8 +298,8 @@ it('mount/unmount test with async atom', async () => {
     () => {}
   )
 
-  const onUnMountFn = jest.fn()
-  const onMountFn = jest.fn(() => onUnMountFn)
+  const onUnMountFn = vi.fn()
+  const onMountFn = vi.fn(() => onUnMountFn)
   countAtom.onMount = onMountFn
 
   const Counter = () => {
@@ -333,13 +333,13 @@ it('mount/unmount test with async atom', async () => {
   resolve()
   await waitFor(() => {
     getByText('count: 0')
-    expect(onMountFn).toBeCalledTimes(1)
-    expect(onUnMountFn).toBeCalledTimes(0)
+    expect(onMountFn).toHaveBeenCalledTimes(1)
+    expect(onUnMountFn).toHaveBeenCalledTimes(0)
   })
 
   fireEvent.click(getByText('button'))
-  expect(onMountFn).toBeCalledTimes(1)
-  expect(onUnMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onUnMountFn).toHaveBeenCalledTimes(1)
 })
 
 it('subscription usage test', async () => {

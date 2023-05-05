@@ -1,6 +1,6 @@
 import { StrictMode, Suspense } from 'react'
-import { it } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { RESET, atomWithDefault } from 'jotai/vanilla/utils'

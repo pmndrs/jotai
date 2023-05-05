@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { expect, it } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
@@ -247,8 +247,8 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
     getByText('count1: 0')
     getByText('count2: 0')
   })
-  expect(renderCount1 > 0).toBe(true)
-  expect(renderCount2 > 0).toBe(true)
+  expect(renderCount1 > 0).toBeTruthy()
+  expect(renderCount2 > 0).toBeTruthy()
 
   fireEvent.click(getByText('inc1'))
   await waitFor(() => {

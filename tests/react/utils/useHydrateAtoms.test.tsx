@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
+import { expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
@@ -222,7 +222,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
 
 it('useHydrateAtoms should respect onMount', async () => {
   const countAtom = atom(0)
-  const onMountFn = jest.fn(() => {})
+  const onMountFn = vi.fn(() => {})
   countAtom.onMount = onMountFn
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
@@ -238,5 +238,5 @@ it('useHydrateAtoms should respect onMount', async () => {
   )
 
   await findByText('count: 42')
-  expect(onMountFn).toBeCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
 })

@@ -7,9 +7,9 @@ import {
   useRef,
   useState,
 } from 'react'
-import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { unstable_batchedUpdates } from 'react-dom'
+import { expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
@@ -705,7 +705,7 @@ it('updates two atoms in child useEffect', async () => {
 
 it('set atom right after useEffect (#208)', async () => {
   const countAtom = atom(0)
-  const effectFn = jest.fn()
+  const effectFn = vi.fn()
 
   const Child = () => {
     const [count, setCount] = useAtom(countAtom)
@@ -739,7 +739,7 @@ it('set atom right after useEffect (#208)', async () => {
   )
 
   await findByText('count: 2')
-  expect(effectFn).lastCalledWith(2)
+  expect(effectFn).toHaveBeenLastCalledWith(2)
 })
 
 it('changes atom from parent (#273, #275)', async () => {
@@ -944,8 +944,8 @@ it('chained derive atom with onMount and useEffect (#897)', async () => {
 })
 
 it('onMount is not called when atom value is accessed from writeGetter in derived atom (#942)', async () => {
-  const onUnmount = jest.fn()
-  const onMount = jest.fn(() => {
+  const onUnmount = vi.fn()
+  const onMount = vi.fn(() => {
     return onUnmount
   })
 
@@ -968,8 +968,8 @@ it('onMount is not called when atom value is accessed from writeGetter in derive
     </StrictMode>
   )
 
-  expect(onMount).not.toBeCalled()
-  expect(onUnmount).not.toBeCalled()
+  expect(onMount).not.toHaveBeenCalled()
+  expect(onUnmount).not.toHaveBeenCalled()
 })
 
 it('useAtom returns consistent value with input with changing atoms (#1235)', async () => {

@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, useEffect } from 'react'
-import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
+import { expect, it, vi } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
@@ -133,7 +133,7 @@ it('loadable can recover from error', async () => {
 
 it('loadable immediately resolves sync values', async () => {
   const syncAtom = atom(5)
-  const effectCallback = jest.fn()
+  const effectCallback = vi.fn()
 
   const { getByText } = render(
     <StrictMode>
@@ -150,7 +150,7 @@ it('loadable immediately resolves sync values', async () => {
 
 it('loadable can use resolved promises synchronously', async () => {
   const asyncAtom = atom(Promise.resolve(5))
-  const effectCallback = jest.fn()
+  const effectCallback = vi.fn()
 
   const ResolveAtomComponent = () => {
     useAtomValue(asyncAtom)

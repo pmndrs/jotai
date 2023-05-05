@@ -1,36 +1,36 @@
-import { describe, expect, it, jest } from '@jest/globals'
+import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
   const countAtom = atom(0)
-  const callback1 = jest.fn()
-  const callback2 = jest.fn()
+  const callback1 = vi.fn()
+  const callback2 = vi.fn()
   store.sub(countAtom, callback1)
   store.sub(countAtom, callback2)
-  expect(callback1).not.toBeCalled()
-  expect(callback2).not.toBeCalled()
+  expect(callback1).not.toHaveBeenCalled()
+  expect(callback2).not.toHaveBeenCalled()
 })
 
 it('should not fire subscription if primitive atom value is the same', async () => {
   const store = createStore()
   const countAtom = atom(0)
-  const callback = jest.fn()
+  const callback = vi.fn()
   store.sub(countAtom, callback)
   const calledTimes = callback.mock.calls.length
   store.set(countAtom, 0)
-  expect(callback).toBeCalledTimes(calledTimes)
+  expect(callback).toHaveBeenCalledTimes(calledTimes)
 })
 
 it('should not fire subscription if derived atom value is the same', async () => {
   const store = createStore()
   const countAtom = atom(0)
   const derivedAtom = atom((get) => get(countAtom) * 0)
-  const callback = jest.fn()
+  const callback = vi.fn()
   store.sub(derivedAtom, callback)
   const calledTimes = callback.mock.calls.length
   store.set(countAtom, 1)
-  expect(callback).toBeCalledTimes(calledTimes)
+  expect(callback).toHaveBeenCalledTimes(calledTimes)
 })
 
 describe('[DEV-ONLY] dev-only methods', () => {
@@ -39,7 +39,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
     const countAtom = atom(0)
     countAtom.debugLabel = 'countAtom'
     const derivedAtom = atom((get) => get(countAtom) * 0)
-    const unsub = store.sub(derivedAtom, jest.fn())
+    const unsub = store.sub(derivedAtom, vi.fn())
     store.set(countAtom, 1)
 
     const result = store.dev_get_mounted_atoms?.() || []
@@ -60,7 +60,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
     const store = createStore()
     const countAtom = atom(0)
     countAtom.debugLabel = 'countAtom'
-    const unsub = store.sub(countAtom, jest.fn())
+    const unsub = store.sub(countAtom, vi.fn())
     store.set(countAtom, 1)
     const result = store.dev_get_atom_state?.(countAtom)
     expect(result).toHaveProperty('v', 1)
@@ -71,7 +71,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
     const store = createStore()
     const countAtom = atom(0)
     countAtom.debugLabel = 'countAtom'
-    const cb = jest.fn()
+    const cb = vi.fn()
     const unsub = store.sub(countAtom, cb)
     store.set(countAtom, 1)
     const result = store.dev_get_mounted?.(countAtom)
@@ -93,10 +93,10 @@ describe('[DEV-ONLY] dev-only methods', () => {
   describe('dev_subscribe_store', () => {
     it('should call the callback when state changes', () => {
       const store = createStore()
-      const callback = jest.fn()
+      const callback = vi.fn()
       const unsub = store.dev_subscribe_store?.(callback)
       const countAtom = atom(0)
-      const unsubAtom = store.sub(countAtom, jest.fn())
+      const unsubAtom = store.sub(countAtom, vi.fn())
       store.set(countAtom, 1)
       expect(callback).toHaveBeenNthCalledWith(1, 'state')
       expect(callback).toHaveBeenNthCalledWith(2, 'sub')
@@ -108,11 +108,11 @@ describe('[DEV-ONLY] dev-only methods', () => {
 
     it('should call unsub only when atom is unsubscribed', () => {
       const store = createStore()
-      const callback = jest.fn()
+      const callback = vi.fn()
       const unsub = store.dev_subscribe_store?.(callback)
       const countAtom = atom(0)
-      const unsubAtom = store.sub(countAtom, jest.fn())
-      const unsubAtomSecond = store.sub(countAtom, jest.fn())
+      const unsubAtom = store.sub(countAtom, vi.fn())
+      const unsubAtomSecond = store.sub(countAtom, vi.fn())
       unsubAtom?.()
       expect(callback).toHaveBeenNthCalledWith(1, 'state')
       expect(callback).toHaveBeenNthCalledWith(2, 'sub')
@@ -129,7 +129,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
 it('should unmount with store.get', async () => {
   const store = createStore()
   const countAtom = atom(0)
-  const callback = jest.fn()
+  const callback = vi.fn()
   const unsub = store.sub(countAtom, callback)
   store.get(countAtom)
   unsub()
@@ -141,7 +141,7 @@ it('should unmount dependencies with store.get', async () => {
   const store = createStore()
   const countAtom = atom(0)
   const derivedAtom = atom((get) => get(countAtom) * 2)
-  const callback = jest.fn()
+  const callback = vi.fn()
   const unsub = store.sub(derivedAtom, callback)
   store.get(derivedAtom)
   unsub()
@@ -154,7 +154,7 @@ it('should unmount tree dependencies with store.get', async () => {
   const countAtom = atom(0)
   const derivedAtom = atom((get) => get(countAtom) * 2)
   const anotherDerivedAtom = atom((get) => get(countAtom) * 3)
-  const callback = jest.fn()
+  const callback = vi.fn()
   const unsubStore = store.dev_subscribe_store?.(() => {
     // Comment this line to make the test pass
     store.get(derivedAtom)

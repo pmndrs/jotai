@@ -1,6 +1,6 @@
 import { StrictMode, Suspense } from 'react'
-import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
 import { RESET, atomWithStorage, createJSONStorage } from 'jotai/vanilla/utils'
@@ -357,7 +357,7 @@ describe('atomWithStorage (in non-browser environment)', () => {
 
 describe('atomWithStorage (with browser storage)', () => {
   const addEventListener = window.addEventListener
-  const mockAddEventListener = jest.fn()
+  const mockAddEventListener = vi.fn()
 
   beforeAll(() => {
     ;(window as any).addEventListener = mockAddEventListener
@@ -370,9 +370,9 @@ describe('atomWithStorage (with browser storage)', () => {
   it('createJSONStorage subscribes to specific window storage events', async () => {
     const store = createStore()
     const mockNativeStorage = Object.create(window.Storage.prototype)
-    mockNativeStorage.setItem = jest.fn() as Storage['setItem']
-    mockNativeStorage.getItem = jest.fn(() => null) as Storage['getItem']
-    mockNativeStorage.removeItem = jest.fn() as Storage['removeItem']
+    mockNativeStorage.setItem = vi.fn() as Storage['setItem']
+    mockNativeStorage.getItem = vi.fn(() => null) as Storage['getItem']
+    mockNativeStorage.removeItem = vi.fn() as Storage['removeItem']
 
     const dummyAtom = atomWithStorage<number>(
       'dummy',
@@ -401,7 +401,7 @@ describe('atomWithStorage (with browser storage)', () => {
     )
 
     const storageEventHandler = mockAddEventListener.mock.calls
-      .filter(([eventName]) => eventName === 'storage')
+      .filter(([eventName]: [string]) => eventName === 'storage')
       .pop()?.[1] as (e: StorageEvent) => void
 
     expect(store.get(dummyAtom)).toBe(1)
@@ -435,7 +435,7 @@ describe('atomWithStorage (with browser storage)', () => {
 
 describe('atomWithStorage (with non-browser storage)', () => {
   const addEventListener = window.addEventListener
-  const mockAddEventListener = jest.fn()
+  const mockAddEventListener = vi.fn()
 
   beforeAll(() => {
     ;(window as any).addEventListener = mockAddEventListener
@@ -448,9 +448,9 @@ describe('atomWithStorage (with non-browser storage)', () => {
   it('createJSONStorage avoids attaching event handler for non-browser storage', async () => {
     const store = createStore()
     const mockNonNativeStorage = {
-      setItem: jest.fn() as Storage['setItem'],
-      getItem: jest.fn(() => null) as Storage['getItem'],
-      removeItem: jest.fn() as Storage['removeItem'],
+      setItem: vi.fn() as Storage['setItem'],
+      getItem: vi.fn(() => null) as Storage['getItem'],
+      removeItem: vi.fn() as Storage['removeItem'],
     }
 
     const dummyAtom = atomWithStorage<number>(

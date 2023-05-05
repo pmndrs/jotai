@@ -1,26 +1,19 @@
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  jest,
-} from '@jest/globals'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
 beforeEach(() => {
-  jest.useFakeTimers()
+  vi.useFakeTimers({ shouldAdvanceTime: true })
 })
 afterEach(() => {
-  jest.runAllTimers()
-  jest.useRealTimers()
+  vi.runAllTimers()
+  vi.useRealTimers()
 })
 
 class ErrorBoundary extends Component<
@@ -161,7 +154,7 @@ it('writable count state with delayed value', async () => {
   )
 
   await findByText('loading')
-  jest.runOnlyPendingTimers()
+  vi.runOnlyPendingTimers()
   await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
@@ -605,22 +598,22 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     await findByText('count: 1')
 
     fireEvent.click(getByText('next'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     await findByText('count: 3')
   })
 
@@ -694,22 +687,22 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     await findByText('count: 1')
 
     fireEvent.click(getByText('refresh'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     await findByText('count: 3')
   })
 })

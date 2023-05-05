@@ -1,9 +1,9 @@
 /// <reference types="react/experimental" />
 
 import ReactExports, { StrictMode, Suspense, useEffect } from 'react'
-import { describe, expect, it } from '@jest/globals'
 import { act, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { describe, expect, it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 

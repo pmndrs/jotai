@@ -1,5 +1,5 @@
-import { it } from '@jest/globals'
 import { expectType } from 'ts-expect'
+import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 

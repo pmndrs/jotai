@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals'
+import { describe, expect, it } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import { unstable_unwrap as unwrap } from 'jotai/vanilla/utils'
 
@@ -12,16 +12,20 @@ describe('unwrap', () => {
       await new Promise<void>((r) => (resolve = r))
       return count * 2
     })
+
     const syncAtom = unwrap(asyncAtom)
+
     expect(store.get(syncAtom)).toBe(undefined)
     resolve()
     await new Promise((r) => setTimeout(r)) // wait a tick
     expect(store.get(syncAtom)).toBe(2)
+
     store.set(countAtom, 2)
     expect(store.get(syncAtom)).toBe(undefined)
     resolve()
     await new Promise((r) => setTimeout(r)) // wait a tick
     expect(store.get(syncAtom)).toBe(4)
+
     store.set(countAtom, 3)
     expect(store.get(syncAtom)).toBe(undefined)
     resolve()
@@ -65,15 +69,18 @@ describe('unwrap', () => {
       return count * 2
     })
     const syncAtom = unwrap(asyncAtom, (prev?: number) => prev ?? 0)
+
     expect(store.get(syncAtom)).toBe(0)
     resolve()
     await new Promise((r) => setTimeout(r)) // wait a tick
     expect(store.get(syncAtom)).toBe(2)
+
     store.set(countAtom, 2)
     expect(store.get(syncAtom)).toBe(2)
     resolve()
     await new Promise((r) => setTimeout(r)) // wait a tick
     expect(store.get(syncAtom)).toBe(4)
+
     store.set(countAtom, 3)
     expect(store.get(syncAtom)).toBe(4)
     resolve()

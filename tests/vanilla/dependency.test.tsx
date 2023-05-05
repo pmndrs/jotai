@@ -1,4 +1,4 @@
-import { expect, it } from '@jest/globals'
+import { expect, it } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 
 it('can propagate updates with async atom chains', async () => {
@@ -14,17 +14,17 @@ it('can propagate updates with async atom chains', async () => {
   const async2Atom = atom((get) => get(asyncAtom))
   const async3Atom = atom((get) => get(async2Atom))
 
-  expect(store.get(async3Atom) instanceof Promise).toBe(true)
+  expect(store.get(async3Atom) instanceof Promise).toBeTruthy()
   resolve()
   await expect(store.get(async3Atom)).resolves.toBe(1)
 
   store.set(countAtom, (c) => c + 1)
-  expect(store.get(async3Atom) instanceof Promise).toBe(true)
+  expect(store.get(async3Atom) instanceof Promise).toBeTruthy()
   resolve()
   await expect(store.get(async3Atom)).resolves.toBe(2)
 
   store.set(countAtom, (c) => c + 1)
-  expect(store.get(async3Atom) instanceof Promise).toBe(true)
+  expect(store.get(async3Atom) instanceof Promise).toBeTruthy()
   resolve()
   await expect(store.get(async3Atom)).resolves.toBe(3)
 })

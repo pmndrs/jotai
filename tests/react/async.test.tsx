@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
-import { expect, it } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
