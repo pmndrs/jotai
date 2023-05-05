@@ -1,18 +1,10 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
-
-beforeEach(() => {
-  vi.useFakeTimers({ shouldAdvanceTime: true })
-})
-afterEach(() => {
-  vi.runAllTimers()
-  vi.useRealTimers()
-})
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -363,13 +355,14 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
 it('updates an async atom in child useEffect on remount', async () => {
   const toggleAtom = atom(true)
   const countAtom = atom(0)
+  const resolve: (() => void)[] = []
   const asyncCountAtom = atom(
     async (get) => {
-      await new Promise<void>((r) => setTimeout(r, 10 * 1000))
+      await new Promise<void>((r) => resolve.push(r))
       return get(countAtom)
     },
     async (get, set) => {
-      await new Promise<void>((r) => setTimeout(r, 10 * 1000))
+      await new Promise<void>((r) => resolve.push(r))
       set(countAtom, get(countAtom) + 1)
     }
   )
@@ -402,15 +395,20 @@ it('updates an async atom in child useEffect on remount', async () => {
 
   await findByText('loading')
 
-  vi.runOnlyPendingTimers()
-  await findByText('count: 1')
+  resolve.splice(0).forEach((fn) => fn())
+  await waitFor(() => {
+    resolve.splice(0).forEach((fn) => fn())
+    getByText('count: 1')
+  })
 
   await userEvent.click(getByText('button'))
   await findByText('no child')
 
   await userEvent.click(getByText('button'))
-  vi.runOnlyPendingTimers()
-  await findByText('count: 2')
+  await waitFor(() => {
+    resolve.splice(0).forEach((fn) => fn())
+    getByText('count: 2')
+  })
 })
 
 it('async get and useEffect on parent', async () => {
