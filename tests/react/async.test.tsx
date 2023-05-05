@@ -354,6 +354,7 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
 })
 
 it('updates an async atom in child useEffect on remount', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
   const toggleAtom = atom(true)
   const countAtom = atom(0)
   const resolve: (() => void)[] = []
