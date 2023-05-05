@@ -331,11 +331,9 @@ it('mount/unmount test with async atom', async () => {
 
   await findByText('loading')
   resolve()
-  await waitFor(() => {
-    getByText('count: 0')
-    expect(onMountFn).toHaveBeenCalledTimes(1)
-    expect(onUnMountFn).toHaveBeenCalledTimes(0)
-  })
+  await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
   fireEvent.click(getByText('button'))
   expect(onMountFn).toHaveBeenCalledTimes(1)
@@ -510,6 +508,7 @@ it('create atom with onMount in async get', async () => {
     </StrictMode>
   )
 
+  await findByText('count: 1')
   await findByText('count: 10')
 
   fireEvent.click(getByText('button'))

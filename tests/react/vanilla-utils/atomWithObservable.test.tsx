@@ -2,17 +2,13 @@ import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
-beforeEach(() => {
-  vi.useFakeTimers({ shouldAdvanceTime: true })
-})
 afterEach(() => {
-  vi.runAllTimers()
   vi.useRealTimers()
 })
 
@@ -123,6 +119,7 @@ it('writable count state without initial value', async () => {
 })
 
 it('writable count state with delayed value', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => {
     const observable = of(1).pipe(delay(10 * 1000))
@@ -455,6 +452,8 @@ it('with initially emitted undefined value', async () => {
 })
 
 it("don't omit values emitted between init and mount", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => subject)
 
@@ -553,6 +552,8 @@ describe('error handling', () => {
   })
 
   it('can recover from error with dependency', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+
     const baseAtom = atom(0)
     const countAtom = atomWithObservable((get) => {
       const base = get(baseAtom)
@@ -618,6 +619,7 @@ describe('error handling', () => {
   })
 
   it('can recover with intermediate atom', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
     let count = -1
     let willThrowError = false
     const refreshAtom = atom(0)
