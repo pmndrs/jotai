@@ -1,7 +1,7 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
@@ -343,12 +343,14 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
     </>
   )
 
+  await findByText('count: 0')
   await findByText('count: 1')
 
   await userEvent.click(getByText('button'))
   await findByText('no child')
 
   await userEvent.click(getByText('button'))
+  await findByText('count: 1')
   await findByText('count: 2')
 })
 
@@ -959,6 +961,7 @@ it('async atom double chain without setTimeout (#751)', async () => {
     </StrictMode>
   )
 
+  await findByText('loading')
   await findByText('async: init')
 
   await userEvent.click(getByText('button'))
@@ -968,6 +971,7 @@ it('async atom double chain without setTimeout (#751)', async () => {
 })
 
 it('async atom double chain with setTimeout', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
   const enabledAtom = atom(false)
   const resolve: (() => void)[] = []
   const asyncAtom = atom(async (get) => {
