@@ -1,10 +1,14 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { expect, it, vi } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -355,6 +359,7 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
 
 it('updates an async atom in child useEffect on remount', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
+
   const toggleAtom = atom(true)
   const countAtom = atom(0)
   const resolve: (() => void)[] = []
@@ -411,7 +416,6 @@ it('updates an async atom in child useEffect on remount', async () => {
     resolve.splice(0).forEach((fn) => fn())
     getByText('count: 2')
   })
-  vi.useRealTimers()
 })
 
 it('async get and useEffect on parent', async () => {
@@ -973,6 +977,7 @@ it('async atom double chain without setTimeout (#751)', async () => {
 
 it('async atom double chain with setTimeout', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
+
   const enabledAtom = atom(false)
   const resolve: (() => void)[] = []
   const asyncAtom = atom(async (get) => {
@@ -1037,7 +1042,6 @@ it('async atom double chain with setTimeout', async () => {
   await new Promise((r) => setTimeout(r)) // wait a tick
   resolve.splice(0).forEach((fn) => fn())
   await findByText('async: ready')
-  vi.useRealTimers()
 })
 
 it('update unmounted async atom with intermediate atom', async () => {

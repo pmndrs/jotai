@@ -331,7 +331,7 @@ it('mount/unmount test with async atom', async () => {
 
   await findByText('loading')
   resolve()
-  await waitFor(() => expect(getByText('count: 0')).toBeTruthy())
+  await findByText('count: 0')
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
 

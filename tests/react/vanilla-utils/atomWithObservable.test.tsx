@@ -120,6 +120,7 @@ it('writable count state without initial value', async () => {
 
 it('writable count state with delayed value', async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
+
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => {
     const observable = of(1).pipe(delay(10 * 1000))
@@ -620,6 +621,7 @@ describe('error handling', () => {
 
   it('can recover with intermediate atom', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
+
     let count = -1
     let willThrowError = false
     const refreshAtom = atom(0)
