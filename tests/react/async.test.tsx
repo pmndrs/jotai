@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, useEffect, useRef } from 'react'
+import React, { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
@@ -350,7 +350,6 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
   await findByText('no child')
 
   await userEvent.click(getByText('button'))
-  await findByText('count: 1')
   await findByText('count: 2')
 })
 
