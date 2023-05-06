@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         react:
-          - 16.9.0
+          - 16.14.0
           - 17.0.0
           - 18.0.0
           - 18.1.0
