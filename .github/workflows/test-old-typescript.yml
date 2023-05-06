@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '18'
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
@@ -67,7 +67,7 @@ jobs:
       - name: Install old TypeScript
         run: yarn add -D typescript@${{ matrix.typescript }}
       - name: Patch testing setup for older TS
-        if: ${{ matrix.typescript == '3.9.7' ||  matrix.typescript == '3.8.3' }}
+        if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
           yarn add -D @testing-library/user-event@12.1.7 @testing-library/react@11.0.4
           rm node_modules/vitest/dist/*.d.ts

@@ -10,7 +10,15 @@ import { atomWithObservable } from 'jotai/vanilla/utils'
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
+  // A workaround for missing performance.mark after using fake timers
+  // https://github.com/pmndrs/jotai/pull/1913#discussion_r1186527192
+  if (!performance.mark) {
+    performance.mark = (() => {}) as any
+    performance.clearMarks = (() => {}) as any
+    performance.clearMeasures = (() => {}) as any
+  }
 })
+
 afterEach(() => {
   vi.runAllTimers()
   vi.useRealTimers()
@@ -154,7 +162,7 @@ it('writable count state with delayed value', async () => {
   )
 
   await findByText('loading')
-  vi.runOnlyPendingTimers()
+  act(() => vi.runOnlyPendingTimers())
   await findByText('count: 1')
 
   fireEvent.click(getByText('button'))
@@ -598,22 +606,22 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
-    vi.runOnlyPendingTimers()
+    act(() => vi.runOnlyPendingTimers())
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    vi.runOnlyPendingTimers()
+    act(() => vi.runOnlyPendingTimers())
     await findByText('count: 1')
 
     fireEvent.click(getByText('next'))
     await findByText('loading')
-    vi.runOnlyPendingTimers()
+    act(() => vi.runOnlyPendingTimers())
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    vi.runOnlyPendingTimers()
+    act(() => vi.runOnlyPendingTimers())
     await findByText('count: 3')
   })
 
@@ -687,22 +695,22 @@ describe('error handling', () => {
     )
 
     await findByText('loading')
-    vi.runOnlyPendingTimers()
+    act(() => vi.runOnlyPendingTimers())
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    vi.runOnlyPendingTimers()
+    act(() => vi.runOnlyPendingTimers())
     await findByText('count: 1')
 
     fireEvent.click(getByText('refresh'))
     await findByText('loading')
-    vi.runOnlyPendingTimers()
+    act(() => vi.runOnlyPendingTimers())
     await findByText('errored')
 
     fireEvent.click(getByText('retry'))
     await findByText('loading')
-    vi.runOnlyPendingTimers()
+    act(() => vi.runOnlyPendingTimers())
     await findByText('count: 3')
   })
 })
