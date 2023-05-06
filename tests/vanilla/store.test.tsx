@@ -180,7 +180,7 @@ it('should update async atom with delay (#1813)', async () => {
   store.get(delayedAtom)
   store.set(countAtom, 1)
   resolve.splice(0).forEach((fn) => fn())
-  await new Promise<void>((r) => setTimeout(r)) // wait for one tick
+  await new Promise<void>((r) => setTimeout(r)) // wait for a tick
   const promise = store.get(delayedAtom)
   resolve.splice(0).forEach((fn) => fn())
   expect(await promise).toBe(1)

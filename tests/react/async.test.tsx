@@ -401,7 +401,7 @@ it('updates an async atom in child useEffect on remount', async () => {
 
   await act(async () => {
     resolve.splice(0).forEach((fn) => fn())
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     resolve.splice(0).forEach((fn) => fn())
   })
   await findByText('count: 1')
@@ -412,7 +412,7 @@ it('updates an async atom in child useEffect on remount', async () => {
   await userEvent.click(getByText('button'))
   await act(async () => {
     resolve.splice(0).forEach((fn) => fn())
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     resolve.splice(0).forEach((fn) => fn())
   })
   await findByText('count: 2')
@@ -1028,14 +1028,14 @@ it('async atom double chain with setTimeout', async () => {
   await findByText('loading')
 
   act(() => resolve.splice(0).forEach((fn) => fn()))
-  await act(() => new Promise((r) => setTimeout(r))) // wait a tick
+  await act(() => new Promise((r) => setTimeout(r))) // wait for a tick
   act(() => resolve.splice(0).forEach((fn) => fn()))
   await findByText('async: init')
 
   await userEvent.click(getByText('button'))
   await findByText('loading')
   act(() => resolve.splice(0).forEach((fn) => fn()))
-  await act(() => new Promise((r) => setTimeout(r))) // wait a tick
+  await act(() => new Promise((r) => setTimeout(r))) // wait for a tick
   act(() => resolve.splice(0).forEach((fn) => fn()))
   await findByText('async: ready')
 })

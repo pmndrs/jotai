@@ -17,19 +17,19 @@ describe('unwrap', () => {
 
     expect(store.get(syncAtom)).toBe(undefined)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(2)
 
     store.set(countAtom, 2)
     expect(store.get(syncAtom)).toBe(undefined)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(4)
 
     store.set(countAtom, 3)
     expect(store.get(syncAtom)).toBe(undefined)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(6)
   })
 
@@ -45,17 +45,17 @@ describe('unwrap', () => {
     const syncAtom = unwrap(asyncAtom, () => -1)
     expect(store.get(syncAtom)).toBe(-1)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(2)
     store.set(countAtom, 2)
     expect(store.get(syncAtom)).toBe(-1)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(4)
     store.set(countAtom, 3)
     expect(store.get(syncAtom)).toBe(-1)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(6)
   })
 
@@ -72,19 +72,19 @@ describe('unwrap', () => {
 
     expect(store.get(syncAtom)).toBe(0)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(2)
 
     store.set(countAtom, 2)
     expect(store.get(syncAtom)).toBe(2)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(4)
 
     store.set(countAtom, 3)
     expect(store.get(syncAtom)).toBe(4)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(6)
   })
 })
