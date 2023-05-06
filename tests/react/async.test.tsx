@@ -396,14 +396,13 @@ it('updates an async atom in child useEffect on remount', async () => {
 
   await findByText('loading')
 
-  await act(async () => {
+  act(() => {
     resolve.splice(0).forEach((fn) => fn())
   })
   await findByText('count: 0')
 
   await act(async () => {
     resolve.splice(0).forEach((fn) => fn())
-    await new Promise((r) => setTimeout(r)) // wait a tick
     await new Promise((r) => setTimeout(r)) // wait a tick
     resolve.splice(0).forEach((fn) => fn())
   })
@@ -415,7 +414,6 @@ it('updates an async atom in child useEffect on remount', async () => {
   await userEvent.click(getByText('button'))
   await act(async () => {
     resolve.splice(0).forEach((fn) => fn())
-    await new Promise((r) => setTimeout(r)) // wait a tick
     await new Promise((r) => setTimeout(r)) // wait a tick
     resolve.splice(0).forEach((fn) => fn())
   })
@@ -1028,21 +1026,33 @@ it('async atom double chain with setTimeout', async () => {
     </StrictMode>
   )
 
-  resolve.splice(0).forEach((fn) => fn())
+  act(() => {
+    resolve.splice(0).forEach((fn) => fn())
+  })
   await findByText('loading')
 
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  resolve.splice(0).forEach((fn) => fn())
+  act(() => {
+    resolve.splice(0).forEach((fn) => fn())
+  })
+  await act(async () => {
+    await new Promise((r) => setTimeout(r)) // wait a tick
+  })
+  act(() => {
+    resolve.splice(0).forEach((fn) => fn())
+  })
   await findByText('async: init')
 
   await userEvent.click(getByText('button'))
   await findByText('loading')
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  resolve.splice(0).forEach((fn) => fn())
+  act(() => {
+    resolve.splice(0).forEach((fn) => fn())
+  })
+  await act(async () => {
+    await new Promise((r) => setTimeout(r)) // wait a tick
+  })
+  act(() => {
+    resolve.splice(0).forEach((fn) => fn())
+  })
   await findByText('async: ready')
 })
 
