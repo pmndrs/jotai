@@ -1,14 +1,10 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
-
-afterEach(() => {
-  vi.useRealTimers()
-})
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -358,8 +354,6 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
 })
 
 it('updates an async atom in child useEffect on remount', async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true })
-
   const toggleAtom = atom(true)
   const countAtom = atom(0)
   const resolve: (() => void)[] = []
@@ -402,23 +396,29 @@ it('updates an async atom in child useEffect on remount', async () => {
 
   await findByText('loading')
 
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  resolve.splice(0).forEach((fn) => fn())
+  await act(async () => {
+    resolve.splice(0).forEach((fn) => fn())
+  })
+  await findByText('count: 0')
+
+  await act(async () => {
+    resolve.splice(0).forEach((fn) => fn())
+    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait a tick
+    resolve.splice(0).forEach((fn) => fn())
+  })
   await findByText('count: 1')
 
   await userEvent.click(getByText('button'))
   await findByText('no child')
 
   await userEvent.click(getByText('button'))
-  resolve.splice(0).forEach((fn) => fn())
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  await new Promise((r) => setTimeout(r)) // wait a tick
-  resolve.splice(0).forEach((fn) => fn())
+  await act(async () => {
+    resolve.splice(0).forEach((fn) => fn())
+    await new Promise((r) => setTimeout(r)) // wait a tick
+    await new Promise((r) => setTimeout(r)) // wait a tick
+    resolve.splice(0).forEach((fn) => fn())
+  })
   await findByText('count: 2')
 })
 
@@ -980,8 +980,6 @@ it('async atom double chain without setTimeout (#751)', async () => {
 })
 
 it('async atom double chain with setTimeout', async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true })
-
   const enabledAtom = atom(false)
   const resolve: (() => void)[] = []
   const asyncAtom = atom(async (get) => {
