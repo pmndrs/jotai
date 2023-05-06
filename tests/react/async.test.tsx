@@ -403,19 +403,23 @@ it('updates an async atom in child useEffect on remount', async () => {
   await findByText('loading')
 
   resolve.splice(0).forEach((fn) => fn())
-  await waitFor(() => {
-    resolve.splice(0).forEach((fn) => fn())
-    getByText('count: 1')
-  })
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  resolve.splice(0).forEach((fn) => fn())
+  await findByText('count: 1')
 
   await userEvent.click(getByText('button'))
   await findByText('no child')
 
   await userEvent.click(getByText('button'))
-  await waitFor(() => {
-    resolve.splice(0).forEach((fn) => fn())
-    getByText('count: 2')
-  })
+  resolve.splice(0).forEach((fn) => fn())
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  await new Promise((r) => setTimeout(r)) // wait a tick
+  resolve.splice(0).forEach((fn) => fn())
+  await findByText('count: 2')
 })
 
 it('async get and useEffect on parent', async () => {
