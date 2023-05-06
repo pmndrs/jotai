@@ -10,6 +10,13 @@ import { atomWithObservable } from 'jotai/vanilla/utils'
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
+  // A workaround for missing performance.mark after using fake timers
+  // https://github.com/pmndrs/jotai/pull/1913#discussion_r1186527192
+  if (!performance.mark) {
+    performance.mark = (() => {}) as any
+    performance.clearMarks = (() => {}) as any
+    performance.clearMeasures = (() => {}) as any
+  }
 })
 
 afterEach(() => {
