@@ -396,9 +396,7 @@ it('updates an async atom in child useEffect on remount', async () => {
 
   await findByText('loading')
 
-  act(() => {
-    resolve.splice(0).forEach((fn) => fn())
-  })
+  act(() => resolve.splice(0).forEach((fn) => fn()))
   await findByText('count: 0')
 
   await act(async () => {
@@ -1026,33 +1024,19 @@ it('async atom double chain with setTimeout', async () => {
     </StrictMode>
   )
 
-  act(() => {
-    resolve.splice(0).forEach((fn) => fn())
-  })
+  act(() => resolve.splice(0).forEach((fn) => fn()))
   await findByText('loading')
 
-  act(() => {
-    resolve.splice(0).forEach((fn) => fn())
-  })
-  await act(async () => {
-    await new Promise((r) => setTimeout(r)) // wait a tick
-  })
-  act(() => {
-    resolve.splice(0).forEach((fn) => fn())
-  })
+  act(() => resolve.splice(0).forEach((fn) => fn()))
+  await act(() => new Promise((r) => setTimeout(r))) // wait a tick
+  act(() => resolve.splice(0).forEach((fn) => fn()))
   await findByText('async: init')
 
   await userEvent.click(getByText('button'))
   await findByText('loading')
-  act(() => {
-    resolve.splice(0).forEach((fn) => fn())
-  })
-  await act(async () => {
-    await new Promise((r) => setTimeout(r)) // wait a tick
-  })
-  act(() => {
-    resolve.splice(0).forEach((fn) => fn())
-  })
+  act(() => resolve.splice(0).forEach((fn) => fn()))
+  await act(() => new Promise((r) => setTimeout(r))) // wait a tick
+  act(() => resolve.splice(0).forEach((fn) => fn()))
   await findByText('async: ready')
 })
 

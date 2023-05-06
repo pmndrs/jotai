@@ -1,5 +1,5 @@
 import { StrictMode, Suspense } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { createStore } from 'jotai/vanilla'
@@ -241,18 +241,18 @@ describe('atomWithStorage (async)', () => {
       </StrictMode>
     )
 
-    resolve.splice(0).forEach((fn) => fn())
+    act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 10')
 
     fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
+    act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 11')
     await waitFor(() => {
       expect(asyncStorageData.count).toBe(11)
     })
 
     fireEvent.click(getByText('reset'))
-    resolve.splice(0).forEach((fn) => fn())
+    act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 1')
     await waitFor(() => {
       expect(asyncStorageData.count).toBeUndefined()
@@ -283,7 +283,7 @@ describe('atomWithStorage (async)', () => {
     await findByText('count: 20')
 
     fireEvent.click(getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
+    act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 21')
     await waitFor(() => {
       expect(asyncStorageData.count2).toBe(21)
@@ -406,28 +406,34 @@ describe('atomWithStorage (with browser storage)', () => {
 
     expect(store.get(dummyAtom)).toBe(1)
 
-    storageEventHandler?.({
-      key: 'dummy',
-      newValue: '2',
-      storageArea: {},
-    } as StorageEvent)
+    act(() => {
+      storageEventHandler?.({
+        key: 'dummy',
+        newValue: '2',
+        storageArea: {},
+      } as StorageEvent)
+    })
 
     expect(store.get(dummyAtom)).toBe(1)
 
-    storageEventHandler?.({
-      key: 'dummy',
-      newValue: '2',
-      storageArea: mockNativeStorage,
-    } as StorageEvent)
+    act(() => {
+      storageEventHandler?.({
+        key: 'dummy',
+        newValue: '2',
+        storageArea: mockNativeStorage,
+      } as StorageEvent)
+    })
 
     expect(store.get(dummyAtom)).toBe(2)
 
-    // simulate removeItem() from another window
-    storageEventHandler?.({
-      key: 'dummy',
-      newValue: null,
-      storageArea: mockNativeStorage,
-    } as StorageEvent)
+    act(() => {
+      // simulate removeItem() from another window
+      storageEventHandler?.({
+        key: 'dummy',
+        newValue: null,
+        storageArea: mockNativeStorage,
+      } as StorageEvent)
+    })
 
     expect(store.get(dummyAtom)).toBe(1)
   })
