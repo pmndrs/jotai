@@ -123,6 +123,46 @@ describe('[DEV-ONLY] dev-only methods', () => {
       unsub?.()
       unsubAtomSecond?.()
     })
+
+    it('should call the callback when async atom is resolved', async () => {
+      const store = createStore()
+      const callback = vi.fn()
+      const unsub = store.dev_subscribe_store?.(callback)
+
+      const countAtom = atom(async () => {
+        const result = await Promise.resolve(1)
+        return result
+      })
+
+      expect(callback).toHaveBeenCalledTimes(0)
+
+      await expect(store.get(countAtom)).resolves.toBe(1)
+
+      expect(callback).toHaveBeenNthCalledWith(1, 'state')
+      expect(callback).toHaveBeenCalledTimes(1)
+
+      unsub?.()
+    })
+
+    it('should call the callback when async atom is rejected', async () => {
+      const store = createStore()
+      const callback = vi.fn()
+      const unsub = store.dev_subscribe_store?.(callback)
+
+      const countAtom = atom(async () => {
+        const result = await Promise.reject(1)
+        return result
+      })
+
+      expect(callback).toHaveBeenCalledTimes(0)
+
+      await expect(store.get(countAtom)).rejects.toBeTruthy()
+
+      expect(callback).toHaveBeenNthCalledWith(1, 'state')
+      expect(callback).toHaveBeenCalledTimes(1)
+
+      unsub?.()
+    })
   })
 })
 

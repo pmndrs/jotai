@@ -245,6 +245,9 @@ export const createStore = () => {
                 if (prevAtomState?.d !== nextAtomState.d) {
                   mountDependencies(atom, nextAtomState, prevAtomState?.d)
                 }
+                if (import.meta.env?.MODE !== 'production') {
+                  storeListeners.forEach((l) => l('state'))
+                }
               }
             },
             (e) => {
@@ -261,6 +264,9 @@ export const createStore = () => {
                 reject(e)
                 if (prevAtomState?.d !== nextAtomState.d) {
                   mountDependencies(atom, nextAtomState, prevAtomState?.d)
+                }
+                if (import.meta.env?.MODE !== 'production') {
+                  storeListeners.forEach((l) => l('state'))
                 }
               }
             }
