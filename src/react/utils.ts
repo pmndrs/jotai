@@ -1,3 +1,4 @@
+export { HydrateAtoms } from './utils/HydrateAtoms.tsx'
 export { useResetAtom } from './utils/useResetAtom.ts'
 export { useReducerAtom } from './utils/useReducerAtom.ts'
 export { useAtomCallback } from './utils/useAtomCallback.ts'
