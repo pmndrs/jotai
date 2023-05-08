@@ -1,5 +1,5 @@
 import { useStore } from '../../react.ts'
-import {
+import type {
   AnyWritableAtom,
   AtomMap,
   AtomTuple,
