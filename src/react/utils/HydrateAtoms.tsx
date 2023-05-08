@@ -24,5 +24,5 @@ export function HydrateAtoms<T extends Iterable<AtomTuple>>({
   options,
 }: Props<T>): JSX.Element {
   useHydrateAtoms(values, options)
-  return children as JSX.Element
+  return <>{children}</>
 }
