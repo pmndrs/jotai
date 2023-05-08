@@ -6,12 +6,7 @@ import { HydrateAtoms } from 'jotai/react/utils'
 
 it('HydrateAtoms should only hydrate on first render', async () => {
   const countAtom = atom(0)
-  const Counter = ({
-    initialCount,
-  }: {
-    initialCount: number
-    initialStatus: string
-  }) => {
+  const Counter = ({ initialCount }: { initialCount: number }) => {
     const [countValue, setCount] = useAtom(countAtom)
 
     return (
@@ -23,7 +18,7 @@ it('HydrateAtoms should only hydrate on first render', async () => {
   }
   const { findByText, getByText, rerender } = render(
     <StrictMode>
-      <Counter initialCount={42} initialStatus="rejected" />
+      <Counter initialCount={42} />
     </StrictMode>
   )
 
@@ -33,7 +28,7 @@ it('HydrateAtoms should only hydrate on first render', async () => {
 
   rerender(
     <StrictMode>
-      <Counter initialCount={65} initialStatus="rejected" />
+      <Counter initialCount={65} />
     </StrictMode>
   )
   await findByText('count: 43')
