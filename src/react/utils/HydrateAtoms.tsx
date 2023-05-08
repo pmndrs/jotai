@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react'
+import { Fragment, PropsWithChildren } from 'react'
 import { AtomMap, AtomTuple, InferAtoms, Options } from './typeUtils.ts'
 import { useHydrateAtoms } from './useHydrateAtoms.ts'
 
@@ -24,5 +24,5 @@ export function HydrateAtoms<T extends Iterable<AtomTuple>>({
   options,
 }: Props<T>): JSX.Element {
   useHydrateAtoms(values, options)
-  return <>{children}</>
+  return <Fragment>{children}</Fragment>
 }
