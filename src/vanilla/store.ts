@@ -69,7 +69,7 @@ type NextDependencies = Map<AnyAtom, AtomState | undefined>
  */
 type AtomState<Value = AnyValue> = {
   d: Dependencies
-} & ({ e: AnyError } | { v: Value })
+} & ({ e: AnyError; o?: never } | { v: Value; o: Promise<Value> | undefined })
 
 const isEqualAtomValue = <Value>(a: AtomState<Value>, b: AtomState<Value>) =>
   'v' in a && 'v' in b && Object.is(a.v, b.v)
@@ -196,12 +196,14 @@ export const createStore = () => {
   const setAtomValue = <Value>(
     atom: Atom<Value>,
     value: Value,
-    nextDependencies?: NextDependencies
+    nextDependencies?: NextDependencies,
+    original?: Promise<Value>
   ): AtomState<Value> => {
     const prevAtomState = getAtomState(atom)
     const nextAtomState: AtomState<Value> = {
       d: prevAtomState?.d || new Map(),
       v: value,
+      o: original,
     }
     if (nextDependencies) {
       updateDependencies(atom, nextAtomState, nextDependencies)
@@ -225,6 +227,16 @@ export const createStore = () => {
     abortPromise?: () => void
   ): AtomState<Value> => {
     if (valueOrPromise instanceof Promise) {
+      const prevAtomState = getAtomState(atom)
+      if (prevAtomState?.o === valueOrPromise) {
+        return setAtomValue(
+          atom,
+          prevAtomState.v as Value,
+          nextDependencies,
+          valueOrPromise
+        )
+      }
+
       let continuePromise: (next: Promise<Awaited<Value>>) => void
       const promise: Promise<Awaited<Value>> & PromiseMeta<Awaited<Value>> =
         new Promise((resolve, reject) => {
@@ -238,7 +250,8 @@ export const createStore = () => {
                 const nextAtomState = setAtomValue(
                   atom,
                   promise as Value,
-                  nextDependencies
+                  nextDependencies,
+                  valueOrPromise
                 )
                 resolvePromise(promise, v)
                 resolve(v)
@@ -255,7 +268,8 @@ export const createStore = () => {
                 const nextAtomState = setAtomValue(
                   atom,
                   promise as Value,
-                  nextDependencies
+                  nextDependencies,
+                  valueOrPromise
                 )
                 rejectPromise(promise, e)
                 reject(e)
@@ -283,7 +297,12 @@ export const createStore = () => {
         }
         abortPromise?.()
       })
-      return setAtomValue(atom, promise as Value, nextDependencies)
+      return setAtomValue(
+        atom,
+        promise as Value,
+        nextDependencies,
+        valueOrPromise
+      )
     }
     return setAtomValue(atom, valueOrPromise, nextDependencies)
   }
