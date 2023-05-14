@@ -39,6 +39,7 @@ type PromiseMeta<T> = {
   status?: 'pending' | 'fulfilled' | 'rejected'
   value?: T
   reason?: AnyError
+  orig?: Promise<T>
 }
 
 const resolvePromise = <T>(promise: Promise<T> & PromiseMeta<T>, value: T) => {
@@ -81,6 +82,11 @@ const hasPromiseAtomValue = <Value>(
   a: AtomState<Value>
 ): a is AtomState<Value> & { v: Value & Promise<unknown> } =>
   'v' in a && a.v instanceof Promise
+
+const isEqualAtomPromiseValue = <Value>(
+  a: AtomState<Promise<Value> & PromiseMeta<Value>>,
+  b: AtomState<Promise<Value> & PromiseMeta<Value>>
+) => 'v' in a && 'v' in b && a.v.orig && a.v.orig === b.v.orig
 
 const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
   if ('e' in atomState) {
@@ -214,6 +220,20 @@ export const createStore = () => {
       // bail out
       return prevAtomState
     }
+    if (
+      prevAtomState &&
+      hasPromiseAtomValue(prevAtomState) &&
+      hasPromiseAtomValue(nextAtomState) &&
+      isEqualAtomPromiseValue(prevAtomState, nextAtomState)
+    ) {
+      if (prevAtomState.d === nextAtomState.d) {
+        // bail out
+        return prevAtomState
+      } else {
+        // restore the wrapped promise
+        nextAtomState.v = prevAtomState.v
+      }
+    }
     setAtomState(atom, nextAtomState)
     return nextAtomState
   }
@@ -276,6 +296,7 @@ export const createStore = () => {
             }
           }
         })
+      promise.orig = valueOrPromise
       promise.status = 'pending'
       registerCancelPromise(promise, (next) => {
         if (next) {
