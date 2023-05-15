@@ -83,7 +83,7 @@ const hasPromiseAtomValue = <Value>(
 ): a is AtomState<Value> & { v: Value & Promise<unknown> } =>
   'v' in a && a.v instanceof Promise
 
-const isEqualAtomPromiseValue = <Value>(
+const isEqualPromiseAtomValue = <Value>(
   a: AtomState<Promise<Value> & PromiseMeta<Value>>,
   b: AtomState<Promise<Value> & PromiseMeta<Value>>
 ) => 'v' in a && 'v' in b && a.v.orig && a.v.orig === b.v.orig
@@ -224,7 +224,7 @@ export const createStore = () => {
       prevAtomState &&
       hasPromiseAtomValue(prevAtomState) &&
       hasPromiseAtomValue(nextAtomState) &&
-      isEqualAtomPromiseValue(prevAtomState, nextAtomState)
+      isEqualPromiseAtomValue(prevAtomState, nextAtomState)
     ) {
       if (prevAtomState.d === nextAtomState.d) {
         // bail out
