@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
+import type { Getter } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -229,7 +230,7 @@ it('should update async atom with deps after await (#1905)', async () => {
 it('should not fire subscription when async atom promise is the same', async () => {
   const promise = Promise.resolve()
   const promiseAtom = atom(promise)
-  const derivedGetter = vi.fn((get) => get(promiseAtom))
+  const derivedGetter = vi.fn((get: Getter) => get(promiseAtom))
   const derivedAtom = atom(derivedGetter)
 
   const store = createStore()
