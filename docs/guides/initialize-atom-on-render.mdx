@@ -8,7 +8,7 @@ There are times when you need to create an reusable component which uses atoms.
 
 These atoms' initial state are determined by the props passed to the component.
 
-Below is a basic example of illustrating how you can use `Provider` and its prop, `initialValues`, to initialize state.
+Below is a basic example illustrating how you can use `Provider` and its prop, `initialValues`, to initialize state.
 
 ### Basic Example
 
@@ -73,7 +73,7 @@ export const TextDisplay = ({ initialTextValue }) => (
 )
 ```
 
-Now, we can easily resue `TextDisplay` component with different initial text values despite them referencing the "same" atom.
+Now, we can easily reuse `TextDisplay` component with different initial text values despite them referencing the "same" atom.
 
 ```jsx
 export default function App() {
