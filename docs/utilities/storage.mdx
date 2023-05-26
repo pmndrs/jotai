@@ -138,7 +138,7 @@ const storedNumberAtom = atomWithStorage('my-number', 0, {
     }
   },
   setItem(key, value) {
-    localStorage.setItem(JSON.stringify(value))
+    localStorage.setItem(key, JSON.stringify(value))
   },
   removeItem(key) {
     localStorage.removeItem(key)
