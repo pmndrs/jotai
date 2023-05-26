@@ -13,6 +13,7 @@ export interface AsyncStorage<Value> {
   getItem: (key: string, initialValue: Value) => Promise<Value>
   setItem: (key: string, newValue: Value) => Promise<void>
   removeItem: (key: string) => Promise<void>
+  getItemOnInit?: boolean
   subscribe?: (
     key: string,
     callback: (value: Value) => void,
@@ -24,6 +25,7 @@ export interface SyncStorage<Value> {
   getItem: (key: string, initialValue: Value) => Value
   setItem: (key: string, newValue: Value) => void
   removeItem: (key: string) => void
+  getItemOnInit?: boolean
   subscribe?: (
     key: string,
     callback: (value: Value) => void,
@@ -117,22 +119,37 @@ const defaultStorage = createJSONStorage(() =>
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
+  storage?: AsyncStorage<Value>
+): WritableAtom<
+  Promise<Value> | Value,
+  [SetStateActionWithReset<Promise<Value> | Value>],
+  Promise<void>
+>
+
+export function atomWithStorage<Value>(
+  key: string,
+  initialValue: Value,
+  storage?: SyncStorage<Value>
+): WritableAtom<Value, [SetStateActionWithReset<Value>], void>
+
+export function atomWithStorage<Value>(
+  key: string,
+  initialValue: Value,
   storage:
     | SyncStorage<Value>
     | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>
-): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
-  const baseAtom = atom(initialValue)
+): any {
+  const baseAtom = atom(
+    storage.getItemOnInit ? storage.getItem(key, initialValue) : initialValue
+  )
 
   if (import.meta.env?.MODE !== 'production') {
     baseAtom.debugPrivate = true
   }
 
   baseAtom.onMount = (setAtom) => {
-    const value = storage.getItem(key, initialValue)
-    if (value instanceof Promise) {
-      value.then((v) => setAtom(v))
-    } else {
-      setAtom(value)
+    if (!storage.getItemOnInit) {
+      setAtom(storage.getItem(key, initialValue))
     }
     let unsub: Unsubscribe | undefined
     if (storage.subscribe) {
@@ -143,14 +160,24 @@ export function atomWithStorage<Value>(
 
   const anAtom = atom(
     (get) => get(baseAtom),
-    (get, set, update: SetStateActionWithReset<Value>) => {
+    (get, set, update: SetStateActionWithReset<Promise<Value> | Value>) => {
       const nextValue =
         typeof update === 'function'
-          ? (update as (prev: Value) => Value | typeof RESET)(get(baseAtom))
+          ? (
+              update as (
+                prev: Promise<Value> | Value
+              ) => Promise<Value> | Value | typeof RESET
+            )(get(baseAtom))
           : update
       if (nextValue === RESET) {
         set(baseAtom, initialValue)
         return storage.removeItem(key)
+      }
+      if (nextValue instanceof Promise) {
+        return nextValue.then((resolvedValue) => {
+          set(baseAtom, resolvedValue)
+          return storage.setItem(key, resolvedValue)
+        })
       }
       set(baseAtom, nextValue)
       return storage.setItem(key, nextValue)
