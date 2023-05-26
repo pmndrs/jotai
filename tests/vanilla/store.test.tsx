@@ -225,3 +225,21 @@ it('should update async atom with deps after await (#1905)', async () => {
   expect(await lastValue).toBe(3)
   unsub()
 })
+
+it('should notify subscription with tree dependencies (#1956)', async () => {
+  const valueAtom = atom(1)
+  const dep1Atom = atom((get) => get(valueAtom) * 2)
+  const dep2Atom = atom((get) => get(valueAtom) + get(dep1Atom))
+  const dep3Atom = atom((get) => get(dep1Atom))
+
+  const cb = vi.fn()
+  const store = createStore()
+  store.sub(dep2Atom, vi.fn()) // this will cause the bug
+  store.sub(dep3Atom, cb)
+
+  expect(cb).toBeCalledTimes(0)
+  expect(store.get(dep3Atom)).toBe(2)
+  store.set(valueAtom, (c) => c + 1)
+  expect(cb).toBeCalledTimes(1)
+  expect(store.get(dep3Atom)).toBe(4)
+})
