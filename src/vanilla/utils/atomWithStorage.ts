@@ -13,7 +13,6 @@ export interface AsyncStorage<Value> {
   getItem: (key: string, initialValue: Value) => Promise<Value>
   setItem: (key: string, newValue: Value) => Promise<void>
   removeItem: (key: string) => Promise<void>
-  getItemOnInit?: boolean
   subscribe?: (
     key: string,
     callback: (value: Value) => void,
@@ -25,7 +24,6 @@ export interface SyncStorage<Value> {
   getItem: (key: string, initialValue: Value) => Value
   setItem: (key: string, newValue: Value) => void
   removeItem: (key: string) => void
-  getItemOnInit?: boolean
   subscribe?: (
     key: string,
     callback: (value: Value) => void,
@@ -119,7 +117,8 @@ const defaultStorage = createJSONStorage(() =>
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
-  storage?: AsyncStorage<Value>
+  storage?: AsyncStorage<Value>,
+  options?: { getOnInit?: boolean }
 ): WritableAtom<
   Promise<Value> | Value,
   [SetStateActionWithReset<Promise<Value> | Value>],
@@ -129,7 +128,8 @@ export function atomWithStorage<Value>(
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
-  storage?: SyncStorage<Value>
+  storage?: SyncStorage<Value>,
+  options?: { getOnInit?: boolean }
 ): WritableAtom<Value, [SetStateActionWithReset<Value>], void>
 
 export function atomWithStorage<Value>(
@@ -137,10 +137,12 @@ export function atomWithStorage<Value>(
   initialValue: Value,
   storage:
     | SyncStorage<Value>
-    | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>
+    | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>,
+  options?: { getOnInit?: boolean }
 ): any {
+  const { getOnInit } = options || {}
   const baseAtom = atom(
-    storage.getItemOnInit ? storage.getItem(key, initialValue) : initialValue
+    getOnInit ? storage.getItem(key, initialValue) : initialValue
   )
 
   if (import.meta.env?.MODE !== 'production') {
@@ -148,7 +150,7 @@ export function atomWithStorage<Value>(
   }
 
   baseAtom.onMount = (setAtom) => {
-    if (!storage.getItemOnInit) {
+    if (!getOnInit) {
       setAtom(storage.getItem(key, initialValue))
     }
     let unsub: Unsubscribe | undefined
