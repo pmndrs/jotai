@@ -8,7 +8,7 @@ import { useStore } from './Provider.ts'
 type Store = ReturnType<typeof useStore>
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
-  typeof (x as any).then === 'function'
+  typeof (x as any)?.then === 'function'
 
 const use =
   ReactExports.use ||
