@@ -109,7 +109,7 @@ type Mounted = {
 }
 
 // for debugging purpose only
-type StoreListener = (type: 'state' | 'sub' | 'unsub') => void
+type StoreListener = (type: 'state' | 'sub' | 'unsub' | 'restore') => void
 type MountedAtoms = Set<AnyAtom>
 
 /**
@@ -137,10 +137,8 @@ export const createStore = () => {
   >()
   let storeListeners: Set<StoreListener>
   let mountedAtoms: MountedAtoms
-  let lastAction: 'set' | 'restore'
 
   if (import.meta.env?.MODE !== 'production') {
-    lastAction = 'set'
     storeListeners = new Set()
     mountedAtoms = new Set()
   }
@@ -478,7 +476,6 @@ export const createStore = () => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
-    lastAction = 'set'
     const result = writeAtomState(atom, ...args)
     flushPending()
     return result
@@ -586,7 +583,9 @@ export const createStore = () => {
     })
   }
 
-  const flushPending = (): void => {
+  const flushPending = (
+    debugChangeType: 'state' | 'restore' = 'state'
+  ): void => {
     while (pendingMap.size) {
       const pending = Array.from(pendingMap)
       pendingMap.clear()
@@ -617,8 +616,8 @@ export const createStore = () => {
         }
       })
     }
-    if (import.meta.env?.MODE !== 'production' && lastAction === 'set') {
-      storeListeners.forEach((l) => l('state'))
+    if (import.meta.env?.MODE !== 'production') {
+      storeListeners.forEach((l) => l(debugChangeType))
     }
   }
 
@@ -656,14 +655,13 @@ export const createStore = () => {
       dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
       dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
       dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => {
-        lastAction = 'restore'
         for (const [atom, valueOrPromise] of values) {
           if (hasInitialValue(atom)) {
             setAtomValueOrPromise(atom, valueOrPromise)
             recomputeDependents(atom)
           }
         }
-        flushPending()
+        flushPending('restore')
       },
     }
   }
