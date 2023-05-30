@@ -7,12 +7,13 @@ import { useStore } from './Provider.ts'
 
 type Store = ReturnType<typeof useStore>
 
-const isPromise = (x: unknown): x is Promise<unknown> => x instanceof Promise
+const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
+  typeof (x as any).then === 'function'
 
 const use =
   ReactExports.use ||
   (<T>(
-    promise: Promise<T> & {
+    promise: PromiseLike<T> & {
       status?: 'pending' | 'fulfilled' | 'rejected'
       value?: T
       reason?: unknown
@@ -99,5 +100,5 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   }, [store, atom, delay])
 
   useDebugValue(value)
-  return isPromise(value) ? use(value) : (value as Awaited<Value>)
+  return isPromiseLike(value) ? use(value) : (value as Awaited<Value>)
 }

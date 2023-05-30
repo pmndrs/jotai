@@ -54,6 +54,9 @@ const rejectPromise = <T>(
   promise.reason = e
 }
 
+const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
+  typeof (x as any)?.then === 'function'
+
 /**
  * Immutable map from a dependency to the dependency's atom state
  * when it was last read.
@@ -224,7 +227,7 @@ export const createStore = () => {
     nextDependencies?: NextDependencies,
     abortPromise?: () => void
   ): AtomState<Value> => {
-    if (valueOrPromise instanceof Promise) {
+    if (isPromiseLike(valueOrPromise)) {
       let continuePromise: (next: Promise<Awaited<Value>>) => void
       const promise: Promise<Awaited<Value>> & PromiseMeta<Awaited<Value>> =
         new Promise((resolve, reject) => {
@@ -241,7 +244,7 @@ export const createStore = () => {
                   nextDependencies
                 )
                 resolvePromise(promise, v)
-                resolve(v)
+                resolve(v as Awaited<Value>)
                 if (prevAtomState?.d !== nextAtomState.d) {
                   mountDependencies(atom, nextAtomState, prevAtomState?.d)
                 }
