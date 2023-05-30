@@ -117,7 +117,7 @@ const defaultStorage = createJSONStorage(() =>
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
-  storage?: AsyncStorage<Value>,
+  storage: AsyncStorage<Value>,
   unstable_options?: { unstable_getOnInit?: boolean }
 ): WritableAtom<
   Promise<Value> | Value,
