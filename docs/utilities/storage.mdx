@@ -116,6 +116,21 @@ const content = {} // anything JSON serializable
 const storedAtom = atomWithStorage('stored-key', content, storage)
 ```
 
+#### Notes with AsyncStorage (since v2.2.0)
+
+If you use any kinds of AsyncStorage, the atom value can become async. Hence, if you are to update the value, you need to possibly resolve the promise.
+
+```js
+const countAtom = atomWithStorage('count-key', 0, anyAsyncStorage)
+const Component = () => {
+  const [count, setCount] = useAtom(countAtom)
+  const increment = () => {
+    setCount(async (promiseOrValue) => (await promiseOrValue) + 1)
+  }
+  // ...
+}
+```
+
 ### Validating stored values
 
 To add runtime validation to your storage atoms, you will need to create a custom implementation of storage.
