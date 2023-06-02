@@ -424,17 +424,51 @@ export const createStore = () => {
     }
   }
 
-  const recomputeDependents = <Value>(atom: Atom<Value>): void => {
-    const mounted = mountedMap.get(atom)
-    mounted?.t.forEach((dependent) => {
-      if (dependent !== atom) {
-        const prevAtomState = getAtomState(dependent)
-        const nextAtomState = readAtomState(dependent)
-        if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
-          recomputeDependents(dependent)
+  const recomputeDependents = (atom: AnyAtom): void => {
+    type Counts = [dirty: number, changed: number]
+    const invalidatedMap = new Map<AnyAtom, Counts>([])
+    const seen = new WeakSet<AnyAtom>()
+    const loop1 = (a: AnyAtom) => {
+      if (seen.has(a)) {
+        return
+      }
+      seen.add(a)
+      const mounted = mountedMap.get(a)
+      mounted?.t.forEach((dependent) => {
+        if (dependent !== a) {
+          const counts = invalidatedMap.get(dependent) || [0, 0]
+          // if it's the root mark changed, otherwise mark dirty
+          ++counts[a === atom ? 1 /* 1:changed */ : 0 /* 0:dirty */]
+          invalidatedMap.set(dependent, counts)
+          loop1(dependent)
+        }
+      })
+    }
+    loop1(atom)
+    while (invalidatedMap.size) {
+      for (const [a, [dirty, changed]] of invalidatedMap.entries()) {
+        if (!dirty) {
+          invalidatedMap.delete(a)
+          let isChanged = changed > 0
+          if (isChanged) {
+            const prevAtomState = getAtomState(a)
+            const nextAtomState = readAtomState(a)
+            isChanged =
+              !prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)
+          }
+          const mounted = mountedMap.get(a)
+          mounted?.t.forEach((dependent) => {
+            if (dependent !== a) {
+              const counts = invalidatedMap.get(dependent) as Counts
+              --counts[0] // decrement dirty count
+              if (isChanged) {
+                ++counts[1] // increment changed count
+              }
+            }
+          })
         }
       }
-    })
+    }
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
