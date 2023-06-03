@@ -445,7 +445,7 @@ export const createStore = () => {
       })
     }
     loop1(atom)
-    while (invalidatedMap.size) {
+    const loop2 = () => {
       for (const [a, [dirty, changed]] of invalidatedMap.entries()) {
         if (!dirty) {
           invalidatedMap.delete(a)
@@ -468,7 +468,11 @@ export const createStore = () => {
           })
         }
       }
+      if (invalidatedMap.size) {
+        loop2()
+      }
     }
+    loop2()
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
