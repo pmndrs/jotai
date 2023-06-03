@@ -425,54 +425,45 @@ export const createStore = () => {
   }
 
   const recomputeDependents = (atom: AnyAtom): void => {
-    type Counts = [dirty: number, changed: number]
-    const invalidatedMap = new Map<AnyAtom, Counts>([])
-    const seen = new WeakSet<AnyAtom>()
+    const changedMap = new WeakMap<AnyAtom, number>()
+    const dirtyMap = new WeakMap<AnyAtom, number>()
     const loop1 = (a: AnyAtom) => {
-      if (seen.has(a)) {
-        return
-      }
-      seen.add(a)
+      changedMap.set(a, (changedMap.get(a) || 0) + 1)
       const mounted = mountedMap.get(a)
       mounted?.t.forEach((dependent) => {
         if (dependent !== a) {
-          const counts = invalidatedMap.get(dependent) || [0, 0]
-          // if it's the root mark changed, otherwise mark dirty
-          ++counts[a === atom ? 1 /* 1:changed */ : 0 /* 0:dirty */]
-          invalidatedMap.set(dependent, counts)
+          dirtyMap.set(dependent, (dirtyMap.get(dependent) || 0) + 1)
           loop1(dependent)
         }
       })
     }
     loop1(atom)
-    const loop2 = () => {
-      for (const [a, [dirty, changed]] of invalidatedMap.entries()) {
-        if (!dirty) {
-          invalidatedMap.delete(a)
-          let isChanged = changed > 0
-          if (isChanged) {
-            const prevAtomState = getAtomState(a)
-            const nextAtomState = readAtomState(a)
-            isChanged =
-              !prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)
+    const loop2 = (a: AnyAtom, unchanged = false) => {
+      if (unchanged) {
+        changedMap.set(a, (changedMap.get(a) as number) - 1)
+      }
+      const mounted = mountedMap.get(a)
+      mounted?.t.forEach((dependent) => {
+        if (dependent !== a) {
+          let dirtyCount = dirtyMap.get(dependent)
+          if (dirtyCount) {
+            dirtyMap.set(dependent, --dirtyCount)
           }
-          const mounted = mountedMap.get(a)
-          mounted?.t.forEach((dependent) => {
-            if (dependent !== a) {
-              const counts = invalidatedMap.get(dependent) as Counts
-              --counts[0] // decrement dirty count
-              if (isChanged) {
-                ++counts[1] // increment changed count
-              }
+          if (!dirtyCount && changedMap.get(a)) {
+            const prevAtomState = getAtomState(dependent)
+            const nextAtomState = readAtomState(dependent)
+            if (
+              prevAtomState &&
+              isEqualAtomValue(prevAtomState, nextAtomState)
+            ) {
+              return loop2(dependent, true)
             }
-          })
+          }
+          loop2(dependent)
         }
-      }
-      if (invalidatedMap.size) {
-        loop2()
-      }
+      })
     }
-    loop2()
+    loop2(atom)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
