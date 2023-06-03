@@ -2,6 +2,9 @@ import { atom } from '../../vanilla.ts'
 import type { WritableAtom } from '../../vanilla.ts'
 import { RESET } from './constants.ts'
 
+const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
+  typeof (x as any)?.then === 'function'
+
 type Unsubscribe = () => void
 
 type SetStateActionWithReset<Value> =
@@ -10,9 +13,9 @@ type SetStateActionWithReset<Value> =
   | ((prev: Value) => Value | typeof RESET)
 
 export interface AsyncStorage<Value> {
-  getItem: (key: string, initialValue: Value) => Promise<Value>
-  setItem: (key: string, newValue: Value) => Promise<void>
-  removeItem: (key: string) => Promise<void>
+  getItem: (key: string, initialValue: Value) => PromiseLike<Value>
+  setItem: (key: string, newValue: Value) => PromiseLike<void>
+  removeItem: (key: string) => PromiseLike<void>
   subscribe?: (
     key: string,
     callback: (value: Value) => void,
@@ -32,9 +35,9 @@ export interface SyncStorage<Value> {
 }
 
 export interface AsyncStringStorage {
-  getItem: (key: string) => Promise<string | null>
-  setItem: (key: string, newValue: string) => Promise<void>
-  removeItem: (key: string) => Promise<void>
+  getItem: (key: string) => PromiseLike<string | null>
+  setItem: (key: string, newValue: string) => PromiseLike<void>
+  removeItem: (key: string) => PromiseLike<void>
 }
 
 export interface SyncStringStorage {
@@ -71,7 +74,7 @@ export function createJSONStorage<Value>(
         return lastValue
       }
       const str = getStringStorage()?.getItem(key) ?? null
-      if (str instanceof Promise) {
+      if (isPromiseLike(str)) {
         return str.then(parse)
       }
       return parse(str)
@@ -129,7 +132,7 @@ export function atomWithStorage<Value>(
 
   baseAtom.onMount = (setAtom) => {
     const value = storage.getItem(key, initialValue)
-    if (value instanceof Promise) {
+    if (isPromiseLike(value)) {
       value.then((v) => setAtom(v))
     } else {
       setAtom(value)
