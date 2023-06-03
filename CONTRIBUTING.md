@@ -39,7 +39,7 @@ If you would like to contribute by fixing an open issue or developing a new feat
 2. Install dependencies by running `yarn` in the `website` folder We use [version 1](https://classic.yarnpkg.com/lang/en/docs/install) of yarn
 3. Run `yarn dev` to start the dev server
 4. Navigate to [`http://localhost:9000`](http://localhost:9000) to view the docs
-5. Naivgate to the `docs` folder and make necessary changes to the docs
+5. Navigate to the `docs` folder and make necessary changes to the docs
 6. Add your changes to the docs and see them live reloaded in the browser
 7. Follow step 4 and onwards from the [general](#general) guide above to bring it to the finish line
 

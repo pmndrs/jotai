@@ -39,6 +39,7 @@ type PromiseMeta<T> = {
   status?: 'pending' | 'fulfilled' | 'rejected'
   value?: T
   reason?: AnyError
+  orig?: PromiseLike<T>
 }
 
 const resolvePromise = <T>(promise: Promise<T> & PromiseMeta<T>, value: T) => {
@@ -53,6 +54,9 @@ const rejectPromise = <T>(
   promise.status = 'rejected'
   promise.reason = e
 }
+
+const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
+  typeof (x as any)?.then === 'function'
 
 /**
  * Immutable map from a dependency to the dependency's atom state
@@ -81,6 +85,11 @@ const hasPromiseAtomValue = <Value>(
   a: AtomState<Value>
 ): a is AtomState<Value> & { v: Value & Promise<unknown> } =>
   'v' in a && a.v instanceof Promise
+
+const isEqualPromiseAtomValue = <Value>(
+  a: AtomState<Promise<Value> & PromiseMeta<Value>>,
+  b: AtomState<Promise<Value> & PromiseMeta<Value>>
+) => 'v' in a && 'v' in b && a.v.orig && a.v.orig === b.v.orig
 
 const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
   if ('e' in atomState) {
@@ -214,6 +223,20 @@ export const createStore = () => {
       // bail out
       return prevAtomState
     }
+    if (
+      prevAtomState &&
+      hasPromiseAtomValue(prevAtomState) &&
+      hasPromiseAtomValue(nextAtomState) &&
+      isEqualPromiseAtomValue(prevAtomState, nextAtomState)
+    ) {
+      if (prevAtomState.d === nextAtomState.d) {
+        // bail out
+        return prevAtomState
+      } else {
+        // restore the wrapped promise
+        nextAtomState.v = prevAtomState.v
+      }
+    }
     setAtomState(atom, nextAtomState)
     return nextAtomState
   }
@@ -224,7 +247,7 @@ export const createStore = () => {
     nextDependencies?: NextDependencies,
     abortPromise?: () => void
   ): AtomState<Value> => {
-    if (valueOrPromise instanceof Promise) {
+    if (isPromiseLike(valueOrPromise)) {
       let continuePromise: (next: Promise<Awaited<Value>>) => void
       const promise: Promise<Awaited<Value>> & PromiseMeta<Awaited<Value>> =
         new Promise((resolve, reject) => {
@@ -241,7 +264,7 @@ export const createStore = () => {
                   nextDependencies
                 )
                 resolvePromise(promise, v)
-                resolve(v)
+                resolve(v as Awaited<Value>)
                 if (prevAtomState?.d !== nextAtomState.d) {
                   mountDependencies(atom, nextAtomState, prevAtomState?.d)
                 }
@@ -276,6 +299,7 @@ export const createStore = () => {
             }
           }
         })
+      promise.orig = valueOrPromise as PromiseLike<Awaited<Value>>
       promise.status = 'pending'
       registerCancelPromise(promise, (next) => {
         if (next) {
@@ -424,17 +448,49 @@ export const createStore = () => {
     }
   }
 
-  const recomputeDependents = <Value>(atom: Atom<Value>): void => {
-    const mounted = mountedMap.get(atom)
-    mounted?.t.forEach((dependent) => {
-      if (dependent !== atom) {
-        const prevAtomState = getAtomState(dependent)
-        const nextAtomState = readAtomState(dependent)
-        if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
-          recomputeDependents(dependent)
+  const recomputeDependents = (atom: AnyAtom): void => {
+    const dependencyMap = new Map<AnyAtom, Set<AnyAtom>>()
+    const dirtyMap = new WeakMap<AnyAtom, number>()
+    const loop1 = (a: AnyAtom) => {
+      const mounted = mountedMap.get(a)
+      mounted?.t.forEach((dependent) => {
+        if (dependent !== a) {
+          dependencyMap.set(
+            dependent,
+            (dependencyMap.get(dependent) || new Set()).add(a)
+          )
+          dirtyMap.set(dependent, (dirtyMap.get(dependent) || 0) + 1)
+          loop1(dependent)
         }
-      }
-    })
+      })
+    }
+    loop1(atom)
+    const loop2 = (a: AnyAtom) => {
+      const mounted = mountedMap.get(a)
+      mounted?.t.forEach((dependent) => {
+        if (dependent !== a) {
+          let dirtyCount = dirtyMap.get(dependent)
+          if (dirtyCount) {
+            dirtyMap.set(dependent, --dirtyCount)
+          }
+          if (!dirtyCount) {
+            let isChanged = !!dependencyMap.get(dependent)?.size
+            if (isChanged) {
+              const prevAtomState = getAtomState(dependent)
+              const nextAtomState = readAtomState(dependent)
+              isChanged =
+                !prevAtomState ||
+                !isEqualAtomValue(prevAtomState, nextAtomState)
+            }
+            if (!isChanged) {
+              dependencyMap.forEach((s) => s.delete(dependent))
+            }
+          }
+          loop2(dependent)
+        }
+      })
+    }
+    loop2(atom)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(

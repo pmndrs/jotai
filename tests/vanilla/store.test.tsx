@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
+import type { Getter } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -224,4 +225,82 @@ it('should update async atom with deps after await (#1905)', async () => {
   resolve.splice(0).forEach((fn) => fn())
   expect(await lastValue).toBe(3)
   unsub()
+})
+
+it('should not fire subscription when async atom promise is the same', async () => {
+  const promise = Promise.resolve()
+  const promiseAtom = atom(promise)
+  const derivedGetter = vi.fn((get: Getter) => get(promiseAtom))
+  const derivedAtom = atom(derivedGetter)
+
+  const store = createStore()
+
+  expect(derivedGetter).not.toHaveBeenCalled()
+
+  const promiseListener = vi.fn()
+  const promiseUnsub = store.sub(promiseAtom, promiseListener)
+  const derivedListener = vi.fn()
+  const derivedUnsub = store.sub(derivedAtom, derivedListener)
+
+  expect(derivedGetter).toHaveBeenCalledOnce()
+  expect(promiseListener).not.toHaveBeenCalled()
+  expect(derivedListener).not.toHaveBeenCalled()
+
+  store.get(promiseAtom)
+  store.get(derivedAtom)
+
+  expect(derivedGetter).toHaveBeenCalledOnce()
+  expect(promiseListener).not.toHaveBeenCalled()
+  expect(derivedListener).not.toHaveBeenCalled()
+
+  store.set(promiseAtom, promise)
+
+  expect(derivedGetter).toHaveBeenCalledOnce()
+  expect(promiseListener).not.toHaveBeenCalled()
+  expect(derivedListener).not.toHaveBeenCalled()
+
+  store.set(promiseAtom, promise)
+
+  expect(derivedGetter).toHaveBeenCalledOnce()
+  expect(promiseListener).not.toHaveBeenCalled()
+  expect(derivedListener).not.toHaveBeenCalled()
+
+  promiseUnsub()
+  derivedUnsub()
+})
+
+it('should notify subscription with tree dependencies (#1956)', async () => {
+  const valueAtom = atom(1)
+  const dep1Atom = atom((get) => get(valueAtom) * 2)
+  const dep2Atom = atom((get) => get(valueAtom) + get(dep1Atom))
+  const dep3Atom = atom((get) => get(dep1Atom))
+
+  const cb = vi.fn()
+  const store = createStore()
+  store.sub(dep2Atom, vi.fn()) // this will cause the bug
+  store.sub(dep3Atom, cb)
+
+  expect(cb).toBeCalledTimes(0)
+  expect(store.get(dep3Atom)).toBe(2)
+  store.set(valueAtom, (c) => c + 1)
+  expect(cb).toBeCalledTimes(1)
+  expect(store.get(dep3Atom)).toBe(4)
+})
+
+it('should notify subscription with tree dependencies with bail-out', async () => {
+  const valueAtom = atom(1)
+  const dep1Atom = atom((get) => get(valueAtom) * 2)
+  const dep2Atom = atom((get) => get(valueAtom) * 0)
+  const dep3Atom = atom((get) => get(dep1Atom) + get(dep2Atom))
+
+  const cb = vi.fn()
+  const store = createStore()
+  store.sub(dep1Atom, vi.fn())
+  store.sub(dep3Atom, cb)
+
+  expect(cb).toBeCalledTimes(0)
+  expect(store.get(dep3Atom)).toBe(2)
+  store.set(valueAtom, (c) => c + 1)
+  expect(cb).toBeCalledTimes(1)
+  expect(store.get(dep3Atom)).toBe(4)
 })
