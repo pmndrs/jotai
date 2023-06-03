@@ -39,7 +39,7 @@ type PromiseMeta<T> = {
   status?: 'pending' | 'fulfilled' | 'rejected'
   value?: T
   reason?: AnyError
-  orig?: Promise<T>
+  orig?: PromiseLike<T>
 }
 
 const resolvePromise = <T>(promise: Promise<T> & PromiseMeta<T>, value: T) => {
@@ -299,7 +299,7 @@ export const createStore = () => {
             }
           }
         })
-      promise.orig = valueOrPromise
+      promise.orig = valueOrPromise as PromiseLike<Awaited<Value>>
       promise.status = 'pending'
       registerCancelPromise(promise, (next) => {
         if (next) {
