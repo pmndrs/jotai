@@ -100,5 +100,8 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   }, [store, atom, delay])
 
   useDebugValue(value)
+  // TS doesn't allow using `use` always.
+  // The use of isPromiseLike is to be consistent with `use` type.
+  // `instanceof Promise` actually works fine in this case.
   return isPromiseLike(value) ? use(value) : (value as Awaited<Value>)
 }
