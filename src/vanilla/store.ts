@@ -445,17 +445,49 @@ export const createStore = () => {
     }
   }
 
-  const recomputeDependents = <Value>(atom: Atom<Value>): void => {
-    const mounted = mountedMap.get(atom)
-    mounted?.t.forEach((dependent) => {
-      if (dependent !== atom) {
-        const prevAtomState = getAtomState(dependent)
-        const nextAtomState = readAtomState(dependent)
-        if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
-          recomputeDependents(dependent)
+  const recomputeDependents = (atom: AnyAtom): void => {
+    const dependencyMap = new Map<AnyAtom, Set<AnyAtom>>()
+    const dirtyMap = new WeakMap<AnyAtom, number>()
+    const loop1 = (a: AnyAtom) => {
+      const mounted = mountedMap.get(a)
+      mounted?.t.forEach((dependent) => {
+        if (dependent !== a) {
+          dependencyMap.set(
+            dependent,
+            (dependencyMap.get(dependent) || new Set()).add(a)
+          )
+          dirtyMap.set(dependent, (dirtyMap.get(dependent) || 0) + 1)
+          loop1(dependent)
         }
-      }
-    })
+      })
+    }
+    loop1(atom)
+    const loop2 = (a: AnyAtom) => {
+      const mounted = mountedMap.get(a)
+      mounted?.t.forEach((dependent) => {
+        if (dependent !== a) {
+          let dirtyCount = dirtyMap.get(dependent)
+          if (dirtyCount) {
+            dirtyMap.set(dependent, --dirtyCount)
+          }
+          if (!dirtyCount) {
+            let isChanged = !!dependencyMap.get(dependent)?.size
+            if (isChanged) {
+              const prevAtomState = getAtomState(dependent)
+              const nextAtomState = readAtomState(dependent)
+              isChanged =
+                !prevAtomState ||
+                !isEqualAtomValue(prevAtomState, nextAtomState)
+            }
+            if (!isChanged) {
+              dependencyMap.forEach((s) => s.delete(dependent))
+            }
+          }
+          loop2(dependent)
+        }
+      })
+    }
+    loop2(atom)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
