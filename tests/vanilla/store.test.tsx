@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
+import type { Getter } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -224,4 +225,46 @@ it('should update async atom with deps after await (#1905)', async () => {
   resolve.splice(0).forEach((fn) => fn())
   expect(await lastValue).toBe(3)
   unsub()
+})
+
+it('should not fire subscription when async atom promise is the same', async () => {
+  const promise = Promise.resolve()
+  const promiseAtom = atom(promise)
+  const derivedGetter = vi.fn((get: Getter) => get(promiseAtom))
+  const derivedAtom = atom(derivedGetter)
+
+  const store = createStore()
+
+  expect(derivedGetter).not.toHaveBeenCalled()
+
+  const promiseListener = vi.fn()
+  const promiseUnsub = store.sub(promiseAtom, promiseListener)
+  const derivedListener = vi.fn()
+  const derivedUnsub = store.sub(derivedAtom, derivedListener)
+
+  expect(derivedGetter).toHaveBeenCalledOnce()
+  expect(promiseListener).not.toHaveBeenCalled()
+  expect(derivedListener).not.toHaveBeenCalled()
+
+  store.get(promiseAtom)
+  store.get(derivedAtom)
+
+  expect(derivedGetter).toHaveBeenCalledOnce()
+  expect(promiseListener).not.toHaveBeenCalled()
+  expect(derivedListener).not.toHaveBeenCalled()
+
+  store.set(promiseAtom, promise)
+
+  expect(derivedGetter).toHaveBeenCalledOnce()
+  expect(promiseListener).not.toHaveBeenCalled()
+  expect(derivedListener).not.toHaveBeenCalled()
+
+  store.set(promiseAtom, promise)
+
+  expect(derivedGetter).toHaveBeenCalledOnce()
+  expect(promiseListener).not.toHaveBeenCalled()
+  expect(derivedListener).not.toHaveBeenCalled()
+
+  promiseUnsub()
+  derivedUnsub()
 })
