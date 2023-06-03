@@ -286,3 +286,21 @@ it('should notify subscription with tree dependencies (#1956)', async () => {
   expect(cb).toBeCalledTimes(1)
   expect(store.get(dep3Atom)).toBe(4)
 })
+
+it('should notify subscription with tree dependencies with bail-out', async () => {
+  const valueAtom = atom(1)
+  const dep1Atom = atom((get) => get(valueAtom) * 2)
+  const dep2Atom = atom((get) => get(valueAtom) * 0)
+  const dep3Atom = atom((get) => get(dep1Atom) + get(dep2Atom))
+
+  const cb = vi.fn()
+  const store = createStore()
+  store.sub(dep1Atom, vi.fn())
+  store.sub(dep3Atom, cb)
+
+  expect(cb).toBeCalledTimes(0)
+  expect(store.get(dep3Atom)).toBe(2)
+  store.set(valueAtom, (c) => c + 1)
+  expect(cb).toBeCalledTimes(1)
+  expect(store.get(dep3Atom)).toBe(4)
+})
