@@ -118,15 +118,7 @@ type Mounted = {
 }
 
 // for debugging purpose only
-type DEPRECATED_string_type = 'state' | 'sub' | 'unsub'
-type StoreListener = (
-  action:
-    | { type: 'write'; atom: WritableAtom<unknown, any, any> }
-    | { type: 'sub'; atom: AnyAtom }
-    | { type: 'unsub'; atom: AnyAtom }
-    | { type: 'restore'; values: Iterable<readonly [AnyAtom, AnyValue]> } // We may not need it
-    | DEPRECATED_string_type
-) => void
+type StoreListener = (type: 'state' | 'sub' | 'unsub') => void
 type MountedAtoms = Set<AnyAtom>
 
 /**
@@ -527,9 +519,6 @@ export const createStore = () => {
       }
       if (!isSync) {
         flushPending()
-        if (import.meta.env?.MODE !== 'production') {
-          storeListeners.forEach((l) => l({ type: 'write', atom: a }))
-        }
       }
       return r as R
     }
@@ -544,9 +533,6 @@ export const createStore = () => {
   ): Result => {
     const result = writeAtomState(atom, ...args)
     flushPending()
-    if (import.meta.env?.MODE !== 'production') {
-      storeListeners.forEach((l) => l({ type: 'write', atom }))
-    }
     return result
   }
 
@@ -695,7 +681,6 @@ export const createStore = () => {
     listeners.add(listener)
     if (import.meta.env?.MODE !== 'production') {
       storeListeners.forEach((l) => l('sub'))
-      storeListeners.forEach((l) => l({ type: 'sub', atom }))
     }
     return () => {
       listeners.delete(listener)
@@ -703,7 +688,6 @@ export const createStore = () => {
       if (import.meta.env?.MODE !== 'production') {
         // devtools uses this to detect if it _can_ unmount or not
         storeListeners.forEach((l) => l('unsub'))
-        storeListeners.forEach((l) => l({ type: 'unsub', atom }))
       }
     }
   }
@@ -731,9 +715,6 @@ export const createStore = () => {
           }
         }
         flushPending()
-        if (import.meta.env?.MODE !== 'production') {
-          storeListeners.forEach((l) => l({ type: 'restore', values }))
-        }
       },
     }
   }
