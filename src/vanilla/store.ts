@@ -741,7 +741,7 @@ export const createStore = () => {
       dev_subscribe_store: ((l: StoreListenerRev1 | StoreListenerRev2, rev) => {
         if (rev !== 2) {
           console.warn(
-            'The current StoreListner revision is 2. The older ones are deprecated.'
+            'The current StoreListener revision is 2. The older ones are deprecated.'
           )
           storeListenersRev1.add(l as StoreListenerRev1)
           return () => {
