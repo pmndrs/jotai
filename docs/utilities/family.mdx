@@ -96,7 +96,7 @@ const todoFamily = atomFamily((name) =>
     (get) => get(todosAtom)[name],
     (get, set, arg) => {
       const prev = get(todosAtom)
-      return { ...prev, [name]: { ...prev[name], ...arg } }
+      set(todosAtom, { ...prev, [name]: { ...prev[name], ...arg } })
     }
   )
 )
