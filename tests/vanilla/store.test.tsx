@@ -91,7 +91,7 @@ describe('[DEV-ONLY] dev-only methods', () => {
     expect(store.get?.(derivedAtom)).toBe(4)
   })
 
-  describe('dev_subscribe_store', () => {
+  describe('dev_subscribe_store rev1', () => {
     it('should call the callback when state changes', () => {
       const store = createStore()
       const callback = vi.fn()
@@ -125,6 +125,67 @@ describe('[DEV-ONLY] dev-only methods', () => {
       unsubAtomSecond?.()
     })
   })
+
+  describe('dev_subscribe_store rev2', () => {
+    it('should call the callback when state changes', () => {
+      const store = createStore()
+      const callback = vi.fn()
+      const unsub = store.dev_subscribe_store?.(callback, 2)
+      const countAtom = atom(0)
+      const unsubAtom = store.sub(countAtom, vi.fn())
+      store.set(countAtom, 1)
+      expect(callback).toHaveBeenNthCalledWith(1, {
+        type: 'sub',
+        flushed: new Set([countAtom]),
+      })
+      expect(callback).toHaveBeenNthCalledWith(2, {
+        type: 'write',
+        flushed: new Set([countAtom]),
+      })
+      expect(callback).toHaveBeenCalledTimes(2)
+      unsub?.()
+      unsubAtom?.()
+    })
+
+    it('should call unsub only when atom is unsubscribed', () => {
+      const store = createStore()
+      const callback = vi.fn()
+      const unsub = store.dev_subscribe_store?.(callback, 2)
+      const countAtom = atom(0)
+      const unsubAtom = store.sub(countAtom, vi.fn())
+      const unsubAtomSecond = store.sub(countAtom, vi.fn())
+      unsubAtom?.()
+      expect(callback).toHaveBeenNthCalledWith(1, {
+        type: 'sub',
+        flushed: new Set([countAtom]),
+      })
+      expect(callback).toHaveBeenNthCalledWith(2, {
+        type: 'sub',
+        flushed: new Set(),
+      })
+      expect(callback).toHaveBeenNthCalledWith(3, { type: 'unsub' })
+      expect(callback).toHaveBeenCalledTimes(3)
+      unsub?.()
+      unsubAtomSecond?.()
+    })
+  })
+
+  it('should unmount tree dependencies with store.get', async () => {
+    const store = createStore()
+    const countAtom = atom(0)
+    const derivedAtom = atom((get) => get(countAtom) * 2)
+    const anotherDerivedAtom = atom((get) => get(countAtom) * 3)
+    const callback = vi.fn()
+    const unsubStore = store.dev_subscribe_store?.(() => {
+      // Comment this line to make the test pass
+      store.get(derivedAtom)
+    }, 2)
+    const unsub = store.sub(anotherDerivedAtom, callback)
+    unsub()
+    unsubStore?.()
+    const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
+    expect(result).toEqual([])
+  })
 })
 
 it('should unmount with store.get', async () => {
@@ -146,23 +207,6 @@ it('should unmount dependencies with store.get', async () => {
   const unsub = store.sub(derivedAtom, callback)
   store.get(derivedAtom)
   unsub()
-  const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
-  expect(result).toEqual([])
-})
-
-it('should unmount tree dependencies with store.get', async () => {
-  const store = createStore()
-  const countAtom = atom(0)
-  const derivedAtom = atom((get) => get(countAtom) * 2)
-  const anotherDerivedAtom = atom((get) => get(countAtom) * 3)
-  const callback = vi.fn()
-  const unsubStore = store.dev_subscribe_store?.(() => {
-    // Comment this line to make the test pass
-    store.get(derivedAtom)
-  })
-  const unsub = store.sub(anotherDerivedAtom, callback)
-  unsub()
-  unsubStore?.()
   const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
   expect(result).toEqual([])
 })
