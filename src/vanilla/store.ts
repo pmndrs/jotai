@@ -122,7 +122,7 @@ type StoreListenerRev1 = (type: 'state' | 'sub' | 'unsub') => void
 type StoreListenerRev2 = (
   action:
     | { type: 'write'; flushed: Set<AnyAtom> }
-    | { type: 'asyncWrite'; flushed: Set<AnyAtom> }
+    | { type: 'async-write'; flushed: Set<AnyAtom> }
     | { type: 'sub'; flushed: Set<AnyAtom> }
     | { type: 'unsub' }
 ) => void
@@ -538,7 +538,7 @@ export const createStore = () => {
         const flushed = flushPending()
         if (import.meta.env?.MODE !== 'production') {
           storeListenersRev2.forEach((l) =>
-            l({ type: 'asyncWrite', flushed: flushed as Set<AnyAtom> })
+            l({ type: 'async-write', flushed: flushed as Set<AnyAtom> })
           )
         }
       }
