@@ -69,10 +69,8 @@ function createESMConfig(input, output) {
               'import.meta.env?.MODE': 'process.env.NODE_ENV',
             }
           : {
-              // we support this usage only:
-              // if (import.meta.env?.MODE !== 'production'
               'import.meta.env?.MODE':
-                'import.meta.env && import.meta.env.MODE',
+                '(!!import.meta.env && import.meta.env.MODE)',
             }),
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
