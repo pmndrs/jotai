@@ -125,6 +125,7 @@ type StoreListenerRev2 = (
     | { type: 'async-write'; flushed: Set<AnyAtom> }
     | { type: 'sub'; flushed: Set<AnyAtom> }
     | { type: 'unsub' }
+    | { type: 'restore'; flushed: Set<AnyAtom> }
 ) => void
 type DevSubscribeStore = {
   /**
@@ -763,7 +764,10 @@ export const createStore = () => {
             recomputeDependents(atom)
           }
         }
-        flushPending()
+        const flushed = flushPending()
+        storeListenersRev2.forEach((l) =>
+          l({ type: 'restore', flushed: flushed as Set<AnyAtom> })
+        )
       },
     }
   }
