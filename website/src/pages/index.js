@@ -324,6 +324,8 @@ const AnimeApp = () => {
       <Code>{`// providers.js (app directory)
 'use client'
 
+import { Provider } from 'jotai'
+
 export default function Providers({ children }) {
   return (
     <Provider>
