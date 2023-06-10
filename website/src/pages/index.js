@@ -324,6 +324,8 @@ const AnimeApp = () => {
       <Code>{`// providers.js (app directory)
 'use client'
 
+import { Provider } from 'jotai'
+
 export default function Providers({ children }) {
   return (
     <Provider>
@@ -353,6 +355,8 @@ export default function RootLayout({ children }) {
         Create the provider in <InlineCode>_app.js</InlineCode>.
       </p>
       <Code>{`// _app.js (pages directory)
+import { Provider } from 'jotai'
+
 export default function App({ Component, pageProps }) {
   return (
     <Provider>
@@ -372,6 +376,8 @@ export default function App({ Component, pageProps }) {
       </p>
       <Code>{`
 // gatsby-shared.js
+import { Provider } from 'jotai'
+
 export const wrapRootElement = ({ element }) => {
   return (
     <Provider>
