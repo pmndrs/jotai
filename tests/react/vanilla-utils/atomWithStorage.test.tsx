@@ -227,7 +227,9 @@ describe('atomWithStorage (async)', () => {
       return (
         <>
           <div>count: {count}</div>
-          <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <button onClick={() => setCount(async (c) => (await c) + 1)}>
+            button
+          </button>
           <button onClick={() => setCount(RESET)}>reset</button>
         </>
       )
@@ -247,6 +249,7 @@ describe('atomWithStorage (async)', () => {
     fireEvent.click(getByText('button'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 11')
+    act(() => resolve.splice(0).forEach((fn) => fn()))
     await waitFor(() => {
       expect(asyncStorageData.count).toBe(11)
     })
@@ -267,7 +270,9 @@ describe('atomWithStorage (async)', () => {
       return (
         <>
           <div>count: {count}</div>
-          <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <button onClick={() => setCount(async (c) => (await c) + 1)}>
+            button
+          </button>
         </>
       )
     }
@@ -285,6 +290,7 @@ describe('atomWithStorage (async)', () => {
     fireEvent.click(getByText('button'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 21')
+    act(() => resolve.splice(0).forEach((fn) => fn()))
     await waitFor(() => {
       expect(asyncStorageData.count2).toBe(21)
     })
@@ -304,7 +310,9 @@ describe('atomWithStorage (without localStorage) (#949)', () => {
       return (
         <>
           <div>count: {count}</div>
-          <button onClick={() => setCount((c) => c + 1)}>button</button>
+          <button onClick={() => setCount(async (c) => (await c) + 1)}>
+            button
+          </button>
         </>
       )
     }

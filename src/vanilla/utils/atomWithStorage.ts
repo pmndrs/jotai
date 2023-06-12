@@ -120,22 +120,41 @@ const defaultStorage = createJSONStorage(() =>
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
+  storage: AsyncStorage<Value>,
+  unstable_options?: { unstable_getOnInit?: boolean }
+): WritableAtom<
+  PromiseLike<Value> | Value,
+  [SetStateActionWithReset<PromiseLike<Value> | Value>],
+  PromiseLike<void>
+>
+
+export function atomWithStorage<Value>(
+  key: string,
+  initialValue: Value,
+  storage?: SyncStorage<Value>,
+  unstable_options?: { unstable_getOnInit?: boolean }
+): WritableAtom<Value, [SetStateActionWithReset<Value>], void>
+
+export function atomWithStorage<Value>(
+  key: string,
+  initialValue: Value,
   storage:
     | SyncStorage<Value>
-    | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>
-): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
-  const baseAtom = atom(initialValue)
+    | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>,
+  unstable_options?: { unstable_getOnInit?: boolean }
+): any {
+  const getOnInit = unstable_options?.unstable_getOnInit
+  const baseAtom = atom(
+    getOnInit ? storage.getItem(key, initialValue) : initialValue
+  )
 
   if (import.meta.env?.MODE !== 'production') {
     baseAtom.debugPrivate = true
   }
 
   baseAtom.onMount = (setAtom) => {
-    const value = storage.getItem(key, initialValue)
-    if (isPromiseLike(value)) {
-      value.then((v) => setAtom(v))
-    } else {
-      setAtom(value)
+    if (!getOnInit) {
+      setAtom(storage.getItem(key, initialValue))
     }
     let unsub: Unsubscribe | undefined
     if (storage.subscribe) {
@@ -146,14 +165,24 @@ export function atomWithStorage<Value>(
 
   const anAtom = atom(
     (get) => get(baseAtom),
-    (get, set, update: SetStateActionWithReset<Value>) => {
+    (get, set, update: SetStateActionWithReset<PromiseLike<Value> | Value>) => {
       const nextValue =
         typeof update === 'function'
-          ? (update as (prev: Value) => Value | typeof RESET)(get(baseAtom))
+          ? (
+              update as (
+                prev: PromiseLike<Value> | Value
+              ) => PromiseLike<Value> | Value | typeof RESET
+            )(get(baseAtom))
           : update
       if (nextValue === RESET) {
         set(baseAtom, initialValue)
         return storage.removeItem(key)
+      }
+      if (isPromiseLike(nextValue)) {
+        return nextValue.then((resolvedValue) => {
+          set(baseAtom, resolvedValue)
+          return storage.setItem(key, resolvedValue)
+        })
       }
       set(baseAtom, nextValue)
       return storage.setItem(key, nextValue)
