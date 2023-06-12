@@ -70,7 +70,7 @@ function createESMConfig(input, output) {
             }
           : {
               'import.meta.env?.MODE':
-                '(import.meta.env && import.meta.env.MODE)',
+                '(import.meta.env ? import.meta.env.MODE : undefined)',
             }),
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
