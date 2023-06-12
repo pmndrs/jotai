@@ -8,33 +8,9 @@ type Read<Value, Args extends unknown[], Result> = WritableAtom<
   Result
 >['read']
 
-const updateValue = <Value>(
-  prevValue: Value,
-  update: SetStateAction<Value>
-): Value =>
-  typeof update === 'function'
-    ? (update as (prev: Value) => Value)(prevValue)
-    : update
-
 export function atomWithDefault<Value>(
-  getDefault: Read<
-    Promise<Value>,
-    [SetStateAction<Awaited<Value>> | typeof RESET],
-    void
-  >
-): WritableAtom<
-  Promise<Value> | Value,
-  [SetStateAction<Awaited<Value>> | typeof RESET],
-  void | Promise<void>
->
-
-export function atomWithDefault<Value>(
-  getDefault: Read<Value, [SetStateAction<Awaited<Value>> | typeof RESET], void>
-): WritableAtom<Value, [SetStateAction<Awaited<Value>> | typeof RESET], void>
-
-export function atomWithDefault<Value>(
-  getDefault: Read<Value, [SetStateAction<Awaited<Value>> | typeof RESET], void>
-) {
+  getDefault: Read<Value, [SetStateAction<Value> | typeof RESET], void>
+): WritableAtom<Value, [SetStateAction<Value> | typeof RESET], void> {
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
 
@@ -44,8 +20,8 @@ export function atomWithDefault<Value>(
 
   const anAtom: WritableAtom<
     Value,
-    [SetStateAction<Awaited<Value>> | typeof RESET],
-    void | Promise<void>
+    [SetStateAction<Value> | typeof RESET],
+    void
   > = atom(
     (get, options) => {
       const overwritten = get(overwrittenAtom)
@@ -56,18 +32,13 @@ export function atomWithDefault<Value>(
     },
     (get, set, update) => {
       if (update === RESET) {
-        return set(overwrittenAtom, EMPTY)
+        set(overwrittenAtom, EMPTY)
+      } else if (typeof update === 'function') {
+        const prevValue = get(anAtom)
+        set(overwrittenAtom, (update as (prev: Value) => Value)(prevValue))
+      } else {
+        set(overwrittenAtom, update)
       }
-      const prevValue = get(anAtom)
-      if (prevValue instanceof Promise) {
-        return prevValue.then((v) =>
-          set(overwrittenAtom, updateValue(v, update))
-        )
-      }
-      return set(
-        overwrittenAtom,
-        updateValue(prevValue as Awaited<Value>, update)
-      )
     }
   )
   return anAtom

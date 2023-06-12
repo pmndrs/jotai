@@ -58,7 +58,9 @@ it('simple async get default', async () => {
           count1: {count1}, count2: {count2}
         </div>
         <button onClick={() => setCount1((c) => c + 1)}>button1</button>
-        <button onClick={() => setCount2((c) => c + 1)}>button2</button>
+        <button onClick={() => setCount2((p) => p.then((c) => c + 1))}>
+          button2
+        </button>
       </>
     )
   }
@@ -149,7 +151,9 @@ it('refresh async atoms to default values', async () => {
           count1: {count1}, count2: {count2}
         </div>
         <button onClick={() => setCount1((c) => c + 1)}>button1</button>
-        <button onClick={() => setCount2((c) => c + 1)}>button2</button>
+        <button onClick={() => setCount2((p) => p.then((c) => c + 1))}>
+          button2
+        </button>
         <button onClick={() => setCount2(RESET)}>Refresh count2</button>
       </>
     )
