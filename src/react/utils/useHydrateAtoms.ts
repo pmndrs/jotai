@@ -2,7 +2,9 @@ import { useStore } from '../../react.ts'
 import type { WritableAtom } from '../../vanilla.ts'
 
 type Store = ReturnType<typeof useStore>
-type Options = Parameters<typeof useStore>[0]
+type Options = Parameters<typeof useStore>[0] & {
+  forceHydrate?: boolean
+}
 type AnyWritableAtom = WritableAtom<unknown, any[], any>
 type AtomMap<A = AnyWritableAtom, V = unknown> = Map<A, V>
 type AtomTuple<A = AnyWritableAtom, V = unknown> = readonly [A, V]
@@ -36,7 +38,12 @@ export function useHydrateAtoms<T extends Iterable<AtomTuple>>(
 
   const hydratedSet = getHydratedSet(store)
   for (const [atom, value] of values) {
-    if (!hydratedSet.has(atom)) {
+    const isHydratedAtom = hydratedSet.has(atom)
+    if (!isHydratedAtom || options?.forceHydrate) {
+      if (options?.forceHydrate && isHydratedAtom) {
+        hydratedSet.delete(atom)
+      }
+
       hydratedSet.add(atom)
       store.set(atom, value)
     }
