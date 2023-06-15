@@ -241,7 +241,7 @@ it('useHydrateAtoms should respect onMount', async () => {
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
-it.only('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', async () => {
+it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', async () => {
   const countAtom = atom(0)
   const statusAtom = atom('fulfilled')
 
