@@ -241,18 +241,18 @@ it('useHydrateAtoms should respect onMount', async () => {
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
-it.only('passing forceHydrate to useHydrateAtoms will re-hydrated atoms', async () => {
+it.only('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', async () => {
   const countAtom = atom(0)
   const statusAtom = atom('fulfilled')
 
   const Counter = ({
     initialCount,
     initialStatus,
-    forceHydrate = false,
+    dangerouslyForceHydrate = false,
   }: {
     initialCount: number
     initialStatus: string
-    forceHydrate?: boolean
+    dangerouslyForceHydrate?: boolean
   }) => {
     useHydrateAtoms(
       [
@@ -260,7 +260,7 @@ it.only('passing forceHydrate to useHydrateAtoms will re-hydrated atoms', async 
         [statusAtom, initialStatus],
       ],
       {
-        forceHydrate,
+        dangerouslyForceHydrate,
       }
     )
     const [countValue, setCount] = useAtom(countAtom)
@@ -305,7 +305,11 @@ it.only('passing forceHydrate to useHydrateAtoms will re-hydrated atoms', async 
 
   rerender(
     <StrictMode>
-      <Counter initialCount={11} initialStatus="rejected" forceHydrate={true} />
+      <Counter
+        initialCount={11}
+        initialStatus="rejected"
+        dangerouslyForceHydrate={true}
+      />
     </StrictMode>
   )
   await findByText('count: 11')
