@@ -123,8 +123,8 @@ export function atomWithStorage<Value>(
   storage: AsyncStorage<Value>,
   unstable_options?: { unstable_getOnInit?: boolean }
 ): WritableAtom<
-  Promise<Value> | Value,
-  [SetStateActionWithReset<Promise<Value> | Value>],
+  Value | Promise<Value>,
+  [SetStateActionWithReset<Value | Promise<Value>>],
   Promise<void>
 >
 
@@ -167,13 +167,13 @@ export function atomWithStorage<Value>(
 
   const anAtom = atom(
     (get) => get(baseAtom),
-    (get, set, update: SetStateActionWithReset<Promise<Value> | Value>) => {
+    (get, set, update: SetStateActionWithReset<Value | Promise<Value>>) => {
       const nextValue =
         typeof update === 'function'
           ? (
               update as (
-                prev: Promise<Value> | Value
-              ) => Promise<Value> | Value | typeof RESET
+                prev: Value | Promise<Value>
+              ) => Value | Promise<Value> | typeof RESET
             )(get(baseAtom))
           : update
       if (nextValue === RESET) {
