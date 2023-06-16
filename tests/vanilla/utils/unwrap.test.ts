@@ -87,4 +87,24 @@ describe('unwrap', () => {
     await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(6)
   })
+
+  it('should unwrap an async writable atom', async () => {
+    const store = createStore()
+    const asyncAtom = atom(Promise.resolve(1))
+    const syncAtom = unwrap(asyncAtom, (prev?: number) => prev ?? 0)
+
+    expect(store.get(syncAtom)).toBe(0)
+    await new Promise((r) => setTimeout(r)) // wait for a tick
+    expect(store.get(syncAtom)).toBe(1)
+
+    store.set(syncAtom, Promise.resolve(2))
+    expect(store.get(syncAtom)).toBe(1)
+    await new Promise((r) => setTimeout(r)) // wait for a tick
+    expect(store.get(syncAtom)).toBe(2)
+
+    store.set(syncAtom, Promise.resolve(3))
+    expect(store.get(syncAtom)).toBe(2)
+    await new Promise((r) => setTimeout(r)) // wait for a tick
+    expect(store.get(syncAtom)).toBe(3)
+  })
 })

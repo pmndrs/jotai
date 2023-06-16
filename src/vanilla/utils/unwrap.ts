@@ -11,6 +11,15 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
 
 const defaultFallback = () => undefined
 
+export function unwrap<Value, Args extends unknown[], Result>(
+  anAtom: WritableAtom<Promise<Value>, Args, Result>
+): WritableAtom<Awaited<Value> | undefined, Args, Result>
+
+export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
+  anAtom: WritableAtom<Promise<Value>, Args, Result>,
+  fallback: (prev?: Value) => PendingValue
+): WritableAtom<Awaited<Value> | PendingValue, Args, Result>
+
 export function unwrap<Value>(
   anAtom: Atom<Promise<Value>>
 ): Atom<Awaited<Value> | undefined>
@@ -86,7 +95,7 @@ export function unwrap<Value, PendingValue>(
           return state.v
         }
         return state.f
-      })
+      }, (anAtom as WritableAtom<Promise<Value>, unknown[], unknown>).write)
     },
     anAtom,
     fallback
