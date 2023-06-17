@@ -37,11 +37,9 @@ npm install jotai-devtools @emotion/react --save
 
 Enhance your development experience with the UI based Jotai DevTool.
 
-### Usage
-
 #### Babel plugin setup - (_Optional but highly recommended_)
 
-Use Jotai babel plugins for optimal debugging experience. Find the complete guide on the [babel](../tools/babel) page
+Use Jotai babel plugins for optimal debugging experience. Find the complete guide on the [babel](../tools/babel) page and/or [swc](../tools/swc) page.
 
 Eg.
 
@@ -85,13 +83,25 @@ type DevToolsProps = {
   // Custom nonce to allowlist jotai-devtools specific inline styles via CSP
   nonce?: string
   options?: {
-    // Private atoms are used internally by atoms like `atomWithStorage`
+    // Private atoms are used internally in atom creators like `atomWithStorage`
     // or `atomWithLocation`, etc. to manage the internal state.
     // Defaults to `false`
     shouldShowPrivateAtoms?: boolean
+    // Expands the JSON tree view on initial render on Atom Viewer tab, Timeline tab, etc.
+    // Defaults to `false`
+    shouldExpandJsonTreeViewInitially?: boolean
+    // The interval (in milliseconds) between each step of the time travel playback.
+    // Defaults to `750ms`
+    timeTravelPlaybackInterval?: number
+    // The maximum number of snapshots to keep in the history.
+    // The higher the number the more memory it will consume.
+    // Defaults to `Infinity`. Recommended: `~30`
+    snapshotHistoryLimit?: number
   }
 }
 ```
+
+### Usage
 
 ### Provider-less
 
