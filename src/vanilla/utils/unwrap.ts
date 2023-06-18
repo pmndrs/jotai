@@ -23,7 +23,7 @@ export function unwrap<Value, PendingValue>(
 export function unwrap<Value, PendingValue>(
   anAtom: Atom<Value>,
   fallback: (prev?: Awaited<Value>) => PendingValue = defaultFallback as any
-): Atom<Awaited<Value> | PendingValue> {
+) {
   return memo2(
     () => {
       type PromiseAndValue = { readonly p?: Promise<Value> } & (
