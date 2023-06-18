@@ -48,6 +48,20 @@ useHydrateAtoms(new Map([[count, 42]]))
 ```
 
 Atoms can only be hydrated once per store. Therefore, if the initial value used is changed during rerenders, it won't update the atom value.
+If there is a unique need to re-hydrate a previously hydrated atom, pass the optional dangerouslyForceHydrate as true
+and note that it may behave wrongly in concurrent rendering.
+
+```js
+useHydrateAtoms(
+  [
+    [countAtom, 42],
+    [frameworkAtom, 'Next.js'],
+  ],
+  {
+    dangerouslyForceHydrate: true,
+  }
+)
+```
 
 If there's a need to hydrate in multiple stores, use multiple `useHydrateAtoms` hooks to achieve that.
 
