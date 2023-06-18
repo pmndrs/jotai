@@ -240,3 +240,78 @@ it('useHydrateAtoms should respect onMount', async () => {
   await findByText('count: 42')
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
+
+it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', async () => {
+  const countAtom = atom(0)
+  const statusAtom = atom('fulfilled')
+
+  const Counter = ({
+    initialCount,
+    initialStatus,
+    dangerouslyForceHydrate = false,
+  }: {
+    initialCount: number
+    initialStatus: string
+    dangerouslyForceHydrate?: boolean
+  }) => {
+    useHydrateAtoms(
+      [
+        [countAtom, initialCount],
+        [statusAtom, initialStatus],
+      ],
+      {
+        dangerouslyForceHydrate,
+      }
+    )
+    const [countValue, setCount] = useAtom(countAtom)
+    const [statusValue, setStatus] = useAtom(statusAtom)
+
+    return (
+      <>
+        <div>count: {countValue}</div>
+        <button onClick={() => setCount((count) => count + 1)}>dispatch</button>
+        <div>status: {statusValue}</div>
+        <button
+          onClick={() =>
+            setStatus((status) =>
+              status === 'fulfilled' ? 'rejected' : 'fulfilled'
+            )
+          }>
+          update
+        </button>
+      </>
+    )
+  }
+  const { findByText, getByText, rerender } = render(
+    <StrictMode>
+      <Counter initialCount={42} initialStatus="rejected" />
+    </StrictMode>
+  )
+
+  await findByText('count: 42')
+  await findByText('status: rejected')
+  fireEvent.click(getByText('dispatch'))
+  fireEvent.click(getByText('update'))
+  await findByText('count: 43')
+  await findByText('status: fulfilled')
+
+  rerender(
+    <StrictMode>
+      <Counter initialCount={65} initialStatus="rejected" />
+    </StrictMode>
+  )
+  await findByText('count: 43')
+  await findByText('status: fulfilled')
+
+  rerender(
+    <StrictMode>
+      <Counter
+        initialCount={11}
+        initialStatus="rejected"
+        dangerouslyForceHydrate={true}
+      />
+    </StrictMode>
+  )
+  await findByText('count: 11')
+  await findByText('status: rejected')
+})

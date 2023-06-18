@@ -123,9 +123,9 @@ export function atomWithStorage<Value>(
   storage: AsyncStorage<Value>,
   unstable_options?: { unstable_getOnInit?: boolean }
 ): WritableAtom<
-  PromiseLike<Value> | Value,
-  [SetStateActionWithReset<PromiseLike<Value> | Value>],
-  PromiseLike<void>
+  Value | Promise<Value>,
+  [SetStateActionWithReset<Value | Promise<Value>>],
+  Promise<void>
 >
 
 export function atomWithStorage<Value>(
@@ -145,7 +145,9 @@ export function atomWithStorage<Value>(
 ): any {
   const getOnInit = unstable_options?.unstable_getOnInit
   const baseAtom = atom(
-    getOnInit ? storage.getItem(key, initialValue) : initialValue
+    getOnInit
+      ? (storage.getItem(key, initialValue) as Value | Promise<Value>)
+      : initialValue
   )
 
   if (import.meta.env?.MODE !== 'production') {
@@ -154,7 +156,7 @@ export function atomWithStorage<Value>(
 
   baseAtom.onMount = (setAtom) => {
     if (!getOnInit) {
-      setAtom(storage.getItem(key, initialValue))
+      setAtom(storage.getItem(key, initialValue) as Value | Promise<Value>)
     }
     let unsub: Unsubscribe | undefined
     if (storage.subscribe) {
@@ -165,20 +167,20 @@ export function atomWithStorage<Value>(
 
   const anAtom = atom(
     (get) => get(baseAtom),
-    (get, set, update: SetStateActionWithReset<PromiseLike<Value> | Value>) => {
+    (get, set, update: SetStateActionWithReset<Value | Promise<Value>>) => {
       const nextValue =
         typeof update === 'function'
           ? (
               update as (
-                prev: PromiseLike<Value> | Value
-              ) => PromiseLike<Value> | Value | typeof RESET
+                prev: Value | Promise<Value>
+              ) => Value | Promise<Value> | typeof RESET
             )(get(baseAtom))
           : update
       if (nextValue === RESET) {
         set(baseAtom, initialValue)
         return storage.removeItem(key)
       }
-      if (isPromiseLike(nextValue)) {
+      if (nextValue instanceof Promise) {
         return nextValue.then((resolvedValue) => {
           set(baseAtom, resolvedValue)
           return storage.setItem(key, resolvedValue)
