@@ -12,21 +12,21 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
 const defaultFallback = () => undefined
 
 export function unwrap<Value>(
-  anAtom: Atom<Promise<Value>>
+  anAtom: Atom<Value>
 ): Atom<Awaited<Value> | undefined>
 
 export function unwrap<Value, PendingValue>(
-  anAtom: Atom<Promise<Value>>,
-  fallback: (prev?: Value) => PendingValue
+  anAtom: Atom<Value>,
+  fallback: (prev?: Awaited<Value>) => PendingValue
 ): Atom<Awaited<Value> | PendingValue>
 
 export function unwrap<Value, PendingValue>(
-  anAtom: Atom<Promise<Value>>,
-  fallback: (prev?: Value) => PendingValue = defaultFallback as any
-): Atom<Awaited<Value> | PendingValue> {
+  anAtom: Atom<Value>,
+  fallback: (prev?: Awaited<Value>) => PendingValue = defaultFallback as any
+) {
   return memo2(
     () => {
-      type PromiseAndValue = { readonly p: Promise<Value> } & (
+      type PromiseAndValue = { readonly p?: Promise<Value> } & (
         | { readonly v: Awaited<Value> }
         | { readonly f: PendingValue }
       )
@@ -45,6 +45,9 @@ export function unwrap<Value, PendingValue>(
           get(refreshAtom)
           const prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
           const promise = get(anAtom)
+          if (!(promise instanceof Promise)) {
+            return { v: promise as Awaited<Value> }
+          }
           if (promise === prev?.p) {
             if (promiseErrorCache.has(promise)) {
               throw promiseErrorCache.get(promise)
