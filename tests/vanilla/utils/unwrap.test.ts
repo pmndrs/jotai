@@ -88,6 +88,17 @@ describe('unwrap', () => {
     expect(store.get(syncAtom)).toBe(6)
   })
 
+  it('should unwrap a sync atom which is noop', async () => {
+    const store = createStore()
+    const countAtom = atom(1)
+    const syncAtom = unwrap(countAtom)
+    expect(store.get(syncAtom)).toBe(1)
+    store.set(countAtom, 2)
+    expect(store.get(syncAtom)).toBe(2)
+    store.set(countAtom, 3)
+    expect(store.get(syncAtom)).toBe(3)
+  })
+
   it('should unwrap an async writable atom', async () => {
     const store = createStore()
     const asyncAtom = atom(Promise.resolve(1))
