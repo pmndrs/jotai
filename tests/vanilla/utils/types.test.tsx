@@ -3,8 +3,7 @@ import type { TypeEqual } from 'ts-expect'
 import { it } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
-import { selectAtom } from 'jotai/vanilla/utils'
-import { unstable_unwrap as unwrap } from 'jotai/vanilla/utils'
+import { selectAtom, unstable_unwrap as unwrap } from 'jotai/vanilla/utils'
 
 it('selectAtom() should return the correct types', () => {
   const doubleCount = (x: number) => x * 2
