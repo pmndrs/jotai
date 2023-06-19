@@ -17,7 +17,7 @@ export function unwrap<Value, Args extends unknown[], Result>(
 
 export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
   anAtom: WritableAtom<Value, Args, Result>,
-  fallback: (prev?: Value) => PendingValue
+  fallback: (prev?: Awaited<Value>) => PendingValue
 ): WritableAtom<Awaited<Value> | PendingValue, Args, Result>
 
 export function unwrap<Value>(
