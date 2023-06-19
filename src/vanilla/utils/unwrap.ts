@@ -11,6 +11,15 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
 
 const defaultFallback = () => undefined
 
+export function unwrap<Value, Args extends unknown[], Result>(
+  anAtom: WritableAtom<Value, Args, Result>
+): WritableAtom<Awaited<Value> | undefined, Args, Result>
+
+export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
+  anAtom: WritableAtom<Value, Args, Result>,
+  fallback: (prev?: Awaited<Value>) => PendingValue
+): WritableAtom<Awaited<Value> | PendingValue, Args, Result>
+
 export function unwrap<Value>(
   anAtom: Atom<Value>
 ): Atom<Awaited<Value> | undefined>
@@ -20,18 +29,18 @@ export function unwrap<Value, PendingValue>(
   fallback: (prev?: Awaited<Value>) => PendingValue
 ): Atom<Awaited<Value> | PendingValue>
 
-export function unwrap<Value, PendingValue>(
-  anAtom: Atom<Value>,
+export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
+  anAtom: WritableAtom<Value, Args, Result> | Atom<Value>,
   fallback: (prev?: Awaited<Value>) => PendingValue = defaultFallback as any
 ) {
   return memo2(
     () => {
-      type PromiseAndValue = { readonly p?: Promise<Value> } & (
+      type PromiseAndValue = { readonly p?: Promise<unknown> } & (
         | { readonly v: Awaited<Value> }
         | { readonly f: PendingValue }
       )
-      const promiseErrorCache = new WeakMap<Promise<Value>, unknown>()
-      const promiseResultCache = new WeakMap<Promise<Value>, Awaited<Value>>()
+      const promiseErrorCache = new WeakMap<Promise<unknown>, unknown>()
+      const promiseResultCache = new WeakMap<Promise<unknown>, Awaited<Value>>()
       const refreshAtom = atom(0)
 
       if (import.meta.env?.MODE !== 'production') {
@@ -89,7 +98,7 @@ export function unwrap<Value, PendingValue>(
           return state.v
         }
         return state.f
-      })
+      }, (anAtom as WritableAtom<Value, unknown[], unknown>).write)
     },
     anAtom,
     fallback
