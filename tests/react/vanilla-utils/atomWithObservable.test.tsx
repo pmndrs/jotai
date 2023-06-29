@@ -1,7 +1,7 @@
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
-import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
+import { BehaviorSubject, Observable, Subject, delay, map, of } from 'rxjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
@@ -128,6 +128,52 @@ it('writable count state without initial value', async () => {
 
   act(() => subject.next(3))
   await findByText('count: 3')
+})
+
+it('writable count state without initial value and rxjs chain', async () => {
+  const single$ = new Subject<number>()
+  const double$ = single$.pipe(map((n) => n * 2))
+  const singleAtom = atomWithObservable(() => single$)
+
+  // this currently breaks:
+  //const doubleAtom = atomWithObservable(() => double$)
+
+  // this works, however:
+  const doubleAtom = atom(async (get) => {
+    const n = await get(singleAtom)
+    return n * 2
+  })
+
+  const CounterValue = () => {
+    const single = useAtomValue(singleAtom)
+    const double = useAtomValue(doubleAtom)
+    return (
+      <>
+        single: {single}, double: {double}
+      </>
+    )
+  }
+
+  const CounterButton = () => {
+    return <button onClick={() => single$.next(2)}>button</button>
+  }
+
+  const { findByText, getByText } = render(
+    <StrictMode>
+      <Suspense fallback="loading">
+        <CounterValue />
+      </Suspense>
+      <CounterButton />
+    </StrictMode>
+  )
+
+  await findByText('loading')
+
+  fireEvent.click(getByText('button'))
+  await findByText('single: 2, double: 4')
+
+  act(() => single$.next(3))
+  await findByText('single: 3, double: 6')
 })
 
 it('writable count state with delayed value', async () => {
@@ -794,5 +840,32 @@ describe('atomWithObservable vanilla tests', () => {
     await expect(store.get(async2Atom)).resolves.toBe(3)
 
     unsub()
+  })
+
+  it('can propagate updates with rxjs chains', async () => {
+    const store = createStore()
+
+    const single$ = new BehaviorSubject(1)
+    const double$ = single$.pipe(map((n) => n * 2))
+    const singleAtom = atomWithObservable(() => single$)
+    const doubleAtom = atomWithObservable(() => double$)
+
+    const unsubs = [
+      store.sub(singleAtom, () => {}),
+      store.sub(doubleAtom, () => {}),
+    ]
+
+    expect(store.get(singleAtom)).toBe(1)
+    expect(store.get(doubleAtom)).toBe(2)
+
+    single$.next(2)
+    expect(store.get(singleAtom)).toBe(2)
+    expect(store.get(doubleAtom)).toBe(4)
+
+    single$.next(3)
+    expect(store.get(singleAtom)).toBe(3)
+    expect(store.get(doubleAtom)).toBe(6)
+
+    unsubs.forEach((unsub) => unsub())
   })
 })
