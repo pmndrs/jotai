@@ -135,6 +135,7 @@
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
     "@vitest/coverage-c8": "^0.32.2",
+    "@vitest/coverage-v8": "^0.32.2",
     "@vitest/ui": "^0.32.2",
     "benny": "^3.7.1",
     "concurrently": "^8.2.0",

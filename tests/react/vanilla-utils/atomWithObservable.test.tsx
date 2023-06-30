@@ -130,23 +130,25 @@ it('writable count state without initial value', async () => {
   await findByText('count: 3')
 })
 
+// See: https://github.com/pmndrs/jotai/discussions/2007
 it('writable count state without initial value and rxjs chain', async () => {
   const single$ = new Subject<number>()
   const double$ = single$.pipe(map((n) => n * 2))
   const singleAtom = atomWithObservable(() => single$)
+  const doubleAtom = atomWithObservable(() => double$)
 
-  // this currently breaks:
-  //const doubleAtom = atomWithObservable(() => double$)
+  // THIS WORKS:
+  // const singleAndDoubleAtom = atom((get) =>
+  //   Promise.all([get(singleAtom), get(doubleAtom)])
+  // )
 
-  // this works, however:
-  const doubleAtom = atom(async (get) => {
-    const n = await get(singleAtom)
-    return n * 2
-  })
+  // in CounterValue:
+  // const [single, double] = useAtomValue(singleAndDoubleAtom)
 
   const CounterValue = () => {
     const single = useAtomValue(singleAtom)
     const double = useAtomValue(doubleAtom)
+
     return (
       <>
         single: {single}, double: {double}
