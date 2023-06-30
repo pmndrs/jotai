@@ -845,8 +845,9 @@ describe('atomWithObservable vanilla tests', () => {
   it('can propagate updates with rxjs chains', async () => {
     const store = createStore()
 
-    const single$ = new BehaviorSubject(1)
+    const single$ = new Subject<number>()
     const double$ = single$.pipe(map((n) => n * 2))
+
     const singleAtom = atomWithObservable(() => single$)
     const doubleAtom = atomWithObservable(() => double$)
 
@@ -855,6 +856,7 @@ describe('atomWithObservable vanilla tests', () => {
       store.sub(doubleAtom, () => {}),
     ]
 
+    single$.next(1)
     expect(store.get(singleAtom)).toBe(1)
     expect(store.get(doubleAtom)).toBe(2)
 
