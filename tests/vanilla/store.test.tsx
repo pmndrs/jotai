@@ -348,3 +348,20 @@ it('should notify subscription with tree dependencies with bail-out', async () =
   expect(cb).toBeCalledTimes(1)
   expect(store.get(dep3Atom)).toBe(4)
 })
+
+it('should bail out with the same value with chained dependency (#2014)', async () => {
+  const store = createStore()
+  const bigAtom = atom({
+    count: 1,
+    theSelectedField: 5,
+  })
+  const selectedAtom = atom((get) => get(bigAtom).theSelectedField)
+  const deriveFn = vi.fn((get: Getter) => get(selectedAtom))
+  const derivedAtom = atom(deriveFn)
+  const derivedFurtherAtom = atom((get) => get(derivedAtom))
+  expect(store.get(derivedFurtherAtom)).toBe(5)
+  expect(deriveFn).toHaveBeenCalledTimes(1)
+  store.set(bigAtom, (obj) => ({ ...obj, count: obj.count + 1 }))
+  expect(store.get(derivedFurtherAtom)).toBe(5)
+  expect(deriveFn).toHaveBeenCalledTimes(1)
+})
