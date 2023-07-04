@@ -351,10 +351,7 @@ it('should notify subscription with tree dependencies with bail-out', async () =
 
 it('should bail out with the same value with chained dependency (#2014)', async () => {
   const store = createStore()
-  const bigAtom = atom({
-    count: 1,
-    theSelectedField: 5,
-  })
+  const bigAtom = atom({ count: 1, theSelectedField: 5 })
   const selectedAtom = atom((get) => get(bigAtom).theSelectedField)
   const deriveFn = vi.fn((get: Getter) => get(selectedAtom))
   const derivedAtom = atom(deriveFn)
@@ -364,4 +361,28 @@ it('should bail out with the same value with chained dependency (#2014)', async 
   store.set(bigAtom, (obj) => ({ ...obj, count: obj.count + 1 }))
   expect(store.get(derivedFurtherAtom)).toBe(5)
   expect(deriveFn).toHaveBeenCalledTimes(1)
+})
+
+it('should bail out with the same value with sub', async () => {
+  const store = createStore()
+  const objAtom = atom({ count: 1 })
+  const countAtom = atom((get) => get(objAtom).count)
+  const deriveFn = vi.fn((get: Getter) => get(countAtom))
+  const derivedAtom = atom(deriveFn)
+  const deriveFurtherFn = vi.fn((get: Getter) => {
+    get(objAtom) // intentional extra dependency
+    return get(derivedAtom)
+  })
+  const derivedFurtherAtom = atom(deriveFurtherFn)
+  const callback = vi.fn()
+  store.sub(derivedFurtherAtom, callback)
+  expect(store.get(derivedAtom)).toBe(1)
+  expect(store.get(derivedFurtherAtom)).toBe(1)
+  expect(callback).toHaveBeenCalledTimes(0)
+  expect(deriveFn).toHaveBeenCalledTimes(1)
+  expect(deriveFurtherFn).toHaveBeenCalledTimes(1)
+  store.set(objAtom, (obj) => ({ ...obj }))
+  expect(callback).toHaveBeenCalledTimes(0)
+  expect(deriveFn).toHaveBeenCalledTimes(1)
+  expect(deriveFurtherFn).toHaveBeenCalledTimes(2)
 })
