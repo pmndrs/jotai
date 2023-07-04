@@ -75,6 +75,20 @@ There are two ways to remove params.
   - shouldRemove is a function that takes two arguments `createdAt` in milliseconds and `param`, and returns a boolean value.
   - setting `null` will remove the previously registered function.
 
+### Workaround: Atom-in-atom
+
+You may not need an atomFamily if you want to use params to retrieve a specific subsection of a larger atom. You can create an atom in your component using the following pattern:
+
+```js
+const value = useAtomValue(useMemo(() => atom((get) => get(bigObjAtom)[id]), [id]));
+```
+
+This pattern can even work with multiple params:
+```js
+const value = useMemo(() => atom((get) => get(bigMapAtom).get(uid)?.get(fid)), [uid, fid]);
+```
+With this pattern, your component will rerender when the particular subsection changes, but not when other parts of your big atom change.
+
 ### Examples
 
 ```js
