@@ -374,16 +374,8 @@ export const createStore = () => {
       // then we're out of date and need to recompute.
       if (
         Array.from(atomState.d).every(([a, s]) => {
-          if (a === atom) {
-            return true
-          }
-          const atomState = getAtomState(a)
-          return (
-            atomState === s ||
-            (atomState &&
-              !hasPromiseAtomValue(atomState) &&
-              isEqualAtomValue(atomState, s))
-          )
+          const aState = getAtomState(a)
+          return a === atom || (aState && isEqualAtomValue(aState, s))
         })
       ) {
         return atomState
