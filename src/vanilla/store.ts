@@ -375,7 +375,14 @@ export const createStore = () => {
       if (
         Array.from(atomState.d).every(([a, s]) => {
           const aState = getAtomState(a)
-          return a === atom || (aState && isEqualAtomValue(aState, s))
+          return (
+            a === atom ||
+            aState === s ||
+            // TODO This is a hack, we should find a better solution.
+            (aState &&
+              !hasPromiseAtomValue(aState) &&
+              isEqualAtomValue(aState, s))
+          )
         })
       ) {
         return atomState
