@@ -255,6 +255,20 @@ it('does not repeatedly attempt to get the value of an unresolved promise atom w
   expect(callsToGetBaseAtom).toBeLessThanOrEqual(3)
 })
 
+it('should handle sync error (#1843)', async () => {
+  const syncAtom = atom(() => {
+    throw new Error('thrown in syncAtom')
+  })
+
+  const { findByText } = render(
+    <StrictMode>
+      <LoadableComponent asyncAtom={syncAtom} />
+    </StrictMode>
+  )
+
+  await findByText('Error: thrown in syncAtom')
+})
+
 type LoadableComponentProps = {
   asyncAtom: Atom<Promise<number> | Promise<string> | string | number>
   effectCallback?: (loadableValue: any) => void

@@ -24,10 +24,16 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
     const derivedAtom = atom(
       (get, { setSelf }) => {
         get(refreshAtom)
-        const promise = get(anAtom)
-        if (!(promise instanceof Promise)) {
-          return { state: 'hasData', data: promise } as Loadable<Value>
+        let value: Value
+        try {
+          value = get(anAtom)
+        } catch (error) {
+          return { state: 'hasError', error } as Loadable<Value>
         }
+        if (!(value instanceof Promise)) {
+          return { state: 'hasData', data: value } as Loadable<Value>
+        }
+        const promise = value
         const cached = loadableCache.get(promise)
         if (cached) {
           return cached
