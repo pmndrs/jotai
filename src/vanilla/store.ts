@@ -373,9 +373,17 @@ export const createStore = () => {
       // If a dependency changed since this atom was last computed,
       // then we're out of date and need to recompute.
       if (
-        Array.from(atomState.d).every(
-          ([a, s]) => a === atom || getAtomState(a) === s
-        )
+        Array.from(atomState.d).every(([a, s]) => {
+          const aState = getAtomState(a)
+          return (
+            a === atom ||
+            aState === s ||
+            // TODO This is a hack, we should find a better solution.
+            (aState &&
+              !hasPromiseAtomValue(aState) &&
+              isEqualAtomValue(aState, s))
+          )
+        })
       ) {
         return atomState
       }
