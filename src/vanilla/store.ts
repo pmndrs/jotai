@@ -441,11 +441,8 @@ export const createStore = () => {
     }
     try {
       const valueOrPromise = atom.read(getter, options as any)
-      return setAtomValueOrPromise(
-        atom,
-        valueOrPromise,
-        nextDependencies,
-        () => controller?.abort()
+      return setAtomValueOrPromise(atom, valueOrPromise, nextDependencies, () =>
+        controller?.abort()
       )
     } catch (error) {
       return setAtomError(atom, error, nextDependencies)

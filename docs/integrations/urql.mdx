@@ -75,7 +75,7 @@ const Counter = () => {
 ```tsx
 type AtomWithQueryOptions<
   Data = unknown,
-  Variables extends AnyVariables = AnyVariables,
+  Variables extends AnyVariables = AnyVariables
 > = {
   // Supports string query, typed-document-node, document node etc.
   query: DocumentInput<Data, Variables>
@@ -88,7 +88,7 @@ type AtomWithQueryOptions<
 
 type AtomWithMutationOptions<
   Data = unknown,
-  Variables extends AnyVariables = AnyVariables,
+  Variables extends AnyVariables = AnyVariables
 > = {
   query: DocumentInput<Data, Variables>
   getClient?: (get: Getter) => Client
@@ -130,7 +130,7 @@ import type { AtomWithQuery } from 'jotai-urql'
 
 export const useQueryAtomData = <
   Data = unknown,
-  Variables extends AnyVariables = AnyVariables,
+  Variables extends AnyVariables = AnyVariables
 >(
   queryAtom: AtomWithQuery<Data, Variables>
 ) => {
@@ -163,7 +163,7 @@ export const useQueryAtomData = <
   return [opResult.data, dispatch, opResult] as [
     Exclude<typeof opResult.data, undefined>,
     typeof dispatch,
-    typeof opResult,
+    typeof opResult
   ]
 }
 

@@ -27,7 +27,7 @@ type WithInitialValue<Value> = {
 type OnUnmount = () => void
 
 type OnMount<Args extends unknown[], Result> = <
-  S extends SetAtom<Args, Result>,
+  S extends SetAtom<Args, Result>
 >(
   setAtom: S
 ) => OnUnmount | void
