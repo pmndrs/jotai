@@ -16,7 +16,7 @@ export const Intro = () => {
             v2
           </div>
         </div>
-        <div className="speech-bubble relative w-2/3 space-y-4 rounded-xl bg-gray-100 p-4 text-sm leading-snug text-gray-800 dark:bg-gray-900 dark:text-gray-300 sm:text-base md:text-lg lg:w-3/4 lg:p-8 lg:leading-normal">
+        <div className="relative w-2/3 space-y-4 rounded-xl bg-gray-100 p-4 text-sm leading-snug text-gray-800 dark:bg-gray-900 dark:text-gray-300 sm:text-base md:text-lg lg:w-3/4 lg:p-8 lg:leading-normal after:absolute after:left-0 after:top-1/2 after:w-0 after:h-0 after:-ml-6 after:-mt-4 after:border-solid after:border-transparent after:border-t-[16px] after:border-r-[24px] after:border-b-[16px] after:border-l-0 after:border-r-[#f5f5f5] after:dark:!border-r-[#171717]">
           <div>Welcome to Jotai v2!</div>
           <div>
             Fully compatible with React 18 and the upcoming <InlineCode dark>use</InlineCode> hook.
