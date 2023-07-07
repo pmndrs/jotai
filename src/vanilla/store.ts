@@ -576,6 +576,8 @@ export const createStore = () => {
         }
       }
     })
+    // recompute atom state (This is only required for React <= 17)
+    readAtomState(atom)
     // mount self
     const mounted: Mounted = {
       t: new Set(initialDependent && [initialDependent]),
