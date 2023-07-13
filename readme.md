@@ -125,7 +125,7 @@ function Counter() {
       ...
 ```
 
-### Write only atoms
+### Write only derived atoms
 
 Just do not define a read function.
 
