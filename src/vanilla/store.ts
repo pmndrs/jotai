@@ -566,7 +566,7 @@ export const createStore = () => {
     initialDependent?: AnyAtom
   ): Mounted => {
     // mount dependencies before mounting self
-    readAtomState(atom).d.forEach((_, a) => {
+    getAtomState(atom)?.d.forEach((_, a) => {
       const aMounted = mountedMap.get(a)
       if (aMounted) {
         aMounted.t.add(atom) // add dependent
@@ -576,7 +576,7 @@ export const createStore = () => {
         }
       }
     })
-    // recompute atom state (This is only required for React <= 17)
+    // recompute atom state
     readAtomState(atom)
     // mount self
     const mounted: Mounted = {
