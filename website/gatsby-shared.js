@@ -1,13 +1,13 @@
 import { MDXProvider } from '@mdx-js/react';
 import { Provider as JotaiProvider, createStore } from 'jotai';
-import { countAtom, menuAtom, searchAtom, textAtom } from './src/atoms';
-import { Code } from './src/components/code';
-import { CodeSandbox } from './src/components/code-sandbox';
-import { InlineCode } from './src/components/inline-code';
-import { Layout } from './src/components/layout';
-import { A, H2, H3, H4, H5 } from './src/components/mdx';
-import { Stackblitz } from './src/components/stackblitz';
-import { TOC } from './src/components/toc';
+import { countAtom, menuAtom, searchAtom, textAtom } from './src/atoms/index.js';
+import { CodeSandbox } from './src/components/code-sandbox.js';
+import { Code } from './src/components/code.js';
+import { InlineCode } from './src/components/inline-code.js';
+import { Layout } from './src/components/layout.js';
+import { A, H2, H3, H4, H5 } from './src/components/mdx.js';
+import { Stackblitz } from './src/components/stackblitz.js';
+import { TOC } from './src/components/toc.js';
 
 const store = createStore();
 

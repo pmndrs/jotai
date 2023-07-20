@@ -1,4 +1,4 @@
-export { wrapRootElement, wrapPageElement } from './gatsby-shared';
+export { wrapRootElement, wrapPageElement } from './gatsby-shared.js';
 
 export const onRenderBody = ({ setHtmlAttributes, setPreBodyComponents }) => {
   setHtmlAttributes({ lang: 'en' });
@@ -14,9 +14,6 @@ export const onRenderBody = ({ setHtmlAttributes, setPreBodyComponents }) => {
     document.body.classList.add(darkMode ? classNameDark : classNameLight);
     document.body.classList.remove(darkMode ? classNameLight : classNameDark);
   }
-  var preferDarkQuery = '(prefers-color-scheme: dark)';
-  var mql = window.matchMedia(preferDarkQuery);
-  var supportsColorSchemeQuery = mql.media === preferDarkQuery;
   var localStorageTheme = null;
   try {
     localStorageTheme = localStorage.getItem(storageKey);
@@ -27,9 +24,6 @@ export const onRenderBody = ({ setHtmlAttributes, setPreBodyComponents }) => {
   }
   if (localStorageExists) {
     setClassOnDocumentBody(localStorageTheme);
-  } else if (supportsColorSchemeQuery) {
-    setClassOnDocumentBody(mql.matches);
-    localStorage.setItem(storageKey, mql.matches);
   } else {
     var isDarkMode = document.body.classList.contains(classNameDark);
     localStorage.setItem(storageKey, JSON.stringify(isDarkMode));

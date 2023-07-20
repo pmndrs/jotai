@@ -1,7 +1,7 @@
 import { useAtom } from 'jotai';
-import { countAtom } from '../atoms';
-import { Button } from '../components/button';
-import { Code } from '../components/code';
+import { countAtom } from '../atoms/index.js';
+import { Button } from '../components/button.js';
+import { Code } from '../components/code.js';
 
 export const IntegrationsDemo = () => {
   const [count, setCount] = useAtom(countAtom);

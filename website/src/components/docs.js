@@ -1,8 +1,8 @@
 import cx from 'classnames';
 import { Link, graphql, useStaticQuery } from 'gatsby';
 import { useSetAtom } from 'jotai';
-import { menuAtom } from '../atoms';
-import { Icon } from '../components/icon';
+import { menuAtom } from '../atoms/index.js';
+import { Icon } from '../components/icon.js';
 
 export const Docs = ({ className = '', ...rest }) => {
   const data = useStaticQuery(staticQuery);

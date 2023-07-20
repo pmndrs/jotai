@@ -1,4 +1,4 @@
-import { Credits } from '../components/credits';
+import { Credits } from '../components/credits.js';
 
 export const Footer = () => {
   return (
