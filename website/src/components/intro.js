@@ -1,5 +1,5 @@
-import { InlineCode } from '../components/inline-code';
-import { Jotai } from '../components/jotai';
+import { InlineCode } from '../components/inline-code.js';
+import { Jotai } from '../components/jotai.js';
 
 export const Intro = () => {
   return (

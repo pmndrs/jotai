@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useAtom } from 'jotai';
-import { helpAtom } from '../atoms';
-import { Modal } from '../components/modal';
-import { Support } from '../components/support';
+import { helpAtom } from '../atoms/index.js';
+import { Modal } from '../components/modal.js';
+import { Support } from '../components/support.js';
 
 export const SupportModal = () => {
   const [showHelp, setShowHelp] = useAtom(helpAtom);

@@ -1,6 +1,6 @@
 import cx from 'classnames';
 import { Link } from 'gatsby';
-import { Icon } from '../components/icon';
+import { Icon } from '../components/icon.js';
 
 export const Button = ({
   type = 'button',

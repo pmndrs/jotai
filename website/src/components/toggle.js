@@ -1,8 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import cx from 'classnames';
 import { useAtom } from 'jotai';
-import { darkModeAtom } from '../atoms';
-import { Icon } from '../components/icon';
+import { darkModeAtom } from '../atoms/index.js';
+import { Icon } from '../components/icon.js';
 
 export const Toggle = () => {
   const [darkMode, setDarkMode] = useAtom(darkModeAtom);
