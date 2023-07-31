@@ -118,7 +118,6 @@ type Mounted = {
 }
 
 // for debugging purpose only
-type StoreListenerRev1 = (type: 'state' | 'sub' | 'unsub') => void
 type StoreListenerRev2 = (
   action:
     | { type: 'write'; flushed: Set<AnyAtom> }
@@ -127,13 +126,6 @@ type StoreListenerRev2 = (
     | { type: 'unsub' }
     | { type: 'restore'; flushed: Set<AnyAtom> }
 ) => void
-type DevSubscribeStore = {
-  /**
-   * @deprecated use StoreListenerRev2
-   */
-  (listener: StoreListenerRev1): () => void
-  (listener: StoreListenerRev2, rev: 2): () => void
-}
 
 type MountedAtoms = Set<AnyAtom>
 
@@ -160,11 +152,9 @@ export const createStore = () => {
     AnyAtom,
     AtomState /* prevAtomState */ | undefined
   >()
-  let storeListenersRev1: Set<StoreListenerRev1>
   let storeListenersRev2: Set<StoreListenerRev2>
   let mountedAtoms: MountedAtoms
   if (import.meta.env?.MODE !== 'production') {
-    storeListenersRev1 = new Set()
     storeListenersRev2 = new Set()
     mountedAtoms = new Set()
   }
@@ -716,7 +706,6 @@ export const createStore = () => {
       })
     }
     if (import.meta.env?.MODE !== 'production') {
-      storeListenersRev1.forEach((l) => l('state'))
       // @ts-expect-error Variable 'flushed' is used before being assigned.
       return flushed
     }
@@ -728,7 +717,6 @@ export const createStore = () => {
     const listeners = mounted.l
     listeners.add(listener)
     if (import.meta.env?.MODE !== 'production') {
-      storeListenersRev1.forEach((l) => l('sub'))
       storeListenersRev2.forEach((l) =>
         l({ type: 'sub', flushed: flushed as Set<AnyAtom> })
       )
@@ -738,7 +726,6 @@ export const createStore = () => {
       delAtom(atom)
       if (import.meta.env?.MODE !== 'production') {
         // devtools uses this to detect if it _can_ unmount or not
-        storeListenersRev1.forEach((l) => l('unsub'))
         storeListenersRev2.forEach((l) => l({ type: 'unsub' }))
       }
     }
@@ -750,21 +737,15 @@ export const createStore = () => {
       set: writeAtom,
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change without notice)
-      dev_subscribe_store: ((l: StoreListenerRev1 | StoreListenerRev2, rev) => {
+      dev_subscribe_store: (l: StoreListenerRev2, rev: 2) => {
         if (rev !== 2) {
-          console.warn(
-            'The current StoreListener revision is 2. The older ones are deprecated.'
-          )
-          storeListenersRev1.add(l as StoreListenerRev1)
-          return () => {
-            storeListenersRev1.delete(l as StoreListenerRev1)
-          }
+          throw new Error('The current StoreListener revision is 2.')
         }
         storeListenersRev2.add(l as StoreListenerRev2)
         return () => {
           storeListenersRev2.delete(l as StoreListenerRev2)
         }
-      }) as DevSubscribeStore,
+      },
       dev_get_mounted_atoms: () => mountedAtoms.values(),
       dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
       dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
