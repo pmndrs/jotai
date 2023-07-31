@@ -1,13 +1,13 @@
-import { Code } from '../components/code';
-import { CoreDemo } from '../components/core-demo';
-import { Headline } from '../components/headline';
-import { InlineCode } from '../components/inline-code';
-import { IntegrationsDemo } from '../components/integrations-demo';
-import { Intro } from '../components/intro';
-import { LogoCloud } from '../components/logo-cloud';
-import { Meta } from '../components/meta';
-import { Tabs } from '../components/tabs';
-import { UtilitiesDemo } from '../components/utilities-demo';
+import { Code } from '../components/code.js';
+import { CoreDemo } from '../components/core-demo.js';
+import { Headline } from '../components/headline.js';
+import { InlineCode } from '../components/inline-code.js';
+import { IntegrationsDemo } from '../components/integrations-demo.js';
+import { Intro } from '../components/intro.js';
+import { LogoCloud } from '../components/logo-cloud.js';
+import { Meta } from '../components/meta.js';
+import { Tabs } from '../components/tabs.js';
+import { UtilitiesDemo } from '../components/utilities-demo.js';
 
 export default function HomePage() {
   return (
@@ -16,21 +16,19 @@ export default function HomePage() {
       <div className="mt-12 space-y-12 lg:mt-24 lg:space-y-24">
         <div className="space-y-4">
           <Headline>Introduction</Headline>
-          <p>
-            Jotai takes an atomic approach to global React state management with a model inspired by
-            Recoil.
-          </p>
+          <p>Jotai takes an atomic approach to global React state management inspired by Recoil.</p>
           <p>
             Build state by combining atoms and renders are automatically optimized based on atom
-            dependency. This solves the extra re-render issue of React context and eliminates the
-            need for memoization.
+            dependency. This solves the extra re-render issue of React context, eliminates the need
+            for memoization, and provides a similar developer experience to signals while
+            maintaining a declarative programming model.
           </p>
           <p>
             It scales from a simple <InlineCode>useState</InlineCode> replacement to an enterprise
             TypeScript application with complex requirements. Plus there are plenty of utilities and
             integrations to help you along the way!
           </p>
-          <p>Jotai is trusted in production by teams at innovative companies like these.</p>
+          <p>Jotai is trusted in production at innovative companies like these.</p>
           <LogoCloud />
         </div>
         <div className="space-y-4">

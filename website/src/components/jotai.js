@@ -1,6 +1,6 @@
 import cx from 'classnames';
 import { Link } from 'gatsby';
-import { Logo } from '../components/logo';
+import { Logo } from '../components/logo.js';
 
 export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
   return (

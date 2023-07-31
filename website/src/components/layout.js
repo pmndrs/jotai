@@ -1,12 +1,12 @@
-import { ClientOnly } from '../components/client-only';
-import { Footer } from '../components/footer';
-import { Main } from '../components/main';
-import { Menu } from '../components/menu';
-import { SearchModal } from '../components/search-modal';
-import { Sidebar } from '../components/sidebar';
-import { SupportModal } from '../components/support-modal';
-import { Toggle } from '../components/toggle';
-import { Wrapper } from '../components/wrapper';
+import { ClientOnly } from '../components/client-only.js';
+import { Footer } from '../components/footer.js';
+import { Main } from '../components/main.js';
+import { Menu } from '../components/menu.js';
+import { SearchModal } from '../components/search-modal.js';
+import { Sidebar } from '../components/sidebar.js';
+import { SupportModal } from '../components/support-modal.js';
+import { Toggle } from '../components/toggle.js';
+import { Wrapper } from '../components/wrapper.js';
 
 export const Layout = ({ showDocs = false, children }) => {
   return (

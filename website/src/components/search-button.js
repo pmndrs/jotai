@@ -1,6 +1,6 @@
 import { useSetAtom } from 'jotai';
-import { searchAtom } from '../atoms';
-import { Button } from '../components/button';
+import { searchAtom } from '../atoms/index.js';
+import { Button } from '../components/button.js';
 
 export const SearchButton = (props) => {
   const setIsSearchOpen = useSetAtom(searchAtom);

@@ -1,10 +1,10 @@
 import { useSetAtom } from 'jotai';
-import { helpAtom } from '../atoms';
-import { Button } from '../components/button';
-import { Credits } from '../components/credits';
-import { Docs } from '../components/docs';
-import { Jotai } from '../components/jotai';
-import { SearchButton } from '../components/search-button';
+import { helpAtom } from '../atoms/index.js';
+import { Button } from '../components/button.js';
+import { Credits } from '../components/credits.js';
+import { Docs } from '../components/docs.js';
+import { Jotai } from '../components/jotai.js';
+import { SearchButton } from '../components/search-button.js';
 
 export const Sidebar = ({ showDocs = false }) => {
   const setShowHelp = useSetAtom(helpAtom);
@@ -29,6 +29,9 @@ export const Sidebar = ({ showDocs = false }) => {
               <Docs />
             </div>
           )}
+          <Button icon="chalkboard" to="https://tutorial.jotai.org" external>
+            Tutorial
+          </Button>
           <Button icon="help" onClick={() => setShowHelp(true)}>
             Support
           </Button>

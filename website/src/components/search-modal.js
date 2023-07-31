@@ -1,14 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
-import algoliasearch from 'algoliasearch/lite';
+import algoliasearch from 'algoliasearch/lite.js';
 import cx from 'classnames';
 import { Link } from 'gatsby';
 import { useAtom, useSetAtom } from 'jotai';
 import throttle from 'just-throttle';
 import { Hits, InstantSearch, useInstantSearch, useSearchBox } from 'react-instantsearch-hooks-web';
-import { searchAtom } from '../atoms';
-import { Button } from '../components/button';
-import { Icon } from '../components/icon';
-import { Modal } from '../components/modal';
+import { searchAtom } from '../atoms/index.js';
+import { Button } from '../components/button.js';
+import { Icon } from '../components/icon.js';
+import { Modal } from '../components/modal.js';
 
 const searchClient = algoliasearch(
   process.env.GATSBY_ALGOLIA_APP_ID,

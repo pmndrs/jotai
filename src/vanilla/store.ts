@@ -430,8 +430,11 @@ export const createStore = () => {
     }
     try {
       const valueOrPromise = atom.read(getter, options as any)
-      return setAtomValueOrPromise(atom, valueOrPromise, nextDependencies, () =>
-        controller?.abort()
+      return setAtomValueOrPromise(
+        atom,
+        valueOrPromise,
+        nextDependencies,
+        () => controller?.abort()
       )
     } catch (error) {
       return setAtomError(atom, error, nextDependencies)
@@ -784,4 +787,15 @@ export const getDefaultStore = () => {
     defaultStore = createStore()
   }
   return defaultStore
+}
+
+// defaultStore is a module state, so checking duplication
+if (import.meta.env?.MODE !== 'production') {
+  if ((globalThis as any).__JOTAI_PACKAGE_IS_LOADED__) {
+    console.warn(
+      'Detected multiple Jotai instances. It may cause unexpected behavior. https://github.com/pmndrs/jotai/discussions/2044'
+    )
+  } else {
+    ;(globalThis as any).__JOTAI_PACKAGE_IS_LOADED__ = true
+  }
 }

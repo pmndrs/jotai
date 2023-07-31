@@ -1,9 +1,9 @@
 import cx from 'classnames';
-import { ExternalLink } from '../components/external-link';
+import { ExternalLink } from '../components/external-link.js';
 
 export const LogoCloud = () => {
   return (
-    <div className="mx-auto grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="mx-auto grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
       <Logo to="https://ping.gg">
         <img
           src="https://storage.googleapis.com/candycode/jotai/logos/ping-current.svg"
@@ -49,6 +49,21 @@ export const LogoCloud = () => {
           />
         </HoverLogo>
       </Logo>
+      <Logo to="https://www.tiktok.com/">
+        <img
+          src="https://storage.googleapis.com/candycode/jotai/logos/tiktok-current.svg"
+          alt="TokTok"
+          className="w-full px-1 opacity-50 transition duration-300 ease-in-out dark:invert lg:px-2"
+        />
+        <HoverLogo>
+          <img
+            src="https://storage.googleapis.com/candycode/jotai/logos/tiktok-color.svg"
+            alt=""
+            className="w-full px-1 lg:px-2"
+            aria-hidden
+          />
+        </HoverLogo>
+      </Logo>
       <Logo to="https://uniswap.org/">
         <img
           src="https://storage.googleapis.com/candycode/jotai/logos/uniswap-current.svg"
@@ -84,7 +99,7 @@ const Logo = ({ to, className = '', children }) => {
 
 const HoverLogo = ({ children }) => {
   return (
-    <div className="absolute inset-0 flex h-full w-full items-center justify-center px-6 opacity-0 transition duration-300 ease-in-out group-hover:opacity-100">
+    <div className="absolute inset-0 flex h-full w-full items-center justify-center px-6 opacity-0 transition duration-300 ease-in-out group-hover:opacity-100 text-white">
       {children}
     </div>
   );

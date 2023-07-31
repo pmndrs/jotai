@@ -1,3 +1,4 @@
+/* eslint-disable import/extensions */
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { atomWithImmer } from 'jotai-immer';
