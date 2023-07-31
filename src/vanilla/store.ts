@@ -796,3 +796,14 @@ export const getDefaultStore = () => {
   }
   return defaultStore
 }
+
+// defaultStore is a module state, so checking duplication
+if (import.meta.env?.MODE !== 'production') {
+  if ((globalThis as any).__JOTAI_PACKAGE_IS_LOADED__) {
+    console.warn(
+      'Detected multiple Jotai instances. It may cause unexpected behavior. https://github.com/pmndrs/jotai/discussions/2044'
+    )
+  } else {
+    ;(globalThis as any).__JOTAI_PACKAGE_IS_LOADED__ = true
+  }
+}
