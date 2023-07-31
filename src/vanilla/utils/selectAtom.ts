@@ -31,7 +31,7 @@ export function selectAtom<Value, Slice>(
       const EMPTY = Symbol()
       const selectValue = ([value, prevSlice]: readonly [
         Awaited<Value>,
-        Slice | typeof EMPTY
+        Slice | typeof EMPTY,
       ]) => {
         if (prevSlice === EMPTY) {
           return selector(value)
