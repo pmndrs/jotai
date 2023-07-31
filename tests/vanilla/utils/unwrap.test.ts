@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import { unstable_unwrap as unwrap } from 'jotai/vanilla/utils'
+import { unwrap } from 'jotai/vanilla/utils'
 
 describe('unwrap', () => {
   it('should unwrap a promise with no fallback function', async () => {
