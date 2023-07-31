@@ -28,8 +28,8 @@ it('useAtomCallback with get', async () => {
       }, [])
     )
     useEffect(() => {
-      const timer = setInterval(async () => {
-        await readCount()
+      const timer = setInterval(() => {
+        readCount()
       }, 10)
       return () => {
         clearInterval(timer)
@@ -80,8 +80,8 @@ it('useAtomCallback with set and update', async () => {
       }, [])
     )
     useEffect(() => {
-      const timer = setInterval(async () => {
-        await changeCount()
+      const timer = setInterval(() => {
+        changeCount()
       }, 10)
       return () => {
         clearInterval(timer)
