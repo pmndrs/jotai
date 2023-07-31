@@ -27,7 +27,7 @@ export function useAtom<AtomType extends WritableAtom<any, any[], any>>(
   options?: Options
 ): [
   Awaited<ExtractAtomValue<AtomType>>,
-  SetAtom<ExtractAtomArgs<AtomType>, ExtractAtomResult<AtomType>>
+  SetAtom<ExtractAtomArgs<AtomType>, ExtractAtomResult<AtomType>>,
 ]
 
 export function useAtom<AtomType extends Atom<any>>(

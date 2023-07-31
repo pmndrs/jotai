@@ -92,13 +92,16 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
         promiseAndValueAtom.debugPrivate = true
       }
 
-      return atom((get) => {
-        const state = get(promiseAndValueAtom)
-        if ('v' in state) {
-          return state.v
-        }
-        return state.f
-      }, (anAtom as WritableAtom<Value, unknown[], unknown>).write)
+      return atom(
+        (get) => {
+          const state = get(promiseAndValueAtom)
+          if ('v' in state) {
+            return state.v
+          }
+          return state.f
+        },
+        (anAtom as WritableAtom<Value, unknown[], unknown>).write
+      )
     },
     anAtom,
     fallback
