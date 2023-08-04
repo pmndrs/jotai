@@ -793,20 +793,24 @@ type Store = ReturnType<typeof createStore>
 
 let defaultStore: Store | undefined
 
+if (import.meta.env?.MODE !== 'production') {
+  if (typeof (globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ === 'number') {
+    ++(globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__
+  }
+  ;(globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ = 1
+}
+
 export const getDefaultStore = () => {
   if (!defaultStore) {
+    if (
+      import.meta.env?.MODE !== 'production' &&
+      (globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ !== 1
+    ) {
+      console.warn(
+        'Detected multiple Jotai instances. It may cause unexpected behavior with the default store. https://github.com/pmndrs/jotai/discussions/2044'
+      )
+    }
     defaultStore = createStore()
   }
   return defaultStore
-}
-
-// defaultStore is a module state, so checking duplication
-if (import.meta.env?.MODE !== 'production') {
-  if ((globalThis as any).__JOTAI_PACKAGE_IS_LOADED__) {
-    console.warn(
-      'Detected multiple Jotai instances. It may cause unexpected behavior. https://github.com/pmndrs/jotai/discussions/2044'
-    )
-  } else {
-    ;(globalThis as any).__JOTAI_PACKAGE_IS_LOADED__ = true
-  }
 }
