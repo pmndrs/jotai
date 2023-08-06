@@ -87,7 +87,7 @@ it('Should handle all atom types', () => {
       const selectedValueAtom = selectAtom(atom({ a: 0, b: 'othervalue' }), (v) => v.a);
       const splittedAtom = splitAtom(atom([]));
 
-      const unwrappedAtom = unstable_unwrap(asyncArrayAtom, () => []);
+      const unwrappedAtom = unwrap(asyncArrayAtom, () => []);
 
       const someatomWithSubscription = atomWithSubscription(() => {});
 
@@ -138,7 +138,7 @@ it('Should handle all atom types', () => {
     selectedValueAtom.debugLabel = \\"selectedValueAtom\\";
     const splittedAtom = splitAtom(atom([]));
     splittedAtom.debugLabel = \\"splittedAtom\\";
-    const unwrappedAtom = unstable_unwrap(asyncArrayAtom, () => []);
+    const unwrappedAtom = unwrap(asyncArrayAtom, () => []);
     unwrappedAtom.debugLabel = \\"unwrappedAtom\\";
     const someatomWithSubscription = atomWithSubscription(() => {});
     someatomWithSubscription.debugLabel = \\"someatomWithSubscription\\";

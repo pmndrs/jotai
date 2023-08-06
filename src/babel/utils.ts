@@ -36,7 +36,7 @@ const atomFunctionNames = [
   'loadable',
   'selectAtom',
   'splitAtom',
-  'unstable_unwrap',
+  'unwrap',
   // jotai-xstate
   'atomWithMachine',
   // jotai-immer

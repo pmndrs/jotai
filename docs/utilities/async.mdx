@@ -80,3 +80,52 @@ const counterAtom2 = atomWithObservable(() => counterSubject, {
 ### Codesandbox
 
 <CodeSandbox id="88pnt" />
+
+## unwrap
+
+The `unwrap` util will convert an async atom to a sync atom like `loadable`.
+Unlike `loadable`, the fallback value can be configured.
+Unlike `loadable`, the error won't be handled and just thrown.
+
+The use case of `unwrap` is to ease deriving atoms.
+This is especially useful for v2 API,
+because `get` in the read function doesn't resolve promises.
+
+### Signature
+
+```ts
+function unwrap<Value, Args extends unknown[], Result>(
+  anAtom: WritableAtom<Value, Args, Result>
+): WritableAtom<Awaited<Value> | undefined, Args, Result>
+
+function unwrap<Value, Args extends unknown[], Result, PendingValue>(
+  anAtom: WritableAtom<Value, Args, Result>,
+  fallback: (prev?: Awaited<Value>) => PendingValue
+): WritableAtom<Awaited<Value> | PendingValue, Args, Result>
+
+function unwrap<Value>(anAtom: Atom<Value>): Atom<Awaited<Value> | undefined>
+
+function unwrap<Value, PendingValue>(
+  anAtom: Atom<Value>,
+  fallback: (prev?: Awaited<Value>) => PendingValue
+): Atom<Awaited<Value> | PendingValue>
+```
+
+### Usage
+
+```tsx
+import { atom } from 'jotai'
+import { unwrap } from 'jotai/utils'
+
+const countAtom = atom(0)
+const delayedCountAtom = atom(async (get) => {
+  await new Promise((r) => setTimeout(r, 500))
+  return get(countAtom)
+})
+
+const unwrapped1Atom = unwrap(delayedCountAtom)
+// The value is `undefiend` while pending
+
+const unwrapped2Atom = unwrap(delayedCountAtom, (prev) => prev ?? 0)
+// The value is `0` initially, and subsequent updates keep the previous value.
+```
