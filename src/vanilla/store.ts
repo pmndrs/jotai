@@ -355,35 +355,24 @@ export const createStore = () => {
     return nextAtomState
   }
 
-  const readAtomState = <Value>(atom: Atom<Value>): AtomState<Value> => {
+  const readAtomState = <Value>(
+    atom: Atom<Value>,
+    force?: boolean
+  ): AtomState<Value> => {
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
-    if (atomState) {
-      // Ensure that each atom we depend on is up to date.
-      // Recursive calls to `readAtomState(a)` will recompute `a` if
-      // it's out of date thus increment its revision number if it changes.
-      atomState.d.forEach((_, a) => {
-        if (a !== atom && !mountedMap.has(a)) {
-          // Dependency is new or unmounted.
-          // Recomputing doesn't touch unmounted atoms, so we need to recurse
-          // into this dependency in case it needs to update.
-          readAtomState(a)
-        }
-      })
-      // If a dependency changed since this atom was last computed,
-      // then we're out of date and need to recompute.
+    if (!force && atomState) {
+      // If the atom is mounted, we can use the cache.
+      // because it should have been updated by dependencies.
+      if (mountedMap.has(atom)) {
+        return atomState
+      }
+      // Otherwise, check if the dependencies have changed.
+      // If all dependencies havne't changed, we can use the cache.
       if (
-        Array.from(atomState.d).every(([a, s]) => {
-          const aState = getAtomState(a)
-          return (
-            a === atom ||
-            aState === s ||
-            // TODO This is a hack, we should find a better solution.
-            (aState &&
-              !hasPromiseAtomValue(aState) &&
-              isEqualAtomValue(aState, s))
-          )
-        })
+        Array.from(atomState.d).every(
+          ([a, s]) => a === atom || readAtomState(a) === s
+        )
       ) {
         return atomState
       }
@@ -506,7 +495,7 @@ export const createStore = () => {
             let isChanged = !!dependencyMap.get(dependent)?.size
             if (isChanged) {
               const prevAtomState = getAtomState(dependent)
-              const nextAtomState = readAtomState(dependent)
+              const nextAtomState = readAtomState(dependent, true)
               isChanged =
                 !prevAtomState ||
                 !isEqualAtomValue(prevAtomState, nextAtomState)
@@ -579,17 +568,8 @@ export const createStore = () => {
     atom: Atom<Value>,
     initialDependent?: AnyAtom
   ): Mounted => {
-    // mount self
-    const mounted: Mounted = {
-      t: new Set(initialDependent && [initialDependent]),
-      l: new Set(),
-    }
-    mountedMap.set(atom, mounted)
-    if (import.meta.env?.MODE !== 'production') {
-      mountedAtoms.add(atom)
-    }
-    // mount dependencies before onMount
-    readAtomState(atom).d.forEach((_, a) => {
+    // mount dependencies before mounting self
+    getAtomState(atom)?.d.forEach((_, a) => {
       const aMounted = mountedMap.get(a)
       if (aMounted) {
         aMounted.t.add(atom) // add dependent
@@ -601,6 +581,15 @@ export const createStore = () => {
     })
     // recompute atom state
     readAtomState(atom)
+    // mount self
+    const mounted: Mounted = {
+      t: new Set(initialDependent && [initialDependent]),
+      l: new Set(),
+    }
+    mountedMap.set(atom, mounted)
+    if (import.meta.env?.MODE !== 'production') {
+      mountedAtoms.add(atom)
+    }
     // onMount
     if (isActuallyWritableAtom(atom) && atom.onMount) {
       const onUnmount = atom.onMount((...args) => writeAtom(atom, ...args))
