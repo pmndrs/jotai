@@ -62,7 +62,7 @@ const staticQuery = graphql`
   }
 `;
 
-const checkDocs = (doc) => doc.meta?.nav !== null && doc.meta.published !== false;
+const checkDocs = (doc) => doc.meta?.nav !== null;
 
 const sortDocs = (a, b) => a.meta.nav - b.meta.nav;
 
