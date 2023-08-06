@@ -91,41 +91,6 @@ describe('[DEV-ONLY] dev-only methods', () => {
     expect(store.get?.(derivedAtom)).toBe(4)
   })
 
-  describe('dev_subscribe_store rev1', () => {
-    it('should call the callback when state changes', () => {
-      const store = createStore()
-      const callback = vi.fn()
-      const unsub = store.dev_subscribe_store?.(callback)
-      const countAtom = atom(0)
-      const unsubAtom = store.sub(countAtom, vi.fn())
-      store.set(countAtom, 1)
-      expect(callback).toHaveBeenNthCalledWith(1, 'state')
-      expect(callback).toHaveBeenNthCalledWith(2, 'sub')
-      expect(callback).toHaveBeenNthCalledWith(3, 'state')
-      expect(callback).toHaveBeenCalledTimes(3)
-      unsub?.()
-      unsubAtom?.()
-    })
-
-    it('should call unsub only when atom is unsubscribed', () => {
-      const store = createStore()
-      const callback = vi.fn()
-      const unsub = store.dev_subscribe_store?.(callback)
-      const countAtom = atom(0)
-      const unsubAtom = store.sub(countAtom, vi.fn())
-      const unsubAtomSecond = store.sub(countAtom, vi.fn())
-      unsubAtom?.()
-      expect(callback).toHaveBeenNthCalledWith(1, 'state')
-      expect(callback).toHaveBeenNthCalledWith(2, 'sub')
-      expect(callback).toHaveBeenNthCalledWith(3, 'state')
-      expect(callback).toHaveBeenNthCalledWith(4, 'sub')
-      expect(callback).toHaveBeenNthCalledWith(5, 'unsub')
-      expect(callback).toHaveBeenCalledTimes(5)
-      unsub?.()
-      unsubAtomSecond?.()
-    })
-  })
-
   describe('dev_subscribe_store rev2', () => {
     it('should call the callback when state changes', () => {
       const store = createStore()
