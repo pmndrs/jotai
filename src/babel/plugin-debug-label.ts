@@ -1,4 +1,4 @@
-import * as path from 'path'
+import path from 'path'
 import babel, { PluginObj } from '@babel/core'
 import _templateBuilder from '@babel/template'
 import { isAtom } from './utils.ts'
