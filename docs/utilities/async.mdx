@@ -124,7 +124,7 @@ const delayedCountAtom = atom(async (get) => {
 })
 
 const unwrapped1Atom = unwrap(delayedCountAtom)
-// The value is `undefiend` while pending
+// The value is `undefined` while pending
 
 const unwrapped2Atom = unwrap(delayedCountAtom, (prev) => prev ?? 0)
 // The value is `0` initially, and subsequent updates keep the previous value.
