@@ -135,7 +135,7 @@
     "@typescript-eslint/eslint-plugin": "^6.2.1",
     "@typescript-eslint/parser": "^6.2.1",
     "@vitest/coverage-c8": "^0.33.0",
-    "@vitest/ui": "^0.34.1",
+    "@vitest/ui": "0.33.0",
     "benny": "^3.7.1",
     "concurrently": "^8.2.0",
     "downlevel-dts": "^0.11.0",
@@ -162,12 +162,12 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.6.1",
     "typescript": "^5.1.6",
-    "vitest": "^0.34.1",
+    "vitest": "0.33.0",
     "wonka": "^6.3.4"
   },
   "peerDependencies": {
-    "react": ">=17.0.0",
-    "@types/react": ">=17.0.0"
+    "@types/react": ">=17.0.0",
+    "react": ">=17.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
