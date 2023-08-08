@@ -766,8 +766,9 @@ let defaultStore: Store | undefined
 if (import.meta.env?.MODE !== 'production') {
   if (typeof (globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ === 'number') {
     ++(globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__
+  } else {
+    ;(globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ = 1
   }
-  ;(globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ = 1
 }
 
 export const getDefaultStore = () => {
