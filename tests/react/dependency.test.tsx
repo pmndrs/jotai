@@ -911,10 +911,6 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', as
   let firstDerivedFn: Mock<[get: Getter], number> | undefined
 
   const Component = () => {
-    const [count, setCount] = useAtom(countAtom)
-    useEffect(() => {
-      setCount((c) => c + 1)
-    }, [setCount])
     const memoizedAtomRef = useRef<Atom<number> | null>(null)
     if (!memoizedAtomRef.current) {
       const derivedFn = vi.fn((get: Getter) => get(countAtom))
@@ -924,15 +920,22 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', as
       memoizedAtomRef.current = atom(derivedFn)
     }
     useAtomValue(memoizedAtomRef.current)
-    return <div>count: {count}</div>
+    return null
   }
 
   const Main = () => {
     const [show, setShow] = useState(true)
+    const setCount = useSetAtom(countAtom)
     return (
       <>
         <button onClick={() => setShow(false)}>hide</button>
-        <button onClick={() => setShow(true)}>show</button>
+        <button
+          onClick={() => {
+            setShow(true)
+            setCount((c) => c + 1)
+          }}>
+          show
+        </button>
         {show && <Component />}
       </>
     )
