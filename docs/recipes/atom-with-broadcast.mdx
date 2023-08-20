@@ -1,0 +1,70 @@
+---
+title: Atom creator with broadcast
+nav: 8.08
+keywords: creators,broadcast
+---
+
+## atomWithBroadcast
+
+> `atomWithBroadcast` creates an atom. The atom will be shared between
+> browser tabs and frames, similar to `atomWithStorage` but with the
+> initialization limitation.
+
+This can be useful when you want the state to interact with each other without
+the use of localStorage and that by just using The Broadcast Channel API allows
+basic communication between browsing contexts (that is, windows, tabs, frames,
+create a component or iframes) and workers on the same origin. According to the MDN documentation receiving a message in initialization is not supported in broadcast and if we want to support that we may need to add extra stuff to atomWithBroadcast (like local storage).
+
+```tsx
+import { atom } from 'jotai'
+
+export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
+  const baseAtom = atom(initialValue)
+  const listeners = new Set<(event: MessageEvent<any>) => void>()
+  const channel = new BroadcastChannel(key)
+  channel.onmessage = (event) => {
+    listeners.forEach((l) => l(event))
+  }
+
+  const broadcastAtom = atom<Value, { isEvent: boolean; value: Value }>(
+    (get) => get(baseAtom),
+    (get, set, update) => {
+      set(baseAtom, update.value)
+
+      if (!update.isEvent) {
+        channel.postMessage(get(baseAtom))
+      }
+    }
+  )
+  broadcastAtom.onMount = (setAtom) => {
+    const listener = (event: MessageEvent<any>) => {
+      setAtom({ isEvent: true, value: event.data })
+    }
+    listeners.add(listener)
+    return () => {
+      listeners.delete(listener)
+    }
+  }
+  const returnedAtom = atom<Value, Value>(
+    (get) => get(broadcastAtom),
+    (get, set, update) => {
+      set(broadcastAtom, { isEvent: false, value: update })
+    }
+  )
+  return returnedAtom
+}
+const broadAtom = atomWithBroadcast('count', 0)
+
+const ListOfThings = () => {
+  const [count, setCount] = useAtom(broadAtom)
+
+  return (
+    <div>
+      {count}
+      <button onClick={() => setCount(count + 1)}>+1</button>
+    </div>
+  )
+}
+```
+
+<CodeSandbox id="ugkzm0" />
