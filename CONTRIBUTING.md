@@ -28,7 +28,7 @@ If you would like to contribute by fixing an open issue or developing a new feat
 1. Install dependencies by running `yarn`. We use [version 1](https://classic.yarnpkg.com/lang/en/docs/install) of yarn
 2. Create failing tests for your fix or new feature in the `tests` folder
 3. Implement your changes
-4. Build the library `yarn run build` _(Pro-tip: `yarn run build:watch` runs the build in watch mode)_
+4. Build the library `yarn run build` _(Pro-tip: `yarn run build-watch` runs the build in watch mode)_
 5. Run the tests and ensure that they pass. _(Pro-tip: `yarn test:dev` runs the test in watch mode)_
 6. You can use `yarn link` or `yalc` to sym-link this package and test it locally on your own project. Alternatively, you may use CodeSandbox CI's canary releases to test the changes in your own project (requires a PR to be created first)
 7. Follow step 4 and onwards from the [general](#general) guide above to bring it to the finish line
