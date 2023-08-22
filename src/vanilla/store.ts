@@ -274,7 +274,7 @@ export const createStore = () => {
                 resolvePromise(promise, v)
                 resolve(v as Awaited<Value>)
                 if (
-                  mountedAtoms.has(atom) &&
+                  mountedMap.has(atom) &&
                   prevAtomState?.d !== nextAtomState.d
                 ) {
                   mountDependencies(atom, nextAtomState, prevAtomState?.d)
@@ -294,7 +294,7 @@ export const createStore = () => {
                 rejectPromise(promise, e)
                 reject(e)
                 if (
-                  mountedAtoms.has(atom) &&
+                  mountedMap.has(atom) &&
                   prevAtomState?.d !== nextAtomState.d
                 ) {
                   mountDependencies(atom, nextAtomState, prevAtomState?.d)
