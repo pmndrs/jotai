@@ -111,11 +111,13 @@ export function splitAtom<Item, Key>(
             const nextItem = isFunction(update)
               ? update(arr[index] as Item)
               : update
-            set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
-              ...arr.slice(0, index),
-              nextItem,
-              ...arr.slice(index + 1),
-            ])
+            if (!Object.is(nextItem, arr[index])) {
+              set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
+                ...arr.slice(0, index),
+                nextItem,
+                ...arr.slice(index + 1),
+              ])
+            }
           }
           atomList[index] = isWritable(arrAtom) ? atom(read, write) : atom(read)
         })
