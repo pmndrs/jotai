@@ -947,6 +947,7 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', as
   )
 
   fireEvent.click(getByText('hide'))
+  expect(firstDerivedFn).toBeCalledTimes(1)
   firstDerivedFn?.mockClear()
 
   fireEvent.click(getByText('show'))
