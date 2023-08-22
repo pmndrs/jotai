@@ -1,7 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import type { Mock } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom, Getter } from 'jotai/vanilla'
@@ -908,7 +907,7 @@ describe('glitch free', () => {
 
 it('should not call read function for unmounted atoms in StrictMode (#2076)', async () => {
   const countAtom = atom(1)
-  let firstDerivedFn: Mock<[get: Getter], number> | undefined
+  let firstDerivedFn: ReturnType<typeof vi.fn> | undefined
 
   const Component = () => {
     const memoizedAtomRef = useRef<Atom<number> | null>(null)
