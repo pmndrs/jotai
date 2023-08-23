@@ -338,7 +338,7 @@ it('should bail out with the same value with chained dependency (#2014)', async 
   expect(deriveFurtherFn).toHaveBeenCalledTimes(2)
 })
 
-it('should update with conditional dependencies (#2048)', async () => {
+it('should update with conditional dependencies (#2084)', async () => {
   const store = createStore()
   const f1 = atom(false)
   const f2 = atom(false)
