@@ -111,7 +111,7 @@ export function splitAtom<Item, Key>(
             const nextItem = isFunction(update)
               ? update(arr[index] as Item)
               : update
-            if (!Object.is(nextItem, arr[index])) {
+            if (!Object.is(arr[index], nextItem)) {
               set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
                 ...arr.slice(0, index),
                 nextItem,

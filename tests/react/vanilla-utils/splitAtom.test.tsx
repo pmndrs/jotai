@@ -517,8 +517,8 @@ it('should not update splitted atom when single item is set to identical value',
   const collectionAtomsAtom = splitAtom(collectionAtom)
 
   function App() {
-    const collection = useAtomValue(collectionAtomsAtom)
-    const setItem2 = useSetAtom(collection[1]!)
+    const collectionAtoms = useAtomValue(collectionAtomsAtom)
+    const setItem2 = useSetAtom(collectionAtoms[1]!)
     const currentCollection = useAtomValue(collectionAtom)
     return (
       <div>
