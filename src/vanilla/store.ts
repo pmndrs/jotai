@@ -273,7 +273,10 @@ export const createStore = () => {
                 )
                 resolvePromise(promise, v)
                 resolve(v as Awaited<Value>)
-                if (prevAtomState?.d !== nextAtomState.d) {
+                if (
+                  mountedMap.has(atom) &&
+                  prevAtomState?.d !== nextAtomState.d
+                ) {
                   mountDependencies(atom, nextAtomState, prevAtomState?.d)
                 }
               }
@@ -290,7 +293,10 @@ export const createStore = () => {
                 )
                 rejectPromise(promise, e)
                 reject(e)
-                if (prevAtomState?.d !== nextAtomState.d) {
+                if (
+                  mountedMap.has(atom) &&
+                  prevAtomState?.d !== nextAtomState.d
+                ) {
                   mountDependencies(atom, nextAtomState, prevAtomState?.d)
                 }
               }
@@ -675,10 +681,10 @@ export const createStore = () => {
       pending.forEach(([atom, prevAtomState]) => {
         const atomState = getAtomState(atom)
         if (atomState) {
-          if (atomState.d !== prevAtomState?.d) {
+          const mounted = mountedMap.get(atom)
+          if (mounted && atomState.d !== prevAtomState?.d) {
             mountDependencies(atom, atomState, prevAtomState?.d)
           }
-          const mounted = mountedMap.get(atom)
           if (
             mounted &&
             !(

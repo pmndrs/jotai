@@ -3,7 +3,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
-import type { Getter } from 'jotai/vanilla'
+import type { Atom, Getter } from 'jotai/vanilla'
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -903,4 +903,53 @@ describe('glitch free', () => {
     await findByText('value: 1')
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
+})
+
+it('should not call read function for unmounted atoms in StrictMode (#2076)', async () => {
+  const countAtom = atom(1)
+  let firstDerivedFn: ReturnType<typeof vi.fn> | undefined
+
+  const Component = () => {
+    const memoizedAtomRef = useRef<Atom<number> | null>(null)
+    if (!memoizedAtomRef.current) {
+      const derivedFn = vi.fn((get: Getter) => get(countAtom))
+      if (!firstDerivedFn) {
+        firstDerivedFn = derivedFn
+      }
+      memoizedAtomRef.current = atom(derivedFn)
+    }
+    useAtomValue(memoizedAtomRef.current)
+    return null
+  }
+
+  const Main = () => {
+    const [show, setShow] = useState(true)
+    const setCount = useSetAtom(countAtom)
+    return (
+      <>
+        <button onClick={() => setShow(false)}>hide</button>
+        <button
+          onClick={() => {
+            setShow(true)
+            setCount((c) => c + 1)
+          }}>
+          show
+        </button>
+        {show && <Component />}
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <StrictMode>
+      <Main />
+    </StrictMode>
+  )
+
+  fireEvent.click(getByText('hide'))
+  expect(firstDerivedFn).toBeCalledTimes(1)
+  firstDerivedFn?.mockClear()
+
+  fireEvent.click(getByText('show'))
+  expect(firstDerivedFn).toBeCalledTimes(0)
 })
