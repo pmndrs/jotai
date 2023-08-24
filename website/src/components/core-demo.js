@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
-import { textAtom, uppercaseAtom } from '../atoms';
-import { Code } from '../components/code';
+import { textAtom, uppercaseAtom } from '../atoms/index.js';
+import { Code } from '../components/code.js';
 
 export const CoreDemo = () => {
   const Input = () => {
@@ -10,7 +10,7 @@ export const CoreDemo = () => {
       <input
         value={text}
         onChange={(event) => setText(event.target.value)}
-        className="w-full bg-transparent focus:!ring-transparent"
+        className="w-full bg-transparent focus:!ring-transparent !border-none"
       />
     );
   };

@@ -91,41 +91,6 @@ describe('[DEV-ONLY] dev-only methods', () => {
     expect(store.get?.(derivedAtom)).toBe(4)
   })
 
-  describe('dev_subscribe_store rev1', () => {
-    it('should call the callback when state changes', () => {
-      const store = createStore()
-      const callback = vi.fn()
-      const unsub = store.dev_subscribe_store?.(callback)
-      const countAtom = atom(0)
-      const unsubAtom = store.sub(countAtom, vi.fn())
-      store.set(countAtom, 1)
-      expect(callback).toHaveBeenNthCalledWith(1, 'state')
-      expect(callback).toHaveBeenNthCalledWith(2, 'sub')
-      expect(callback).toHaveBeenNthCalledWith(3, 'state')
-      expect(callback).toHaveBeenCalledTimes(3)
-      unsub?.()
-      unsubAtom?.()
-    })
-
-    it('should call unsub only when atom is unsubscribed', () => {
-      const store = createStore()
-      const callback = vi.fn()
-      const unsub = store.dev_subscribe_store?.(callback)
-      const countAtom = atom(0)
-      const unsubAtom = store.sub(countAtom, vi.fn())
-      const unsubAtomSecond = store.sub(countAtom, vi.fn())
-      unsubAtom?.()
-      expect(callback).toHaveBeenNthCalledWith(1, 'state')
-      expect(callback).toHaveBeenNthCalledWith(2, 'sub')
-      expect(callback).toHaveBeenNthCalledWith(3, 'state')
-      expect(callback).toHaveBeenNthCalledWith(4, 'sub')
-      expect(callback).toHaveBeenNthCalledWith(5, 'unsub')
-      expect(callback).toHaveBeenCalledTimes(5)
-      unsub?.()
-      unsubAtomSecond?.()
-    })
-  })
-
   describe('dev_subscribe_store rev2', () => {
     it('should call the callback when state changes', () => {
       const store = createStore()
@@ -347,4 +312,63 @@ it('should notify subscription with tree dependencies with bail-out', async () =
   store.set(valueAtom, (c) => c + 1)
   expect(cb).toBeCalledTimes(1)
   expect(store.get(dep3Atom)).toBe(4)
+})
+
+it('should bail out with the same value with chained dependency (#2014)', async () => {
+  const store = createStore()
+  const objAtom = atom({ count: 1 })
+  const countAtom = atom((get) => get(objAtom).count)
+  const deriveFn = vi.fn((get: Getter) => get(countAtom))
+  const derivedAtom = atom(deriveFn)
+  const deriveFurtherFn = vi.fn((get: Getter) => {
+    get(objAtom) // intentional extra dependency
+    return get(derivedAtom)
+  })
+  const derivedFurtherAtom = atom(deriveFurtherFn)
+  const callback = vi.fn()
+  store.sub(derivedFurtherAtom, callback)
+  expect(store.get(derivedAtom)).toBe(1)
+  expect(store.get(derivedFurtherAtom)).toBe(1)
+  expect(callback).toHaveBeenCalledTimes(0)
+  expect(deriveFn).toHaveBeenCalledTimes(1)
+  expect(deriveFurtherFn).toHaveBeenCalledTimes(1)
+  store.set(objAtom, (obj) => ({ ...obj }))
+  expect(callback).toHaveBeenCalledTimes(0)
+  expect(deriveFn).toHaveBeenCalledTimes(1)
+  expect(deriveFurtherFn).toHaveBeenCalledTimes(2)
+})
+
+it('should not call read function for unmounted atoms (#2076)', async () => {
+  const store = createStore()
+  const countAtom = atom(1)
+  const derive1Fn = vi.fn((get: Getter) => get(countAtom))
+  const derived1Atom = atom(derive1Fn)
+  const derive2Fn = vi.fn((get: Getter) => get(countAtom))
+  const derived2Atom = atom(derive2Fn)
+  expect(store.get(derived1Atom)).toBe(1)
+  expect(store.get(derived2Atom)).toBe(1)
+  expect(derive1Fn).toHaveBeenCalledTimes(1)
+  expect(derive2Fn).toHaveBeenCalledTimes(1)
+  store.sub(derived2Atom, vi.fn())
+  store.set(countAtom, (c) => c + 1)
+  expect(derive1Fn).toHaveBeenCalledTimes(1)
+  expect(derive2Fn).toHaveBeenCalledTimes(2)
+})
+
+it('should update with conditional dependencies (#2084)', async () => {
+  const store = createStore()
+  const f1 = atom(false)
+  const f2 = atom(false)
+  const f3 = atom(
+    (get) => get(f1) && get(f2),
+    (_get, set, val: boolean) => {
+      set(f1, val)
+      set(f2, val)
+    }
+  )
+  store.sub(f1, vi.fn())
+  store.sub(f2, vi.fn())
+  store.sub(f3, vi.fn())
+  store.set(f3, true)
+  expect(store.get(f3)).toBe(true)
 })

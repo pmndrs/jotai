@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { expect, it } from 'vitest'
-import { useAtom, useSetAtom } from 'jotai/react'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom, PrimitiveAtom } from 'jotai/vanilla'
 import { splitAtom } from 'jotai/vanilla/utils'
@@ -509,4 +509,33 @@ it('variable sized splitted atom', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('numbers: 1,2')
+})
+
+it('should not update splitted atom when single item is set to identical value', async () => {
+  const initialCollection = [1, 2, 3]
+  const collectionAtom = atom<number[]>(initialCollection)
+  const collectionAtomsAtom = splitAtom(collectionAtom)
+
+  function App() {
+    const collectionAtoms = useAtomValue(collectionAtomsAtom)
+    const setItem2 = useSetAtom(collectionAtoms[1]!)
+    const currentCollection = useAtomValue(collectionAtom)
+    return (
+      <div>
+        <button onClick={() => setItem2(2)}>button</button>
+        changed: {(!Object.is(currentCollection, initialCollection)).toString()}
+      </div>
+    )
+  }
+
+  const { findByText, getByText } = render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  )
+
+  await findByText('changed: false')
+
+  fireEvent.click(getByText('button'))
+  await findByText('changed: false')
 })

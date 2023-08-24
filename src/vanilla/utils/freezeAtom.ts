@@ -29,7 +29,7 @@ export function freezeAtom<AtomType extends Atom<any>>(
 }
 
 export function freezeAtomCreator<
-  CreateAtom extends (...params: any[]) => Atom<any>
+  CreateAtom extends (...params: any[]) => Atom<any>,
 >(createAtom: CreateAtom) {
   return ((...params: any[]) => {
     const anAtom = createAtom(...params)
