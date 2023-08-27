@@ -337,3 +337,38 @@ it('should bail out with the same value with chained dependency (#2014)', async 
   expect(deriveFn).toHaveBeenCalledTimes(1)
   expect(deriveFurtherFn).toHaveBeenCalledTimes(2)
 })
+
+it('should not call read function for unmounted atoms (#2076)', async () => {
+  const store = createStore()
+  const countAtom = atom(1)
+  const derive1Fn = vi.fn((get: Getter) => get(countAtom))
+  const derived1Atom = atom(derive1Fn)
+  const derive2Fn = vi.fn((get: Getter) => get(countAtom))
+  const derived2Atom = atom(derive2Fn)
+  expect(store.get(derived1Atom)).toBe(1)
+  expect(store.get(derived2Atom)).toBe(1)
+  expect(derive1Fn).toHaveBeenCalledTimes(1)
+  expect(derive2Fn).toHaveBeenCalledTimes(1)
+  store.sub(derived2Atom, vi.fn())
+  store.set(countAtom, (c) => c + 1)
+  expect(derive1Fn).toHaveBeenCalledTimes(1)
+  expect(derive2Fn).toHaveBeenCalledTimes(2)
+})
+
+it('should update with conditional dependencies (#2084)', async () => {
+  const store = createStore()
+  const f1 = atom(false)
+  const f2 = atom(false)
+  const f3 = atom(
+    (get) => get(f1) && get(f2),
+    (_get, set, val: boolean) => {
+      set(f1, val)
+      set(f2, val)
+    }
+  )
+  store.sub(f1, vi.fn())
+  store.sub(f2, vi.fn())
+  store.sub(f3, vi.fn())
+  store.set(f3, true)
+  expect(store.get(f3)).toBe(true)
+})
