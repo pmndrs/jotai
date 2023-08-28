@@ -5,7 +5,7 @@ nav: 4.03
 keywords: urql
 ---
 
-## Install
+### Install
 
 You have to install `jotai-urql`, `@urql/core` and `wonka` to use the integration.
 
@@ -13,15 +13,15 @@ You have to install `jotai-urql`, `@urql/core` and `wonka` to use the integratio
 yarn add jotai-urql @urql/core wonka
 ```
 
-## Exported functions
+### Exported functions
 
 - `atomWithQuery` for [client.query](https://formidable.com/open-source/urql/docs/api/core/#clientquery)
 - `atomWithMutation` for [client.mutation](https://formidable.com/open-source/urql/docs/api/core/#clientmutation)
 - `atomWithSubscription` for [client.subscription](https://formidable.com/open-source/urql/docs/api/core/#clientsubscription)
 
-## Basic usage
+### Basic usage
 
-### Query:
+#### Query:
 
 ```tsx
 import { useAtom } from 'jotai'
@@ -45,7 +45,7 @@ const Counter = () => {
 }
 ```
 
-### Mutation:
+#### Mutation:
 
 ```tsx
 import { useAtom } from 'jotai'
@@ -70,7 +70,7 @@ const Counter = () => {
 }
 ```
 
-## Simplified type of options passed to functions
+### Simplified type of options passed to functions
 
 ```tsx
 type AtomWithQueryOptions<
@@ -97,7 +97,7 @@ type AtomWithMutationOptions<
 // Subscription type is the same as AtomWithQueryOptions
 ```
 
-## Disable suspense
+### Disable suspense
 
 Usage of `import { loadable } from "jotai/utils"` is preferred instead as proven more stable. However is you still want that
 here is how you do it:
@@ -112,13 +112,13 @@ export const App = () => {
 }
 ```
 
-## Useful helper hook
+### Useful helper hook
 
 Here is the helper hook, to cover one rare corner case, and make use of these bindings similar to `@tanstack/react-query`
 default behavior where errors are treated as errors (in case of Promise reject) and are handled mostly in the nearby
 ErrorBoundaries. Only valid for suspended version.
 
-### useQueryAtomData
+#### useQueryAtomData
 
 Neatly returns `data` after the resolution + handles all the error throwing/reexecute cases/corner cases.
 Note that Type is overridden so `data` it never `undefined` nor `null` (unless that's expected return type of the query itself)
@@ -194,11 +194,11 @@ function use(promise: Promise<any> | any) {
 }
 ```
 
-### Basic demo
+#### Basic demo
 
 <CodeSandbox id="5rwunq" />
 
-## Refferencing the same instance of the client for both atoms and urql provider
+### Refferencing the same instance of the client for both atoms and urql provider
 
 To ensure that you reference the same urqlClient object, be sure to wrap the root of your project in a `<Provider>` and initialise clientAtom with the same urqlClient value you provided to UrqlProvider.
 

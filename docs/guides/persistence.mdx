@@ -8,7 +8,7 @@ Jotai has an [atomWithStorage function in the utils bundle](../utilities/storage
 
 There are also several alternate implementations here:
 
-## A simple pattern with localStorage
+### A simple pattern with localStorage
 
 ```js
 const strAtom = atom(localStorage.getItem('myKey') ?? 'foo')
@@ -22,7 +22,7 @@ const strAtomWithPersistence = atom(
 )
 ```
 
-## A helper function with localStorage and JSON parse
+### A helper function with localStorage and JSON parse
 
 ```js
 const atomWithLocalStorage = (key, initialValue) => {
@@ -49,7 +49,7 @@ const atomWithLocalStorage = (key, initialValue) => {
 
 (Error handling should be added.)
 
-## A helper function with AsyncStorage and JSON parse
+### A helper function with AsyncStorage and JSON parse
 
 This requires [onMount](../core/atom.mdx#on-mount).
 
@@ -77,7 +77,7 @@ const atomWithAsyncStorage = (key, initialValue) => {
 
 Don't forget to check out the [Async documentation](../guides/async.mdx) for more details on how to use async atoms.
 
-### Usage in Async actions
+#### Usage in Async actions
 
 When using an asynchronous storage, the reading of the created atoms are asynchronous too. That comes with some limitations. Before `useAtom` has been called at least once, the value is not set.
 This can cause an issue, for example, if you want to retrieve the value of your stored atom in an async action (write-only atom).
@@ -99,7 +99,7 @@ const fetchUserInfo = atom(null, async (get, set, payload: any) => {
 
 We want to make sure the action will never fail. As always with asynchronous flow in Jotai, we have 2 options: with or without **Suspense**.
 
-#### With Suspense
+##### With Suspense
 
 You may want to preload atoms at root level of your app directly:
 
@@ -121,7 +121,7 @@ const Root = () => {
 }
 ```
 
-#### Without Suspense
+##### Without Suspense
 
 ```js
 // We add the "delayInit: true" option to tell jotai not to use Suspense
@@ -143,7 +143,7 @@ But always remember jotai is un-opinionated and your workflow may not need prelo
 
 ---
 
-## Example with sessionStorage
+### Example with sessionStorage
 
 Same as AsyncStorage, just use `atomWithStorage` util and override the default storage with the `sessionStorage`
 
@@ -154,7 +154,7 @@ const storage = createJSONStorage(() => sessionStorage)
 const someAtom = atomWithStorage('some-key', someInitialValue, storage)
 ```
 
-## A serialize atom pattern
+### A serialize atom pattern
 
 ```tsx
 type Actions =
@@ -202,11 +202,11 @@ const Persist = () => {
 }
 ```
 
-### Examples
+#### Examples
 
 <CodeSandbox id="g96xjx" />
 
-## A pattern with atomFamily
+### A pattern with atomFamily
 
 ```tsx
 type Actions =
@@ -263,6 +263,6 @@ const Persist = () => {
 }
 ```
 
-### Examples
+#### Examples
 
 <CodeSandbox id="oyiw5r" />

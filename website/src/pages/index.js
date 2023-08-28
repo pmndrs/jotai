@@ -16,7 +16,7 @@ export default function HomePage() {
       <div className="mt-12 space-y-12 lg:mt-24 lg:space-y-24">
         <div className="space-y-4">
           <Headline>Introduction</Headline>
-          <p>Jotai takes an atomic approach to global React state management inspired by Recoil.</p>
+          <p>Jotai takes an atomic approach to global React state management.</p>
           <p>
             Build state by combining atoms and renders are automatically optimized based on atom
             dependency. This solves the extra re-render issue of React context, eliminates the need
@@ -135,13 +135,9 @@ pnpm install jotai
       <Code language="bash">{`# npm
 npm install --save-dev @swc-jotai/react-refresh
 
-# .swcrc
-{
-  "jsc": {
-    "experimental": {
-      "plugins": [["@swc-jotai/react-refresh", {}]]
-    }
-  }
+# next.config.js
+experimental: {
+  swcPlugins: [['@swc-jotai/react-refresh', {}]],
 }
 `}</Code>
       <h3>Next.js (Babel)</h3>

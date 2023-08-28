@@ -17,22 +17,22 @@ export const Button = ({
   ...rest
 }) => {
   const buttonClassNames = cx(
-    'inline-flex select-none items-center border dark:!shadow-none',
+    'inline-flex select-none items-center border dark:!shadow-none dark:!border-none group',
     bold && 'font-medium',
     !small
       ? 'space-x-4 rounded-md px-6 py-3 text-base shadow-md sm:rounded-lg'
       : 'space-x-2 rounded px-3 py-1.5 text-xs shadow-sm sm:rounded-md',
     !dark
-      ? 'border-gray-200 bg-gray-100 text-black hover:bg-blue-100 dark:border-gray-800 dark:bg-gray-900 hover:border-blue-200 dark:hover:!border-teal-800 dark:hover:bg-teal-950 dark:text-gray-300'
+      ? 'border-gray-200 bg-gray-100 text-black hover:bg-blue-100 dark:border-gray-800 dark:bg-gray-900 hover:border-blue-200 dark:hover:bg-white dark:text-gray-300 dark:hover:text-black'
       : 'border-gray-800 bg-gray-900 text-gray-300',
     !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
     className,
   );
 
   const iconClassNames = cx(
-    'flex-shrink-0 fill-current object-contain',
+    'flex-shrink-0 fill-current object-contain transition ease-in-out duration-300',
     !small ? 'h-6 w-6' : 'h-4 w-4',
-    !dark ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300',
+    !dark ? 'text-gray-700 dark:text-gray-300 dark:group-hover:text-black' : 'text-gray-300',
   );
 
   if (onClick && to) {

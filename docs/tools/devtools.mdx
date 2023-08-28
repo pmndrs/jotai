@@ -5,7 +5,7 @@ nav: 5.03
 keywords: devtools,debug,snapshot
 ---
 
-## Install
+### Install
 
 Install `jotai-devtools` to your project to get started
 
@@ -17,13 +17,13 @@ yarn add jotai-devtools @emotion/react
 npm install jotai-devtools @emotion/react --save
 ```
 
-## Notes
+### Notes
 
 - `<DevTools/>` is optimized to be tree-shakable for production builds, and **only works in a non-production environment**
 - Hooks are dev-only, and are designed to work in a non-production environment
 - Feedback welcome, please file issues or ask questions on the [Jotai DevTools GitHub Repo](https://github.com/jotaijs/jotai-devtools/discussions)
 
-## Quick links
+### Quick links
 
 - [UI Devtools](#ui-devtools)
 - Hooks
@@ -33,7 +33,7 @@ npm install jotai-devtools @emotion/react --save
   - [useAtomsSnapshot](#useatomssnapshot)
   - [useGotoAtomsSnapshot](#usegotoatomssnapshot)
 
-## UI DevTools
+### UI DevTools
 
 Enhance your development experience with the UI based Jotai DevTool.
 
@@ -103,7 +103,7 @@ type DevToolsProps = {
 
 ### Usage
 
-### Provider-less
+#### Provider-less
 
 ```tsx
 import { DevTools } from 'jotai-devtools'
@@ -118,7 +118,7 @@ const App = () => {
 }
 ```
 
-### With Provider
+#### With Provider
 
 ```tsx
 import { createStore } from 'jotai'

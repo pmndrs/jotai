@@ -147,11 +147,11 @@ derivedAtom.onMount = (setAtom) => {
 }
 ```
 
-## Advanced API
+### Advanced API
 
 Since Jotai v2, the `read` function has the second argument `options`.
 
-### `options.signal`
+#### `options.signal`
 
 It uses [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) so that you can abort async functions.
 Abort is triggered before new calculation (invoking `read` function) is started.

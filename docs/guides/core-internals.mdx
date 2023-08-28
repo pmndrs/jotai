@@ -7,7 +7,7 @@ nav: 7.10
 This guide is beneficial for those who want to understand the core implementation of Jotai. It's not meant to be a complete example of the
 core implementation but rather a simplified version. It's inspired by the collection of tweets by Daishi Kato([@dai_shi](https://twitter.com/dai_shi)).
 
-## First Version
+### First Version
 
 Let's start with an easy example. An atom is just a function that will return a configuration object. We are using WeakMap to map atom with their state.
 WeakMap doesn't keep its keys in memory, so if an atom is garbage collected, its state will be garbage collected too. This helps avoid memory leaks.
@@ -60,7 +60,7 @@ Here's an example using our simplified atom implementation. [Counter example](ht
 
 Ref tweet: [Demystifying the internal of jotai](https://twitter.com/dai_shi/status/1484835169475653634)
 
-## Second Version
+### Second Version
 
 Hang on! We can do better. In Jotai, we can create derived atom. A derived atom is an atom that depends on other atoms.
 
