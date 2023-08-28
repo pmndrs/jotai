@@ -117,7 +117,7 @@ const CustomSearchBox = (props) => {
 };
 
 const Hit = ({ hit }) => {
-  const { title, excerpt, slug } = hit;
+  const { title, excerpt, slug, level } = hit;
   const setIsSearchOpen = useSetAtom(searchAtom);
 
   return (
@@ -127,10 +127,20 @@ const Hit = ({ hit }) => {
       className="group mb-8 flex space-x-3"
     >
       <div>
-        <Icon icon="file" className="h-6 w-6 fill-current text-blue-400 dark:text-teal-600" />
+        <Icon
+          icon={level === 1 ? 'file' : 'file-blank'}
+          className="h-6 w-6 fill-current text-gray-500"
+        />
       </div>
       <div>
-        <div className="text-xl font-semibold dark:text-gray-200">{title}</div>
+        <div className="text-xl font-semibold dark:text-gray-200 inline-flex gap-1.5 items-center">
+          <span>{title}</span>
+          {level === 2 && (
+            <span className="px-1 py-0.5 bg-gray-100 rounded text-xs dark:bg-gray-800">
+              section
+            </span>
+          )}
+        </div>
         {excerpt && <div className="mt-1 text-sm leading-snug text-gray-500">{excerpt}</div>}
         <div className="mt-1 text-xs font-medium tracking-wider text-gray-400 group-hover:underline">
           jotai.org/docs/{slug}

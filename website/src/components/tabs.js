@@ -35,10 +35,10 @@ export const Tabs = ({ orientation = 'horizontal', tabs = {} }) => {
                 {({ selected }) => (
                   <div
                     className={cx(
-                      'rounded-lg border px-3 py-1.5 text-left font-bold leading-tight transition duration-300 ease-in-out hover:border-blue-200 hover:bg-blue-100 hover:text-black dark:hover:!border-teal-800 dark:hover:bg-teal-950',
+                      'rounded-lg border px-3 py-1.5 text-left font-bold leading-tight transition duration-300 ease-in-out hover:border-blue-200 hover:bg-blue-100 hover:text-black dark:hover:bg-white dark:!border-none dark:hover:text-black',
                       !selected
                         ? 'border-transparent text-gray-350 dark:text-gray-300'
-                        : ' hover: border-gray-200 bg-gray-100 text-black dark:border-gray-700 dark:bg-white dark:text-black dark:hover:text-gray-300',
+                        : ' border-blue-200 bg-blue-100 text-black dark:border-gray-700 dark:bg-white dark:text-black dark:hover:text-black',
                       !vertical ? 'text-2xl lg:text-3xl' : 'text-lg',
                     )}
                   >

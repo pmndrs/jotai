@@ -12,7 +12,7 @@ to implement a functionality.
 
 Let's recap how we can derive an atom.
 
-## Basic derived atoms
+### Basic derived atoms
 
 Here's one of the simplest examples of a derived atom:
 
@@ -40,7 +40,7 @@ So, we can only export `textUpperCaseAtom` and can hide
 
 Now, let's see some real examples.
 
-## Overriding default atom values
+### Overriding default atom values
 
 Suppose we have a read-only atom.
 Obviously read-only atoms are not writable, but we can combine two atoms
@@ -69,7 +69,7 @@ in `jotai/utils`. See [atomWithDefault](../utilities/resettable.mdx).
 
 Next, let's see another example to sync with external value.
 
-## Syncing atom values with external values
+### Syncing atom values with external values
 
 There are some external values we want to deal with.
 `localStorage` is the one. Another is `window.title`.
@@ -107,7 +107,7 @@ will be in sync.
 
 Back to the main topic, let's explore another example.
 
-## Extending atoms with `atomWith*` utils
+### Extending atoms with `atomWith*` utils
 
 We have several utils whose names start with `atomWith`.
 They create an atom with a certain functionality.
@@ -137,7 +137,7 @@ It would still be a open research field.
 
 Finally, let's see another example with actions.
 
-## Action atoms
+### Action atoms
 
 This should be known pattern as it's described in README.
 Nonetheless, it might to be useful to revisit.
@@ -193,7 +193,7 @@ export const dispatchAtom = atom(null, (_get, set, action) => {
 Why do we want it? Because it will be used only when needed.
 It allows code splitting and dead code elimination.
 
-## In summary
+### In summary
 
 Atoms are building block.
 By composing atoms based on other atoms,
