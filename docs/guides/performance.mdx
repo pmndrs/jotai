@@ -109,7 +109,7 @@ Let's imagine an atom containing an object that changes almost every second, it 
 
 On the other hand, if your object has properties that rarely change, and most importantly, that change independently from the other properties, then you may want to use `focusAtom` or `selectAtom` to prevent un-necessary renders.
 
-## "Stop observing" pattern
+### "Stop observing" pattern
 
 An example of pattern that can be interesting is to use `useMemo` to read an atom value only once, in order to prevent further renders even if the atom changes down the line.
 

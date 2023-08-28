@@ -13,7 +13,7 @@ From the [Overview docs](https://tanstack.com/query/v4/docs/overview):
 
 [jotai-tanstack-query](https://github.com/jotai-labs/jotai-tanstack-query) is a Jotai integration library for TanStack Query. It provides a wonderful interface with all of the TanStack Query features, providing you the ability to use those features in combination with your existing Jotai state.
 
-## Install
+### Install
 
 In addition to `jotai`, you have to install `jotai-tanstack-query` and `@tanstack/query-core` to use the integration.
 
@@ -21,7 +21,7 @@ In addition to `jotai`, you have to install `jotai-tanstack-query` and `@tanstac
 yarn add jotai-tanstack-query @tanstack/query-core
 ```
 
-## Exported functions
+### Exported functions
 
 - `atomsWithQuery` for [QueryObserver](https://tanstack.com/query/v4/docs/reference/QueryObserver)
 - `atomsWithInfiniteQuery` for [InfiniteQueryObserver](https://tanstack.com/query/v4/docs/reference/InfiniteQueryObserver)
@@ -42,7 +42,7 @@ The second one is called `statusAtom` and it's an atom for the full result from 
 The data from the observer is also included in `statusAtom`,
 so if you don't use Suspense and Error Boundary, you don't need to use `dataAtom`.
 
-## `atomsWithQuery` usage
+### `atomsWithQuery` usage
 
 `atomsWithQuery` creates new atoms that implement a standard [`Query`](https://tanstack.com/query/v4/docs/guides/queries) from TanStack Query.
 
@@ -67,7 +67,7 @@ const UserData = () => {
 }
 ```
 
-## `atomsWithInfiniteQuery` usage
+### `atomsWithInfiniteQuery` usage
 
 `atomsWithInfiniteQuery` is very similar to `atomsWithQuery`, however it is for an `InfiniteQuery`, which is used for data that is meant to be paginated. You can [read more about Infinite Queries here](https://tanstack.com/query/v4/docs/guides/infinite-queries).
 
@@ -98,7 +98,7 @@ const UserData = () => {
 }
 ```
 
-### Fetching pages and refetching
+#### Fetching pages and refetching
 
 Using the same atom as in the above example, we can dispatch an action to `userAtom`.
 
@@ -110,7 +110,7 @@ const UserData = () => {
 }
 ```
 
-## `atomsWithMutation` usage
+### `atomsWithMutation` usage
 
 `atomsWithMutation` creates new atoms that implement a standard [`Mutation`](https://tanstack.com/query/v4/docs/guides/mutations) from TanStack Query.
 
@@ -147,7 +147,7 @@ const PostData = () => {
 }
 ```
 
-## Referencing the same instance of Query Client in your project
+### Referencing the same instance of Query Client in your project
 
 Perhaps you have some custom hooks in your project that utilises the `useQueryClient()` hook to obtain the `QueryClient` object and call its methods.
 
@@ -157,7 +157,7 @@ Without this step, `useQueryAtom` will reference a separate `QueryClient` from a
 
 Alternatively, you can specify your `queryClient` with `getQueryClient` parameter.
 
-### Example
+#### Example
 
 In the example below, we have a mutation hook, `useTodoMutation` and a query `todosAtom`.
 
@@ -226,11 +226,11 @@ export const useTodoMutation = () => {
 }
 ```
 
-## SSR support
+### SSR support
 
 All atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://tanstack.com/query/v4/docs/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://tanstack.com/query/v4/docs/guides/ssr#using-hydration) or [`initialData`](https://tanstack.com/query/v4/docs/guides/ssr#using-initialdata).
 
-## Error handling
+### Error handling
 
 With `dataAtom`,
 Fetch error will be thrown and can be caught with ErrorBoundary.
@@ -238,7 +238,7 @@ Refetching may recover from a temporary error.
 
 See [a working example](https://codesandbox.io/s/joer59) to learn more.
 
-## Devtools
+### Devtools
 
 In order to use the Devtools, you need to install it additionally.
 
@@ -288,16 +288,16 @@ export const App = () => {
 }
 ```
 
-## Examples
+### Examples
 
-### Basic demo
+#### Basic demo
 
 <CodeSandbox id="vg6e6u" />
 
-### Devtools demo
+#### Devtools demo
 
 <CodeSandbox id="99blcz" />
 
-### Hackernews
+#### Hackernews
 
 <CodeSandbox id="rvrjxg" />

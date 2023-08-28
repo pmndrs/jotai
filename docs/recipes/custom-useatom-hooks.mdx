@@ -6,9 +6,9 @@ keywords: custom,hook
 
 This page shows the ways of creating different utility functions. Utility functions save your time on coding, and you can preserve your base atom for other usage.
 
-## utils
+### utils
 
-### useSelectAtom
+#### useSelectAtom
 
 ```js
 import { useAtomValue } from 'jotai'
@@ -28,7 +28,7 @@ useSelectAtom(
 
 Please note that in this case `keyFn` must be stable, either define outside render or wrap with `useCallback`.
 
-### useFreezeAtom
+#### useFreezeAtom
 
 ```js
 import { useAtom } from 'jotai'
@@ -39,7 +39,7 @@ export function useFreezeAtom(anAtom) {
 }
 ```
 
-### useSplitAtom
+#### useSplitAtom
 
 ```js
 import { useAtom } from 'jotai'
@@ -50,9 +50,9 @@ export function useSplitAtom(anAtom) {
 }
 ```
 
-## integrations
+### integrations
 
-### useFocusAtom
+#### useFocusAtom
 
 ```js
 import { useAtom } from 'jotai'
@@ -70,7 +70,7 @@ useFocusAtom(anAtom) {
 }
 ```
 
-### CodeSandbox
+#### CodeSandbox
 
 <CodeSandbox id="y5wef8" />
 

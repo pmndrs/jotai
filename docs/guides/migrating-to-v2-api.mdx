@@ -12,15 +12,15 @@ Jotai v2 will have a new API.
 
 Unfortunately, there are some breaking changes along with new features.
 
-## What are new features
+### What are new features
 
-### Vanilla library
+#### Vanilla library
 
 Jotai comes with vanilla (non-React) functions
 and React functions separately.
 They are provided from alternate entry points like `jotai/vanilla`.
 
-### Store API
+#### Store API
 
 Jotai exposes store interface so that you can directly manipulate atom values.
 
@@ -40,7 +40,7 @@ const unsub = store.sub(fooAtom, () => {
 
 You can also create your own React Context to pass a store.
 
-### More flexible atom `write` function
+#### More flexible atom `write` function
 
 The write function can accept multiple arguments,
 and return a value.
@@ -55,9 +55,9 @@ atom(
 )
 ```
 
-## What are breaking
+### What are breaking
 
-### Async atoms are no longer special
+#### Async atoms are no longer special
 
 Async atoms are just normal atoms with promise values.
 Atoms getter functions don't resolve promises.
@@ -66,7 +66,7 @@ On the other hand, `useAtom` hook continues to resolve promises.
 Some utils like `splitAtom` expects sync atoms,
 and won't work with async atoms.
 
-### Writable atom type is changed (TypeScript only)
+#### Writable atom type is changed (TypeScript only)
 
 ```ts
 // Old
@@ -78,16 +78,16 @@ WritableAtom<Value, Args extends unknown[], Result>
 
 In general, we should avoid using `WritableAtom` type directly.
 
-### Some functions are dropped
+#### Some functions are dropped
 
 - Provider's `initialValues` prop is removed, because `store` is more flexible.
 - Provider's scope props is removed, because you can create own context.
 - `abortableAtom` util is removed, because the feature is included by default
 - `waitForAll` util is removed, because `Promise.all` just works
 
-## Migration guides
+### Migration guides
 
-### Async atoms
+#### Async atoms
 
 `get` function for read function of async atoms
 doesn't resolve promises, so you have to put `await` or `.then()`.
@@ -95,14 +95,14 @@ doesn't resolve promises, so you have to put `await` or `.then()`.
 In short, the change is something like the following.
 (If you are TypeScript users, types will tell where to changes.)
 
-#### Previous API
+##### Previous API
 
 ```js
 const asyncAtom = atom(async () => 'hello')
 const derivedAtom = atom((get) => get(asyncAtom).toUppercase())
 ```
 
-#### New API
+##### New API
 
 ```js
 const asyncAtom = atom(async () => 'hello')
@@ -111,9 +111,9 @@ const derivedAtom = atom(async (get) => (await get(asyncAtom)).toUppercase())
 const derivedAtom = atom((get) => get(asyncAtom).then((x) => x.toUppercase()))
 ```
 
-### Provider's `initialValues` prop
+#### Provider's `initialValues` prop
 
-#### Previous API
+##### Previous API
 
 ```jsx
 const countAtom = atom(0)
@@ -123,7 +123,7 @@ const countAtom = atom(0)
     ...
 ```
 
-#### New API
+##### New API
 
 ```jsx
 const countAtom = atom(0)
@@ -139,9 +139,9 @@ const HydrateAtoms = ({ initialValues, children }) => {
       ...
 ```
 
-### Provider's `scope` prop
+#### Provider's `scope` prop
 
-#### Previous API
+##### Previous API
 
 ```jsx
 const myScope = Symbol()
@@ -155,7 +155,7 @@ const myScope = Symbol()
   useAtom(..., myScope)
 ```
 
-#### New API
+##### New API
 
 ```jsx
 const MyContext = createContext()
@@ -171,12 +171,12 @@ const store = createStore()
   useAtom(..., { store })
 ```
 
-### `abortableAtom` util
+#### `abortableAtom` util
 
 You no longer need the previous `abortableAtom` util,
 because it's now supported with the normal `atom`.
 
-#### Previous API
+##### Previous API
 
 ```js
 const asyncAtom = abortableAtom(async (get, { signal }) => {
@@ -184,7 +184,7 @@ const asyncAtom = abortableAtom(async (get, { signal }) => {
 }
 ```
 
-#### New API
+##### New API
 
 ```js
 const asyncAtom = atom(async (get, { signal }) => {
@@ -192,18 +192,18 @@ const asyncAtom = atom(async (get, { signal }) => {
 }
 ```
 
-### `waitForAll` util
+#### `waitForAll` util
 
 You no longer need the previous `waitForAll` util,
 because we can use native Promise APIs.
 
-#### Previous API
+##### Previous API
 
 ```js
 const allAtom = waitForAll([fooAtom, barAtom])
 ```
 
-#### New API
+##### New API
 
 ```js
 const allAtom = atom((get) => Promise.all([get(fooAtom), get(barAtom)]))
@@ -211,20 +211,20 @@ const allAtom = atom((get) => Promise.all([get(fooAtom), get(barAtom)]))
 
 Note that creating an atom in render function can cause [infinite loop](../api/atom.mdx#note-about-creating-an-atom-in-render-function)
 
-### `splitAtom` util (or some other utils) with async atoms
+#### `splitAtom` util (or some other utils) with async atoms
 
 `splitAtom` util only accepts sync atoms.
 You need to unwrap async atoms before passing.
 
 This applies to some other utils like `atomsWithQuery` from `jotai-tanstack-query`.
 
-#### Previous API
+##### Previous API
 
 ```js
 const splittedAtom = splitAtom(asyncArrayAtom)
 ```
 
-#### New API
+##### New API
 
 ```js
 const splittedAtom = splitAtom(unwrap(asyncArrayAtom, () => []))
@@ -240,14 +240,14 @@ For more information, refer the following discussions:
 - https://github.com/jotaijs/jotai-tanstack-query/issues/21
 - https://github.com/pmndrs/jotai/discussions/1751
 
-## Some other changes
+### Some other changes
 
-### Utils
+#### Utils
 
 - `atomWithStorage` util's `delayInit` is removed as being default. Also it will always render `initialValue` on first render, and the stored value, if any, on subsequent renders. The new behavior differs from v1. See https://github.com/pmndrs/jotai/discussions/1737 for more information.
 - `useHydrateAtoms` can only accept writable atoms.
 
-### Import statements
+#### Import statements
 
 The v2 API is also provided from alternate entry points for library authors and non-React users.
 

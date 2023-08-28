@@ -7,7 +7,7 @@ nav: 7.12
 Atom configs don't have string keys and we identify them with referential equality.
 In other words, we can use an atom config like a key.
 
-## Storing an atom config in useState
+### Storing an atom config in useState
 
 First things first, we can store an atom config in useState.
 
@@ -44,7 +44,7 @@ const Component = () => {
 }
 ```
 
-## Storing an atom config in atom
+### Storing an atom config in atom
 
 Likewise, we can store an atom config as a value of another atom.
 
@@ -84,7 +84,7 @@ const derivedNameAtom = atom((get) => get(get(showingNameAtom)))
 To avoid confusing what is in atoms, naming atoms explicitly would be important.
 Also, TypeScript type information would be helpful.
 
-## Storing an array of atom configs in atom
+### Storing an array of atom configs in atom
 
 Finally, the atoms in atom pattern is to store an array of atom config into an atom.
 
@@ -122,13 +122,13 @@ only the corresponding Counter component re-renders and no other components re-r
 
 It is important to note that `anAtom.toString()` returns a unique id, which can be used as a `key` in a map.
 
-### Hint for TypeScript users
+#### Hint for TypeScript users
 
 ```jsx
 <Counter countAtom={countAtom} key={`${countAtom}`} />
 ```
 
-## Storing a map of atom configs in atom
+### Storing a map of atom configs in atom
 
 Likewise, we can store an object map instead of an array.
 

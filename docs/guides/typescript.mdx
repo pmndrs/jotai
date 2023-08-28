@@ -5,7 +5,7 @@ nav: 7.02
 keywords: typescript,types
 ---
 
-## Version requirement
+### Version requirement
 
 Jotai uses TypeScript 3.8+ syntax. Upgrade your TypeScript version if you're on 3.7.5 or lower.
 
@@ -14,9 +14,9 @@ Jotai relies heavily on type inferences and requires `strictNullChecks` to be en
 [#802](https://github.com/pmndrs/jotai/issues/802)
 [#838](https://github.com/pmndrs/jotai/issues/838)
 
-## Notes
+### Notes
 
-### Primitive atoms are basically type inferred
+#### Primitive atoms are basically type inferred
 
 ```ts
 const numAtom = atom(0) // primitive number atom
@@ -31,7 +31,7 @@ const numAtom = atom<number | null>(0)
 const arrAtom = atom<string[]>([])
 ```
 
-### Derived atoms can mostly have their types inferred
+#### Derived atoms can mostly have their types inferred
 
 In general, this is the recommended approach since typing derived
 atoms can get a little confusing, particularly for those who are
@@ -62,7 +62,7 @@ const asyncReadWriteAtom = atom(
 )
 ```
 
-### Derived atoms can also be explicitly typed
+#### Derived atoms can also be explicitly typed
 
 If you encounter a situation where you need or want to explicitly
 type your derived atoms, you can do that as well.
@@ -94,7 +94,7 @@ const readWriteAtom = atom<Promise<string>, [number], void>(
 )
 ```
 
-### useAtom is typed based on atom types
+#### useAtom is typed based on atom types
 
 ```ts
 const [num, setNum] = useAtom(primitiveNumAtom)
@@ -102,7 +102,7 @@ const [num] = useAtom(readOnlyNumAtom)
 const [, setNum] = useAtom(writeOnlyNumAtom)
 ```
 
-### Access to the value type of an atom
+#### Access to the value type of an atom
 
 ```ts
 import { ExtractAtomValue, useAtomValue } from 'jotai'
