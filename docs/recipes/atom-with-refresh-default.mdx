@@ -1,0 +1,77 @@
+---
+title: atomWithRefreshAndDefault
+nav: 8.06
+keywords: creators,refresh,default
+---
+
+## atomWithRefreshAndDefault
+
+> This is for an another implementation of [atomWithDefault](../utilities/resettable.mdx#atomwithdefault)
+
+### Look back to atomWithDefault behavior
+
+As you can see in the example code in atomWithDefault section, the two atoms' relation is disconnected after updating created one, `count2Atom = atomWithDefault((get) => get(count1Atom) * 2)`.  
+Let's confirm what's occurred,
+
+- 1. Click "increment count1", then count1 is 2 and count2 is 4
+- 2. Click "increment count2", then count1 is 2 and count2 is 5 (Disconnected!!)
+
+Those atoms have no relation after updating count2Atom. So,
+
+- Click "increment count1", count1 is incremented only
+- Even if you reset count2Atom, these dependency relation never come back
+
+### Motivation
+
+In some cases,
+
+- After disconnecting and resetting, they should come back to their relation
+- Derived atoms should be reset based on updated the original atom
+- We'd like to reset all derived atoms but just want to operate as simply as possible
+
+How do we make those cases?
+Here is a declarative way to create a function to provide a refreshable atom instead of atomWithDefault.
+
+```js
+const refreshCountAtom = atom(0)
+
+const baseDataAtom = atom(1) // original data, e.g. base count1Atom
+const dataAtom = atom(
+  (get) => {
+    get(refreshCountAtom) // it's introduced at atomWithRefresh
+    return get(baseDataAtom)
+  },
+  (get, set, update) => {
+    set(baseDataAtom, update)
+  }
+)
+
+const atomWithRefreshAndDefault = (refreshAtom, getDefault) => {
+  const overwrittenAtom = atom(null)
+  return atom(
+    (get) => {
+      const lastState = get(overwrittenAtom)
+      if (lastState && lastState.refresh === get(refreshAtom)) {
+        return lastState.value
+      }
+      return getDefault(get)
+    },
+    (get, set, update) => {
+      set(overwrittenAtom, { refresh: get(refreshAtom), value: update })
+    }
+  )
+}
+
+// This is an alternative of `atomWithDefault((get) => get(count1Atom) * 2)`
+const refreshableAtom = atomWithRefreshAndDefault(
+  refreshCountAtom,
+  (get) => get(dataAtom) * 2
+)
+
+// You can reset by updating just one atom
+const resetRootAtom = atom(null, (get, set) => {
+  set(refreshCountAtom, get(refreshCountAtom) + 1)
+})
+```
+
+<CodeSandbox id="tcx2mk" />
