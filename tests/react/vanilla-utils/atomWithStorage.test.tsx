@@ -2,7 +2,7 @@ import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
-import { createStore } from 'jotai/vanilla'
+import { atom, createStore } from 'jotai/vanilla'
 import { RESET, atomWithStorage, createJSONStorage } from 'jotai/vanilla/utils'
 
 const resolve: (() => void)[] = []
@@ -444,6 +444,61 @@ describe('atomWithStorage (with browser storage)', () => {
     })
 
     expect(store.get(dummyAtom)).toBe(1)
+  })
+
+  it("should recompute dependents' state after onMount (#2098)", async () => {
+    const store = createStore()
+    let currentValue: string | null = 'true'
+    const mockNativeStorage = {
+      setItem: vi.fn((_key: string, value: string) => (currentValue = value)),
+      getItem: vi.fn(() => currentValue),
+      removeItem: vi.fn(() => (currentValue = null)),
+    }
+
+    const isLoggedAtom = atom(false)
+    const isDevModeStorageAtom = atomWithStorage(
+      'isDevModeStorageAtom',
+      false,
+      createJSONStorage<boolean>(() => mockNativeStorage)
+    )
+    const isDevModeState = atom(
+      (get) => {
+        if (!get(isLoggedAtom)) return false
+        return get(isDevModeStorageAtom)
+      },
+      (get, set, value: boolean) => {
+        set(isDevModeStorageAtom, value)
+      }
+    )
+
+    const DummyComponent = () => {
+      const [isLogged] = useAtom(isLoggedAtom, { store })
+      const [value, setValue] = useAtom(isDevModeState, { store })
+      return isLogged ? (
+        <input
+          type="checkbox"
+          checked={value}
+          onChange={() => setValue(!value)}
+        />
+      ) : null
+    }
+
+    const { getByRole } = render(
+      <StrictMode>
+        <DummyComponent />
+      </StrictMode>
+    )
+
+    act(() => store.set(isLoggedAtom, true))
+
+    const checkbox = getByRole('checkbox') as HTMLInputElement
+
+    expect(store.get(isLoggedAtom)).toBeTruthy()
+    expect(store.get(isDevModeStorageAtom)).toBeTruthy()
+
+    expect(checkbox.checked).toBeTruthy()
+    fireEvent.click(checkbox)
+    expect(checkbox.checked).toBeFalsy()
   })
 })
 

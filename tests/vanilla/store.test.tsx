@@ -372,3 +372,34 @@ it('should update with conditional dependencies (#2084)', async () => {
   store.set(f3, true)
   expect(store.get(f3)).toBe(true)
 })
+
+it("should recompute dependents' state after onMount (#2098)", async () => {
+  const store = createStore()
+
+  const isLoggedAtom = atom(false)
+  const baseAtom = atom(false)
+  baseAtom.onMount = (set) => void set(true)
+  const isDevModeStorageAtom = atom(
+    (get) => get(baseAtom),
+    (_get, set, update: boolean) => void set(baseAtom, update)
+  )
+  const isDevModeState = atom(
+    (get) => {
+      if (!get(isLoggedAtom)) return false
+      return get(isDevModeStorageAtom)
+    },
+    (_get, set, value: boolean) => void set(isDevModeStorageAtom, value)
+  )
+
+  // mount isDevModeState
+  store.sub(isDevModeState, () => {})
+
+  store.set(isLoggedAtom, true)
+
+  expect(store.get(isLoggedAtom)).toBeTruthy()
+  expect(store.get(isDevModeStorageAtom)).toBeTruthy()
+
+  expect(store.get(isDevModeState)).toBeTruthy()
+  store.set(isDevModeState, false)
+  expect(store.get(isDevModeState)).toBeFalsy()
+})

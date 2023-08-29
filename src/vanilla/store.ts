@@ -364,7 +364,7 @@ export const createStore = () => {
         return atomState
       }
       // Otherwise, check if the dependencies have changed.
-      // If all dependencies havne't changed, we can use the cache.
+      // If all dependencies haven't changed, we can use the cache.
       if (
         Array.from(atomState.d).every(
           ([a, s]) => a === atom || readAtomState(a) === s
@@ -572,8 +572,9 @@ export const createStore = () => {
     atom: Atom<Value>,
     initialDependent?: AnyAtom
   ): Mounted => {
+    const prevState = getAtomState(atom)
     // mount dependencies before mounting self
-    getAtomState(atom)?.d.forEach((_, a) => {
+    prevState?.d.forEach((_, a) => {
       const aMounted = mountedMap.get(a)
       if (aMounted) {
         aMounted.t.add(atom) // add dependent
@@ -584,7 +585,7 @@ export const createStore = () => {
       }
     })
     // recompute atom state
-    readAtomState(atom)
+    const currentState = readAtomState(atom)
     // mount self
     const mounted: Mounted = {
       t: new Set(initialDependent && [initialDependent]),
@@ -593,6 +594,15 @@ export const createStore = () => {
     mountedMap.set(atom, mounted)
     if (import.meta.env?.MODE !== 'production') {
       mountedAtoms.add(atom)
+    }
+    // update `initialDependent` if the value has changed during mounting
+    if (
+      initialDependent &&
+      prevState &&
+      currentState !== prevState &&
+      !isEqualAtomValue(prevState, currentState)
+    ) {
+      readAtomState(initialDependent, true)
     }
     // onMount
     if (isActuallyWritableAtom(atom) && atom.onMount) {
