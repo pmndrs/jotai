@@ -570,22 +570,23 @@ export const createStore = () => {
 
   const mountAtom = <Value>(
     atom: Atom<Value>,
-    initialDependent?: AnyAtom
+    initialDependent?: AnyAtom,
+    onMountQueue?: (() => void)[]
   ): Mounted => {
-    const prevState = getAtomState(atom)
+    const queue = onMountQueue || []
     // mount dependencies before mounting self
-    prevState?.d.forEach((_, a) => {
+    getAtomState(atom)?.d.forEach((_, a) => {
       const aMounted = mountedMap.get(a)
       if (aMounted) {
         aMounted.t.add(atom) // add dependent
       } else {
         if (a !== atom) {
-          mountAtom(a, atom)
+          mountAtom(a, atom, queue)
         }
       }
     })
     // recompute atom state
-    const currentState = readAtomState(atom)
+    readAtomState(atom)
     // mount self
     const mounted: Mounted = {
       t: new Set(initialDependent && [initialDependent]),
@@ -595,21 +596,18 @@ export const createStore = () => {
     if (import.meta.env?.MODE !== 'production') {
       mountedAtoms.add(atom)
     }
-    // update `initialDependent` if the value has changed during mounting
-    if (
-      initialDependent &&
-      prevState &&
-      currentState !== prevState &&
-      !isEqualAtomValue(prevState, currentState)
-    ) {
-      readAtomState(initialDependent, true)
-    }
     // onMount
     if (isActuallyWritableAtom(atom) && atom.onMount) {
-      const onUnmount = atom.onMount((...args) => writeAtom(atom, ...args))
-      if (onUnmount) {
-        mounted.u = onUnmount
-      }
+      const { onMount } = atom
+      queue.push(() => {
+        const onUnmount = onMount((...args) => writeAtom(atom, ...args))
+        if (onUnmount) {
+          mounted.u = onUnmount
+        }
+      })
+    }
+    if (!onMountQueue) {
+      queue.forEach((f) => f())
     }
     return mounted
   }
