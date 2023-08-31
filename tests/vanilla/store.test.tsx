@@ -376,30 +376,30 @@ it('should update with conditional dependencies (#2084)', async () => {
 it("should recompute dependents' state after onMount (#2098)", async () => {
   const store = createStore()
 
-  const isLoggedAtom = atom(false)
+  const condAtom = atom(false)
   const baseAtom = atom(false)
-  baseAtom.onMount = (set) => void set(true)
-  const isDevModeStorageAtom = atom(
+  baseAtom.onMount = (set) => set(true)
+  const derivedAtom = atom(
     (get) => get(baseAtom),
-    (_get, set, update: boolean) => void set(baseAtom, update)
+    (_get, set, update: boolean) => set(baseAtom, update)
   )
-  const isDevModeState = atom(
-    (get) => {
-      if (!get(isLoggedAtom)) return false
-      return get(isDevModeStorageAtom)
-    },
-    (_get, set, value: boolean) => void set(isDevModeStorageAtom, value)
+  const finalAtom = atom(
+    (get) => (get(condAtom) ? get(derivedAtom) : undefined),
+    (_get, set, value: boolean) => set(derivedAtom, value)
   )
 
-  // mount isDevModeState
-  store.sub(isDevModeState, () => {})
+  store.sub(finalAtom, () => {}) // mounts finalAtom, but not baseAtom
+  expect(store.get(baseAtom)).toBe(false)
+  expect(store.get(derivedAtom)).toBe(false)
+  expect(store.get(finalAtom)).toBe(undefined)
 
-  store.set(isLoggedAtom, true)
+  store.set(condAtom, true) // mounts baseAtom
+  expect(store.get(baseAtom)).toBe(true)
+  expect(store.get(derivedAtom)).toBe(true)
+  expect(store.get(finalAtom)).toBe(true)
 
-  expect(store.get(isLoggedAtom)).toBeTruthy()
-  expect(store.get(isDevModeStorageAtom)).toBeTruthy()
-
-  expect(store.get(isDevModeState)).toBeTruthy()
-  store.set(isDevModeState, false)
-  expect(store.get(isDevModeState)).toBeFalsy()
+  store.set(finalAtom, false)
+  expect(store.get(baseAtom)).toBe(false)
+  expect(store.get(derivedAtom)).toBe(false)
+  expect(store.get(finalAtom)).toBe(false)
 })
