@@ -4,6 +4,7 @@ type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
 export interface AtomFamily<Param, AtomType> {
   (param: Param): AtomType
+  keys(): IterableIterator<Param>
   remove(param: Param): void
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
 }
@@ -69,5 +70,8 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
       }
     }
   }
+
+  createAtom.keys = () => atoms.keys()
+
   return createAtom
 }
