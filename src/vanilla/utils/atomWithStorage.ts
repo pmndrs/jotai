@@ -85,7 +85,8 @@ export function createJSONStorage<Value>(
   }
   if (
     typeof window !== 'undefined' &&
-    typeof window.addEventListener === 'function'
+    typeof window.addEventListener === 'function' &&
+    window.Storage
   ) {
     storage.subscribe = (key, callback, initialValue) => {
       if (!(getStringStorage() instanceof window.Storage)) {

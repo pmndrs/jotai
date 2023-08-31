@@ -1,4 +1,4 @@
-import kebabCase from 'just-kebab-case';
+import { getAnchor } from '../utils/index.js';
 
 export const H2 = ({ children }) => {
   const anchor = getAnchor(children);
@@ -60,8 +60,4 @@ export const A = ({ href, children, ...rest }) => {
       {children}
     </a>
   );
-};
-
-const getAnchor = (value) => {
-  return typeof value === 'string' ? kebabCase(value.toLowerCase().replaceAll("'", '')) : '';
 };

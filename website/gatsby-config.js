@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 require('dotenv').config();
 
+const kebabCase = require('just-kebab-case');
+const getAnchor = (value) => {
+  return typeof value === 'string' ? kebabCase(value.toLowerCase().replaceAll("'", '')) : '';
+};
+
 const DOCS_QUERY = `
   query {
     allMdx {
@@ -24,8 +29,10 @@ const DOCS_QUERY = `
 const queries = [
   {
     query: DOCS_QUERY,
-    transformer: ({ data }) =>
-      data.allMdx.nodes.map((item) => {
+    transformer: ({ data }) => {
+      const results = [];
+
+      data.allMdx.nodes.forEach((item) => {
         const transformedNode = {
           objectID: item.slug,
           slug: item.slug,
@@ -35,10 +42,34 @@ const queries = [
           excerpt: item.excerpt,
           headings: item.headings.map((heading) => heading.value).join(' '),
           body: item.rawBody.replace(/(<([^>]+)>)/gi, ''),
+          level: 1,
         };
 
-        return transformedNode;
-      }),
+        if (item.slug !== 'introduction') {
+          item.headings
+            .map((heading) => heading.value)
+            .forEach((heading) => {
+              const transformedNode = {
+                objectID: `${item.slug}#${getAnchor(heading)}`,
+                slug: `${item.slug}#${getAnchor(heading)}`,
+                title: heading,
+                description: '',
+                keywords: [],
+                excerpt: '',
+                headings: [],
+                body: '',
+                level: 2,
+              };
+
+              results.push(transformedNode);
+            });
+        }
+
+        results.push(transformedNode);
+      });
+
+      return results;
+    },
     indexName: 'Docs',
     settings: {
       searchableAttributes: [
@@ -84,7 +115,7 @@ module.exports = {
         appId: process.env.GATSBY_ALGOLIA_APP_ID,
         apiKey: process.env.ALGOLIA_ADMIN_KEY,
         queries,
-        skipIndexing: process.env.ALGOLIA_SKIP_INDEXING === 'true',
+        // skipIndexing: process.env.ALGOLIA_SKIP_INDEXING === 'true',
       },
     },
     `gatsby-plugin-sitemap`,

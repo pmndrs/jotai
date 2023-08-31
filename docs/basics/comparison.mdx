@@ -27,15 +27,15 @@ Jotai has two principles.
 - Primitive: Its basic API is simple, like `useState`.
 - Flexible: Atoms can derive another atom and form a graph. Atoms can also be updated by another arbitrary atom. It allows abstracting complex state models.
 
-## How is Jotai different from useContext of React?
+### How is Jotai different from useContext of React?
 
 Jotai's core API is minimalistic and makes it easy to build utilities based upon it.
 
-### Analogy
+#### Analogy
 
 You can view Jotai as a drop-in replacement to `useContext`. Except Jotai is aiming for simplicity, minimalistic API and can do much more than `useContext` & `useState`.
 
-### Usage difference
+#### Usage difference
 
 We can see how we used to share data to children, compared to how we do it with Jotai. But let's use a real-world example where we have multiple `Context` in our app.
 
@@ -96,35 +96,35 @@ const Component2 = () => {
 }
 ```
 
-## How is Jotai different from Zustand?
+### How is Jotai different from Zustand?
 
-### Name
+#### Name
 
 Jotai means "state" in Japanese.
 Zustand means "state" in German.
 
-### Analogy
+#### Analogy
 
 Jotai is like Recoil.
 Zustand is like Redux.
 
-### Where state resides
+#### Where state resides
 
 To hold states,
 Both have stores that can exist either at module level or at context level.
 Jotai is designed to be context first, and module second.
 Zustand is designed to be module first, and context second.
 
-### How to structure state
+#### How to structure state
 
 Jotai state consists of atoms (i.e. bottom-up).
 Zustand state is one object (i.e. top-down).
 
-### Technical difference
+#### Technical difference
 
 The major difference is the state model. Zustand is a single store (although you could create multiple separate stores), while Jotai consists of primitive atoms and allows composing them together. In this sense, it's the matter of programming mental model.
 
-### When to use which
+#### When to use which
 
 - If you need a replacement for useState+useContext, Jotai fits well.
 - If you want a simple module state, Zustand fits well.
@@ -132,26 +132,26 @@ The major difference is the state model. Zustand is a single store (although you
 - If you prefer Redux devtools, Zustand is good to go.
 - If you want to make use of Suspense, Jotai is the one.
 
-## How is Jotai different from Recoil?
+### How is Jotai different from Recoil?
 
 (Disclaimer: the author is not very familiar with Recoil, this may be biased and inaccurate.)
 
-### Developer
+#### Developer
 
 - Jotai is developed with collective work by a few developers in Poimandres (formerly react-spring) org.
 - Recoil is developed by a team at Facebook.
 
-### Basis
+#### Basis
 
 - Jotai is focusing on primitive APIs for easy learning, and it's unopinionated. (The same philosophy with Zustand)
 - Recoil is all-in-one, and it has various cache strategies.
 
-### Technical difference
+#### Technical difference
 
 - Jotai depends on atom object referential identities.
 - Recoil depends on atom string keys.
 
-### When to use which
+#### When to use which
 
 - If you want to learn something new, either should work.
 - If you like Zustand, Jotai would also be pleasant.

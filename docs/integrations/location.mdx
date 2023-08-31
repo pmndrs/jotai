@@ -7,7 +7,7 @@ keywords: location,hash
 
 To deal with `window.location`, we have some functions to create atoms.
 
-## Install
+### Install
 
 You have to install `jotai-location` to use this feature.
 
@@ -131,11 +131,9 @@ This function works only with DOM.
 
 **deserialize** (optional): a custom function to deserialize the hash to the atom value. Defaults to `JSON.parse`.
 
-**delayInit** (optional): delay initialization of the atom to when `onMount` is called. See [#739](https://github.com/pmndrs/jotai/issues/739#issuecomment-929260696). Defaults to `false`.
-
-**replaceState** (optional): when the atom value is changed, replace the current history entry instead of adding a new one. See [#660](https://github.com/pmndrs/jotai/issues/660). Defaults to `false`.
-
 **subscribe** (optional): custom hash change subscribe function
+
+**setHash** (optional): describes how hash gets updated on the side of the browser. Defaults to pushing a new entry to the history via `window.location.hash = searchParams` ([jotai-location#4](https://github.com/jotaijs/jotai-location/pull/4))
 
 ### Examples
 

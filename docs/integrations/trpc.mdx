@@ -7,7 +7,7 @@ keywords: rpc,trpc,typescript,t3
 
 You can use Jotai with [tRPC](https://trpc.io).
 
-## Install
+### Install
 
 You have to install `jotai-trpc`, `@trpc/client` and `@trpc/server` to use the integration.
 
@@ -15,7 +15,7 @@ You have to install `jotai-trpc`, `@trpc/client` and `@trpc/server` to use the i
 yarn add jotai-trpc @trpc/client @trpc/server
 ```
 
-## Usage
+### Usage
 
 ```ts
 import { createTRPCJotai } from 'jotai-trpc'
@@ -32,7 +32,7 @@ const idAtom = atom('foo')
 const queryAtom = trpc.bar.baz.atomWithQuery((get) => get(idAtom))
 ```
 
-## atomWithQuery
+### atomWithQuery
 
 `...atomWithQuery` creates a new atom with "query". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...query` procedure.
 
@@ -79,17 +79,17 @@ const Pokemon = () => {
 }
 ```
 
-### Examples
+#### Examples
 
 <CodeSandbox id="j1vhcg" />
 
-## atomWithMutation
+### atomWithMutation
 
 `...atomWithMutation` creates a new atom with "mutate". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...mutate` procedure.
 
 FIXME: add code example and codesandbox
 
-## atomWithSubscription
+### atomWithSubscription
 
 `...atomWithSubscription` creates a new atom with "subscribe". It internally uses [Vanilla Client](https://trpc.io/docs/vanilla)'s `...subscribe` procedure.
 
