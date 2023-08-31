@@ -39,7 +39,7 @@ jobs:
       - name: Patch for Newer TS
         if: ${{ matrix.typescript == '4.9.5' || matrix.typescript == '4.8.4' }}
         run: |
-          sed -i~ 's/"moduleResolution": "nodenext",/"moduleResolution": "node",/' tsconfig.json
+          sed -i~ 's/"moduleResolution": "\w+",/"moduleResolution": "node",/' tsconfig.json
           sed -i~ 's/"allowImportingTsExtensions": true,//' tsconfig.json
           sed -i~ 's/"jotai": \["\.\/src\/index\.ts"\],/"jotai": [".\/dist\/index.d.ts"],/' tsconfig.json
           sed -i~ 's/"jotai\/\*": \["\.\/src\/\*\.ts"\]/"jotai\/*": [".\/dist\/*.d.ts"]/' tsconfig.json
