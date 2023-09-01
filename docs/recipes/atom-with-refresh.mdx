@@ -1,0 +1,62 @@
+---
+title: atomWithRefresh
+nav: 8.06
+keywords: creators,refresh
+---
+
+> `atomWithRefresh` creates a derived atom that can be force-refreshed, by using
+> the update function.
+
+This is helpful when you need to refresh asynchronous data after performing a
+side effect.
+
+It can also be used to implement "pull to refresh" functionality.
+
+```ts
+import { atom, Getter } from 'jotai'
+
+export function atomWithRefresh<T>(fn: (get: Getter) => T) {
+  const refreshCounter = atom(0)
+
+  return atom(
+    (get) => {
+      get(refreshCounter)
+      return fn(get)
+    },
+    (_, set) => set(refreshCounter, (i) => i + 1)
+  )
+}
+```
+
+Here's how you'd use it to implement an refresh-able source of data:
+
+```js
+import { atomWithRefresh } from 'XXX'
+
+const postsAtom = atomWithRefresh((get) =>
+  fetch('https://jsonplaceholder.typicode.com/posts').then((r) => r.json())
+)
+```
+
+In a component:
+
+```jsx
+const PostsList = () => {
+  const [posts, refreshPosts] = useAtom(postsAtom)
+
+  return (
+    <div>
+      <ul>
+        {posts.map((post) => (
+          <li key={post.id}>{post.title}</li>
+        ))}
+      </ul>
+
+      {/* Clicking this button will re-fetch the posts */}
+      <button type="button" onClick={refreshPosts}>
+        Refresh posts
+      </button>
+    </div>
+  )
+}
+```
