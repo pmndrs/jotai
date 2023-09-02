@@ -403,3 +403,23 @@ it("should recompute dependents' state after onMount (#2098)", async () => {
   expect(store.get(derivedAtom)).toBe(false)
   expect(store.get(finalAtom)).toBe(false)
 })
+
+it('should update derived atoms during write (#2107)', async () => {
+  const store = createStore()
+
+  const baseCountAtom = atom(1)
+  const countAtom = atom(
+    (get) => get(baseCountAtom),
+    (get, set, newValue: number) => {
+      set(baseCountAtom, newValue)
+      if (get(countAtom) !== newValue) {
+        throw new Error('mismatch')
+      }
+    }
+  )
+
+  store.sub(countAtom, () => {})
+  expect(store.get(countAtom)).toBe(1)
+  store.set(countAtom, 2)
+  expect(store.get(countAtom)).toBe(2)
+})
