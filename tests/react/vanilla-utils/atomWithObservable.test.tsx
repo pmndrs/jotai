@@ -8,6 +8,7 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
+const consoleError = console.error
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
   // A workaround for missing performance.mark after using fake timers
@@ -17,11 +18,23 @@ beforeEach(() => {
     performance.clearMarks = (() => {}) as any
     performance.clearMeasures = (() => {}) as any
   }
+  // suppress ErrorBoundary error log
+  console.error = vi.fn((message: unknown, ...optionalParams: unknown[]) => {
+    if (
+      typeof message === 'string' &&
+      (message.includes('Error: Uncaught [Error: Test Error]') ||
+        message.includes('at ErrorBoundary'))
+    ) {
+      return
+    }
+    return consoleError(message, ...optionalParams)
+  })
 })
 
 afterEach(() => {
   vi.runAllTimers()
   vi.useRealTimers()
+  console.error = consoleError
 })
 
 class ErrorBoundary extends Component<
