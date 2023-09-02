@@ -465,9 +465,17 @@ export const createStore = () => {
   const recomputeDependents = (atom: AnyAtom): void => {
     const dependencyMap = new Map<AnyAtom, Set<AnyAtom>>()
     const dirtyMap = new WeakMap<AnyAtom, number>()
+    const getDependents = (a: AnyAtom): Dependents => {
+      const dependents = new Set(mountedMap.get(a)?.t)
+      pendingMap.forEach((_, pendingAtom) => {
+        if (getAtomState(pendingAtom)?.d.has(a)) {
+          dependents.add(pendingAtom)
+        }
+      })
+      return dependents
+    }
     const loop1 = (a: AnyAtom) => {
-      const mounted = mountedMap.get(a)
-      mounted?.t.forEach((dependent) => {
+      getDependents(a).forEach((dependent) => {
         if (dependent !== a) {
           dependencyMap.set(
             dependent,
@@ -480,8 +488,7 @@ export const createStore = () => {
     }
     loop1(atom)
     const loop2 = (a: AnyAtom) => {
-      const mounted = mountedMap.get(a)
-      mounted?.t.forEach((dependent) => {
+      getDependents(a).forEach((dependent) => {
         if (dependent !== a) {
           let dirtyCount = dirtyMap.get(dependent)
           if (dirtyCount) {
