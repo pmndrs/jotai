@@ -1,7 +1,7 @@
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
-import { BehaviorSubject, Observable, Subject, delay, of } from 'rxjs'
+import { BehaviorSubject, Observable, Subject, delay, map, of } from 'rxjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
@@ -794,5 +794,34 @@ describe('atomWithObservable vanilla tests', () => {
     await expect(store.get(async2Atom)).resolves.toBe(3)
 
     unsub()
+  })
+
+  it('can propagate updates with rxjs chains', async () => {
+    const store = createStore()
+
+    const single$ = new Subject<number>()
+    const double$ = single$.pipe(map((n) => n * 2))
+
+    const singleAtom = atomWithObservable(() => single$)
+    const doubleAtom = atomWithObservable(() => double$)
+
+    const unsubs = [
+      store.sub(singleAtom, () => {}),
+      store.sub(doubleAtom, () => {}),
+    ]
+
+    single$.next(1)
+    expect(store.get(singleAtom)).toBe(1)
+    expect(store.get(doubleAtom)).toBe(2)
+
+    single$.next(2)
+    expect(store.get(singleAtom)).toBe(2)
+    expect(store.get(doubleAtom)).toBe(4)
+
+    single$.next(3)
+    expect(store.get(singleAtom)).toBe(3)
+    expect(store.get(doubleAtom)).toBe(6)
+
+    unsubs.forEach((unsub) => unsub())
   })
 })
