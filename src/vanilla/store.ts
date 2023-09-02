@@ -462,10 +462,7 @@ export const createStore = () => {
     }
   }
 
-  const recomputeDependents = (updatedAtoms: Set<AnyAtom>): void => {
-    if (!updatedAtoms.size) {
-      return
-    }
+  const recomputeDependents = (atom: AnyAtom): void => {
     const dependencyMap = new Map<AnyAtom, Set<AnyAtom>>()
     const dirtyMap = new WeakMap<AnyAtom, number>()
     const loop1 = (a: AnyAtom) => {
@@ -481,7 +478,7 @@ export const createStore = () => {
         }
       })
     }
-    updatedAtoms.forEach(loop1)
+    loop1(atom)
     const loop2 = (a: AnyAtom) => {
       const mounted = mountedMap.get(a)
       mounted?.t.forEach((dependent) => {
@@ -507,12 +504,10 @@ export const createStore = () => {
         }
       })
     }
-    updatedAtoms.forEach(loop2)
-    updatedAtoms.clear()
+    loop2(atom)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
-    updatedAtoms: Set<AnyAtom>,
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
@@ -531,13 +526,12 @@ export const createStore = () => {
         const prevAtomState = getAtomState(a)
         const nextAtomState = setAtomValueOrPromise(a, args[0] as V)
         if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
-          updatedAtoms.add(a)
+          recomputeDependents(a)
         }
       } else {
-        r = writeAtomState(updatedAtoms, a as AnyWritableAtom, ...args) as R
+        r = writeAtomState(a as AnyWritableAtom, ...args) as R
       }
       if (!isSync) {
-        recomputeDependents(updatedAtoms)
         const flushed = flushPending()
         if (import.meta.env?.MODE !== 'production') {
           storeListenersRev2.forEach((l) =>
@@ -556,9 +550,7 @@ export const createStore = () => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
-    const updatedAtoms = new Set<AnyAtom>()
-    const result = writeAtomState(updatedAtoms, atom, ...args)
-    recomputeDependents(updatedAtoms)
+    const result = writeAtomState(atom, ...args)
     const flushed = flushPending()
     if (import.meta.env?.MODE !== 'production') {
       storeListenersRev2.forEach((l) =>
@@ -761,14 +753,12 @@ export const createStore = () => {
       dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
       dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
       dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => {
-        const updatedAtoms = new Set<AnyAtom>()
         for (const [atom, valueOrPromise] of values) {
           if (hasInitialValue(atom)) {
             setAtomValueOrPromise(atom, valueOrPromise)
-            updatedAtoms.add(atom)
+            recomputeDependents(atom)
           }
         }
-        recomputeDependents(updatedAtoms)
         const flushed = flushPending()
         storeListenersRev2.forEach((l) =>
           l({ type: 'restore', flushed: flushed as Set<AnyAtom> })
