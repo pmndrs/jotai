@@ -2237,10 +2237,10 @@
   dependencies:
     defer-to-connect "^2.0.0"
 
-"@tailwindcss/forms@^0.5.3":
-  version "0.5.5"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/forms/-/forms-0.5.5.tgz#2965ee74159a16b5ef012d5eddae20c9b48aa49c"
-  integrity sha512-03sXK1DcPt44GZ0Yg6AcAfQln89IKdbE79g2OwoKqBm1ukaadLO2AH3EiB3mXHeQnxa3tzm7eE0x7INXSjbuug==
+"@tailwindcss/forms@^0.5.6":
+  version "0.5.6"
+  resolved "https://registry.yarnpkg.com/@tailwindcss/forms/-/forms-0.5.6.tgz#29c6c2b032b363e0c5110efed1499867f6d7e868"
+  integrity sha512-Fw+2BJ0tmAwK/w01tEFL5TiaJBX1NLT1/YbWgvm7ws3Qcn11kiXxzNTEQDMs5V3mQemhB56l3u0i9dwdzSQldA==
   dependencies:
     mini-svg-data-uri "^1.2.3"
 
@@ -7267,10 +7267,10 @@ jotai-immer@^0.2.0:
   resolved "https://registry.yarnpkg.com/jotai-immer/-/jotai-immer-0.2.0.tgz#9bfa1a5a7911c5b222d22a8388a801c05bc06c65"
   integrity sha512-hahK8EPiROS9RoNWmX/Z8rY9WkAijspX4BZ1O7umpcwI4kPNkbcCpu/PhiQ8FMcpEcF6KmbpbMpSSj/GFmo8NA==
 
-jotai@^2.0.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/jotai/-/jotai-2.4.0.tgz#3f0b30fa54dfb4b4bb22141264512bccca5f5149"
-  integrity sha512-NUHJdAJe3C8Prf0DD6EzezCATjkNvfCNI7pgkaX7bCPPsqE0oK8L9RzZsEhz/UxFoGRayXwacTvAli0VEYKkqQ==
+jotai@^2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/jotai/-/jotai-2.4.1.tgz#16f469f0a50f5fc34bcf033dffcaa582a10089d0"
+  integrity sha512-S4CTLpsZV+LABBXL5PgkMl+5jK3ljfbWmcLqtN7CQ2vio/Hrg3T6IKk/vf2/9hnp1imTPDsaFv7D54de/7Sa+w==
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
@@ -9034,10 +9034,10 @@ postcss-value-parser@^4.0.0, postcss-value-parser@^4.1.0, postcss-value-parser@^
   resolved "https://registry.yarnpkg.com/postcss-value-parser/-/postcss-value-parser-4.2.0.tgz#723c09920836ba6d3e5af019f92bc0971c02e514"
   integrity sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==
 
-postcss@^8.2.15, postcss@^8.2.9, postcss@^8.3.11, postcss@^8.4.16, postcss@^8.4.23:
-  version "8.4.28"
-  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.4.28.tgz#c6cc681ed00109072816e1557f889ef51cf950a5"
-  integrity sha512-Z7V5j0cq8oEKyejIKfpD8b4eBy9cwW2JWPk0+fB1HOAMsfHbnAXLLS+PfVWlzMSLQaWttKDt607I0XHmpE67Vw==
+postcss@^8.2.15, postcss@^8.2.9, postcss@^8.3.11, postcss@^8.4.23, postcss@^8.4.29:
+  version "8.4.29"
+  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.4.29.tgz#33bc121cf3b3688d4ddef50be869b2a54185a1dd"
+  integrity sha512-cbI+jaqIeu/VGqXEarWkRCCffhjgXc0qjBtXpqJhTBohMUjUQnbBr0xqX3vEKudc4iviTewcJo5ajcec5+wdJw==
   dependencies:
     nanoid "^3.3.6"
     picocolors "^1.0.0"
@@ -9083,15 +9083,15 @@ prepend-http@^2.0.0:
   resolved "https://registry.yarnpkg.com/prepend-http/-/prepend-http-2.0.0.tgz#e92434bfa5ea8c19f41cdfd401d741a3c819d897"
   integrity sha512-ravE6m9Atw9Z/jjttRUZ+clIXogdghyZAuWJ3qEzjT+jI/dL1ifAqhZeC5VHzQp1MSt1+jxKkFNemj/iO7tVUA==
 
-prettier-plugin-tailwindcss@^0.2.2:
-  version "0.2.8"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-tailwindcss/-/prettier-plugin-tailwindcss-0.2.8.tgz#e9c0356680331f909a86fefe8fc2b247c21e23a2"
-  integrity sha512-KgPcEnJeIijlMjsA6WwYgRs5rh3/q76oInqtMXBA/EMcamrcYJpyhtRhyX1ayT9hnHlHTuO8sIifHF10WuSDKg==
+prettier-plugin-tailwindcss@^0.5.4:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-tailwindcss/-/prettier-plugin-tailwindcss-0.5.4.tgz#ebfacbcb90e2ca1df671ffe4083e99f81d72040d"
+  integrity sha512-QZzzB1bID6qPsKHTeA9qPo1APmmxfFrA5DD3LQ+vbTmAnY40eJI7t9Q1ocqel2EKMWNPLJqdTDWZj1hKYgqSgg==
 
-prettier@^2.7.1:
-  version "2.8.8"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.8.8.tgz#e8c5d7e98a4305ffe3de2e1fc4aca1a71c28b1da"
-  integrity sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==
+prettier@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.0.3.tgz#432a51f7ba422d1469096c0fdc28e235db8f9643"
+  integrity sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==
 
 pretty-bytes@^5.3.0, pretty-bytes@^5.4.1:
   version "5.6.0"

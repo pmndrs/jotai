@@ -31,7 +31,7 @@
     "gatsby-plugin-postcss": "^5.23.0",
     "gatsby-plugin-sitemap": "^5.23.0",
     "gatsby-source-filesystem": "^4.23.0",
-    "jotai": "^2.0.0",
+    "jotai": "^2.4.1",
     "jotai-immer": "^0.2.0",
     "just-kebab-case": "^4.1.1",
     "just-throttle": "^4.1.1",
@@ -42,14 +42,14 @@
     "react-remove-scroll": "^2.5.5"
   },
   "devDependencies": {
-    "@tailwindcss/forms": "^0.5.3",
+    "@tailwindcss/forms": "^0.5.6",
     "autoprefixer": "^10.4.11",
     "babel-preset-gatsby": "^2.23.0",
-    "postcss": "^8.4.16",
+    "postcss": "^8.4.29",
     "postcss-import": "^15.0.0",
     "postmark": "^3.0.14",
-    "prettier": "^2.7.1",
-    "prettier-plugin-tailwindcss": "^0.2.2",
+    "prettier": "^3.0.3",
+    "prettier-plugin-tailwindcss": "^0.5.4",
     "tailwindcss": "^3.1.8"
   },
   "private": true,
