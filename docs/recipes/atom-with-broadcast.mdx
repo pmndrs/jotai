@@ -8,10 +8,9 @@ keywords: creators,broadcast
 > browser tabs and frames, similar to `atomWithStorage` but with the
 > initialization limitation.
 
-This can be useful when you want the state to interact with each other without
-the use of localStorage and that by just using The Broadcast Channel API allows
-basic communication between browsing contexts (that is, windows, tabs, frames,
-create a component or iframes) and workers on the same origin. According to the MDN documentation receiving a message in initialization is not supported in broadcast and if we want to support that we may need to add extra stuff to atomWithBroadcast (like local storage).
+This can be useful when you want states to interact with each other without the use of localStorage.
+By using the BroadcastChannel API, you can enable basic communication between browsing contexts such as windows, tabs, frames, components, or iframes, and workers on the same origin.
+According to the MDN documentation, receiving a message during initialization is not supported in the BroadcastChannel, but if you want to support that functionality, you may need to add extra option to atomWithBroadcast, such as local storage.
 
 ```tsx
 import { atom } from 'jotai'
