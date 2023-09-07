@@ -11,6 +11,7 @@
     "exactOptionalPropertyTypes": true,
     "baseUrl": ".",
     "skipLibCheck": true,
+    "noEmit": true,
     "paths": {
       "jotai": ["./src/index.ts"],
       "jotai/*": ["./src/*.ts"]
