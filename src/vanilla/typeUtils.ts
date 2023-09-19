@@ -1,5 +1,5 @@
-import type { Atom, WritableAtom } from './atom.ts'
 import type { SetStateAction } from 'react'
+import type { Atom, WritableAtom } from './atom.ts'
 
 export type Getter = Parameters<Atom<unknown>['read']>[0]
 export type Setter = Parameters<
