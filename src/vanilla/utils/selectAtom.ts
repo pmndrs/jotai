@@ -10,8 +10,16 @@ const memo3 = <T>(
   dep2: object,
   dep3: object
 ): T => {
-  const cache2 = getCached(() => new WeakMap(), cache1, dep1)
-  const cache3 = getCached(() => new WeakMap(), cache2, dep2)
+  const cache2: WeakMap<object, WeakMap<object, T>> = getCached(
+    () => new WeakMap(),
+    cache1,
+    dep1
+  )
+  const cache3: WeakMap<object, T> = getCached(
+    () => new WeakMap(),
+    cache2,
+    dep2
+  )
   return getCached(create, cache3, dep3)
 }
 

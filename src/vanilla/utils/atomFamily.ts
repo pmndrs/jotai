@@ -2,7 +2,7 @@ import type { Atom } from '../../vanilla.ts'
 
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
-export interface AtomFamily<Param, AtomType> {
+export interface AtomFamily<Param, AtomType extends Atom<unknown>> {
   (param: Param): AtomType
   remove(param: Param): void
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void

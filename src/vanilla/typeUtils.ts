@@ -1,4 +1,5 @@
-import type { Atom, PrimitiveAtom, WritableAtom } from './atom.ts'
+import type { Atom, WritableAtom } from './atom.ts'
+import type { SetStateAction } from 'react'
 
 export type Getter = Parameters<Atom<unknown>['read']>[0]
 export type Setter = Parameters<
@@ -25,4 +26,4 @@ export type ExtractAtomResult<AtomType> = AtomType extends WritableAtom<
   ? Result
   : never
 
-export type SetStateAction<Value> = ExtractAtomArgs<PrimitiveAtom<Value>>[0]
+export type { SetStateAction }
