@@ -131,7 +131,6 @@
     "@testing-library/user-event": "^14.4.3",
     "@types/babel__core": "^7.20.1",
     "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.6.0",
     "@typescript-eslint/parser": "^6.6.0",
     "@vitest/coverage-v8": "^0.34.3",
@@ -152,7 +151,6 @@
     "json": "^11.0.0",
     "prettier": "^3.0.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "redux": "^4.2.1",
     "rollup": "^3.29.0",
     "rollup-plugin-esbuild": "^5.0.0",
@@ -170,10 +168,10 @@
     "react": ">=17.0.0"
   },
   "peerDependenciesMeta": {
-    "react": {
+    "@types/react": {
       "optional": true
     },
-    "@types/react": {
+    "react": {
       "optional": true
     }
   }
