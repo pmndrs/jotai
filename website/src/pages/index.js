@@ -136,8 +136,10 @@ pnpm install jotai
 npm install --save-dev @swc-jotai/react-refresh
 
 # next.config.js
-experimental: {
-  swcPlugins: [['@swc-jotai/react-refresh', {}]],
+module.exports = {
+  experimental: {
+    swcPlugins: [['@swc-jotai/react-refresh', {}]],
+  },
 }
 `}</Code>
       <h3>Next.js (Babel)</h3>
