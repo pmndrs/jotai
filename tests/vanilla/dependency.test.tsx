@@ -72,3 +72,24 @@ it('correctly updates async derived atom after get/set update', async () => {
   derived = await store.get(derivedAsyncAtom)
   expect(derived).toBe(3)
 })
+
+it('correctly handles the same promise being returned twice from an atom getter (#2151)', async () => {
+  const asyncDataAtom = atom(async () => {
+    return 'Asynchronous Data'
+  })
+
+  const counterAtom = atom(0)
+
+  const derivedAtom = atom((get) => {
+    get(counterAtom) // depending on sync data
+    return get(asyncDataAtom) // returning a promise from another atom
+  })
+
+  const store = createStore()
+
+  store.get(derivedAtom)
+  // setting the `counterAtom` dependency on the same JS event loop cycle, before
+  // the `derivedAtom` promise resolves.
+  store.set(counterAtom, 1)
+  await expect(store.get(derivedAtom)).resolves.toBe('Asynchronous Data')
+})
