@@ -73,7 +73,7 @@ it('correctly updates async derived atom after get/set update', async () => {
   expect(derived).toBe(3)
 })
 
-it('correctly handles the same promise being returned twice from an atom getter', async () => {
+it('correctly handles the same promise being returned twice from an atom getter (#2151)', async () => {
   const asyncDataAtom = atom(async () => {
     return 'Asynchronous Data'
   })
