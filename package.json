@@ -128,7 +128,7 @@
     "@rollup/plugin-typescript": "^11.1.4",
     "@testing-library/dom": "^9.3.3",
     "@testing-library/react": "^14.0.0",
-    "@testing-library/user-event": "^14.5.1",
+    "@testing-library/user-event": "14.5.0",
     "@types/babel__core": "^7.20.2",
     "@types/react": "^18.2.23",
     "@types/react-dom": "^18.2.8",
