@@ -181,7 +181,6 @@ export const createStore = () => {
             ? atomState.v
             : Promise.resolve(atomState.v)
           : Promise.reject(atomState.e)
-
       if (prevAtomState.v !== next) {
         cancelPromise(prevAtomState.v, next)
       }
