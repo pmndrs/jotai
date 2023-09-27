@@ -12,14 +12,15 @@ Ref: https://github.com/pmndrs/jotai/issues/60
 ### Usage
 
 ```ts
-useAtomCallback(
-  callback: (get: Getter, set: Setter, arg: Arg) => Result
-): (arg: Arg) => Promise<Result>
+useAtomCallback<Result, Args extends unknown[]>(
+  callback: (get: Getter, set: Setter, ...arg: Args) => Result,
+  options?: Options
+): (...args: Args) => Result
 ```
 
-This hook allows to interact with atoms imperatively.
+This hook is for interacting with atoms imperatively.
 It takes a callback function that works like atom write function,
-and returns a function that returns a promise.
+and returns a function that returns an atom value.
 
 The callback to pass in the hook must be stable (should be wrapped with useCallback).
 
@@ -52,7 +53,7 @@ const Monitor = () => {
   )
   useEffect(() => {
     const timer = setInterval(async () => {
-      console.log(await readCount())
+      console.log(readCount())
     }, 1000)
     return () => {
       clearInterval(timer)
