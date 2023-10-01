@@ -5,6 +5,96 @@ nav: 4.08
 keywords: scope
 ---
 
+There are a few libraries to extend Jotai's usage in React.
+
+## `jotai-scope`
+
+While Jotai's Provider allows to scope Jotai's store under a subtree,
+we can't use the store above the tree within the subtree.
+
+A workaround is to use `store` option in useAtom and other hooks.
+To ease such use cases, `jotai-scope` provides a
+scoped provider and hooks.
+Instead of specifying the `store` option,
+the scoped provider accepts `atoms` prop
+and the use of those atoms is scoped within the subtree.
+
+### Install
+
+```
+yarn add jotai-scope
+```
+
+### Counter Example
+
+```tsx
+import {
+  Provider as ScopedProvider,
+  useAtom as useScopedAtom,
+} from 'jotai-scope'
+import { atom, useAtom } from 'jotai'
+import {
+  Provider as ScopedProvider,
+  useAtom as useScopedAtom,
+} from 'jotai-scope'
+
+const countAtom = atom(0)
+const anotherCountAtom = atom(0)
+
+const Counter = () => {
+  const [count, setCount] = useAtom(countAtom)
+  const [anotherCount, setAnotherCount] = useScopedAtom(anotherCountAtom)
+  return (
+    <>
+      <div>
+        <span>count: {count}</span>
+        <button type="button" onClick={() => setCount((c) => c + 1)}>
+          increment
+        </button>
+      </div>
+      <div>
+        <span>another count: {anotherCount}</span>
+        <button type="button" onClick={() => setAnotherCount((c) => c + 1)}>
+          increment
+        </button>
+      </div>
+    </>
+  )
+}
+
+const App = () => (
+  <div>
+    <h1>First Provider</h1>
+    <ScopedProvider atoms={[anotherCountAtom]}>
+      <Counter />
+    </ScopedProvider>
+    <h1>Second Provider</h1>
+    <ScopedProvider atoms={[anotherCountAtom]}>
+      <Counter />
+    </ScopedProvider>
+  </div>
+)
+```
+
+<CodeSandbox id="k5gfvl" />
+
+## `createIsolation`
+
+Both Jotai's Provider and `jotai-scope`'s scoped provider
+are still using global contexts.
+
+If you are developing a library that depends on Jotai and
+the library user may use Jotai separately in their apps,
+they can share the same context. This can be troublesome
+because they point to unexpected Jotai stores.
+
+To avoid conflicting the contexts,
+a utility function called `createIsolation` is exported from `jotai-scope`.
+
+Check out the example in the repo: https://github.com/jotaijs/jotai-scope/tree/main/examples/01_isolation
+
+## `bunshi` (formerly `jotai-molecules`)
+
 Jotai atoms provide a basic solution to optimize re-renders.
 Atoms defined globally can depend on other atoms,
 but they can't depend on props and state within a component tree.
@@ -12,27 +102,22 @@ It's possible to define atoms within a component tree,
 but then you would need to pass those atoms in some ways
 (for example, [atoms-in-atom](../guides/atoms-in-atom.mdx).)
 
-[jotai-molecules](https://github.com/saasquatch/jotai-molecules) is
+[bunshi](https://github.com/saasquatch/bunshi) is
 a third-party library to help such use cases.
 
-See [Motivation](https://github.com/saasquatch/jotai-molecules#motivation) for more details.
+See [Motivation](https://github.com/saasquatch/bunshi/tree/v1.1.1#motivation) for more details.
 
 ### Install
 
 ```
-yarn add jotai-molecules
+yarn add bunshi
 ```
 
 ### Counter Example
 
 ```jsx
 import { atom, useAtom } from 'jotai'
-import {
-  molecule,
-  useMolecule,
-  createScope,
-  ScopeProvider,
-} from 'jotai-molecules'
+import { molecule, useMolecule, createScope, ScopeProvider } from 'bunshi/react'
 
 const InitialCountScope = createScope(0)
 const countMolecule = molecule((getMol, getScope) => {
