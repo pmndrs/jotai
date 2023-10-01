@@ -120,7 +120,7 @@ npm i jotai
 yarn add jotai
 
 # pnpm
-pnpm install jotai
+pnpm add jotai
 `}</Code>
     </section>
   ),
