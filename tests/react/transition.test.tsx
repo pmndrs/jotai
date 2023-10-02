@@ -10,6 +10,7 @@ import { atom } from 'jotai/vanilla'
 const { use, useTransition } = ReactExports
 
 describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
+  // FIXME some tests are failing with react@experimental
   it.skipIf(typeof use === 'function')(
     'no extra commit with useTransition (#1125)',
     async () => {
