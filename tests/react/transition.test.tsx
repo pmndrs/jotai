@@ -9,65 +9,64 @@ import { atom } from 'jotai/vanilla'
 
 const { use, useTransition } = ReactExports
 
-const describeWithUseTransition =
-  typeof useTransition === 'function' ? describe : describe.skip
-
-// FIXME some tests are failing with react@experimental
-const itWithoutUse = typeof use === 'function' ? it.skip : it
-
-describeWithUseTransition('useTransition', () => {
-  itWithoutUse('no extra commit with useTransition (#1125)', async () => {
-    const countAtom = atom(0)
-    let resolve = () => {}
-    const delayedAtom = atom(async (get) => {
-      await new Promise<void>((r) => (resolve = r))
-      return get(countAtom)
-    })
-
-    const commited: { pending: boolean; delayed: number }[] = []
-
-    const Counter = () => {
-      const setCount = useSetAtom(countAtom)
-      const delayed = useAtomValue(delayedAtom)
-      const [pending, startTransition] = useTransition()
-      useEffect(() => {
-        commited.push({ pending, delayed })
+describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
+  // FIXME some tests are failing with react@experimental
+  it.skipIf(typeof use === 'function')(
+    'no extra commit with useTransition (#1125)',
+    async () => {
+      const countAtom = atom(0)
+      let resolve = () => {}
+      const delayedAtom = atom(async (get) => {
+        await new Promise<void>((r) => (resolve = r))
+        return get(countAtom)
       })
-      return (
+
+      const commited: { pending: boolean; delayed: number }[] = []
+
+      const Counter = () => {
+        const setCount = useSetAtom(countAtom)
+        const delayed = useAtomValue(delayedAtom)
+        const [pending, startTransition] = useTransition()
+        useEffect(() => {
+          commited.push({ pending, delayed })
+        })
+        return (
+          <>
+            <div>delayed: {delayed}</div>
+            <button
+              onClick={() => startTransition(() => setCount((c) => c + 1))}>
+              button
+            </button>
+          </>
+        )
+      }
+
+      const { getByText } = render(
         <>
-          <div>delayed: {delayed}</div>
-          <button onClick={() => startTransition(() => setCount((c) => c + 1))}>
-            button
-          </button>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
         </>
       )
-    }
 
-    const { getByText } = render(
-      <>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </>
-    )
-
-    resolve()
-    await waitFor(() => expect(getByText('delayed: 0')).toBeTruthy())
-
-    await userEvent.click(getByText('button'))
-
-    act(() => {
       resolve()
-    })
+      await waitFor(() => expect(getByText('delayed: 0')).toBeTruthy())
 
-    await waitFor(() => expect(getByText('delayed: 1')).toBeTruthy())
+      await userEvent.click(getByText('button'))
 
-    expect(commited).toEqual([
-      { pending: false, delayed: 0 },
-      { pending: true, delayed: 0 },
-      { pending: false, delayed: 1 },
-    ])
-  })
+      act(() => {
+        resolve()
+      })
+
+      await waitFor(() => expect(getByText('delayed: 1')).toBeTruthy())
+
+      expect(commited).toEqual([
+        { pending: false, delayed: 0 },
+        { pending: true, delayed: 0 },
+        { pending: false, delayed: 1 },
+      ])
+    }
+  )
 
   it('can update normal atom with useTransition (#1151)', async () => {
     const countAtom = atom(0)
