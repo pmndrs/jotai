@@ -42,7 +42,6 @@ const Counter = () => {
   return (
     <>
       count: {state.count}
-      proxyState: {proxyState.count}
       <button
         onClick={() =>
           setState((prev) => ({ ...prev, count: prev.count + 1 }))
