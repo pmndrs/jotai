@@ -32,7 +32,7 @@ It's two-way binding and you can change the value from both ends.
 ```jsx
 import { useAtom } from 'jotai'
 import { atomWithProxy } from 'jotai-valtio'
-import { proxy } from 'valtio/vanilla'
+import { proxy } from 'valtio/vanilla'	
 
 const proxyState = proxy({ count: 0 })
 const stateAtom = atomWithProxy(proxyState)
@@ -42,11 +42,18 @@ const Counter = () => {
   return (
     <>
       count: {state.count}
+      proxyState: {proxyState.count}
       <button
         onClick={() =>
           setState((prev) => ({ ...prev, count: prev.count + 1 }))
         }>
-        button
+        inc atom
+      </button>
+      <button
+        onClick={() => {
+          ++proxyState.count
+        }}>
+        inc proxy
       </button>
     </>
   )
@@ -82,7 +89,7 @@ const countProxyAtom = mutableAtom(0)
 
 function IncrementButton() {
   const countProxy = useAtomValue(countProxyAtom)
-  return <button onClick={() => countProxy.value++}>+</button>
+  return <button onClick={() => ++countProxy.value}>+</button>
 }
 ```
 
@@ -110,11 +117,11 @@ const countProxyAtom = mutableAtom(0)
 atom(
   (get) => {
     const countProxy = get(countProxyAtom)
-    countProxy.value++ // This will cause an infinite loop
+    ++countProxy.value // This will cause an infinite loop
   },
   (get, set) => {
     const countProxy = get(countProxyAtom)
-    countProxy.value++ // This is fine
+    ++countProxy.value // This is fine
   }
 )
 ```
