@@ -32,7 +32,7 @@ It's two-way binding and you can change the value from both ends.
 ```jsx
 import { useAtom } from 'jotai'
 import { atomWithProxy } from 'jotai-valtio'
-import { proxy } from 'valtio/vanilla'	
+import { proxy } from 'valtio/vanilla'
 
 const proxyState = proxy({ count: 0 })
 const stateAtom = atomWithProxy(proxyState)
