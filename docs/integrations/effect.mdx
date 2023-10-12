@@ -5,8 +5,6 @@ nav: 4.03
 keywords: effect, atom effect, side effect, side-effect, sideeffect
 ---
 
-# Effect
-
 [jotai-effect](https://github.com/jotaijs/jotai-effect) is a utility package for reactive side effects.
 
 ## install
@@ -86,9 +84,9 @@ function MyComponent() {
 - **Cleanup Function:**
   The cleanup function is invoked on unmount or before re-evaluation.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   atomEffect((get, set) => {
@@ -97,14 +95,14 @@ function MyComponent() {
   })
   ```
 
-      </details>
+  </details>
 
 - **Resistent To Infinite Loops:**
   `atomEffect` does not rerun when it changes a value that it is watching.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   const countAtom = atom(0)
@@ -114,15 +112,14 @@ function MyComponent() {
     set(countAtom, increment)
   })
   ```
-
-      </details>
+  </details>
 
 - **Executes In The Next Microtask:**
   `effectFn` runs in the next available microtask, after all Jotai synchronous read evaluations have completed.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   const countAtom = atom(0)
@@ -139,15 +136,14 @@ function MyComponent() {
   })
   store.set(setCountAndReadLog)
   ```
-
-      </details>
+  </details>
 
 - **Batches Synchronous Updates (Atomic Transactions):**
   Multiple synchronous updates to `atomEffect` atom dependencies are batched. The effect is run with the final values as a single atomic transaction.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   const enabledAtom = atom(false)
@@ -163,15 +159,14 @@ function MyComponent() {
   store.set(updateLettersAndNumbers)
   store.get(combos) // [[false, 0], [true, 1]]
   ```
-
-      </details>
+  </details>
 
 - **Conditionally Running atomEffect:**
   `atomEffect` is active only when it is mounted within the application. This prevents unnecessary computations and side effects when they are not needed. You can disable the effect by unmounting it.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   atom((get) => {
@@ -180,15 +175,14 @@ function MyComponent() {
     }
   })
   ```
-
-      </details>
+  </details>
 
 - **Idempotent:**
   `atomEffect` runs once when state changes regardless of how many times it is mounted.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   let i = 0
@@ -205,8 +199,7 @@ function MyComponent() {
     console.log(i) // 1
   })
   ```
-
-      </details>
+  </details>
 
 ### Dependency Management
 
@@ -215,9 +208,9 @@ Aside from mount events, the effect runs when any of its dependencies change val
 - **Sync:**
   All atoms accessed with `get` during the synchronous evaluation of the effect are added to the atom's internal dependency map.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   const asyncEffect = atomEffect((get, set) => {
@@ -228,15 +221,14 @@ Aside from mount events, the effect runs when any of its dependencies change val
     }, 5000)
   })
   ```
-
-      </details>
+  </details>
 
 - **Async:**
   For effects that return a promise, all atoms accessed with `get` prior to the returned promise resolving are added to the atom's internal dependency map. Atoms that have been watched after the promise has resolved, for instance in a `setTimeout`, are not included in the dependency map.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   const asyncEffect = atomEffect(async (get, set) => {
@@ -248,15 +240,14 @@ Aside from mount events, the effect runs when any of its dependencies change val
     }, 5000)
   })
   ```
-
-      </details>
+  </details>
 
 - **Cleanup:**
   Accessing atoms with `get` in the cleanup function does not add them to the atom's internal dependency map.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   const asyncEffect = atomEffect((get, set) => {
@@ -271,15 +262,14 @@ Aside from mount events, the effect runs when any of its dependencies change val
     }
   })
   ```
-
-      </details>
+  </details>
 
 - **Recalculation of Dependency Map:**
   The dependency map is recalculated on every run. If an atom was not watched during the current run, it will not be in the current run's dependency map. Only actively watched atoms are considered dependencies.
 
-      <details>
-
-  <summary>Example</summary>
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
   ```js
   const isEnabledAtom = atom(true)
@@ -294,9 +284,4 @@ Aside from mount events, the effect runs when any of its dependencies change val
     }
   })
   ```
-
-      </details>
-
-```
-
-```
+  </details>
