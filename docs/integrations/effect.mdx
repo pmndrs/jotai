@@ -112,6 +112,7 @@ function MyComponent() {
     set(countAtom, increment)
   })
   ```
+
   </details>
 
 - **Executes In The Next Microtask:**
@@ -136,6 +137,7 @@ function MyComponent() {
   })
   store.set(setCountAndReadLog)
   ```
+
   </details>
 
 - **Batches Synchronous Updates (Atomic Transactions):**
@@ -159,6 +161,7 @@ function MyComponent() {
   store.set(updateLettersAndNumbers)
   store.get(combos) // [[false, 0], [true, 1]]
   ```
+
   </details>
 
 - **Conditionally Running atomEffect:**
@@ -175,6 +178,7 @@ function MyComponent() {
     }
   })
   ```
+
   </details>
 
 - **Idempotent:**
@@ -199,6 +203,7 @@ function MyComponent() {
     console.log(i) // 1
   })
   ```
+
   </details>
 
 ### Dependency Management
@@ -221,6 +226,7 @@ Aside from mount events, the effect runs when any of its dependencies change val
     }, 5000)
   })
   ```
+
   </details>
 
 - **Async:**
@@ -240,6 +246,7 @@ Aside from mount events, the effect runs when any of its dependencies change val
     }, 5000)
   })
   ```
+
   </details>
 
 - **Cleanup:**
@@ -262,6 +269,7 @@ Aside from mount events, the effect runs when any of its dependencies change val
     }
   })
   ```
+
   </details>
 
 - **Recalculation of Dependency Map:**
@@ -284,4 +292,5 @@ Aside from mount events, the effect runs when any of its dependencies change val
     }
   })
   ```
+
   </details>
