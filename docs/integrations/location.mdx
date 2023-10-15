@@ -133,7 +133,7 @@ This function works only with DOM.
 
 **subscribe** (optional): custom hash change subscribe function
 
-**setHash** (optional): describes how hash gets updated on the side of the browser. Defaults to pushing a new entry to the history via `window.location.hash = searchParams` ([jotai-location#4](https://github.com/jotaijs/jotai-location/pull/4))
+**setHash** (optional): `replaceState` or a custom function that describes how hash gets updated on the side of the browser. Defaults to pushing a new entry to the history via `window.location.hash = searchParams` ([jotai-location#4](https://github.com/jotaijs/jotai-location/pull/4))
 
 ### Examples
 
