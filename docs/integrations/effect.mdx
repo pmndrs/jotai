@@ -297,16 +297,28 @@ Aside from mount events, the effect runs when any of its dependencies change val
 
 ### Comparison with useEffect
 
+#### Component Side Effects
+
 [useEffect](https://react.dev/reference/react/useEffect) is a React Hook that lets you synchronize a component with an external system.
 
-Hooks are functions that let you “hook into” React state and lifecycle features from function components. They are a way to reuse, but not centralize, stateful logic. Each call to a hook has a completely isolated state. This isolation can be referred to as _component-scoped_. Mixing a global state management library such as Jotai with useEffect can have some unexpected results.
+Hooks are functions that let you “hook into” React state and lifecycle features from function components.
+They are a way to reuse, but not centralize, stateful logic.
+Each call to a hook has a completely isolated state.
+This isolation can be referred to as _component-scoped_.
+For synchronizing component props and state with a Jotai atom, you should use the useEffect hook.
 
-Consider the setup below. useMessages is called in two components. Since useEffect is component-scoped this results in two dom event listeners being set up.
+#### Global Side Effects
 
-<CodeSandbox id="855hd4" />
+For setting up global side-effects, deciding between useEffect and atomEffect comes down to developer preference.
+Whether you prefer to build this logic directly into the component or build this logic into the Jotai state model depends on what mental model you adopt.
 
-We can fix this example by replacing useEffect with `atomEffect`.
+atomEffects are more appropriate for modeling logic in atoms.
+They are scoped to the store context rather than the component.
+This guarantees that a single effect will be used regardless of how many calls they have.
 
-<CodeSandbox id="gzq9jg" />
+The same guarantee can be achieved with the useEffect hook if you ensure that the useEffect has only actioning one call.
 
-`atomEffect` is scoped to the store context rather than the component. This guarantees that a single effect will be used regardless of how many times it is called. When implementing behavior with a global state management solution, be careful when mixing component-scope and global-scope.
+#### Conclusion
+
+Both useEffect and atomEffect have their own advantages and applications. Your project’s specific needs and your comfort level should guide your selection.
+Always lean towards an approach that gives you a smoother, more intuitive development experience. Happy coding!
