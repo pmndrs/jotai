@@ -162,6 +162,6 @@ function Controls() {
 
 ## Links
 
-- [website](https://jotai.org)
-- [documentation](https://jotai.org/docs)
-- [course](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0)
+- [Official Website](https://jotai.org)
+- [Documentation](https://jotai.org/docs)
+- [Course](https://egghead.io/courses/manage-application-state-with-jotai-atoms-2c3a29f0)
