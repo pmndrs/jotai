@@ -68,7 +68,7 @@ exports.createPages = ({ actions }) => {
 
   createRedirect({
     fromPath: `/docs/utils/atom-with-hash`,
-    toPath: `/docs/integrations/location`,
+    toPath: `/docs/extensions/location`,
     isPermanent: false,
   });
 
@@ -76,6 +76,12 @@ exports.createPages = ({ actions }) => {
     fromPath: `/docs/utils/atom-with-observable`,
     toPath: `/docs/utilities/async`,
     isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/*`,
+    toPath: `/docs/extensions/*`,
+    isPermanent: true,
   });
 
   createRedirect({
