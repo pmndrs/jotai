@@ -262,28 +262,18 @@ export const createStore = () => {
       const promise: Promise<Awaited<Value>> & PromiseMeta<Awaited<Value>> =
         new Promise((resolve, reject) => {
           let settled = false
-          valueOrPromise.then(
-            (v) => {
-              if (!settled) {
-                settled = true
-                const prevAtomState = getAtomState(atom)
-                // update dependencies, that could have changed
-                const nextAtomState = setAtomValue(
-                  atom,
-                  promise as Value,
-                  nextDependencies
-                )
+          valueOrPromise
+            .then(
+              (v) => {
                 resolvePromise(promise, v)
                 resolve(v as Awaited<Value>)
-                if (
-                  mountedMap.has(atom) &&
-                  prevAtomState?.d !== nextAtomState.d
-                ) {
-                  mountDependencies(atom, nextAtomState, prevAtomState?.d)
-                }
+              },
+              (e) => {
+                rejectPromise(promise, e)
+                reject(e)
               }
-            },
-            (e) => {
+            )
+            .then(() => {
               if (!settled) {
                 settled = true
                 const prevAtomState = getAtomState(atom)
@@ -293,8 +283,6 @@ export const createStore = () => {
                   promise as Value,
                   nextDependencies
                 )
-                rejectPromise(promise, e)
-                reject(e)
                 if (
                   mountedMap.has(atom) &&
                   prevAtomState?.d !== nextAtomState.d
@@ -302,8 +290,7 @@ export const createStore = () => {
                   mountDependencies(atom, nextAtomState, prevAtomState?.d)
                 }
               }
-            }
-          )
+            })
           continuePromise = (next) => {
             if (!settled) {
               settled = true
