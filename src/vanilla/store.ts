@@ -368,9 +368,13 @@ export const createStore = () => {
       // Otherwise, check if the dependencies have changed.
       // If all dependencies haven't changed, we can use the cache.
       if (
-        Array.from(atomState.d).every(
-          ([a, s]) => a === atom || readAtomState(a) === s
-        )
+        Array.from(atomState.d).every(([a, s]) => {
+          if (a === atom) {
+            return true
+          }
+          const aState = readAtomState(a)
+          return aState === s || (aState && !hasPromiseAtomValue(aState))
+        })
       ) {
         return atomState
       }
