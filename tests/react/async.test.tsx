@@ -1,10 +1,10 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { assert, expect, it } from 'vitest'
 import { Provider, useAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Atom, SetStateAction, Setter } from 'jotai/vanilla'
+import type { Atom, SetStateAction } from 'jotai/vanilla'
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -1145,10 +1145,10 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
 })
 
 it('[render] resolves dependencies reliably after a delay', async () => {
-  expect.assertions(2)
+  expect.assertions(1)
   const countAtom = atom(0)
-  const resultAtom = atom<number | null>(null)
 
+  let result: number | null = null
   const resolve: (() => void)[] = []
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
@@ -1167,9 +1167,10 @@ it('[render] resolves dependencies reliably after a delay', async () => {
       console.log(`derived (${count})`)
       const resultCount = await get(asyncAtom)
       console.log(`derived (${count})`, resultCount)
-      setSelf(resultAtom, resultCount)
+      result = resultCount
+      if (resultCount === 2) setSelf() // <-- necessary
     },
-    (_get, set, ...args: Parameters<Setter>) => set(...args)
+    () => {}
   )
 
   const derivedSyncAtom = atom((get) => {
@@ -1192,7 +1193,7 @@ it('[render] resolves dependencies reliably after a delay', async () => {
   render(<TestComponent />, { wrapper: Wrapper })
 
   const setCount = (arg: SetStateAction<number>) => store.set(countAtom, arg)
-
+  const increment = (c: number) => c + 1
   await waitFor(() => assert(resolve.length === 1))
 
   resolve[0]!()
@@ -1203,8 +1204,7 @@ it('[render] resolves dependencies reliably after a delay', async () => {
   resolve[1]!()
   resolve[2]!()
 
-  await waitFor(() => assert(store.get(countAtom) === 2))
-  expect(store.get(resultAtom)).toBe(2)
+  await waitFor(() => assert(result === 2))
 
   await act(() => setCount(increment))
   await act(() => setCount(increment))
@@ -1213,72 +1213,5 @@ it('[render] resolves dependencies reliably after a delay', async () => {
   resolve[4]!()
 
   await waitFor(() => assert(store.get(countAtom) === 4))
-  expect(store.get(resultAtom)).toBe(4) // 3
+  expect(result).toBe(4) // 3
 })
-
-it('[unit] resolves dependencies reliably after a delay', async () => {
-  const countAtom = atom(0)
-  const resultAtom = atom<number | null>(null)
-
-  const resolve: (() => void)[] = []
-  const asyncAtom = atom(async (get) => {
-    const count = get(countAtom)
-    await new Promise<void>((r: { (): void; count?: number }) => {
-      r.count = count
-      resolve.push(r)
-    })
-    console.log(`resolved (${count})`)
-    return count
-  })
-
-  const derivedAtom = atom(
-    async (get, { setSelf }) => {
-      const count = get(countAtom)
-      await Promise.resolve()
-      console.log(`derived (${count})`)
-      const asyncCount = await get(asyncAtom)
-      console.log(`derived (${count})`, asyncCount)
-      setSelf(resultAtom, asyncCount)
-    },
-    (_get, set, ...args: Parameters<Setter>) => set(...args)
-  )
-
-  const store = createStore()
-  store.sub(derivedAtom, () => {})
-
-  await waitFor(() => assert(resolve.length === 1))
-
-  resolve[0]!()
-
-  store.set(countAtom, increment)
-  store.set(countAtom, increment)
-
-  await waitFor(() => assert(resolve.length === 3))
-
-  resolve[1]!()
-  resolve[2]!()
-
-  await waitFor(() => assert(store.get(countAtom) === 2))
-  expect(store.get(resultAtom)).toBe(2)
-
-  store.set(countAtom, increment)
-  store.set(countAtom, increment)
-
-  await waitFor(() => assert(resolve.length === 5))
-
-  resolve[3]!()
-  resolve[4]!()
-
-  await waitFor(() => assert(store.get(countAtom) === 4))
-  expect(store.get(resultAtom)).toBe(4) // 3
-})
-
-function assert(condition: boolean): asserts condition {
-  if (!condition) {
-    throw new Error('assertion failed')
-  }
-}
-
-function increment(c: number) {
-  return c + 1
-}

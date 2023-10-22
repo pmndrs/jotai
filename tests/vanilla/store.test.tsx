@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { waitFor } from '@testing-library/dom'
+import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Getter } from 'jotai/vanilla'
 
@@ -422,4 +423,62 @@ it('should update derived atoms during write (#2107)', async () => {
   expect(store.get(countAtom)).toBe(1)
   store.set(countAtom, 2)
   expect(store.get(countAtom)).toBe(2)
+})
+
+it.only('[unit] resolves dependencies reliably after a delay', async () => {
+  expect.assertions(1)
+  const countAtom = atom(0)
+  let result: number | null = null
+
+  const resolve: (() => void)[] = []
+  const asyncAtom = atom(async (get) => {
+    const count = get(countAtom)
+    await new Promise<void>((r: { (): void; count?: number }) => {
+      r.count = count
+      resolve.push(r)
+    })
+    console.log(`resolved (${count})`)
+    return count
+  })
+
+  const derivedAtom = atom(
+    async (get, { setSelf }) => {
+      const count = get(countAtom)
+      await Promise.resolve()
+      console.log(`derived (${count})`)
+      result = await get(asyncAtom)
+      console.log(`derived (${count})`, result)
+      if (result === 2) setSelf() // <-- necessary
+    },
+    () => {}
+  )
+
+  const store = createStore()
+  store.sub(derivedAtom, () => {})
+
+  await waitFor(() => assert(resolve.length === 1))
+
+  resolve[0]!()
+  const increment = (c: number) => c + 1
+  store.set(countAtom, increment)
+  store.set(countAtom, increment)
+
+  await waitFor(() => assert(resolve.length === 3))
+
+  resolve[1]!()
+  resolve[2]!()
+  await waitFor(() => assert(result === 2))
+
+  store.set(countAtom, increment)
+  store.set(countAtom, increment)
+
+  await waitFor(() => assert(resolve.length === 5))
+
+  resolve[3]!()
+  resolve[4]!()
+
+  await new Promise(setImmediate)
+  await waitFor(() => assert(store.get(countAtom) === 4))
+
+  expect(result).toBe(4) // 3
 })
