@@ -373,7 +373,11 @@ export const createStore = () => {
             return true
           }
           const aState = readAtomState(a)
-          return aState === s || (aState && !hasPromiseAtomValue(aState))
+          return (
+            aState === s ||
+            // We need to check values in case only dependencies are changed
+            (aState && isEqualAtomValue(aState, s))
+          )
         })
       ) {
         return atomState
