@@ -75,16 +75,20 @@ type AtomState<Value = AnyValue> = {
   d: Dependencies
 } & ({ e: AnyError } | { v: Value })
 
-const isEqualAtomValue = <Value>(a: AtomState<Value>, b: AtomState<Value>) =>
-  'v' in a && 'v' in b && Object.is(a.v, b.v)
+const isEqualAtomValue = <Value>(
+  a: AtomState<Value> | undefined,
+  b: AtomState<Value>
+): a is AtomState<Value> => !!a && 'v' in a && 'v' in b && Object.is(a.v, b.v)
 
-const isEqualAtomError = <Value>(a: AtomState<Value>, b: AtomState<Value>) =>
-  'e' in a && 'e' in b && Object.is(a.e, b.e)
+const isEqualAtomError = <Value>(
+  a: AtomState<Value> | undefined,
+  b: AtomState<Value>
+): a is AtomState<Value> => !!a && 'e' in a && 'e' in b && Object.is(a.e, b.e)
 
 const hasPromiseAtomValue = <Value>(
-  a: AtomState<Value>
+  a: AtomState<Value> | undefined
 ): a is AtomState<Value> & { v: Value & Promise<unknown> } =>
-  'v' in a && a.v instanceof Promise
+  !!a && 'v' in a && a.v instanceof Promise
 
 const isEqualPromiseAtomValue = <Value>(
   a: AtomState<Promise<Value> & PromiseMeta<Value>>,
@@ -174,7 +178,7 @@ export const createStore = () => {
     if (!pendingMap.has(atom)) {
       pendingMap.set(atom, prevAtomState)
     }
-    if (prevAtomState && hasPromiseAtomValue(prevAtomState)) {
+    if (hasPromiseAtomValue(prevAtomState)) {
       const next =
         'v' in atomState
           ? atomState.v instanceof Promise
@@ -226,7 +230,6 @@ export const createStore = () => {
       updateDependencies(atom, nextAtomState, nextDependencies)
     }
     if (
-      prevAtomState &&
       isEqualAtomValue(prevAtomState, nextAtomState) &&
       prevAtomState.d === nextAtomState.d
     ) {
@@ -234,7 +237,6 @@ export const createStore = () => {
       return prevAtomState
     }
     if (
-      prevAtomState &&
       hasPromiseAtomValue(prevAtomState) &&
       hasPromiseAtomValue(nextAtomState) &&
       isEqualPromiseAtomValue(prevAtomState, nextAtomState)
@@ -342,7 +344,6 @@ export const createStore = () => {
       updateDependencies(atom, nextAtomState, nextDependencies)
     }
     if (
-      prevAtomState &&
       isEqualAtomError(prevAtomState, nextAtomState) &&
       prevAtomState.d === nextAtomState.d
     ) {
@@ -501,9 +502,7 @@ export const createStore = () => {
             if (isChanged) {
               const prevAtomState = getAtomState(dependent)
               const nextAtomState = readAtomState(dependent, true)
-              isChanged =
-                !prevAtomState ||
-                !isEqualAtomValue(prevAtomState, nextAtomState)
+              isChanged = !isEqualAtomValue(prevAtomState, nextAtomState)
             }
             if (!isChanged) {
               dependencyMap.forEach((s) => s.delete(dependent))
@@ -534,7 +533,7 @@ export const createStore = () => {
         }
         const prevAtomState = getAtomState(a)
         const nextAtomState = setAtomValueOrPromise(a, args[0] as V)
-        if (!prevAtomState || !isEqualAtomValue(prevAtomState, nextAtomState)) {
+        if (!isEqualAtomValue(prevAtomState, nextAtomState)) {
           recomputeDependents(a)
         }
       } else {
@@ -700,7 +699,6 @@ export const createStore = () => {
               // TODO This seems pretty hacky. Hope to fix it.
               // Maybe we could `mountDependencies` in `setAtomState`?
               (
-                prevAtomState &&
                 !hasPromiseAtomValue(prevAtomState) &&
                 (isEqualAtomValue(prevAtomState, atomState) ||
                   isEqualAtomError(prevAtomState, atomState))
