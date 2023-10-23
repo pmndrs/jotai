@@ -92,14 +92,22 @@ export function atom<Value, Args extends unknown[], Result>(
     config.read = read as Read<Value, SetAtom<Args, Result>>
   } else {
     config.init = read
-    config.read = (get) => get(config)
-    config.write = ((get: Getter, set: Setter, arg: SetStateAction<Value>) =>
-      set(
-        config as unknown as PrimitiveAtom<Value>,
+    config.read = function (get) {
+      return get(this)
+    }
+    config.write = function (
+      this: PrimitiveAtom<Value>,
+      get: Getter,
+      set: Setter,
+      arg: SetStateAction<Value>
+    ) {
+      return set(
+        this,
         typeof arg === 'function'
-          ? (arg as (prev: Value) => Value)(get(config))
+          ? (arg as (prev: Value) => Value)(get(this))
           : arg
-      )) as unknown as Write<Args, Result>
+      )
+    } as unknown as Write<Args, Result>
   }
   if (write) {
     config.write = write
