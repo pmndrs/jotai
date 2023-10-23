@@ -1,10 +1,10 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { assert, expect, it } from 'vitest'
-import { Provider, useAtom } from 'jotai/react'
-import { atom, createStore } from 'jotai/vanilla'
-import type { Atom, SetStateAction } from 'jotai/vanilla'
+import { expect, it } from 'vitest'
+import { useAtom } from 'jotai/react'
+import { atom } from 'jotai/vanilla'
+import type { Atom } from 'jotai/vanilla'
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -1142,76 +1142,4 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
     getByText('aName: alpha')
     getByText('bName: beta')
   })
-})
-
-it('[render] resolves dependencies reliably after a delay', async () => {
-  expect.assertions(1)
-  const countAtom = atom(0)
-
-  let result: number | null = null
-  const resolve: (() => void)[] = []
-  const asyncAtom = atom(async (get) => {
-    const count = get(countAtom)
-    await new Promise<void>((r: { (): void; count?: number }) => {
-      r.count = count
-      resolve.push(r)
-    })
-    console.log(`resolved (${count})`)
-    return count
-  })
-
-  const derivedAtom = atom(
-    async (get, { setSelf }) => {
-      const count = get(countAtom)
-      await Promise.resolve()
-      console.log(`derived (${count})`)
-      const resultCount = await get(asyncAtom)
-      console.log(`derived (${count})`, resultCount)
-      result = resultCount
-      if (resultCount === 2) setSelf() // <-- necessary
-    },
-    () => {}
-  )
-
-  const derivedSyncAtom = atom((get) => {
-    get(derivedAtom)
-  })
-
-  function useTest() {
-    useAtom(derivedSyncAtom)
-    useAtom(countAtom)
-  }
-  function TestComponent() {
-    useTest()
-    return null
-  }
-  const store = createStore()
-
-  const Wrapper = ({ children }: React.PropsWithChildren) => (
-    <Provider store={store}>{children}</Provider>
-  )
-  render(<TestComponent />, { wrapper: Wrapper })
-
-  const setCount = (arg: SetStateAction<number>) => store.set(countAtom, arg)
-  const increment = (c: number) => c + 1
-  await waitFor(() => assert(resolve.length === 1))
-
-  resolve[0]!()
-
-  await act(() => setCount(increment))
-  await act(() => setCount(increment))
-
-  resolve[1]!()
-  resolve[2]!()
-
-  await waitFor(() => assert(result === 2))
-
-  await act(() => setCount(increment))
-  await act(() => setCount(increment))
-
-  resolve[3]!()
-  resolve[4]!()
-
-  await waitFor(() => assert(store.get(countAtom) === 4))
-  expect(result).toBe(4) // 3
 })
