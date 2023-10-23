@@ -425,7 +425,7 @@ it('should update derived atoms during write (#2107)', async () => {
   expect(store.get(countAtom)).toBe(2)
 })
 
-it.only('resolves dependencies reliably after a delay', async () => {
+it('resolves dependencies reliably after a delay (#2192)', async () => {
   expect.assertions(1)
   const countAtom = atom(0)
   let result: number | null = null
@@ -433,10 +433,7 @@ it.only('resolves dependencies reliably after a delay', async () => {
   const resolve: (() => void)[] = []
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
-    await new Promise<void>((r: { (): void; count?: number }) => {
-      r.count = count
-      resolve.push(r)
-    })
+    await new Promise<void>((r) => resolve.push(r))
     return count
   })
 
