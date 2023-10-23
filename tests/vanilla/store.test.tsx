@@ -423,3 +423,15 @@ it('should update derived atoms during write (#2107)', async () => {
   store.set(countAtom, 2)
   expect(store.get(countAtom)).toBe(2)
 })
+
+it('should not recompute a derived atom value if unchanged (#2168)', async () => {
+  const store = createStore()
+  const countAtom = atom(1)
+  const derived1Atom = atom((get) => get(countAtom) * 0)
+  const derive2Fn = vi.fn((get: Getter) => get(derived1Atom))
+  const derived2Atom = atom(derive2Fn)
+  expect(store.get(derived2Atom)).toBe(0)
+  store.set(countAtom, (c) => c + 1)
+  expect(store.get(derived2Atom)).toBe(0)
+  expect(derive2Fn).toHaveBeenCalledTimes(1)
+})
