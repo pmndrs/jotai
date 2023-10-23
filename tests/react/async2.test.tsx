@@ -1,7 +1,7 @@
 import { StrictMode, Suspense } from 'react'
-import { fireEvent, render } from '@testing-library/react'
-import { describe, it } from 'vitest'
-import { useAtomValue, useSetAtom } from 'jotai/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
+import { assert, describe, expect, it } from 'vitest'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 describe('useAtom delay option test', () => {
@@ -139,5 +139,79 @@ describe('atom read function setSelf option test', () => {
 
     fireEvent.click(getByText('button'))
     await findByText('text: hello1')
+  })
+})
+
+describe('timing issue with setSelf', () => {
+  it('resolves dependencies reliably after a delay (#2192)', async () => {
+    expect.assertions(1)
+    const countAtom = atom(0)
+
+    let result: number | null = null
+    const resolve: (() => void)[] = []
+    const asyncAtom = atom(async (get) => {
+      const count = get(countAtom)
+      await new Promise<void>((r) => resolve.push(r))
+      return count
+    })
+
+    const derivedAtom = atom(
+      async (get, { setSelf }) => {
+        get(countAtom)
+        await Promise.resolve()
+        const resultCount = await get(asyncAtom)
+        result = resultCount
+        if (resultCount === 2) setSelf() // <-- necessary
+      },
+      () => {}
+    )
+
+    const derivedSyncAtom = atom((get) => {
+      get(derivedAtom)
+    })
+
+    const increment = (c: number) => c + 1
+    function TestComponent() {
+      useAtom(derivedSyncAtom)
+      const [count, setCount] = useAtom(countAtom)
+      const onClick = () => {
+        setCount(increment)
+        setCount(increment)
+      }
+      return (
+        <>
+          count: {count}
+          <button onClick={onClick}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>
+    )
+
+    await waitFor(() => assert(resolve.length === 1))
+    resolve[0]!()
+
+    // The use of fireEvent is required to reproduce the issue
+    fireEvent.click(getByText('button'))
+
+    await waitFor(() => assert(resolve.length === 3))
+    resolve[1]!()
+    resolve[2]!()
+
+    await waitFor(() => assert(result === 2))
+
+    // The use of fireEvent is required to reproduce the issue
+    fireEvent.click(getByText('button'))
+
+    await waitFor(() => assert(resolve.length === 5))
+    resolve[3]!()
+    resolve[4]!()
+
+    await findByText('count: 4')
+    expect(result).toBe(4) // 3
   })
 })

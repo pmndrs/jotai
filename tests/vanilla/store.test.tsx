@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { waitFor } from '@testing-library/dom'
+import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Getter } from 'jotai/vanilla'
 
@@ -422,4 +423,68 @@ it('should update derived atoms during write (#2107)', async () => {
   expect(store.get(countAtom)).toBe(1)
   store.set(countAtom, 2)
   expect(store.get(countAtom)).toBe(2)
+})
+
+it('resolves dependencies reliably after a delay (#2192)', async () => {
+  expect.assertions(1)
+  const countAtom = atom(0)
+  let result: number | null = null
+
+  const resolve: (() => void)[] = []
+  const asyncAtom = atom(async (get) => {
+    const count = get(countAtom)
+    await new Promise<void>((r) => resolve.push(r))
+    return count
+  })
+
+  const derivedAtom = atom(
+    async (get, { setSelf }) => {
+      get(countAtom)
+      await Promise.resolve()
+      result = await get(asyncAtom)
+      if (result === 2) setSelf() // <-- necessary
+    },
+    () => {}
+  )
+
+  const store = createStore()
+  store.sub(derivedAtom, () => {})
+
+  await waitFor(() => assert(resolve.length === 1))
+
+  resolve[0]!()
+  const increment = (c: number) => c + 1
+  store.set(countAtom, increment)
+  store.set(countAtom, increment)
+
+  await waitFor(() => assert(resolve.length === 3))
+
+  resolve[1]!()
+  resolve[2]!()
+  await waitFor(() => assert(result === 2))
+
+  store.set(countAtom, increment)
+  store.set(countAtom, increment)
+
+  await waitFor(() => assert(resolve.length === 5))
+
+  resolve[3]!()
+  resolve[4]!()
+
+  await new Promise(setImmediate)
+  await waitFor(() => assert(store.get(countAtom) === 4))
+
+  expect(result).toBe(4) // 3
+})
+
+it('should not recompute a derived atom value if unchanged (#2168)', async () => {
+  const store = createStore()
+  const countAtom = atom(1)
+  const derived1Atom = atom((get) => get(countAtom) * 0)
+  const derive2Fn = vi.fn((get: Getter) => get(derived1Atom))
+  const derived2Atom = atom(derive2Fn)
+  expect(store.get(derived2Atom)).toBe(0)
+  store.set(countAtom, (c) => c + 1)
+  expect(store.get(derived2Atom)).toBe(0)
+  expect(derive2Fn).toHaveBeenCalledTimes(1)
 })
