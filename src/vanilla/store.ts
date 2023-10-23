@@ -264,7 +264,6 @@ export const createStore = () => {
       const updatePromiseDependencies = () => {
         const prevAtomState = getAtomState(atom)
         if (
-          !prevAtomState ||
           !hasPromiseAtomValue(prevAtomState) ||
           prevAtomState.v !== promise
         ) {
@@ -370,11 +369,9 @@ export const createStore = () => {
             return true
           }
           const aState = readAtomState(a)
-          return (
-            aState === s ||
-            // We need to check values in case only dependencies are changed
-            (aState && isEqualAtomValue(aState, s))
-          )
+          // Check if the atom state is unchanged, or
+          // check the atom value in case only dependencies are changed
+          return aState === s || isEqualAtomValue(aState, s)
         })
       ) {
         return atomState
