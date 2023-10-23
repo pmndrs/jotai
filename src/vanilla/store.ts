@@ -259,6 +259,26 @@ export const createStore = () => {
   ): AtomState<Value> => {
     if (isPromiseLike(valueOrPromise)) {
       let continuePromise: (next: Promise<Awaited<Value>>) => void
+      const updatePromiseDependencies = () => {
+        const prevAtomState = getAtomState(atom)
+        if (
+          !prevAtomState ||
+          !hasPromiseAtomValue(prevAtomState) ||
+          prevAtomState.v !== promise
+        ) {
+          // not the latest promise
+          return
+        }
+        // update dependencies, that could have changed
+        const nextAtomState = setAtomValue(
+          atom,
+          promise as Value,
+          nextDependencies
+        )
+        if (mountedMap.has(atom) && prevAtomState.d !== nextAtomState.d) {
+          mountDependencies(atom, nextAtomState, prevAtomState.d)
+        }
+      }
       const promise: Promise<Awaited<Value>> & PromiseMeta<Awaited<Value>> =
         new Promise((resolve, reject) => {
           let settled = false
@@ -266,41 +286,17 @@ export const createStore = () => {
             (v) => {
               if (!settled) {
                 settled = true
-                const prevAtomState = getAtomState(atom)
-                // update dependencies, that could have changed
-                const nextAtomState = setAtomValue(
-                  atom,
-                  promise as Value,
-                  nextDependencies
-                )
                 resolvePromise(promise, v)
                 resolve(v as Awaited<Value>)
-                if (
-                  mountedMap.has(atom) &&
-                  prevAtomState?.d !== nextAtomState.d
-                ) {
-                  mountDependencies(atom, nextAtomState, prevAtomState?.d)
-                }
+                updatePromiseDependencies()
               }
             },
             (e) => {
               if (!settled) {
                 settled = true
-                const prevAtomState = getAtomState(atom)
-                // update dependencies, that could have changed
-                const nextAtomState = setAtomValue(
-                  atom,
-                  promise as Value,
-                  nextDependencies
-                )
                 rejectPromise(promise, e)
                 reject(e)
-                if (
-                  mountedMap.has(atom) &&
-                  prevAtomState?.d !== nextAtomState.d
-                ) {
-                  mountDependencies(atom, nextAtomState, prevAtomState?.d)
-                }
+                updatePromiseDependencies()
               }
             }
           )
