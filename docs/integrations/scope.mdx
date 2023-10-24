@@ -28,8 +28,8 @@ yarn add jotai-scope
 ### Counter Example
 
 ```tsx
-import { atom } from 'jotai'
-import { ScopeProvider, useAtom } from 'jotai-scope'
+import { atom, useAtom } from 'jotai'
+import { ScopeProvider } from 'jotai-scope'
 
 const countAtom = atom(0)
 const anotherCountAtom = atom(0)
@@ -55,21 +55,23 @@ const Counter = () => {
   )
 }
 
-const App = () => (
-  <div>
-    <h1>First Provider</h1>
-    <ScopeProvider atoms={[anotherCountAtom]}>
-      <Counter />
-    </ScopeProvider>
-    <h1>Second Provider</h1>
-    <ScopeProvider atoms={[anotherCountAtom]}>
-      <Counter />
-    </ScopeProvider>
-  </div>
-)
+const App = () => {
+  return (
+    <div>
+      <h1>First Provider</h1>
+      <ScopeProvider atoms={[anotherCountAtom]}>
+        <Counter />
+      </ScopeProvider>
+      <h1>Second Provider</h1>
+      <ScopeProvider atoms={[anotherCountAtom]}>
+        <Counter />
+      </ScopeProvider>
+    </div>
+  )
+}
 ```
 
-<CodeSandbox id="nmmnrh" />
+<CodeSandbox id="rf3r4n" />
 
 ## `createIsolation`
 
