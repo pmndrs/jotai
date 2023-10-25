@@ -9,6 +9,9 @@ type SetAtom<Args extends unknown[], Result> = <A extends Args>(
   ...args: A
 ) => Result
 
+/**
+ * setSelf is for internal use only and subject to change without notice.
+ */
 type Read<Value, SetSelf = never> = (
   get: Getter,
   options: { readonly signal: AbortSignal; readonly setSelf: SetSelf }
