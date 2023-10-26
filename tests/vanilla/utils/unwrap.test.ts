@@ -86,6 +86,15 @@ describe('unwrap', () => {
     resolve()
     await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(6)
+
+    store.set(countAtom, 4)
+    expect(store.get(syncAtom)).toBe(6)
+    resolve()
+    store.set(countAtom, 5)
+    expect(store.get(syncAtom)).not.toBe(0) // expect 6 or 8
+    resolve()
+    await new Promise((r) => setTimeout(r)) // wait for a tick
+    expect(store.get(syncAtom)).toBe(10)
   })
 
   it('should unwrap a sync atom which is noop', async () => {
