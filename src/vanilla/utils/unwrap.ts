@@ -76,8 +76,12 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
               )
               .finally(setSelf)
           }
-          if (prev && 'v' in prev) {
-            return { p: promise, f: fallback(prev.v) }
+          if (prev) {
+            if ('v' in prev) {
+              return { p: promise, f: fallback(prev.v) }
+            } else if ('f' in prev) {
+              return { p: promise, f: prev.f }
+            }
           }
           return { p: promise, f: fallback() }
         },
