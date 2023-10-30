@@ -34,13 +34,13 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "default": {
-        "types": "./index.d.ts",
-        "default": "./index.js"
-      },
       "import": {
         "types": "./esm/index.d.mts",
         "default": "./esm/index.mjs"
+      },
+      "default": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
       }
     },
     "./*": {
