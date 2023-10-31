@@ -1,5 +1,5 @@
 import { expectType } from 'ts-expect'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type {
   Atom,
@@ -55,4 +55,15 @@ it('type utils should work', () => {
     expectType<Promise<void>>(result)
   }
   Component
+})
+
+it('init property should exist in primitiveAtom', () => {
+  {
+    const primitiveAtom = atom(1)
+    expectType<number>(primitiveAtom.init)
+  }
+  {
+    const primitiveAtom = atom(Promise.resolve(1))
+    expectType<Promise<number>>(primitiveAtom.init)
+  }
 })

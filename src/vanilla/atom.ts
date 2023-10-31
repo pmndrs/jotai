@@ -59,7 +59,9 @@ export type PrimitiveAtom<Value> = WritableAtom<
   Value,
   [SetStateAction<Value>],
   void
->
+> & {
+  init: Value
+}
 
 let keyCount = 0 // global key count for all atoms
 
@@ -79,9 +81,7 @@ export function atom<Value, Args extends unknown[], Result>(
 ): WritableAtom<Value, Args, Result> & WithInitialValue<Value>
 
 // primitive atom
-export function atom<Value>(
-  initialValue: Value
-): PrimitiveAtom<Value> & WithInitialValue<Value>
+export function atom<Value>(initialValue: Value): PrimitiveAtom<Value>
 
 export function atom<Value, Args extends unknown[], Result>(
   read: Value | Read<Value, SetAtom<Args, Result>>,
