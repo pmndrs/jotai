@@ -95,7 +95,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
       return atom(
         (get) => {
           const state = get(promiseAndValueAtom)
-          if ('f' in state) {
+          if ('f' in state) { // is pending
             return state.f
           }
           return state.v
