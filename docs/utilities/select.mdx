@@ -7,7 +7,9 @@ published: false
 
 ## selectAtom
 
-Ref: https://github.com/pmndrs/jotai/issues/36
+⚠️ Unlike its name, `selectAtom` is provided as an escape hatch. Using it means building not 100% pure atom model. Prefer using derived atoms and use `selectAtom` only when `equalityFn` or `prevSlice` is unavoidable.
+
+### Signatures
 
 ```ts
 function selectAtom<Value, Slice>(
