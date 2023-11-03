@@ -288,7 +288,12 @@ it('moving atoms', async () => {
           <TaskItem
             key={`${anAtom}`}
             onMoveLeft={() => {
-              if (index > 0) {
+              if (index === 0) {
+                dispatch({
+                  type: 'move',
+                  atom: anAtom,
+                })
+              } else if (index > 0) {
                 dispatch({
                   type: 'move',
                   atom: anAtom,
@@ -370,6 +375,13 @@ it('moving atoms', async () => {
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
       'help nana<>get dragon food<>get cat food<>'
+    )
+  })
+
+  fireEvent.click(getByTestId('help nana-leftbutton'))
+  await waitFor(() => {
+    expect(queryByTestId('list')?.textContent).toBe(
+      'get dragon food<>get cat food<>help nana<>'
     )
   })
 })
