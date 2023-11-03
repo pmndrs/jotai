@@ -158,10 +158,10 @@ export function splitAtom<Item, Key>(
                   const index = get(splittedAtom).indexOf(action.atom)
                   if (index >= 0) {
                     const arr = get(arrAtom)
-                    set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
-                      ...arr.slice(0, index),
-                      ...arr.slice(index + 1),
-                    ])
+                    set(
+                      arrAtom as WritableAtom<Item[], [Item[]], void>,
+                      arr.toSpliced(index, 1)
+                    )
                   }
                   break
                 }
@@ -171,11 +171,10 @@ export function splitAtom<Item, Key>(
                     : get(splittedAtom).length
                   if (index >= 0) {
                     const arr = get(arrAtom)
-                    set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
-                      ...arr.slice(0, index),
-                      action.value,
-                      ...arr.slice(index),
-                    ])
+                    set(
+                      arrAtom as WritableAtom<Item[], [Item[]], void>,
+                      arr.toSpliced(index, 0, action.value)
+                    )
                   }
                   break
                 }
@@ -186,21 +185,16 @@ export function splitAtom<Item, Key>(
                     : get(splittedAtom).length
                   if (index1 >= 0 && index2 >= 0) {
                     const arr = get(arrAtom)
-                    if (index1 < index2) {
-                      set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
-                        ...arr.slice(0, index1),
-                        ...arr.slice(index1 + 1, index2),
-                        arr[index1] as Item,
-                        ...arr.slice(index2),
-                      ])
-                    } else {
-                      set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
-                        ...arr.slice(0, index2),
-                        arr[index1] as Item,
-                        ...arr.slice(index2, index1),
-                        ...arr.slice(index1 + 1),
-                      ])
-                    }
+
+                    // when moving item up, its place shifted after the first toSpliced call, so we adjust the index
+                    const removeIndex = index1 < index2 ? index1 : index1 + 1
+
+                    set(
+                      arrAtom as WritableAtom<Item[], [Item[]], void>,
+                      arr
+                        .toSpliced(index2, 0, arr[index1] as Item)
+                        .toSpliced(removeIndex, 1)
+                    )
                   }
                   break
                 }

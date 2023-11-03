@@ -83,7 +83,7 @@
     "patch-readme": "shx sed -i 's/.*Jotai \\(dark mode\\).*//' dist/readme.md"
   },
   "engines": {
-    "node": ">=12.20.0"
+    "node": ">=20.0.0"
   },
   "prettier": {
     "semi": false,
@@ -176,5 +176,6 @@
     "@types/react": {
       "optional": true
     }
-  }
+  },
+  "packageManager": "yarn@1.22.19"
 }
