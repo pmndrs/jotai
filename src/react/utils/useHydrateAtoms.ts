@@ -6,34 +6,37 @@ type Options = Parameters<typeof useStore>[0] & {
   dangerouslyForceHydrate?: boolean
 }
 type AnyWritableAtom = WritableAtom<unknown, any[], any>
-type AtomMap<A = AnyWritableAtom, V = unknown> = Map<A, V>
-type AtomTuple<A = AnyWritableAtom, V = unknown> = readonly [A, V]
-type InferAtoms<T extends Iterable<AtomTuple>> = {
-  [K in keyof T]: T[K] extends AtomTuple<infer A>
-    ? A extends AnyWritableAtom
-      ? AtomTuple<A, ReturnType<A['read']>>
+
+type InferAtomTuples<T> = {
+  [K in keyof T]: T[K] extends readonly [infer A, unknown]
+    ? A extends WritableAtom<unknown, infer Args, any>
+      ? readonly [A, Args[0]]
       : T[K]
     : never
 }
 
+// For internal use only
+// This can be changed without notice.
+export type INTERNAL_InferAtomTuples<T> = InferAtomTuples<T>
+
 const hydratedMap: WeakMap<Store, WeakSet<AnyWritableAtom>> = new WeakMap()
 
-export function useHydrateAtoms<T extends Array<AtomTuple>>(
-  values: InferAtoms<T>,
-  options?: Options
-): void
-export function useHydrateAtoms<T extends AtomMap>(
+export function useHydrateAtoms<
+  T extends (readonly [AnyWritableAtom, unknown])[],
+>(values: InferAtomTuples<T>, options?: Options): void
+
+export function useHydrateAtoms<T extends Map<AnyWritableAtom, unknown>>(
   values: T,
   options?: Options
 ): void
-export function useHydrateAtoms<T extends Iterable<AtomTuple>>(
-  values: InferAtoms<T>,
-  options?: Options
-): void
-export function useHydrateAtoms<T extends Iterable<AtomTuple>>(
-  values: InferAtoms<T>,
-  options?: Options
-) {
+
+export function useHydrateAtoms<
+  T extends Iterable<readonly [AnyWritableAtom, unknown]>,
+>(values: InferAtomTuples<T>, options?: Options): void
+
+export function useHydrateAtoms<
+  T extends Iterable<readonly [AnyWritableAtom, unknown]>,
+>(values: T, options?: Options) {
   const store = useStore(options)
 
   const hydratedSet = getHydratedSet(store)
