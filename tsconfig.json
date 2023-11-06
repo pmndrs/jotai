@@ -6,12 +6,12 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    "skipLibCheck": true /* FIXME remove this once vite fixes it */,
     "allowImportingTsExtensions": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "baseUrl": ".",
-    "skipLibCheck": true,
     "noEmit": true,
+    "baseUrl": ".",
     "paths": {
       "jotai": ["./src/index.ts"],
       "jotai/*": ["./src/*.ts"]

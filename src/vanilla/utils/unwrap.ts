@@ -37,7 +37,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
     () => {
       type PromiseAndValue = { readonly p?: Promise<unknown> } & (
         | { readonly v: Awaited<Value> }
-        | { readonly f: PendingValue }
+        | { readonly f: PendingValue; readonly v?: Awaited<Value> }
       )
       const promiseErrorCache = new WeakMap<Promise<unknown>, unknown>()
       const promiseResultCache = new WeakMap<Promise<unknown>, Awaited<Value>>()
@@ -77,7 +77,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
               .finally(setSelf)
           }
           if (prev && 'v' in prev) {
-            return { p: promise, f: fallback(prev.v) }
+            return { p: promise, f: fallback(prev.v), v: prev.v }
           }
           return { p: promise, f: fallback() }
         },
@@ -95,10 +95,11 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
       return atom(
         (get) => {
           const state = get(promiseAndValueAtom)
-          if ('v' in state) {
-            return state.v
+          if ('f' in state) {
+            // is pending
+            return state.f
           }
-          return state.f
+          return state.v
         },
         (_get, set, ...args) =>
           set(anAtom as WritableAtom<Value, unknown[], unknown>, ...args)

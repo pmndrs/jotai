@@ -1,7 +1,7 @@
 {
   "name": "jotai",
   "private": true,
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "👻 Primitive and flexible state management for React",
   "main": "./index.js",
   "types": "./index.d.ts",
@@ -34,20 +34,24 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./index.d.ts",
       "import": {
         "types": "./esm/index.d.mts",
         "default": "./esm/index.mjs"
       },
-      "default": "./index.js"
+      "default": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      }
     },
     "./*": {
-      "types": "./*.d.ts",
       "import": {
         "types": "./esm/*.d.mts",
         "default": "./esm/*.mjs"
       },
-      "default": "./*.js"
+      "default": {
+        "types": "./*.d.ts",
+        "default": "./*.js"
+      }
     }
   },
   "files": [
@@ -119,42 +123,42 @@
     "@babel/preset-env": "^7.23.2",
     "@babel/template": "^7.22.15",
     "@babel/types": "^7.23.0",
-    "@redux-devtools/extension": "^3.2.5",
+    "@redux-devtools/extension": "^3.2.6",
     "@rollup/plugin-alias": "^5.0.1",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-replace": "^5.0.4",
+    "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.5",
     "@testing-library/dom": "^9.3.3",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "14.4.3",
     "@types/babel__core": "^7.20.3",
-    "@types/react": "^18.2.31",
+    "@types/react": "^18.2.35",
     "@types/react-dom": "^18.2.14",
-    "@typescript-eslint/eslint-plugin": "^6.8.0",
-    "@typescript-eslint/parser": "^6.8.0",
+    "@typescript-eslint/eslint-plugin": "^6.9.1",
+    "@typescript-eslint/parser": "^6.9.1",
     "@vitest/coverage-v8": "0.33.0",
     "@vitest/ui": "0.33.0",
     "benny": "^3.7.1",
     "concurrently": "^8.2.2",
     "downlevel-dts": "^0.11.0",
     "esbuild": "^0.19.5",
-    "eslint": "^8.52.0",
+    "eslint": "^8.53.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-prettier": "^5.0.1",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-vitest": "^0.3.8",
+    "eslint-plugin-vitest": "^0.3.9",
     "jsdom": "^22.1.0",
     "json": "^11.0.0",
     "prettier": "^3.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "redux": "^4.2.1",
-    "rollup": "^4.1.4",
+    "rollup": "^4.3.0",
     "rollup-plugin-esbuild": "^6.1.0",
     "rxjs": "^7.8.1",
     "shx": "^0.3.4",
