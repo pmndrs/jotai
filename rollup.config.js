@@ -5,9 +5,9 @@ const resolve = require('@rollup/plugin-node-resolve')
 const replace = require('@rollup/plugin-replace')
 const terser = require('@rollup/plugin-terser')
 const typescript = require('@rollup/plugin-typescript')
+const banner2 = require('rollup-plugin-banner2')
 const { default: esbuild } = require('rollup-plugin-esbuild')
 const createBabelConfig = require('./babel.config.js')
-const banner2 = require('rollup-plugin-banner2')
 
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
