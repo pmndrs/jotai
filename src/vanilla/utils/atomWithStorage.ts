@@ -122,7 +122,7 @@ export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage: AsyncStorage<Value>,
-  unstable_options?: { unstable_getOnInit?: boolean }
+  options?: { getOnInit?: boolean }
 ): WritableAtom<
   Value | Promise<Value>,
   [SetStateActionWithReset<Value | Promise<Value>>],
@@ -133,7 +133,7 @@ export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage?: SyncStorage<Value>,
-  unstable_options?: { unstable_getOnInit?: boolean }
+  options?: { getOnInit?: boolean }
 ): WritableAtom<Value, [SetStateActionWithReset<Value>], void>
 
 export function atomWithStorage<Value>(
@@ -142,9 +142,9 @@ export function atomWithStorage<Value>(
   storage:
     | SyncStorage<Value>
     | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>,
-  unstable_options?: { unstable_getOnInit?: boolean }
+  options?: { getOnInit?: boolean }
 ): any {
-  const getOnInit = unstable_options?.unstable_getOnInit
+  const getOnInit = options?.getOnInit
   const baseAtom = atom(
     getOnInit
       ? (storage.getItem(key, initialValue) as Value | Promise<Value>)
