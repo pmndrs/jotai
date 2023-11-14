@@ -15,7 +15,7 @@ it('loadable turns suspense into values', async () => {
   const { findByText } = render(
     <StrictMode>
       <LoadableComponent asyncAtom={asyncAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('Loading...')
@@ -32,7 +32,7 @@ it('loadable turns errors into values', async () => {
   const { findByText } = render(
     <StrictMode>
       <LoadableComponent asyncAtom={asyncAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('Loading...')
@@ -49,7 +49,7 @@ it('loadable turns primitive throws into values', async () => {
   const { findByText } = render(
     <StrictMode>
       <LoadableComponent asyncAtom={asyncAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('Loading...')
@@ -80,7 +80,7 @@ it('loadable goes back to loading after re-fetch', async () => {
     <StrictMode>
       <Refresh />
       <LoadableComponent asyncAtom={asyncAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   getByText('Loading...')
@@ -119,7 +119,7 @@ it('loadable can recover from error', async () => {
     <StrictMode>
       <Refresh />
       <LoadableComponent asyncAtom={asyncAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   getByText('Loading...')
@@ -138,12 +138,12 @@ it('loadable immediately resolves sync values', async () => {
   const { getByText } = render(
     <StrictMode>
       <LoadableComponent effectCallback={effectCallback} asyncAtom={syncAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   getByText('Data: 5')
   expect(effectCallback.mock.calls).not.toContain(
-    expect.objectContaining({ state: 'loading' })
+    expect.objectContaining({ state: 'loading' }),
   )
   expect(effectCallback).toHaveBeenLastCalledWith({ state: 'hasData', data: 5 })
 })
@@ -163,7 +163,7 @@ it('loadable can use resolved promises synchronously', async () => {
       <Suspense fallback={null}>
         <ResolveAtomComponent />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('Ready')
@@ -174,12 +174,12 @@ it('loadable can use resolved promises synchronously', async () => {
         effectCallback={effectCallback}
         asyncAtom={asyncAtom}
       />
-    </StrictMode>
+    </StrictMode>,
   )
   await findByText('Data: 5')
 
   expect(effectCallback.mock.calls).not.toContain(
-    expect.objectContaining({ state: 'loading' })
+    expect.objectContaining({ state: 'loading' }),
   )
   expect(effectCallback).toHaveBeenLastCalledWith({ state: 'hasData', data: 5 })
 })
@@ -205,7 +205,7 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
     <StrictMode>
       <Trigger />
       <LoadableComponent asyncAtom={asyncAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   getByText('Loading...')
@@ -226,7 +226,7 @@ it('loadable of a derived async atom with error does not trigger infinite loop (
   const { findByText, getByText } = render(
     <StrictMode>
       <LoadableComponent asyncAtom={asyncAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   getByText('Loading...')
@@ -245,7 +245,7 @@ it('does not repeatedly attempt to get the value of an unresolved promise atom w
   render(
     <StrictMode>
       <LoadableComponent asyncAtom={derivedAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   // we need a small delay to reproduce the issue
@@ -263,7 +263,7 @@ it('should handle sync error (#1843)', async () => {
   const { findByText } = render(
     <StrictMode>
       <LoadableComponent asyncAtom={syncAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('Error: thrown in syncAtom')

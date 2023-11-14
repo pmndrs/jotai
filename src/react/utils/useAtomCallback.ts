@@ -7,11 +7,11 @@ type Options = Parameters<typeof useSetAtom>[1]
 
 export function useAtomCallback<Result, Args extends unknown[]>(
   callback: (get: Getter, set: Setter, ...arg: Args) => Result,
-  options?: Options
+  options?: Options,
 ): (...args: Args) => Result {
   const anAtom = useMemo(
     () => atom(null, (get, set, ...args: Args) => callback(get, set, ...args)),
-    [callback]
+    [callback],
   )
   return useSetAtom(anAtom, options)
 }

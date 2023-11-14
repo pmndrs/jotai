@@ -26,7 +26,7 @@ it('simple sync get default', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count1: 1, count2: 2')
@@ -70,7 +70,7 @@ it('simple async get default', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -113,7 +113,7 @@ it('refresh sync atoms to default values', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count1: 1, count2: 2')
@@ -164,7 +164,7 @@ it('refresh async atoms to default values', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')

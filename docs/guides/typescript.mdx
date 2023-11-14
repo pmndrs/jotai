@@ -80,7 +80,7 @@ const asyncStrAtom = atom<Promise<string>>(async () => 'foo')
  */
 const writeOnlyAtom = atom<null, [string, number], void>(
   null,
-  (_get, set, stringValue, numberValue) => set(fooAtom, stringValue)
+  (_get, set, stringValue, numberValue) => set(fooAtom, stringValue),
 )
 
 /**
@@ -90,7 +90,7 @@ const writeOnlyAtom = atom<null, [string, number], void>(
  */
 const readWriteAtom = atom<Promise<string>, [number], void>(
   async (get) => await get(asyncStrAtom),
-  (_get, set, num) => set(strAtom, String(num))
+  (_get, set, num) => set(strAtom, String(num)),
 )
 ```
 

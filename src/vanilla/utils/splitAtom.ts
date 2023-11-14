@@ -18,7 +18,7 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
 const cacheKeyForEmptyKeyExtractor = {}
 
 const isWritable = <Value, Args extends unknown[], Result>(
-  atom: Atom<Value> | WritableAtom<Value, Args, Result>
+  atom: Atom<Value> | WritableAtom<Value, Args, Result>,
 ): atom is WritableAtom<Value, Args, Result> =>
   !!(atom as WritableAtom<Value, Args, Result>).write
 
@@ -40,17 +40,17 @@ type SplitAtomAction<Item> =
 
 export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], [Item[]], void>,
-  keyExtractor?: (item: Item) => Key
+  keyExtractor?: (item: Item) => Key,
 ): WritableAtom<PrimitiveAtom<Item>[], [SplitAtomAction<Item>], void>
 
 export function splitAtom<Item, Key>(
   arrAtom: Atom<Item[]>,
-  keyExtractor?: (item: Item) => Key
+  keyExtractor?: (item: Item) => Key,
 ): Atom<Atom<Item>[]>
 
 export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], [Item[]], void> | Atom<Item[]>,
-  keyExtractor?: (item: Item) => Key
+  keyExtractor?: (item: Item) => Key,
 ) {
   return memo2(
     () => {
@@ -99,7 +99,7 @@ export function splitAtom<Item, Key>(
           const write = (
             get: Getter,
             set: Setter,
-            update: SetStateAction<Item>
+            update: SetStateAction<Item>,
           ) => {
             const prev = get(mappingAtom) as Mapping | undefined
             const arr = get(arrAtom)
@@ -205,12 +205,12 @@ export function splitAtom<Item, Key>(
                   break
                 }
               }
-            }
+            },
           )
         : atom((get) => get(mappingAtom).atomList) // read-only atom
       return splittedAtom
     },
     arrAtom,
-    keyExtractor || cacheKeyForEmptyKeyExtractor
+    keyExtractor || cacheKeyForEmptyKeyExtractor,
   )
 }

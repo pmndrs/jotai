@@ -50,27 +50,27 @@ type OptionsWithInitialValue<Data> = {
 
 export function atomWithObservable<Data>(
   getObservable: (get: Getter) => SubjectLike<Data>,
-  options: OptionsWithInitialValue<Data>
+  options: OptionsWithInitialValue<Data>,
 ): WritableAtom<Data, [Data], void>
 
 export function atomWithObservable<Data>(
   getObservable: (get: Getter) => SubjectLike<Data>,
-  options?: Options<Data>
+  options?: Options<Data>,
 ): WritableAtom<Data | Promise<Data>, [Data], void>
 
 export function atomWithObservable<Data>(
   getObservable: (get: Getter) => ObservableLike<Data>,
-  options: OptionsWithInitialValue<Data>
+  options: OptionsWithInitialValue<Data>,
 ): Atom<Data>
 
 export function atomWithObservable<Data>(
   getObservable: (get: Getter) => ObservableLike<Data>,
-  options?: Options<Data>
+  options?: Options<Data>,
 ): Atom<Data | Promise<Data>>
 
 export function atomWithObservable<Data>(
   getObservable: (get: Getter) => ObservableLike<Data> | SubjectLike<Data>,
-  options?: Options<Data>
+  options?: Options<Data>,
 ) {
   type Result = { d: Data } | { e: AnyError }
   const returnResultData = (result: Result) => {
@@ -186,7 +186,7 @@ export function atomWithObservable<Data>(
       } else {
         throw new Error('observable is not subject')
       }
-    }
+    },
   )
 
   return observableAtom

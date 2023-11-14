@@ -14,7 +14,7 @@ type SetAtom<Args extends unknown[], Result> = <A extends Args>(
  */
 type Read<Value, SetSelf = never> = (
   get: Getter,
-  options: { readonly signal: AbortSignal; readonly setSelf: SetSelf }
+  options: { readonly signal: AbortSignal; readonly setSelf: SetSelf },
 ) => Value
 
 type Write<Args extends unknown[], Result> = (
@@ -32,7 +32,7 @@ type OnUnmount = () => void
 type OnMount<Args extends unknown[], Result> = <
   S extends SetAtom<Args, Result>,
 >(
-  setAtom: S
+  setAtom: S,
 ) => OnUnmount | void
 
 export interface Atom<Value> {
@@ -66,7 +66,7 @@ let keyCount = 0 // global key count for all atoms
 // writable derived atom
 export function atom<Value, Args extends unknown[], Result>(
   read: Read<Value, SetAtom<Args, Result>>,
-  write: Write<Args, Result>
+  write: Write<Args, Result>,
 ): WritableAtom<Value, Args, Result>
 
 // read-only derived atom
@@ -75,17 +75,17 @@ export function atom<Value>(read: Read<Value>): Atom<Value>
 // write-only derived atom
 export function atom<Value, Args extends unknown[], Result>(
   initialValue: Value,
-  write: Write<Args, Result>
+  write: Write<Args, Result>,
 ): WritableAtom<Value, Args, Result> & WithInitialValue<Value>
 
 // primitive atom
 export function atom<Value>(
-  initialValue: Value
+  initialValue: Value,
 ): PrimitiveAtom<Value> & WithInitialValue<Value>
 
 export function atom<Value, Args extends unknown[], Result>(
   read: Value | Read<Value, SetAtom<Args, Result>>,
-  write?: Write<Args, Result>
+  write?: Write<Args, Result>,
 ) {
   const key = `atom${++keyCount}`
   const config = {
@@ -102,13 +102,13 @@ export function atom<Value, Args extends unknown[], Result>(
       this: PrimitiveAtom<Value>,
       get: Getter,
       set: Setter,
-      arg: SetStateAction<Value>
+      arg: SetStateAction<Value>,
     ) {
       return set(
         this,
         typeof arg === 'function'
           ? (arg as (prev: Value) => Value)(get(this))
-          : arg
+          : arg,
       )
     } as unknown as Write<Args, Result>
   }

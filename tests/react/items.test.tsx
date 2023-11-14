@@ -64,7 +64,7 @@ it('remove an item, then add another', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <List />
-    </StrictMode>
+    </StrictMode>,
   )
 
   fireEvent.click(getByText('Add'))
@@ -103,7 +103,7 @@ it('add an item with filtered list', async () => {
   let itemIndex = 0
   const itemAtomsAtom = atom<ItemAtoms>([])
   const setItemsAtom = atom(null, (_get, set, update: Update) =>
-    set(itemAtomsAtom, update)
+    set(itemAtomsAtom, update),
   )
   const filterAtom = atom<'all' | 'checked' | 'not-checked'>('all')
   const filteredAtom = atom((get) => {
@@ -193,7 +193,7 @@ it('add an item with filtered list', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <List />
-    </StrictMode>
+    </StrictMode>,
   )
 
   fireEvent.click(getByText('Checked'))

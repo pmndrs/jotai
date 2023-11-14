@@ -56,7 +56,7 @@ it('correctly updates async derived atom after get/set update', async () => {
   const baseAtom = atom(0)
   const derivedAsyncAtom = atom(
     async (get) => get(baseAtom) + 1,
-    async (_get, set, val) => set(baseAtom, val as number)
+    async (_get, set, val) => set(baseAtom, val as number),
   )
 
   const store = createStore()

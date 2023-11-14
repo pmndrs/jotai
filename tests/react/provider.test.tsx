@@ -29,7 +29,7 @@ it('uses initial values from provider', async () => {
       <Provider store={store}>
         <Display />
       </Provider>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -62,7 +62,7 @@ it('only uses initial value from provider for specific atom', async () => {
       <Provider store={store}>
         <Display />
       </Provider>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -75,6 +75,6 @@ it('renders correctly without children', () => {
   render(
     <StrictMode>
       <Provider />
-    </StrictMode>
+    </StrictMode>,
   )
 })

@@ -69,7 +69,8 @@ const Counter = () => {
       <button
         onClick={() =>
           executeMutation().then((it) => console.log(it.data?.increment))
-        }>
+        }
+      >
         Increment
       </button>
       <div>{operationResult.data?.increment}</div>
@@ -140,7 +141,7 @@ export const useQueryAtomData = <
   Data = unknown,
   Variables extends AnyVariables = AnyVariables,
 >(
-  queryAtom: AtomWithQuery<Data, Variables>
+  queryAtom: AtomWithQuery<Data, Variables>,
 ) => {
   const [opResult, dispatch] = useAtom(queryAtom)
 
@@ -155,7 +156,7 @@ export const useQueryAtomData = <
         setTimeout(resolve, 10000) // This timeout time is going to cause suspense of this component up until
         // new operation result will come. After 10 second it will simply try to render component itself and suspend again
         // in an endless loop
-      })
+      }),
     )
   }
 
@@ -165,7 +166,7 @@ export const useQueryAtomData = <
 
   if (!opResult.data) {
     throw Error(
-      'Query data is undefined. Probably you paused the query? In that case use `useQueryAtom` instead.'
+      'Query data is undefined. Probably you paused the query? In that case use `useQueryAtom` instead.',
     )
   }
   return [opResult.data, dispatch, opResult] as [
@@ -195,7 +196,7 @@ function use(promise: Promise<any> | any) {
       (reason: any) => {
         promise.status = 'rejected'
         promise.reason = reason
-      }
+      },
     )
     throw promise
   }

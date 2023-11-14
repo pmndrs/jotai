@@ -35,7 +35,7 @@ describe('useAtom delay option test', () => {
           <Component />
           <Controls />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('count: 0')
@@ -73,7 +73,7 @@ describe('useAtom delay option test', () => {
       <StrictMode>
         <Component />
         <Controls />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('count: 0')
@@ -109,7 +109,7 @@ describe('atom read function setSelf option test', () => {
       },
       (_get, set) => {
         set(refreshAtom, (c) => c + 1)
-      }
+      },
     )
 
     const Component = () => {
@@ -130,7 +130,7 @@ describe('atom read function setSelf option test', () => {
       <StrictMode>
         <Component />
         <Controls />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('text: pending0')
@@ -163,7 +163,7 @@ describe('timing issue with setSelf', () => {
         result = resultCount
         if (resultCount === 2) setSelf() // <-- necessary
       },
-      () => {}
+      () => {},
     )
 
     const derivedSyncAtom = atom((get) => {
@@ -189,7 +189,7 @@ describe('timing issue with setSelf', () => {
     const { getByText, findByText } = render(
       <StrictMode>
         <TestComponent />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await waitFor(() => assert(resolve.length === 1))

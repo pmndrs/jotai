@@ -38,14 +38,14 @@ const writeOnlyAtom = atom(
   (get, set, update) => {
     // `update` is any single value we receive for updating this atom
     set(priceAtom, get(priceAtom) - update.discount)
-  }
+  },
 )
 const readWriteAtom = atom(
   (get) => get(priceAtom) * 2,
   (get, set, newPrice) => {
     set(priceAtom, newPrice / 2)
     // you can set as many atoms as you want at the same time
-  }
+  },
 )
 ```
 
@@ -84,13 +84,13 @@ function atom<Value>(read: (get: Getter) => Value | Promise<Value>): Atom<Value>
 // writable derived atom
 function atom<Value, Update>(
   read: (get: Getter) => Value | Promise<Value>,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>,
 ): WritableAtom<Value, Update>
 
 // write-only derived atom
 function atom<Value, Update>(
   read: Value,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>,
 ): WritableAtom<Value, Update>
 ```
 
@@ -140,7 +140,7 @@ const derivedAtom = atom(
     } else if (action.type === 'inc') {
       set(countAtom, (c) => c + 1)
     }
-  }
+  },
 )
 derivedAtom.onMount = (setAtom) => {
   setAtom({ type: 'init' })
@@ -169,7 +169,7 @@ const writableDerivedAtom = atom(
   },
   (get, set, arg) => {
     // ...
-  }
+  },
 )
 ```
 
@@ -199,7 +199,7 @@ const userAtom = atom(async (get, { signal }) => {
   const userId = get(userIdAtom)
   const response = await fetch(
     `https://jsonplaceholder.typicode.com/users/${userId}?_delay=2000`,
-    { signal }
+    { signal },
   )
   return response.json()
 })

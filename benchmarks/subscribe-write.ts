@@ -51,7 +51,7 @@ const main = async () => {
         folder: __dirname,
         file: `subscribe-write-${n}`,
         format: 'chart.html',
-      })
+      }),
     )
   }
 }

@@ -31,7 +31,7 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
       if (!update.isEvent) {
         channel.postMessage(get(baseAtom))
       }
-    }
+    },
   )
   broadcastAtom.onMount = (setAtom) => {
     const listener = (event: MessageEvent<any>) => {
@@ -46,7 +46,7 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
     (get) => get(broadcastAtom),
     (get, set, update) => {
       set(broadcastAtom, { isEvent: false, value: update })
-    }
+    },
   )
   return returnedAtom
 }

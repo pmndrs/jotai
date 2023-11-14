@@ -22,7 +22,7 @@ it('one atom, one effect', async () => {
   const { getByText, findByText } = render(
     <>
       <Counter />
-    </>
+    </>,
   )
 
   await findByText('count: 1')
@@ -52,7 +52,8 @@ it('two atoms, one each', async () => {
           onClick={() => {
             setCount((c) => c + 1)
             setCount2((c) => c + 1)
-          }}>
+          }}
+        >
           button
         </button>
       </>
@@ -62,7 +63,7 @@ it('two atoms, one each', async () => {
   const { getByText } = render(
     <>
       <Counter />
-    </>
+    </>,
   )
 
   await waitFor(() => {
@@ -100,7 +101,7 @@ it('one derived atom, one onMount', async () => {
   const { findByText } = render(
     <>
       <Counter />
-    </>
+    </>,
   )
 
   await findByText('count: 1')
@@ -136,7 +137,7 @@ it('mount/unmount test', async () => {
   const { getByText } = render(
     <>
       <Display />
-    </>
+    </>,
   )
 
   expect(onMountFn).toHaveBeenCalledTimes(1)
@@ -156,7 +157,7 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
     (_get, set, update: number) => {
       set(countAtom, update)
       set(derivedAtom, update)
-    }
+    },
   )
   const onUnMountFn = vi.fn()
   const onMountFn = vi.fn(() => onUnMountFn)
@@ -187,7 +188,7 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   const { getByText } = render(
     <>
       <Display />
-    </>
+    </>,
   )
   expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
   expect(derivedOnUnMountFn).toHaveBeenCalledTimes(0)
@@ -211,7 +212,7 @@ it('mount/unMount order', async () => {
     (_get, set, update: number) => {
       set(countAtom, update)
       set(derivedAtom, update)
-    }
+    },
   )
   const onUnMountFn = vi.fn(() => {
     committed[0] = 0
@@ -263,7 +264,7 @@ it('mount/unMount order', async () => {
   const { getByText } = render(
     <StrictMode>
       <Display />
-    </StrictMode>
+    </StrictMode>,
   )
   expect(committed).toEqual([0, 0])
 
@@ -295,7 +296,7 @@ it('mount/unmount test with async atom', async () => {
       await new Promise<void>((r) => (resolve = r))
       return 0
     },
-    () => {}
+    () => {},
   )
 
   const onUnMountFn = vi.fn()
@@ -326,7 +327,7 @@ it('mount/unmount test with async atom', async () => {
       <Suspense fallback="loading">
         <Display />
       </Suspense>
-    </>
+    </>,
   )
 
   await findByText('loading')
@@ -382,7 +383,7 @@ it('subscription usage test', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Display />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 10')
@@ -433,7 +434,7 @@ it('subscription in base atom test', async () => {
     (get) => get(countAtom),
     (_get, _set, n: number) => {
       store.add(n)
-    }
+    },
   )
 
   const Counter = () => {
@@ -449,7 +450,7 @@ it('subscription in base atom test', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 10')
@@ -487,7 +488,7 @@ it('create atom with onMount in async get', async () => {
     async (get) => get(await get(holderAtom)),
     (_get, _set, n: number) => {
       store.add(n)
-    }
+    },
   )
 
   const Counter = () => {
@@ -505,7 +506,7 @@ it('create atom with onMount in async get', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
