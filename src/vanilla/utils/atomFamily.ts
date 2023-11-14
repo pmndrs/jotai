@@ -10,12 +10,12 @@ export interface AtomFamily<Param, AtomType> {
 
 export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
-  areEqual?: (a: Param, b: Param) => boolean
+  areEqual?: (a: Param, b: Param) => boolean,
 ): AtomFamily<Param, AtomType>
 
 export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
-  areEqual?: (a: Param, b: Param) => boolean
+  areEqual?: (a: Param, b: Param) => boolean,
 ) {
   type CreatedAt = number // in milliseconds
   let shouldRemove: ShouldRemove<Param> | null = null

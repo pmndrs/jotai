@@ -27,7 +27,7 @@ export function useHydrateAtoms<
 
 export function useHydrateAtoms<T extends Map<AnyWritableAtom, unknown>>(
   values: T,
-  options?: Options
+  options?: Options,
 ): void
 
 export function useHydrateAtoms<

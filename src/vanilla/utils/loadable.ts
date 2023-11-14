@@ -46,14 +46,14 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
             },
             (error) => {
               loadableCache.set(promise, { state: 'hasError', error })
-            }
+            },
           )
           .finally(setSelf)
         return LOADING as Loadable<Value>
       },
       (_get, set) => {
         set(refreshAtom, (c) => c + 1)
-      }
+      },
     )
 
     if (import.meta.env?.MODE !== 'production') {

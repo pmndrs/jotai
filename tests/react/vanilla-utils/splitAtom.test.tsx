@@ -63,7 +63,7 @@ it('no unnecessary updates when updating atoms', async () => {
   const { getByTestId, getByText } = render(
     <>
       <TaskList listAtom={todosAtom} />
-    </>
+    </>,
   )
 
   await waitFor(() => {
@@ -144,7 +144,7 @@ it('removing atoms', async () => {
   const { getByTestId, queryByText } = render(
     <StrictMode>
       <TaskList listAtom={todosAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -211,7 +211,8 @@ it('inserting atoms', async () => {
               type: 'insert',
               value: { task: 'end' },
             })
-          }>
+          }
+        >
           add task
         </button>
       </>
@@ -232,7 +233,8 @@ it('inserting atoms', async () => {
         <div>{value.task}</div>
         <button
           data-testid={`${value.task}-insertbutton`}
-          onClick={() => onInsert({ task: 'new task' + taskCount++ })}>
+          onClick={() => onInsert({ task: 'new task' + taskCount++ })}
+        >
           +
         </button>
       </li>
@@ -242,33 +244,33 @@ it('inserting atoms', async () => {
   const { getByTestId, queryByTestId } = render(
     <StrictMode>
       <TaskList listAtom={todosAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
-      'get cat food+get dragon food+help nana+'
+      'get cat food+get dragon food+help nana+',
     )
   })
 
   fireEvent.click(getByTestId('help nana-insertbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
-      'get cat food+get dragon food+new task1+help nana+'
+      'get cat food+get dragon food+new task1+help nana+',
     )
   })
 
   fireEvent.click(getByTestId('get cat food-insertbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
-      'new task2+get cat food+get dragon food+new task1+help nana+'
+      'new task2+get cat food+get dragon food+new task1+help nana+',
     )
   })
 
   fireEvent.click(getByTestId('addtaskbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
-      'new task2+get cat food+get dragon food+new task1+help nana+end+'
+      'new task2+get cat food+get dragon food+new task1+help nana+end+',
     )
   })
 })
@@ -348,40 +350,40 @@ it('moving atoms', async () => {
   const { getByTestId, queryByTestId } = render(
     <StrictMode>
       <TaskList listAtom={todosAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
-      'get cat food<>get dragon food<>help nana<>'
+      'get cat food<>get dragon food<>help nana<>',
     )
   })
 
   fireEvent.click(getByTestId('help nana-leftbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
-      'get cat food<>help nana<>get dragon food<>'
+      'get cat food<>help nana<>get dragon food<>',
     )
   })
 
   fireEvent.click(getByTestId('get cat food-rightbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
-      'help nana<>get cat food<>get dragon food<>'
+      'help nana<>get cat food<>get dragon food<>',
     )
   })
 
   fireEvent.click(getByTestId('get cat food-rightbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
-      'help nana<>get dragon food<>get cat food<>'
+      'help nana<>get dragon food<>get cat food<>',
     )
   })
 
   fireEvent.click(getByTestId('help nana-leftbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
-      'get dragon food<>get cat food<>help nana<>'
+      'get dragon food<>get cat food<>help nana<>',
     )
   })
 })
@@ -420,7 +422,7 @@ it('read-only array atom', async () => {
   const { getByTestId } = render(
     <StrictMode>
       <TaskList listAtom={todosAtom} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
@@ -482,7 +484,7 @@ it('no error with cached atoms (fix 510)', async () => {
     <StrictMode>
       <Filter />
       <Filtered />
-    </StrictMode>
+    </StrictMode>,
   )
 
   fireEvent.click(getByText('button'))
@@ -493,7 +495,7 @@ it('variable sized splitted atom', async () => {
   const collectionAtom = atom<number[]>([])
   const collectionAtomsAtom = splitAtom(collectionAtom)
   const derivativeAtom = atom((get) =>
-    get(collectionAtomsAtom).map((ca) => get(ca))
+    get(collectionAtomsAtom).map((ca) => get(ca)),
   )
 
   function App() {
@@ -514,7 +516,7 @@ it('variable sized splitted atom', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <App />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('numbers: 1,2,3')
@@ -543,7 +545,7 @@ it('should not update splitted atom when single item is set to identical value',
   const { findByText, getByText } = render(
     <StrictMode>
       <App />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('changed: false')

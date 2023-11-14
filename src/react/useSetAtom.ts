@@ -15,17 +15,17 @@ type Options = {
 
 export function useSetAtom<Value, Args extends any[], Result>(
   atom: WritableAtom<Value, Args, Result>,
-  options?: Options
+  options?: Options,
 ): SetAtom<Args, Result>
 
 export function useSetAtom<AtomType extends WritableAtom<any, any[], any>>(
   atom: AtomType,
-  options?: Options
+  options?: Options,
 ): SetAtom<ExtractAtomArgs<AtomType>, ExtractAtomResult<AtomType>>
 
 export function useSetAtom<Value, Args extends any[], Result>(
   atom: WritableAtom<Value, Args, Result>,
-  options?: Options
+  options?: Options,
 ) {
   const store = useStore(options)
   const setAtom = useCallback(
@@ -37,7 +37,7 @@ export function useSetAtom<Value, Args extends any[], Result>(
       }
       return store.set(atom, ...args)
     },
-    [store, atom]
+    [store, atom],
   )
   return setAtom
 }

@@ -7,7 +7,7 @@ const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 
 export default function reactRefreshPlugin(
   { types: t }: typeof babel,
-  options?: PluginOptions
+  options?: PluginOptions,
 ): PluginObj {
   return {
     pre({ opts }) {
@@ -42,7 +42,7 @@ export default function reactRefreshPlugin(
           const atomKey = `${filename}/defaultExport`
 
           const buildExport = templateBuilder(
-            `export default globalThis.jotaiAtomCache.get(%%atomKey%%, %%atom%%)`
+            `export default globalThis.jotaiAtomCache.get(%%atomKey%%, %%atom%%)`,
           )
           const ast = buildExport({
             atomKey: t.stringLiteral(atomKey),
@@ -64,7 +64,7 @@ export default function reactRefreshPlugin(
           const atomKey = `${filename}/${nodePath.node.id.name}`
 
           const buildAtomDeclaration = templateBuilder(
-            `const %%atomIdentifier%% = globalThis.jotaiAtomCache.get(%%atomKey%%, %%atom%%)`
+            `const %%atomIdentifier%% = globalThis.jotaiAtomCache.get(%%atomKey%%, %%atom%%)`,
           )
           const ast = buildAtomDeclaration({
             atomIdentifier: t.identifier(nodePath.node.id.name),

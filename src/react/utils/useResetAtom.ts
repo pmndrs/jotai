@@ -7,7 +7,7 @@ type Options = Parameters<typeof useSetAtom>[1]
 
 export function useResetAtom(
   anAtom: WritableAtom<unknown, [typeof RESET], unknown>,
-  options?: Options
+  options?: Options,
 ) {
   const setAtom = useSetAtom(anAtom, options)
   const resetAtom = useCallback(() => setAtom(RESET), [setAtom])

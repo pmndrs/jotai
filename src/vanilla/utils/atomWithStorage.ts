@@ -19,7 +19,7 @@ export interface AsyncStorage<Value> {
   subscribe?: (
     key: string,
     callback: (value: Value) => void,
-    initialValue: Value
+    initialValue: Value,
   ) => Unsubscribe
 }
 
@@ -30,7 +30,7 @@ export interface SyncStorage<Value> {
   subscribe?: (
     key: string,
     callback: (value: Value) => void,
-    initialValue: Value
+    initialValue: Value,
   ) => Unsubscribe
 }
 
@@ -47,15 +47,15 @@ export interface SyncStringStorage {
 }
 
 export function createJSONStorage<Value>(
-  getStringStorage: () => AsyncStringStorage
+  getStringStorage: () => AsyncStringStorage,
 ): AsyncStorage<Value>
 
 export function createJSONStorage<Value>(
-  getStringStorage: () => SyncStringStorage
+  getStringStorage: () => SyncStringStorage,
 ): SyncStorage<Value>
 
 export function createJSONStorage<Value>(
-  getStringStorage: () => AsyncStringStorage | SyncStringStorage | undefined
+  getStringStorage: () => AsyncStringStorage | SyncStringStorage | undefined,
 ): AsyncStorage<Value> | SyncStorage<Value> {
   let lastStr: string | undefined
   let lastValue: any
@@ -115,14 +115,14 @@ export function createJSONStorage<Value>(
 const defaultStorage = createJSONStorage(() =>
   typeof window !== 'undefined'
     ? window.localStorage
-    : (undefined as unknown as Storage)
+    : (undefined as unknown as Storage),
 )
 
 export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage: AsyncStorage<Value>,
-  unstable_options?: { unstable_getOnInit?: boolean }
+  unstable_options?: { unstable_getOnInit?: boolean },
 ): WritableAtom<
   Value | Promise<Value>,
   [SetStateActionWithReset<Value | Promise<Value>>],
@@ -133,7 +133,7 @@ export function atomWithStorage<Value>(
   key: string,
   initialValue: Value,
   storage?: SyncStorage<Value>,
-  unstable_options?: { unstable_getOnInit?: boolean }
+  unstable_options?: { unstable_getOnInit?: boolean },
 ): WritableAtom<Value, [SetStateActionWithReset<Value>], void>
 
 export function atomWithStorage<Value>(
@@ -142,13 +142,13 @@ export function atomWithStorage<Value>(
   storage:
     | SyncStorage<Value>
     | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>,
-  unstable_options?: { unstable_getOnInit?: boolean }
+  unstable_options?: { unstable_getOnInit?: boolean },
 ): any {
   const getOnInit = unstable_options?.unstable_getOnInit
   const baseAtom = atom(
     getOnInit
       ? (storage.getItem(key, initialValue) as Value | Promise<Value>)
-      : initialValue
+      : initialValue,
   )
 
   if (import.meta.env?.MODE !== 'production') {
@@ -173,7 +173,7 @@ export function atomWithStorage<Value>(
         typeof update === 'function'
           ? (
               update as (
-                prev: Value | Promise<Value>
+                prev: Value | Promise<Value>,
               ) => Value | Promise<Value> | typeof RESET
             )(get(baseAtom))
           : update
@@ -189,7 +189,7 @@ export function atomWithStorage<Value>(
       }
       set(baseAtom, nextValue)
       return storage.setItem(key, nextValue)
-    }
+    },
   )
 
   return anAtom

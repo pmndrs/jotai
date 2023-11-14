@@ -56,5 +56,5 @@ pre > span:nth-child(61),
 pre > span:nth-child(78),
 pre > span:nth-child(79) > span > span.class-name,
 pre > span:nth-child(85) > span > span.class-name {
-  color: #ff7bab!important;
+  color: #ff7bab !important;
 }

@@ -17,7 +17,7 @@ it('freezeAtom basic test', async () => {
   const { findByText } = render(
     <StrictMode>
       <Component />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('isFrozen: true')
@@ -36,7 +36,7 @@ it('freezeAtomCreator basic test', async () => {
   const { findByText } = render(
     <StrictMode>
       <Component />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('isFrozen: true')

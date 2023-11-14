@@ -10,7 +10,7 @@ type Param = { id: string; title?: string }
 const todoAtomFamily = atomFamily(
   (param: Param) =>
     atom({ title: param.title || 'No title', completed: false }),
-  (a: Param, b: Param) => a.id === b.id
+  (a: Param, b: Param) => a.id === b.id,
 )
 
 const filterAtom = atom('all')

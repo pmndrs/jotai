@@ -21,7 +21,7 @@ it('useReducerAtom with no action argument', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -61,7 +61,7 @@ it('useReducerAtom with optional action argument', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -101,7 +101,7 @@ it('useReducerAtom with non-optional action argument', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')

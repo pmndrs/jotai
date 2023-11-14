@@ -21,7 +21,7 @@ it('useAtomValue basic test', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')

@@ -71,7 +71,7 @@ it('count state', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
@@ -96,7 +96,7 @@ it('writable count state', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
@@ -131,7 +131,7 @@ it('writable count state without initial value', async () => {
         <CounterValue />
       </Suspense>
       <CounterButton />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -159,7 +159,8 @@ it('writable count state with delayed value', async () => {
         <button
           onClick={() => {
             dispatch(9)
-          }}>
+          }}
+        >
           button
         </button>
       </>
@@ -171,7 +172,7 @@ it('writable count state with delayed value', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -201,7 +202,7 @@ it('only subscribe once per atom', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </>
+    </>,
   )
   await findByText('loading')
   act(() => subject.next(1))
@@ -215,7 +216,7 @@ it('only subscribe once per atom', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </>
+    </>,
   )
   act(() => subject.next(2))
   await findByText('count: 2')
@@ -245,7 +246,7 @@ it('cleanup subscription', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -284,7 +285,7 @@ it('resubscribe on remount', async () => {
           <Counter />
         </Toggle>
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -310,7 +311,7 @@ it("count state with initialValue doesn't suspend", async () => {
   const { findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 5')
@@ -339,7 +340,7 @@ it('writable count state with initialValue', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 5')
@@ -371,7 +372,7 @@ it('writable count state with error', async () => {
           <Counter />
         </Suspense>
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -391,7 +392,7 @@ it('synchronous subscription with initial value', async () => {
   const { findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
@@ -408,7 +409,7 @@ it('synchronous subscription with BehaviorSubject', async () => {
   const { findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
@@ -426,7 +427,7 @@ it('synchronous subscription with already emitted value', async () => {
   const { findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
@@ -445,7 +446,7 @@ it('with falsy initial value', async () => {
   const { findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -465,7 +466,7 @@ it('with initially emitted undefined value', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -487,7 +488,8 @@ it("don't omit values emitted between init and mount", async () => {
         <button
           onClick={() => {
             dispatch(9)
-          }}>
+          }}
+        >
           button
         </button>
       </>
@@ -499,7 +501,7 @@ it("don't omit values emitted between init and mount", async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -534,7 +536,8 @@ describe('error handling', () => {
               onClick={() => {
                 this.props.retry?.()
                 this.setState({ hasError: false })
-              }}>
+              }}
+            >
               retry
             </button>
           )}
@@ -565,7 +568,7 @@ describe('error handling', () => {
             <Counter />
           </Suspense>
         </ErrorBoundary>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')
@@ -615,7 +618,7 @@ describe('error handling', () => {
     const { findByText, getByText } = render(
       <StrictMode>
         <App />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')
@@ -704,7 +707,7 @@ describe('error handling', () => {
     const { findByText, getByText } = render(
       <StrictMode>
         <App />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')
@@ -744,7 +747,7 @@ describe('wonka', () => {
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('count: 1')
@@ -758,7 +761,7 @@ describe('wonka', () => {
       (get) => get(observableAtom),
       (_get, _set, nextValue: number) => {
         subject.next(nextValue)
-      }
+      },
     )
 
     const Counter = () => {
@@ -777,7 +780,7 @@ describe('wonka', () => {
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')

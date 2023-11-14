@@ -13,7 +13,7 @@ it('creates atoms', () => {
     (get, set, value: number) => {
       set(countAtom, get(countAtom) + value / 2)
       set(anotherCountAtom, get(anotherCountAtom) + value / 2)
-    }
+    },
   )
   // write-only derived atom
   const decrementCountAtom = atom(null, (get, set) => {

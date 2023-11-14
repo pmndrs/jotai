@@ -43,9 +43,8 @@ const Counter = () => {
     <>
       count: {state.count}
       <button
-        onClick={() =>
-          setState((prev) => ({ ...prev, count: prev.count + 1 }))
-        }>
+        onClick={() => setState((prev) => ({ ...prev, count: prev.count + 1 }))}
+      >
         button
       </button>
     </>

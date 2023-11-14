@@ -1,4 +1,4 @@
-@import url("https://rsms.me/inter/inter.css");
+@import url('https://rsms.me/inter/inter.css');
 
 * {
   box-sizing: border-box;
@@ -17,7 +17,7 @@ body,
 body {
   background: white;
   color: black;
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -70,7 +70,7 @@ button {
   background: transparent;
   border: none;
   cursor: pointer;
-  font-family: "Inter", sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 200;
   font-size: 6em;
   padding: 0px 30px 20px 0px;

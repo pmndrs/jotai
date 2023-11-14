@@ -40,8 +40,8 @@ const Component = () => {
     useMemo(
       // This is also fine
       () => atom((get) => get(stableAtom) * 2),
-      []
-    )
+      [],
+    ),
   )
 }
 ```
@@ -54,13 +54,13 @@ const Component = () => {
 // primitive or writable derived atom
 function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>,
-  options?: { store?: Store }
+  options?: { store?: Store },
 ): [Value, SetAtom<Update>]
 
 // read-only atom
 function useAtom<Value>(
   atom: Atom<Value>,
-  options?: { store?: Store }
+  options?: { store?: Store },
 ): [Value, never]
 ```
 
