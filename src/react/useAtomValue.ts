@@ -17,7 +17,7 @@ const use =
       status?: 'pending' | 'fulfilled' | 'rejected'
       value?: T
       reason?: unknown
-    }
+    },
   ): T => {
     if (promise.status === 'pending') {
       throw promise
@@ -35,7 +35,7 @@ const use =
         (e) => {
           promise.status = 'rejected'
           promise.reason = e
-        }
+        },
       )
       throw promise
     }
@@ -48,12 +48,12 @@ type Options = {
 
 export function useAtomValue<Value>(
   atom: Atom<Value>,
-  options?: Options
+  options?: Options,
 ): Awaited<Value>
 
 export function useAtomValue<AtomType extends Atom<any>>(
   atom: AtomType,
-  options?: Options
+  options?: Options,
 ): Awaited<ExtractAtomValue<AtomType>>
 
 export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
@@ -76,7 +76,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
         return [nextValue, store, atom]
       },
       undefined,
-      () => [store.get(atom), store, atom]
+      () => [store.get(atom), store, atom],
     )
 
   let value = valueFromReducer

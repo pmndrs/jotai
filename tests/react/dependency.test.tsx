@@ -36,7 +36,7 @@ it('works with 2 level dependencies', async () => {
   const { getByText, findByText } = render(
     <>
       <Counter />
-    </>
+    </>,
   )
 
   await findByText('commits: 1, count: 1, doubled: 2, tripled: 6')
@@ -71,7 +71,7 @@ it('works a primitive atom and a dependent async atom', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -129,7 +129,7 @@ it('should keep an atom value even if unmounted', async () => {
   const { getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -192,7 +192,7 @@ it('should keep a dependent atom value even if unmounted', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('derived: 0')
@@ -235,7 +235,7 @@ it('should bail out updating if not changed', async () => {
     <StrictMode>
       <Counter />
       <DerivedCounter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -270,7 +270,8 @@ it('should bail out updating if not changed, 2 level', async () => {
         <button
           onClick={() =>
             setData((prev) => ({ ...prev, count: prev.count + 1 }))
-          }>
+          }
+        >
           button
         </button>
       </>
@@ -286,7 +287,7 @@ it('should bail out updating if not changed, 2 level', async () => {
     <StrictMode>
       <Counter />
       <DerivedCounter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -313,7 +314,7 @@ it('derived atom to update base atom in callback', async () => {
     (get) => get(countAtom) * 2,
     (_get, _set, callback: () => void) => {
       callback()
-    }
+    },
   )
 
   const Counter = () => {
@@ -334,7 +335,7 @@ it('derived atom to update base atom in callback', async () => {
   const { getByText, findByText } = render(
     <>
       <Counter />
-    </>
+    </>,
   )
 
   await findByText('commits: 1, count: 1, doubled: 2')
@@ -364,7 +365,7 @@ it('can read sync derived atom in write without initializing', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
@@ -415,7 +416,7 @@ it('can remount atoms with dependency (#490)', async () => {
   const { getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -496,7 +497,7 @@ it('can remount atoms with intermediate atom', async () => {
   const { getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -579,7 +580,7 @@ it('can update dependents with useEffect (#512)', async () => {
   const { getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -629,7 +630,7 @@ it('update unmounted atom with intermediate atom', async () => {
     <StrictMode>
       <DerivedCounter />
       <Control />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('derived: 2')
@@ -674,7 +675,7 @@ it('Should bail for derived sync chains (#877)', async () => {
     <StrictMode>
       <Input />
       <ForceValue />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('My very long data')
@@ -720,7 +721,7 @@ it('Should bail for derived async chains (#877)', async () => {
         <Input />
         <ForceValue />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('My very long data')
@@ -763,7 +764,7 @@ it('update correctly with async updates (#1250)', async () => {
   const { getByText } = render(
     <StrictMode>
       <App />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -809,7 +810,7 @@ describe('glitch free', () => {
       <StrictMode>
         <App />
         <Control />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('value: v0: 0, v1: 0, v2: 0')
@@ -850,7 +851,7 @@ describe('glitch free', () => {
       <StrictMode>
         <App />
         <Control />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('value: 0')
@@ -893,7 +894,7 @@ describe('glitch free', () => {
       <StrictMode>
         <App />
         <Control />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('value: 0')
@@ -932,7 +933,8 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', as
           onClick={() => {
             setShow(true)
             setCount((c) => c + 1)
-          }}>
+          }}
+        >
           show
         </button>
         {show && <Component />}
@@ -943,7 +945,7 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', as
   const { getByText } = render(
     <StrictMode>
       <Main />
-    </StrictMode>
+    </StrictMode>,
   )
 
   fireEvent.click(getByText('hide'))

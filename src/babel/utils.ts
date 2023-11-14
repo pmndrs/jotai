@@ -7,7 +7,7 @@ export interface PluginOptions {
 export function isAtom(
   t: typeof types,
   callee: babel.types.Expression | babel.types.V8IntrinsicIdentifier,
-  customAtomNames: PluginOptions['customAtomNames'] = []
+  customAtomNames: PluginOptions['customAtomNames'] = [],
 ) {
   const atomNames = [...atomFunctionNames, ...customAtomNames]
   if (t.isIdentifier(callee) && atomNames.includes(callee.name)) {

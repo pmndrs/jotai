@@ -56,7 +56,8 @@ const App = () => {
           style={{
             fontWeight: loc.pathname === '/' ? 'bold' : 'normal',
           }}
-          onClick={() => setLoc((prev) => ({ ...prev, pathname: '/' }))}>
+          onClick={() => setLoc((prev) => ({ ...prev, pathname: '/' }))}
+        >
           Home
         </button>
       </li>
@@ -74,7 +75,8 @@ const App = () => {
               pathname: '/foo',
               searchParams: new URLSearchParams(),
             }))
-          }>
+          }
+        >
           Foo
         </button>
       </li>
@@ -92,7 +94,8 @@ const App = () => {
               pathname: '/foo',
               searchParams: new URLSearchParams([['bar', '1']]),
             }))
-          }>
+          }
+        >
           Foo?bar=1
         </button>
       </li>

@@ -18,7 +18,7 @@ const strAtomWithPersistence = atom(
   (get, set, newStr) => {
     set(strAtom, newStr)
     localStorage.setItem('myKey', newStr)
-  }
+  },
 )
 ```
 
@@ -41,7 +41,7 @@ const atomWithLocalStorage = (key, initialValue) => {
         typeof update === 'function' ? update(get(baseAtom)) : update
       set(baseAtom, nextValue)
       localStorage.setItem(key, JSON.stringify(nextValue))
-    }
+    },
   )
   return derivedAtom
 }
@@ -69,7 +69,7 @@ const atomWithAsyncStorage = (key, initialValue) => {
         typeof update === 'function' ? update(get(baseAtom)) : update
       set(baseAtom, nextValue)
       AsyncStorage.setItem(key, JSON.stringify(nextValue))
-    }
+    },
   )
   return derivedAtom
 }
@@ -172,7 +172,7 @@ const serializeAtom = atom(null, (get, set, action: Actions) => {
     // needs error handling and type checking
     set(
       todosAtom,
-      obj.todos.map((todo: Todo) => atom(todo))
+      obj.todos.map((todo: Todo) => atom(todo)),
     )
   }
 })

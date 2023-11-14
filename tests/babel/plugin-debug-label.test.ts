@@ -5,7 +5,7 @@ import plugin from 'jotai/babel/plugin-debug-label'
 const transform = (
   code: string,
   filename?: string,
-  customAtomNames?: string[]
+  customAtomNames?: string[],
 ) =>
   transformSync(code, {
     babelrc: false,
@@ -60,8 +60,8 @@ it('Should handle all types of exports', () => {
       export const countAtom = atom(0);
       export default atom(0);
     `,
-      'atoms/index.ts'
-    )
+      'atoms/index.ts',
+    ),
   ).toMatchInlineSnapshot(`
     "export const countAtom = atom(0);
     countAtom.debugLabel = \\"countAtom\\";
@@ -108,8 +108,8 @@ it('Should handle all atom types', () => {
       const someAtomWithRecoilValue = atomWithRecoilValue({});
       
     `,
-      'atoms/index.ts'
-    )
+      'atoms/index.ts',
+    ),
   ).toMatchInlineSnapshot(`
     "export const countAtom = atom(0);
     countAtom.debugLabel = \\"countAtom\\";
@@ -165,7 +165,7 @@ it('Handles custom atom names a debugLabel to an atom', () => {
   expect(
     transform(`const mySpecialThing = myCustomAtom(0);`, undefined, [
       'myCustomAtom',
-    ])
+    ]),
   ).toMatchInlineSnapshot(`
     "const mySpecialThing = myCustomAtom(0);
     mySpecialThing.debugLabel = \\"mySpecialThing\\";"

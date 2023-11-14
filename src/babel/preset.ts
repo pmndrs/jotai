@@ -5,7 +5,7 @@ import { PluginOptions } from './utils.ts'
 
 export default function jotaiPreset(
   _: typeof babel,
-  options?: PluginOptions
+  options?: PluginOptions,
 ): { plugins: babel.PluginItem[] } {
   return {
     plugins: [

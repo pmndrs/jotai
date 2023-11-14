@@ -41,7 +41,7 @@ const dataAtom = atom(
   },
   (get, set, update) => {
     set(baseDataAtom, update)
-  }
+  },
 )
 
 const atomWithRefreshAndDefault = (refreshAtom, getDefault) => {
@@ -56,14 +56,14 @@ const atomWithRefreshAndDefault = (refreshAtom, getDefault) => {
     },
     (get, set, update) => {
       set(overwrittenAtom, { refresh: get(refreshAtom), value: update })
-    }
+    },
   )
 }
 
 // This is an alternative of `atomWithDefault((get) => get(count1Atom) * 2)`
 const refreshableAtom = atomWithRefreshAndDefault(
   refreshCountAtom,
-  (get) => get(dataAtom) * 2
+  (get) => get(dataAtom) * 2,
 )
 
 // You can reset by updating just one atom

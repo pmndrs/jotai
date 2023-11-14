@@ -33,7 +33,7 @@ describe('atomWithStorage (sync)', () => {
     subscribe: (
       key: string,
       callback: (value: number) => void,
-      initialValue: number
+      initialValue: number,
     ) => {
       const listener = (k: string, value: number | null) => {
         if (k === key) {
@@ -62,7 +62,7 @@ describe('atomWithStorage (sync)', () => {
     const { findByText, getByText } = render(
       <StrictMode>
         <Counter />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('count: 10')
@@ -92,7 +92,7 @@ describe('atomWithStorage (sync)', () => {
     const { findByText } = render(
       <StrictMode>
         <Counter />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('count: 9')
@@ -157,7 +157,7 @@ describe('with sync string storage', () => {
     const { findByText, getByText } = render(
       <StrictMode>
         <Counter />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('count: 10')
@@ -190,7 +190,7 @@ describe('with sync string storage', () => {
     const { findByText } = render(
       <StrictMode>
         <Counter />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('noentry: -1')
@@ -240,7 +240,7 @@ describe('atomWithStorage (async)', () => {
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     act(() => resolve.splice(0).forEach((fn) => fn()))
@@ -282,7 +282,7 @@ describe('atomWithStorage (async)', () => {
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('count: 20')
@@ -302,7 +302,7 @@ describe('atomWithStorage (without localStorage) (#949)', () => {
     const countAtom = atomWithStorage(
       'count',
       1,
-      createJSONStorage(() => undefined as any)
+      createJSONStorage(() => undefined as any),
     )
 
     const Counter = () => {
@@ -320,7 +320,7 @@ describe('atomWithStorage (without localStorage) (#949)', () => {
     const { findByText } = render(
       <StrictMode>
         <Counter />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('count: 1')
@@ -385,7 +385,7 @@ describe('atomWithStorage (with browser storage)', () => {
     const dummyAtom = atomWithStorage<number>(
       'dummy',
       1,
-      createJSONStorage<number>(() => mockNativeStorage)
+      createJSONStorage<number>(() => mockNativeStorage),
     )
 
     const DummyComponent = () => {
@@ -400,12 +400,12 @@ describe('atomWithStorage (with browser storage)', () => {
     render(
       <StrictMode>
         <DummyComponent />
-      </StrictMode>
+      </StrictMode>,
     )
 
     expect(mockAddEventListener).toHaveBeenCalledWith(
       'storage',
-      expect.any(Function)
+      expect.any(Function),
     )
 
     const storageEventHandler = mockAddEventListener.mock.calls
@@ -459,7 +459,7 @@ describe('atomWithStorage (with browser storage)', () => {
     const isDevModeStorageAtom = atomWithStorage(
       'isDevModeStorageAtom',
       false,
-      createJSONStorage<boolean>(() => mockNativeStorage)
+      createJSONStorage<boolean>(() => mockNativeStorage),
     )
     const isDevModeState = atom(
       (get) => {
@@ -468,7 +468,7 @@ describe('atomWithStorage (with browser storage)', () => {
       },
       (get, set, value: boolean) => {
         set(isDevModeStorageAtom, value)
-      }
+      },
     )
 
     const DummyComponent = () => {
@@ -486,7 +486,7 @@ describe('atomWithStorage (with browser storage)', () => {
     const { getByRole } = render(
       <StrictMode>
         <DummyComponent />
-      </StrictMode>
+      </StrictMode>,
     )
 
     act(() => store.set(isLoggedAtom, true))
@@ -525,7 +525,7 @@ describe('atomWithStorage (with non-browser storage)', () => {
     const dummyAtom = atomWithStorage<number>(
       'dummy',
       1,
-      createJSONStorage<number>(() => mockNonNativeStorage)
+      createJSONStorage<number>(() => mockNonNativeStorage),
     )
 
     const DummyComponent = () => {
@@ -540,12 +540,12 @@ describe('atomWithStorage (with non-browser storage)', () => {
     render(
       <StrictMode>
         <DummyComponent />
-      </StrictMode>
+      </StrictMode>,
     )
 
     expect(mockAddEventListener).not.toHaveBeenCalledWith(
       'storage',
-      expect.any(Function)
+      expect.any(Function),
     )
   })
 })

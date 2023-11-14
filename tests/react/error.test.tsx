@@ -64,7 +64,7 @@ it('can throw an initial error in read function', async () => {
       <ErrorBoundary>
         <Counter />
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('errored')
@@ -96,7 +96,7 @@ it('can throw an error in read function', async () => {
       <ErrorBoundary>
         <Counter />
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('no error')
@@ -125,7 +125,7 @@ it('can throw an initial chained error in read function', async () => {
       <ErrorBoundary>
         <Counter />
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('errored')
@@ -158,7 +158,7 @@ it('can throw a chained error in read function', async () => {
       <ErrorBoundary>
         <Counter />
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('no error')
@@ -188,7 +188,7 @@ it('can throw an initial error in async read function', async () => {
           <Counter />
         </Suspense>
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('errored')
@@ -222,7 +222,7 @@ it('can throw an error in async read function', async () => {
           <Counter />
         </Suspense>
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('no error')
@@ -237,7 +237,7 @@ it('can throw an error in write function', async () => {
     (get) => get(countAtom),
     () => {
       throw new Error('error_in_write_function')
-    }
+    },
   )
 
   const Counter = () => {
@@ -261,7 +261,7 @@ it('can throw an error in write function', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('no error')
@@ -277,7 +277,7 @@ it('can throw an error in async write function', async () => {
     (get) => get(countAtom),
     async () => {
       throw new Error('error_in_async_write_function')
-    }
+    },
   )
 
   const Counter = () => {
@@ -303,7 +303,7 @@ it('can throw an error in async write function', async () => {
       <Suspense fallback={null}>
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('no error')
@@ -321,13 +321,13 @@ it('can throw a chained error in write function', async () => {
     (get) => get(countAtom),
     () => {
       throw new Error('chained_err_in_write')
-    }
+    },
   )
   const chainedAtom = atom(
     (get) => get(errorAtom),
     (_get, set) => {
       set(errorAtom)
-    }
+    },
   )
 
   const Counter = () => {
@@ -351,7 +351,7 @@ it('can throw a chained error in write function', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('no error')
@@ -387,7 +387,7 @@ it('throws an error while updating in effect', async () => {
       <ErrorBoundary>
         <Counter />
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('no error')
@@ -434,17 +434,17 @@ describe('throws an error while updating in effect cleanup', () => {
         <ErrorBoundary>
           <Main />
         </ErrorBoundary>
-      </>
+      </>,
     )
 
     await findByText('no error')
     expect(errorMessages).not.toContain(
-      'Error: Uncaught [Error: err_in_effect_cleanup]'
+      'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
 
     fireEvent.click(getByText('close'))
     expect(errorMessages).toContain(
-      'Error: Uncaught [Error: err_in_effect_cleanup]'
+      'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
   })
 
@@ -456,17 +456,17 @@ describe('throws an error while updating in effect cleanup', () => {
         <ErrorBoundary>
           <Main />
         </ErrorBoundary>
-      </>
+      </>,
     )
 
     await findByText('no error')
     expect(errorMessages).not.toContain(
-      'Error: Uncaught [Error: err_in_effect_cleanup]'
+      'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
 
     fireEvent.click(getByText('close'))
     expect(errorMessages).toContain(
-      'Error: Uncaught [Error: err_in_effect_cleanup]'
+      'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
   })
 })
@@ -506,7 +506,7 @@ describe('error recovery', () => {
         <ErrorBoundary>
           <Display />
         </ErrorBoundary>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('errored')
@@ -540,7 +540,7 @@ describe('error recovery', () => {
             <Display />
           </Suspense>
         </ErrorBoundary>
-      </StrictMode>
+      </StrictMode>,
     )
 
     resolve()

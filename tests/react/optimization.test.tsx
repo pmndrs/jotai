@@ -37,7 +37,7 @@ it('only relevant render function called (#156)', async () => {
     <>
       <Counter1 />
       <Counter2 />
-    </>
+    </>,
   )
 
   await waitFor(() => {
@@ -94,7 +94,7 @@ it('only render once using atoms with write-only atom', async () => {
     <>
       <Counter />
       <Control />
-    </>
+    </>,
   )
 
   await findByText('count1: 0, count2: 0')
@@ -132,7 +132,7 @@ it('useless re-renders with static atoms (#355)', async () => {
   const { getByText, findByText } = render(
     <>
       <Counter />
-    </>
+    </>,
   )
 
   await findByText('count: 0')
@@ -167,7 +167,7 @@ it('does not re-render if value is the same (#1158)', async () => {
   const { getByText, findByText } = render(
     <>
       <Counter />
-    </>
+    </>,
   )
 
   await findByText('count: 0')
@@ -240,7 +240,7 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
       <Counter1 />
       <Counter2 />
       <Control />
-    </>
+    </>,
   )
 
   await waitFor(() => {

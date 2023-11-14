@@ -16,7 +16,7 @@ it('new atomFamily impl', async () => {
   const { findByText } = render(
     <StrictMode>
       <Displayer index={'a'} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: a')
@@ -32,7 +32,7 @@ it('primitive atomFamily returns same reference for same parameters', async () =
 it('read-only derived atomFamily returns same reference for same parameters', async () => {
   const arrayAtom = atom([0])
   const myFamily = atomFamily((num: number) =>
-    atom((get) => get(arrayAtom)[num] as number)
+    atom((get) => get(arrayAtom)[num] as number),
   )
   expect(myFamily(0)).toEqual(myFamily(0))
   expect(myFamily(0)).not.toEqual(myFamily(1))
@@ -42,7 +42,7 @@ it('read-only derived atomFamily returns same reference for same parameters', as
 it('removed atom creates a new reference', async () => {
   const bigAtom = atom([0])
   const myFamily = atomFamily((num: number) =>
-    atom((get) => get(bigAtom)[num] as number)
+    atom((get) => get(bigAtom)[num] as number),
   )
 
   const savedReference = myFamily(0)
@@ -87,7 +87,7 @@ it('primitive atomFamily initialized with props', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
@@ -125,8 +125,8 @@ it('derived atomFamily functionality as usual', async () => {
 
           return newArray
         })
-      }
-    )
+      },
+    ),
   )
 
   const Displayer = ({
@@ -164,7 +164,7 @@ it('derived atomFamily functionality as usual', async () => {
   const { getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -199,13 +199,13 @@ it('custom equality function work', async () => {
   const bigAtom = atom([0])
 
   const badFamily = atomFamily((num: { index: number }) =>
-    atom((get) => get(bigAtom)[num.index] as number)
+    atom((get) => get(bigAtom)[num.index] as number),
   )
 
   const goodFamily = atomFamily(
     (num: { index: number }) =>
       atom((get) => get(bigAtom)[num.index] as number),
-    (l, r) => l.index === r.index
+    (l, r) => l.index === r.index,
   )
 
   expect(badFamily({ index: 0 })).not.toEqual(badFamily({ index: 0 }))
@@ -222,7 +222,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
     atom(async () => {
       await new Promise<void>((r) => resolve.push(r))
       return n + 10
-    })
+    }),
   )
   const derivedAtom = atom((get) => get(getAsyncAtom(get(countAtom))))
 
@@ -242,7 +242,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -263,7 +263,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
 it('setShouldRemove with custom equality function', async () => {
   const myFamily = atomFamily(
     (num: { index: number }) => atom(num),
-    (l, r) => l.index === r.index
+    (l, r) => l.index === r.index,
   )
   let firstTime = true
   myFamily.setShouldRemove(() => {

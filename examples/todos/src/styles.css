@@ -1,4 +1,4 @@
-@import url("https://rsms.me/inter/inter.css");
+@import url('https://rsms.me/inter/inter.css');
 
 * {
   box-sizing: border-box;
@@ -16,7 +16,7 @@ body {
   align-items: flex-start;
   justify-content: center;
   background: #fdfdfd;
-  font-family: "Inter", sans-serif !important;
+  font-family: 'Inter', sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   filter: saturate(0);
@@ -29,7 +29,7 @@ body {
   gap: 1em;
 }
 
-input:not([type="checkbox"]) {
+input:not([type='checkbox']) {
   width: 100%;
   border: none;
   box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.05);

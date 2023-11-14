@@ -40,7 +40,7 @@ const main = async () => {
         folder: __dirname,
         file: `simple-read-${n}`,
         format: 'chart.html',
-      })
+      }),
     )
   }
 }

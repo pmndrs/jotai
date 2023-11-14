@@ -25,7 +25,7 @@ it('useAtomCallback with get', async () => {
         const currentCount = get(countAtom)
         setCount(currentCount)
         return currentCount
-      }, [])
+      }, []),
     )
     useEffect(() => {
       const timer = setInterval(() => {
@@ -46,7 +46,7 @@ it('useAtomCallback with get', async () => {
     <StrictMode>
       <Counter />
       <Monitor />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('atom count: 0')
@@ -77,7 +77,7 @@ it('useAtomCallback with set and update', async () => {
         const currentCount = get(countAtom)
         set(changeableAtom, currentCount)
         return currentCount
-      }, [])
+      }, []),
     )
     useEffect(() => {
       const timer = setInterval(() => {
@@ -98,7 +98,7 @@ it('useAtomCallback with set and update', async () => {
     <StrictMode>
       <Counter />
       <Monitor />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -118,7 +118,7 @@ it('useAtomCallback with set and update and arg', async () => {
       useCallback((_get, set, arg: number) => {
         set(countAtom, arg)
         return arg
-      }, [])
+      }, []),
     )
 
     return (
@@ -132,7 +132,7 @@ it('useAtomCallback with set and update and arg', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <App />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -165,7 +165,7 @@ it('useAtomCallback with sync atom (#1100)', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('atom count: 0')

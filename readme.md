@@ -131,7 +131,7 @@ Just do not define a read function.
 
 ```jsx
 const multiplyCountAtom = atom(null, (get, set, by) =>
-  set(countAtom, get(countAtom) * by)
+  set(countAtom, get(countAtom) * by),
 )
 
 function Controls() {

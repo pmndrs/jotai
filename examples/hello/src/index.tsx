@@ -13,12 +13,13 @@ ReactDOM.render(
         className="
         text-2xl font-regular text-gray-400 
         lg:flex justify-between items-center
-        ">
+        "
+      >
         <div>Primitive and flexible state management for React.</div>
         <div className="text-xl font-regular text-gray-400">状態 </div>
       </h2>
     </header>
     <App />
   </div>,
-  document.getElementById('root')
+  document.getElementById('root'),
 )

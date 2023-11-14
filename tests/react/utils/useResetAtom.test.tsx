@@ -27,7 +27,7 @@ it('atomWithReset resets to its first value', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -64,7 +64,8 @@ it('atomWithReset reset based on previous value', async () => {
         <button
           onClick={() =>
             setValue((oldValue) => (oldValue === 3 ? RESET : oldValue + 1))
-          }>
+          }
+        >
           increment till 3, then reset
         </button>
       </>
@@ -74,7 +75,7 @@ it('atomWithReset reset based on previous value', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -94,7 +95,8 @@ it('atomWithReset through read-write atom', async () => {
   const primitiveAtom = atomWithReset(0)
   const countAtom = atom(
     (get) => get(primitiveAtom),
-    (_get, set, newValue: number | typeof RESET) => set(primitiveAtom, newValue)
+    (_get, set, newValue: number | typeof RESET) =>
+      set(primitiveAtom, newValue),
   )
 
   const Parent = () => {
@@ -112,7 +114,7 @@ it('atomWithReset through read-write atom', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -151,7 +153,7 @@ it('useResetAtom with custom atom', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
