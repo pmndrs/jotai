@@ -15,7 +15,7 @@ published: false
 function selectAtom<Value, Slice>(
   anAtom: Atom<Value>,
   selector: (v: Value, prevSlice?: Slice) => Slice,
-  equalityFn: (a: Slice, b: Slice) => boolean = Object.is
+  equalityFn: (a: Slice, b: Slice) => boolean = Object.is,
 ): Atom<Slice>
 ```
 
@@ -81,8 +81,8 @@ const Component = () => {
   const [value] = useAtom(
     selectAtom(
       baseAtom,
-      useCallback((v) => v, [])
-    )
+      useCallback((v) => v, []),
+    ),
   )
 
   // Solution 3: All constraints are already satisfied

@@ -10,7 +10,7 @@ Ref: https://github.com/pmndrs/jotai/issues/41
 
 ```ts
 function atomWithReset<Value>(
-  initialValue: Value
+  initialValue: Value,
 ): WritableAtom<Value, SetStateAction<Value> | typeof RESET>
 ```
 
@@ -72,7 +72,7 @@ const ResetExample = () => {
 
 ```ts
 function useResetAtom<Value>(
-  anAtom: WritableAtom<Value, typeof RESET>
+  anAtom: WritableAtom<Value, typeof RESET>,
 ): () => void | Promise<void>
 ```
 

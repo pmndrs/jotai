@@ -201,7 +201,7 @@ function useAtomDevtools<Value>(
     store?: Store
     name?: string
     enabled?: boolean
-  }
+  },
 ): void
 ```
 
@@ -250,7 +250,7 @@ function useAtomsDevtools(
   options?: {
     store?: Store
     enabled?: boolean
-  }
+  },
 ): void
 ```
 
@@ -365,7 +365,8 @@ const UpdateSnapshot = () => {
         newSnapshot.set(petAtom, 'dog')
         newSnapshot.set(colorAtom, 'green')
         goToSnapshot(newSnapshot)
-      }}>
+      }}
+    >
       Go to snapshot
     </button>
   )

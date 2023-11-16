@@ -31,6 +31,6 @@ export const Provider = ({
     {
       value: store || storeRef.current,
     },
-    children
+    children,
   )
 }

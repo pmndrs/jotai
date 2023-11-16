@@ -31,9 +31,10 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
         <button
           onClick={() =>
             setStatus((status) =>
-              status === 'fulfilled' ? 'rejected' : 'fulfilled'
+              status === 'fulfilled' ? 'rejected' : 'fulfilled',
             )
-          }>
+          }
+        >
           update
         </button>
       </>
@@ -42,7 +43,7 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
   const { findByText, getByText, rerender } = render(
     <StrictMode>
       <Counter initialCount={42} initialStatus="rejected" />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 42')
@@ -55,7 +56,7 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialStatus="rejected" />
-    </StrictMode>
+    </StrictMode>,
   )
   await findByText('count: 43')
   await findByText('status: fulfilled')
@@ -79,7 +80,7 @@ it('useHydrateAtoms should only hydrate on first render using a Map', async () =
       >([
         [activeAtom, initialActive],
         [countAtom, initialCount],
-      ])
+      ]),
     )
     const activeValue = useAtomValue(activeAtom)
     const [countValue, setCount] = useAtom(countAtom)
@@ -95,7 +96,7 @@ it('useHydrateAtoms should only hydrate on first render using a Map', async () =
   const { findByText, getByText, rerender } = render(
     <StrictMode>
       <Counter initialCount={42} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 42')
@@ -106,7 +107,7 @@ it('useHydrateAtoms should only hydrate on first render using a Map', async () =
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialActive={true} />
-    </StrictMode>
+    </StrictMode>,
   )
   await findByText('count: 43')
   await findByText('is active: no')
@@ -134,7 +135,7 @@ it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
   const { findByText, getByText } = render(
     <>
       <Counter initialCount={42} />
-    </>
+    </>,
   )
 
   await findByText('count: 42')
@@ -164,7 +165,7 @@ it('useHydrateAtoms should work with derived atoms', async () => {
   const { findByText, getByText } = render(
     <StrictMode>
       <Counter initialCount={42} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 42')
@@ -202,7 +203,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   const { findByText, getByText, rerender } = render(
     <StrictMode>
       <Counter initialCount={42} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 42')
@@ -212,7 +213,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   rerender(
     <StrictMode>
       <Counter2 count={65} />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 43')
@@ -234,7 +235,7 @@ it('useHydrateAtoms should respect onMount', async () => {
   const { findByText } = render(
     <>
       <Counter initialCount={42} />
-    </>
+    </>,
   )
 
   await findByText('count: 42')
@@ -261,7 +262,7 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
       ],
       {
         dangerouslyForceHydrate,
-      }
+      },
     )
     const [countValue, setCount] = useAtom(countAtom)
     const [statusValue, setStatus] = useAtom(statusAtom)
@@ -274,9 +275,10 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
         <button
           onClick={() =>
             setStatus((status) =>
-              status === 'fulfilled' ? 'rejected' : 'fulfilled'
+              status === 'fulfilled' ? 'rejected' : 'fulfilled',
             )
-          }>
+          }
+        >
           update
         </button>
       </>
@@ -285,7 +287,7 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
   const { findByText, getByText, rerender } = render(
     <StrictMode>
       <Counter initialCount={42} initialStatus="rejected" />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 42')
@@ -298,7 +300,7 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialStatus="rejected" />
-    </StrictMode>
+    </StrictMode>,
   )
   await findByText('count: 43')
   await findByText('status: fulfilled')
@@ -310,7 +312,7 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
         initialStatus="rejected"
         dangerouslyForceHydrate={true}
       />
-    </StrictMode>
+    </StrictMode>,
   )
   await findByText('count: 11')
   await findByText('status: rejected')

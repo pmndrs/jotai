@@ -34,7 +34,8 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
           <>
             <div>delayed: {delayed}</div>
             <button
-              onClick={() => startTransition(() => setCount((c) => c + 1))}>
+              onClick={() => startTransition(() => setCount((c) => c + 1))}
+            >
               button
             </button>
           </>
@@ -46,7 +47,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
           <Suspense fallback="loading">
             <Counter />
           </Suspense>
-        </>
+        </>,
       )
 
       resolve()
@@ -65,7 +66,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
         { pending: true, delayed: 0 },
         { pending: false, delayed: 1 },
       ])
-    }
+    },
   )
 
   it('can update normal atom with useTransition (#1151)', async () => {
@@ -100,7 +101,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('count: 0')

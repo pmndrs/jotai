@@ -9,7 +9,7 @@ type Read<Value, Args extends unknown[], Result> = WritableAtom<
 >['read']
 
 export function atomWithDefault<Value>(
-  getDefault: Read<Value, [SetStateAction<Value> | typeof RESET], void>
+  getDefault: Read<Value, [SetStateAction<Value> | typeof RESET], void>,
 ): WritableAtom<Value, [SetStateAction<Value> | typeof RESET], void> {
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
@@ -39,7 +39,7 @@ export function atomWithDefault<Value>(
       } else {
         set(overwrittenAtom, update)
       }
-    }
+    },
   )
   return anAtom
 }

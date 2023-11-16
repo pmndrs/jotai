@@ -28,7 +28,7 @@ The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an i
 // Definition
 function useHydrateAtoms(
   values: Iterable<readonly [Atom<unknown>, unknown]>,
-  options?: { store?: Store }
+  options?: { store?: Store },
 ): void
 ```
 
@@ -41,7 +41,7 @@ useHydrateAtoms(
     [countAtom, 42],
     [frameworkAtom, 'Next.js'],
   ],
-  { store: myStore }
+  { store: myStore },
 )
 // Or with a map
 useHydrateAtoms(new Map([[count, 42]]))
@@ -59,7 +59,7 @@ useHydrateAtoms(
   ],
   {
     dangerouslyForceHydrate: true,
-  }
+  },
 )
 ```
 
@@ -75,7 +75,7 @@ useHydrateAtoms(
     [countAtom, 17],
     [frameworkAtom, 'Gatsby'],
   ],
-  { store: myStore }
+  { store: myStore },
 )
 ```
 

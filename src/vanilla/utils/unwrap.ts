@@ -12,26 +12,26 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
 const defaultFallback = () => undefined
 
 export function unwrap<Value, Args extends unknown[], Result>(
-  anAtom: WritableAtom<Value, Args, Result>
+  anAtom: WritableAtom<Value, Args, Result>,
 ): WritableAtom<Awaited<Value> | undefined, Args, Result>
 
 export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
   anAtom: WritableAtom<Value, Args, Result>,
-  fallback: (prev?: Awaited<Value>) => PendingValue
+  fallback: (prev?: Awaited<Value>) => PendingValue,
 ): WritableAtom<Awaited<Value> | PendingValue, Args, Result>
 
 export function unwrap<Value>(
-  anAtom: Atom<Value>
+  anAtom: Atom<Value>,
 ): Atom<Awaited<Value> | undefined>
 
 export function unwrap<Value, PendingValue>(
   anAtom: Atom<Value>,
-  fallback: (prev?: Awaited<Value>) => PendingValue
+  fallback: (prev?: Awaited<Value>) => PendingValue,
 ): Atom<Awaited<Value> | PendingValue>
 
 export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
   anAtom: WritableAtom<Value, Args, Result> | Atom<Value>,
-  fallback: (prev?: Awaited<Value>) => PendingValue = defaultFallback as any
+  fallback: (prev?: Awaited<Value>) => PendingValue = defaultFallback as any,
 ) {
   return memo2(
     () => {
@@ -72,7 +72,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
             promise
               .then(
                 (v) => promiseResultCache.set(promise, v as Awaited<Value>),
-                (e) => promiseErrorCache.set(promise, e)
+                (e) => promiseErrorCache.set(promise, e),
               )
               .finally(setSelf)
           }
@@ -83,7 +83,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
         },
         (_get, set) => {
           set(refreshAtom, (c) => c + 1)
-        }
+        },
       )
       // HACK to read PromiseAndValue atom before initialization
       promiseAndValueAtom.init = undefined
@@ -102,10 +102,10 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
           return state.v
         },
         (_get, set, ...args) =>
-          set(anAtom as WritableAtom<Value, unknown[], unknown>, ...args)
+          set(anAtom as WritableAtom<Value, unknown[], unknown>, ...args),
       )
     },
     anAtom,
-    fallback
+    fallback,
   )
 }

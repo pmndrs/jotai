@@ -5,7 +5,7 @@ import preset from 'jotai/babel/preset'
 const transform = (
   code: string,
   filename?: string,
-  customAtomNames?: string[]
+  customAtomNames?: string[],
 ) =>
   transformSync(code, {
     babelrc: false,
@@ -38,8 +38,8 @@ it('Should add a debugLabel and cache to multiple atoms', () => {
       `
   const countAtom = atom(0);
   const doubleAtom = atom((get) => get(countAtom) * 2);`,
-      '/src/atoms.ts'
-    )
+      '/src/atoms.ts',
+    ),
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),
@@ -65,8 +65,8 @@ it('Should add a cache and debugLabel for multiple exported atoms', () => {
   export const countAtom = atom(0);
   export const doubleAtom = atom((get) => get(countAtom) * 2);
   `,
-      '/src/atoms/index.ts'
-    )
+      '/src/atoms/index.ts',
+    ),
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),
@@ -111,8 +111,8 @@ it('Should add a cache and debugLabel for mixed exports of atoms', () => {
   export const countAtom = atom(0);
   export default atom((get) => get(countAtom) * 2);
   `,
-      '/src/atoms/index.ts'
-    )
+      '/src/atoms/index.ts',
+    ),
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),
@@ -134,7 +134,7 @@ it('Should add a cache and debugLabel for mixed exports of atoms', () => {
 
 it('Should fail if no filename is available', () => {
   expect(() => transform(`const countAtom = atom(0);`)).toThrow(
-    'Filename must be available'
+    'Filename must be available',
   )
 })
 
@@ -142,7 +142,7 @@ it('Should handle custom atom names', () => {
   expect(
     transform(`const mySpecialThing = myCustomAtom(0);`, '/src/atoms.ts', [
       'myCustomAtom',
-    ])
+    ]),
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),

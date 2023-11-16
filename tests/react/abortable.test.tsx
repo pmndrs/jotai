@@ -39,7 +39,7 @@ describe('abortable atom test', () => {
           <Component />
           <Controls />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')
@@ -96,7 +96,7 @@ describe('abortable atom test', () => {
           <Component />
           <Controls />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')
@@ -154,7 +154,7 @@ describe('abortable atom test', () => {
         <Suspense fallback="loading">
           <Parent />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')
@@ -204,7 +204,7 @@ describe('abortable atom test', () => {
           <Component />
           <Controls />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')

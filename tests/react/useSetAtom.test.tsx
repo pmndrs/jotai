@@ -51,7 +51,7 @@ it('useSetAtom does not trigger rerender in component', async () => {
   const { getByText } = render(
     <>
       <Parent />
-    </>
+    </>,
   )
 
   await waitFor(() => {
@@ -78,7 +78,7 @@ it('useSetAtom does not trigger rerender in component', async () => {
 it('useSetAtom with write without an argument', async () => {
   const countAtom = atom(0)
   const incrementCountAtom = atom(null, (get, set) =>
-    set(countAtom, get(countAtom) + 1)
+    set(countAtom, get(countAtom) + 1),
   )
 
   const Button = ({ cb, children }: PropsWithChildren<{ cb: () => void }>) => (
@@ -106,7 +106,7 @@ it('useSetAtom with write without an argument', async () => {
   const { getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {

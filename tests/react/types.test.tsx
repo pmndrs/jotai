@@ -18,7 +18,7 @@ it('useAtom should return the correct types', () => {
       (get) => get(primitiveAtom),
       (get, set, value: number) => {
         set(primitiveAtom, get(primitiveAtom) + value)
-      }
+      },
     )
     expectType<[number, (arg: number) => void]>(useAtom(readWriteDerivedAtom))
 

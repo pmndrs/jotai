@@ -12,7 +12,7 @@ This avoids the boilerplate of having to set up another atom just to update the 
 import { WritableAtom, atom } from 'jotai'
 
 export function atomWithToggle(
-  initialValue?: boolean
+  initialValue?: boolean,
 ): WritableAtom<boolean, boolean | undefined> {
   const anAtom = atom(initialValue, (get, set, nextValue?: boolean) => {
     const update = nextValue ?? !get(anAtom)

@@ -25,7 +25,7 @@ it('atom() should return the correct types', () => {
       (get) => get(primitiveAtom),
       (get, set, value: number) => {
         set(primitiveAtom, get(primitiveAtom) + value)
-      }
+      },
     )
     expectType<WritableAtom<number, [number], void>>(readWriteDerivedAtom)
 
@@ -42,7 +42,7 @@ it('type utils should work', () => {
   function Component() {
     const readWriteAtom = atom(
       (_get) => 1 as number,
-      async (_get, _set, _value: string) => {}
+      async (_get, _set, _value: string) => {},
     )
 
     const value: ExtractAtomValue<typeof readWriteAtom> = 1

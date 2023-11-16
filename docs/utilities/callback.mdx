@@ -49,7 +49,7 @@ const Monitor = () => {
       const currCount = get(countAtom)
       setCount(currCount)
       return currCount
-    }, [])
+    }, []),
   )
   useEffect(() => {
     const timer = setInterval(async () => {

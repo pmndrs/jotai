@@ -58,7 +58,7 @@ If you want to explicitly declare the atomFamily for a primitive atom, you need 
 type SetStateAction<Value> = Value | ((prev: Value) => Value)
 
 const myFamily = atomFamily<number, number, SetStateAction<number>>(
-  (id: number) => atom(id)
+  (id: number) => atom(id),
 )
 ```
 
@@ -97,8 +97,8 @@ const todoFamily = atomFamily((name) =>
     (get, set, arg) => {
       const prev = get(todosAtom)
       set(todosAtom, { ...prev, [name]: { ...prev[name], ...arg } })
-    }
-  )
+    },
+  ),
 )
 ```
 
@@ -108,7 +108,7 @@ import { atomFamily } from 'jotai/utils'
 
 const todoFamily = atomFamily(
   ({ id, name }) => atom({ name }),
-  (a, b) => a.id === b.id
+  (a, b) => a.id === b.id,
 )
 ```
 

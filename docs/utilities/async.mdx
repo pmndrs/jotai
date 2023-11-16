@@ -95,19 +95,19 @@ because `get` in the read function doesn't resolve promises.
 
 ```ts
 function unwrap<Value, Args extends unknown[], Result>(
-  anAtom: WritableAtom<Value, Args, Result>
+  anAtom: WritableAtom<Value, Args, Result>,
 ): WritableAtom<Awaited<Value> | undefined, Args, Result>
 
 function unwrap<Value, Args extends unknown[], Result, PendingValue>(
   anAtom: WritableAtom<Value, Args, Result>,
-  fallback: (prev?: Awaited<Value>) => PendingValue
+  fallback: (prev?: Awaited<Value>) => PendingValue,
 ): WritableAtom<Awaited<Value> | PendingValue, Args, Result>
 
 function unwrap<Value>(anAtom: Atom<Value>): Atom<Awaited<Value> | undefined>
 
 function unwrap<Value, PendingValue>(
   anAtom: Atom<Value>,
-  fallback: (prev?: Awaited<Value>) => PendingValue
+  fallback: (prev?: Awaited<Value>) => PendingValue,
 ): Atom<Awaited<Value> | PendingValue>
 ```
 
