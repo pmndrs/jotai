@@ -141,7 +141,7 @@ function createUMDConfig(input, output, env, rsc) {
   }
 }
 
-function createSystemConfig(input, output, env, rsc) {
+function createSystemConfig(input, output, env, clientOnly) {
   return {
     input,
     output: {
@@ -158,14 +158,14 @@ function createSystemConfig(input, output, env, rsc) {
         preventAssignment: true,
       }),
       getEsbuild('node12', env),
-      banner2(() => !rsc && cscComment),
+      banner2(() => clientOnly && cscComment),
     ],
   }
 }
 
 module.exports = function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
-  const rsc = Object.keys(args).find((key) => key === 'rsc')
+  const clientOnly = Object.keys(args).some((key) => key === 'client-only')
   if (c) {
     c = c.slice('config-'.length).replace(/_/g, '/')
   } else {
@@ -173,12 +173,22 @@ module.exports = function (args) {
   }
   return [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
-    createCommonJSConfig(`src/${c}.ts`, `dist/${c}`, !!rsc),
-    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`, !!rsc),
-    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development', !!rsc),
-    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production', !!rsc),
-    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'development', !!rsc),
-    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'production', !!rsc),
+    createCommonJSConfig(`src/${c}.ts`, `dist/${c}`, clientOnly),
+    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`, clientOnly),
+    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development', clientOnly),
+    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production', clientOnly),
+    createSystemConfig(
+      `src/${c}.ts`,
+      `dist/system/${c}`,
+      'development',
+      clientOnly
+    ),
+    createSystemConfig(
+      `src/${c}.ts`,
+      `dist/system/${c}`,
+      'production',
+      clientOnly
+    ),
   ]
 }
 
