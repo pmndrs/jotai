@@ -14,17 +14,17 @@ type Options = Parameters<typeof useAtomValue>[1]
 
 export function useAtom<Value, Args extends any[], Result>(
   atom: WritableAtom<Value, Args, Result>,
-  options?: Options
+  options?: Options,
 ): [Awaited<Value>, SetAtom<Args, Result>]
 
 export function useAtom<Value>(
   atom: Atom<Value>,
-  options?: Options
+  options?: Options,
 ): [Awaited<Value>, never]
 
 export function useAtom<AtomType extends WritableAtom<any, any[], any>>(
   atom: AtomType,
-  options?: Options
+  options?: Options,
 ): [
   Awaited<ExtractAtomValue<AtomType>>,
   SetAtom<ExtractAtomArgs<AtomType>, ExtractAtomResult<AtomType>>,
@@ -32,12 +32,12 @@ export function useAtom<AtomType extends WritableAtom<any, any[], any>>(
 
 export function useAtom<AtomType extends Atom<any>>(
   atom: AtomType,
-  options?: Options
+  options?: Options,
 ): [Awaited<ExtractAtomValue<AtomType>>, never]
 
 export function useAtom<Value, Args extends any[], Result>(
   atom: Atom<Value> | WritableAtom<Value, Args, Result>,
-  options?: Options
+  options?: Options,
 ) {
   return [
     useAtomValue(atom, options),

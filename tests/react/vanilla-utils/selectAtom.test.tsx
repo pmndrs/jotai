@@ -24,7 +24,8 @@ it('selectAtom works as expected', async () => {
         <button
           onClick={() =>
             setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
-          }>
+          }
+        >
           increment
         </button>
       </>
@@ -44,7 +45,7 @@ it('selectAtom works as expected', async () => {
     <StrictMode>
       <Parent />
       <Selector />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('a: 0')
@@ -69,7 +70,8 @@ it('selectAtom works with async atom', async () => {
         <button
           onClick={() =>
             setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
-          }>
+          }
+        >
           increment
         </button>
       </>
@@ -91,7 +93,7 @@ it('selectAtom works with async atom', async () => {
         <Parent />
         <Selector />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('a: 0')
@@ -109,7 +111,7 @@ it('do not update unless equality function says value has changed', async () => 
   const littleAtom = selectAtom(
     bigAtom,
     (value) => value,
-    (left, right) => JSON.stringify(left) === JSON.stringify(right)
+    (left, right) => JSON.stringify(left) === JSON.stringify(right),
   )
 
   const Parent = () => {
@@ -119,7 +121,8 @@ it('do not update unless equality function says value has changed', async () => 
         <button
           onClick={() =>
             setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
-          }>
+          }
+        >
           increment
         </button>
         <button onClick={() => setValue((oldValue) => ({ ...oldValue }))}>
@@ -144,7 +147,7 @@ it('do not update unless equality function says value has changed', async () => 
     <>
       <Parent />
       <Selector />
-    </>
+    </>,
   )
 
   await findByText('value: {"a":0}')
@@ -181,7 +184,7 @@ it('equality function works even if suspend', async () => {
   const littleAtom = selectAtom(
     bigAtomAsync,
     (value) => value,
-    (left, right) => left.a === right.a
+    (left, right) => left.a === right.a,
   )
 
   const Controls = () => {
@@ -192,7 +195,8 @@ it('equality function works even if suspend', async () => {
         <button
           onClick={() =>
             setValue((oldValue) => ({ ...oldValue, a: oldValue.a + 1 }))
-          }>
+          }
+        >
           increment
         </button>
         <button onClick={() => setValue((oldValue) => ({ ...oldValue, b: 2 }))}>
@@ -213,7 +217,7 @@ it('equality function works even if suspend', async () => {
         <Controls />
         <Selector />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('bigValue: {"a":0}')

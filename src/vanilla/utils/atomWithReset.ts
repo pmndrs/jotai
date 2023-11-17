@@ -18,7 +18,7 @@ export function atomWithReset<Value>(initialValue: Value) {
           : update
 
       set(anAtom, nextValue === RESET ? initialValue : nextValue)
-    }
+    },
   )
   return anAtom as WritableAtom<Value, [Update], void>
 }

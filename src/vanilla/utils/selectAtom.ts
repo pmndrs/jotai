@@ -8,7 +8,7 @@ const memo3 = <T>(
   create: () => T,
   dep1: object,
   dep2: object,
-  dep3: object
+  dep3: object,
 ): T => {
   const cache2 = getCached(() => new WeakMap(), cache1, dep1)
   const cache3 = getCached(() => new WeakMap(), cache2, dep2)
@@ -18,13 +18,13 @@ const memo3 = <T>(
 export function selectAtom<Value, Slice>(
   anAtom: Atom<Value>,
   selector: (v: Awaited<Value>, prevSlice?: Slice) => Slice,
-  equalityFn?: (a: Slice, b: Slice) => boolean
+  equalityFn?: (a: Slice, b: Slice) => boolean,
 ): Atom<Value extends Promise<unknown> ? Promise<Slice> : Slice>
 
 export function selectAtom<Value, Slice>(
   anAtom: Atom<Value>,
   selector: (v: Awaited<Value>, prevSlice?: Slice) => Slice,
-  equalityFn: (a: Slice, b: Slice) => boolean = Object.is
+  equalityFn: (a: Slice, b: Slice) => boolean = Object.is,
 ) {
   return memo3(
     () => {
@@ -55,6 +55,6 @@ export function selectAtom<Value, Slice>(
     },
     anAtom,
     selector,
-    equalityFn
+    equalityFn,
   )
 }

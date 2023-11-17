@@ -365,7 +365,7 @@ it('should update with conditional dependencies (#2084)', async () => {
     (_get, set, val: boolean) => {
       set(f1, val)
       set(f2, val)
-    }
+    },
   )
   store.sub(f1, vi.fn())
   store.sub(f2, vi.fn())
@@ -382,11 +382,11 @@ it("should recompute dependents' state after onMount (#2098)", async () => {
   baseAtom.onMount = (set) => set(true)
   const derivedAtom = atom(
     (get) => get(baseAtom),
-    (_get, set, update: boolean) => set(baseAtom, update)
+    (_get, set, update: boolean) => set(baseAtom, update),
   )
   const finalAtom = atom(
     (get) => (get(condAtom) ? get(derivedAtom) : undefined),
-    (_get, set, value: boolean) => set(derivedAtom, value)
+    (_get, set, value: boolean) => set(derivedAtom, value),
   )
 
   store.sub(finalAtom, () => {}) // mounts finalAtom, but not baseAtom
@@ -416,7 +416,7 @@ it('should update derived atoms during write (#2107)', async () => {
       if (get(countAtom) !== newValue) {
         throw new Error('mismatch')
       }
-    }
+    },
   )
 
   store.sub(countAtom, () => {})
@@ -444,7 +444,7 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
       result = await get(asyncAtom)
       if (result === 2) setSelf() // <-- necessary
     },
-    () => {}
+    () => {},
   )
 
   const store = createStore()

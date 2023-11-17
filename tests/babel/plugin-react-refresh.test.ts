@@ -5,7 +5,7 @@ import plugin from 'jotai/babel/plugin-react-refresh'
 const transform = (
   code: string,
   filename?: string,
-  customAtomNames?: string[]
+  customAtomNames?: string[],
 ) =>
   transformSync(code, {
     babelrc: false,
@@ -39,8 +39,8 @@ it('Should add a cache for multiple atoms', () => {
   const countAtom = atom(0);
   const doubleAtom = atom((get) => get(countAtom) * 2);
   `,
-      '/src/atoms/index.ts'
-    )
+      '/src/atoms/index.ts',
+    ),
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),
@@ -64,8 +64,8 @@ it('Should add a cache for multiple exported atoms', () => {
   export const countAtom = atom(0);
   export const doubleAtom = atom((get) => get(countAtom) * 2);
   `,
-      '/src/atoms/index.ts'
-    )
+      '/src/atoms/index.ts',
+    ),
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),
@@ -106,8 +106,8 @@ it('Should add a cache for mixed exports of atoms', () => {
   export const countAtom = atom(0);
   export default atom((get) => get(countAtom) * 2);
   `,
-      '/src/atoms/index.ts'
-    )
+      '/src/atoms/index.ts',
+    ),
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),
@@ -126,7 +126,7 @@ it('Should add a cache for mixed exports of atoms', () => {
 
 it('Should fail if no filename is available', () => {
   expect(() => transform(`const countAtom = atom(0);`)).toThrow(
-    'Filename must be available'
+    'Filename must be available',
   )
 })
 
@@ -142,8 +142,8 @@ it('Should handle atoms returned from functions (#891)', () => {
   const countAtom = atom(0);
   const countAtom2 = createAtom("countAtom2");
   const countAtom3 = createAtom("countAtom3");`,
-      '/src/atoms/index.ts'
-    )
+      '/src/atoms/index.ts',
+    ),
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),
@@ -171,8 +171,8 @@ it('Should handle custom atom names', () => {
     transform(
       `const mySpecialThing = myCustomAtom(0);`,
       '/src/atoms/index.ts',
-      ['myCustomAtom']
-    )
+      ['myCustomAtom'],
+    ),
   ).toMatchInlineSnapshot(`
     "globalThis.jotaiAtomCache = globalThis.jotaiAtomCache || {
       cache: new Map(),

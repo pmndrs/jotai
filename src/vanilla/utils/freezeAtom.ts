@@ -17,12 +17,12 @@ const deepFreeze = (obj: any) => {
 }
 
 export function freezeAtom<AtomType extends Atom<any>>(
-  anAtom: AtomType
+  anAtom: AtomType,
 ): AtomType {
   return memo1(() => {
     const frozenAtom: any = atom(
       (get) => deepFreeze(get(anAtom)),
-      (_get, set, arg) => set(anAtom as any, arg)
+      (_get, set, arg) => set(anAtom as any, arg),
     )
     return frozenAtom
   }, anAtom)

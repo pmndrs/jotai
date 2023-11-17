@@ -8,7 +8,7 @@ const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 
 export default function debugLabelPlugin(
   { types: t }: typeof babel,
-  options?: PluginOptions
+  options?: PluginOptions,
 ): PluginObj {
   return {
     visitor: {
@@ -50,11 +50,11 @@ export default function debugLabelPlugin(
                 '=',
                 t.memberExpression(
                   t.identifier(path.node.id.name),
-                  t.identifier('debugLabel')
+                  t.identifier('debugLabel'),
                 ),
-                t.stringLiteral(path.node.id.name)
-              )
-            )
+                t.stringLiteral(path.node.id.name),
+              ),
+            ),
           )
         }
       },

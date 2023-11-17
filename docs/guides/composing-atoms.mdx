@@ -30,7 +30,7 @@ The following is another simple example with the `write` function:
 const textAtom = atom('hello')
 export const textUpperCaseAtom = atom(
   (get) => get(textAtom).toUpperCase(),
-  (_get, set, newText) => set(textAtom, newText)
+  (_get, set, newText) => set(textAtom, newText),
 )
 ```
 
@@ -56,7 +56,7 @@ export const numberAtom = atom(
     const nextValue =
       typeof newValue === 'function' ? newValue(get(numberAtom)) : newValue
     set(overwrittenAtom, nextValue)
-  }
+  },
 )
 ```
 
@@ -85,7 +85,7 @@ export const persistedAtom = atom(
       typeof newValue === 'function' ? newValue(get(baseAtom)) : newValue
     set(baseAtom, nextValue)
     localStorage.setItem('mykey', nextValue)
-  }
+  },
 )
 ```
 

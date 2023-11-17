@@ -22,7 +22,7 @@ export function useSelectAtom(anAtom, keyFn) {
 // how to use it
 useSelectAtom(
   useMemo(() => atom(initValue), [initValue]),
-  useCallback((state) => state.prop, [])
+  useCallback((state) => state.prop, []),
 )
 ```
 

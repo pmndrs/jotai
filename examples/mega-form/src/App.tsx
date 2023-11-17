@@ -15,11 +15,11 @@ const Field = ({
 }) => {
   const nameAtom = useMemo(
     () => focusAtom(fieldAtom, (o) => o.prop('name')),
-    [fieldAtom]
+    [fieldAtom],
   )
   const valueAtom = useMemo(
     () => focusAtom(fieldAtom, (o) => o.prop('value')),
-    [fieldAtom]
+    [fieldAtom],
   )
   const [name, setName] = useAtom(nameAtom)
   const [value, setValue] = useAtom(valueAtom)
@@ -60,11 +60,11 @@ const Form = ({
             })),
           (arrayOfObjects) =>
             Object.fromEntries(
-              arrayOfObjects.map(({ name, value }) => [name, value])
-            )
-        )
+              arrayOfObjects.map(({ name, value }) => [name, value]),
+            ),
+        ),
       ),
-    [formAtom]
+    [formAtom],
   )
 
   const fieldAtoms = useAtomSlice(objectsAtom)
@@ -78,8 +78,8 @@ const Form = ({
           { name: `new field ${id}`, value: '' },
         ])
       },
-      [objectsAtom]
-    )
+      [objectsAtom],
+    ),
   )
 
   return (
@@ -111,10 +111,10 @@ const FormList = ({
       focusAtom(formListAtom, (o) =>
         o.iso(
           (obj) => Object.entries(obj),
-          (array) => Object.fromEntries(array)
-        )
+          (array) => Object.fromEntries(array),
+        ),
       ),
-    [formListAtom]
+    [formListAtom],
   )
   const formAtoms = useAtomSlice(entriesAtom)
 
@@ -124,8 +124,8 @@ const FormList = ({
         const id = Math.floor(Math.random() * 1000)
         set(entriesAtom, (oldValue) => [...oldValue, [`new form ${id}`, {}]])
       },
-      [entriesAtom]
-    )
+      [entriesAtom],
+    ),
   )
 
   const formValues = useMemo(() => {

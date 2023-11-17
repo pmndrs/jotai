@@ -9,7 +9,7 @@ type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
 const hasInitialValue = <T extends Atom<AnyValue>>(
-  atom: T
+  atom: T,
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
   'init' in atom
 
@@ -21,7 +21,7 @@ const cancelPromiseMap = new WeakMap<Promise<unknown>, CancelPromise>()
 
 const registerCancelPromise = (
   promise: Promise<unknown>,
-  cancel: CancelPromise
+  cancel: CancelPromise,
 ) => {
   cancelPromiseMap.set(promise, cancel)
   promise.catch(() => {}).finally(() => cancelPromiseMap.delete(promise))
@@ -49,7 +49,7 @@ const resolvePromise = <T>(promise: Promise<T> & PromiseMeta<T>, value: T) => {
 
 const rejectPromise = <T>(
   promise: Promise<T> & PromiseMeta<T>,
-  e: AnyError
+  e: AnyError,
 ) => {
   promise.status = 'rejected'
   promise.reason = e
@@ -77,22 +77,22 @@ type AtomState<Value = AnyValue> = {
 
 const isEqualAtomValue = <Value>(
   a: AtomState<Value> | undefined,
-  b: AtomState<Value>
+  b: AtomState<Value>,
 ): a is AtomState<Value> => !!a && 'v' in a && 'v' in b && Object.is(a.v, b.v)
 
 const isEqualAtomError = <Value>(
   a: AtomState<Value> | undefined,
-  b: AtomState<Value>
+  b: AtomState<Value>,
 ): a is AtomState<Value> => !!a && 'e' in a && 'e' in b && Object.is(a.e, b.e)
 
 const hasPromiseAtomValue = <Value>(
-  a: AtomState<Value> | undefined
+  a: AtomState<Value> | undefined,
 ): a is AtomState<Value> & { v: Value & Promise<unknown> } =>
   !!a && 'v' in a && a.v instanceof Promise
 
 const isEqualPromiseAtomValue = <Value>(
   a: AtomState<Promise<Value> & PromiseMeta<Value>>,
-  b: AtomState<Promise<Value> & PromiseMeta<Value>>
+  b: AtomState<Promise<Value> & PromiseMeta<Value>>,
 ) => 'v' in a && 'v' in b && a.v.orig && a.v.orig === b.v.orig
 
 const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
@@ -128,7 +128,7 @@ type StoreListenerRev2 = (
     | { type: 'async-write'; flushed: Set<AnyAtom> }
     | { type: 'sub'; flushed: Set<AnyAtom> }
     | { type: 'unsub' }
-    | { type: 'restore'; flushed: Set<AnyAtom> }
+    | { type: 'restore'; flushed: Set<AnyAtom> },
 ) => void
 
 type MountedAtoms = Set<AnyAtom>
@@ -168,7 +168,7 @@ export const createStore = () => {
 
   const setAtomState = <Value>(
     atom: Atom<Value>,
-    atomState: AtomState<Value>
+    atomState: AtomState<Value>,
   ): void => {
     if (import.meta.env?.MODE !== 'production') {
       Object.freeze(atomState)
@@ -194,7 +194,7 @@ export const createStore = () => {
   const updateDependencies = <Value>(
     atom: Atom<Value>,
     nextAtomState: AtomState<Value>,
-    nextDependencies: NextDependencies
+    nextDependencies: NextDependencies,
   ): void => {
     const dependencies: Dependencies = new Map()
     let changed = false
@@ -219,7 +219,7 @@ export const createStore = () => {
   const setAtomValue = <Value>(
     atom: Atom<Value>,
     value: Value,
-    nextDependencies?: NextDependencies
+    nextDependencies?: NextDependencies,
   ): AtomState<Value> => {
     const prevAtomState = getAtomState(atom)
     const nextAtomState: AtomState<Value> = {
@@ -257,7 +257,7 @@ export const createStore = () => {
     atom: Atom<Value>,
     valueOrPromise: Value,
     nextDependencies?: NextDependencies,
-    abortPromise?: () => void
+    abortPromise?: () => void,
   ): AtomState<Value> => {
     if (isPromiseLike(valueOrPromise)) {
       let continuePromise: (next: Promise<Awaited<Value>>) => void
@@ -274,7 +274,7 @@ export const createStore = () => {
         const nextAtomState = setAtomValue(
           atom,
           promise as Value,
-          nextDependencies
+          nextDependencies,
         )
         if (mountedMap.has(atom) && prevAtomState.d !== nextAtomState.d) {
           mountDependencies(atom, nextAtomState, prevAtomState.d)
@@ -299,14 +299,14 @@ export const createStore = () => {
                 reject(e)
                 updatePromiseDependencies()
               }
-            }
+            },
           )
           continuePromise = (next) => {
             if (!settled) {
               settled = true
               next.then(
                 (v) => resolvePromise(promise, v),
-                (e) => rejectPromise(promise, e)
+                (e) => rejectPromise(promise, e),
               )
               resolve(next)
             }
@@ -328,7 +328,7 @@ export const createStore = () => {
   const setAtomError = <Value>(
     atom: Atom<Value>,
     error: AnyError,
-    nextDependencies?: NextDependencies
+    nextDependencies?: NextDependencies,
   ): AtomState<Value> => {
     const prevAtomState = getAtomState(atom)
     const nextAtomState: AtomState<Value> = {
@@ -351,7 +351,7 @@ export const createStore = () => {
 
   const readAtomState = <Value>(
     atom: Atom<Value>,
-    force?: boolean
+    force?: boolean,
   ): AtomState<Value> => {
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
@@ -434,7 +434,7 @@ export const createStore = () => {
         atom,
         valueOrPromise,
         nextDependencies,
-        () => controller?.abort()
+        () => controller?.abort(),
       )
     } catch (error) {
       return setAtomError(atom, error, nextDependencies)
@@ -483,7 +483,7 @@ export const createStore = () => {
         if (dependent !== a) {
           dependencyMap.set(
             dependent,
-            (dependencyMap.get(dependent) || new Set()).add(a)
+            (dependencyMap.get(dependent) || new Set()).add(a),
           )
           dirtyMap.set(dependent, (dirtyMap.get(dependent) || 0) + 1)
           loop1(dependent)
@@ -544,7 +544,7 @@ export const createStore = () => {
         const flushed = flushPending()
         if (import.meta.env?.MODE !== 'production') {
           storeListenersRev2.forEach((l) =>
-            l({ type: 'async-write', flushed: flushed as Set<AnyAtom> })
+            l({ type: 'async-write', flushed: flushed as Set<AnyAtom> }),
           )
         }
       }
@@ -563,7 +563,7 @@ export const createStore = () => {
     const flushed = flushPending()
     if (import.meta.env?.MODE !== 'production') {
       storeListenersRev2.forEach((l) =>
-        l({ type: 'write', flushed: flushed as Set<AnyAtom> })
+        l({ type: 'write', flushed: flushed as Set<AnyAtom> }),
       )
     }
     return result
@@ -572,7 +572,7 @@ export const createStore = () => {
   const mountAtom = <Value>(
     atom: Atom<Value>,
     initialDependent?: AnyAtom,
-    onMountQueue?: (() => void)[]
+    onMountQueue?: (() => void)[],
   ): Mounted => {
     const queue = onMountQueue || []
     // mount dependencies before mounting self
@@ -649,7 +649,7 @@ export const createStore = () => {
   const mountDependencies = <Value>(
     atom: Atom<Value>,
     atomState: AtomState<Value>,
-    prevDependencies?: Dependencies
+    prevDependencies?: Dependencies,
   ): void => {
     const depSet = new Set(atomState.d.keys())
     prevDependencies?.forEach((_, a) => {
@@ -729,7 +729,7 @@ export const createStore = () => {
     listeners.add(listener)
     if (import.meta.env?.MODE !== 'production') {
       storeListenersRev2.forEach((l) =>
-        l({ type: 'sub', flushed: flushed as Set<AnyAtom> })
+        l({ type: 'sub', flushed: flushed as Set<AnyAtom> }),
       )
     }
     return () => {
@@ -769,7 +769,7 @@ export const createStore = () => {
         }
         const flushed = flushPending()
         storeListenersRev2.forEach((l) =>
-          l({ type: 'restore', flushed: flushed as Set<AnyAtom> })
+          l({ type: 'restore', flushed: flushed as Set<AnyAtom> }),
         )
       },
     }
@@ -800,7 +800,7 @@ export const getDefaultStore = () => {
       (globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ !== 1
     ) {
       console.warn(
-        'Detected multiple Jotai instances. It may cause unexpected behavior with the default store. https://github.com/pmndrs/jotai/discussions/2044'
+        'Detected multiple Jotai instances. It may cause unexpected behavior with the default store. https://github.com/pmndrs/jotai/discussions/2044',
       )
     }
     defaultStore = createStore()
