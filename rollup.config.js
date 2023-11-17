@@ -58,7 +58,7 @@ function createDeclarationConfig(input, output) {
   }
 }
 
-function createESMConfig(input, output, rsc) {
+function createESMConfig(input, output, clientOnly) {
   return {
     input,
     output: { file: output, format: 'esm' },
@@ -79,12 +79,12 @@ function createESMConfig(input, output, rsc) {
         preventAssignment: true,
       }),
       getEsbuild('node12'),
-      banner2(() => !rsc && cscComment),
+      banner2(() => clientOnly && cscComment),
     ],
   }
 }
 
-function createCommonJSConfig(input, output, rsc) {
+function createCommonJSConfig(input, output, clientOnly) {
   return {
     input,
     output: { file: `${output}.js`, format: 'cjs' },
@@ -98,12 +98,12 @@ function createCommonJSConfig(input, output, rsc) {
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
-      banner2(() => !rsc && cscComment),
+      banner2(() => clientOnly && cscComment),
     ],
   }
 }
 
-function createUMDConfig(input, output, env, rsc) {
+function createUMDConfig(input, output, env, clientOnly) {
   let name = 'jotai'
   const fileName = output.slice('dist/umd/'.length)
   const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
@@ -135,7 +135,7 @@ function createUMDConfig(input, output, env, rsc) {
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
-      banner2(() => !rsc && cscComment),
+      banner2(() => clientOnly && cscComment),
       ...(env === 'production' ? [terser()] : []),
     ],
   }
@@ -181,13 +181,13 @@ module.exports = function (args) {
       `src/${c}.ts`,
       `dist/system/${c}`,
       'development',
-      clientOnly
+      clientOnly,
     ),
     createSystemConfig(
       `src/${c}.ts`,
       `dist/system/${c}`,
       'production',
-      clientOnly
+      clientOnly,
     ),
   ]
 }
