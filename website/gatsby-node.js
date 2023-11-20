@@ -8,18 +8,6 @@ exports.createPages = ({ actions }) => {
   });
 
   createRedirect({
-    fromPath: `/docs/utils/*`,
-    toPath: `/docs/utilities/*`,
-    isPermanent: false,
-  });
-
-  createRedirect({
-    fromPath: `/docs/advanced-recipes/*`,
-    toPath: `/docs/recipes/*`,
-    isPermanent: false,
-  });
-
-  createRedirect({
     fromPath: `/docs/api/babel`,
     toPath: `/docs/tools/babel`,
     isPermanent: false,
@@ -68,7 +56,7 @@ exports.createPages = ({ actions }) => {
 
   createRedirect({
     fromPath: `/docs/utils/atom-with-hash`,
-    toPath: `/docs/integrations/location`,
+    toPath: `/docs/extensions/location`,
     isPermanent: false,
   });
 
@@ -165,6 +153,90 @@ exports.createPages = ({ actions }) => {
   createRedirect({
     fromPath: `/docs/utils/use-update-atom`,
     toPath: `/docs/core/use-atom`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/cache`,
+    toPath: `/docs/extensions/cache`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/effect`,
+    toPath: `/docs/extensions/effect`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/immer`,
+    toPath: `/docs/extensions/immer`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/location`,
+    toPath: `/docs/extensions/location`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/optics`,
+    toPath: `/docs/extensions/optics`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/query`,
+    toPath: `/docs/extensions/query`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/redux`,
+    toPath: `/docs/extensions/redux`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/relay`,
+    toPath: `/docs/extensions/relay`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/scope`,
+    toPath: `/docs/extensions/scope`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/trpc`,
+    toPath: `/docs/extensions/trpc`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/urql`,
+    toPath: `/docs/extensions/urql`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/valtio`,
+    toPath: `/docs/extensions/valtio`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/xstate`,
+    toPath: `/docs/extensions/xstate`,
+    isPermanent: false,
+  });
+
+  createRedirect({
+    fromPath: `/docs/integrations/zustand`,
+    toPath: `/docs/extensions/zustand`,
     isPermanent: false,
   });
 };
