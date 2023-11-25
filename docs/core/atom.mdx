@@ -38,6 +38,9 @@ const writeOnlyAtom = atom(
   (get, set, update) => {
     // `update` is any single value we receive for updating this atom
     set(priceAtom, get(priceAtom) - update.discount)
+    // or we can pass a function as the second parameter
+    // the function will be invoked, receiving the atom's current value as its first parameter
+    set(priceAtom, (price) => price - update.discount)
   },
 )
 const readWriteAtom = atom(
@@ -79,24 +82,24 @@ const Component = ({ value }) => {
 function atom<Value>(initialValue: Value): PrimitiveAtom<Value>
 
 // read-only atom
-function atom<Value>(read: (get: Getter) => Value | Promise<Value>): Atom<Value>
+function atom<Value>(read: (get: Getter) => Value): Atom<Value>
 
 // writable derived atom
-function atom<Value, Update>(
+function atom<Value, Args extends unknown[], Result>(
   read: (get: Getter) => Value | Promise<Value>,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>,
-): WritableAtom<Value, Update>
+  write: (get: Getter, set: Setter, ...args: Args) => Result,
+): WritableAtom<Value, Args, Result>
 
 // write-only derived atom
-function atom<Value, Update>(
+function atom<Value, Args extends unknown[], Result>(
   read: Value,
-  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>,
-): WritableAtom<Value, Update>
+  write: (get: Getter, set: Setter, ...args: Args) => Result,
+): WritableAtom<Value, Args, Result>
 ```
 
 - `initialValue`: the initial value that the atom will return until its value is changed.
-- `read`: a function that's called on every re-render. The signature of `read` is `(get) => Value | Promise<Value>`, and `get` is a function that takes an atom config and returns its value stored in Provider as described below. Dependency is tracked, so if `get` is used for an atom at least once, the `read` will be reevaluated whenever the atom value is changed.
-- `write`: a function mostly used for mutating atom's values, for a better description; it gets called whenever we call the second value of the returned pair of `useAtom`, the `useAtom()[1]`. The default value of this function in the primitive atom will change the value of that atom. The signature of `write` is `(get, set, update) => void | Promise<void>`. `get` is similar to the one described above, but it doesn't track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `update` is an arbitrary value that we receive from the updating function returned by `useAtom` described below.
+- `read`: a function that's evaluated whenever the atom is read. The signature of `read` is `(get) => Value`, and `get` is a function that takes an atom config and returns its value stored in Provider as described below. Dependency is tracked, so if `get` is used for an atom at least once, the `read` will be reevaluated whenever the atom value is changed.
+- `write`: a function mostly used for mutating atom's values, for a better description; it gets called whenever we call the second value of the returned pair of `useAtom`, the `useAtom()[1]`. The default value of this function in the primitive atom will change the value of that atom. The signature of `write` is `(get, set, ...args) => Result`. `get` is similar to the one described above, but it doesn't track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `...args` is the arguments that we receive when we call `useAtom()[1]`. `Result` is the return value of the `write` function.
 
 ```js
 const primitiveAtom = atom(initialValue)
