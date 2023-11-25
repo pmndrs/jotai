@@ -87,7 +87,7 @@ function atom<Value>(read: (get: Getter) => Value): Atom<Value>
 
 // writable derived atom
 function atom<Value, Args extends unknown[], Result>(
-  read: (get: Getter) => Value | Promise<Value>,
+  read: (get: Getter) => Value,
   write: (get: Getter, set: Setter, ...args: Args) => Result,
 ): WritableAtom<Value, Args, Result>
 
