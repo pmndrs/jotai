@@ -3,7 +3,7 @@ import { countAtom } from '../atoms/index.js';
 import { Button } from '../components/button.js';
 import { Code } from '../components/code.js';
 
-export const IntegrationsDemo = () => {
+export const ExtensionsDemo = () => {
   const [count, setCount] = useAtom(countAtom);
 
   const increment = () => setCount((c) => (c = c + 1));
