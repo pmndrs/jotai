@@ -39,7 +39,8 @@ const writeOnlyAtom = atom(
     // `update` is any single value we receive for updating this atom
     set(priceAtom, get(priceAtom) - update.discount)
     // or we can pass a function as the second parameter
-    // the function will be invoked, receiving the atom's current value as its first parameter
+    // the function will be invoked,
+    //  receiving the atom's current value as its first parameter
     set(priceAtom, (price) => price - update.discount)
   },
 )
