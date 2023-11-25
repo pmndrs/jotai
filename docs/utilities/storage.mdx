@@ -41,6 +41,10 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 - **removeItem(key)** (required): Deletes the item from storage
 - **subscribe(key, callback, initialValue)** (optional): A method which subscribes to external storage updates.
 
+**options** (optional): an object with the following properties:
+
+- **getOnInit** (optional): A boolean value indicating whether to get item from storage on initialization.
+
 If not specified, the default storage implementation uses `localStorage` for storage/retrieval, `JSON.stringify()`/`JSON.parse()` for serialization/deserialization, and subscribes to `storage` events for cross-tab synchronization.
 
 <CodeSandbox id="vuwi7" />
