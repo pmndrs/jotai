@@ -121,7 +121,7 @@ Note: While, the debug labels don’t have to be unique, it’s generally recomm
 
 The created atom config can have an optional property `onMount`. `onMount` is a function which takes a function `setAtom` and returns `onUnmount` function optionally.
 
-The `onMount` function is called when the atom is subscribed in the provider,
+The `onMount` function is called when the atom is subscribed in the provider in the first time,
 and `onUnmount` is called when it’s no longer subscribed.
 In some cases (like [React strict mode](https://react.dev/reference/react/StrictMode)),
 an atom can be unmounted and then mounted immediately.
@@ -132,6 +132,20 @@ anAtom.onMount = (setAtom) => {
   console.log('atom is mounted in provider')
   setAtom(c => c + 1) // increment count on mount
   return () => { ... } // return optional onUnmount function
+}
+
+const Component = () => {
+  // `onMount` will be called when the component is mounted in the following cases:
+  useAtom(anAtom)
+  useAtomValue(anAtom)
+
+  // however, in the following cases,
+  //  `onMount` will not be called because the atom is not subscribed:
+  useSetAtom(anAtom)
+  useAtomCallback(
+    useCallback((get) => get(anAtom), []),
+  )
+  // ...
 }
 ```
 
