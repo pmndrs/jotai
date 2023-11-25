@@ -121,7 +121,10 @@ Note: While, the debug labels don’t have to be unique, it’s generally recomm
 
 The created atom config can have an optional property `onMount`. `onMount` is a function which takes a function `setAtom` and returns `onUnmount` function optionally.
 
-The `onMount` function is called when the atom is first used in a provider, and `onUnmount` is called when it’s no longer used. In some edge cases, an atom can be unmounted and then mounted immediately.
+The `onMount` function is called when the atom is subscribed in the provider,
+and `onUnmount` is called when it’s no longer subscribed.
+In some cases (like [React strict mode](https://react.dev/reference/react/StrictMode)),
+an atom can be unmounted and then mounted immediately.
 
 ```js
 const anAtom = atom(1)
