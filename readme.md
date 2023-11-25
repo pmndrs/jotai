@@ -17,7 +17,7 @@ visit [jotai.org](https://jotai.org) or `npm i jotai`
 Jotai scales from a simple useState replacement to an enterprise TypeScript application.
 
 - Minimal core API (2kb)
-- Many utilities and integrations
+- Many utilities and extensions
 - No string keys (compared to Recoil)
 
 Examples: [Demo 1](https://codesandbox.io/s/jotai-demo-47wvh) |

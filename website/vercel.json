@@ -63,7 +63,7 @@
     },
     {
       "source": "/docs/utils/atom-with-hash",
-      "destination": "/docs/integrations/location",
+      "destination": "/docs/extensions/location",
       "permanent": false
     },
     {

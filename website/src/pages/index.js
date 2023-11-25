@@ -1,8 +1,8 @@
 import { Code } from '../components/code.js';
 import { CoreDemo } from '../components/core-demo.js';
+import { ExtensionsDemo } from '../components/extensions-demo.js';
 import { Headline } from '../components/headline.js';
 import { InlineCode } from '../components/inline-code.js';
-import { IntegrationsDemo } from '../components/integrations-demo.js';
 import { Intro } from '../components/intro.js';
 import { LogoCloud } from '../components/logo-cloud.js';
 import { Meta } from '../components/meta.js';
@@ -26,7 +26,7 @@ export default function HomePage() {
           <p>
             It scales from a simple <InlineCode>useState</InlineCode> replacement to an enterprise
             TypeScript application with complex requirements. Plus there are plenty of utilities and
-            integrations to help you along the way!
+            extensions to help you along the way!
           </p>
           <p>Jotai is trusted in production at innovative companies like these.</p>
           <LogoCloud />
@@ -88,14 +88,14 @@ const apiTabs = {
       <UtilitiesDemo />
     </section>
   ),
-  Integrations: (
+  Extensions: (
     <section>
       <p>
-        There are also separate packages for each official integration: tRPC, Immer, Query, XState,
+        There are also separate packages for each official extension: tRPC, Immer, Query, XState,
         URQL, Optics, Relay, location, molecules, cache, and more.
       </p>
       <p>
-        Some integrations provide new atom types with alternate write functions such as{' '}
+        Some extensions provide new atom types with alternate write functions such as{' '}
         <InlineCode>atomWithImmer</InlineCode> (Immer) or <InlineCode>atomWithMachine</InlineCode>{' '}
         (XState).
       </p>
@@ -103,7 +103,7 @@ const apiTabs = {
         Others provide new atom types with two-way data binding such as{' '}
         <InlineCode>atomWithLocation</InlineCode> or <InlineCode>atomWithHash</InlineCode>.
       </p>
-      <IntegrationsDemo />
+      <ExtensionsDemo />
     </section>
   ),
 };
