@@ -52,8 +52,8 @@
         "default": "./esm/react.mjs"
       },
       "default": {
-        "react-server": "./error.js",
         "types": "./react.d.ts",
+        "react-server": "./error.js",
         "default": "./react.js"
       }
     },
