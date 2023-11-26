@@ -5,7 +5,6 @@ const resolve = require('@rollup/plugin-node-resolve')
 const replace = require('@rollup/plugin-replace')
 const terser = require('@rollup/plugin-terser')
 const typescript = require('@rollup/plugin-typescript')
-const banner2 = require('rollup-plugin-banner2')
 const { default: esbuild } = require('rollup-plugin-esbuild')
 const createBabelConfig = require('./babel.config.js')
 
@@ -21,8 +20,6 @@ const entries = [
 function external(id) {
   return !id.startsWith('.') && !id.startsWith(root)
 }
-
-const cscComment = `'use client';\n`
 
 function getBabelOptions(targets) {
   return {
@@ -58,7 +55,7 @@ function createDeclarationConfig(input, output) {
   }
 }
 
-function createESMConfig(input, output, clientOnly) {
+function createESMConfig(input, output) {
   return {
     input,
     output: { file: output, format: 'esm' },
@@ -79,12 +76,11 @@ function createESMConfig(input, output, clientOnly) {
         preventAssignment: true,
       }),
       getEsbuild('node12'),
-      banner2(() => clientOnly && cscComment),
     ],
   }
 }
 
-function createCommonJSConfig(input, output, clientOnly) {
+function createCommonJSConfig(input, output) {
   return {
     input,
     output: { file: `${output}.js`, format: 'cjs' },
@@ -98,12 +94,11 @@ function createCommonJSConfig(input, output, clientOnly) {
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
-      banner2(() => clientOnly && cscComment),
     ],
   }
 }
 
-function createUMDConfig(input, output, env, clientOnly) {
+function createUMDConfig(input, output, env) {
   let name = 'jotai'
   const fileName = output.slice('dist/umd/'.length)
   const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
@@ -135,13 +130,12 @@ function createUMDConfig(input, output, env, clientOnly) {
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
-      banner2(() => clientOnly && cscComment),
       ...(env === 'production' ? [terser()] : []),
     ],
   }
 }
 
-function createSystemConfig(input, output, env, clientOnly) {
+function createSystemConfig(input, output, env) {
   return {
     input,
     output: {
@@ -158,14 +152,12 @@ function createSystemConfig(input, output, env, clientOnly) {
         preventAssignment: true,
       }),
       getEsbuild('node12', env),
-      banner2(() => clientOnly && cscComment),
     ],
   }
 }
 
 module.exports = function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
-  const clientOnly = Object.keys(args).some((key) => key === 'client-only')
   if (c) {
     c = c.slice('config-'.length).replace(/_/g, '/')
   } else {
@@ -173,22 +165,12 @@ module.exports = function (args) {
   }
   return [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
-    createCommonJSConfig(`src/${c}.ts`, `dist/${c}`, clientOnly),
-    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`, clientOnly),
-    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development', clientOnly),
-    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production', clientOnly),
-    createSystemConfig(
-      `src/${c}.ts`,
-      `dist/system/${c}`,
-      'development',
-      clientOnly,
-    ),
-    createSystemConfig(
-      `src/${c}.ts`,
-      `dist/system/${c}`,
-      'production',
-      clientOnly,
-    ),
+    createCommonJSConfig(`src/${c}.ts`, `dist/${c}`),
+    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
+    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development'),
+    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production'),
+    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'development'),
+    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'production'),
   ]
 }
 
