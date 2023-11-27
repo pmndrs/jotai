@@ -36,37 +36,11 @@
     ".": {
       "import": {
         "types": "./esm/index.d.mts",
-        "react-server": "./esm/vanilla.mjs",
         "default": "./esm/index.mjs"
       },
       "default": {
         "types": "./index.d.ts",
-        "react-server": "./vanilla.js",
         "default": "./index.js"
-      }
-    },
-    "./react": {
-      "import": {
-        "types": "./esm/react.d.mts",
-        "react-server": "./esm/error.mjs",
-        "default": "./esm/react.mjs"
-      },
-      "default": {
-        "react-server": "./error.js",
-        "types": "./react.d.ts",
-        "default": "./react.js"
-      }
-    },
-    "./react/*": {
-      "import": {
-        "types": "./esm/*.d.mts",
-        "react-server": "./esm/error.mjs",
-        "default": "./esm/*.mjs"
-      },
-      "default": {
-        "types": "./*.d.ts",
-        "react-server": "./error.js",
-        "default": "./*.js"
       }
     },
     "./*": {
@@ -89,15 +63,14 @@
     "build": "concurrently -m 8 'yarn:build:*'",
     "build-watch": "concurrently -n watch: 'yarn:build:* --watch'",
     "build:base": "rollup -c",
-    "build:error": "rollup -c --config-error",
     "build:utils": "rollup -c --config-utils",
     "build:babel:plugin-debug-label": "rollup -c --config-babel_plugin-debug-label",
     "build:babel:plugin-react-refresh": "rollup -c --config-babel_plugin-react-refresh",
     "build:babel:preset": "rollup -c --config-babel_preset",
     "build:vanilla": "rollup -c --config-vanilla",
     "build:vanilla:utils": "rollup -c --config-vanilla_utils",
-    "build:react": "rollup -c --config-react",
-    "build:react:utils": "rollup -c --config-react_utils",
+    "build:react": "rollup -c --config-react --client-only",
+    "build:react:utils": "rollup -c --config-react_utils --client-only",
     "postbuild": "yarn patch-d-ts && yarn copy && yarn patch-ts3.8 && yarn patch-old-ts && yarn patch-esm-ts && yarn patch-readme",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --write",
     "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
@@ -182,6 +155,7 @@
     "react-dom": "^18.2.0",
     "redux": "^4.2.1",
     "rollup": "^4.5.2",
+    "rollup-plugin-banner2": "^1.2.2",
     "rollup-plugin-esbuild": "^6.1.0",
     "rxjs": "^7.8.1",
     "shx": "^0.3.4",
