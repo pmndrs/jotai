@@ -137,7 +137,7 @@ const Posts = () => {
 
 > Unlike queries, mutations are typically used to create/update/delete data or perform server side-effects.
 
-```jsx
+```tsx
 const postAtom = atomWithMutation(() => ({
   mutationKey: ['posts'],
   mutationFn: async ({ title }: { title: string }) => {
