@@ -7,53 +7,69 @@ keywords: tanstack,query
 
 [TanStack Query](https://tanstack.com/query/) provides a set of functions for managing async state (typically external data).
 
-From the [Overview docs](https://tanstack.com/query/v4/docs/overview):
+From the [Overview docs](https://tanstack.com/query/v5/docs/overview):
 
 > React Query is often described as the missing data-fetching library for React, but in more technical terms, it makes **fetching, caching, synchronizing and updating server state** in your React applications a breeze.
 
 [jotai-tanstack-query](https://github.com/jotai-labs/jotai-tanstack-query) is a Jotai extension library for TanStack Query. It provides a wonderful interface with all of the TanStack Query features, providing you the ability to use those features in combination with your existing Jotai state.
 
+### Support
+
+jotai-tanstack-query currently supports TanStack Query v5.
+
 ### Install
 
-In addition to `jotai`, you have to install `jotai-tanstack-query` and `@tanstack/query-core` to use the extension.
+In addition to `jotai`, you have to install `jotai-tanstack-query`, `@tanstack/query-core` and `wonka` to use the extension.
 
 ```bash
-yarn add jotai-tanstack-query @tanstack/query-core
+yarn add jotai-tanstack-query @tanstack/query-core wonka
+```
+
+### Incremental Adoption
+
+You can incrementally adopt `jotai-tanstack-query` in your app. It's not an all or nothing solution. You just have to ensure you are using the same QueryClient instance. [QueryClient Setup](#referencing-the-same-instance-of-query-client-in-your-project).
+
+```jsx
+# existing useQueryHook
+  const { data, isLoading, isError } = useQuery('todos', () => fetch('/todos'));
+
+# jotai-tanstack-query
+  const todosAtom = atomWithQuery(() => ({
+    queryKey: ['todos'],
+  }))
+
+  const [{ data, isLoading, isError }] = useAtom(todosAtom)
+
 ```
 
 ### Exported functions
 
-- `atomsWithQuery` for [QueryObserver](https://tanstack.com/query/v4/docs/reference/QueryObserver)
-- `atomsWithInfiniteQuery` for [InfiniteQueryObserver](https://tanstack.com/query/v4/docs/reference/InfiniteQueryObserver)
-- `atomsWithMutation` for MutationObserver
+- `atomWithQuery` for [useQuery](https://tanstack.com/query/v5/docs/react/reference/useQuery)
+- `atomWithInfiniteQuery` for [useInfiniteQuery](https://tanstack.com/query/v5/docs/react/reference/useInfiniteQuery)
+- `atomWithMutation` for [useMutation](https://tanstack.com/query/v5/docs/react/reference/useMutation)
+- `atomWithSuspenseQuery` for [useSuspenseQuery](https://tanstack.com/query/v5/docs/react/reference/useSuspenseQuery)
+- `atomWithSuspenseInfiniteQuery` for [useSuspenseInfiniteQuery](https://tanstack.com/query/v5/docs/react/reference/useSuspenseInfiniteQuery)
+- `atomWithMutationState` for [useMutationState](https://tanstack.com/query/v5/docs/react/reference/useMutationState)
 
-All three functions follow the same signature.
+All functions follow the same signature.
 
 ```ts
-const [dataAtom, statusAtom] = atomsWithSomething(getOptions, getQueryClient)
+const dataAtom = atomWithSomething(getOptions, getQueryClient)
 ```
 
 The first `getOptions` parameter is a function that returns an input to the observer.
-The second optional `getQueryClient` parameter is a function that return [QueryClient](https://tanstack.com/query/v4/docs/reference/QueryClient).
+The second optional `getQueryClient` parameter is a function that return [QueryClient](https://tanstack.com/query/v5/docs/reference/QueryClient).
 
-The return values have two atoms.
-The first one is called `dataAtom` and it's an atom for the data from the observer. `dataAtom` requires Suspense.
-The second one is called `statusAtom` and it's an atom for the full result from the observer. `statusAtom` doesn't require Suspense and won't throw errors to Error Boundary.
-The data from the observer is also included in `statusAtom`,
-so if you don't use Suspense and Error Boundary, you don't need to use `dataAtom`.
+### atomWithQuery usage
 
-### `atomsWithQuery` usage
-
-`atomsWithQuery` creates new atoms that implement a standard [`Query`](https://tanstack.com/query/v4/docs/guides/queries) from TanStack Query.
-
-> A query is a declarative dependency on an asynchronous source of data that is tied to a unique key. A query can be used with any Promise based method (including GET and POST methods) to fetch data from a server.
+`atomWithQuery` creates a new atom that implements a standard [`Query`](https://tanstack.com/query/v5/docs/react/guides/queries) from TanStack Query.
 
 ```jsx
 import { atom, useAtom } from 'jotai'
-import { atomsWithQuery } from 'jotai-tanstack-query'
+import { atomWithQuery } from 'jotai-tanstack-query'
 
 const idAtom = atom(1)
-const [userAtom] = atomsWithQuery((get) => ({
+const userAtom = atomWithQuery((get) => ({
   queryKey: ['users', get(idAtom)],
   queryFn: async ({ queryKey: [, id] }) => {
     const res = await fetch(`https://jsonplaceholder.typicode.com/users/${id}`)
@@ -62,14 +78,18 @@ const [userAtom] = atomsWithQuery((get) => ({
 }))
 
 const UserData = () => {
-  const [data] = useAtom(userAtom)
+  const [{ data, isPending, isError }] = useAtom(userAtom)
+
+  if (isPending) return <div>Loading...</div>
+  if (isError) return <div>Error</div>
+
   return <div>{JSON.stringify(data)}</div>
 }
 ```
 
-### `atomsWithInfiniteQuery` usage
+### atomWithInfiniteQuery usage
 
-`atomsWithInfiniteQuery` is very similar to `atomsWithQuery`, however it is for an `InfiniteQuery`, which is used for data that is meant to be paginated. You can [read more about Infinite Queries here](https://tanstack.com/query/v4/docs/guides/infinite-queries).
+`atomWithInfiniteQuery` is very similar to `atomWithQuery`, however it is for an `InfiniteQuery`, which is used for data that is meant to be paginated. You can [read more about Infinite Queries here](https://tanstack.com/query/v5/docs/guides/infinite-queries).
 
 > Rendering lists that can additively "load more" data onto an existing set of data or "infinite scroll" is also a very common UI pattern. React Query supports a useful version of useQuery called useInfiniteQuery for querying these types of lists.
 
@@ -77,72 +97,146 @@ A notable difference between a standard query atom is the additional option `get
 
 ```jsx
 import { atom, useAtom } from 'jotai'
-import { atomsWithInfiniteQuery } from 'jotai-tanstack-query'
+import { atomWithInfiniteQuery } from 'jotai-tanstack-query'
 
-const idAtom = atom(1)
-const [userAtom] = atomsWithInfiniteQuery((get) => ({
-  queryKey: ['users', get(idAtom)],
-  queryFn: async ({ queryKey: [, id] }) => {
-    const res = await fetch(`https://jsonplaceholder.typicode.com/users/${id}`)
+const postsAtom = atomWithInfiniteQuery(() => ({
+  queryKey: ['posts'],
+  queryFn: async ({ pageParam }) => {
+    const res = await fetch(`https://jsonplaceholder.typicode.com/posts?_page=${pageParam}`)
     return res.json()
   },
-  // infinite queries can support paginated fetching
-  getNextPageParam: (lastPage, pages) => lastPage.nextCursor,
+  getNextPageParam: (lastPage, allPages, lastPageParam) => lastPageParam + 1,
+  initialPageParam: 1,
 }))
 
-const UserData = () => {
-  const [data] = useAtom(userAtom)
-  return data.pages.map((userData, index) => (
-    <div key={index}>{JSON.stringify(userData)}</div>
-  ))
+const Posts = () => {
+  const [{ data, fetchNextPage, isPending, isError, isFetching }] =
+    useAtom(postsAtom)
+
+  if (isPending) return <div>Loading...</div>
+  if (isError) return <div>Error</div>
+
+  return (
+    <>
+      {data.pages.map((page, index) => (
+        <div key={index}>
+          {page.map((post: any) => (
+            <div key={post.id}>{post.title}</div>
+          ))}
+        </div>
+      ))}
+      <button onClick={() => fetchNextPage()}>Next</button>
+    </>
+  )
 }
 ```
 
-#### Fetching pages and refetching
+### atomWithMutation usage
 
-Using the same atom as in the above example, we can dispatch an action to `userAtom`.
-
-```js
-const UserData = () => {
-  const [data, dispatch] = useAtom(userAtom)
-  const handleFetchNextPage = () => dispatch({ type: 'fetchNextPage' })
-  const handleFetchPreviousPage = () => dispatch({ type: 'fetchPreviousPage' })
-}
-```
-
-### `atomsWithMutation` usage
-
-`atomsWithMutation` creates new atoms that implement a standard [`Mutation`](https://tanstack.com/query/v4/docs/guides/mutations) from TanStack Query.
+`atomWithMutation` creates a new atom that implements a standard [`Mutation`](https://tanstack.com/query/v5/docs/guides/mutations) from TanStack Query.
 
 > Unlike queries, mutations are typically used to create/update/delete data or perform server side-effects.
 
-```jsx
-import { atom, useAtom } from 'jotai'
-import { atomsWithMutation } from 'jotai-tanstack-query'
-
-const idAtom = atom(1)
-const [, postAtom] = atomsWithMutation((get) => ({
+```tsx
+const postAtom = atomWithMutation(() => ({
   mutationKey: ['posts'],
-  mutationFn: async ({ title, body }) => {
+  mutationFn: async ({ title }: { title: string }) => {
     const res = await fetch(`https://jsonplaceholder.typicode.com/posts`, {
       method: 'POST',
-      body: JSON.stringify({ title, body, userId: get(idAtom) }),
-      headers: { 'Content-type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify({
+        title,
+        body: 'body',
+        userId: 1,
+      }),
+      headers: {
+        'Content-type': 'application/json; charset=UTF-8',
+      },
     })
     const data = await res.json()
     return data
   },
 }))
 
-const PostData = () => {
-  const [post, mutate] = useAtom(postAtom)
+const Posts = () => {
+  const [{ mutate, status }] = useAtom(postAtom)
   return (
     <div>
-      <button onClick={() => mutate([{ title: 'foo', body: 'bar' }])}>
-        Click me
-      </button>
-      <div>{JSON.stringify(post)}</div>
+      <button onClick={() => mutate({ title: 'foo' })}>Click me</button>
+      <pre>{JSON.stringify(status, null, 2)}</pre>
     </div>
+  )
+}
+```
+
+### atomWithMutationState usage
+
+`atomWithMutationState` creates a new atom that gives you access to all mutations in the [`MutationCache`](https://tanstack.com/query/v5/docs/react/reference/useMutationState).
+
+```jsx
+const mutationStateAtom = atomWithMutationState((get) => ({
+  filters: {
+    mutationKey: ['posts'],
+  },
+}))
+```
+
+### Suspense
+
+jotai-tanstack-query can also be used with React's Suspense.
+
+### atomWithSuspenseQuery usage
+
+```jsx
+import { atom, useAtom } from 'jotai'
+import { atomWithSuspenseQuery } from 'jotai-tanstack-query'
+
+const idAtom = atom(1)
+const userAtom = atomWithSuspenseQuery((get) => ({
+  queryKey: ['users', get(idAtom)],
+  queryFn: async ({ queryKey: [, id] }) => {
+    const res = await fetch(`https://jsonplaceholder.typicode.com/users/${id}`)
+    return res.json()
+  },
+}))
+
+const UserData = () => {
+  const [{ data }] = useAtom(userAtom)
+
+  return <div>{JSON.stringify(data)}</div>
+}
+```
+
+### atomWithSuspenseInfiniteQuery usage
+
+```jsx
+import { atom, useAtom } from 'jotai'
+import { atomWithSuspenseInfiniteQuery } from 'jotai-tanstack-query'
+
+const postsAtom = atomWithSuspenseInfiniteQuery(() => ({
+  queryKey: ['posts'],
+  queryFn: async ({ pageParam }) => {
+    const res = await fetch(`https://jsonplaceholder.typicode.com/posts?_page=${pageParam}`)
+    return res.json()
+  },
+  getNextPageParam: (lastPage, allPages, lastPageParam) => lastPageParam + 1,
+  initialPageParam: 1,
+}))
+
+const Posts = () => {
+  const [{ data, fetchNextPage, isPending, isError, isFetching }] =
+    useAtom(postsAtom)
+
+  return (
+    <>
+      {data.pages.map((page, index) => (
+        <div key={index}>
+          {page.map((post: any) => (
+            <div key={post.id}>{post.title}</div>
+          ))}
+        </div>
+      ))}
+      <button onClick={() => fetchNextPage()}>Next</button>
+    </>
   )
 }
 ```
@@ -176,7 +270,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
-import { atomsWithQuery, queryClientAtom } from 'jotai-tanstack-query'
+import { atomWithQuery, queryClientAtom } from 'jotai-tanstack-query'
 
 const queryClient = new QueryClient()
 
@@ -202,7 +296,7 @@ export const App = () => {
   )
 }
 
-export const [todosAtom] = atomsWithQuery((get) => {
+export const todosAtom = atomWithQuery((get) => {
   return {
     queryKey: ['todos'],
     queryFn: () => fetch('/todos'),
@@ -228,15 +322,14 @@ export const useTodoMutation = () => {
 
 ### SSR support
 
-All atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://tanstack.com/query/v4/docs/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://tanstack.com/query/v4/docs/guides/ssr#using-hydration) or [`initialData`](https://tanstack.com/query/v4/docs/guides/ssr#using-initialdata).
+All atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://tanstack.com/query/v5/docs/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://tanstack.com/query/v5/docs/react/guides/ssr#using-the-hydration-apis) or [`initialData`](https://tanstack.com/query/v5/docs/react/guides/ssr#get-started-fast-with-initialdata).
 
 ### Error handling
 
-With `dataAtom`,
 Fetch error will be thrown and can be caught with ErrorBoundary.
 Refetching may recover from a temporary error.
 
-See [a working example](https://codesandbox.io/s/joer59) to learn more.
+See [a working example](https://codesandbox.io/s/4gfp6z) to learn more.
 
 ### Devtools
 
@@ -250,7 +343,7 @@ $ pnpm add @tanstack/react-query-devtools
 $ yarn add @tanstack/react-query-devtools
 ```
 
-All you have to do is put the `<ReactQueryDevtools />` in the `<QueryClientProvider />`.
+All you have to do is put the `<ReactQueryDevtools />` within `<QueryClientProvider />`.
 
 ```tsx
 import {
@@ -288,16 +381,66 @@ export const App = () => {
 }
 ```
 
+## Migrate to v0.8.0
+
+### Change in atom signature
+
+All atom signatures have changed to be more consistent with TanStack Query.
+v0.8.0 returns only a single atom, instead of a tuple of atoms, and hence the name change from `atomsWithSomething` to`atomWithSomething`.
+
+```diff
+
+- const [dataAtom, statusAtom] = atomsWithSomething(getOptions, getQueryClient)
++ const dataAtom = atomWithSomething(getOptions, getQueryClient)
+
+```
+
+### Simplified Return Structure
+
+In the previous version of `jotai-tanstack-query`, the query atoms `atomsWithQuery` and `atomsWithInfiniteQuery` returned a tuple of atoms: `[dataAtom, statusAtom]`. This design separated the data and its status into two different atoms.
+
+#### atomWithQuery and atomWithInfiniteQuery
+
+- `dataAtom` was used to access the actual data (`TData`).
+- `statusAtom` provided the status object (`QueryObserverResult<TData, TError>`), which included additional attributes like `isLoading`, `isError`, etc.
+
+In v0.8.0, they have been replaced by `atomWithQuery` and `atomWithInfiniteQuery` to return only a single `dataAtom`. This `dataAtom` now directly provides the `QueryObserverResult<TData, TError>`, aligning it closely with the behavior of Tanstack Query's bindings.
+
+To migrate to the new version, replace the separate `dataAtom` and `statusAtom` usage with the unified `dataAtom` that now contains both data and status information.
+
+```diff
+- const [dataAtom, statusAtom] = atomsWithQuery(/* ... */);
+- const [data] = useAtom(dataAtom);
+- const [status] = useAtom(statusAtom);
+
++ const dataAtom = atomWithQuery(/* ... */);
++ const [{ data, isLoading, isError }] = useAtom(dataAtom);
+```
+
+#### atomWithMutation
+
+Similar to `atomsWithQuery` and `atomsWithInfiniteQuery`, `atomWithMutation` also returns a single atom instead of a tuple of atoms. The return type of the atom value is `MutationObserverResult<TData, TError, TVariables, TContext>`.
+
+```diff
+
+- const [, postAtom] = atomsWithMutation(/* ... */);
+- const [post, mutate] = useAtom(postAtom); // Accessing mutation status from post; and mutate() to execute the mutation
+
++ const postAtom = atomWithMutation(/* ... */);
++ const [{ data, error, mutate }] = useAtom(postAtom); // Accessing mutation result and mutate method from the same atom
+
+```
+
 ### Examples
 
 #### Basic demo
 
-<CodeSandbox id="vg6e6u" />
+<CodeSandbox id="jm8mf7" />
 
 #### Devtools demo
 
-<CodeSandbox id="99blcz" />
+<CodeSandbox id="zlp3pj" />
 
 #### Hackernews
 
-<CodeSandbox id="rvrjxg" />
+<CodeSandbox id="8v4mc4" />
