@@ -19,10 +19,27 @@ jotai-tanstack-query currently supports TanStack Query v5.
 
 ### Install
 
-In addition to `jotai`, you have to install `jotai-tanstack-query` and `@tanstack/query-core` to use the extension.
+In addition to `jotai`, you have to install `jotai-tanstack-query`, `@tanstack/query-core` and `wonka` to use the extension.
 
 ```bash
-yarn add jotai-tanstack-query @tanstack/query-core
+yarn add jotai-tanstack-query @tanstack/query-core wonka
+```
+
+### Incremental Adoption
+
+You can incrementally adopt `jotai-tanstack-query` in your app. It's not an all or nothing solution. You just have to ensure you are using the same QueryClient instance. [QueryClient Setup](#referencing-the-same-instance-of-query-client-in-your-project).
+
+```jsx
+# existing useQueryHook
+  const { data, isLoading, isError } = useQuery('todos', () => fetch('/todos'));
+
+# jotai-tanstack-query
+  const todosAtom = atomWithQuery(() => ({
+    queryKey: ['todos'],
+  }))
+
+  const [{ data, isLoading, isError }] = useAtom(todosAtom)
+
 ```
 
 ### Exported functions
@@ -312,7 +329,7 @@ All atoms can be used within the context of a server side rendered app, such as 
 Fetch error will be thrown and can be caught with ErrorBoundary.
 Refetching may recover from a temporary error.
 
-See [a working example](https://codesandbox.io/s/joer59) to learn more.
+See [a working example](https://codesandbox.io/s/4gfp6z) to learn more.
 
 ### Devtools
 
@@ -364,16 +381,66 @@ export const App = () => {
 }
 ```
 
+## Migrate to v0.8.0
+
+### Change in atom signature
+
+All atom signatures have changed to be more consistent with TanStack Query.
+v0.8.0 returns only a single atom, instead of a tuple of atoms, and hence the name change from `atomsWithSomething` to`atomWithSomething`.
+
+```diff
+
+- const [dataAtom, statusAtom] = atomsWithSomething(getOptions, getQueryClient)
++ const dataAtom = atomWithSomething(getOptions, getQueryClient)
+
+```
+
+### Simplified Return Structure
+
+In the previous version of `jotai-tanstack-query`, the query atoms `atomsWithQuery` and `atomsWithInfiniteQuery` returned a tuple of atoms: `[dataAtom, statusAtom]`. This design separated the data and its status into two different atoms.
+
+#### atomWithQuery and atomWithInfiniteQuery
+
+- `dataAtom` was used to access the actual data (`TData`).
+- `statusAtom` provided the status object (`QueryObserverResult<TData, TError>`), which included additional attributes like `isLoading`, `isError`, etc.
+
+In v0.8.0, they have been replaced by `atomWithQuery` and `atomWithInfiniteQuery` to return only a single `dataAtom`. This `dataAtom` now directly provides the `QueryObserverResult<TData, TError>`, aligning it closely with the behavior of Tanstack Query's bindings.
+
+To migrate to the new version, replace the separate `dataAtom` and `statusAtom` usage with the unified `dataAtom` that now contains both data and status information.
+
+```diff
+- const [dataAtom, statusAtom] = atomsWithQuery(/* ... */);
+- const [data] = useAtom(dataAtom);
+- const [status] = useAtom(statusAtom);
+
++ const dataAtom = atomWithQuery(/* ... */);
++ const [{ data, isLoading, isError }] = useAtom(dataAtom);
+```
+
+#### atomWithMutation
+
+Similar to `atomsWithQuery` and `atomsWithInfiniteQuery`, `atomWithMutation` also returns a single atom instead of a tuple of atoms. The return type of the atom value is `MutationObserverResult<TData, TError, TVariables, TContext>`.
+
+```diff
+
+- const [, postAtom] = atomsWithMutation(/* ... */);
+- const [post, mutate] = useAtom(postAtom); // Accessing mutation status from post; and mutate() to execute the mutation
+
++ const postAtom = atomWithMutation(/* ... */);
++ const [{ data, error, mutate }] = useAtom(postAtom); // Accessing mutation result and mutate method from the same atom
+
+```
+
 ### Examples
 
 #### Basic demo
 
-<CodeSandbox id="vg6e6u" />
+<CodeSandbox id="jm8mf7" />
 
 #### Devtools demo
 
-<CodeSandbox id="99blcz" />
+<CodeSandbox id="zlp3pj" />
 
 #### Hackernews
 
-<CodeSandbox id="rvrjxg" />
+<CodeSandbox id="8v4mc4" />
