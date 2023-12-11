@@ -31,14 +31,17 @@ You can incrementally adopt `jotai-tanstack-query` in your app. It's not an all 
 
 ```jsx
 # existing useQueryHook
-  const { data, isLoading, isError } = useQuery('todos', () => fetch('/todos'));
+  const { data, isPending, isError } = useQuery({
+    queryKey: ['todos'],
+    queryFn: fetchTodoList
+  });
 
 # jotai-tanstack-query
   const todosAtom = atomWithQuery(() => ({
     queryKey: ['todos'],
   }))
 
-  const [{ data, isLoading, isError }] = useAtom(todosAtom)
+  const [{ data, isPending, isError }] = useAtom(todosAtom)
 
 ```
 
@@ -402,7 +405,7 @@ In the previous version of `jotai-tanstack-query`, the query atoms `atomsWithQue
 #### atomWithQuery and atomWithInfiniteQuery
 
 - `dataAtom` was used to access the actual data (`TData`).
-- `statusAtom` provided the status object (`QueryObserverResult<TData, TError>`), which included additional attributes like `isLoading`, `isError`, etc.
+- `statusAtom` provided the status object (`QueryObserverResult<TData, TError>`), which included additional attributes like `isPending`, `isError`, etc.
 
 In v0.8.0, they have been replaced by `atomWithQuery` and `atomWithInfiniteQuery` to return only a single `dataAtom`. This `dataAtom` now directly provides the `QueryObserverResult<TData, TError>`, aligning it closely with the behavior of Tanstack Query's bindings.
 
@@ -414,7 +417,7 @@ To migrate to the new version, replace the separate `dataAtom` and `statusAtom` 
 - const [status] = useAtom(statusAtom);
 
 + const dataAtom = atomWithQuery(/* ... */);
-+ const [{ data, isLoading, isError }] = useAtom(dataAtom);
++ const [{ data, isPending, isError }] = useAtom(dataAtom);
 ```
 
 #### atomWithMutation
