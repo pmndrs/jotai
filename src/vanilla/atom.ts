@@ -23,7 +23,7 @@ type Write<Args extends unknown[], Result> = (
   ...args: Args
 ) => Result
 
-export type WithInitialValue<Value> = {
+type WithInitialValue<Value> = {
   init: Value
 }
 
