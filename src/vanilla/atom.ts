@@ -23,6 +23,8 @@ type Write<Args extends unknown[], Result> = (
   ...args: Args
 ) => Result
 
+// This is an internal type and not part of public API.
+// Do not depend on it as it can change without notice.
 type WithInitialValue<Value> = {
   init: Value
 }
