@@ -1,5 +1,5 @@
 import { atom } from '../../vanilla.ts'
-import type { WritableAtom } from '../../vanilla.ts'
+import type { WithInitialValue, WritableAtom } from '../../vanilla.ts'
 import { RESET } from './constants.ts'
 
 type SetStateActionWithReset<Value> =
@@ -20,5 +20,5 @@ export function atomWithReset<Value>(initialValue: Value) {
       set(anAtom, nextValue === RESET ? initialValue : nextValue)
     },
   )
-  return anAtom as WritableAtom<Value, [Update], void>
+  return anAtom as WritableAtom<Value, [Update], void> & WithInitialValue<Value>
 }
