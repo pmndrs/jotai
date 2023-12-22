@@ -1,1 +1,1 @@
-export const RESET = Symbol()
+export const RESET = Symbol('RESET')
