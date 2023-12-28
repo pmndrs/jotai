@@ -7,6 +7,12 @@ type SetStateActionWithReset<Value> =
   | typeof RESET
   | ((prev: Value) => Value | typeof RESET)
 
+// This is an internal type and not part of public API.
+// Do not depend on it as it can change without notice.
+type WithInitialValue<Value> = {
+  init: Value
+}
+
 export function atomWithReset<Value>(initialValue: Value) {
   type Update = SetStateActionWithReset<Value>
   const anAtom = atom<Value, [Update], void>(
@@ -20,5 +26,5 @@ export function atomWithReset<Value>(initialValue: Value) {
       set(anAtom, nextValue === RESET ? initialValue : nextValue)
     },
   )
-  return anAtom as WritableAtom<Value, [Update], void>
+  return anAtom as WritableAtom<Value, [Update], void> & WithInitialValue<Value>
 }
