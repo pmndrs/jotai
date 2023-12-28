@@ -94,34 +94,34 @@ For more information on `Provider` behavior, please read the docs [here](../core
 
 For more complex use cases, check out [Scope extension](../extensions/scope.mdx).
 
-
 ### Using Typescript
 
 `useHydrateAtoms` has overloaded types and typescript cannot extract types from overloaded function. It is recommended to use a `Map` when passing initial atom values to the `useHydrateAtoms`.
 
-Here is a working example :
+Here is a working example:
 
-```jsx
-import { Provider, atom, useAtomValue, type WritableAtom } from "jotai";
-import { useHydrateAtoms } from "jotai/utils";
-import { type ReactNode } from "react";
+```tsx
+import type { ReactNode } from 'react'
+import { Provider, atom, useAtomValue } from 'jotai'
+import type { WritableAtom } from 'jotai'
+import { useHydrateAtoms } from 'jotai/utils'
 
-const testAtom = atom("");
+const testAtom = atom('')
 
-export default function JotaiTests() {
+export default function App() {
   return (
     <Provider>
-      <AtomsHydrator atomValues={[[testAtom, "hello"]]}>
-        <MyComponent />
+      <AtomsHydrator atomValues={[[testAtom, 'hello']]}>
+        <Component />
       </AtomsHydrator>
     </Provider>
-  );
+  )
 }
 
 //This component contains all the states and the logic
-function MyComponent() {
-  const testAtomValue = useAtomValue(testAtom);
-  return <div>{testAtomValue}</div>;
+function Component() {
+  const testAtomValue = useAtomValue(testAtom)
+  return <div>{testAtomValue}</div>
 }
 
 function AtomsHydrator({
@@ -129,10 +129,12 @@ function AtomsHydrator({
   children,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  atomValues: Iterable<readonly [WritableAtom<unknown, [any], unknown>, unknown]>;
-  children: ReactNode;
+  atomValues: Iterable<
+    readonly [WritableAtom<unknown, [any], unknown>, unknown]
+  >
+  children: ReactNode
 }) {
-  useHydrateAtoms(new Map(atomValues));
-  return children;
+  useHydrateAtoms(new Map(atomValues))
+  return children
 }
 ```
