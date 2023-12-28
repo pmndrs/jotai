@@ -88,7 +88,7 @@ const atoms = [count1, count2, count3, ...otherAtoms]
 const sum = atom((get) => atoms.map(get).reduce((acc, count) => acc + count))
 ```
 
-### Derived async atoms <img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />
+### Derived async atoms [<img src="https://img.shields.io/badge/-needs_suspense-black" alt="needs suspense" />](https://react.dev/reference/react/Suspense)
 
 You can make the read function an async function too.
 

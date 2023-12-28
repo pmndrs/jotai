@@ -182,12 +182,12 @@ You can also create an action atom that will call another action atom:
 export const dispatchAtom = atom(null, (_get, set, action) => {
   if (action === 'INC') {
     set(incAtom)
-  }
-  if (action === 'DEC') {
+  } else if (action === 'DEC') {
     set(decAtom)
+  } else {
+    throw new Error('unknown action')
   }
-  throw new Error('unknown action')
-}
+})
 ```
 
 Why do we want it? Because it will be used only when needed.
