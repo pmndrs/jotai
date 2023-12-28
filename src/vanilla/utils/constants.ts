@@ -1,1 +1,3 @@
-export const RESET = import.meta.env?.MODE !== 'production' ? Symbol('RESET') : Symbol()
+export const RESET = Symbol(
+  import.meta.env?.MODE !== 'production' ? 'RESET' : '',
+)
