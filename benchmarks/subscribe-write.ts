@@ -1,4 +1,4 @@
-#!/usr/bin/env npx ts-node
+#!/usr/bin/env npx tsx
 
 import { add, complete, cycle, save, suite } from 'benny'
 import { atom } from '../src/vanilla/atom.ts'
