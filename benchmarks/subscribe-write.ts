@@ -32,28 +32,28 @@ const createStateWithAtoms = (n: number) => {
 }
 
 const main = async () => {
-  for (const n of [2, 3, 4, 5, 6]) {
-    await suite(
-      `subscribe-write-${n}`,
+  await suite(
+    'subscribe-write',
+    ...[2, 3, 4, 5, 6].map((n) =>
       add(`atoms=${10 ** n}`, () => {
         cleanup()
         const [store, targetAtom] = createStateWithAtoms(10 ** n)
         return () => store.set(targetAtom, (c) => c + 1)
       }),
-      cycle(),
-      complete(),
-      save({
-        folder: __dirname,
-        file: `subscribe-write-${n}`,
-        format: 'json',
-      }),
-      save({
-        folder: __dirname,
-        file: `subscribe-write-${n}`,
-        format: 'chart.html',
-      }),
-    )
-  }
+    ),
+    cycle(),
+    complete(),
+    save({
+      folder: __dirname,
+      file: 'subscribe-write',
+      format: 'json',
+    }),
+    save({
+      folder: __dirname,
+      file: 'subscribe-write',
+      format: 'chart.html',
+    }),
+  )
 }
 
 main()

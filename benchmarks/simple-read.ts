@@ -22,27 +22,27 @@ const createStateWithAtoms = (n: number) => {
 }
 
 const main = async () => {
-  for (const n of [2, 3, 4, 5, 6]) {
-    await suite(
-      `simple-read-${n}`,
+  await suite(
+    'simple-read',
+    ...[2, 3, 4, 5, 6].map((n) =>
       add(`atoms=${10 ** n}`, () => {
         const [store, targetAtom] = createStateWithAtoms(10 ** n)
         return () => store.get(targetAtom)
       }),
-      cycle(),
-      complete(),
-      save({
-        folder: __dirname,
-        file: `simple-read-${n}`,
-        format: 'json',
-      }),
-      save({
-        folder: __dirname,
-        file: `simple-read-${n}`,
-        format: 'chart.html',
-      }),
-    )
-  }
+    ),
+    cycle(),
+    complete(),
+    save({
+      folder: __dirname,
+      file: 'simple-read',
+      format: 'json',
+    }),
+    save({
+      folder: __dirname,
+      file: 'simple-read',
+      format: 'chart.html',
+    }),
+  )
 }
 
 main()
