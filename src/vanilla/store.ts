@@ -651,22 +651,10 @@ export const createStore = () => {
     atomState: AtomState<Value>,
     prevDependencies?: Dependencies,
   ): void => {
-    const depSet = new Set(atomState.d.keys())
-    prevDependencies?.forEach((_, a) => {
-      if (depSet.has(a)) {
-        // not changed
-        depSet.delete(a)
-        return
+    atomState.d.forEach((_, a) => {
+      if(prevDependencies != null && prevDependencies.has(a)) {
+        return;
       }
-      const mounted = mountedMap.get(a)
-      if (mounted) {
-        mounted.t.delete(atom) // delete from dependents
-        if (canUnmountAtom(a, mounted)) {
-          unmountAtom(a)
-        }
-      }
-    })
-    depSet.forEach((a) => {
       const mounted = mountedMap.get(a)
       if (mounted) {
         mounted.t.add(atom) // add to dependents
@@ -675,6 +663,18 @@ export const createStore = () => {
         // Note: we should revisit this when you find other issues
         // https://github.com/pmndrs/jotai/issues/942
         mountAtom(a, atom)
+      }
+    })
+    prevDependencies?.forEach((_, a) => {
+      if (mountedMap.has(a)) {
+        return;
+      }
+      const mounted = mountedMap.get(a)
+      if (mounted) {
+        mounted.t.delete(atom) // delete from dependents
+        if (canUnmountAtom(a, mounted)) {
+          unmountAtom(a)
+        }
       }
     })
   }
