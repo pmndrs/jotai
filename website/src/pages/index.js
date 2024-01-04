@@ -133,7 +133,7 @@ pnpm add jotai
       </p>
       <h3>Vite (SWC)</h3>
       <Code language="bash">{`# npm
-npm install --save-dev @swc-jotai/react-refresh
+npm install --save-dev @swc-jotai/react-refresh @swc-jotai/debug-label
 
 # vite.config.ts
 import { defineConfig } from 'vite'
