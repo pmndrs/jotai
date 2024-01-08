@@ -41,7 +41,7 @@ Enhance your development experience with the UI based Jotai DevTool.
 
 Use Jotai babel plugins for optimal debugging experience. Find the complete guide on the [babel](../tools/babel) page and/or [swc](../tools/swc) page.
 
-Eg.
+Example:
 
 ```ts
 {
@@ -52,6 +52,23 @@ Eg.
     "jotai/babel/plugin-debug-label"
   ]
 }
+```
+
+Example for Vite + React project:
+
+
+```ts
+// vite.config.ts
+
+export default defineConfig({
+  plugins: [
+    react({
+      babel: {
+        plugins: ["jotai/babel/plugin-debug-label", "jotai/babel/plugin-react-refresh"],
+      },
+    }),
+  ],
+});
 ```
 
 ### Next JS setup
