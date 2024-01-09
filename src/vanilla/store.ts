@@ -659,7 +659,7 @@ export const createStore = () => {
         depSet.delete(a)
         return
       }
-      maybeUnmountAtomSet.add(a);
+      maybeUnmountAtomSet.add(a)
       const mounted = mountedMap.get(a)
       if (mounted) {
         mounted.t.delete(atom) // delete from dependents
@@ -677,9 +677,9 @@ export const createStore = () => {
       }
     })
     maybeUnmountAtomSet.forEach((a) => {
-      const mounted = mountedMap.get(a);
+      const mounted = mountedMap.get(a)
       if (mounted && canUnmountAtom(a, mounted)) {
-        unmountAtom(a);
+        unmountAtom(a)
       }
     })
   }
