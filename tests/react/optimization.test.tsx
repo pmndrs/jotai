@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { expect, it } from 'vitest'
-import { useAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import { Provider, useAtom } from 'jotai/react'
+import { atom, createStore, getDefaultStore } from 'jotai/vanilla'
 
 it('only relevant render function called (#156)', async () => {
   const count1Atom = atom(0)
@@ -270,4 +270,71 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
     getByText('count2: 1')
   })
   expect(renderCount1).toBe(renderCount1AfterCommit)
+})
+
+const readAtomStateTestCase = (markPure: boolean) => {
+  const queryParams = atom({
+    key: '123',
+    query: 'foobar',
+  })
+  const authAtom = atom({
+    isLoggedInUser: true,
+  })
+  const hasProfileAtom = atom((get) => {
+    const auth = get(authAtom)
+    return auth.isLoggedInUser
+  })
+  const mockDep1 = atom(1)
+  const mockDep2 = atom(2)
+
+  const queryAtom = atom((get) => {
+    get(queryParams)
+    get(authAtom)
+    get(hasProfileAtom)
+    get(mockDep1)
+    get(mockDep2)
+    return {
+      data: {
+        alert: 'This is an alert',
+        content: ['This is the page content'],
+        cart: {
+          items: [],
+        },
+      },
+    }
+  })
+  const alertAtom = atom((get) => {
+    return get(queryAtom).data.alert
+  })
+  const contentAtom = atom((get) => {
+    return get(queryAtom).data.content
+  })
+  const cartAtom = atom((get) => {
+    return get(queryAtom).data.cart
+  })
+
+  const store = createStore()
+  if (markPure) {
+    store.dev_mark_atom_immutable_before_mount?.(queryAtom)
+  }
+  const MyPage = () => {
+    useAtom(alertAtom)
+    useAtom(contentAtom)
+    useAtom(cartAtom)
+    return 'Hello world'
+  }
+  render(
+    <Provider store={store}>
+      <MyPage />
+    </Provider>,
+  )
+
+  store.dev_print_call_counts?.()
+  store.dev_clear_call_counts?.()
+}
+it('Avoid redundant readAtomState before mount', () => {
+  console.debug('Test case without immutable flag')
+  readAtomStateTestCase(false)
+  console.debug('Test case with immutable flag')
+  readAtomStateTestCase(true)
 })

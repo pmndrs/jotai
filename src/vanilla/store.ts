@@ -150,6 +150,7 @@ type MountedAtoms = Set<AnyAtom>
  * @returns A store.
  */
 export const createStore = () => {
+  const immutableBeforeMountMap = new WeakSet<AnyAtom>()
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingMap = new Map<
@@ -158,9 +159,30 @@ export const createStore = () => {
   >()
   let storeListenersRev2: Set<StoreListenerRev2>
   let mountedAtoms: MountedAtoms
+  const debugCounts = new Map<string, number>()
   if (import.meta.env?.MODE !== 'production') {
     storeListenersRev2 = new Set()
     mountedAtoms = new Set()
+  }
+
+  const incrementCount = (name: string) => {
+    if (import.meta.env?.MODE !== 'production') {
+      debugCounts.set(name, (debugCounts.get(name) || 0) + 1)
+    }
+  }
+  const printCounts = () => {
+    console.debug('Jotai store call counts')
+    console.debug('-----------------------')
+    debugCounts.forEach((value, key) => {
+      console.debug(`| ${key} | ${value}`)
+    })
+  }
+  const resetCounts = () => {
+    debugCounts.clear()
+  }
+
+  const markAtomImmutableBeforeMount = <Value>(atom: Atom<Value>) => {
+    immutableBeforeMountMap.add(atom)
   }
 
   const getAtomState = <Value>(atom: Atom<Value>) =>
@@ -353,12 +375,13 @@ export const createStore = () => {
     atom: Atom<Value>,
     force?: boolean,
   ): AtomState<Value> => {
+    incrementCount('readAtomState')
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
     if (!force && atomState) {
       // If the atom is mounted, we can use the cache.
       // because it should have been updated by dependencies.
-      if (mountedMap.has(atom)) {
+      if (mountedMap.has(atom) || immutableBeforeMountMap.has(atom)) {
         return atomState
       }
       // Otherwise, check if the dependencies have changed.
@@ -520,6 +543,7 @@ export const createStore = () => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
+    incrementCount('writeAtomState')
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
     const setter: Setter = <V, As extends unknown[], R>(
@@ -772,6 +796,9 @@ export const createStore = () => {
           l({ type: 'restore', flushed: flushed as Set<AnyAtom> }),
         )
       },
+      dev_print_call_counts: printCounts,
+      dev_clear_call_counts: resetCounts,
+      dev_mark_atom_immutable_before_mount: markAtomImmutableBeforeMount,
     }
   }
   return {
