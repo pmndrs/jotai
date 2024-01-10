@@ -10,9 +10,7 @@ keywords: immer
 You have to install `immer` and `jotai-immer` to use this feature.
 
 ```
-npm install immer jotai-immer
-# or
-yarn add immer jotai-immer
+npm i immer jotai-immer
 ```
 
 ## atomWithImmer
@@ -108,6 +106,8 @@ const Controls = () => {
 ```
 
 It would be better if you don't use `withImmer` and `atomWithImmer` with `useImmerAtom` because they provide the immer-like `writeFunction` and we don't need to create a new one.
+
+You can use `useSetImmerAtom` if you need only the setter part of `useImmerAtom`.
 
 ### Examples
 
