@@ -272,7 +272,7 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
   expect(renderCount1).toBe(renderCount1AfterCommit)
 })
 
-const readAtomStateTestCase = (markPure: boolean) => {
+const readAtomStateTestCase = (enableOptimization: boolean) => {
   const queryParams = atom({
     key: '123',
     query: 'foobar',
@@ -313,10 +313,7 @@ const readAtomStateTestCase = (markPure: boolean) => {
     return get(queryAtom).data.cart
   })
 
-  const store = createStore()
-  if (markPure) {
-    store.dev_mark_atom_immutable_before_mount?.(queryAtom)
-  }
+  const store = createStore({ unmountedCacheEnabled: enableOptimization })
   const MyPage = () => {
     useAtom(alertAtom)
     useAtom(contentAtom)
@@ -332,9 +329,9 @@ const readAtomStateTestCase = (markPure: boolean) => {
   store.dev_print_call_counts?.()
   store.dev_clear_call_counts?.()
 }
-it('Avoid redundant readAtomState before mount', () => {
-  console.debug('Test case without immutable flag')
+it('Avoid redundant readAtomState while unmount', () => {
+  console.debug('Test case without unmounted cache')
   readAtomStateTestCase(false)
-  console.debug('Test case with immutable flag')
+  console.debug('Test case with unmounted cache')
   readAtomStateTestCase(true)
 })

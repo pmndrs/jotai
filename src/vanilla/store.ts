@@ -149,14 +149,15 @@ type MountedAtoms = Set<AnyAtom>
  *
  * @returns A store.
  */
-export const createStore = () => {
-  const immutableBeforeMountMap = new WeakSet<AnyAtom>()
+export const createStore = (opts?: { unmountedCacheEnabled: boolean }) => {
+  const { unmountedCacheEnabled } = opts || {}
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingMap = new Map<
     AnyAtom,
     AtomState /* prevAtomState */ | undefined
   >()
+  let unmountedAtomReadCache = new WeakSet<AnyAtom>()
   let storeListenersRev2: Set<StoreListenerRev2>
   let mountedAtoms: MountedAtoms
   const debugCounts = new Map<string, number>()
@@ -179,10 +180,6 @@ export const createStore = () => {
   }
   const resetCounts = () => {
     debugCounts.clear()
-  }
-
-  const markAtomImmutableBeforeMount = <Value>(atom: Atom<Value>) => {
-    immutableBeforeMountMap.add(atom)
   }
 
   const getAtomState = <Value>(atom: Atom<Value>) =>
@@ -381,7 +378,10 @@ export const createStore = () => {
     if (!force && atomState) {
       // If the atom is mounted, we can use the cache.
       // because it should have been updated by dependencies.
-      if (mountedMap.has(atom) || immutableBeforeMountMap.has(atom)) {
+      if (
+        mountedMap.has(atom) ||
+        (unmountedCacheEnabled && unmountedAtomReadCache.has(atom))
+      ) {
         return atomState
       }
       // Otherwise, check if the dependencies have changed.
@@ -397,6 +397,7 @@ export const createStore = () => {
           return aState === s || isEqualAtomValue(aState, s)
         })
       ) {
+        unmountedAtomReadCache.add(atom)
         return atomState
       }
     }
@@ -462,6 +463,7 @@ export const createStore = () => {
     } catch (error) {
       return setAtomError(atom, error, nextDependencies)
     } finally {
+      unmountedAtomReadCache.add(atom)
       isSync = false
     }
   }
@@ -589,6 +591,10 @@ export const createStore = () => {
       storeListenersRev2.forEach((l) =>
         l({ type: 'write', flushed: flushed as Set<AnyAtom> }),
       )
+    }
+    if (unmountedCacheEnabled && !mountedAtoms.has(atom)) {
+      // A value was manually changed in the store, invalidate all unmounted atoms
+      unmountedAtomReadCache = new WeakSet<AnyAtom>()
     }
     return result
   }
@@ -798,7 +804,6 @@ export const createStore = () => {
       },
       dev_print_call_counts: printCounts,
       dev_clear_call_counts: resetCounts,
-      dev_mark_atom_immutable_before_mount: markAtomImmutableBeforeMount,
     }
   }
   return {
