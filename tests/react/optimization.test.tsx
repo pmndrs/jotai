@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { Provider, useAtom } from 'jotai/react'
-import { atom, createStore, getDefaultStore } from 'jotai/vanilla'
+import { atom, createStore } from 'jotai/vanilla'
 
 it('only relevant render function called (#156)', async () => {
   const count1Atom = atom(0)
@@ -334,4 +334,15 @@ it('Avoid redundant readAtomState while unmount', () => {
   readAtomStateTestCase(false)
   console.debug('Test case with unmounted cache')
   readAtomStateTestCase(true)
+})
+
+it('store.set clears unmounted cache', () => {
+  const baseAtom = atom(0)
+  const derivedAtom = atom((get) => get(baseAtom) * 2)
+
+  const store = createStore({ unmountedCacheEnabled: true })
+  store.get(derivedAtom)
+  expect(store.get(derivedAtom)).toEqual(0)
+  store.set(baseAtom, 10)
+  expect(store.get(derivedAtom)).toEqual(20)
 })
