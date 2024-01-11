@@ -52,7 +52,6 @@ Example:
 
 Example for Vite + React project:
 
-
 ```ts
 // vite.config.ts
 
@@ -60,11 +59,14 @@ export default defineConfig({
   plugins: [
     react({
       babel: {
-        plugins: ["jotai/babel/plugin-debug-label", "jotai/babel/plugin-react-refresh"],
+        plugins: [
+          'jotai/babel/plugin-debug-label',
+          'jotai/babel/plugin-react-refresh',
+        ],
       },
     }),
   ],
-});
+})
 ```
 
 ### Next JS setup
