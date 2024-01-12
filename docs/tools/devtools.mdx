@@ -41,11 +41,8 @@ Example:
 
 ```ts
 {
-  "plugins": [
-    // Enables hot reload for atoms
-    "jotai/babel/plugin-react-refresh",
-    // Automatically adds debug labels to the atoms
-    "jotai/babel/plugin-debug-label"
+  "presets": [
+    'jotai/babel/preset'
   ]
 }
 ```
@@ -59,7 +56,7 @@ export default defineConfig({
   plugins: [
     react({
       babel: {
-        plugins: [
+        presets: [
           'jotai/babel/preset',
         ],
       },
