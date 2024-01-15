@@ -9,7 +9,7 @@ export { atomWithDefault } from './utils/atomWithDefault.ts'
 export {
   atomWithStorage,
   createJSONStorage,
-  withStorageValidator,
+  withStorageValidator as unstable_withStorageValidator,
 } from './utils/atomWithStorage.ts'
 export { atomWithObservable } from './utils/atomWithObservable.ts'
 export { loadable } from './utils/loadable.ts'
