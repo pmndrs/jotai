@@ -142,7 +142,7 @@ To add runtime validation to your storage atoms, you will need to create a custo
 Below is an example that utilizes Zod to validate values stored in `localStorage` with cross-tab synchronization.
 
 ```js
-import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+import { atomWithStorage } from 'jotai/utils'
 import { z } from 'zod'
 
 const myNumberSchema = z.number().int().nonnegative()
@@ -182,4 +182,25 @@ const storedNumberAtom = atomWithStorage('my-number', 0, {
     })
   },
 })
+```
+
+We also have a new util `unstable_withStorageValidator` to simplify some cases.
+The above case would become:
+
+```js
+import {
+  atomWithStorage,
+  createJSONStorage,
+  unstable_withStorageValidator as withStorageValidator,
+} from 'jotai/utils'
+import { z } from 'zod'
+
+const myNumberSchema = z.number().int().nonnegative()
+const isMyNumber = (v) => myNumberSchema.safeParse(v).success);
+
+const storedNumberAtom = atomWithStorage(
+  'my-number',
+  0,
+  withStorageValidator(isMyNumber)(createJSONStorage()),
+)
 ```
