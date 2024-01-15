@@ -7,14 +7,10 @@ keywords: devtools,debug,snapshot
 
 ### Install
 
-Install `jotai-devtools` to your project to get started
+Install `jotai-devtools` to your project to get started.
 
 ```sh
-# yarn
-yarn add jotai-devtools @emotion/react
-
-# npm
-npm install jotai-devtools @emotion/react --save
+npm i jotai-devtools @emotion/react
 ```
 
 ### Notes
@@ -41,17 +37,33 @@ Enhance your development experience with the UI based Jotai DevTool.
 
 Use Jotai babel plugins for optimal debugging experience. Find the complete guide on the [babel](../tools/babel) page and/or [swc](../tools/swc) page.
 
-Eg.
+Example:
 
 ```ts
 {
-  "plugins": [
-    // Enables hot reload for atoms
-    "jotai/babel/plugin-react-refresh",
-    // Automatically adds debug labels to the atoms
-    "jotai/babel/plugin-debug-label"
+  "presets": [
+    // The preset includes two plugins:
+    // - jotai/babel/plugin-react-refresh to enable hot reaload for atoms
+    // - jotai/babel/plugin-debug-label to automatically adds debug labels to atoms
+    'jotai/babel/preset'
   ]
 }
+```
+
+Example for Vite + React project:
+
+```ts
+// vite.config.ts
+
+export default defineConfig({
+  plugins: [
+    react({
+      babel: {
+        presets: ['jotai/babel/preset'],
+      },
+    }),
+  ],
+})
 ```
 
 ### Next JS setup
