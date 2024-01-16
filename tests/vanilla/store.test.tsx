@@ -488,3 +488,17 @@ it('should not recompute a derived atom value if unchanged (#2168)', async () =>
   expect(store.get(derived2Atom)).toBe(0)
   expect(derive2Fn).toHaveBeenCalledTimes(1)
 })
+
+it('should mount once with atom creator atom (#2314)', async () => {
+  const countAtom = atom(1)
+  countAtom.onMount = vi.fn((setAtom: (v: number) => void) => {
+    setAtom(2)
+  })
+  const atomCreatorAtom = atom((get) => {
+    const derivedAtom = atom((get) => get(countAtom))
+    get(derivedAtom)
+  })
+  const store = createStore()
+  store.sub(atomCreatorAtom, () => {})
+  expect(countAtom.onMount).toHaveBeenCalledTimes(1)
+})
