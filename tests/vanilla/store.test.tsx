@@ -491,7 +491,7 @@ it('should not recompute a derived atom value if unchanged (#2168)', async () =>
 
 it('should mount once with atom creator atom (#2314)', async () => {
   const countAtom = atom(1)
-  countAtom.onMount = vi.fn((setAtom) => {
+  countAtom.onMount = vi.fn((setAtom: (v: number) => void) => {
     setAtom(2)
   })
   const atomCreatorAtom = atom((get) => {
