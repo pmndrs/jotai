@@ -46,10 +46,45 @@ export interface SyncStringStorage {
   removeItem: (key: string) => void
 }
 
+export function withStorageValidator<Value>(
+  validator: (value: unknown) => value is Value,
+): (storage: AsyncStorage<unknown>) => AsyncStorage<Value>
+
+export function withStorageValidator<Value>(
+  validator: (value: unknown) => value is Value,
+): (storage: SyncStorage<unknown>) => SyncStorage<Value>
+
+export function withStorageValidator<Value>(
+  validator: (value: unknown) => value is Value,
+) {
+  return (unknownStorage: AsyncStorage<unknown> | SyncStorage<unknown>) => {
+    const storage = {
+      ...unknownStorage,
+      getItem: (key: string, initialValue: Value) => {
+        const validate = (value: unknown) => {
+          if (!validator(value)) {
+            return initialValue
+          }
+          return value
+        }
+        const value = unknownStorage.getItem(key, initialValue)
+        if (isPromiseLike(value)) {
+          return value.then(validate)
+        }
+        return validate(value)
+      },
+    }
+    return storage as any // FIXME better way to type this?
+  }
+}
+
 type JsonStorageOptions = {
   reviver?: (key: string, value: unknown) => unknown
   replacer?: (key: string, value: unknown) => unknown
 }
+
+export function createJSONStorage<Value>(): SyncStorage<Value>
+
 export function createJSONStorage<Value>(
   getStringStorage: () => AsyncStringStorage,
   options?: JsonStorageOptions,
@@ -61,7 +96,11 @@ export function createJSONStorage<Value>(
 ): SyncStorage<Value>
 
 export function createJSONStorage<Value>(
-  getStringStorage: () => AsyncStringStorage | SyncStringStorage | undefined,
+  getStringStorage: () =>
+    | AsyncStringStorage
+    | SyncStringStorage
+    | undefined = () =>
+    typeof window !== 'undefined' ? window.localStorage : undefined,
   options?: JsonStorageOptions,
 ): AsyncStorage<Value> | SyncStorage<Value> {
   let lastStr: string | undefined
@@ -122,11 +161,7 @@ export function createJSONStorage<Value>(
   return storage
 }
 
-const defaultStorage = createJSONStorage(() =>
-  typeof window !== 'undefined'
-    ? window.localStorage
-    : (undefined as unknown as Storage),
-)
+const defaultStorage = createJSONStorage()
 
 export function atomWithStorage<Value>(
   key: string,
