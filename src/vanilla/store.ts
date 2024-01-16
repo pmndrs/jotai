@@ -592,8 +592,8 @@ export const createStore = (opts?: { unmountedCacheEnabled: boolean }) => {
         l({ type: 'write', flushed: flushed as Set<AnyAtom> }),
       )
     }
-    if (unmountedCacheEnabled && !mountedAtoms.has(atom)) {
-      // A value was manually changed in the store, invalidate all unmounted atoms
+    if (unmountedCacheEnabled) {
+      // A value was changed in the store, invalidate all unmounted atoms
       unmountedAtomReadCache = new WeakSet<AnyAtom>()
     }
     return result
