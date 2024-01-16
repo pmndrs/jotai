@@ -46,16 +46,23 @@ export interface SyncStringStorage {
   removeItem: (key: string) => void
 }
 
+type JsonStorageOptions = {
+  reviver?: (key: string, value: unknown) => unknown
+  replacer?: (key: string, value: unknown) => unknown
+}
 export function createJSONStorage<Value>(
   getStringStorage: () => AsyncStringStorage,
+  options?: JsonStorageOptions,
 ): AsyncStorage<Value>
 
 export function createJSONStorage<Value>(
   getStringStorage: () => SyncStringStorage,
+  options?: JsonStorageOptions,
 ): SyncStorage<Value>
 
 export function createJSONStorage<Value>(
   getStringStorage: () => AsyncStringStorage | SyncStringStorage | undefined,
+  options?: JsonStorageOptions,
 ): AsyncStorage<Value> | SyncStorage<Value> {
   let lastStr: string | undefined
   let lastValue: any
@@ -65,7 +72,7 @@ export function createJSONStorage<Value>(
         str = str || ''
         if (lastStr !== str) {
           try {
-            lastValue = JSON.parse(str)
+            lastValue = JSON.parse(str, options?.reviver)
           } catch {
             return initialValue
           }
@@ -80,7 +87,10 @@ export function createJSONStorage<Value>(
       return parse(str)
     },
     setItem: (key, newValue) =>
-      getStringStorage()?.setItem(key, JSON.stringify(newValue)),
+      getStringStorage()?.setItem(
+        key,
+        JSON.stringify(newValue, options?.replacer),
+      ),
     removeItem: (key) => getStringStorage()?.removeItem(key),
   }
   if (
