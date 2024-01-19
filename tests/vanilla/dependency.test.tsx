@@ -93,3 +93,63 @@ it('correctly handles the same promise being returned twice from an atom getter 
   store.set(counterAtom, 1)
   await expect(store.get(derivedAtom)).resolves.toBe('Asynchronous Data')
 })
+
+it('keeps atoms mounted between recalculations', async () => {
+  const metrics1 = {
+    mounted: 0,
+    unmounted: 0,
+  }
+  const atom1 = atom(0)
+  atom1.onMount = () => {
+    ++metrics1.mounted
+    return () => {
+      ++metrics1.unmounted
+    }
+  }
+
+  const metrics2 = {
+    mounted: 0,
+    unmounted: 0,
+  }
+  const atom2 = atom(0)
+  atom2.onMount = () => {
+    ++metrics2.mounted
+    return () => {
+      ++metrics2.unmounted
+    }
+  }
+
+  let resolve = () => {}
+  const derivedAtom = atom(async (get) => {
+    get(atom1)
+    await new Promise<void>((r) => (resolve = r))
+    get(atom2)
+  })
+
+  const unrelatedAtom = atom(0)
+
+  const store = createStore()
+  store.sub(derivedAtom, () => {})
+  resolve()
+  await Promise.resolve()
+  await Promise.resolve() // we need two awaits to reproduce
+  store.set(unrelatedAtom, (c) => c + 1)
+  expect(metrics1).toEqual({
+    mounted: 1,
+    unmounted: 0,
+  })
+  expect(metrics2).toEqual({
+    mounted: 1,
+    unmounted: 0,
+  })
+  store.set(atom1, (c) => c + 1)
+  resolve()
+  expect(metrics1).toEqual({
+    mounted: 1,
+    unmounted: 0,
+  })
+  expect(metrics2).toEqual({
+    mounted: 1,
+    unmounted: 0,
+  })
+})

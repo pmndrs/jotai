@@ -70,6 +70,8 @@ it('does not show async stale result', async () => {
   await findByText('loading')
   resolve1()
   resolve2()
+  await Promise.resolve()
+  resolve2()
   await waitFor(() => {
     getByText('count: 2')
     getByText('delayedCount: 2')
