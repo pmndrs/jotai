@@ -34,9 +34,7 @@ export function freezeAtomCreator<
   return ((...params: any[]) => {
     const anAtom = createAtom(...params)
     const origRead = anAtom.read
-    anAtom.read = function (get, options) {
-      return deepFreeze(origRead.call(this, get, options))
-    }
+    anAtom.read = (get, options) => deepFreeze(origRead(get, options))
     return anAtom
   }) as CreateAtom
 }
