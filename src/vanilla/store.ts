@@ -102,6 +102,14 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
   return atomState.v
 }
 
+/**
+ * @returns Original atom if anAtom is a scoped atom in `jotai-scope`. Otherwise it
+ * returns anAtom itself.
+ */
+const getScopedOriginal = (anAtom: AnyAtom): AnyAtom => {
+  return anAtom.scopedOriginal ?? anAtom;
+}
+
 type Listeners = Set<() => void>
 type Dependents = Set<AnyAtom>
 
@@ -524,7 +532,7 @@ export const createStore = () => {
       ...args: As
     ) => {
       let r: R | undefined
-      if ((a as AnyWritableAtom) === atom) {
+      if (getScopedOriginal(a) === getScopedOriginal(atom)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')

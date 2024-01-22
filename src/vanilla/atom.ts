@@ -46,6 +46,11 @@ export interface Atom<Value> {
    * @private
    */
   debugPrivate?: boolean
+  /**
+   * @internal
+   * Original atom of a scoped atom. For package `jotai-scope` ONLY.
+   */
+  scopedOriginal?: Atom<Value>
 }
 
 export interface WritableAtom<Value, Args extends unknown[], Result>
