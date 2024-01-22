@@ -502,6 +502,44 @@ describe('atomWithStorage (with browser storage)', () => {
   })
 })
 
+describe('atomWithStorage (with disabled browser storage)', () => {
+  const savedLocalStorage = window.localStorage
+
+  beforeAll(() => {
+    // Firefox and chromium based browser throw DOMException when cookies are disabled
+    Object.defineProperty(window, 'localStorage', {
+      get() {
+        throw new DOMException('The operation is insecure.')
+      },
+    })
+  })
+
+  afterAll(() => {
+    window.localStorage = savedLocalStorage
+  })
+
+  it('initial value of atomWithStorage can be used when cookies are disabled', async () => {
+    const countAtom = atomWithStorage<number>('counter', 4)
+
+    const Counter = () => {
+      const [value] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {value}</div>
+        </>
+      )
+    }
+
+    const { findByText } = render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    )
+
+    await findByText('count: 4')
+  })
+})
+
 describe('atomWithStorage (with non-browser storage)', () => {
   const addEventListener = window.addEventListener
   const mockAddEventListener = vi.fn()
