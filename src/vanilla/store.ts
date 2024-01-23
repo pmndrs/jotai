@@ -8,9 +8,8 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
-const defaultAtomIs = function (this: AnyAtom, a: AnyAtom) {
-  return a === this
-}
+const isSelfAtom = (atom: AnyAtom, a: AnyAtom) =>
+  atom.is ? atom.is(a) : a === atom
 
 const hasInitialValue = <T extends Atom<AnyValue>>(
   atom: T,
@@ -203,7 +202,7 @@ export const createStore = () => {
     const dependencies: Dependencies = new Map()
     let changed = false
     nextDependencies.forEach((aState, a) => {
-      if (!aState && (atom.is || defaultAtomIs).call(atom, a)) {
+      if (!aState && isSelfAtom(atom, a)) {
         aState = nextAtomState
       }
       if (aState) {
@@ -369,7 +368,7 @@ export const createStore = () => {
       // If all dependencies haven't changed, we can use the cache.
       if (
         Array.from(atomState.d).every(([a, s]) => {
-          if ((atom.is || defaultAtomIs).call(atom, a)) {
+          if (isSelfAtom(atom, a)) {
             return true
           }
           const aState = readAtomState(a)
@@ -385,7 +384,7 @@ export const createStore = () => {
     const nextDependencies: NextDependencies = new Map()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      if ((atom.is || defaultAtomIs).call(atom, a)) {
+      if (isSelfAtom(atom, a)) {
         const aState = getAtomState(a)
         if (aState) {
           nextDependencies.set(a, aState)
@@ -528,7 +527,7 @@ export const createStore = () => {
       ...args: As
     ) => {
       let r: R | undefined
-      if ((atom.is || defaultAtomIs).call(atom, a)) {
+      if (isSelfAtom(atom, a)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
