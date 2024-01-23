@@ -9,7 +9,7 @@ type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
 const isSelfAtom = (atom: AnyAtom, a: AnyAtom) =>
-  atom.is ? atom.is(atom, a) : a === atom
+  atom.is ? atom.is(a) : a === atom
 
 const hasInitialValue = <T extends Atom<AnyValue>>(
   atom: T,

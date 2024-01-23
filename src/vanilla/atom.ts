@@ -40,7 +40,7 @@ type OnMount<Args extends unknown[], Result> = <
 export interface Atom<Value> {
   toString: () => string
   read: Read<Value>
-  is?: (self: Atom<unknown>, target: Atom<unknown>) => boolean
+  is?(a: Atom<unknown>): boolean
   debugLabel?: string
   /**
    * To ONLY be used by Jotai libraries to mark atoms as private. Subject to change.
