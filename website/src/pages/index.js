@@ -131,30 +131,6 @@ pnpm add jotai
         Then we recommend adding the optional SWC or Babel plugin to enable React Fast Refresh
         support for the best developer experience (framework specific).
       </p>
-      <h3>Vite (SWC)</h3>
-      <Code language="bash">{`# npm
-npm install --save-dev @swc-jotai/react-refresh @swc-jotai/debug-label
-
-# vite.config.ts
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react({
-    "plugins": [
-      [
-        "@swc-jotai/react-refresh",
-        {}
-      ],
-      [
-        "@swc-jotai/debug-label",
-        {}
-      ]
-    ]
-  })],
-})
-`}</Code>
       <h3>Next.js (SWC)</h3>
       <Code language="bash">{`# npm
 npm install --save-dev @swc-jotai/react-refresh
@@ -171,6 +147,22 @@ experimental: {
   "presets": ["next/babel"],
   "plugins": ["jotai/babel/plugin-react-refresh"]
 }
+`}</Code>
+      <h3>Vite (SWC)</h3>
+      <Code language="bash">{`# npm
+npm install --save-dev @swc-jotai/react-refresh
+
+# vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+
+export default defineConfig({
+  plugins: [
+    react({
+      plugins: [['@swc-jotai/react-refresh', {}]],
+    }),
+  ],
+});
 `}</Code>
       <h3>Gatsby (Babel)</h3>
       <Code language="bash">{`# npm
