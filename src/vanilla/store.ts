@@ -107,7 +107,7 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
  * returns anAtom itself.
  */
 const getScopedOriginal = (anAtom: AnyAtom): AnyAtom => {
-  return anAtom.scopedOriginal ?? anAtom;
+  return anAtom.scopedOriginal ?? anAtom
 }
 
 type Listeners = Set<() => void>

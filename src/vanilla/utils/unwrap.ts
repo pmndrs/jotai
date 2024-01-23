@@ -101,7 +101,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
           }
           return state.v
         },
-        (anAtom as WritableAtom<Value, unknown[], unknown>).write
+        (anAtom as WritableAtom<Value, unknown[], unknown>).write,
       )
     },
     anAtom,
