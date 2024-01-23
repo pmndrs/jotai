@@ -128,7 +128,7 @@ pnpm add jotai
     <section>
       <h2>Configuration</h2>
       <p>
-        Then we recommend adding the optional SWC or Babel plugin to enable React Fast Refresh
+        We recommend adding the optional SWC or Babel plugin to enable React Fast Refresh
         support for the best developer experience (framework specific).
       </p>
       <h3>Next.js (SWC)</h3>
