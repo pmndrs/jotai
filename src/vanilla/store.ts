@@ -9,7 +9,7 @@ type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
 const defaultAtomIs = function (this: AnyAtom, a: AnyAtom) {
-  return this === a
+  return a === this
 }
 
 const hasInitialValue = <T extends Atom<AnyValue>>(
