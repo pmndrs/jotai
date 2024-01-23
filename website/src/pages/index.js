@@ -148,6 +148,22 @@ experimental: {
   "plugins": ["jotai/babel/plugin-react-refresh"]
 }
 `}</Code>
+      <h3>Vite (SWC)</h3>
+      <Code language="bash">{`# npm
+npm install --save-dev @swc-jotai/react-refresh
+
+# vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+
+export default defineConfig({
+  plugins: [
+    react({
+      plugins: [['@swc-jotai/react-refresh', {}]],
+    }),
+  ],
+});
+`}</Code>
       <h3>Gatsby (Babel)</h3>
       <Code language="bash">{`# npm
 npm install --save-dev babel-preset-gatsby
