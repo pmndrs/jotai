@@ -430,11 +430,8 @@ export const createStore = () => {
     }
     try {
       const valueOrPromise = atom.read(getter, options as any)
-      return setAtomValueOrPromise(
-        atom,
-        valueOrPromise,
-        nextDependencies,
-        () => controller?.abort(),
+      return setAtomValueOrPromise(atom, valueOrPromise, nextDependencies, () =>
+        controller?.abort(),
       )
     } catch (error) {
       return setAtomError(atom, error, nextDependencies)
@@ -652,18 +649,17 @@ export const createStore = () => {
     prevDependencies?: Dependencies,
   ): void => {
     const depSet = new Set(atomState.d.keys())
+    const maybeUnmountAtomSet = new Set<AnyAtom>()
     prevDependencies?.forEach((_, a) => {
       if (depSet.has(a)) {
         // not changed
         depSet.delete(a)
         return
       }
+      maybeUnmountAtomSet.add(a)
       const mounted = mountedMap.get(a)
       if (mounted) {
         mounted.t.delete(atom) // delete from dependents
-        if (canUnmountAtom(a, mounted)) {
-          unmountAtom(a)
-        }
       }
     })
     depSet.forEach((a) => {
@@ -675,6 +671,12 @@ export const createStore = () => {
         // Note: we should revisit this when you find other issues
         // https://github.com/pmndrs/jotai/issues/942
         mountAtom(a, atom)
+      }
+    })
+    maybeUnmountAtomSet.forEach((a) => {
+      const mounted = mountedMap.get(a)
+      if (mounted && canUnmountAtom(a, mounted)) {
+        unmountAtom(a)
       }
     })
   }

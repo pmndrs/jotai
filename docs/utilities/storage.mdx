@@ -49,6 +49,26 @@ If not specified, the default storage implementation uses `localStorage` for sto
 
 <CodeSandbox id="vuwi7" />
 
+### `createJSONStorage` util
+
+To create a custom storage implementation with `JSON.stringify()`/`JSON.parse()` for the `storage` option, `createJSONStorage` util is provided.
+
+Usage:
+
+```js
+const storage = createJSONStorage(
+  // getStringStorage
+  () => localStorage, // or sesseionStorage, asyncStorage or alike
+  // options (optional)
+  {
+    reviver, // optional reviver option for JSON.parse
+    replacer, // optional replacer option for JSON.stringify
+  },
+)
+```
+
+Note: `JSON.parse` is not type safe. If it can't accept any types, some kind of validation would be necessary for production apps.
+
 ### Server-side rendering
 
 Any JSX markup that depends on the value of a stored atom (e.g., a `className` or `style` prop) will use the `initialValue` when rendered on the server (since `localStorage` and `sessionStorage` are not available on the server).
@@ -142,7 +162,7 @@ To add runtime validation to your storage atoms, you will need to create a custo
 Below is an example that utilizes Zod to validate values stored in `localStorage` with cross-tab synchronization.
 
 ```js
-import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+import { atomWithStorage } from 'jotai/utils'
 import { z } from 'zod'
 
 const myNumberSchema = z.number().int().nonnegative()
@@ -182,4 +202,25 @@ const storedNumberAtom = atomWithStorage('my-number', 0, {
     })
   },
 })
+```
+
+We also have a new util `unstable_withStorageValidator` to simplify some cases.
+The above case would become:
+
+```js
+import {
+  atomWithStorage,
+  createJSONStorage,
+  unstable_withStorageValidator as withStorageValidator,
+} from 'jotai/utils'
+import { z } from 'zod'
+
+const myNumberSchema = z.number().int().nonnegative()
+const isMyNumber = (v) => myNumberSchema.safeParse(v).success);
+
+const storedNumberAtom = atomWithStorage(
+  'my-number',
+  0,
+  withStorageValidator(isMyNumber)(createJSONStorage()),
+)
 ```
