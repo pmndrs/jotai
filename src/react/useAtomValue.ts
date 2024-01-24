@@ -2,10 +2,8 @@
 
 import ReactExports, { useDebugValue, useEffect, useReducer } from 'react'
 import type { ReducerWithoutAction } from 'react'
-import type { Atom, ExtractAtomValue } from '../vanilla.ts'
+import type { Atom, ExtractAtomValue, Store } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
-
-type Store = ReturnType<typeof useStore>
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as any)?.then === 'function'
@@ -41,8 +39,7 @@ const use =
     }
   })
 
-type Options = {
-  store?: Store
+type Options = Parameters<typeof useStore>[0] & {
   delay?: number
 }
 

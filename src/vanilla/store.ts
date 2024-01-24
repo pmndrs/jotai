@@ -176,7 +176,7 @@ export const createStore = () => {
     if (import.meta.env?.MODE !== 'production') {
       Object.freeze(atomState)
     }
-    const prevAtomState = atomStateMap.get(atom)
+    const prevAtomState = getAtomState(atom)
     atomStateMap.set(atom, atomState)
     if (!pendingMap.has(atom)) {
       pendingMap.set(atom, prevAtomState)
@@ -795,7 +795,7 @@ export const createStore = () => {
   }
 }
 
-type Store = ReturnType<typeof createStore>
+export type Store = ReturnType<typeof createStore>
 
 let defaultStore: Store | undefined
 
