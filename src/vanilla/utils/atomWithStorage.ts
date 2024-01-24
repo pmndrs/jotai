@@ -103,12 +103,12 @@ export function createJSONStorage<Value>(
     try {
       return window.localStorage
     } catch (e) {
-      // Window could be undefined or local storage could be disabled
-      if (e instanceof TypeError || e instanceof DOMException) {
-        return undefined
+      if (import.meta.env?.MODE !== 'production') {
+        if (typeof window !== 'undefined') {
+          console.warn(e);
+        }
       }
-
-      throw e
+      return undefined
     }
   },
   options?: JsonStorageOptions,
