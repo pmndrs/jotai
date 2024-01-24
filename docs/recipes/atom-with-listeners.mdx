@@ -26,7 +26,7 @@ type Callback<Value> = (
 
 export function atomWithListeners<Value>(initialValue: Value) {
   const baseAtom = atom(initialValue)
-  const listenersAtom = atom(<Callback<Value>[]>[])
+  const listenersAtom = atom<Callback<Value>[]>([])
   const anAtom = atom(
     (get) => get(baseAtom),
     (get, set, arg: SetStateAction<Value>) => {
