@@ -105,7 +105,7 @@ export function createJSONStorage<Value>(
     } catch (e) {
       if (import.meta.env?.MODE !== 'production') {
         if (typeof window !== 'undefined') {
-          console.warn(e);
+          console.warn(e)
         }
       }
       return undefined
