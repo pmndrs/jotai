@@ -442,8 +442,11 @@ export const createStore = () => {
     }
     try {
       const valueOrPromise = atom.read(getter, options as any)
-      return setAtomValueOrPromise(atom, valueOrPromise, nextDependencies, () =>
-        controller?.abort(),
+      return setAtomValueOrPromise(
+        atom,
+        valueOrPromise,
+        nextDependencies,
+        () => controller?.abort(),
       )
     } catch (error) {
       return setAtomError(atom, error, nextDependencies)
@@ -476,8 +479,6 @@ export const createStore = () => {
   }
 
   const recomputeDependents = (atom: AnyAtom): void => {
-    const dependencyMap = new Map<AnyAtom, Set<AnyAtom>>()
-    const dirtyMap = new WeakMap<AnyAtom, number>()
     const getDependents = (a: AnyAtom): Dependents => {
       const dependents = new Set(mountedMap.get(a)?.t)
       pendingMap.forEach((_, pendingAtom) => {
@@ -487,42 +488,66 @@ export const createStore = () => {
       })
       return dependents
     }
-    const loop1 = (a: AnyAtom) => {
-      getDependents(a).forEach((dependent) => {
-        if (dependent !== a) {
-          dependencyMap.set(
-            dependent,
-            (dependencyMap.get(dependent) || new Set()).add(a),
-          )
-          dirtyMap.set(dependent, (dirtyMap.get(dependent) || 0) + 1)
-          loop1(dependent)
-        }
-      })
+
+    // This is a topological sort via depth-first search, as described here:
+    // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+
+    // Step 1: find all atoms in the graph
+    const allAtomsInDependencyGraph = new Array<AnyAtom>()
+    const seen = new Set<AnyAtom>()
+    const queue = [atom]
+    while (queue.length) {
+      const atom = queue.pop()!
+      if (!seen.has(atom)) {
+        seen.add(atom)
+        allAtomsInDependencyGraph.push(atom)
+        queue.push(...getDependents(atom))
+      }
     }
-    loop1(atom)
-    const loop2 = (a: AnyAtom) => {
-      getDependents(a).forEach((dependent) => {
-        if (dependent !== a) {
-          let dirtyCount = dirtyMap.get(dependent)
-          if (dirtyCount) {
-            dirtyMap.set(dependent, --dirtyCount)
-          }
-          if (!dirtyCount) {
-            let isChanged = !!dependencyMap.get(dependent)?.size
-            if (isChanged) {
-              const prevAtomState = getAtomState(dependent)
-              const nextAtomState = readAtomState(dependent, true)
-              isChanged = !isEqualAtomValue(prevAtomState, nextAtomState)
-            }
-            if (!isChanged) {
-              dependencyMap.forEach((s) => s.delete(dependent))
-            }
-          }
-          loop2(dependent)
+
+    // Step 2: traverse the dependency graph to visit all atoms
+    const topsortedAtoms = new Array<AnyAtom>()
+    const permanentlyMarked = new Set<AnyAtom>()
+    const temporarilyMarked = new Set<AnyAtom>()
+    const visit = (n: AnyAtom) => {
+      if (permanentlyMarked.has(n)) {
+        return
+      }
+      if (temporarilyMarked.has(n)) {
+        throw new Error('atom graph has cycle')
+      }
+      temporarilyMarked.add(n)
+      for (const m of getDependents(n)) {
+        if (n !== m) {
+          visit(m)
         }
-      })
+      }
+      permanentlyMarked.add(n)
+      temporarilyMarked.delete(n)
+      topsortedAtoms.push(n)
     }
-    loop2(atom)
+    while (allAtomsInDependencyGraph.length) {
+      visit(allAtomsInDependencyGraph.pop()!)
+    }
+    topsortedAtoms.reverse()
+
+    // Step 3: use the topsorted atom list to recompute all affected atoms
+    // Track what's changed, so that we can short circuit when possible
+    const changedAtoms = new Set<AnyAtom>([atom])
+    for (const a of topsortedAtoms) {
+      const prevAtomState = getAtomState(a)
+      const hasChangedDeps =
+        prevAtomState?.d.size &&
+        Array.from(prevAtomState?.d.keys()).some(
+          (dep) => dep !== a && changedAtoms.has(dep),
+        )
+      if (hasChangedDeps) {
+        const nextAtomState = readAtomState(a, true)
+        if (!isEqualAtomValue(prevAtomState, nextAtomState)) {
+          changedAtoms.add(a)
+        }
+      }
+    }
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
