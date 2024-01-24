@@ -515,7 +515,8 @@ describe('atomWithStorage (with disabled browser storage)', () => {
   })
 
   afterAll(() => {
-    window.localStorage = savedLocalStorage
+    // TS < 4.5 causes type error
+    (window as any).localStorage = savedLocalStorage
   })
 
   it('initial value of atomWithStorage can be used when cookies are disabled', async () => {
