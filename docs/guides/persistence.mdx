@@ -6,6 +6,8 @@ nav: 7.14
 
 Jotai has an [atomWithStorage function in the utils bundle](../utilities/storage.mdx) for persistence that supports persisting state in `sessionStorage`, `localStorage`, `AsyncStorage`, or the URL hash.
 
+(Note: This guide is a bit outdated and requires some rewrites.)
+
 There are also several alternate implementations here:
 
 ### A simple pattern with localStorage
@@ -76,72 +78,6 @@ const atomWithAsyncStorage = (key, initialValue) => {
 ```
 
 Don't forget to check out the [Async documentation](../guides/async.mdx) for more details on how to use async atoms.
-
-#### Usage in Async actions
-
-When using an asynchronous storage, the reading of the created atoms are asynchronous too. That comes with some limitations. Before `useAtom` has been called at least once, the value is not set.
-This can cause an issue, for example, if you want to retrieve the value of your stored atom in an async action (write-only atom).
-
-Let's use the [atomWithStorage function in the utils bundle](../utilities/storage.mdx) for the examples, so that we have more options available.
-
-```js
-import { atomWithStorage, createJSONStorage } from 'jotai/utils'
-
-const storage = createJSONStorage(() => AsyncStorage)
-const userId = atomWithStorage('user-id-key', null, storage)
-const userInfo = atom({})
-const fetchUserInfo = atom(null, async (get, set, payload: any) => {
-  const id = get(userId) // This throws an error if "userId" is not loaded yet
-  const info = await fetch('https://jotai.org/users/' + id)
-  set(userInfo, info)
-})
-```
-
-We want to make sure the action will never fail. As always with asynchronous flow in Jotai, we have 2 options: with or without **Suspense**.
-
-##### With Suspense
-
-You may want to preload atoms at root level of your app directly:
-
-```js
-const Preloader = () => {
-  useAtomValue(userId) // Trigger the "onMount" function that will load the data from the store
-  return null
-}
-```
-
-```jsx
-const Root = () => {
-  return (
-    <Suspense fallback={<Text>Hydrating...<Text>}>
-      <Preloader /> {/* Wait for atoms to preload */}
-      <App /> {/* Rest of your app */}
-    </Suspense>
-  )
-}
-```
-
-##### Without Suspense
-
-```js
-// We add the "delayInit: true" option to tell jotai not to use Suspense
-const storage = { ...createJSONStorage(() => AsyncStorage), delayInit: true }
-const userId = atomWithStorage('user-id-key', null, storage)
-const userInfo = atom({})
-const fetchUserInfo = atom(null, async (get, set, payload) => {
-  let id = get(userId)
-  if (id === null) {
-    // We make sure to preload if no value has yet been loaded
-    id = await AsyncStorage.getItem('user-id-key')
-  }
-  const info = await fetch('https://jotai.org/users/' + id)
-  set(userInfo, info)
-})
-```
-
-But always remember jotai is un-opinionated and your workflow may not need preloading at all.
-
----
 
 ### Example with sessionStorage
 

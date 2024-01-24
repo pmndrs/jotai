@@ -15,8 +15,7 @@ export function atomWithReducer<Value, Action>(
   initialValue: Value,
   reducer: (value: Value, action: Action) => Value,
 ) {
-  const anAtom: any = atom(initialValue, (get, set, action: Action) =>
-    set(anAtom, reducer(get(anAtom), action)),
-  )
-  return anAtom
+  return atom(initialValue, function (this: any, get, set, action: Action) {
+    set(this, reducer(get(this), action))
+  })
 }

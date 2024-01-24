@@ -195,8 +195,11 @@ export const createStore = () => {
     atom: Atom<Value>,
     nextAtomState: AtomState<Value>,
     nextDependencies: NextDependencies,
+    keepPreviousDependencies?: boolean,
   ): void => {
-    const dependencies: Dependencies = new Map()
+    const dependencies: Dependencies = new Map(
+      keepPreviousDependencies ? nextAtomState.d : null,
+    )
     let changed = false
     nextDependencies.forEach((aState, a) => {
       if (!aState && a === atom) {
@@ -220,6 +223,7 @@ export const createStore = () => {
     atom: Atom<Value>,
     value: Value,
     nextDependencies?: NextDependencies,
+    keepPreviousDependencies?: boolean,
   ): AtomState<Value> => {
     const prevAtomState = getAtomState(atom)
     const nextAtomState: AtomState<Value> = {
@@ -227,7 +231,12 @@ export const createStore = () => {
       v: value,
     }
     if (nextDependencies) {
-      updateDependencies(atom, nextAtomState, nextDependencies)
+      updateDependencies(
+        atom,
+        nextAtomState,
+        nextDependencies,
+        keepPreviousDependencies,
+      )
     }
     if (
       isEqualAtomValue(prevAtomState, nextAtomState) &&
@@ -320,7 +329,7 @@ export const createStore = () => {
         }
         abortPromise?.()
       })
-      return setAtomValue(atom, promise as Value, nextDependencies)
+      return setAtomValue(atom, promise as Value, nextDependencies, true)
     }
     return setAtomValue(atom, valueOrPromise, nextDependencies)
   }
