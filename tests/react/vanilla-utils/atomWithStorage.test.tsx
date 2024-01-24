@@ -515,7 +515,7 @@ describe('atomWithStorage (with disabled browser storage)', () => {
   })
 
   afterAll(() => {
-    // TS < 4.5 causes type error
+    // TS < 4.5 causes type error without `as any`
     ;(window as any).localStorage = savedLocalStorage
   })
 
