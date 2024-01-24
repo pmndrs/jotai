@@ -489,58 +489,64 @@ export const createStore = () => {
       return dependents
     }
 
-    // This is a topological sort via depth-first search, as described here:
+    // This is a topological sort via depth-first search, slightly modified from
+    // what's described here for performance reasons:
     // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
 
     // Step 1: find all atoms in the graph
     const allAtomsInDependencyGraph = new Array<AnyAtom>()
     const seen = new Set<AnyAtom>()
     const queue = [atom]
-    while (queue.length) {
-      const atom = queue.pop()!
-      if (!seen.has(atom)) {
-        seen.add(atom)
-        allAtomsInDependencyGraph.push(atom)
-        queue.push(...getDependents(atom))
+    while (true) {
+      const a = queue.pop()
+      if (!a) {
+        break
+      }
+      if (!seen.has(a)) {
+        seen.add(a)
+        allAtomsInDependencyGraph.push(a)
+        queue.push(...getDependents(a))
       }
     }
 
-    // Step 2: traverse the dependency graph to visit all atoms
+    // Step 2: traverse the dependency graph to build the topsorted atom list
+    // We don't bother to check for cycles, which simplifies the algorithm.
     const topsortedAtoms = new Array<AnyAtom>()
-    const permanentlyMarked = new Set<AnyAtom>()
-    const temporarilyMarked = new Set<AnyAtom>()
+    const markedAtoms = new Set<AnyAtom>()
     const visit = (n: AnyAtom) => {
-      if (permanentlyMarked.has(n)) {
+      if (markedAtoms.has(n)) {
         return
       }
-      if (temporarilyMarked.has(n)) {
-        throw new Error('atom graph has cycle')
-      }
-      temporarilyMarked.add(n)
+      markedAtoms.add(n)
       for (const m of getDependents(n)) {
         if (n !== m) {
           visit(m)
         }
       }
-      permanentlyMarked.add(n)
-      temporarilyMarked.delete(n)
+      // The algorithm calls for pushing onto the front of the list. Since
+      // Array.unshift is likely slower than pushing onto the end, we simply
+      // push and will have to iterate in reverse order later.
       topsortedAtoms.push(n)
     }
     while (allAtomsInDependencyGraph.length) {
       visit(allAtomsInDependencyGraph.pop()!)
     }
-    topsortedAtoms.reverse()
 
     // Step 3: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
-    for (const a of topsortedAtoms) {
+    for (let i = topsortedAtoms.length; i > 0; i--) {
+      const a = topsortedAtoms[i - 1]!
       const prevAtomState = getAtomState(a)
-      const hasChangedDeps =
-        prevAtomState?.d.size &&
-        Array.from(prevAtomState?.d.keys()).some(
-          (dep) => dep !== a && changedAtoms.has(dep),
-        )
+      let hasChangedDeps = false
+      if (prevAtomState?.d.size) {
+        for (const dep of prevAtomState?.d.keys()!) {
+          if (dep !== a && changedAtoms.has(dep)) {
+            hasChangedDeps = true
+            break
+          }
+        }
+      }
       if (hasChangedDeps) {
         const nextAtomState = readAtomState(a, true)
         if (!isEqualAtomValue(prevAtomState, nextAtomState)) {
