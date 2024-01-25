@@ -795,7 +795,7 @@ export const createStore = () => {
   }
 }
 
-export type Store = ReturnType<typeof createStore>
+type Store = ReturnType<typeof createStore>
 
 let defaultStore: Store | undefined
 

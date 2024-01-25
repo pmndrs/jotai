@@ -1,7 +1,8 @@
 import { createContext, createElement, useContext, useRef } from 'react'
 import type { FunctionComponentElement, ReactNode } from 'react'
 import { createStore, getDefaultStore } from '../vanilla.ts'
-import type { Store } from '../vanilla.ts'
+
+type Store = ReturnType<typeof createStore>
 
 const StoreContext = createContext<Store | undefined>(undefined)
 
