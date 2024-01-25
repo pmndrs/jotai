@@ -8,7 +8,7 @@ import type {
 import { useAtomValue } from './useAtomValue.ts'
 import { useSetAtom } from './useSetAtom.ts'
 
-type SetAtom<Args extends any[], Result> = (...args: Args) => Result
+type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
 
 type Options = Parameters<typeof useAtomValue>[1]
 
