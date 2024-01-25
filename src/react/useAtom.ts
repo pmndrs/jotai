@@ -12,7 +12,7 @@ type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
 
 type Options = Parameters<typeof useAtomValue>[1]
 
-export function useAtom<Value, Args extends any[], Result>(
+export function useAtom<Value, Args extends unknown[], Result>(
   atom: WritableAtom<Value, Args, Result>,
   options?: Options,
 ): [Awaited<Value>, SetAtom<Args, Result>]
@@ -35,7 +35,7 @@ export function useAtom<AtomType extends Atom<any>>(
   options?: Options,
 ): [Awaited<ExtractAtomValue<AtomType>>, never]
 
-export function useAtom<Value, Args extends any[], Result>(
+export function useAtom<Value, Args extends unknown[], Result>(
   atom: Atom<Value> | WritableAtom<Value, Args, Result>,
   options?: Options,
 ) {
