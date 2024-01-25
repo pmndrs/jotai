@@ -494,11 +494,8 @@ export const createStore = () => {
     const allAtomsInDependencyGraph = new Array<AnyAtom>()
     const seen = new Set<AnyAtom>()
     const queue = [atom]
-    while (true) {
-      const a = queue.pop()
-      if (!a) {
-        break
-      }
+    let a: AnyAtom | undefined
+    while ((a = queue.pop())) {
       if (!seen.has(a)) {
         seen.add(a)
         allAtomsInDependencyGraph.push(a)
@@ -508,7 +505,8 @@ export const createStore = () => {
 
     // Step 2: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
-    const topsortedAtoms = new Array<AnyAtom>()
+    const topsortedAtoms = new Array<AnyAtom>(allAtomsInDependencyGraph.length)
+    let topsortedAtomsIndex = 0
     const markedAtoms = new Set<AnyAtom>()
     const visit = (n: AnyAtom) => {
       if (markedAtoms.has(n)) {
@@ -520,10 +518,10 @@ export const createStore = () => {
           visit(m)
         }
       }
-      // The algorithm calls for pushing onto the front of the list. Since
-      // Array.unshift is likely slower than pushing onto the end, we simply
-      // push and will have to iterate in reverse order later.
-      topsortedAtoms.push(n)
+      // The algorithm calls for pushing onto the front of the list. For
+      // simplicity, we simply append items in order, and will iterate
+      // in reverse order later.
+      topsortedAtoms[topsortedAtomsIndex++] = n
     }
     while (allAtomsInDependencyGraph.length) {
       visit(allAtomsInDependencyGraph.pop()!)
@@ -536,12 +534,10 @@ export const createStore = () => {
       const a = topsortedAtoms[i - 1]!
       const prevAtomState = getAtomState(a)
       let hasChangedDeps = false
-      if (prevAtomState?.d.size) {
-        for (const dep of prevAtomState?.d.keys()!) {
-          if (dep !== a && changedAtoms.has(dep)) {
-            hasChangedDeps = true
-            break
-          }
+      for (const dep of prevAtomState?.d.keys() || []) {
+        if (dep !== a && changedAtoms.has(dep)) {
+          hasChangedDeps = true
+          break
         }
       }
       if (hasChangedDeps) {
