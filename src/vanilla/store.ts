@@ -506,7 +506,7 @@ export const createStore = () => {
     // Step 2: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
     const topsortedAtoms = new Array<AnyAtom>(allAtomsInDependencyGraph.length)
-    let topsortedAtomsIndex = 0
+    let topsortedAtomsIndex = allAtomsInDependencyGraph.length
     const markedAtoms = new Set<AnyAtom>()
     const visit = (n: AnyAtom) => {
       if (markedAtoms.has(n)) {
@@ -518,10 +518,9 @@ export const createStore = () => {
           visit(m)
         }
       }
-      // The algorithm calls for pushing onto the front of the list. For
-      // simplicity, we simply append items in order, and will iterate
-      // in reverse order later.
-      topsortedAtoms[topsortedAtomsIndex++] = n
+      // The algorithm calls for pushing onto the front of the list, so we fill
+      // the array in reverse order.
+      topsortedAtoms[--topsortedAtomsIndex] = n
     }
     while (allAtomsInDependencyGraph.length) {
       visit(allAtomsInDependencyGraph.pop()!)
@@ -530,8 +529,7 @@ export const createStore = () => {
     // Step 3: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
-    for (let i = topsortedAtoms.length; i > 0; i--) {
-      const a = topsortedAtoms[i - 1]!
+    for (const a of topsortedAtoms) {
       const prevAtomState = getAtomState(a)
       let hasChangedDeps = false
       for (const dep of prevAtomState?.d.keys() || []) {
