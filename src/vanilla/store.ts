@@ -476,14 +476,14 @@ export const createStore = () => {
   }
 
   const recomputeDependents = (atom: AnyAtom): void => {
-    const getDependents = (a: AnyAtom): Dependents => {
+    const getDependents = (a: AnyAtom): Array<AnyAtom> => {
       const dependents = new Set(mountedMap.get(a)?.t)
       pendingMap.forEach((_, pendingAtom) => {
         if (getAtomState(pendingAtom)?.d.has(a)) {
           dependents.add(pendingAtom)
         }
       })
-      return dependents
+      return Array.from(dependents)
     }
 
     // This is a topological sort via depth-first search, slightly modified from
