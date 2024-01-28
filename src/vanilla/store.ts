@@ -476,6 +476,10 @@ export const createStore = () => {
   }
 
   const recomputeDependents = (atom: AnyAtom): void => {
+    // Returns an array rather than a set to work around an issue with
+    // transpilation for older environments. Otherwise, Array.prototype.push
+    // below will fail due to the transpiled set iterator implementation.
+    // https://github.com/pmndrs/jotai/discussions/2368#discussioncomment-8274991
     const getDependents = (a: AnyAtom): Array<AnyAtom> => {
       const dependents = new Set(mountedMap.get(a)?.t)
       pendingMap.forEach((_, pendingAtom) => {
