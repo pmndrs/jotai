@@ -531,8 +531,11 @@ export const createStore = () => {
     const changedAtoms = new Set<AnyAtom>([atom])
     for (const a of topsortedAtoms) {
       const prevAtomState = getAtomState(a)
+      if (!prevAtomState) {
+        continue
+      }
       let hasChangedDeps = false
-      for (const dep of prevAtomState?.d.keys() || []) {
+      for (const dep of prevAtomState.d.keys()) {
         if (dep !== a && changedAtoms.has(dep)) {
           hasChangedDeps = true
           break
