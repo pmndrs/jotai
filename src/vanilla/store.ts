@@ -476,41 +476,23 @@ export const createStore = () => {
   }
 
   const recomputeDependents = (atom: AnyAtom): void => {
-    // Returns an array rather than a set to work around an issue with
-    // transpilation for older environments. Otherwise, Array.prototype.push
-    // below will fail due to the transpiled set iterator implementation.
-    // https://github.com/pmndrs/jotai/discussions/2368#discussioncomment-8274991
-    const getDependents = (a: AnyAtom): Array<AnyAtom> => {
+    const getDependents = (a: AnyAtom): Dependents => {
       const dependents = new Set(mountedMap.get(a)?.t)
       pendingMap.forEach((_, pendingAtom) => {
         if (getAtomState(pendingAtom)?.d.has(a)) {
           dependents.add(pendingAtom)
         }
       })
-      return Array.from(dependents)
+      return dependents
     }
 
     // This is a topological sort via depth-first search, slightly modified from
-    // what's described here for performance reasons:
+    // what's described here for simplicity and performance reasons:
     // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
 
-    // Step 1: find all atoms in the graph
-    const allAtomsInDependencyGraph = new Array<AnyAtom>()
-    const seen = new Set<AnyAtom>()
-    const queue = [atom]
-    let a: AnyAtom | undefined
-    while ((a = queue.pop())) {
-      if (!seen.has(a)) {
-        seen.add(a)
-        allAtomsInDependencyGraph.push(a)
-        queue.push(...getDependents(a))
-      }
-    }
-
-    // Step 2: traverse the dependency graph to build the topsorted atom list
+    // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
-    const topsortedAtoms = new Array<AnyAtom>(allAtomsInDependencyGraph.length)
-    let topsortedAtomsIndex = allAtomsInDependencyGraph.length
+    const topsortedAtoms = new Array<AnyAtom>()
     const markedAtoms = new Set<AnyAtom>()
     const visit = (n: AnyAtom) => {
       if (markedAtoms.has(n)) {
@@ -522,18 +504,21 @@ export const createStore = () => {
           visit(m)
         }
       }
-      // The algorithm calls for pushing onto the front of the list, so we fill
-      // the array in reverse order.
-      topsortedAtoms[--topsortedAtomsIndex] = n
-    }
-    while (allAtomsInDependencyGraph.length) {
-      visit(allAtomsInDependencyGraph.pop()!)
+      // The algorithm calls for pushing onto the front of the list. For
+      // performance, we will simply push onto the end, and then will iterate in
+      // reverse order later.
+      topsortedAtoms.push(n)
     }
 
-    // Step 3: use the topsorted atom list to recompute all affected atoms
+    // Visit the root atom. This is the only atom in the dependency graph
+    // without incoming edges, which is one reason we can simplify the algorithm
+    visit(atom)
+
+    // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
-    for (const a of topsortedAtoms) {
+    for (let i = topsortedAtoms.length; i > 0; i--) {
+      const a = topsortedAtoms[i - 1]!
       const prevAtomState = getAtomState(a)
       if (!prevAtomState) {
         continue
