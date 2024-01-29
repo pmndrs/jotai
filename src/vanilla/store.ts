@@ -517,8 +517,8 @@ export const createStore = () => {
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
-    for (let i = topsortedAtoms.length; i > 0; i--) {
-      const a = topsortedAtoms[i - 1]!
+    for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
+      const a = topsortedAtoms[i]!
       const prevAtomState = getAtomState(a)
       if (!prevAtomState) {
         continue
