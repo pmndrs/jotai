@@ -477,8 +477,6 @@ export const createStore = () => {
   }
 
   const recomputeDependents = (atom: AnyAtom): void => {
-    const dependencyMap = new Map<AnyAtom, Set<AnyAtom>>()
-    const dirtyMap = new WeakMap<AnyAtom, number>()
     const getDependents = (a: AnyAtom): Dependents => {
       const dependents = new Set(mountedMap.get(a)?.t)
       pendingMap.forEach((_, pendingAtom) => {
@@ -488,42 +486,59 @@ export const createStore = () => {
       })
       return dependents
     }
-    const loop1 = (a: AnyAtom) => {
-      getDependents(a).forEach((dependent) => {
-        if (dependent !== a) {
-          dependencyMap.set(
-            dependent,
-            (dependencyMap.get(dependent) || new Set()).add(a),
-          )
-          dirtyMap.set(dependent, (dirtyMap.get(dependent) || 0) + 1)
-          loop1(dependent)
+
+    // This is a topological sort via depth-first search, slightly modified from
+    // what's described here for simplicity and performance reasons:
+    // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+
+    // Step 1: traverse the dependency graph to build the topsorted atom list
+    // We don't bother to check for cycles, which simplifies the algorithm.
+    const topsortedAtoms = new Array<AnyAtom>()
+    const markedAtoms = new Set<AnyAtom>()
+    const visit = (n: AnyAtom) => {
+      if (markedAtoms.has(n)) {
+        return
+      }
+      markedAtoms.add(n)
+      for (const m of getDependents(n)) {
+        // we shouldn't use isSelfAtom here.
+        if (n !== m) {
+          visit(m)
         }
-      })
+      }
+      // The algorithm calls for pushing onto the front of the list. For
+      // performance, we will simply push onto the end, and then will iterate in
+      // reverse order later.
+      topsortedAtoms.push(n)
     }
-    loop1(atom)
-    const loop2 = (a: AnyAtom) => {
-      getDependents(a).forEach((dependent) => {
-        if (dependent !== a) {
-          let dirtyCount = dirtyMap.get(dependent)
-          if (dirtyCount) {
-            dirtyMap.set(dependent, --dirtyCount)
-          }
-          if (!dirtyCount) {
-            let isChanged = !!dependencyMap.get(dependent)?.size
-            if (isChanged) {
-              const prevAtomState = getAtomState(dependent)
-              const nextAtomState = readAtomState(dependent, true)
-              isChanged = !isEqualAtomValue(prevAtomState, nextAtomState)
-            }
-            if (!isChanged) {
-              dependencyMap.forEach((s) => s.delete(dependent))
-            }
-          }
-          loop2(dependent)
+
+    // Visit the root atom. This is the only atom in the dependency graph
+    // without incoming edges, which is one reason we can simplify the algorithm
+    visit(atom)
+
+    // Step 2: use the topsorted atom list to recompute all affected atoms
+    // Track what's changed, so that we can short circuit when possible
+    const changedAtoms = new Set<AnyAtom>([atom])
+    for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
+      const a = topsortedAtoms[i]!
+      const prevAtomState = getAtomState(a)
+      if (!prevAtomState) {
+        continue
+      }
+      let hasChangedDeps = false
+      for (const dep of prevAtomState.d.keys()) {
+        if (dep !== a && changedAtoms.has(dep)) {
+          hasChangedDeps = true
+          break
         }
-      })
+      }
+      if (hasChangedDeps) {
+        const nextAtomState = readAtomState(a, true)
+        if (!isEqualAtomValue(prevAtomState, nextAtomState)) {
+          changedAtoms.add(a)
+        }
+      }
     }
-    loop2(atom)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
