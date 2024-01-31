@@ -500,6 +500,7 @@ export const createStore = () => {
       }
       markedAtoms.add(n)
       for (const m of getDependents(n)) {
+        // we shouldn't use isSelfAtom here.
         if (n !== m) {
           visit(m)
         }
