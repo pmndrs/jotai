@@ -377,7 +377,8 @@ export const createStore = () => {
       // If all dependencies haven't changed, we can use the cache.
       if (
         Array.from(atomState.d).every(([a, s]) => {
-          if (isSelfAtom(atom, a)) {
+          // we shouldn't use isSelfAtom. https://github.com/pmndrs/jotai/pull/2371
+          if (a === atom) {
             return true
           }
           const aState = readAtomState(a)
