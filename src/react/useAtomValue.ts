@@ -41,8 +41,7 @@ const use =
     }
   })
 
-type Options = {
-  store?: Store
+type Options = Parameters<typeof useStore>[0] & {
   delay?: number
 }
 

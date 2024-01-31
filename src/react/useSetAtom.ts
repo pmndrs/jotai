@@ -7,11 +7,7 @@ import type {
 import { useStore } from './Provider.ts'
 
 type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
-type Store = ReturnType<typeof useStore>
-
-type Options = {
-  store?: Store
-}
+type Options = Parameters<typeof useStore>[0]
 
 export function useSetAtom<Value, Args extends unknown[], Result>(
   atom: WritableAtom<Value, Args, Result>,
