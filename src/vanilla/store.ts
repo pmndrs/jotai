@@ -377,7 +377,7 @@ export const createStore = () => {
       // If all dependencies haven't changed, we can use the cache.
       if (
         Array.from(atomState.d).every(([a, s]) => {
-          if (isSelfAtom(atom, a)) {
+          if (atom === a) {
             return true
           }
           const aState = readAtomState(a)
