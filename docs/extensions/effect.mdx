@@ -23,11 +23,11 @@ npm i jotai-effect
 type CleanupFn = () => void
 
 type EffectFn = (
-  get: Getter,
+  get: Getter & { peek: Getter },
   set: Setter & { recurse: Setter },
 ) => CleanupFn | void
 
-function atomEffect(effectFn: EffectFn): Atom<void>
+declare function atomEffect(effectFn: EffectFn): Atom<void>
 ```
 
 **effectFn** (required): A function for listening to state updates with `get` and writing state updates with `set`. The `effectFn` is useful for creating side effects that interact with other Jotai atoms. You can cleanup these side effects by returning a cleanup function.
@@ -98,7 +98,7 @@ function MyComponent() {
   </details>
 
 - **Resistent To Infinite Loops:**
-  `atomEffect` does not rerun when it changes a value that it is watching with `set`.
+  `atomEffect` does not rerun when it changes a value with `set` that it is watching.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -131,6 +131,23 @@ function MyComponent() {
       set.recurse(countAtom, increment)
     }, 1000)
     return () => clearTimeout(timeoutId)
+  })
+  ```
+
+  </details>
+
+- **Supports Peek:**
+  Read atom data without subscribing to changes with `get.peek`.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  const countAtom = atom(0)
+  atomEffect((get, set) => {
+    // will not rerun when countAtom changes
+    const count = get.peek(countAtom)
   })
   ```
 
