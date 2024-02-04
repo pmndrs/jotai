@@ -37,6 +37,8 @@ type OnMount<Args extends unknown[], Result> = <
   setAtom: S,
 ) => OnUnmount | void
 
+type OnUpdate<Args extends unknown[]> = (get: Getter, ...args: Args) => void
+
 export interface Atom<Value> {
   toString: () => string
   read: Read<Value>
@@ -54,6 +56,7 @@ export interface WritableAtom<Value, Args extends unknown[], Result>
   read: Read<Value, SetAtom<Args, Result>>
   write: Write<Args, Result>
   onMount?: OnMount<Args, Result>
+  onUpdate?: OnUpdate<Args>
 }
 
 type SetStateAction<Value> = Value | ((prev: Value) => Value)

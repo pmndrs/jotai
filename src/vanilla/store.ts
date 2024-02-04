@@ -575,6 +575,7 @@ export const createStore = () => {
       }
       return r as R
     }
+    atom.onUpdate?.(getter, ...args)
     const result = atom.write(getter, setter, ...args)
     isSync = false
     return result
