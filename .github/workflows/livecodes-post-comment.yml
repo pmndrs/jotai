@@ -1,8 +1,6 @@
-name: livecodes post comment
-
 on:
   workflow_run:
-    workflows: [livecodes preview]
+    workflows: [livecodes]
     types:
       - completed
 
