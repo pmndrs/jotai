@@ -1,0 +1,20 @@
+name: livecodes-post-comment
+
+on:
+  workflow_run:
+    workflows: ["livecodes-preview"]
+    types:
+      - completed
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: live-codes/pr-comment-from-artifact@v1
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
