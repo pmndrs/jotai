@@ -1,8 +1,8 @@
-name: livecodes-post-comment
+name: livecodes post comment
 
 on:
   workflow_run:
-    workflows: [livecodes-preview]
+    workflows: [livecodes preview]
     types:
       - completed
 
