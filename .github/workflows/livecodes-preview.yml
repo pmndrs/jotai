@@ -11,4 +11,4 @@ jobs:
         with:
           install-command: "yarn install --frozen-lockfile --check-files"
           build-command: "yarn build"
-          base-url: "https://{{LC::REF}}.preview-in-livecodes-demo.pages.dev"
+          # base-url: "https://{{LC::REF}}.preview-in-livecodes-demo.pages.dev"
