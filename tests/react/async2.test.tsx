@@ -217,13 +217,12 @@ describe('timing issue with setSelf', () => {
 })
 
 describe('infinite pending', () => {
-  const infinitePending = new Promise<never>(() => {})
-
   it('odd counter', async () => {
     const countAtom = atom(0)
     const asyncAtom = atom((get) => {
       const count = get(countAtom)
       if (count % 2 === 0) {
+        const infinitePending = new Promise<never>(() => {})
         return infinitePending
       }
       return count
