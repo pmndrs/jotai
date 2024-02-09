@@ -22,9 +22,12 @@ npm i jotai-effect
 ```ts
 type CleanupFn = () => void
 
-type EffectFn = (get: Getter, set: Setter) => CleanupFn | void
+type EffectFn = (
+  get: Getter & { peek: Getter },
+  set: Setter & { recurse: Setter },
+) => CleanupFn | void
 
-function atomEffect(effectFn: EffectFn): Atom<void>
+declare function atomEffect(effectFn: EffectFn): Atom<void>
 ```
 
 **effectFn** (required): A function for listening to state updates with `get` and writing state updates with `set`. The `effectFn` is useful for creating side effects that interact with other Jotai atoms. You can cleanup these side effects by returning a cleanup function.
@@ -95,7 +98,7 @@ function MyComponent() {
   </details>
 
 - **Resistent To Infinite Loops:**
-  `atomEffect` does not rerun when it changes a value that it is watching.
+  `atomEffect` does not rerun when it changes a value with `set` that it is watching.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -107,6 +110,44 @@ function MyComponent() {
     // this will not infinite loop
     get(countAtom) // after mount, count will be 1
     set(countAtom, increment)
+  })
+  ```
+
+  </details>
+
+- **Supports Recursion:**
+  Recursion is supported with `set.recurse` for both sync and async use cases, but is not supported in the cleanup function.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  const countAtom = atom(0)
+  atomEffect((get, set) => {
+    // increments count once per second
+    const count = get(countAtom)
+    const timeoutId = setTimeout(() => {
+      set.recurse(countAtom, increment)
+    }, 1000)
+    return () => clearTimeout(timeoutId)
+  })
+  ```
+
+  </details>
+
+- **Supports Peek:**
+  Read atom data without subscribing to changes with `get.peek`.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  const countAtom = atom(0)
+  atomEffect((get, set) => {
+    // will not rerun when countAtom changes
+    const count = get.peek(countAtom)
   })
   ```
 
@@ -268,14 +309,15 @@ Aside from mount events, the effect runs when any of its dependencies change val
 
   ```js
   atomEffect((get, set) => {
-    // runs once on mount or when valueAtom changes
+    // runs once on mount
     // does not update when `idAtom` changes
-    const unsubscribe = subscribe((value) => {
+    const unsubscribe = subscribe((valueAtom) => {
       const value = get(valueAtom)
       // ...
     })
     return () => {
-      unsubscribe(get(idAtom))
+      const id = get(idAtom)
+      unsubscribe(id)
     }
   })
   ```
@@ -322,13 +364,13 @@ For synchronizing component props and state with a Jotai atom, you should use th
 For setting up global side-effects, deciding between useEffect and atomEffect comes down to developer preference.
 Whether you prefer to build this logic directly into the component or build this logic into the Jotai state model depends on what mental model you adopt.
 
-atomEffects are more appropriate for modeling logic in atoms.
+atomEffects are more appropriate for modeling behavior in atoms.
 They are scoped to the store context rather than the component.
 This guarantees that a single effect will be used regardless of how many calls they have.
 
 The same guarantee can be achieved with the useEffect hook if you ensure that the useEffect is idempotent.
 
-atomEffects are distinguished from useEffect in a few other ways. The can directly react to atom state changes, are resistent to infinite loops, and can be mounted conditionally.
+atomEffects are distinguished from useEffect in a few other ways. They can directly react to atom state changes, are resistent to infinite loops, and can be mounted conditionally.
 
 #### It's up to you
 
