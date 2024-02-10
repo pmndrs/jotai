@@ -1,11 +1,24 @@
 {
   "title": "React demo",
   "activeEditor": "script",
+  "markup": {
+    "language": "html",
+    "content": "<div id=\"root\"></div>"
+  },
+  "style": {
+    "language": "css",
+    "content": ".App {\n  font-family: sans-serif;\n  text-align: center;\n}\n"
+  },
   "script": {
     "language": "jsx",
     "content": "import { StrictMode, Suspense } from 'react';\nimport { createRoot } from 'react-dom/client';\nimport { atom, useAtom } from 'jotai';\n\nconst countAtom = atom(0);\n\nconst Counter = () => {\n  const [count, setCount] = useAtom(countAtom);\n  const inc = () => setCount((c) => c + 1);\n  return (\n    <>\n      {count} <button onClick={inc}>+1</button>\n    </>\n  );\n};\n\nconst App = () => (\n  <Suspense fallback=\"Loading...\">\n    <div className=\"App\">\n      <h1>Hello Jotai</h1>\n      <h2>Enjoy coding!</h2>\n      <Counter />\n    </div>\n  </Suspense>\n);\n\nconst rootElement = document.getElementById('root');\nconst root = createRoot(rootElement);\n\nroot.render(\n  <StrictMode>\n    <App />\n  </StrictMode>\n);\n"
   },
   "imports": {
-    "jotai": "{{LC::TO_DATA_URL(./dist/esm/index.mjs)}}"
+    "jotai": "{{LC::TO_DATA_URL(./dist/esm/index.mjs)}}",
+    "jotai/vanilla": "{{LC::TO_DATA_URL(./dist/esm/vanilla.mjs)}}",
+    "jotai/utils": "{{LC::TO_DATA_URL(./dist/esm/utils.mjs)}}",
+    "jotai/react": "{{LC::TO_DATA_URL(./dist/esm/react.mjs)}}",
+    "jotai/vanilla/utils": "{{LC::TO_DATA_URL(./dist/esm/vanilla/utils.mjs)}}",
+    "jotai/react/utils": "{{LC::TO_DATA_URL(./dist/esm/react/utils.mjs)}}"
   }
 }
