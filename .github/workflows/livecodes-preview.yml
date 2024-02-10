@@ -1,4 +1,4 @@
-name: livecodes
+name: LiveCodes Preview
 
 on: [pull_request]
 
