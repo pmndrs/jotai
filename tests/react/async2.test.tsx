@@ -215,3 +215,51 @@ describe('timing issue with setSelf', () => {
     expect(result).toBe(4) // 3
   })
 })
+
+describe('infinite pending', () => {
+  it('odd counter', async () => {
+    const countAtom = atom(0)
+    const asyncAtom = atom((get) => {
+      const count = get(countAtom)
+      if (count % 2 === 0) {
+        const infinitePending = new Promise<never>(() => {})
+        return infinitePending
+      }
+      return count
+    })
+
+    const Component = () => {
+      const count = useAtomValue(asyncAtom)
+      return <div>count: {count}</div>
+    }
+
+    const Controls = () => {
+      const setCount = useSetAtom(countAtom)
+      return (
+        <>
+          <button onClick={() => setCount((c) => c + 1)}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <Controls />
+        <Suspense fallback="loading">
+          <Component />
+        </Suspense>
+      </StrictMode>,
+    )
+
+    await findByText('loading')
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 1')
+
+    fireEvent.click(getByText('button'))
+    await findByText('loading')
+
+    fireEvent.click(getByText('button'))
+    await findByText('count: 3')
+  })
+})
