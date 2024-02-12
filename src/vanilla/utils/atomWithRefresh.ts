@@ -26,6 +26,9 @@ export function atomWithRefresh<Value, Args extends unknown[], Result>(
   write?: Write<Value, Args, Result>,
 ) {
   const refreshAtom = atom(0)
+  if (import.meta.env?.MODE !== 'production') {
+    refreshAtom.debugPrivate = true
+  }
   return atom(
     (get, options) => {
       get(refreshAtom)
