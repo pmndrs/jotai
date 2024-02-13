@@ -155,9 +155,9 @@ type MountedAtoms = Set<AnyAtom>
 export const createStore = () => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
-  const pendingMap = new Map<
+  const pendingMap = new WeakMap<
     AnyAtom,
-    AtomState /* prevAtomState */ | undefined
+    [prevAtomState: AtomState | undefined, dependents: Dependents]
   >()
   let storeListenersRev2: Set<StoreListenerRev2>
   let mountedAtoms: MountedAtoms
@@ -179,7 +179,13 @@ export const createStore = () => {
     const prevAtomState = getAtomState(atom)
     atomStateMap.set(atom, atomState)
     if (!pendingMap.has(atom)) {
-      pendingMap.set(atom, prevAtomState)
+      pendingMap.set(atom, [prevAtomState, new Set()])
+      atomState.d.forEach((_, a) => {
+        if (!pendingMap.has(a)) {
+          pendingMap.set(a, [getAtomState(a), new Set()])
+        }
+        pendingMap.get(a)![1].add(atom)
+      })
     }
     if (hasPromiseAtomValue(prevAtomState)) {
       const next =
@@ -479,10 +485,8 @@ export const createStore = () => {
   const recomputeDependents = (atom: AnyAtom): void => {
     const getDependents = (a: AnyAtom): Dependents => {
       const dependents = new Set(mountedMap.get(a)?.t)
-      pendingMap.forEach((_, pendingAtom) => {
-        if (getAtomState(pendingAtom)?.d.has(a)) {
-          dependents.add(pendingAtom)
-        }
+      pendingMap.get(a)?.[1].forEach((dependent) => {
+        dependents.add(dependent)
       })
       return dependents
     }
@@ -715,13 +719,25 @@ export const createStore = () => {
       flushed = new Set()
     }
     const pending: [AnyAtom, AtomState | undefined][] = []
-    pendingMap.forEach((prevAtomState, atom) => {
-      pending.push([atom, prevAtomState])
-    })
-    pendingMap.clear()
+    const collectPending = (pendingAtom: AnyAtom) => {
+      if (!pendingMap.has(pendingAtom)) {
+        return
+      }
+      const [prevAtomState, dependents] = pendingMap.get(pendingAtom)!
+      pendingMap.delete(pendingAtom)
+      pending.push([pendingAtom, prevAtomState])
+      dependents.forEach(collectPending)
+    }
+    pendingAtoms.forEach(collectPending)
     pending.forEach(([atom, prevAtomState]) => {
       const atomState = getAtomState(atom)
-      if (atomState) {
+      if (!atomState) {
+        if (import.meta.env?.MODE !== 'production') {
+          console.warn('[Bug] no atom state to flush')
+        }
+        return
+      }
+      if (atomState !== prevAtomState) {
         const mounted = mountedMap.get(atom)
         if (mounted && atomState.d !== prevAtomState?.d) {
           mountDependencies(atom, atomState, prevAtomState?.d)
@@ -743,8 +759,6 @@ export const createStore = () => {
             flushed.add(atom)
           }
         }
-      } else if (import.meta.env?.MODE !== 'production') {
-        console.warn('[Bug] no atom state to flush')
       }
     })
     if (import.meta.env?.MODE !== 'production') {
