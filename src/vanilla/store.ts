@@ -566,7 +566,7 @@ export const createStore = () => {
         r = writeAtomState(a as AnyWritableAtom, ...args) as R
       }
       if (!isSync) {
-        const flushed = flushPending()
+        const flushed = flushPending([atom])
         if (import.meta.env?.MODE !== 'production') {
           storeListenersRev2.forEach((l) =>
             l({ type: 'async-write', flushed: flushed as Set<AnyAtom> }),
@@ -585,7 +585,7 @@ export const createStore = () => {
     ...args: Args
   ): Result => {
     const result = writeAtomState(atom, ...args)
-    const flushed = flushPending()
+    const flushed = flushPending([atom])
     if (import.meta.env?.MODE !== 'production') {
       storeListenersRev2.forEach((l) =>
         l({ type: 'write', flushed: flushed as Set<AnyAtom> }),
@@ -709,43 +709,44 @@ export const createStore = () => {
     })
   }
 
-  const flushPending = (): void | Set<AnyAtom> => {
+  const flushPending = (pendingAtoms: AnyAtom[]): void | Set<AnyAtom> => {
     let flushed: Set<AnyAtom>
     if (import.meta.env?.MODE !== 'production') {
       flushed = new Set()
     }
-    while (pendingMap.size) {
-      const pending = Array.from(pendingMap)
-      pendingMap.clear()
-      pending.forEach(([atom, prevAtomState]) => {
-        const atomState = getAtomState(atom)
-        if (atomState) {
-          const mounted = mountedMap.get(atom)
-          if (mounted && atomState.d !== prevAtomState?.d) {
-            mountDependencies(atom, atomState, prevAtomState?.d)
-          }
-          if (
-            mounted &&
-            !(
-              // TODO This seems pretty hacky. Hope to fix it.
-              // Maybe we could `mountDependencies` in `setAtomState`?
-              (
-                !hasPromiseAtomValue(prevAtomState) &&
-                (isEqualAtomValue(prevAtomState, atomState) ||
-                  isEqualAtomError(prevAtomState, atomState))
-              )
-            )
-          ) {
-            mounted.l.forEach((listener) => listener())
-            if (import.meta.env?.MODE !== 'production') {
-              flushed.add(atom)
-            }
-          }
-        } else if (import.meta.env?.MODE !== 'production') {
-          console.warn('[Bug] no atom state to flush')
+    const pending: [AnyAtom, AtomState | undefined][] = []
+    pendingMap.forEach((prevAtomState, atom) => {
+      pending.push([atom, prevAtomState])
+    })
+    pendingMap.clear()
+    pending.forEach(([atom, prevAtomState]) => {
+      const atomState = getAtomState(atom)
+      if (atomState) {
+        const mounted = mountedMap.get(atom)
+        if (mounted && atomState.d !== prevAtomState?.d) {
+          mountDependencies(atom, atomState, prevAtomState?.d)
         }
-      })
-    }
+        if (
+          mounted &&
+          !(
+            // TODO This seems pretty hacky. Hope to fix it.
+            // Maybe we could `mountDependencies` in `setAtomState`?
+            (
+              !hasPromiseAtomValue(prevAtomState) &&
+              (isEqualAtomValue(prevAtomState, atomState) ||
+                isEqualAtomError(prevAtomState, atomState))
+            )
+          )
+        ) {
+          mounted.l.forEach((listener) => listener())
+          if (import.meta.env?.MODE !== 'production') {
+            flushed.add(atom)
+          }
+        }
+      } else if (import.meta.env?.MODE !== 'production') {
+        console.warn('[Bug] no atom state to flush')
+      }
+    })
     if (import.meta.env?.MODE !== 'production') {
       // @ts-expect-error Variable 'flushed' is used before being assigned.
       return flushed
@@ -754,7 +755,7 @@ export const createStore = () => {
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
     const mounted = addAtom(atom)
-    const flushed = flushPending()
+    const flushed = flushPending([atom])
     const listeners = mounted.l
     listeners.add(listener)
     if (import.meta.env?.MODE !== 'production') {
@@ -797,7 +798,7 @@ export const createStore = () => {
             recomputeDependents(atom)
           }
         }
-        const flushed = flushPending()
+        const flushed = flushPending(Array.from(values).map(([a]) => a))
         storeListenersRev2.forEach((l) =>
           l({ type: 'restore', flushed: flushed as Set<AnyAtom> }),
         )
