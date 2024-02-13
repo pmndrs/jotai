@@ -169,6 +169,19 @@ export const createStore = () => {
   const getAtomState = <Value>(atom: Atom<Value>) =>
     atomStateMap.get(atom) as AtomState<Value> | undefined
 
+  const addPendingDependent = (atom: AnyAtom, atomState: AtomState) => {
+    atomState.d.forEach((_, a) => {
+      if (!pendingMap.has(a)) {
+        const aState = getAtomState(a)
+        pendingMap.set(a, [aState, new Set()])
+        if (aState) {
+          addPendingDependent(a, aState)
+        }
+      }
+      pendingMap.get(a)![1].add(atom)
+    })
+  }
+
   const setAtomState = <Value>(
     atom: Atom<Value>,
     atomState: AtomState<Value>,
@@ -180,12 +193,7 @@ export const createStore = () => {
     atomStateMap.set(atom, atomState)
     if (!pendingMap.has(atom)) {
       pendingMap.set(atom, [prevAtomState, new Set()])
-      atomState.d.forEach((_, a) => {
-        if (!pendingMap.has(a)) {
-          pendingMap.set(a, [getAtomState(a), new Set()])
-        }
-        pendingMap.get(a)![1].add(atom)
-      })
+      addPendingDependent(atom, atomState)
     }
     if (hasPromiseAtomValue(prevAtomState)) {
       const next =
