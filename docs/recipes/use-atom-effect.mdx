@@ -1,0 +1,64 @@
+---
+title: useAtomEffect
+nav: 8.03
+keywords: effect, atom effect, side effect, side-effect, sideeffect, hook, useAtomEffect
+---
+
+> `useAtomEffect` runs side effects in response to changes in atoms or props using [atomEffect](../extensions/effect.mdx).
+
+The effectFn reruns whenever the atoms it depends on change or the effectFn itself changes. Be sure to memoize the effectFn if it's a function defined in the component.
+
+⚠️ Note: always prefer to use a [stable version of useMemo and useCallback](https://github.com/alexreardon/use-memo-one) to avoid extra atomEffect recomputations. You may rely on useMemo as a performance optimization, but not as a semantic guarantee. In the future, React may choose to “forget” some previously memoized values and recalculate them on next render, e.g. to free memory for offscreen components.
+
+```ts
+import { useMemoOne as useStableMemo } from 'use-memo-one'
+import { useAtomValue } from 'jotai/react'
+import { atomEffect } from 'jotai-effect'
+
+type EffectFn = Parameters<typeof atomEffect>[0]
+
+export function useAtomEffect(effectFn: EffectFn) {
+  useAtomValue(useStableMemo(() => atomEffect(effectFn), [effectFn]))
+}
+```
+
+### Example Usage
+
+```tsx
+import { useCallbackOne as useStableCallback } from 'use-memo-one'
+import { atom, useAtom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
+import { useAtomEffect } from './useAtomEffect'
+
+const channelSubscriptionAtomFamily = atomFamily<Channel>(
+  (channelId: string) => {
+    return atom(new Channel(channelId))
+  },
+)
+const messagesAtom = atom<Message[]>([])
+
+function Messages({ channelId }: { channelId: string }) {
+  const [messages] = useAtom(messagesAtom)
+  useAtomEffect(
+    useStableCallback(
+      (get, set) => {
+        const channel = get(channelSubscriptionAtomFamily(channelId))
+        const unsubscribe = channel.subscribe((message) => {
+          set(messagesAtom, (prev) => [...prev, message])
+        })
+        return unsubscribe
+      },
+      [id],
+    ),
+  )
+  return (
+    <>
+      <h1>You have {messages.length} messages</h1>
+      <hr />
+      {messages.map((message) => (
+        <div key={message.id}>{message.text}</div>
+      ))}
+    </>
+  )
+}
+```
