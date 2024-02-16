@@ -3,31 +3,31 @@ import { ExternalLink } from '../components/external-link.js';
 
 export const LogoCloud = () => {
   return (
-    <div className="mx-auto grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
-      <Logo to="https://ping.gg">
+    <div className="mx-auto grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6 2xl:-mx-6">
+      <Logo to="https://about.meta.com/">
         <img
-          src="https://storage.googleapis.com/candycode/jotai/logos/ping-current.svg"
-          alt="Ping Labs"
-          className="aspect-[24/9] w-full opacity-50 transition duration-300 ease-in-out dark:invert"
+          src="https://cdn.candycode.com/jotai/logos/meta-current.svg"
+          alt=""
+          className="w-full opacity-50 transition duration-300 ease-in-out dark:invert"
         />
         <HoverLogo>
           <img
-            src="https://storage.googleapis.com/candycode/jotai/logos/ping-color.svg"
+            src="https://cdn.candycode.com/jotai/logos/meta-color.svg"
             alt=""
-            className="aspect-[24/9] w-full"
+            className="w-full"
             aria-hidden
           />
         </HoverLogo>
       </Logo>
       <Logo to="https://candycode.com/">
         <img
-          src="https://storage.googleapis.com/candycode/jotai/logos/candycode-current.svg"
+          src="https://cdn.candycode.com/jotai/logos/candycode-current.svg"
           alt="candycode alternative graphic design web development agency"
           className="aspect-[16/9] w-full opacity-50 transition duration-300 ease-in-out dark:invert"
         />
         <HoverLogo>
           <img
-            src="https://storage.googleapis.com/candycode/jotai/logos/candycode-color.svg"
+            src="https://cdn.candycode.com/jotai/logos/candycode-color.svg"
             alt=""
             className="aspect-[16/9] w-full"
             aria-hidden
@@ -36,28 +36,43 @@ export const LogoCloud = () => {
       </Logo>
       <Logo to="https://www.adobe.com/">
         <img
-          src="https://storage.googleapis.com/candycode/jotai/logos/adobe-current.svg"
+          src="https://cdn.candycode.com/jotai/logos/adobe-current.svg"
           alt="Adobe"
           className="w-full px-1 opacity-50 transition duration-300 ease-in-out dark:invert lg:px-2"
         />
         <HoverLogo>
           <img
-            src="https://storage.googleapis.com/candycode/jotai/logos/adobe-color.svg"
+            src="https://cdn.candycode.com/jotai/logos/adobe-color.svg"
             alt=""
             className="w-full px-1 lg:px-2"
             aria-hidden
           />
         </HoverLogo>
       </Logo>
+      <Logo to="https://ping.gg">
+        <img
+          src="https://cdn.candycode.com/jotai/logos/ping-current.svg"
+          alt="Ping Labs"
+          className="aspect-[24/9] w-full opacity-50 transition duration-300 ease-in-out dark:invert"
+        />
+        <HoverLogo>
+          <img
+            src="https://cdn.candycode.com/jotai/logos/ping-color.svg"
+            alt=""
+            className="aspect-[24/9] w-full"
+            aria-hidden
+          />
+        </HoverLogo>
+      </Logo>
       <Logo to="https://www.tiktok.com/">
         <img
-          src="https://storage.googleapis.com/candycode/jotai/logos/tiktok-current.svg"
+          src="https://cdn.candycode.com/jotai/logos/tiktok-current.svg"
           alt="TokTok"
           className="w-full px-1 opacity-50 transition duration-300 ease-in-out dark:invert lg:px-2"
         />
         <HoverLogo>
           <img
-            src="https://storage.googleapis.com/candycode/jotai/logos/tiktok-color.svg"
+            src="https://cdn.candycode.com/jotai/logos/tiktok-color.svg"
             alt=""
             className="w-full px-1 lg:px-2"
             aria-hidden
@@ -66,13 +81,13 @@ export const LogoCloud = () => {
       </Logo>
       <Logo to="https://uniswap.org/">
         <img
-          src="https://storage.googleapis.com/candycode/jotai/logos/uniswap-current.svg"
+          src="https://cdn.candycode.com/jotai/logos/uniswap-current.svg"
           alt="Uniswap"
           className="aspect-[16/9] w-full opacity-50 transition duration-300 ease-in-out dark:invert"
         />
         <HoverLogo>
           <img
-            src="https://storage.googleapis.com/candycode/jotai/logos/uniswap-color.svg"
+            src="https://cdn.candycode.com/jotai/logos/uniswap-color.svg"
             alt=""
             className="aspect-[16/9] w-full"
             aria-hidden

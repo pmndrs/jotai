@@ -22,6 +22,10 @@ module.exports = {
       red: { ...colors.red, 950: '#400f0f' },
       teal: { ...colors.teal, 950: '#0a2725' },
     },
+    fontFamily: {
+      sans: ['"Inter"', 'sans-serif'],
+      mono: ['"Fira Code"', 'monospace'],
+    },
     fontSize: {
       'xs': ['0.75rem'],
       'sm': ['0.875rem'],
