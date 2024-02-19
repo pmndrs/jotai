@@ -8,19 +8,20 @@ type Read<Value, Args extends unknown[], Result> = WritableAtom<
   Result
 >['read']
 
-export function atomWithDefault<Value>(
-  getDefault: Read<Value, [SetStateAction<Value> | typeof RESET], void>,
-): WritableAtom<Value, [SetStateAction<Value> | typeof RESET], void> {
+export function atomWithDefault<Value, KType = Awaited<Value>>(
+  getDefault: Read<Value, [SetStateAction<KType> | typeof RESET], void>,
+): WritableAtom<Value | KType, [SetStateAction<KType> | typeof RESET], void> {
   const EMPTY = Symbol()
-  const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
+
+  const overwrittenAtom = atom<KType | typeof EMPTY>(EMPTY)
 
   if (import.meta.env?.MODE !== 'production') {
     overwrittenAtom.debugPrivate = true
   }
 
   const anAtom: WritableAtom<
-    Value,
-    [SetStateAction<Value> | typeof RESET],
+    Value | KType,
+    [SetStateAction<KType> | typeof RESET],
     void
   > = atom(
     (get, options) => {
@@ -34,8 +35,8 @@ export function atomWithDefault<Value>(
       if (update === RESET) {
         set(overwrittenAtom, EMPTY)
       } else if (typeof update === 'function') {
-        const prevValue = get(anAtom)
-        set(overwrittenAtom, (update as (prev: Value) => Value)(prevValue))
+        const prevValue = get(anAtom) as KType
+        set(overwrittenAtom, (update as (prev: KType) => KType)(prevValue))
       } else {
         set(overwrittenAtom, update)
       }
