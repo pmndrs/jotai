@@ -3,6 +3,8 @@ import type {
   ExtractAtomArgs,
   ExtractAtomResult,
   ExtractAtomValue,
+  PrimitiveAtom,
+  SetStateAction,
   WritableAtom,
 } from '../vanilla.ts'
 import { useAtomValue } from './useAtomValue.ts'
@@ -16,6 +18,11 @@ export function useAtom<Value, Args extends unknown[], Result>(
   atom: WritableAtom<Value, Args, Result>,
   options?: Options,
 ): [Awaited<Value>, SetAtom<Args, Result>]
+
+export function useAtom<Value>(
+  atom: PrimitiveAtom<Value>,
+  options?: Options,
+): [Awaited<Value>, SetAtom<[SetStateAction<Value>], void>]
 
 export function useAtom<Value>(
   atom: Atom<Value>,

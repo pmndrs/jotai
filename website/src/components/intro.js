@@ -8,7 +8,7 @@ export const Intro = () => {
       <div className="mt-8 flex items-center space-x-4 sm:space-x-8 sm:px-16 lg:mt-0 lg:px-0">
         <div className="relative w-1/3 max-w-[215px] lg:w-1/4">
           <img
-            src="https://storage.googleapis.com/candycode/jotai/jotai-mascot.png"
+            src="https://cdn.candycode.com/jotai/jotai-mascot.png"
             title="Atomikku, the Jotai mascot"
             alt="Atomikku, the Jotai mascot"
           />
