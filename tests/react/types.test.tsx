@@ -1,4 +1,5 @@
 import { expectType } from 'ts-expect'
+import type { TypeEqual } from 'ts-expect'
 import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -45,6 +46,21 @@ it('useAtom should handle inference of atoms (#1831 #1387)', () => {
     expectType<[string, (arg: string) => void]>(useField('username'))
     expectType<[number, (arg: number) => void]>(useField('age'))
     expectType<[boolean, (arg: boolean) => void]>(useField('checked'))
+  }
+  Component
+})
+
+it('useAtom should handle primitive atom with one type argeument', () => {
+  const countAtom = atom(0)
+  function Component() {
+    const [count, setCount] = useAtom<number>(countAtom)
+    expectType<TypeEqual<typeof count, number>>(true)
+    expectType<
+      TypeEqual<
+        typeof setCount,
+        (arg: number | ((prev: number) => number)) => void
+      >
+    >(true)
   }
   Component
 })
