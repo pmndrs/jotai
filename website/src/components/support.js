@@ -150,7 +150,7 @@ export const Support = () => {
             className="flex-shrink-0"
           >
             <img
-              src="https://storage.googleapis.com/candycode/jotai/daishi.png"
+              src="https://cdn.candycode.com/jotai/daishi.png"
               className="aspect-square h-28 w-28 rounded-full border border-gray-300 bg-white dark:border-gray-800 dark:bg-black"
               alt="Daishi Kato"
             />

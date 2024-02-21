@@ -8,7 +8,7 @@ export const Meta = ({ lang = 'en', title, description, uri }) => {
   const siteTitle = site.siteMetadata.title;
   const siteUrl = site.siteMetadata.siteUrl;
   const siteIcon = `/favicon.svg`;
-  const socialMediaCardImage = `https://storage.googleapis.com/candycode/jotai/jotai-opengraph-v2.png`;
+  const socialMediaCardImage = `https://cdn.candycode.com/jotai/jotai-opengraph-v2.png`;
   const shortName = site.siteMetadata.shortName;
 
   const pageTitle = title ? `${title} — ${title.length <= 10 ? siteTitle : shortName}` : siteTitle;
@@ -35,6 +35,7 @@ export const Meta = ({ lang = 'en', title, description, uri }) => {
       <link rel="canonical" href={pageUrl} />
       <link rel="dns-prefetch" href="appid-dsn.algolia.net" />
       <link rel="preconnect" href="https://98qz5x9lgr-dsn.algolia.net" crossOrigin="true" />
+      <link rel="preconnect" href="https://cdn.candycode.com" crossOrigin="true" />
       <link rel="preconnect" href="https://storage.googleapis.com" crossOrigin="true" />
     </>
   );

@@ -35,10 +35,10 @@ export default function HomePage() {
           <Headline>Getting started</Headline>
           <p className="!mb-8">
             This walks you through the process of creating a simple Jotai application. It starts
-            with installation and configuration, then explores the basics of the core API, and ends
-            with server-side rendering in a React framework.
+            with installation, then explores the basics of the core API, and ends with server-side
+            rendering in a React framework.
           </p>
-          <Tabs tabs={gettingStartedTabs} orientation="vertical" />
+          <Tabs tabs={gettingStartedTabs} />
         </div>
         <div className="space-y-4">
           <Headline>API overview</Headline>
@@ -54,7 +54,7 @@ export default function HomePage() {
             className="mt-4 block"
           >
             <img
-              src="https://storage.googleapis.com/candycode/jotai/jotai-course-banner.jpg"
+              src="https://cdn.candycode.com/jotai/jotai-course-banner.jpg"
               className="block rounded-md shadow-lg dark:!shadow-none sm:rounded-lg"
               alt="Jotai course"
               title="Jotai course"
@@ -69,6 +69,7 @@ export default function HomePage() {
 const apiTabs = {
   Core: (
     <section>
+      <h2>Core</h2>
       <p>
         Jotai has a very minimal API and is TypeScript oriented. It is as simple to use as React’s
         integrated <InlineCode>useState</InlineCode> hook, but all state is globally accessible,
@@ -79,6 +80,7 @@ const apiTabs = {
   ),
   Utilities: (
     <section>
+      <h2>Utilities</h2>
       <p>
         The Jotai package also includes a <InlineCode>jotai/utils</InlineCode> bundle. These extra
         functions add support for persisting an atom in localStorage, hydrating an atom during
@@ -90,6 +92,7 @@ const apiTabs = {
   ),
   Extensions: (
     <section>
+      <h2>Extensions</h2>
       <p>
         There are also separate packages for each official extension: tRPC, Immer, Query, XState,
         URQL, Optics, Relay, location, molecules, cache, and more.
@@ -121,63 +124,6 @@ yarn add jotai
 
 # pnpm
 pnpm add jotai
-`}</Code>
-    </section>
-  ),
-  'Configuration': (
-    <section>
-      <h2>Configuration</h2>
-      <p>
-        We recommend adding the optional SWC or Babel plugin to enable React Fast Refresh
-        support for the best developer experience (framework specific).
-      </p>
-      <h3>Next.js (SWC)</h3>
-      <Code language="bash">{`# npm
-npm install --save-dev @swc-jotai/react-refresh
-
-# next.config.js
-experimental: {
-  swcPlugins: [['@swc-jotai/react-refresh', {}]],
-}
-`}</Code>
-      <h3>Next.js (Babel)</h3>
-      <Code language="bash">{`
-# .babelrc
-{
-  "presets": ["next/babel"],
-  "plugins": ["jotai/babel/plugin-react-refresh"]
-}
-`}</Code>
-      <h3>Vite (SWC)</h3>
-      <Code language="bash">{`# npm
-npm install --save-dev @swc-jotai/react-refresh
-
-# vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
-
-export default defineConfig({
-  plugins: [
-    react({
-      plugins: [['@swc-jotai/react-refresh', {}]],
-    }),
-  ],
-});
-`}</Code>
-      <h3>Gatsby (Babel)</h3>
-      <Code language="bash">{`# npm
-npm install --save-dev babel-preset-gatsby
-
-# .babelrc
-{
-  "presets": ["babel-preset-gatsby"],
-  "plugins": ["jotai/babel/plugin-react-refresh"]
-}
-
-# gatsby-config.js
-flags: {
-  DEV_SSR: false,
-}
 `}</Code>
     </section>
   ),
@@ -379,10 +325,8 @@ export default function App({ Component, pageProps }) {
       <p>
         Create the provider in a <InlineCode>gatsby-shared.js</InlineCode> file to share code
         between <InlineCode>gatsby-browser.js</InlineCode> and{' '}
-        <InlineCode>gatsby-ssr.js</InlineCode>.
-      </p>
-      <p>
-        Use the <InlineCode>wrapRootElement</InlineCode> API to place the provider.
+        <InlineCode>gatsby-ssr.js</InlineCode>. Use the <InlineCode>wrapRootElement</InlineCode> API
+        to place the provider.
       </p>
       <Code>{`
 // gatsby-shared.js
