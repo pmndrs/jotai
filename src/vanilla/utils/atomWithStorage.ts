@@ -48,11 +48,10 @@ export interface SyncStringStorage {
 
 export function withStorageValidator<Value>(
   validator: (value: unknown) => value is Value,
-): (storage: AsyncStorage<unknown>) => AsyncStorage<Value>
-
-export function withStorageValidator<Value>(
-  validator: (value: unknown) => value is Value,
-): (storage: SyncStorage<unknown>) => SyncStorage<Value>
+): {
+  (storage: AsyncStorage<any>): AsyncStorage<Value>
+  (storage: SyncStorage<any>): SyncStorage<Value>
+}
 
 export function withStorageValidator<Value>(
   validator: (value: unknown) => value is Value,

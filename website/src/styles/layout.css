@@ -1,14 +1,10 @@
-* {
-  font-family: 'Inter Var', 'Inter', sans-serif;
-}
-
 html {
   overflow: visible !important;
   padding-right: 0 !important;
 }
 
 body {
-  @apply overflow-x-clip overflow-y-scroll overscroll-none bg-black leading-none;
+  @apply overflow-x-clip overflow-y-scroll overscroll-none bg-black leading-none font-sans;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
 }
@@ -17,11 +13,28 @@ body {
   @apply bg-white text-black dark:bg-gray-950 dark:text-gray-50;
 }
 
+#___gatsby > div {
+  opacity: 0;
+  animation: fadeIn cubic-bezier(0.4, 0, 0.2, 1) 0.5s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards !important;
+  animation-delay: 0.7s;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 pre,
 code,
 pre span,
 code span {
-  font-family: 'Meslo', monospace !important;
+  font-family: 'Fira Code', monospace !important;
 }
 
 ::selection {

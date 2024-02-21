@@ -92,6 +92,9 @@ type DevToolsProps = {
   store?: Store
   // Defaults to light
   theme?: 'dark' | 'light'
+  // Set the position of the trigger button
+  // Defaults to `bottom-left`
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
   // Custom nonce to allowlist jotai-devtools specific inline styles via CSP
   nonce?: string
   options?: {
