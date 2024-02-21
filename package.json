@@ -131,7 +131,7 @@
     "@testing-library/user-event": "14.4.3",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^20.11.19",
-    "@types/react": "^18.2.57",
+    "@types/react": "18.2.48",
     "@types/react-dom": "^18.2.19",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
@@ -166,6 +166,9 @@
     "typescript": "^5.3.3",
     "vitest": "0.33.0",
     "wonka": "^6.3.4"
+  },
+  "resolutions": {
+    "@types/react": "18.2.48"
   },
   "peerDependencies": {
     "@types/react": ">=17.0.0",
