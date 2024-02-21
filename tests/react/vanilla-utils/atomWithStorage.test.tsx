@@ -3,7 +3,12 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
-import { RESET, atomWithStorage, createJSONStorage } from 'jotai/vanilla/utils'
+import {
+  RESET,
+  atomWithStorage,
+  createJSONStorage,
+  unstable_withStorageValidator as withStorageValidator,
+} from 'jotai/vanilla/utils'
 
 const resolve: (() => void)[] = []
 
@@ -586,5 +591,13 @@ describe('atomWithStorage (with non-browser storage)', () => {
       'storage',
       expect.any(Function),
     )
+  })
+})
+
+describe('withStorageValidator', () => {
+  it('should use withStorageValidator with isNumber', () => {
+    const storage = createJSONStorage<number>()
+    const isNumber = (v: unknown): v is number => typeof v === 'number'
+    atomWithStorage('my-number', 0, withStorageValidator(isNumber)(storage))
   })
 })
