@@ -155,6 +155,7 @@ type MountedAtoms = Set<AnyAtom>
 export const createStore = () => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
+  const pendingStack: Set<AnyAtom>[] = []
   const pendingMap = new WeakMap<
     AnyAtom,
     [prevAtomState: AtomState | undefined, dependents: Dependents]
@@ -173,6 +174,7 @@ export const createStore = () => {
     atomState.d.forEach((_, a) => {
       if (!pendingMap.has(a)) {
         const aState = getAtomState(a)
+        pendingStack[pendingStack.length - 1]?.add(a)
         pendingMap.set(a, [aState, new Set()])
         if (aState) {
           addPendingDependent(a, aState)
@@ -192,6 +194,7 @@ export const createStore = () => {
     const prevAtomState = getAtomState(atom)
     atomStateMap.set(atom, atomState)
     if (!pendingMap.has(atom)) {
+      pendingStack[pendingStack.length - 1]?.add(atom)
       pendingMap.set(atom, [prevAtomState, new Set()])
       addPendingDependent(atom, atomState)
     }
@@ -581,7 +584,7 @@ export const createStore = () => {
         const flushed = flushPending([atom])
         if (import.meta.env?.MODE !== 'production') {
           storeListenersRev2.forEach((l) =>
-            l({ type: 'async-write', flushed: flushed as Set<AnyAtom> }),
+            l({ type: 'async-write', flushed: flushed! }),
           )
         }
       }
@@ -596,12 +599,11 @@ export const createStore = () => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
+    pendingStack.push(new Set())
     const result = writeAtomState(atom, ...args)
-    const flushed = flushPending([atom])
+    const flushed = flushPending(Array.from(pendingStack.pop()!))
     if (import.meta.env?.MODE !== 'production') {
-      storeListenersRev2.forEach((l) =>
-        l({ type: 'write', flushed: flushed as Set<AnyAtom> }),
-      )
+      storeListenersRev2.forEach((l) => l({ type: 'write', flushed: flushed! }))
     }
     return result
   }
@@ -815,15 +817,16 @@ export const createStore = () => {
       dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
       dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
       dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => {
+        pendingStack.push(new Set())
         for (const [atom, valueOrPromise] of values) {
           if (hasInitialValue(atom)) {
             setAtomValueOrPromise(atom, valueOrPromise)
             recomputeDependents(atom)
           }
         }
-        const flushed = flushPending(Array.from(values).map(([a]) => a))
+        const flushed = flushPending(Array.from(pendingStack.pop()!))
         storeListenersRev2.forEach((l) =>
-          l({ type: 'restore', flushed: flushed as Set<AnyAtom> }),
+          l({ type: 'restore', flushed: flushed! }),
         )
       },
     }
