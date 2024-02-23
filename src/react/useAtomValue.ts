@@ -2,23 +2,18 @@
 
 import ReactExports, { useDebugValue, useEffect, useReducer } from 'react'
 import type { ReducerWithoutAction } from 'react'
+import {
+  type RichPromise,
+  isPromiseLike,
+} from '../vanilla/utils/promiseUtils.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
 
 type Store = ReturnType<typeof useStore>
 
-const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
-  typeof (x as any)?.then === 'function'
-
 const use =
   ReactExports.use ||
-  (<T>(
-    promise: PromiseLike<T> & {
-      status?: 'pending' | 'fulfilled' | 'rejected'
-      value?: T
-      reason?: unknown
-    },
-  ): T => {
+  (<T>(promise: RichPromise<T>): T => {
     if (promise.status === 'pending') {
       throw promise
     } else if (promise.status === 'fulfilled') {

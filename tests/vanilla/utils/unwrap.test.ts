@@ -127,4 +127,12 @@ describe('unwrap', () => {
     await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(syncAtom)).toBe(3)
   })
+
+  it('should unwrap to a fulfilled value of an already resolved async atom', async () => {
+    const store = createStore()
+    const asyncAtom = atom(Promise.resolve('concrete'))
+
+    expect(await store.get(asyncAtom)).toEqual('concrete')
+    expect(store.get(unwrap(asyncAtom))).toEqual('concrete')
+  })
 })

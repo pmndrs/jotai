@@ -1,5 +1,6 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom, WritableAtom } from '../../vanilla.ts'
+import { actOnResolved, isPromiseLike } from './promiseUtils.ts'
 
 const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
   (m.has(k) ? m : m.set(k, c())).get(k) as T
@@ -35,12 +36,15 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
 ) {
   return memo2(
     () => {
-      type PromiseAndValue = { readonly p?: Promise<unknown> } & (
+      type PromiseAndValue = { readonly p?: PromiseLike<unknown> } & (
         | { readonly v: Awaited<Value> }
         | { readonly f: PendingValue; readonly v?: Awaited<Value> }
       )
-      const promiseErrorCache = new WeakMap<Promise<unknown>, unknown>()
-      const promiseResultCache = new WeakMap<Promise<unknown>, Awaited<Value>>()
+      const promiseErrorCache = new WeakMap<PromiseLike<unknown>, unknown>()
+      const promiseResultCache = new WeakMap<
+        PromiseLike<unknown>,
+        Awaited<Value>
+      >()
       const refreshAtom = atom(0)
 
       if (import.meta.env?.MODE !== 'production') {
@@ -54,28 +58,38 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
           get(refreshAtom)
           const prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
           const promise = get(anAtom)
-          if (!(promise instanceof Promise)) {
+          if (!isPromiseLike(promise)) {
             return { v: promise as Awaited<Value> }
           }
-          if (promise === prev?.p) {
-            if (promiseErrorCache.has(promise)) {
-              throw promiseErrorCache.get(promise)
-            }
-            if (promiseResultCache.has(promise)) {
-              return {
-                p: promise,
-                v: promiseResultCache.get(promise) as Awaited<Value>,
-              }
-            }
-          }
+
           if (promise !== prev?.p) {
-            promise
-              .then(
-                (v) => promiseResultCache.set(promise, v as Awaited<Value>),
-                (e) => promiseErrorCache.set(promise, e),
-              )
-              .finally(setSelf)
+            actOnResolved(
+              promise,
+              // fulfilled
+              (v) => promiseResultCache.set(promise, v as Awaited<Value>),
+              // rejected
+              (e) => promiseErrorCache.set(promise, e),
+              // finally
+              (sync) => {
+                if (!sync) {
+                  // cannot set self synchronously
+                  setSelf()
+                }
+              },
+            )
           }
+
+          if (promiseErrorCache.has(promise)) {
+            throw promiseErrorCache.get(promise)
+          }
+
+          if (promiseResultCache.has(promise)) {
+            return {
+              p: promise,
+              v: promiseResultCache.get(promise) as Awaited<Value>,
+            }
+          }
+
           if (prev && 'v' in prev) {
             return { p: promise, f: fallback(prev.v), v: prev.v }
           }
