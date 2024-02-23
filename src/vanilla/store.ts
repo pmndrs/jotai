@@ -736,8 +736,9 @@ export const createStore = () => {
       const [prevAtomState, dependents] = pendingMap.get(pendingAtom)!
       pendingMap.delete(pendingAtom)
       pending.push([pendingAtom, prevAtomState])
-      getAtomState(pendingAtom)?.d.forEach((_, a) => collectPending(a))
       dependents.forEach(collectPending)
+      // FIXME might be better if we can avoid collecting from dependencies
+      getAtomState(pendingAtom)?.d.forEach((_, a) => collectPending(a))
     }
     pendingAtoms.forEach(collectPending)
     pending.forEach(([atom, prevAtomState]) => {
