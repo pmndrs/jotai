@@ -734,6 +734,7 @@ export const createStore = () => {
       const [prevAtomState, dependents] = pendingMap.get(pendingAtom)!
       pendingMap.delete(pendingAtom)
       pending.push([pendingAtom, prevAtomState])
+      getAtomState(pendingAtom)?.d.forEach((_, a) => collectPending(a))
       dependents.forEach(collectPending)
     }
     pendingAtoms.forEach(collectPending)
