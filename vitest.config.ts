@@ -20,5 +20,8 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'text-summary'],
       reportsDirectory: './coverage/',
     },
+    onConsoleLog(log) {
+      if (log.includes('DOMException')) return false
+    },
   },
 })
