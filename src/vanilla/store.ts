@@ -601,7 +601,7 @@ export const createStore = () => {
   ): Result => {
     pendingStack.push(new Set([atom]))
     const result = writeAtomState(atom, ...args)
-    const flushed = flushPending(Array.from(pendingStack.pop()!))
+    const flushed = flushPending(pendingStack.pop()!)
     if (import.meta.env?.MODE !== 'production') {
       storeListenersRev2.forEach((l) => l({ type: 'write', flushed: flushed! }))
     }
@@ -723,7 +723,9 @@ export const createStore = () => {
     })
   }
 
-  const flushPending = (pendingAtoms: AnyAtom[]): void | Set<AnyAtom> => {
+  const flushPending = (
+    pendingAtoms: AnyAtom[] | Set<AnyAtom>,
+  ): void | Set<AnyAtom> => {
     let flushed: Set<AnyAtom>
     if (import.meta.env?.MODE !== 'production') {
       flushed = new Set()
@@ -825,7 +827,7 @@ export const createStore = () => {
             recomputeDependents(atom)
           }
         }
-        const flushed = flushPending(Array.from(pendingStack.pop()!))
+        const flushed = flushPending(pendingStack.pop()!)
         storeListenersRev2.forEach((l) =>
           l({ type: 'restore', flushed: flushed! }),
         )
