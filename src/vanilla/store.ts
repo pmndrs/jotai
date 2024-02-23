@@ -581,7 +581,7 @@ export const createStore = () => {
         r = writeAtomState(a as AnyWritableAtom, ...args) as R
       }
       if (!isSync) {
-        const flushed = flushPending([atom])
+        const flushed = flushPending([a])
         if (import.meta.env?.MODE !== 'production') {
           storeListenersRev2.forEach((l) =>
             l({ type: 'async-write', flushed: flushed! }),
@@ -599,7 +599,7 @@ export const createStore = () => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
-    pendingStack.push(new Set())
+    pendingStack.push(new Set([atom]))
     const result = writeAtomState(atom, ...args)
     const flushed = flushPending(Array.from(pendingStack.pop()!))
     if (import.meta.env?.MODE !== 'production') {
