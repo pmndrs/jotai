@@ -1,6 +1,5 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom, WritableAtom } from '../../vanilla.ts'
-import { actOnResolved, isPromiseLike } from './promiseUtils.ts'
 
 const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
   (m.has(k) ? m : m.set(k, c())).get(k) as T
@@ -11,6 +10,14 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
 }
 
 const defaultFallback = () => undefined
+
+type PromiseMeta =
+  | { status?: 'pending' }
+  | { status: 'fulfilled'; value: unknown }
+  | { status: 'rejected'; reason?: unknown }
+
+const isPromise = (x: unknown): x is Promise<unknown> & PromiseMeta =>
+  x instanceof Promise
 
 export function unwrap<Value, Args extends unknown[], Result>(
   anAtom: WritableAtom<Value, Args, Result>,
@@ -36,15 +43,12 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
 ) {
   return memo2(
     () => {
-      type PromiseAndValue = { readonly p?: PromiseLike<unknown> } & (
+      type PromiseAndValue = { readonly p?: Promise<unknown> } & (
         | { readonly v: Awaited<Value> }
         | { readonly f: PendingValue; readonly v?: Awaited<Value> }
       )
-      const promiseErrorCache = new WeakMap<PromiseLike<unknown>, unknown>()
-      const promiseResultCache = new WeakMap<
-        PromiseLike<unknown>,
-        Awaited<Value>
-      >()
+      const promiseErrorCache = new WeakMap<Promise<unknown>, unknown>()
+      const promiseResultCache = new WeakMap<Promise<unknown>, Awaited<Value>>()
       const refreshAtom = atom(0)
 
       if (import.meta.env?.MODE !== 'production') {
@@ -58,38 +62,32 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
           get(refreshAtom)
           const prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
           const promise = get(anAtom)
-          if (!isPromiseLike(promise)) {
+          if (!isPromise(promise)) {
             return { v: promise as Awaited<Value> }
           }
-
           if (promise !== prev?.p) {
-            actOnResolved(
-              promise,
-              // fulfilled
-              (v) => promiseResultCache.set(promise, v as Awaited<Value>),
-              // rejected
-              (e) => promiseErrorCache.set(promise, e),
-              // finally
-              (sync) => {
-                if (!sync) {
-                  // cannot set self synchronously
-                  setSelf()
-                }
-              },
-            )
+            if (promise.status === 'fulfilled') {
+              promiseResultCache.set(promise, promise.value as Awaited<Value>)
+            } else if (promise.status === 'rejected') {
+              promiseErrorCache.set(promise, promise.reason)
+            } else {
+              promise
+                .then(
+                  (v) => promiseResultCache.set(promise, v as Awaited<Value>),
+                  (e) => promiseErrorCache.set(promise, e),
+                )
+                .finally(setSelf)
+            }
           }
-
           if (promiseErrorCache.has(promise)) {
             throw promiseErrorCache.get(promise)
           }
-
           if (promiseResultCache.has(promise)) {
             return {
               p: promise,
               v: promiseResultCache.get(promise) as Awaited<Value>,
             }
           }
-
           if (prev && 'v' in prev) {
             return { p: promise, f: fallback(prev.v), v: prev.v }
           }
