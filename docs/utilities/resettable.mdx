@@ -146,3 +146,62 @@ is no longer used and any change in dependencies atoms will not trigger an updat
 
 Resetting the value allows us to restore its original default value,
 discarding changes made previously via the `set` function.
+
+## atomWithRefresh
+
+```ts
+function atomWithRefresh<Value>(
+  read: Read<Value, [], void>,
+): WritableAtom<Value, [], void>
+```
+
+Creates an atom that we can refresh,
+which is to force reevaluating the read function.
+
+This is helpful when you need to refresh asynchronous data.
+It can also be used to implement "pull to refresh" functionality.
+
+```ts
+function atomWithRefresh<Value, Args extends unknown[], Result>(
+  read: Read<Value, Args, Result>,
+  write: Write<Value, Args, Result>,
+): WritableAtom<Value, Args | [], Result | void>
+```
+
+Passing zero arguments to `set` will refresh.
+Passing one or more arguments to `set` will call "write" function.
+
+### Example
+
+Here's how you'd use it to implement an refresh-able source of data:
+
+```js
+import { atomWithRefresh } from 'XXX'
+
+const postsAtom = atomWithRefresh((get) =>
+  fetch('https://jsonplaceholder.typicode.com/posts').then((r) => r.json()),
+)
+```
+
+In a component:
+
+```jsx
+const PostsList = () => {
+  const [posts, refreshPosts] = useAtom(postsAtom)
+
+  return (
+    <div>
+      <ul>
+        {posts.map((post) => (
+          <li key={post.id}>{post.title}</li>
+        ))}
+      </ul>
+
+      {/* Clicking this button will re-fetch the posts */}
+      <button type="button" onClick={refreshPosts}>
+        Refresh posts
+      </button>
+    </div>
+  )
+}
+```
