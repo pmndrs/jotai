@@ -1,10 +1,17 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom } from '../../vanilla.ts'
-import { actOnResolved, isPromiseLike } from './promiseUtils.ts'
 
 const cache1 = new WeakMap()
 const memo1 = <T>(create: () => T, dep1: object): T =>
   (cache1.has(dep1) ? cache1 : cache1.set(dep1, create())).get(dep1)
+
+type PromiseMeta =
+  | { status?: 'pending' }
+  | { status: 'fulfilled'; value: any }
+  | { status: 'rejected'; reason: unknown }
+
+const isPromise = (x: unknown): x is Promise<any> & PromiseMeta =>
+  x instanceof Promise
 
 export type Loadable<Value> =
   | { state: 'loading' }
@@ -15,7 +22,10 @@ const LOADING: Loadable<unknown> = { state: 'loading' }
 
 export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
   return memo1(() => {
-    const loadableCache = new WeakMap<PromiseLike<unknown>, Loadable<Value>>()
+    const loadableCache = new WeakMap<
+      Promise<Awaited<Value>>,
+      Loadable<Value>
+    >()
     const refreshAtom = atom(0)
 
     if (import.meta.env?.MODE !== 'production') {
@@ -31,38 +41,37 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
         } catch (error) {
           return { state: 'hasError', error } as Loadable<Value>
         }
-        if (!isPromiseLike(value)) {
+        if (!isPromise(value)) {
           return { state: 'hasData', data: value } as Loadable<Value>
         }
-
         const promise = value
-
-        let cached = loadableCache.get(promise)
-        if (cached) {
-          return cached
+        const cached1 = loadableCache.get(promise)
+        if (cached1) {
+          return cached1
         }
-
-        actOnResolved(
-          promise,
-          // fulfilled
-          (data) => loadableCache.set(promise, { state: 'hasData', data }),
-          // rejected
-          (error) => loadableCache.set(promise, { state: 'hasError', error }),
-          // finally
-          (sync) => {
-            if (!sync) {
-              // cannot set self synchronously
-              setSelf()
-            }
-          },
-        )
-
-        // might have been resolved synchronously
-        cached = loadableCache.get(promise)
-        if (cached) {
-          return cached
+        if (promise.status === 'fulfilled') {
+          loadableCache.set(promise, { state: 'hasData', data: promise.value })
+        } else if (promise.status === 'rejected') {
+          loadableCache.set(promise, {
+            state: 'hasError',
+            error: promise.reason,
+          })
+        } else {
+          promise
+            .then(
+              (data) => {
+                loadableCache.set(promise, { state: 'hasData', data })
+              },
+              (error) => {
+                loadableCache.set(promise, { state: 'hasError', error })
+              },
+            )
+            .finally(setSelf)
         }
-
+        const cached2 = loadableCache.get(promise)
+        if (cached2) {
+          return cached2
+        }
         loadableCache.set(promise, LOADING as Loadable<Value>)
         return LOADING as Loadable<Value>
       },

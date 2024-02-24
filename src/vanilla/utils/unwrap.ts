@@ -9,15 +9,15 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
   return getCached(create, cache2, dep2)
 }
 
-const defaultFallback = () => undefined
-
 type PromiseMeta =
   | { status?: 'pending' }
   | { status: 'fulfilled'; value: unknown }
-  | { status: 'rejected'; reason?: unknown }
+  | { status: 'rejected'; reason: unknown }
 
 const isPromise = (x: unknown): x is Promise<unknown> & PromiseMeta =>
   x instanceof Promise
+
+const defaultFallback = () => undefined
 
 export function unwrap<Value, Args extends unknown[], Result>(
   anAtom: WritableAtom<Value, Args, Result>,
