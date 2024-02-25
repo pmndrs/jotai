@@ -471,7 +471,7 @@ describe('atomWithStorage (with browser storage)', () => {
         if (!get(isLoggedAtom)) return false
         return get(isDevModeStorageAtom)
       },
-      (get, set, value: boolean) => {
+      (_get, set, value: boolean) => {
         set(isDevModeStorageAtom, value)
       },
     )
@@ -596,7 +596,7 @@ describe('atomWithStorage (with non-browser storage)', () => {
 
 describe('withStorageValidator', () => {
   it('should use withStorageValidator with isNumber', () => {
-    const storage = createJSONStorage<number>()
+    const storage = createJSONStorage()
     const isNumber = (v: unknown): v is number => typeof v === 'number'
     atomWithStorage('my-number', 0, withStorageValidator(isNumber)(storage))
   })
