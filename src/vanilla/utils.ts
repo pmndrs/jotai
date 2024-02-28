@@ -14,3 +14,4 @@ export {
 export { atomWithObservable } from './utils/atomWithObservable.ts'
 export { loadable } from './utils/loadable.ts'
 export { unwrap } from './utils/unwrap.ts'
+export { atomWithRefresh } from './utils/atomWithRefresh.ts'
