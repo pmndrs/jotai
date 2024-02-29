@@ -46,10 +46,8 @@ export const Menu = () => {
       </div>
       <div
         className={cx(
-          isMenuOpen
-            ? 'pointer-events-auto opacity-100 lg:pointer-events-none lg:opacity-0'
-            : 'pointer-events-none opacity-0',
-          'fixed inset-0 z-50 flex max-h-screen items-end bg-black/75 p-4 transition duration-300 ease-in-out sm:p-6',
+          isMenuOpen ? 'opacity-100 visible lg:invisible lg:opacity-0' : 'opacity-0 invisible',
+          'fixed inset-0 z-50 flex max-h-screen items-end bg-black/75 p-4 transition-[opacity,visibility] duration-300 ease-in-out sm:p-6',
         )}
       >
         <div className="max-h-full w-full overflow-y-scroll !overscroll-none rounded-lg border border-gray-300 bg-white p-8 shadow-2xl dark:border-gray-800 dark:bg-gray-950 dark:!shadow-none">
