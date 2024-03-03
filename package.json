@@ -38,6 +38,10 @@
         "types": "./esm/index.d.mts",
         "default": "./esm/index.mjs"
       },
+      "webpack": {
+        "types": "./index.d.ts",
+        "default": "./webpack/index.js"
+      },
       "default": {
         "types": "./index.d.ts",
         "default": "./index.js"
@@ -47,6 +51,10 @@
       "import": {
         "types": "./esm/*.d.mts",
         "default": "./esm/*.mjs"
+      },
+      "webpack": {
+        "types": "./*.d.ts",
+        "default": "./webpack/*.js"
       },
       "default": {
         "types": "./*.d.ts",
