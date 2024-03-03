@@ -1,8 +1,8 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import { atom, createStore } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/vanilla/utils'
 
 const useCommitCount = () => {
@@ -230,4 +230,32 @@ it('equality function works even if suspend', async () => {
   fireEvent.click(getByText('other'))
   await findByText('bigValue: {"a":1,"b":2}')
   await findByText('littleValue: {"a":1}')
+})
+
+it('should not return async value when the base atom values are synchronous', async () => {
+  expect.assertions(4)
+  type Base = { id: number; value: number }
+  const baseAtom = atom<Base | Promise<Base>>(
+    Promise.resolve({ id: 0, value: 0 }),
+  )
+  const idAtom = selectAtom(
+    baseAtom,
+    ({ id }) => id,
+    (a, b) => a === b,
+  )
+
+  const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
+    typeof (x as any)?.then === 'function'
+
+  const store = createStore()
+  async function incrementValue() {
+    const { id, value } = await store.get(baseAtom)
+    store.set(baseAtom, { id, value: value + 1 })
+  }
+
+  expect(isPromiseLike(store.get(baseAtom))).toBe(true)
+  expect(isPromiseLike(store.get(idAtom))).toBe(true)
+  await incrementValue()
+  expect(isPromiseLike(store.get(baseAtom))).toBe(false)
+  expect(isPromiseLike(store.get(idAtom))).toBe(false)
 })
