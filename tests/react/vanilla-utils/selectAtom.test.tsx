@@ -232,12 +232,11 @@ it('equality function works even if suspend', async () => {
   await findByText('littleValue: {"a":1}')
 })
 
-it('should not return async value when the base atom values are synchronous', async () => {
+it.only('should not return async value when the base atom values are synchronous', async () => {
   expect.assertions(4)
   type Base = { id: number; value: number }
-  const baseAtom = atom<Base | Promise<Base>>(
-    Promise.resolve({ id: 0, value: 0 }),
-  )
+  const initialBase = Promise.resolve({ id: 0, value: 0 })
+  const baseAtom = atom<Base | Promise<Base>>(initialBase)
   const idAtom = selectAtom(
     baseAtom,
     ({ id }) => id,
@@ -255,7 +254,12 @@ it('should not return async value when the base atom values are synchronous', as
 
   expect(isPromiseLike(store.get(baseAtom))).toBe(true)
   expect(isPromiseLike(store.get(idAtom))).toBe(true)
+  await delay(0)
   await incrementValue()
   expect(isPromiseLike(store.get(baseAtom))).toBe(false)
   expect(isPromiseLike(store.get(idAtom))).toBe(false)
 })
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}

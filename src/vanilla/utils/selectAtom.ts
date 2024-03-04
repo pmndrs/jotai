@@ -29,6 +29,11 @@ export function selectAtom<Value, Slice>(
   return memo3(
     () => {
       const EMPTY = Symbol()
+      const refAtom = atom(() => ({
+        version: 0,
+        prev: EMPTY as Slice | typeof EMPTY | Promise<Slice>,
+      }))
+
       const selectValue = ([value, prevSlice]: readonly [
         Awaited<Value>,
         Slice | typeof EMPTY,
@@ -42,12 +47,22 @@ export function selectAtom<Value, Slice>(
       const derivedAtom: Atom<Slice | Promise<Slice> | typeof EMPTY> & {
         init?: typeof EMPTY
       } = atom((get) => {
+        const ref = get(refAtom)
         const prev = get(derivedAtom)
+        const prevSlice = prev instanceof Promise ? ref.prev : prev
         const value = get(anAtom)
-        if (value instanceof Promise || prev instanceof Promise) {
-          return Promise.all([value, prev] as const).then(selectValue)
+        const version = ++ref.version
+        if (value instanceof Promise || prevSlice instanceof Promise) {
+          return (ref.prev = Promise.all([value, prevSlice] as const)
+            .then(selectValue)
+            .then((slice) => {
+              if (version === ref.version) {
+                ref.prev = slice
+              }
+              return slice
+            }))
         }
-        return selectValue([value as Awaited<Value>, prev] as const)
+        return (ref.prev = selectValue([value as Awaited<Value>, prevSlice]))
       })
       // HACK to read derived atom before initialization
       derivedAtom.init = EMPTY
