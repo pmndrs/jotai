@@ -232,7 +232,7 @@ it('equality function works even if suspend', async () => {
   await findByText('littleValue: {"a":1}')
 })
 
-it.only('should not return async value when the base atom values are synchronous', async () => {
+it('should not return async value when the base atom values are synchronous', async () => {
   expect.assertions(4)
   type Base = { id: number; value: number }
   const initialBase = Promise.resolve({ id: 0, value: 0 })

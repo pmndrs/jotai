@@ -15,6 +15,8 @@ const memo3 = <T>(
   return getCached(create, cache3, dep3)
 }
 
+const stateCache = new WeakMap()
+
 export function selectAtom<Value, Slice>(
   anAtom: Atom<Value>,
   selector: (v: Awaited<Value>, prevSlice?: Slice) => Slice,
@@ -29,10 +31,11 @@ export function selectAtom<Value, Slice>(
   return memo3(
     () => {
       const EMPTY = Symbol()
-      const refAtom = atom(() => ({
+      const initState = () => ({
         version: 0,
         prev: EMPTY as Slice | typeof EMPTY | Promise<Slice>,
-      }))
+      })
+      const ref = getCached(initState, stateCache, anAtom)
 
       const selectValue = ([value, prevSlice]: readonly [
         Awaited<Value>,
@@ -47,7 +50,6 @@ export function selectAtom<Value, Slice>(
       const derivedAtom: Atom<Slice | Promise<Slice> | typeof EMPTY> & {
         init?: typeof EMPTY
       } = atom((get) => {
-        const ref = get(refAtom)
         const prev = get(derivedAtom)
         const prevSlice = prev instanceof Promise ? ref.prev : prev
         const value = get(anAtom)
