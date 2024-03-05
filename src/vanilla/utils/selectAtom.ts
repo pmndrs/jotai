@@ -1,8 +1,11 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom } from '../../vanilla.ts'
 
-const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
-  (m.has(k) ? m : m.set(k, c())).get(k) as T
+const getCached = <T, K extends object>(
+  c: () => T,
+  m: WeakMap<K, T>,
+  k: K,
+): T => (m.has(k) ? m : m.set(k, c())).get(k) as T
 const cache1 = new WeakMap()
 const memo3 = <T>(
   create: () => T,
@@ -35,7 +38,9 @@ export function selectAtom<Value, Slice>(
         version: 0,
         prev: EMPTY as Slice | typeof EMPTY | Promise<Slice>,
       })
-      const ref = getCached(initState, stateCache, anAtom)
+      const refFamily = getCached(() => new WeakMap(), stateCache, anAtom)
+
+      const identityAtom = atom(() => ({}))
 
       const selectValue = ([value, prevSlice]: readonly [
         Awaited<Value>,
@@ -50,6 +55,7 @@ export function selectAtom<Value, Slice>(
       const derivedAtom: Atom<Slice | Promise<Slice> | typeof EMPTY> & {
         init?: typeof EMPTY
       } = atom((get) => {
+        const ref = getCached(initState, refFamily, get(identityAtom))
         const prev = get(derivedAtom)
         const prevSlice = prev instanceof Promise ? ref.prev : prev
         const value = get(anAtom)
