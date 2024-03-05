@@ -1,11 +1,8 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom } from '../../vanilla.ts'
 
-const getCached = <T, K extends object>(
-  c: () => T,
-  m: WeakMap<K, T>,
-  k: K,
-): T => (m.has(k) ? m : m.set(k, c())).get(k) as T
+const getCached = <T>(c: () => T, m: WeakMap<object, T>, k: object): T =>
+  (m.has(k) ? m : m.set(k, c())).get(k) as T
 const cache1 = new WeakMap()
 const memo3 = <T>(
   create: () => T,
@@ -18,32 +15,22 @@ const memo3 = <T>(
   return getCached(create, cache3, dep3)
 }
 
-const stateCache = new WeakMap()
-
 export function selectAtom<Value, Slice>(
   anAtom: Atom<Value>,
-  selector: (v: Awaited<Value>, prevSlice?: Slice) => Slice,
+  selector: (v: Value, prevSlice?: Slice) => Slice,
   equalityFn?: (a: Slice, b: Slice) => boolean,
-): Atom<Value extends Promise<unknown> ? Promise<Slice> : Slice>
+): Atom<Slice>
 
 export function selectAtom<Value, Slice>(
   anAtom: Atom<Value>,
-  selector: (v: Awaited<Value>, prevSlice?: Slice) => Slice,
-  equalityFn: (a: Slice, b: Slice) => boolean = Object.is,
+  selector: (v: Value, prevSlice?: Slice) => Slice,
+  equalityFn: (prevSlice: Slice, slice: Slice) => boolean = Object.is,
 ) {
   return memo3(
     () => {
       const EMPTY = Symbol()
-      const initState = () => ({
-        version: 0,
-        prev: EMPTY as Slice | typeof EMPTY | Promise<Slice>,
-      })
-      const refFamily = getCached(() => new WeakMap(), stateCache, anAtom)
-
-      const identityAtom = atom(() => ({}))
-
       const selectValue = ([value, prevSlice]: readonly [
-        Awaited<Value>,
+        Value,
         Slice | typeof EMPTY,
       ]) => {
         if (prevSlice === EMPTY) {
@@ -52,25 +39,12 @@ export function selectAtom<Value, Slice>(
         const slice = selector(value, prevSlice)
         return equalityFn(prevSlice, slice) ? prevSlice : slice
       }
-      const derivedAtom: Atom<Slice | Promise<Slice> | typeof EMPTY> & {
+      const derivedAtom: Atom<Slice | typeof EMPTY> & {
         init?: typeof EMPTY
       } = atom((get) => {
-        const ref = getCached(initState, refFamily, get(identityAtom))
         const prev = get(derivedAtom)
-        const prevSlice = prev instanceof Promise ? ref.prev : prev
         const value = get(anAtom)
-        const version = ++ref.version
-        if (value instanceof Promise || prevSlice instanceof Promise) {
-          return (ref.prev = Promise.all([value, prevSlice] as const)
-            .then(selectValue)
-            .then((slice) => {
-              if (version === ref.version) {
-                ref.prev = slice
-              }
-              return slice
-            }))
-        }
-        return (ref.prev = selectValue([value as Awaited<Value>, prevSlice]))
+        return selectValue([value, prev] as const)
       })
       // HACK to read derived atom before initialization
       derivedAtom.init = EMPTY
