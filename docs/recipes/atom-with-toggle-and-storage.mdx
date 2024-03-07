@@ -16,17 +16,17 @@ export function atomWithToggleAndStorage(
   key: string,
   initialValue?: boolean,
   storage?: any,
-): WritableAtom<boolean, boolean | undefined> {
+): WritableAtom<boolean, [boolean?], void> {
   const anAtom = atomWithStorage(key, initialValue, storage)
   const derivedAtom = atom(
     (get) => get(anAtom),
     (get, set, nextValue?: boolean) => {
       const update = nextValue ?? !get(anAtom)
-      set(anAtom, update)
+      void set(anAtom, update)
     },
   )
 
-  return derivedAtom
+  return derivedAtom as WritableAtom<boolean, [boolean?], void>
 }
 ```
 
