@@ -8,6 +8,6 @@
     "./react": "./src/react.ts",
     "./react/utils": "./src/react/utils.ts"
   },
-  "include": ["jsr.json", "src/**"],
-  "exclude": ["**"]
+  "include": ["src/**"],
+  "exclude": ["website/**"]
 }
