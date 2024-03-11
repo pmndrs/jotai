@@ -68,12 +68,13 @@ const nameAtom = atom(NAMES[0])
 const pokemonAtom = trpc.pokemon.byId.atomWithQuery((get) => get(nameAtom))
 
 const Pokemon = () => {
-  const [data] = useAtom(pokemonAtom)
+  const [data, refresh] = useAtom(pokemonAtom)
   return (
     <div>
       <div>ID: {data.id}</div>
       <div>Height: {data.height}</div>
       <div>Weight: {data.weight}</div>
+      <button onClick={refresh}>Refresh</button>
     </div>
   )
 }
