@@ -11,8 +11,7 @@ to interact with the world outside React.
 
 ## createStore
 
-[`createStore`](../core/store) provides a store interface that can be used to store your atoms. Using the store, you can access and mutate the state of your stored atoms from outside React.
-
+[`createStore`](../core/store.mdx#createstore) provides a store interface that can be used to store your atoms. Using the store, you can access and mutate the state of your stored atoms from outside React.
 
 ```jsx
 import { atom, useAtomValue, createStore, Provider } from "jotai";
@@ -20,11 +19,11 @@ import { atom, useAtomValue, createStore, Provider } from "jotai";
 const timeAtom = atom(0);
 const store = createStore();
 
-store.set(timeAtom, store.get(timeAtom) + 1); // Update atom's value
-store.get(timeAtom); // Read atom's value
+store.set(timeAtom, (prev) => prev + 1); // Update atom's value
+store.get(timeAtom) // Read atom's value
 
 function Component() {
-  const time = useAtomValue(timeAtom); // Inside React
+  const time = useAtomValue(timeAtom) // Inside React
   return (
     <div className="App">
       <h1>{time}</h1>
