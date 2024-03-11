@@ -199,30 +199,38 @@ export function atomWithStorage<Value>(
   options?: { getOnInit?: boolean },
 ): any {
   const getOnInit = options?.getOnInit
-  const baseAtom = atom(
-    getOnInit
-      ? (storage.getItem(key, initialValue) as Value | Promise<Value>)
-      : initialValue,
-  )
 
-  if (import.meta.env?.MODE !== 'production') {
-    baseAtom.debugPrivate = true
-  }
+  // wrapping in an atom to reinitialize per store.
+  const baseWrapperAtom = atom(() => {
+    const baseAtom = atom(
+      getOnInit
+        ? (storage.getItem(key, initialValue) as Value | Promise<Value>)
+        : initialValue,
+    )
 
-  baseAtom.onMount = (setAtom) => {
-    if (!getOnInit) {
-      setAtom(storage.getItem(key, initialValue) as Value | Promise<Value>)
+    if (import.meta.env?.MODE !== 'production') {
+      baseAtom.debugPrivate = true
     }
-    let unsub: Unsubscribe | undefined
-    if (storage.subscribe) {
-      unsub = storage.subscribe(key, setAtom, initialValue)
+
+    baseAtom.onMount = (setAtom) => {
+      if (!getOnInit) {
+        setAtom(storage.getItem(key, initialValue) as Value | Promise<Value>)
+      }
+      let unsub: Unsubscribe | undefined
+      if (storage.subscribe) {
+        unsub = storage.subscribe(key, setAtom, initialValue)
+      }
+      return unsub
     }
-    return unsub
-  }
+
+    return baseAtom
+  })
 
   const anAtom = atom(
-    (get) => get(baseAtom),
+    (get) => get(get(baseWrapperAtom)),
     (get, set, update: SetStateActionWithReset<Value | Promise<Value>>) => {
+      const baseAtom = get(baseWrapperAtom)
+
       const nextValue =
         typeof update === 'function'
           ? (
