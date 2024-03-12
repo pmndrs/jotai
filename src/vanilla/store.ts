@@ -476,7 +476,7 @@ export const createStore = () => {
   const addAtom = (atom: AnyAtom, initialListener?: () => void): Mounted => {
     let mounted = mountedMap.get(atom)
     if (!mounted) {
-      mounted = mountAtom(atom, initialListener)
+      mounted = mountAtom(atom, undefined, undefined, initialListener)
     }
     return mounted
   }
@@ -610,9 +610,9 @@ export const createStore = () => {
 
   const mountAtom = <Value>(
     atom: Atom<Value>,
-    initialListener?: () => void,
     initialDependent?: AnyAtom,
     onMountQueue?: (() => void)[],
+    initialListener?: () => void,
   ): Mounted => {
     const queue = onMountQueue || []
     // mount dependencies before mounting self
@@ -622,7 +622,7 @@ export const createStore = () => {
         aMounted.t.add(atom) // add dependent
       } else {
         if (a !== atom) {
-          mountAtom(a, undefined, atom, queue)
+          mountAtom(a, atom, queue)
         }
       }
     })
@@ -717,7 +717,7 @@ export const createStore = () => {
         // we mount dependencies only when atom is already mounted
         // Note: we should revisit this when you find other issues
         // https://github.com/pmndrs/jotai/issues/942
-        mountAtom(a, undefined, atom)
+        mountAtom(a, atom)
       }
     })
     maybeUnmountAtomSet.forEach((a) => {
