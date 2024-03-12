@@ -503,7 +503,7 @@ it('should mount once with atom creator atom (#2314)', async () => {
   expect(countAtom.onMount).toHaveBeenCalledTimes(1)
 })
 
-it('should flush pending write triggered asynchronously and indirectly', async () => {
+it('should flush pending write triggered asynchronously and indirectly (#2451)', async () => {
   const store = createStore()
   const anAtom = atom('initial')
 
