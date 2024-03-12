@@ -560,7 +560,6 @@ export const createStore = () => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
-    let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
@@ -580,7 +579,7 @@ export const createStore = () => {
       } else {
         r = writeAtomState(a as AnyWritableAtom, ...args) as R
       }
-      if (!isSync) {
+      if (pendingStack.length === 0) {
         const flushed = flushPending([a])
         if (import.meta.env?.MODE !== 'production') {
           storeListenersRev2.forEach((l) =>
@@ -591,7 +590,6 @@ export const createStore = () => {
       return r as R
     }
     const result = atom.write(getter, setter, ...args)
-    isSync = false
     return result
   }
 
