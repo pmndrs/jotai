@@ -502,3 +502,19 @@ it('should mount once with atom creator atom (#2314)', async () => {
   store.sub(atomCreatorAtom, () => {})
   expect(countAtom.onMount).toHaveBeenCalledTimes(1)
 })
+
+it('should notify subscriber if subscribing causes the value to change', async () => {
+  const anAtom = atom(0)
+  anAtom.onMount = (setAtom) => {
+    setAtom(1)
+  }
+  const store = createStore()
+  const subscriberFn = vi.fn((_value: number) => {})
+  expect(store.get(anAtom)).toEqual(0)
+  store.sub(anAtom, () => {
+    subscriberFn(store.get(anAtom))
+  })
+
+  expect(subscriberFn).toHaveBeenCalledOnce()
+  expect(subscriberFn).toHaveBeenCalledWith(1)
+})

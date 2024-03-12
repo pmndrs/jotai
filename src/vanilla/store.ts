@@ -473,10 +473,10 @@ export const createStore = () => {
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(atom))
 
-  const addAtom = (atom: AnyAtom): Mounted => {
+  const addAtom = (atom: AnyAtom, initialListener?: () => void): Mounted => {
     let mounted = mountedMap.get(atom)
     if (!mounted) {
-      mounted = mountAtom(atom)
+      mounted = mountAtom(atom, initialListener)
     }
     return mounted
   }
@@ -610,6 +610,7 @@ export const createStore = () => {
 
   const mountAtom = <Value>(
     atom: Atom<Value>,
+    initialListener?: () => void,
     initialDependent?: AnyAtom,
     onMountQueue?: (() => void)[],
   ): Mounted => {
@@ -621,12 +622,12 @@ export const createStore = () => {
         aMounted.t.add(atom) // add dependent
       } else {
         if (a !== atom) {
-          mountAtom(a, atom, queue)
+          mountAtom(a, undefined, atom, queue)
         }
       }
     })
     // recompute atom state
-    readAtomState(atom)
+    const preMountState = readAtomState(atom)
     // mount self
     const mounted: Mounted = {
       t: new Set(initialDependent && [initialDependent]),
@@ -648,6 +649,10 @@ export const createStore = () => {
     }
     if (!onMountQueue) {
       queue.forEach((f) => f())
+    }
+    const postMountState = readAtomState(atom)
+    if (initialListener && !isEqualAtomValue(preMountState, postMountState)) {
+      initialListener()
     }
     return mounted
   }
@@ -712,7 +717,7 @@ export const createStore = () => {
         // we mount dependencies only when atom is already mounted
         // Note: we should revisit this when you find other issues
         // https://github.com/pmndrs/jotai/issues/942
-        mountAtom(a, atom)
+        mountAtom(a, undefined, atom)
       }
     })
     maybeUnmountAtomSet.forEach((a) => {
@@ -782,7 +787,7 @@ export const createStore = () => {
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    const mounted = addAtom(atom)
+    const mounted = addAtom(atom, listener)
     const flushed = flushPending([atom])
     const listeners = mounted.l
     listeners.add(listener)
