@@ -153,3 +153,82 @@ it('keeps atoms mounted between recalculations', async () => {
     unmounted: 0,
   })
 })
+
+it('settles never resolving async derivations with deps picked up sync', async () => {
+  const resolve: ((value: number) => void)[] = []
+
+  const syncAtom = atom({
+    promise: new Promise<number>((r) => resolve.push(r)),
+  })
+
+  const asyncAtom = atom(async (get) => {
+    return await get(syncAtom).promise
+  })
+
+  const store = createStore()
+
+  let sub = 0
+  const values: unknown[] = []
+  store.get(asyncAtom).then((value) => values.push(value))
+
+  store.sub(asyncAtom, () => {
+    sub++
+    store.get(asyncAtom).then((value) => values.push(value))
+  })
+
+  await new Promise((r) => setTimeout(r))
+
+  store.set(syncAtom, {
+    promise: new Promise<number>((r) => resolve.push(r)),
+  })
+
+  await new Promise((r) => setTimeout(r))
+
+  resolve[1]?.(1)
+
+  await new Promise((r) => setTimeout(r))
+
+  expect(values).toEqual([1, 1])
+  expect(sub).toBe(1)
+})
+
+it('settles never resolving async derivations with deps picked up async', async () => {
+  const resolve: ((value: number) => void)[] = []
+
+  const syncAtom = atom({
+    promise: new Promise<number>((r) => resolve.push(r)),
+  })
+
+  const asyncAtom = atom(async (get) => {
+    // we want to pick up `syncAtom` as an async dep
+    await Promise.resolve()
+
+    return await get(syncAtom).promise
+  })
+
+  const store = createStore()
+
+  let sub = 0
+  const values: unknown[] = []
+  store.get(asyncAtom).then((value) => values.push(value))
+
+  store.sub(asyncAtom, () => {
+    sub++
+    store.get(asyncAtom).then((value) => values.push(value))
+  })
+
+  await new Promise((r) => setTimeout(r))
+
+  store.set(syncAtom, {
+    promise: new Promise<number>((r) => resolve.push(r)),
+  })
+
+  await new Promise((r) => setTimeout(r))
+
+  resolve[1]?.(1)
+
+  await new Promise((r) => setTimeout(r))
+
+  expect(values).toEqual([1, 1])
+  expect(sub).toBe(1)
+})
