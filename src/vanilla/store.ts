@@ -565,6 +565,10 @@ export const createStore = () => {
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
+      const isSync = pendingStack.length > 0
+      if (!isSync) {
+        pendingStack.push(new Set([a]))
+      }
       let r: R | undefined
       if (isSelfAtom(atom, a)) {
         if (!hasInitialValue(a)) {
@@ -579,8 +583,8 @@ export const createStore = () => {
       } else {
         r = writeAtomState(a as AnyWritableAtom, ...args) as R
       }
-      if (pendingStack.length === 0) {
-        const flushed = flushPending([a])
+      if (!isSync) {
+        const flushed = flushPending(pendingStack.pop()!)
         if (import.meta.env?.MODE !== 'production') {
           storeListenersRev2.forEach((l) =>
             l({ type: 'async-write', flushed: flushed! }),
