@@ -1,3 +1,9 @@
+// TODO
+// onMount (with queue), onUnmount
+// mount/unmount with dependency change (somehow queue it?)
+// notify subscribers
+// do not recompute if not mounted
+
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -10,6 +16,11 @@ type Setter = Parameters<AnyWritableAtom['write']>[1]
 
 const isSelfAtom = (atom: AnyAtom, a: AnyAtom) =>
   atom.unstable_is ? atom.unstable_is(a) : a === atom
+
+const hasInitialValue = <T extends Atom<AnyValue>>(
+  atom: T,
+): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
+  'init' in atom
 
 const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
@@ -132,15 +143,18 @@ type AtomState<Value = AnyValue> = {
   readonly d: Set<AnyAtom>
   /** Set of atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
-  /** Object to store mounted state of the atom. */ // TODO nested mounted
+  /** Object to store mounted state of the atom. */
   m?: Mounted // only available if the atom is mounted
   /** Atom value, atom error or empty. */
-  s?: { v: Value } | { e: AnyError }
+  s?: { readonly v: Value } | { readonly e: AnyError }
 }
+
+type WithS<T extends AtomState> = T & { s: NonNullable<T['s']> }
 
 const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
   if (!('s' in atomState)) {
-    throw new Error('[Bug] atom state is not initialized')
+    // NOTE invalid derived atoms can reach here
+    throw new Error('no atom init')
   }
   if ('e' in atomState.s) {
     throw atomState.s.e
@@ -154,7 +168,7 @@ export const createStore = () => {
   const getAtomState = <Value>(atom: Atom<Value>) => {
     if (!atomStateMap.has(atom)) {
       const atomState: AtomState<Value> = { d: new Set(), t: new Set() }
-      if ('init' in atom) {
+      if (hasInitialValue(atom)) {
         atomState.s = { v: atom.init as Value }
       }
       atomStateMap.set(atom, atomState)
@@ -179,11 +193,11 @@ export const createStore = () => {
   const readAtomState = <Value>(
     atom: Atom<Value>,
     force?: boolean,
-  ): AtomState<Value> => {
+  ): WithS<AtomState<Value>> => {
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
     if (!force && 's' in atomState) {
-      return atomState
+      return atomState as WithS<typeof atomState>
     }
     // Compute a new state for this atom.
     clearDependencies(atom)
@@ -191,10 +205,6 @@ export const createStore = () => {
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
         const aState = getAtomState(a)
-        if (!('s' in aState)) {
-          // NOTE invalid derived atoms can reach here
-          throw new Error('no atom init')
-        }
         return returnAtomValue(aState)
       }
       // a !== atom
@@ -247,10 +257,10 @@ export const createStore = () => {
       } else {
         atomState.s = { v: valueOrPromise }
       }
-      return atomState
+      return atomState as WithS<typeof atomState>
     } catch (error) {
       atomState.s = { e: error }
-      return atomState
+      return atomState as WithS<typeof atomState>
     } finally {
       isSync = false
     }
@@ -259,16 +269,133 @@ export const createStore = () => {
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(atom))
 
+  const recomputeDependents = (atom: AnyAtom): void => {
+    // This is a topological sort via depth-first search, slightly modified from
+    // what's described here for simplicity and performance reasons:
+    // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+
+    // Step 1: traverse the dependency graph to build the topsorted atom list
+    // We don't bother to check for cycles, which simplifies the algorithm.
+    const topsortedAtoms: AnyAtom[] = []
+    const markedAtoms = new Set<AnyAtom>()
+    const visit = (n: AnyAtom) => {
+      if (markedAtoms.has(n)) {
+        return
+      }
+      markedAtoms.add(n)
+      for (const m of getAtomState(n).t) {
+        // we shouldn't use isSelfAtom here.
+        if (n !== m) {
+          visit(m)
+        }
+      }
+      // The algorithm calls for pushing onto the front of the list. For
+      // performance, we will simply push onto the end, and then will iterate in
+      // reverse order later.
+      topsortedAtoms.push(n)
+    }
+    // Visit the root atom. This is the only atom in the dependency graph
+    // without incoming edges, which is one reason we can simplify the algorithm
+    visit(atom)
+    // Step 2: use the topsorted atom list to recompute all affected atoms
+    // Track what's changed, so that we can short circuit when possible
+    const changedAtoms = new Set<AnyAtom>([atom])
+    for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
+      const a = topsortedAtoms[i]!
+      const aState = getAtomState(a)
+      const prev = aState.s
+      let hasChangedDeps = false
+      for (const dep of aState.d) {
+        if (dep !== a && changedAtoms.has(dep)) {
+          hasChangedDeps = true
+          break
+        }
+      }
+      if (hasChangedDeps) {
+        const nextAtomState = readAtomState(a, true)
+        if (
+          !prev ||
+          !('v' in prev) ||
+          !('v' in nextAtomState.s) ||
+          !Object.is(prev.v, nextAtomState.s.v)
+        ) {
+          changedAtoms.add(a)
+        }
+      }
+    }
+  }
+
+  const writeAtomState = <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...args: Args
+  ): Result => {
+    const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
+    const setter: Setter = <V, As extends unknown[], R>(
+      a: WritableAtom<V, As, R>,
+      ...args: As
+    ) => {
+      let r: R | undefined
+      if (isSelfAtom(atom, a)) {
+        if (!hasInitialValue(a)) {
+          // NOTE technically possible but restricted as it may cause bugs
+          throw new Error('atom not writable')
+        }
+        const aState = getAtomState(a)
+        const prev = aState.s
+        aState.s = { v: args[0] as V }
+        if (!prev || !('v' in prev) || !Object.is(prev.v, args[0])) {
+          recomputeDependents(a)
+        }
+      } else {
+        r = writeAtomState(a as AnyWritableAtom, ...args) as R
+      }
+      return r as R
+    }
+    const result = atom.write(getter, setter, ...args)
+    return result
+  }
+
   const writeAtom = <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
-    // TODO
-    return null as any
+    const result = writeAtomState(atom, ...args)
+    return result
+  }
+
+  const mountAtom = (atom: AnyAtom): Mounted => {
+    const atomState = getAtomState(atom)
+    if (!atomState.m) {
+      // mount dependents first
+      for (const a of atomState.d) {
+        mountAtom(a)
+      }
+      // mount self
+      atomState.m = { l: new Set() }
+    }
+    return atomState.m
+  }
+
+  const unmountAtom = (atom: AnyAtom) => {
+    const atomState = getAtomState(atom)
+    if (atomState.m && !atomState.m.l.size && !atomState.t.size) {
+      // unmount self
+      delete atomState.m
+      // unmount dependencies
+      for (const a of atomState.d) {
+        unmountAtom(a)
+      }
+    }
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    // TODO
+    const mounted = mountAtom(atom)
+    const listeners = mounted.l
+    listeners.add(listener)
+    return () => {
+      listeners.delete(listener)
+      unmountAtom(atom)
+    }
   }
 
   return {
