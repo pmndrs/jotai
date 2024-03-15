@@ -210,9 +210,7 @@ export function atomWithStorage<Value>(
   }
 
   baseAtom.onMount = (setAtom) => {
-    if (!getOnInit) {
-      setAtom(storage.getItem(key, initialValue) as Value | Promise<Value>)
-    }
+    setAtom(storage.getItem(key, initialValue) as Value | Promise<Value>)
     let unsub: Unsubscribe | undefined
     if (storage.subscribe) {
       unsub = storage.subscribe(key, setAtom, initialValue)
