@@ -473,26 +473,6 @@ export const createStore = () => {
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(atom))
 
-  const addAtom = (atom: AnyAtom): Mounted => {
-    let mounted = mountedMap.get(atom)
-    if (!mounted) {
-      mounted = mountAtom(atom)
-    }
-    return mounted
-  }
-
-  // FIXME doesn't work with mutually dependent atoms
-  const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
-    !mounted.l.size &&
-    (!mounted.t.size || (mounted.t.size === 1 && mounted.t.has(atom)))
-
-  const delAtom = (atom: AnyAtom): void => {
-    const mounted = mountedMap.get(atom)
-    if (mounted && canUnmountAtom(atom, mounted)) {
-      unmountAtom(atom)
-    }
-  }
-
   const recomputeDependents = (atom: AnyAtom): void => {
     const getDependents = (a: AnyAtom): Dependents => {
       const dependents = new Set(mountedMap.get(a)?.t)
@@ -615,16 +595,19 @@ export const createStore = () => {
     initialDependent?: AnyAtom,
     onMountQueue?: (() => void)[],
   ): Mounted => {
+    const existingMount = mountedMap.get(atom)
+    if (existingMount) {
+      if (initialDependent) {
+        existingMount.t.add(initialDependent)
+      }
+      return existingMount
+    }
+
     const queue = onMountQueue || []
     // mount dependencies before mounting self
     getAtomState(atom)?.d.forEach((_, a) => {
-      const aMounted = mountedMap.get(a)
-      if (aMounted) {
-        aMounted.t.add(atom) // add dependent
-      } else {
-        if (a !== atom) {
-          mountAtom(a, atom, queue)
-        }
+      if (a !== atom) {
+        mountAtom(a, atom, queue)
       }
     })
     // recompute atom state
@@ -654,9 +637,17 @@ export const createStore = () => {
     return mounted
   }
 
-  const unmountAtom = <Value>(atom: Atom<Value>): void => {
+  // FIXME doesn't work with mutually dependent atoms
+  const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
+    !mounted.l.size &&
+    (!mounted.t.size || (mounted.t.size === 1 && mounted.t.has(atom)))
+
+  const tryUnmountAtom = <Value>(atom: Atom<Value>, mounted: Mounted): void => {
+    if (!canUnmountAtom(atom, mounted)) {
+      return
+    }
     // unmount self
-    const onUnmount = mountedMap.get(atom)?.u
+    const onUnmount = mounted.u
     if (onUnmount) {
       onUnmount()
     }
@@ -673,12 +664,10 @@ export const createStore = () => {
       }
       atomState.d.forEach((_, a) => {
         if (a !== atom) {
-          const mounted = mountedMap.get(a)
-          if (mounted) {
-            mounted.t.delete(atom)
-            if (canUnmountAtom(a, mounted)) {
-              unmountAtom(a)
-            }
+          const mountedDep = mountedMap.get(a)
+          if (mountedDep) {
+            mountedDep.t.delete(atom)
+            tryUnmountAtom(a, mountedDep)
           }
         }
       })
@@ -707,20 +696,12 @@ export const createStore = () => {
       }
     })
     depSet.forEach((a) => {
-      const mounted = mountedMap.get(a)
-      if (mounted) {
-        mounted.t.add(atom) // add to dependents
-      } else if (mountedMap.has(atom)) {
-        // we mount dependencies only when atom is already mounted
-        // Note: we should revisit this when you find other issues
-        // https://github.com/pmndrs/jotai/issues/942
-        mountAtom(a, atom)
-      }
+      mountAtom(a, atom)
     })
     maybeUnmountAtomSet.forEach((a) => {
       const mounted = mountedMap.get(a)
-      if (mounted && canUnmountAtom(a, mounted)) {
-        unmountAtom(a)
+      if (mounted) {
+        tryUnmountAtom(a, mounted)
       }
     })
   }
@@ -784,7 +765,7 @@ export const createStore = () => {
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    const mounted = addAtom(atom)
+    const mounted = mountAtom(atom)
     const flushed = flushPending([atom])
     const listeners = mounted.l
     listeners.add(listener)
@@ -795,7 +776,7 @@ export const createStore = () => {
     }
     return () => {
       listeners.delete(listener)
-      delAtom(atom)
+      tryUnmountAtom(atom, mounted)
       if (import.meta.env?.MODE !== 'production') {
         // devtools uses this to detect if it _can_ unmount or not
         storeListenersRev2.forEach((l) => l({ type: 'unsub' }))
