@@ -13,7 +13,10 @@ type WithInitialValue<Value> = {
   init: Value
 }
 
-export function atomWithReset<Value>(initialValue: Value) {
+export function atomWithReset<Value>(
+  initialValue: Value,
+): WritableAtom<Value, [SetStateActionWithReset<Value>], void> &
+  WithInitialValue<Value> {
   type Update = SetStateActionWithReset<Value>
   const anAtom = atom<Value, [Update], void>(
     initialValue,

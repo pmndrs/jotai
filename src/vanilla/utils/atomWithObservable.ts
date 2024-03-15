@@ -4,12 +4,6 @@ import type { Atom, Getter, WritableAtom } from '../../vanilla.ts'
 type Timeout = ReturnType<typeof setTimeout>
 type AnyError = unknown
 
-declare global {
-  interface SymbolConstructor {
-    readonly observable: symbol
-  }
-}
-
 type Subscription = {
   unsubscribe: () => void
 }
