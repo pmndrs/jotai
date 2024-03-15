@@ -22,6 +22,10 @@ const CONTINUE_PROMISE = Symbol(
   import.meta.env?.MODE !== 'production' ? 'CONTINUE_PROMISE' : '',
 )
 
+const PENDING = 'pending'
+const FULFILLED = 'fulfilled'
+const REJECTED = 'rejected'
+
 type ContinuePromise<T> = (
   nextPromise: PromiseLike<T>,
   nextAbort: () => void,
@@ -29,9 +33,9 @@ type ContinuePromise<T> = (
 
 type ContinuablePromise<T> = Promise<T> &
   (
-    | { status: 'pending' }
-    | { status: 'fulfilled'; value?: T }
-    | { status: 'rejected'; reason?: AnyError }
+    | { status: typeof PENDING }
+    | { status: typeof FULFILLED; value?: T }
+    | { status: typeof REJECTED; reason?: AnyError }
   ) & {
     [CONTINUE_PROMISE]: ContinuePromise<T>
   }
@@ -60,14 +64,14 @@ const createContinuablePromise = <T>(
       promise.then(
         (v) => {
           if (orig === promise) {
-            p.status = 'fulfilled'
+            p.status = FULFILLED
             p.value = v
             resolve(v)
           }
         },
         (e) => {
           if (orig === promise) {
-            p.status = 'rejected'
+            p.status = REJECTED
             p.reason = e
             reject(e)
           }
@@ -79,13 +83,13 @@ const createContinuablePromise = <T>(
         nextPromise.then(
           (v) => {
             if (orig === nextPromise) {
-              p.status = 'fulfilled'
+              p.status = FULFILLED
               p.value = v
             }
           },
           (e) => {
             if (orig === nextPromise) {
-              p.status = 'rejected'
+              p.status = REJECTED
               p.reason = e
             }
           },
@@ -95,7 +99,7 @@ const createContinuablePromise = <T>(
         abort = nextAbort
       }
     })
-    p.status = 'pending'
+    p.status = PENDING
     p[CONTINUE_PROMISE] = continuePromise!
     continuablePromiseMap.set(promise, p)
   }
@@ -230,15 +234,9 @@ export const createStore = () => {
     try {
       const valueOrPromise = atom.read(getter, options as any)
       if (isPromiseLike(valueOrPromise)) {
-        if (
-          's' in atomState &&
-          'v' in atomState.s &&
-          isContinuablePromise(atomState.s.v) &&
-          atomState.s.v.status === 'pending'
-        ) {
-          atomState.s.v[CONTINUE_PROMISE](valueOrPromise, () =>
-            controller?.abort(),
-          )
+        const prev: unknown = (atomState as any).s?.v
+        if (isContinuablePromise(prev) && prev.status === PENDING) {
+          prev[CONTINUE_PROMISE](valueOrPromise, () => controller?.abort())
         } else {
           atomState.s = {
             v: createContinuablePromise(valueOrPromise, () =>
