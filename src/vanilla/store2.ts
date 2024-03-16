@@ -262,6 +262,29 @@ export const createStore = (): Store => {
     }
   }
 
+  const mountDependencies = (
+    pendingSet: PendingSet | undefined,
+    atomState: AtomState,
+    prevDeps: Set<AnyAtom>,
+  ) => {
+    if (pendingSet && atomState.m) {
+      prevDeps.forEach((a) => {
+        if (!atomState.d.has(a)) {
+          unmountAtom(pendingSet!, a)
+        }
+      })
+      atomState.d.forEach((a) => {
+        if (!prevDeps.has(a)) {
+          mountAtom(pendingSet!, a)
+        }
+      })
+      const flushed = flushPendingSet(pendingSet, true)
+      if (import.meta.env?.MODE !== 'production' && flushed) {
+        // storeListenersRev2.forEach((l) => l({ type: 'async-mount', flushed }))
+      }
+    }
+  }
+
   const readAtomState = <Value>(
     pendingSet: PendingSet | undefined,
     atom: Atom<Value>,
@@ -335,33 +358,28 @@ export const createStore = (): Store => {
         if (isContinuablePromise(prev) && prev.status === PENDING) {
           prev[CONTINUE_PROMISE](valueOrPromise, () => controller?.abort())
         } else {
-          atomState.s = {
-            v: createContinuablePromise(valueOrPromise, () =>
-              controller?.abort(),
-            ) as Value,
-          }
+          const continuablePromise = createContinuablePromise(
+            valueOrPromise,
+            () => controller?.abort(),
+          )
+          atomState.s = { v: continuablePromise as Value }
+          continuablePromise.finally(() => {
+            pendingSet = createPendingSet()
+            mountDependencies(pendingSet, atomState, prevDeps)
+            flushPendingSet(pendingSet)
+          })
         }
       } else {
         atomState.s = { v: valueOrPromise }
+        mountDependencies(pendingSet, atomState, prevDeps)
       }
       return atomState as WithS<typeof atomState>
     } catch (error) {
       atomState.s = { e: error }
+      mountDependencies(pendingSet, atomState, prevDeps)
       return atomState as WithS<typeof atomState>
     } finally {
       isSync = false
-      if (pendingSet && atomState.m) {
-        prevDeps.forEach((a) => {
-          if (!atomState.d.has(a)) {
-            unmountAtom(pendingSet!, a)
-          }
-        })
-        atomState.d.forEach((a) => {
-          if (!prevDeps.has(a)) {
-            mountAtom(pendingSet!, a)
-          }
-        })
-      }
     }
   }
 
@@ -411,19 +429,14 @@ export const createStore = (): Store => {
         }
       }
       if (hasChangedDeps) {
-        if (aState.m) {
-          readAtomState(pendingSet, a, true)
-          if (
-            !prev ||
-            !('v' in prev) ||
-            !('v' in aState.s!) ||
-            !Object.is(prev.v, aState.s.v)
-          ) {
-            addPendingSet(pendingSet, [a, aState])
-            changedAtoms.add(a)
-          }
-        } else {
-          delete aState.s
+        readAtomState(pendingSet, a, true)
+        if (
+          !prev ||
+          !('v' in prev) ||
+          !('v' in aState.s!) ||
+          !Object.is(prev.v, aState.s.v)
+        ) {
+          addPendingSet(pendingSet, [a, aState])
           changedAtoms.add(a)
         }
       }
