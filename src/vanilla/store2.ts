@@ -172,8 +172,11 @@ type Mounted = {
  * tracked for both mounted and unmounted atoms in a store.
  */
 type AtomState<Value = AnyValue> = {
-  /** Set of atoms that the atom depends on. */
-  readonly d: Set<AnyAtom>
+  /**
+   * Map of atoms that the atom depends on.
+   * The map value is value/error of the dependency.
+   */
+  readonly d: Map<AnyAtom, { readonly v: AnyValue } | { readonly e: AnyError }>
   /** Set of atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Object to store mounted state of the atom. */
@@ -226,7 +229,7 @@ export const createStore = (): Store => {
 
   const getAtomState = <Value>(atom: Atom<Value>) => {
     if (!atomStateMap.has(atom)) {
-      const atomState: AtomState<Value> = { d: new Set(), t: new Set() }
+      const atomState: AtomState<Value> = { d: new Map(), t: new Set() }
       atomStateMap.set(atom, atomState)
     }
     return atomStateMap.get(atom) as AtomState<Value>
@@ -241,10 +244,10 @@ export const createStore = (): Store => {
 
   const clearDependencies = <Value>(atom: Atom<Value>) => {
     const atomState = getAtomState(atom)
-    const prevDeps = new Set(atomState.d)
-    atomState.d.forEach((a) => {
+    const prevDeps = new Set(atomState.d.keys())
+    for (const a of atomState.d.keys()) {
       getAtomState(a).t.delete(atom)
-    })
+    }
     atomState.d.clear()
     return prevDeps
   }
@@ -253,10 +256,14 @@ export const createStore = (): Store => {
     pendingSet: PendingSet | undefined,
     atom: Atom<Value>,
     a: AnyAtom,
+    aState: WithS<AtomState>,
   ) => {
+    if (import.meta.env?.MODE !== 'production' && a === atom) {
+      throw new Error('[Bug] atom cannot depend on itself')
+    }
     const atomState = getAtomState(atom)
-    atomState.d.add(a)
-    getAtomState(a).t.add(atom)
+    atomState.d.set(a, aState.s)
+    aState.t.add(atom)
     if (pendingSet && atomState.m) {
       mountAtom(pendingSet, a)
     }
@@ -268,16 +275,16 @@ export const createStore = (): Store => {
     prevDeps: Set<AnyAtom>,
   ) => {
     if (pendingSet && atomState.m) {
-      prevDeps.forEach((a) => {
+      for (const a of prevDeps) {
         if (!atomState.d.has(a)) {
           unmountAtom(pendingSet!, a)
         }
-      })
-      atomState.d.forEach((a) => {
+      }
+      for (const a of atomState.d.keys()) {
         if (!prevDeps.has(a)) {
           mountAtom(pendingSet!, a)
         }
-      })
+      }
       const flushed = flushPendingSet(pendingSet, true)
       if (import.meta.env?.MODE !== 'production' && flushed) {
         // storeListenersRev2.forEach((l) => l({ type: 'async-mount', flushed }))
@@ -293,7 +300,23 @@ export const createStore = (): Store => {
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
     if (!force && 's' in atomState) {
-      return atomState as WithS<typeof atomState>
+      // If the atom is mounted, we can use the cache.
+      // because it should have been updated by dependencies.
+      if (atomState.m) {
+        return atomState as WithS<typeof atomState>
+      }
+      // Otherwise, check if the dependencies have changed.
+      // If all dependencies haven't changed, we can use the cache.
+      if (
+        Array.from(atomState.d).every(([a, s]) => {
+          // Recursively, read the atom state of the dependency, and
+          const aState = readAtomState(pendingSet, a)
+          // Check if the atom value is unchanged
+          return 'v' in s && 'v' in aState.s && Object.is(s.v, aState.s.v)
+        })
+      ) {
+        return atomState as WithS<typeof atomState>
+      }
     }
     // Compute a new state for this atom.
     const prevDeps = clearDependencies(atom)
@@ -315,8 +338,8 @@ export const createStore = (): Store => {
       if (!isSync) {
         pendingSet = createPendingSet()
       }
-      addDependency(pendingSet, atom, a)
       const aState = readAtomState(pendingSet, a)
+      addDependency(pendingSet, atom, a, aState)
       if (!isSync) {
         flushPendingSet(pendingSet!)
       }
@@ -422,22 +445,25 @@ export const createStore = (): Store => {
       const aState = getAtomState(a)
       const prev = aState.s
       let hasChangedDeps = false
-      for (const dep of aState.d) {
+      for (const dep of aState.d.keys()) {
         if (dep !== a && changedAtoms.has(dep)) {
           hasChangedDeps = true
           break
         }
       }
       if (hasChangedDeps) {
-        readAtomState(pendingSet, a, true)
-        if (
-          !prev ||
-          !('v' in prev) ||
-          !('v' in aState.s!) ||
-          !Object.is(prev.v, aState.s.v)
-        ) {
-          addPendingSet(pendingSet, [a, aState])
-          changedAtoms.add(a)
+        // only recompute if it is mounted
+        if (aState.m) {
+          readAtomState(pendingSet, a, true)
+          if (
+            !prev ||
+            !('v' in prev) ||
+            !('v' in aState.s!) ||
+            !Object.is(prev.v, aState.s.v)
+          ) {
+            addPendingSet(pendingSet, [a, aState])
+            changedAtoms.add(a)
+          }
         }
       }
     }
@@ -499,10 +525,7 @@ export const createStore = (): Store => {
       // recompute atom state
       readAtomState(pendingSet, atom)
       // mount dependents first
-      for (const a of atomState.d) {
-        if (a === atom) {
-          throw new Error('[Bug] atom cannot depend on itself')
-        }
+      for (const a of atomState.d.keys()) {
         mountAtom(pendingSet, a)
       }
       // mount self
@@ -533,7 +556,7 @@ export const createStore = (): Store => {
       }
       delete atomState.m
       // unmount dependencies
-      for (const a of atomState.d) {
+      for (const a of atomState.d.keys()) {
         unmountAtom(pendingSet, a)
       }
     }
@@ -583,7 +606,7 @@ export const createStore = (): Store => {
             aState &&
             aState.s && {
               d: new Map<AnyAtom, OldAtomState>(
-                Array.from(aState.d).flatMap((a) => {
+                Array.from(aState.d.keys()).flatMap((a) => {
                   const s = getOldAtomState(a)
                   return s ? [[a, s]] : []
                 }),
