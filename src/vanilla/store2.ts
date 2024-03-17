@@ -104,41 +104,26 @@ const createContinuablePromise = <T>(
   if (!continuablePromiseMap.has(promise)) {
     let continuePromise: ContinuePromise<T>
     const p: any = new Promise((resolve, reject) => {
-      let orig = promise
-      promise.then(
-        (v) => {
-          if (orig === promise) {
-            p.status = FULFILLED
-            p.value = v
-            resolve(v)
-          }
-        },
-        (e) => {
-          if (orig === promise) {
-            p.status = REJECTED
-            p.reason = e
-            reject(e)
-          }
-        },
-      )
+      let curr = promise
+      const onFullfilled = (me: PromiseLike<T>) => (v: T) => {
+        if (curr === me) {
+          p.status = FULFILLED
+          p.value = v
+          resolve(v)
+        }
+      }
+      const onRejected = (me: PromiseLike<T>) => (e: AnyError) => {
+        if (curr === me) {
+          p.status = REJECTED
+          p.reason = e
+          reject(e)
+        }
+      }
+      promise.then(onFullfilled(promise), onRejected(promise))
       continuePromise = (nextPromise, nextAbort) => {
-        orig = nextPromise
         continuablePromiseMap.set(nextPromise, p)
-        nextPromise.then(
-          (v) => {
-            if (orig === nextPromise) {
-              p.status = FULFILLED
-              p.value = v
-            }
-          },
-          (e) => {
-            if (orig === nextPromise) {
-              p.status = REJECTED
-              p.reason = e
-            }
-          },
-        )
-        resolve(nextPromise)
+        curr = nextPromise
+        nextPromise.then(onFullfilled(nextPromise), onRejected(nextPromise))
         abort()
         abort = nextAbort
       }
@@ -192,6 +177,22 @@ const returnAtomValue = <Value>(atomState: WithS<AtomState<Value>>): Value => {
     throw atomState.s.e
   }
   return atomState.s.v
+}
+
+const setAtomStatePromise = (
+  atomState: AtomState,
+  promise: PromiseLike<unknown>,
+  abort = () => {},
+  complete = () => {},
+) => {
+  const prev: unknown = (atomState as any).s?.v
+  if (isContinuablePromise(prev) && prev.status === PENDING) {
+    prev[CONTINUE_PROMISE](promise, abort)
+  } else {
+    const continuablePromise = createContinuablePromise(promise, abort)
+    atomState.s = { v: continuablePromise }
+    continuablePromise.finally(complete)
+  }
 }
 
 // for debugging purpose only
@@ -377,21 +378,16 @@ export const createStore = (): Store => {
     try {
       const valueOrPromise = atom.read(getter, options as any)
       if (isPromiseLike(valueOrPromise)) {
-        const prev: unknown = (atomState as any).s?.v
-        if (isContinuablePromise(prev) && prev.status === PENDING) {
-          prev[CONTINUE_PROMISE](valueOrPromise, () => controller?.abort())
-        } else {
-          const continuablePromise = createContinuablePromise(
-            valueOrPromise,
-            () => controller?.abort(),
-          )
-          atomState.s = { v: continuablePromise as Value }
-          continuablePromise.finally(() => {
-            pendingSet = createPendingSet()
+        setAtomStatePromise(
+          atomState,
+          valueOrPromise,
+          () => controller?.abort(),
+          () => {
+            const pendingSet = createPendingSet()
             mountDependencies(pendingSet, atomState, prevDeps)
             flushPendingSet(pendingSet)
-          })
-        }
+          },
+        )
       } else {
         atomState.s = { v: valueOrPromise }
         mountDependencies(pendingSet, atomState, prevDeps)
@@ -488,8 +484,19 @@ export const createStore = (): Store => {
         }
         const aState = getAtomState(a)
         const prev = aState.s
-        aState.s = { v: args[0] as V }
-        if (!prev || !('v' in prev) || !Object.is(prev.v, args[0])) {
+        const v = args[0] as V
+        if (isPromiseLike(v)) {
+          setAtomStatePromise(aState, v)
+        } else {
+          aState.s = { v }
+        }
+        const curr = (aState as WithS<typeof aState>).s
+        if (
+          !prev ||
+          !('v' in prev) ||
+          !('v' in curr) ||
+          !Object.is(prev.v, curr.v)
+        ) {
           addPendingSet(pendingSet, [a, aState])
           recomputeDependents(pendingSet, a)
         }
