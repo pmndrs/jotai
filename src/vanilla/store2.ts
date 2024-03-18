@@ -42,7 +42,9 @@ const flushPendingSet = (pendingSet: PendingSet, redo?: boolean) => {
     return
   }
   const flushed = new Set<AnyAtom>()
-  pendingSet[0].forEach((pending) => {
+  const copy = new Set(pendingSet[0])
+  pendingSet[0].clear()
+  copy.forEach((pending) => {
     if (typeof pending === 'function') {
       pending()
     } else {
@@ -53,7 +55,6 @@ const flushPendingSet = (pendingSet: PendingSet, redo?: boolean) => {
       }
     }
   })
-  pendingSet[0].clear()
   pendingSet[1] = true
   return flushed
 }
@@ -87,7 +88,7 @@ type ContinuablePromise<T> = Promise<T> &
 const isContinuablePromise = (
   promise: unknown,
 ): promise is ContinuablePromise<AnyValue> =>
-  !!promise && CONTINUE_PROMISE in (promise as object)
+  typeof promise === 'object' && promise !== null && CONTINUE_PROMISE in promise
 
 const continuablePromiseMap = new WeakMap<
   PromiseLike<AnyValue>,
@@ -179,19 +180,31 @@ const returnAtomValue = <Value>(atomState: WithS<AtomState<Value>>): Value => {
   return atomState.s.v
 }
 
-const setAtomStatePromise = (
+const setAtomStateValueOrPromise = (
   atomState: AtomState,
-  promise: PromiseLike<unknown>,
-  abort = () => {},
-  complete = () => {},
+  valueOrPromise: unknown,
+  completeSync = () => {},
+  abortPromise = () => {},
+  completePromise = () => {},
 ) => {
   const prev: unknown = (atomState as any).s?.v
-  if (isContinuablePromise(prev) && prev.status === PENDING) {
-    prev[CONTINUE_PROMISE](promise, abort)
+  if (isPromiseLike(valueOrPromise)) {
+    if (isContinuablePromise(prev) && prev.status === PENDING) {
+      prev[CONTINUE_PROMISE](valueOrPromise, abortPromise)
+    } else {
+      const continuablePromise = createContinuablePromise(
+        valueOrPromise,
+        abortPromise,
+      )
+      atomState.s = { v: continuablePromise }
+      continuablePromise.finally(completePromise)
+    }
   } else {
-    const continuablePromise = createContinuablePromise(promise, abort)
-    atomState.s = { v: continuablePromise }
-    continuablePromise.finally(complete)
+    if (isContinuablePromise(prev) && prev.status === PENDING) {
+      prev[CONTINUE_PROMISE](Promise.resolve(valueOrPromise), abortPromise)
+    }
+    atomState.s = { v: valueOrPromise }
+    completeSync()
   }
 }
 
@@ -278,12 +291,12 @@ export const createStore = (): Store => {
     if (pendingSet && atomState.m) {
       for (const a of prevDeps) {
         if (!atomState.d.has(a)) {
-          unmountAtom(pendingSet!, a)
+          unmountAtom(pendingSet, a)
         }
       }
       for (const a of atomState.d.keys()) {
         if (!prevDeps.has(a)) {
-          mountAtom(pendingSet!, a)
+          mountAtom(pendingSet, a)
         }
       }
       const flushed = flushPendingSet(pendingSet, true)
@@ -327,7 +340,7 @@ export const createStore = (): Store => {
         const aState = getAtomState(a)
         if (!aState.s) {
           if (hasInitialValue(a)) {
-            aState.s = { v: a.init as V }
+            setAtomStateValueOrPromise(aState, a.init)
           } else {
             // NOTE invalid derived atoms can reach here
             throw new Error('no atom init')
@@ -336,13 +349,10 @@ export const createStore = (): Store => {
         return returnAtomValue(aState as WithS<typeof aState>)
       }
       // a !== atom
-      if (!isSync) {
-        pendingSet = createPendingSet()
-      }
       const aState = readAtomState(pendingSet, a)
       addDependency(pendingSet, atom, a, aState)
-      if (!isSync) {
-        flushPendingSet(pendingSet!)
+      if (pendingSet) {
+        flushPendingSet(pendingSet, true)
       }
       return returnAtomValue(aState)
     }
@@ -377,21 +387,17 @@ export const createStore = (): Store => {
     }
     try {
       const valueOrPromise = atom.read(getter, options as any)
-      if (isPromiseLike(valueOrPromise)) {
-        setAtomStatePromise(
-          atomState,
-          valueOrPromise,
-          () => controller?.abort(),
-          () => {
-            const pendingSet = createPendingSet()
-            mountDependencies(pendingSet, atomState, prevDeps)
-            flushPendingSet(pendingSet)
-          },
-        )
-      } else {
-        atomState.s = { v: valueOrPromise }
-        mountDependencies(pendingSet, atomState, prevDeps)
-      }
+      setAtomStateValueOrPromise(
+        atomState,
+        valueOrPromise,
+        () => mountDependencies(pendingSet, atomState, prevDeps),
+        () => controller?.abort(),
+        () => {
+          const pendingSet = createPendingSet()
+          mountDependencies(pendingSet, atomState, prevDeps)
+          flushPendingSet(pendingSet)
+        },
+      )
       return atomState as WithS<typeof atomState>
     } catch (error) {
       atomState.s = { e: error }
@@ -399,6 +405,13 @@ export const createStore = (): Store => {
       return atomState as WithS<typeof atomState>
     } finally {
       isSync = false
+      if (!pendingSet) {
+        // for async read
+        pendingSet = createPendingSet()
+        // flush immediately to change the state to done
+        // FIXME there should be more explicit way.
+        flushPendingSet(pendingSet)
+      }
     }
   }
 
@@ -485,11 +498,7 @@ export const createStore = (): Store => {
         const aState = getAtomState(a)
         const prev = aState.s
         const v = args[0] as V
-        if (isPromiseLike(v)) {
-          setAtomStatePromise(aState, v)
-        } else {
-          aState.s = { v }
-        }
+        setAtomStateValueOrPromise(aState, v)
         const curr = (aState as WithS<typeof aState>).s
         if (
           !prev ||
@@ -631,7 +640,7 @@ export const createStore = (): Store => {
       dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => {
         const pendingSet = createPendingSet()
         for (const [atom, value] of values) {
-          getAtomState(atom).s = { v: value }
+          setAtomStateValueOrPromise(getAtomState(atom), value)
           recomputeDependents(pendingSet, atom)
         }
         const flushed = flushPendingSet(pendingSet)
