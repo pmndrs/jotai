@@ -659,25 +659,17 @@ export const createStore = (): Store => {
 
 let defaultStore: Store | undefined
 
-if (import.meta.env?.MODE !== 'production') {
-  if (typeof (globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ === 'number') {
-    ++(globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__
-  } else {
-    ;(globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ = 1
-  }
-}
-
 export const getDefaultStore = () => {
   if (!defaultStore) {
-    if (
-      import.meta.env?.MODE !== 'production' &&
-      (globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ !== 1
-    ) {
-      console.warn(
-        'Detected multiple Jotai instances. It may cause unexpected behavior with the default store. https://github.com/pmndrs/jotai/discussions/2044',
-      )
-    }
     defaultStore = createStore()
+    if (import.meta.env?.MODE !== 'production') {
+      ;(globalThis as any).__JOTAI_DEFAULT_STORE__ ||= defaultStore
+      if ((globalThis as any).__JOTAI_DEFAULT_STORE__ !== defaultStore) {
+        console.warn(
+          'Detected multiple Jotai instances. It may cause unexpected behavior with the default store. https://github.com/pmndrs/jotai/discussions/2044',
+        )
+      }
+    }
   }
   return defaultStore
 }
