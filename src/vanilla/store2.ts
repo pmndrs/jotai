@@ -188,6 +188,7 @@ type AtomState<Value = AnyValue> = {
   s?: { readonly v: Value } | { readonly e: AnyError }
 }
 
+type WithM<T extends AtomState> = T & { m: NonNullable<T['m']> }
 type WithS<T extends AtomState> = T & { s: NonNullable<T['s']> }
 
 const returnAtomValue = <Value>(atomState: WithS<AtomState<Value>>): Value => {
@@ -291,9 +292,9 @@ export const createStore = (): Store => {
     const atomState = getAtomState(atom)
     atomState.d.set(a, aState.s)
     aState.t.add(atom)
-    if (!isSync && aState.m) {
+    if (!isSync && atomState.m) {
       const pendingPair = createPendingPair()
-      mountDependencies(pendingPair, atomState)
+      mountDependencies(pendingPair, atomState as WithM<typeof atomState>)
       flushPending(pendingPair)
     }
   }
@@ -379,7 +380,7 @@ export const createStore = (): Store => {
         () => {
           if (atomState.m) {
             const pendingPair = createPendingPair()
-            mountDependencies(pendingPair, atomState)
+            mountDependencies(pendingPair, atomState as WithM<typeof atomState>)
             flushPending(pendingPair)
           }
         },
@@ -443,7 +444,7 @@ export const createStore = (): Store => {
         if (aState.m) {
           delete aState.s // delete previous value/error
           readAtomState(a)
-          mountDependencies(pendingPair, aState)
+          mountDependencies(pendingPair, aState as WithM<typeof aState>)
           if (
             !prev ||
             !('v' in prev) ||
@@ -478,7 +479,9 @@ export const createStore = (): Store => {
         const prev = aState.s
         const v = args[0] as V
         setAtomStateValueOrPromise(aState, v)
-        mountDependencies(pendingPair, aState)
+        if (aState.m) {
+          mountDependencies(pendingPair, aState as WithM<typeof aState>)
+        }
         const curr = (aState as WithS<typeof aState>).s
         if (
           !prev ||
@@ -517,24 +520,22 @@ export const createStore = (): Store => {
 
   const mountDependencies = (
     pendingPair: PendingPair,
-    atomState: AtomState,
+    atomState: WithM<AtomState>,
   ) => {
     const value: unknown = (atomState as any).s?.v
-    if (isContinuablePromise(value) && value.status === PENDING) {
-      return
-    }
-    if (atomState.m) {
+    const isPending = isContinuablePromise(value) && value.status === PENDING
+    if (!isPending) {
       for (const a of atomState.m.d || []) {
         if (!atomState.d.has(a)) {
           unmountAtom(pendingPair, a)
           atomState.m.d.delete(a)
         }
       }
-      for (const a of atomState.d.keys()) {
-        if (!atomState.m.d.has(a)) {
-          mountAtom(pendingPair, a)
-          atomState.m.d.add(a)
-        }
+    }
+    for (const a of atomState.d.keys()) {
+      if (!atomState.m.d.has(a)) {
+        mountAtom(pendingPair, a)
+        atomState.m.d.add(a)
       }
     }
   }
