@@ -207,7 +207,9 @@ const setAtomStateValueOrPromise = (
   const prev: unknown = (atomState as any).s?.v
   if (isPromiseLike(valueOrPromise)) {
     if (isContinuablePromise(prev) && prev.status === PENDING) {
-      prev[CONTINUE_PROMISE](valueOrPromise, abortPromise)
+      if (prev !== valueOrPromise) {
+        prev[CONTINUE_PROMISE](valueOrPromise, abortPromise)
+      }
     } else {
       const continuablePromise = createContinuablePromise(
         valueOrPromise,
@@ -299,10 +301,13 @@ export const createStore = (): Store => {
     }
   }
 
-  const readAtomState = <Value>(atom: Atom<Value>): WithS<AtomState<Value>> => {
+  const readAtomState = <Value>(
+    atom: Atom<Value>,
+    force?: true,
+  ): WithS<AtomState<Value>> => {
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
-    if ('s' in atomState) {
+    if (!force && 's' in atomState) {
       // If the atom is mounted, we can use the cache.
       // because it should have been updated by dependencies.
       if (atomState.m) {
@@ -442,14 +447,13 @@ export const createStore = (): Store => {
       if (hasChangedDeps) {
         // only recompute if it is mounted
         if (aState.m) {
-          delete aState.s // delete previous value/error
-          readAtomState(a)
+          readAtomState(a, true)
           mountDependencies(pendingPair, aState as WithM<typeof aState>)
           if (
             !prev ||
             !('v' in prev) ||
             !('v' in aState.s!) ||
-            !Object.is(prev.v, (aState as any).s.v)
+            !Object.is(prev.v, aState.s.v)
           ) {
             addPending(pendingPair, [a, aState])
             changedAtoms.add(a)
