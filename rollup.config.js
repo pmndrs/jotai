@@ -76,6 +76,7 @@ function createESMConfig(input, output, clientOnly) {
               'import.meta.env?.MODE':
                 '(import.meta.env ? import.meta.env.MODE : undefined)',
             }),
+        'import.meta.env?.USE_STORE2': 'false',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
@@ -95,6 +96,7 @@ function createCommonJSConfig(input, output, clientOnly) {
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': 'process.env.NODE_ENV',
+        'import.meta.env?.USE_STORE2': 'false',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),

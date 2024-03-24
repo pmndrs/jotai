@@ -540,18 +540,18 @@ export const createStore = (): Store => {
     atomState: WithM<AtomState>,
   ) => {
     const isPending = !!getPendingContinuablePromise(atomState)
+    for (const a of atomState.d.keys()) {
+      if (!atomState.m.d.has(a)) {
+        mountAtom(pendingPair, a)
+        atomState.m.d.add(a)
+      }
+    }
     if (!isPending) {
       for (const a of atomState.m.d || []) {
         if (!atomState.d.has(a)) {
           unmountAtom(pendingPair, a)
           atomState.m.d.delete(a)
         }
-      }
-    }
-    for (const a of atomState.d.keys()) {
-      if (!atomState.m.d.has(a)) {
-        mountAtom(pendingPair, a)
-        atomState.m.d.add(a)
       }
     }
   }
