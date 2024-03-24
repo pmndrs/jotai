@@ -84,7 +84,7 @@ const FULFILLED = 'fulfilled'
 const REJECTED = 'rejected'
 
 type ContinuePromise<T> = (
-  nextPromise: PromiseLike<T>,
+  nextPromise: PromiseLike<T> | undefined,
   nextAbort: () => void,
 ) => void
 
@@ -137,9 +137,11 @@ const createContinuablePromise = <T>(
       }
       promise.then(onFullfilled(promise), onRejected(promise))
       continuePromise = (nextPromise, nextAbort) => {
-        continuablePromiseMap.set(nextPromise, p)
-        curr = nextPromise
-        nextPromise.then(onFullfilled(nextPromise), onRejected(nextPromise))
+        if (nextPromise) {
+          continuablePromiseMap.set(nextPromise, p)
+          curr = nextPromise
+          nextPromise.then(onFullfilled(nextPromise), onRejected(nextPromise))
+        }
         abort()
         abort = nextAbort
       }
@@ -153,6 +155,14 @@ const createContinuablePromise = <T>(
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as any)?.then === 'function'
+
+const getPendingContinuablePromise = (atomState: AtomState) => {
+  const value: unknown = (atomState as any).s?.v
+  if (isContinuablePromise(value) && value.status === PENDING) {
+    return value
+  }
+  return null
+}
 
 /**
  * State tracked for mounted atoms. An atom is considered "mounted" if it has a
@@ -204,11 +214,11 @@ const setAtomStateValueOrPromise = (
   abortPromise = () => {},
   completePromise = () => {},
 ) => {
-  const prev: unknown = (atomState as any).s?.v
+  const pendingPromise = getPendingContinuablePromise(atomState)
   if (isPromiseLike(valueOrPromise)) {
-    if (isContinuablePromise(prev) && prev.status === PENDING) {
-      if (prev !== valueOrPromise) {
-        prev[CONTINUE_PROMISE](valueOrPromise, abortPromise)
+    if (pendingPromise) {
+      if (pendingPromise !== valueOrPromise) {
+        pendingPromise[CONTINUE_PROMISE](valueOrPromise, abortPromise)
       }
     } else {
       const continuablePromise = createContinuablePromise(
@@ -219,8 +229,11 @@ const setAtomStateValueOrPromise = (
       atomState.s = { v: continuablePromise }
     }
   } else {
-    if (isContinuablePromise(prev) && prev.status === PENDING) {
-      prev[CONTINUE_PROMISE](Promise.resolve(valueOrPromise), abortPromise)
+    if (pendingPromise) {
+      pendingPromise[CONTINUE_PROMISE](
+        Promise.resolve(valueOrPromise),
+        abortPromise,
+      )
     }
     atomState.s = { v: valueOrPromise }
   }
@@ -526,8 +539,7 @@ export const createStore = (): Store => {
     pendingPair: PendingPair,
     atomState: WithM<AtomState>,
   ) => {
-    const value: unknown = (atomState as any).s?.v
-    const isPending = isContinuablePromise(value) && value.status === PENDING
+    const isPending = !!getPendingContinuablePromise(atomState)
     if (!isPending) {
       for (const a of atomState.m.d || []) {
         if (!atomState.d.has(a)) {
@@ -573,7 +585,11 @@ export const createStore = (): Store => {
 
   const unmountAtom = (pendingPair: PendingPair, atom: AnyAtom) => {
     const atomState = getAtomState(atom)
-    if (atomState.m && !atomState.m.l.size && !atomState.t.size) {
+    if (
+      atomState.m &&
+      !atomState.m.l.size &&
+      !Array.from(atomState.t).some((a) => getAtomState(a).m)
+    ) {
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
@@ -583,6 +599,12 @@ export const createStore = (): Store => {
       // unmount dependencies
       for (const a of atomState.d.keys()) {
         unmountAtom(pendingPair, a)
+      }
+      // abort pending promise
+      const pendingPromise = getPendingContinuablePromise(atomState)
+      if (pendingPromise) {
+        // FIXME using `undefined` is kind of a hack.
+        pendingPromise[CONTINUE_PROMISE](undefined, () => {})
       }
     }
   }
