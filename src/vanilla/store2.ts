@@ -616,12 +616,19 @@ export const createStore = (): Store => {
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
+    let prevMounted: Mounted | undefined
+    if (import.meta.env?.MODE !== 'production') {
+      prevMounted = atomStateMap.get(atom)?.m
+    }
     const pendingPair = createPendingPair()
     const mounted = mountAtom(pendingPair, atom)
     const flushed = flushPending(pendingPair)
     const listeners = mounted.l
     listeners.add(listener)
     if (import.meta.env?.MODE !== 'production') {
+      if (!prevMounted) {
+        flushed!.add(atom) // HACK to include self
+      }
       storeListenersRev2.forEach((l) => l({ type: 'sub', flushed: flushed! }))
     }
     return () => {
@@ -672,7 +679,14 @@ export const createStore = (): Store => {
       },
       dev_get_mounted: (a: AnyAtom) => {
         const aState = atomStateMap.get(a)
-        return aState && aState.m && { t: aState.t, ...aState.m }
+        return (
+          aState &&
+          aState.m && {
+            l: aState.m.l,
+            t: new Set([...aState.t, a]), // HACK to include self
+            ...(aState.m.u ? { u: aState.m.u } : {}),
+          }
+        )
       },
       dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => {
         const pendingPair = createPendingPair()
