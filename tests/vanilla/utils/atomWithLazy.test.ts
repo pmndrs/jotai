@@ -35,7 +35,7 @@ it('should work with a set state action', async () => {
   const store = createStore()
   const anAtom = atomWithLazy(() => 4)
 
-  store.set(anAtom, (prev) => prev * prev)
+  store.set(anAtom, (prev: number) => prev * prev)
 
   expect(store.get(anAtom)).toEqual(16)
 })
