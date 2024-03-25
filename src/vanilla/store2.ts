@@ -567,6 +567,9 @@ export const createStore = (): Store => {
       }
       // mount self
       atomState.m = { l: new Set(), d: new Set(atomState.d.keys()) }
+      if (import.meta.env?.MODE !== 'production') {
+        mountedAtoms.add(atom)
+      }
       if (isActuallyWritableAtom(atom) && atom.onMount) {
         const mounted = atomState.m
         const { onMount } = atom
@@ -596,6 +599,9 @@ export const createStore = (): Store => {
         addPending(pendingPair, onUnmount)
       }
       delete atomState.m
+      if (import.meta.env?.MODE !== 'production') {
+        mountedAtoms.delete(atom)
+      }
       // unmount dependencies
       for (const a of atomState.d.keys()) {
         unmountAtom(pendingPair, a)
