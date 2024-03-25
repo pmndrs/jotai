@@ -24,6 +24,7 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
 //
 
 type PendingPair = [
+  // TODO We should probably separate queues to notify and (un)mount
   pendingForSync: Set<readonly [AnyAtom, AtomState] | (() => void)> | undefined,
   pendingForAsync: Set<readonly [AnyAtom, AtomState] | (() => void)>,
 ]
@@ -198,7 +199,6 @@ type AtomState<Value = AnyValue> = {
   s?: { readonly v: Value } | { readonly e: AnyError }
 }
 
-type WithM<T extends AtomState> = T & { m: NonNullable<T['m']> }
 type WithS<T extends AtomState> = T & { s: NonNullable<T['s']> }
 
 const returnAtomValue = <Value>(atomState: WithS<AtomState<Value>>): Value => {
@@ -309,7 +309,7 @@ export const createStore = (): Store => {
     aState.t.add(atom)
     if (!isSync && atomState.m) {
       const pendingPair = createPendingPair()
-      mountDependencies(pendingPair, atomState as WithM<typeof atomState>)
+      mountDependencies(pendingPair, atomState)
       flushPending(pendingPair)
     }
   }
@@ -398,7 +398,7 @@ export const createStore = (): Store => {
         () => {
           if (atomState.m) {
             const pendingPair = createPendingPair()
-            mountDependencies(pendingPair, atomState as WithM<typeof atomState>)
+            mountDependencies(pendingPair, atomState)
             flushPending(pendingPair)
           }
         },
@@ -458,10 +458,10 @@ export const createStore = (): Store => {
         }
       }
       if (hasChangedDeps) {
-        // only recompute if it is mounted
-        if (aState.m) {
+        // only recompute if it is mounted or it has a pending promise
+        if (aState.m || getPendingContinuablePromise(aState)) {
           readAtomState(a, true)
-          mountDependencies(pendingPair, aState as WithM<typeof aState>)
+          mountDependencies(pendingPair, aState)
           if (
             !prev ||
             !('v' in prev) ||
@@ -496,9 +496,7 @@ export const createStore = (): Store => {
         const prev = aState.s
         const v = args[0] as V
         setAtomStateValueOrPromise(aState, v)
-        if (aState.m) {
-          mountDependencies(pendingPair, aState as WithM<typeof aState>)
-        }
+        mountDependencies(pendingPair, aState)
         const curr = (aState as WithS<typeof aState>).s
         if (
           !prev ||
@@ -537,16 +535,15 @@ export const createStore = (): Store => {
 
   const mountDependencies = (
     pendingPair: PendingPair,
-    atomState: WithM<AtomState>,
+    atomState: AtomState,
   ) => {
-    const isPending = !!getPendingContinuablePromise(atomState)
-    for (const a of atomState.d.keys()) {
-      if (!atomState.m.d.has(a)) {
-        mountAtom(pendingPair, a)
-        atomState.m.d.add(a)
+    if (atomState.m && !getPendingContinuablePromise(atomState)) {
+      for (const a of atomState.d.keys()) {
+        if (!atomState.m.d.has(a)) {
+          mountAtom(pendingPair, a)
+          atomState.m.d.add(a)
+        }
       }
-    }
-    if (!isPending) {
       for (const a of atomState.m.d || []) {
         if (!atomState.d.has(a)) {
           unmountAtom(pendingPair, a)
