@@ -25,28 +25,4 @@ const countReducerAtom = atomWithReducer(0, countReducer)
 
 ## useReducerAtom
 
-```jsx
-import { atom } from 'jotai'
-import { useReducerAtom } from 'jotai/utils'
-
-const countReducer = (prev, action) => {
-  if (action.type === 'inc') return prev + 1
-  if (action.type === 'dec') return prev - 1
-  throw new Error('unknown action type')
-}
-
-const countAtom = atom(0)
-
-const Counter = () => {
-  const [count, dispatch] = useReducerAtom(countAtom, countReducer)
-  return (
-    <div>
-      {count}
-      <button onClick={() => dispatch({ type: 'inc' })}>+1</button>
-      <button onClick={() => dispatch({ type: 'dec' })}>-1</button>
-    </div>
-  )
-}
-```
-
-<CodeSandbox id="eg0mw" />
+See [useReducerAtom](../recipes/use-reducer-atom.mdx) recipe.
