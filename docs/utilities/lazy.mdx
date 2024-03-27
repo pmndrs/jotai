@@ -1,0 +1,95 @@
+---
+title: Lazy
+nav: 3.03
+keywords: lazy,initialize,init,loading
+---
+
+When defining primitive atoms, their initial value has to be bound at definition time.
+If creating that initial value is computationally expensive, or the value is not accessible during definition,
+it would be best to postpone the atom's initialization until its [first use in the store](#using-multiple-stores).
+
+```jsx
+const imageDataAtom = atom(initializeExpensiveImage()) // 1) has to be computed here
+
+function Home() {
+  ...
+}
+
+function ImageEditor() {
+  // 2) used only in this route
+  const [imageData, setImageData] = useAtom(imageDataAtom);
+  ...
+}
+
+function App() {
+  return (
+    <Router>
+      <Route path="/" component={Home} />
+      <Route path="/edit" component={ImageEditor} />
+    </Router>
+  )
+}
+```
+
+## atomWithLazy
+
+Ref: https://github.com/pmndrs/jotai/pull/2465
+
+We can use `atomWithLazy` to create a primitive atom whose initial value will be computed at [first use in the store](#using-multiple-stores).
+After initialization, it will behave like a regular primitive atom (can be written to).
+
+### Usage
+
+```jsx
+import { atomWithLazy } from 'jotai/utils'
+
+const imageDataAtom = atomWithLazy(() => initializeExpensiveImage())
+
+function Home() {
+  ...
+}
+
+function ImageEditor() {
+  // only gets initialized if user goes to `/edit`.
+  const [imageData, setImageData] = useAtom(imageDataAtom);
+  ...
+}
+
+function App() {
+  return (
+    <Router>
+      <Route path="/" component={Home} />
+      <Route path="/edit" component={ImageEditor} />
+    </Router>
+  )
+}
+```
+
+### Using multiple stores
+
+Since each store is its separate universe, the initial value will be recreated exactly once per store (unless using something like `jotai-scope`, which fractures a store into smaller universes).
+
+```ts
+type RGB = [number, number, number];
+
+function randomRGB(): RGB {
+  ...
+}
+
+const lift = (value: number) => ([r, g, b]: RGB) => {
+  return [r + value, g + value, b + value]
+}
+
+const colorAtom = lazyAtom(randomRGB)
+
+let store = createStore();
+
+console.log(store.get(colorAtom)) // [0, 36, 128]
+store.set(colorAtom, lift(8))
+console.log(store.get(colorAtom)) // [8, 44, 136]
+
+// recreating store, sometimes done when logging out or resetting the app in some way
+store = createStore();
+
+console.log(store.get(colorAtom)) // [255, 12, 46] -- a new random color
+```
