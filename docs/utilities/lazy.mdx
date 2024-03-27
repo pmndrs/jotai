@@ -83,14 +83,14 @@ const lift = (value: number) => ([r, g, b]: RGB) => {
 
 const colorAtom = lazyAtom(randomRGB)
 
-let store = createStore();
+let store = createStore()
 
 console.log(store.get(colorAtom)) // [0, 36, 128]
 store.set(colorAtom, lift(8))
 console.log(store.get(colorAtom)) // [8, 44, 136]
 
 // recreating store, sometimes done when logging out or resetting the app in some way
-store = createStore();
+store = createStore()
 
 console.log(store.get(colorAtom)) // [255, 12, 46] -- a new random color
 ```
