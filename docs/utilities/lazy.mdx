@@ -43,7 +43,8 @@ After initialization, it will behave like a regular primitive atom (can be writt
 ```jsx
 import { atomWithLazy } from 'jotai/utils'
 
-const imageDataAtom = atomWithLazy(() => initializeExpensiveImage())
+// passing the initialization function
+const imageDataAtom = atomWithLazy(initializeExpensiveImage)
 
 function Home() {
   ...
