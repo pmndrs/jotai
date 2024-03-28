@@ -459,7 +459,7 @@ export const createStore = () => {
       },
     }
     try {
-      const valueOrPromise = atom.read(getter, options as any)
+      const valueOrPromise = atom.read(getter, options as never)
       return setAtomValueOrPromise(atom, valueOrPromise, nextDependencies, () =>
         controller?.abort(),
       )

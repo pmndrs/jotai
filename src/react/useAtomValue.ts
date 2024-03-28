@@ -50,7 +50,7 @@ export function useAtomValue<Value>(
   options?: Options,
 ): Awaited<Value>
 
-export function useAtomValue<AtomType extends Atom<any>>(
+export function useAtomValue<AtomType extends Atom<unknown>>(
   atom: AtomType,
   options?: Options,
 ): Awaited<ExtractAtomValue<AtomType>>
