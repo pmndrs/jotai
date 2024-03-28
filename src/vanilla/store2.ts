@@ -390,7 +390,7 @@ export const createStore = (): Store => {
       },
     }
     try {
-      const valueOrPromise = atom.read(getter, options as any)
+      const valueOrPromise = atom.read(getter, options as never)
       setAtomStateValueOrPromise(
         atomState,
         valueOrPromise,
