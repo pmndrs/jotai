@@ -1,5 +1,6 @@
 export { atom } from './vanilla/atom.ts'
 export type { Atom, WritableAtom, PrimitiveAtom } from './vanilla/atom.ts'
+
 // export { createStore, getDefaultStore } from './vanilla/store.ts'
 import * as store from './vanilla/store.ts'
 import * as store2 from './vanilla/store2.ts'
@@ -11,6 +12,8 @@ export const createStore: CreateStore = import.meta.env?.USE_STORE2
 export const getDefaultStore: GetDefaultStore = import.meta.env?.USE_STORE2
   ? store2.getDefaultStore
   : store.getDefaultStore
+export const experimental_createStore = store2.createStore
+
 export type {
   Getter,
   Setter,
