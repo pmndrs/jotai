@@ -4,7 +4,10 @@ import { createStore, getDefaultStore } from '../vanilla.ts'
 
 type Store = ReturnType<typeof createStore>
 
-const StoreContext = createContext<Store | undefined>(undefined)
+type StoreContextType = ReturnType<typeof createContext<Store | undefined>>
+const StoreContext: StoreContextType = createContext<Store | undefined>(
+  undefined,
+)
 
 type Options = {
   store?: Store
