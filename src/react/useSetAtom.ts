@@ -14,7 +14,9 @@ export function useSetAtom<Value, Args extends unknown[], Result>(
   options?: Options,
 ): SetAtom<Args, Result>
 
-export function useSetAtom<AtomType extends WritableAtom<any, any[], any>>(
+export function useSetAtom<
+  AtomType extends WritableAtom<unknown, never[], unknown>,
+>(
   atom: AtomType,
   options?: Options,
 ): SetAtom<ExtractAtomArgs<AtomType>, ExtractAtomResult<AtomType>>

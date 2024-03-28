@@ -29,7 +29,9 @@ export function useAtom<Value>(
   options?: Options,
 ): [Awaited<Value>, never]
 
-export function useAtom<AtomType extends WritableAtom<any, any[], any>>(
+export function useAtom<
+  AtomType extends WritableAtom<unknown, never[], unknown>,
+>(
   atom: AtomType,
   options?: Options,
 ): [
@@ -37,7 +39,7 @@ export function useAtom<AtomType extends WritableAtom<any, any[], any>>(
   SetAtom<ExtractAtomArgs<AtomType>, ExtractAtomResult<AtomType>>,
 ]
 
-export function useAtom<AtomType extends Atom<any>>(
+export function useAtom<AtomType extends Atom<unknown>>(
   atom: AtomType,
   options?: Options,
 ): [Awaited<ExtractAtomValue<AtomType>>, never]

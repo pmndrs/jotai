@@ -5,11 +5,11 @@ type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0] & {
   dangerouslyForceHydrate?: boolean
 }
-type AnyWritableAtom = WritableAtom<unknown, any[], any>
+type AnyWritableAtom = WritableAtom<unknown, never[], unknown>
 
 type InferAtomTuples<T> = {
   [K in keyof T]: T[K] extends readonly [infer A, unknown]
-    ? A extends WritableAtom<unknown, infer Args, any>
+    ? A extends WritableAtom<unknown, infer Args, infer _Result>
       ? readonly [A, Args[0]]
       : T[K]
     : never
@@ -43,7 +43,7 @@ export function useHydrateAtoms<
   for (const [atom, value] of values) {
     if (!hydratedSet.has(atom) || options?.dangerouslyForceHydrate) {
       hydratedSet.add(atom)
-      store.set(atom, value)
+      store.set(atom, value as never)
     }
   }
 }

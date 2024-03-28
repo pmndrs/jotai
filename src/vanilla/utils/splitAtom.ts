@@ -22,7 +22,7 @@ const isWritable = <Value, Args extends unknown[], Result>(
 ): atom is WritableAtom<Value, Args, Result> =>
   !!(atom as WritableAtom<Value, Args, Result>).write
 
-const isFunction = <T>(x: T): x is T & ((...args: any[]) => any) =>
+const isFunction = <T>(x: T): x is T & ((...args: never[]) => unknown) =>
   typeof x === 'function'
 
 type SplitAtomAction<Item> =
@@ -94,7 +94,7 @@ export function splitAtom<Item, Key>(
               }
               throw new Error('splitAtom: index out of bounds for read')
             }
-            return currArr[index] as Item
+            return currArr[index]!
           }
           const write = (
             get: Getter,
@@ -109,7 +109,7 @@ export function splitAtom<Item, Key>(
               throw new Error('splitAtom: index out of bounds for write')
             }
             const nextItem = isFunction(update)
-              ? update(arr[index] as Item)
+              ? (update as (prev: Item) => Item)(arr[index]!)
               : update
             if (!Object.is(arr[index], nextItem)) {
               set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
@@ -190,13 +190,13 @@ export function splitAtom<Item, Key>(
                       set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
                         ...arr.slice(0, index1),
                         ...arr.slice(index1 + 1, index2),
-                        arr[index1] as Item,
+                        arr[index1]!,
                         ...arr.slice(index2),
                       ])
                     } else {
                       set(arrAtom as WritableAtom<Item[], [Item[]], void>, [
                         ...arr.slice(0, index2),
-                        arr[index1] as Item,
+                        arr[index1]!,
                         ...arr.slice(index2, index1),
                         ...arr.slice(index1 + 1),
                       ])
