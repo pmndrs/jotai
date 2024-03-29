@@ -30,7 +30,7 @@ export function freezeAtom<AtomType extends Atom<unknown>>(
 
 export function freezeAtomCreator<
   CreateAtom extends (...params: never[]) => Atom<unknown>,
->(createAtom: CreateAtom) {
+>(createAtom: CreateAtom): CreateAtom {
   return ((...params: never[]) => {
     const anAtom = createAtom(...params)
     const origRead = anAtom.read
@@ -38,5 +38,5 @@ export function freezeAtomCreator<
       return deepFreeze(origRead.call(this, get, options))
     }
     return anAtom
-  }) as CreateAtom
+  }) as never
 }

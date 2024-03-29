@@ -8,7 +8,7 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
-const isSelfAtom = (atom: AnyAtom, a: AnyAtom) =>
+const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
   atom.unstable_is ? atom.unstable_is(a) : a === atom
 
 const hasInitialValue = <T extends Atom<AnyValue>>(
@@ -20,7 +20,7 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
 type CancelPromise = (next?: Promise<unknown>) => void
-const cancelPromiseMap = new WeakMap<Promise<unknown>, CancelPromise>()
+const cancelPromiseMap: WeakMap<Promise<unknown>, CancelPromise> = new WeakMap()
 
 const registerCancelPromise = (
   promise: Promise<unknown>,
@@ -124,6 +124,8 @@ type Mounted = {
   u?: OnUnmount
 }
 
+type MountedAtoms = Set<AnyAtom>
+
 // for debugging purpose only
 type StoreListenerRev2 = (
   action:
@@ -134,7 +136,19 @@ type StoreListenerRev2 = (
     | { type: 'restore'; flushed: Set<AnyAtom> },
 ) => void
 
-type MountedAtoms = Set<AnyAtom>
+type Store = {
+  get: <Value>(atom: Atom<Value>) => Value
+  set: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...args: Args
+  ) => Result
+  sub: (atom: AnyAtom, listener: () => void) => () => void
+  dev_subscribe_store?: (l: StoreListenerRev2, rev: 2) => () => void
+  dev_get_mounted_atoms?: () => IterableIterator<AnyAtom>
+  dev_get_atom_state?: (a: AnyAtom) => AtomState | undefined
+  dev_get_mounted?: (a: AnyAtom) => Mounted | undefined
+  dev_restore_atoms?: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
+}
 
 /**
  * Create a new store. Each store is an independent, isolated universe of atom
@@ -152,7 +166,7 @@ type MountedAtoms = Set<AnyAtom>
  *
  * @returns A store.
  */
-export const createStore = () => {
+export const createStore = (): Store => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingStack: Set<AnyAtom>[] = []
@@ -824,11 +838,9 @@ export const createStore = () => {
   }
 }
 
-type Store = ReturnType<typeof createStore>
-
 let defaultStore: Store | undefined
 
-export const getDefaultStore = () => {
+export const getDefaultStore = (): Store => {
   if (!defaultStore) {
     defaultStore = createStore()
     if (import.meta.env?.MODE !== 'production') {
