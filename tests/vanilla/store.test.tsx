@@ -502,3 +502,29 @@ it('should mount once with atom creator atom (#2314)', async () => {
   store.sub(atomCreatorAtom, () => {})
   expect(countAtom.onMount).toHaveBeenCalledTimes(1)
 })
+
+it('should flush pending write triggered asynchronously and indirectly (#2451)', async () => {
+  const store = createStore()
+  const anAtom = atom('initial')
+
+  const callbackFn = vi.fn((_value: string) => {})
+  const unsub = store.sub(anAtom, () => {
+    callbackFn(store.get(anAtom))
+  })
+
+  const actionAtom = atom(null, async (_get, set) => {
+    await Promise.resolve() // waiting a microtask
+    set(indirectSetAtom)
+  })
+
+  const indirectSetAtom = atom(null, (_get, set) => {
+    set(anAtom, 'next')
+  })
+
+  // executing the chain reaction
+  await store.set(actionAtom)
+
+  expect(callbackFn).toHaveBeenCalledOnce()
+  expect(callbackFn).toHaveBeenCalledWith('next')
+  unsub()
+})
