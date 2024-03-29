@@ -71,6 +71,7 @@
     "build:vanilla:utils": "rollup -c --config-vanilla_utils",
     "build:react": "rollup -c --config-react --client-only",
     "build:react:utils": "rollup -c --config-react_utils --client-only",
+    "build:experimental": "rollup -c --config-experimental",
     "postbuild": "yarn patch-d-ts && yarn copy && yarn patch-ts3.8 && yarn patch-old-ts && yarn patch-esm-ts && yarn patch-readme",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --write",
     "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --list-different",

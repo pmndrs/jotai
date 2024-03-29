@@ -12,7 +12,6 @@ export const createStore: CreateStore = import.meta.env?.USE_STORE2
 export const getDefaultStore: GetDefaultStore = import.meta.env?.USE_STORE2
   ? store2.getDefaultStore
   : store.getDefaultStore
-export const experimental_createStore = store2.createStore
 
 export type {
   Getter,
