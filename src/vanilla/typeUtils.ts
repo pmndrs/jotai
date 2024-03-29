@@ -9,9 +9,13 @@ export type ExtractAtomValue<AtomType> =
   AtomType extends Atom<infer Value> ? Value : never
 
 export type ExtractAtomArgs<AtomType> =
-  AtomType extends WritableAtom<any, infer Args, any> ? Args : never
+  AtomType extends WritableAtom<unknown, infer Args, infer _Result>
+    ? Args
+    : never
 
 export type ExtractAtomResult<AtomType> =
-  AtomType extends WritableAtom<any, any[], infer Result> ? Result : never
+  AtomType extends WritableAtom<unknown, infer _Args, infer Result>
+    ? Result
+    : never
 
 export type SetStateAction<Value> = ExtractAtomArgs<PrimitiveAtom<Value>>[0]
