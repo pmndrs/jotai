@@ -39,7 +39,7 @@ export function unwrap<Value, PendingValue>(
 
 export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
   anAtom: WritableAtom<Value, Args, Result> | Atom<Value>,
-  fallback: (prev?: Awaited<Value>) => PendingValue = defaultFallback as any,
+  fallback: (prev?: Awaited<Value>) => PendingValue = defaultFallback as never,
 ) {
   return memo2(
     () => {
