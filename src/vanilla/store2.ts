@@ -8,7 +8,7 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
-const isSelfAtom = (atom: AnyAtom, a: AnyAtom) =>
+const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
   atom.unstable_is ? atom.unstable_is(a) : a === atom
 
 const hasInitialValue = <T extends Atom<AnyValue>>(
@@ -103,10 +103,10 @@ const isContinuablePromise = (
 ): promise is ContinuablePromise<AnyValue> =>
   typeof promise === 'object' && promise !== null && CONTINUE_PROMISE in promise
 
-const continuablePromiseMap = new WeakMap<
+const continuablePromiseMap: WeakMap<
   PromiseLike<AnyValue>,
   ContinuablePromise<AnyValue>
->()
+> = new WeakMap()
 
 /**
  * Create a continuable promise from a regular promise.
@@ -707,7 +707,7 @@ export const createStore = (): Store => {
 
 let defaultStore: Store | undefined
 
-export const getDefaultStore = () => {
+export const getDefaultStore = (): Store => {
   if (!defaultStore) {
     defaultStore = createStore()
     if (import.meta.env?.MODE !== 'production') {
