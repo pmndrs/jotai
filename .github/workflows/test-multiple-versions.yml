@@ -33,8 +33,8 @@ jobs:
           - 18.0.0
           - 18.1.0
           - 18.2.0
-          - 18.3.0-canary-c3048aab4-20240326
-          - 0.0.0-experimental-c3048aab4-20240326
+          - 18.3.0-canary-e373190fa-20240325
+          - 0.0.0-experimental-e373190fa-20240325
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
