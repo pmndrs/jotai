@@ -9,5 +9,5 @@
     "next-js-with-custom-babel-config-komw9",
     "react-with-custom-babel-config-z1ebx"
   ],
-  "node": "20"
+  "node": "18"
 }
