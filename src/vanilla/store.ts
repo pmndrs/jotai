@@ -135,20 +135,23 @@ type StoreListenerRev2 = (
     | { type: 'unsub' }
     | { type: 'restore'; flushed: Set<AnyAtom> },
 ) => void
+type DevStoreRev2 = {
+  dev_subscribe_store: (l: StoreListenerRev2, rev: 2) => () => void
+  dev_get_mounted_atoms: () => IterableIterator<AnyAtom>
+  dev_get_atom_state: (a: AnyAtom) => AtomState | undefined
+  dev_get_mounted: (a: AnyAtom) => Mounted | undefined
+  dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
+}
 
-type Store = {
+type PrdStore = {
   get: <Value>(atom: Atom<Value>) => Value
   set: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
-  dev_subscribe_store?: (l: StoreListenerRev2, rev: 2) => () => void
-  dev_get_mounted_atoms?: () => IterableIterator<AnyAtom>
-  dev_get_atom_state?: (a: AnyAtom) => AtomState | undefined
-  dev_get_mounted?: (a: AnyAtom) => Mounted | undefined
-  dev_restore_atoms?: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
+type Store = PrdStore | (PrdStore & DevStoreRev2)
 
 /**
  * Create a new store. Each store is an independent, isolated universe of atom
@@ -804,19 +807,16 @@ export const createStore = (): Store => {
       set: writeAtom,
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change without notice)
-      dev_subscribe_store: (l: StoreListenerRev2, rev: 2) => {
-        if (rev !== 2) {
-          throw new Error('The current StoreListener revision is 2.')
-        }
-        storeListenersRev2.add(l as StoreListenerRev2)
+      dev_subscribe_store: (l) => {
+        storeListenersRev2.add(l)
         return () => {
-          storeListenersRev2.delete(l as StoreListenerRev2)
+          storeListenersRev2.delete(l)
         }
       },
       dev_get_mounted_atoms: () => mountedAtoms.values(),
-      dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
-      dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
-      dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => {
+      dev_get_atom_state: (a) => atomStateMap.get(a),
+      dev_get_mounted: (a) => mountedMap.get(a),
+      dev_restore_atoms: (values) => {
         pendingStack.push(new Set())
         for (const [atom, valueOrPromise] of values) {
           if (hasInitialValue(atom)) {
