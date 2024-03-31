@@ -162,7 +162,9 @@ type PrdStore = {
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
 }
-type Store = PrdStore | (PrdStore & DevStoreRev2 & DevStoreRev3)
+type Store =
+  | (PrdStore & Partial<DevStoreRev2>)
+  | (PrdStore & DevStoreRev2 & DevStoreRev3)
 
 /**
  * Create a new store. Each store is an independent, isolated universe of atom
