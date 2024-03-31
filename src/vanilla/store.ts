@@ -869,7 +869,9 @@ export const createStore = (): Store => {
         if (!aState) {
           return undefined
         }
-        return aState.d.keys()
+        const deps = new Set(aState.d.keys())
+        deps.delete(a)
+        return deps
       },
       dev3_restore_atoms: (values) => {
         pendingStack.push(new Set())
