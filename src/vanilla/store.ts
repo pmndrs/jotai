@@ -840,6 +840,50 @@ export const createStore = (): Store => {
           l({ type: 'restore', flushed: flushed! }),
         )
       },
+      dev3_subscribe_store: (l) => {
+        const l2: DevListenerRev2 = (action) => {
+          if ('flushed' in action) {
+            for (const a of action.flushed) {
+              l({ type: 'set', atom: a })
+            }
+          }
+        }
+        storeListenersRev2.add(l2)
+        return () => {
+          storeListenersRev2.delete(l2)
+        }
+      },
+      dev3_get_mounted_atoms: () => mountedAtoms.values(),
+      dev3_get_atom_state: (a) => {
+        const aState = atomStateMap.get(a)
+        if (aState && 'v' in aState) {
+          return { v: aState.v }
+        }
+        if (aState && 'e' in aState) {
+          return { e: aState.e }
+        }
+        return undefined
+      },
+      dev3_get_atom_deps: (a) => {
+        const aState = atomStateMap.get(a)
+        if (!aState) {
+          return undefined
+        }
+        return aState.d.keys()
+      },
+      dev3_restore_atoms: (values) => {
+        pendingStack.push(new Set())
+        for (const [atom, valueOrPromise] of values) {
+          if (hasInitialValue(atom)) {
+            setAtomValueOrPromise(atom, valueOrPromise)
+            recomputeDependents(atom)
+          }
+        }
+        const flushed = flushPending(pendingStack.pop()!)
+        storeListenersRev2.forEach((l) =>
+          l({ type: 'restore', flushed: flushed! }),
+        )
+      },
     }
   }
   return {
