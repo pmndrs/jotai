@@ -127,7 +127,7 @@ type Mounted = {
 type MountedAtoms = Set<AnyAtom>
 
 // for debugging purpose only
-type StoreListenerRev2 = (
+type DevListenerRev2 = (
   action:
     | { type: 'write'; flushed: Set<AnyAtom> }
     | { type: 'async-write'; flushed: Set<AnyAtom> }
@@ -136,11 +136,22 @@ type StoreListenerRev2 = (
     | { type: 'restore'; flushed: Set<AnyAtom> },
 ) => void
 type DevStoreRev2 = {
-  dev_subscribe_store: (l: StoreListenerRev2, rev: 2) => () => void
+  dev_subscribe_store: (l: DevListenerRev2, rev: 2) => () => void
   dev_get_mounted_atoms: () => IterableIterator<AnyAtom>
   dev_get_atom_state: (a: AnyAtom) => AtomState | undefined
   dev_get_mounted: (a: AnyAtom) => Mounted | undefined
   dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
+}
+type DevListenerRev3 = (action: { type: 'set'; atom: AnyAtom }) => void
+type DevStoreRev3 = {
+  dev3_subscribe_store: (l: DevListenerRev3) => () => void
+  dev3_get_mounted_atoms: () => Iterable<AnyAtom>
+  dev3_get_atom_state: (
+    a: AnyAtom,
+  ) => { readonly v: AnyValue } | { readonly e: AnyError } | undefined
+  // deps are atoms that specified atom depends on (not including self)
+  dev3_get_atom_deps: (a: AnyAtom) => Iterable<AnyAtom> | undefined
+  dev3_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
 type PrdStore = {
@@ -151,7 +162,7 @@ type PrdStore = {
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
 }
-type Store = PrdStore | (PrdStore & DevStoreRev2)
+type Store = PrdStore | (PrdStore & DevStoreRev2 & DevStoreRev3)
 
 /**
  * Create a new store. Each store is an independent, isolated universe of atom
@@ -177,7 +188,7 @@ export const createStore = (): Store => {
     AnyAtom,
     [prevAtomState: AtomState | undefined, dependents: Dependents]
   >()
-  let storeListenersRev2: Set<StoreListenerRev2>
+  let storeListenersRev2: Set<DevListenerRev2>
   let mountedAtoms: MountedAtoms
   if (import.meta.env?.MODE !== 'production') {
     storeListenersRev2 = new Set()
