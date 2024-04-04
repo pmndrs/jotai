@@ -142,7 +142,9 @@ type DevStoreRev2 = {
   dev_get_mounted: (a: AnyAtom) => Mounted | undefined
   dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
-type DevListenerRev3 = (action: { type: 'set'; atom: AnyAtom }) => void
+type DevListenerRev3 = (
+  action: { type: 'set'; atom: AnyAtom } | { type: 'unsub' },
+) => void
 type DevStoreRev3 = {
   dev3_subscribe_store: (l: DevListenerRev3) => () => void
   dev3_get_mounted_atoms: () => Iterable<AnyAtom>
@@ -190,10 +192,10 @@ export const createStore = (): Store => {
     AnyAtom,
     [prevAtomState: AtomState | undefined, dependents: Dependents]
   >()
-  let storeListenersRev2: Set<DevListenerRev2>
+  let devListenersRev3: Set<DevListenerRev2>
   let mountedAtoms: MountedAtoms
   if (import.meta.env?.MODE !== 'production') {
-    storeListenersRev2 = new Set()
+    devListenersRev3 = new Set()
     mountedAtoms = new Set()
   }
 
@@ -596,7 +598,7 @@ export const createStore = (): Store => {
       if (!isSync) {
         const flushed = flushPending(pendingStack.pop()!)
         if (import.meta.env?.MODE !== 'production') {
-          storeListenersRev2.forEach((l) =>
+          devListenersRev3.forEach((l) =>
             l({ type: 'async-write', flushed: flushed! }),
           )
         }
@@ -615,7 +617,7 @@ export const createStore = (): Store => {
     const result = writeAtomState(atom, ...args)
     const flushed = flushPending(pendingStack.pop()!)
     if (import.meta.env?.MODE !== 'production') {
-      storeListenersRev2.forEach((l) => l({ type: 'write', flushed: flushed! }))
+      devListenersRev3.forEach((l) => l({ type: 'write', flushed: flushed! }))
     }
     return result
   }
@@ -800,7 +802,7 @@ export const createStore = (): Store => {
     const listeners = mounted.l
     listeners.add(listener)
     if (import.meta.env?.MODE !== 'production') {
-      storeListenersRev2.forEach((l) =>
+      devListenersRev3.forEach((l) =>
         l({ type: 'sub', flushed: flushed as Set<AnyAtom> }),
       )
     }
@@ -809,7 +811,7 @@ export const createStore = (): Store => {
       tryUnmountAtom(atom, mounted)
       if (import.meta.env?.MODE !== 'production') {
         // devtools uses this to detect if it _can_ unmount or not
-        storeListenersRev2.forEach((l) => l({ type: 'unsub' }))
+        devListenersRev3.forEach((l) => l({ type: 'unsub' }))
       }
     }
   }
@@ -821,9 +823,9 @@ export const createStore = (): Store => {
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change without notice)
       dev_subscribe_store: (l) => {
-        storeListenersRev2.add(l)
+        devListenersRev3.add(l)
         return () => {
-          storeListenersRev2.delete(l)
+          devListenersRev3.delete(l)
         }
       },
       dev_get_mounted_atoms: () => mountedAtoms.values(),
@@ -838,21 +840,23 @@ export const createStore = (): Store => {
           }
         }
         const flushed = flushPending(pendingStack.pop()!)
-        storeListenersRev2.forEach((l) =>
+        devListenersRev3.forEach((l) =>
           l({ type: 'restore', flushed: flushed! }),
         )
       },
       dev3_subscribe_store: (l) => {
         const l2: DevListenerRev2 = (action) => {
-          if ('flushed' in action) {
+          if (action.type === 'unsub') {
+            l(action)
+          } else if ('flushed' in action) {
             for (const a of action.flushed) {
               l({ type: 'set', atom: a })
             }
           }
         }
-        storeListenersRev2.add(l2)
+        devListenersRev3.add(l2)
         return () => {
-          storeListenersRev2.delete(l2)
+          devListenersRev3.delete(l2)
         }
       },
       dev3_get_mounted_atoms: () => mountedAtoms.values(),
@@ -884,7 +888,7 @@ export const createStore = (): Store => {
           }
         }
         const flushed = flushPending(pendingStack.pop()!)
-        storeListenersRev2.forEach((l) =>
+        devListenersRev3.forEach((l) =>
           l({ type: 'restore', flushed: flushed! }),
         )
       },
