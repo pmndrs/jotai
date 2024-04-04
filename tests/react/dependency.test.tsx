@@ -908,7 +908,9 @@ describe('glitch free', () => {
 
 it('should not call read function for unmounted atoms in StrictMode (#2076)', async () => {
   const countAtom = atom(1)
-  let firstDerivedFn: ReturnType<typeof vi.fn> | undefined
+  let firstDerivedFn:
+    | ReturnType<typeof vi.fn<[get: Getter], number>>
+    | undefined
 
   const Component = () => {
     const memoizedAtomRef = useRef<Atom<number> | null>(null)
