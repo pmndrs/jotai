@@ -273,11 +273,12 @@ export const createStore = (): Store => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
 
   const getAtomState = <Value>(atom: Atom<Value>) => {
-    if (!atomStateMap.has(atom)) {
-      const atomState: AtomState<Value> = { d: new Map(), t: new Set() }
+    let atomState = atomStateMap.get(atom);
+    if (!atomState) {
+      atomState = { d: new Map(), t: new Set() }
       atomStateMap.set(atom, atomState)
     }
-    return atomStateMap.get(atom) as AtomState<Value>
+    return atomState as AtomState<Value>
   }
 
   let storeListenersRev2: Set<StoreListenerRev2>
