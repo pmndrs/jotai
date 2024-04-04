@@ -1,0 +1,56 @@
+---
+title: useReduerAtom
+nav: 8.11
+keywords: reducer, hook, useReducerAtom
+---
+
+`useReducerAtom` is a custom hook to apply a reducer to a primitive atom.
+
+It's useful to change the update behavior temporarily.
+Also, consider [atomWithReducer](../utilities/reducer.mdx)
+for the atom-level solution.
+
+```ts
+import { useCallback } from 'react'
+import { useAtom } from 'jotai'
+import type { PrimitiveAtom } from 'jotai'
+
+export function useReducerAtom<Value, Action>(
+  anAtom: PrimitiveAtom<Value>,
+  reducer: (v: Value, a: Action) => Value,
+) {
+  const [state, setState] = useAtom(anAtom)
+  const dispatch = useCallback(
+    (action: Action) => setState((prev) => reducer(prev, action)),
+    [setState, reducer],
+  )
+  return [state, dispatch] as const
+}
+```
+
+### Example Usage
+
+```jsx
+import { atom } from 'jotai'
+
+const countReducer = (prev, action) => {
+  if (action.type === 'inc') return prev + 1
+  if (action.type === 'dec') return prev - 1
+  throw new Error('unknown action type')
+}
+
+const countAtom = atom(0)
+
+const Counter = () => {
+  const [count, dispatch] = useReducerAtom(countAtom, countReducer)
+  return (
+    <div>
+      {count}
+      <button onClick={() => dispatch({ type: 'inc' })}>+1</button>
+      <button onClick={() => dispatch({ type: 'dec' })}>-1</button>
+    </div>
+  )
+}
+```
+
+<CodeSandbox id="eg0mw" />
