@@ -45,7 +45,11 @@ describe('[DEV-ONLY] dev-only methods', () => {
     store.set(countAtom, 1)
 
     const result = store.dev_get_mounted_atoms?.() || []
-    expect(Array.from(result)).toStrictEqual([
+    expect(
+      Array.from(result).sort(
+        (a, b) => Object.keys(a).length - Object.keys(b).length,
+      ),
+    ).toStrictEqual([
       { toString: expect.any(Function), read: expect.any(Function) },
       {
         toString: expect.any(Function),
