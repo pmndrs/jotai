@@ -848,7 +848,7 @@ export const createStore = (): Store => {
         const l2: DevListenerRev2 = (action) => {
           if (action.type === 'unsub') {
             l(action)
-          } else if ('flushed' in action) {
+          } else if (action.type !== 'sub' && 'flushed' in action) {
             for (const a of action.flushed) {
               l({ type: 'set', atom: a })
             }

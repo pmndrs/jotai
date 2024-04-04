@@ -734,16 +734,9 @@ export const createStore = (): Store => {
         )
       },
       dev3_subscribe_store: (l) => {
-        const l2: DevListenerRev2 = (action) => {
-          if ('flushed' in action) {
-            for (const a of action.flushed) {
-              l({ type: 'set', atom: a })
-            }
-          }
-        }
-        devListenersRev2.add(l2)
+        devListenersRev3.add(l)
         return () => {
-          devListenersRev2.delete(l2)
+          devListenersRev3.delete(l)
         }
       },
       dev3_get_mounted_atoms: () => mountedAtoms.values(),
