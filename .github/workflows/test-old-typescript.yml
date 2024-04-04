@@ -77,6 +77,8 @@ jobs:
           echo "declare module '@vitest/expect'" >> ./src/types.d.ts
           rm node_modules/@vitest/runner/dist/*.d.ts
           echo "declare module '@vitest/runner'" >> ./src/types.d.ts
+          rm node_modules/@vitest/spy/dist/*.d.ts
+          echo "declare module '@vitest/spy'" >> ./src/types.d.ts
       - name: Patch testing setup for older TS
         if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
