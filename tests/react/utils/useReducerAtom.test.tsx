@@ -1,8 +1,17 @@
 import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { it } from 'vitest'
+import { afterEach, beforeEach, it, vi } from 'vitest'
 import { useReducerAtom } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
+
+let savedConsoleWarn: any
+beforeEach(() => {
+  savedConsoleWarn = console.warn
+  console.warn = vi.fn()
+})
+afterEach(() => {
+  console.warn = savedConsoleWarn
+})
 
 it('useReducerAtom with no action argument', async () => {
   const countAtom = atom(0)
