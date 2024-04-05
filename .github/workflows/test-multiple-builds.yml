@@ -41,6 +41,8 @@ jobs:
         if: ${{ matrix.build == 'cjs' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.ts
+          sed -i~ "s/\"\.\/src\(.*\)\.ts\"/\"\.\/dist\1.js\"/" tsconfig.json
+          cat tsconfig.json
       - name: Patch for ESM
         if: ${{ matrix.build == 'esm' }}
         run: |

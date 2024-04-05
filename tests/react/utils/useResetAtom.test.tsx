@@ -4,10 +4,7 @@ import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { useResetAtom } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
-// For CJS/UMD testing
-const { RESET, atomWithReducer, atomWithReset } = await import(
-  'jotai/vanilla/utils'
-)
+import { RESET, atomWithReducer, atomWithReset } from 'jotai/vanilla/utils'
 
 it('atomWithReset resets to its first value', async () => {
   const countAtom = atomWithReset(0)
