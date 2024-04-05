@@ -51,13 +51,13 @@ jobs:
       - name: Patch for UMD
         if: ${{ matrix.build == 'umd' }}
         run: |
-          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/umd\1.js')/" vitest.config.ts
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/umd\1.${NODE_ENV}.js')/" vitest.config.ts
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Patch for SystemJS
         if: ${{ matrix.build == 'system' }}
         run: |
-          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/system\1.js')/" vitest.config.ts
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/system\1.${NODE_ENV}.js')/" vitest.config.ts
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
