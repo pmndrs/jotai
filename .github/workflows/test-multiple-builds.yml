@@ -40,7 +40,8 @@ jobs:
       - name: Patch for CJS
         if: ${{ matrix.build == 'cjs' }}
         run: |
-          sed -i~ "s/<rootDir>\/src\(.*\)\.ts/<rootDir>\/dist\1.js/" package.json
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.ts
+          cat vitest.config.ts
       - name: Patch for ESM
         if: ${{ matrix.build == 'esm' }}
         run: |
