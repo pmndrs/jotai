@@ -13,6 +13,12 @@ export const getDefaultStore: GetDefaultStore = import.meta.env?.USE_STORE2
   ? store2.getDefaultStore
   : store.getDefaultStore
 
+export {
+  INTERNAL_DevStoreRev2,
+  INTERNAL_DevStoreRev3,
+  INTERNAL_PrdStore,
+} from './vanilla/store.ts'
+
 export type {
   Getter,
   Setter,
