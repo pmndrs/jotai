@@ -266,11 +266,16 @@ type DevListenerRev3 = (
 type DevStoreRev3 = {
   dev3_subscribe_store: (l: DevListenerRev3) => () => void
   dev3_get_mounted_atoms: () => Iterable<AnyAtom>
-  dev3_get_atom_state: (
-    a: AnyAtom,
-  ) => { readonly v: AnyValue } | { readonly e: AnyError } | undefined
-  // deps are atoms that specified atom depends on (not including self)
-  dev3_get_atom_deps: (a: AnyAtom) => Iterable<AnyAtom> | undefined
+  dev3_get_atom_state: (a: AnyAtom) =>
+    | {
+        readonly v: AnyValue
+        readonly d: Iterable<AnyAtom> // deps excluding self
+      }
+    | {
+        readonly e: AnyError
+        readonly d: Iterable<AnyAtom> // deps excluding self
+      }
+    | undefined
   dev3_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
@@ -740,10 +745,11 @@ export const createStore = (): Store => {
         }
       },
       dev3_get_mounted_atoms: () => mountedAtoms.values(),
-      dev3_get_atom_state: (a) => atomStateMap.get(a)?.s,
-      dev3_get_atom_deps: (a) => {
+      dev3_get_atom_state: (a) => {
         const aState = atomStateMap.get(a)
-        return aState ? new Set(aState.d.keys()) : undefined
+        return aState?.s
+          ? { ...aState.s, d: new Set(aState.d.keys()) }
+          : undefined
       },
       dev3_restore_atoms: (values) => {
         const pendingPair = createPendingPair()

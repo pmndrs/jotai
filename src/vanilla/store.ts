@@ -148,11 +148,16 @@ type DevListenerRev3 = (
 type DevStoreRev3 = {
   dev3_subscribe_store: (l: DevListenerRev3) => () => void
   dev3_get_mounted_atoms: () => Iterable<AnyAtom>
-  dev3_get_atom_state: (
-    a: AnyAtom,
-  ) => { readonly v: AnyValue } | { readonly e: AnyError } | undefined
-  // deps are atoms that specified atom depends on (not including self)
-  dev3_get_atom_deps: (a: AnyAtom) => Iterable<AnyAtom> | undefined
+  dev3_get_atom_state: (a: AnyAtom) =>
+    | {
+        readonly v: AnyValue
+        readonly d: Iterable<AnyAtom> // deps excluding self
+      }
+    | {
+        readonly e: AnyError
+        readonly d: Iterable<AnyAtom> // deps excluding self
+      }
+    | undefined
   dev3_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
@@ -867,21 +872,16 @@ export const createStore = (): Store => {
       dev3_get_atom_state: (a) => {
         const aState = atomStateMap.get(a)
         if (aState && 'v' in aState) {
-          return { v: aState.v }
+          const d = new Set(aState.d.keys())
+          d.delete(a)
+          return { v: aState.v, d }
         }
         if (aState && 'e' in aState) {
-          return { e: aState.e }
+          const d = new Set(aState.d.keys())
+          d.delete(a)
+          return { e: aState.e, d }
         }
         return undefined
-      },
-      dev3_get_atom_deps: (a) => {
-        const aState = atomStateMap.get(a)
-        if (!aState) {
-          return undefined
-        }
-        const deps = new Set(aState.d.keys())
-        deps.delete(a)
-        return deps
       },
       dev3_restore_atoms: (values) => {
         pendingStack.push(new Set())

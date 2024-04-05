@@ -165,21 +165,21 @@ describe('[DEV-ONLY] dev-only methods rev3', () => {
 
   it('should get atom deps', () => {
     const store = createStore()
-    if (!('dev3_get_atom_deps' in store)) {
+    if (!('dev3_get_atom_state' in store)) {
       throw new Error('dev methods are not available')
     }
     const countAtom = atom(0)
     const cb = vi.fn()
     const unsub = store.sub(countAtom, cb)
     store.set(countAtom, 1)
-    const result = store.dev3_get_atom_deps(countAtom)
-    expect(result && Array.from(result)).toStrictEqual([])
+    const result = store.dev3_get_atom_state(countAtom)
+    expect(result?.d && Array.from(result.d)).toStrictEqual([])
     unsub()
   })
 
   it('should get atom deps 2', () => {
     const store = createStore()
-    if (!('dev3_get_atom_deps' in store)) {
+    if (!('dev3_get_atom_state' in store)) {
       throw new Error('dev methods are not available')
     }
     const countAtom = atom(0)
@@ -187,8 +187,8 @@ describe('[DEV-ONLY] dev-only methods rev3', () => {
     const cb = vi.fn()
     const unsub = store.sub(doubleAtom, cb)
     store.set(countAtom, 1)
-    const result = store.dev3_get_atom_deps(doubleAtom)
-    expect(result && Array.from(result)).toStrictEqual([countAtom])
+    const result = store.dev3_get_atom_state(doubleAtom)
+    expect(result?.d && Array.from(result.d)).toStrictEqual([countAtom])
     unsub()
   })
 
