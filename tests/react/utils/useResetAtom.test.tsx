@@ -133,6 +133,8 @@ it('useResetAtom with custom atom', async () => {
         return state + 1
       case RESET:
         return 0
+      default:
+        throw new Error('unknown action')
     }
   }
 
