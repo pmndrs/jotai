@@ -136,8 +136,8 @@
     "@types/react-dom": "^18.2.24",
     "@typescript-eslint/eslint-plugin": "7.2.0",
     "@typescript-eslint/parser": "7.2.0",
-    "@vitest/coverage-v8": "1.4.0",
-    "@vitest/ui": "1.4.0",
+    "@vitest/coverage-v8": "^1.4.0",
+    "@vitest/ui": "^1.4.0",
     "benny": "^3.7.1",
     "concurrently": "^8.2.2",
     "downlevel-dts": "^0.11.0",
@@ -165,7 +165,7 @@
     "ts-node": "^10.9.2",
     "tslib": "^2.6.2",
     "typescript": "^5.4.3",
-    "vitest": "1.4.0",
+    "vitest": "^1.4.0",
     "wonka": "^6.3.4"
   },
   "resolutions": {
