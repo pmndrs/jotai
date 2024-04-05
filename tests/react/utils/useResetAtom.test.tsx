@@ -4,9 +4,10 @@ import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { useResetAtom } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
-import { atomWithReducer, atomWithReset } from 'jotai/vanilla/utils'
 // For CJS/UMD testing
-const { RESET }: any = await import('jotai/vanilla/utils')
+const { RESET, atomWithReducer, atomWithReset } = await import(
+  'jotai/vanilla/utils'
+)
 
 it('atomWithReset resets to its first value', async () => {
   const countAtom = atomWithReset(0)
@@ -65,7 +66,9 @@ it('atomWithReset reset based on previous value', async () => {
         <div>count: {count}</div>
         <button
           onClick={() =>
-            setValue((oldValue) => (oldValue === 3 ? RESET : oldValue + 1))
+            setValue((oldValue) =>
+              oldValue === 3 ? (RESET as never) : oldValue + 1,
+            )
           }
         >
           increment till 3, then reset
@@ -98,7 +101,7 @@ it('atomWithReset through read-write atom', async () => {
   const countAtom = atom(
     (get) => get(primitiveAtom),
     (_get, set, newValue: number | typeof RESET) =>
-      set(primitiveAtom, newValue),
+      set(primitiveAtom, newValue as never),
   )
 
   const Parent = () => {
