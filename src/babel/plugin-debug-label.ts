@@ -1,4 +1,4 @@
-import { basename, dirname, extname } from 'path'
+import path from 'path'
 import babel, { PluginObj } from '@babel/core'
 import _templateBuilder from '@babel/template'
 import { isAtom } from './utils.ts'
@@ -20,11 +20,11 @@ export default function debugLabelPlugin(
         ) {
           const filename = state.filename || 'unknown'
 
-          let displayName = basename(filename, extname(filename))
+          let displayName = path.basename(filename, path.extname(filename))
 
           // ./{module name}/index.js
           if (displayName === 'index') {
-            displayName = basename(dirname(filename))
+            displayName = path.basename(path.dirname(filename))
           }
           // Relies on visiting the variable declaration to add the debugLabel
           const buildExport = templateBuilder(`
