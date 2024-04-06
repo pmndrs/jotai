@@ -258,9 +258,6 @@ type PrdStore = {
 }
 type Store = PrdStore | (PrdStore & DevStoreRev4)
 
-export type INTERNAL_DevStoreRev4 = DevStoreRev4
-export type INTERNAL_PrdStore = PrdStore
-
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
 
