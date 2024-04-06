@@ -41,7 +41,7 @@ jobs:
         if: ${{ matrix.build == 'cjs' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.ts
-          sed -i~ "s/'jotai\/vanilla\/utils'/..\/..\/..\/dist\/vanilla\/utils.js/" tests/react/utils/useResetAtom.test.tsx
+          sed -i~ "s/'jotai\/vanilla\/utils'/'..\/..\/..\/dist\/vanilla\/utils.js'/" tests/react/utils/useResetAtom.test.tsx
           cat tests/react/utils/useResetAtom.test.tsx
       - name: Patch for ESM
         if: ${{ matrix.build == 'esm' }}
