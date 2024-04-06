@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type {
-  INTERNAL_DevStoreRev4,
-  INTERNAL_PrdStore,
-} from '../../src/vanilla/store2.js'
 
 describe.skipIf(import.meta.env?.USE_STORE2)(
   '[DEV-ONLY] dev-only methods rev2',
@@ -135,14 +131,14 @@ describe.skipIf(!import.meta.env?.USE_STORE2)(
   '[DEV-ONLY] dev-only methods rev4',
   () => {
     it('should get atom value', () => {
-      const store = createStore() as INTERNAL_PrdStore & INTERNAL_DevStoreRev4
+      const store = createStore()
       if (!('dev4_get_internal_weak_map' in store)) {
         throw new Error('dev methods are not available')
       }
       const countAtom = atom(0)
       countAtom.debugLabel = 'countAtom'
       store.set(countAtom, 1)
-      const weakMap = store.dev4_get_internal_weak_map()
+      const weakMap = (store as any).dev4_get_internal_weak_map()
       expect(weakMap.get(countAtom)?.s).toEqual({ v: 1 })
     })
   },
