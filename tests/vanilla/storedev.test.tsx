@@ -131,14 +131,14 @@ describe.skipIf(!import.meta.env?.USE_STORE2)(
   '[DEV-ONLY] dev-only methods rev4',
   () => {
     it('should get atom value', () => {
-      const store = createStore()
+      const store = createStore() as any
       if (!('dev4_get_internal_weak_map' in store)) {
         throw new Error('dev methods are not available')
       }
       const countAtom = atom(0)
       countAtom.debugLabel = 'countAtom'
       store.set(countAtom, 1)
-      const weakMap = (store as any).dev4_get_internal_weak_map()
+      const weakMap = store.dev4_get_internal_weak_map()
       expect(weakMap.get(countAtom)?.s).toEqual({ v: 1 })
     })
   },
