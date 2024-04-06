@@ -278,6 +278,13 @@ type DevStoreRev3 = {
     | undefined
   dev3_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
+type DevStoreRev4 = {
+  dev4_get_internal_weak_map: () => WeakMap<AnyAtom, AtomState>
+  dev4_override_method: <K extends keyof PrdStore>(
+    key: K,
+    fn: PrdStore[K],
+  ) => void
+}
 
 type PrdStore = {
   get: <Value>(atom: Atom<Value>) => Value
@@ -289,7 +296,7 @@ type PrdStore = {
 }
 type Store =
   | (PrdStore & Partial<DevStoreRev2>)
-  | (PrdStore & DevStoreRev2 & DevStoreRev3)
+  | (PrdStore & DevStoreRev2 & DevStoreRev3 & DevStoreRev4)
 
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
@@ -686,7 +693,7 @@ export const createStore = (): Store => {
   }
 
   if (import.meta.env?.MODE !== 'production') {
-    return {
+    const store: Store = {
       get: readAtom,
       set: writeAtom,
       sub: subscribeAtom,
@@ -762,7 +769,12 @@ export const createStore = (): Store => {
           devListenersRev3.forEach((l) => l({ type: 'set', atom: a }))
         })
       },
+      dev4_get_internal_weak_map: () => atomStateMap,
+      dev4_override_method: (key, fn) => {
+        ;(store as any)[key] = fn
+      },
     }
+    return store
   }
   return {
     get: readAtom,
