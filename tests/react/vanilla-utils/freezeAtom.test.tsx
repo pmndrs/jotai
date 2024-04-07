@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { it } from 'vitest'
+import { afterEach, beforeEach, describe, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { freezeAtom, freezeAtomCreator } from 'jotai/vanilla/utils'
@@ -12,7 +12,6 @@ it('freezeAtom basic test', async () => {
 
   const Component = () => {
     const [obj, setObj] = useAtom(freezeAtom(objAtom))
-
     return (
       <>
         <button onClick={setObj}>change</button>
@@ -32,38 +31,46 @@ it('freezeAtom basic test', async () => {
   await findByText('isFrozen: true')
 
   fireEvent.click(getByText('change'))
-
   await findByText('isFrozen: true')
 })
 
-it('freezeAtomCreator basic test', async () => {
-  const createFrozenAtom = freezeAtomCreator(atom)
-  const objAtom = createFrozenAtom({ deep: {} }, (_get, set, _ignored?) => {
-    set(objAtom, { deep: {} })
+describe('freezeAtomCreator', () => {
+  let savedConsoleWarn: any
+  beforeEach(() => {
+    savedConsoleWarn = console.warn
+    console.warn = vi.fn()
+  })
+  afterEach(() => {
+    console.warn = savedConsoleWarn
   })
 
-  const Component = () => {
-    const [obj, setObj] = useAtom(objAtom)
+  it('freezeAtomCreator basic test', async () => {
+    const createFrozenAtom = freezeAtomCreator(atom)
+    const objAtom = createFrozenAtom({ deep: {} }, (_get, set, _ignored?) => {
+      set(objAtom, { deep: {} })
+    })
 
-    return (
-      <>
-        <button onClick={setObj}>change</button>
-        <div>
-          isFrozen: {`${Object.isFrozen(obj) && Object.isFrozen(obj.deep)}`}
-        </div>
-      </>
+    const Component = () => {
+      const [obj, setObj] = useAtom(objAtom)
+      return (
+        <>
+          <button onClick={setObj}>change</button>
+          <div>
+            isFrozen: {`${Object.isFrozen(obj) && Object.isFrozen(obj.deep)}`}
+          </div>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <Component />
+      </StrictMode>,
     )
-  }
 
-  const { getByText, findByText } = render(
-    <StrictMode>
-      <Component />
-    </StrictMode>,
-  )
+    await findByText('isFrozen: true')
 
-  await findByText('isFrozen: true')
-
-  fireEvent.click(getByText('change'))
-
-  await findByText('isFrozen: true')
+    fireEvent.click(getByText('change'))
+    await findByText('isFrozen: true')
+  })
 })

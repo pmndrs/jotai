@@ -16,6 +16,7 @@ const deepFreeze = (obj: unknown) => {
 export function freezeAtom<AtomType extends Atom<unknown>>(
   anAtom: AtomType,
 ): AtomType
+
 export function freezeAtom(
   anAtom: WritableAtom<unknown, unknown[], unknown>,
 ): WritableAtom<unknown, unknown[], unknown> {
@@ -48,11 +49,14 @@ export function freezeAtom(
   return anAtom
 }
 
+/**
+ * @deprecated Define it on users end
+ */
 export function freezeAtomCreator<
   CreateAtom extends (...args: unknown[]) => Atom<unknown>,
->(createAtom: CreateAtom): CreateAtom
-export function freezeAtomCreator(
-  createAtom: (...args: unknown[]) => WritableAtom<unknown, unknown[], unknown>,
-): (...args: unknown[]) => WritableAtom<unknown, unknown[], unknown> {
-  return (...args) => freezeAtom(createAtom(...args))
+>(createAtom: CreateAtom): CreateAtom {
+  console.warn(
+    '[DEPRECATED] freezeAtomCreator is deprecated, define it on users end',
+  )
+  return ((...args: unknown[]) => freezeAtom(createAtom(...args))) as never
 }
