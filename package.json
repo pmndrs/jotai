@@ -150,6 +150,7 @@
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-vitest": "^0.4.1",
+    "jest-leak-detector": "^29.7.0",
     "jsdom": "^24.0.0",
     "json": "^11.0.0",
     "prettier": "^3.2.5",

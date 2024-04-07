@@ -1,43 +1,76 @@
 import { StrictMode } from 'react'
-import { render } from '@testing-library/react'
-import { it } from 'vitest'
+import { fireEvent, render } from '@testing-library/react'
+import { afterEach, beforeEach, describe, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { freezeAtom, freezeAtomCreator } from 'jotai/vanilla/utils'
 
 it('freezeAtom basic test', async () => {
-  const objAtom = atom({ count: 0 })
+  const objAtom = atom({ deep: {} }, (_get, set, _ignored?) => {
+    set(objAtom, { deep: {} })
+  })
 
   const Component = () => {
-    const [obj] = useAtom(freezeAtom(objAtom))
-
-    return <div>isFrozen: {`${Object.isFrozen(obj)}`}</div>
+    const [obj, setObj] = useAtom(freezeAtom(objAtom))
+    return (
+      <>
+        <button onClick={setObj}>change</button>
+        <div>
+          isFrozen: {`${Object.isFrozen(obj) && Object.isFrozen(obj.deep)}`}
+        </div>
+      </>
+    )
   }
 
-  const { findByText } = render(
+  const { getByText, findByText } = render(
     <StrictMode>
       <Component />
     </StrictMode>,
   )
 
+  await findByText('isFrozen: true')
+
+  fireEvent.click(getByText('change'))
   await findByText('isFrozen: true')
 })
 
-it('freezeAtomCreator basic test', async () => {
-  const createFrozenAtom = freezeAtomCreator(atom)
-  const objAtom = createFrozenAtom({ count: 0 })
+describe('freezeAtomCreator', () => {
+  let savedConsoleWarn: any
+  beforeEach(() => {
+    savedConsoleWarn = console.warn
+    console.warn = vi.fn()
+  })
+  afterEach(() => {
+    console.warn = savedConsoleWarn
+  })
 
-  const Component = () => {
-    const [obj] = useAtom(objAtom)
+  it('freezeAtomCreator basic test', async () => {
+    const createFrozenAtom = freezeAtomCreator(atom)
+    const objAtom = createFrozenAtom({ deep: {} }, (_get, set, _ignored?) => {
+      set(objAtom, { deep: {} })
+    })
 
-    return <div>isFrozen: {`${Object.isFrozen(obj)}`}</div>
-  }
+    const Component = () => {
+      const [obj, setObj] = useAtom(objAtom)
+      return (
+        <>
+          <button onClick={setObj}>change</button>
+          <div>
+            isFrozen: {`${Object.isFrozen(obj) && Object.isFrozen(obj.deep)}`}
+          </div>
+        </>
+      )
+    }
 
-  const { findByText } = render(
-    <StrictMode>
-      <Component />
-    </StrictMode>,
-  )
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <Component />
+      </StrictMode>,
+    )
 
-  await findByText('isFrozen: true')
+    await findByText('isFrozen: true')
+
+    fireEvent.click(getByText('change'))
+    await findByText('isFrozen: true')
+  })
 })
