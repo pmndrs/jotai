@@ -47,10 +47,7 @@ describe.skipIf(IS_STORE2)('[DEV-ONLY] dev-only methods rev2', () => {
     const unsub = store.sub(countAtom, cb)
     store.set(countAtom, 1)
     const result = store.dev_get_mounted?.(countAtom)
-    expect(result).toStrictEqual({
-      l: new Set([cb]),
-      t: new Set([countAtom]),
-    })
+    expect(result).toStrictEqual({ l: new Set([cb]), t: new Set([countAtom]) })
     unsub()
   })
 
