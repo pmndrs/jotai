@@ -63,7 +63,9 @@ it('atomWithReset reset based on previous value', async () => {
         <div>count: {count}</div>
         <button
           onClick={() =>
-            setValue((oldValue) => (oldValue === 3 ? RESET : oldValue + 1))
+            setValue((oldValue) =>
+              oldValue === 3 ? (RESET as never) : oldValue + 1,
+            )
           }
         >
           increment till 3, then reset
@@ -96,7 +98,7 @@ it('atomWithReset through read-write atom', async () => {
   const countAtom = atom(
     (get) => get(primitiveAtom),
     (_get, set, newValue: number | typeof RESET) =>
-      set(primitiveAtom, newValue),
+      set(primitiveAtom, newValue as never),
   )
 
   const Parent = () => {
@@ -133,6 +135,8 @@ it('useResetAtom with custom atom', async () => {
         return state + 1
       case RESET:
         return 0
+      default:
+        throw new Error('unknown action')
     }
   }
 
