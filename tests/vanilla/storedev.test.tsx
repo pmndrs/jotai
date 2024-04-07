@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 
-const IS_STORE2 = 'dev4_get_internal_weak_map' in createStore()
+const IS_DEV_STORE = 'dev_subscribe_store' in createStore()
+const IS_DEV_STORE2 = 'dev4_get_internal_weak_map' in createStore()
 
-describe.skipIf(IS_STORE2)('[DEV-ONLY] dev-only methods rev2', () => {
+describe.skipIf(!IS_DEV_STORE)('[DEV-ONLY] dev-only methods rev2', () => {
   it('should return the values of all mounted atoms', () => {
     const store = createStore()
     const countAtom = atom(0)
@@ -123,7 +124,7 @@ describe.skipIf(IS_STORE2)('[DEV-ONLY] dev-only methods rev2', () => {
   })
 })
 
-describe.skipIf(!IS_STORE2)('[DEV-ONLY] dev-only methods rev4', () => {
+describe.skipIf(!IS_DEV_STORE2)('[DEV-ONLY] dev-only methods rev4', () => {
   it('should get atom value', () => {
     const store = createStore() as any
     if (!('dev4_get_internal_weak_map' in store)) {
