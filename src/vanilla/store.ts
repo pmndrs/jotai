@@ -142,19 +142,6 @@ type DevStoreRev2 = {
   dev_get_mounted: (a: AnyAtom) => Mounted | undefined
   dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
-type DevListenerRev3 = (
-  action: { type: 'set'; atom: AnyAtom } | { type: 'unsub' },
-) => void
-type DevStoreRev3 = {
-  dev3_subscribe_store: (l: DevListenerRev3) => () => void
-  dev3_get_mounted_atoms: () => Iterable<AnyAtom>
-  dev3_get_atom_state: (
-    a: AnyAtom,
-  ) => { readonly v: AnyValue } | { readonly e: AnyError } | undefined
-  // deps are atoms that specified atom depends on (not including self)
-  dev3_get_atom_deps: (a: AnyAtom) => Iterable<AnyAtom> | undefined
-  dev3_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
-}
 
 type PrdStore = {
   get: <Value>(atom: Atom<Value>) => Value
@@ -164,12 +151,9 @@ type PrdStore = {
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
 }
-type Store =
-  | (PrdStore & Partial<DevStoreRev2>)
-  | (PrdStore & DevStoreRev2 & DevStoreRev3)
+type Store = PrdStore & Partial<DevStoreRev2>
 
 export type INTERNAL_DevStoreRev2 = DevStoreRev2
-export type INTERNAL_DevStoreRev3 = DevStoreRev3
 export type INTERNAL_PrdStore = PrdStore
 
 /**
@@ -196,10 +180,10 @@ export const createStore = (): Store => {
     AnyAtom,
     [prevAtomState: AtomState | undefined, dependents: Dependents]
   >()
-  let devListenersRev3: Set<DevListenerRev2>
+  let devListenersRev2: Set<DevListenerRev2>
   let mountedAtoms: MountedAtoms
   if (import.meta.env?.MODE !== 'production') {
-    devListenersRev3 = new Set()
+    devListenersRev2 = new Set()
     mountedAtoms = new Set()
   }
 
@@ -602,7 +586,7 @@ export const createStore = (): Store => {
       if (!isSync) {
         const flushed = flushPending(pendingStack.pop()!)
         if (import.meta.env?.MODE !== 'production') {
-          devListenersRev3.forEach((l) =>
+          devListenersRev2.forEach((l) =>
             l({ type: 'async-write', flushed: flushed! }),
           )
         }
@@ -621,7 +605,7 @@ export const createStore = (): Store => {
     const result = writeAtomState(atom, ...args)
     const flushed = flushPending(pendingStack.pop()!)
     if (import.meta.env?.MODE !== 'production') {
-      devListenersRev3.forEach((l) => l({ type: 'write', flushed: flushed! }))
+      devListenersRev2.forEach((l) => l({ type: 'write', flushed: flushed! }))
     }
     return result
   }
@@ -806,7 +790,7 @@ export const createStore = (): Store => {
     const listeners = mounted.l
     listeners.add(listener)
     if (import.meta.env?.MODE !== 'production') {
-      devListenersRev3.forEach((l) =>
+      devListenersRev2.forEach((l) =>
         l({ type: 'sub', flushed: flushed as Set<AnyAtom> }),
       )
     }
@@ -815,7 +799,7 @@ export const createStore = (): Store => {
       tryUnmountAtom(atom, mounted)
       if (import.meta.env?.MODE !== 'production') {
         // devtools uses this to detect if it _can_ unmount or not
-        devListenersRev3.forEach((l) => l({ type: 'unsub' }))
+        devListenersRev2.forEach((l) => l({ type: 'unsub' }))
       }
     }
   }
@@ -827,9 +811,9 @@ export const createStore = (): Store => {
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change without notice)
       dev_subscribe_store: (l) => {
-        devListenersRev3.add(l)
+        devListenersRev2.add(l)
         return () => {
-          devListenersRev3.delete(l)
+          devListenersRev2.delete(l)
         }
       },
       dev_get_mounted_atoms: () => mountedAtoms.values(),
@@ -844,55 +828,7 @@ export const createStore = (): Store => {
           }
         }
         const flushed = flushPending(pendingStack.pop()!)
-        devListenersRev3.forEach((l) =>
-          l({ type: 'restore', flushed: flushed! }),
-        )
-      },
-      dev3_subscribe_store: (l) => {
-        const l2: DevListenerRev2 = (action) => {
-          if (action.type === 'unsub') {
-            l(action)
-          } else if (action.type !== 'sub' && 'flushed' in action) {
-            for (const a of action.flushed) {
-              l({ type: 'set', atom: a })
-            }
-          }
-        }
-        devListenersRev3.add(l2)
-        return () => {
-          devListenersRev3.delete(l2)
-        }
-      },
-      dev3_get_mounted_atoms: () => mountedAtoms.values(),
-      dev3_get_atom_state: (a) => {
-        const aState = atomStateMap.get(a)
-        if (aState && 'v' in aState) {
-          return { v: aState.v }
-        }
-        if (aState && 'e' in aState) {
-          return { e: aState.e }
-        }
-        return undefined
-      },
-      dev3_get_atom_deps: (a) => {
-        const aState = atomStateMap.get(a)
-        if (!aState) {
-          return undefined
-        }
-        const deps = new Set(aState.d.keys())
-        deps.delete(a)
-        return deps
-      },
-      dev3_restore_atoms: (values) => {
-        pendingStack.push(new Set())
-        for (const [atom, valueOrPromise] of values) {
-          if (hasInitialValue(atom)) {
-            setAtomValueOrPromise(atom, valueOrPromise)
-            recomputeDependents(atom)
-          }
-        }
-        const flushed = flushPending(pendingStack.pop()!)
-        devListenersRev3.forEach((l) =>
+        devListenersRev2.forEach((l) =>
           l({ type: 'restore', flushed: flushed! }),
         )
       },
