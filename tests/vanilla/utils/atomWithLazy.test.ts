@@ -18,8 +18,8 @@ it('initializes on first store get', async () => {
 
   expect(storeA.get(anAtom)).toEqual('first')
   expect(initializer).toHaveBeenCalledOnce()
-  expect(storeB.get(anAtom)).toEqual('second')
-  expect(initializer).toHaveBeenCalledTimes(2)
+  expect(storeB.get(anAtom)).toEqual('first')
+  expect(initializer).toHaveBeenCalledOnce()
 })
 
 it('is writable', async () => {
