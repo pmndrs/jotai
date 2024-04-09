@@ -120,7 +120,7 @@ const createContinuablePromise = <T>(
     let continuePromise: ContinuePromise<T>
     const p: any = new Promise((resolve, reject) => {
       let curr = promise
-      const onFullfilled = (me: PromiseLike<T>) => (v: T) => {
+      const onFulfilled = (me: PromiseLike<T>) => (v: T) => {
         if (curr === me) {
           p.status = FULFILLED
           p.value = v
@@ -136,12 +136,12 @@ const createContinuablePromise = <T>(
           complete()
         }
       }
-      promise.then(onFullfilled(promise), onRejected(promise))
+      promise.then(onFulfilled(promise), onRejected(promise))
       continuePromise = (nextPromise, nextAbort) => {
         if (nextPromise) {
           continuablePromiseMap.set(nextPromise, p)
           curr = nextPromise
-          nextPromise.then(onFullfilled(nextPromise), onRejected(nextPromise))
+          nextPromise.then(onFulfilled(nextPromise), onRejected(nextPromise))
         }
         abort()
         abort = nextAbort
