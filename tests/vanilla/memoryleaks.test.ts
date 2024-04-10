@@ -26,6 +26,17 @@ describe('test memory leaks (get & set only)', () => {
     expect(await detector1.isLeaking()).toBe(false)
     expect(await detector2.isLeaking()).toBe(false)
   })
+
+  it('with a long-lived base atom', async () => {
+    const store = createStore()
+    const objAtom = atom({})
+    let detector: LeakDetector
+    ;(() => {
+      const derivedAtom = atom((get) => ({ obj: get(objAtom) }))
+      detector = new LeakDetector(store.get(derivedAtom))
+    })()
+    expect(await detector.isLeaking()).toBe(false)
+  })
 })
 
 describe('test memory leaks (with subscribe)', () => {
@@ -55,5 +66,18 @@ describe('test memory leaks (with subscribe)', () => {
     })()
     expect(await detector1.isLeaking()).toBe(false)
     expect(await detector2.isLeaking()).toBe(false)
+  })
+
+  it('with a long-lived base atom', async () => {
+    const store = createStore()
+    const objAtom = atom({})
+    let detector: LeakDetector
+    ;(() => {
+      const derivedAtom = atom((get) => ({ obj: get(objAtom) }))
+      detector = new LeakDetector(store.get(derivedAtom))
+      const unsub = store.sub(derivedAtom, () => {})
+      unsub()
+    })()
+    expect(await detector.isLeaking()).toBe(false)
   })
 })
