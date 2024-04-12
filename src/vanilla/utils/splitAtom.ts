@@ -37,6 +37,10 @@ type SplitAtomAction<Item> =
       atom: PrimitiveAtom<Item>
       before?: PrimitiveAtom<Item>
     }
+  | {
+      type: 'bulk'
+      atoms: PrimitiveAtom<Item>[]
+    }
 
 export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], [Item[]], void>,
@@ -202,6 +206,13 @@ export function splitAtom<Item, Key>(
                       ])
                     }
                   }
+                  break
+                }
+                case 'bulk': {
+                  set(
+                    arrAtom,
+                    action.atoms.map((atom) => get(atom)),
+                  )
                   break
                 }
               }
