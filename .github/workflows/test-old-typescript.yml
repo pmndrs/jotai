@@ -13,7 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         typescript:
-          - 5.3.2
+          - 5.4.4
+          - 5.3.3
           - 5.2.2
           - 5.1.6
           - 5.0.4
@@ -47,7 +48,7 @@ jobs:
           sed -i~ 's/"jotai\/\*": \["\.\/src\/\*\.ts"\]/"jotai\/*": [".\/dist\/*.d.ts"]/' tsconfig.json
           sed -i~ 's/"include": .*/"include": ["src\/types.d.ts", "dist\/**\/*", "tests\/**\/*"],/' tsconfig.json
       - name: Patch for Old TS
-        if: ${{ matrix.typescript == '4.7.4' || matrix.typescript == '4.6.4' || matrix.typescript == '4.5.5' ||   matrix.typescript == '4.4.4' || matrix.typescript == '4.3.5' || matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
+        if: ${{ matrix.typescript == '4.7.4' || matrix.typescript == '4.6.4' || matrix.typescript == '4.5.5' || matrix.typescript == '4.4.4' || matrix.typescript == '4.3.5' || matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
           sed -i~ 's/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//' tests/*/*.tsx tests/*/*/*.tsx
           sed -i~ 's/"target":/"skipLibCheck":true,"target":/' tsconfig.json
@@ -70,6 +71,21 @@ jobs:
           rm -r tests/react/vanilla-utils/atomWithObservable.*
       - name: Install old TypeScript
         run: yarn add -D typescript@${{ matrix.typescript }}
+      - name: Patch testing setup for Old TS
+        if: ${{ matrix.typescript == '4.4.4' || matrix.typescript == '4.3.5' || matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
+        run: |
+          rm node_modules/@vitest/expect/dist/*.d.ts
+          echo "declare module '@vitest/expect'" >> ./src/types.d.ts
+          rm node_modules/@vitest/runner/dist/*.d.ts
+          echo "declare module '@vitest/runner'" >> ./src/types.d.ts
+          rm node_modules/@vitest/spy/dist/*.d.ts
+          echo "declare module '@vitest/spy'" >> ./src/types.d.ts
+          rm node_modules/@vitest/utils/dist/*.d.ts
+          echo "declare module '@vitest/utils'" >> ./src/types.d.ts
+          rm node_modules/vite-node/dist/*.d.ts
+          echo "declare module 'vite-node'" >> ./src/types.d.ts
+          rm node_modules/vitest/dist/*.d.ts
+          echo "declare module 'vitest'" >> ./src/types.d.ts
       - name: Patch testing setup for older TS
         if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
