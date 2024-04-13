@@ -10,7 +10,7 @@ keywords: devtools,debug,snapshot
 Install `jotai-devtools` to your project to get started.
 
 ```sh
-npm i jotai-devtools @emotion/react
+npm i jotai-devtools
 ```
 
 ### Notes
@@ -28,6 +28,8 @@ npm i jotai-devtools @emotion/react
   - [useAtomsDevtools](#useatomsdevtools)
   - [useAtomsSnapshot](#useatomssnapshot)
   - [useGotoAtomsSnapshot](#usegotoatomssnapshot)
+- Migration guides
+  - [Migrate from `@emotion/react`](https://github.com/jotaijs/jotai-devtools?tab=readme-ov-file#migrate-%C6%92rom-emotionreact-to-native-css)
 
 ### UI DevTools
 
@@ -122,6 +124,7 @@ type DevToolsProps = {
 
 ```tsx
 import { DevTools } from 'jotai-devtools'
+import 'jotai-devtools/styles.css';
 
 const App = () => {
   return (
@@ -138,6 +141,7 @@ const App = () => {
 ```tsx
 import { createStore } from 'jotai'
 import { DevTools } from 'jotai-devtools'
+import 'jotai-devtools/styles.css';
 
 const customStore = createStore()
 
