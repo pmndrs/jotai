@@ -246,6 +246,7 @@ type DevStoreRev4 = {
     key: K,
     fn: PrdStore[K],
   ) => void
+  dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
 type PrdStore = {
@@ -609,6 +610,14 @@ export const createStore = (): Store => {
       dev4_get_internal_weak_map: () => atomStateMap,
       dev4_override_method: (key, fn) => {
         ;(store as any)[key] = fn
+      },
+      dev4_restore_atoms: (values) => {
+        const pendingPair = createPendingPair()
+        for (const [atom, value] of values) {
+          setAtomStateValueOrPromise(getAtomState(atom), value)
+          recomputeDependents(pendingPair, atom)
+        }
+        flushPending(pendingPair)
       },
     }
     return store

@@ -136,4 +136,17 @@ describe.skipIf(!IS_DEV_STORE2)('[DEV-ONLY] dev-only methods rev4', () => {
     const weakMap = store.dev4_get_internal_weak_map()
     expect(weakMap.get(countAtom)?.s).toEqual({ v: 1 })
   })
+
+  it('should restore atoms and its dependencies correctly', () => {
+    const store = createStore() as any
+    if (!('dev4_restore_atoms' in store)) {
+      throw new Error('dev methods are not available')
+    }
+    const countAtom = atom(0)
+    const derivedAtom = atom((get) => get(countAtom) * 2)
+    store.set(countAtom, 1)
+    store.dev4_restore_atoms([[countAtom, 2]])
+    expect(store.get(countAtom)).toBe(2)
+    expect(store.get?.(derivedAtom)).toBe(4)
+  })
 })
