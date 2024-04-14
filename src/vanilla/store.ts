@@ -153,9 +153,6 @@ type PrdStore = {
 }
 type Store = PrdStore & Partial<DevStoreRev2>
 
-export type INTERNAL_DevStoreRev2 = DevStoreRev2
-export type INTERNAL_PrdStore = PrdStore
-
 /**
  * Create a new store. Each store is an independent, isolated universe of atom
  * states.
