@@ -10,7 +10,7 @@ keywords: devtools,debug,snapshot
 Install `jotai-devtools` to your project to get started.
 
 ```sh
-npm i jotai-devtools @emotion/react
+npm i jotai-devtools
 ```
 
 ### Notes
@@ -28,6 +28,8 @@ npm i jotai-devtools @emotion/react
   - [useAtomsDevtools](#useatomsdevtools)
   - [useAtomsSnapshot](#useatomssnapshot)
   - [useGotoAtomsSnapshot](#usegotoatomssnapshot)
+- Migration guides
+  - [Migrate from `@emotion/react`](https://github.com/jotaijs/jotai-devtools?tab=readme-ov-file#migrate-%C6%92rom-emotionreact-to-native-css)
 
 ### UI DevTools
 
@@ -122,6 +124,7 @@ type DevToolsProps = {
 
 ```tsx
 import { DevTools } from 'jotai-devtools'
+import 'jotai-devtools/styles.css'
 
 const App = () => {
   return (
@@ -138,6 +141,7 @@ const App = () => {
 ```tsx
 import { createStore } from 'jotai'
 import { DevTools } from 'jotai-devtools'
+import 'jotai-devtools/styles.css'
 
 const customStore = createStore()
 
@@ -172,7 +176,7 @@ It will catch all atoms that are accessible from the place the hook is located.
 ### Example
 
 ```jsx
-import { useAtomsDebugValue } from 'jotai-devtools'
+import { useAtomsDebugValue } from 'jotai-devtools/utils'
 
 const textAtom = atom('hello')
 textAtom.debugLabel = 'textAtom'
@@ -226,7 +230,7 @@ The `useAtomDevtools` hook accepts a generic type parameter (mirroring the type 
 ### Example
 
 ```ts
-import { useAtomDevtools } from 'jotai-devtools'
+import { useAtomDevtools } from 'jotai-devtools/utils'
 
 // The interface for the type stored in the atom.
 export interface Task {
@@ -322,7 +326,7 @@ Be careful using this hook because it will cause the component to re-render for 
 
 ```jsx
 import { Provider } from 'jotai'
-import { useAtomsSnapshot } from 'jotai-devtools'
+import { useAtomsSnapshot } from 'jotai-devtools/utils'
 
 const RegisteredAtoms = () => {
   const atoms = useAtomsSnapshot()
@@ -365,7 +369,7 @@ This hook is primarily meant for debugging and devtools use cases.
 
 ```jsx
 import { Provider } from 'jotai'
-import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai-devtools'
+import { useAtomsSnapshot, useGotoAtomsSnapshot } from 'jotai-devtools/utils'
 
 const petAtom = atom('cat')
 const colorAtom = atom('blue')

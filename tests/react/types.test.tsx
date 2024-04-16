@@ -38,7 +38,6 @@ it('useAtom should handle inference of atoms (#1831 #1387)', () => {
     age: atom(0),
     checked: atom(false),
   }
-
   const useField = <T extends keyof typeof fieldAtoms>(prop: T) => {
     return useAtom(fieldAtoms[prop])
   }
@@ -46,6 +45,23 @@ it('useAtom should handle inference of atoms (#1831 #1387)', () => {
     expectType<[string, (arg: string) => void]>(useField('username'))
     expectType<[number, (arg: number) => void]>(useField('age'))
     expectType<[boolean, (arg: boolean) => void]>(useField('checked'))
+  }
+  Component
+})
+
+it('useAtom should handle inference of read-only atoms', () => {
+  const fieldAtoms = {
+    username: atom(() => ''),
+    age: atom(() => 0),
+    checked: atom(() => false),
+  }
+  const useField = <T extends keyof typeof fieldAtoms>(prop: T) => {
+    return useAtom(fieldAtoms[prop])
+  }
+  function Component() {
+    expectType<[string, never]>(useField('username'))
+    expectType<[number, never]>(useField('age'))
+    expectType<[boolean, never]>(useField('checked'))
   }
   Component
 })
