@@ -608,7 +608,7 @@ export const createStore = (): Store => {
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => atomStateMap,
       dev4_override_method: (key, fn) => {
-        ;(store as any)[key] = fn
+        store[key] = fn
       },
     }
     return store
