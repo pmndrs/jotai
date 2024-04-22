@@ -5,18 +5,18 @@ nav: 4.04
 keywords: immer
 ---
 
-### Install
+### 安装 {#install}
 
-You have to install `immer` and `jotai-immer` to use this feature.
+要使用此功能，你必须安装 `immer` 和 `jotai-immer`。
 
 ```
 npm i immer jotai-immer
 ```
 
-## atomWithImmer
+## atomWithImmer {#atomwithimmer}
 
-`atomWithImmer` creates a new atom similar to the regular [`atom`](../core/atom.mdx) [atom] with a different `writeFunction`. In this bundle, we don't have read-only atoms, because the point of these functions is the immer produce(mutability) function.
-The signature of writeFunction is `(get, set, update: (draft: Draft<Value>) => void) => void`.
+`atomWithImmer` 创建一个新的 atom，类似于常规的 [`atom`](../core/atom.mdx) [atom]，但具有不同的 `writeFunction`。在这个包中，我们没有只读的 atoms，因为这些函数的目的是 immer produce(可变性)函数。
+writeFunction 的签名是 `(get, set, update: (draft: Draft<Value>) => void) => void`。
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -26,7 +26,7 @@ const countAtom = atomWithImmer({ value: 0 })
 
 const Counter = () => {
   const [count] = useAtom(countAtom)
-  return <div>count: {count.value}</div>
+  return <div>计数: {count.value}</div>
 }
 
 const Controls = () => {
@@ -40,15 +40,15 @@ const Controls = () => {
 }
 ```
 
-### Examples
+### 示例 {#examples}
 
-Check this example with atomWithImmer:
+查看这个使用 atomWithImmer 的示例：
 
 <CodeSandbox id="83l6sr" />
 
-## withImmer
+## withImmer {#withimmer}
 
-`withImmer` takes an atom and returns a derived atom, same as `atomWithImmer` it has a different `writeFunction`.
+`withImmer` 接收一个 atom 并返回一个派生的 atom，就像 `atomWithImmer` 一样，它有一个不同的 `writeFunction`。
 
 ```jsx
 import { useAtom, atom } from 'jotai'
@@ -59,7 +59,7 @@ const countAtom = withImmer(primitiveAtom)
 
 const Counter = () => {
   const [count] = useAtom(countAtom)
-  return <div>count: {count.value}</div>
+  return <div>计数: {count.value}</div>
 }
 
 const Controls = () => {
@@ -73,15 +73,15 @@ const Controls = () => {
 }
 ```
 
-### Examples
+### 示例 {#examples}
 
-Check this example with withImmer:
+查看这个使用 withImmer 的示例：
 
 <CodeSandbox id="fn49h2" />
 
-## useImmerAtom
+## useImmerAtom {#useimmeratom}
 
-This hook takes an atom and replaces the atom's `writeFunction` with the new immer-like `writeFunction` like the previous helpers.
+这个 hook 接收一个 atom 并用新的类似 immer 的 `writeFunction` 替换 atom 的 `writeFunction`。
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -91,7 +91,7 @@ const primitiveAtom = atom({ value: 0 })
 
 const Counter = () => {
   const [count] = useImmerAtom(primitiveAtom)
-  return <div>count: {count.value}</div>
+  return <div>计数: {count.value}</div>
 }
 
 const Controls = () => {
@@ -105,16 +105,16 @@ const Controls = () => {
 }
 ```
 
-It would be better if you don't use `withImmer` and `atomWithImmer` with `useImmerAtom` because they provide the immer-like `writeFunction` and we don't need to create a new one.
+如果你不使用 `withImmer` 和 `atomWithImmer` 与 `useImmerAtom` 一起使用会更好，因为它们提供了类似 immer 的 `writeFunction`，我们不需要创建一个新的。
 
-You can use `useSetImmerAtom` if you need only the setter part of `useImmerAtom`.
+如果你只需要 `useImmerAtom` 的 setter 部分，可以使用 `useSetImmerAtom`。
 
-### Examples
+### 示例 {#examples}
 
-Check this example with useImmerAtom:
+查看这个使用 useImmerAtom 的示例：
 
 <CodeSandbox id="np7y97" />
 
-## Demo
+## 演示 {#demo}
 
 <CodeSandbox id="9q4dg7" />

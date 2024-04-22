@@ -1,30 +1,30 @@
 ---
-title: Composing atoms
+title: 组合原子
 nav: 7.11
 ---
 
-The `atom` function provided by library is very primitive,
-but it's also so flexible that you can combine multiple atoms
-to implement a functionality.
+库提供的 `atom` 函数非常原始，
+但它也非常灵活，你可以组合多个原子
+来实现一个功能。
 
-> Note again that `atom()` creates an atom config, which is an object
-> to define a behavior of the atom.
+> 再次注意，`atom()` 创建一个原子配置，这是一个对象
+> 用于定义原子的行为。
 
-Let's recap how we can derive an atom.
+让我们回顾一下我们如何派生一个原子。
 
-### Basic derived atoms
+### 基本派生原子 {#basic-derived-atoms}
 
-Here's one of the simplest examples of a derived atom:
+以下是一个派生原子的最简单示例之一：
 
 ```js
 export const textAtom = atom('hello')
 export const textLenAtom = atom((get) => get(textAtom).length)
 ```
 
-The `textLenAtom` is called read-only atom, because
-it doesn't have a `write` function defined.
+`textLenAtom` 被称为只读原子，因为
+它没有定义 `write` 函数。
 
-The following is another simple example with the `write` function:
+以下是另一个带有 `write` 函数的简单示例：
 
 ```js
 const textAtom = atom('hello')
@@ -34,20 +34,20 @@ export const textUpperCaseAtom = atom(
 )
 ```
 
-In this case, `textUpperCaseAtom` is capable to set the original `textAtom`.
-So, we can only export `textUpperCaseAtom` and can hide
-`textAtom` in a smaller scope.
+在这种情况下，`textUpperCaseAtom` 能够设置原始的 `textAtom`。
+所以，我们只能导出 `textUpperCaseAtom` 并可以隐藏
+`textAtom` 在一个较小的范围内。
 
-Now, let's see some real examples.
+现在，让我们看一些真实的例子。
 
-### Overriding default atom values
+### 覆盖默认原子值 {#overriding-default-atom-values}
 
-Suppose we have a read-only atom.
-Obviously read-only atoms are not writable, but we can combine two atoms
-to override the read-only atom value.
+假设我们有一个只读原子。
+显然只读原子是不可写的，但我们可以组合两个原子
+来覆盖只读原子值。
 
 ```js
-const rawNumberAtom = atom(10.1) // can be exported
+const rawNumberAtom = atom(10.1) // 可以被导出
 const roundNumberAtom = atom((get) => Math.round(get(rawNumberAtom)))
 const overwrittenAtom = atom(null)
 export const numberAtom = atom(
@@ -60,21 +60,20 @@ export const numberAtom = atom(
 )
 ```
 
-The final `numberAtom` just works like a normal primitive atom like `atom(10)`.
-If you set a number value, it will override the `overwrittenAtom` value,
-and if you set `null`, it will be the `roundNumberAtom` value.
+最后的 `numberAtom` 就像一个正常的原始原子，如 `atom(10)`。
+如果你设置一个数字值，它将覆盖 `overwrittenAtom` 的值，
+如果你设置 `null`，它将是 `roundNumberAtom` 的值。
 
-The reusable implementation is available as `atomWithDefault`
-in `jotai/utils`. See [atomWithDefault](../utilities/resettable.mdx).
+可重用的实现在 `jotai/utils` 中作为 `atomWithDefault` 可用。参见 [atomWithDefault](../utilities/resettable.mdx)。
 
-Next, let's see another example to sync with external value.
+接下来，让我们看另一个例子来同步外部值。
 
-### Syncing atom values with external values
+### 与外部值同步原子值 {#syncing-atom-values-with-external-values}
 
-There are some external values we want to deal with.
-`localStorage` is the one. Another is `window.title`.
+有一些外部值我们想要处理。
+`localStorage` 就是其中之一。另一个是 `window.title`。
 
-Let's see how to create an atom that is in sync with `localStorage`.
+让我们看看如何创建一个与 `localStorage` 同步的原子。
 
 ```js
 const baseAtom = atom(localStorage.getItem('mykey') || '')
@@ -89,34 +88,33 @@ export const persistedAtom = atom(
 )
 ```
 
-The `persistedAtom` works like a primitive atom, but its value
-is persisted in `localStorage`.
+`persistedAtom` 的工作方式就像一个原始原子，但它的值
+被持久化在 `localStorage` 中。
 
-The reusable implementation is available as `atomWithStorage`
-in `jotai/utils`. See [atomWithStorage](../utilities/storage.mdx).
+可重用的实现在 `jotai/utils` 中作为 `atomWithStorage` 可用。参见 [atomWithStorage](../utilities/storage.mdx)。
 
-There is a caveat with this usage. While atom config doesn't hold a value,
-the external value is a singleton value.
-So, if we use this atom in two different Providers,
-There will be an inconsistency between the two `persistedAtom` values.
-This could be solved if the external value had a subscription mechanism.
+这种用法有一个注意事项。虽然原子配置不持有值，
+但外部值是一个单例值。
+所以，如果我们在两个不同的 Providers 中使用这个原子，
+两个 `persistedAtom` 的值之间会有不一致。
+如果外部值有订阅机制，这个问题就可以解决。
 
-For example, `atomWithProxy` in `jotai-valtio` comes with subscription,
-so we don't have such a limitation. Values in different Providers
-will be in sync.
+例如，`jotai-valtio` 中的 `atomWithProxy` 带有订阅，
+所以我们没有这样的限制。在不同的 Providers 中的值
+将保持同步。
 
-Back to the main topic, let's explore another example.
+回到主题，让我们探索另一个例子。
 
-### Extending atoms with `atomWith*` utils
+### 使用 `atomWith*` 工具扩展原子 {#extending-atoms-with-`atomwith*`-utils}
 
-We have several utils whose names start with `atomWith`.
-They create an atom with a certain functionality.
-Unfortunately, we can't combine two atom utils.
-For example, `atomWithStorage` and `atomWithReducer`
-can't be used to define a single atom.
+我们有几个以 `atomWith` 开头的工具。
+它们创建一个具有某种功能的原子。
+不幸的是，我们不能组合两个原子工具。
+例如，`atomWithStorage` 和 `atomWithReducer`
+不能用于定义单个原子。
 
-In such a case, we need to derive an atom by ourselves.
-Let's try adding reducer functionality to `atomWithStorage`:
+在这种情况下，我们需要自己派生一个原子。
+让我们尝试为 `atomWithStorage` 添加 reducer 功能：
 
 ```js
 const reducer = ...
@@ -129,22 +127,22 @@ export const derivedAtom = atom(
 )
 ```
 
-This is easy, because in this case, `atomWithReducer`
-is a simple implementation compared to `atomWithStorage`.
+这很简单，因为在这种情况下，`atomWithReducer`
+相比 `atomWithStorage` 是一个简单的实现。
 
-For more complex cases, it wouldn't be very easy.
-It would still be a open research field.
+对于更复杂的情况，这可能不会很容易。
+这仍然是一个开放的研究领域。
 
-Finally, let's see another example with actions.
+最后，让我们看另一个带有操作的例子。
 
-### Action atoms
+### 操作原子 {#action-atoms}
 
-This should be known pattern as it's described in README.
-Nonetheless, it might to be useful to revisit.
+这应该是一个已知的模式，因为它在 README 中有描述。
+尽管如此，重新审视可能会有所帮助。
 
-Let's create a counter that you can only increment or decrement by one.
+让我们创建一个计数器，你只能增加或减少一。
 
-One solution is `atomWithReducer`:
+一个解决方案是 `atomWithReducer`：
 
 ```js
 const countAtom = atomWithReducer(0, (prev, action) => {
@@ -158,13 +156,13 @@ const countAtom = atomWithReducer(0, (prev, action) => {
 })
 ```
 
-This is fine, but not very atomic.
-If we want to get benefit from code splitting / lazy loading,
-We want to create write only atoms, or action atoms.
+这很好，但不是非常原子化。
+如果我们想从代码分割 / 惰性加载中获益，
+我们希望创建只写原子，或者操作原子。
 
 ```js
-const baseAtom = atom(0) // do not export
-export const countAtom = atom((get) => get(baseAtom)) // read only
+const baseAtom = atom(0) // 不导出
+export const countAtom = atom((get) => get(baseAtom)) // 只读
 export const incAtom = atom(null, (_get, set) => {
   set(baseAtom, (prev) => prev + 1)
 })
@@ -173,12 +171,12 @@ export const decAtom = atom(null, (_get, set) => {
 })
 ```
 
-This is more atomic and looks like a Jotai way.
+这更原子化，看起来像是 Jotai 的方式。
 
-You can also create an action atom that will call another action atom:
+你也可以创建一个操作原子，它将调用另一个操作原子：
 
 ```js
-// continued from the previous code
+// 继续上面的代码
 export const dispatchAtom = atom(null, (_get, set, action) => {
   if (action === 'INC') {
     set(incAtom)
@@ -190,25 +188,25 @@ export const dispatchAtom = atom(null, (_get, set, action) => {
 })
 ```
 
-Why do we want it? Because it will be used only when needed.
-It allows code splitting and dead code elimination.
+为什么我们需要它？因为它只在需要时使用。
+它允许代码分割和死代码消除。
 
-### In summary
+### 总结 {#in-summary}
 
-Atoms are building block.
-By composing atoms based on other atoms,
-we can implement complicated logic.
-This is not only for read derived atoms, but also for write action atoms.
+原子是构建块。
+通过基于其他原子组合原子，
+我们可以实现复杂的逻辑。
+这不仅适用于读取派生的原子，也适用于写入操作的原子。
 
-Essentially, atoms are like functions, so composing atoms is
-like composing functions with other functions.
+本质上，原子就像函数，所以组合原子就像
+用其他函数组合函数。
 
-**Note**: We mentioned that our atoms can contain any kind of data, it can be a string, Blob, Observer, anything really. There is just one exception. Because derived atoms are defined using a function, Jotai will not understand if we pass it a function that isn't exactly a pure getter.
-So what you can do is simply wrap your function in an object.
+**注意**：我们提到我们的原子可以包含任何类型的数据，它可以是字符串，Blob，Observer，真的可以是任何东西。只有一个例外。因为派生原子是使用函数定义的，如果我们传递的函数不是纯 getter，Jotai 将无法理解。
+所以你可以做的就是简单地将你的函数包装在一个对象中。
 
 ```js
 const doublerAtom = atom({ callback: (n) => n * 2 })
-// Usage
+// 使用
 const [doubler] = useAtom(doublerAtom)
-const doubledValue = doubler.callback(50) // Will compute to 100
+const doubledValue = doubler.callback(50) // 将计算为 100
 ```

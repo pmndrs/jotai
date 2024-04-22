@@ -4,11 +4,11 @@ nav: 8.05
 keywords: creators,compare
 ---
 
-> `atomWithCompare` creates atom that triggers updates when custom compare function `areEqual(prev, next)` is false.
+> `atomWithCompare`创建一个原子，当自定义比较函数`areEqual(prev, next)`为假时触发更新。
 
-This can help you avoid unwanted re-renders by ignoring state changes that don't matter to your application.
+这可以帮助你通过忽略对你的应用程序无关紧要的状态变化，避免不必要的重新渲染。
 
-Note: Jotai uses `Object.is` internally to compare values when changes occur. If `areEqual(a, b)` returns false, but `Object.is(a, b)` returns true, Jotai will not trigger an update.
+注意：Jotai在发生变化时内部使用`Object.is`来比较值。如果`areEqual(a, b)`返回假，但`Object.is(a, b)`返回真，Jotai将不会触发更新。
 
 ```ts
 import { atomWithReducer } from 'jotai/utils'
@@ -27,7 +27,7 @@ export function atomWithCompare<Value>(
 }
 ```
 
-Here's how you'd use it to make an atom that ignores updates that are shallow-equal:
+这是你如何使用它来创建一个忽略浅相等更新的原子：
 
 ```ts
 import { atomWithCompare } from 'XXX'
@@ -50,14 +50,14 @@ const StylePreview = () => {
     <div>
       <div styles={styles}>Style preview</div>
 
-      {/* Clicking this button twice will only trigger one render */}
+      {/* 点击这个按钮两次只会触发一次渲染 */}
       <button onClick={() => setStyles({ ...styles, backgroundColor: 'red' })}>
-        Set background to red
+        设置背景为红色
       </button>
 
-      {/* Clicking this button twice will only trigger one render */}
+      {/* 点击这个按钮两次只会触发一次渲染 */}
       <button onClick={() => setStyles({ ...styles, fontSize: 32 })}>
-        Enlarge font
+        放大字体
       </button>
     </div>
   )

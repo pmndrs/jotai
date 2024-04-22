@@ -4,24 +4,23 @@ nav: 3.5
 keywords: family
 ---
 
-## atomFamily
+## atomFamily {#atomfamily}
 
-Ref: https://github.com/pmndrs/jotai/issues/23
+参考： https://github.com/pmndrs/jotai/issues/23
 
-### Usage
+### 使用方法 {#usage}
 
 ```js
 atomFamily(initializeAtom, areEqual): (param) => Atom
 ```
 
-This will create a function that takes `param` and returns an atom.
-If it's already created, it will return it from the cache.
-`initializeAtom` is function that can return any kind of atom (`atom()`, `atomWithDefault()`, ...).
-Note that `areEqual` is optional, which tell
-if two params are equal (defaults to `Object.is`).
+这将创建一个函数，该函数接受 `param` 并返回一个原子。
+如果它已经被创建，它将从缓存中返回。
+`initializeAtom` 是一个可以返回任何类型的原子（`atom()`，`atomWithDefault()`，...）的函数。
+注意 `areEqual` 是可选的，它告诉两个参数是否相等（默认为 `Object.is`）。
 
-To reproduce the similar behavior to [Recoil's atomFamily/selectorFamily](https://recoiljs.org/docs/api-reference/utils/atomFamily),
-specify a deepEqual function to `areEqual`. For example:
+要复制 [Recoil's atomFamily/selectorFamily](https://recoiljs.org/docs/api-reference/utils/atomFamily) 的类似行为，
+请为 `areEqual` 指定一个 deepEqual 函数。例如：
 
 ```js
 import { atom } from 'jotai'
@@ -31,28 +30,28 @@ import deepEqual from 'fast-deep-equal'
 const fooFamily = atomFamily((param) => atom(param), deepEqual)
 ```
 
-### TypeScript
+### TypeScript {#typescript}
 
-The atom family types will be inferred from initializeAtom. Here's a typical usage with a primitive atom.
+原子族的类型将从 initializeAtom 中推断出来。这是一个使用原始原子的典型用法。
 
 ```ts
 import type { PrimitiveAtom } from 'jotai'
 
 /**
- * here the atom(id) returns a PrimitiveAtom<number>
- * and PrimitiveAtom<number> is a WritableAtom<number, SetStateAction<number>>
+ * 这里的 atom(id) 返回一个 PrimitiveAtom<number>
+ * 而 PrimitiveAtom<number> 是一个 WritableAtom<number, SetStateAction<number>>
  */
 const myFamily = atomFamily((id: number) => atom(id)).
 ```
 
-You can explicitly declare the type of parameter, value, and atom's setState function using TypeScript generics.
+你可以使用 TypeScript 泛型明确声明参数、值和原子的 setState 函数的类型。
 
 ```ts
 atomFamily<Param, Value, Update>(initializeAtom: (param: Param) => WritableAtom<Value, Update>, areEqual?: (a: Param, b: Param) => boolean)
 atomFamily<Param, Value>(initializeAtom: (param: Param) => Atom<Value>, areEqual?: (a: Param, b: Param) => boolean)
 ```
 
-If you want to explicitly declare the atomFamily for a primitive atom, you need to use `SetStateAction`.
+如果你想为原始原子明确声明 atomFamily，你需要使用 `SetStateAction`。
 
 ```ts
 type SetStateAction<Value> = Value | ((prev: Value) => Value)
@@ -62,20 +61,20 @@ const myFamily = atomFamily<number, number, SetStateAction<number>>(
 )
 ```
 
-### Caveat: Memory Leaks
+### 注意：内存泄漏 {#caveat:-memory-leaks}
 
-Internally, atomFamily is just a Map whose key is a param and whose value is an atom config.
-Unless you explicitly remove unused params, this leads to memory leaks.
-This is crucial if you use infinite number of params.
+在内部，atomFamily 只是一个 Map，其键是 param，其值是原子配置。
+除非你明确地删除未使用的参数，否则这将导致内存泄漏。
+如果你使用无限数量的参数，这是至关重要的。
 
-There are two ways to remove params.
+有两种方法可以删除参数。
 
-- `myFamily.remove(param)` allows you to remove a specific param.
-- `myFamily.setShouldRemove(shouldRemove)` is to register `shouldRemove` function which runs immediately **and** when you are to get an atom from a cache.
-  - shouldRemove is a function that takes two arguments `createdAt` in milliseconds and `param`, and returns a boolean value.
-  - setting `null` will remove the previously registered function.
+- `myFamily.remove(param)` 允许你删除特定的参数。
+- `myFamily.setShouldRemove(shouldRemove)` 是注册 `shouldRemove` 函数，该函数立即运行**并且**当你要从缓存中获取原子时。
+  - shouldRemove 是一个接受两个参数 `createdAt`（以毫秒为单位）和 `param`，并返回一个布尔值的函数。
+  - 设置 `null` 将删除先前注册的函数。
 
-### Examples
+### 示例 {#examples}
 
 ```js
 import { atom } from 'jotai'
@@ -84,7 +83,7 @@ import { atomFamily } from 'jotai/utils'
 const todoFamily = atomFamily((name) => atom(name))
 
 todoFamily('foo')
-// this will create a new atom('foo'), or return the one if already created
+// 这将创建一个新的 atom('foo')，或者如果已经创建，则返回它
 ```
 
 ```js
@@ -112,6 +111,6 @@ const todoFamily = atomFamily(
 )
 ```
 
-### Codesandbox
+### Codesandbox {#codesandbox}
 
 <CodeSandbox id="huxd4i" />

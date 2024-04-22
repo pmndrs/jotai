@@ -6,9 +6,9 @@ keywords: vite
 published: false
 ---
 
-You can use the plugins from the `jotai/babel` bundle to enhance your developer experience when using Vite and Jotai.
+你可以使用 `jotai/babel` 包中的插件来增强你在使用 Vite 和 Jotai 时的开发体验。
 
-In your `vite.config.ts`:
+在你的 `vite.config.ts` 文件中：
 
 ```js
 import { defineConfig } from 'vite'
@@ -21,14 +21,14 @@ export default defineConfig({
   plugins: [
     react({ babel: { plugins: [jotaiDebugLabel, jotaiReactRefresh] } }),
   ],
-  // ... The rest of your configuration
+  // ... 你的其他配置
 })
 ```
 
-There's a template below to try it yourself.
+下面有一个模板供你尝试。
 
-### Examples
+### 示例 {#examples}
 
-#### Vite Template
+#### Vite 模板 {#vite-template}
 
 <Stackblitz id="vitejs-vite-xhhxve" file="vite.config.ts" />

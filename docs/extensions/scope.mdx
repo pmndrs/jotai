@@ -5,27 +5,21 @@ nav: 4.08
 keywords: scope
 ---
 
-There are a few libraries to extend Jotai's usage in React.
+这里有一些库可以扩展在React中使用Jotai的方式。
 
-## `jotai-scope`
+## `jotai-scope` {#jotai-scope}
 
-While Jotai's Provider allows to scope Jotai's store under a subtree,
-we can't use the store above the tree within the subtree.
+虽然Jotai的Provider允许在子树下划定Jotai的存储范围，但我们不能在子树内使用树上方的存储。
 
-A workaround is to use `store` option in useAtom and other hooks.
-To ease such use cases, `jotai-scope` provides a
-scoped provider and hooks.
-Instead of specifying the `store` option,
-the scoped provider accepts `atoms` prop
-and the use of those atoms is scoped within the subtree.
+一个解决方法是在useAtom和其他钩子中使用`store`选项。为了简化这种用例，`jotai-scope`提供了一个有范围的提供者和钩子。而不是指定`store`选项，有范围的提供者接受`atoms`属性，这些原子的使用在子树内有范围。
 
-### Install
+### 安装 {#install}
 
 ```
 npm i jotai-scope
 ```
 
-### Counter Example
+### 计数器示例 {#counter-example}
 
 ```tsx
 import { atom, useAtom } from 'jotai'
@@ -40,15 +34,15 @@ const Counter = () => {
   return (
     <>
       <div>
-        <span>count: {count}</span>
+        <span>计数： {count}</span>
         <button type="button" onClick={() => setCount((c) => c + 1)}>
-          increment
+          增加
         </button>
       </div>
       <div>
-        <span>another count: {anotherCount}</span>
+        <span>另一个计数： {anotherCount}</span>
         <button type="button" onClick={() => setAnotherCount((c) => c + 1)}>
-          increment
+          增加
         </button>
       </div>
     </>
@@ -58,11 +52,11 @@ const Counter = () => {
 const App = () => {
   return (
     <div>
-      <h1>First Provider</h1>
+      <h1>第一个提供者</h1>
       <ScopeProvider atoms={[anotherCountAtom]}>
         <Counter />
       </ScopeProvider>
-      <h1>Second Provider</h1>
+      <h1>第二个提供者</h1>
       <ScopeProvider atoms={[anotherCountAtom]}>
         <Counter />
       </ScopeProvider>
@@ -73,42 +67,31 @@ const App = () => {
 
 <CodeSandbox id="rf3r4n" />
 
-## `createIsolation`
+## `createIsolation` {#`createisolation`}
 
-Both Jotai's Provider and `jotai-scope`'s scoped provider
-are still using global contexts.
+Jotai的Provider和`jotai-scope`的有范围的提供者仍然使用全局上下文。
 
-If you are developing a library that depends on Jotai and
-the library user may use Jotai separately in their apps,
-they can share the same context. This can be troublesome
-because they point to unexpected Jotai stores.
+如果你正在开发一个依赖于Jotai的库，并且库用户可能在他们的应用中单独使用Jotai，他们可以共享相同的上下文。这可能会引起问题，因为他们指向意外的Jotai存储。
 
-To avoid conflicting the contexts,
-a utility function called `createIsolation` is exported from `jotai-scope`.
+为了避免上下文冲突，`jotai-scope`导出了一个名为`createIsolation`的实用函数。
 
-Check out the example in the repo: https://github.com/jotaijs/jotai-scope/tree/main/examples/01_isolation
+查看仓库中的示例：https://github.com/jotaijs/jotai-scope/tree/main/examples/01_isolation
 
-## `bunshi` (formerly `jotai-molecules`)
+## `bunshi`（前身为`jotai-molecules`） {#`bunshi`-(formerly-`jotai-molecules`)}
 
-Jotai atoms provide a basic solution to optimize re-renders.
-Atoms defined globally can depend on other atoms,
-but they can't depend on props and state within a component tree.
-It's possible to define atoms within a component tree,
-but then you would need to pass those atoms in some ways
-(for example, [atoms-in-atom](../guides/atoms-in-atom.mdx).)
+Jotai原子提供了一个基本的解决方案来优化重新渲染。全局定义的原子可以依赖于其他原子，但是它们不能依赖于组件树内的props和state。在组件树内定义原子是可能的，但是你需要以某种方式传递这些原子（例如，[atoms-in-atom](../guides/atoms-in-atom.mdx).）
 
-[bunshi](https://github.com/saasquatch/bunshi) is
-a third-party library to help such use cases.
+[bunshi](https://github.com/saasquatch/bunshi)是一个帮助这种用例的第三方库。
 
-See [Motivation](https://github.com/saasquatch/bunshi/tree/v1.1.1#motivation) for more details.
+查看[动机](https://github.com/saasquatch/bunshi/tree/v1.1.1#motivation)以获取更多详细信息。
 
-### Install
+### 安装 {#install}
 
 ```
 npm i bunshi
 ```
 
-### Counter Example
+### 计数器示例 {#counter-example}
 
 ```jsx
 import { atom, useAtom } from 'jotai'
@@ -132,17 +115,17 @@ const Counter = () => {
 
 const App = () => (
   <div>
-    <h1>With initial value 1</h1>
+    <h1>初始值为1</h1>
     <ScopeProvider scope={InitialCountScope} value={1}>
       <Counter />
       <Counter />
     </ScopeProvider>
-    <h1>With initial value 2</h1>
+    <h1>初始值为2</h1>
     <ScopeProvider scope={InitialCountScope} value={2}>
       <Counter />
       <Counter />
     </ScopeProvider>
-    <h1>Default</h1>
+    <h1>默认</h1>
     <Counter />
     <Counter />
   </div>

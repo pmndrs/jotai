@@ -6,24 +6,21 @@ keywords: redux
 published: false
 ---
 
-Jotai's state resides in React, but sometimes it would be nice
-to interact with the world outside React.
+Jotai的状态存在于React中，但有时候我们希望能与React之外的世界进行交互。
 
-Redux provides a store interface that can be used to store some values
-and sync with atoms in Jotai.
+Redux提供了一个存储接口，可以用来存储一些值，并与Jotai中的原子进行同步。
 
-### Install
+### 安装 {#install}
 
-You have to install `redux` and `jotai-redux` to use this feature.
+要使用此功能，你必须安装`redux`和`jotai-redux`。
 
 ```
 npm i redux jotai-redux
 ```
 
-## atomWithStore
+## atomWithStore {#atomwithstore}
 
-`atomWithStore` creates a new atom with redux store.
-It's two-way binding and you can change the value from both ends.
+`atomWithStore`创建一个新的带有redux存储的原子。它是双向绑定的，你可以从两端更改值。
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -46,12 +43,12 @@ const Counter = () => {
   return (
     <>
       count: {state.count}
-      <button onClick={() => dispatch({ type: 'INC' })}>button</button>
+      <button onClick={() => dispatch({ type: 'INC' })}>按钮</button>
     </>
   )
 }
 ```
 
-### Examples
+### 示例 {#examples}
 
 <CodeSandbox id="487792" />

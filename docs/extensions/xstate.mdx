@@ -5,25 +5,19 @@ nav: 4.05
 keywords: xstate,machine,atomwithmachine
 ---
 
-Jotai's state management is primitive and flexible,
-but that sometimes means too free.
-XState is a sophisticated library to provide
-a better and safer abstraction for state management.
+Jotai的状态管理既原始又灵活，但有时候也意味着过于自由。XState是一个复杂的库，为状态管理提供了更好、更安全的抽象。
 
-### Install
+### 安装 {#install}
 
-You have to install `xstate` and `jotai-xstate` to use this feature.
+要使用此功能，你必须安装 `xstate` 和 `jotai-xstate`。
 
 ```
 npm i xstate jotai-xstate
 ```
 
-## atomWithMachine
+## atomWithMachine {#atomwithmachine}
 
-`atomWithMachine` creates a new atom with XState machine.
-It receives a function `getMachine` to create a new machine.
-`getMachine` is invoked at the first use with `get` argument,
-with which you can read other atom values.
+`atomWithMachine` 使用XState机器创建一个新的原子。它接收一个函数 `getMachine` 来创建一个新的机器。`getMachine` 在第一次使用 `get` 参数时被调用，你可以用它来读取其他原子的值。
 
 ```tsx
 import { useAtom } from 'jotai'
@@ -59,7 +53,7 @@ const createEditableMachine = (value: string) =>
 
 const defaultTextAtom = atom('edit me')
 const editableMachineAtom = atomWithMachine((get) =>
-  // `get` is available only for initializing a machine
+// `get` 只在初始化机器时可用
   createEditableMachine(get(defaultTextAtom)),
 )
 
@@ -89,19 +83,16 @@ const Toggle = () => {
       <br />
       <br />
       <div>
-        Double-click to edit. Blur the input or press <code>enter</code> to
-        commit. Press <code>esc</code> to cancel.
+        双击进行编辑。失去焦点或按 <code>enter</code> 提交。按 <code>esc</code> 取消。
       </div>
     </div>
   )
 }
 ```
 
-### Restartable machine stored in a global Provider (provider-less mode)
+### 在全局Provider中存储可重启的机器（无Provider模式） {#restartable-machine-stored-in-a-global-provider-(provider-less-mode)}
 
-When your machine reaches its final state it cannot receive any more events.
-If your atomWithMachine is initialized in global store (aka provider-less mode),
-to restart it you need to send a `RESTART` event to your machine like so:
+当你的机器达到其最终状态时，它不能接收任何更多的事件。如果你的atomWithMachine在全局存储（也就是无Provider模式）中初始化，要重启它，你需要向你的机器发送一个 `RESTART` 事件，如下所示：
 
 ```tsx
 import { RESTART } from 'jotai-xstate'
@@ -112,7 +103,7 @@ const YourComponent = () => {
   const isFinalState = current.matches('myFinalState')
 
   useEffect(() => {
-    // restart globally initialized machine on component unmount
+    // 当组件卸载时，重启全局初始化的机器
     return () => {
       if (isFinalState) send(RESTART)
     }
@@ -120,20 +111,20 @@ const YourComponent = () => {
 }
 ```
 
-### Examples
+### 示例 {#examples}
 
-Check examples with atomWithMachine:
+查看带有atomWithMachine的示例：
 
 <CodeSandbox id="fxtoe3" />
 
-Restartable machine:
+可重启的机器：
 
 <CodeSandbox id="n179xd" />
 
-### Tutorials
+### 教程 {#tutorials}
 
-Check out a course about Jotai and XState.
+查看关于Jotai和XState的课程。
 
-[Complex State Management in React with Jotai and XState](https://egghead.io/courses/complex-state-management-in-react-with-jotai-and-xstate-3be0a740)
+[React中的复杂状态管理与Jotai和XState](https://egghead.io/courses/complex-state-management-in-react-with-jotai-and-xstate-3be0a740)
 
-(Note: In the course, it uses `jotai/xstate` which is supersede by `jotai-xstate`.)
+（注意：在课程中，它使用的是 `jotai/xstate`，已被 `jotai-xstate` 取代。）

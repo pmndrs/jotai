@@ -34,7 +34,7 @@ const Controls = () => {
     <>
       <div className="flex items-center space-x-8 pt-4 lg:pt-8 lg:pb-4">
         <Button onClick={increment} icon="plus" className="focus:ring">
-          Increment
+          增量
         </Button>
         <span className="text-3xl font-bold ordinal slashed-zero tabular-nums">{count}</span>
       </div>

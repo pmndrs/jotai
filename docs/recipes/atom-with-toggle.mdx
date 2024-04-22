@@ -4,9 +4,9 @@ nav: 8.04
 keywords: creators,toggle
 ---
 
-> `atomWithToggle` creates a new atom with a boolean as initial state & a setter function to toggle it.
+> `atomWithToggle` 创建一个新的 atom，其初始状态为布尔值，并带有一个切换它的 setter 函数。
 
-This avoids the boilerplate of having to set up another atom just to update the state of the first.
+这避免了必须设置另一个 atom 来更新第一个的状态的样板代码。
 
 ```ts
 import { WritableAtom, atom } from 'jotai'
@@ -23,16 +23,16 @@ export function atomWithToggle(
 }
 ```
 
-An optional initial state can be provided as the first argument.
+可以提供一个可选的初始状态作为第一个参数。
 
-The setter function can have an optional argument to force a particular state, such as if you want to make a setActive function out of it.
+setter 函数可以有一个可选的参数，用于强制设定特定的状态，比如如果你想从中创建一个 setActive 函数。
 
-Here is how it's used.
+下面是它的使用方法。
 
 ```js
 import { atomWithToggle } from 'XXX'
 
-// will have an initial value set to true
+// 初始值将设置为 true
 const isActiveAtom = atomWithToggle(true)
 ```
 

@@ -1,28 +1,27 @@
 import { getAnchor } from '../utils/index.js';
 
 function parseMarkdownHeader(text) {
-  console.log('text', text);
   if (typeof text !== 'string') {
     return text;
   }
   // 使用正则表达式匹配标题和描点
   const match = text.match(/(.*) {#(.*)}/);
 
-  let title, anchorRaw;
+  let title, anchor;
   if (match) {
     title = match[1]; // 标题
-    anchorRaw = match[2]; // 描点
+    anchor = match[2]; // 描点
   } else {
     title = text; // 如果没有描点，整个文本就是标题
-    anchorRaw = text;
+    anchor = text;
   }
 
-  return { title, anchorRaw };
+  return { title, anchor };
 }
 
 export const H2 = ({ children }) => {
-  const { title, anchorRaw } = parseMarkdownHeader(children);
-  const anchor = getAnchor(anchorRaw);
+  const { title, anchor } = parseMarkdownHeader(children);
+  // const anchor = getAnchor(anchorRaw);
   const link = `#${anchor}`;
 
   return (
@@ -33,8 +32,8 @@ export const H2 = ({ children }) => {
 };
 
 export const H3 = ({ children }) => {
-  const { title, anchorRaw } = parseMarkdownHeader(children);
-  const anchor = getAnchor(anchorRaw);
+  const { title, anchor } = parseMarkdownHeader(children);
+  // const anchor = getAnchor(anchorRaw);
   const link = `#${anchor}`;
 
   return (
@@ -45,8 +44,8 @@ export const H3 = ({ children }) => {
 };
 
 export const H4 = ({ children }) => {
-  const { title, anchorRaw } = parseMarkdownHeader(children);
-  const anchor = getAnchor(anchorRaw);
+  const { title, anchor } = parseMarkdownHeader(children);
+  // const anchor = getAnchor(anchorRaw);
   const link = `#${anchor}`;
 
   return (
@@ -57,8 +56,8 @@ export const H4 = ({ children }) => {
 };
 
 export const H5 = ({ children }) => {
-  const { title, anchorRaw } = parseMarkdownHeader(children);
-  const anchor = getAnchor(anchorRaw);
+  const { title, anchor } = parseMarkdownHeader(children);
+  // const anchor = getAnchor(anchorRaw);
   const link = `#${anchor}`;
 
   return (

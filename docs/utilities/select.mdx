@@ -5,11 +5,11 @@ keywords: select
 published: false
 ---
 
-## selectAtom
+## selectAtom {#selectatom}
 
-⚠️ Unlike its name, `selectAtom` is provided as an escape hatch. Using it means building not 100% pure atom model. Prefer using derived atoms and use `selectAtom` only when `equalityFn` or `prevSlice` is unavoidable.
+⚠️ 尽管名为 `selectAtom`，但它被视为一种逃生舱。使用它意味着构建的原子模型不是100%纯粹的。优先使用派生原子，并仅在 `equalityFn` 或 `prevSlice` 不可避免时使用 `selectAtom`。
 
-### Signatures
+### 签名 {#signatures}
 
 ```ts
 function selectAtom<Value, Slice>(
@@ -19,14 +19,11 @@ function selectAtom<Value, Slice>(
 ): Atom<Slice>
 ```
 
-This function creates a derived atom whose value is a function of the original atom's value,
-determined by `selector.`
-The selector function runs whenever the original atom changes; it updates the derived atom
-only if `equalityFn` reports that the derived value has changed.
-By default, `equalityFn` is reference equality, but you can supply your favorite deep-equals
-function to stabilize the derived value where necessary.
+此函数创建一个派生原子，其值是原始原子值的函数，由 `selector` 确定。
+每当原始原子发生变化时，选择器函数就会运行；只有当 `equalityFn` 报告派生值已经改变时，它才更新派生原子。
+默认情况下，`equalityFn` 是引用相等，但你可以提供你最喜欢的深度相等函数来在必要时稳定派生值。
 
-### Examples
+### 示例 {#examples}
 
 ```js
 const defaultPerson = {
@@ -45,39 +42,39 @@ const defaultPerson = {
   },
 }
 
-// Original atom.
+// 原始原子。
 const personAtom = atom(defaultPerson)
 
-// Tracks person.name. Updated when person.name object changes, even
-// if neither name.first nor name.last actually change.
+// 跟踪 person.name。当 person.name 对象发生变化时更新，即使
+// name.first 和 name.last 实际上并未改变。
 const nameAtom = selectAtom(personAtom, (person) => person.name)
 
-// Tracks person.birth. Updated when year, month, day, hour, or minute changes.
-// Use of deepEquals means that this atom doesn't update if birth field is
-// replaced with a new object containing the same data. E.g., if person is re-read
-// from a database.
+// 跟踪 person.birth。当年、月、日、小时或分钟发生变化时更新。
+// 使用 deepEquals 意味着如果 birth 字段被
+// 替换为包含相同数据的新对象，此原子不会更新。例如，如果人重新
+// 从数据库中读取。
 const birthAtom = selectAtom(personAtom, (person) => person.birth, deepEquals)
 ```
 
-### Hold stable references
+### 保持稳定的引用 {#hold-stable-references}
 
-As always, to prevent an infinite loop when using `useAtom` in render cycle, you must provide `useAtom` a stable reference of your atoms.
-For `selectAtom`, we need **both** the base atom and the selector to be stable.
+像往常一样，为了防止在渲染周期中使用 `useAtom` 时出现无限循环，你必须为 `useAtom` 提供原子的稳定引用。
+对于 `selectAtom`，我们需要基础原子和选择器**都**是稳定的。
 
 ```js
-const [value] = useAtom(selectAtom(atom(0), (val) => val)) // So this will cause an infinite loop
+const [value] = useAtom(selectAtom(atom(0), (val) => val)) // 这将导致无限循环
 ```
 
-You have multiple options in order to satisfy these constraints:
+你有多种选择来满足这些约束：
 
 ```js
-const baseAtom = atom(0) // Stable
-const baseSelector = (v) => v // Stable
+const baseAtom = atom(0) // 稳定的
+const baseSelector = (v) => v // 稳定的
 const Component = () => {
-  // Solution 1: Memoize the whole resulting atom with "useMemo"
+  // 解决方案 1：使用 "useMemo" 记忆整个结果原子
   const [value] = useAtom(useMemo(() => selectAtom(baseAtom, (v) => v), []))
 
-  // Solution 2: Memoize the inline callback with "useCallback"
+  // 解决方案 2：使用 "useCallback" 记忆内联回调
   const [value] = useAtom(
     selectAtom(
       baseAtom,
@@ -85,11 +82,11 @@ const Component = () => {
     ),
   )
 
-  // Solution 3: All constraints are already satisfied
+  // 解决方案 3：所有约束都已满足
   const [value] = useAtom(selectAtom(baseAtom, baseSelector))
 }
 ```
 
-### CodeSandbox
+### CodeSandbox {#codesandbox}
 
 <CodeSandbox id="8czek" />

@@ -11,9 +11,11 @@
   ],
   "scripts": {
     "dev": "gatsby develop -H 0.0.0.0 -p 9000",
-    "build": "gatsby build",
+    "build": "gatsby build --prefix-paths",
     "serve": "gatsby serve",
     "clean": "gatsby clean",
+    "deploy": "npm run build && gh-pages -d public",
+    "deploy2": "gh-pages -d public",
     "deduplicate": "npx yarn-deduplicate yarn.lock",
     "postdeduplicate": "yarn install",
     "browserslist": "npx browserslist@latest --update-db"

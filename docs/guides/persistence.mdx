@@ -1,16 +1,16 @@
 ---
-title: Persistence
+title: 持久性
 description: How to persist atoms
 nav: 7.14
 ---
 
-Jotai has an [atomWithStorage function in the utils bundle](../utilities/storage.mdx) for persistence that supports persisting state in `sessionStorage`, `localStorage`, `AsyncStorage`, or the URL hash.
+Jotai 在[工具包中有一个用于持久化的 atomWithStorage 函数](../utilities/storage.mdx)，支持在 `sessionStorage`、`localStorage`、`AsyncStorage` 或 URL hash 中持久化状态。
 
-(Note: This guide is a bit outdated and requires some rewrites.)
+（注意：这篇指南有些过时，需要一些重写。）
 
-There are also several alternate implementations here:
+这里还有几种替代实现：
 
-### A simple pattern with localStorage
+### 使用 localStorage 的简单模式 {#a-simple-pattern-with-localstorage}
 
 ```js
 const strAtom = atom(localStorage.getItem('myKey') ?? 'foo')
@@ -24,7 +24,7 @@ const strAtomWithPersistence = atom(
 )
 ```
 
-### A helper function with localStorage and JSON parse
+### 使用 localStorage 和 JSON 解析的辅助函数 {#a-helper-function-with-localstorage-and-json-parse}
 
 ```js
 const atomWithLocalStorage = (key, initialValue) => {
@@ -49,11 +49,11 @@ const atomWithLocalStorage = (key, initialValue) => {
 }
 ```
 
-(Error handling should be added.)
+（应添加错误处理。）
 
-### A helper function with AsyncStorage and JSON parse
+### 使用 AsyncStorage 和 JSON 解析的辅助函数 {#a-helper-function-with-asyncstorage-and-json-parse}
 
-This requires [onMount](../core/atom.mdx#on-mount).
+这需要 [onMount](../core/atom.mdx#on-mount)。
 
 ```js
 const atomWithAsyncStorage = (key, initialValue) => {
@@ -70,18 +70,22 @@ const atomWithAsyncStorage = (key, initialValue) => {
       const nextValue =
         typeof update === 'function' ? update(get(baseAtom)) : update
       set(baseAtom, nextValue)
-      AsyncStorage.setItem(key, JSON.stringify(nextValue))
+      AsyncStorage
+
+.setItem
+
+(key, JSON.stringify(nextValue))
     },
   )
   return derivedAtom
 }
 ```
 
-Don't forget to check out the [Async documentation](../guides/async.mdx) for more details on how to use async atoms.
+不要忘记查看 [Async 文档](../guides/async.mdx)以获取更多关于如何使用异步原子的详细信息。
 
-### Example with sessionStorage
+### 使用 sessionStorage 的示例 {#example-with-sessionstorage}
 
-Same as AsyncStorage, just use `atomWithStorage` util and override the default storage with the `sessionStorage`
+与 AsyncStorage 相同，只需使用 `atomWithStorage` 工具并用 `sessionStorage` 覆盖默认存储。
 
 ```js
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
@@ -90,7 +94,7 @@ const storage = createJSONStorage(() => sessionStorage)
 const someAtom = atomWithStorage('some-key', someInitialValue, storage)
 ```
 
-### A serialize atom pattern
+### A serialize atom pattern {#a-serialize-atom-pattern}
 
 ```tsx
 type Actions =
@@ -105,7 +109,7 @@ const serializeAtom = atom(null, (get, set, action: Actions) => {
     action.callback(JSON.stringify(obj))
   } else if (action.type === 'deserialize') {
     const obj = JSON.parse(action.value)
-    // needs error handling and type checking
+    // 需要错误处理和类型检查
     set(
       todosAtom,
       obj.todos.map((todo: Todo) => atom(todo)),
@@ -138,11 +142,11 @@ const Persist = () => {
 }
 ```
 
-#### Examples
+#### 示例 {#examples}
 
 <CodeSandbox id="g96xjx" />
 
-### A pattern with atomFamily
+### 使用 atomFamily 的模式 {#a-pattern-with-atomfamily}
 
 ```tsx
 type Actions =
@@ -164,7 +168,7 @@ const serializeAtom = atom(null, (get, set, action: Actions) => {
     action.callback(JSON.stringify(obj))
   } else if (action.type === 'deserialize') {
     const obj = JSON.parse(action.value)
-    // needs error handling and type checking
+    // 需要错误处理和类型检查
     set(filterAtom, obj.filter)
     obj.todos.forEach((id: string) => {
       const todo = obj.todoMap[id]
@@ -192,13 +196,13 @@ const Persist = () => {
   }
   return (
     <div>
-      <button onClick={save}>Save to localStorage</button>
-      <button onClick={load}>Load from localStorage</button>
+      <button onClick={save}>保存到 localStorage</button>
+      <button onClick={load}>从 localStorage 加载</button>
     </div>
   )
 }
 ```
 
-#### Examples
+#### 示例 {#examples}
 
 <CodeSandbox id="oyiw5r" />

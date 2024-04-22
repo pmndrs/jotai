@@ -5,25 +5,25 @@ nav: 7.02
 keywords: typescript,types
 ---
 
-### Version requirement
+### 版本要求 {#version-requirement}
 
-Jotai uses TypeScript 3.8+ syntax. Upgrade your TypeScript version if you're on 3.7.5 or lower.
+Jotai 使用 TypeScript 3.8+ 语法。如果你的 TypeScript 版本是 3.7.5 或更低，请升级你的 TypeScript 版本。
 
-Jotai relies heavily on type inferences and requires `strictNullChecks` to be enabled. Consider adding `"strict": true` in your tsconfig.json.
+Jotai 重度依赖类型推断，并且需要启用 `strictNullChecks`。请考虑在你的 tsconfig.json 中添加 `"strict": true`。
 [#550](https://github.com/pmndrs/jotai/issues/550)
 [#802](https://github.com/pmndrs/jotai/issues/802)
 [#838](https://github.com/pmndrs/jotai/issues/838)
 
-### Notes
+### 注意事项 {#notes}
 
-#### Primitive atoms are basically type inferred
+#### 原始 atoms 基本上是类型推断的 {#primitive-atoms-are-basically-type-inferred}
 
 ```ts
-const numAtom = atom(0) // primitive number atom
-const strAtom = atom('') // primitive string atom
+const numAtom = atom(0) // 原始数字 atom
+const strAtom = atom('') // 原始字符串 atom
 ```
 
-### Primitive atoms can be explicitly typed
+### 原始 atoms 可以显式地进行类型化 {#primitive-atoms-can-be-explicitly-typed}
 
 ```ts
 const numAtom = atom<number>(0)
@@ -31,19 +31,17 @@ const numAtom = atom<number | null>(0)
 const arrAtom = atom<string[]>([])
 ```
 
-#### Derived atoms can mostly have their types inferred
+#### 派生 atoms 大部分可以推断出它们的类型 {#derived-atoms-can-mostly-have-their-types-inferred}
 
-In general, this is the recommended approach since typing derived
-atoms can get a little confusing, particularly for those who are
-doing it for the first time.
+一般来说，这是推荐的方法，因为类型化派生 atoms 可能会有些混淆，特别是对于第一次尝试的人。
 
 ```ts
 
-# Read only derived atoms
+# 只读派生 atoms {#read-only-derived-atoms}
 const readOnlyAtom = atom((get) => get(numAtom))
 const asyncReadOnlyAtom = atom(async (get) => await get(someAsyncAtom))
 
-# Write only atoms
+# 只写 atoms {#write-only-atoms}
 const writeOnlyAtom = atom(null, (_get, set, str: string) => set(fooAtom, str))
 const multipleArgumentsAtom = atom(
   null,
@@ -51,7 +49,7 @@ const multipleArgumentsAtom = atom(
     set(fooAtom, Math.max(valueOne, valueTwo))
 );
 
-# Read/Write atoms
+# 读/写 atoms {#read/write-atoms}
 const readWriteAtom = atom(
   (get) => get(strAtom),
   (_get, set, num: number) => set(strAtom, String(num))
@@ -62,21 +60,18 @@ const asyncReadWriteAtom = atom(
 )
 ```
 
-#### Derived atoms can also be explicitly typed
+#### 派生 atoms 也可以显式地进行类型化 {#derived-atoms-can-also-be-explicitly-typed}
 
-If you encounter a situation where you need or want to explicitly
-type your derived atoms, you can do that as well.
+如果你遇到需要或想要显式类型化你的派生 atoms 的情况，你也可以这样做。
 
 ```ts
 const asyncStrAtom = atom<Promise<string>>(async () => 'foo')
 
 /**
- * For write only atoms you'll need to supply three type parameters.
- * The first type parameter describes the value returned from the atom. In the following example this is `null`.
- * The second type parameter describes the arguments (plural) you will pass to the "write" function. Even if you only
- * plan to have one argument, this type must be an array as show in the example.
- * The third type parameter describes the return value of the "write" function. Normally, there is no return value,
- * which is why we use `void` in the example below.
+ * 对于只写 atoms，你需要提供三个类型参数。
+ * 第一个类型参数描述了 atom 返回的值。在下面的例子中，这是 `null`。
+ * 第二个类型参数描述了你将传递给 "write" 函数的参数（复数）。即使你只计划有一个参数，这个类型也必须是数组，如示例中所示。
+ * 第三个类型参数描述了 "write" 函数的返回值。通常，没有返回值，这就是为什么我们在下面的例子中使用 `void`。
  */
 const writeOnlyAtom = atom<null, [string, number], void>(
   null,
@@ -84,9 +79,8 @@ const writeOnlyAtom = atom<null, [string, number], void>(
 )
 
 /**
- * Read/Write atoms also take the same three type parameters.
- * Just for the sake of completeness, in this example, we show that the first type parameter
- * can also describe an async atom.
+ * 读/写 atoms 也需要同样的三个类型参数。
+ * 为了完整性，在这个例子中，我们展示了第一个类型参数也可以描述一个异步 atom。
  */
 const readWriteAtom = atom<Promise<string>, [number], void>(
   async (get) => await get(asyncStrAtom),
@@ -94,7 +88,7 @@ const readWriteAtom = atom<Promise<string>, [number], void>(
 )
 ```
 
-#### useAtom is typed based on atom types
+#### useAtom 是基于 atom 类型进行类型化的 {#useatom-is-typed-based-on-atom-types}
 
 ```ts
 const [num, setNum] = useAtom(primitiveNumAtom)
@@ -102,7 +96,7 @@ const [num] = useAtom(readOnlyNumAtom)
 const [, setNum] = useAtom(writeOnlyNumAtom)
 ```
 
-#### Access to the value type of an atom
+#### 访问 atom 的值类型 {#access-to-the-value-type-of-an-atom}
 
 ```ts
 import { ExtractAtomValue, useAtomValue } from 'jotai'

@@ -6,26 +6,23 @@ keywords: valtio,proxy
 published: false
 ---
 
-Jotai's state resides in React, but sometimes it would be nice
-to interact with the world outside React.
+Jotai的状态存在于React中，但有时我们希望能与React之外的世界进行交互。
 
-Valtio provides a proxy interface that can be used to store some values
-and sync with atoms in Jotai.
+Valtio提供了一个代理接口，可以用来存储一些值，并与Jotai中的原子进行同步。
 
-This only uses the vanilla api of valtio.
+这只使用了valtio的vanilla api。
 
-### Install
+### 安装 {#install}
 
-You have to install `valtio` and `jotai-valtio` to use this feature.
+要使用此功能，你必须安装`valtio`和`jotai-valtio`。
 
 ```
 npm i valtio jotai-valtio
 ```
 
-## atomWithProxy
+## atomWithProxy {#atomwithproxy}
 
-`atomWithProxy` creates a new atom with valtio proxy.
-It's two-way binding and you can change the value from both ends.
+`atomWithProxy`使用valtio代理创建一个新的原子。它是双向绑定的，你可以从两端更改值。
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -57,29 +54,29 @@ const Counter = () => {
 }
 ```
 
-### Parameters
+### 参数 {#parameters}
 
 ```
 atomWithProxy(proxyObject, options?)
 ```
 
-**proxyObject** (required): the Valtio proxy object you want to derive the atom from
+**proxyObject** (必需): 你想从中派生原子的Valtio代理对象
 
-**options.sync** (optional): makes the atom update synchronously instead of waiting for batched updates, similar to [`valtio/useSnapshot`](https://github.com/pmndrs/valtio#update-synchronously). This will result in more renders, but have more guarantees that it syncs with other Jotai atoms.
+**options.sync** (可选): 使原子同步更新，而不是等待批量更新，类似于[`valtio/useSnapshot`](https://github.com/pmndrs/valtio#update-synchronously)。这将导致更多的渲染，但有更多保证它与其他Jotai原子同步。
 
 ```
 atomWithProxy(proxyObject, { sync: true })
 ```
 
-### Examples
+### 示例 {#examples}
 
 <CodeSandbox id="ew98ll" />
 
-## mutableAtom
+## mutableAtom {#mutableatom}
 
-`mutableAtom` wraps a value in a self-aware Valtio proxy. You can make changes to it in the same way you would to a normal js-object.
+`mutableAtom`将一个值包装在一个自我意识的Valtio代理中。你可以像对待普通的js对象一样对它进行更改。
 
-Count value is stored under the `value` property.
+计数值存储在`value`属性下。
 
 ```jsx
 const countProxyAtom = mutableAtom(0)
@@ -90,23 +87,24 @@ function IncrementButton() {
 }
 ```
 
-### Parameters
+### 参数 {#parameters}
 
-```js
+
+```tsx
 mutableAtom(value, options?)
 ```
 
-**value** (required): the value to proxy.
+**value** (必需): 要代理的值。
 
-**options.proxyFn** (optional): allows customization with `proxyFn` for custom proxy functions. Can be `proxy` (default) or a custom function.
+**options.proxyFn** (可选): 允许使用`proxyFn`进行自定义代理函数的定制。可以是`proxy`（默认）或自定义函数。
 
-### Examples
+### 示例 {#examples}
 
 <CodeSandbox id="f84sk5" />
 
-### Caution on Mutating Proxies
+### 注意直接在原子的读取函数或渲染过程中改变代理 {#caution-on-mutating-proxies}
 
-Be careful to not mutate the proxy directly in the atom's read function or during render. Doing so could cause an infinite render loop.
+请注意不要在原子的读取函数或渲染过程中直接改变代理。这样做可能会导致无限的渲染循环。
 
 ```ts
 const countProxyAtom = mutableAtom(0)
@@ -114,11 +112,11 @@ const countProxyAtom = mutableAtom(0)
 atom(
   (get) => {
     const countProxy = get(countProxyAtom)
-    ++countProxy.value // This will cause an infinite loop
+    ++countProxy.value // 这将导致无限循环
   },
   (get, set) => {
     const countProxy = get(countProxyAtom)
-    ++countProxy.value // This is fine
+    ++countProxy.value // 这是可以的
   },
 )
 ```

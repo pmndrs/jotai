@@ -5,17 +5,17 @@ nav: 7.06
 keywords: native,ios,android
 ---
 
-Jotai atoms can be used in React Native applications with absolutely no changes.
-Our goal is to always be 100% compatible with React-Native.
+Jotai 原子可以在 React Native 应用程序中无需任何更改地使用。
+我们的目标始终是与 React-Native 100% 兼容。
 
-### Persistence
+### 持久性 {#persistence}
 
-When it comes to persistence feature, the implementation specific to React Native are detailed in the [atomWithStorage function in the utils bundle](../utilities/storage.mdx).
+当涉及到持久性特性时，特定于 React Native 的实现详细说明在 [utils 包中的 atomWithStorage 函数](../utilities/storage.mdx)。
 
-### Performance
+### 性能 {#performance}
 
-There is no known specific overhead when using Jotai in your app. Some libraries will add some/lots of additional properties and methods to the stored data for the practical usage, but Jotai behaves differently and you're always manipulating simple stuff that could barely be shortcuted.
+在您的应用程序中使用 Jotai 没有已知的特定开销。一些库会为实际使用向存储的数据添加一些/大量的额外属性和方法，但 Jotai 的行为不同，您总是在操作几乎不能被简化的简单事物。
 
-Jotai atomical architecture will encourage you to split logic and data, providing a top-most experience to control every one of your render ([or commits, to be precise](https://legacy.reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html#browsing-commits)) and therefore reach the best performances.
+Jotai 的原子架构将鼓励您分离逻辑和数据，提供顶级的体验来控制您的每一个渲染（[或者准确地说，是提交](https://legacy.reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html#browsing-commits)），从而达到最佳性能。
 
-And always remember that renders have to be fast, split calculation logic to async actions.
+并且始终记住，渲染必须快速，将计算逻辑分离到异步操作中。

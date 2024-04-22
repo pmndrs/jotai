@@ -5,34 +5,34 @@ nav: 4.09
 keywords: optics
 ---
 
-### Install
+### 安装 {#install}
 
-You have to install `optics-ts` and `jotai-optics` to use this feature.
+要使用此功能，你必须安装 `optics-ts` 和 `jotai-optics`。
 
 ```
 npm i optics-ts jotai-optics
 ```
 
-## focusAtom
+## focusAtom {#focusatom}
 
-`focusAtom` creates a new atom, based on the focus that you pass to it. This creates a derived atom that will focus on the specified part of the atom,
-and when the derived atom is updated, the derivee is notified of the update, and the equivalent update is done on the derivee.
+`focusAtom` 创建一个新的原子，基于你传递给它的焦点。这将创建一个派生的原子，它将专注于原子的指定部分，
+当派生原子更新时，派生者会收到更新通知，并在派生者上完成等效的更新。
 
-See this:
+看看这个：
 
 ```js
 const baseAtom = atom({ a: 5 }) // PrimitiveAtom<{a: number}>
 const derivedAtom = focusAtom(baseAtom, (optic) => optic.prop('a')) // PrimitiveAtom<number>
 ```
 
-So basically, we started with a `PrimitiveAtom<{a: number}>`, which has a getter and a setter, and then used `focusAtom` to zoom in on the `a`-property of
-the `baseAtom`, and got a `PrimitiveAtom<number>`. What is noteworthy here is that this `derivedAtom` is not only a getter, it is also a setter. If `derivedAtom` is updated, then equivalent update is done on the `baseAtom`.
+所以基本上，我们从一个 `PrimitiveAtom<{a: number}>` 开始，它有一个 getter 和一个 setter，然后使用 `focusAtom` 来放大 `baseAtom` 的 `a` 属性，
+并得到一个 `PrimitiveAtom<number>`。值得注意的是，这个 `derivedAtom` 不仅是一个 getter，它也是一个 setter。如果 `derivedAtom` 更新，那么在 `baseAtom` 上也会进行等效的更新。
 
-The example below is simple, but it's a starting point. `focusAtom` supports many kinds of optics, including `Lens`, `Prism`, `Isomorphism`.
+下面的例子很简单，但它是一个起点。`focusAtom` 支持许多种类型的 optics，包括 `Lens`，`Prism`，`Isomorphism`。
 
-To see more advanced optics, please see the example at: https://github.com/akheron/optics-ts
+要查看更高级的 optics，请参见以下示例：https://github.com/akheron/optics-ts
 
-### Example
+### 示例 {#example}
 
 ```jsx
 import { atom } from 'jotai'
@@ -56,6 +56,6 @@ const Controls = () => {
 }
 ```
 
-#### Codesandbox
+#### Codesandbox {#codesandbox}
 
 <CodeSandbox id="nsy4u8" />

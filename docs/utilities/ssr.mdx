@@ -4,11 +4,11 @@ nav: 3.02
 keywords: ssr,server,hydrate,hydration,next,nextjs,gatsby,remix,framework
 ---
 
-## useHydrateAtoms
+## useHydrateAtoms {#usehydrateatoms}
 
-Ref: https://github.com/pmndrs/jotai/issues/340
+参考：https://github.com/pmndrs/jotai/issues/340
 
-### Usage
+### 使用方法 {#usage}
 
 ```js
 import { atom, useAtom } from 'jotai'
@@ -18,24 +18,24 @@ const countAtom = atom(0)
 const CounterPage = ({ countFromServer }) => {
   useHydrateAtoms([[countAtom, countFromServer]])
   const [count] = useAtom(countAtom)
-  // count would be the value of `countFromServer`, not 0.
+  // count 将是 `countFromServer` 的值，而不是 0.
 }
 ```
 
-The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an initial value is e.g. fetched on the server, which can be passed to a component by props.
+`useHydrateAtoms` 的主要用例是 SSR 应用，如 Next.js，其中初始值例如在服务器上获取，然后可以通过 props 传递给组件。
 
 ```ts
-// Definition
+// 定义
 function useHydrateAtoms(
   values: Iterable<readonly [Atom<unknown>, unknown]>,
   options?: { store?: Store },
 ): void
 ```
 
-The hook takes an iterable of tuples containing `[atom, value]` as an argument and optional options.
+该 hook 接受一个包含 `[atom, value]` 元组的可迭代对象作为参数，以及可选的选项。
 
 ```js
-// Usage with an array, specifying a store
+// 使用数组指定 store 的用法
 useHydrateAtoms(
   [
     [countAtom, 42],
@@ -43,13 +43,13 @@ useHydrateAtoms(
   ],
   { store: myStore },
 )
-// Or with a map
+// 或者使用 map
 useHydrateAtoms(new Map([[count, 42]]))
 ```
 
-Atoms can only be hydrated once per store. Therefore, if the initial value used is changed during rerenders, it won't update the atom value.
-If there is a unique need to re-hydrate a previously hydrated atom, pass the optional dangerouslyForceHydrate as true
-and note that it may behave wrongly in concurrent rendering.
+每个 store 只能对 Atom 进行一次 hydration。因此，如果在重新渲染期间更改了使用的初始值，它将不会更新 atom 的值。
+如果有重新 hydrate 之前已经 hydrate 过的 atom 的特殊需求，可以将可选的 dangerouslyForceHydrate 设置为 true，
+并注意在并发渲染中可能会出现错误的行为。
 
 ```js
 useHydrateAtoms(
@@ -63,7 +63,7 @@ useHydrateAtoms(
 )
 ```
 
-If there's a need to hydrate in multiple stores, use multiple `useHydrateAtoms` hooks to achieve that.
+如果需要在多个 store 中进行 hydration，可以使用多个 `useHydrateAtoms` hook 来实现。
 
 ```js
 useHydrateAtoms([
@@ -79,7 +79,7 @@ useHydrateAtoms(
 )
 ```
 
-If you are using TypeScript with target `ES5`, you might need `as const` cast on the array to preserve the tuple type.
+如果你在使用 TypeScript 并且目标为 `ES5`，你可能需要在数组上使用 `as const` 来保留元组类型。
 
 ```ts
 useHydrateAtoms([
@@ -88,8 +88,8 @@ useHydrateAtoms([
 ] as const)
 ```
 
-### Codesandbox
+### 在 CodeSandbox 中的代码 {#codesandbox}
 
 <CodeSandbox id="snu7n" />
 
-There's more examples in the [Next.js section](../guides/nextjs.mdx).
+在 [Next.js 部分](../guides/nextjs.mdx) 中有更多的例子。

@@ -4,39 +4,39 @@ nav: 8.07
 keywords: creators,refresh,default
 ---
 
-> This is for another implementation of [atomWithDefault](../utilities/resettable.mdx#atomwithdefault)
+> 这是对 [atomWithDefault](../utilities/resettable.mdx#atomwithdefault) 的另一种实现
 
-### Look back to atomWithDefault behavior
+### 回顾 atomWithDefault 的行为 {#look-back-to-atomwithdefault-behavior}
 
-As you can see in the example code in atomWithDefault section, the two atoms' relation is disconnected after updating created one, `count2Atom = atomWithDefault((get) => get(count1Atom) * 2)`.  
-Let's confirm what's occurred,
+如你在 atomWithDefault 部分的示例代码中看到的，更新创建的 `count2Atom = atomWithDefault((get) => get(count1Atom) * 2)` 后，两个原子的关系就断开了。
+让我们确认一下发生了什么，
 
-- 1. Click "increment count1", then count1 is 2 and count2 is 4
-- 2. Click "increment count2", then count1 is 2 and count2 is 5 (Disconnected!!)
+- 1. 点击 "increment count1"，然后 count1 是 2，count2 是 4
+- 2. 点击 "increment count2"，然后 count1 是 2，count2 是 5 (断开连接!!)
 
-Those atoms have no relation after updating count2Atom. So,
+更新 count2Atom 后，这些原子就没有关系了。所以，
 
-- Click "increment count1", count1 is incremented only
-- Even if you reset count2Atom, these dependency relation never come back
+- 点击 "increment count1"，只增加 count1
+- 即使你重置 count2Atom，这些依赖关系也永远不会回来
 
-### Motivation
+### 动机 {#motivation}
 
-In some cases,
+在某些情况下，
 
-- After disconnecting and resetting, they should come back to their relation
-- Derived atoms should be reset based on updated the original atom
-- We'd like to reset all derived atoms but just want to operate as simply as possible
+- 断开连接和重置后，它们应该回到它们的关系
+- 应该根据更新的原始原子重置派生原子
+- 我们希望重置所有派生原子，但只想尽可能简单地操作
 
-How do we make those cases?
-Here is a declarative way to create a function to provide a refreshable atom instead of atomWithDefault.
+我们如何实现这些情况呢？
+这里有一种声明式的方式来创建一个函数，提供一个可刷新的原子，而不是 atomWithDefault。
 
 ```js
 const refreshCountAtom = atom(0)
 
-const baseDataAtom = atom(1) // original data, e.g. base count1Atom
+const baseDataAtom = atom(1) // 原始数据，例如 base count1Atom
 const dataAtom = atom(
   (get) => {
-    get(refreshCountAtom) // it's introduced at atomWithRefresh
+    get(refreshCountAtom) // 它在 atomWithRefresh 中引入
     return get(baseDataAtom)
   },
   (get, set, update) => {
@@ -60,13 +60,13 @@ const atomWithRefreshAndDefault = (refreshAtom, getDefault) => {
   )
 }
 
-// This is an alternative of `atomWithDefault((get) => get(count1Atom) * 2)`
+// 这是 `atomWithDefault((get) => get(count1Atom) * 2)` 的替代品
 const refreshableAtom = atomWithRefreshAndDefault(
   refreshCountAtom,
   (get) => get(dataAtom) * 2,
 )
 
-// You can reset by updating just one atom
+// 你可以通过更新一个原子来重置
 const resetRootAtom = atom(null, (get, set) => {
   set(refreshCountAtom, get(refreshCountAtom) + 1)
 })

@@ -4,14 +4,12 @@ nav: 8.08
 keywords: creators,listeners
 ---
 
-> `atomWithListeners` creates an atom and a hook. The hook can be called to
-> add a new listener. The hook takes as an argument a callback, and that
-> callback is called every time the atom's value is set. The hook also
-> returns a function to remove the listener.
+> `atomWithListeners` 创建了一个原子和一个钩子。这个钩子可以被调用来
+> 添加一个新的监听器。这个钩子接受一个回调函数作为参数，每次设置原子的值时，
+> 都会调用这个回调函数。钩子还
+> 返回一个函数来移除监听器。
 
-This can be useful when you want to create a component that can listen to when
-an atom's state changes without having to re-render that component with each of
-those state changes.
+这在你想创建一个组件来监听原子状态的变化时非常有用，而无需在每次状态变化时都重新渲染该组件。
 
 ```ts
 import { useEffect } from 'react'
@@ -64,8 +62,8 @@ function EvenCounter() {
   useCountListener(
     useCallback(
       (get, set, newVal, prevVal) => {
-        // Every time `countAtom`'s value is set, we check if its new value
-        // is even, and if it is, we increment `evenCount`.
+        // 每次设置 `countAtom` 的值时，我们都会检查它的新值是否为偶数，
+        // 如果是，我们就增加 `evenCount`。
         if (newVal % 2 === 0) {
           setEvenCount((c) => c + 1)
         }

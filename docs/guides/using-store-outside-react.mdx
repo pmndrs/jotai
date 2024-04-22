@@ -1,17 +1,16 @@
 ---
-title: Using store outside React
+title: 在React外部使用存储
 description: Using store outside React
 nav: 4.98
 keywords: state, outside, react
 published: false
 ---
 
-Jotai's state resides in React, but sometimes it would be nice
-to interact with the world outside React.
+Jotai的状态存在于React中，但有时候我们希望能够在React之外与世界进行交互。
 
-## createStore
+## createStore {#createstore}
 
-[`createStore`](../core/store.mdx#createstore) provides a store interface that can be used to store your atoms. Using the store, you can access and mutate the state of your stored atoms from outside React.
+[`createStore`](../core/store.mdx#createstore) 提供了一个可以用来存储你的 atoms 的 store 接口。使用 store，你可以从 React 外部访问和改变你存储的 atoms 的状态。
 
 ```jsx
 import { atom, useAtomValue, createStore, Provider } from 'jotai'
@@ -19,11 +18,11 @@ import { atom, useAtomValue, createStore, Provider } from 'jotai'
 const timeAtom = atom(0)
 const store = createStore()
 
-store.set(timeAtom, (prev) => prev + 1) // Update atom's value
-store.get(timeAtom) // Read atom's value
+store.set(timeAtom, (prev) => prev + 1) // 更新 atom 的值
+store.get(timeAtom) // 读取 atom 的值
 
 function Component() {
-  const time = useAtomValue(timeAtom) // Inside React
+  const time = useAtomValue(timeAtom) // 在 React 内部
   return (
     <div className="App">
       <h1>{time}</h1>
@@ -40,6 +39,6 @@ export default function App() {
 }
 ```
 
-### Examples
+### 示例 {#examples}
 
 <CodeSandbox id="2jvynm" />

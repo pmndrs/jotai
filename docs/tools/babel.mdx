@@ -5,13 +5,13 @@ nav: 5.02
 keywords: babel,gatsby,fast,refresh
 ---
 
-## babel/plugin-react-refresh
+## babel/plugin-react-refresh {#babel/plugin-react-refresh}
 
-This plugin adds support for React Refresh for Jotai atoms. This makes sure that state isn't reset, when developing using React Refresh.
+这个插件为 Jotai atoms 添加了对 React Refresh 的支持。这确保在使用 React Refresh 开发时，状态不会被重置。
 
-### Usage
+### 使用方法 {#usage}
 
-With a `babel` configuration file:
+使用 `babel` 配置文件：
 
 ```json
 {
@@ -19,7 +19,7 @@ With a `babel` configuration file:
 }
 ```
 
-You can also supply your atom names to the plugin:
+你也可以向插件提供你的 atom 名称：
 
 ```json
 {
@@ -29,37 +29,37 @@ You can also supply your atom names to the plugin:
 }
 ```
 
-Examples can be found below.
+下面可以找到示例。
 
-## babel/plugin-debug-label
+## babel/plugin-debug-label {#babel/plugin-debug-label}
 
-Jotai is based on object references and not keys (like Recoil). This means there's no identifier for atoms. To identify atoms, it's possible to add a `debugLabel` to an atom, which can be found in React devtools.
+Jotai 是基于对象引用而不是键（如 Recoil）。这意味着 atoms 没有标识符。为了识别 atoms，可以向 atom 添加一个 `debugLabel`，这可以在 React devtools 中找到。
 
-However, this can quickly become cumbersome to add a `debugLabel` to every atom.
+然而，向每个 atom 添加 `debugLabel` 可能会很快变得繁琐。
 
-This `babel` plugin adds a `debugLabel` to every atom, based on its identifier.
+这个 `babel` 插件会根据其标识符向每个 atom 添加一个 `debugLabel`。
 
-The plugin transforms this code:
+插件会将这段代码：
 
 ```js
 export const countAtom = atom(0)
 ```
 
-Into:
+转换为：
 
 ```js
 export const countAtom = atom(0)
 countAtom.debugLabel = 'countAtom'
 ```
 
-Default exports are also handled, based on the file naming:
+默认的导出也会被处理，基于文件命名：
 
 ```js
 // countAtom.ts
 export default atom(0)
 ```
 
-Which transform into:
+会被转换为：
 
 ```js
 // countAtom.ts
@@ -68,9 +68,9 @@ countAtom.debugLabel = 'countAtom'
 export default countAtom
 ```
 
-### Usage
+### 使用方法 {#usage}
 
-With a `babel` configuration file:
+使用 `babel` 配置文件：
 
 ```json
 {
@@ -78,7 +78,7 @@ With a `babel` configuration file:
 }
 ```
 
-You can also supply your atom names to the plugin:
+你也可以向插件提供你的 atom 名称：
 
 ```json
 {
@@ -88,15 +88,15 @@ You can also supply your atom names to the plugin:
 }
 ```
 
-Examples can be found below.
+下面可以找到示例。
 
-## babel/preset
+## babel/preset {#babel/preset}
 
-Jotai ships with a `babel` containing the plugins created for Jotai.
+Jotai 附带了一个包含为 Jotai 创建的插件的 `babel`。
 
-### Usage
+### 使用方法 {#usage}
 
-With a `babel` configuration file:
+使用 `babel` 配置文件：
 
 ```json
 {
@@ -104,7 +104,7 @@ With a `babel` configuration file:
 }
 ```
 
-You can also supply your atom names to the preset:
+你也可以向预设提供你的 atom 名称：
 
 ```json
 {
@@ -112,12 +112,12 @@ You can also supply your atom names to the preset:
 }
 ```
 
-### Examples
+### 示例 {#examples}
 
-#### Next.js
+#### Next.js {#next.js}
 
 <CodeSandbox id="o2di2" />
 
-#### Parcel
+#### Parcel {#parcel}
 
 <CodeSandbox id="bgf3b" />

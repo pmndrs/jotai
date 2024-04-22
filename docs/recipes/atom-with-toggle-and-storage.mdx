@@ -4,9 +4,9 @@ nav: 8.05
 keywords: creators,storage
 ---
 
-> `atomWithToggleAndStorage` is like `atomWithToggle` but also persist the state anytime it changes in given storage using [`atomWithStorage`](../utilities/storage.mdx).
+> `atomWithToggleAndStorage` 类似于 `atomWithToggle`，但它还会在状态发生变化时持久化到给定的存储中，这是通过 [`atomWithStorage`](../utilities/storage.mdx) 实现的。
 
-Here is the source:
+以下是源代码：
 
 ```ts
 import { WritableAtom, atom } from 'jotai'
@@ -30,13 +30,13 @@ export function atomWithToggleAndStorage(
 }
 ```
 
-And how it's used:
+以及如何使用它：
 
 ```js
 import { atomWithToggleAndStorage } from 'XXX'
 
-// will have an initial value set to false & get stored in localStorage under the key "isActive"
+// 初始值将设置为 false，并在 localStorage 中以 "isActive" 为键进行存储
 const isActiveAtom = atomWithToggleAndStorage('isActive')
 ```
 
-The usage in a component is also the same as `atomWithToggle`.
+在组件中的使用也与 `atomWithToggle` 相同。

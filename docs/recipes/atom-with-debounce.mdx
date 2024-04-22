@@ -4,9 +4,9 @@ nav: 8.10
 keywords: creators,debounce
 ---
 
-> `atomWithDebounce` helps with creating an atom where state set should be debounced.
+> `atomWithDebounce`帮助创建一个状态设置应被防抖的原子。
 
-This util is useful for text search inputs, where you would like to call **functions in derived atoms only once** after waiting for a duration, instead of firing an action on every keystroke.
+这个工具对于文本搜索输入很有用，你可能希望在等待一段时间后只调用一次派生原子中的函数，而不是在每次按键时触发一个动作。
 
 ```tsx
 import { atom, SetStateAction } from 'jotai'
@@ -20,8 +20,8 @@ export default function atomWithDebounce<T>(
     undefined,
   )
 
-  // DO NOT EXPORT currentValueAtom as using this atom to set state can cause
-  // inconsistent state between currentValueAtom and debouncedValueAtom
+  // 不要导出currentValueAtom，因为使用这个原子来设置状态可能会导致
+  // currentValueAtom和debouncedValueAtom之间的状态不一致
   const _currentValueAtom = atom(initialValue)
   const isDebouncingAtom = atom(false)
 
@@ -57,12 +57,12 @@ export default function atomWithDebounce<T>(
         onDebounceEnd()
       }, delayMilliseconds)
 
-      // set previous timeout atom in case it needs to get cleared
+      // 设置前一个超时原子，以防需要清除它
       set(prevTimeoutAtom, nextTimeoutId)
     },
   )
 
-  // exported atom setter to clear timeout if needed
+  // 导出原子设置器以便在需要时清除超时
   const clearTimeoutAtom = atom(null, (get, set, _arg) => {
     clearTimeout(get(prevTimeoutAtom))
     set(isDebouncingAtom, false)
@@ -77,18 +77,18 @@ export default function atomWithDebounce<T>(
 }
 ```
 
-### Caveat
+### 注意事项 {#caveat}
 
-Please note that this atom has different objectives from concurrent features in React 18 such as `useTransition` and `useDeferredValue` whose main aim is to prevent blocking of interaction with the page for expensive updates.
+请注意，这个原子与React 18中的并发特性如`useTransition`和`useDeferredValue`有不同的目标，后者的主要目标是防止因昂贵的更新而阻塞与页面的交互。
 
-For more info, please read this github discussion https://github.com/reactwg/react-18/discussions/41 under the section titled **"How is it different from setTimeout?"**
+更多信息，请阅读这个github讨论https://github.com/reactwg/react-18/discussions/41，在标题为**"How is it different from setTimeout?"**的部分。
 
-### Example Usage
+### 示例用法 {#example-usage}
 
-The sandbox link below shows how we would use a derived atom to fetch state based on the value of `debouncedValueAtom`.
+下面的沙箱链接展示了我们如何使用派生原子来根据`debouncedValueAtom`的值获取状态。
 
-When typing a pokemon's name in `<SearchInput>`, we do not send a get request on every letter, but only after `delayMilliseconds` has passed since the last text input.
+在`<SearchInput>`中输入一个宝可梦的名字时，我们不会在每个字母上发送一个get请求，而只有在最后一次文本输入后`delayMilliseconds`已经过去。
 
-This reduces the number of backend requests to the server.
+这减少了对服务器的后端请求的数量。
 
 <CodeSandbox id="cjrz2y" />

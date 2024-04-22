@@ -5,24 +5,24 @@ keywords: select
 published: false
 ---
 
-## splitAtom
+## splitAtom {#splitatom}
 
-The `splitAtom` utility is useful for when you want to get an atom for each element in a list.
-It works for read/write atoms that contain a list. When used on such an atom, it returns an atom
-which itself contains a list of atoms, each corresponding to the respective item in the original list.
+`splitAtom` 工具在你想要获取列表中每个元素的原子时非常有用。
+它适用于包含列表的读/写原子。在这样的原子上使用时，它返回一个原子，
+该原子本身包含一个原子列表，每个原子对应于原始列表中的相应项。
 
-A simplified type signature would be:
+一个简化的类型签名可能是：
 
 ```ts
 type SplitAtom = <Item>(arrayAtom: PrimitiveAtom<Array<Item>>): Atom<Array<PrimitiveAtom<Item>>>
 ```
 
-Additionally, the atom returned by `splitAtom` contains a dispatch function in the `write` direction (since v1.6.4),
-this is useful for when you want a simple way to modify the original atom with actions such as `remove`, `insert`, and `move`.
+此外，`splitAtom` 返回的原子在 `write` 方向包含一个调度函数（自 v1.6.4 起），
+这在你想要一种简单的方式来修改原始原子的操作，如 `remove`、`insert` 和 `move` 时非常有用。
 
-See the below example for usage.
+请参阅下面的示例以了解使用方法。
 
-### Codesandbox
+### Codesandbox {#codesandbox}
 
 <CodeSandbox id="s4hvgo" />
 

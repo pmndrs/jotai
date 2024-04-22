@@ -4,9 +4,9 @@ nav: 3.04
 keywords: reset,default
 ---
 
-## atomWithReset
+## atomWithReset {#atomwithreset}
 
-Ref: https://github.com/pmndrs/jotai/issues/41
+参考： https://github.com/pmndrs/jotai/issues/41
 
 ```ts
 function atomWithReset<Value>(
@@ -14,35 +14,30 @@ function atomWithReset<Value>(
 ): WritableAtom<Value, SetStateAction<Value> | typeof RESET>
 ```
 
-Creates an atom that could be reset to its `initialValue` with
-[`useResetAtom`](use-reset-atom.mdx) hook. It works exactly the same
-way as primitive atom would, but you are also able to set it to a special value
-[`RESET`](reset.mdx). See examples in [Resettable atoms](../utilities/resettable.mdx).
+创建一个可以通过 [`useResetAtom`](use-reset-atom.mdx) 钩子重置为其 `initialValue` 的原子。它的工作方式与原始原子完全相同，但你也可以将其设置为特殊值 [`RESET`](reset.mdx)。请参见 [可重置原子](../utilities/resettable.mdx) 中的示例。
 
-### Example
+### 示例 {#example}
 
 ```js
 import { atomWithReset } from 'jotai/utils'
 
 const dollarsAtom = atomWithReset(0)
 const todoListAtom = atomWithReset([
-  { description: 'Add a todo', checked: false },
+  { description: '添加一个待办事项', checked: false },
 ])
 ```
 
-## RESET
+## RESET {#reset}
 
-Ref: https://github.com/pmndrs/jotai/issues/217
+参考：https://github.com/pmndrs/jotai/issues/217
 
 ```ts
 const RESET: unique symbol
 ```
 
-Special value that is accepted by [Resettable atoms](../utilities/resettable.mdx)
-created with [`atomWithReset`](../utilities/resettable.mdx), [`atomWithDefault`](../utilities/resettable.mdx)
-or writable atom created with `atom` if it accepts `RESET` symbol.
+这是一个特殊的值，被 [`atomWithReset`](../utilities/resettable.mdx)、[`atomWithDefault`](../utilities/resettable.mdx) 创建的 [可重置原子](../utilities/resettable.mdx) 或者如果它接受 `RESET` 符号的可写原子 `atom` 所接受。
 
-### Example
+### 示例 {#example}
 
 ```jsx
 import { atom, useSetAtom } from 'jotai'
@@ -68,7 +63,7 @@ const ResetExample = () => {
 }
 ```
 
-## useResetAtom
+## useResetAtom {#useresetatom}
 
 ```ts
 function useResetAtom<Value>(
@@ -76,9 +71,9 @@ function useResetAtom<Value>(
 ): () => void | Promise<void>
 ```
 
-Resets a [Resettable atom](../utilities/resettable.mdx) to its initial value.
+将[可重置原子](../utilities/resettable.mdx)重置为其初始值。
 
-### Example
+### 示例 {#example}
 
 ```jsx
 import { useResetAtom } from 'jotai/utils'
@@ -90,14 +85,14 @@ const TodoResetButton = () => {
 }
 ```
 
-## atomWithDefault
+## atomWithDefault {#atomwithdefault}
 
-Ref: https://github.com/pmndrs/jotai/issues/352
+参考： https://github.com/pmndrs/jotai/issues/352
 
-### Usage
+### 使用方法 {#usage}
 
-This is a function to create a resettable primitive atom.
-Its default value can be specified with a read function instead of a static initial value.
+这是一个创建可重置原始原子的函数。
+其默认值可以用读取函数指定，而不是静态初始值。
 
 ```js
 import { atomWithDefault } from 'jotai/utils'
@@ -106,13 +101,13 @@ const count1Atom = atom(1)
 const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
 ```
 
-### Codesandbox
+### Codesandbox {#codesandbox}
 
 <CodeSandbox id="unfro" />
 
-### Resetting default values
+### 重置默认值 {#resetting-default-values}
 
-You can reset the value of an `atomWithDefault` atom to its original default value.
+你可以将 `atomWithDefault` 原子的值重置为其原始默认值。
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -140,14 +135,12 @@ const Counter = () => {
 }
 ```
 
-This can be useful when an `atomWithDefault` atom value is overwritten
-using the `set` function, in which case the provided `getter` function
-is no longer used and any change in dependencies atoms will not trigger an update.
+当使用 `set` 函数覆盖 `atomWithDefault` 原子的值时，这可能会很有用，
+在这种情况下，提供的 `getter` 函数将不再被使用，依赖项原子的任何变化都不会触发更新。
 
-Resetting the value allows us to restore its original default value,
-discarding changes made previously via the `set` function.
+重置值允许我们恢复其原始默认值，丢弃之前通过 `set` 函数做出的更改。
 
-## atomWithRefresh
+## atomWithRefresh {#atomwithrefresh}
 
 ```ts
 function atomWithRefresh<Value>(
@@ -155,11 +148,10 @@ function atomWithRefresh<Value>(
 ): WritableAtom<Value, [], void>
 ```
 
-Creates an atom that we can refresh,
-which is to force reevaluating the read function.
+创建一个我们可以刷新的原子，即强制重新评估读取函数。
 
-This is helpful when you need to refresh asynchronous data.
-It can also be used to implement "pull to refresh" functionality.
+当你需要刷新异步数据时，这会很有帮助。
+它也可以用来实现 "下拉刷新" 功能。
 
 ```ts
 function atomWithRefresh<Value, Args extends unknown[], Result>(
@@ -168,12 +160,12 @@ function atomWithRefresh<Value, Args extends unknown[], Result>(
 ): WritableAtom<Value, Args | [], Result | void>
 ```
 
-Passing zero arguments to `set` will refresh.
-Passing one or more arguments to `set` will call "write" function.
+向 `set` 传递零个参数将刷新。
+向 `set` 传递一个或多个参数将调用 "write" 函数。
 
-### Example
+### 示例 {#example}
 
-Here's how you'd use it to implement an refresh-able source of data:
+以下是你如何使用它来实现可刷新的数据源：
 
 ```js
 import { atomWithRefresh } from 'XXX'
@@ -183,7 +175,7 @@ const postsAtom = atomWithRefresh((get) =>
 )
 ```
 
-In a component:
+在一个组件中：
 
 ```jsx
 const PostsList = () => {
@@ -197,7 +189,7 @@ const PostsList = () => {
         ))}
       </ul>
 
-      {/* Clicking this button will re-fetch the posts */}
+      {/* 点击这个按钮将重新获取帖子 */}
       <button type="button" onClick={refreshPosts}>
         Refresh posts
       </button>

@@ -1,25 +1,24 @@
 ---
-title: Core internals
+title: 核心内部
 description: A simplified version of the core implementation
 nav: 7.10
 ---
 
-This guide is beneficial for those who want to understand the core implementation of Jotai. It's not meant to be a complete example of the
-core implementation but rather a simplified version. It's inspired by the collection of tweets by Daishi Kato([@dai_shi](https://twitter.com/dai_shi)).
+本指南对于那些希望理解 Jotai 核心实现的人非常有益。它并不是核心实现的完整示例，而是一个简化版本。它受到了 Daishi Kato（[@dai_shi](https://twitter.com/dai_shi)）的一系列推文的启发。
 
-### First Version
+### 第一版 {#first-version}
 
-Let's start with an easy example. An atom is just a function that will return a configuration object. We are using WeakMap to map atom with their state.
-WeakMap doesn't keep its keys in memory, so if an atom is garbage collected, its state will be garbage collected too. This helps avoid memory leaks.
+让我们从一个简单的例子开始。原子就是一个将返回配置对象的函数。我们使用 WeakMap 来映射原子及其状态。
+WeakMap 不会在内存中保留其键，所以如果一个原子被垃圾收集，它的状态也会被垃圾收集。这有助于避免内存泄漏。
 
 ```js
 import { useState, useEffect } from 'react'
 
-// atom function returns a config object which contains initial value
+// atom 函数返回一个包含初始值的配置对象
 export const atom = (initialValue) => ({ init: initialValue })
 
-// we need to keep track of the state of the atom.
-// we are using weakmap to avoid memory leaks
+// 我们需要跟踪原子的状态。
+// 我们使用 weakmap 来避免内存泄漏
 const atomStateMap = new WeakMap()
 const getAtomState = (atom) => {
   let atomState = atomStateMap.get(atom)
@@ -30,16 +29,16 @@ const getAtomState = (atom) => {
   return atomState
 }
 
-// useAtom hook returns a tuple of the current value
-// and a function to update the atom's value
+// useAtom 钩子返回当前值的元组
+// 和一个用于更新原子值的函数
 export const useAtom = (atom) => {
   const atomState = getAtomState(atom)
   const [value, setValue] = useState(atomState.value)
   useEffect(() => {
     const callback = () => setValue(atomState.value)
 
-    // same atom can be used at multiple components, so we need to
-    // keep listening for atom's state change till component is unmounted.
+    // 同一个原子可以在多个组件中使用，所以我们需要
+    // 一直监听原子的状态变化，直到组件被卸载。
     atomState.listeners.add(callback)
     callback()
     return () => atomState.listeners.delete(callback)
@@ -48,7 +47,7 @@ export const useAtom = (atom) => {
   const setAtom = (nextValue) => {
     atomState.value = nextValue
 
-    // let all the subscribed components know that the atom's state has changed
+    // 让所有订阅的组件知道原子的状态已经改变
     atomState.listeners.forEach((l) => l())
   }
 
@@ -56,19 +55,19 @@ export const useAtom = (atom) => {
 }
 ```
 
-Here's an example using our simplified atom implementation. [Counter example](https://codesandbox.io/s/zealous-field-z2xk6?file=/src/App.js)
+这是一个使用我们简化的原子实现的例子。[计数器示例](https://codesandbox.io/s/zealous-field-z2xk6?file=/src/App.js)
 
-Ref tweet: [Demystifying the internal of jotai](https://twitter.com/dai_shi/status/1484835169475653634)
+参考推文：[揭秘 jotai 的内部](https://twitter.com/dai_shi/status/1484835169475653634)
 
-### Second Version
+### 第二版 {#second-version}
 
-Hang on! We can do better. In Jotai, we can create derived atom. A derived atom is an atom that depends on other atoms.
+等一下！我们可以做得更好。在 Jotai 中，我们可以创建派生原子。派生原子是依赖于其他原子的原子。
 
 ```js
 const priceAtom = atom(10)
 const readOnlyAtom = atom((get) => get(priceAtom) * 2)
 const writeOnlyAtom = atom(
-  null, // it's a convention to pass `null` for the first argument
+  null, // 传递 `null` 作为第一个参数是一种约定
   (get, set, args) => {
     set(priceAtom, get(priceAtom) - args)
   },
@@ -77,13 +76,13 @@ const readWriteAtom = atom(
   (get) => get(priceAtom) * 2,
   (get, set, newPrice) => {
     set(priceAtom, newPrice / 2)
-    // you can set as many atoms as you want at the same time
+    // 你可以同时设置尽可能多的原子
   },
 )
 ```
 
-To keep track of all the dependents, we need to add one more property to the atom's state. Let's say atom X depends on atom Y,
-so when we update atom Y, we also update atom X. This is called dependency tracking.
+为了跟踪所有的依赖项，我们需要在原子的状态中添加一个属性。假设原子 X 依赖于原子 Y，
+所以当我们更新原子 Y 时，我们也更新原子 X。这被称为依赖跟踪。
 
 ```js
 const atomState = {
@@ -93,7 +92,7 @@ const atomState = {
 }
 ```
 
-We now need to create functions for reading and writing an atom that can handle updating dependent atoms' state.
+我们现在需要创建用于读取和写入原子的函数，这些函数可以处理更新依赖原子的状态。
 
 ```js
 import { useState, useEffect } from 'react'
@@ -105,13 +104,13 @@ export const atom = (read, write) => {
   const config = {
     init: read,
 
-    // get in the read function is to read the atom value.
-    // It's reactive and read dependencies are tracked.
+    // read 函数中的 get 是用来读取原子值的。
+    // 它是响应式的，读取依赖项会被跟踪。
     read: (get) => get(config),
 
-    // get in the write function is also to read atom value, but it's not tracked.
-    // set in the write function is to write atom value and
-    // it will invoke the write function of the target atom.
+    // write 函数中的 get 也是用来读取原子值的，但它不会被跟踪。
+    // write 函数中的 set 是用来写入原子值的，
+    // 它将调用目标原子的 write 函数。
     write:
       write ||
       ((get, set, arg) => {
@@ -125,7 +124,7 @@ export const atom = (read, write) => {
   return config
 }
 
-// same as above but the state has one extra property: dependents
+// 与上面相同，但状态有一个额外的属性：dependents
 const atomStateMap = new WeakMap()
 const getAtomState = (atom) => {
   let atomState = atomStateMap.get(atom)
@@ -140,9 +139,9 @@ const getAtomState = (atom) => {
   return atomState
 }
 
-// If atom is primitive, we return it's value.
-// If atom is derived, we read the parent atom's value
-// and add current atom to parent's the dependent set (recursively).
+// 如果原子是基本类型，我们返回它的值。
+// 如果原子是派生的，我们读取父原子的值
+// 并将当前原子添加到父原子的依赖集合中（递归）。
 const readAtom = (atom) => {
   const atomState = getAtomState(atom)
   const get = (a) => {
@@ -150,16 +149,16 @@ const readAtom = (atom) => {
       return atomState.value
     }
     const aState = getAtomState(a)
-    aState.dependents.add(atom) // XXX add only
-    return readAtom(a) // XXX no caching
+    aState.dependents.add(atom) // XXX 只添加
+    return readAtom(a) // XXX 没有缓存
   }
   const value = atom.read(get)
   atomState.value = value
   return value
 }
 
-// if atomState is modified, we need to notify all the dependent atoms (recursively)
-// now run callbacks for all the components that are dependent on this atom
+// 如果 atomState 被修改，我们需要通知所有的依赖原子（递归）
+// 现在为所有依赖于此原子的组件运行回调
 const notify = (atom) => {
   const atomState = getAtomState(atom)
   atomState.dependents.forEach((d) => {
@@ -168,18 +167,18 @@ const notify = (atom) => {
   atomState.listeners.forEach((l) => l())
 }
 
-// writeAtom calls atom.write with the necessary params and triggers notify function
+// writeAtom 使用必要的参数调用 atom.write 并触发 notify 函数
 const writeAtom = (atom, value) => {
   const atomState = getAtomState(atom)
 
-  // 'a' is some atom from atomStateMap
+  // 'a' 是 atomStateMap 中的某个原子
   const get = (a) => {
     const aState = getAtomState(a)
     return aState.value
   }
 
-  // if 'a' is the same as atom, update the value, notify that atom and return
-  // else calls writeAtom for 'a' (recursively)
+  // 如果 'a' 与 atom 相同，更新值，通知该原子并返回
+  // 否则为 'a' 调用 writeAtom（递归）
   const set = (a, v) => {
     if (a === atom) {
       atomState.value = v
@@ -208,6 +207,6 @@ export const useAtom = (atom) => {
 }
 ```
 
-Here is an example using our derived atom implementation. [Derived counter example](https://codesandbox.io/s/affectionate-chandrasekhar-nuxms?file=/src/App.js)
+这是一个使用我们的派生原子实现的例子。[派生计数器示例](https://codesandbox.io/s/affectionate-chandrasekhar-nuxms?file=/src/App.js)
 
-Ref tweet: [Supporting derived atoms](https://twitter.com/dai_shi/status/1485434083778117632)
+参考推文：[支持派生原子](https://twitter.com/dai_shi/status/1485434083778117632)

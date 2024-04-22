@@ -5,13 +5,13 @@ nav: 7.03
 keywords: next,nextjs
 ---
 
-### Hydration
+### Hydration {#hydration}
 
-Jotai has support for hydration of atoms with `useHydrateAtoms`. The documentation for the hook can be seen [here](../utilities/ssr.mdx).
+Jotai 支持使用 `useHydrateAtoms` 进行 atoms 的 hydration。你可以在[这里](../utilities/ssr.mdx)查看该 hook 的文档。
 
-### Sync with router
+### 与路由同步 {#sync-with-router}
 
-It's possible to sync Jotai with the router. You can achieve this with `atomWithHash`:
+可以将 Jotai 与路由同步。你可以通过 `atomWithHash` 实现这一点：
 
 ```js
 const pageAtom = atomWithHash('page', 1, {
@@ -27,17 +27,17 @@ const pageAtom = atomWithHash('page', 1, {
 })
 ```
 
-This way you have full control over what [router event](https://nextjs.org/docs/api-reference/next/router#routerevents) you want to subscribe to.
+这样，你就可以完全控制你想订阅的[路由事件](https://nextjs.org/docs/api-reference/next/router#routerevents)。
 
-> #### In Next.js 13
+> #### 在 Next.js 13 中
 >
-> As of Next.js 13 there have been some changes to the `Router.events.on()` which no longer expose events. There are plans in the [App Router Roadmap](https://beta.nextjs.org/docs/app-directory-roadmap#planned-features) for event intercepting and hash handeling. However there is no ETA on when this will be available or what it will look like. For now when trying to the `atomWithHash()` you will not get the atom loading with any data when navigating using the router, only when the page is reloaded or the component is rerendered. It is also recommended that you set the `setHash` option to `replaceState` as Next.js appears to use window.history in the background and this will allow the user to use the browser back button.
+> 从 Next.js 13 开始，`Router.events.on()` 已经发生了一些变化，不再暴露事件。在 [App Router Roadmap](https://beta.nextjs.org/docs/app-directory-roadmap#planned-features) 中有关于事件拦截和 hash 处理的计划。但是，目前还没有 ETA，也不清楚它会是什么样子。目前，当你尝试使用 `atomWithHash()` 时，只有在页面重新加载或组件重新渲染时，你才能获取到带有数据的 atom，而不是通过路由导航。建议你将 `setHash` 选项设置为 `replaceState`，因为 Next.js 似乎在后台使用 window.history，这将允许用户使用浏览器的后退按钮。
 
-### You can't return promises in server side rendering
+### 你不能在服务器端渲染中返回 promises {#you-can't-return-promises-in-server-side-rendering}
 
-It's important to note that you can't return promises with SSR - However, it's possible to guard against it inside the atom definition.
+需要注意的是，你不能在 SSR 中返回 promises - 但是，你可以在 atom 定义中防止这种情况。
 
-If possible use `useHydrateAtoms` to hydrate values from the server.
+如果可能的话，使用 `useHydrateAtoms` 来从服务器 hydrate 值。
 
 ```js
 const postData = atom((get) => {
@@ -45,15 +45,15 @@ const postData = atom((get) => {
   if (isSSR || prefetchedPostData[id]) {
     return prefetchedPostData[id] || EMPTY_POST_DATA
   }
-  return fetchData(id) // returns a promise
+  return fetchData(id) // 返回一个 promise
 })
 ```
 
-### Provider
+### Provider {#provider}
 
-By default, Jotai uses an implicit global store to keep track of atom values. This is what is referred to as "provider-less" mode. This becomes an issue in SSR scenario because this global store is kept alive and is shared between multiple requests, which can lead to bugs and security risks.
+默认情况下，Jotai 使用一个隐式的全局存储来跟踪 atom 的值。这就是所谓的 "无 provider" 模式。在 SSR 场景中，这成为一个问题，因为这个全局存储保持活跃，并在多个请求之间共享，这可能导致 bugs 和安全风险。
 
-To limit the lifetime of the store to the scope of one request, you need to use a [Provider](../core/provider.mdx) at the root of your app (or a subtree if you're using Jotai only for a part of your application).
+为了将存储的生命周期限制在一个请求的范围内，你需要在你的应用的根部（或者如果你只在应用的一部分使用 Jotai，那就是那部分的子树）使用 [Provider](../core/provider.mdx)。
 
 ```typescript
 import { Provider } from 'jotai'
@@ -67,29 +67,29 @@ function App({ Component, pageProps }: AppProps) {
 }
 ```
 
-In this case:
+在这种情况下：
 
-1. `Provider` will hold the state of the atoms used in its subtree instead of the global store.
-2. `Provider`'s lifetime will be the same as the app itself, and since the app is recreated on each SSR request we essentially limit the lifetime of the store to a single request as well.
+1. `Provider` 将持有其子树中使用的 atoms 的状态，而不是全局存储。
+2. `Provider` 的生命周期将与应用本身相同，而由于应用在每个 SSR 请求上都会被重新创建，我们实际上将存储的生命周期限制在了一个请求内。
 
-### SWC plugins
+### SWC 插件 {#swc-plugins}
 
-Jotai provides SWC plugins for better DX while developing with Next.js. [Find more info in the SWC section.](../tools/swc.mdx)
+Jotai 提供了 SWC 插件，以便在使用 Next.js 开发时获得更好的 DX。[在 SWC 部分找到更多信息。](../tools/swc.mdx)
 
-### Examples
+### 示例 {#examples}
 
-#### Clock
+#### 时钟 {#clock}
 
 <CodeSandbox id="snu7n" />
 
-#### HN Posts
+#### HN 文章 {#hn-posts}
 
 <CodeSandbox id="819n4" />
 
-#### Next.js repo
+#### Next.js 仓库 {#next.js-repo}
 
 ```bash
 npx create-next-app --example with-jotai with-jotai-app
 ```
 
-Here's a [link](https://github.com/vercel/next.js/tree/canary/examples/with-jotai).
+这是一个[链接](https://github.com/vercel/next.js/tree/canary/examples/with-jotai)。

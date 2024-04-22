@@ -6,24 +6,23 @@ keywords: relay
 published: false
 ---
 
-You can use Jotai with [Relay](https://relay.dev).
+你可以将 Jotai 与 [Relay](https://relay.dev) 一起使用。
 
-### Install
+### 安装 {#install}
 
-You have to install `jotai-relay` and `relay-runtime`.
+你需要安装 `jotai-relay` 和 `relay-runtime`。
 
 ```
 npm i jotai-relay relay-runtime
 ```
 
-### Usage
+### 使用 {#usage}
 
-See [Relay Docs](https://relay.dev/docs/) to
-learn about basics and how to use compiler in advance.
+查看 [Relay 文档](https://relay.dev/docs/) 以了解基础知识以及如何提前使用编译器。
 
-### atomWithQuery
+### atomWithQuery {#atomwithquery}
 
-`atomWithQuery` creates a new atom with [fetchQuery](https://relay.dev/docs/api-reference/fetch-query/).
+`atomWithQuery` 使用 [fetchQuery](https://relay.dev/docs/api-reference/fetch-query/) 创建一个新的 atom。
 
 ```jsx
 import React, { Suspense } from 'react'
@@ -90,18 +89,18 @@ const App = () => {
 }
 ```
 
-#### Examples
+#### 示例 {#examples}
 
 <CodeSandbox id="cxc6p5" />
 
-### atomWithMutation
+### atomWithMutation {#atomwithmutation}
 
-`atomWithMutation` creates a new atom with [commitMutation](https://relay.dev/docs/api-reference/commit-mutation/).
+`atomWithMutation` 使用 [commitMutation](https://relay.dev/docs/api-reference/commit-mutation/) 创建一个新的 atom。
 
-FIXME: add code example and codesandbox
+待修复：添加代码示例和 codesandbox
 
-### atomWithSubscription
+### atomWithSubscription {#atomwithsubscription}
 
-`atomWithSubscription` creates a new atom with [requestSubscription](https://relay.dev/docs/api-reference/request-subscription/).
+`atomWithSubscription` 使用 [requestSubscription](https://relay.dev/docs/api-reference/request-subscription/) 创建一个新的 atom。
 
-FIXME: add code example and codesandbox
+待修复：添加代码示例和 codesandbox

@@ -3,13 +3,13 @@ title: Atoms in atom
 nav: 7.12
 ---
 
-`atom()` creates an atom config, which is an object, but it doesn't hold a value.
-Atom configs don't have string keys and we identify them with referential equality.
-In other words, we can use an atom config like a key.
+`atom()` 创建一个原子配置，这是一个对象，但它不持有值。
+原子配置没有字符串键，我们通过引用相等性来识别它们。
+换句话说，我们可以像使用键一样使用原子配置。
 
-### Storing an atom config in useState
+### 在 useState 中存储原子配置 {#storing-an-atom-config-in-usestate}
 
-First things first, we can store an atom config in useState.
+首先，我们可以在 useState 中存储原子配置。
 
 ```jsx
 const Component = ({ atom1, atom2 }) => {
@@ -17,19 +17,19 @@ const Component = ({ atom1, atom2 }) => {
   const [value] = useAtom(selectedAtom)
   return (
     <div>
-      Selected value: {value}
-      <button onClick={() => setSelectedAtom(atom1)}>Select an atom</button>
+      选中的值：{value}
+      <button onClick={() => setSelectedAtom(atom1)}>选择一个原子</button>
       <button onClick={() => setSelectedAtom(atom2)}>
-        Select another atom
+        选择另一个原子
       </button>
     </div>
   )
 }
 ```
 
-Note that we can pass atoms configs as props.
+注意，我们可以将原子配置作为 props 传递。
 
-It might not make any sense, but we could create an atom config on demand.
+这可能没有任何意义，但我们可以按需创建一个原子配置。
 
 ```jsx
 const Component = () => {
@@ -37,16 +37,16 @@ const Component = () => {
   const [count, setCount] = useAtom(currentAtom)
   return (
     <div>
-      Count: {count} <button onClick={() => setCount((c) => c + 1)}>+1</button>
-      <button onClick={() => setCurrentAtom(atom(0))}>Create new</button>
+      计数：{count} <button onClick={() => setCount((c) => c + 1)}>+1</button>
+      <button onClick={() => setCurrentAtom(atom(0))}>创建新的</button>
     </div>
   )
 }
 ```
 
-### Storing an atom config in atom
+### 在原子中存储原子配置 {#storing-an-atom-config-in-atom}
 
-Likewise, we can store an atom config as a value of another atom.
+同样，我们可以将一个原子配置作为另一个原子的值存储。
 
 ```jsx
 const firstNameAtom = atom('Tanjiro')
@@ -59,17 +59,17 @@ const Component = () => {
   const [name] = useAtom(nameAtom)
   return (
     <div>
-      Name: {name}
+      名字：{name}
       <button onClick={() => setNameAtom(firstNameAtom)}>
-        Show First Name
+        显示名字
       </button>
-      <button onClick={() => setNameAtom(lastNameAtom)}>Show Last Name</button>
+      <button onClick={() => setNameAtom(lastNameAtom)}>显示姓氏</button>
     </div>
   )
 }
 ```
 
-It's possible to create a derived atom.
+可以创建一个派生原子。
 
 ```js
 const derivedNameAtom = atom((get) => {
@@ -77,16 +77,16 @@ const derivedNameAtom = atom((get) => {
   return get(nameAtom)
 })
 
-// Or a shorter version
+// 或者一个更短的版本
 const derivedNameAtom = atom((get) => get(get(showingNameAtom)))
 ```
 
-To avoid confusing what is in atoms, naming atoms explicitly would be important.
-Also, TypeScript type information would be helpful.
+为了避免混淆原子中的内容，明确命名原子是很重要的。
+此外，TypeScript 类型信息也会很有帮助。
 
-### Storing an array of atom configs in atom
+### 在原子中存储原子配置的数组 {#storing-an-array-of-atom-configs-in-atom}
 
-Finally, the atoms in atom pattern is to store an array of atom config into an atom.
+最后，原子中的原子模式是将原子配置的数组存储到一个原子中。
 
 ```jsx
 const countsAtom = atom([atom(1), atom(2), atom(3)])
@@ -111,26 +111,26 @@ const Parent = () => {
       {counts.map((countAtom) => (
         <Counter countAtom={countAtom} key={countAtom} />
       ))}
-      <button onClick={addNewCount}>Add</button>
+      <button onClick={addNewCount}>添加</button>
     </div>
   )
 }
 ```
 
-The benefit of this approach is, if you increment a count,
-only the corresponding Counter component re-renders and no other components re-render.
+这种方法的好处是，如果你增加一个计数，
+只有对应的 Counter 组件重新渲染，其他组件不会重新渲染。
 
-It is important to note that `anAtom.toString()` returns a unique id, which can be used as a `key` in a map.
+需要注意的是，`anAtom.toString()` 返回一个唯一的 id，可以用作 map 中的 `key`。
 
-#### Hint for TypeScript users
+#### TypeScript 用户的提示 {#hint-for-typescript-users}
 
 ```jsx
 <Counter countAtom={countAtom} key={`${countAtom}`} />
 ```
 
-### Storing a map of atom configs in atom
+### 在原子中存储原子配置的映射 {#storing-a-map-of-atom-configs-in-atom}
 
-Likewise, we can store an object map instead of an array.
+同样，我们可以存储一个对象映射，而不是数组。
 
 ```jsx
 const pricesAtom = atom({

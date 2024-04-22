@@ -1,31 +1,31 @@
 ---
-title: Initializing state on render
+title: 在渲染时初始化状态
 description: How to initialize atom state on initial render
 nav: 7.13
 ---
 
-There are times when you need to create an reusable component which uses atoms.
+有时，你可能需要创建一个使用原子状态的可复用组件。
 
-These atoms' initial state are determined by the props passed to the component.
+这些原子的初始状态由传递给组件的 props 决定。
 
-Below is a basic example illustrating how you can use `Provider` and its prop, `initialValues`, to initialize state.
+下面是一个基本的示例，说明如何使用 `Provider` 及其 prop `initialValues` 来初始化状态。
 
-### Basic Example
+### 基本示例 {#basic-example}
 
-> CodeSandbox link: [codesandbox](https://codesandbox.io/s/init-atoms-with-usehydrateatoms-nryk1w).
+> CodeSandbox 链接：[codesandbox](https://codesandbox.io/s/init-atoms-with-usehydrateatoms-nryk1w)。
 
-Consider a basic example where you have a reusable `TextDisplay` component that allows you to display and update plain text.
+考虑一个基本示例，你有一个可复用的 `TextDisplay` 组件，它允许你显示和更新纯文本。
 
-This component has two child components, `PrettyText` and `UpdateTextInput`.
+这个组件有两个子组件，`PrettyText` 和 `UpdateTextInput`。
 
-- `PrettyText` displays the text in blue.
-- `UpdateTextInput` is an input field which updates the text value.
+- `PrettyText` 以蓝色显示文本。
+- `UpdateTextInput` 是一个输入字段，它更新文本值。
 
-As opposed to passing `text` as a prop in the two child components, you decided that the `text` state should be shared between components as an atom.
+你决定将 `text` 状态作为原子在组件之间共享，而不是在两个子组件中传递 `text` 作为 prop。
 
-To make `TextDisplay` component reusable, we take in a prop `initialTextValue`, which determines the initial state of the `text` atom.
+为了使 `TextDisplay` 组件可复用，我们接受一个 prop `initialTextValue`，它决定 `text` 原子的初始状态。
 
-To tie `initialTextValue` to `textAtom`, we wrap the child components in a component where we create a new store and pass it to a `Provider` component.
+为了将 `initialTextValue` 与 `textAtom` 关联起来，我们将子组件包装在一个组件中，在该组件中我们创建一个新的存储并将其传递给 `Provider` 组件。
 
 ```jsx
 const textAtom = atom('')
@@ -58,7 +58,7 @@ const UpdateTextInput = () => {
 }
 
 const HydrateAtoms = ({ initialValues, children }) => {
-  // initialising on state with prop on render here
+  // 在这里使用 prop 在渲染时初始化状态
   useHydrateAtoms(initialValues)
   return children
 }
@@ -74,7 +74,7 @@ export const TextDisplay = ({ initialTextValue }) => (
 )
 ```
 
-Now, we can easily reuse `TextDisplay` component with different initial text values despite them referencing the "same" atom.
+现在，我们可以轻松地复用 `TextDisplay` 组件，尽管它们引用的是"相同"的原子，但可以使用不同的初始文本值。
 
 ```jsx
 export default function App() {
@@ -88,17 +88,17 @@ export default function App() {
 }
 ```
 
-This behavior is due to our child components looking for the lowest commmon `Provider` ancestor to derive its value.
+这种行为是因为我们的子组件寻找最低的公共 `Provider` 祖先来获取其值。
 
-For more information on `Provider` behavior, please read the docs [here](../core/provider.mdx).
+有关 `Provider` 行为的更多信息，请阅读[这里](../core/provider.mdx)的文档。
 
-For more complex use cases, check out [Scope extension](../extensions/scope.mdx).
+对于更复杂的用例，请查看 [Scope extension](../extensions/scope.mdx)。
 
-### Using Typescript
+### 使用 Typescript {#using-typescript}
 
-`useHydrateAtoms` has overloaded types and typescript cannot extract types from overloaded function. It is recommended to use a `Map` when passing initial atom values to the `useHydrateAtoms`.
+`useHydrateAtoms` 有重载类型，typescript 无法从重载函数中提取类型。建议在将初始原子值传递给 `useHydrateAtoms` 时使用 `Map`。
 
-Here is a working example:
+以下是一个工作示例：
 
 ```tsx
 import type { ReactNode } from 'react'
@@ -118,7 +118,7 @@ export default function App() {
   )
 }
 
-//This component contains all the states and the logic
+//这个组件包含所有的状态和逻辑
 function Component() {
   const testAtomValue = useAtomValue(testAtom)
   return <div>{testAtomValue}</div>

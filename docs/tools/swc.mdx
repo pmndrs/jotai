@@ -5,21 +5,21 @@ nav: 5.01
 keywords: swc,next,nextjs,fast,refresh
 ---
 
-⚠️ Note: These plugins are experimental. Feedback is welcome in the [Github repo](https://github.com/pmndrs/swc-jotai). Please file issues in the separate repo instead of `jotai` repo.
+⚠️ 注意：这些插件处于实验阶段。欢迎在 [Github 仓库](https://github.com/pmndrs/swc-jotai) 提供反馈。请在单独的仓库中提交问题，而不是在 `jotai` 仓库中。
 
-## @swc-jotai/react-refresh
+## @swc-jotai/react-refresh {#@swc-jotai/react-refresh}
 
-This plugin adds support for React Refresh for Jotai atoms. This makes sure that state isn't reset, when developing using React Refresh.
+此插件为 Jotai atoms 添加了对 React Refresh 的支持。这确保在使用 React Refresh 进行开发时，状态不会被重置。
 
-### Usage
+### 使用方法 {#usage}
 
-Install it with:
+安装它：
 
 ```sh
 npm install --save-dev @swc-jotai/react-refresh
 ```
 
-You can add the plugin to `.swcrc`:
+你可以将插件添加到 `.swcrc`：
 
 ```json
 {
@@ -31,7 +31,7 @@ You can add the plugin to `.swcrc`:
 }
 ```
 
-You can use the plugin with the [experimental SWC plugins feature](https://nextjs.org/docs/advanced-features/compiler#swc-plugins-experimental) in Next.js.
+你可以在 Next.js 中使用 [实验性的 SWC 插件功能](https://nextjs.org/docs/advanced-features/compiler#swc-plugins-experimental) 来使用此插件。
 
 ```js
 module.exports = {
@@ -41,37 +41,37 @@ module.exports = {
 }
 ```
 
-Examples can be found below.
+下面可以找到示例。
 
-## @swc-jotai/debug-label
+## @swc-jotai/debug-label {#@swc-jotai/debug-label}
 
-Jotai is based on object references and not keys (like Recoil). This means there's no identifier for atoms. To identify atoms, it's possible to add a `debugLabel` to an atom, which can be found in React devtools.
+Jotai 是基于对象引用而不是键（如 Recoil）。这意味着 atoms 没有标识符。要识别 atoms，可以向 atom 添加一个 `debugLabel`，这可以在 React devtools 中找到。
 
-However, this can quickly become cumbersome to add a `debugLabel` to every atom.
+然而，向每个 atom 添加 `debugLabel` 很快就会变得繁琐。
 
-This `SWC` plugin adds a `debugLabel` to every atom, based on its identifier.
+这个 `SWC` 插件会根据其标识符向每个 atom 添加一个 `debugLabel`。
 
-The plugin transforms this code:
+插件将此代码：
 
 ```js
 export const countAtom = atom(0)
 ```
 
-Into:
+转换为：
 
 ```js
 export const countAtom = atom(0)
 countAtom.debugLabel = 'countAtom'
 ```
 
-Default exports are also handled, based on the file naming:
+也处理基于文件命名的默认导出：
 
 ```js
 // countAtom.ts
 export default atom(0)
 ```
 
-Which transform into:
+转换为：
 
 ```js
 // countAtom.ts
@@ -80,15 +80,15 @@ countAtom.debugLabel = 'countAtom'
 export default countAtom
 ```
 
-### Usage
+### 使用方法 {#usage}
 
-Install it with:
+安装它：
 
 ```sh
 npm install --save-dev @swc-jotai/debug-label
 ```
 
-You can add the plugin to `.swcrc`:
+你可以将插件添加到 `.swcrc`：
 
 ```json
 {
@@ -100,7 +100,7 @@ You can add the plugin to `.swcrc`:
 }
 ```
 
-Or you can use the plugin with the [experimental SWC plugins feature](https://nextjs.org/docs/advanced-features/compiler#swc-plugins-experimental) in Next.js.
+或者，你可以在 Next.js 中使用 [实验性的 SWC 插件功能](https://nextjs.org/docs/advanced-features/compiler#swc-plugins-experimental) 来使用此插件。
 
 ```js
 module.exports = {
@@ -110,11 +110,11 @@ module.exports = {
 }
 ```
 
-Examples can be found below.
+下面可以找到示例。
 
-### Custom atom names
+### 自定义 atom 名称 {#custom-atom-names}
 
-You can enable the plugins for your custom atoms. You can supply them to the plugins like below:
+你可以为你的自定义 atoms 启用插件。你可以像下面这样将它们提供给插件：
 
 ```js
 module.exports = {
@@ -127,8 +127,8 @@ module.exports = {
 }
 ```
 
-### Examples
+### 示例 {#examples}
 
-### Next.js
+### Next.js {#next.js}
 
 <CodeSandbox id="ygiuzm" />

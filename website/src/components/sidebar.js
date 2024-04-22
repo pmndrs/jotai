@@ -14,14 +14,14 @@ export const Sidebar = ({ showDocs = false }) => {
       <div className="flex-grow">
         <Jotai isDocsPage={showDocs} />
         <div className="mt-8 flex flex-col space-y-4">
-          <SearchButton />
+          {/* <SearchButton /> */}
           {showDocs ? (
             <Button to="/" icon="home">
-              Home
+              主页
             </Button>
           ) : (
             <Button to="/docs/introduction" icon="book">
-              Documentation
+              文档
             </Button>
           )}
           {showDocs && (
@@ -30,22 +30,22 @@ export const Sidebar = ({ showDocs = false }) => {
             </div>
           )}
           <Button icon="chalkboard" to="https://tutorial.jotai.org" external>
-            Tutorial
+            教程
           </Button>
           <Button icon="help" onClick={() => setShowHelp(true)}>
-            Support
+            支持
           </Button>
           <Button icon="github" to="https://github.com/pmndrs/jotai" external>
-            Repository
+            仓库
           </Button>
           <Button icon="npm" to="https://www.npmjs.com/package/jotai" external>
-            Package
+            包
           </Button>
           <Button icon="discord" to="https://discord.gg/poimandres" external>
-            Community
+            社区
           </Button>
           <Button icon="twitter" to="https://twitter.com/jotaijs" external>
-            Updates
+            更新
           </Button>
         </div>
       </div>

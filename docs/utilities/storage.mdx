@@ -4,9 +4,9 @@ nav: 3.01
 keywords: storage,localstorage,sessionstorage,asyncstorage,persist,persistence
 ---
 
-## atomWithStorage
+## atomWithStorage {#atomwithstorage}
 
-Ref: https://github.com/pmndrs/jotai/pull/394
+参考：https://github.com/pmndrs/jotai/pull/394
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -26,63 +26,63 @@ const Page = () => {
 }
 ```
 
-The `atomWithStorage` function creates an atom with a value persisted in `localStorage` or `sessionStorage` for React or `AsyncStorage` for React Native.
+`atomWithStorage` 函数创建了一个原子，其值在 React 的 `localStorage` 或 `sessionStorage`，或者在 React Native 的 `AsyncStorage` 中持久化。
 
-### Parameters
+### 参数 {#parameters}
 
-**key** (required): a unique string used as the key when syncing state with localStorage, sessionStorage, or AsyncStorage
+**key**（必需）：在将状态与localStorage，sessionStorage或AsyncStorage同步时使用的唯一字符串作为键
 
-**initialValue** (required): the initial value of the atom
+**initialValue**（必需）：原子的初始值
 
-**storage** (optional): an object with the following methods:
+**storage**（可选）：具有以下方法的对象：
 
-- **getItem(key, initialValue)** (required): Reads an item from storage, or falls back to the `intialValue`
-- **setItem(key, value)** (required): Saves an item to storage
-- **removeItem(key)** (required): Deletes the item from storage
-- **subscribe(key, callback, initialValue)** (optional): A method which subscribes to external storage updates.
+- **getItem(key, initialValue)**（必需）：从存储中读取项目，或回退到`initialValue`
+- **setItem(key, value)**（必需）：将项目保存到存储
+- **removeItem(key)**（必需）：从存储中删除项目
+- **subscribe(key, callback, initialValue)**（可选）：订阅外部存储更新的方法。
 
-**options** (optional): an object with the following properties:
+**options**（可选）：具有以下属性的对象：
 
-- **getOnInit** (optional, by default **false**): A boolean value indicating whether to get item from storage on initialization. Note that in an SPA with `getOnInit` either not set or `false` you will always get the initial value instead of the stored value on initialization. If the stored value is preferred set `getOnInit` to `true`.
+- **getOnInit**（可选，默认为**false**）：一个布尔值，表示是否在初始化时从存储中获取项目。请注意，在SPA中，如果`getOnInit`未设置或为`false`，则始终会在初始化时获取初始值，而不是存储的值。如果首选存储的值，将`getOnInit`设置为`true`。
 
-If not specified, the default storage implementation uses `localStorage` for storage/retrieval, `JSON.stringify()`/`JSON.parse()` for serialization/deserialization, and subscribes to `storage` events for cross-tab synchronization.
+如果未指定，默认的存储实现使用`localStorage`进行存储/检索，`JSON.stringify()`/`JSON.parse()`进行序列化/反序列化，并订阅`storage`事件进行跨标签同步。
 
 <CodeSandbox id="vuwi7" />
 
-### `createJSONStorage` util
+### `createJSONStorage` 工具 {#`createjsonstorage`-util}
 
-To create a custom storage implementation with `JSON.stringify()`/`JSON.parse()` for the `storage` option, `createJSONStorage` util is provided.
+为了使用`JSON.stringify()`/`JSON.parse()`创建自定义存储实现，提供了`createJSONStorage`工具。
 
-Usage:
+使用：
 
 ```js
 const storage = createJSONStorage(
   // getStringStorage
-  () => localStorage, // or sessionStorage, asyncStorage or alike
-  // options (optional)
+  () => localStorage, // 或 sessionStorage, asyncStorage 或类似的
+  // options (可选)
   {
-    reviver, // optional reviver option for JSON.parse
-    replacer, // optional replacer option for JSON.stringify
+    reviver, // JSON.parse 的可选 reviver 选项
+    replacer, // JSON.stringify 的可选 replacer 选项
   },
 )
 ```
 
-Note: `JSON.parse` is not type safe. If it can't accept any types, some kind of validation would be necessary for production apps.
+注意：`JSON.parse` 不是类型安全的。如果它不能接受任何类型，那么对于生产应用程序，某种验证将是必要的。
 
-### Server-side rendering
+### 服务器端渲染 {#server-side-rendering}
 
-Any JSX markup that depends on the value of a stored atom (e.g., a `className` or `style` prop) will use the `initialValue` when rendered on the server (since `localStorage` and `sessionStorage` are not available on the server).
+任何依赖于存储原子值的JSX标记（例如，`className`或`style`属性）在服务器上渲染时将使用`initialValue`（因为`localStorage`和`sessionStorage`在服务器上不可用）。
 
-This means that there will be a mismatch between what is originally served to the user's browser as HTML and what is expected by React during the rehydration process if the user has a `storedValue` that differs from the `initialValue`.
+这意味着，如果用户有一个与`initialValue`不同的`storedValue`，那么最初提供给用户浏览器的HTML和React在重新水合过程中期望的内容之间将存在不匹配。
 
-The suggested workaround for this issue is to only render the content dependent on the `storedValue` client-side by wrapping it in a [custom `<ClientOnly>` wrapper](https://www.joshwcomeau.com/react/the-perils-of-rehydration/#abstractions), which only renders after rehydration. Alternative solutions are technically possible, but would require a brief "flicker" as the `initialValue` is swapped to the `storedValue`, which can result in an unpleasant user experience, so this solution is advised.
+对此问题的建议解决方案是只在客户端渲染依赖于`storedValue`的内容，通过将其包装在一个[自定义的`<ClientOnly>`包装器](https://www.joshwcomeau.com/react/the-perils-of-rehydration/#abstractions)中，该包装器只在重新水合后渲染。技术上可能有其他解决方案，但是需要在`initialValue`切换到`storedValue`时短暂的"闪烁"，这可能会导致不愉快的用户体验，因此建议使用此解决方案。
 
-### Deleting an item from storage
+### 从存储中删除项目 {#deleting-an-item-from-storage}
 
-For the case you want to delete an item from storage,
-the atom created with `atomWithStorage` accepts the `RESET` symbol on write.
+对于您想从存储中删除项目的情况，
+使用`atomWithStorage`创建的原子在写入时接受`RESET`符号。
 
-See the following example for the usage:
+参见以下示例以了解使用方法：
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -102,11 +102,11 @@ const TextBox = () => {
 }
 ```
 
-If needed, you can also do conditional resets based on previous value.
+如果需要，您还可以根据先前的值进行条件重置。
 
-This can be particularly useful if you wish to clear keys in localStorage if previous values meet a condition.
+如果您希望在先前的值满足某个条件时清除localStorage中的键，这可能特别有用。
 
-Below exemplifies this usage that clears the `visible` key whenever the previous value is `true`.
+以下示例说明了这种用法，即每当先前的值为`true`时，清除`visible`键。
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -126,23 +126,23 @@ const TextBox = () => {
 }
 ```
 
-### React-Native implementation
+### React-Native 实现 {#react-native-implementation}
 
-You can use any library that implements `getItem`, `setItem` & `removeItem`.
-Let's say you would use the standard AsyncStorage provided by the community.
+你可以使用任何实现了 `getItem`、`setItem` 和 `removeItem` 的库。
+假设你会使用社区提供的标准 AsyncStorage。
 
 ```js
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const storage = createJSONStorage(() => AsyncStorage)
-const content = {} // anything JSON serializable
+const content = {} // 任何可以 JSON 序列化的内容
 const storedAtom = atomWithStorage('stored-key', content, storage)
 ```
 
-#### Notes with AsyncStorage (since v2.2.0)
+#### 使用 AsyncStorage 的注意事项（自 v2.2.0 起） {#notes-with-asyncstorage-(since-v2.2.0)}
 
-If you use any kinds of AsyncStorage, the atom value can become async. Hence, if you are to update the value, you need to possibly resolve the promise.
+如果你使用任何类型的 AsyncStorage，原子值可能会变为异步。因此，如果你要更新值，你可能需要解析 promise。
 
 ```js
 const countAtom = atomWithStorage('count-key', 0, anyAsyncStorage)
@@ -155,11 +155,11 @@ const Component = () => {
 }
 ```
 
-### Validating stored values
+### 验证存储的值 {#validating-stored-values}
 
-To add runtime validation to your storage atoms, you will need to create a custom implementation of storage.
+要为你的存储原子添加运行时验证，你需要创建一个自定义的存储实现。
 
-Below is an example that utilizes Zod to validate values stored in `localStorage` with cross-tab synchronization.
+下面是一个例子，它使用 Zod 来验证存储在 `localStorage` 中的值，并进行跨标签同步。
 
 ```js
 import { atomWithStorage } from 'jotai/utils'
@@ -204,8 +204,8 @@ const storedNumberAtom = atomWithStorage('my-number', 0, {
 })
 ```
 
-We also have a new util `unstable_withStorageValidator` to simplify some cases.
-The above case would become:
+我们还有一个新的工具 `unstable_withStorageValidator` 来简化一些情况。
+上述情况将变为：
 
 ```js
 import {

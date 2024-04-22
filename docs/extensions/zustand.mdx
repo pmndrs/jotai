@@ -6,26 +6,24 @@ keywords: zustand
 published: false
 ---
 
-Jotai's state resides in React, but sometimes it would be nice
-to interact with the world outside React.
+Jotai的状态存在于React中，但有时候我们希望能与React之外的世界进行交互。
 
-Zustand provides a store interface that can be used to hold some values
-and sync with atoms in Jotai.
+Zustand提供了一个存储接口，可以用来保存一些值，并与Jotai中的原子进行同步。
 
-This only uses the vanilla api of zustand.
+这只使用了zustand的原生api。
 
-### Install
+### 安装 {#install}
 
-You have to install `zustand` and `jotai-zustand` to use this feature.
+你需要安装`zustand`和`jotai-zustand`才能使用此功能。
 
 ```
 npm i zustand jotai-zustand
 ```
 
-## atomWithStore
+## atomWithStore {#atomwithstore}
 
-`atomWithStore` creates a new atom with zustand store.
-It's two-way binding and you can change the value from both ends.
+`atomWithStore`使用zustand存储创建一个新的原子。
+它是双向绑定的，你可以从两端改变值。
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -50,6 +48,6 @@ const Counter = () => {
 }
 ```
 
-### Examples
+### 示例 {#examples}
 
 <CodeSandbox id="mqtugt" />

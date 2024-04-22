@@ -1,10 +1,13 @@
 html {
   overflow: visible !important;
   padding-right: 0 !important;
+  font-size: 15px;
 }
 
 body {
-  @apply overflow-x-clip overflow-y-scroll overscroll-none bg-black leading-none font-sans;
+  @apply overflow-x-clip overflow-y-scroll overscroll-none bg-black leading-none;
+  font-family: "Roboto", "Microsoft YaHei", sans-serif;
+
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
 }
@@ -35,6 +38,7 @@ code,
 pre span,
 code span {
   font-family: 'Fira Code', monospace !important;
+  font-size: 14px;
 }
 
 ::selection {

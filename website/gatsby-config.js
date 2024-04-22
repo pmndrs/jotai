@@ -88,10 +88,11 @@ const queries = [
 ];
 
 module.exports = {
+  pathPrefix: `/jotai-zh`,
   siteMetadata: {
-    title: `Jotai, primitive and flexible state management for React`,
-    description: `Jotai takes a bottom-up approach to global React state management with an atomic model inspired by Recoil. One can build state by combining atoms and renders are optimized based on atom dependency. This solves the extra re-render issue of React context and eliminates the need for memoization.`,
-    siteUrl: `https://jotai.org`,
+    title: `Jotai，React 的原子化和灵活的状态管理`,
+    description: `Jotai 采用自下而上的方法来进行全局 React 状态管理，其原子模型受到 Recoil 的启发。人们可以通过组合原子来构建状态，渲染基于原子依赖进行优化。这解决了 React 上下文的额外重新渲染问题，并消除了对 memoization 的需要。`,
+    siteUrl: `https://ouweiya.github.io/jotai-zh/`,
     shortName: `Jotai`,
   },
   plugins: [
@@ -109,15 +110,15 @@ module.exports = {
       },
     },
     `gatsby-plugin-postcss`,
-    {
-      resolve: `gatsby-plugin-algolia`,
-      options: {
-        appId: process.env.GATSBY_ALGOLIA_APP_ID,
-        apiKey: process.env.ALGOLIA_ADMIN_KEY,
-        queries,
-        skipIndexing: process.env.ALGOLIA_SKIP_INDEXING === 'true',
-      },
-    },
+    // {
+    //   resolve: `gatsby-plugin-algolia`,
+    //   options: {
+    //     appId: process.env.GATSBY_ALGOLIA_APP_ID,
+    //     apiKey: process.env.ALGOLIA_ADMIN_KEY,
+    //     queries,
+    //     skipIndexing: process.env.ALGOLIA_SKIP_INDEXING === 'true',
+    //   },
+    // },
     `gatsby-plugin-sitemap`,
     {
       resolve: `gatsby-plugin-google-gtag`,

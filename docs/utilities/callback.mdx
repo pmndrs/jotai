@@ -5,11 +5,11 @@ keywords: callback
 published: false
 ---
 
-## useAtomCallback
+## useAtomCallback {#useatomcallback}
 
-Ref: https://github.com/pmndrs/jotai/issues/60
+参考： https://github.com/pmndrs/jotai/issues/60
 
-### Usage
+### 使用方法 {#usage}
 
 ```ts
 useAtomCallback<Result, Args extends unknown[]>(
@@ -18,13 +18,13 @@ useAtomCallback<Result, Args extends unknown[]>(
 ): (...args: Args) => Result
 ```
 
-This hook is for interacting with atoms imperatively.
-It takes a callback function that works like atom write function,
-and returns a function that returns an atom value.
+这个钩子用于命令式地与原子进行交互。
+它接受一个回调函数，该函数的工作方式类似于原子写入函数，
+并返回一个返回原子值的函数。
 
-The callback to pass in the hook must be stable (should be wrapped with useCallback).
+传递给钩子的回调必须是稳定的（应该用 useCallback 包装）。
 
-### Examples
+### 示例 {#examples}
 
 ```jsx
 import { useEffect, useState, useCallback } from 'react'
@@ -63,6 +63,6 @@ const Monitor = () => {
 }
 ```
 
-### Codesandbox
+### Codesandbox {#codesandbox}
 
 <CodeSandbox id="95gxnt" />

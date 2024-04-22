@@ -5,45 +5,42 @@ nav: 4.07
 keywords: cache
 ---
 
-Jotai provides primitive functions to optimize re-renders.
-It's designed to hold only "current" atom values,
-and it doesn't cache older values.
+Jotai 提供了一些原始函数来优化重新渲染。
+它只设计用来保存"当前"的原子值，并不会缓存旧的值。
 
-Caching is sometimes useful. For example, if an async atom
-triggers network requests, we may want to cache the responses.
+有时候，缓存是很有用的。例如，如果一个异步原子触发了网络请求，我们可能想要缓存这些响应。
 
-[jotai-cache](https://github.com/jotai-labs/jotai-cache) is
-a third-party library to help such use cases.
+[jotai-cache](https://github.com/jotai-labs/jotai-cache) 是一个第三方库，用来帮助处理这类情况。
 
-### Install
+### 安装 {#install}
 
 ```
 npm i jotai-cache
 ```
 
-## atomWithCache
+## atomWithCache {#atomwithcache}
 
 ```js
 atomWithCache(read, options): Atom
 ```
 
-`atomWithCache` creates a new read-only atom with cache.
+`atomWithCache` 创建一个带有缓存的新的只读原子。
 
-### Parameters
+### 参数 {#parameters}
 
-**read**: read function to define the read-only atom.
+**read**: 定义只读原子的读取函数。
 
-**options** (optional): an object of options to customize the behavior of the atom
+**options** (可选): 一个选项对象，用来自定义原子的行为
 
-### Options
+### 选项 {#options}
 
-**size** (optional): maximum size of cache items.
+**size** (可选): 缓存项的最大大小。
 
-**shouldRemove** (optional): a function to check if cache items should be removed.
+**shouldRemove** (可选): 一个函数，用来检查是否应该移除缓存项。
 
-**areEqual** (optional): a function to compare atom values.
+**areEqual** (可选): 一个函数，用来比较原子值。
 
-### Examples
+### 示例 {#examples}
 
 ```jsx
 import { atom, useAtom } from 'jotai'
@@ -67,11 +64,11 @@ const NormalUser = () => {
   const [{ data }] = useAtom(normalAtom)
   return (
     <div>
-      <h1>User (normal atom)</h1>
+      <h1>用户 (普通原子)</h1>
       <ul>
         <li>ID: {data.id}</li>
-        <li>First name: {data.first_name}</li>
-        <li>Last name: {data.last_name}</li>
+        <li>名字: {data.first_name}</li>
+        <li>姓氏: {data.last_name}</li>
       </ul>
     </div>
   )
@@ -81,11 +78,11 @@ const CachedUser = () => {
   const [{ data }] = useAtom(cachedAtom)
   return (
     <div>
-      <h1>User (cached atom)</h1>
+      <h1>用户 (带缓存的原子)</h1>
       <ul>
         <li>ID: {data.id}</li>
-        <li>First name: {data.first_name}</li>
-        <li>Last name: {data.last_name}</li>
+        <li>名字: {data.first_name}</li>
+        <li>姓氏: {data.last_name}</li>
       </ul>
     </div>
   )
@@ -97,17 +94,17 @@ const App = () => {
     <div>
       ID: {id}{' '}
       <button type="button" onClick={() => setId((c) => c - 1)}>
-        Prev
+        上一个
       </button>{' '}
       <button type="button" onClick={() => setId((c) => c + 1)}>
-        Next
+        下一个
       </button>
       <hr />
-      <Suspense fallback="Loading...">
+      <Suspense fallback="加载中...">
         <CachedUser />
       </Suspense>
       <hr />
-      <Suspense fallback="Loading...">
+      <Suspense fallback="加载中...">
         <NormalUser />
       </Suspense>
     </div>
@@ -115,6 +112,6 @@ const App = () => {
 }
 ```
 
-### Codesandbox
+### Codesandbox {#codesandbox}
 
 <CodeSandbox id="h09znd" />

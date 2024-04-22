@@ -4,19 +4,19 @@ nav: 3.03
 keywords: load,loadable,observable
 ---
 
-All atoms support async behavior such as async read or async write. However there are APIs for more control described here.
+所有的原子都支持异步行为，如异步读取或异步写入。然而，这里描述的API可以提供更多的控制。
 
-## loadable
+## loadable {#loadable}
 
-If you don't want async atoms to suspend or throw to an error boundary (for example, for finer-grained control of loading and error logic), you can use the `loadable` util.
+如果你不希望异步原子挂起或抛出到错误边界（例如，为了更细粒度的加载和错误逻辑控制），你可以使用 `loadable` 工具。
 
-It would work the same way for any atom. Simply wrap your atoms with the `loadable` util. It returns a value with one of three states: `loading`, `hasData` and `hasError`.
+它对任何原子都能起作用。只需用 `loadable` 工具包装你的原子。它返回一个具有三种状态之一的值：`loading`，`hasData` 和 `hasError`。
 
 ```ts
 {
-	state: 'loading' | 'hasData' | 'hasError',
-	data?: any,
-	error?: any,
+    state: 'loading' | 'hasData' | 'hasError',
+    data?: any,
+    error?: any,
 }
 ```
 
@@ -25,23 +25,23 @@ import { loadable } from "jotai/utils"
 
 const asyncAtom = atom(async (get) => ...)
 const loadableAtom = loadable(asyncAtom)
-// Does not need to be wrapped by a <Suspense> element
+// 不需要被 <Suspense> 元素包裹
 const Component = () => {
   const [value] = useAtom(loadableAtom)
   if (value.state === 'hasError') return <Text>{value.error}</Text>
   if (value.state === 'loading') {
     return <Text>Loading...</Text>
   }
-  console.log(value.data) // Results of the Promise
+  console.log(value.data) // Promise的结果
   return <Text>Value: {value.data}</Text>
 }
 ```
 
-## atomWithObservable
+## atomWithObservable {#atomwithobservable}
 
-Ref: https://github.com/pmndrs/jotai/pull/341
+参考：https://github.com/pmndrs/jotai/pull/341
 
-### Usage
+### 使用方法 {#usage}
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -58,14 +58,14 @@ const Counter = () => {
 }
 ```
 
-The `atomWithObservable` function creates an atom from a rxjs (or similar) `subject` or `observable`.
-Its value will be last value emitted from the stream.
+`atomWithObservable` 函数从 rxjs（或类似）的 `subject` 或 `observable` 创建一个原子。
+其值将是流中最后发出的值。
 
-To use this atom, you need to wrap your component with `<Suspense>`. Check out [guides/async](../guides/async.mdx).
+要使用这个原子，你需要用 `<Suspense>` 包裹你的组件。查看 [guides/async](../guides/async.mdx)。
 
-### Initial value
+### 初始值 {#initial-value}
 
-`atomWithObservable` takes second optional parameter `{ initialValue }` that allows to specify initial value for the atom. If `initialValue` is provided then `atomWithObservable` will not suspend and will show initial value before receiving first value from observable. `initialValue` can be either a value or a function that returns a value
+`atomWithObservable` 接受第二个可选参数 `{ initialValue }`，该参数允许为原子指定初始值。如果提供了 `initialValue`，那么 `atomWithObservable` 将不会挂起，并且在从 observable 接收到第一个值之前显示初始值。`initialValue` 可以是一个值，也可以是一个返回值的函数
 
 ```js
 const counterAtom = atomWithObservable(() => counterSubject, {
@@ -77,21 +77,21 @@ const counterAtom2 = atomWithObservable(() => counterSubject, {
 })
 ```
 
-### Codesandbox
+### Codesandbox {#codesandbox}
 
 <CodeSandbox id="88pnt" />
 
-## unwrap
+## unwrap {#unwrap}
 
-The `unwrap` util will convert an async atom to a sync atom like `loadable`.
-Unlike `loadable`, the fallback value can be configured.
-Unlike `loadable`, the error won't be handled and just thrown.
+`unwrap` 工具将把一个异步原子转换为一个同步原子，就像 `loadable` 一样。
+与 `loadable` 不同，可以配置回退值。
+与 `loadable` 不同，错误不会被处理，而是直接抛出。
 
-The use case of `unwrap` is to ease deriving atoms.
-This is especially useful for v2 API,
-because `get` in the read function doesn't resolve promises.
+`unwrap` 的使用场景是为了简化派生原子。
+这对于 v2 API 特别有用，
+因为在读取函数中的 `get` 不解析 promise。
 
-### Signature
+### 签名 {#signature}
 
 ```ts
 function unwrap<Value, Args extends unknown[], Result>(
@@ -111,7 +111,7 @@ function unwrap<Value, PendingValue>(
 ): Atom<Awaited<Value> | PendingValue>
 ```
 
-### Usage
+### 使用方法 {#usage}
 
 ```tsx
 import { atom } from 'jotai'
@@ -124,8 +124,8 @@ const delayedCountAtom = atom(async (get) => {
 })
 
 const unwrapped1Atom = unwrap(delayedCountAtom)
-// The value is `undefined` while pending
+// 当挂起时，值为 `undefined`
 
 const unwrapped2Atom = unwrap(delayedCountAtom, (prev) => prev ?? 0)
-// The value is `0` initially, and subsequent updates keep the previous value.
+// 初始值为 `0`，后续更新保持前一个值。
 ```

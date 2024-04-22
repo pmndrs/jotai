@@ -5,41 +5,41 @@ nav: 4.06
 keywords: location,hash
 ---
 
-To deal with `window.location`, we have some functions to create atoms.
+处理 `window.location`，我们有一些函数来创建原子。
 
-### Install
+### 安装 {#install}
 
-You have to install `jotai-location` to use this feature.
+你需要安装 `jotai-location` 才能使用此功能。
 
 ```
 npm i jotai-location
 ```
 
-## atomWithLocation
+## atomWithLocation {#atomwithlocation}
 
 ```js
 atomWithLocation(options): PrimitiveAtom
 ```
 
-`atomWithLocation` creates a new atom that links to `window.location`.
+`atomWithLocation` 创建一个新的原子，该原子链接到 `window.location`。
 
-### Parameters
+### 参数 {#parameters}
 
-**options** (optional): an object of options to customize the behavior of the atom
+**options**（可选）：一个选项对象，用于自定义原子的行为
 
-### Options
+### 选项 {#options}
 
-**preloaded** (optional): preloaded location value to avoid getting location at initialization.
+**preloaded**（可选）：预加载的位置值，以避免在初始化时获取位置。
 
-**replace** (optional): a boolean to indicate to use `replaceState` instead of `pushState`.
+**replace**（可选）：一个布尔值，用于指示是否使用 `replaceState` 而不是 `pushState`。
 
-**getLocation** (optional): a custom function to get location value.
+**getLocation**（可选）：一个自定义函数，用于获取位置值。
 
-**applyLocation** (optional): a custom function to set location value.
+**applyLocation**（可选）：一个自定义函数，用于设置位置值。
 
-**subscribe** (optional): a custom function to subscribe to location change.
+**subscribe**（可选）：一个自定义函数，用于订阅位置更改。
 
-### Examples
+### 示例 {#examples}
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -104,41 +104,40 @@ const App = () => {
 }
 ```
 
-### Codesandbox
+### 代码沙箱 {#codesandbox}
 
 <CodeSandbox id="kism55" />
 
-## atomWithHash
+## atomWithHash {#atomwithhash}
 
 ```js
 atomWithHash(key, initialValue, options): PrimitiveAtom
 ```
 
-This creates a new atom that is connected with URL hash.
-The hash must be in the URLSearchParams format.
-It's a two-way binding: changing the atom value will change the hash and
-changing the hash will change the atom value.
-This function works only with DOM.
+这将创建一个新的原子，该原子与 URL 哈希连接。
+哈希必须是 URLSearchParams 格式。
+这是双向绑定：更改原子值将更改哈希，更改哈希将更改原子值。
+此函数仅适用于 DOM。
 
-### Parameters
+### 参数 {#parameters}
 
-**key** (required): a unique string used as the key when syncing state with localStorage, sessionStorage, or AsyncStorage
+**key**（必需）：在与 localStorage、sessionStorage 或 AsyncStorage 同步状态时用作键的唯一字符串
 
-**initialValue** (required): the initial value of the atom
+**initialValue**（必需）：原子的初始值
 
-**options** (optional): an object of options to customize the behavior of the atom
+**options**（可选）：一个选项对象，用于自定义原子的行为
 
-### Options
+### 选项 {#options}
 
-**serialize** (optional): a custom function to serialize the atom value to the hash. Defaults to `JSON.stringify`.
+**serialize**（可选）：一个自定义函数，用于将原子值序列化为哈希。默认为 `JSON.stringify`。
 
-**deserialize** (optional): a custom function to deserialize the hash to the atom value. Defaults to `JSON.parse`.
+**deserialize**（可选）：一个自定义函数，用于将哈希反序列化为原子值。默认为 `JSON.parse`。
 
-**subscribe** (optional): custom hash change subscribe function
+**subscribe**（可选）：自定义哈希更改订阅函数
 
-**setHash** (optional): `replaceState` or a custom function that describes how hash gets updated on the side of the browser. Defaults to pushing a new entry to the history via `window.location.hash = searchParams` ([jotai-location#4](https://github.com/jotaijs/jotai-location/pull/4))
+**setHash**（可选）：`replaceState` 或一个自定义函数，描述浏览器端如何更新哈希。默认为通过 `window.location.hash = searchParams` 将新条目推送到历史记录（[jotai-location#4](https://github.com/jotaijs/jotai-location/pull/4)）
 
-### Examples
+### 示例 {#examples}
 
 ```jsx
 import { useAtom } from 'jotai'
@@ -157,11 +156,11 @@ const Counter = () => {
 }
 ```
 
-### Codesandbox
+### 代码沙箱 {#codesandbox}
 
 <CodeSandbox id="2mocd1" />
 
-### Deleting Item
+### 删除项目 {#deleting-item}
 
-Please refer [atomWithStorage](../utilities/storage.mdx)
-for the usage about deleting items.
+请参考 [atomWithStorage](../utilities/storage.mdx)
+关于删除项目的使用方法。

@@ -1,51 +1,51 @@
 ---
-title: Comparison
+title: 比较
 nav: 6.02
 ---
 
-Jotai was born to solve extra re-render issues in React.
-An extra re-render is when the render process produces the same UI result,
-where users won't see any differences.
+Jotai 诞生于解决 React 中的额外重渲染问题。
+额外的重渲染是指渲染过程产生相同的 UI 结果，
+用户不会看到任何差异。
 
-To tackle this issue with React context (useContext + useState),
-one would require many contexts and face some issues.
+要解决 React context (useContext + useState) 的这个问题，
+需要很多 context 并面临一些问题。
 
-- Provider hell: It's likely that your root component has many context providers, which is technically okay, and sometimes desirable to provide context in different subtree.
-- Dynamic addition/deletion: Adding a new context at runtime is not very nice, because you need to add a new provider and its children will be re-mounted.
+- Provider 地狱：你的根组件可能有很多 context provider，这在技术上是可以的，有时候在不同的子树中提供 context 是可取的。
+- 动态添加/删除：在运行时添加新的 context 不太好，因为你需要添加一个新的 provider，它的子元素将被重新挂载。
 
-Traditionally, a top-down solution to this is to use a selector function.
-The [use-context-selector](https://github.com/dai-shi/use-context-selector) library is one example.
-The issue with this approach is the selector function needs to return
-referentially equal values to prevent re-renders, and this often requires a memoization technique.
+传统上，解决这个问题的自上而下的方法是使用选择器函数。
+[use-context-selector](https://github.com/dai-shi/use-context-selector) 库就是一个例子。
+这种方法的问题是选择器函数需要返回
+引用相等的值以防止重新渲染，这通常需要一个记忆化技术。
 
-Jotai takes a bottom-up approach with the atomic model, inspired by [Recoil](https://recoiljs.org/).
-One can build state combining atoms, and optimize renders based on atom dependency.
-This avoids the need for memoization.
+Jotai 采用了由 [Recoil](https://recoiljs.org/) 启发的原子模型的自下而上的方法。
+人们可以构建基于原子依赖的状态，并优化渲染。
+这避免了需要记忆化。
 
-Jotai has two principles.
+Jotai 有两个原则。
 
-- Primitive: Its basic API is simple, like `useState`.
-- Flexible: Atoms can derive another atom and form a graph. Atoms can also be updated by another arbitrary atom. It allows abstracting complex state models.
+- 原始：它的基本 API 很简单，就像 `useState`。
+- 灵活：原子可以派生另一个原子并形成图。原子也可以由另一个任意原子更新。它允许抽象复杂的状态模型。
 
-### How is Jotai different from useContext of React?
+### Jotai 与 React 的 useContext 有何不同？ {#how-is-jotai-different-from-usecontext-of-react?}
 
-Jotai's core API is minimalistic and makes it easy to build utilities based upon it.
+Jotai 的核心 API 是简约的，使得基于它构建实用程序变得容易。
 
-#### Analogy
+#### 类比 {#analogy}
 
-You can view Jotai as a drop-in replacement to `useContext`. Except Jotai is aiming for simplicity, minimalistic API and can do much more than `useContext` & `useState`.
+你可以将 Jotai 视为 `useContext` 的替代品。除了 Jotai 追求简单，最小化的 API，并且可以做比 `useContext` & `useState` 更多的事情。
 
-#### Usage difference
+#### 使用差异 {#usage-difference}
 
-We can see how we used to share data to children, compared to how we do it with Jotai. But let's use a real-world example where we have multiple `Context` in our app.
+我们可以看到我们如何将数据共享给子组件，与我们如何用 Jotai 做这件事的区别。但让我们使用一个真实世界的例子，我们的应用中有多个 `Context`。
 
 ```jsx
-// 1. useState local state
+// 1. useState 本地状态
 const Component = () => {
   const [state, setState] = useState(0)
 }
 
-// 2. Lift local state up and share it via context
+// 2. 提升本地状态并通过 context 分享
 const StateContext = createContext()
 const Parent = ({ children }) => {
   return (
@@ -58,7 +58,7 @@ const Component = () => {
   const [state, setState] = useContext(StateContext)
 }
 
-// 3. Have multiple states and contexts
+// 3. 有多个状态和 contexts
 const State1Context = createContext()
 const State2Context = createContext()
 const Parent = ({ children }) => (
@@ -76,15 +76,15 @@ const Component2 = () => {
 }
 ```
 
-Now let's see how Jotai simplify it for us. You can just use atoms instead of multiple `Context`.
+现在让我们看看 Jotai 如何为我们简化它。你可以只使用原子而不是多个 `Context`。
 
 ```jsx
 import { Provider, atom, useAtom } from 'jotai'
 const atom1 = atom(0)
 const atom2 = atom(0)
-// Optional: you can use Provider's just like useContext,
-// ...but if you only need one,
-// ...you can just omit it and Jotai will use a default one (called Provider-less mode).
+// 可选：你可以像使用 useContext 一样使用 Provider，
+// ...但如果你只需要一个，
+// ...你可以省略它，Jotai 将使用一个默认的（称为无 Provider 模式）。
 const Parent = ({ children }) => {
   return <Provider>{children}</Provider>
 }
@@ -96,66 +96,66 @@ const Component2 = () => {
 }
 ```
 
-### How is Jotai different from Zustand?
+### Jotai 与 Zustand 有何不同？ {#how-is-jotai-different-from-zustand?}
 
-#### Name
+#### 名称 {#name}
 
-Jotai means "state" in Japanese.
-Zustand means "state" in German.
+Jotai 在日语中意为 "状态"。
+Zustand 在德语中意为 "状态"。
 
-#### Analogy
+#### 类比 {#analogy}
 
-Jotai is like Recoil.
-Zustand is like Redux.
+Jotai 类似于 Recoil。
+Zustand 类似于 Redux。
 
-#### Where state resides
+#### 状态所在的位置 {#where-state-resides}
 
-To hold states,
-Both have stores that can exist either at module level or at context level.
-Jotai is designed to be context first, and module second.
-Zustand is designed to be module first, and context second.
+为了保存状态，
+两者都有可以存在于模块级别或上下文级别的存储。
+Jotai 的设计是首先考虑上下文，其次考虑模块。
+Zustand 的设计是首先考虑模块，其次考虑上下文。
 
-#### How to structure state
+#### 如何构造状态 {#how-to-structure-state}
 
-Jotai state consists of atoms (i.e. bottom-up).
-Zustand state is one object (i.e. top-down).
+Jotai 的状态由原子组成（即自下而上）。
+Zustand 的状态是一个对象（即自上而下）。
 
-#### Technical difference
+#### 技术差异 {#technical-difference}
 
-The major difference is the state model. Zustand is a single store (although you could create multiple separate stores), while Jotai consists of primitive atoms and allows composing them together. In this sense, it's the matter of programming mental model.
+主要的差异在于状态模型。Zustand 是一个单一的存储（尽管你可以创建多个独立的存储），而 Jotai 由原始的原子组成，并允许将它们组合在一起。在这个意义上，这是编程思维模型的问题。
 
-#### When to use which
+#### 何时使用哪个 {#when-to-use-which}
 
-- If you need a replacement for useState+useContext, Jotai fits well.
-- If you want a simple module state, Zustand fits well.
-- If code splitting is important, Jotai should perform well.
-- If you prefer Redux devtools, Zustand is good to go.
-- If you want to make use of Suspense, Jotai is the one.
+- 如果你需要替换 useState+useContext，Jotai 很适合。
+- 如果你想要一个简单的模块状态，Zustand 很适合。
+- 如果代码分割很重要，Jotai 应该表现得很好。
+- 如果你喜欢 Redux devtools，Zustand 是好的选择。
+- 如果你想利用 Suspense，Jotai 是最好的选择。
 
-### How is Jotai different from Recoil?
+### Jotai 与 Recoil 有何不同？ {#how-is-jotai-different-from-recoil?}
 
-(Disclaimer: the author is not very familiar with Recoil, this may be biased and inaccurate.)
+（免责声明：作者对 Recoil 不是很熟悉，这可能有偏见并且不准确。）
 
-#### Developer
+#### 开发者 {#developer}
 
-- Jotai is developed with collective work by a few developers in Poimandres (formerly react-spring) org.
-- Recoil is developed by a team at Facebook.
+- Jotai 是由 Poimandres（前身为 react-spring）组织中的几个开发者共同开发的。
+- Recoil 是由 Facebook 的一个团队开发的。
 
-#### Basis
+#### 基础 {#basis}
 
-- Jotai is focusing on primitive APIs for easy learning, and it's unopinionated. (The same philosophy with Zustand)
-- Recoil is all-in-one, and it has various cache strategies.
+- Jotai 专注于简单的 API，以便于学习，它是无主见的。（与 Zustand 的理念相同）
+- Recoil 是一站式的，它有各种缓存策略。
 
-#### Technical difference
+#### 技术差异 {#technical-difference}
 
-- Jotai depends on atom object referential identities.
-- Recoil depends on atom string keys.
+- Jotai 依赖于原子对象的引用身份。
+- Recoil 依赖于原子字符串键。
 
-#### When to use which
+#### 何时使用哪个 {#when-to-use-which}
 
-- If you want to learn something new, either should work.
-- If you like Zustand, Jotai would also be pleasant.
-- If you need React Context alternatives, Jotai comes with enough features.
-- If you need to read and write atoms outside React, Jotai provides store API.
-- If you would try to create a new library, Jotai might give good primitives.
-- Otherwise, both are pretty similar about the general goals and basic techniques, so please try both and share your feedback with us.
+- 如果你想学习新的东西，两者都可以。
+- 如果你喜欢 Zustand，你也会喜欢 Jotai。
+- 如果你需要 React Context 的替代品，Jotai 提供了足够的功能。
+- 如果你需要在 React 外部读写原子，Jotai 提供了存储 API。
+- 如果你想尝试创建一个新的库，Jotai 可能会提供好的原语。
+- 否则，两者在总体目标和基本技术上都非常相似，所以请尝试两者并与我们分享你的反馈。

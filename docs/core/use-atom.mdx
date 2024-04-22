@@ -5,40 +5,40 @@ nav: 2.02
 keywords: use,useatom,useatomvalue,usesetatom,atomvalue,setatom
 ---
 
-## useAtom
+## useAtom {#useatom}
 
-The `useAtom` hook is to read an atom value in the state.
-The state can be seen as a WeakMap of atom configs and atom values.
+`useAtom` 钩子用于读取状态中的原子值。
+状态可以被视为原子配置和原子值的 WeakMap。
 
-The `useAtom` hook returns the atom value and an update function as a tuple,
-just like React's `useState`.
-It takes an atom config created with `atom()`.
+`useAtom` 钩子返回原子值和更新函数作为元组，
+就像 React 的 `useState` 一样。
+它接受用 `atom()` 创建的原子配置。
 
-Initially, there is no value associated with the atom.
-Only once the atom is used via `useAtom`,
-does the initial value get stored in the state.
-If the atom is a derived atom, the read function is called to compute the initial value.
-When an atom is no longer used, meaning all the components using it are unmounted,
-and the atom config no longer exists, the value in the state is garbage collected.
+最初，原子没有关联的值。
+只有当通过 `useAtom` 使用原子时，
+初始值才会存储在状态中。
+如果原子是派生原子，读取函数被调用以计算初始值。
+当一个原子不再被使用，意味着使用它的所有组件都被卸载，
+并且原子配置不再存在，状态中的值就会被垃圾回收。
 
 ```js
 const [value, setValue] = useAtom(anAtom)
 ```
 
-The `setValue` takes just one argument, which will be passed
-to the third argument of the write function of the atom.
-The behavior depends on how the write function is implemented.
+`setValue` 只接受一个参数，该参数将被传递
+到原子的写函数的第三个参数。
+行为取决于写函数如何实现。
 
-**Note:** as mentioned in the _atom_ section, you have to take care of handling the reference of your atom, otherwise it may enter an infinite loop
+**注意：**如在 _原子_ 部分提到的，你必须处理好你的原子引用，否则可能会进入无限循环
 
 ```js
 const stableAtom = atom(0)
 const Component = () => {
-  const [atomValue] = useAtom(atom(0)) // This will cause an infinite loop
-  const [atomValue] = useAtom(stableAtom) // This is fine
+  const [atomValue] = useAtom(atom(0)) // 这将导致无限循环
+  const [atomValue] = useAtom(stableAtom) // 这是可以的
   const [derivedAtomValue] = useAtom(
     useMemo(
-      // This is also fine
+      // 这也是可以的
       () => atom((get) => get(stableAtom) * 2),
       [],
     ),
@@ -46,65 +46,65 @@ const Component = () => {
 }
 ```
 
-**Note**: Remember that React is responsible for calling your component. Meaning it has to be idempotent, ready to be called multiple times. You will often see an extra re-render even if no props or atoms have changed. An extra re-render without a commit is an expected behavior. It is actually the default behavior of useReducer in React 18.
+**注意**：记住，React 负责调用你的组件。这意味着它必须是幂等的，准备好被多次调用。即使没有 props 或原子发生变化，你也经常会看到额外的重新渲染。没有提交的额外重新渲染是预期的行为。这实际上是 React 18 中 useReducer 的默认行为。
 
-### Signatures
+### 签名 {#signatures}
 
 ```ts
-// primitive or writable derived atom
+// 原始或可写的派生原子
 function useAtom<Value, Update>(
   atom: WritableAtom<Value, Update>,
   options?: { store?: Store },
 ): [Value, SetAtom<Update>]
 
-// read-only atom
+// 只读原子
 function useAtom<Value>(
   atom: Atom<Value>,
   options?: { store?: Store },
 ): [Value, never]
 ```
 
-The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it are unmounted, and the atom config no longer exists, the value is removed from the Provider.
+useAtom 钩子用于读取存储在 Provider 中的原子值。它返回原子值和更新函数作为元组，就像 useState 一样。它接受用 `atom()` 创建的原子配置。最初，Provider 中没有存储值。第一次通过 `useAtom` 使用原子时，它将在 Provider 中添加初始值。如果原子是派生原子，读取函数被执行以计算初始值。当一个原子不再被使用，意味着使用它的所有组件都被卸载，并且原子配置不再存在，值就会从 Provider 中移除。
 
 ```js
 const [value, setValue] = useAtom(anAtom)
 ```
 
-The `setValue` takes one argument, which will be passed to the third argument of writeFunction of the atom. The behavior depends on how the writeFunction is implemented.
+`setValue` 接受一个参数，该参数将被传递到原子的 writeFunction 的第三个参数。行为取决于 writeFunction 如何实现。
 
-### How atom dependency works
+### 原子依赖如何工作 {#how-atom-dependency-works}
 
-To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh the dependencies and dependents. For example, If A depends on B, it means that B is a dependency of A, and A is a dependent of B.
+首先，让我们解释一下。在当前的实现中，每次我们调用 "read" 函数，我们都会刷新依赖项和依赖者。例如，如果 A 依赖于 B，这意味着 B 是 A 的依赖项，A 是 B 的依赖者。
 
 ```js
 const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
 ```
 
-The read function is the first parameter of the atom.
-The dependency will initially be empty. On first use, we run the read function and know that `uppercaseAtom` depends on `textAtom`. `textAtom` has a dependency on `uppercaseAtom`. So, add `uppercaseAtom` to the dependents of `textAtom`.
-When we re-run the read function (because its dependency `textAtom` is updated),
-the dependency is created again, which is the same in this case. We then remove stale dependents and replace with the latest one.
+读取函数是原子的第一个参数。
+依赖项最初将为空。首次使用时，我们运行读取函数并知道 `uppercaseAtom` 依赖于 `textAtom`。`textAtom` 对 `uppercaseAtom` 有依赖。所以，将 `uppercaseAtom` 添加到 `textAtom` 的依赖者中。
+当我们重新运行读取函数（因为它的依赖项 `textAtom` 已更新）时，
+依赖项会再次被创建，这在这种情况下是相同的。然后我们移除过时的依赖者并替换为最新的。
 
-### Atoms can be created on demand
+### 原子可以按需创建 {#atoms-can-be-created-on-demand}
 
-While the basic examples here show defining atoms globally outside components,
-there's no restrictions about where or when we can create an atom.
-As long as we remember that atoms are identified by their object referential identity,
-we can create them anytime.
+虽然这里的基本示例显示在组件外部全局定义原子，
+但我们可以在任何地方或任何时候创建原子。
+只要我们记住原子是由它们的对象引用身份标识的，
+我们可以随时创建它们。
 
-If you create atoms in render functions, you would typically want to use
-a hook like `useRef` or `useMemo` for memoization. If not, the atom would be re-created each time the component renders.
+如果你在渲染函数中创建原子，你通常会想使用
+像 `useRef` 或 `useMemo` 这样的钩子进行记忆化。如果不这样做，每次组件渲染时原子都会被重新创建。
 
-You can create an atom and store it with `useState` or even in another atom.
-See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
+你可以创建一个原子并用 `useState` 或甚至在另一个原子中存储它。
+在 [issue #5](https://github.com/pmndrs/jotai/issues/5) 中看到一个例子。
 
-You can cache atoms somewhere globally.
-See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or
-[that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
+你可以在全局某处缓存原子。
+看看 [这个例子](https://twitter.com/dai_shi/status/1317653548314718208) 或
+[那个例子](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321)。
 
-Check [`atomFamily`](../utilities/family.mdx) in utils for parameterized atoms.
+检查 utils 中的 [`atomFamily`](../utilities/family.mdx) 以获取参数化的原子。
 
-## useAtomValue
+## useAtomValue {#useatomvalue}
 
 ```jsx
 const countAtom = atom(0)
@@ -122,9 +122,9 @@ const Counter = () => {
 }
 ```
 
-Similar to the `useSetAtom` hook, `useAtomValue` allows you to access a read-only atom.
+与 `useSetAtom` 钩子类似，`useAtomValue` 允许你访问只读原子。
 
-## useSetAtom
+## useSetAtom {#usesetatom}
 
 ```jsx
 const switchAtom = atom(false)
@@ -164,6 +164,6 @@ export default function App() {
 }
 ```
 
-In case you need to update a value of an atom without reading it, you can use `useSetAtom()`.
+如果你需要更新原子的值而不读取它，你可以使用 `useSetAtom()`。
 
-This is especially useful when the performance is a concern, as the `const [, setValue] = useAtom(valueAtom)` will cause unnecessary rerenders on each `valueAtom` update.
+当性能是一个关注点时，这尤其有用，因为 `const [, setValue] = useAtom(valueAtom)` 会在每次 `valueAtom` 更新时导致不必要的重新渲染。

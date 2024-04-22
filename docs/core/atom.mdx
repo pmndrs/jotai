@@ -5,15 +5,13 @@ nav: 2.01
 keywords: atom,primitive,derived,debug,label,onmount
 ---
 
-## atom
+## atom {#atom}
 
-The `atom` function is to create an atom config.
-We call it "atom config" as it's just a definition and it doesn't yet hold a value.
-We may also call it just "atom" if the context is clear.
+`atom`函数用于创建一个原子配置。我们称之为"原子配置"，因为它只是一个定义，还没有保存任何值。如果上下文清晰，我们也可以简单地称之为"原子"。
 
-An atom config is an immutable object. The atom config object doesn't hold a value. The atom value exists in a store.
+原子配置是一个不可变对象。原子配置对象不保存任何值。原子值存在于一个存储中。
 
-To create a primitive atom (config), all you need is to provide an initial value.
+要创建一个基本的原子（配置），你只需要提供一个初始值。
 
 ```js
 import { atom } from 'jotai'
@@ -23,24 +21,24 @@ const messageAtom = atom('hello')
 const productAtom = atom({ id: 12, name: 'good stuff' })
 ```
 
-You can also create derived atoms. We have three patterns:
+你也可以创建派生的原子。我们有三种模式：
 
-- Read-only atom
-- Write-only atom
-- Read-Write atom
+- 只读原子
+- 只写原子
+- 读写原子
 
-To create derived atoms, we pass a read function and an optional write function.
+要创建派生原子，我们传递一个读取函数和一个可选的写入函数。
 
 ```js
 const readOnlyAtom = atom((get) => get(priceAtom) * 2)
 const writeOnlyAtom = atom(
-  null, // it's a convention to pass `null` for the first argument
+  null, // 传递`null`作为第一个参数是一种约定
   (get, set, update) => {
-    // `update` is any single value we receive for updating this atom
+    // `update`是我们接收到的用于更新此原子的任何单一值
     set(priceAtom, get(priceAtom) - update.discount)
-    // or we can pass a function as the second parameter
-    // the function will be invoked,
-    //  receiving the atom's current value as its first parameter
+    // 或者我们可以将函数作为第二个参数传递
+    // 该函数将被调用，
+    // 接收原子的当前值作为其第一个参数
     set(priceAtom, (price) => price - update.discount)
   },
 )
@@ -48,26 +46,20 @@ const readWriteAtom = atom(
   (get) => get(priceAtom) * 2,
   (get, set, newPrice) => {
     set(priceAtom, newPrice / 2)
-    // you can set as many atoms as you want at the same time
+    // 你可以同时设置尽可能多的原子
   },
 )
 ```
 
-`get` in the read function is to read the atom value.
-It's reactive and read dependencies are tracked.
+读取函数中的`get`用于读取原子值。它是响应式的，读取依赖项会被跟踪。
 
-`get` in the write function is also to read atom value, but it's not tracked.
-Furthermore, it can't read unresolved async values in Jotai v1 API.
+写入函数中的`get`也用于读取原子值，但它不会被跟踪。此外，它不能读取Jotai v1 API中未解析的异步值。
 
-`set` in the write function is to write atom value.
-It will invoke the write function of the target atom.
+写入函数中的`set`用于写入原子值。它将调用目标原子的写入函数。
 
-### Note about creating an atom in render function
+### 在渲染函数中创建原子的注意事项 {#note-about-creating-an-atom-in-render-function}
 
-Atom configs can be created anywhere, but referential equality is important.
-They can be created dynamically too.
-To create an atom in render function, `useMemo` or `useRef` is required to get a stable reference. If in doubt about using `useMemo` or `useRef` for memoization, use `useMemo`.
-Otherwise, it can cause infinite loop with `useAtom`.
+原子配置可以在任何地方创建，但引用相等性很重要。它们也可以动态创建。在渲染函数中创建原子时，需要`useMemo`或`useRef`来获取稳定的引用。如果对于使用`useMemo`或`useRef`进行记忆化有疑问，使用`useMemo`。否则，它可能会与`useAtom`一起导致无限循环。
 
 ```js
 const Component = ({ value }) => {
@@ -76,31 +68,31 @@ const Component = ({ value }) => {
 }
 ```
 
-### Signatures
+### 签名 {#signatures}
 
 ```ts
-// primitive atom
+// 基本原子
 function atom<Value>(initialValue: Value): PrimitiveAtom<Value>
 
-// read-only atom
+// 只读原子
 function atom<Value>(read: (get: Getter) => Value): Atom<Value>
 
-// writable derived atom
+// 可写的派生原子
 function atom<Value, Args extends unknown[], Result>(
   read: (get: Getter) => Value,
   write: (get: Getter, set: Setter, ...args: Args) => Result,
 ): WritableAtom<Value, Args, Result>
 
-// write-only derived atom
+// 只写的派生原子
 function atom<Value, Args extends unknown[], Result>(
   read: Value,
   write: (get: Getter, set: Setter, ...args: Args) => Result,
 ): WritableAtom<Value, Args, Result>
 ```
 
-- `initialValue`: the initial value that the atom will return until its value is changed.
-- `read`: a function that's evaluated whenever the atom is read. The signature of `read` is `(get) => Value`, and `get` is a function that takes an atom config and returns its value stored in Provider as described below. Dependency is tracked, so if `get` is used for an atom at least once, the `read` will be reevaluated whenever the atom value is changed.
-- `write`: a function mostly used for mutating atom's values, for a better description; it gets called whenever we call the second value of the returned pair of `useAtom`, the `useAtom()[1]`. The default value of this function in the primitive atom will change the value of that atom. The signature of `write` is `(get, set, ...args) => Result`. `get` is similar to the one described above, but it doesn't track the dependency. `set` is a function that takes an atom config and a new value which then updates the atom value in Provider. `...args` is the arguments that we receive when we call `useAtom()[1]`. `Result` is the return value of the `write` function.
+- `initialValue`：原子在其值被改变之前返回的初始值。
+- `read`：每当读取原子时都会评估的函数。`read`的签名是`(get) => Value`，`get`是一个函数，它接收一个原子配置并返回在Provider中存储的其值。依赖性被跟踪，所以如果`get`至少一次用于一个原子，那么每当原子值改变时，`read`都会被重新评估。
+- `write`：主要用于改变原子值的函数，更好的描述是；每当我们调用`useAtom`返回的对的第二个值时，它就会被调用，即`useAtom()[1]`。在基本原子中，这个函数的默认值会改变那个原子的值。`write`的签名是`(get, set, ...args) => Result`。`get`与上面描述的类似，但它不跟踪依赖性。`set`是一个函数，它接收一个原子配置和一个新值，然后在Provider中更新原子值。`...args`是我们在调用`useAtom()[1]`时接收的参数。`Result`是`write`函数的返回值。
 
 ```js
 const primitiveAtom = atom(initialValue)
@@ -109,38 +101,38 @@ const derivedAtomWithReadWrite = atom(read, write)
 const derivedAtomWithWriteOnly = atom(null, write)
 ```
 
-There are two kinds of atoms: a writable atom and a read-only atom. Primitive atoms are always writable. Derived atoms are writable if the `write` is specified. The `write` of primitive atoms is equivalent to the `setState` of `React.useState`.
+原子有两种类型：可写原子和只读原子。原始原子总是可写的。如果指定了`write`，派生原子就是可写的。原始原子的`write`等同于`React.useState`的`setState`。
 
-### `debugLabel` property
+### `debugLabel`属性 {#`debuglabel`-property}
 
-The created atom config can have an optional property `debugLabel`. The debug label is used to display the atom in debugging. See [Debugging guide](../guides/debugging.mdx) for more information.
+创建的原子配置可以有一个可选的属性`debugLabel`。调试标签用于在调试中显示原子。有关更多信息，请参阅[调试指南](../guides/debugging.mdx)。
 
-Note: While, the debug labels don’t have to be unique, it’s generally recommended to make them distinguishable.
+注意：虽然调试标签不必是唯一的，但通常建议使它们可区分。
 
-### `onMount` property
+### `onMount`属性 {#`onmount`-property}
 
-The created atom config can have an optional property `onMount`. `onMount` is a function which takes a function `setAtom` and returns `onUnmount` function optionally.
+创建的原子配置可以有一个可选的属性`onMount`。`onMount`是一个函数，它接受一个函数`setAtom`并可选地返回`onUnmount`函数。
 
-The `onMount` function is called when the atom is subscribed in the provider in the first time,
-and `onUnmount` is called when it’s no longer subscribed.
-In some cases (like [React strict mode](https://react.dev/reference/react/StrictMode)),
-an atom can be unmounted and then mounted immediately.
+当原子在提供者中第一次被订阅时，调用`onMount`函数，
+当它不再被订阅时，调用`onUnmount`。
+在某些情况下（如[React严格模式](https://react.dev/reference/react/StrictMode)），
+一个原子可以被卸载然后立即装载。
 
 ```js
 const anAtom = atom(1)
 anAtom.onMount = (setAtom) => {
   console.log('atom is mounted in provider')
-  setAtom(c => c + 1) // increment count on mount
-  return () => { ... } // return optional onUnmount function
+  setAtom(c => c + 1) // 在装载时增加计数
+  return () => { ... } // 返回可选的onUnmount函数
 }
 
 const Component = () => {
-  // `onMount` will be called when the component is mounted in the following cases:
+  // 当组件在以下情况下装载时，将调用`onMount`：
   useAtom(anAtom)
   useAtomValue(anAtom)
 
-  // however, in the following cases,
-  //  `onMount` will not be called because the atom is not subscribed:
+  // 然而，在以下情况下，
+  //  `onMount`将不会被调用，因为原子没有被订阅：
   useSetAtom(anAtom)
   useAtomCallback(
     useCallback((get) => get(anAtom), []),
@@ -149,7 +141,7 @@ const Component = () => {
 }
 ```
 
-Calling `setAtom` function will invoke the atom’s `write`. Customizing `write` allows changing the behavior.
+调用`setAtom`函数将调用原子的`write`。自定义`write`允许改变行为。
 
 ```js
 const countAtom = atom(1)
@@ -168,25 +160,25 @@ derivedAtom.onMount = (setAtom) => {
 }
 ```
 
-### Advanced API
+### 高级API {#advanced-api}
 
-Since Jotai v2, the `read` function has the second argument `options`.
+自Jotai v2起，`read`函数有第二个参数`options`。
 
-#### `options.signal`
+#### `options.signal` {#`options.signal`}
 
-It uses [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) so that you can abort async functions.
-Abort is triggered before new calculation (invoking `read` function) is started.
+它使用[AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)，以便你可以中止异步函数。
+在新的计算（调用`read`函数）开始之前触发中止。
 
-How to use it:
+如何使用它：
 
 ```ts
 const readOnlyDerivedAtom = atom(async (get, { signal }) => {
-  // use signal to abort your function
+  // 使用信号来中止你的函数
 })
 
 const writableDerivedAtom = atom(
   async (get, { signal }) => {
-    // use signal to abort your function
+    // 使用信号来中止你的函数
   },
   (get, set, arg) => {
     // ...
@@ -194,20 +186,20 @@ const writableDerivedAtom = atom(
 )
 ```
 
-The `signal` value is [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal).
-You can check `signal.aborted` boolean value, or use `abort` event with `addEventListener`.
+`signal`值是[AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)。
+你可以检查`signal.aborted`布尔值，或者使用`addEventListener`与`abort`事件。
 
-For `fetch` use case, we can simply pass `signal`.
+对于`fetch`用例，我们可以简单地传递`signal`。
 
-See the below example for `fetch` usage.
+参见下面的`fetch`使用示例。
 
-#### `options.setSelf`
+#### `options.setSelf` {#`options.setself`}
 
-It's a special function to invoke the write function of the self atom.
+它是一个特殊的函数，用于调用自身原子的写函数。
 
-⚠️ It's provided primarily for internal usage and third-party library authors. Read the source code carefully to understand the behavior. Check release notes for any breaking/non-breaking changes.
+⚠️ 它主要为内部使用和第三方库作者提供。仔细阅读源代码以理解行为。检查发布说明以获取任何破坏性/非破坏性的更改。
 
-## codesandbox
+## codesandbox {#codesandbox}
 
 <CodeSandbox id="hg665r" />
 

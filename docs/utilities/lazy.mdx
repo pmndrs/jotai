@@ -4,19 +4,19 @@ nav: 3.03
 keywords: lazy,initialize,init,loading
 ---
 
-When defining primitive atoms, their initial value has to be bound at definition time.
-If creating that initial value is computationally expensive, or the value is not accessible during definition,
-it would be best to postpone the atom's initialization until its [first use in the store](#using-multiple-stores).
+当定义原始原子时，它们的初始值必须在定义时绑定。
+如果创建初始值的计算成本很高，或者在定义时无法访问该值，
+最好将原子的初始化推迟到其[在存储中首次使用](#using-multiple-stores)时。
 
 ```jsx
-const imageDataAtom = atom(initializeExpensiveImage()) // 1) has to be computed here
+const imageDataAtom = atom(initializeExpensiveImage()) // 1) 必须在此处计算
 
 function Home() {
   ...
 }
 
 function ImageEditor() {
-  // 2) used only in this route
+  // 2) 仅在此路由中使用
   const [imageData, setImageData] = useAtom(imageDataAtom);
   ...
 }
@@ -31,19 +31,19 @@ function App() {
 }
 ```
 
-## atomWithLazy
+## atomWithLazy {#atomwithlazy}
 
-Ref: https://github.com/pmndrs/jotai/pull/2465
+参考：https://github.com/pmndrs/jotai/pull/2465
 
-We can use `atomWithLazy` to create a primitive atom whose initial value will be computed at [first use in the store](#using-multiple-stores).
-After initialization, it will behave like a regular primitive atom (can be written to).
+我们可以使用 `atomWithLazy` 创建一个原始原子，其初始值将在[在存储中首次使用](#using-multiple-stores)时计算。
+初始化后，它将像常规原始原子一样运行（可以写入）。
 
-### Usage
+### 使用方法 {#usage}
 
 ```jsx
 import { atomWithLazy } from 'jotai/utils'
 
-// passing the initialization function
+// 传递初始化函数
 const imageDataAtom = atomWithLazy(initializeExpensiveImage)
 
 function Home() {
@@ -51,7 +51,7 @@ function Home() {
 }
 
 function ImageEditor() {
-  // only gets initialized if user goes to `/edit`.
+  // 只有当用户访问 `/edit` 时才会初始化。
   const [imageData, setImageData] = useAtom(imageDataAtom);
   ...
 }
@@ -66,9 +66,9 @@ function App() {
 }
 ```
 
-### Using multiple stores
+### 使用多个存储 {#using-multiple-stores}
 
-Since each store is its separate universe, the initial value will be recreated exactly once per store (unless using something like `jotai-scope`, which fractures a store into smaller universes).
+由于每个存储都是其独立的宇宙，初始值将在每个存储中恰好重新创建一次（除非使用像 `jotai-scope` 这样的东西，它将存储分裂成更小的宇宙）。
 
 ```ts
 type RGB = [number, number, number];
@@ -89,8 +89,8 @@ console.log(store.get(colorAtom)) // [0, 36, 128]
 store.set(colorAtom, lift(8))
 console.log(store.get(colorAtom)) // [8, 44, 136]
 
-// recreating store, sometimes done when logging out or resetting the app in some way
+// 重新创建存储，有时在注销或以某种方式重置应用程序时完成
 store = createStore()
 
-console.log(store.get(colorAtom)) // [255, 12, 46] -- a new random color
+console.log(store.get(colorAtom)) // [255, 12, 46] -- 一个新的随机颜色
 ```

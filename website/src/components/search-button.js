@@ -7,7 +7,7 @@ export const SearchButton = (props) => {
 
   return (
     <Button onClick={() => setIsSearchOpen(true)} icon="search" dark {...props}>
-      Search...
+      搜索...
     </Button>
   );
 };

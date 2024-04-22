@@ -1,52 +1,52 @@
 ---
-title: Async
+title: 异步
 description: This doc describes about the behavior with async.
 nav: 7.99
 keywords: async
 published: false
 ---
 
-Using async atoms, you gain access to real-world data while still managing them directly from your atoms and with incredible ease.
+使用异步原子，你可以在直接从你的原子管理它们的同时，轻松地访问真实世界的数据。
 
-We can separate them in two main categories:
+我们可以将它们分为两个主要类别：
 
-- Async read atoms: async request is started instantly as soon as you try to get its value. You could relate to them as "smart getters".
-- Async write atoms: async request is started at a specific moment. You could relate to them as "actions".
+- 异步读取原子：异步请求在你尝试获取其值的瞬间立即开始。你可以将它们视为 "智能获取器"。
+- 异步写入原子：异步请求在特定时刻开始。你可以将它们视为 "动作"。
 
-## Async read atom
+## 异步读取原子 {#async-read-atom}
 
-The `read` function of an atom can return a promise.
+原子的 `read` 函数可以返回一个 promise。
 
 ```js
 const countAtom = atom(1)
 const asyncAtom = atom(async (get) => get(countAtom) * 2)
 ```
 
-Jotai is inherently leveraging `Suspense` to handle asynchronous flows.
+Jotai 本质上利用 `Suspense` 来处理异步流。
 
 ```jsx
 const ComponentUsingAsyncAtoms = () => {
   const [num] = useAtom(asyncAtom)
-  // here `num` is always `number` even though asyncAtom returns a Promise
+  // 这里 `num` 总是 `number`，即使 asyncAtom 返回一个 Promise
 }
 const App = () => {
   return (
-    <Suspense fallback={/* What to show while suspended */}>
+    <Suspense fallback={/* 挂起时显示的内容 */}>
       <ComponentUsingAsyncAtoms />
     </Suspense>
   )
 }
 ```
 
-Alternatively, you could avoid the inherent suspending that Jotai does for you, by wrapping your atoms with the [`loadable` API](../utilities/async.mdx).
+另外，你可以通过使用 [`loadable` API](../utilities/async.mdx) 包装你的原子，来避免 Jotai 为你做的内在挂起。
 
-If another atom uses an async atom, it will return a promise. So, we need to make the atom also async.
+如果另一个原子使用了异步原子，它将返回一个 promise。所以，我们需要使原子也变为异步。
 
 ```js
 const anotherAtom = atom(async (get) => (await get(asyncAtom)) / 2)
 ```
 
-This also applies to an atom with write function.
+这也适用于带有写入函数的原子。
 
 ```js
 const asyncAtom = atom(async (get) => ...)
@@ -56,14 +56,14 @@ const writeAtom = atom(null, async (get, set, payload) => {
 })
 ```
 
-## Async write atom
+## 异步写入原子 {#async-write-atom}
 
-Async write atoms are another kind of async atom. When the `write` function of atom returns a promise.
+异步写入原子是另一种异步原子。当原子的 `write` 函数返回一个 promise 时。
 
 ```js
 const countAtom = atom(1)
 const asyncIncrementAtom = atom(null, async (get, set) => {
-  // await something
+  // 等待某事
   set(countAtom, get(countAtom) + 1)
 })
 
@@ -76,9 +76,9 @@ const Component = () => {
 }
 ```
 
-## Async sometimes
+## 有时异步 {#async-sometimes}
 
-An interesting pattern that can be achieved with Jotai is switching from async to sync to trigger suspending when wanted.
+一个可以用 Jotai 实现的有趣模式是在需要触发挂起时从异步切换到同步。
 
 ```js
 const request = async () => fetch('https://...').then((res) => res.json())
@@ -86,46 +86,46 @@ const baseAtom = atom(0)
 const Component = () => {
   const [value, setValue] = useAtom(baseAtom)
   const handleClick = () => {
-    setValue(request()) // Will suspend until request resolves
+    setValue(request()) // 将挂起，直到请求解析
   }
   // ...
 }
 ```
 
-### Usage in TypeScript
+### 在 TypeScript 中的使用 {#usage-in-typescript}
 
-In TypeScript `atom(0)` is inferred as `PrimitiveAtom<number>`. It cannot accept `Promise<number>` as a value so preceding code would not typecheck. To accommodate for that you need to type your atom explicitly and add `Promise<number>` as accepted value.
+在 TypeScript 中 `atom(0)` 被推断为 `PrimitiveAtom<number>`。它不能接受 `Promise<number>` 作为值，所以前面的代码将无法进行类型检查。为了适应这个，你需要显式地为你的原子进行类型注解，并添加 `Promise<number>` 作为接受的值。
 
 ```ts
-const baseAtom = atom<number | Promise<number>>(0) // Will accept sync and async values
+const baseAtom = atom<number | Promise<number>>(0) // 将接受同步和异步值
 ```
 
-## Async forever
+## 永远异步 {#async-forever}
 
-Sometimes you may want to suspend until an unpredetermined moment (or never).
+有时你可能希望挂起，直到一个不确定的时刻（或永不）。
 
 ```js
-const baseAtom = atom(new Promise(() => {})) // Will be suspend until set otherwise
+const baseAtom = atom(new Promise(() => {})) // 将挂起，直到设置为其他值
 ```
 
-## Suspense
+## Suspense {#suspense}
 
-Async support is first class in Jotai. It fully leverages React Suspense at its core.
+在 Jotai 中，异步支持是一流的。它在核心上完全利用了 React Suspense。
 
-> Technically, Suspense usage other than React.lazy is still unsupported / undocumented in React 17. If this is blocking, so you can still use the [`loadable` API](../utilities/async.mdx) to avoid suspending
+> 技术上，除了 React.lazy 之外的 Suspense 使用在 React 17 中仍然不受支持/未记录。如果这是阻碍，那么你仍然可以使用 [`loadable` API](../utilities/async.mdx) 来避免挂起
 
-To use async atoms, you need to wrap your component tree with `<Suspense>`.
+要使用异步原子，你需要用 `<Suspense>` 包裹你的组件树。
 
-> If you have a `<Provider>`, place **at least one** `<Suspense>` inside said `<Provider>`; otherwise, it may cause an endless loop while rendering the components.
+> 如果你有一个 `<Provider>`，请在该 `<Provider>` 内放置**至少一个** `<Suspense>`；否则，它可能会在渲染组件时造成无尽的循环。
 
 ```jsx
 const App = () => (
   <Provider>
-    <Suspense fallback="Loading...">
+    <Suspense fallback="加载中...">
       <Layout />
     </Suspense>
   </Provider>
 )
 ```
 
-Having more `<Suspense>`s in the component tree is also possible and must be considered to profit from Jotai inherent handling at best.
+在组件树中有更多的 `<Suspense>` 也是可能的，并且必须考虑以最大程度地利用 Jotai 的内在处理。

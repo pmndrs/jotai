@@ -185,5 +185,9 @@
       "optional": true
     }
   },
-  "packageManager": "yarn@1.22.1"
+  "packageManager": "yarn@1.22.1",
+  "dependencies": {
+    "gh-pages": "^6.1.1",
+    "glob": "^10.3.12"
+  }
 }

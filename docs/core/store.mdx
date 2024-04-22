@@ -5,13 +5,13 @@ nav: 2.03
 keywords: store,createstore,getdefaultstore,defaultstore
 ---
 
-## createStore
+## createStore {#createstore}
 
-This function is to create a new empty store.
-The store can be used to pass in `Provider`.
+这个函数用于创建一个新的空存储。
+该存储可以用于传入 `Provider`。
 
-The store has three methods: `get` for getting atom values,
-`set` for setting atom values, and `sub` for subscribing to atom changes.
+存储有三个方法：`get` 用于获取原子值，
+`set` 用于设置原子值，以及 `sub` 用于订阅原子值的变化。
 
 ```jsx
 const myStore = createStore()
@@ -21,7 +21,7 @@ myStore.set(countAtom, 1)
 const unsub = myStore.sub(countAtom, () => {
   console.log('countAtom value is changed to', myStore.get(countAtom))
 })
-// unsub() to unsubscribe
+// 使用 unsub() 来取消订阅
 
 const Root = () => (
   <Provider store={myStore}>
@@ -30,9 +30,9 @@ const Root = () => (
 )
 ```
 
-## getDefaultStore
+## getDefaultStore {#getdefaultstore}
 
-This function returns a default store that is used in provider-less mode.
+这个函数返回一个默认的存储，它在无提供者模式下使用。
 
 ```js
 const defaultStore = getDefaultStore()

@@ -53,7 +53,7 @@ const Page = () => {
               </button>
             </div>
             <div className="text-sm leading-relaxed lg:text-lg">
-              This toggle will be persisted between user sessions via localStorage.
+              此切换将通过 localStorage 在用户会话之间持久化。
             </div>
           </div>
         </ClientOnly>

@@ -1,20 +1,19 @@
 ---
-title: Testing
+title: 测试
 description: How to test your code using Jotai
 nav: 7.09
 keywords: test,testing
 ---
 
-We echo the [guiding principles of Testing library](https://testing-library.com/docs/guiding-principles/):
+我们回应了[测试库的指导原则](https://testing-library.com/docs/guiding-principles/)：
 
-- "The more your tests resemble the way your software is used, the more confidence they can give you."
+- "你的测试越像你的软件被使用的方式，它们就能给你更多的信心。"
 
-We encourage you to write tests, like the user would interact with your atoms and components,
-therefore treating Jotai as an implementation detail.
+我们鼓励你像用户会与你的原子和组件交互那样编写测试，因此将Jotai视为一个实现细节。
 
-Here's an example using [React testing library](https://github.com/testing-library/react-testing-library):
+这里有一个使用[React测试库](https://github.com/testing-library/react-testing-library)的例子：
 
-`Counter.tsx`:
+`Counter.tsx`：
 
 ```jsx
 import { atom, useAtom } from 'jotai'
@@ -32,7 +31,7 @@ export function Counter() {
 }
 ```
 
-`Counter.test.ts`:
+`Counter.test.ts`：
 
 ```jsx
 import React from 'react'
@@ -52,11 +51,9 @@ test('should increment counter', () => {
 })
 ```
 
-### Injected Values
+### 注入值 {#injected-values}
 
-You may want to inject arbitrary values to your atom before starting some tests.
-Maybe the counter should be limited to 100. Let's see how to test that it doesn't increase after reaching 100.
-In order to do that, simply use a [Provider](../core/provider.mdx), and export your atom to be filled-in.
+你可能想在开始一些测试之前向你的原子注入任意值。也许计数器应该限制到100。让我们看看如何测试它在达到100后不会增加。为了做到这一点，只需使用一个[Provider](../core/provider.mdx)，并导出你的原子以便填充。
 
 ```tsx
 import React from 'react'
@@ -94,14 +91,13 @@ test('should not increment on max (100)', () => {
 })
 ```
 
-### Custom hooks
+### 自定义钩子 {#custom-hooks}
 
-If you have complex atoms, sometimes you want to test them in isolation.
+如果你有复杂的原子，有时你可能想要单独测试它们。
 
-For that, you can use [React Hooks Testing Library](https://github.com/testing-library/react-hooks-testing-library).
-Here's an example below:
+为此，你可以使用[React Hooks测试库](https://github.com/testing-library/react-hooks-testing-library)。下面是一个例子：
 
-`countAtom.ts`:
+`countAtom.ts`：
 
 ```ts
 import { useAtom } from 'jotai'
@@ -120,7 +116,7 @@ const reducer = (state: number, action?: 'INCREASE' | 'DECREASE') => {
 export const countAtom = atomWithReducer(0, reducer)
 ```
 
-`countAtom.test.ts`:
+`countAtom.test.ts`：
 
 ```ts
 import { renderHook, act } from '@testing-library/react-hooks'
@@ -138,9 +134,9 @@ test('should increment counter', () => {
 })
 ```
 
-### Example with React-Native
+### 使用React-Native的例子 {#example-with-react-native}
 
-Of course, you can test React-Native components too the same way, with or without `Provider`.
+当然，你也可以用相同的方式测试React-Native组件，无论是否使用`Provider`。
 
 ```tsx
 import React from 'react'
@@ -148,13 +144,13 @@ import { render, fireEvent } from '@testing-library/react-native'
 import { Counter } from './counter'
 
 test('should increment counter', () => {
-  // Arrange
+  // 安排
   const { getByText } = render(<Counter />)
   const counter = getByText('0')
   const incrementButton = getByText('one up')
-  // Act
+  // 执行
   fireEvent.press(incrementButton)
-  // Assert
+  // 断言
   expect(counter.props.children.toString()).toEqual('1')
 })
 ```

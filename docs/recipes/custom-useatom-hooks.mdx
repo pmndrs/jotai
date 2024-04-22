@@ -4,31 +4,32 @@ nav: 8.02
 keywords: custom,hook
 ---
 
-This page shows the ways of creating different utility functions. Utility functions save your time on coding, and you can preserve your base atom for other usage.
+这个页面展示了创建不同实用函数的方法。实用函数可以节省你的编码时间，并且你可以为其他用途保留你的基础原子。
 
-### utils
+### 实用工具 {#utils}
 
-#### useSelectAtom
+#### useSelectAtom {#useselectatom}
 
 ```js
 import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
-/* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
+/* 如果在这里创建了一个原子，请使用 `useMemo(() => atom(initValue), [initValue])` 替代。 */
 export function useSelectAtom(anAtom, keyFn) {
   return useAtomValue(selectAtom(anAtom, keyFn))
 }
 
-// how to use it
+// 如何使用它
 useSelectAtom(
   useMemo(() => atom(initValue), [initValue]),
   useCallback((state) => state.prop, []),
 )
+
 ```
 
-Please note that in this case `keyFn` must be stable, either define outside render or wrap with `useCallback`.
+请注意，在这种情况下，`keyFn` 必须是稳定的，要么在渲染外部定义，要么用 `useCallback` 包装。
 
-#### useFreezeAtom
+#### useFreezeAtom {#usefreezeatom}
 
 ```js
 import { useAtom } from 'jotai'
@@ -39,7 +40,7 @@ export function useFreezeAtom(anAtom) {
 }
 ```
 
-#### useSplitAtom
+#### useSplitAtom {#usesplitatom}
 
 ```js
 import { useAtom } from 'jotai'
@@ -50,28 +51,28 @@ export function useSplitAtom(anAtom) {
 }
 ```
 
-### extensions
+### extensions {#extensions}
 
-#### useFocusAtom
+#### useFocusAtom {#usefocusatom}
 
 ```js
 import { useAtom } from 'jotai'
 import { focusAtom } from 'jotai-optics'
 
-/* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
+/* 如果在这里创建了一个原子，请使用 `useMemo(() => atom(initValue), [initValue])` 替代。 */
 export function useFocusAtom(anAtom, keyFn) {
     return useAtom(focusAtom(anAtom, keyFn))
 }
 
-// how to use it
+// 如何使用它
 useFocusAtom(anAtom) {
     useMemo(() => atom(initValue), [initValue]),
     useCallback((optic) => optic.prop('key'), [])
 }
 ```
 
-#### CodeSandbox
+#### CodeSandbox {#codesandbox}
 
 <CodeSandbox id="y5wef8" />
 
-Please note that in this case `keyFn` must be stable, either define outside render or wrap with `useCallback`.
+请注意，在这种情况下，`keyFn` 必须是稳定的，要么在渲染外部定义，要么用 `useCallback` 包装。

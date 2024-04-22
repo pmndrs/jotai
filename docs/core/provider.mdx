@@ -5,20 +5,19 @@ nav: 2.04
 keywords: provider,usestore,ssr
 ---
 
-## Provider
+## Provider {#provider}
 
-The `Provider` component is to provide state for a component sub tree.
-Multiple Providers can be used for multiple subtrees, and they can even be nested.
-This works just like React Context.
+`Provider`组件的作用是为组件子树提供状态。
+可以使用多个Provider为多个子树提供状态，它们甚至可以嵌套。
+这就像React Context一样。
 
-If an atom is used in a tree without a Provider,
-it will use the default state. This is so-called provider-less mode.
+如果在没有Provider的树中使用了一个原子，它将使用默认状态。这就是所谓的无Provider模式。
 
-Providers are useful for three reasons:
+Provider有三个用途：
 
-1. To provide a different state for each sub tree.
-2. To accept initial values of atoms.
-3. To clear all atoms by remounting.
+1. 为每个子树提供不同的状态。
+2. 接受原子的初始值。
+3. 通过重新挂载来清除所有原子。
 
 ```jsx
 const SubTree = () => (
@@ -28,7 +27,7 @@ const SubTree = () => (
 )
 ```
 
-### Signatures
+### 签名 {#signatures}
 
 ```ts
 const Provider: React.FC<{
@@ -36,7 +35,7 @@ const Provider: React.FC<{
 }>
 ```
 
-Atom configs don't hold values. Atom values reside in separate stores. A Provider is a component that contains a store and provides atom values under the component tree. A Provider works like React context provider. If you don't use a Provider, it works as provider-less mode with a default store. A Provider will be necessary if we need to hold different atom values for different component trees. Provider can take an optional prop `store`.
+原子配置不包含值。原子值存在于独立的存储中。Provider是一个包含存储并在组件树下提供原子值的组件。Provider的工作方式类似于React context provider。如果你不使用Provider，它将以默认存储的无Provider模式工作。如果我们需要为不同的组件树保存不同的原子值，那么Provider将是必需的。Provider可以接受一个可选的prop `store`。
 
 ```jsx
 const Root = () => (
@@ -46,11 +45,11 @@ const Root = () => (
 )
 ```
 
-### `store` prop
+### `store` 属性 {#`store`-属性}
 
-A Provider accepts an optional prop `store` that you can use for the Provider subtree.
+Provider接受一个可选的`store`属性，你可以在Provider子树中使用它。
 
-#### Example
+#### 示例 {#示例}
 
 ```jsx
 const myStore = createStore()
@@ -62,9 +61,9 @@ const Root = () => (
 )
 ```
 
-## useStore
+## useStore {#usestore}
 
-This hook returns a store within the component tree.
+这个钩子在组件树中返回一个存储。
 
 ```jsx
 const Component = () => {

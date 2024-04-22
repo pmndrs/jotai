@@ -5,19 +5,19 @@ nav: 4.03
 keywords: effect, atom effect, side effect, side-effect, sideeffect
 ---
 
-[jotai-effect](https://github.com/jotaijs/jotai-effect) is a utility package for reactive side effects.
+[jotai-effect](https://github.com/jotaijs/jotai-effect) 是一个用于响应式副作用的实用程序包。
 
-## install
+## 安装 {#install}
 
 ```
 npm i jotai-effect
 ```
 
-## atomEffect
+## atomEffect {#atomeffect}
 
-`atomEffect` is a utility function for declaring side effects and synchronizing atoms in Jotai. It is useful for observing and reacting to state changes.
+`atomEffect` 是一个用于声明副作用和同步 Jotai 原子的实用函数。它对于观察和响应状态变化非常有用。
 
-## Parameters
+## 参数 {#parameters}
 
 ```ts
 type CleanupFn = () => void
@@ -30,23 +30,23 @@ type EffectFn = (
 declare function atomEffect(effectFn: EffectFn): Atom<void>
 ```
 
-**effectFn** (required): A function for listening to state updates with `get` and writing state updates with `set`. The `effectFn` is useful for creating side effects that interact with other Jotai atoms. You can cleanup these side effects by returning a cleanup function.
+**effectFn** (必需): 一个用于通过 `get` 监听状态更新和通过 `set` 写入状态更新的函数。`effectFn` 对于创建与其他 Jotai 原子交互的副作用非常有用。您可以通过返回一个清理函数来清理这些副作用。
 
-## Usage
+## 使用 {#usage}
 
-Subscribe to Atom Changes
+订阅原子变化
 
 ```js
 import { atomEffect } from 'jotai-effect'
 
 const loggingEffect = atomEffect((get, set) => {
-  // runs on mount or whenever someAtom changes
+  // 在挂载或某个原子发生变化时运行
   const value = get(someAtom)
   loggingService.setValue(value)
 })
 ```
 
-Setup and Teardown Side Effects
+设置和拆解副作用
 
 ```js
 import { atomEffect } from 'jotai-effect'
@@ -59,18 +59,18 @@ const subscriptionEffect = atomEffect((get, set) => {
 })
 ```
 
-## Mounting with Atoms or Hooks
+## 使用原子或钩子挂载 {#mounting-with-atoms-or-hooks}
 
-After defining an effect using `atomEffect`, it can be integrated within another atom's read function or passed to Jotai hooks.
+在使用 `atomEffect` 定义了一个效果后，它可以被集成到另一个原子的读取函数中，或者传递给 Jotai 钩子。
 
 ```js
 const anAtom = atom((get) => {
-  // mounts the atomEffect when anAtom mounts
+  // 当 anAtom 挂载时，挂载 atomEffect
   get(loggingEffect)
   // ...
 })
 
-// mounts the atomEffect when the component mounts
+// 当组件挂载时，挂载 atomEffect
 function MyComponent() {
   useAtom(subscriptionEffect)
   // ...
@@ -79,14 +79,14 @@ function MyComponent() {
 
 <CodeSandbox id="tg9xsf" />
 
-## The `atomEffect` behavior
+## `atomEffect` 的行为 {#the-`atomeffect`-behavior}
 
-- **Cleanup Function:**
-  The cleanup function is invoked on unmount or before re-evaluation.
+- **清理函数:**
+  在卸载或重新评估之前，会调用清理函数。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   atomEffect((get, set) => {
@@ -97,35 +97,35 @@ function MyComponent() {
 
   </details>
 
-- **Resistant To Infinite Loops:**
-  `atomEffect` does not rerun when it changes a value with `set` that it is watching.
+- **抵抗无限循环:**
+  当 `atomEffect` 通过 `set` 改变它正在观察的值时，不会重新运行。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   const countAtom = atom(0)
   atomEffect((get, set) => {
-    // this will not infinite loop
-    get(countAtom) // after mount, count will be 1
+    // 这不会无限循环
+    get(countAtom) // 在挂载后，计数将为 1
     set(countAtom, increment)
   })
   ```
 
   </details>
 
-- **Supports Recursion:**
-  Recursion is supported with `set.recurse` for both sync and async use cases, but is not supported in the cleanup function.
+- **支持递归:**
+  对于同步和异步的使用场景，都支持使用 `set.recurse` 进行递归，但在清理函数中不支持。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   const countAtom = atom(0)
   atomEffect((get, set) => {
-    // increments count once per second
+    // 每秒增加一次计数
     const count = get(countAtom)
     const timeoutId = setTimeout(() => {
       set.recurse(countAtom, increment)
@@ -136,29 +136,29 @@ function MyComponent() {
 
   </details>
 
-- **Supports Peek:**
-  Read atom data without subscribing to changes with `get.peek`.
+- **支持 Peek:**
+  使用 `get.peek` 读取原子数据，而不订阅更改。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   const countAtom = atom(0)
   atomEffect((get, set) => {
-    // will not rerun when countAtom changes
+    // 当 countAtom 发生变化时，不会重新运行
     const count = get.peek(countAtom)
   })
   ```
 
   </details>
 
-- **Executes In The Next Microtask:**
-  `effectFn` runs in the next available microtask, after all Jotai synchronous read evaluations have completed.
+- **在下一个微任务中执行:**
+  `effectFn` 在下一个可用的微任务中运行，所有 Jotai 的同步读取评估完成后。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   const countAtom = atom(0)
@@ -168,7 +168,7 @@ function MyComponent() {
   })
   const setCountAndReadLog = atom(null, async (get, set) => {
     get(logAtom) // [0]
-    set(countAtom, increment) // effect runs in next microtask
+    set(countAtom, increment) // 效果在下一个微任务中运行
     get(logAtom) // [0]
     await Promise.resolve().then()
     get(logAtom) // [0, 1]
@@ -178,8 +178,8 @@ function MyComponent() {
 
   </details>
 
-- **Batches Synchronous Updates (Atomic Transactions):**
-  Multiple synchronous updates to `atomEffect` atom dependencies are batched. The effect is run with the final values as a single atomic transaction.
+- **批量同步更新 (原子事务):**
+  对 `atomEffect` 原子依赖的多个同步更新被批量处理。效果是以最终值作为单个原子事务运行。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -202,12 +202,12 @@ function MyComponent() {
 
   </details>
 
-- **Conditionally Running atomEffect:**
-  `atomEffect` is active only when it is mounted within the application. This prevents unnecessary computations and side effects when they are not needed. You can disable the effect by unmounting it.
+- **有条件地运行 atomEffect：**
+  `atomEffect` 只在其在应用程序中被挂载时才处于活动状态。这可以防止在不需要时进行不必要的计算和副作用。你可以通过卸载它来禁用效果。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   atom((get) => {
@@ -219,12 +219,12 @@ function MyComponent() {
 
   </details>
 
-- **Idempotent:**
-  `atomEffect` runs once when state changes regardless of how many times it is mounted.
+- **幂等性：**
+  `atomEffect` 在状态改变时只运行一次，无论它被挂载了多少次。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   let i = 0
@@ -244,20 +244,20 @@ function MyComponent() {
 
   </details>
 
-### Dependency Management
+### 依赖管理 {#dependency-management}
 
-Aside from mount events, the effect runs when any of its dependencies change value.
+除了挂载事件外，当任何依赖项的值改变时，效果也会运行。
 
-- **Sync:**
-  All atoms accessed with `get` during the synchronous evaluation of the effect are added to the atom's internal dependency map.
+- **同步：**
+  在效果的同步评估期间，使用 `get` 访问的所有原子都会被添加到原子的内部依赖图中。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   atomEffect((get, set) => {
-    // updates whenever `anAtom` changes value but not when `anotherAtom` changes value
+    // 当 `anAtom` 的值改变时更新，但当 `anotherAtom` 的值改变时不更新
     get(anAtom)
     setTimeout(() => {
       get(anotherAtom)
@@ -267,32 +267,32 @@ Aside from mount events, the effect runs when any of its dependencies change val
 
   </details>
 
-- **Async:**
-  For async effects, you should use an abort controller to cancel pending fetch requests and promises.
+- **异步：**
+  对于异步效果，你应该使用一个中止控制器来取消待处理的获取请求和承诺。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   atomEffect((get, set) => {
-    const count = get(countAtom) // countAtom is an atom dependency
+    const count = get(countAtom) // countAtom 是一个原子依赖
     const abortController = new AbortController()
     ;(async () => {
       try {
         await delay(1000)
         abortController.signal.throwIfAborted()
-        get(dataAtom) // dataAtom is not an atom dependency
+        get(dataAtom) // dataAtom 不是一个原子依赖
       } catch (e) {
         if (e instanceof AbortError) {
-          // async cleanup logic here
+          // 这里是异步清理逻辑
         } else {
           console.error(e)
         }
       }
     })()
     return () => {
-      // abort when countAtom changes
+      // 当 countAtom 改变时中止
       abortController.abort(new AbortError())
     }
   })
@@ -300,17 +300,17 @@ Aside from mount events, the effect runs when any of its dependencies change val
 
   </details>
 
-- **Cleanup:**
-  Accessing atoms with `get` in the cleanup function does not add them to the atom's internal dependency map.
+- **清理：**
+  在清理函数中使用 `get` 访问原子不会将它们添加到原子的内部依赖图中。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   atomEffect((get, set) => {
-    // runs once on mount
-    // does not update when `idAtom` changes
+    // 在挂载时运行一次
+    // 当 `idAtom` 改变时不更新
     const unsubscribe = subscribe((valueAtom) => {
       const value = get(valueAtom)
       // ...
@@ -324,19 +324,19 @@ Aside from mount events, the effect runs when any of its dependencies change val
 
   </details>
 
-- **Recalculation of Dependency Map:**
-  The dependency map is recalculated on every run. If an atom was not watched during the current run, it will not be in the current run's dependency map. Only actively watched atoms are considered dependencies.
+- **依赖图的重新计算：**
+  每次运行时都会重新计算依赖图。如果在当前运行期间没有监视某个原子，那么它将不会在当前运行的依赖图中。只有被积极监视的原子才被视为依赖项。
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
+    <summary>示例</summary>
 
   ```js
   const isEnabledAtom = atom(true)
 
   atomEffect((get, set) => {
-    // if `isEnabledAtom` is true, runs when `isEnabledAtom` or `anAtom` changes value
-    // otherwise runs when `isEnabledAtom` or `anotherAtom` changes value
+    // 如果 `isEnabledAtom` 为真，当 `isEnabledAtom` 或 `anAtom` 的值改变时运行
+    // 否则，当 `isEnabledAtom` 或 `anotherAtom` 的值改变时运行
     if (get(isEnabledAtom)) {
       const aValue = get(anAtom)
     } else {
@@ -347,32 +347,32 @@ Aside from mount events, the effect runs when any of its dependencies change val
 
   </details>
 
-### Comparison with useEffect
+### 与 useEffect 的比较 {#comparison-with-useeffect}
 
-#### Component Side Effects
+#### 组件副作用 {#component-side-effects}
 
-[useEffect](https://react.dev/reference/react/useEffect) is a React Hook that lets you synchronize a component with an external system.
+[useEffect](https://react.dev/reference/react/useEffect) 是一个 React Hook，它让你可以将组件与外部系统同步。
 
-Hooks are functions that let you “hook into” React state and lifecycle features from function components.
-They are a way to reuse, but not centralize, stateful logic.
-Each call to a hook has a completely isolated state.
-This isolation can be referred to as _component-scoped_.
-For synchronizing component props and state with a Jotai atom, you should use the useEffect hook.
+Hooks 是一种函数，让你可以从函数组件中“钩入” React 的状态和生命周期特性。
+它们是一种复用，但不集中，有状态的逻辑。
+每次调用 hook 都有一个完全独立的状态。
+这种隔离可以被称为 _组件范围的_。
+对于将组件 props 和状态与 Jotai 原子同步，你应该使用 useEffect hook。
 
-#### Global Side Effects
+#### 全局副作用 {#global-side-effects}
 
-For setting up global side-effects, deciding between useEffect and atomEffect comes down to developer preference.
-Whether you prefer to build this logic directly into the component or build this logic into the Jotai state model depends on what mental model you adopt.
+对于设置全局副作用，选择 useEffect 和 atomEffect 取决于开发者的偏好。
+你是更喜欢直接在组件中构建这个逻辑，还是在 Jotai 状态模型中构建这个逻辑，取决于你采用的思维模型。
 
-atomEffects are more appropriate for modeling behavior in atoms.
-They are scoped to the store context rather than the component.
-This guarantees that a single effect will be used regardless of how many calls they have.
+atomEffects 更适合在原子中建模行为。
+它们的范围是存储上下文，而不是组件。
+这保证了无论有多少次调用，都只会使用一个效果。
 
-The same guarantee can be achieved with the useEffect hook if you ensure that the useEffect is idempotent.
+如果你确保 useEffect 是幂等的，那么也可以通过 useEffect hook 实现同样的保证。
 
-atomEffects are distinguished from useEffect in a few other ways. They can directly react to atom state changes, are resistant to infinite loops, and can be mounted conditionally.
+atomEffects 与 useEffect 的区别还在于其他几个方面。它们可以直接对原子状态的改变做出反应，对无限循环有抵抗力，并且可以有条件地挂载。
 
-#### It's up to you
+#### 由你决定 {#it's-up-to-you}
 
-Both useEffect and atomEffect have their own advantages and applications. Your project’s specific needs and your comfort level should guide your selection.
-Always lean towards an approach that gives you a smoother, more intuitive development experience. Happy coding!
+useEffect 和 atomEffect 都有自己的优点和应用。你的项目的具体需求和你的舒适程度应该指导你的选择。
+总是倾向于那种给你更顺畅、更直观的开发体验的方法。祝你编程愉快！

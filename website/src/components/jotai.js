@@ -27,12 +27,12 @@ export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
         )}
       >
         <div className={cx(!small ? 'text-lg 2xl:text-xl' : 'text-xs', 'whitespace-nowrap')}>
-          状態
+          状态
         </div>
         <div
           className={cx(!small ? 'text-sm leading-snug 2xl:text-base' : 'text-xs leading-tight')}
         >
-          Primitive and flexible state management for React
+          React 原始而灵活的状态管理
         </div>
       </div>
     </div>
