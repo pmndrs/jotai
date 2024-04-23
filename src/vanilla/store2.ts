@@ -158,7 +158,7 @@ const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as any)?.then === 'function'
 
 const getPendingContinuablePromise = (atomState: AtomState) => {
-  const value: unknown = (atomState as any).s?.v
+  const value: unknown = atomState.v
   if (isContinuablePromise(value) && value.status === PENDING) {
     return value
   }
@@ -188,24 +188,32 @@ type Mounted = {
 type AtomState<Value = AnyValue> = {
   /**
    * Map of atoms that the atom depends on.
-   * The map value is value/error of the dependency.
+   * The map value is the epoch number of the dependency.
    */
-  readonly d: Map<AnyAtom, { readonly v: AnyValue } | { readonly e: AnyError }>
+  readonly d: Map<AnyAtom, number>
   /** Set of atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
+  /** The epoch number of the atom. */
+  n: number
   /** Object to store mounted state of the atom. */
   m?: Mounted // only available if the atom is mounted
-  /** Atom value, atom error or empty. */
-  s?: { readonly v: Value } | { readonly e: AnyError }
+  /** Atom value */
+  v?: Value
+  /** Atom error */
+  e?: AnyError
 }
 
-type WithS<T extends AtomState> = T & { s: NonNullable<T['s']> }
+const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
+  'v' in atomState || 'e' in atomState
 
-const returnAtomValue = <Value>(atomState: WithS<AtomState<Value>>): Value => {
-  if ('e' in atomState.s) {
-    throw atomState.s.e
+const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
+  if ('e' in atomState) {
+    throw atomState.e
   }
-  return atomState.s.v
+  if (import.meta.env?.MODE !== 'production' && !('v' in atomState)) {
+    throw new Error('[Bug] atom state is not initialized')
+  }
+  return atomState.v!
 }
 
 const setAtomStateValueOrPromise = (
@@ -214,6 +222,8 @@ const setAtomStateValueOrPromise = (
   abortPromise = () => {},
   completePromise = () => {},
 ) => {
+  const hasPrevValue = 'v' in atomState
+  const prevValue = atomState.v
   const pendingPromise = getPendingContinuablePromise(atomState)
   if (isPromiseLike(valueOrPromise)) {
     if (pendingPromise) {
@@ -226,7 +236,8 @@ const setAtomStateValueOrPromise = (
         abortPromise,
         completePromise,
       )
-      atomState.s = { v: continuablePromise }
+      atomState.v = continuablePromise
+      delete atomState.e
     }
   } else {
     if (pendingPromise) {
@@ -235,7 +246,11 @@ const setAtomStateValueOrPromise = (
         abortPromise,
       )
     }
-    atomState.s = { v: valueOrPromise }
+    atomState.v = valueOrPromise
+    delete atomState.e
+  }
+  if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
+    ++atomState.n
   }
 }
 
@@ -267,7 +282,7 @@ export const createStore = (): Store => {
   const getAtomState = <Value>(atom: Atom<Value>) => {
     let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
     if (!atomState) {
-      atomState = { d: new Map(), t: new Set() }
+      atomState = { d: new Map(), t: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
     }
     return atomState
@@ -284,14 +299,14 @@ export const createStore = (): Store => {
   const addDependency = <Value>(
     atom: Atom<Value>,
     a: AnyAtom,
-    aState: WithS<AtomState>,
+    aState: AtomState,
     isSync: boolean,
   ) => {
     if (import.meta.env?.MODE !== 'production' && a === atom) {
       throw new Error('[Bug] atom cannot depend on itself')
     }
     const atomState = getAtomState(atom)
-    atomState.d.set(a, aState.s)
+    atomState.d.set(a, aState.n)
     aState.t.add(atom)
     if (!isSync && atomState.m) {
       const pendingPair = createPendingPair()
@@ -303,26 +318,26 @@ export const createStore = (): Store => {
   const readAtomState = <Value>(
     atom: Atom<Value>,
     force?: true,
-  ): WithS<AtomState<Value>> => {
+  ): AtomState<Value> => {
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
-    if (!force && 's' in atomState) {
+    if (!force && isAtomStateInitialized(atomState)) {
       // If the atom is mounted, we can use the cache.
       // because it should have been updated by dependencies.
       if (atomState.m) {
-        return atomState as WithS<typeof atomState>
+        return atomState
       }
       // Otherwise, check if the dependencies have changed.
       // If all dependencies haven't changed, we can use the cache.
       if (
-        Array.from(atomState.d).every(([a, s]) => {
-          // Recursively, read the atom state of the dependency, and
-          const aState = readAtomState(a)
-          // Check if the atom value is unchanged
-          return 'v' in s && 'v' in aState.s && Object.is(s.v, aState.s.v)
-        })
+        Array.from(atomState.d).every(
+          ([a, n]) =>
+            // Recursively, read the atom state of the dependency, and
+            // check if the atom epoch number is unchanged
+            readAtomState(a).n === n,
+        )
       ) {
-        return atomState as WithS<typeof atomState>
+        return atomState
       }
     }
     // Compute a new state for this atom.
@@ -331,7 +346,7 @@ export const createStore = (): Store => {
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
         const aState = getAtomState(a)
-        if (!aState.s) {
+        if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
             setAtomStateValueOrPromise(aState, a.init)
           } else {
@@ -339,7 +354,7 @@ export const createStore = (): Store => {
             throw new Error('no atom init')
           }
         }
-        return returnAtomValue(aState as WithS<typeof aState>)
+        return returnAtomValue(aState)
       }
       // a !== atom
       const aState = readAtomState(a)
@@ -389,10 +404,12 @@ export const createStore = (): Store => {
           }
         },
       )
-      return atomState as WithS<typeof atomState>
+      return atomState
     } catch (error) {
-      atomState.s = { e: error }
-      return atomState as WithS<typeof atomState>
+      delete atomState.v
+      atomState.e = error
+      ++atomState.n
+      return atomState
     } finally {
       isSync = false
     }
@@ -435,7 +452,8 @@ export const createStore = (): Store => {
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
       const a = topsortedAtoms[i]!
       const aState = getAtomState(a)
-      const prev = aState.s
+      const hasPrevValue = 'v' in aState
+      const prevValue = aState.v
       let hasChangedDeps = false
       for (const dep of aState.d.keys()) {
         if (dep !== a && changedAtoms.has(dep)) {
@@ -448,12 +466,7 @@ export const createStore = (): Store => {
         if (aState.m || getPendingContinuablePromise(aState)) {
           readAtomState(a, true)
           mountDependencies(pendingPair, aState)
-          if (
-            !prev ||
-            !('v' in prev) ||
-            !('v' in aState.s!) ||
-            !Object.is(prev.v, aState.s.v)
-          ) {
+          if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
             addPending(pendingPair, [a, aState])
             changedAtoms.add(a)
           }
@@ -479,17 +492,12 @@ export const createStore = (): Store => {
           throw new Error('atom not writable')
         }
         const aState = getAtomState(a)
-        const prev = aState.s
+        const hasPrevValue = 'v' in aState
+        const prevValue = aState.v
         const v = args[0] as V
         setAtomStateValueOrPromise(aState, v)
         mountDependencies(pendingPair, aState)
-        const curr = (aState as WithS<typeof aState>).s
-        if (
-          !prev ||
-          !('v' in prev) ||
-          !('v' in curr) ||
-          !Object.is(prev.v, curr.v)
-        ) {
+        if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
           addPending(pendingPair, [a, aState])
           recomputeDependents(pendingPair, a)
         }
