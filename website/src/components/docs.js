@@ -14,8 +14,8 @@ export const Docs = ({ className = '', ...rest }) => {
 
   return (
     <div className={cx('my-8 space-y-8', className)} {...rest}>
-      {navLinks.map((section) => (
-        <div key={section.title} className="space-y-2">
+      {navLinks.map((section, i) => (
+        <div key={section.title || i} className="space-y-2">
           {section.title && (
             <div className="relative -left-0.5 flex items-center gap-1">
               <span className="text-base font-bold uppercase tracking-widest text-gray-350 dark:text-white">
