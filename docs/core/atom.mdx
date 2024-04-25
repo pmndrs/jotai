@@ -111,13 +111,13 @@ const derivedAtomWithWriteOnly = atom(null, write)
 
 There are two kinds of atoms: a writable atom and a read-only atom. Primitive atoms are always writable. Derived atoms are writable if the `write` is specified. The `write` of primitive atoms is equivalent to the `setState` of `React.useState`.
 
-### `debugLabel` property
+### `debugLabel`
 
 The created atom config can have an optional property `debugLabel`. The debug label is used to display the atom in debugging. See [Debugging guide](../guides/debugging.mdx) for more information.
 
 Note: While, the debug labels don’t have to be unique, it’s generally recommended to make them distinguishable.
 
-### `onMount` property
+### `onMount`
 
 The created atom config can have an optional property `onMount`. `onMount` is a function which takes a function `setAtom` and returns `onUnmount` function optionally.
 
