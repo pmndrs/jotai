@@ -70,20 +70,17 @@ describe('test memory leaks (with subscribe)', () => {
     expect(await detector2.isLeaking()).toBe(false)
   })
 
-  it.skipIf(!import.meta.env?.USE_STORE2)(
-    'with a long-lived base atom',
-    async () => {
-      const store = createStore()
-      const objAtom = atom({})
-      let derivedAtom: Atom<object> | undefined = atom((get) => ({
-        obj: get(objAtom),
-      }))
-      const detector = new LeakDetector(store.get(derivedAtom))
-      let unsub: (() => void) | undefined = store.sub(objAtom, () => {})
-      unsub()
-      unsub = undefined
-      derivedAtom = undefined
-      expect(await detector.isLeaking()).toBe(false)
-    },
-  )
+  it('with a long-lived base atom', async () => {
+    const store = createStore()
+    const objAtom = atom({})
+    let derivedAtom: Atom<object> | undefined = atom((get) => ({
+      obj: get(objAtom),
+    }))
+    const detector = new LeakDetector(store.get(derivedAtom))
+    let unsub: (() => void) | undefined = store.sub(objAtom, () => {})
+    unsub()
+    unsub = undefined
+    derivedAtom = undefined
+    expect(await detector.isLeaking()).toBe(false)
+  })
 })
