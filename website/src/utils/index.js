@@ -14,9 +14,5 @@ const getTextContent = (children) => {
 };
 
 export const getAnchor = (value) => {
-  if (typeof value === 'string') {
-    return kebabCase(value.toLowerCase().replaceAll("'", ''));
-  } else {
-    return kebabCase(getTextContent(value).toLowerCase().replaceAll("'", ''));
-  }
+  return kebabCase(getTextContent(value).toLowerCase().replaceAll("'", ''));
 };
