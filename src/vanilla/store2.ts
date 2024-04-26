@@ -614,8 +614,10 @@ export const createStore = (): Store => {
       dev4_restore_atoms: (values) => {
         const pendingPair = createPendingPair()
         for (const [atom, value] of values) {
-          setAtomStateValueOrPromise(getAtomState(atom), value)
-          recomputeDependents(pendingPair, atom)
+          if (hasInitialValue(atom)) {
+            setAtomStateValueOrPromise(getAtomState(atom), value)
+            recomputeDependents(pendingPair, atom)
+          }
         }
         flushPending(pendingPair)
       },
