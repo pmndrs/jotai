@@ -15,12 +15,12 @@ atomFamily(initializeAtom, areEqual): (param) => Atom
 ```
 
 This will create a function that takes `param` and returns an atom.
-If it's already created, it will return it from the cache.
-`initializeAtom` is function that can return any kind of atom (`atom()`, `atomWithDefault()`, ...).
-Note that `areEqual` is optional, which tell
+If the atom has already been created, it will be returned from the cache.
+`initializeAtom` is a function that can return any kind of atom (`atom()`, `atomWithDefault()`, ...).
+Note that the `areEqual` argument is optional and compares
 if two params are equal (defaults to `Object.is`).
 
-To reproduce the similar behavior to [Recoil's atomFamily/selectorFamily](https://recoiljs.org/docs/api-reference/utils/atomFamily),
+To reproduce behavior similar to [Recoil's atomFamily/selectorFamily](https://recoiljs.org/docs/api-reference/utils/atomFamily),
 specify a deepEqual function to `areEqual`. For example:
 
 ```js
