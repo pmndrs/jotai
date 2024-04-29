@@ -11,10 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: yarn
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --immutable --check-resolutions
       - name: Test Build # we don't have any other workflows to test build
@@ -37,12 +35,9 @@ jobs:
           - 0.0.0-experimental-4b84f1161-20240318
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: yarn
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-      - run: yarn install --immutable --check-resolutions
       - name: Install legacy testing-library
         if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
         run: yarn add -D @testing-library/react@12.1.4

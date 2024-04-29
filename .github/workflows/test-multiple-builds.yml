@@ -16,10 +16,8 @@ jobs:
         env: [development, production]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: yarn
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --immutable --check-resolutions
       - run: yarn build

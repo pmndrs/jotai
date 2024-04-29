@@ -1,0 +1,37 @@
+name: 'Jotai Node.js Setup'
+description: 'Node.js setup for CI'
+inputs:
+  extra-flags:
+    description: 'Extra flags to pass to the yarn install.'
+    required: false
+    default: '--immutable --inline-builds'
+  package-install:
+    description: 'Run the install step.'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Set yarn global cache path
+      shell: bash
+      id: yarn-cache
+      run: node -e "const p = $(yarn config cacheFolder --json).effective; console.log('yarn_global_cache=' + p)" >> $GITHUB_OUTPUT
+
+    - name: Cache full yarn cache on Linux
+      uses: actions/cache@v4
+      with:
+        path: |
+          node_modules
+          ${{ steps.yarn-cache.outputs.yarn_global_cache }}
+        key: node_modules-cache-full-${{ runner.os }}
+
+    - name: yarn install
+      if: ${{ inputs.package-install == 'true' }}
+      shell: bash
+      run: yarn ${{ inputs.extra-flags }}
