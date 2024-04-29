@@ -25,7 +25,7 @@ If you would like to contribute by fixing an open issue or developing a new feat
 
 ### Core lib
 
-1. Install dependencies by running `yarn`. We use [version 1](https://classic.yarnpkg.com/lang/en/docs/install) of yarn
+1. Enable [Corepack](https://nodejs.org/api/corepack.html) by running `corepack enable`, and install the dependencies by running `yarn install`
 2. Create failing tests for your fix or new feature in the `tests` folder
 3. Implement your changes
 4. Build the library `yarn run build` _(Pro-tip: `yarn run build-watch` runs the build in watch mode)_

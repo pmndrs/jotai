@@ -21,7 +21,7 @@ jobs:
           node-version: '18'
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-      - run: yarn install --frozen-lockfile --check-files
+      - run: yarn install --immutable --check-resolutions
       - run: yarn build
       - name: Use React 17 for production test
         if: ${{ matrix.env == 'production' }}

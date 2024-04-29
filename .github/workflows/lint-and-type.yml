@@ -16,7 +16,7 @@ jobs:
           node-version: '18'
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-      - run: yarn install --frozen-lockfile --check-files
+      - run: yarn install --immutable --check-resolutions
       - name: Prettier
         run: yarn prettier:ci
       - name: Lint

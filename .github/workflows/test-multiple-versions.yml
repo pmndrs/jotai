@@ -16,7 +16,7 @@ jobs:
           node-version: '18'
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-      - run: yarn install --frozen-lockfile --check-files
+      - run: yarn install --immutable --check-resolutions
       - name: Test Build # we don't have any other workflows to test build
         run: yarn build
       - name: Test Default
@@ -42,7 +42,7 @@ jobs:
           node-version: '18'
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-      - run: yarn install --frozen-lockfile --check-files
+      - run: yarn install --immutable --check-resolutions
       - name: Install legacy testing-library
         if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
         run: yarn add -D @testing-library/react@12.1.4

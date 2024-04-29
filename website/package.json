@@ -14,8 +14,7 @@
     "build": "gatsby build",
     "serve": "gatsby serve",
     "clean": "gatsby clean",
-    "deduplicate": "npx yarn-deduplicate yarn.lock",
-    "postdeduplicate": "yarn install",
+    "deduplicate": "yarn dedupe",
     "browserslist": "npx browserslist@latest --update-db"
   },
   "dependencies": {
