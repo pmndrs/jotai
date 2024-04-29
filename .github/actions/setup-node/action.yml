@@ -18,6 +18,10 @@ runs:
       with:
         node-version: '18'
 
+    - name: Enable Corepack
+      shell: bash
+      run: corepack enable
+
     - name: Set yarn global cache path
       shell: bash
       id: yarn-cache
