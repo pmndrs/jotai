@@ -32,7 +32,7 @@ jobs:
           - 3.8.3
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: yarn
