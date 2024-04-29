@@ -94,7 +94,6 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
       }
       rerender()
     })
-    rerender()
     return unsub
   }, [store, atom, delay])
 

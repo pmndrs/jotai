@@ -61,8 +61,12 @@ const flushPending = (pendingPair: PendingPair, isAsync?: true) => {
         pending()
       } else {
         const [atom, atomState] = pending
-        if (!flushed.has(atom) && atomState.m) {
-          atomState.m.l.forEach((listener) => listener())
+        if (!flushed.has(atom)) {
+          if (atomState.m && atomState.m.l.size) {
+            atomState.m.l.forEach((listener) => listener())
+          } else {
+            atomState.u = true
+          }
           flushed.add(atom)
         }
       }
@@ -197,6 +201,8 @@ type AtomState<Value = AnyValue> = {
   m?: Mounted // only available if the atom is mounted
   /** Atom value, atom error or empty. */
   s?: { readonly v: Value } | { readonly e: AnyError }
+  /** should update */
+  u?: boolean // only if the atom is unmounted but has been written state, the value is true.
 }
 
 type WithS<T extends AtomState> = T & { s: NonNullable<T['s']> }
@@ -432,6 +438,7 @@ export const createStore = (): Store => {
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
+    const originalAtomState = getAtomState(atom)
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
       const a = topsortedAtoms[i]!
       const aState = getAtomState(a)
@@ -440,12 +447,13 @@ export const createStore = (): Store => {
       for (const dep of aState.d.keys()) {
         if (dep !== a && changedAtoms.has(dep)) {
           hasChangedDeps = true
+          aState.u = originalAtomState.u || false
           break
         }
       }
       if (hasChangedDeps) {
         // only recompute if it is mounted or it has a pending promise
-        if (aState.m || getPendingContinuablePromise(aState)) {
+        if (aState.u || aState.m || getPendingContinuablePromise(aState)) {
           readAtomState(a, true)
           mountDependencies(pendingPair, aState)
           if (
@@ -548,9 +556,10 @@ export const createStore = (): Store => {
         const mounted = atomState.m
         const { onMount } = atom
         addPending(pendingPair, () => {
-          const onUnmount = onMount((...args) =>
-            writeAtomState(pendingPair, atom, ...args),
-          )
+          const onUnmount = onMount((...args) => {
+            atomState.u = true
+            return writeAtomState(pendingPair, atom, ...args)
+          })
           if (onUnmount) {
             mounted.u = onUnmount
           }
@@ -592,6 +601,11 @@ export const createStore = (): Store => {
     flushPending(pendingPair)
     const listeners = mounted.l
     listeners.add(listener)
+    const atomState = getAtomState(atom)
+    if (atomState.u) {
+      listener()
+      atomState.u = false
+    }
     return () => {
       listeners.delete(listener)
       const pendingPair = createPendingPair()
