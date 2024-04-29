@@ -15,7 +15,7 @@ jobs:
         build: [cjs, esm, umd]
         env: [development, production]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
