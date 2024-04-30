@@ -65,6 +65,6 @@ jobs:
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
         run: |
-          yarn test:ci
+          yarn test:ci:build # test:ci
         env:
           NODE_ENV: ${{ matrix.env }}
