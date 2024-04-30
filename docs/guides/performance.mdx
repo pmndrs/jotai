@@ -129,17 +129,13 @@ Then, when the user clicks one toggle, we update it
 const Item = ({ index, val }) => {
   const setToggles = useSetAtom(togglesAtom)
   const onPress = () => {
-    setToggles(old => {
-      const newArray = [...old];
-      newArray[index] = !newArray[index];
-      return newArray;
-    })
+    setToggles(old => [...old, [index]: !val])
   }
 }
 
 const List = () => {
   const [toggles] = useAtom(togglesAtom)
-  return toggles.map((val, index) => <Item index={index} val={val} />)
+  return toggles.map((val, index) => <Item id={index} val={val} />)
 }
 ```
 
@@ -147,28 +143,25 @@ With this approach, updating any toggle will cause all `<Item />` to re-render.
 
 ### Memoized pattern
 
-Using "atom config" as the initial value, changes in the atom within the component will not trigger re-rendering of other components. At the same time, `getAllAtom` can automatically synchronize all atom states without the need for additional status updates for the `togglesAtom` atom.
+Now let's try to memoize the value on the first render
 
 ```tsx
-const togglesAtom = atom([atom(false), atom(false), atom(false)])
-const getAllAtom = atom(get => get(togglesAtom).map(get))
-
 const List = () => {
-  const [toggles] = useAtom(togglesAtom)
-  return toggles.map((val, index) => <Item index={index} val={val} />)
+  const [toggles] = useMemo(() => useAtom(togglesAtom), [])
+  return toggles.map((val, index) => <Item id={index} initialValue={val} />)
 }
 ```
 
 But now it means we have to handle the changes locally in each `Item`
 
 ```tsx
-const Item = ({ index, val }) => {
-  const setToggles = useAtomValue(getAllAtom);
-  const [toggle, setToggle] = useAtom(val)
+const Item = ({ index, initialValue }) => {
+  const setToggles = useSetAtom(togglesAtom)
+  const [toggle, setToggle] = React.useMemo(() => useAtom(atom(val)), [])
 
   const onPress = () => {
     setToggle(!toggle) // Update locally
-    console.log('All toggles', setToggles) // Will show the updated value
+    setToggles(old => [...old, [index]: !val]) // Update the main atom
   }
 }
 ```
