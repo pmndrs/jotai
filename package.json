@@ -80,6 +80,7 @@
     "pretest": "tsc",
     "test": "vitest --ui --coverage",
     "test:ci": "vitest && USE_STORE2=true vitest",
+    "test:ci:build": "vitest",
     "patch-d-ts": "node -e \"var {entries}=require('./rollup.config.js');require('shelljs').find('dist/**/*.d.ts').forEach(f=>{entries.forEach(({find,replacement})=>require('shelljs').sed('-i',new RegExp(' from \\''+find.source.slice(0,-1)+'\\';$'),' from \\''+replacement+'\\';',f));require('shelljs').sed('-i',/ from '(\\.[^']+)\\.ts';$/,' from \\'\\$1\\';',f)})\"",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.8 --to=3.8 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined;\"",
     "patch-ts3.8": "node -e \"require('shelljs').find('dist/ts3.8/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
