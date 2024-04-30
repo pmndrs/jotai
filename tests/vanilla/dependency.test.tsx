@@ -157,7 +157,7 @@ it('keeps atoms mounted between recalculations', async () => {
 it.skipIf(!import.meta.env?.USE_STORE2)(
   'should not provide stale values to conditional dependents',
   () => {
-    const dataAtom = atom<number[]>([])
+    const dataAtom = atom<number[]>([100])
     const hasFilterAtom = atom(false)
     const filteredAtom = atom((get) => {
       const data = get(dataAtom)
@@ -182,7 +182,6 @@ it.skipIf(!import.meta.env?.USE_STORE2)(
     store.sub(filteredAtom, () => undefined)
     store.sub(stageAtom, () => undefined)
 
-    store.set(dataAtom, [100])
     expect(store.get(stageAtom), 'should start without filter').to.equal(
       'no-filter',
     )
