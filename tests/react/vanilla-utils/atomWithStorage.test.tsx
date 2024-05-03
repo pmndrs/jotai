@@ -9,6 +9,7 @@ import {
   createJSONStorage,
   unstable_withStorageValidator as withStorageValidator,
 } from 'jotai/vanilla/utils'
+import type { SyncStringStorage } from 'jotai/vanilla/utils/atomWithStorage'
 
 const resolve: (() => void)[] = []
 
@@ -599,5 +600,103 @@ describe('withStorageValidator', () => {
     const storage = createJSONStorage()
     const isNumber = (v: unknown): v is number => typeof v === 'number'
     atomWithStorage('my-number', 0, withStorageValidator(isNumber)(storage))
+  })
+})
+
+describe('with subscribe method in string storage', () => {
+  it('createJSONStorage subscriber is called correctly', async () => {
+    const store = createStore()
+
+    const subscribe = vi.fn()
+    const stringStorage = {
+      getItem: () => {
+        return null
+      },
+      setItem: () => {},
+      removeItem: () => {},
+      subscribe,
+    }
+
+    const dummyStorage = createJSONStorage<number>(() => stringStorage)
+
+    const dummyAtom = atomWithStorage<number>('dummy', 1, dummyStorage)
+
+    const DummyComponent = () => {
+      const [value] = useAtom(dummyAtom, { store })
+      return (
+        <>
+          <div>{value}</div>
+        </>
+      )
+    }
+
+    render(
+      <StrictMode>
+        <DummyComponent />
+      </StrictMode>,
+    )
+
+    expect(subscribe).toHaveBeenCalledWith('dummy', expect.any(Function), 1)
+  })
+
+  it('createJSONStorage subscriber responds to events correctly', async () => {
+    const storageData: Record<string, string> = {
+      count: '10',
+    }
+
+    const stringStorage = {
+      getItem: (key: string) => {
+        return storageData[key] || null
+      },
+      setItem: (key: string, newValue: string) => {
+        storageData[key] = newValue
+      },
+      removeItem: (key: string) => {
+        delete storageData[key]
+      },
+      subscribe(key, callback) {
+        function handler(event: CustomEvent<string>) {
+          callback(event.detail)
+        }
+
+        window.addEventListener('dummystoragechange', handler as EventListener)
+        return () =>
+          window.removeEventListener(
+            'dummystoragechange',
+            handler as EventListener,
+          )
+      },
+    } as SyncStringStorage
+
+    const dummyStorage = createJSONStorage<number>(() => stringStorage)
+
+    const countAtom = atomWithStorage('count', 1, dummyStorage)
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+        </>
+      )
+    }
+
+    const { findByText } = render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    )
+
+    await findByText('count: 10')
+
+    storageData.count = '12'
+    fireEvent(
+      window,
+      new CustomEvent('dummystoragechange', {
+        detail: '12',
+      }),
+    )
+    await findByText('count: 12')
+    // expect(storageData.count).toBe('11')
   })
 })
