@@ -10,7 +10,7 @@ import type {
 import { useAtomValue } from './useAtomValue.ts'
 import { useSetAtom } from './useSetAtom.ts'
 
-type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
+export type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
 
 type Options = Parameters<typeof useAtomValue>[1]
 
