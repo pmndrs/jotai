@@ -177,6 +177,8 @@ type Mounted = {
   readonly l: Set<() => void>
   /** Set of mounted atoms that the atom depends on. */
   readonly d: Set<AnyAtom>
+  /** Set of atoms that depends on the atom. */
+  readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
   u?: OnUnmount
 }
@@ -191,8 +193,6 @@ type AtomState<Value = AnyValue> = {
    * The map value is the epoch number of the dependency.
    */
   readonly d: Map<AnyAtom, number>
-  /** Set of atoms that depends on the atom. */
-  readonly t: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: number
   /** Object to store mounted state of the atom. */
@@ -282,18 +282,10 @@ export const createStore = (): Store => {
   const getAtomState = <Value>(atom: Atom<Value>) => {
     let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
     if (!atomState) {
-      atomState = { d: new Map(), t: new Set(), n: 0 }
+      atomState = { d: new Map(), n: 0 }
       atomStateMap.set(atom, atomState)
     }
     return atomState
-  }
-
-  const clearDependencies = <Value>(atom: Atom<Value>) => {
-    const atomState = getAtomState(atom)
-    for (const a of atomState.d.keys()) {
-      getAtomState(a).t.delete(atom)
-    }
-    atomState.d.clear()
   }
 
   const addDependency = <Value>(
@@ -307,8 +299,7 @@ export const createStore = (): Store => {
     }
     const atomState = getAtomState(atom)
     atomState.d.set(a, aState.n)
-    aState.t.add(atom)
-    if (!isSync && atomState.m) {
+    if (!isSync && aState.m) {
       const pendingPair = createPendingPair()
       mountDependencies(pendingPair, atomState)
       flushPending(pendingPair)
@@ -341,7 +332,7 @@ export const createStore = (): Store => {
       }
     }
     // Compute a new state for this atom.
-    clearDependencies(atom)
+    atomState.d.clear()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
@@ -419,6 +410,16 @@ export const createStore = (): Store => {
     returnAtomValue(readAtomState(atom))
 
   const recomputeDependents = (pendingPair: PendingPair, atom: AnyAtom) => {
+    const getDependents = (a: AnyAtom): Set<AnyAtom> => {
+      const dependents = new Set(getAtomState(a)?.m?.t)
+      ;(pendingPair[0] || pendingPair[1]).forEach((pending) => {
+        if (Array.isArray(pending) && pending[1].d.has(a)) {
+          dependents.add(pending[0])
+        }
+      })
+      return dependents
+    }
+
     // This is a topological sort via depth-first search, slightly modified from
     // what's described here for simplicity and performance reasons:
     // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
@@ -432,7 +433,7 @@ export const createStore = (): Store => {
         return
       }
       markedAtoms.add(n)
-      for (const m of getAtomState(n).t) {
+      for (const m of getDependents(n)) {
         // we shouldn't use isSelfAtom here.
         if (n !== m) {
           visit(m)
@@ -463,6 +464,7 @@ export const createStore = (): Store => {
       }
       if (hasChangedDeps) {
         // only recompute if it is mounted or it has a pending promise
+        // TODO check this in visit?
         if (aState.m || getPendingContinuablePromise(aState)) {
           readAtomState(a, true)
           mountDependencies(pendingPair, aState)
@@ -548,10 +550,15 @@ export const createStore = (): Store => {
       readAtomState(atom)
       // mount dependents first
       for (const a of atomState.d.keys()) {
-        mountAtom(pendingPair, a)
+        const aMounted = mountAtom(pendingPair, a)
+        aMounted.t.add(atom)
       }
       // mount self
-      atomState.m = { l: new Set(), d: new Set(atomState.d.keys()) }
+      atomState.m = {
+        l: new Set(),
+        d: new Set(atomState.d.keys()),
+        t: new Set(),
+      }
       if (isActuallyWritableAtom(atom) && atom.onMount) {
         const mounted = atomState.m
         const { onMount } = atom
@@ -568,12 +575,12 @@ export const createStore = (): Store => {
     return atomState.m
   }
 
-  const unmountAtom = (pendingPair: PendingPair, atom: AnyAtom) => {
+  const unmountAtom = (pendingPair: PendingPair, atom: AnyAtom): void => {
     const atomState = getAtomState(atom)
     if (
       atomState.m &&
       !atomState.m.l.size &&
-      !Array.from(atomState.t).some((a) => getAtomState(a).m)
+      !Array.from(atomState.m.t).some((a) => getAtomState(a).m)
     ) {
       // unmount self
       const onUnmount = atomState.m.u
