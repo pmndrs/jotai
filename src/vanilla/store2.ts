@@ -169,6 +169,12 @@ type AtomState<Value = AnyValue> = {
    * The map value is the epoch number of the dependency.
    */
   readonly d: Map<AnyAtom, number>
+  /**
+   * Set of atoms with pending promise that depend on the atom.
+   *
+   * This may cause memory leaks, but it's for the capability to continue promises
+   */
+  readonly p: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: number
   /** Object to store mounted state of the atom. */
@@ -192,7 +198,27 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
   return atomState.v!
 }
 
+const addPendingContinuablePromiseToDependency = (
+  atom: AnyAtom,
+  promise: ContinuablePromise<AnyValue> & { status: typeof PENDING },
+  dependencyAtomState: AtomState,
+) => {
+  if (!dependencyAtomState.p.has(atom)) {
+    dependencyAtomState.p.add(atom)
+    promise.then(
+      () => {
+        dependencyAtomState.p.delete(atom)
+      },
+      () => {
+        dependencyAtomState.p.delete(atom)
+      },
+    )
+  }
+}
+
 const setAtomStateValueOrPromise = (
+  getAtomState: (a: AnyAtom) => AtomState,
+  atom: AnyAtom,
   atomState: AtomState,
   valueOrPromise: unknown,
   abortPromise = () => {},
@@ -212,6 +238,16 @@ const setAtomStateValueOrPromise = (
         abortPromise,
         completePromise,
       )
+      if (continuablePromise.status === PENDING) {
+        for (const a of atomState.d.keys()) {
+          const aState = getAtomState(a)
+          addPendingContinuablePromiseToDependency(
+            atom,
+            continuablePromise,
+            aState,
+          )
+        }
+      }
       atomState.v = continuablePromise
       delete atomState.e
     }
@@ -258,7 +294,7 @@ export const createStore = (): Store => {
   const getAtomState = <Value>(atom: Atom<Value>) => {
     let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
     if (!atomState) {
-      atomState = { d: new Map(), n: 0 }
+      atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
     }
     return atomState
@@ -275,6 +311,10 @@ export const createStore = (): Store => {
     }
     const atomState = getAtomState(atom)
     atomState.d.set(a, aState.n)
+    const continuablePromise = getPendingContinuablePromise(atomState)
+    if (continuablePromise) {
+      addPendingContinuablePromiseToDependency(atom, continuablePromise, aState)
+    }
     if (aState.m) {
       aState.m.t.add(atom)
     } else if (pendingSet) {
@@ -320,7 +360,7 @@ export const createStore = (): Store => {
         const aState = getAtomState(a)
         if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
-            setAtomStateValueOrPromise(aState, a.init)
+            setAtomStateValueOrPromise(getAtomState, a, aState, a.init)
           } else {
             // NOTE invalid derived atoms can reach here
             throw new Error('no atom init')
@@ -372,6 +412,8 @@ export const createStore = (): Store => {
     try {
       const valueOrPromise = atom.read(getter, options as never)
       setAtomStateValueOrPromise(
+        getAtomState,
+        atom,
         atomState,
         valueOrPromise,
         () => controller?.abort(),
@@ -399,7 +441,11 @@ export const createStore = (): Store => {
 
   const recomputeDependents = (pendingSet: PendingSet, atom: AnyAtom) => {
     const getDependents = (a: AnyAtom): Set<AnyAtom> => {
-      const dependents = new Set(getAtomState(a)?.m?.t)
+      const aState = getAtomState(a)
+      const dependents = new Set(aState.m?.t)
+      for (const atomWithPendingContinuablePromise of aState.p) {
+        dependents.add(atomWithPendingContinuablePromise)
+      }
       pendingSet.forEach((pending) => {
         if (Array.isArray(pending) && pending[0] === a) {
           for (const dependent of pending[2]) {
@@ -453,15 +499,11 @@ export const createStore = (): Store => {
         }
       }
       if (hasChangedDeps) {
-        // only recompute if it is mounted or it has a pending promise
-        // TODO check this in visit?
-        if (aState.m || getPendingContinuablePromise(aState)) {
-          readAtomState(pendingSet, a, true)
-          mountDependencies(pendingSet, a, aState)
-          if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
-            pendingSet.add([a, aState, new Set()])
-            changedAtoms.add(a)
-          }
+        readAtomState(pendingSet, a, true)
+        mountDependencies(pendingSet, a, aState)
+        if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
+          pendingSet.add([a, aState, new Set()])
+          changedAtoms.add(a)
         }
       }
     }
@@ -488,7 +530,7 @@ export const createStore = (): Store => {
         const hasPrevValue = 'v' in aState
         const prevValue = aState.v
         const v = args[0] as V
-        setAtomStateValueOrPromise(aState, v)
+        setAtomStateValueOrPromise(getAtomState, a, aState, v)
         mountDependencies(pendingSet, a, aState)
         if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
           pendingSet.add([a, aState, new Set()])
