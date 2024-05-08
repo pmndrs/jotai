@@ -27,6 +27,19 @@ describe('test memory leaks (get & set only)', () => {
   })
 
   it.skipIf(!import.meta.env?.USE_STORE2)(
+    'should not hold onto dependent atoms that are not mounted',
+    async () => {
+      const store = createStore()
+      const objAtom = atom({})
+      let depAtom: Atom<unknown> | undefined = atom((get) => get(objAtom))
+      const detector = new LeakDetector(depAtom)
+      store.get(depAtom)
+      depAtom = undefined
+      await expect(detector.isLeaking()).resolves.toBe(false)
+    },
+  )
+
+  it.skipIf(!import.meta.env?.USE_STORE2)(
     'with a long-lived base atom',
     async () => {
       const store = createStore()
