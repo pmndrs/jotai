@@ -1,5 +1,5 @@
 import { waitFor } from '@testing-library/dom'
-import { assert, expect, it, vi } from 'vitest'
+import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Getter } from 'jotai/vanilla'
 
@@ -408,4 +408,35 @@ it('should flush pending write triggered asynchronously and indirectly (#2451)',
   expect(callbackFn).toHaveBeenCalledOnce()
   expect(callbackFn).toHaveBeenCalledWith('next')
   unsub()
+})
+
+describe('async atom with subtle timing', () => {
+  it('case 1', async () => {
+    const store = createStore()
+    let resolve = () => {}
+    const a = atom(1)
+    const b = atom(async (get) => {
+      await new Promise<void>((r) => (resolve = r))
+      return get(a)
+    })
+    const bValue = store.get(b)
+    store.set(a, 2)
+    resolve()
+    expect(await bValue).toBe(2)
+  })
+
+  it('case 2', async () => {
+    const store = createStore()
+    let resolve = () => {}
+    const a = atom(1)
+    const b = atom(async (get) => {
+      const aValue = get(a)
+      await new Promise<void>((r) => (resolve = r))
+      return aValue
+    })
+    const bValue = store.get(b)
+    store.set(a, 2)
+    resolve()
+    expect(await bValue).toBe(2)
+  })
 })
