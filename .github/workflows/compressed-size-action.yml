@@ -17,6 +17,4 @@ jobs:
           node-version: 18
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
-      - uses: preactjs/compressed-size-action@v2
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+      - uses: preactjs/compressed-size-action@2.6.0
