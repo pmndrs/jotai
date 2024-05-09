@@ -14,8 +14,6 @@
     "build": "gatsby build",
     "serve": "gatsby serve",
     "clean": "gatsby clean",
-    "deduplicate": "npx yarn-deduplicate yarn.lock",
-    "postdeduplicate": "yarn install",
     "browserslist": "npx browserslist@latest --update-db"
   },
   "packageManager": "pnpm@8.15.0",
