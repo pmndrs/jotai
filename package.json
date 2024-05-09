@@ -60,8 +60,8 @@
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "concurrently -m 8 'yarn:build:*'",
-    "build-watch": "concurrently -n watch: 'yarn:build:* --watch'",
+    "build": "pnpm run '/^build:.*/'",
+    "build-watch": "pnpm run '/^build:.*/' --watch",
     "build:base": "rollup -c",
     "build:utils": "rollup -c --config-utils",
     "build:babel:plugin-debug-label": "rollup -c --config-babel_plugin-debug-label",
@@ -141,7 +141,6 @@
     "@vitest/coverage-v8": "^1.4.0",
     "@vitest/ui": "^1.4.0",
     "benny": "^3.7.1",
-    "concurrently": "^8.2.2",
     "downlevel-dts": "^0.11.0",
     "esbuild": "^0.20.2",
     "eslint": "^8.57.0",
