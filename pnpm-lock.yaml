@@ -147,6 +147,9 @@ devDependencies:
   rxjs:
     specifier: ^7.8.1
     version: 7.8.1
+  shelljs:
+    specifier: ^0.8.5
+    version: 0.8.5
   shx:
     specifier: ^0.3.4
     version: 0.3.4
