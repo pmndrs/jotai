@@ -133,6 +133,7 @@
     "@testing-library/react": "^14.2.2",
     "@testing-library/user-event": "14.4.3",
     "@types/babel__core": "^7.20.5",
+    "@types/babel__template": "^7.4.4",
     "@types/node": "^20.12.4",
     "@types/react": "18.2.56",
     "@types/react-dom": "^18.2.24",

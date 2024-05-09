@@ -60,6 +60,9 @@ devDependencies:
   '@types/babel__core':
     specifier: ^7.20.5
     version: 7.20.5
+  '@types/babel__template':
+    specifier: ^7.4.4
+    version: 7.4.4
   '@types/node':
     specifier: ^20.12.4
     version: 20.12.11
