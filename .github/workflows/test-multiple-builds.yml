@@ -68,6 +68,6 @@ jobs:
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
         run: |
-          pnpm test:spec:build # test:spec
+          pnpm test-build:spec # test:spec
         env:
           NODE_ENV: ${{ matrix.env }}
