@@ -6,7 +6,7 @@ export const Code = ({ language = 'jsx', children }) => {
   return (
     <Highlight {...defaultProps} language={language} code={code} theme={undefined}>
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
-        <pre className={className} style={style}>
+        <pre className={`${className} notranslate`} style={style}>
           {tokens.map((line, i) => (
             <div {...getLineProps({ line, key: i })}>
               {line.map((token, key) => (

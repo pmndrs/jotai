@@ -3,10 +3,12 @@ import { PrimitiveAtom, atom } from '../../vanilla.ts'
 export function atomWithLazy<Value>(
   makeInitial: () => Value,
 ): PrimitiveAtom<Value> {
-  return {
-    ...atom(undefined as unknown as Value),
-    get init() {
+  const a = atom(undefined as unknown as Value)
+  delete (a as { init?: Value }).init
+  Object.defineProperty(a, 'init', {
+    get() {
       return makeInitial()
     },
-  }
+  })
+  return a
 }

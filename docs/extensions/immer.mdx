@@ -15,7 +15,7 @@ npm i immer jotai-immer
 
 ## atomWithImmer
 
-`atomWithImmer` creates a new atom similar to the regular [`atom`](../core/atom.mdx) [atom] with a different `writeFunction`. In this bundle, we don't have read-only atoms, because the point of these functions is the immer produce(mutability) function.
+`atomWithImmer` creates a new atom similar to the regular [`atom`](../core/atom.mdx) with a different `writeFunction`. In this bundle, we don't have read-only atoms, because the point of these functions is the immer produce(mutability) function.
 The signature of writeFunction is `(get, set, update: (draft: Draft<Value>) => void) => void`.
 
 ```jsx

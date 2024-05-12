@@ -73,6 +73,7 @@ const countAtom = atom(0)
 function Counter() {
   const [count, setCount] = useAtom(countAtom)
   useAtomDevtools(countAtom)
+}
 ```
 
 Now if we try `setCount`, we can see that the Redux Dev Tools logs those changes immediately.
@@ -135,8 +136,9 @@ Which returns atoms value that is deeply freezed with `Object.freeze`.
 freezeAtom(anAtom): AtomType
 ```
 
-`freezeAtom` takes an existing atom and returns a new derived "frozen" atom.
-The atom will be deeply frozen by `Object.freeze`.
+`freezeAtom` takes an existing atom and make it "frozen".
+It returns the same atom.
+The atom value will be deeply frozen by `Object.freeze`.
 It is useful to find bugs where you unintentionally tried
 to change objects (states) which can lead to unexpected behavior.
 You may use `freezeAtom` with all atoms to prevent this situation.
@@ -156,14 +158,14 @@ const objAtom = freezeAtom(atom({ count: 0 }))
 
 ### freezeAtomCreator
 
-```js
-import { atom } from 'jotai'
-import { freezeAtomCreator } from 'jotai/utils'
+If you need, you can define a factory for `freezeAtom`.
 
-const createFrozenAtom = freezeAtomCreator(atom)
-const objAtom = createFrozenAtom({ count: 0 })
+```ts
+import { freezeAtom } from 'jotai/utils'
+
+export function freezeAtomCreator<
+  CreateAtom extends (...args: unknown[]) => Atom<unknown>,
+>(createAtom: CreateAtom): CreateAtom {
+  return ((...args: unknown[]) => freezeAtom(createAtom(...args))) as never
+}
 ```
-
-Instead of create a frozen atom from an existing atom,
-`freezeAtomCreator` takes an atom creator function and returns a new function.
-You can use this not only for `atom`, but also for other `atomWith*` creators such as `atomWithReduer`.
