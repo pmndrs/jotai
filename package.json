@@ -1,8 +1,9 @@
 {
   "name": "jotai",
-  "private": true,
-  "version": "2.8.0",
   "description": "👻 Primitive and flexible state management for React",
+  "private": true,
+  "type": "commonjs",
+  "version": "2.8.0",
   "main": "./index.js",
   "types": "./index.d.ts",
   "typesVersions": {
@@ -60,8 +61,8 @@
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "concurrently -m 8 'yarn:build:*'",
-    "build-watch": "concurrently -n watch: 'yarn:build:* --watch'",
+    "build": "pnpm run prebuild && pnpm run '/^build:.*/' && pnpm run postbuild",
+    "build-watch": "pnpm run '/^build:.*/' --watch",
     "build:base": "rollup -c",
     "build:utils": "rollup -c --config-utils",
     "build:babel:plugin-debug-label": "rollup -c --config-babel_plugin-debug-label",
@@ -72,15 +73,15 @@
     "build:react": "rollup -c --config-react --client-only",
     "build:react:utils": "rollup -c --config-react_utils --client-only",
     "build:experimental": "rollup -c --config-experimental",
-    "postbuild": "yarn patch-d-ts && yarn copy && yarn patch-ts3.8 && yarn patch-old-ts && yarn patch-esm-ts && yarn patch-readme",
+    "postbuild": "pnpm patch-d-ts && pnpm copy && pnpm patch-ts3.8 && pnpm patch-old-ts && pnpm patch-esm-ts && pnpm patch-readme",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --write",
-    "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
     "eslint": "eslint --fix --no-eslintrc --c .eslintrc.json '*.{js,json,ts}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
-    "eslint:ci": "eslint --no-eslintrc --c .eslintrc.json '*.{js,json,ts}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
-    "pretest": "tsc",
-    "test": "vitest --ui --coverage",
-    "test:ci": "vitest && USE_STORE2=true vitest",
-    "test:ci:build": "vitest",
+    "test": "pnpm run '/^test:.*/'",
+    "test:format": "prettier '*.{js,json,md}' '{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
+    "test:types": "tsc --noEmit",
+    "test:lint": "eslint --no-eslintrc --c .eslintrc.json '*.{js,json,ts}' '{src,tests,benchmarks}/**/*.{ts,tsx}'",
+    "test:spec": "vitest && USE_STORE2=true vitest",
+    "test-build:spec": "vitest",
     "patch-d-ts": "node -e \"var {entries}=require('./rollup.config.js');require('shelljs').find('dist/**/*.d.ts').forEach(f=>{entries.forEach(({find,replacement})=>require('shelljs').sed('-i',new RegExp(' from \\''+find.source.slice(0,-1)+'\\';$'),' from \\''+replacement+'\\';',f));require('shelljs').sed('-i',/ from '(\\.[^']+)\\.ts';$/,' from \\'\\$1\\';',f)})\"",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.8 --to=3.8 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined;\"",
     "patch-ts3.8": "node -e \"require('shelljs').find('dist/ts3.8/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
@@ -114,6 +115,7 @@
     "url": "https://github.com/pmndrs/jotai/issues"
   },
   "homepage": "https://github.com/pmndrs/jotai",
+  "packageManager": "pnpm@8.15.0",
   "devDependencies": {
     "@babel/core": "^7.24.4",
     "@babel/plugin-transform-react-jsx": "^7.23.4",
@@ -132,6 +134,7 @@
     "@testing-library/react": "^14.2.2",
     "@testing-library/user-event": "14.4.3",
     "@types/babel__core": "^7.20.5",
+    "@types/babel__template": "^7.4.4",
     "@types/node": "^20.12.4",
     "@types/react": "18.2.56",
     "@types/react-dom": "^18.2.24",
@@ -140,7 +143,6 @@
     "@vitest/coverage-v8": "^1.4.0",
     "@vitest/ui": "^1.4.0",
     "benny": "^3.7.1",
-    "concurrently": "^8.2.2",
     "downlevel-dts": "^0.11.0",
     "esbuild": "^0.20.2",
     "eslint": "^8.57.0",
@@ -162,6 +164,7 @@
     "rollup-plugin-banner2": "^1.2.3",
     "rollup-plugin-esbuild": "^6.1.1",
     "rxjs": "^7.8.1",
+    "shelljs": "^0.8.5",
     "shx": "^0.3.4",
     "ts-expect": "^1.3.0",
     "ts-node": "^10.9.2",
@@ -185,6 +188,5 @@
     "react": {
       "optional": true
     }
-  },
-  "packageManager": "yarn@1.22.1"
+  }
 }
