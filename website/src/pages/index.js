@@ -1,6 +1,7 @@
 import { Code } from '../components/code.js';
 import { CoreDemo } from '../components/core-demo.js';
 import { ExtensionsDemo } from '../components/extensions-demo.js';
+import { ExternalLink } from '../components/external-link.js';
 import { Headline } from '../components/headline.js';
 import { InlineCode } from '../components/inline-code.js';
 import { Intro } from '../components/intro.js';
@@ -262,27 +263,22 @@ const AnimeApp = () => {
     <section>
       <h2>Server-side rendering</h2>
       <p>
-        If server-side rendering with a framework such as Next.js or Gatsby, make sure to use at
-        least one Provider component at the root.
+        If server-side rendering with a framework such as{' '}
+        <ExternalLink to="https://nextjs.org">Next.js</ExternalLink> or{' '}
+        <ExternalLink to="https://waku.gg">Waku</ExternalLink>, make sure to add a Jotai Provider
+        component at the root.
       </p>
-      <Code>{`import { Provider } from 'jotai'
-
-// Placement is framework-specific (see below)
-<Provider>
-  {...}
-</Provider>
-`}</Code>
       <h3>Next.js (app directory)</h3>
       <p>
         Create the provider in a separate client component. Then import the provider into the root{' '}
         <InlineCode>layout.js</InlineCode> server component.
       </p>
-      <Code>{`// providers.js (app directory)
+      <Code>{`// ./components/providers.js
 'use client'
 
 import { Provider } from 'jotai'
 
-export default function Providers({ children }) {
+export const Providers = ({ children }) => {
   return (
     <Provider>
       {children}
@@ -291,8 +287,8 @@ export default function Providers({ children }) {
 }
 
 
-// layout.js (app directory)
-import Providers from './providers'
+// ./app/layout.js
+import { Providers } from '../components/providers'
 
 export default function RootLayout({ children }) {
   return (
@@ -310,7 +306,7 @@ export default function RootLayout({ children }) {
       <p>
         Create the provider in <InlineCode>_app.js</InlineCode>.
       </p>
-      <Code>{`// _app.js (pages directory)
+      <Code>{`// ./pages/_app.js
 import { Provider } from 'jotai'
 
 export default function App({ Component, pageProps }) {
@@ -321,30 +317,35 @@ export default function App({ Component, pageProps }) {
   )
 }
 `}</Code>
-      <h3>Gatsby</h3>
+      <h3>Waku</h3>
       <p>
-        Create the provider in a <InlineCode>gatsby-shared.js</InlineCode> file to share code
-        between <InlineCode>gatsby-browser.js</InlineCode> and{' '}
-        <InlineCode>gatsby-ssr.js</InlineCode>. Use the <InlineCode>wrapRootElement</InlineCode> API
-        to place the provider.
+        Create the provider in a separate client component. Then import the provider into the root
+        layout.
       </p>
-      <Code>{`
-// gatsby-shared.js
+      <Code>{`// ./src/components/providers.js
+'use client'
+
 import { Provider } from 'jotai'
 
-export const wrapRootElement = ({ element }) => {
+export const Providers = ({ children }) => {
   return (
     <Provider>
-      {element}
+      {children}
     </Provider>
   )
 }
 
-// gatsby-browser.js
-export { wrapRootElement } from './gatsby-shared'
 
-// gatsby-ssr.js
-export { wrapRootElement } from './gatsby-shared'
+// ./src/pages/_layout.js
+import { Providers } from '../components/providers'
+
+export default async function RootLayout({ children }) {
+  return (
+    <Providers>
+      {children}
+    </Providers>
+  )
+}
 `}</Code>
     </section>
   ),

@@ -14,8 +14,8 @@ export const Docs = ({ className = '', ...rest }) => {
 
   return (
     <div className={cx('my-8 space-y-8', className)} {...rest}>
-      {navLinks.map((section) => (
-        <div key={section.title} className="space-y-2">
+      {navLinks.map((section, index) => (
+        <div key={section.title || index} className="space-y-2">
           {section.title && (
             <div className="relative -left-0.5 flex items-center gap-1">
               <span className="text-base font-bold uppercase tracking-widest text-gray-350 dark:text-white">
@@ -34,7 +34,6 @@ export const Docs = ({ className = '', ...rest }) => {
                   onClick={() => setIsMenuOpen(false)}
                   className="relative -left-3 inline-block whitespace-nowrap rounded border dark:!border-none border-transparent px-2 py-1 text-base text-black hover:!border-blue-200 hover:bg-blue-100 dark:text-gray-300 dark:hover:!text-black dark:hover:bg-white"
                   activeClassName="!border-blue-200 dark:!border-white bg-blue-100 dark:bg-white dark:!text-black"
-                  partiallyActive
                 >
                   {doc.meta.title}
                 </Link>

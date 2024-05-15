@@ -134,7 +134,7 @@ describe.skipIf(!IS_DEV_STORE2)('[DEV-ONLY] dev-only methods rev4', () => {
     countAtom.debugLabel = 'countAtom'
     store.set(countAtom, 1)
     const weakMap = store.dev4_get_internal_weak_map()
-    expect(weakMap.get(countAtom)?.s).toEqual({ v: 1 })
+    expect(weakMap.get(countAtom)?.v).toEqual(1)
   })
 
   it('should restore atoms and its dependencies correctly', () => {

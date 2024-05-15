@@ -209,7 +209,7 @@ const allAtom = waitForAll([fooAtom, barAtom])
 const allAtom = atom((get) => Promise.all([get(fooAtom), get(barAtom)]))
 ```
 
-Note that creating an atom in render function can cause [infinite loop](../api/atom.mdx#note-about-creating-an-atom-in-render-function)
+Note that creating an atom in render function can cause [infinite loop](../core/atom.mdx#note-about-creating-an-atom-in-render-function)
 
 #### `splitAtom` util (or some other utils) with async atoms
 
