@@ -19,25 +19,25 @@ If you would like to contribute by fixing an open issue or developing a new feat
 1. Fork this repository
 2. Create a new feature branch based off the `main` branch
 3. Follow the [Core lib](#core-lib) and/or the [docs](#docs) guide below and come back to this once done
-4. Run `yarn run prettier` to format the code
+4. Run `pnpm run prettier` to format the code
 5. Git stage your required changes and commit (review the commit guidelines below)
 6. Submit the PR for review
 
 ### Core lib
 
-1. Install dependencies by running `yarn`. We use [version 1](https://classic.yarnpkg.com/lang/en/docs/install) of yarn
+1. Install dependencies by running `pnpm`.
 2. Create failing tests for your fix or new feature in the `tests` folder
 3. Implement your changes
-4. Build the library `yarn run build` _(Pro-tip: `yarn run build-watch` runs the build in watch mode)_
-5. Run the tests and ensure that they pass. _(Pro-tip: `yarn test:dev` runs the test in watch mode)_
-6. You can use `yarn link` or `yalc` to sym-link this package and test it locally on your own project. Alternatively, you may use CodeSandbox CI's canary releases to test the changes in your own project (requires a PR to be created first)
+4. Build the library `pnpm run build` _(Pro-tip: `pnpm run build-watch` runs the build in watch mode)_
+5. Run the tests and ensure that they pass.
+6. You can use `pnpm link` or `yalc` to sym-link this package and test it locally on your own project. Alternatively, you may use CodeSandbox CI's canary releases to test the changes in your own project (requires a PR to be created first)
 7. Follow step 4 and onwards from the [general](#general) guide above to bring it to the finish line
 
 ### Docs
 
 1. Navigate to the `website` folder. Eg. `cd website`
-2. Install dependencies by running `yarn` in the `website` folder We use [version 1](https://classic.yarnpkg.com/lang/en/docs/install) of yarn
-3. Run `yarn dev` to start the dev server
+2. Install dependencies by running `pnpm` in the `website` folder
+3. Run `pnpm dev` to start the dev server
 4. Navigate to [`http://localhost:9000`](http://localhost:9000) to view the docs
 5. Navigate to the `docs` folder and make necessary changes to the docs
 6. Add your changes to the docs and see them live reloaded in the browser
@@ -49,7 +49,7 @@ We follow the [conventional commit spec](https://www.conventionalcommits.org/en/
 
 Your commit type must be one of the following:
 
-- **build**: Changes that affect the build system or external dependencies (example scopes: yarn, npm, rollup, etc.)
+- **build**: Changes that affect the build system or external dependencies (example scopes: pnpm, npm, rollup, etc.)
 - **ci**: Changes to our CI configuration files and scripts (example scopes: GitHub Actions)
 - **docs**: Documentation only changes
 - **feat**: A new feature

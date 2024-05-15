@@ -7,8 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.2.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
       - uses: live-codes/preview-in-livecodes@v1
         with:
-          install-command: "yarn install --frozen-lockfile --check-files"
-          build-command: "yarn build"
+          install-command: "pnpm install --frozen-lockfile"
+          build-command: "pnpm build"
           base-url: "https://{{LC::REF}}.preview-in-livecodes-demo.pages.dev"

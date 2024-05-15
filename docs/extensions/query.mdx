@@ -30,19 +30,18 @@ npm i jotai-tanstack-query @tanstack/query-core wonka
 You can incrementally adopt `jotai-tanstack-query` in your app. It's not an all or nothing solution. You just have to ensure you are using the same QueryClient instance. [QueryClient Setup](#referencing-the-same-instance-of-query-client-in-your-project).
 
 ```jsx
-# existing useQueryHook
-  const { data, isPending, isError } = useQuery({
-    queryKey: ['todos'],
-    queryFn: fetchTodoList
-  });
+// existing useQueryHook
+const { data, isPending, isError } = useQuery({
+  queryKey: ['todos'],
+  queryFn: fetchTodoList,
+})
 
-# jotai-tanstack-query
-  const todosAtom = atomWithQuery(() => ({
-    queryKey: ['todos'],
-  }))
+// jotai-tanstack-query
+const todosAtom = atomWithQuery(() => ({
+  queryKey: ['todos'],
+}))
 
-  const [{ data, isPending, isError }] = useAtom(todosAtom)
-
+const [{ data, isPending, isError }] = useAtom(todosAtom)
 ```
 
 ### Exported functions
