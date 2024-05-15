@@ -957,3 +957,41 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', as
   fireEvent.click(getByText('show'))
   expect(firstDerivedFn).toBeCalledTimes(0)
 })
+
+it('works with unused hook (#2554)', async () => {
+  const isFooAtom = atom(false)
+  const isBarAtom = atom(false)
+  const isActive1Atom = atom<boolean>((get) => {
+    return get(isFooAtom) && get(isBarAtom)
+  })
+  const isActive2Atom = atom<boolean>((get) => {
+    return get(isFooAtom) && get(isActive1Atom)
+  })
+  const activateAction = atom(undefined, async (_get, set) => {
+    set(isFooAtom, true)
+    set(isBarAtom, true)
+  })
+
+  const App = () => {
+    const activate = useSetAtom(activateAction)
+    useAtomValue(isActive1Atom)
+    const isRunning = useAtomValue(isActive2Atom)
+    return (
+      <div>
+        <button onClick={() => activate()}>Activate</button>
+        {isRunning ? 'running' : 'not running'}
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+
+  await findByText('not running')
+
+  fireEvent.click(getByText('Activate'))
+  await findByText('running')
+})
