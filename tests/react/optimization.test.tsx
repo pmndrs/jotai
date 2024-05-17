@@ -273,7 +273,7 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
 })
 
 // TODO
-it.skip('no extra rerenders after mounted (#2530)', async () => {
+it('no extra rerenders after mounted (#2558)', async () => {
   const baseAtom = atom(0)
 
   let renderCount = 0
