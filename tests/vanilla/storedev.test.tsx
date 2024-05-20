@@ -160,7 +160,6 @@ describe.skipIf(!IS_DEV_STORE2)('[DEV-ONLY] dev-only methods rev4', () => {
     const countCb = vi.fn()
     const derivedCb = vi.fn()
     store.set(countAtom, 2)
-    store.set(countAtom, 4)
     const unsubCount = store.sub(countAtom, countCb)
     const unsubDerived = store.sub(derivedAtom, derivedCb)
     store.dev4_restore_atoms([
