@@ -681,10 +681,10 @@ export const createStore = (): Store => {
         ;(store as any)[key] = fn
       },
       dev4_restore_atoms: (values) => {
-        const pendingPair = createPendingPair()
+        const pendingPair = createPending()
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
-            setAtomStateValueOrPromise(getAtomState(atom), value)
+            setAtomStateValueOrPromise(atom, getAtomState(atom), value)
             recomputeDependents(pendingPair, atom)
           }
         }
