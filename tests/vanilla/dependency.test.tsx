@@ -180,9 +180,7 @@ it('should not provide stale values to conditional dependents', () => {
   store.sub(filteredAtom, () => undefined)
   store.sub(stageAtom, () => undefined)
 
-  expect(store.get(stageAtom), 'should start without filter').to.equal(
-    'no-filter',
-  )
+  expect(store.get(stageAtom), 'should start without filter').toBe('no-filter')
   store.set(hasFilterAtom, true)
-  expect(store.get(stageAtom), 'should update').to.equal('is-empty')
+  expect(store.get(stageAtom), 'should update').toBe('is-empty')
 })
