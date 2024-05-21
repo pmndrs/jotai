@@ -547,6 +547,7 @@ export const createStore = (): Store => {
       }
       if (hasChangedDeps) {
         const nextAtomState = readAtomState(a, isMarked)
+        addPendingDependent(a, nextAtomState)
         if (!isEqualAtomValue(prevAtomState, nextAtomState)) {
           changedAtoms.add(a)
         }
