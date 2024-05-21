@@ -136,7 +136,7 @@
     "@types/babel__core": "^7.20.5",
     "@types/babel__template": "^7.4.4",
     "@types/node": "^20.12.12",
-    "@types/react": "18.3.2",
+    "@types/react": "^18.3.2",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "7.10.0",
     "@typescript-eslint/parser": "7.10.0",
