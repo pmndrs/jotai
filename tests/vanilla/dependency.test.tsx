@@ -153,3 +153,34 @@ it('keeps atoms mounted between recalculations', async () => {
     unmounted: 0,
   })
 })
+
+it('should not provide stale values to conditional dependents', () => {
+  const dataAtom = atom<number[]>([100])
+  const hasFilterAtom = atom(false)
+  const filteredAtom = atom((get) => {
+    const data = get(dataAtom)
+    const hasFilter = get(hasFilterAtom)
+    if (hasFilter) {
+      return []
+    } else {
+      return data
+    }
+  })
+  const stageAtom = atom((get) => {
+    const hasFilter = get(hasFilterAtom)
+    if (hasFilter) {
+      const filtered = get(filteredAtom)
+      return filtered.length === 0 ? 'is-empty' : 'has-data'
+    } else {
+      return 'no-filter'
+    }
+  })
+
+  const store = createStore()
+  store.sub(filteredAtom, () => undefined)
+  store.sub(stageAtom, () => undefined)
+
+  expect(store.get(stageAtom), 'should start without filter').toBe('no-filter')
+  store.set(hasFilterAtom, true)
+  expect(store.get(stageAtom), 'should update').toBe('is-empty')
+})
