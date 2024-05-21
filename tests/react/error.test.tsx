@@ -1,6 +1,7 @@
 import { Component, StrictMode, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -101,7 +102,7 @@ it('can throw an error in read function', async () => {
 
   await findByText('no error')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('errored')
 })
 
@@ -163,7 +164,7 @@ it('can throw a chained error in read function', async () => {
 
   await findByText('no error')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('errored')
 })
 
@@ -227,7 +228,7 @@ it('can throw an error in async read function', async () => {
 
   await findByText('no error')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('errored')
 })
 
@@ -267,7 +268,7 @@ it('can throw an error in write function', async () => {
   await findByText('no error')
   expect(errorMessages).not.toContain('Error: error_in_write_function')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   expect(errorMessages).toContain('Error: error_in_write_function')
 })
 
@@ -309,7 +310,7 @@ it('can throw an error in async write function', async () => {
   await findByText('no error')
   expect(errorMessages).not.toContain('Error: error_in_async_write_function')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     expect(errorMessages).toContain('Error: error_in_async_write_function')
   })
@@ -357,7 +358,7 @@ it('can throw a chained error in write function', async () => {
   await findByText('no error')
   expect(errorMessages).not.toContain('Error: chained_err_in_write')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   expect(errorMessages).toContain('Error: chained_err_in_write')
 })
 
@@ -442,7 +443,7 @@ describe('throws an error while updating in effect cleanup', () => {
       'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
 
-    fireEvent.click(getByText('close'))
+    await userEvent.click(getByText('close'))
     expect(errorMessages).toContain(
       'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
@@ -464,7 +465,7 @@ describe('throws an error while updating in effect cleanup', () => {
       'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
 
-    fireEvent.click(getByText('close'))
+    await userEvent.click(getByText('close'))
     expect(errorMessages).toContain(
       'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
@@ -511,8 +512,8 @@ describe('error recovery', () => {
 
     await findByText('errored')
 
-    fireEvent.click(getByText('increment'))
-    fireEvent.click(getByText('retry'))
+    await userEvent.click(getByText('increment'))
+    await userEvent.click(getByText('retry'))
     await findByText('Value: 1')
   })
 
@@ -546,8 +547,8 @@ describe('error recovery', () => {
     resolve()
     await findByText('errored')
 
-    fireEvent.click(getByText('increment'))
-    fireEvent.click(getByText('retry'))
+    await userEvent.click(getByText('increment'))
+    await userEvent.click(getByText('retry'))
     resolve()
     await findByText('Value: 1')
   })
