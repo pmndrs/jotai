@@ -61,7 +61,7 @@ jobs:
           sed -i~ 's/"jotai": \["\.\/src\/index\.ts"\],/"jotai": [".\/dist\/ts3.8\/index.d.ts"],/' tsconfig.json
           sed -i~ 's/"jotai\/\*": \["\.\/src\/\*\.ts"\]/"jotai\/*": [".\/dist\/ts3.8\/*.d.ts"]/' tsconfig.json
           sed -i~ 's/"include": .*/"include": ["src\/types.d.ts", "dist\/**\/*", "tests\/**\/*"],/' tsconfig.json
-          pnpm add -D @testing-library/user-event@14.4.3,
+          pnpm add -D @testing-library/user-event@14.4.3
       - name: Patch for Older TS
         if: ${{ matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
