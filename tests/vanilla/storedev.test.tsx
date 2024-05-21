@@ -136,4 +136,40 @@ describe.skipIf(!IS_DEV_STORE2)('[DEV-ONLY] dev-only methods rev4', () => {
     const weakMap = store.dev4_get_internal_weak_map()
     expect(weakMap.get(countAtom)?.v).toEqual(1)
   })
+
+  it('should restore atoms and its dependencies correctly', () => {
+    const store = createStore() as any
+    if (!('dev4_restore_atoms' in store)) {
+      throw new Error('dev methods are not available')
+    }
+    const countAtom = atom(0)
+    const derivedAtom = atom((get) => get(countAtom) * 2)
+    store.set(countAtom, 1)
+    store.dev4_restore_atoms([[countAtom, 2]])
+    expect(store.get(countAtom)).toBe(2)
+    expect(store.get?.(derivedAtom)).toBe(4)
+  })
+
+  it('should restore atoms and call store listeners correctly', () => {
+    const store = createStore() as any
+    if (!('dev4_restore_atoms' in store)) {
+      throw new Error('dev methods are not available')
+    }
+    const countAtom = atom(0)
+    const derivedAtom = atom((get) => get(countAtom) * 2)
+    const countCb = vi.fn()
+    const derivedCb = vi.fn()
+    store.set(countAtom, 2)
+    const unsubCount = store.sub(countAtom, countCb)
+    const unsubDerived = store.sub(derivedAtom, derivedCb)
+    store.dev4_restore_atoms([
+      [countAtom, 1],
+      [derivedAtom, 2],
+    ])
+
+    expect(countCb).toHaveBeenCalled()
+    expect(derivedCb).toHaveBeenCalled()
+    unsubCount()
+    unsubDerived()
+  })
 })
