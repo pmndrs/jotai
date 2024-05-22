@@ -1,5 +1,5 @@
-import { atom } from '../../vanilla.ts'
 import type { WritableAtom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.ts'
 import { RESET } from './constants.ts'
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
@@ -12,13 +12,6 @@ type Subscribe<Value> = (
 ) => Unsubscribe
 
 type Unsubscribe = () => void
-
-type SubscribeHandler<Value> = (
-  subscribe: Subscribe<Value>,
-  key: string,
-  callback: (value: Value) => void,
-  initialValue: Value,
-) => Unsubscribe
 
 type SetStateActionWithReset<Value> =
   | Value
@@ -145,25 +138,23 @@ export function createJSONStorage<Value>(
     }
   }
 
-  const handleSubscribe: SubscribeHandler<Value> = (
-    subscriber,
-    key,
-    callback,
-    initialValue,
-  ) => {
-    function callbackWithParser(v: Value) {
-      let newValue: Value
-      try {
-        newValue = JSON.parse((v as string) || '')
-      } catch {
-        newValue = initialValue
+  const createHandleSubscribe =
+    (subscriber: Subscribe<Value>) =>
+    (...params: Parameters<Subscribe<Value>>) => {
+      const [key, callback, initialValue] = params
+      function callbackWithParser(v: Value) {
+        let newValue: Value
+        try {
+          newValue = JSON.parse((v as string) || '')
+        } catch {
+          newValue = initialValue
+        }
+
+        callback(newValue as Value)
       }
 
-      callback(newValue as Value)
+      return subscriber(key, callbackWithParser, initialValue)
     }
-
-    return subscriber(key, callbackWithParser, initialValue)
-  }
 
   const storage: AsyncStorage<Value> | SyncStorage<Value> = {
     getItem: (key, initialValue) => {
@@ -198,12 +189,11 @@ export function createJSONStorage<Value>(
     typeof window.addEventListener === 'function'
   ) {
     if (getStringStorage()?.subscribe) {
-      storage.subscribe = handleSubscribe.bind(
-        null,
+      storage.subscribe = createHandleSubscribe(
         getStringStorage()!.subscribe as unknown as Subscribe<Value>,
       )
     } else if (window.Storage) {
-      storage.subscribe = handleSubscribe.bind(null, webStorageSubscribe)
+      storage.subscribe = createHandleSubscribe(webStorageSubscribe)
     }
   }
   return storage
