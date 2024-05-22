@@ -2,8 +2,8 @@ import {
   Component,
   StrictMode,
   Suspense,
-  useEffect,
   version as reactVersion,
+  useEffect,
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
