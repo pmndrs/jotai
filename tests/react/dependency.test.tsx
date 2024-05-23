@@ -1,5 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -41,7 +42,7 @@ it('works with 2 level dependencies', async () => {
 
   await findByText('commits: 1, count: 1, doubled: 2, tripled: 6')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('commits: 2, count: 2, doubled: 4, tripled: 12')
 })
 
@@ -78,12 +79,12 @@ it('works a primitive atom and a dependent async atom', async () => {
   resolve()
   await findByText('count: 1, doubled: 2')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve()
   await findByText('count: 2, doubled: 4')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve()
   await findByText('count: 3, doubled: 6')
@@ -138,20 +139,20 @@ it('should keep an atom value even if unmounted', async () => {
   })
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 1')
     getByText('derived: 1')
   })
   expect(derivedFn).toHaveReturnedTimes(2)
 
-  fireEvent.click(getByText('toggle'))
+  await userEvent.click(getByText('toggle'))
   await waitFor(() => {
     getByText('hidden')
   })
   expect(derivedFn).toHaveReturnedTimes(2)
 
-  fireEvent.click(getByText('toggle'))
+  await userEvent.click(getByText('toggle'))
   await waitFor(() => {
     getByText('count: 1')
     getByText('derived: 1')
@@ -198,15 +199,15 @@ it('should keep a dependent atom value even if unmounted', async () => {
   await findByText('derived: 0')
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  fireEvent.click(getByText('toggle'))
+  await userEvent.click(getByText('toggle'))
   await findByText('count: 0')
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 1')
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  fireEvent.click(getByText('toggle'))
+  await userEvent.click(getByText('toggle'))
   await findByText('derived: 1')
   expect(derivedFn).toHaveReturnedTimes(2)
 })
@@ -244,7 +245,7 @@ it('should bail out updating if not changed', async () => {
   })
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 0')
     getByText('derived: 0')
@@ -298,7 +299,7 @@ it('should bail out updating if not changed, 2 level', async () => {
   expect(getDataObjFn).toHaveReturnedTimes(1)
   expect(getAnotherCountFn).toHaveReturnedTimes(1)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 2')
     getByText('anotherCount: 10')
@@ -340,7 +341,7 @@ it('derived atom to update base atom in callback', async () => {
 
   await findByText('commits: 1, count: 1, doubled: 2')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('commits: 2, count: 2, doubled: 4')
 })
 
@@ -370,10 +371,10 @@ it('can read sync derived atom in write without initializing', async () => {
 
   await findByText('count: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 2')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 3')
 })
 
@@ -424,24 +425,24 @@ it('can remount atoms with dependency (#490)', async () => {
     getByText('derived: 0')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 1')
     getByText('derived: 1')
   })
 
-  fireEvent.click(getByText('toggle'))
+  await userEvent.click(getByText('toggle'))
   await waitFor(() => {
     getByText('hidden')
   })
 
-  fireEvent.click(getByText('toggle'))
+  await userEvent.click(getByText('toggle'))
   await waitFor(() => {
     getByText('count: 1')
     getByText('derived: 1')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 2')
     getByText('derived: 2')
@@ -505,31 +506,31 @@ it('can remount atoms with intermediate atom', async () => {
     getByText('derived: 2')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 2')
     getByText('derived: 4')
   })
 
-  fireEvent.click(getByText('toggle'))
+  await userEvent.click(getByText('toggle'))
   await waitFor(() => {
     getByText('count: 2')
     getByText('hidden')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 3')
     getByText('hidden')
   })
 
-  fireEvent.click(getByText('toggle'))
+  await userEvent.click(getByText('toggle'))
   await waitFor(() => {
     getByText('count: 3')
     getByText('derived: 6')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 4')
     getByText('derived: 8')
@@ -588,7 +589,7 @@ it('can update dependents with useEffect (#512)', async () => {
     getByText('derived: 2')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 2')
     getByText('derived: 4')
@@ -635,11 +636,11 @@ it('update unmounted atom with intermediate atom', async () => {
 
   await findByText('derived: 2')
 
-  fireEvent.click(getByText('toggle enabled'))
-  fireEvent.click(getByText('increment count'))
+  await userEvent.click(getByText('toggle enabled'))
+  await userEvent.click(getByText('increment count'))
   await findByText('derived: -1')
 
-  fireEvent.click(getByText('toggle enabled'))
+  await userEvent.click(getByText('toggle enabled'))
   await findByText('derived: 4')
 })
 
@@ -681,7 +682,7 @@ it('Should bail for derived sync chains (#877)', async () => {
   await findByText('My very long data')
   expect(syncAtomCount).toBe(1)
 
-  fireEvent.click(getByText(`set value to 'hello'`))
+  await userEvent.click(getByText(`set value to 'hello'`))
 
   await findByText('My very long data')
   expect(syncAtomCount).toBe(1)
@@ -727,7 +728,7 @@ it('Should bail for derived async chains (#877)', async () => {
   await findByText('My very long data')
   expect(syncAtomCount).toBe(1)
 
-  fireEvent.click(getByText(`set value to 'hello'`))
+  await userEvent.click(getByText(`set value to 'hello'`))
 
   await findByText('My very long data')
   expect(syncAtomCount).toBe(1)
@@ -772,7 +773,7 @@ it('update correctly with async updates (#1250)', async () => {
     getByText('countIsGreaterThanOne: false')
   })
 
-  fireEvent.click(getByText('Increment Count Twice'))
+  await userEvent.click(getByText('Increment Count Twice'))
   await waitFor(() => {
     getByText('alsoCount: 2')
     getByText('countIsGreaterThanOne: true')
@@ -816,7 +817,7 @@ describe('glitch free', () => {
     await findByText('value: v0: 0, v1: 0, v2: 0')
     expect(computeValue).toHaveBeenCalledTimes(1)
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('value: v0: 1, v1: 1, v2: 1')
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
@@ -857,7 +858,7 @@ describe('glitch free', () => {
     await findByText('value: 0')
     expect(computeValue).toHaveBeenCalledTimes(1)
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('value: 1')
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
@@ -900,7 +901,7 @@ describe('glitch free', () => {
     await findByText('value: 0')
     expect(computeValue).toHaveBeenCalledTimes(1)
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('value: 1')
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
@@ -950,11 +951,11 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', as
     </StrictMode>,
   )
 
-  fireEvent.click(getByText('hide'))
+  await userEvent.click(getByText('hide'))
   expect(firstDerivedFn).toBeCalledTimes(1)
   firstDerivedFn?.mockClear()
 
-  fireEvent.click(getByText('show'))
+  await userEvent.click(getByText('show'))
   expect(firstDerivedFn).toBeCalledTimes(0)
 })
 
@@ -992,6 +993,49 @@ it('works with unused hook (#2554)', async () => {
 
   await findByText('not running')
 
-  fireEvent.click(getByText('Activate'))
+  await userEvent.click(getByText('Activate'))
   await findByText('running')
+})
+
+it('works with async dependencies (#2565)', async () => {
+  const countAtom = atom(0)
+  const countUpAction = atom(null, (_get, set) => {
+    set(countAtom, (prev) => prev + 1)
+  })
+  const totalCountAtom = atom(async (get) => {
+    const base = await Promise.resolve(100)
+    const count = get(countAtom)
+    return base + count
+  })
+
+  const Count = () => {
+    const count = useAtomValue(totalCountAtom)
+    return <p>count: {count}</p>
+  }
+  const App = () => {
+    const up = useSetAtom(countUpAction)
+    return (
+      <div>
+        <button onClick={up}>Count Up</button>
+        <Suspense fallback="loading">
+          <Count />
+        </Suspense>
+      </div>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+
+  await findByText('loading')
+  await findByText('count: 100')
+
+  await userEvent.click(getByText('Count Up'))
+  await findByText('count: 101')
+
+  await userEvent.click(getByText('Count Up'))
+  await findByText('count: 102')
 })
