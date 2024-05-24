@@ -455,6 +455,7 @@ export const createStore = (): Store => {
 
   const recomputeDependents = (pending: Pending, atom: AnyAtom) => {
     const getDependents = (a: AnyAtom): Set<AnyAtom> => {
+      a = resolveAtom(a) // not sure if this is correct
       const aState = getAtomState(a)
       const dependents = new Set(aState.m?.t)
       for (const atomWithPendingContinuablePromise of aState.p) {
