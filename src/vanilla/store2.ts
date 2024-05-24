@@ -243,10 +243,7 @@ const flushPending = (pending: Pending) => {
 // for debugging purpose only
 type DevStoreRev4 = {
   dev4_get_internal_weak_map: () => WeakMap<AnyAtom, AtomState>
-  dev4_override_method: <K extends keyof PrdStore>(
-    key: K,
-    fn: PrdStore[K],
-  ) => void
+  dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
 type PrdStore = {
@@ -346,11 +343,11 @@ export const createStore = (): Store => {
   const readAtomState = <Value>(
     pending: Pending | undefined,
     atom: Atom<Value>,
-    force?: true,
+    force?: (a: AnyAtom) => boolean,
   ): AtomState<Value> => {
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
-    if (!force && isAtomStateInitialized(atomState)) {
+    if (!force?.(atom) && isAtomStateInitialized(atomState)) {
       // If the atom is mounted, we can use the cache.
       // because it should have been updated by dependencies.
       if (atomState.m) {
@@ -363,7 +360,7 @@ export const createStore = (): Store => {
           ([a, n]) =>
             // Recursively, read the atom state of the dependency, and
             // check if the atom epoch number is unchanged
-            readAtomState(pending, a).n === n,
+            readAtomState(pending, a, force).n === n,
         )
       ) {
         return atomState
@@ -386,7 +383,7 @@ export const createStore = (): Store => {
         return returnAtomValue(aState)
       }
       // a !== atom
-      const aState = readAtomState(pending, a)
+      const aState = readAtomState(pending, a, force)
       if (isSync) {
         addDependency(pending, atom, a, aState)
       } else {
@@ -498,6 +495,7 @@ export const createStore = (): Store => {
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
+    const isMarked = (a: AnyAtom) => markedAtoms.has(a)
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
       const a = topsortedAtoms[i]!
       const aState = getAtomState(a)
@@ -511,13 +509,14 @@ export const createStore = (): Store => {
         }
       }
       if (hasChangedDeps) {
-        readAtomState(pending, a, true)
+        readAtomState(pending, a, isMarked)
         mountDependencies(pending, a, aState)
         if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
           addPendingAtom(pending, a, aState)
           changedAtoms.add(a)
         }
       }
+      markedAtoms.delete(a)
     }
   }
 
@@ -676,8 +675,22 @@ export const createStore = (): Store => {
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => atomStateMap,
-      dev4_override_method: (key, fn) => {
-        ;(store as any)[key] = fn
+      dev4_restore_atoms: (values) => {
+        const pending = createPending()
+        for (const [atom, value] of values) {
+          if (hasInitialValue(atom)) {
+            const aState = getAtomState(atom)
+            const hasPrevValue = 'v' in aState
+            const prevValue = aState.v
+            setAtomStateValueOrPromise(atom, aState, value)
+            mountDependencies(pending, atom, aState)
+            if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
+              addPendingAtom(pending, atom, aState)
+              recomputeDependents(pending, atom)
+            }
+          }
+        }
+        flushPending(pending)
       },
     }
     return store
