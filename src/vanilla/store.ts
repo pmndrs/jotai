@@ -491,6 +491,7 @@ export const createStore = (): Store => {
 
   const recomputeDependents = (atom: AnyAtom): void => {
     const getDependents = (a: AnyAtom): Dependents => {
+      a = resolveAtom(a) // not sure if this is correct
       const dependents = new Set(mountedMap.get(a)?.t)
       pendingMap.get(a)?.[1].forEach((dependent) => {
         dependents.add(dependent)
