@@ -182,11 +182,10 @@ export const createStore = (): Store => {
     mountedAtoms = new Set()
   }
 
-  const resolveAtom = <Value>(atom: Atom<Value>) =>
-    store.unstable_resolve?.(atom) || atom
-
   const getAtomState = <Value>(atom: Atom<Value>) =>
-    atomStateMap.get(atom) as AtomState<Value> | undefined
+    atomStateMap.get(store.unstable_resolve?.(atom) || atom) as
+      | AtomState<Value>
+      | undefined
 
   const addPendingDependent = (atom: AnyAtom, atomState: AtomState) => {
     atomState.d.forEach((_, a) => {
@@ -209,8 +208,7 @@ export const createStore = (): Store => {
       Object.freeze(atomState)
     }
     const prevAtomState = getAtomState(atom)
-    atomStateMap.set(atom, atomState)
-    pendingStack[pendingStack.length - 1]?.add(atom)
+    atomStateMap.set(store.unstable_resolve?.(atom) || atom, atomState)
     if (!pendingMap.has(atom)) {
       pendingMap.set(atom, [prevAtomState, new Set()])
       addPendingDependent(atom, atomState)
@@ -239,7 +237,7 @@ export const createStore = (): Store => {
     )
     let changed = false
     nextDependencies.forEach((aState, a) => {
-      if (!aState && a === resolveAtom(atom)) {
+      if (!aState && a === atom) {
         aState = nextAtomState
       }
       if (aState) {
@@ -411,7 +409,7 @@ export const createStore = (): Store => {
       // If all dependencies haven't changed, we can use the cache.
       if (
         Array.from(atomState.d).every(([a, s]) => {
-          if (a === resolveAtom(atom)) {
+          if (a === atom) {
             return true
           }
           const aState = readAtomState(a, force)
@@ -427,7 +425,7 @@ export const createStore = (): Store => {
     const nextDependencies: NextDependencies = new Map()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      if (a === resolveAtom(atom as AnyAtom)) {
+      if (a === (atom as AnyAtom)) {
         const aState = getAtomState(a)
         if (aState) {
           nextDependencies.set(a, aState)
@@ -491,7 +489,6 @@ export const createStore = (): Store => {
 
   const recomputeDependents = (atom: AnyAtom): void => {
     const getDependents = (a: AnyAtom): Dependents => {
-      a = resolveAtom(a) // not sure if this is correct
       const dependents = new Set(mountedMap.get(a)?.t)
       pendingMap.get(a)?.[1].forEach((dependent) => {
         dependents.add(dependent)
@@ -569,7 +566,7 @@ export const createStore = (): Store => {
         pendingStack.push(new Set([a]))
       }
       let r: R | undefined
-      if (a === resolveAtom(atom as AnyAtom)) {
+      if (a === (atom as AnyAtom)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
@@ -817,7 +814,7 @@ export const createStore = (): Store => {
             }
           },
           dev_get_mounted_atoms: () => mountedAtoms.values(),
-          dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
+          dev_get_atom_state: getAtomState,
           dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
           dev_restore_atoms: (
             values: Iterable<readonly [AnyAtom, AnyValue]>,
