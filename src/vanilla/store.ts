@@ -8,9 +8,6 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
-const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
-  atom.unstable_is ? atom.unstable_is(a) : a === atom
-
 const hasInitialValue = <T extends Atom<AnyValue>>(
   atom: T,
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
@@ -150,6 +147,7 @@ type PrdStore = {
     ...args: Args
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
+  unstable_resolve?: <Value>(atom: Atom<Value>) => Atom<Value>
 }
 type Store = PrdStore & Partial<DevStoreRev2>
 
@@ -183,6 +181,9 @@ export const createStore = (): Store => {
     devListenersRev2 = new Set()
     mountedAtoms = new Set()
   }
+
+  const resolveAtom = <Value>(atom: Atom<Value>) =>
+    store.unstable_resolve?.(atom) || atom
 
   const getAtomState = <Value>(atom: Atom<Value>) =>
     atomStateMap.get(atom) as AtomState<Value> | undefined
@@ -239,7 +240,7 @@ export const createStore = (): Store => {
     )
     let changed = false
     nextDependencies.forEach((aState, a) => {
-      if (!aState && isSelfAtom(atom, a)) {
+      if (!aState && a === resolveAtom(atom)) {
         aState = nextAtomState
       }
       if (aState) {
@@ -411,8 +412,7 @@ export const createStore = (): Store => {
       // If all dependencies haven't changed, we can use the cache.
       if (
         Array.from(atomState.d).every(([a, s]) => {
-          // we shouldn't use isSelfAtom. https://github.com/pmndrs/jotai/pull/2371
-          if (a === atom) {
+          if (a === resolveAtom(atom)) {
             return true
           }
           const aState = readAtomState(a, force)
@@ -428,7 +428,7 @@ export const createStore = (): Store => {
     const nextDependencies: NextDependencies = new Map()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      if (isSelfAtom(atom, a)) {
+      if (a === resolveAtom(atom as AnyAtom)) {
         const aState = getAtomState(a)
         if (aState) {
           nextDependencies.set(a, aState)
@@ -513,7 +513,6 @@ export const createStore = (): Store => {
       }
       markedAtoms.add(n)
       for (const m of getDependents(n)) {
-        // we shouldn't use isSelfAtom here.
         if (n !== m) {
           visit(m)
         }
@@ -570,7 +569,7 @@ export const createStore = (): Store => {
         pendingStack.push(new Set([a]))
       }
       let r: R | undefined
-      if (isSelfAtom(atom, a)) {
+      if (a === resolveAtom(atom as AnyAtom)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
@@ -804,41 +803,44 @@ export const createStore = (): Store => {
     }
   }
 
-  if (import.meta.env?.MODE !== 'production') {
-    return {
-      get: readAtom,
-      set: writeAtom,
-      sub: subscribeAtom,
-      // store dev methods (these are tentative and subject to change without notice)
-      dev_subscribe_store: (l) => {
-        devListenersRev2.add(l)
-        return () => {
-          devListenersRev2.delete(l)
+  const store: Store =
+    import.meta.env?.MODE !== 'production'
+      ? {
+          get: readAtom,
+          set: writeAtom,
+          sub: subscribeAtom,
+          // store dev methods (these are tentative and subject to change without notice)
+          dev_subscribe_store: (l: DevListenerRev2) => {
+            devListenersRev2.add(l)
+            return () => {
+              devListenersRev2.delete(l)
+            }
+          },
+          dev_get_mounted_atoms: () => mountedAtoms.values(),
+          dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
+          dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
+          dev_restore_atoms: (
+            values: Iterable<readonly [AnyAtom, AnyValue]>,
+          ) => {
+            pendingStack.push(new Set())
+            for (const [atom, valueOrPromise] of values) {
+              if (hasInitialValue(atom)) {
+                setAtomValueOrPromise(atom, valueOrPromise)
+                recomputeDependents(atom)
+              }
+            }
+            const flushed = flushPending(pendingStack.pop()!)
+            devListenersRev2.forEach((l) =>
+              l({ type: 'restore', flushed: flushed! }),
+            )
+          },
         }
-      },
-      dev_get_mounted_atoms: () => mountedAtoms.values(),
-      dev_get_atom_state: (a) => atomStateMap.get(a),
-      dev_get_mounted: (a) => mountedMap.get(a),
-      dev_restore_atoms: (values) => {
-        pendingStack.push(new Set())
-        for (const [atom, valueOrPromise] of values) {
-          if (hasInitialValue(atom)) {
-            setAtomValueOrPromise(atom, valueOrPromise)
-            recomputeDependents(atom)
-          }
+      : {
+          get: readAtom,
+          set: writeAtom,
+          sub: subscribeAtom,
         }
-        const flushed = flushPending(pendingStack.pop()!)
-        devListenersRev2.forEach((l) =>
-          l({ type: 'restore', flushed: flushed! }),
-        )
-      },
-    }
-  }
-  return {
-    get: readAtom,
-    set: writeAtom,
-    sub: subscribeAtom,
-  }
+  return store
 }
 
 let defaultStore: Store | undefined

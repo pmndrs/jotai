@@ -8,9 +8,6 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
-const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
-  atom.unstable_is ? atom.unstable_is(a) : a === atom
-
 const hasInitialValue = <T extends Atom<AnyValue>>(
   atom: T,
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
@@ -257,6 +254,7 @@ type PrdStore = {
     ...args: Args
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
+  unstable_resolve?: <Value>(atom: Atom<Value>) => Atom<Value>
 }
 type Store = PrdStore | (PrdStore & DevStoreRev4)
 
@@ -265,6 +263,9 @@ export type INTERNAL_PrdStore = PrdStore
 
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
+
+  const resolveAtom = <Value>(atom: Atom<Value>) =>
+    store.unstable_resolve?.(atom) || atom
 
   const getAtomState = <Value>(atom: Atom<Value>) => {
     let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
@@ -374,7 +375,7 @@ export const createStore = (): Store => {
     atomState.d.clear()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      if (isSelfAtom(atom, a)) {
+      if (a === resolveAtom(atom as AnyAtom)) {
         const aState = getAtomState(a)
         if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
@@ -483,7 +484,6 @@ export const createStore = (): Store => {
       }
       markedAtoms.add(n)
       for (const m of getDependents(n)) {
-        // we shouldn't use isSelfAtom here.
         if (n !== m) {
           visit(m)
         }
@@ -536,7 +536,7 @@ export const createStore = (): Store => {
       ...args: As
     ) => {
       let r: R | undefined
-      if (isSelfAtom(atom, a)) {
+      if (a === resolveAtom(atom as AnyAtom)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
@@ -672,41 +672,41 @@ export const createStore = (): Store => {
     }
   }
 
-  if (import.meta.env?.MODE !== 'production') {
-    const store: Store = {
-      get: readAtom,
-      set: writeAtom,
-      sub: subscribeAtom,
-      // store dev methods (these are tentative and subject to change without notice)
-      dev4_get_internal_weak_map: () => atomStateMap,
-      dev4_override_method: (key, fn) => {
-        ;(store as any)[key] = fn
-      },
-      dev4_restore_atoms: (values) => {
-        const pending = createPending()
-        for (const [atom, value] of values) {
-          if (hasInitialValue(atom)) {
-            const aState = getAtomState(atom)
-            const hasPrevValue = 'v' in aState
-            const prevValue = aState.v
-            setAtomStateValueOrPromise(atom, aState, value)
-            mountDependencies(pending, atom, aState)
-            if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
-              addPendingAtom(pending, atom, aState)
-              recomputeDependents(pending, atom)
+  const store: Store =
+    import.meta.env?.MODE !== 'production'
+      ? {
+          get: readAtom,
+          set: writeAtom,
+          sub: subscribeAtom,
+          // store dev methods (these are tentative and subject to change without notice)
+          dev4_get_internal_weak_map: () => atomStateMap,
+          dev4_override_method: (key, fn) => {
+            ;(store as any)[key] = fn
+          },
+          dev4_restore_atoms: (values) => {
+            const pending = createPending()
+            for (const [atom, value] of values) {
+              if (hasInitialValue(atom)) {
+                const aState = getAtomState(atom)
+                const hasPrevValue = 'v' in aState
+                const prevValue = aState.v
+                setAtomStateValueOrPromise(atom, aState, value)
+                mountDependencies(pending, atom, aState)
+                if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
+                  addPendingAtom(pending, atom, aState)
+                  recomputeDependents(pending, atom)
+                }
+              }
             }
-          }
+            flushPending(pending)
+          },
         }
-        flushPending(pending)
-      },
-    }
-    return store
-  }
-  return {
-    get: readAtom,
-    set: writeAtom,
-    sub: subscribeAtom,
-  }
+      : {
+          get: readAtom,
+          set: writeAtom,
+          sub: subscribeAtom,
+        }
+  return store
 }
 
 let defaultStore: Store | undefined
