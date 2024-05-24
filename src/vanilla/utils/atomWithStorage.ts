@@ -1,9 +1,11 @@
-import type { WritableAtom } from '../../vanilla.ts'
 import { atom } from '../../vanilla.ts'
+import type { WritableAtom } from '../../vanilla.ts'
 import { RESET } from './constants.ts'
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as any)?.then === 'function'
+
+type Unsubscribe = () => void
 
 type Subscribe<Value> = (
   key: string,
@@ -11,7 +13,10 @@ type Subscribe<Value> = (
   initialValue: Value,
 ) => Unsubscribe
 
-type Unsubscribe = () => void
+type StringSubscribe = (
+  key: string,
+  callback: (value: string | null) => void,
+) => Unsubscribe
 
 type SetStateActionWithReset<Value> =
   | Value
@@ -22,36 +27,28 @@ export interface AsyncStorage<Value> {
   getItem: (key: string, initialValue: Value) => PromiseLike<Value>
   setItem: (key: string, newValue: Value) => PromiseLike<void>
   removeItem: (key: string) => PromiseLike<void>
-  subscribe?: (
-    key: string,
-    callback: (value: Value) => void,
-    initialValue: Value,
-  ) => Unsubscribe
+  subscribe?: Subscribe<Value>
 }
 
 export interface SyncStorage<Value> {
   getItem: (key: string, initialValue: Value) => Value
   setItem: (key: string, newValue: Value) => void
   removeItem: (key: string) => void
-  subscribe?: (
-    key: string,
-    callback: (value: Value) => void,
-    initialValue: Value,
-  ) => Unsubscribe
+  subscribe?: Subscribe<Value>
 }
 
 export interface AsyncStringStorage {
   getItem: (key: string) => PromiseLike<string | null>
   setItem: (key: string, newValue: string) => PromiseLike<void>
   removeItem: (key: string) => PromiseLike<void>
-  subscribe?: Subscribe<string | null>
+  subscribe?: StringSubscribe
 }
 
 export interface SyncStringStorage {
   getItem: (key: string) => string | null
   setItem: (key: string, newValue: string) => void
   removeItem: (key: string) => void
-  subscribe?: Subscribe<string | null>
+  subscribe?: StringSubscribe
 }
 
 export function withStorageValidator<Value>(
@@ -123,39 +120,6 @@ export function createJSONStorage<Value>(
   let lastStr: string | undefined
   let lastValue: Value
 
-  const webStorageSubscribe: Subscribe<Value> = (key, callback) => {
-    if (!(getStringStorage() instanceof window.Storage)) {
-      return () => {}
-    }
-    const storageEventCallback = (e: StorageEvent) => {
-      if (e.storageArea === getStringStorage() && e.key === key) {
-        callback((e.newValue || '') as Value)
-      }
-    }
-    window.addEventListener('storage', storageEventCallback)
-    return () => {
-      window.removeEventListener('storage', storageEventCallback)
-    }
-  }
-
-  const createHandleSubscribe =
-    (subscriber: Subscribe<Value>) =>
-    (...params: Parameters<Subscribe<Value>>) => {
-      const [key, callback, initialValue] = params
-      function callbackWithParser(v: Value) {
-        let newValue: Value
-        try {
-          newValue = JSON.parse((v as string) || '')
-        } catch {
-          newValue = initialValue
-        }
-
-        callback(newValue as Value)
-      }
-
-      return subscriber(key, callbackWithParser, initialValue)
-    }
-
   const storage: AsyncStorage<Value> | SyncStorage<Value> = {
     getItem: (key, initialValue) => {
       const parse = (str: string | null) => {
@@ -184,17 +148,41 @@ export function createJSONStorage<Value>(
     removeItem: (key) => getStringStorage()?.removeItem(key),
   }
 
-  if (
-    typeof window !== 'undefined' &&
-    typeof window.addEventListener === 'function'
-  ) {
-    if (getStringStorage()?.subscribe) {
-      storage.subscribe = createHandleSubscribe(
-        getStringStorage()!.subscribe as unknown as Subscribe<Value>,
-      )
-    } else if (window.Storage) {
-      storage.subscribe = createHandleSubscribe(webStorageSubscribe)
-    }
+  const createHandleSubscribe =
+    (subscriber: StringSubscribe): Subscribe<Value> =>
+    (key, callback, initialValue) =>
+      subscriber(key, (v) => {
+        let newValue: Value
+        try {
+          newValue = JSON.parse(v || '')
+        } catch {
+          newValue = initialValue
+        }
+        callback(newValue)
+      })
+
+  const subscriber: StringSubscribe | undefined =
+    getStringStorage()?.subscribe ||
+    (typeof window !== 'undefined' &&
+      typeof window.addEventListener === 'function' &&
+      ((key, callback) => {
+        if (!(getStringStorage() instanceof window.Storage)) {
+          return () => {}
+        }
+        const storageEventCallback = (e: StorageEvent) => {
+          if (e.storageArea === getStringStorage() && e.key === key) {
+            callback(e.newValue)
+          }
+        }
+        window.addEventListener('storage', storageEventCallback)
+        return () => {
+          window.removeEventListener('storage', storageEventCallback)
+        }
+      })) ||
+    undefined
+
+  if (subscriber) {
+    storage.subscribe = createHandleSubscribe(subscriber)
   }
   return storage
 }

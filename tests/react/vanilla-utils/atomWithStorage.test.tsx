@@ -636,7 +636,7 @@ describe('with subscribe method in string storage', () => {
       </StrictMode>,
     )
 
-    expect(subscribe).toHaveBeenCalledWith('dummy', expect.any(Function), 1)
+    expect(subscribe).toHaveBeenCalledWith('dummy', expect.any(Function))
   })
 
   it('createJSONStorage subscriber responds to events correctly', async () => {
