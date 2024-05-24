@@ -260,10 +260,8 @@ export type INTERNAL_PrdStore = PrdStore
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
 
-  const resolveAtom = <Value>(atom: Atom<Value>) =>
-    store.unstable_resolve?.(atom) || atom
-
   const getAtomState = <Value>(atom: Atom<Value>) => {
+    atom = store.unstable_resolve?.(atom) || atom
     let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
@@ -371,7 +369,7 @@ export const createStore = (): Store => {
     atomState.d.clear()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      if (a === resolveAtom(atom as AnyAtom)) {
+      if (a === (atom as AnyAtom)) {
         const aState = getAtomState(a)
         if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
@@ -455,7 +453,6 @@ export const createStore = (): Store => {
 
   const recomputeDependents = (pending: Pending, atom: AnyAtom) => {
     const getDependents = (a: AnyAtom): Set<AnyAtom> => {
-      a = resolveAtom(a) // not sure if this is correct
       const aState = getAtomState(a)
       const dependents = new Set(aState.m?.t)
       for (const atomWithPendingContinuablePromise of aState.p) {
@@ -533,7 +530,7 @@ export const createStore = (): Store => {
       ...args: As
     ) => {
       let r: R | undefined
-      if (a === resolveAtom(atom as AnyAtom)) {
+      if (a === (atom as AnyAtom)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
