@@ -18,16 +18,16 @@ beforeEach(() => {
     performance.clearMarks = (() => {}) as any
     performance.clearMeasures = (() => {}) as any
   }
-  // suppress ErrorBoundary error log
-  console.error = vi.fn((message: unknown, ...optionalParams: unknown[]) => {
+  // suppress error log
+  console.error = vi.fn((...args: unknown[]) => {
+    const message = String(args)
     if (
-      typeof message === 'string' &&
-      (message.includes('Error: Uncaught [Error: Test Error]') ||
-        message.includes('at ErrorBoundary'))
+      message.includes('at ErrorBoundary') ||
+      message.includes('Test Error')
     ) {
       return
     }
-    return consoleError(message, ...optionalParams)
+    return consoleError(...args)
   })
 })
 
