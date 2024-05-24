@@ -243,10 +243,6 @@ const flushPending = (pending: Pending) => {
 // for debugging purpose only
 type DevStoreRev4 = {
   dev4_get_internal_weak_map: () => WeakMap<AnyAtom, AtomState>
-  dev4_override_method: <K extends keyof PrdStore>(
-    key: K,
-    fn: PrdStore[K],
-  ) => void
   dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
@@ -679,9 +675,6 @@ export const createStore = (): Store => {
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => atomStateMap,
-      dev4_override_method: (key, fn) => {
-        ;(store as any)[key] = fn
-      },
       dev4_restore_atoms: (values) => {
         const pending = createPending()
         for (const [atom, value] of values) {
