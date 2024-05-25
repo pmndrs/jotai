@@ -209,7 +209,7 @@ const allAtom = waitForAll([fooAtom, barAtom])
 const allAtom = atom((get) => Promise.all([get(fooAtom), get(barAtom)]))
 ```
 
-Note that creating an atom in render function can cause [infinite loop](../api/atom.mdx#note-about-creating-an-atom-in-render-function)
+Note that creating an atom in render function can cause [infinite loop](../core/atom.mdx#note-about-creating-an-atom-in-render-function)
 
 #### `splitAtom` util (or some other utils) with async atoms
 
@@ -231,7 +231,7 @@ const splittedAtom = splitAtom(unwrap(asyncArrayAtom, () => []))
 ```
 
 As of writing, `unwrap` is unstable and not documented.
-You can instead use `loadable`, which gives more controll on loading status.
+You can instead use `loadable`, which gives more control on loading status.
 If you need to use `<Suspense>`, atoms-in-atom pattern would help.
 
 For more information, refer the following discussions:

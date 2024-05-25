@@ -8,7 +8,7 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
-const isSelfAtom = (atom: AnyAtom, a: AnyAtom) =>
+const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
   atom.unstable_is ? atom.unstable_is(a) : a === atom
 
 const hasInitialValue = <T extends Atom<AnyValue>>(
@@ -20,7 +20,7 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
 type CancelPromise = (next?: Promise<unknown>) => void
-const cancelPromiseMap = new WeakMap<Promise<unknown>, CancelPromise>()
+const cancelPromiseMap: WeakMap<Promise<unknown>, CancelPromise> = new WeakMap()
 
 const registerCancelPromise = (
   promise: Promise<unknown>,
@@ -124,8 +124,10 @@ type Mounted = {
   u?: OnUnmount
 }
 
+type MountedAtoms = Set<AnyAtom>
+
 // for debugging purpose only
-type StoreListenerRev2 = (
+type DevListenerRev2 = (
   action:
     | { type: 'write'; flushed: Set<AnyAtom> }
     | { type: 'async-write'; flushed: Set<AnyAtom> }
@@ -133,8 +135,23 @@ type StoreListenerRev2 = (
     | { type: 'unsub' }
     | { type: 'restore'; flushed: Set<AnyAtom> },
 ) => void
+type DevStoreRev2 = {
+  dev_subscribe_store: (l: DevListenerRev2, rev: 2) => () => void
+  dev_get_mounted_atoms: () => IterableIterator<AnyAtom>
+  dev_get_atom_state: (a: AnyAtom) => AtomState | undefined
+  dev_get_mounted: (a: AnyAtom) => Mounted | undefined
+  dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
+}
 
-type MountedAtoms = Set<AnyAtom>
+type PrdStore = {
+  get: <Value>(atom: Atom<Value>) => Value
+  set: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...args: Args
+  ) => Result
+  sub: (atom: AnyAtom, listener: () => void) => () => void
+}
+type Store = PrdStore & Partial<DevStoreRev2>
 
 /**
  * Create a new store. Each store is an independent, isolated universe of atom
@@ -152,7 +169,7 @@ type MountedAtoms = Set<AnyAtom>
  *
  * @returns A store.
  */
-export const createStore = () => {
+export const createStore = (): Store => {
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   const mountedMap = new WeakMap<AnyAtom, Mounted>()
   const pendingStack: Set<AnyAtom>[] = []
@@ -160,10 +177,10 @@ export const createStore = () => {
     AnyAtom,
     [prevAtomState: AtomState | undefined, dependents: Dependents]
   >()
-  let storeListenersRev2: Set<StoreListenerRev2>
+  let devListenersRev2: Set<DevListenerRev2>
   let mountedAtoms: MountedAtoms
   if (import.meta.env?.MODE !== 'production') {
-    storeListenersRev2 = new Set()
+    devListenersRev2 = new Set()
     mountedAtoms = new Set()
   }
 
@@ -380,11 +397,11 @@ export const createStore = () => {
 
   const readAtomState = <Value>(
     atom: Atom<Value>,
-    force?: boolean,
+    force?: (a: AnyAtom) => boolean,
   ): AtomState<Value> => {
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
-    if (!force && atomState) {
+    if (!force?.(atom) && atomState) {
       // If the atom is mounted, we can use the cache.
       // because it should have been updated by dependencies.
       if (mountedMap.has(atom)) {
@@ -398,7 +415,7 @@ export const createStore = () => {
           if (a === atom) {
             return true
           }
-          const aState = readAtomState(a)
+          const aState = readAtomState(a, force)
           // Check if the atom state is unchanged, or
           // check the atom value in case only dependencies are changed
           return aState === s || isEqualAtomValue(aState, s)
@@ -425,7 +442,7 @@ export const createStore = () => {
         throw new Error('no atom init')
       }
       // a !== atom
-      const aState = readAtomState(a)
+      const aState = readAtomState(a, force)
       nextDependencies.set(a, aState)
       return returnAtomValue(aState)
     }
@@ -459,7 +476,7 @@ export const createStore = () => {
       },
     }
     try {
-      const valueOrPromise = atom.read(getter, options as any)
+      const valueOrPromise = atom.read(getter, options as never)
       return setAtomValueOrPromise(atom, valueOrPromise, nextDependencies, () =>
         controller?.abort(),
       )
@@ -472,26 +489,6 @@ export const createStore = () => {
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(atom))
-
-  const addAtom = (atom: AnyAtom): Mounted => {
-    let mounted = mountedMap.get(atom)
-    if (!mounted) {
-      mounted = mountAtom(atom)
-    }
-    return mounted
-  }
-
-  // FIXME doesn't work with mutually dependent atoms
-  const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
-    !mounted.l.size &&
-    (!mounted.t.size || (mounted.t.size === 1 && mounted.t.has(atom)))
-
-  const delAtom = (atom: AnyAtom): void => {
-    const mounted = mountedMap.get(atom)
-    if (mounted && canUnmountAtom(atom, mounted)) {
-      unmountAtom(atom)
-    }
-  }
 
   const recomputeDependents = (atom: AnyAtom): void => {
     const getDependents = (a: AnyAtom): Dependents => {
@@ -534,6 +531,7 @@ export const createStore = () => {
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
+    const isMarked = (a: AnyAtom) => markedAtoms.has(a)
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
       const a = topsortedAtoms[i]!
       const prevAtomState = getAtomState(a)
@@ -548,11 +546,13 @@ export const createStore = () => {
         }
       }
       if (hasChangedDeps) {
-        const nextAtomState = readAtomState(a, true)
+        const nextAtomState = readAtomState(a, isMarked)
+        addPendingDependent(a, nextAtomState)
         if (!isEqualAtomValue(prevAtomState, nextAtomState)) {
           changedAtoms.add(a)
         }
       }
+      markedAtoms.delete(a)
     }
   }
 
@@ -560,12 +560,15 @@ export const createStore = () => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
-    let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
+      const isSync = pendingStack.length > 0
+      if (!isSync) {
+        pendingStack.push(new Set([a]))
+      }
       let r: R | undefined
       if (isSelfAtom(atom, a)) {
         if (!hasInitialValue(a)) {
@@ -581,9 +584,9 @@ export const createStore = () => {
         r = writeAtomState(a as AnyWritableAtom, ...args) as R
       }
       if (!isSync) {
-        const flushed = flushPending([a])
+        const flushed = flushPending(pendingStack.pop()!)
         if (import.meta.env?.MODE !== 'production') {
-          storeListenersRev2.forEach((l) =>
+          devListenersRev2.forEach((l) =>
             l({ type: 'async-write', flushed: flushed! }),
           )
         }
@@ -591,7 +594,6 @@ export const createStore = () => {
       return r as R
     }
     const result = atom.write(getter, setter, ...args)
-    isSync = false
     return result
   }
 
@@ -603,7 +605,7 @@ export const createStore = () => {
     const result = writeAtomState(atom, ...args)
     const flushed = flushPending(pendingStack.pop()!)
     if (import.meta.env?.MODE !== 'production') {
-      storeListenersRev2.forEach((l) => l({ type: 'write', flushed: flushed! }))
+      devListenersRev2.forEach((l) => l({ type: 'write', flushed: flushed! }))
     }
     return result
   }
@@ -613,16 +615,19 @@ export const createStore = () => {
     initialDependent?: AnyAtom,
     onMountQueue?: (() => void)[],
   ): Mounted => {
+    const existingMount = mountedMap.get(atom)
+    if (existingMount) {
+      if (initialDependent) {
+        existingMount.t.add(initialDependent)
+      }
+      return existingMount
+    }
+
     const queue = onMountQueue || []
     // mount dependencies before mounting self
     getAtomState(atom)?.d.forEach((_, a) => {
-      const aMounted = mountedMap.get(a)
-      if (aMounted) {
-        aMounted.t.add(atom) // add dependent
-      } else {
-        if (a !== atom) {
-          mountAtom(a, atom, queue)
-        }
+      if (a !== atom) {
+        mountAtom(a, atom, queue)
       }
     })
     // recompute atom state
@@ -652,9 +657,17 @@ export const createStore = () => {
     return mounted
   }
 
-  const unmountAtom = <Value>(atom: Atom<Value>): void => {
+  // FIXME doesn't work with mutually dependent atoms
+  const canUnmountAtom = (atom: AnyAtom, mounted: Mounted) =>
+    !mounted.l.size &&
+    (!mounted.t.size || (mounted.t.size === 1 && mounted.t.has(atom)))
+
+  const tryUnmountAtom = <Value>(atom: Atom<Value>, mounted: Mounted): void => {
+    if (!canUnmountAtom(atom, mounted)) {
+      return
+    }
     // unmount self
-    const onUnmount = mountedMap.get(atom)?.u
+    const onUnmount = mounted.u
     if (onUnmount) {
       onUnmount()
     }
@@ -671,12 +684,10 @@ export const createStore = () => {
       }
       atomState.d.forEach((_, a) => {
         if (a !== atom) {
-          const mounted = mountedMap.get(a)
-          if (mounted) {
-            mounted.t.delete(atom)
-            if (canUnmountAtom(a, mounted)) {
-              unmountAtom(a)
-            }
+          const mountedDep = mountedMap.get(a)
+          if (mountedDep) {
+            mountedDep.t.delete(atom)
+            tryUnmountAtom(a, mountedDep)
           }
         }
       })
@@ -705,20 +716,12 @@ export const createStore = () => {
       }
     })
     depSet.forEach((a) => {
-      const mounted = mountedMap.get(a)
-      if (mounted) {
-        mounted.t.add(atom) // add to dependents
-      } else if (mountedMap.has(atom)) {
-        // we mount dependencies only when atom is already mounted
-        // Note: we should revisit this when you find other issues
-        // https://github.com/pmndrs/jotai/issues/942
-        mountAtom(a, atom)
-      }
+      mountAtom(a, atom)
     })
     maybeUnmountAtomSet.forEach((a) => {
       const mounted = mountedMap.get(a)
-      if (mounted && canUnmountAtom(a, mounted)) {
-        unmountAtom(a)
+      if (mounted) {
+        tryUnmountAtom(a, mounted)
       }
     })
   }
@@ -782,21 +785,21 @@ export const createStore = () => {
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    const mounted = addAtom(atom)
+    const mounted = mountAtom(atom)
     const flushed = flushPending([atom])
     const listeners = mounted.l
     listeners.add(listener)
     if (import.meta.env?.MODE !== 'production') {
-      storeListenersRev2.forEach((l) =>
+      devListenersRev2.forEach((l) =>
         l({ type: 'sub', flushed: flushed as Set<AnyAtom> }),
       )
     }
     return () => {
       listeners.delete(listener)
-      delAtom(atom)
+      tryUnmountAtom(atom, mounted)
       if (import.meta.env?.MODE !== 'production') {
         // devtools uses this to detect if it _can_ unmount or not
-        storeListenersRev2.forEach((l) => l({ type: 'unsub' }))
+        devListenersRev2.forEach((l) => l({ type: 'unsub' }))
       }
     }
   }
@@ -807,19 +810,16 @@ export const createStore = () => {
       set: writeAtom,
       sub: subscribeAtom,
       // store dev methods (these are tentative and subject to change without notice)
-      dev_subscribe_store: (l: StoreListenerRev2, rev: 2) => {
-        if (rev !== 2) {
-          throw new Error('The current StoreListener revision is 2.')
-        }
-        storeListenersRev2.add(l as StoreListenerRev2)
+      dev_subscribe_store: (l) => {
+        devListenersRev2.add(l)
         return () => {
-          storeListenersRev2.delete(l as StoreListenerRev2)
+          devListenersRev2.delete(l)
         }
       },
       dev_get_mounted_atoms: () => mountedAtoms.values(),
-      dev_get_atom_state: (a: AnyAtom) => atomStateMap.get(a),
-      dev_get_mounted: (a: AnyAtom) => mountedMap.get(a),
-      dev_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => {
+      dev_get_atom_state: (a) => atomStateMap.get(a),
+      dev_get_mounted: (a) => mountedMap.get(a),
+      dev_restore_atoms: (values) => {
         pendingStack.push(new Set())
         for (const [atom, valueOrPromise] of values) {
           if (hasInitialValue(atom)) {
@@ -828,7 +828,7 @@ export const createStore = () => {
           }
         }
         const flushed = flushPending(pendingStack.pop()!)
-        storeListenersRev2.forEach((l) =>
+        devListenersRev2.forEach((l) =>
           l({ type: 'restore', flushed: flushed! }),
         )
       },
@@ -841,29 +841,19 @@ export const createStore = () => {
   }
 }
 
-type Store = ReturnType<typeof createStore>
-
 let defaultStore: Store | undefined
 
-if (import.meta.env?.MODE !== 'production') {
-  if (typeof (globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ === 'number') {
-    ++(globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__
-  } else {
-    ;(globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ = 1
-  }
-}
-
-export const getDefaultStore = () => {
+export const getDefaultStore = (): Store => {
   if (!defaultStore) {
-    if (
-      import.meta.env?.MODE !== 'production' &&
-      (globalThis as any).__NUMBER_OF_JOTAI_INSTANCES__ !== 1
-    ) {
-      console.warn(
-        'Detected multiple Jotai instances. It may cause unexpected behavior with the default store. https://github.com/pmndrs/jotai/discussions/2044',
-      )
-    }
     defaultStore = createStore()
+    if (import.meta.env?.MODE !== 'production') {
+      ;(globalThis as any).__JOTAI_DEFAULT_STORE__ ||= defaultStore
+      if ((globalThis as any).__JOTAI_DEFAULT_STORE__ !== defaultStore) {
+        console.warn(
+          'Detected multiple Jotai instances. It may cause unexpected behavior with the default store. https://github.com/pmndrs/jotai/discussions/2044',
+        )
+      }
+    }
   }
   return defaultStore
 }

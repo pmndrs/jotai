@@ -28,7 +28,7 @@ it('Should add a cache for a single atom', () => {
           return inst;
         }
       };
-      const countAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/countAtom\\", atom(0));"
+      const countAtom = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/countAtom", atom(0));"
     `)
 })
 
@@ -52,8 +52,8 @@ it('Should add a cache for multiple atoms', () => {
         return inst;
       }
     };
-    const countAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/countAtom\\", atom(0));
-    const doubleAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/doubleAtom\\", atom(get => get(countAtom) * 2));"
+    const countAtom = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/countAtom", atom(0));
+    const doubleAtom = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/doubleAtom", atom(get => get(countAtom) * 2));"
   `)
 })
 
@@ -77,8 +77,8 @@ it('Should add a cache for multiple exported atoms', () => {
         return inst;
       }
     };
-    export const countAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/countAtom\\", atom(0));
-    export const doubleAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/doubleAtom\\", atom(get => get(countAtom) * 2));"
+    export const countAtom = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/countAtom", atom(0));
+    export const doubleAtom = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/doubleAtom", atom(get => get(countAtom) * 2));"
   `)
 })
 
@@ -95,7 +95,7 @@ it('Should add a cache for a default exported atom', () => {
           return inst;
         }
       };
-      export default globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/defaultExport\\", atom(0));"
+      export default globalThis.jotaiAtomCache.get("/src/atoms/index.ts/defaultExport", atom(0));"
     `)
 })
 
@@ -119,8 +119,8 @@ it('Should add a cache for mixed exports of atoms', () => {
         return inst;
       }
     };
-    export const countAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/countAtom\\", atom(0));
-    export default globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/defaultExport\\", atom(get => get(countAtom) * 2));"
+    export const countAtom = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/countAtom", atom(0));
+    export default globalThis.jotaiAtomCache.get("/src/atoms/index.ts/defaultExport", atom(get => get(countAtom) * 2));"
   `)
 })
 
@@ -160,9 +160,9 @@ it('Should handle atoms returned from functions (#891)', () => {
       anAtom.debugLabel = label;
       return anAtom;
     }
-    const countAtom = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/countAtom\\", atom(0));
-    const countAtom2 = createAtom(\\"countAtom2\\");
-    const countAtom3 = createAtom(\\"countAtom3\\");"
+    const countAtom = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/countAtom", atom(0));
+    const countAtom2 = createAtom("countAtom2");
+    const countAtom3 = createAtom("countAtom3");"
   `)
 })
 
@@ -184,6 +184,6 @@ it('Should handle custom atom names', () => {
         return inst;
       }
     };
-    const mySpecialThing = globalThis.jotaiAtomCache.get(\\"/src/atoms/index.ts/mySpecialThing\\", myCustomAtom(0));"
+    const mySpecialThing = globalThis.jotaiAtomCache.get("/src/atoms/index.ts/mySpecialThing", myCustomAtom(0));"
   `)
 })

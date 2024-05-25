@@ -95,6 +95,7 @@ module.exports = {
     shortName: `Jotai`,
   },
   plugins: [
+    `gatsby-plugin-pnpm`,
     {
       resolve: `gatsby-source-filesystem`,
       options: {

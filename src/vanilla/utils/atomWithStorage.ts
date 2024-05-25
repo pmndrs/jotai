@@ -73,7 +73,7 @@ export function withStorageValidator<Value>(
         return validate(value)
       },
     }
-    return storage as any // FIXME better way to type this?
+    return storage
   }
 }
 
@@ -113,7 +113,7 @@ export function createJSONStorage<Value>(
   options?: JsonStorageOptions,
 ): AsyncStorage<Value> | SyncStorage<Value> {
   let lastStr: string | undefined
-  let lastValue: any
+  let lastValue: Value
   const storage: AsyncStorage<Value> | SyncStorage<Value> = {
     getItem: (key, initialValue) => {
       const parse = (str: string | null) => {
@@ -130,9 +130,9 @@ export function createJSONStorage<Value>(
       }
       const str = getStringStorage()?.getItem(key) ?? null
       if (isPromiseLike(str)) {
-        return str.then(parse)
+        return str.then(parse) as never
       }
-      return parse(str)
+      return parse(str) as never
     },
     setItem: (key, newValue) =>
       getStringStorage()?.setItem(
@@ -197,7 +197,7 @@ export function atomWithStorage<Value>(
     | SyncStorage<Value>
     | AsyncStorage<Value> = defaultStorage as SyncStorage<Value>,
   options?: { getOnInit?: boolean },
-): any {
+) {
   const getOnInit = options?.getOnInit
   const baseAtom = atom(
     getOnInit
@@ -210,9 +210,7 @@ export function atomWithStorage<Value>(
   }
 
   baseAtom.onMount = (setAtom) => {
-    if (!getOnInit) {
-      setAtom(storage.getItem(key, initialValue) as Value | Promise<Value>)
-    }
+    setAtom(storage.getItem(key, initialValue) as Value | Promise<Value>)
     let unsub: Unsubscribe | undefined
     if (storage.subscribe) {
       unsub = storage.subscribe(key, setAtom, initialValue)
@@ -246,5 +244,5 @@ export function atomWithStorage<Value>(
     },
   )
 
-  return anAtom
+  return anAtom as never
 }
