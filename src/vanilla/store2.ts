@@ -538,11 +538,12 @@ export const createStore = (): Store => {
           throw new Error('atom not writable')
         }
         const aState = getAtomState(a)
-        const prevEpochNumber = aState.n
+        const hasPrevValue = 'v' in aState
+        const prevValue = aState.v
         const v = args[0] as V
         setAtomStateValueOrPromise(a, aState, v)
         mountDependencies(pending, a, aState)
-        if (prevEpochNumber !== aState.n) {
+        if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
           addPendingAtom(pending, a, aState)
           recomputeDependents(pending, a)
         }
@@ -679,10 +680,11 @@ export const createStore = (): Store => {
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
             const aState = getAtomState(atom)
-            const prevEpochNumber = aState.n
+            const hasPrevValue = 'v' in aState
+            const prevValue = aState.v
             setAtomStateValueOrPromise(atom, aState, value)
             mountDependencies(pending, atom, aState)
-            if (prevEpochNumber !== aState.n) {
+            if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
               addPendingAtom(pending, atom, aState)
               recomputeDependents(pending, atom)
             }
