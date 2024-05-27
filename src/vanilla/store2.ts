@@ -285,6 +285,7 @@ export const createStore = (): Store => {
       if (pendingPromise) {
         if (pendingPromise !== valueOrPromise) {
           pendingPromise[CONTINUE_PROMISE](valueOrPromise, abortPromise)
+          ++atomState.n
         }
       } else {
         const continuablePromise = createContinuablePromise(
@@ -499,8 +500,7 @@ export const createStore = (): Store => {
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
       const a = topsortedAtoms[i]!
       const aState = getAtomState(a)
-      const hasPrevValue = 'v' in aState
-      const prevValue = aState.v
+      const prevEpochNumber = aState.n
       let hasChangedDeps = false
       for (const dep of aState.d.keys()) {
         if (dep !== a && changedAtoms.has(dep)) {
@@ -511,7 +511,7 @@ export const createStore = (): Store => {
       if (hasChangedDeps) {
         readAtomState(pending, a, isMarked)
         mountDependencies(pending, a, aState)
-        if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
+        if (prevEpochNumber !== aState.n) {
           addPendingAtom(pending, a, aState)
           changedAtoms.add(a)
         }
