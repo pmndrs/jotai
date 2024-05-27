@@ -448,7 +448,7 @@ describe('unstable_resolve resolves the correct value for', () => {
 
   it('primitive atom', async () => {
     const store = createStore()
-    store.unstable_resolve = (atom: Atom<unknown>): Atom<unknown> => {
+    store.unstable_resolve = <T>(atom: Atom<T>): Atom<T> => {
       if (atom === pseudo) {
         return a
       }
@@ -476,7 +476,7 @@ describe('unstable_resolve resolves the correct value for', () => {
 
   it('derived atom', async () => {
     const store = createStore()
-    store.unstable_resolve = (atom: Atom<unknown>): Atom<unknown> => {
+    store.unstable_resolve = <T>(atom: Atom<T>): Atom<T> => {
       if (atom === pseudo) {
         return a
       }
@@ -516,7 +516,7 @@ describe('unstable_resolve resolves the correct value for', () => {
 
   it('writable atom', async () => {
     const store = createStore()
-    store.unstable_resolve = (atom: Atom<unknown>): Atom<unknown> => {
+    store.unstable_resolve = <T>(atom: Atom<T>): Atom<T> => {
       if (atom === pseudo) {
         return a
       }
@@ -548,7 +548,7 @@ describe('unstable_resolve resolves the correct value for', () => {
 
   it('this in read and write', async () => {
     const store = createStore()
-    store.unstable_resolve = (atom: Atom<unknown>): Atom<unknown> => {
+    store.unstable_resolve = <T>(atom: Atom<T>): Atom<T> => {
       if (atom === pseudo) {
         return this_read
       }
@@ -564,7 +564,7 @@ describe('unstable_resolve resolves the correct value for', () => {
     this_read.debugLabel = 'this_read'
     expect(store.get(pseudo)).toBe('this_read')
 
-    store.unstable_resolve = (atom: Atom<unknown>): Atom<unknown> => {
+    store.unstable_resolve = <T>(atom: Atom<T>): Atom<T> => {
       if (atom === pseudo) {
         return this_write
       }
