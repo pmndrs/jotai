@@ -39,7 +39,7 @@ class ErrorBoundary extends Component<
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error }
   }
-  render(): ReactNode {
+  render() {
     return this.state.hasError ? (
       <div>
         Errored: {this.state.error.message}
