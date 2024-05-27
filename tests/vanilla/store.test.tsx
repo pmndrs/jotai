@@ -448,7 +448,7 @@ describe('unstable_resolve resolves the correct value for', () => {
 
   it('primitive atom', async () => {
     const store = createStore()
-    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
+    store.unstable_resolve = (atom: Atom<string>): Atom<string> => {
       if (atom === pseudo) {
         return a
       }
