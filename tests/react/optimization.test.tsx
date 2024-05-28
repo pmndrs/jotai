@@ -272,23 +272,25 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
   expect(renderCount1).toBe(renderCount1AfterCommit)
 })
 
-// TODO
-it('no extra rerenders after mounted (#2558)', async () => {
-  const baseAtom = atom(0)
+it.skipIf(!import.meta.env?.USE_STORE2)(
+  'no extra rerenders after mounted (#2558)',
+  async () => {
+    const baseAtom = atom(0)
 
-  let renderCount = 0
+    let renderCount = 0
 
-  const App = () => {
-    const [count] = useAtom(baseAtom)
-    ++renderCount
-    return <div>count: {count}</div>
-  }
+    const App = () => {
+      const [count] = useAtom(baseAtom)
+      ++renderCount
+      return <div>count: {count}</div>
+    }
 
-  render(
-    <>
-      <App />
-    </>,
-  )
+    render(
+      <>
+        <App />
+      </>,
+    )
 
-  expect(renderCount === 1).toBeTruthy()
-})
+    expect(renderCount).toBe(1)
+  },
+)

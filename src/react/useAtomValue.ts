@@ -94,7 +94,9 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
       }
       rerender()
     })
-    rerender()
+    if (!import.meta.env?.USE_STORE2) {
+      rerender()
+    }
     return unsub
   }, [store, atom, delay])
 
