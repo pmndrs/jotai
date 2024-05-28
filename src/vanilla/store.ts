@@ -191,7 +191,6 @@ export const createStore = (): Store => {
     atomState.d.forEach((_, a) => {
       if (!pendingMap.has(a)) {
         const aState = getAtomState(a)
-        pendingStack[pendingStack.length - 1]?.add(a)
         pendingMap.set(a, [aState, new Set()])
         if (aState) {
           addPendingDependent(a, aState)
@@ -210,8 +209,8 @@ export const createStore = (): Store => {
     }
     const prevAtomState = getAtomState(atom)
     atomStateMap.set(atom, atomState)
+    pendingStack[pendingStack.length - 1]?.add(atom)
     if (!pendingMap.has(atom)) {
-      pendingStack[pendingStack.length - 1]?.add(atom)
       pendingMap.set(atom, [prevAtomState, new Set()])
       addPendingDependent(atom, atomState)
     }
@@ -397,11 +396,11 @@ export const createStore = (): Store => {
 
   const readAtomState = <Value>(
     atom: Atom<Value>,
-    force?: boolean,
+    force?: (a: AnyAtom) => boolean,
   ): AtomState<Value> => {
     // See if we can skip recomputing this atom.
     const atomState = getAtomState(atom)
-    if (!force && atomState) {
+    if (!force?.(atom) && atomState) {
       // If the atom is mounted, we can use the cache.
       // because it should have been updated by dependencies.
       if (mountedMap.has(atom)) {
@@ -415,7 +414,7 @@ export const createStore = (): Store => {
           if (a === atom) {
             return true
           }
-          const aState = readAtomState(a)
+          const aState = readAtomState(a, force)
           // Check if the atom state is unchanged, or
           // check the atom value in case only dependencies are changed
           return aState === s || isEqualAtomValue(aState, s)
@@ -442,7 +441,7 @@ export const createStore = (): Store => {
         throw new Error('no atom init')
       }
       // a !== atom
-      const aState = readAtomState(a)
+      const aState = readAtomState(a, force)
       nextDependencies.set(a, aState)
       return returnAtomValue(aState)
     }
@@ -531,6 +530,7 @@ export const createStore = (): Store => {
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
+    const isMarked = (a: AnyAtom) => markedAtoms.has(a)
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
       const a = topsortedAtoms[i]!
       const prevAtomState = getAtomState(a)
@@ -545,11 +545,13 @@ export const createStore = (): Store => {
         }
       }
       if (hasChangedDeps) {
-        const nextAtomState = readAtomState(a, true)
+        const nextAtomState = readAtomState(a, isMarked)
+        addPendingDependent(a, nextAtomState)
         if (!isEqualAtomValue(prevAtomState, nextAtomState)) {
           changedAtoms.add(a)
         }
       }
+      markedAtoms.delete(a)
     }
   }
 

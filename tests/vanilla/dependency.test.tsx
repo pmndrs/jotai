@@ -153,3 +153,116 @@ it('keeps atoms mounted between recalculations', async () => {
     unmounted: 0,
   })
 })
+
+it('should not provide stale values to conditional dependents', () => {
+  const dataAtom = atom<number[]>([100])
+  const hasFilterAtom = atom(false)
+  const filteredAtom = atom((get) => {
+    const data = get(dataAtom)
+    const hasFilter = get(hasFilterAtom)
+    if (hasFilter) {
+      return []
+    } else {
+      return data
+    }
+  })
+  const stageAtom = atom((get) => {
+    const hasFilter = get(hasFilterAtom)
+    if (hasFilter) {
+      const filtered = get(filteredAtom)
+      return filtered.length === 0 ? 'is-empty' : 'has-data'
+    } else {
+      return 'no-filter'
+    }
+  })
+
+  const store = createStore()
+  store.sub(filteredAtom, () => undefined)
+  store.sub(stageAtom, () => undefined)
+
+  expect(store.get(stageAtom), 'should start without filter').toBe('no-filter')
+  store.set(hasFilterAtom, true)
+  expect(store.get(stageAtom), 'should update').toBe('is-empty')
+})
+
+it('settles never resolving async derivations with deps picked up sync', async () => {
+  const resolve: ((value: number) => void)[] = []
+
+  const syncAtom = atom({
+    promise: new Promise<number>((r) => resolve.push(r)),
+  })
+
+  const asyncAtom = atom(async (get) => {
+    return await get(syncAtom).promise
+  })
+
+  const store = createStore()
+
+  let sub = 0
+  const values: unknown[] = []
+  store.get(asyncAtom).then((value) => values.push(value))
+
+  store.sub(asyncAtom, () => {
+    sub++
+    store.get(asyncAtom).then((value) => values.push(value))
+  })
+
+  await new Promise((r) => setTimeout(r))
+
+  store.set(syncAtom, {
+    promise: new Promise<number>((r) => resolve.push(r)),
+  })
+
+  await new Promise((r) => setTimeout(r))
+
+  resolve[1]?.(1)
+
+  await new Promise((r) => setTimeout(r))
+
+  expect(values).toEqual([1, 1])
+  expect(sub).toBe(1)
+})
+
+it.skipIf(!import.meta.env?.USE_STORE2)(
+  'settles never resolving async derivations with deps picked up async',
+  async () => {
+    const resolve: ((value: number) => void)[] = []
+
+    const syncAtom = atom({
+      promise: new Promise<number>((r) => resolve.push(r)),
+    })
+
+    const asyncAtom = atom(async (get) => {
+      // we want to pick up `syncAtom` as an async dep
+      await Promise.resolve()
+
+      return await get(syncAtom).promise
+    })
+
+    const store = createStore()
+
+    let sub = 0
+    const values: unknown[] = []
+    store.get(asyncAtom).then((value) => values.push(value))
+
+    store.sub(asyncAtom, () => {
+      sub++
+      store.get(asyncAtom).then((value) => values.push(value))
+    })
+
+    await new Promise((r) => setTimeout(r))
+
+    store.set(syncAtom, {
+      promise: new Promise<number>((r) => resolve.push(r)),
+    })
+
+    await new Promise((r) => setTimeout(r))
+
+    resolve[1]?.(1)
+
+    await new Promise((r) => setTimeout(r))
+
+    expect(values).toEqual([1, 1])
+    expect(sub).toBe(1)
+  },
+)
