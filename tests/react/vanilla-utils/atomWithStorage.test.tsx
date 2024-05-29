@@ -353,6 +353,11 @@ describe('atomWithStorage (in non-browser environment)', () => {
   }
 
   const addEventListener = window.addEventListener
+  const localStorage = window.localStorage
+  const sessionStorage = window.sessionStorage
+
+  const localStorageSpy = vi.spyOn(window.localStorage, 'getItem')
+  const sessionStorageSpy = vi.spyOn(window.sessionStorage, 'getItem')
 
   beforeAll(() => {
     ;(window as any).addEventListener = undefined
@@ -360,12 +365,26 @@ describe('atomWithStorage (in non-browser environment)', () => {
 
   afterAll(() => {
     window.addEventListener = addEventListener
+    window.localStorage = localStorage
+    window.sessionStorage = sessionStorage
+
+    localStorageSpy.mockRestore()
+    sessionStorageSpy.mockRestore()
   })
 
   it('createJSONStorage with undefined window.addEventListener', async () => {
     const storage = createJSONStorage(() => asyncDummyStorage)
-
     expect(storage.subscribe).toBeUndefined()
+  })
+
+  it('createJSONStorage with localStorageSpy', async () => {
+    createJSONStorage(() => localStorage)
+    expect(localStorageSpy).not.toBeCalled()
+  })
+
+  it('createJSONStorage with sessionStorageSpy', async () => {
+    createJSONStorage(() => localStorage)
+    expect(sessionStorageSpy).not.toBeCalled()
   })
 })
 
