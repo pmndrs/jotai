@@ -1,5 +1,5 @@
-import { atom } from '../../vanilla.ts'
 import type { WritableAtom } from '../../vanilla.ts'
+import { atom } from '../../vanilla.ts'
 import { RESET } from './constants.ts'
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
@@ -161,30 +161,34 @@ export function createJSONStorage<Value>(
         callback(newValue)
       })
 
-  let subscriber = getStringStorage()?.subscribe
   if (
-    !subscriber &&
     typeof window !== 'undefined' &&
-    typeof window.addEventListener === 'function' &&
-    window.Storage &&
-    getStringStorage() instanceof window.Storage
+    typeof window.addEventListener === 'function'
   ) {
-    subscriber = (key, callback) => {
-      const storageEventCallback = (e: StorageEvent) => {
-        if (e.storageArea === getStringStorage() && e.key === key) {
-          callback(e.newValue)
+    let subscriber = getStringStorage()?.subscribe
+    if (
+      !subscriber &&
+      window.Storage &&
+      getStringStorage() instanceof window.Storage
+    ) {
+      subscriber = (key, callback) => {
+        const storageEventCallback = (e: StorageEvent) => {
+          if (e.storageArea === getStringStorage() && e.key === key) {
+            callback(e.newValue)
+          }
+        }
+        window.addEventListener('storage', storageEventCallback)
+        return () => {
+          window.removeEventListener('storage', storageEventCallback)
         }
       }
-      window.addEventListener('storage', storageEventCallback)
-      return () => {
-        window.removeEventListener('storage', storageEventCallback)
-      }
+    }
+
+    if (subscriber) {
+      storage.subscribe = createHandleSubscribe(subscriber)
     }
   }
 
-  if (subscriber) {
-    storage.subscribe = createHandleSubscribe(subscriber)
-  }
   return storage
 }
 
