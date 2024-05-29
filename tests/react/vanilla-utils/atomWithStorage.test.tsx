@@ -378,8 +378,16 @@ describe('atomWithStorage (in non-browser environment)', () => {
 
   afterAll(() => {
     window.addEventListener = addEventListener
-    window.localStorage = localStorage
-    window.sessionStorage = sessionStorage
+    Object.defineProperty(window, 'localStorage', {
+      get() {
+        return localStorage
+      },
+    })
+    Object.defineProperty(window, 'sessionStorage', {
+      get() {
+        return sessionStorage
+      },
+    })
   })
 
   it('createJSONStorage with undefined window.addEventListener', async () => {
