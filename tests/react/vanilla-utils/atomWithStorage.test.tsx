@@ -356,20 +356,20 @@ describe('atomWithStorage (in non-browser environment)', () => {
   const localStorage = window.localStorage
   const sessionStorage = window.sessionStorage
 
-  const localStorageSpy = vi.spyOn(window.localStorage, 'getItem')
-  const sessionStorageSpy = vi.spyOn(window.sessionStorage, 'getItem')
+  const localStorageSpy = {
+    getItem: vi.fn(),
+  }
 
   beforeAll(() => {
     ;(window as any).addEventListener = undefined
+    ;(window as any).localStorage = localStorageSpy
+    ;(window as any).sessionStorage = localStorageSpy
   })
 
   afterAll(() => {
     window.addEventListener = addEventListener
     window.localStorage = localStorage
     window.sessionStorage = sessionStorage
-
-    localStorageSpy.mockRestore()
-    sessionStorageSpy.mockRestore()
   })
 
   it('createJSONStorage with undefined window.addEventListener', async () => {
@@ -377,14 +377,14 @@ describe('atomWithStorage (in non-browser environment)', () => {
     expect(storage.subscribe).toBeUndefined()
   })
 
-  it('createJSONStorage with localStorageSpy', async () => {
+  it('createJSONStorage with localStorage Spy', async () => {
     createJSONStorage(() => localStorage)
-    expect(localStorageSpy).not.toBeCalled()
+    expect(window.localStorage.getItem).not.toBeCalled()
   })
 
-  it('createJSONStorage with sessionStorageSpy', async () => {
-    createJSONStorage(() => localStorage)
-    expect(sessionStorageSpy).not.toBeCalled()
+  it('createJSONStorage with sessionStorage Spy', async () => {
+    createJSONStorage(() => sessionStorage)
+    expect(window.sessionStorage.getItem).not.toBeCalled()
   })
 })
 
