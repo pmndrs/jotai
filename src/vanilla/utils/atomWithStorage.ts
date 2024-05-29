@@ -161,34 +161,37 @@ export function createJSONStorage<Value>(
         callback(newValue)
       })
 
+  let subscriber: StringSubscribe | undefined
+  try {
+    subscriber = getStringStorage()?.subscribe
+  } catch {
+    // ignore
+  }
   if (
+    !subscriber &&
     typeof window !== 'undefined' &&
-    typeof window.addEventListener === 'function'
+    typeof window.addEventListener === 'function' &&
+    window.Storage
   ) {
-    let subscriber = getStringStorage()?.subscribe
-    if (
-      !subscriber &&
-      window.Storage &&
-      getStringStorage() instanceof window.Storage
-    ) {
-      subscriber = (key, callback) => {
-        const storageEventCallback = (e: StorageEvent) => {
-          if (e.storageArea === getStringStorage() && e.key === key) {
-            callback(e.newValue)
-          }
-        }
-        window.addEventListener('storage', storageEventCallback)
-        return () => {
-          window.removeEventListener('storage', storageEventCallback)
+    subscriber = (key, callback) => {
+      if (!(getStringStorage() instanceof window.Storage)) {
+        return () => {}
+      }
+      const storageEventCallback = (e: StorageEvent) => {
+        if (e.storageArea === getStringStorage() && e.key === key) {
+          callback(e.newValue)
         }
       }
-    }
-
-    if (subscriber) {
-      storage.subscribe = createHandleSubscribe(subscriber)
+      window.addEventListener('storage', storageEventCallback)
+      return () => {
+        window.removeEventListener('storage', storageEventCallback)
+      }
     }
   }
 
+  if (subscriber) {
+    storage.subscribe = createHandleSubscribe(subscriber)
+  }
   return storage
 }
 
