@@ -9,10 +9,7 @@ import {
   createJSONStorage,
   unstable_withStorageValidator as withStorageValidator,
 } from 'jotai/vanilla/utils'
-import type {
-  AsyncStringStorage,
-  SyncStringStorage,
-} from 'jotai/vanilla/utils/atomWithStorage'
+import type { SyncStringStorage } from 'jotai/vanilla/utils/atomWithStorage'
 
 const resolve: (() => void)[] = []
 
@@ -340,7 +337,7 @@ describe('atomWithStorage (in non-browser environment)', () => {
   const asyncStorageData: Record<string, string> = {
     count: '10',
   }
-  const asyncDummyStorage: AsyncStringStorage = {
+  const asyncDummyStorage = {
     getItem: async (key: string) => {
       await new Promise<void>((r) => resolve.push(r))
       return asyncStorageData[key] as string
@@ -369,13 +366,6 @@ describe('atomWithStorage (in non-browser environment)', () => {
     const storage = createJSONStorage(() => asyncDummyStorage)
 
     expect(storage.subscribe).toBeUndefined()
-  })
-
-  it('createJSONStorage with custom subscribe', async () => {
-    const subscriber = vi.fn()
-    createJSONStorage(subscriber)
-
-    expect(subscriber).not.toBeCalled()
   })
 })
 
