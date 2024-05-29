@@ -356,14 +356,24 @@ describe('atomWithStorage (in non-browser environment)', () => {
   const localStorage = window.localStorage
   const sessionStorage = window.sessionStorage
 
-  const localStorageSpy = {
-    getItem: vi.fn(),
-  }
+  const mockGetItem = vi.fn()
 
   beforeAll(() => {
     ;(window as any).addEventListener = undefined
-    ;(window as any).localStorage = localStorageSpy
-    ;(window as any).sessionStorage = localStorageSpy
+    Object.defineProperty(window, 'localStorage', {
+      get() {
+        return {
+          getItem: mockGetItem,
+        }
+      },
+    })
+    Object.defineProperty(window, 'sessionStorage', {
+      get() {
+        return {
+          getItem: mockGetItem,
+        }
+      },
+    })
   })
 
   afterAll(() => {
@@ -378,12 +388,12 @@ describe('atomWithStorage (in non-browser environment)', () => {
   })
 
   it('createJSONStorage with localStorage Spy', async () => {
-    createJSONStorage(() => localStorage)
-    expect(window.localStorage.getItem).not.toBeCalled()
+    createJSONStorage(() => window.localStorage)
+    expect(mockGetItem).not.toBeCalled()
   })
 
   it('createJSONStorage with sessionStorage Spy', async () => {
-    createJSONStorage(() => sessionStorage)
+    createJSONStorage(() => window.sessionStorage)
     expect(window.sessionStorage.getItem).not.toBeCalled()
   })
 })
