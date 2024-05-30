@@ -356,22 +356,16 @@ describe('atomWithStorage (in non-browser environment)', () => {
   const localStorage = window.localStorage
   const sessionStorage = window.sessionStorage
 
-  const mockGetItem = vi.fn()
-
   beforeAll(() => {
     ;(window as any).addEventListener = undefined
     Object.defineProperty(window, 'localStorage', {
       get() {
-        return {
-          getItem: mockGetItem,
-        }
+        throw new Error('localStorage is not available.')
       },
     })
     Object.defineProperty(window, 'sessionStorage', {
       get() {
-        return {
-          getItem: mockGetItem,
-        }
+        throw new Error('localStorage is not available.')
       },
     })
   })
@@ -395,14 +389,12 @@ describe('atomWithStorage (in non-browser environment)', () => {
     expect(storage.subscribe).toBeUndefined()
   })
 
-  it('createJSONStorage with localStorage Spy', async () => {
-    createJSONStorage(() => window.localStorage)
-    expect(mockGetItem).not.toBeCalled()
+  it('createJSONStorage with localStorage', async () => {
+    expect(() => createJSONStorage(() => window.localStorage)).not.toThrow()
   })
 
-  it('createJSONStorage with sessionStorage Spy', async () => {
-    createJSONStorage(() => window.sessionStorage)
-    expect(window.sessionStorage.getItem).not.toBeCalled()
+  it('createJSONStorage with sessionStorage', async () => {
+    expect(() => createJSONStorage(() => window.sessionStorage)).not.toThrow()
   })
 })
 
