@@ -164,7 +164,6 @@ export function createJSONStorage<Value>(
   let subscriber: StringSubscribe | undefined
   try {
     subscriber = getStringStorage()?.subscribe
-    // getStringStorage() //?.getItem('')
   } catch {
     // ignore
   }
