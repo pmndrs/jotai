@@ -354,19 +354,61 @@ describe('atomWithStorage (in non-browser environment)', () => {
   }
 
   const addEventListener = window.addEventListener
+  const localStorage = window.localStorage
+  const sessionStorage = window.sessionStorage
+  const consoleWarn = window.console.warn
 
   beforeAll(() => {
     ;(window as any).addEventListener = undefined
+    // patch console.warn to prevent logging along test results
+    Object.defineProperty(window.console, 'warn', {
+      value: () => {},
+    })
+    Object.defineProperties(window, {
+      localStorage: {
+        get() {
+          throw new Error('localStorage is not available.')
+        },
+      },
+      sessionStorage: {
+        get() {
+          throw new Error('sessionStorage is not available.')
+        },
+      },
+    })
   })
 
   afterAll(() => {
     window.addEventListener = addEventListener
+    Object.defineProperty(window.console, 'warn', {
+      value: consoleWarn,
+    })
+    Object.defineProperties(window, {
+      localStorage: {
+        get() {
+          return localStorage
+        },
+      },
+      sessionStorage: {
+        get() {
+          return sessionStorage
+        },
+      },
+    })
   })
 
   it('createJSONStorage with undefined window.addEventListener', async () => {
     const storage = createJSONStorage(() => asyncDummyStorage)
-
     expect(storage.subscribe).toBeUndefined()
+  })
+
+  it('createJSONStorage with localStorage', async () => {
+    expect(() => createJSONStorage()).not.toThrow()
+    expect(() => createJSONStorage(() => window.localStorage)).not.toThrow()
+  })
+
+  it('createJSONStorage with sessionStorage', async () => {
+    expect(() => createJSONStorage(() => window.sessionStorage)).not.toThrow()
   })
 })
 

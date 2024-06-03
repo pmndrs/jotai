@@ -161,15 +161,22 @@ export function createJSONStorage<Value>(
         callback(newValue)
       })
 
-  let subscriber = getStringStorage()?.subscribe
+  let subscriber: StringSubscribe | undefined
+  try {
+    subscriber = getStringStorage()?.subscribe
+  } catch {
+    // ignore
+  }
   if (
     !subscriber &&
     typeof window !== 'undefined' &&
     typeof window.addEventListener === 'function' &&
-    window.Storage &&
-    getStringStorage() instanceof window.Storage
+    window.Storage
   ) {
     subscriber = (key, callback) => {
+      if (!(getStringStorage() instanceof window.Storage)) {
+        return () => {}
+      }
       const storageEventCallback = (e: StorageEvent) => {
         if (e.storageArea === getStringStorage() && e.key === key) {
           callback(e.newValue)
