@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
+import { INTERNAL_DevStoreRev4, INTERNAL_PrdStore } from 'jotai/vanilla/store2'
 
 const IS_DEV_STORE = 'dev_subscribe_store' in createStore()
 const IS_DEV_STORE2 = 'dev4_get_internal_weak_map' in createStore()
@@ -171,5 +172,48 @@ describe.skipIf(!IS_DEV_STORE2)('[DEV-ONLY] dev-only methods rev4', () => {
     expect(derivedCb).toHaveBeenCalled()
     unsubCount()
     unsubDerived()
+  })
+
+  it('should return all the mounted atoms correctly', () => {
+    const store = createStore() as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
+    if (!('dev4_get_mounted_atoms' in store)) {
+      throw new Error('dev methods are not available')
+    }
+    const countAtom = atom(0)
+    countAtom.debugLabel = 'countAtom'
+    const derivedAtom = atom((get) => get(countAtom) * 2)
+    const unsub = store.sub(derivedAtom, vi.fn())
+    store.set(countAtom, 1)
+    const result = store.dev4_get_mounted_atoms()
+    expect(
+      Array.from(result).sort(
+        (a, b) => Object.keys(a).length - Object.keys(b).length,
+      ),
+    ).toStrictEqual([
+      { toString: expect.any(Function), read: expect.any(Function) },
+      {
+        toString: expect.any(Function),
+        init: 0,
+        read: expect.any(Function),
+        write: expect.any(Function),
+        debugLabel: 'countAtom',
+      },
+    ])
+    unsub()
+  })
+
+  it("should return all the mounted atoms correctly after they're unsubscribed", () => {
+    const store = createStore() as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
+    if (!('dev4_get_mounted_atoms' in store)) {
+      throw new Error('dev methods are not available')
+    }
+    const countAtom = atom(0)
+    countAtom.debugLabel = 'countAtom'
+    const derivedAtom = atom((get) => get(countAtom) * 2)
+    const unsub = store.sub(derivedAtom, vi.fn())
+    store.set(countAtom, 1)
+    unsub()
+    const result = store.dev4_get_mounted_atoms()
+    expect(Array.from(result)).toStrictEqual([])
   })
 })
