@@ -1,5 +1,6 @@
 import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
@@ -9,6 +10,7 @@ import {
   createJSONStorage,
   unstable_withStorageValidator as withStorageValidator,
 } from 'jotai/vanilla/utils'
+import type { SyncStringStorage } from 'jotai/vanilla/utils/atomWithStorage'
 
 const resolve: (() => void)[] = []
 
@@ -72,11 +74,11 @@ describe('atomWithStorage (sync)', () => {
 
     await findByText('count: 10')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 11')
     expect(storageData.count).toBe(11)
 
-    fireEvent.click(getByText('reset'))
+    await userEvent.click(getByText('reset'))
     await findByText('count: 1')
     expect(storageData.count).toBeUndefined()
   })
@@ -167,19 +169,19 @@ describe('with sync string storage', () => {
 
     await findByText('count: 10')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 11')
     expect(storageData.count).toBe('11')
 
-    fireEvent.click(getByText('reset'))
+    await userEvent.click(getByText('reset'))
     await findByText('count: 1')
     expect(storageData.count).toBeUndefined()
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 2')
     expect(storageData.count).toBe('2')
 
-    fireEvent.click(getByText('conditional reset'))
+    await userEvent.click(getByText('conditional reset'))
     await findByText('count: 1')
     expect(storageData.count).toBeUndefined()
   })
@@ -251,7 +253,7 @@ describe('atomWithStorage (async)', () => {
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 10')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 11')
     act(() => resolve.splice(0).forEach((fn) => fn()))
@@ -259,7 +261,7 @@ describe('atomWithStorage (async)', () => {
       expect(asyncStorageData.count).toBe(11)
     })
 
-    fireEvent.click(getByText('reset'))
+    await userEvent.click(getByText('reset'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 1')
     await waitFor(() => {
@@ -292,7 +294,7 @@ describe('atomWithStorage (async)', () => {
 
     await findByText('count: 20')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 21')
     act(() => resolve.splice(0).forEach((fn) => fn()))
@@ -502,7 +504,7 @@ describe('atomWithStorage (with browser storage)', () => {
     expect(store.get(isDevModeStorageAtom)).toBeTruthy()
 
     expect(checkbox.checked).toBeTruthy()
-    fireEvent.click(checkbox)
+    await userEvent.click(checkbox)
     expect(checkbox.checked).toBeFalsy()
   })
 })
@@ -599,5 +601,103 @@ describe('withStorageValidator', () => {
     const storage = createJSONStorage()
     const isNumber = (v: unknown): v is number => typeof v === 'number'
     atomWithStorage('my-number', 0, withStorageValidator(isNumber)(storage))
+  })
+})
+
+describe('with subscribe method in string storage', () => {
+  it('createJSONStorage subscriber is called correctly', async () => {
+    const store = createStore()
+
+    const subscribe = vi.fn()
+    const stringStorage = {
+      getItem: () => {
+        return null
+      },
+      setItem: () => {},
+      removeItem: () => {},
+      subscribe,
+    }
+
+    const dummyStorage = createJSONStorage<number>(() => stringStorage)
+
+    const dummyAtom = atomWithStorage<number>('dummy', 1, dummyStorage)
+
+    const DummyComponent = () => {
+      const [value] = useAtom(dummyAtom, { store })
+      return (
+        <>
+          <div>{value}</div>
+        </>
+      )
+    }
+
+    render(
+      <StrictMode>
+        <DummyComponent />
+      </StrictMode>,
+    )
+
+    expect(subscribe).toHaveBeenCalledWith('dummy', expect.any(Function))
+  })
+
+  it('createJSONStorage subscriber responds to events correctly', async () => {
+    const storageData: Record<string, string> = {
+      count: '10',
+    }
+
+    const stringStorage = {
+      getItem: (key: string) => {
+        return storageData[key] || null
+      },
+      setItem: (key: string, newValue: string) => {
+        storageData[key] = newValue
+      },
+      removeItem: (key: string) => {
+        delete storageData[key]
+      },
+      subscribe(_key, callback) {
+        function handler(event: CustomEvent<string>) {
+          callback(event.detail)
+        }
+
+        window.addEventListener('dummystoragechange', handler as EventListener)
+        return () =>
+          window.removeEventListener(
+            'dummystoragechange',
+            handler as EventListener,
+          )
+      },
+    } as SyncStringStorage
+
+    const dummyStorage = createJSONStorage<number>(() => stringStorage)
+
+    const countAtom = atomWithStorage('count', 1, dummyStorage)
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+        </>
+      )
+    }
+
+    const { findByText } = render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    )
+
+    await findByText('count: 10')
+
+    storageData.count = '12'
+    fireEvent(
+      window,
+      new CustomEvent('dummystoragechange', {
+        detail: '12',
+      }),
+    )
+    await findByText('count: 12')
+    // expect(storageData.count).toBe('11')
   })
 })
