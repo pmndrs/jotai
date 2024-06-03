@@ -355,31 +355,43 @@ describe('atomWithStorage (in non-browser environment)', () => {
   const addEventListener = window.addEventListener
   const localStorage = window.localStorage
   const sessionStorage = window.sessionStorage
+  const consoleWarn = window.console.warn
 
   beforeAll(() => {
     ;(window as any).addEventListener = undefined
-    Object.defineProperty(window, 'localStorage', {
-      get() {
-        throw new Error('localStorage is not available.')
-      },
+    // patch console.warn to prevent logging along test results
+    Object.defineProperty(window.console, 'warn', {
+      value: () => {},
     })
-    Object.defineProperty(window, 'sessionStorage', {
-      get() {
-        throw new Error('localStorage is not available.')
+    Object.defineProperties(window, {
+      localStorage: {
+        get() {
+          throw new Error('localStorage is not available.')
+        },
+      },
+      sessionStorage: {
+        get() {
+          throw new Error('sessionStorage is not available.')
+        },
       },
     })
   })
 
   afterAll(() => {
     window.addEventListener = addEventListener
-    Object.defineProperty(window, 'localStorage', {
-      get() {
-        return localStorage
-      },
+    Object.defineProperty(window.console, 'warn', {
+      value: consoleWarn,
     })
-    Object.defineProperty(window, 'sessionStorage', {
-      get() {
-        return sessionStorage
+    Object.defineProperties(window, {
+      localStorage: {
+        get() {
+          return localStorage
+        },
+      },
+      sessionStorage: {
+        get() {
+          return sessionStorage
+        },
       },
     })
   })
@@ -390,6 +402,7 @@ describe('atomWithStorage (in non-browser environment)', () => {
   })
 
   it('createJSONStorage with localStorage', async () => {
+    expect(() => createJSONStorage()).not.toThrow()
     expect(() => createJSONStorage(() => window.localStorage)).not.toThrow()
   })
 
