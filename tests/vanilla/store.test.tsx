@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/dom'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Getter } from 'jotai/vanilla'
+import type { Atom, Getter } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -438,5 +438,164 @@ describe('async atom with subtle timing', () => {
     store.set(a, 2)
     resolve()
     expect(await bValue).toBe(2)
+  })
+})
+
+describe('unstable_resolve resolves the correct value for', () => {
+  function nextTask() {
+    return new Promise((resolve) => setTimeout(resolve))
+  }
+
+  it('primitive atom', async () => {
+    const store = createStore()
+    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
+      if (atom === (pseudo as Atom<unknown>)) {
+        return a as unknown as Atom<T>
+      }
+      return atom
+    }
+
+    const pseudo = atom('pseudo') as typeof a
+    pseudo.debugLabel = 'pseudo'
+    pseudo.onMount = (setSelf) => setSelf((v) => v + ':pseudo-mounted')
+    const a = atom('a')
+    a.debugLabel = 'a'
+    a.onMount = (setSelf) => setSelf((v) => v + ':a-mounted')
+
+    expect(store.get(pseudo)).toBe('a')
+    const callback = vi.fn()
+    store.sub(pseudo, callback)
+    await nextTask()
+    expect(callback).toHaveBeenCalledOnce()
+    expect(store.get(pseudo)).toBe('a:a-mounted')
+    store.set(pseudo, (v) => v + ':a-updated')
+    expect(store.get(pseudo)).toBe('a:a-mounted:a-updated')
+    await nextTask()
+    expect(store.get(pseudo)).toBe('a:a-mounted:a-updated')
+  })
+
+  it('derived atom', async () => {
+    const store = createStore()
+    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
+      if (atom === (pseudo as Atom<unknown>)) {
+        return a as unknown as Atom<T>
+      }
+      return atom
+    }
+
+    const pseudo = atom('pseudo') as typeof a
+    pseudo.debugLabel = 'pseudo'
+    pseudo.onMount = (setSelf) => setSelf((v) => v + ':pseudo-mounted')
+    const a = atom('a')
+    a.debugLabel = 'a'
+    a.onMount = (setSelf) => setSelf((v) => v + ':a-mounted')
+    const b = atom('b')
+    b.debugLabel = 'b'
+    const c = atom((get) => get(pseudo) + get(b))
+    c.debugLabel = 'c'
+    expect(store.get(c)).toBe('ab')
+    const d = atom(
+      (_get, { setSelf }) => setTimeout(setSelf, 0, 'd'),
+      (get, set, v) => set(pseudo, get(pseudo) + v),
+    )
+    const callback = vi.fn()
+    store.sub(c, callback)
+    store.get(d)
+    expect(store.get(a)).toBe('abd')
+    expect(store.get(c)).toBe('abd')
+    expect(store.get(pseudo)).toEqual('abd')
+    await nextTask()
+    expect(callback).toHaveBeenCalledOnce()
+    expect(store.get(pseudo)).toBe('abd:a-mounted')
+    delete store.unstable_resolve
+    await nextTask()
+    expect(store.get(pseudo)).toEqual('pseudo')
+    await nextTask()
+    expect(store.get(pseudo)).toEqual('pseudo:pseudo-mounted')
+  })
+
+  it('writable atom', async () => {
+    const store = createStore()
+    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
+      if (atom === (pseudo as Atom<unknown>)) {
+        return a as unknown as Atom<T>
+      }
+      return atom
+    }
+
+    const pseudo = atom('pseudo') as unknown as typeof a
+    pseudo.debugLabel = 'pseudo'
+    pseudo.onMount = (setSelf) => setSelf('pseudo-mounted')
+    const a = atom('a', (get, set, value: string) => {
+      set(pseudo, get(pseudo) + ':' + value)
+      return () => set(pseudo, get(pseudo) + ':a-unmounted')
+    })
+    a.debugLabel = 'a'
+    a.onMount = (setSelf) => setSelf('a-mounted')
+    expect(store.get(pseudo)).toBe('a')
+    const callback = vi.fn()
+    const unsub = store.sub(pseudo, callback)
+    await nextTask()
+    expect(callback).toHaveBeenCalledOnce()
+    expect(store.get(pseudo)).toBe('a:a-mounted')
+    const value = store.set(pseudo, 'a-updated')
+    expect(typeof value).toBe('function')
+    expect(store.get(pseudo)).toBe('a:a-mounted:a-updated')
+    unsub()
+    await nextTask()
+    expect(store.get(pseudo)).toBe('a:a-mounted:a-updated:a-unmounted')
+  })
+
+  it('this in read and write', async () => {
+    const store = createStore()
+    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
+      if (atom === pseudo) {
+        return this_read as Atom<T>
+      }
+      return atom
+    }
+
+    const pseudo = atom('pseudo') as typeof this_read
+    pseudo.debugLabel = 'pseudo'
+    let i = 0
+    const this_read = atom(function read(this: any, get) {
+      return i++ % 2 ? get(this) : 'this_read'
+    })
+    this_read.debugLabel = 'this_read'
+    expect(store.get(pseudo)).toBe('this_read')
+
+    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
+      if (atom === pseudo) {
+        return this_write as unknown as Atom<T>
+      }
+      return atom
+    }
+
+    const this_write = atom(
+      'this',
+      function write(this: any, get, set, value: string) {
+        set(this, get(this) + ':' + value)
+        return () => set(this, get(this) + ':this_write-unmounted')
+      },
+    )
+    this_write.debugLabel = 'this_write'
+    this_write.onMount = (setSelf) => setSelf('this_write-mounted')
+    expect(store.get(pseudo)).toBe('this')
+    const callback = vi.fn()
+    const unsub = store.sub(pseudo, callback)
+    await nextTask()
+    expect(store.get(pseudo)).toBe('this:this_write-mounted')
+    expect(callback).not.toHaveBeenCalledOnce()
+    store.set(this_write, 'this_write-updated')
+    expect(store.get(pseudo)).toBe('this:this_write-mounted:this_write-updated')
+    await nextTask()
+    expect(callback).not.toHaveBeenCalledOnce()
+    unsub()
+    await nextTask()
+    expect(store.get(pseudo)).toBe(
+      'this:this_write-mounted:this_write-updated:this_write-unmounted',
+    )
+    delete store.unstable_resolve
+    expect(store.get(pseudo)).toBe('pseudo')
   })
 })
