@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/dom'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Atom, Getter, WritableAtom } from 'jotai/vanilla'
+import type { Atom, Getter } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -448,9 +448,9 @@ describe('unstable_resolve resolves the correct value for', () => {
 
   it('primitive atom', async () => {
     const store = createStore()
-    store.unstable_resolve = (atom: Atom<string>): Atom<string> => {
-      if (atom === pseudo) {
-        return a
+    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
+      if (atom === (pseudo as Atom<unknown>)) {
+        return a as unknown as Atom<T>
       }
       return atom
     }
@@ -477,8 +477,8 @@ describe('unstable_resolve resolves the correct value for', () => {
   it('derived atom', async () => {
     const store = createStore()
     store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
-      if (atom === pseudo) {
-        return a
+      if (atom === (pseudo as Atom<unknown>)) {
+        return a as unknown as Atom<T>
       }
       return atom
     }
@@ -517,8 +517,8 @@ describe('unstable_resolve resolves the correct value for', () => {
   it('writable atom', async () => {
     const store = createStore()
     store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
-      if (atom === pseudo) {
-        return a
+      if (atom === (pseudo as Atom<unknown>)) {
+        return a as unknown as Atom<T>
       }
       return atom
     }
@@ -550,7 +550,7 @@ describe('unstable_resolve resolves the correct value for', () => {
     const store = createStore()
     store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
       if (atom === pseudo) {
-        return this_read
+        return this_read as Atom<T>
       }
       return atom
     }
@@ -566,7 +566,7 @@ describe('unstable_resolve resolves the correct value for', () => {
 
     store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
       if (atom === pseudo) {
-        return this_write
+        return this_write as unknown as Atom<T>
       }
       return atom
     }
