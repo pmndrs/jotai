@@ -7,18 +7,17 @@ keywords: use,useatom,useatomvalue,usesetatom,atomvalue,setatom
 
 ## useAtom
 
-The `useAtom` hook is to read an atom value in the state.
+The `useAtom` hook is used to read an atom from the state.
 The state can be seen as a WeakMap of atom configs and atom values.
 
 The `useAtom` hook returns the atom value and an update function as a tuple,
 just like React's `useState`.
-It takes an atom config created with `atom()`.
+It takes an atom config created with `atom()` as a parameter.
 
-Initially, there is no value associated with the atom.
-Only once the atom is used via `useAtom`,
-does the initial value get stored in the state.
-If the atom is a derived atom, the read function is called to compute the initial value.
-When an atom is no longer used, meaning all the components using it are unmounted,
+At the creation of the atom config, there is no value associated with it.
+Only once the atom is used via `useAtom`, does the initial value get stored in the state.
+If the atom is a derived atom, the read function is called to compute its initial value.
+When an atom is no longer used, meaning all the components using it are unmounted
 and the atom config no longer exists, the value in the state is garbage collected.
 
 ```js
@@ -26,15 +25,17 @@ const [value, setValue] = useAtom(anAtom)
 ```
 
 The `setValue` takes just one argument, which will be passed
-to the third argument of the write function of the atom.
-The behavior depends on how the write function is implemented.
+to the write function of the atom as the third parameter.
+The end result depends on how the write function is implemented.
+If the write function is not explicitly set, the atom will simply receive the value passed as a parameter to `setValue`.
 
-**Note:** as mentioned in the _atom_ section, you have to take care of handling the reference of your atom, otherwise it may enter an infinite loop
+**Note:** as mentioned in the _atom_ section, referential equality is important when creating atoms,
+so you need to handle it properly otherwise it can cause infinite loops.
 
 ```js
 const stableAtom = atom(0)
 const Component = () => {
-  const [atomValue] = useAtom(atom(0)) // This will cause an infinite loop
+  const [atomValue] = useAtom(atom(0)) // This will cause an infinite loop since the atom instance is being recreated in every render
   const [atomValue] = useAtom(stableAtom) // This is fine
   const [derivedAtomValue] = useAtom(
     useMemo(
@@ -46,7 +47,7 @@ const Component = () => {
 }
 ```
 
-**Note**: Remember that React is responsible for calling your component. Meaning it has to be idempotent, ready to be called multiple times. You will often see an extra re-render even if no props or atoms have changed. An extra re-render without a commit is an expected behavior. It is actually the default behavior of useReducer in React 18.
+**Note**: Remember that React is responsible for calling your component, meaning it has to be idempotent, ready to be called multiple times. You will often see an extra re-render even if no props or atoms have changed. An extra re-render without a commit is an expected behavior, since it is the default behavior of useReducer in React 18.
 
 ### Signatures
 
@@ -64,26 +65,20 @@ function useAtom<Value>(
 ): [Value, never]
 ```
 
-The useAtom hook is to read an atom value stored in the Provider. It returns the atom value and an updating function as a tuple, just like useState. It takes an atom config created with `atom()`. Initially, there is no value stored in the Provider. The first time the atom is used via `useAtom`, it will add an initial value in the Provider. If the atom is a derived atom, the read function is executed to compute an initial value. When an atom is no longer used, meaning all the components using it are unmounted, and the atom config no longer exists, the value is removed from the Provider.
-
-```js
-const [value, setValue] = useAtom(anAtom)
-```
-
-The `setValue` takes one argument, which will be passed to the third argument of writeFunction of the atom. The behavior depends on how the writeFunction is implemented.
-
 ### How atom dependency works
 
-To begin with, let's explain this. In the current implementation, every time we invoke the "read" function, we refresh the dependencies and dependents. For example, If A depends on B, it means that B is a dependency of A, and A is a dependent of B.
+Every time we invoke the "read" function, we refresh the dependencies and dependents.
+
+> The read function is the first parameter of the atom.
+> If B depends on A, it means that A is a dependency of B, and B is a dependent on A.
 
 ```js
 const uppercaseAtom = atom((get) => get(textAtom).toUpperCase())
 ```
 
-The read function is the first parameter of the atom.
-The dependency will initially be empty. On first use, we run the read function and know that `uppercaseAtom` depends on `textAtom`. `textAtom` has a dependency on `uppercaseAtom`. So, add `uppercaseAtom` to the dependents of `textAtom`.
-When we re-run the read function (because its dependency `textAtom` is updated),
-the dependency is created again, which is the same in this case. We then remove stale dependents and replace with the latest one.
+When you create the atom, the dependency will not be present. On first use, we run the read function and conclude that `uppercaseAtom` depends on `textAtom`. So `uppercaseAtom` is added to the dependents of `textAtom`.
+When we re-run the read function of `uppercaseAtom` (because its `textAtom` dependency is updated),
+the dependency is created again, which is the same in this case. We then remove stale dependents from `textAtom` and replace them with their latest versions.
 
 ### Atoms can be created on demand
 
@@ -98,7 +93,7 @@ a hook like `useRef` or `useMemo` for memoization. If not, the atom would be re-
 You can create an atom and store it with `useState` or even in another atom.
 See an example in [issue #5](https://github.com/pmndrs/jotai/issues/5).
 
-You can cache atoms somewhere globally.
+You can also cache atoms somewhere globally.
 See [this example](https://twitter.com/dai_shi/status/1317653548314718208) or
 [that example](https://github.com/pmndrs/jotai/issues/119#issuecomment-706046321).
 
@@ -122,7 +117,7 @@ const Counter = () => {
 }
 ```
 
-Similar to the `useSetAtom` hook, `useAtomValue` allows you to access a read-only atom.
+Similar to the `useSetAtom` hook, `useAtomValue` allows you to access a read-only atom. Nonetheless, it can also be used to access read-write atom's values.
 
 ## useSetAtom
 

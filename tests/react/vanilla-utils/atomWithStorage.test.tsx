@@ -1,5 +1,6 @@
 import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
@@ -73,11 +74,11 @@ describe('atomWithStorage (sync)', () => {
 
     await findByText('count: 10')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 11')
     expect(storageData.count).toBe(11)
 
-    fireEvent.click(getByText('reset'))
+    await userEvent.click(getByText('reset'))
     await findByText('count: 1')
     expect(storageData.count).toBeUndefined()
   })
@@ -168,19 +169,19 @@ describe('with sync string storage', () => {
 
     await findByText('count: 10')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 11')
     expect(storageData.count).toBe('11')
 
-    fireEvent.click(getByText('reset'))
+    await userEvent.click(getByText('reset'))
     await findByText('count: 1')
     expect(storageData.count).toBeUndefined()
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 2')
     expect(storageData.count).toBe('2')
 
-    fireEvent.click(getByText('conditional reset'))
+    await userEvent.click(getByText('conditional reset'))
     await findByText('count: 1')
     expect(storageData.count).toBeUndefined()
   })
@@ -252,7 +253,7 @@ describe('atomWithStorage (async)', () => {
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 10')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 11')
     act(() => resolve.splice(0).forEach((fn) => fn()))
@@ -260,7 +261,7 @@ describe('atomWithStorage (async)', () => {
       expect(asyncStorageData.count).toBe(11)
     })
 
-    fireEvent.click(getByText('reset'))
+    await userEvent.click(getByText('reset'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 1')
     await waitFor(() => {
@@ -293,7 +294,7 @@ describe('atomWithStorage (async)', () => {
 
     await findByText('count: 20')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await findByText('count: 21')
     act(() => resolve.splice(0).forEach((fn) => fn()))
@@ -545,7 +546,7 @@ describe('atomWithStorage (with browser storage)', () => {
     expect(store.get(isDevModeStorageAtom)).toBeTruthy()
 
     expect(checkbox.checked).toBeTruthy()
-    fireEvent.click(checkbox)
+    await userEvent.click(checkbox)
     expect(checkbox.checked).toBeFalsy()
   })
 })
@@ -696,7 +697,7 @@ describe('with subscribe method in string storage', () => {
       removeItem: (key: string) => {
         delete storageData[key]
       },
-      subscribe(key, callback) {
+      subscribe(_key, callback) {
         function handler(event: CustomEvent<string>) {
           callback(event.detail)
         }
