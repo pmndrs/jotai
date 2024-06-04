@@ -5,7 +5,7 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 describe('useAtom delay option test', () => {
-  it('suspend for Promise.resovle without delay option', async () => {
+  it('suspend for Promise.resolve without delay option', async () => {
     const countAtom = atom(0)
     const asyncAtom = atom((get) => {
       const count = get(countAtom)
@@ -45,7 +45,7 @@ describe('useAtom delay option test', () => {
     await findByText('count: 1')
   })
 
-  it('do not suspend for Promise.resovle with delay option', async () => {
+  it('do not suspend for Promise.resolve with delay option', async () => {
     const countAtom = atom(0)
     const asyncAtom = atom((get) => {
       const count = get(countAtom)
