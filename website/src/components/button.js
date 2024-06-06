@@ -17,7 +17,7 @@ export const Button = ({
   ...rest
 }) => {
   const buttonClassNames = cx(
-    'inline-flex select-none items-center border dark:!shadow-none dark:!border-none group',
+    'inline-flex select-none items-center border dark:!shadow-none dark:!border-transparent group',
     bold && 'font-medium',
     !small
       ? 'space-x-4 rounded-md px-6 py-3 text-base shadow-md sm:rounded-lg'
