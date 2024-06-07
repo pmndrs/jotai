@@ -251,7 +251,7 @@ type PrdStore = {
     ...args: Args
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
-  unstable_resolve?: <Value>(atom: Atom<Value>) => Atom<Value>
+  unstable_resolve?: <A extends Atom<unknown>>(atom: A) => A
 }
 type Store = PrdStore | (PrdStore & DevStoreRev4)
 
@@ -268,13 +268,16 @@ export const createStore = (): Store => {
   }
 
   const getAtomState = <Value>(atom: Atom<Value>) => {
-    atom = store.unstable_resolve?.(atom) || atom
     let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
     }
     return atomState
+  }
+
+  const resolveAtom = <A extends Atom<unknown>>(atom: A): A => {
+    return store.unstable_resolve?.(atom) ?? atom
   }
 
   const setAtomStateValueOrPromise = (
@@ -326,6 +329,7 @@ export const createStore = (): Store => {
       ++atomState.n
     }
   }
+
   const addDependency = <Value>(
     pending: Pending | undefined,
     atom: Atom<Value>,
@@ -377,11 +381,12 @@ export const createStore = (): Store => {
     atomState.d.clear()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      if (a === (atom as AnyAtom)) {
-        const aState = getAtomState(a)
+      const resolvedA = resolveAtom(a)
+      if (resolvedA === (atom as AnyAtom)) {
+        const aState = getAtomState(resolvedA)
         if (!isAtomStateInitialized(aState)) {
-          if (hasInitialValue(a)) {
-            setAtomStateValueOrPromise(a, aState, a.init)
+          if (hasInitialValue(resolvedA)) {
+            setAtomStateValueOrPromise(resolvedA, aState, resolvedA.init)
           } else {
             // NOTE invalid derived atoms can reach here
             throw new Error('no atom init')
@@ -389,13 +394,13 @@ export const createStore = (): Store => {
         }
         return returnAtomValue(aState)
       }
-      // a !== atom
-      const aState = readAtomState(pending, a, force)
+      // resolvedA !== resolvedAtom
+      const aState = readAtomState(pending, resolvedA, force)
       if (isSync) {
-        addDependency(pending, atom, a, aState)
+        addDependency(pending, atom, resolvedA, aState)
       } else {
         const pending = createPending()
-        addDependency(pending, atom, a, aState)
+        addDependency(pending, atom, resolvedA, aState)
         mountDependencies(pending, atom, atomState)
         flushPending(pending)
       }
@@ -457,7 +462,7 @@ export const createStore = (): Store => {
   }
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(undefined, atom))
+    returnAtomValue(readAtomState(undefined, resolveAtom(atom)))
 
   const recomputeDependents = (pending: Pending, atom: AnyAtom) => {
     const getDependents = (a: AnyAtom): Set<AnyAtom> => {
@@ -531,29 +536,30 @@ export const createStore = (): Store => {
     ...args: Args
   ): Result => {
     const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(pending, a))
+      returnAtomValue(readAtomState(pending, resolveAtom(a)))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
       let r: R | undefined
-      if (a === (atom as AnyAtom)) {
-        if (!hasInitialValue(a)) {
+      const resolvedA = resolveAtom(a)
+      if (resolvedA === (atom as AnyAtom)) {
+        if (!hasInitialValue(resolvedA)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
-        const aState = getAtomState(a)
+        const aState = getAtomState(resolvedA)
         const hasPrevValue = 'v' in aState
         const prevValue = aState.v
         const v = args[0] as V
-        setAtomStateValueOrPromise(a, aState, v)
-        mountDependencies(pending, a, aState)
+        setAtomStateValueOrPromise(resolvedA, aState, v)
+        mountDependencies(pending, resolvedA, aState)
         if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
-          addPendingAtom(pending, a, aState)
-          recomputeDependents(pending, a)
+          addPendingAtom(pending, resolvedA, aState)
+          recomputeDependents(pending, resolvedA)
         }
       } else {
-        r = writeAtomState(pending, a as AnyWritableAtom, ...args) as R
+        r = writeAtomState(pending, resolvedA, ...args)
       }
       flushPending(pending)
       return r as R
@@ -566,8 +572,9 @@ export const createStore = (): Store => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
+    const resolvedAtom = resolveAtom(atom)
     const pending = createPending()
-    const result = writeAtomState(pending, atom, ...args)
+    const result = writeAtomState(pending, resolvedAtom, ...args)
     flushPending(pending)
     return result
   }
@@ -666,24 +673,27 @@ export const createStore = (): Store => {
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
+    const resolvedAtom = resolveAtom(atom)
     const pending = createPending()
-    const mounted = mountAtom(pending, atom)
+    const mounted = mountAtom(pending, resolvedAtom)
     flushPending(pending)
     const listeners = mounted.l
     listeners.add(listener)
     return () => {
       listeners.delete(listener)
       const pending = createPending()
-      unmountAtom(pending, atom)
+      unmountAtom(pending, resolvedAtom)
       flushPending(pending)
     }
   }
 
+  const store: Store = {
+    get: readAtom,
+    set: writeAtom,
+    sub: subscribeAtom,
+  }
   if (import.meta.env?.MODE !== 'production') {
-    const store: Store = {
-      get: readAtom,
-      set: writeAtom,
-      sub: subscribeAtom,
+    const devStore: DevStoreRev4 = {
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => atomStateMap,
       dev4_get_mounted_atoms: () => debugMountedAtoms,
@@ -705,13 +715,9 @@ export const createStore = (): Store => {
         flushPending(pending)
       },
     }
-    return store
+    Object.assign(store, devStore)
   }
-  return {
-    get: readAtom,
-    set: writeAtom,
-    sub: subscribeAtom,
-  }
+  return store as Store
 }
 
 let defaultStore: Store | undefined

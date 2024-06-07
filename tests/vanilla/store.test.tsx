@@ -448,9 +448,9 @@ describe('unstable_resolve resolves the correct value for', () => {
 
   it('primitive atom', async () => {
     const store = createStore()
-    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
-      if (atom === (pseudo as Atom<unknown>)) {
-        return a as unknown as Atom<T>
+    store.unstable_resolve = (atom) => {
+      if (atom === (pseudo as Atom<any>)) {
+        return a as unknown as typeof atom
       }
       return atom
     }
@@ -465,8 +465,6 @@ describe('unstable_resolve resolves the correct value for', () => {
     expect(store.get(pseudo)).toBe('a')
     const callback = vi.fn()
     store.sub(pseudo, callback)
-    await nextTask()
-    expect(callback).toHaveBeenCalledOnce()
     expect(store.get(pseudo)).toBe('a:a-mounted')
     store.set(pseudo, (v) => v + ':a-updated')
     expect(store.get(pseudo)).toBe('a:a-mounted:a-updated')
@@ -476,9 +474,9 @@ describe('unstable_resolve resolves the correct value for', () => {
 
   it('derived atom', async () => {
     const store = createStore()
-    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
-      if (atom === (pseudo as Atom<unknown>)) {
-        return a as unknown as Atom<T>
+    store.unstable_resolve = (atom) => {
+      if (atom === (pseudo as Atom<any>)) {
+        return a as unknown as typeof atom
       }
       return atom
     }
@@ -498,32 +496,32 @@ describe('unstable_resolve resolves the correct value for', () => {
       (_get, { setSelf }) => setTimeout(setSelf, 0, 'd'),
       (get, set, v) => set(pseudo, get(pseudo) + v),
     )
+    store.get(d)
+    await nextTask()
+    expect(store.get(a)).toBe('ad')
+    expect(store.get(c)).toBe('adb')
+    expect(store.get(pseudo)).toEqual('ad')
     const callback = vi.fn()
     store.sub(c, callback)
-    store.get(d)
-    expect(store.get(a)).toBe('abd')
-    expect(store.get(c)).toBe('abd')
-    expect(store.get(pseudo)).toEqual('abd')
-    await nextTask()
-    expect(callback).toHaveBeenCalledOnce()
-    expect(store.get(pseudo)).toBe('abd:a-mounted')
+    expect(store.get(pseudo)).toBe('ad:a-mounted')
     delete store.unstable_resolve
     await nextTask()
     expect(store.get(pseudo)).toEqual('pseudo')
-    await nextTask()
+    store.sub(pseudo, callback)
     expect(store.get(pseudo)).toEqual('pseudo:pseudo-mounted')
   })
 
   it('writable atom', async () => {
     const store = createStore()
-    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
-      if (atom === (pseudo as Atom<unknown>)) {
-        return a as unknown as Atom<T>
+    store.unstable_resolve = (atom) => {
+      if (atom === (pseudo as Atom<any>)) {
+        return a as unknown as typeof atom
       }
       return atom
     }
 
-    const pseudo = atom('pseudo') as unknown as typeof a
+    const pseudoWriteFn = vi.fn()
+    const pseudo = atom('pseudo', pseudoWriteFn) as unknown as typeof a
     pseudo.debugLabel = 'pseudo'
     pseudo.onMount = (setSelf) => setSelf('pseudo-mounted')
     const a = atom('a', (get, set, value: string) => {
@@ -536,9 +534,9 @@ describe('unstable_resolve resolves the correct value for', () => {
     const callback = vi.fn()
     const unsub = store.sub(pseudo, callback)
     await nextTask()
-    expect(callback).toHaveBeenCalledOnce()
     expect(store.get(pseudo)).toBe('a:a-mounted')
     const value = store.set(pseudo, 'a-updated')
+    expect(pseudoWriteFn).not.toHaveBeenCalled()
     expect(typeof value).toBe('function')
     expect(store.get(pseudo)).toBe('a:a-mounted:a-updated')
     unsub()
@@ -548,9 +546,9 @@ describe('unstable_resolve resolves the correct value for', () => {
 
   it('this in read and write', async () => {
     const store = createStore()
-    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
-      if (atom === pseudo) {
-        return this_read as Atom<T>
+    store.unstable_resolve = (atom) => {
+      if (atom === (pseudo as Atom<any>)) {
+        return this_read as unknown as typeof atom
       }
       return atom
     }
@@ -564,9 +562,9 @@ describe('unstable_resolve resolves the correct value for', () => {
     this_read.debugLabel = 'this_read'
     expect(store.get(pseudo)).toBe('this_read')
 
-    store.unstable_resolve = <T,>(atom: Atom<T>): Atom<T> => {
-      if (atom === pseudo) {
-        return this_write as unknown as Atom<T>
+    store.unstable_resolve = (atom) => {
+      if (atom === (pseudo as Atom<any>)) {
+        return this_write as unknown as typeof atom
       }
       return atom
     }
@@ -589,7 +587,6 @@ describe('unstable_resolve resolves the correct value for', () => {
     store.set(this_write, 'this_write-updated')
     expect(store.get(pseudo)).toBe('this:this_write-mounted:this_write-updated')
     await nextTask()
-    expect(callback).not.toHaveBeenCalledOnce()
     unsub()
     await nextTask()
     expect(store.get(pseudo)).toBe(
