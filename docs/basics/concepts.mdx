@@ -14,10 +14,10 @@ The React world is very much like our world, it's a big set of small entities, w
 Now, the Jotai world also has its small entities, atoms, and they also have their state. Composing atoms will create your app state!
 
 Jotai considers anything to be an atom, so you may say: `Huh, I need objects and arrays, filter them and then sort them out`.
-And here's the beauty of it, Jotai gracefully lets you create dumb atoms derivated from even more dumb atoms.
+And here's the beauty of it, Jotai gracefully lets you create dumb atoms derived from even more dumb atoms.
 
 If, for example, I have a page with 2 tabs: online friends and offline friends.
-I will have 2 atoms simply derivating from a common, dumber source.
+I will have 2 atoms simply derived from a common, dumber source.
 
 ```js
 const dumbAtom = atom([{ name: 'Friend 1', online: false }])
@@ -27,4 +27,4 @@ const offlineAtom = atom((get) => get(dumbAtom).filter((item) => !item.online))
 
 And you could keep going on complexity forever.
 
-Another incredible feature of Jotai is the built-in ability to suspend when using asynchronous atoms. This is a relatively new features that yet needs to get experimented more, but definitely the future of how we build React apps. [Check out the docs](https://react.dev/blog/2022/03/29/react-v18#new-suspense-features) for more info.
+Another incredible feature of Jotai is the built-in ability to suspend when using asynchronous atoms. This is a relatively new feature that needs more experimentation, but is definitely the future of how we will build React apps. [Check out the docs](https://react.dev/blog/2022/03/29/react-v18#new-suspense-features) for more info.
