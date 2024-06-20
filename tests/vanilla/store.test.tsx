@@ -440,3 +440,114 @@ describe('async atom with subtle timing', () => {
     expect(await bValue).toBe(2)
   })
 })
+
+describe('aborting atoms', () => {
+  // We can't use signal.throwIfAborted as it is not available
+  // in earlier versions of TS that this is tested on.
+  const throwIfAborted = (signal: AbortSignal) => {
+    if (signal.aborted) {
+      throw new Error('aborted')
+    }
+  }
+
+  it('should abort the signal when dependencies change', async () => {
+    const a = atom(1)
+    const callBeforeAbort = vi.fn()
+    const callAfterAbort = vi.fn()
+    let resolve = () => {}
+
+    const store = createStore()
+
+    const derivedAtom = atom(async (get, { signal }) => {
+      const aVal = get(a)
+
+      await new Promise<void>((r) => (resolve = r))
+
+      callBeforeAbort()
+
+      throwIfAborted(signal)
+
+      callAfterAbort()
+
+      return aVal + 1
+    })
+
+    const promise = store.get(derivedAtom)
+    const firstResolve = resolve
+    store.set(a, 3)
+
+    firstResolve()
+    resolve()
+    expect(await promise).toEqual(4)
+
+    expect(callBeforeAbort).toHaveBeenCalledTimes(2)
+    expect(callAfterAbort).toHaveBeenCalledTimes(1)
+  })
+
+  it('should abort the signal when dependencies change and the atom is mounted', async () => {
+    const a = atom(1)
+    const callBeforeAbort = vi.fn()
+    const callAfterAbort = vi.fn()
+    let resolve = () => {}
+
+    const store = createStore()
+
+    const derivedAtom = atom(async (get, { signal }) => {
+      const aVal = get(a)
+
+      await new Promise<void>((r) => (resolve = r))
+
+      callBeforeAbort()
+
+      throwIfAborted(signal)
+
+      callAfterAbort()
+
+      return aVal + 1
+    })
+
+    store.sub(derivedAtom, () => {})
+    const firstResolve = resolve
+    store.set(a, 3)
+
+    firstResolve()
+    resolve()
+
+    await new Promise(setImmediate)
+
+    expect(callBeforeAbort).toHaveBeenCalledTimes(2)
+    expect(callAfterAbort).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not abort the signal when unsubscribed', async () => {
+    const a = atom(1)
+    const callBeforeAbort = vi.fn()
+    const callAfterAbort = vi.fn()
+    let resolve = () => {}
+
+    const store = createStore()
+
+    const derivedAtom = atom(async (get, { signal }) => {
+      const aVal = get(a)
+
+      await new Promise<void>((r) => (resolve = r))
+
+      callBeforeAbort()
+
+      throwIfAborted(signal)
+
+      callAfterAbort()
+
+      return aVal + 1
+    })
+
+    const unsub = store.sub(derivedAtom, () => {})
+
+    unsub()
+    resolve()
+
+    expect(await store.get(derivedAtom)).toEqual(2)
+    expect(callBeforeAbort).toHaveBeenCalledTimes(1)
+    expect(callAfterAbort).toHaveBeenCalledTimes(1)
+  })
+})

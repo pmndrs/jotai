@@ -362,8 +362,12 @@ export const createStore = (): Store => {
       registerCancelPromise(promise, (next) => {
         if (next) {
           continuePromise(next as Promise<Awaited<Value>>)
+
+          // Only abort promises that aren't user-facing. When next is set,
+          // we can replace the current promise with the next one, so we don't
+          // see any abort-related errors.
+          abortPromise?.()
         }
-        abortPromise?.()
       })
       return setAtomValue(atom, promise as Value, nextDependencies, true)
     }

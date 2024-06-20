@@ -89,9 +89,13 @@ const createContinuablePromise = <T>(
           continuablePromiseMap.set(nextPromise, p)
           curr = nextPromise
           nextPromise.then(onFulfilled(nextPromise), onRejected(nextPromise))
+
+          // Only abort promises that aren't user-facing. When nextPromise is set,
+          // we can replace the current promise with the next one, so we don't
+          // see any abort-related errors.
+          abort()
+          abort = nextAbort
         }
-        abort()
-        abort = nextAbort
       }
     })
     p.status = PENDING
