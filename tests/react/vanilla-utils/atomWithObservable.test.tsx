@@ -409,7 +409,9 @@ it('synchronous subscription with BehaviorSubject', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Counter />
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </StrictMode>,
   )
 
@@ -427,7 +429,9 @@ it('synchronous subscription with already emitted value', async () => {
 
   const { findByText } = render(
     <StrictMode>
-      <Counter />
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
     </StrictMode>,
   )
 
@@ -517,16 +521,26 @@ it("don't omit values emitted between init and mount", async () => {
 })
 
 describe('error handling', () => {
+  type ErrorBoundaryProps = {
+    message?: string
+    retry?: () => void
+    onError?: (error: unknown) => void
+    children: ReactNode
+  }
+
   class ErrorBoundary extends Component<
-    { message?: string; retry?: () => void; children: ReactNode },
+    ErrorBoundaryProps,
     { hasError: boolean }
   > {
-    constructor(props: { message?: string; children: ReactNode }) {
+    constructor(props: ErrorBoundaryProps) {
       super(props)
       this.state = { hasError: false }
     }
     static getDerivedStateFromError() {
       return { hasError: true }
+    }
+    componentDidCatch(error: unknown) {
+      this.props.onError?.(error)
     }
     render() {
       return this.state.hasError ? (
@@ -729,6 +743,48 @@ describe('error handling', () => {
     await findByText('loading')
     act(() => vi.runOnlyPendingTimers())
     await findByText('count: 3')
+  })
+
+  it('will trigger subsequent errors after the first value', async () => {
+    const subject = new Subject<number>()
+    const countAtom = atomWithObservable(() => subject)
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+        </>
+      )
+    }
+
+    let caughtError: unknown
+
+    const { findByText } = render(
+      <StrictMode>
+        <ErrorBoundary
+          onError={(error) => {
+            caughtError = error
+          }}
+        >
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </StrictMode>,
+    )
+
+    await findByText('loading')
+
+    act(() => subject.next(1))
+    await findByText('count: 1')
+
+    const error = new Error('Test Error')
+
+    act(() => subject.error(error))
+    await findByText('errored')
+
+    expect(caughtError).toBe(error)
   })
 })
 

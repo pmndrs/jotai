@@ -42,6 +42,8 @@ type OptionsWithInitialValue<Data> = {
   unstable_timeout?: number
 }
 
+type Result<Data> = { d: Data } | { e: AnyError }
+
 export function atomWithObservable<Data>(
   getObservable: (get: Getter) => SubjectLike<Data>,
   options: OptionsWithInitialValue<Data>,
@@ -66,13 +68,7 @@ export function atomWithObservable<Data>(
   getObservable: (get: Getter) => ObservableLike<Data> | SubjectLike<Data>,
   options?: Options<Data>,
 ) {
-  type Result = { d: Data } | { e: AnyError }
-  const returnResultData = (result: Result) => {
-    if ('e' in result) {
-      throw result.e
-    }
-    return result.d
-  }
+  const EMPTY = Symbol()
 
   const observableResultAtom = atom((get) => {
     let observable = getObservable(get)
@@ -81,43 +77,51 @@ export function atomWithObservable<Data>(
       observable = itself
     }
 
-    let resolve: ((result: Result) => void) | undefined
-    const makePending = () =>
-      new Promise<Result>((r) => {
-        resolve = r
-      })
-    const initialResult: Result | Promise<Result> =
-      options && 'initialValue' in options
-        ? {
-            d:
-              typeof options.initialValue === 'function'
-                ? (options.initialValue as () => Data)()
-                : (options.initialValue as Data),
-          }
-        : makePending()
+    // TODO: replace with https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/withResolvers
+    // once CI Node version is bump to 22+
+    let resolve: (value: Data | PromiseLike<Data>) => void
+    let reject: (reason?: any) => void
+    const promise = new Promise<Data>((_resolve, _reject) => {
+      resolve = _resolve
+      reject = _reject
+    })
 
-    let setResult: ((result: Result) => void) | undefined
-    let lastResult: Result | undefined
-    const listener = (result: Result) => {
-      lastResult = result
-      resolve?.(result)
-      setResult?.(result)
-    }
+    const initialResult =
+      options && 'initialValue' in options
+        ? typeof options.initialValue === 'function'
+          ? (options.initialValue as () => Data)()
+          : (options.initialValue as Data)
+        : promise
+
+    const resultAtom = atom<Result<Data | Promise<Data>>>({ d: initialResult })
+
+    let preMountData: Data | typeof EMPTY = EMPTY
+
+    let setResult: ((result: Result<Data | Promise<Data>>) => void) | undefined
+    const isMounted = () => setResult !== undefined
 
     let subscription: Subscription | undefined
     let timer: Timeout | undefined
-    const isNotMounted = () => !setResult
-    const start = () => {
-      if (subscription) {
+    const startSubscription = () => {
+      if (subscription !== undefined) {
         clearTimeout(timer)
         subscription.unsubscribe()
       }
+
       subscription = observable.subscribe({
-        next: (d) => listener({ d }),
-        error: (e) => listener({ e }),
+        next: (value) => {
+          resolve(value)
+          preMountData = value
+          setResult?.({ d: value })
+        },
+        error: (error) => {
+          reject(error)
+          setResult?.({ e: error })
+        },
         complete: () => {},
       })
-      if (isNotMounted() && options?.unstable_timeout) {
+
+      if (!isMounted() && options?.unstable_timeout) {
         timer = setTimeout(() => {
           if (subscription) {
             subscription.unsubscribe()
@@ -126,62 +130,60 @@ export function atomWithObservable<Data>(
         }, options.unstable_timeout)
       }
     }
-    start()
-
-    const resultAtom = atom(lastResult || initialResult)
 
     if (import.meta.env?.MODE !== 'production') {
       resultAtom.debugPrivate = true
     }
 
-    resultAtom.onMount = (update) => {
-      setResult = update
-      if (lastResult) {
-        update(lastResult)
+    startSubscription()
+
+    resultAtom.onMount = (setAtom) => {
+      setResult = setAtom
+
+      if (preMountData !== EMPTY) {
+        setAtom({ d: preMountData })
       }
-      if (subscription) {
-        clearTimeout(timer)
+
+      if (subscription === undefined) {
+        startSubscription()
       } else {
-        start()
+        clearTimeout(timer)
       }
+
       return () => {
-        setResult = undefined
-        if (subscription) {
-          subscription.unsubscribe()
-          subscription = undefined
-        }
+        subscription?.unsubscribe()
+        subscription = undefined
       }
     }
-    return [resultAtom, observable, makePending, start, isNotMounted] as const
+
+    return { atom: resultAtom, observable }
   })
 
-  if (import.meta.env?.MODE !== 'production') {
-    observableResultAtom.debugPrivate = true
-  }
-
-  const observableAtom = atom(
+  return atom(
     (get) => {
-      const [resultAtom] = get(observableResultAtom)
-      const result = get(resultAtom)
-      if (result instanceof Promise) {
-        return result.then(returnResultData)
-      }
-      return returnResultData(result)
-    },
-    (get, set, data: Data) => {
-      const [resultAtom, observable, makePending, start, isNotMounted] =
-        get(observableResultAtom)
-      if ('next' in observable) {
-        if (isNotMounted()) {
-          set(resultAtom, makePending())
-          start()
+      const unwrapResult = (result: Result<unknown>) => {
+        if ('e' in result) {
+          throw result.e
         }
+
+        return result.d
+      }
+
+      const result = get(get(observableResultAtom).atom)
+
+      if (result instanceof Promise) {
+        return result.then(unwrapResult)
+      }
+
+      return unwrapResult(result)
+    },
+    (get, _, data: Data) => {
+      const observable = get(observableResultAtom).observable
+      if ('next' in observable) {
         observable.next(data)
       } else {
         throw new Error('observable is not subject')
       }
     },
   )
-
-  return observableAtom
 }
