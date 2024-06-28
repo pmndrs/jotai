@@ -1,5 +1,5 @@
 import { StrictMode, Suspense } from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { assert, describe, expect, it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
@@ -196,8 +196,8 @@ describe('timing issue with setSelf', () => {
     await waitFor(() => assert(resolve.length === 1))
     resolve[0]!()
 
-    // The use of await userEvent is required to reproduce the issue
-    await userEvent.click(getByText('button'))
+    // The use of fireEvent is required to reproduce the issue
+    fireEvent.click(getByText('button'))
 
     await waitFor(() => assert(resolve.length === 3))
     resolve[1]!()
@@ -205,8 +205,8 @@ describe('timing issue with setSelf', () => {
 
     await waitFor(() => assert(result === 2))
 
-    // The use of await userEvent is required to reproduce the issue
-    await userEvent.click(getByText('button'))
+    // The use of fireEvent is required to reproduce the issue
+    fireEvent.click(getByText('button'))
 
     await waitFor(() => assert(resolve.length === 5))
     resolve[3]!()
