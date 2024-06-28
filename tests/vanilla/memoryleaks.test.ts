@@ -22,6 +22,9 @@ describe('test memory leaks (get & set only)', () => {
     const detector2 = new LeakDetector(store.get(derivedAtom))
     objAtom = undefined
     derivedAtom = undefined
+    // WeapRef is different from WeakMap, we should call isLeaking twice to make garbage-collected success.
+    await detector1.isLeaking()
+    await detector2.isLeaking()
     expect(await detector1.isLeaking()).toBe(false)
     expect(await detector2.isLeaking()).toBe(false)
   })
@@ -35,6 +38,7 @@ describe('test memory leaks (get & set only)', () => {
       const detector = new LeakDetector(depAtom)
       store.get(depAtom)
       depAtom = undefined
+      await detector.isLeaking()
       await expect(detector.isLeaking()).resolves.toBe(false)
     },
   )
@@ -49,6 +53,7 @@ describe('test memory leaks (get & set only)', () => {
       }))
       const detector = new LeakDetector(store.get(derivedAtom))
       derivedAtom = undefined
+      await detector.isLeaking()
       expect(await detector.isLeaking()).toBe(false)
     },
   )
@@ -63,6 +68,7 @@ describe('test memory leaks (with subscribe)', () => {
     unsub()
     unsub = undefined
     objAtom = undefined
+    await detector.isLeaking()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -79,6 +85,8 @@ describe('test memory leaks (with subscribe)', () => {
     unsub = undefined
     objAtom = undefined
     derivedAtom = undefined
+    await detector1.isLeaking()
+    await detector2.isLeaking()
     expect(await detector1.isLeaking()).toBe(false)
     expect(await detector2.isLeaking()).toBe(false)
   })
@@ -94,6 +102,7 @@ describe('test memory leaks (with subscribe)', () => {
     unsub()
     unsub = undefined
     derivedAtom = undefined
+    await detector.isLeaking()
     expect(await detector.isLeaking()).toBe(false)
   })
 })
