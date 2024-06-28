@@ -1,5 +1,6 @@
 import { StrictMode, Suspense, useEffect } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -86,7 +87,7 @@ it('loadable goes back to loading after re-fetch', async () => {
   getByText('Loading...')
   resolve(5)
   await findByText('Data: 5')
-  fireEvent.click(getByText('refresh'))
+  await userEvent.click(getByText('refresh'))
   await findByText('Loading...')
   resolve(6)
   await findByText('Data: 6')
@@ -125,7 +126,7 @@ it('loadable can recover from error', async () => {
   getByText('Loading...')
   reject(new Error('An error occurred'))
   await findByText('Error: An error occurred')
-  fireEvent.click(getByText('refresh'))
+  await userEvent.click(getByText('refresh'))
   await findByText('Loading...')
   resolve(6)
   await findByText('Data: 6')
@@ -209,7 +210,7 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
   )
 
   getByText('Loading...')
-  fireEvent.click(getByText('trigger'))
+  await userEvent.click(getByText('trigger'))
   resolve(5)
   await findByText('Data: 5')
 })

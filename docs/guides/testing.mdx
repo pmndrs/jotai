@@ -36,7 +36,8 @@ export function Counter() {
 
 ```jsx
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Counter } from './Counter'
 
 test('should increment counter', () => {
@@ -46,7 +47,7 @@ test('should increment counter', () => {
   const counter = screen.getByText('0')
   const incrementButton = screen.getByText('one up')
   // Act
-  fireEvent.click(incrementButton)
+  await userEvent.click(incrementButton)
   // Assert
   expect(counter.textContent).toEqual('1')
 })
@@ -60,7 +61,8 @@ In order to do that, simply use a [Provider](../core/provider.mdx), and export y
 
 ```tsx
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { useHydrateAtoms } from 'jotai/utils'
 import { countAtom, Counter } from './Counter'
 import { Provider } from 'jotai'
@@ -89,7 +91,7 @@ test('should not increment on max (100)', () => {
 
   const counter = screen.getByText('100')
   const incrementButton = screen.getByText('one up')
-  fireEvent.click(incrementButton)
+  await userEvent.click(incrementButton)
   expect(counter.textContent).toEqual('100')
 })
 ```

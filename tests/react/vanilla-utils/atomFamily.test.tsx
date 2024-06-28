@@ -1,5 +1,6 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -92,13 +93,13 @@ it('primitive atomFamily initialized with props', async () => {
 
   await findByText('count: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 11')
 
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 2')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 12')
 })
 
@@ -173,21 +174,21 @@ it('derived atomFamily functionality as usual', async () => {
     getByText('index: 2, count: 0')
   })
 
-  fireEvent.click(getByText('increment #1'))
+  await userEvent.click(getByText('increment #1'))
   await waitFor(() => {
     getByText('index: 0, count: 0')
     getByText('index: 1, count: 1')
     getByText('index: 2, count: 0')
   })
 
-  fireEvent.click(getByText('increment #0'))
+  await userEvent.click(getByText('increment #0'))
   await waitFor(() => {
     getByText('index: 0, count: 1')
     getByText('index: 1, count: 1')
     getByText('index: 2, count: 0')
   })
 
-  fireEvent.click(getByText('increment #2'))
+  await userEvent.click(getByText('increment #2'))
   await waitFor(() => {
     getByText('index: 0, count: 1')
     getByText('index: 1, count: 1')
@@ -249,12 +250,12 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 11')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 12')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve.splice(0).forEach((fn) => fn())
   await findByText('derived: 13')

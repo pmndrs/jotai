@@ -7,7 +7,8 @@ import {
   useRef,
   useState,
 } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { unstable_batchedUpdates } from 'react-dom'
 import { expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -53,7 +54,7 @@ it('uses a primitive atom', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 1')
 })
 
@@ -83,7 +84,7 @@ it('uses a read-only derived atom', async () => {
     getByText('count: 0')
     getByText('doubledCount: 0')
   })
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 1')
     getByText('doubledCount: 2')
@@ -119,7 +120,7 @@ it('uses a read-write derived atom', async () => {
     getByText('count: 0')
     getByText('doubledCount: 0')
   })
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 2')
     getByText('doubledCount: 4')
@@ -163,7 +164,7 @@ it('uses a write-only derived atom', async () => {
     getByText('button commits: 1')
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('commits: 2, count: 1')
     getByText('button commits: 1')
@@ -212,13 +213,13 @@ it('only re-renders if value has changed', async () => {
     getByText('commits: 1, count2: 0')
     getByText('commits: 1, product: 0')
   })
-  fireEvent.click(getByText('button-count1'))
+  await userEvent.click(getByText('button-count1'))
   await waitFor(() => {
     getByText('commits: 2, count1: 1')
     getByText('commits: 1, count2: 0')
     getByText('commits: 1, product: 0')
   })
-  fireEvent.click(getByText('button-count2'))
+  await userEvent.click(getByText('button-count2'))
   await waitFor(() => {
     getByText('commits: 2, count1: 1')
     getByText('commits: 2, count2: 1')
@@ -294,12 +295,12 @@ it('works with async get', async () => {
   resolve()
   await findByText('commits: 1, count: 0, delayedCount: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve()
   await findByText('commits: 2, count: 1, delayedCount: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   resolve()
   await findByText('commits: 3, count: 2, delayedCount: 2')
@@ -335,10 +336,10 @@ it('works with async get without setTimeout', async () => {
   await findByText('loading')
   await findByText('count: 0, delayedCount: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 1, delayedCount: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 2, delayedCount: 2')
 })
 
@@ -377,11 +378,11 @@ it('uses atoms with tree dependencies', async () => {
 
   await findByText('commits: 1, count: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   resolve()
   await findByText('commits: 2, count: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   resolve()
   await findByText('commits: 3, count: 2')
 })
@@ -416,7 +417,7 @@ it('runs update only once in StrictMode', async () => {
   await findByText('count: 0')
   expect(updateCount).toBe(0)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 1')
   expect(updateCount).toBe(1)
 })
@@ -453,7 +454,7 @@ it('uses an async write-only atom', async () => {
 
   await findByText('commits: 1, count: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   resolve()
   await findByText('commits: 2, count: 1')
 })
@@ -483,7 +484,7 @@ it('uses a writable atom without read function', async () => {
 
   await findByText('count: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   resolve()
   await findByText('count: 11')
 })
@@ -574,7 +575,7 @@ it('only invoke read function on use atom', async () => {
 
   await findByText('commits: 1, count: 0, readCount: 1, doubled: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('commits: 2, count: 1, readCount: 2, doubled: 2')
 })
 
@@ -619,16 +620,16 @@ it('uses a read-write derived atom with two primitive atoms', async () => {
 
   await findByText('countA: 0, countB: 0, sum: 0')
 
-  fireEvent.click(getByText('incA'))
+  await userEvent.click(getByText('incA'))
   await findByText('countA: 1, countB: 0, sum: 1')
 
-  fireEvent.click(getByText('incB'))
+  await userEvent.click(getByText('incB'))
   await findByText('countA: 1, countB: 1, sum: 2')
 
-  fireEvent.click(getByText('reset'))
+  await userEvent.click(getByText('reset'))
   await findByText('countA: 0, countB: 0, sum: 0')
 
-  fireEvent.click(getByText('incBoth'))
+  await userEvent.click(getByText('incBoth'))
   await findByText('countA: 1, countB: 1, sum: 2')
 })
 
@@ -662,7 +663,7 @@ it('updates a derived atom in useEffect with two primitive atoms', async () => {
 
   await findByText('countA: 1, countB: 1, sum: 2')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('countA: 2, countB: 2, sum: 4')
 })
 
@@ -775,13 +776,13 @@ it('changes atom from parent (#273, #275)', async () => {
 
   await findByText('commits: 1, id: a')
 
-  fireEvent.click(getByText('atom a'))
+  await userEvent.click(getByText('atom a'))
   await findByText('commits: 1, id: a')
 
-  fireEvent.click(getByText('atom b'))
+  await userEvent.click(getByText('atom b'))
   await findByText('commits: 2, id: b')
 
-  fireEvent.click(getByText('atom a'))
+  await userEvent.click(getByText('atom a'))
   await findByText('commits: 3, id: a')
 })
 
@@ -814,7 +815,7 @@ it('should be able to use a double derived atom twice and useEffect (#373)', asy
   )
 
   await findByText('count: 0,0,0')
-  fireEvent.click(getByText('one up'))
+  await userEvent.click(getByText('one up'))
   await findByText('count: 1,4,4')
 })
 
@@ -841,7 +842,7 @@ it('write self atom (undocumented usage)', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 1')
 })
 
@@ -909,9 +910,9 @@ it('sync re-renders with useState re-renders (#827)', async () => {
   )
 
   await findByText('commits: 1')
-  fireEvent.click(getByText('rotate'))
+  await userEvent.click(getByText('rotate'))
   await findByText('commits: 2')
-  fireEvent.click(getByText('rotate'))
+  await userEvent.click(getByText('rotate'))
   await findByText('commits: 3')
 })
 
@@ -998,6 +999,6 @@ it('useAtom returns consistent value with input with changing atoms (#1235)', as
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 1')
 })

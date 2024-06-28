@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -50,11 +51,11 @@ it('selectAtom works as expected', async () => {
 
   await findByText('a: 0')
 
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('a: 1')
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('a: 2')
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('a: 3')
 })
 
@@ -104,28 +105,28 @@ it('do not update unless equality function says value has changed', async () => 
 
   await findByText('value: {"a":0}')
   await findByText('commits: 1')
-  fireEvent.click(getByText('copy'))
+  await userEvent.click(getByText('copy'))
   await findByText('value: {"a":0}')
   await findByText('commits: 1')
 
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('value: {"a":1}')
   await findByText('commits: 2')
-  fireEvent.click(getByText('copy'))
+  await userEvent.click(getByText('copy'))
   await findByText('value: {"a":1}')
   await findByText('commits: 2')
 
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('value: {"a":2}')
   await findByText('commits: 3')
-  fireEvent.click(getByText('copy'))
+  await userEvent.click(getByText('copy'))
   await findByText('value: {"a":2}')
   await findByText('commits: 3')
 
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('value: {"a":3}')
   await findByText('commits: 4')
-  fireEvent.click(getByText('copy'))
+  await userEvent.click(getByText('copy'))
   await findByText('value: {"a":3}')
   await findByText('commits: 4')
 })

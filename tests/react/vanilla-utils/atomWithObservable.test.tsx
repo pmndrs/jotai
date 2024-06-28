@@ -1,6 +1,7 @@
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { act, render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { BehaviorSubject, Observable, Subject, delay, map, of } from 'rxjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
@@ -104,7 +105,7 @@ it('writable count state', async () => {
   act(() => subject.next(2))
   await findByText('count: 2')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 9')
   expect(subject.value).toBe(9)
 
@@ -136,7 +137,7 @@ it('writable count state without initial value', async () => {
 
   await findByText('loading')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 9')
 
   act(() => subject.next(3))
@@ -179,7 +180,7 @@ it('writable count state with delayed value', async () => {
   act(() => vi.runOnlyPendingTimers())
   await findByText('count: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 9')
 })
 
@@ -292,8 +293,8 @@ it('resubscribe on remount', async () => {
   act(() => subject.next(1))
   await findByText('count: 1')
 
-  fireEvent.click(getByText('Toggle'))
-  fireEvent.click(getByText('Toggle'))
+  await userEvent.click(getByText('Toggle'))
+  await userEvent.click(getByText('Toggle'))
 
   act(() => subject.next(2))
   await findByText('count: 2')
@@ -347,7 +348,7 @@ it('writable count state with initialValue', async () => {
   act(() => subject.next(1))
   await findByText('count: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 9')
 })
 
@@ -511,7 +512,7 @@ it("don't omit values emitted between init and mount", async () => {
   })
   await findByText('count: 2')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 9')
 })
 
@@ -625,17 +626,17 @@ describe('error handling', () => {
     act(() => vi.runOnlyPendingTimers())
     await findByText('errored')
 
-    fireEvent.click(getByText('retry'))
+    await userEvent.click(getByText('retry'))
     await findByText('loading')
     act(() => vi.runOnlyPendingTimers())
     await findByText('count: 1')
 
-    fireEvent.click(getByText('next'))
+    await userEvent.click(getByText('next'))
     await findByText('loading')
     act(() => vi.runOnlyPendingTimers())
     await findByText('errored')
 
-    fireEvent.click(getByText('retry'))
+    await userEvent.click(getByText('retry'))
     await findByText('loading')
     act(() => vi.runOnlyPendingTimers())
     await findByText('count: 3')
@@ -714,17 +715,17 @@ describe('error handling', () => {
     act(() => vi.runOnlyPendingTimers())
     await findByText('errored')
 
-    fireEvent.click(getByText('retry'))
+    await userEvent.click(getByText('retry'))
     await findByText('loading')
     act(() => vi.runOnlyPendingTimers())
     await findByText('count: 1')
 
-    fireEvent.click(getByText('refresh'))
+    await userEvent.click(getByText('refresh'))
     await findByText('loading')
     act(() => vi.runOnlyPendingTimers())
     await findByText('errored')
 
-    fireEvent.click(getByText('retry'))
+    await userEvent.click(getByText('retry'))
     await findByText('loading')
     act(() => vi.runOnlyPendingTimers())
     await findByText('count: 3')
@@ -785,7 +786,7 @@ describe('wonka', () => {
 
     await findByText('loading')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 1')
   })
 })

@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -78,7 +79,7 @@ it('no unnecessary updates when updating atoms', async () => {
   expect(catBox.checked).toBeFalsy()
   expect(dragonBox.checked).toBeFalsy()
 
-  fireEvent.click(catBox)
+  await userEvent.click(catBox)
 
   await waitFor(() => {
     getByText('TaskListUpdates: 1')
@@ -89,7 +90,7 @@ it('no unnecessary updates when updating atoms', async () => {
   expect(catBox.checked).toBeTruthy()
   expect(dragonBox.checked).toBeFalsy()
 
-  fireEvent.click(dragonBox)
+  await userEvent.click(dragonBox)
 
   await waitFor(() => {
     getByText('TaskListUpdates: 1')
@@ -153,7 +154,7 @@ it('removing atoms', async () => {
     expect(queryByText('help nana')).toBeTruthy()
   })
 
-  fireEvent.click(getByTestId('get cat food-removebutton'))
+  await userEvent.click(getByTestId('get cat food-removebutton'))
 
   await waitFor(() => {
     expect(queryByText('get cat food')).toBeFalsy()
@@ -161,7 +162,7 @@ it('removing atoms', async () => {
     expect(queryByText('help nana')).toBeTruthy()
   })
 
-  fireEvent.click(getByTestId('get dragon food-removebutton'))
+  await userEvent.click(getByTestId('get dragon food-removebutton'))
 
   await waitFor(() => {
     expect(queryByText('get cat food')).toBeFalsy()
@@ -169,7 +170,7 @@ it('removing atoms', async () => {
     expect(queryByText('help nana')).toBeTruthy()
   })
 
-  fireEvent.click(getByTestId('help nana-removebutton'))
+  await userEvent.click(getByTestId('help nana-removebutton'))
 
   await waitFor(() => {
     expect(queryByText('get cat food')).toBeFalsy()
@@ -253,21 +254,21 @@ it('inserting atoms', async () => {
     )
   })
 
-  fireEvent.click(getByTestId('help nana-insertbutton'))
+  await userEvent.click(getByTestId('help nana-insertbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
       'get cat food+get dragon food+new task1+help nana+',
     )
   })
 
-  fireEvent.click(getByTestId('get cat food-insertbutton'))
+  await userEvent.click(getByTestId('get cat food-insertbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
       'new task2+get cat food+get dragon food+new task1+help nana+',
     )
   })
 
-  fireEvent.click(getByTestId('addtaskbutton'))
+  await userEvent.click(getByTestId('addtaskbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
       'new task2+get cat food+get dragon food+new task1+help nana+end+',
@@ -359,28 +360,28 @@ it('moving atoms', async () => {
     )
   })
 
-  fireEvent.click(getByTestId('help nana-leftbutton'))
+  await userEvent.click(getByTestId('help nana-leftbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
       'get cat food<>help nana<>get dragon food<>',
     )
   })
 
-  fireEvent.click(getByTestId('get cat food-rightbutton'))
+  await userEvent.click(getByTestId('get cat food-rightbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
       'help nana<>get cat food<>get dragon food<>',
     )
   })
 
-  fireEvent.click(getByTestId('get cat food-rightbutton'))
+  await userEvent.click(getByTestId('get cat food-rightbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
       'help nana<>get dragon food<>get cat food<>',
     )
   })
 
-  fireEvent.click(getByTestId('help nana-leftbutton'))
+  await userEvent.click(getByTestId('help nana-leftbutton'))
   await waitFor(() => {
     expect(queryByTestId('list')?.textContent).toBe(
       'get dragon food<>get cat food<>help nana<>',
@@ -487,7 +488,7 @@ it('no error with cached atoms (fix 510)', async () => {
     </StrictMode>,
   )
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
 })
 
 it('variable sized splitted atom', async () => {
@@ -521,7 +522,7 @@ it('variable sized splitted atom', async () => {
 
   await findByText('numbers: 1,2,3')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('numbers: 1,2')
 })
 
@@ -550,6 +551,6 @@ it('should not update splitted atom when single item is set to identical value',
 
   await findByText('changed: false')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('changed: false')
 })

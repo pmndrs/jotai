@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -47,7 +48,7 @@ it('only relevant render function called (#156)', async () => {
   const renderCount1AfterMount = renderCount1
   const renderCount2AfterMount = renderCount2
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await waitFor(() => {
     getByText('count1: 1')
     getByText('count2: 0')
@@ -55,7 +56,7 @@ it('only relevant render function called (#156)', async () => {
   expect(renderCount1).toBe(renderCount1AfterMount + 1)
   expect(renderCount2).toBe(renderCount2AfterMount + 0)
 
-  fireEvent.click(getByText('button2'))
+  await userEvent.click(getByText('button2'))
   await waitFor(() => {
     getByText('count1: 1')
     getByText('count2: 1')
@@ -100,11 +101,11 @@ it('only render once using atoms with write-only atom', async () => {
   await findByText('count1: 0, count2: 0')
   const renderCountAfterMount = renderCount
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count1: 1, count2: 1')
   expect(renderCount).toBe(renderCountAfterMount + 1)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count1: 2, count2: 2')
   expect(renderCount).toBe(renderCountAfterMount + 2)
 })
@@ -138,11 +139,11 @@ it('useless re-renders with static atoms (#355)', async () => {
   await findByText('count: 0')
   const renderCountAfterMount = renderCount
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 1')
   expect(renderCount).toBe(renderCountAfterMount + 1)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 2')
   expect(renderCount).toBe(renderCountAfterMount + 2)
 })
@@ -173,19 +174,19 @@ it('does not re-render if value is the same (#1158)', async () => {
   await findByText('count: 0')
   const renderCountAfterMount = renderCount
 
-  fireEvent.click(getByText('noop'))
+  await userEvent.click(getByText('noop'))
   await findByText('count: 0')
   expect(renderCount).toBe(renderCountAfterMount + 0)
 
-  fireEvent.click(getByText('inc'))
+  await userEvent.click(getByText('inc'))
   await findByText('count: 1')
   expect(renderCount).toBe(renderCountAfterMount + 1)
 
-  fireEvent.click(getByText('noop'))
+  await userEvent.click(getByText('noop'))
   await findByText('count: 1')
   expect(renderCount).toBe(renderCountAfterMount + 1)
 
-  fireEvent.click(getByText('inc'))
+  await userEvent.click(getByText('inc'))
   await findByText('count: 2')
   expect(renderCount).toBe(renderCountAfterMount + 2)
 })
@@ -250,21 +251,21 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
   expect(renderCount1 > 0).toBeTruthy()
   expect(renderCount2 > 0).toBeTruthy()
 
-  fireEvent.click(getByText('inc1'))
+  await userEvent.click(getByText('inc1'))
   await waitFor(() => {
     getByText('count1: 1')
     getByText('count2: 0')
   })
   expect(renderCount1).toBe(renderCount1AfterCommit)
 
-  fireEvent.click(getByText('inc2'))
+  await userEvent.click(getByText('inc2'))
   await waitFor(() => {
     getByText('count1: 1')
     getByText('count2: 1')
   })
   expect(renderCount2).toBe(renderCount2AfterCommit)
 
-  fireEvent.click(getByText('inc1'))
+  await userEvent.click(getByText('inc1'))
   await waitFor(() => {
     getByText('count1: 2')
     getByText('count2: 1')

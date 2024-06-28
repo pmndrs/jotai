@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
@@ -48,8 +49,8 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
 
   await findByText('count: 42')
   await findByText('status: rejected')
-  fireEvent.click(getByText('dispatch'))
-  fireEvent.click(getByText('update'))
+  await userEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('update'))
   await findByText('count: 43')
   await findByText('status: fulfilled')
 
@@ -101,7 +102,7 @@ it('useHydrateAtoms should only hydrate on first render using a Map', async () =
 
   await findByText('count: 42')
   await findByText('is active: no')
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await findByText('count: 43')
 
   rerender(
@@ -140,7 +141,7 @@ it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
 
   await findByText('count: 42')
   await findByText('commits: 1')
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await findByText('count: 43')
   await findByText('commits: 2')
 })
@@ -170,7 +171,7 @@ it('useHydrateAtoms should work with derived atoms', async () => {
 
   await findByText('count: 42')
   await findByText('doubleCount: 84')
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await findByText('count: 43')
   await findByText('doubleCount: 86')
 })
@@ -207,7 +208,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   )
 
   await findByText('count: 42')
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await findByText('count: 43')
 
   rerender(
@@ -217,7 +218,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   )
 
   await findByText('count: 43')
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await findByText('count: 44')
 })
 
@@ -292,8 +293,8 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
 
   await findByText('count: 42')
   await findByText('status: rejected')
-  fireEvent.click(getByText('dispatch'))
-  fireEvent.click(getByText('update'))
+  await userEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('update'))
   await findByText('count: 43')
   await findByText('status: fulfilled')
 
