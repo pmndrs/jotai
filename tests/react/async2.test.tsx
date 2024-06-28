@@ -1,6 +1,5 @@
 import { StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { assert, describe, expect, it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -41,7 +40,7 @@ describe('useAtom delay option test', () => {
 
     await findByText('count: 0')
 
-    await userEvent.click(getByText('button'))
+    fireEvent.click(getByText('button'))
     await findByText('loading')
     await findByText('count: 1')
   })
@@ -79,7 +78,7 @@ describe('useAtom delay option test', () => {
 
     await findByText('count: 0')
 
-    await userEvent.click(getByText('button'))
+    fireEvent.click(getByText('button'))
     await findByText('count: 1')
   })
 })
@@ -138,7 +137,7 @@ describe('atom read function setSelf option test', () => {
     resolve()
     await findByText('text: hello0')
 
-    await userEvent.click(getByText('button'))
+    fireEvent.click(getByText('button'))
     await findByText('text: hello1')
   })
 })
@@ -254,13 +253,13 @@ describe('infinite pending', () => {
 
     await findByText('loading')
 
-    await userEvent.click(getByText('button'))
+    fireEvent.click(getByText('button'))
     await findByText('count: 1')
 
-    await userEvent.click(getByText('button'))
+    fireEvent.click(getByText('button'))
     await findByText('loading')
 
-    await userEvent.click(getByText('button'))
+    fireEvent.click(getByText('button'))
     await findByText('count: 3')
   })
 })
