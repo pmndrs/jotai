@@ -146,8 +146,7 @@ Of course, you can test React-Native components too the same way, with or withou
 
 ```tsx
 import React from 'react'
-import { render } from '@testing-library/react-native'
-import userEvent from '@testing-library/user-event'
+import { render, fireEvent } from '@testing-library/react-native'
 import { Counter } from './counter'
 
 test('should increment counter', () => {
@@ -156,7 +155,7 @@ test('should increment counter', () => {
   const counter = getByText('0')
   const incrementButton = getByText('one up')
   // Act
-  await userEvent.press(incrementButton)
+  fireEvent.press(incrementButton)
   // Assert
   expect(counter.props.children.toString()).toEqual('1')
 })
