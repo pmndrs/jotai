@@ -35,8 +35,9 @@ jobs:
           - 18.1.0
           - 18.2.0
           - 18.3.1
-          - 19.0.0-rc-6d3110b4d9-20240531
-          - 0.0.0-experimental-6d3110b4d9-20240531
+          - 19.0.0-rc.0
+          - 19.0.0-rc-e02baf6c92-20240627
+          - 0.0.0-experimental-e02baf6c92-20240627
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
