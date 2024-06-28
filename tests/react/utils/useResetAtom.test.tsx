@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { useResetAtom } from 'jotai/react/utils'
@@ -32,24 +33,24 @@ it('atomWithReset resets to its first value', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 1')
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 2')
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 3')
 
-  fireEvent.click(getByText('reset'))
+  await userEvent.click(getByText('reset'))
   await findByText('count: 0')
 
-  fireEvent.click(getByText('set to 10'))
+  await userEvent.click(getByText('set to 10'))
   await findByText('count: 10')
 
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 11')
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 12')
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 13')
 })
 
@@ -82,14 +83,14 @@ it('atomWithReset reset based on previous value', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('increment till 3, then reset'))
+  await userEvent.click(getByText('increment till 3, then reset'))
   await findByText('count: 1')
-  fireEvent.click(getByText('increment till 3, then reset'))
+  await userEvent.click(getByText('increment till 3, then reset'))
   await findByText('count: 2')
-  fireEvent.click(getByText('increment till 3, then reset'))
+  await userEvent.click(getByText('increment till 3, then reset'))
   await findByText('count: 3')
 
-  fireEvent.click(getByText('increment till 3, then reset'))
+  await userEvent.click(getByText('increment till 3, then reset'))
   await findByText('count: 0')
 })
 
@@ -121,10 +122,10 @@ it('atomWithReset through read-write atom', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('set to 10'))
+  await userEvent.click(getByText('set to 10'))
   await findByText('count: 10')
 
-  fireEvent.click(getByText('reset'))
+  await userEvent.click(getByText('reset'))
   await findByText('count: 0')
 })
 
@@ -162,13 +163,13 @@ it('useResetAtom with custom atom', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 1')
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 2')
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await findByText('count: 3')
 
-  fireEvent.click(getByText('reset'))
+  await userEvent.click(getByText('reset'))
   await findByText('count: 0')
 })

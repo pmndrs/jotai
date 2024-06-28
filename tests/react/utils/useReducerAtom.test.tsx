@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, it, vi } from 'vitest'
 import { useReducerAtom } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
@@ -35,10 +36,10 @@ it('useReducerAtom with no action argument', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await findByText('count: 2')
 
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await findByText('count: 4')
 })
 
@@ -75,13 +76,13 @@ it('useReducerAtom with optional action argument', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('dispatch INCREASE'))
+  await userEvent.click(getByText('dispatch INCREASE'))
   await findByText('count: 1')
 
-  fireEvent.click(getByText('dispatch empty'))
+  await userEvent.click(getByText('dispatch empty'))
   await findByText('count: 1')
 
-  fireEvent.click(getByText('dispatch DECREASE'))
+  await userEvent.click(getByText('dispatch DECREASE'))
   await findByText('count: 0')
 })
 
@@ -115,9 +116,9 @@ it('useReducerAtom with non-optional action argument', async () => {
 
   await findByText('count: 0')
 
-  fireEvent.click(getByText('dispatch INCREASE'))
+  await userEvent.click(getByText('dispatch INCREASE'))
   await findByText('count: 1')
 
-  fireEvent.click(getByText('dispatch DECREASE'))
+  await userEvent.click(getByText('dispatch DECREASE'))
   await findByText('count: 0')
 })

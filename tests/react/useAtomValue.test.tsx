@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -25,6 +26,6 @@ it('useAtomValue basic test', async () => {
   )
 
   await findByText('count: 0')
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await findByText('count: 1')
 })

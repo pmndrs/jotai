@@ -1,5 +1,6 @@
 import { StrictMode, Suspense } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -31,13 +32,13 @@ it('simple sync get default', async () => {
 
   await findByText('count1: 1, count2: 2')
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await findByText('count1: 2, count2: 4')
 
-  fireEvent.click(getByText('button2'))
+  await userEvent.click(getByText('button2'))
   await findByText('count1: 2, count2: 5')
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await findByText('count1: 3, count2: 5')
 })
 
@@ -77,16 +78,16 @@ it('simple async get default', async () => {
   resolve()
   await findByText('count1: 1, count2: 2')
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await findByText('loading')
   resolve()
   await findByText('count1: 2, count2: 4')
 
-  fireEvent.click(getByText('button2'))
+  await userEvent.click(getByText('button2'))
   resolve()
   await findByText('count1: 2, count2: 5')
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   resolve()
   await findByText('count1: 3, count2: 5')
 })
@@ -118,19 +119,19 @@ it('refresh sync atoms to default values', async () => {
 
   await findByText('count1: 1, count2: 2')
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await findByText('count1: 2, count2: 4')
 
-  fireEvent.click(getByText('button2'))
+  await userEvent.click(getByText('button2'))
   await findByText('count1: 2, count2: 5')
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await findByText('count1: 3, count2: 5')
 
-  fireEvent.click(getByText('Refresh count2'))
+  await userEvent.click(getByText('Refresh count2'))
   await findByText('count1: 3, count2: 6')
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await findByText('count1: 4, count2: 8')
 })
 
@@ -173,32 +174,32 @@ it('refresh async atoms to default values', async () => {
     getByText('count1: 1, count2: 2')
   })
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await findByText('loading')
   await waitFor(() => {
     resolve()
     getByText('count1: 2, count2: 4')
   })
 
-  fireEvent.click(getByText('button2'))
+  await userEvent.click(getByText('button2'))
   await waitFor(() => {
     resolve()
     getByText('count1: 2, count2: 5')
   })
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await waitFor(() => {
     resolve()
     getByText('count1: 3, count2: 5')
   })
 
-  fireEvent.click(getByText('Refresh count2'))
+  await userEvent.click(getByText('Refresh count2'))
   await waitFor(() => {
     resolve()
     getByText('count1: 3, count2: 6')
   })
 
-  fireEvent.click(getByText('button1'))
+  await userEvent.click(getByText('button1'))
   await waitFor(() => {
     resolve()
     getByText('count1: 4, count2: 8')

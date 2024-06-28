@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -30,7 +31,7 @@ it('freezeAtom basic test', async () => {
 
   await findByText('isFrozen: true')
 
-  fireEvent.click(getByText('change'))
+  await userEvent.click(getByText('change'))
   await findByText('isFrozen: true')
 })
 
@@ -70,7 +71,7 @@ describe('freezeAtomCreator', () => {
 
     await findByText('isFrozen: true')
 
-    fireEvent.click(getByText('change'))
+    await userEvent.click(getByText('change'))
     await findByText('isFrozen: true')
   })
 })

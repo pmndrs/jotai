@@ -1,5 +1,6 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { act, render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -28,7 +29,7 @@ it('one atom, one effect', async () => {
   await findByText('count: 1')
   expect(onMountFn).toHaveBeenCalledTimes(1)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 2')
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
@@ -73,7 +74,7 @@ it('two atoms, one each', async () => {
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onMountFn2).toHaveBeenCalledTimes(1)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     getByText('count: 2')
     getByText('count2: 2')
@@ -143,7 +144,7 @@ it('mount/unmount test', async () => {
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     expect(onMountFn).toHaveBeenCalledTimes(1)
     expect(onUnMountFn).toHaveBeenCalledTimes(1)
@@ -195,7 +196,7 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
     expect(derivedOnUnMountFn).toHaveBeenCalledTimes(1)
@@ -268,22 +269,22 @@ it('mount/unMount order', async () => {
   )
   expect(committed).toEqual([0, 0])
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     expect(committed).toEqual([1, 0])
   })
 
-  fireEvent.click(getByText('derived atom'))
+  await userEvent.click(getByText('derived atom'))
   await waitFor(() => {
     expect(committed).toEqual([1, 1])
   })
 
-  fireEvent.click(getByText('derived atom'))
+  await userEvent.click(getByText('derived atom'))
   await waitFor(() => {
     expect(committed).toEqual([1, 0])
   })
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await waitFor(() => {
     expect(committed).toEqual([0, 0])
   })
@@ -336,7 +337,7 @@ it('mount/unmount test with async atom', async () => {
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(1)
 })
@@ -393,13 +394,13 @@ it('subscription usage test', async () => {
   })
   await findByText('count: 11')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('N/A')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 11')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('N/A')
 
   act(() => {
@@ -407,7 +408,7 @@ it('subscription usage test', async () => {
   })
   await findByText('N/A')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 12')
 })
 
@@ -455,10 +456,10 @@ it('subscription in base atom test', async () => {
 
   await findByText('count: 10')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 11')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 12')
 })
 
@@ -512,9 +513,9 @@ it('create atom with onMount in async get', async () => {
   await findByText('count: 1')
   await findByText('count: 10')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 11')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('count: 12')
 })

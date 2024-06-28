@@ -1,5 +1,6 @@
 import { StrictMode, Suspense } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { assert, describe, expect, it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -40,7 +41,7 @@ describe('useAtom delay option test', () => {
 
     await findByText('count: 0')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('loading')
     await findByText('count: 1')
   })
@@ -78,7 +79,7 @@ describe('useAtom delay option test', () => {
 
     await findByText('count: 0')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 1')
   })
 })
@@ -137,7 +138,7 @@ describe('atom read function setSelf option test', () => {
     resolve()
     await findByText('text: hello0')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('text: hello1')
   })
 })
@@ -195,8 +196,8 @@ describe('timing issue with setSelf', () => {
     await waitFor(() => assert(resolve.length === 1))
     resolve[0]!()
 
-    // The use of fireEvent is required to reproduce the issue
-    fireEvent.click(getByText('button'))
+    // The use of await userEvent is required to reproduce the issue
+    await userEvent.click(getByText('button'))
 
     await waitFor(() => assert(resolve.length === 3))
     resolve[1]!()
@@ -204,8 +205,8 @@ describe('timing issue with setSelf', () => {
 
     await waitFor(() => assert(result === 2))
 
-    // The use of fireEvent is required to reproduce the issue
-    fireEvent.click(getByText('button'))
+    // The use of await userEvent is required to reproduce the issue
+    await userEvent.click(getByText('button'))
 
     await waitFor(() => assert(resolve.length === 5))
     resolve[3]!()
@@ -253,13 +254,13 @@ describe('infinite pending', () => {
 
     await findByText('loading')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 1')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('loading')
 
-    fireEvent.click(getByText('button'))
+    await userEvent.click(getByText('button'))
     await findByText('count: 3')
   })
 })

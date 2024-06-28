@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -58,17 +59,17 @@ it('useSetAtom does not trigger rerender in component', async () => {
     getByText('count: 0, commits: 1')
     getByText('updater commits: 1')
   })
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await waitFor(() => {
     getByText('count: 1, commits: 2')
     getByText('updater commits: 1')
   })
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await waitFor(() => {
     getByText('count: 2, commits: 3')
     getByText('updater commits: 1')
   })
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await waitFor(() => {
     getByText('count: 3, commits: 4')
     getByText('updater commits: 1')
@@ -112,7 +113,7 @@ it('useSetAtom with write without an argument', async () => {
   await waitFor(() => {
     getByText('count: 0')
   })
-  fireEvent.click(getByText('increment'))
+  await userEvent.click(getByText('increment'))
   await waitFor(() => {
     getByText('count: 1')
   })
