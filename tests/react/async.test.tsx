@@ -668,11 +668,11 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   await findByText('loading')
   await findByText('derived: 11, commits: 1')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 12, commits: 2')
 
-  fireEvent.click(getByText('button'))
+  await userEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('derived: 13, commits: 3')
 })
@@ -776,6 +776,7 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
 
   await findByText('count: 0')
 
+  // The use of fireEvent is required to reproduce the issue
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
   await findByText('count: -1')
