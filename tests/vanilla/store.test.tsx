@@ -42,7 +42,9 @@ it('should unmount with store.get', async () => {
   const unsub = store.sub(countAtom, callback)
   store.get(countAtom)
   unsub()
-  const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
+  const result = Array.from(
+    'dev4_get_mounted_atoms' in store ? store.dev4_get_mounted_atoms() : [],
+  )
   expect(result).toEqual([])
 })
 
@@ -54,7 +56,9 @@ it('should unmount dependencies with store.get', async () => {
   const unsub = store.sub(derivedAtom, callback)
   store.get(derivedAtom)
   unsub()
-  const result = Array.from(store.dev_get_mounted_atoms?.() ?? [])
+  const result = Array.from(
+    'dev4_restore_atoms' in store ? store.dev4_get_mounted_atoms() : [],
+  )
   expect(result).toEqual([])
 })
 
