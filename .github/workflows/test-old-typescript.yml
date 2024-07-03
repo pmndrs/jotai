@@ -32,7 +32,7 @@ jobs:
           - 3.8.3
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v4
         with:
           version: 8.2.0
       - uses: actions/setup-node@v3
