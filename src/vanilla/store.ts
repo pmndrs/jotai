@@ -703,7 +703,6 @@ const buildStore = (
     sub: subscribeAtom,
     unstable_derive,
   }
-
   if (import.meta.env?.MODE !== 'production') {
     const devStore: DevStoreRev4 = {
       // store dev methods (these are tentative and subject to change without notice)
