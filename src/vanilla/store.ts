@@ -8,9 +8,6 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
-const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
-  atom.unstable_is ? atom.unstable_is(a) : a === atom
-
 const hasInitialValue = <T extends Atom<AnyValue>>(
   atom: T,
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
@@ -251,6 +248,12 @@ type DevStoreRev4 = {
   dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
+// internal & unstable type
+type StoreArgs = [
+  atomStateMap: WeakMap<AnyAtom, AtomState>,
+  isSelfAtom: (atom: AnyAtom, a: AnyAtom) => boolean,
+]
+
 type PrdStore = {
   get: <Value>(atom: Atom<Value>) => Value
   set: <Value, Args extends unknown[], Result>(
@@ -258,14 +261,17 @@ type PrdStore = {
     ...args: Args
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
+  unstable_derive: (fn: (...args: StoreArgs) => StoreArgs) => Store
 }
 type Store = PrdStore | (PrdStore & DevStoreRev4)
 
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
-export const createStore = (): Store => {
-  const atomStateMap = new WeakMap<AnyAtom, AtomState>()
+const buildStore = (
+  atomStateMap: WeakMap<AnyAtom, AtomState>,
+  isSelfAtom: (atom: AnyAtom, a: AnyAtom) => boolean,
+): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
 
@@ -685,11 +691,21 @@ export const createStore = (): Store => {
     }
   }
 
+  const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) => {
+    const derivedArgs = fn(atomStateMap, isSelfAtom)
+    const derivedStore = buildStore(...derivedArgs)
+    return derivedStore
+  }
+
+  const store: Store = {
+    get: readAtom,
+    set: writeAtom,
+    sub: subscribeAtom,
+    unstable_derive,
+  }
+
   if (import.meta.env?.MODE !== 'production') {
-    const store: Store = {
-      get: readAtom,
-      set: writeAtom,
-      sub: subscribeAtom,
+    const devStore: DevStoreRev4 = {
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => atomStateMap,
       dev4_get_mounted_atoms: () => debugMountedAtoms,
@@ -711,14 +727,13 @@ export const createStore = (): Store => {
         flushPending(pending)
       },
     }
-    return store
+    Object.assign(store, devStore)
   }
-  return {
-    get: readAtom,
-    set: writeAtom,
-    sub: subscribeAtom,
-  }
+  return store
 }
+
+export const createStore = (): Store =>
+  buildStore(new WeakMap(), (atom, a) => atom === a)
 
 let defaultStore: Store | undefined
 
