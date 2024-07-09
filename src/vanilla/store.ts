@@ -249,7 +249,7 @@ type DevStoreRev4 = {
 }
 
 // internal & unstable type
-type StoreArgs = [
+type StoreArgs = readonly [
   atomStateMap: WeakMap<AnyAtom, AtomState>,
   isSelfAtom: (atom: AnyAtom, a: AnyAtom) => boolean,
 ]
@@ -269,8 +269,8 @@ export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (
-  atomStateMap: WeakMap<AnyAtom, AtomState>,
-  isSelfAtom: (atom: AnyAtom, a: AnyAtom) => boolean,
+  atomStateMap: StoreArgs[0],
+  isSelfAtom: StoreArgs[1],
 ): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
