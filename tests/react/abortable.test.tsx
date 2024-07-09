@@ -119,7 +119,7 @@ describe('abortable atom test', () => {
     expect(abortedCount).toBe(1)
   })
 
-  it('can abort on unmount', async () => {
+  it('does not abort on unmount', async () => {
     const countAtom = atom(0)
     let abortedCount = 0
     const resolve: (() => void)[] = []
@@ -169,7 +169,7 @@ describe('abortable atom test', () => {
     await findByText('hidden')
 
     resolve.splice(0).forEach((fn) => fn())
-    await waitFor(() => expect(abortedCount).toBe(1))
+    await waitFor(() => expect(abortedCount).toBe(0))
   })
 
   it('throws aborted error (like fetch)', async () => {

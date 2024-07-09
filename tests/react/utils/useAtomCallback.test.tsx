@@ -1,5 +1,6 @@
 import { StrictMode, useCallback, useEffect, useState } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { useAtomCallback } from 'jotai/react/utils'
@@ -50,7 +51,7 @@ it('useAtomCallback with get', async () => {
   )
 
   await findByText('atom count: 0')
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await waitFor(() => {
     getByText('atom count: 1')
     getByText('state count: 1')
@@ -102,7 +103,7 @@ it('useAtomCallback with set and update', async () => {
   )
 
   await findByText('count: 0')
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await waitFor(() => {
     getByText('count: 1')
     getByText('changeable count: 1')
@@ -136,7 +137,7 @@ it('useAtomCallback with set and update and arg', async () => {
   )
 
   await findByText('count: 0')
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await waitFor(() => {
     getByText('count: 42')
   })
@@ -170,6 +171,6 @@ it('useAtomCallback with sync atom (#1100)', async () => {
 
   await findByText('atom count: 0')
 
-  fireEvent.click(getByText('dispatch'))
+  await userEvent.click(getByText('dispatch'))
   await findByText('atom count: 1')
 })

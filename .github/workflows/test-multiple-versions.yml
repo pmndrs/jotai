@@ -10,11 +10,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8.2.0
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'pnpm'
@@ -35,14 +33,13 @@ jobs:
           - 18.1.0
           - 18.2.0
           - 18.3.1
-          - 19.0.0-rc-6d3110b4d9-20240531
-          - 0.0.0-experimental-6d3110b4d9-20240531
+          - 19.0.0-rc.0
+          - 19.0.0-rc-df783f9ea1-20240708
+          - 0.0.0-experimental-df783f9ea1-20240708
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8.2.0
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'pnpm'
