@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/dom'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Getter } from 'jotai/vanilla'
+import type { Atom, Getter } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -556,19 +556,22 @@ describe('aborting atoms', () => {
   })
 })
 
-describe('unstable_resolve resolves the correct value for', () => {
+describe('unstable_derive resolves the correct value for', () => {
   function nextTask() {
     return new Promise((resolve) => setTimeout(resolve))
   }
 
   it('primitive atom', async () => {
-    const store = createStore()
-    store.unstable_resolve = (atom) => {
-      if (atom === (pseudo as Atom<any>)) {
+    const unstable_resolve = <T extends Atom<unknown>>(atom: T): T => {
+      if (atom === (pseudo as Atom<unknown>)) {
         return a as unknown as typeof atom
       }
       return atom
     }
+    const store = createStore().unstable_derive((atomStateMap) => [
+      atomStateMap,
+      unstable_resolve,
+    ])
 
     const pseudo = atom('pseudo') as typeof a
     pseudo.debugLabel = 'pseudo'
@@ -588,13 +591,18 @@ describe('unstable_resolve resolves the correct value for', () => {
   })
 
   it('derived atom', async () => {
-    const store = createStore()
-    store.unstable_resolve = (atom) => {
-      if (atom === (pseudo as Atom<any>)) {
+    let unstable_resolve:
+      | (<T extends Atom<unknown>>(atom: T) => T)
+      | undefined = (atom) => {
+      if (atom === (pseudo as Atom<unknown>)) {
         return a as unknown as typeof atom
       }
       return atom
     }
+    const store = createStore().unstable_derive((atomStateMap) => [
+      atomStateMap,
+      (atom) => unstable_resolve?.(atom) ?? atom,
+    ])
 
     const pseudo = atom('pseudo') as typeof a
     pseudo.debugLabel = 'pseudo'
@@ -619,7 +627,7 @@ describe('unstable_resolve resolves the correct value for', () => {
     const callback = vi.fn()
     store.sub(c, callback)
     expect(store.get(pseudo)).toBe('ad:a-mounted')
-    delete store.unstable_resolve
+    unstable_resolve = undefined
     await nextTask()
     expect(store.get(pseudo)).toEqual('pseudo')
     store.sub(pseudo, callback)
@@ -627,13 +635,16 @@ describe('unstable_resolve resolves the correct value for', () => {
   })
 
   it('writable atom', async () => {
-    const store = createStore()
-    store.unstable_resolve = (atom) => {
-      if (atom === (pseudo as Atom<any>)) {
+    const unstable_resolve = <T extends Atom<unknown>>(atom: T): T => {
+      if (atom === (pseudo as Atom<unknown>)) {
         return a as unknown as typeof atom
       }
       return atom
     }
+    const store = createStore().unstable_derive((atomStateMap) => [
+      atomStateMap,
+      unstable_resolve,
+    ])
 
     const pseudoWriteFn = vi.fn()
     const pseudo = atom('pseudo', pseudoWriteFn) as unknown as typeof a
@@ -660,13 +671,18 @@ describe('unstable_resolve resolves the correct value for', () => {
   })
 
   it('this in read and write', async () => {
-    const store = createStore()
-    store.unstable_resolve = (atom) => {
-      if (atom === (pseudo as Atom<any>)) {
+    let unstable_resolve:
+      | (<T extends Atom<unknown>>(atom: T) => T)
+      | undefined = (atom) => {
+      if (atom === (pseudo as Atom<unknown>)) {
         return this_read as unknown as typeof atom
       }
       return atom
     }
+    const store = createStore().unstable_derive((atomStateMap) => [
+      atomStateMap,
+      (atom) => unstable_resolve?.(atom) ?? atom,
+    ])
 
     const pseudo = atom('pseudo') as typeof this_read
     pseudo.debugLabel = 'pseudo'
@@ -677,8 +693,8 @@ describe('unstable_resolve resolves the correct value for', () => {
     this_read.debugLabel = 'this_read'
     expect(store.get(pseudo)).toBe('this_read')
 
-    store.unstable_resolve = (atom) => {
-      if (atom === (pseudo as Atom<any>)) {
+    unstable_resolve = (atom) => {
+      if (atom === (pseudo as Atom<unknown>)) {
         return this_write as unknown as typeof atom
       }
       return atom
@@ -707,7 +723,7 @@ describe('unstable_resolve resolves the correct value for', () => {
     expect(store.get(pseudo)).toBe(
       'this:this_write-mounted:this_write-updated:this_write-unmounted',
     )
-    delete store.unstable_resolve
+    unstable_resolve = undefined
     expect(store.get(pseudo)).toBe('pseudo')
   })
 })
