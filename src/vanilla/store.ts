@@ -254,7 +254,10 @@ type AtomStateMap = {
 }
 
 // internal & unstable type
-type StoreArgs = readonly [atomStateMap: AtomStateMap]
+type StoreArgs = readonly [
+  atomStateMap: AtomStateMap,
+  // possible other arguments in the future
+]
 
 type PrdStore = {
   get: <Value>(atom: Atom<Value>) => Value
@@ -689,11 +692,8 @@ const buildStore = (atomStateMap: StoreArgs[0]): Store => {
     }
   }
 
-  const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) => {
-    const derivedArgs = fn(atomStateMap)
-    const derivedStore = buildStore(...derivedArgs)
-    return derivedStore
-  }
+  const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
+    buildStore(...fn(atomStateMap))
 
   const store: Store = {
     get: readAtom,
