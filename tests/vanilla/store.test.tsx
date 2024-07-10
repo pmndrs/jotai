@@ -556,44 +556,47 @@ describe('aborting atoms', () => {
   })
 })
 
-describe('unstable_derive with atomStateMap resolves the correct value for', () => {
+describe('unstable_derive for scoping atoms', () => {
   it('primitive atom', async () => {
     const a = atom('a')
     a.onMount = (setSelf) => setSelf((v) => v + ':mounted')
-    const pseudo = atom('a') as typeof a
-    pseudo.onMount = (setSelf) => setSelf((v) => v + ':mounted')
+    const scopedAtoms = new Set<Atom<unknown>>([a])
 
-    const unstable_resolve = <T extends Atom<unknown>>(atom: T): T => {
-      if (atom === (pseudo as Atom<unknown>)) {
-        return a as unknown as typeof atom
-      }
-      return atom
-    }
     const store = createStore()
-    const derivedStore = store.unstable_derive((atomStateMap, resolveAtom) => [
-      {
-        get(key) {
-          return atomStateMap.get(unstable_resolve(key))
+    const derivedStore = store.unstable_derive((atomStateMap, resolveAtom) => {
+      const scopedAtomStateMap = new WeakMap() as typeof atomStateMap
+      return [
+        {
+          get(key) {
+            if (scopedAtoms.has(key)) {
+              return scopedAtomStateMap.get(key)
+            }
+            return atomStateMap.get(key)
+          },
+          set(key, value) {
+            if (scopedAtoms.has(key)) {
+              scopedAtomStateMap.set(key, value)
+            } else {
+              atomStateMap.set(key, value)
+            }
+          },
         },
-        set(key, value) {
-          atomStateMap.set(unstable_resolve(key), value)
-        },
-      },
-      resolveAtom, // unchanged
-    ])
+        resolveAtom, // unchanged
+      ]
+    })
 
-    expect(store.get(pseudo)).toBe('a')
-    expect(derivedStore.get(pseudo)).toBe('a')
+    expect(store.get(a)).toBe('a')
+    expect(derivedStore.get(a)).toBe('a')
 
-    derivedStore.sub(pseudo, vi.fn())
+    derivedStore.sub(a, vi.fn())
     await new Promise((resolve) => setTimeout(resolve))
-    expect(store.get(pseudo)).toBe('a')
-    expect(derivedStore.get(pseudo)).toBe('a:mounted')
+    expect(store.get(a)).toBe('a')
+    expect(derivedStore.get(a)).toBe('a:mounted')
 
-    derivedStore.set(pseudo, (v) => v + ':updated')
+    derivedStore.set(a, (v) => v + ':updated')
     await new Promise((resolve) => setTimeout(resolve))
-    expect(store.get(pseudo)).toBe('a')
-    expect(derivedStore.get(pseudo)).toBe('a:mounted:updated')
+    expect(store.get(a)).toBe('a')
+    expect(derivedStore.get(a)).toBe('a:mounted:updated')
   })
 })
 
