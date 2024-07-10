@@ -243,14 +243,19 @@ const flushPending = (pending: Pending) => {
 
 // for debugging purpose only
 type DevStoreRev4 = {
-  dev4_get_internal_weak_map: () => WeakMap<AnyAtom, AtomState>
+  dev4_get_internal_weak_map: () => AtomStateMap
   dev4_get_mounted_atoms: () => Set<AnyAtom>
   dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
+type AtomStateMap = {
+  get<Value>(key: Atom<Value>): AtomState<Value> | undefined
+  set<Value>(key: Atom<Value>, value: AtomState<Value>): void
+}
+
 // internal & unstable type
 type StoreArgs = readonly [
-  atomStateMap: WeakMap<AnyAtom, AtomState>,
+  atomStateMap: AtomStateMap,
   resolveAtom: <T extends AnyAtom>(atom: T) => T,
 ]
 
@@ -280,7 +285,7 @@ const buildStore = (
   }
 
   const getAtomState = <Value>(atom: Atom<Value>) => {
-    let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
+    let atomState = atomStateMap.get(atom)
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
@@ -734,7 +739,7 @@ const buildStore = (
 }
 
 export const createStore = (): Store =>
-  buildStore(new WeakMap(), (atom) => atom)
+  buildStore(new WeakMap() as AtomStateMap, (atom) => atom)
 
 let defaultStore: Store | undefined
 
