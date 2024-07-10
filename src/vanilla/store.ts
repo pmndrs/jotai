@@ -254,10 +254,7 @@ type AtomStateMap = {
 }
 
 // internal & unstable type
-type StoreArgs = readonly [
-  atomStateMap: AtomStateMap,
-  resolveAtom: <T extends AnyAtom>(atom: T) => T,
-]
+type StoreArgs = readonly [atomStateMap: AtomStateMap]
 
 type PrdStore = {
   get: <Value>(atom: Atom<Value>) => Value
@@ -273,10 +270,7 @@ type Store = PrdStore | (PrdStore & DevStoreRev4)
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
-const buildStore = (
-  atomStateMap: StoreArgs[0],
-  resolveAtom: StoreArgs[1],
-): Store => {
+const buildStore = (atomStateMap: StoreArgs[0]): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
 
@@ -393,7 +387,6 @@ const buildStore = (
     atomState.d.clear()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      a = resolveAtom(a)
       if (a === (atom as AnyAtom)) {
         const aState = getAtomState(a)
         if (!isAtomStateInitialized(aState)) {
@@ -474,7 +467,7 @@ const buildStore = (
   }
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(undefined, resolveAtom(atom)))
+    returnAtomValue(readAtomState(undefined, atom))
 
   const recomputeDependents = (pending: Pending, atom: AnyAtom) => {
     const getDependents = (a: AnyAtom): Set<AnyAtom> => {
@@ -548,13 +541,12 @@ const buildStore = (
     ...args: Args
   ): Result => {
     const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(pending, resolveAtom(a)))
+      returnAtomValue(readAtomState(pending, a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
       let r: R | undefined
-      a = resolveAtom(a)
       if (a === (atom as AnyAtom)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
@@ -585,7 +577,7 @@ const buildStore = (
     ...args: Args
   ): Result => {
     const pending = createPending()
-    const result = writeAtomState(pending, resolveAtom(atom), ...args)
+    const result = writeAtomState(pending, atom, ...args)
     flushPending(pending)
     return result
   }
@@ -684,7 +676,6 @@ const buildStore = (
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    atom = resolveAtom(atom)
     const pending = createPending()
     const mounted = mountAtom(pending, atom)
     flushPending(pending)
@@ -699,7 +690,7 @@ const buildStore = (
   }
 
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) => {
-    const derivedArgs = fn(atomStateMap, resolveAtom)
+    const derivedArgs = fn(atomStateMap)
     const derivedStore = buildStore(...derivedArgs)
     return derivedStore
   }
@@ -739,7 +730,7 @@ const buildStore = (
 }
 
 export const createStore = (): Store =>
-  buildStore(new WeakMap() as AtomStateMap, (atom) => atom)
+  buildStore(new WeakMap() as AtomStateMap)
 
 let defaultStore: Store | undefined
 

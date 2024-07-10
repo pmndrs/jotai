@@ -563,7 +563,7 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive((atomStateMap, resolveAtom) => {
+    const derivedStore = store.unstable_derive((atomStateMap) => {
       const scopedAtomStateMap = new WeakMap() as typeof atomStateMap
       return [
         {
@@ -581,7 +581,6 @@ describe('unstable_derive for scoping atoms', () => {
             }
           },
         },
-        resolveAtom, // unchanged
       ]
     })
 
@@ -598,176 +597,39 @@ describe('unstable_derive for scoping atoms', () => {
     expect(store.get(a)).toBe('a')
     expect(derivedStore.get(a)).toBe('a:mounted:updated')
   })
-})
-
-describe('unstable_derive with resolveAtom resolves the correct value for', () => {
-  function nextTask() {
-    return new Promise((resolve) => setTimeout(resolve))
-  }
-
-  it('primitive atom', async () => {
-    const unstable_resolve = <T extends Atom<unknown>>(atom: T): T => {
-      if (atom === (pseudo as Atom<unknown>)) {
-        return a as unknown as typeof atom
-      }
-      return atom
-    }
-    const store = createStore().unstable_derive((atomStateMap) => [
-      atomStateMap,
-      unstable_resolve,
-    ])
-
-    const pseudo = atom('pseudo') as typeof a
-    pseudo.debugLabel = 'pseudo'
-    pseudo.onMount = (setSelf) => setSelf((v) => v + ':pseudo-mounted')
-    const a = atom('a')
-    a.debugLabel = 'a'
-    a.onMount = (setSelf) => setSelf((v) => v + ':a-mounted')
-
-    expect(store.get(pseudo)).toBe('a')
-    const callback = vi.fn()
-    store.sub(pseudo, callback)
-    expect(store.get(pseudo)).toBe('a:a-mounted')
-    store.set(pseudo, (v) => v + ':a-updated')
-    expect(store.get(pseudo)).toBe('a:a-mounted:a-updated')
-    await nextTask()
-    expect(store.get(pseudo)).toBe('a:a-mounted:a-updated')
-  })
 
   it('derived atom', async () => {
-    let unstable_resolve:
-      | (<T extends Atom<unknown>>(atom: T) => T)
-      | undefined = (atom) => {
-      if (atom === (pseudo as Atom<unknown>)) {
-        return a as unknown as typeof atom
-      }
-      return atom
-    }
-    const store = createStore().unstable_derive((atomStateMap) => [
-      atomStateMap,
-      (atom) => unstable_resolve?.(atom) ?? atom,
-    ])
-
-    const pseudo = atom('pseudo') as typeof a
-    pseudo.debugLabel = 'pseudo'
-    pseudo.onMount = (setSelf) => setSelf((v) => v + ':pseudo-mounted')
     const a = atom('a')
-    a.debugLabel = 'a'
-    a.onMount = (setSelf) => setSelf((v) => v + ':a-mounted')
-    const b = atom('b')
-    b.debugLabel = 'b'
-    const c = atom((get) => get(pseudo) + get(b))
-    c.debugLabel = 'c'
-    expect(store.get(c)).toBe('ab')
-    const d = atom(
-      (_get, { setSelf }) => setTimeout(setSelf, 0, 'd'),
-      (get, set, v) => set(pseudo, get(pseudo) + v),
-    )
-    store.get(d)
-    await nextTask()
-    expect(store.get(a)).toBe('ad')
-    expect(store.get(c)).toBe('adb')
-    expect(store.get(pseudo)).toEqual('ad')
-    const callback = vi.fn()
-    store.sub(c, callback)
-    expect(store.get(pseudo)).toBe('ad:a-mounted')
-    unstable_resolve = undefined
-    await nextTask()
-    expect(store.get(pseudo)).toEqual('pseudo')
-    store.sub(pseudo, callback)
-    expect(store.get(pseudo)).toEqual('pseudo:pseudo-mounted')
-  })
+    const b = atom((get) => get(a))
+    const scopedAtoms = new Set<Atom<unknown>>([a])
 
-  it('writable atom', async () => {
-    const unstable_resolve = <T extends Atom<unknown>>(atom: T): T => {
-      if (atom === (pseudo as Atom<unknown>)) {
-        return a as unknown as typeof atom
-      }
-      return atom
-    }
-    const store = createStore().unstable_derive((atomStateMap) => [
-      atomStateMap,
-      unstable_resolve,
-    ])
-
-    const pseudoWriteFn = vi.fn()
-    const pseudo = atom('pseudo', pseudoWriteFn) as unknown as typeof a
-    pseudo.debugLabel = 'pseudo'
-    pseudo.onMount = (setSelf) => setSelf('pseudo-mounted')
-    const a = atom('a', (get, set, value: string) => {
-      set(pseudo, get(pseudo) + ':' + value)
-      return () => set(pseudo, get(pseudo) + ':a-unmounted')
+    const store = createStore()
+    const derivedStore = store.unstable_derive((atomStateMap) => {
+      const scopedAtomStateMap = new WeakMap() as typeof atomStateMap
+      return [
+        {
+          get(key) {
+            if (scopedAtoms.has(key)) {
+              return scopedAtomStateMap.get(key)
+            }
+            return atomStateMap.get(key)
+          },
+          set(key, value) {
+            if (scopedAtoms.has(key)) {
+              scopedAtomStateMap.set(key, value)
+            } else {
+              atomStateMap.set(key, value)
+            }
+          },
+        },
+      ]
     })
-    a.debugLabel = 'a'
-    a.onMount = (setSelf) => setSelf('a-mounted')
-    expect(store.get(pseudo)).toBe('a')
-    const callback = vi.fn()
-    const unsub = store.sub(pseudo, callback)
-    await nextTask()
-    expect(store.get(pseudo)).toBe('a:a-mounted')
-    const value = store.set(pseudo, 'a-updated')
-    expect(pseudoWriteFn).not.toHaveBeenCalled()
-    expect(typeof value).toBe('function')
-    expect(store.get(pseudo)).toBe('a:a-mounted:a-updated')
-    unsub()
-    await nextTask()
-    expect(store.get(pseudo)).toBe('a:a-mounted:a-updated:a-unmounted')
-  })
 
-  it('this in read and write', async () => {
-    let unstable_resolve:
-      | (<T extends Atom<unknown>>(atom: T) => T)
-      | undefined = (atom) => {
-      if (atom === (pseudo as Atom<unknown>)) {
-        return this_read as unknown as typeof atom
-      }
-      return atom
-    }
-    const store = createStore().unstable_derive((atomStateMap) => [
-      atomStateMap,
-      (atom) => unstable_resolve?.(atom) ?? atom,
-    ])
-
-    const pseudo = atom('pseudo') as typeof this_read
-    pseudo.debugLabel = 'pseudo'
-    let i = 0
-    const this_read = atom(function read(this: any, get) {
-      return i++ % 2 ? get(this) : 'this_read'
-    })
-    this_read.debugLabel = 'this_read'
-    expect(store.get(pseudo)).toBe('this_read')
-
-    unstable_resolve = (atom) => {
-      if (atom === (pseudo as Atom<unknown>)) {
-        return this_write as unknown as typeof atom
-      }
-      return atom
-    }
-
-    const this_write = atom(
-      'this',
-      function write(this: any, get, set, value: string) {
-        set(this, get(this) + ':' + value)
-        return () => set(this, get(this) + ':this_write-unmounted')
-      },
-    )
-    this_write.debugLabel = 'this_write'
-    this_write.onMount = (setSelf) => setSelf('this_write-mounted')
-    expect(store.get(pseudo)).toBe('this')
-    const callback = vi.fn()
-    const unsub = store.sub(pseudo, callback)
-    await nextTask()
-    expect(store.get(pseudo)).toBe('this:this_write-mounted')
-    expect(callback).not.toHaveBeenCalledOnce()
-    store.set(this_write, 'this_write-updated')
-    expect(store.get(pseudo)).toBe('this:this_write-mounted:this_write-updated')
-    await nextTask()
-    unsub()
-    await nextTask()
-    expect(store.get(pseudo)).toBe(
-      'this:this_write-mounted:this_write-updated:this_write-unmounted',
-    )
-    unstable_resolve = undefined
-    expect(store.get(pseudo)).toBe('pseudo')
+    expect(store.get(b)).toBe('a')
+    expect(derivedStore.get(b)).toBe('a')
+    derivedStore.set(a, 'b')
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(store.get(b)).toBe('a')
+    expect(derivedStore.get(b)).toBe('b')
   })
 })
