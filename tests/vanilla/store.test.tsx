@@ -556,7 +556,48 @@ describe('aborting atoms', () => {
   })
 })
 
-describe('unstable_derive resolves the correct value for', () => {
+describe('unstable_derive with atomStateMap resolves the correct value for', () => {
+  it('primitive atom', async () => {
+    const a = atom('a')
+    a.onMount = (setSelf) => setSelf((v) => v + ':mounted')
+    const pseudo = atom('a') as typeof a
+    pseudo.onMount = (setSelf) => setSelf((v) => v + ':mounted')
+
+    const unstable_resolve = <T extends Atom<unknown>>(atom: T): T => {
+      if (atom === (pseudo as Atom<unknown>)) {
+        return a as unknown as typeof atom
+      }
+      return atom
+    }
+    const store = createStore()
+    const derivedStore = store.unstable_derive((atomStateMap, resolveAtom) => [
+      {
+        get(key) {
+          return atomStateMap.get(unstable_resolve(key))
+        },
+        set(key, value) {
+          atomStateMap.set(unstable_resolve(key), value)
+        },
+      },
+      resolveAtom, // unchanged
+    ])
+
+    expect(store.get(pseudo)).toBe('a')
+    expect(derivedStore.get(pseudo)).toBe('a')
+
+    derivedStore.sub(pseudo, vi.fn())
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(store.get(pseudo)).toBe('a')
+    expect(derivedStore.get(pseudo)).toBe('a:mounted')
+
+    derivedStore.set(pseudo, (v) => v + ':updated')
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(store.get(pseudo)).toBe('a')
+    expect(derivedStore.get(pseudo)).toBe('a:mounted:updated')
+  })
+})
+
+describe('unstable_derive with resolveAtom resolves the correct value for', () => {
   function nextTask() {
     return new Promise((resolve) => setTimeout(resolve))
   }
