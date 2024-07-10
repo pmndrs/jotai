@@ -251,7 +251,7 @@ type DevStoreRev4 = {
 // internal & unstable type
 type StoreArgs = readonly [
   atomStateMap: WeakMap<AnyAtom, AtomState>,
-  isSelfAtom: (atom: AnyAtom, a: AnyAtom) => boolean,
+  resolveAtom: <T extends AnyAtom>(atom: T) => T,
 ]
 
 type PrdStore = {
@@ -270,7 +270,7 @@ export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (
   atomStateMap: StoreArgs[0],
-  isSelfAtom: StoreArgs[1],
+  resolveAtom: StoreArgs[1],
 ): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
@@ -388,7 +388,8 @@ const buildStore = (
     atomState.d.clear()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      if (isSelfAtom(atom, a)) {
+      a = resolveAtom(a)
+      if (a === (atom as AnyAtom)) {
         const aState = getAtomState(a)
         if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
@@ -468,7 +469,7 @@ const buildStore = (
   }
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(undefined, atom))
+    returnAtomValue(readAtomState(undefined, resolveAtom(atom)))
 
   const recomputeDependents = (pending: Pending, atom: AnyAtom) => {
     const getDependents = (a: AnyAtom): Set<AnyAtom> => {
@@ -497,7 +498,6 @@ const buildStore = (
       }
       markedAtoms.add(n)
       for (const m of getDependents(n)) {
-        // we shouldn't use isSelfAtom here.
         if (n !== m) {
           visit(m)
         }
@@ -543,13 +543,14 @@ const buildStore = (
     ...args: Args
   ): Result => {
     const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(pending, a))
+      returnAtomValue(readAtomState(pending, resolveAtom(a)))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
       let r: R | undefined
-      if (isSelfAtom(atom, a)) {
+      a = resolveAtom(a)
+      if (a === (atom as AnyAtom)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
@@ -565,7 +566,7 @@ const buildStore = (
           recomputeDependents(pending, a)
         }
       } else {
-        r = writeAtomState(pending, a as AnyWritableAtom, ...args) as R
+        r = writeAtomState(pending, a, ...args) as R
       }
       flushPending(pending)
       return r as R
@@ -579,7 +580,7 @@ const buildStore = (
     ...args: Args
   ): Result => {
     const pending = createPending()
-    const result = writeAtomState(pending, atom, ...args)
+    const result = writeAtomState(pending, resolveAtom(atom), ...args)
     flushPending(pending)
     return result
   }
@@ -678,6 +679,7 @@ const buildStore = (
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
+    atom = resolveAtom(atom)
     const pending = createPending()
     const mounted = mountAtom(pending, atom)
     flushPending(pending)
@@ -692,7 +694,7 @@ const buildStore = (
   }
 
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) => {
-    const derivedArgs = fn(atomStateMap, isSelfAtom)
+    const derivedArgs = fn(atomStateMap, resolveAtom)
     const derivedStore = buildStore(...derivedArgs)
     return derivedStore
   }
@@ -732,7 +734,7 @@ const buildStore = (
 }
 
 export const createStore = (): Store =>
-  buildStore(new WeakMap(), (atom, a) => atom === a)
+  buildStore(new WeakMap(), (atom) => atom)
 
 let defaultStore: Store | undefined
 
