@@ -7,22 +7,46 @@ published: false
 
 ## splitAtom
 
-The `splitAtom` utility is useful for when you want to get an atom for each element in a list.
-It works for read/write atoms that contain a list. When used on such an atom, it returns an atom
-which itself contains a list of atoms, each corresponding to the respective item in the original list.
+The `splitAtom` utility is designed for scenarios where you need to obtain an atom for each element in a list. It operates on read/write atoms containing a list, returning an atom that holds a list of atoms, each corresponding to an item in the original list.
 
-A simplified type signature would be:
+### Signature
+
+A simplified type signature for `splitAtom` would be:
 
 ```ts
-type SplitAtom = <Item>(arrayAtom: PrimitiveAtom<Array<Item>>): Atom<Array<PrimitiveAtom<Item>>>
+type SplitAtom = <Item, Key>(
+  arrayAtom: PrimitiveAtom<Array<Item>>,
+  keyExtractor?: (item: Item) => Key
+): Atom<Array<PrimitiveAtom<Item>>>
 ```
 
-Additionally, the atom returned by `splitAtom` contains a dispatch function in the `write` direction (since v1.6.4),
-this is useful for when you want a simple way to modify the original atom with actions such as `remove`, `insert`, and `move`.
+### Key Features
 
-See the below example for usage.
+1. The returned atom contains a dispatch function in the `write` direction (since v1.6.4), providing a simple way to modify the original atom with actions like `remove`, `insert`, and `move`.
 
-### Codesandbox
+2. An optional `keyExtractor` function can be provided as a second argument to enhance stability and performance.
+
+### Key Extractor
+
+The `splitAtom` utility supports a second argument which is a key extractor function:
+
+```ts
+export function splitAtom<Item, Key>(
+  arrAtom: WritableAtom<Item[], [Item[]], void> | Atom<Item[]>,
+  keyExtractor?: (item: Item) => Key
+)
+```
+
+Important considerations for the `keyExtractor`:
+
+- If `splitAtom` is used within a React render loop, the `keyExtractor` must be a stable function that maintains object equality (shallow equality). This requirement doesn't apply outside of render loops.
+- Providing a `keyExtractor` enhances the stability of the atom output (which makes memoization hit cache more often). It prevents unnecessary subatom recreation due to index shifts in the source array. 
+- `keyExtractor` is an optional optimization that should only be used if the extracted key is guaranteed unique for each item in the array.
+
+
+### Example Usage
+
+Here's an example demonstrating the use of `splitAtom`:
 
 <CodeSandbox id="s4hvgo" />
 
@@ -97,3 +121,5 @@ const App = () => (
 
 export default App
 ```
+
+This example demonstrates how to use `splitAtom` to manage a list of todo items, allowing individual manipulation of each item while maintaining the overall list atom.
