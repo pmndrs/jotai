@@ -1,0 +1,49 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  issues: write
+
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.2.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run benchmarks
+      - run: |
+          FILES=("benchmarks/simple-read.json" "benchmarks/simple-write.json" "benchmarks/subscribe-write.json")
+          echo "## Benchmark Results" > table.md
+          for file in "${FILES[@]}"; do
+            if [ -f "$file" ]; then
+              name=$(jq -r '.name' "$file")
+              echo "### $name" >> table.md
+              echo "| Test Case | Ops/sec | Margin of Error |" >> table.md
+              echo "|-----------|---------|-----------------|" >> table.md
+              jq -r '.results[] | "| \(.name) | \(.ops) | \(.margin)% |"' "$file" >> table.md
+              echo "" >> table.md
+            fi
+          done
+          cat table.md
+      - run: |
+          table_content=$(cat table.md)
+          echo "table_content<<EOF" >> $GITHUB_ENV
+          echo "$table_content" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ env.table_content }}

@@ -1,5 +1,3 @@
-#!/usr/bin/env npx tsx
-
 import { add, complete, cycle, save, suite } from 'benny'
 import { atom } from '../src/vanilla/atom.ts'
 import type { PrimitiveAtom } from '../src/vanilla/atom.ts'
