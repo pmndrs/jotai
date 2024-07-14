@@ -92,7 +92,11 @@ export function atom<Value, Args extends unknown[], Result>(
 ) {
   const key = `atom${++keyCount}`
   const config = {
-    toString: () => key,
+    toString() {
+      return import.meta.env?.MODE !== 'production' && this.debugLabel
+        ? key + ':' + this.debugLabel
+        : key
+    },
   } as WritableAtom<Value, Args, Result> & { init?: Value }
   if (typeof read === 'function') {
     config.read = read as Read<Value, SetAtom<Args, Result>>
