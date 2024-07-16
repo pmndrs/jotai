@@ -563,7 +563,7 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive((atomStateMap) => {
+    const derivedStore = store.unstable_derive((atomStateMap, getAtomState) => {
       const scopedAtomStateMap = new WeakMap() as typeof atomStateMap
       return [
         {
@@ -581,6 +581,7 @@ describe('unstable_derive for scoping atoms', () => {
             }
           },
         },
+        getAtomState,
       ]
     })
 
@@ -598,13 +599,13 @@ describe('unstable_derive for scoping atoms', () => {
     expect(derivedStore.get(a)).toBe('a:mounted:updated')
   })
 
-  it('derived atom', async () => {
+  it('derived atom (scoping primitive)', async () => {
     const a = atom('a')
     const b = atom((get) => get(a))
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive((atomStateMap) => {
+    const derivedStore = store.unstable_derive((atomStateMap, getAtomState) => {
       const scopedAtomStateMap = new WeakMap() as typeof atomStateMap
       return [
         {
@@ -622,6 +623,7 @@ describe('unstable_derive for scoping atoms', () => {
             }
           },
         },
+        getAtomState,
       ]
     })
 
@@ -631,5 +633,77 @@ describe('unstable_derive for scoping atoms', () => {
     await new Promise((resolve) => setTimeout(resolve))
     expect(store.get(b)).toBe('a')
     expect(derivedStore.get(b)).toBe('b')
+  })
+
+  it('derived atom (scoping derived)', async () => {
+    const a = atom('a')
+    const b = atom(
+      (get) => get(a),
+      (_get, set, v: string) => {
+        set(a, v)
+      },
+    )
+    const scopedAtoms = new Set<Atom<unknown>>([b])
+
+    const store = createStore()
+    const derivedStore = store.unstable_derive((atomStateMap, getAtomState) => {
+      const scopedAtomStateMap = new WeakMap() as typeof atomStateMap
+      return [
+        atomStateMap,
+        (atomStateMap, atom, unknownContext: unknown) => {
+          let context = unknownContext as
+            | { scope?: typeof scopedAtomStateMap }
+            | undefined
+          if (scopedAtoms.has(atom)) {
+            context = {
+              ...context,
+              scope: scopedAtomStateMap,
+            }
+          }
+          if (context?.scope !== scopedAtomStateMap) {
+            return getAtomState(atomStateMap, atom, context)
+          }
+          let atomState = context.scope.get(atom)
+          if (!atomState) {
+            atomState = { d: new Map(), p: new Set(), n: 0 }
+            context.scope.set(atom, atomState)
+          }
+          return [atomState, context]
+        },
+      ]
+    })
+
+    expect(store.get(a)).toBe('a')
+    expect(store.get(b)).toBe('a')
+    expect(derivedStore.get(a)).toBe('a')
+    expect(derivedStore.get(b)).toBe('a')
+
+    store.set(a, 'a2')
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(store.get(a)).toBe('a2')
+    expect(store.get(b)).toBe('a2')
+    expect(derivedStore.get(a)).toBe('a2')
+    expect(derivedStore.get(b)).toBe('a')
+
+    store.set(b, 'a3')
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(store.get(a)).toBe('a3')
+    expect(store.get(b)).toBe('a3')
+    expect(derivedStore.get(a)).toBe('a3')
+    expect(derivedStore.get(b)).toBe('a')
+
+    derivedStore.set(a, 'a4')
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(store.get(a)).toBe('a4')
+    expect(store.get(b)).toBe('a4')
+    expect(derivedStore.get(a)).toBe('a4')
+    expect(derivedStore.get(b)).toBe('a')
+
+    derivedStore.set(b, 'a5')
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(store.get(a)).toBe('a4')
+    expect(store.get(b)).toBe('a4')
+    expect(derivedStore.get(a)).toBe('a4')
+    expect(derivedStore.get(b)).toBe('a5')
   })
 })
