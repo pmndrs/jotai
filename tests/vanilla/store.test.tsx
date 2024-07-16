@@ -567,7 +567,11 @@ describe('unstable_derive for scoping atoms', () => {
       (getAtomState, getAtomContext) => {
         const scopedAtomStateMap = new WeakMap()
         return [
-          ((atom, context, createDefault) => {
+          ((
+            atom: Atom<unknown>,
+            context: unknown,
+            createDefault: () => NonNullable<ReturnType<typeof getAtomState>>,
+          ) => {
             if (scopedAtoms.has(atom)) {
               let atomState = scopedAtomStateMap.get(atom)
               if (!atomState) {
@@ -610,7 +614,11 @@ describe('unstable_derive for scoping atoms', () => {
       (getAtomState, getAtomContext) => {
         const scopedAtomStateMap = new WeakMap()
         return [
-          ((atom, context, createDefault) => {
+          ((
+            atom: Atom<unknown>,
+            context: unknown,
+            createDefault: () => NonNullable<ReturnType<typeof getAtomState>>,
+          ) => {
             if (scopedAtoms.has(atom)) {
               let atomState = scopedAtomStateMap.get(atom)
               if (!atomState) {
@@ -652,7 +660,11 @@ describe('unstable_derive for scoping atoms', () => {
       (getAtomState, getAtomContext) => {
         const scopedAtomStateMap = new WeakMap()
         return [
-          ((atom, context, createDefault) => {
+          ((
+            atom: Atom<unknown>,
+            context: unknown,
+            createDefault: () => NonNullable<ReturnType<typeof getAtomState>>,
+          ) => {
             if (
               (context as { scoped: unknown } | undefined)?.scoped ||
               scopedAtoms.has(atom)
