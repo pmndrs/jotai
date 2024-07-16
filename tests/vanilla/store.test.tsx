@@ -43,7 +43,7 @@ it('should unmount with store.get', async () => {
   store.get(countAtom)
   unsub()
   const result = Array.from(
-    'dev4_get_mounted_atoms' in store ? store.dev4_get_mounted_atoms() : [],
+    'dev5_get_mounted_atoms' in store ? store.dev5_get_mounted_atoms() : [],
   )
   expect(result).toEqual([])
 })
@@ -57,7 +57,7 @@ it('should unmount dependencies with store.get', async () => {
   store.get(derivedAtom)
   unsub()
   const result = Array.from(
-    'dev4_restore_atoms' in store ? store.dev4_get_mounted_atoms() : [],
+    'dev5_restore_atoms' in store ? store.dev5_get_mounted_atoms() : [],
   )
   expect(result).toEqual([])
 })
@@ -567,24 +567,17 @@ describe('unstable_derive for scoping atoms', () => {
       (getAtomState, getAtomContext) => {
         const scopedAtomStateMap = new WeakMap()
         return [
-          ((
-            atom: Atom<unknown>,
-            context: unknown,
-            createDefault: () => NonNullable<ReturnType<typeof getAtomState>>,
-          ) => {
+          (atom: Atom<unknown>, context: unknown) => {
             if (scopedAtoms.has(atom)) {
               let atomState = scopedAtomStateMap.get(atom)
               if (!atomState) {
-                if (!createDefault) {
-                  return undefined
-                }
-                atomState = createDefault()
+                atomState = { d: new Map(), p: new Set(), n: 0 }
                 scopedAtomStateMap.set(atom, atomState)
               }
               return atomState
             }
-            return getAtomState(atom, context, createDefault)
-          }) as typeof getAtomState,
+            return getAtomState(atom, context)
+          },
           getAtomContext,
         ]
       },
@@ -614,24 +607,17 @@ describe('unstable_derive for scoping atoms', () => {
       (getAtomState, getAtomContext) => {
         const scopedAtomStateMap = new WeakMap()
         return [
-          ((
-            atom: Atom<unknown>,
-            context: unknown,
-            createDefault: () => NonNullable<ReturnType<typeof getAtomState>>,
-          ) => {
+          (atom: Atom<unknown>, context: unknown) => {
             if (scopedAtoms.has(atom)) {
               let atomState = scopedAtomStateMap.get(atom)
               if (!atomState) {
-                if (!createDefault) {
-                  return undefined
-                }
-                atomState = createDefault()
+                atomState = { d: new Map(), p: new Set(), n: 0 }
                 scopedAtomStateMap.set(atom, atomState)
               }
               return atomState
             }
-            return getAtomState(atom, context, createDefault)
-          }) as typeof getAtomState,
+            return getAtomState(atom, context)
+          },
           getAtomContext,
         ]
       },
@@ -660,27 +646,20 @@ describe('unstable_derive for scoping atoms', () => {
       (getAtomState, getAtomContext) => {
         const scopedAtomStateMap = new WeakMap()
         return [
-          ((
-            atom: Atom<unknown>,
-            context: unknown,
-            createDefault: () => NonNullable<ReturnType<typeof getAtomState>>,
-          ) => {
+          (atom: Atom<unknown>, context: unknown) => {
             if (
               (context as { scoped: unknown } | undefined)?.scoped ||
               scopedAtoms.has(atom)
             ) {
               let atomState = scopedAtomStateMap.get(atom)
               if (!atomState) {
-                if (!createDefault) {
-                  return undefined
-                }
-                atomState = createDefault()
+                atomState = { d: new Map(), p: new Set(), n: 0 }
                 scopedAtomStateMap.set(atom, atomState)
               }
               return atomState
             }
-            return getAtomState(atom, context, createDefault)
-          }) as typeof getAtomState,
+            return getAtomState(atom, context)
+          },
           (atom, context) => {
             context = getAtomContext(atom, context)
             if (scopedAtoms.has(atom)) {
