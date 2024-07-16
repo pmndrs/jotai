@@ -563,27 +563,28 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive((atomStateMap, getAtomState) => {
-      const scopedAtomStateMap = new WeakMap() as typeof atomStateMap
-      return [
-        {
-          get(key) {
-            if (scopedAtoms.has(key)) {
-              return scopedAtomStateMap.get(key)
+    const derivedStore = store.unstable_derive(
+      (getAtomState, getAtomContext) => {
+        const scopedAtomStateMap = new WeakMap()
+        return [
+          ((atom, context, createDefault) => {
+            if (scopedAtoms.has(atom)) {
+              let atomState = scopedAtomStateMap.get(atom)
+              if (!atomState) {
+                if (!createDefault) {
+                  return undefined
+                }
+                atomState = createDefault()
+                scopedAtomStateMap.set(atom, atomState)
+              }
+              return atomState
             }
-            return atomStateMap.get(key)
-          },
-          set(key, value) {
-            if (scopedAtoms.has(key)) {
-              scopedAtomStateMap.set(key, value)
-            } else {
-              atomStateMap.set(key, value)
-            }
-          },
-        },
-        getAtomState,
-      ]
-    })
+            return getAtomState(atom, context, createDefault)
+          }) as typeof getAtomState,
+          getAtomContext,
+        ]
+      },
+    )
 
     expect(store.get(a)).toBe('a')
     expect(derivedStore.get(a)).toBe('a')
@@ -605,27 +606,28 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive((atomStateMap, getAtomState) => {
-      const scopedAtomStateMap = new WeakMap() as typeof atomStateMap
-      return [
-        {
-          get(key) {
-            if (scopedAtoms.has(key)) {
-              return scopedAtomStateMap.get(key)
+    const derivedStore = store.unstable_derive(
+      (getAtomState, getAtomContext) => {
+        const scopedAtomStateMap = new WeakMap()
+        return [
+          ((atom, context, createDefault) => {
+            if (scopedAtoms.has(atom)) {
+              let atomState = scopedAtomStateMap.get(atom)
+              if (!atomState) {
+                if (!createDefault) {
+                  return undefined
+                }
+                atomState = createDefault()
+                scopedAtomStateMap.set(atom, atomState)
+              }
+              return atomState
             }
-            return atomStateMap.get(key)
-          },
-          set(key, value) {
-            if (scopedAtoms.has(key)) {
-              scopedAtomStateMap.set(key, value)
-            } else {
-              atomStateMap.set(key, value)
-            }
-          },
-        },
-        getAtomState,
-      ]
-    })
+            return getAtomState(atom, context, createDefault)
+          }) as typeof getAtomState,
+          getAtomContext,
+        ]
+      },
+    )
 
     expect(store.get(b)).toBe('a')
     expect(derivedStore.get(b)).toBe('a')
@@ -646,32 +648,37 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([b])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive((atomStateMap, getAtomState) => {
-      const scopedAtomStateMap = new WeakMap() as typeof atomStateMap
-      return [
-        atomStateMap,
-        (atomStateMap, atom, unknownContext: unknown) => {
-          let context = unknownContext as
-            | { scope?: typeof scopedAtomStateMap }
-            | undefined
-          if (scopedAtoms.has(atom)) {
-            context = {
-              ...context,
-              scope: scopedAtomStateMap,
+    const derivedStore = store.unstable_derive(
+      (getAtomState, getAtomContext) => {
+        const scopedAtomStateMap = new WeakMap()
+        return [
+          ((atom, context, createDefault) => {
+            if (
+              (context as { scoped: unknown } | undefined)?.scoped ||
+              scopedAtoms.has(atom)
+            ) {
+              let atomState = scopedAtomStateMap.get(atom)
+              if (!atomState) {
+                if (!createDefault) {
+                  return undefined
+                }
+                atomState = createDefault()
+                scopedAtomStateMap.set(atom, atomState)
+              }
+              return atomState
             }
-          }
-          if (context?.scope !== scopedAtomStateMap) {
-            return getAtomState(atomStateMap, atom, context)
-          }
-          let atomState = context.scope.get(atom)
-          if (!atomState) {
-            atomState = { d: new Map(), p: new Set(), n: 0 }
-            context.scope.set(atom, atomState)
-          }
-          return [atomState, context]
-        },
-      ]
-    })
+            return getAtomState(atom, context, createDefault)
+          }) as typeof getAtomState,
+          (atom, context) => {
+            context = getAtomContext(atom, context)
+            if (scopedAtoms.has(atom)) {
+              return { ...(context as object), scoped: true }
+            }
+            return context
+          },
+        ]
+      },
+    )
 
     expect(store.get(a)).toBe('a')
     expect(store.get(b)).toBe('a')

@@ -149,6 +149,12 @@ type AtomState<Value = AnyValue> = {
   e?: AnyError
 }
 
+const createDefaultAtomState = (): AtomState<never> => ({
+  d: new Map(),
+  p: new Set(),
+  n: 0,
+})
+
 const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
   'v' in atomState || 'e' in atomState
 
@@ -241,26 +247,28 @@ const flushPending = (pending: Pending) => {
   }
 }
 
-type AtomStateMap = {
-  get<Value>(key: Atom<Value>): AtomState<Value> | undefined
-  set<Value>(key: Atom<Value>, value: AtomState<Value>): void
+type AtomContext = unknown
+
+type GetAtomState = {
+  <Value>(atom: Atom<Value>): AtomState<Value> | undefined
+  <Value>(
+    atom: Atom<Value>,
+    context: AtomContext,
+    createDefault: () => AtomState<Value>,
+  ): AtomState<Value>
 }
 
-type GetAtomState = <Value>(
-  atomStateMap: AtomStateMap,
-  atom: Atom<Value>,
-  context: unknown,
-) => [atomState: AtomState<Value>, context: unknown]
+type GetAtomContext = (atom: AnyAtom, prevContext?: AtomContext) => AtomContext
 
 // internal & unstable type
 type StoreArgs = readonly [
-  atomStateMap: AtomStateMap,
   getAtomState: GetAtomState,
+  getAtomContext: GetAtomContext,
 ]
 
 // for debugging purpose only
 type DevStoreRev4 = {
-  dev4_get_internal_weak_map: () => AtomStateMap
+  dev4_get_internal_weak_map: () => { get: GetAtomState }
   dev4_get_mounted_atoms: () => Set<AnyAtom>
   dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
@@ -281,8 +289,8 @@ export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (
-  atomStateMap: StoreArgs[0],
-  getAtomState: StoreArgs[1],
+  getAtomState: StoreArgs[0],
+  getAtomContext: StoreArgs[1],
 ): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
@@ -293,7 +301,7 @@ const buildStore = (
 
   const setAtomStateValueOrPromise = (
     atom: AnyAtom,
-    context: unknown,
+    context: AtomContext,
     atomState: AtomState,
     valueOrPromise: unknown,
     abortPromise = () => {},
@@ -316,7 +324,7 @@ const buildStore = (
         )
         if (continuablePromise.status === PENDING) {
           for (const a of atomState.d.keys()) {
-            const [aState] = getAtomState(atomStateMap, a, context)
+            const aState = getAtomState(a, context, createDefaultAtomState)
             addPendingContinuablePromiseToDependency(
               atom,
               continuablePromise,
@@ -344,14 +352,14 @@ const buildStore = (
   const addDependency = <Value>(
     pending: Pending | undefined,
     atom: Atom<Value>,
-    context: unknown,
+    context: AtomContext,
     a: AnyAtom,
     aState: AtomState,
   ) => {
     if (import.meta.env?.MODE !== 'production' && a === atom) {
       throw new Error('[Bug] atom cannot depend on itself')
     }
-    const [atomState] = getAtomState(atomStateMap, atom, context)
+    const atomState = getAtomState(atom, context, createDefaultAtomState)
     atomState.d.set(a, aState.n)
     const continuablePromise = getPendingContinuablePromise(atomState)
     if (continuablePromise) {
@@ -366,10 +374,10 @@ const buildStore = (
   const readAtomState = <Value>(
     pending: Pending | undefined,
     atom: Atom<Value>,
-    context: unknown,
+    context: AtomContext,
     force?: (a: AnyAtom) => boolean,
   ): AtomState<Value> => {
-    const [atomState, nextContext] = getAtomState(atomStateMap, atom, context)
+    const atomState = getAtomState(atom, context, createDefaultAtomState)
     // See if we can skip recomputing this atom.
     if (!force?.(atom) && isAtomStateInitialized(atomState)) {
       // If the atom is mounted, we can use the cache.
@@ -384,7 +392,8 @@ const buildStore = (
           ([a, n]) =>
             // Recursively, read the atom state of the dependency, and
             // check if the atom epoch number is unchanged
-            readAtomState(pending, a, nextContext, force).n === n,
+            readAtomState(pending, a, getAtomContext(a, context), force).n ===
+            n,
         )
       ) {
         return atomState
@@ -394,8 +403,9 @@ const buildStore = (
     atomState.d.clear()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
+      const nextContext = getAtomContext(a, context)
       if (a === (atom as AnyAtom)) {
-        const [aState] = getAtomState(atomStateMap, a, nextContext)
+        const aState = getAtomState(a, nextContext, createDefaultAtomState)
         if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
             setAtomStateValueOrPromise(a, nextContext, aState, a.init)
@@ -451,14 +461,14 @@ const buildStore = (
       const valueOrPromise = atom.read(getter, options as never)
       setAtomStateValueOrPromise(
         atom,
-        nextContext,
+        context,
         atomState,
         valueOrPromise,
         () => controller?.abort(),
         () => {
           if (atomState.m) {
             const pending = createPending()
-            mountDependencies(pending, atom, nextContext, atomState)
+            mountDependencies(pending, atom, context, atomState)
             flushPending(pending)
           }
         },
@@ -475,15 +485,16 @@ const buildStore = (
   }
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(undefined, atom, undefined))
+    returnAtomValue(readAtomState(undefined, atom, getAtomContext(atom)))
 
   const recomputeDependents = (
     pending: Pending,
     atom: AnyAtom,
-    context: unknown,
+    context: AtomContext,
   ) => {
-    const getDependents = (a: AnyAtom) => {
-      const [aState, nextContext] = getAtomState(atomStateMap, a, context)
+    const getDependents = (a: AnyAtom, context: AtomContext) => {
+      const aState = getAtomState(a, context, createDefaultAtomState)
+      const nextContext = getAtomContext(a, context)
       const dependents = new Set(aState.m?.t)
       for (const atomWithPendingContinuablePromise of aState.p) {
         dependents.add(atomWithPendingContinuablePromise)
@@ -500,34 +511,35 @@ const buildStore = (
 
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
-    const topsortedAtoms: (readonly [atom: AnyAtom, context: unknown])[] = []
+    const topsortedAtoms: (readonly [atom: AnyAtom, context: AtomContext])[] =
+      []
     const markedAtoms = new Set<AnyAtom>()
-    const visit = (n: AnyAtom) => {
+    const visit = (n: AnyAtom, context: AtomContext) => {
       if (markedAtoms.has(n)) {
         return
       }
       markedAtoms.add(n)
-      const [dependents, nextContext] = getDependents(n)
+      const [dependents, nextContext] = getDependents(n, context)
       for (const m of dependents) {
         if (n !== m) {
-          visit(m)
+          visit(m, nextContext)
         }
       }
       // The algorithm calls for pushing onto the front of the list. For
       // performance, we will simply push onto the end, and then will iterate in
       // reverse order later.
-      topsortedAtoms.push([n, nextContext])
+      topsortedAtoms.push([n, context])
     }
     // Visit the root atom. This is the only atom in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
-    visit(atom)
+    visit(atom, context)
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
     const isMarked = (a: AnyAtom) => markedAtoms.has(a)
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
       const [a, nextContext] = topsortedAtoms[i]!
-      const [aState] = getAtomState(atomStateMap, a, nextContext)
+      const aState = getAtomState(a, nextContext, createDefaultAtomState)
       const prevEpochNumber = aState.n
       let hasChangedDeps = false
       for (const dep of aState.d.keys()) {
@@ -551,22 +563,23 @@ const buildStore = (
   const writeAtomState = <Value, Args extends unknown[], Result>(
     pending: Pending,
     atom: WritableAtom<Value, Args, Result>,
-    context: unknown,
+    context: AtomContext,
     ...args: Args
   ): Result => {
     const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(pending, a, context))
+      returnAtomValue(readAtomState(pending, a, getAtomContext(a, context)))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
+      const nextContext = getAtomContext(a, context)
       let r: R | undefined
       if (a === (atom as AnyAtom)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
         }
-        const [aState, nextContext] = getAtomState(atomStateMap, a, context)
+        const aState = getAtomState(a, nextContext, createDefaultAtomState)
         const hasPrevValue = 'v' in aState
         const prevValue = aState.v
         const v = args[0] as V
@@ -577,7 +590,7 @@ const buildStore = (
           recomputeDependents(pending, a, nextContext)
         }
       } else {
-        r = writeAtomState(pending, a, context, ...args) as R
+        r = writeAtomState(pending, a, nextContext, ...args) as R
       }
       flushPending(pending)
       return r as R
@@ -591,12 +604,7 @@ const buildStore = (
     ...args: Args
   ): Result => {
     const pending = createPending()
-    const result = writeAtomState(
-      pending,
-      atom,
-      getAtomState(atomStateMap, atom, undefined)[1],
-      ...args,
-    )
+    const result = writeAtomState(pending, atom, getAtomContext(atom), ...args)
     flushPending(pending)
     return result
   }
@@ -604,7 +612,7 @@ const buildStore = (
   const mountDependencies = (
     pending: Pending,
     atom: AnyAtom,
-    context: unknown,
+    context: AtomContext,
     atomState: AtomState,
   ) => {
     if (atomState.m && !getPendingContinuablePromise(atomState)) {
@@ -628,15 +636,15 @@ const buildStore = (
   const mountAtom = (
     pending: Pending,
     atom: AnyAtom,
-    context: unknown,
+    context: AtomContext,
   ): Mounted => {
-    const [atomState, nextContext] = getAtomState(atomStateMap, atom, context)
+    const atomState = getAtomState(atom, context, createDefaultAtomState)
     if (!atomState.m) {
       // recompute atom state
-      readAtomState(pending, atom, nextContext)
+      readAtomState(pending, atom, context)
       // mount dependencies first
       for (const a of atomState.d.keys()) {
-        const aMounted = mountAtom(pending, a, nextContext)
+        const aMounted = mountAtom(pending, a, getAtomContext(a, context))
         aMounted.t.add(atom)
       }
       // mount self
@@ -653,7 +661,7 @@ const buildStore = (
         const { onMount } = atom
         addPendingFunction(pending, () => {
           const onUnmount = onMount((...args) =>
-            writeAtomState(pending, atom, nextContext, ...args),
+            writeAtomState(pending, atom, context, ...args),
           )
           if (onUnmount) {
             mounted.u = onUnmount
@@ -667,14 +675,15 @@ const buildStore = (
   const unmountAtom = (
     pending: Pending,
     atom: AnyAtom,
-    context: unknown,
+    context: AtomContext,
   ): Mounted | undefined => {
-    const [atomState, nextContext] = getAtomState(atomStateMap, atom, context)
+    const atomState = getAtomState(atom, context, createDefaultAtomState)
     if (
       atomState.m &&
       !atomState.m.l.size &&
       !Array.from(atomState.m.t).some(
-        (a) => getAtomState(atomStateMap, a, nextContext)[0].m,
+        (a) =>
+          getAtomState(a, getAtomContext(a, context), createDefaultAtomState).m,
       )
     ) {
       // unmount self
@@ -688,7 +697,7 @@ const buildStore = (
       }
       // unmount dependencies
       for (const a of atomState.d.keys()) {
-        const aMounted = unmountAtom(pending, a, nextContext)
+        const aMounted = unmountAtom(pending, a, getAtomContext(a, context))
         aMounted?.t.delete(atom)
       }
       // abort pending promise
@@ -717,7 +726,7 @@ const buildStore = (
   }
 
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
-    buildStore(...fn(atomStateMap, getAtomState))
+    buildStore(...fn(getAtomState, getAtomContext))
 
   const store: Store = {
     get: readAtom,
@@ -728,23 +737,24 @@ const buildStore = (
   if (import.meta.env?.MODE !== 'production') {
     const devStore: DevStoreRev4 = {
       // store dev methods (these are tentative and subject to change without notice)
-      dev4_get_internal_weak_map: () => atomStateMap,
+      dev4_get_internal_weak_map: () => ({ get: getAtomState }),
       dev4_get_mounted_atoms: () => debugMountedAtoms,
       dev4_restore_atoms: (values) => {
         const pending = createPending()
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
-            const [aState, context] = getAtomState(
-              atomStateMap,
+            const context = getAtomContext(atom)
+            const atomState = getAtomState(
               atom,
-              undefined,
+              context,
+              createDefaultAtomState,
             )
-            const hasPrevValue = 'v' in aState
-            const prevValue = aState.v
-            setAtomStateValueOrPromise(atom, context, aState, value)
-            mountDependencies(pending, atom, context, aState)
-            if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
-              addPendingAtom(pending, atom, aState)
+            const hasPrevValue = 'v' in atomState
+            const prevValue = atomState.v
+            setAtomStateValueOrPromise(atom, context, atomState, value)
+            mountDependencies(pending, atom, context, atomState)
+            if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
+              addPendingAtom(pending, atom, atomState)
               recomputeDependents(pending, atom, context)
             }
           }
@@ -758,16 +768,20 @@ const buildStore = (
 }
 
 export const createStore = (): Store => {
-  const atomStateMap = new WeakMap() as AtomStateMap
-  const getAtomState: GetAtomState = (atomStateMap, atom, context) => {
+  const atomStateMap = new WeakMap()
+  const getAtomState = ((atom, _context, createDefault) => {
     let atomState = atomStateMap.get(atom)
     if (!atomState) {
-      atomState = { d: new Map(), p: new Set(), n: 0 }
+      if (!createDefault) {
+        return undefined
+      }
+      atomState = createDefault()
       atomStateMap.set(atom, atomState)
     }
-    return [atomState, context]
-  }
-  return buildStore(atomStateMap, getAtomState)
+    return atomState
+  }) as GetAtomState
+  const getAtomContext: GetAtomContext = (_atom, context) => context
+  return buildStore(getAtomState, getAtomContext)
 }
 
 let defaultStore: Store | undefined
