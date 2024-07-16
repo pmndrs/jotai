@@ -494,15 +494,20 @@ const buildStore = (
   ) => {
     const getDependents = (a: AnyAtom, context: AtomContext) => {
       const aState = getAtomState(a, context, createDefaultAtomState)
-      const nextContext = getAtomContext(a, context)
-      const dependents = new Set(aState.m?.t)
+      const dependents = new Map<AnyAtom, AtomContext>()
+      for (const dependent of aState.m?.t || []) {
+        dependents.set(dependent, getAtomContext(dependent, context))
+      }
       for (const atomWithPendingContinuablePromise of aState.p) {
-        dependents.add(atomWithPendingContinuablePromise)
+        dependents.set(
+          atomWithPendingContinuablePromise,
+          getAtomContext(atomWithPendingContinuablePromise, context),
+        )
       }
       getPendingDependents(pending, a)?.forEach((dependent) => {
-        dependents.add(dependent)
+        dependents.set(dependent, getAtomContext(dependent, context))
       })
-      return [dependents, nextContext] as const
+      return dependents
     }
 
     // This is a topological sort via depth-first search, slightly modified from
@@ -519,10 +524,10 @@ const buildStore = (
         return
       }
       markedAtoms.add(n)
-      const [dependents, nextContext] = getDependents(n, context)
-      for (const m of dependents) {
+      const dependents = getDependents(n, context)
+      for (const [m, c] of dependents) {
         if (n !== m) {
-          visit(m, nextContext)
+          visit(m, c)
         }
       }
       // The algorithm calls for pushing onto the front of the list. For
