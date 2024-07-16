@@ -697,13 +697,13 @@ export const createStore = (): Store => {
         const pending = createPending()
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
-            const aState = getAtomState(atom)
-            const hasPrevValue = 'v' in aState
-            const prevValue = aState.v
-            setAtomStateValueOrPromise(atom, aState, value)
-            mountDependencies(pending, atom, aState)
-            if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
-              addPendingAtom(pending, atom, aState)
+            const atomState = getAtomState(atom)
+            const hasPrevValue = 'v' in atomState
+            const prevValue = atomState.v
+            setAtomStateValueOrPromise(atom, atomState, value)
+            mountDependencies(pending, atom, atomState)
+            if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
+              addPendingAtom(pending, atom, atomState)
               recomputeDependents(pending, atom)
             }
           }
