@@ -259,6 +259,7 @@ type PrdStore = {
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
 }
+
 type Store = PrdStore | (PrdStore & DevStoreRev4)
 
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
@@ -685,11 +686,14 @@ export const createStore = (): Store => {
     }
   }
 
+  const store: Store = {
+    get: readAtom,
+    set: writeAtom,
+    sub: subscribeAtom,
+  }
+
   if (import.meta.env?.MODE !== 'production') {
-    const store: Store = {
-      get: readAtom,
-      set: writeAtom,
-      sub: subscribeAtom,
+    const devStore: DevStoreRev4 = {
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => atomStateMap,
       dev4_get_mounted_atoms: () => debugMountedAtoms,
@@ -711,13 +715,9 @@ export const createStore = (): Store => {
         flushPending(pending)
       },
     }
-    return store
+    Object.assign(store, devStore)
   }
-  return {
-    get: readAtom,
-    set: writeAtom,
-    sub: subscribeAtom,
-  }
+  return store
 }
 
 let defaultStore: Store | undefined
