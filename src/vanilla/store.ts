@@ -259,6 +259,7 @@ type PrdStore = {
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
 }
+
 type Store = PrdStore | (PrdStore & DevStoreRev4)
 
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
@@ -685,11 +686,14 @@ export const createStore = (): Store => {
     }
   }
 
+  const store: Store = {
+    get: readAtom,
+    set: writeAtom,
+    sub: subscribeAtom,
+  }
+
   if (import.meta.env?.MODE !== 'production') {
-    const store: Store = {
-      get: readAtom,
-      set: writeAtom,
-      sub: subscribeAtom,
+    const devStore: DevStoreRev4 = {
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => atomStateMap,
       dev4_get_mounted_atoms: () => debugMountedAtoms,
@@ -697,13 +701,13 @@ export const createStore = (): Store => {
         const pending = createPending()
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
-            const aState = getAtomState(atom)
-            const hasPrevValue = 'v' in aState
-            const prevValue = aState.v
-            setAtomStateValueOrPromise(atom, aState, value)
-            mountDependencies(pending, atom, aState)
-            if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
-              addPendingAtom(pending, atom, aState)
+            const atomState = getAtomState(atom)
+            const hasPrevValue = 'v' in atomState
+            const prevValue = atomState.v
+            setAtomStateValueOrPromise(atom, atomState, value)
+            mountDependencies(pending, atom, atomState)
+            if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
+              addPendingAtom(pending, atom, atomState)
               recomputeDependents(pending, atom)
             }
           }
@@ -711,13 +715,9 @@ export const createStore = (): Store => {
         flushPending(pending)
       },
     }
-    return store
+    Object.assign(store, devStore)
   }
-  return {
-    get: readAtom,
-    set: writeAtom,
-    sub: subscribeAtom,
-  }
+  return store
 }
 
 let defaultStore: Store | undefined
