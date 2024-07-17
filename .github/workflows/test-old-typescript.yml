@@ -40,6 +40,10 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: Patch for Older TS
+        if: ${{ startsWith(matrix.typescript, '4.') || startsWith(matrix.typescript, '3.') }}
+        run: |
+          sed -i~ 's/"verbatimModuleSyntax": true,//' tsconfig.json
       - name: Patch for Newer TS
         if: ${{ matrix.typescript == '4.9.5' || matrix.typescript == '4.8.4' }}
         run: |
