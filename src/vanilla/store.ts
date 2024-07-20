@@ -1,9 +1,10 @@
-import type { Atom, WritableAtom } from './atom.ts'
+import type { Atom, PrimitiveAtom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
 type AnyError = unknown
 type AnyAtom = Atom<AnyValue>
 type AnyWritableAtom = WritableAtom<AnyValue, unknown[], unknown>
+type AnyPrimitiveAtom = PrimitiveAtom<AnyValue>
 type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
@@ -18,6 +19,9 @@ const hasInitialValue = <T extends Atom<AnyValue>>(
 
 const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
+
+const isActuallyPrimitiveAtom = (atom: AnyAtom): atom is AnyPrimitiveAtom =>
+  hasInitialValue(atom)
 
 //
 // Continuable Promise
@@ -249,6 +253,9 @@ type DevStoreRev4 = {
   dev4_get_internal_weak_map: () => WeakMap<AnyAtom, AtomState>
   dev4_get_mounted_atoms: () => Set<AnyAtom>
   dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
+  // more
+  dev4_get_atom_keys_set: () => Set<string>
+  dev4_get_key_atom_map: () => Map<string, AnyAtom>
 }
 
 type PrdStore = {
@@ -267,7 +274,7 @@ export type INTERNAL_PrdStore = PrdStore
 
 export const createStore = (): Store => {
   // ensure each atom have its unique key
-  const keySet = new Set<string>()
+  const atomKeysSet = new Set<string>()
 
   // unique key - atom map
   // key: unique key
@@ -286,6 +293,24 @@ export const createStore = (): Store => {
   const getAtomState = <Value>(atom: Atom<Value>) => {
     let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
     if (!atomState) {
+      // set unique key - atom map for primitive atom only
+      if (isActuallyPrimitiveAtom(atom)) {
+        if (!atom.uniqueKey) {
+          throw Error('Primitive atom should have "uniqueKey"')
+        }
+
+        if (atomKeysSet.has(atom.uniqueKey)) {
+          throw Error(`"${atom.uniqueKey}" already been used for other atom`)
+        }
+
+        // add unique key to atomKeysSet
+        atomKeysSet.add(atom.uniqueKey)
+
+        // set unique key - atom map
+        keyAtomMap.set(atom.uniqueKey, atom)
+      }
+
+      // set atom - state map
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
     }
@@ -724,6 +749,9 @@ export const createStore = (): Store => {
         }
         flushPending(pending)
       },
+      // more
+      dev4_get_atom_keys_set: () => atomKeysSet,
+      dev4_get_key_atom_map: () => keyAtomMap,
     }
     Object.assign(store, devStore)
   }
