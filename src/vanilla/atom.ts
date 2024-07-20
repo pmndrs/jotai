@@ -47,6 +47,8 @@ export interface Atom<Value> {
    * @private
    */
   debugPrivate?: boolean
+  // Unique key for this atom
+  uniqueKey?: string
 }
 
 export interface WritableAtom<Value, Args extends unknown[], Result>
@@ -66,44 +68,64 @@ export type PrimitiveAtom<Value> = WritableAtom<
 
 let keyCount = 0 // global key count for all atoms
 
-// writable derived atom
+// 1. writable derived atom
 export function atom<Value, Args extends unknown[], Result>(
   read: Read<Value, SetAtom<Args, Result>>,
   write: Write<Args, Result>,
 ): WritableAtom<Value, Args, Result>
 
-// read-only derived atom
+// 2. read-only derived atom
 export function atom<Value>(read: Read<Value>): Atom<Value>
 
-// write-only derived atom
+// 3. write-only derived atom
 export function atom<Value, Args extends unknown[], Result>(
   initialValue: Value,
   write: Write<Args, Result>,
 ): WritableAtom<Value, Args, Result> & WithInitialValue<Value>
 
-// primitive atom
+// 4. primitive atom
 export function atom<Value>(
   initialValue: Value,
 ): PrimitiveAtom<Value> & WithInitialValue<Value>
 
+// 5. primitive atom with unique key
+export function atom<Value>(
+  initialValue: Value,
+  uniqueKey: string,
+): PrimitiveAtom<Value> & WithInitialValue<Value>
+
 export function atom<Value, Args extends unknown[], Result>(
   read: Value | Read<Value, SetAtom<Args, Result>>,
-  write?: Write<Args, Result>,
+  write?: string | Write<Args, Result>,
 ) {
   const key = `atom${++keyCount}`
   const config = {
     toString: () => key,
   } as WritableAtom<Value, Args, Result> & { init?: Value }
+
+  // 1 or 2
   if (typeof read === 'function') {
     config.read = read as Read<Value, SetAtom<Args, Result>>
-  } else {
+  }
+  // 3 or 4 or 5
+  else {
     config.init = read
     config.read = defaultRead
     config.write = defaultWrite as unknown as Write<Args, Result>
   }
+
   if (write) {
-    config.write = write
+    // 1 or 3
+    if (typeof write === 'function') {
+      config.write = write
+    }
+    // 5
+    else {
+      config.uniqueKey = write
+      console.log(write)
+    }
   }
+
   return config
 }
 

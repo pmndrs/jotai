@@ -266,7 +266,16 @@ export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 export const createStore = (): Store => {
+  // ensure each atom have its unique key
+  const keySet = new Set<string>()
+
+  // unique key - atom map
+  // key: unique key
+  // value: any atom
+  const keyAtomMap = new Map<string, AnyAtom>()
+
   const atomStateMap = new WeakMap<AnyAtom, AtomState>()
+
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
 
@@ -565,6 +574,7 @@ export const createStore = (): Store => {
       flushPending(pending)
       return r as R
     }
+
     const result = atom.write(getter, setter, ...args)
     return result
   }
