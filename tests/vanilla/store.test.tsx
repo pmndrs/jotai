@@ -628,10 +628,17 @@ describe('unstable_derive for scoping atoms', () => {
 
     expect(store.get(c)).toBe('ab')
     expect(derivedStore.get(c)).toBe('ab')
+
     derivedStore.set(a, 'a2')
     await new Promise((resolve) => setTimeout(resolve))
     expect(store.get(c)).toBe('ab')
     expect(derivedStore.get(c)).toBe('a2b')
+
+    derivedStore.sub(c, vi.fn())
+    derivedStore.set(b, 'b2')
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(store.get(c)).toBe('ab2')
+    expect(derivedStore.get(c)).toBe('a2b2')
   })
 
   /**
