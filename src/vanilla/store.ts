@@ -645,9 +645,7 @@ export const createStore = (): Store => {
     if (
       atomState.m &&
       !atomState.m.l.size &&
-      !Array.from(atomState.m.t).some(
-        (a) => getAtomState(a).m?.d.has(atom) ?? false,
-      )
+      !Array.from(atomState.m.t).some((a) => getAtomState(a).m?.d.has(atom))
     ) {
       // unmount self
       const onUnmount = atomState.m.u
