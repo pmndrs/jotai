@@ -758,7 +758,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap()
   const getAtomState = <Value>(atom: Atom<Value>) => {
-    let atomState = atomStateMap.get(atom)
+    let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)

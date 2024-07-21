@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/dom'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Atom, Getter } from 'jotai/vanilla'
+import type { Atom, Getter, ExtractAtomValue } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -610,18 +610,53 @@ describe('unstable_derive for scoping atoms', () => {
 
     const store = createStore()
     const derivedStore = store.unstable_derive((getAtomState) => {
-      const scopedAtomStateMap = new WeakMap()
+      type AnyAtom = Parameters<typeof getAtomState>[0]
+      type AtomState = ReturnType<typeof getAtomState>
+      const scopedAtomStateMap = new WeakMap<AnyAtom, AtomState>()
+      const scopedInvertAtomStateMap = new WeakMap<AtomState, AnyAtom>()
+      const copyMounted = (
+        mounted: NonNullable<AtomState['m']>,
+      ): NonNullable<AtomState['m']> => ({
+        ...mounted,
+        d: new Set(mounted.d),
+        t: new Set(mounted.t),
+      })
+      const copyAtomState = (atomState: AtomState): AtomState => ({
+        ...atomState,
+        d: new Map(atomState.d),
+        p: new Set(atomState.p),
+        ...('m' in atomState ? { m: copyMounted(atomState.m) } : {}),
+      })
       return [
         (atom, originAtomState) => {
-          if (scopedAtoms.has(atom)) {
-            let atomState = scopedAtomStateMap.get(atom)
-            if (!atomState) {
-              atomState = { d: new Map(), p: new Set(), n: 0 }
-              scopedAtomStateMap.set(atom, atomState)
-            }
-            return atomState
+          type TheAtomState = ReturnType<
+            typeof getAtomState<ExtractAtomValue<typeof atom>>
+          >
+          let atomState = scopedAtomStateMap.get(atom)
+          if (atomState) {
+            return atomState as TheAtomState
           }
-          return getAtomState(atom, originAtomState)
+          if (
+            scopedInvertAtomStateMap.has(originAtomState as never) ||
+            scopedAtoms.has(atom)
+          ) {
+            atomState = { d: new Map(), p: new Set(), n: 0 }
+            scopedAtomStateMap.set(atom, atomState)
+            scopedInvertAtomStateMap.set(atomState, atom)
+            return atomState as TheAtomState
+          }
+          const originalAtomState = getAtomState(atom, originAtomState)
+          if (
+            Array.from(originalAtomState.d).some(([a]) =>
+              scopedAtomStateMap.has(a),
+            )
+          ) {
+            atomState = copyAtomState(originalAtomState)
+            scopedAtomStateMap.set(atom, atomState)
+            scopedInvertAtomStateMap.set(atomState, atom)
+            return atomState as TheAtomState
+          }
+          return originalAtomState
         },
       ]
     })
