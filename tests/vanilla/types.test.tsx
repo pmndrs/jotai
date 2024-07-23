@@ -1,4 +1,5 @@
 import { expectType } from 'ts-expect'
+import type { TypeOf } from 'ts-expect'
 import { it } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type {
@@ -15,6 +16,15 @@ it('atom() should return the correct types', () => {
     // primitive atom
     const primitiveAtom = atom(0)
     expectType<PrimitiveAtom<number>>(primitiveAtom)
+    expectType<TypeOf<PrimitiveAtom<number>, typeof primitiveAtom>>(true)
+    expectType<TypeOf<PrimitiveAtom<number | undefined>, typeof primitiveAtom>>(
+      false,
+    )
+
+    // primitive atom without initial value
+    const primitiveWithoutInitialAtom = atom<number | undefined>()
+    expectType<PrimitiveAtom<number | undefined>>(primitiveWithoutInitialAtom)
+    expectType<PrimitiveAtom<undefined>>(atom())
 
     // read-only derived atom
     const readonlyDerivedAtom = atom((get) => get(primitiveAtom) * 2)
