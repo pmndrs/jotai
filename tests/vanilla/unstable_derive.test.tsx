@@ -55,57 +55,85 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive((getAtomState) => {
-      type AnyAtom = Parameters<typeof getAtomState>[0]
-      type AtomState = ReturnType<typeof getAtomState>
-      const scopedAtomStateMap = new WeakMap<AnyAtom, AtomState>()
-      const scopedInvertAtomStateMap = new WeakMap<AtomState, AnyAtom>()
-      const copyMounted = (
-        mounted: NonNullable<AtomState['m']>,
-      ): NonNullable<AtomState['m']> => ({
-        ...mounted,
-        d: new Set(mounted.d),
-        t: new Set(mounted.t),
-      })
-      const copyAtomState = (atomState: AtomState): AtomState => ({
-        ...atomState,
-        d: new Map(atomState.d),
-        p: new Set(atomState.p),
-        ...('m' in atomState ? { m: copyMounted(atomState.m) } : {}),
-      })
-      return [
-        (atom, originAtomState) => {
-          type TheAtomState = ReturnType<
-            typeof getAtomState<ExtractAtomValue<typeof atom>>
-          >
-          let atomState = scopedAtomStateMap.get(atom)
-          if (atomState) {
-            return atomState as TheAtomState
+
+    const scopedAtomStateMap = new WeakMap<Atom<unknown>, unknown>()
+    const wipAtoms = new Set<Atom<unknown>>()
+    let propagateScopedAtom: ((atoms: Set<Atom<unknown>>) => void) | undefined
+    const wrapStore = (origStore: typeof store) => {
+      const wrapMethod = <T extends (...args: never[]) => unknown>(
+        method: T,
+      ): T =>
+        ((...args: Parameters<T>) => {
+          try {
+            return method(...args)
+          } finally {
+            propagateScopedAtom?.(wipAtoms)
+            wipAtoms.clear()
           }
-          if (
-            scopedInvertAtomStateMap.has(originAtomState as never) ||
-            scopedAtoms.has(atom)
-          ) {
-            atomState = { d: new Map(), p: new Set(), n: 0 }
-            scopedAtomStateMap.set(atom, atomState)
-            scopedInvertAtomStateMap.set(atomState, atom)
-            return atomState as TheAtomState
+        }) as never
+      return {
+        ...origStore,
+        get: wrapMethod(origStore.get),
+        set: wrapMethod(origStore.set),
+        sub: wrapMethod(origStore.sub),
+      }
+    }
+    const derivedStore = wrapStore(
+      store.unstable_derive((getAtomState) => {
+        type AtomState = ReturnType<typeof getAtomState>
+        const copyMounted = (
+          mounted: NonNullable<AtomState['m']>,
+        ): NonNullable<AtomState['m']> => ({
+          ...mounted,
+          d: new Set(mounted.d),
+          t: new Set(mounted.t),
+        })
+        const copyAtomState = (atomState: AtomState): AtomState => ({
+          ...atomState,
+          d: new Map(atomState.d),
+          p: new Set(atomState.p),
+          ...('m' in atomState ? { m: copyMounted(atomState.m) } : {}),
+        })
+        propagateScopedAtom ||= (atoms) => {
+          const nextAtoms = new Set<Atom<unknown>>()
+          for (const atom of atoms) {
+            const atomState = scopedAtomStateMap.get(atom) as
+              | AtomState
+              | undefined
+            if (atomState && atomState.m) {
+              for (const dependent of atomState.m.t) {
+                if (!scopedAtomStateMap.has(dependent)) {
+                  scopedAtomStateMap.set(
+                    dependent,
+                    copyAtomState(getAtomState(dependent)),
+                  )
+                  nextAtoms.add(dependent)
+                }
+              }
+            }
           }
-          const originalAtomState = getAtomState(atom, originAtomState)
-          if (
-            Array.from(originalAtomState.d).some(([a]) =>
-              scopedAtomStateMap.has(a),
-            )
-          ) {
-            atomState = copyAtomState(originalAtomState)
-            scopedAtomStateMap.set(atom, atomState)
-            scopedInvertAtomStateMap.set(atomState, atom)
-            return atomState as TheAtomState
+          if (nextAtoms.size) {
+            propagateScopedAtom?.(nextAtoms)
           }
-          return originalAtomState
-        },
-      ]
-    })
+        }
+        return [
+          (atom, originAtomState) => {
+            type TheAtomState = ReturnType<
+              typeof getAtomState<ExtractAtomValue<typeof atom>>
+            >
+            let atomState = scopedAtomStateMap.get(atom)
+            if (!atomState && scopedAtoms.has(atom)) {
+              atomState = { d: new Map(), p: new Set(), n: 0 }
+              scopedAtomStateMap.set(atom, atomState)
+            }
+            if (atomState) {
+              return atomState as TheAtomState
+            }
+            return getAtomState(atom, originAtomState)
+          },
+        ]
+      }),
+    )
 
     expect(store.get(c)).toBe('ab')
     expect(derivedStore.get(c)).toBe('ab')
