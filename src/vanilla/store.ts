@@ -594,9 +594,9 @@ export const createStore = (): Store => {
       }
       for (const a of atomState.m.d || []) {
         if (!atomState.d.has(a)) {
+          atomState.m.d.delete(a)
           const aMounted = unmountAtom(pending, a)
           aMounted?.t.delete(atom)
-          atomState.m.d.delete(a)
         }
       }
     }
@@ -645,7 +645,7 @@ export const createStore = (): Store => {
     if (
       atomState.m &&
       !atomState.m.l.size &&
-      !Array.from(atomState.m.t).some((a) => getAtomState(a).m)
+      !Array.from(atomState.m.t).some((a) => getAtomState(a).m?.d.has(atom))
     ) {
       // unmount self
       const onUnmount = atomState.m.u
