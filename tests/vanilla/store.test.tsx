@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/dom'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Atom, Getter, ExtractAtomValue } from 'jotai/vanilla'
+import type { Atom, ExtractAtomValue, Getter } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -554,6 +554,23 @@ describe('aborting atoms', () => {
     expect(callBeforeAbort).toHaveBeenCalledTimes(1)
     expect(callAfterAbort).toHaveBeenCalledTimes(1)
   })
+})
+
+it('Unmount an atom that is no longer dependent within a derived atom (#2658)', async () => {
+  const condAtom = atom(true)
+
+  const baseAtom = atom(0)
+  const onUnmount = vi.fn()
+  baseAtom.onMount = () => onUnmount
+
+  const derivedAtom = atom((get) => {
+    if (get(condAtom)) get(baseAtom)
+  })
+
+  const store = createStore()
+  store.sub(derivedAtom, () => {})
+  store.set(condAtom, false)
+  expect(onUnmount).toHaveBeenCalledTimes(1)
 })
 
 describe('unstable_derive for scoping atoms', () => {

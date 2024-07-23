@@ -613,9 +613,9 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
       }
       for (const a of atomState.m.d || []) {
         if (!atomState.d.has(a)) {
+          atomState.m.d.delete(a)
           const aMounted = unmountAtom(pending, a, getAtomState(a, atomState))
           aMounted?.t.delete(atom)
-          atomState.m.d.delete(a)
         }
       }
     }
@@ -667,7 +667,9 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     if (
       atomState.m &&
       !atomState.m.l.size &&
-      !Array.from(atomState.m.t).some((a) => getAtomState(a, atomState).m)
+      !Array.from(atomState.m.t).some((a) =>
+        getAtomState(a, atomState).m?.d.has(atom),
+      )
     ) {
       // unmount self
       const onUnmount = atomState.m.u
