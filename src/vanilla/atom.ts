@@ -81,19 +81,23 @@ export function atom<Value, Args extends unknown[], Result>(
   write: Write<Args, Result>,
 ): WritableAtom<Value, Args, Result> & WithInitialValue<Value>
 
+// primitive atom without initial value
+export function atom<Value>(): PrimitiveAtom<Value | undefined> &
+  WithInitialValue<Value | undefined>
+
 // primitive atom
 export function atom<Value>(
   initialValue: Value,
 ): PrimitiveAtom<Value> & WithInitialValue<Value>
 
 export function atom<Value, Args extends unknown[], Result>(
-  read: Value | Read<Value, SetAtom<Args, Result>>,
+  read?: Value | Read<Value, SetAtom<Args, Result>>,
   write?: Write<Args, Result>,
 ) {
   const key = `atom${++keyCount}`
   const config = {
     toString: () => key,
-  } as WritableAtom<Value, Args, Result> & { init?: Value }
+  } as WritableAtom<Value, Args, Result> & { init?: Value | undefined }
   if (typeof read === 'function') {
     config.read = read as Read<Value, SetAtom<Args, Result>>
   } else {
