@@ -2,6 +2,8 @@ import type { Atom } from '../../vanilla.ts'
 
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
+export const SymbolOriginator = Symbol('Originator')
+
 export interface AtomFamily<Param, AtomType> {
   (param: Param): AtomType
   remove(param: Param): void
@@ -43,6 +45,7 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
     }
 
     const newAtom = initializeAtom(param)
+    ;(newAtom as any)[SymbolOriginator] = createAtom
     atoms.set(param, [newAtom, Date.now()])
     return newAtom
   }
