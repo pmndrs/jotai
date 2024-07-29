@@ -47,6 +47,10 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
     return newAtom
   }
 
+  createAtom.getParams = () => {
+    return Array.from(atoms.keys())
+  }
+
   createAtom.remove = (param: Param) => {
     if (areEqual === undefined) {
       atoms.delete(param)
