@@ -4,6 +4,7 @@ type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 
 export interface AtomFamily<Param, AtomType> {
   (param: Param): AtomType
+  has(atom: AtomType): boolean
   remove(param: Param): void
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
 }
@@ -20,6 +21,7 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
   type CreatedAt = number // in milliseconds
   let shouldRemove: ShouldRemove<Param> | null = null
   const atoms: Map<Param, [AtomType, CreatedAt]> = new Map()
+  const atomSet = new WeakSet<AtomType>()
   const createAtom = (param: Param) => {
     let item: [AtomType, CreatedAt] | undefined
     if (areEqual === undefined) {
@@ -43,16 +45,24 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
     }
 
     const newAtom = initializeAtom(param)
+    atomSet.add(newAtom)
     atoms.set(param, [newAtom, Date.now()])
     return newAtom
   }
 
+  createAtom.has = (atom: AtomType) => {
+    return atomSet.has(atom)
+  }
+
   createAtom.remove = (param: Param) => {
     if (areEqual === undefined) {
+      if (!atoms.has(param)) return
+      atomSet.delete(atoms.get(param)![0])
       atoms.delete(param)
     } else {
-      for (const [key] of atoms) {
+      for (const [key, value] of atoms) {
         if (areEqual(key, param)) {
+          atomSet.delete(value[0])
           atoms.delete(key)
           break
         }
@@ -65,6 +75,7 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
     if (!shouldRemove) return
     for (const [key, value] of atoms) {
       if (shouldRemove(value[1], key)) {
+        atomSet.delete(value[0])
         atoms.delete(key)
       }
     }
