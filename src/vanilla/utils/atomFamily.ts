@@ -42,10 +42,15 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
       }
     }
 
-    const newAtom = initializeAtom(param)
+    const newAtom = Object.setPrototypeOf(
+      initializeAtom(param),
+      createAtom.prototype,
+    )
     atoms.set(param, [newAtom, Date.now()])
     return newAtom
   }
+
+  createAtom.prototype = {}
 
   createAtom.remove = (param: Param) => {
     if (areEqual === undefined) {
