@@ -1,5 +1,6 @@
 import { expect, it, vi } from 'vitest'
-import { type Atom, atom, createStore } from 'jotai/vanilla'
+import { atom, createStore } from 'jotai/vanilla'
+import type { Atom } from 'jotai/vanilla'
 import { atomFamily } from 'jotai/vanilla/utils'
 
 it('should create atoms with different params', () => {
