@@ -1,6 +1,10 @@
 import { type Atom } from '../../vanilla.ts'
 
-type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
+/**
+ * in milliseconds
+ */
+type CreatedAt = number
+type ShouldRemove<Param> = (createdAt: CreatedAt, param: Param) => boolean
 type Cleanup = () => void
 type Callback<Param, AtomType> = (event: {
   type: 'CREATE' | 'REMOVE'
@@ -29,7 +33,6 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
   areEqual?: (a: Param, b: Param) => boolean,
 ) {
-  type CreatedAt = number // in milliseconds
   let shouldRemove: ShouldRemove<Param> | null = null
   const atoms: Map<Param, [AtomType, CreatedAt]> = new Map()
   const listeners = new Set<Callback<Param, AtomType>>()
