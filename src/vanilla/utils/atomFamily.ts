@@ -1,4 +1,4 @@
-import type { Atom } from '../../vanilla.ts'
+import { type Atom } from '../../vanilla.ts'
 
 type ShouldRemove<Param> = (createdAt: number, param: Param) => boolean
 type Cleanup = () => void
@@ -56,8 +56,8 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
     }
 
     const newAtom = initializeAtom(param)
-    notifyListeners('CREATE', param, newAtom)
     atoms.set(param, [newAtom, Date.now()])
+    notifyListeners('CREATE', param, newAtom)
     return newAtom
   }
 
@@ -84,13 +84,13 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
     if (areEqual === undefined) {
       if (!atoms.has(param)) return
       const [atom] = atoms.get(param)!
-      notifyListeners('REMOVE', param, atom)
       atoms.delete(param)
+      notifyListeners('REMOVE', param, atom)
     } else {
       for (const [key, [atom]] of atoms) {
         if (areEqual(key, param)) {
-          notifyListeners('REMOVE', key, atom)
           atoms.delete(key)
+          notifyListeners('REMOVE', key, atom)
           break
         }
       }
@@ -102,8 +102,8 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
     if (!shouldRemove) return
     for (const [key, [atom, createdAt]] of atoms) {
       if (shouldRemove(createdAt, key)) {
-        notifyListeners('REMOVE', key, atom)
         atoms.delete(key)
+        notifyListeners('REMOVE', key, atom)
       }
     }
   }
