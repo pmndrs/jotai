@@ -2,6 +2,7 @@ import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
+import { selectAtom } from 'jotai/utils'
 import { atom } from 'jotai/vanilla'
 import type { Atom, Getter } from 'jotai/vanilla'
 
@@ -954,4 +955,85 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', as
 
   fireEvent.click(getByText('show'))
   expect(firstDerivedFn).toBeCalledTimes(0)
+})
+
+it('all dependencies should receive updated value', async () => {
+  const baseAtom = atom({ name: 'Foo', favoriteNumber: 10 })
+  baseAtom.debugLabel = 'baseAtom'
+  const favoriteNumberAtom = selectAtom(baseAtom, (val) => val.favoriteNumber)
+
+  const favoriteNumberIsEven = selectAtom(
+    favoriteNumberAtom,
+    (val) => val % 2 === 0,
+  )
+
+  const barsFavoriteNumberAtom = atom((get) => {
+    // adding this fixes it, because the optional dependency becomes required.
+    // get(favoriteNumberAtom)
+    if (get(baseAtom).name === 'Bar') {
+      return get(favoriteNumberAtom) // Optionally depend on a derived atom of baseAtom
+    }
+    return undefined
+  })
+
+  /* The above atom structure results in the following topographical sort when processing dependencies
+   * - baseAtom
+   * - barsFavoriteNumberAtom
+   * - favoriteNumberAtom
+   * - favoriteNumberIsEven
+   *
+   * The issue is barsFavoriteNumberAtom now depends on favoriteNumberAtom and should have been sorted below it.
+   * The code as-is couldn't know that the dependencies array was going to change.
+   */
+  const Main = () => {
+    const [base, setBase] = useAtom(baseAtom)
+    const favoriteNumber = useAtomValue(favoriteNumberAtom)
+    const isEven = useAtomValue(favoriteNumberIsEven)
+    const barsFavoriteNumber = useAtomValue(barsFavoriteNumberAtom)
+
+    console.debug(`
+      name: ${base.name}
+      base: ${base.favoriteNumber},
+      favoriteNumber: ${favoriteNumber},
+      isEven: ${isEven}
+      barsFavoriteNumber: ${barsFavoriteNumber}
+    `)
+
+    const numberUpToDate = base.favoriteNumber === favoriteNumber
+    const evenUpToDate = base.favoriteNumber === barsFavoriteNumber
+    const evenIsCorrect = isEven === (base.favoriteNumber % 2 === 0)
+
+    return (
+      <>
+        <span>{numberUpToDate ? 'Number Sync' : 'Number Desync'}</span>
+        <span>{evenUpToDate ? 'Even Sync' : 'Even Desync'}</span>
+        <span> {evenIsCorrect ? 'Even Correct' : 'Even Incorrect'}</span>
+        <button
+          onClick={() =>
+            setBase({
+              name: 'Bar',
+              favoriteNumber: 15,
+            })
+          }
+        >
+          clickMe
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText, queryByText } = render(
+    <StrictMode>
+      <Main />
+    </StrictMode>,
+  )
+
+  await fireEvent.click(getByText('clickMe'))
+  await findByText('Number Sync')
+  await findByText('Even Sync')
+  await findByText('Even Correct')
+
+  expect(queryByText('Number Desync')).toBeNull()
+  expect(queryByText('Even Desync')).toBeNull()
+  expect(queryByText('Even Incorrect')).toBeNull()
 })
