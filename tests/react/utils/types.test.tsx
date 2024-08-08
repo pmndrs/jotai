@@ -1,6 +1,4 @@
-/* eslint @typescript-eslint/no-unused-expressions: off */
-
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
 
@@ -33,5 +31,5 @@ it('useHydrateAtoms should not allow invalid atom types when array is passed', (
       [activeAtom, false],
     ])
   }
-  Component
+  expect(Component).toBeDefined()
 })
