@@ -1,3 +1,5 @@
+/* eslint @typescript-eslint/no-unused-expressions: off */
+
 import { it } from 'vitest'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'

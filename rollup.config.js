@@ -1,3 +1,5 @@
+/* eslint @typescript-eslint/no-require-imports: off */
+
 const path = require('path')
 const alias = require('@rollup/plugin-alias')
 const babelPlugin = require('@rollup/plugin-babel')

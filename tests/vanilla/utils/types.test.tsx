@@ -1,3 +1,5 @@
+/* eslint @typescript-eslint/no-unused-vars: off */
+
 import { expectType } from 'ts-expect'
 import type { TypeEqual } from 'ts-expect'
 import { it } from 'vitest'
