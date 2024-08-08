@@ -1,6 +1,6 @@
 import { expectType } from 'ts-expect'
 import type { TypeOf } from 'ts-expect'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type {
   Atom,
@@ -45,7 +45,7 @@ it('atom() should return the correct types', () => {
     })
     expectType<WritableAtom<null, [], void>>(writeonlyDerivedAtom)
   }
-  Component
+  expect(Component).toBeDefined()
 })
 
 it('type utils should work', () => {
@@ -64,5 +64,5 @@ it('type utils should work', () => {
     const result: ExtractAtomResult<typeof readWriteAtom> = Promise.resolve()
     expectType<Promise<void>>(result)
   }
-  Component
+  expect(Component).toBeDefined()
 })

@@ -216,7 +216,7 @@ import {
 import { z } from 'zod'
 
 const myNumberSchema = z.number().int().nonnegative()
-const isMyNumber = (v) => myNumberSchema.safeParse(v).success);
+const isMyNumber = (v) => myNumberSchema.safeParse(v).success
 
 const storedNumberAtom = atomWithStorage(
   'my-number',
