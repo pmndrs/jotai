@@ -572,3 +572,23 @@ it('Unmount an atom that is no longer dependent within a derived atom (#2658)', 
   store.set(condAtom, false)
   expect(onUnmount).toHaveBeenCalledTimes(1)
 })
+
+it('should update derived atom even if dependances changed (#2697)', () => {
+  const primitiveAtom = atom<number | undefined>(undefined)
+  const derivedAtom = atom((get) => get(primitiveAtom))
+  const conditionalAtom = atom((get) => {
+    const base = get(primitiveAtom)
+    if (!base) return
+    return get(derivedAtom)
+  })
+
+  const store = createStore()
+  const onChangeDerived = vi.fn()
+
+  store.sub(derivedAtom, onChangeDerived)
+  store.sub(conditionalAtom, () => {})
+
+  expect(onChangeDerived).toHaveBeenCalledTimes(0)
+  store.set(primitiveAtom, 1)
+  expect(onChangeDerived).toHaveBeenCalledTimes(1)
+})
