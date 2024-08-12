@@ -509,10 +509,12 @@ export const createStore = (): Store => {
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
     const isMarked = (a: AnyAtom) => markedAtoms.has(a)
+    const prevEpochNumbers: number[] = topsortedAtoms.map(
+      (a) => getAtomState(a).n,
+    )
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
       const a = topsortedAtoms[i]!
       const aState = getAtomState(a)
-      const prevEpochNumber = aState.n
       let hasChangedDeps = false
       for (const dep of aState.d.keys()) {
         if (dep !== a && changedAtoms.has(dep)) {
@@ -523,7 +525,7 @@ export const createStore = (): Store => {
       if (hasChangedDeps) {
         readAtomState(pending, a, isMarked)
         mountDependencies(pending, a, aState)
-        if (prevEpochNumber !== aState.n) {
+        if (prevEpochNumbers[i] !== aState.n) {
           addPendingAtom(pending, a, aState)
           changedAtoms.add(a)
         }
