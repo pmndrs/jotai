@@ -466,8 +466,7 @@ export const createStore = (): Store => {
     returnAtomValue(readAtomState(undefined, atom))
 
   const recomputeDependents = (pending: Pending, atom: AnyAtom) => {
-    const getDependents = (a: AnyAtom): Set<AnyAtom> => {
-      const aState = getAtomState(a)
+    const getDependents = (a: AnyAtom, aState: AtomState): Set<AnyAtom> => {
       const dependents = new Set(aState.m?.t)
       for (const atomWithPendingContinuablePromise of aState.p) {
         dependents.add(atomWithPendingContinuablePromise)
@@ -484,23 +483,28 @@ export const createStore = (): Store => {
 
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
-    const topsortedAtoms: AnyAtom[] = []
+    const topsortedAtoms: (readonly [
+      atom: AnyAtom,
+      atomState: AtomState,
+      epochNumber: number,
+    ])[] = []
     const markedAtoms = new Set<AnyAtom>()
-    const visit = (n: AnyAtom) => {
-      if (markedAtoms.has(n)) {
+    const visit = (a: AnyAtom) => {
+      if (markedAtoms.has(a)) {
         return
       }
-      markedAtoms.add(n)
-      for (const m of getDependents(n)) {
+      markedAtoms.add(a)
+      const aState = getAtomState(a)
+      for (const d of getDependents(a, aState)) {
         // we shouldn't use isSelfAtom here.
-        if (n !== m) {
-          visit(m)
+        if (a !== d) {
+          visit(d)
         }
       }
       // The algorithm calls for pushing onto the front of the list. For
       // performance, we will simply push onto the end, and then will iterate in
       // reverse order later.
-      topsortedAtoms.push(n)
+      topsortedAtoms.push([a, aState, aState.n])
     }
     // Visit the root atom. This is the only atom in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
@@ -510,9 +514,7 @@ export const createStore = (): Store => {
     const changedAtoms = new Set<AnyAtom>([atom])
     const isMarked = (a: AnyAtom) => markedAtoms.has(a)
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
-      const a = topsortedAtoms[i]!
-      const aState = getAtomState(a)
-      const prevEpochNumber = aState.n
+      const [a, aState, prevEpochNumber] = topsortedAtoms[i]!
       let hasChangedDeps = false
       for (const dep of aState.d.keys()) {
         if (dep !== a && changedAtoms.has(dep)) {
