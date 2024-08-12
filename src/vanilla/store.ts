@@ -504,22 +504,26 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
 
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
-    const topsortedAtoms: (readonly [AnyAtom, AtomState])[] = []
+    const topsortedAtoms: (readonly [
+      atom: AnyAtom,
+      atomState: AtomState,
+      epochNumber: number,
+    ])[] = []
     const markedAtoms = new Set<AnyAtom>()
     const visit = (a: AnyAtom, aState: AtomState) => {
       if (markedAtoms.has(a)) {
         return
       }
       markedAtoms.add(a)
-      for (const [m, s] of getDependents(pending, a, aState)) {
-        if (a !== m) {
-          visit(m, s)
+      for (const [d, s] of getDependents(pending, a, aState)) {
+        if (a !== d) {
+          visit(d, s)
         }
       }
       // The algorithm calls for pushing onto the front of the list. For
       // performance, we will simply push onto the end, and then will iterate in
       // reverse order later.
-      topsortedAtoms.push([a, aState])
+      topsortedAtoms.push([a, aState, aState.n])
     }
     // Visit the root atom. This is the only atom in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
@@ -529,8 +533,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     const changedAtoms = new Set<AnyAtom>([atom])
     const isMarked = (a: AnyAtom) => markedAtoms.has(a)
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
-      const [a, aState] = topsortedAtoms[i]!
-      const prevEpochNumber = aState.n
+      const [a, aState, prevEpochNumber] = topsortedAtoms[i]!
       let hasChangedDeps = false
       for (const dep of aState.d.keys()) {
         if (dep !== a && changedAtoms.has(dep)) {
