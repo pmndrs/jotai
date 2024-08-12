@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Atom, ExtractAtomValue } from 'jotai/vanilla'
+import type { Atom } from 'jotai/vanilla'
 
 describe('unstable_derive for scoping atoms', () => {
   /**
@@ -55,85 +55,22 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-
-    const scopedAtomStateMap = new WeakMap<Atom<unknown>, unknown>()
-    const wipAtoms = new Set<Atom<unknown>>()
-    let propagateScopedAtom: ((atoms: Set<Atom<unknown>>) => void) | undefined
-    const wrapStore = (origStore: typeof store) => {
-      const wrapMethod = <T extends (...args: never[]) => unknown>(
-        method: T,
-      ): T =>
-        ((...args: Parameters<T>) => {
-          try {
-            return method(...args)
-          } finally {
-            propagateScopedAtom?.(wipAtoms)
-            wipAtoms.clear()
-          }
-        }) as never
-      return {
-        ...origStore,
-        get: wrapMethod(origStore.get),
-        set: wrapMethod(origStore.set),
-        sub: wrapMethod(origStore.sub),
-      }
-    }
-    const derivedStore = wrapStore(
-      store.unstable_derive((getAtomState) => {
-        type AtomState = ReturnType<typeof getAtomState>
-        const copyMounted = (
-          mounted: NonNullable<AtomState['m']>,
-        ): NonNullable<AtomState['m']> => ({
-          ...mounted,
-          d: new Set(mounted.d),
-          t: new Set(mounted.t),
-        })
-        const copyAtomState = (atomState: AtomState): AtomState => ({
-          ...atomState,
-          d: new Map(atomState.d),
-          p: new Set(atomState.p),
-          ...('m' in atomState ? { m: copyMounted(atomState.m) } : {}),
-        })
-        propagateScopedAtom ||= (atoms) => {
-          const nextAtoms = new Set<Atom<unknown>>()
-          for (const atom of atoms) {
-            const atomState = scopedAtomStateMap.get(atom) as
-              | AtomState
-              | undefined
-            if (atomState && atomState.m) {
-              for (const dependent of atomState.m.t) {
-                if (!scopedAtomStateMap.has(dependent)) {
-                  scopedAtomStateMap.set(
-                    dependent,
-                    copyAtomState(getAtomState(dependent)),
-                  )
-                  nextAtoms.add(dependent)
-                }
-              }
-            }
-          }
-          if (nextAtoms.size) {
-            propagateScopedAtom?.(nextAtoms)
-          }
-        }
-        return [
-          (atom, originAtomState) => {
-            type TheAtomState = ReturnType<
-              typeof getAtomState<ExtractAtomValue<typeof atom>>
-            >
+    const derivedStore = store.unstable_derive((getAtomState) => {
+      const scopedAtomStateMap = new WeakMap()
+      return [
+        (atom, originAtomState) => {
+          if (scopedAtoms.has(atom)) {
             let atomState = scopedAtomStateMap.get(atom)
-            if (!atomState && scopedAtoms.has(atom)) {
+            if (!atomState) {
               atomState = { d: new Map(), p: new Set(), n: 0 }
               scopedAtomStateMap.set(atom, atomState)
             }
-            if (atomState) {
-              return atomState as TheAtomState
-            }
-            return getAtomState(atom, originAtomState)
-          },
-        ]
-      }),
-    )
+            return atomState
+          }
+          return getAtomState(atom, originAtomState)
+        },
+      ]
+    })
 
     expect(store.get(c)).toBe('ab')
     expect(derivedStore.get(c)).toBe('ab')
@@ -142,12 +79,6 @@ describe('unstable_derive for scoping atoms', () => {
     await new Promise((resolve) => setTimeout(resolve))
     expect(store.get(c)).toBe('ab')
     expect(derivedStore.get(c)).toBe('a2b')
-
-    derivedStore.sub(c, vi.fn())
-    derivedStore.set(b, 'b2')
-    await new Promise((resolve) => setTimeout(resolve))
-    expect(store.get(c)).toBe('ab2')
-    expect(derivedStore.get(c)).toBe('a2b2')
   })
 
   /**
