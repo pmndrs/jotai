@@ -8,6 +8,9 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
+const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
+  atom.unstable_is ? atom.unstable_is(a) : a === atom
+
 const hasInitialValue = <T extends Atom<AnyValue>>(
   atom: T,
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
@@ -385,7 +388,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     atomState.d.clear()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      if (a === (atom as AnyAtom)) {
+      if (isSelfAtom(atom, a)) {
         const aState = getAtomState(a, atomState)
         if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
@@ -567,7 +570,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     ) => {
       const aState = getAtomState(a, atomState)
       let r: R | undefined
-      if (a === (atom as AnyAtom)) {
+      if (isSelfAtom(atom, a)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')

@@ -40,6 +40,7 @@ type OnMount<Args extends unknown[], Result> = <
 export interface Atom<Value> {
   toString: () => string
   read: Read<Value>
+  unstable_is?(a: Atom<unknown>): boolean
   debugLabel?: string
   /**
    * To ONLY be used by Jotai libraries to mark atoms as private. Subject to change.
