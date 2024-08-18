@@ -33,16 +33,15 @@ The `splitAtom` utility supports a second argument which is a key extractor func
 ```ts
 export function splitAtom<Item, Key>(
   arrAtom: WritableAtom<Item[], [Item[]], void> | Atom<Item[]>,
-  keyExtractor?: (item: Item) => Key
+  keyExtractor?: (item: Item) => Key,
 )
 ```
 
 Important considerations for the `keyExtractor`:
 
 - If `splitAtom` is used within a React render loop, the `keyExtractor` must be a stable function that maintains object equality (shallow equality). This requirement doesn't apply outside of render loops.
-- Providing a `keyExtractor` enhances the stability of the atom output (which makes memoization hit cache more often). It prevents unnecessary subatom recreation due to index shifts in the source array. 
+- Providing a `keyExtractor` enhances the stability of the atom output (which makes memoization hit cache more often). It prevents unnecessary subatom recreation due to index shifts in the source array.
 - `keyExtractor` is an optional optimization that should only be used if the extracted key is guaranteed unique for each item in the array.
-
 
 ### Example Usage
 
