@@ -592,3 +592,58 @@ it('should update derived atom even if dependances changed (#2697)', () => {
   store.set(primitiveAtom, 1)
   expect(onChangeDerived).toHaveBeenCalledTimes(1)
 })
+
+it('should preserve dependencies when reusing continuable promise', async () => {
+  const baseAtom = atom(0)
+  const isMountedAtom = atom(false)
+  isMountedAtom.onMount = (setSelf) => setSelf(true)
+
+  let promise = Promise.resolve(-1)
+  let inProgress = false
+  const derivedAtom = atom<Promise<number>, [], void>(
+    (get, { setSelf }) => {
+      if (!get(isMountedAtom)) {
+        // early return when not mounted is somehow important
+        return promise
+      }
+      if (inProgress) {
+        // bailing out when inProgress is true causes the original dependencies to be lost
+        return promise
+      }
+      promise = Promise.resolve().then(() => {
+        const value = get(baseAtom)
+        inProgress = true
+        // causes the derivedAtom to be re-evaluated, which triggers the inProgress bail
+        setSelf()
+        return value
+      })
+      setTimeout(() => {
+        inProgress = false
+      }, 0)
+      return promise
+    },
+    (_get, _set) => {
+      // setting baseAtom to Infinity causes the derivedAtom to be re-evaluated
+      _set(baseAtom, Infinity)
+    },
+  )
+  const store = createStore()
+
+  store.sub(derivedAtom, () => {})
+  await waitFor(() => assert(store.get(isMountedAtom)))
+  expect(await store.get(derivedAtom)).toBe(0)
+
+  // baseAtom is Infinity right now
+  store.set(baseAtom, 1)
+  expect(store.get(baseAtom)).toBe(1)
+  await new Promise((resolve) => setTimeout(resolve))
+  // expect(await store.get(derivedAtom)).toBe(1) // Fails: receives 0
+
+  // baseAtom NOT is Infinity right now
+  store.set(baseAtom, 2)
+  expect(store.get(baseAtom)).toBe(2)
+  await new Promise((resolve) => setTimeout(resolve))
+
+  // baseAtom is NOT Infinity right now
+  expect(await store.get(derivedAtom)).toBe(2) // Fails: receives 0
+})
