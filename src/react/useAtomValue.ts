@@ -41,6 +41,54 @@ const use =
     }
   })
 
+const continuablePromiseMap = new WeakMap<
+  PromiseLike<unknown>,
+  Promise<unknown>
+>()
+
+const createContinuablePromise = <T>(
+  promise: PromiseLike<T>,
+  getLatest: () => PromiseLike<T>,
+) => {
+  let continuablePromise = continuablePromiseMap.get(promise)
+  if (!continuablePromise) {
+    continuablePromise = new Promise<T>((resolve, reject) => {
+      let curr = promise
+      const onFulfilled = (me: PromiseLike<T>) => (v: T) => {
+        if (curr === me) {
+          resolve(v)
+        }
+      }
+      const onRejected = (me: PromiseLike<T>) => (e: unknown) => {
+        if (curr === me) {
+          reject(e)
+        }
+      }
+      promise.then(onFulfilled(promise), onRejected(promise))
+      const signal =
+        'signal' in promise &&
+        promise.signal instanceof AbortSignal &&
+        promise.signal
+      if (signal) {
+        signal.addEventListener('abort', () => {
+          const nextPromise = getLatest()
+          if (
+            import.meta.env?.MODE !== 'production' &&
+            nextPromise === promise
+          ) {
+            throw new Error('[Bug] promise is not updated even after aborting')
+          }
+          continuablePromiseMap.set(nextPromise, continuablePromise!)
+          curr = nextPromise
+          nextPromise.then(onFulfilled(nextPromise), onRejected(nextPromise))
+        })
+      }
+    })
+    continuablePromiseMap.set(promise, continuablePromise)
+  }
+  return continuablePromise
+}
+
 type Options = Parameters<typeof useStore>[0] & {
   delay?: number
 }
@@ -99,8 +147,14 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   }, [store, atom, delay])
 
   useDebugValue(value)
-  // TS doesn't allow using `use` always.
   // The use of isPromiseLike is to be consistent with `use` type.
   // `instanceof Promise` actually works fine in this case.
-  return isPromiseLike(value) ? use(value) : (value as Awaited<Value>)
+  if (isPromiseLike(value)) {
+    const promise = createContinuablePromise(
+      value,
+      () => store.get(atom) as typeof value,
+    )
+    return use(promise)
+  }
+  return value as Awaited<Value>
 }
