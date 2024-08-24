@@ -150,10 +150,10 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   // The use of isPromiseLike is to be consistent with `use` type.
   // `instanceof Promise` actually works fine in this case.
   if (isPromiseLike(value)) {
-    const promise = createContinuablePromise(
-      value,
-      () => store.get(atom) as typeof value,
-    )
+    const promise = createContinuablePromise(value, () => {
+      const nextValue = store.get(atom)
+      return isPromiseLike(nextValue) ? nextValue : Promise.resolve(nextValue)
+    })
     return use(promise)
   }
   return value as Awaited<Value>

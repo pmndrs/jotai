@@ -20,89 +20,47 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
 //
-// Continuable Promise
+// Abortable Promise
 //
 
-const CONTINUE_PROMISE = Symbol(
-  import.meta.env?.MODE !== 'production' ? 'CONTINUE_PROMISE' : '',
-)
+type PromiseState = [controller: AbortController, settled: boolean]
 
-const PENDING = 'pending'
-const FULFILLED = 'fulfilled'
-const REJECTED = 'rejected'
+const abortablePromiseMap = new WeakMap<PromiseLike<unknown>, PromiseState>()
 
-type ContinuePromise<T> = (
-  nextPromise: PromiseLike<T> | undefined,
-  nextAbort: () => void,
-) => void
+const isPromisePending = <T>(promise: PromiseLike<T>) =>
+  !abortablePromiseMap.get(promise)?.[1]
 
-type ContinuablePromise<T> = Promise<T> &
-  (
-    | { status: typeof PENDING }
-    | { status: typeof FULFILLED; value?: T }
-    | { status: typeof REJECTED; reason?: AnyError }
-  ) & {
-    [CONTINUE_PROMISE]: ContinuePromise<T>
+const abortPromise = <T>(promise: PromiseLike<T>) => {
+  const promiseState = abortablePromiseMap.get(promise)
+  if (promiseState) {
+    promiseState[0].abort()
+    promiseState[1] = true
+  } else if (import.meta.env?.MODE !== 'production') {
+    throw new Error('[Bug] abortable promise not found')
   }
+}
 
-const isContinuablePromise = (
-  promise: unknown,
-): promise is ContinuablePromise<AnyValue> =>
-  typeof promise === 'object' && promise !== null && CONTINUE_PROMISE in promise
-
-const continuablePromiseMap: WeakMap<
-  PromiseLike<AnyValue>,
-  ContinuablePromise<AnyValue>
-> = new WeakMap()
-
-/**
- * Create a continuable promise from a regular promise.
- */
-const createContinuablePromise = <T>(
-  promise: PromiseLike<T>,
-  abort: () => void,
-  complete: () => void,
-): ContinuablePromise<T> => {
-  if (!continuablePromiseMap.has(promise)) {
-    let continuePromise: ContinuePromise<T>
-    const p: any = new Promise((resolve, reject) => {
-      let curr = promise
-      const onFulfilled = (me: PromiseLike<T>) => (v: T) => {
-        if (curr === me) {
-          p.status = FULFILLED
-          p.value = v
-          resolve(v)
-          complete()
-        }
-      }
-      const onRejected = (me: PromiseLike<T>) => (e: AnyError) => {
-        if (curr === me) {
-          p.status = REJECTED
-          p.reason = e
-          reject(e)
-          complete()
-        }
-      }
-      promise.then(onFulfilled(promise), onRejected(promise))
-      continuePromise = (nextPromise, nextAbort) => {
-        if (nextPromise) {
-          continuablePromiseMap.set(nextPromise, p)
-          curr = nextPromise
-          nextPromise.then(onFulfilled(nextPromise), onRejected(nextPromise))
-
-          // Only abort promises that aren't user-facing. When nextPromise is set,
-          // we can replace the current promise with the next one, so we don't
-          // see any abort-related errors.
-          abort()
-          abort = nextAbort
-        }
-      }
-    })
-    p.status = PENDING
-    p[CONTINUE_PROMISE] = continuePromise!
-    continuablePromiseMap.set(promise, p)
+const registerAbort = <T>(promise: PromiseLike<T>, abort: () => void) => {
+  const promiseState = abortablePromiseMap.get(promise)
+  if (promiseState) {
+    promiseState[0].signal.addEventListener('abort', abort)
+  } else if (import.meta.env?.MODE !== 'production') {
+    throw new Error('[Bug] abortable promise not found')
   }
-  return continuablePromiseMap.get(promise) as ContinuablePromise<T>
+}
+
+const patchPromiseForAbortability = <T>(promise: PromiseLike<T>) => {
+  if (abortablePromiseMap.has(promise)) {
+    // already patched
+    return
+  }
+  const promiseState: PromiseState = [new AbortController(), false]
+  abortablePromiseMap.set(promise, promiseState)
+  const settle = () => {
+    promiseState![1] = true
+  }
+  promise.then(settle, settle)
+  ;(promise as { signal?: AbortSignal }).signal = promiseState[0].signal
 }
 
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
@@ -165,17 +123,17 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
   return atomState.v!
 }
 
-const getPendingContinuablePromise = (atomState: AtomState) => {
+const getPendingPromise = (atomState: AtomState) => {
   const value: unknown = atomState.v
-  if (isContinuablePromise(value) && value.status === PENDING) {
+  if (isPromiseLike(value) && isPromisePending(value)) {
     return value
   }
   return null
 }
 
-const addPendingContinuablePromiseToDependency = (
+const addPendingPromiseToDependency = (
   atom: AnyAtom,
-  promise: ContinuablePromise<AnyValue> & { status: typeof PENDING },
+  promise: PromiseLike<AnyValue>,
   dependencyAtomState: AtomState,
 ) => {
   if (!dependencyAtomState.p.has(atom)) {
@@ -202,9 +160,9 @@ const addDependency = <Value>(
     throw new Error('[Bug] atom cannot depend on itself')
   }
   atomState.d.set(a, aState.n)
-  const continuablePromise = getPendingContinuablePromise(atomState)
-  if (continuablePromise) {
-    addPendingContinuablePromiseToDependency(atom, continuablePromise, aState)
+  const abortablePromise = getPendingPromise(atomState)
+  if (abortablePromise) {
+    addPendingPromiseToDependency(atom, abortablePromise, aState)
   }
   aState.m?.t.add(atom)
   if (pending) {
@@ -312,48 +270,30 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     atom: AnyAtom,
     atomState: AtomState,
     valueOrPromise: unknown,
-    abortPromise = () => {},
-    completePromise = () => {},
   ) => {
     const hasPrevValue = 'v' in atomState
     const prevValue = atomState.v
-    const pendingPromise = getPendingContinuablePromise(atomState)
+    const pendingPromise = getPendingPromise(atomState)
     if (isPromiseLike(valueOrPromise)) {
-      if (pendingPromise) {
-        if (pendingPromise !== valueOrPromise) {
-          pendingPromise[CONTINUE_PROMISE](valueOrPromise, abortPromise)
-          ++atomState.n
-        }
-      } else {
-        const continuablePromise = createContinuablePromise(
+      patchPromiseForAbortability(valueOrPromise)
+      for (const a of atomState.d.keys()) {
+        addPendingPromiseToDependency(
+          atom,
           valueOrPromise,
-          abortPromise,
-          completePromise,
+          getAtomState(a, atomState),
         )
-        if (continuablePromise.status === PENDING) {
-          for (const a of atomState.d.keys()) {
-            addPendingContinuablePromiseToDependency(
-              atom,
-              continuablePromise,
-              getAtomState(a, atomState),
-            )
-          }
-        }
-        atomState.v = continuablePromise
-        delete atomState.e
       }
+      atomState.v = valueOrPromise
+      delete atomState.e
     } else {
-      if (pendingPromise) {
-        pendingPromise[CONTINUE_PROMISE](
-          Promise.resolve(valueOrPromise),
-          abortPromise,
-        )
-      }
       atomState.v = valueOrPromise
       delete atomState.e
     }
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
+    }
+    if (pendingPromise) {
+      abortPromise(pendingPromise)
     }
   }
 
@@ -448,19 +388,18 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     }
     try {
       const valueOrPromise = atom.read(getter, options as never)
-      setAtomStateValueOrPromise(
-        atom,
-        atomState,
-        valueOrPromise,
-        () => controller?.abort(),
-        () => {
+      setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
+      if (isPromiseLike(valueOrPromise)) {
+        registerAbort(valueOrPromise, () => controller?.abort())
+        const complete = () => {
           if (atomState.m) {
             const pending = createPending()
             mountDependencies(pending, atom, atomState)
             flushPending(pending)
           }
-        },
-      )
+        }
+        valueOrPromise.then(complete, complete)
+      }
       return atomState
     } catch (error) {
       delete atomState.v
@@ -484,10 +423,10 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     for (const a of atomState.m?.t || []) {
       dependents.set(a, getAtomState(a, atomState))
     }
-    for (const atomWithPendingContinuablePromise of atomState.p) {
+    for (const atomWithPendingAbortablePromise of atomState.p) {
       dependents.set(
-        atomWithPendingContinuablePromise,
-        getAtomState(atomWithPendingContinuablePromise, atomState),
+        atomWithPendingAbortablePromise,
+        getAtomState(atomWithPendingAbortablePromise, atomState),
       )
     }
     getPendingDependents(pending, atom)?.forEach((dependent) => {
@@ -609,7 +548,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     atom: AnyAtom,
     atomState: AtomState,
   ) => {
-    if (atomState.m && !getPendingContinuablePromise(atomState)) {
+    if (atomState.m && !getPendingPromise(atomState)) {
       for (const a of atomState.d.keys()) {
         if (!atomState.m.d.has(a)) {
           const aMounted = mountAtom(pending, a, getAtomState(a, atomState))
@@ -692,10 +631,9 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
         aMounted?.t.delete(atom)
       }
       // abort pending promise
-      const pendingPromise = getPendingContinuablePromise(atomState)
+      const pendingPromise = getPendingPromise(atomState)
       if (pendingPromise) {
-        // FIXME using `undefined` is kind of a hack.
-        pendingPromise[CONTINUE_PROMISE](undefined, () => {})
+        abortPromise(pendingPromise)
       }
       return undefined
     }
