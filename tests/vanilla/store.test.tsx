@@ -593,36 +593,36 @@ it('should update derived atom even if dependances changed (#2697)', () => {
   expect(onChangeDerived).toHaveBeenCalledTimes(1)
 })
 
-it('should preserve dependencies when reusing continuable promise', async () => {
+it('should preserve dependencies when returning a reused promise', async () => {
   const baseAtom = atom(0)
   const refreshAtom = atom(0)
-  const inProgressAtom = atom(false)
-  let promise = Promise.resolve(-1)
-  const internalAtom = atom<Promise<number>, [], void>(
+  const refAtom = atom(() => ({
+    promise: Promise.resolve(-1),
+    inProgress: false,
+  }))
+  const derivedAtom = atom<Promise<number>, [], void>(
     (get, { setSelf }) => {
-      promise = Promise.resolve().then(() => {
+      get(refreshAtom)
+      const ref = get(refAtom)
+      if (ref.inProgress) {
+        return ref.promise
+      }
+      ref.promise = Promise.resolve().then(() => {
         const value = get(baseAtom)
+        ref.inProgress = true
         // causes the derivedAtom to be re-evaluated, which triggers the inProgress bail
         setSelf()
         return value
       })
-      return promise
+      Promise.resolve().then(() => {
+        ref.inProgress = false
+      })
+      return ref.promise
     },
     (_, set) => {
-      set(inProgressAtom, true)
       set(refreshAtom, (c) => c + 1)
-      setTimeout(() => {
-        set(inProgressAtom, false)
-      })
     },
   )
-  const derivedAtom = atom((get) => {
-    get(refreshAtom)
-    if (get(inProgressAtom)) {
-      return promise
-    }
-    return get(internalAtom)
-  })
   const store = createStore()
 
   store.sub(derivedAtom, () => {})
@@ -638,4 +638,49 @@ it('should preserve dependencies when reusing continuable promise', async () => 
   expect(store.get(baseAtom)).toBe(2)
   await new Promise((resolve) => setTimeout(resolve))
   expect(await store.get(derivedAtom)).toBe(2)
+})
+
+it('should not preserve dependencies when returning a new promise', async () => {
+  const baseAtom = atom(0)
+  const refreshAtom = atom(0)
+  const refAtom = atom(() => ({
+    promise: Promise.resolve(-1),
+    inProgress: false,
+  }))
+  const derivedAtom = atom<Promise<number>, [], void>(
+    (get, { setSelf }) => {
+      get(refreshAtom)
+      const ref = get(refAtom)
+      if (ref.inProgress) {
+        return Promise.resolve(store.get(baseAtom))
+      }
+      ref.promise = Promise.resolve().then(() => {
+        const value = get(baseAtom)
+        ref.inProgress = true
+        // causes the derivedAtom to be re-evaluated, which triggers the inProgress bail
+        setSelf()
+        return value
+      })
+      Promise.resolve().then(() => {
+        ref.inProgress = false
+      })
+      return ref.promise
+    },
+    (_, set) => set(refreshAtom, (c) => c + 1),
+  )
+  const store = createStore()
+
+  store.sub(derivedAtom, () => {})
+  await new Promise((resolve) => setTimeout(resolve))
+  expect(await store.get(derivedAtom)).toBe(0)
+
+  store.set(baseAtom, 1)
+  expect(store.get(baseAtom)).toBe(1)
+  await new Promise((resolve) => setTimeout(resolve))
+  expect(await store.get(derivedAtom)).toBe(0)
+
+  store.set(baseAtom, 2)
+  expect(store.get(baseAtom)).toBe(2)
+  await new Promise((resolve) => setTimeout(resolve))
+  expect(await store.get(derivedAtom)).toBe(0)
 })
