@@ -10,6 +10,26 @@ type Store = ReturnType<typeof useStore>
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as any)?.then === 'function'
 
+const attachPromiseMeta = <T>(
+  promise: PromiseLike<T> & {
+    status?: 'pending' | 'fulfilled' | 'rejected'
+    value?: T
+    reason?: unknown
+  },
+) => {
+  promise.status = 'pending'
+  promise.then(
+    (v) => {
+      promise.status = 'fulfilled'
+      promise.value = v
+    },
+    (e) => {
+      promise.status = 'rejected'
+      promise.reason = e
+    },
+  )
+}
+
 const use =
   ReactExports.use ||
   (<T>(
@@ -26,17 +46,7 @@ const use =
     } else if (promise.status === 'rejected') {
       throw promise.reason
     } else {
-      promise.status = 'pending'
-      promise.then(
-        (v) => {
-          promise.status = 'fulfilled'
-          promise.value = v
-        },
-        (e) => {
-          promise.status = 'rejected'
-          promise.reason = e
-        },
-      )
+      attachPromiseMeta(promise)
       throw promise
     }
   })
@@ -48,7 +58,7 @@ const continuablePromiseMap = new WeakMap<
 
 const createContinuablePromise = <T>(
   promise: PromiseLike<T>,
-  getLatest: () => PromiseLike<T>,
+  getLatest: () => PromiseLike<T> | T,
 ) => {
   let continuablePromise = continuablePromiseMap.get(promise)
   if (!continuablePromise) {
@@ -68,7 +78,10 @@ const createContinuablePromise = <T>(
       const addAbortListener = (p: PromiseLike<T>) => {
         if ('signal' in p && p.signal instanceof AbortSignal) {
           p.signal.addEventListener('abort', () => {
-            const nextPromise = getLatest()
+            const nextValue = getLatest()
+            const nextPromise = isPromiseLike(nextValue)
+              ? nextValue
+              : Promise.resolve(nextValue)
             if (import.meta.env?.MODE !== 'production' && nextPromise === p) {
               throw new Error('[Bug] p is not updated even after aborting')
             }
@@ -133,6 +146,12 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   useEffect(() => {
     const unsub = store.sub(atom, () => {
       if (typeof delay === 'number') {
+        const value = store.get(atom)
+        if (isPromiseLike(value)) {
+          attachPromiseMeta(
+            createContinuablePromise(value, () => store.get(atom)),
+          )
+        }
         // delay rerendering to wait a promise possibly to resolve
         setTimeout(rerender, delay)
         return
@@ -147,10 +166,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   // The use of isPromiseLike is to be consistent with `use` type.
   // `instanceof Promise` actually works fine in this case.
   if (isPromiseLike(value)) {
-    const promise = createContinuablePromise(value, () => {
-      const nextValue = store.get(atom)
-      return isPromiseLike(nextValue) ? nextValue : Promise.resolve(nextValue)
-    })
+    const promise = createContinuablePromise(value, () => store.get(atom))
     return use(promise)
   }
   return value as Awaited<Value>
