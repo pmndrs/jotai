@@ -595,19 +595,13 @@ it('should update derived atom even if dependances changed (#2697)', () => {
 
 it('should preserve dependencies when reusing continuable promise', async () => {
   const baseAtom = atom(0)
-  const isMountedAtom = atom(false)
-  isMountedAtom.onMount = (setSelf) => setSelf(true)
-
+  const refreshAtom = atom(0)
   let promise = Promise.resolve(-1)
   let inProgress = false
   const derivedAtom = atom<Promise<number>, [], void>(
     (get, { setSelf }) => {
-      if (!get(isMountedAtom)) {
-        // early return when not mounted is somehow important
-        return promise
-      }
+      get(refreshAtom)
       if (inProgress) {
-        // bailing out when inProgress is true causes the original dependencies to be lost
         return promise
       }
       promise = Promise.resolve().then(() => {
@@ -619,31 +613,24 @@ it('should preserve dependencies when reusing continuable promise', async () => 
       })
       setTimeout(() => {
         inProgress = false
-      }, 0)
+      })
       return promise
     },
-    (_get, _set) => {
-      // setting baseAtom to Infinity causes the derivedAtom to be re-evaluated
-      _set(baseAtom, Infinity)
-    },
+    (_, set) => set(refreshAtom, (c) => c + 1),
   )
   const store = createStore()
 
   store.sub(derivedAtom, () => {})
-  await waitFor(() => assert(store.get(isMountedAtom)))
+  await new Promise((resolve) => setTimeout(resolve))
   expect(await store.get(derivedAtom)).toBe(0)
 
-  // baseAtom is Infinity right now
   store.set(baseAtom, 1)
   expect(store.get(baseAtom)).toBe(1)
   await new Promise((resolve) => setTimeout(resolve))
-  // expect(await store.get(derivedAtom)).toBe(1) // Fails: receives 0
+  expect(await store.get(derivedAtom)).toBe(1)
 
-  // baseAtom NOT is Infinity right now
   store.set(baseAtom, 2)
   expect(store.get(baseAtom)).toBe(2)
   await new Promise((resolve) => setTimeout(resolve))
-
-  // baseAtom is NOT Infinity right now
-  expect(await store.get(derivedAtom)).toBe(2) // Fails: receives 0
+  expect(await store.get(derivedAtom)).toBe(2)
 })

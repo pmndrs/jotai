@@ -384,8 +384,13 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
         return atomState
       }
     }
-    // Compute a new state for this atom.
-    atomState.d.clear()
+
+    if (isContinuablePromise(atomState.v) && atomState.v.status === PENDING) {
+      // If the atom has a pending promise, we should preserve the dependents
+    } else {
+      // Compute a new state for this atom.
+      atomState.d.clear()
+    }
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
