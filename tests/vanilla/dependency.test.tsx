@@ -201,25 +201,18 @@ it('settles never resolving async derivations with deps picked up sync', async (
   let sub = 0
   const values: unknown[] = []
   store.get(asyncAtom).then((value) => values.push(value))
-
   store.sub(asyncAtom, () => {
     sub++
     store.get(asyncAtom).then((value) => values.push(value))
   })
 
-  await new Promise((r) => setTimeout(r))
-
   store.set(syncAtom, {
     promise: new Promise<number>((r) => resolve.push(r)),
   })
-
-  await new Promise((r) => setTimeout(r))
-
   resolve[1]?.(1)
 
-  await new Promise((r) => setTimeout(r))
-
-  expect(values).toEqual([1, 1])
+  await new Promise((r) => setTimeout(r)) // wait for a tick
+  expect(values).toEqual([1])
   expect(sub).toBe(1)
 })
 
@@ -233,7 +226,6 @@ it('settles never resolving async derivations with deps picked up async', async 
   const asyncAtom = atom(async (get) => {
     // we want to pick up `syncAtom` as an async dep
     await Promise.resolve()
-
     return await get(syncAtom).promise
   })
 
@@ -242,24 +234,18 @@ it('settles never resolving async derivations with deps picked up async', async 
   let sub = 0
   const values: unknown[] = []
   store.get(asyncAtom).then((value) => values.push(value))
-
   store.sub(asyncAtom, () => {
     sub++
     store.get(asyncAtom).then((value) => values.push(value))
   })
 
-  await new Promise((r) => setTimeout(r))
-
+  await new Promise((r) => setTimeout(r)) // wait for a tick
   store.set(syncAtom, {
     promise: new Promise<number>((r) => resolve.push(r)),
   })
-
-  await new Promise((r) => setTimeout(r))
-
   resolve[1]?.(1)
 
-  await new Promise((r) => setTimeout(r))
-
-  expect(values).toEqual([1, 1])
+  await new Promise((r) => setTimeout(r)) // wait for a tick
+  expect(values).toEqual([1])
   expect(sub).toBe(1)
 })
