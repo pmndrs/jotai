@@ -384,7 +384,6 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
         return atomState
       }
     }
-
     // Compute a new state for this atom.
     atomState.d.clear()
     let isSync = true
