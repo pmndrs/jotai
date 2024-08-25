@@ -291,9 +291,9 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     }
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
-    }
-    if (pendingPromise) {
-      abortPromise(pendingPromise)
+      if (pendingPromise) {
+        abortPromise(pendingPromise)
+      }
     }
   }
 

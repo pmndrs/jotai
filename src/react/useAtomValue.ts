@@ -65,24 +65,21 @@ const createContinuablePromise = <T>(
         }
       }
       promise.then(onFulfilled(promise), onRejected(promise))
-      const signal =
-        'signal' in promise &&
-        promise.signal instanceof AbortSignal &&
-        promise.signal
-      if (signal) {
-        signal.addEventListener('abort', () => {
-          const nextPromise = getLatest()
-          if (
-            import.meta.env?.MODE !== 'production' &&
-            nextPromise === promise
-          ) {
-            throw new Error('[Bug] promise is not updated even after aborting')
-          }
-          continuablePromiseMap.set(nextPromise, continuablePromise!)
-          curr = nextPromise
-          nextPromise.then(onFulfilled(nextPromise), onRejected(nextPromise))
-        })
+      const addAbortListener = (p: PromiseLike<T>) => {
+        if ('signal' in p && p.signal instanceof AbortSignal) {
+          p.signal.addEventListener('abort', () => {
+            const nextPromise = getLatest()
+            if (import.meta.env?.MODE !== 'production' && nextPromise === p) {
+              throw new Error('[Bug] p is not updated even after aborting')
+            }
+            continuablePromiseMap.set(nextPromise, continuablePromise!)
+            curr = nextPromise
+            nextPromise.then(onFulfilled(nextPromise), onRejected(nextPromise))
+            addAbortListener(nextPromise)
+          })
+        }
       }
+      addAbortListener(promise)
     })
     continuablePromiseMap.set(promise, continuablePromise)
   }
