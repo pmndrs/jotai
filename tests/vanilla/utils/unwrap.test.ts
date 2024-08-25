@@ -133,7 +133,7 @@ describe('unwrap', () => {
     const asyncAtom = atom(Promise.resolve('concrete'))
 
     expect(await store.get(asyncAtom)).toEqual('concrete')
-    store.get(unwrap(asyncAtom)) // initially pending
+    expect(store.get(unwrap(asyncAtom))).toEqual(undefined)
     await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(unwrap(asyncAtom))).toEqual('concrete')
   })
