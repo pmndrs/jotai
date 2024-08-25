@@ -630,11 +630,6 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
         const aMounted = unmountAtom(pending, a, getAtomState(a, atomState))
         aMounted?.t.delete(atom)
       }
-      // abort pending promise
-      const pendingPromise = getPendingPromise(atomState)
-      if (pendingPromise) {
-        abortPromise(pendingPromise)
-      }
       return undefined
     }
     return atomState.m

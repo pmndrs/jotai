@@ -87,9 +87,11 @@ it('should override a promise by setting', async () => {
   const countAtom = atom(Promise.resolve(0))
   const infinitePending = new Promise<never>(() => {})
   store.set(countAtom, infinitePending)
-  const promise = store.get(countAtom)
+  const promise1 = store.get(countAtom)
+  expect(promise1).toBe(infinitePending)
   store.set(countAtom, Promise.resolve(1))
-  expect(await promise).toBe(1)
+  const promise2 = store.get(countAtom)
+  expect(await promise2).toBe(1)
 })
 
 it('should update async atom with deps after await (#1905)', async () => {
@@ -417,31 +419,37 @@ it('should flush pending write triggered asynchronously and indirectly (#2451)',
 describe('async atom with subtle timing', () => {
   it('case 1', async () => {
     const store = createStore()
-    let resolve = () => {}
+    const resolve: (() => void)[] = []
     const a = atom(1)
     const b = atom(async (get) => {
-      await new Promise<void>((r) => (resolve = r))
+      await new Promise<void>((r) => resolve.push(r))
       return get(a)
     })
     const bValue = store.get(b)
     store.set(a, 2)
-    resolve()
+    resolve.splice(0).forEach((fn) => fn())
+    const bValue2 = store.get(b)
+    resolve.splice(0).forEach((fn) => fn())
     expect(await bValue).toBe(2)
+    expect(await bValue2).toBe(2)
   })
 
   it('case 2', async () => {
     const store = createStore()
-    let resolve = () => {}
+    const resolve: (() => void)[] = []
     const a = atom(1)
     const b = atom(async (get) => {
       const aValue = get(a)
-      await new Promise<void>((r) => (resolve = r))
+      await new Promise<void>((r) => resolve.push(r))
       return aValue
     })
     const bValue = store.get(b)
     store.set(a, 2)
-    resolve()
-    expect(await bValue).toBe(2)
+    resolve.splice(0).forEach((fn) => fn())
+    const bValue2 = store.get(b)
+    resolve.splice(0).forEach((fn) => fn())
+    expect(await bValue).toBe(1) // returns old value
+    expect(await bValue2).toBe(2)
   })
 })
 
@@ -458,32 +466,26 @@ describe('aborting atoms', () => {
     const a = atom(1)
     const callBeforeAbort = vi.fn()
     const callAfterAbort = vi.fn()
-    let resolve = () => {}
+    const resolve: (() => void)[] = []
 
     const store = createStore()
 
     const derivedAtom = atom(async (get, { signal }) => {
       const aVal = get(a)
-
-      await new Promise<void>((r) => (resolve = r))
-
+      await new Promise<void>((r) => resolve.push(r))
       callBeforeAbort()
-
       throwIfAborted(signal)
-
       callAfterAbort()
-
       return aVal + 1
     })
 
     const promise = store.get(derivedAtom)
-    const firstResolve = resolve
     store.set(a, 3)
+    const promise2 = store.get(derivedAtom)
 
-    firstResolve()
-    resolve()
-    expect(await promise).toEqual(4)
-
+    resolve.splice(0).forEach((fn) => fn())
+    expect(promise).rejects.toThrow('aborted')
+    expect(await promise2).toEqual(4)
     expect(callBeforeAbort).toHaveBeenCalledTimes(2)
     expect(callAfterAbort).toHaveBeenCalledTimes(1)
   })
@@ -492,33 +494,24 @@ describe('aborting atoms', () => {
     const a = atom(1)
     const callBeforeAbort = vi.fn()
     const callAfterAbort = vi.fn()
-    let resolve = () => {}
+    const resolve: (() => void)[] = []
 
     const store = createStore()
 
     const derivedAtom = atom(async (get, { signal }) => {
       const aVal = get(a)
-
-      await new Promise<void>((r) => (resolve = r))
-
+      await new Promise<void>((r) => resolve.push(r))
       callBeforeAbort()
-
       throwIfAborted(signal)
-
       callAfterAbort()
-
       return aVal + 1
     })
 
     store.sub(derivedAtom, () => {})
-    const firstResolve = resolve
     store.set(a, 3)
 
-    firstResolve()
-    resolve()
-
-    await new Promise(setImmediate)
-
+    resolve.splice(0).forEach((fn) => fn())
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(callBeforeAbort).toHaveBeenCalledTimes(2)
     expect(callAfterAbort).toHaveBeenCalledTimes(1)
   })
@@ -527,28 +520,22 @@ describe('aborting atoms', () => {
     const a = atom(1)
     const callBeforeAbort = vi.fn()
     const callAfterAbort = vi.fn()
-    let resolve = () => {}
+    const resolve: (() => void)[] = []
 
     const store = createStore()
 
     const derivedAtom = atom(async (get, { signal }) => {
       const aVal = get(a)
-
-      await new Promise<void>((r) => (resolve = r))
-
+      await new Promise<void>((r) => resolve.push(r))
       callBeforeAbort()
-
       throwIfAborted(signal)
-
       callAfterAbort()
-
       return aVal + 1
     })
 
     const unsub = store.sub(derivedAtom, () => {})
-
     unsub()
-    resolve()
+    resolve.splice(0).forEach((fn) => fn())
 
     expect(await store.get(derivedAtom)).toEqual(2)
     expect(callBeforeAbort).toHaveBeenCalledTimes(1)
