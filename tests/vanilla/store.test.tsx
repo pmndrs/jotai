@@ -596,33 +596,33 @@ it('should update derived atom even if dependances changed (#2697)', () => {
 it('should preserve dependencies when reusing continuable promise', async () => {
   const baseAtom = atom(0)
   const refreshAtom = atom(0)
-  const inProgressAtom = atom(false)
-  let promise = Promise.resolve(-1)
-  const internalAtom = atom<Promise<number>, [], void>(
+  const refAtom = atom(() => ({
+    promise: Promise.resolve(-1),
+    inProgress: false,
+  }))
+  const derivedAtom = atom<Promise<number>, [], void>(
     (get, { setSelf }) => {
-      promise = Promise.resolve().then(() => {
+      get(refreshAtom)
+      const ref = get(refAtom)
+      if (ref.inProgress) {
+        return ref.promise
+      }
+      ref.promise = Promise.resolve().then(() => {
         const value = get(baseAtom)
+        ref.inProgress = true
         // causes the derivedAtom to be re-evaluated, which triggers the inProgress bail
         setSelf()
         return value
       })
-      return promise
+      Promise.resolve().then(() => {
+        ref.inProgress = false
+      })
+      return ref.promise
     },
     (_, set) => {
-      set(inProgressAtom, true)
       set(refreshAtom, (c) => c + 1)
-      setTimeout(() => {
-        set(inProgressAtom, false)
-      })
     },
   )
-  const derivedAtom = atom((get) => {
-    get(refreshAtom)
-    if (get(inProgressAtom)) {
-      return promise
-    }
-    return get(internalAtom)
-  })
   const store = createStore()
 
   store.sub(derivedAtom, () => {})
