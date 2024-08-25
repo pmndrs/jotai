@@ -74,7 +74,6 @@ const createContinuablePromise = <T>(
           reject(e)
         }
       }
-      promise.then(onFulfilled(promise), onRejected(promise))
       const addAbortListener = (p: PromiseLike<T>) => {
         if ('signal' in p && p.signal instanceof AbortSignal) {
           p.signal.addEventListener('abort', () => {
@@ -92,6 +91,7 @@ const createContinuablePromise = <T>(
           })
         }
       }
+      promise.then(onFulfilled(promise), onRejected(promise))
       addAbortListener(promise)
     })
     continuablePromiseMap.set(promise, continuablePromise)
