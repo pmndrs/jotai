@@ -600,13 +600,9 @@ it('should preserve dependencies when returning a reused promise', async () => {
     promise: Promise.resolve(-1),
     inProgress: false,
   }))
-  const derivedAtom = atom<Promise<number>, [], void>(
+  const internalAtom = atom<Promise<number>, [], void>(
     (get, { setSelf }) => {
-      get(refreshAtom)
       const ref = get(refAtom)
-      if (ref.inProgress) {
-        return ref.promise
-      }
       ref.promise = Promise.resolve().then(() => {
         const value = get(baseAtom)
         ref.inProgress = true
@@ -616,6 +612,7 @@ it('should preserve dependencies when returning a reused promise', async () => {
       })
       Promise.resolve().then(() => {
         ref.inProgress = false
+        setSelf()
       })
       return ref.promise
     },
@@ -623,6 +620,14 @@ it('should preserve dependencies when returning a reused promise', async () => {
       set(refreshAtom, (c) => c + 1)
     },
   )
+  const derivedAtom = atom((get) => {
+    get(refreshAtom)
+    const ref = get(refAtom)
+    if (ref.inProgress) {
+      return ref.promise
+    }
+    return get(internalAtom)
+  })
   const store = createStore()
 
   store.sub(derivedAtom, () => {})
