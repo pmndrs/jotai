@@ -611,7 +611,7 @@ it('should preserve dependencies when reusing continuable promise', async () => 
         setSelf()
         return value
       })
-      setTimeout(() => {
+      Promise.resolve().then(() => {
         inProgress = false
       })
       return promise
