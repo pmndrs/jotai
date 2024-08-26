@@ -155,9 +155,9 @@ const addDependency = <Value>(
     throw new Error('[Bug] atom cannot depend on itself')
   }
   atomState.d.set(a, aState.n)
-  const cancelablePromise = getPendingPromise(atomState)
-  if (cancelablePromise) {
-    addPendingPromiseToDependency(atom, cancelablePromise, aState)
+  const pendingPromise = getPendingPromise(atomState)
+  if (pendingPromise) {
+    addPendingPromiseToDependency(atom, pendingPromise, aState)
   }
   aState.m?.t.add(atom)
   if (pending) {
