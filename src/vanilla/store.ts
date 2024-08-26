@@ -28,8 +28,8 @@ type PromiseState = [cancelHandlers: Set<CancelHandler>, settled: boolean]
 
 const cancelablePromiseMap = new WeakMap<PromiseLike<unknown>, PromiseState>()
 
-const isPromisePending = <T>(promise: PromiseLike<T>) =>
-  !cancelablePromiseMap.get(promise)?.[1]
+const isPendingPromise = (value: unknown): value is PromiseLike<unknown> =>
+  isPromiseLike(value) && !cancelablePromiseMap.get(value)?.[1]
 
 const cancelPromise = <T>(promise: PromiseLike<T>) => {
   const promiseState = cancelablePromiseMap.get(promise)
@@ -118,14 +118,6 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
   return atomState.v!
 }
 
-const getPendingPromise = (atomState: AtomState) => {
-  const value: unknown = atomState.v
-  if (isPromiseLike(value) && isPromisePending(value)) {
-    return value
-  }
-  return null
-}
-
 const addPendingPromiseToDependency = (
   atom: AnyAtom,
   promise: PromiseLike<AnyValue>,
@@ -155,9 +147,8 @@ const addDependency = <Value>(
     throw new Error('[Bug] atom cannot depend on itself')
   }
   atomState.d.set(a, aState.n)
-  const pendingPromise = getPendingPromise(atomState)
-  if (pendingPromise) {
-    addPendingPromiseToDependency(atom, pendingPromise, aState)
+  if (isPendingPromise(atomState.v)) {
+    addPendingPromiseToDependency(atom, atomState.v, aState)
   }
   aState.m?.t.add(atom)
   if (pending) {
@@ -268,7 +259,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
   ) => {
     const hasPrevValue = 'v' in atomState
     const prevValue = atomState.v
-    const pendingPromise = getPendingPromise(atomState)
+    const pendingPromise = isPendingPromise(atomState.v) ? atomState.v : null
     if (isPromiseLike(valueOrPromise)) {
       patchPromiseForCancelability(valueOrPromise)
       for (const a of atomState.d.keys()) {
@@ -543,7 +534,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     atom: AnyAtom,
     atomState: AtomState,
   ) => {
-    if (atomState.m && !getPendingPromise(atomState)) {
+    if (atomState.m && !isPendingPromise(atomState.v)) {
       for (const a of atomState.d.keys()) {
         if (!atomState.m.d.has(a)) {
           const aMounted = mountAtom(pending, a, getAtomState(a, atomState))
