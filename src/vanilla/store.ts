@@ -20,50 +20,45 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
 //
-// Abortable Promise
+// Cancelable Promise
 //
 
-type PromiseState = [controller: AbortController, settled: boolean]
+type CancelHandler = () => void
+type PromiseState = [cancelHandlers: Set<CancelHandler>, settled: boolean]
 
-const abortablePromiseMap = new WeakMap<PromiseLike<unknown>, PromiseState>()
+const cancelablePromiseMap = new WeakMap<PromiseLike<unknown>, PromiseState>()
 
 const isPromisePending = <T>(promise: PromiseLike<T>) =>
-  !abortablePromiseMap.get(promise)?.[1]
+  !cancelablePromiseMap.get(promise)?.[1]
 
-const abortPromise = <T>(promise: PromiseLike<T>) => {
-  const promiseState = abortablePromiseMap.get(promise)
+const cancelPromise = <T>(promise: PromiseLike<T>) => {
+  const promiseState = cancelablePromiseMap.get(promise)
   if (promiseState) {
-    promiseState[0].abort()
+    promiseState[0].forEach((fn) => fn())
     promiseState[1] = true
   } else if (import.meta.env?.MODE !== 'production') {
-    throw new Error('[Bug] abortable promise not found')
+    throw new Error('[Bug] cancelable promise not found')
   }
 }
 
-const registerAbort = <T>(promise: PromiseLike<T>, abort: () => void) => {
-  const promiseState = abortablePromiseMap.get(promise)
-  if (promiseState) {
-    promiseState[0].signal.addEventListener('abort', abort)
-  } else if (import.meta.env?.MODE !== 'production') {
-    throw new Error('[Bug] abortable promise not found')
-  }
-}
-
-const patchPromiseForAbortability = <T>(promise: PromiseLike<T>) => {
-  if (abortablePromiseMap.has(promise)) {
+const patchPromiseForCancelability = <T>(promise: PromiseLike<T>) => {
+  if (cancelablePromiseMap.has(promise)) {
     // already patched
     return
   }
-  const promiseState: PromiseState = [new AbortController(), false]
-  abortablePromiseMap.set(promise, promiseState)
+  const promiseState: PromiseState = [new Set(), false]
+  cancelablePromiseMap.set(promise, promiseState)
   const settle = () => {
     promiseState![1] = true
   }
   promise.then(settle, settle)
-  ;(promise as { signal?: AbortSignal }).signal = promiseState[0].signal
+  ;(promise as { onCancel?: (fn: CancelHandler) => void }).onCancel = (fn) =>
+    promiseState[0].add(fn)
 }
 
-const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
+const isPromiseLike = (
+  x: unknown,
+): x is PromiseLike<unknown> & { onCancel?: (fn: CancelHandler) => void } =>
   typeof (x as any)?.then === 'function'
 
 /**
@@ -160,9 +155,9 @@ const addDependency = <Value>(
     throw new Error('[Bug] atom cannot depend on itself')
   }
   atomState.d.set(a, aState.n)
-  const abortablePromise = getPendingPromise(atomState)
-  if (abortablePromise) {
-    addPendingPromiseToDependency(atom, abortablePromise, aState)
+  const cancelablePromise = getPendingPromise(atomState)
+  if (cancelablePromise) {
+    addPendingPromiseToDependency(atom, cancelablePromise, aState)
   }
   aState.m?.t.add(atom)
   if (pending) {
@@ -275,7 +270,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     const prevValue = atomState.v
     const pendingPromise = getPendingPromise(atomState)
     if (isPromiseLike(valueOrPromise)) {
-      patchPromiseForAbortability(valueOrPromise)
+      patchPromiseForCancelability(valueOrPromise)
       for (const a of atomState.d.keys()) {
         addPendingPromiseToDependency(
           atom,
@@ -292,7 +287,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
       if (pendingPromise) {
-        abortPromise(pendingPromise)
+        cancelPromise(pendingPromise)
       }
     }
   }
@@ -390,7 +385,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
       const valueOrPromise = atom.read(getter, options as never)
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
       if (isPromiseLike(valueOrPromise)) {
-        registerAbort(valueOrPromise, () => controller?.abort())
+        valueOrPromise.onCancel?.(() => controller?.abort())
         const complete = () => {
           if (atomState.m) {
             const pending = createPending()
@@ -423,10 +418,10 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     for (const a of atomState.m?.t || []) {
       dependents.set(a, getAtomState(a, atomState))
     }
-    for (const atomWithPendingAbortablePromise of atomState.p) {
+    for (const atomWithPendingPromise of atomState.p) {
       dependents.set(
-        atomWithPendingAbortablePromise,
-        getAtomState(atomWithPendingAbortablePromise, atomState),
+        atomWithPendingPromise,
+        getAtomState(atomWithPendingPromise, atomState),
       )
     }
     getPendingDependents(pending, atom)?.forEach((dependent) => {

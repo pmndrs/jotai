@@ -74,25 +74,25 @@ const createContinuablePromise = <T>(
           reject(e)
         }
       }
-      const addAbortListener = (p: PromiseLike<T>) => {
-        if ('signal' in p && p.signal instanceof AbortSignal) {
-          p.signal.addEventListener('abort', () => {
+      const registerCancelHandler = (p: PromiseLike<T>) => {
+        if ('onCancel' in p && typeof p.onCancel === 'function') {
+          p.onCancel(() => {
             const nextValue = getLatest()
             const nextPromise = isPromiseLike(nextValue)
               ? nextValue
               : Promise.resolve(nextValue)
             if (import.meta.env?.MODE !== 'production' && nextPromise === p) {
-              throw new Error('[Bug] p is not updated even after aborting')
+              throw new Error('[Bug] p is not updated even after cancelation')
             }
             continuablePromiseMap.set(nextPromise, continuablePromise!)
             curr = nextPromise
             nextPromise.then(onFulfilled(nextPromise), onRejected(nextPromise))
-            addAbortListener(nextPromise)
+            registerCancelHandler(nextPromise)
           })
         }
       }
       promise.then(onFulfilled(promise), onRejected(promise))
-      addAbortListener(promise)
+      registerCancelHandler(promise)
     })
     continuablePromiseMap.set(promise, continuablePromise)
   }
