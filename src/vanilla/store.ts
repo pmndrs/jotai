@@ -34,8 +34,8 @@ const isPendingPromise = (value: unknown): value is PromiseLike<unknown> =>
 const cancelPromise = <T>(promise: PromiseLike<T>) => {
   const promiseState = cancelablePromiseMap.get(promise)
   if (promiseState) {
-    promiseState[0].forEach((fn) => fn())
     promiseState[1] = true
+    promiseState[0].forEach((fn) => fn())
   } else if (import.meta.env?.MODE !== 'production') {
     throw new Error('[Bug] cancelable promise not found')
   }
@@ -49,11 +49,12 @@ const patchPromiseForCancelability = <T>(promise: PromiseLike<T>) => {
   const promiseState: PromiseState = [new Set(), false]
   cancelablePromiseMap.set(promise, promiseState)
   const settle = () => {
-    promiseState![1] = true
+    promiseState[1] = true
   }
   promise.then(settle, settle)
-  ;(promise as { onCancel?: (fn: CancelHandler) => void }).onCancel = (fn) =>
+  ;(promise as { onCancel?: (fn: CancelHandler) => void }).onCancel = (fn) => {
     promiseState[0].add(fn)
+  }
 }
 
 const isPromiseLike = (
