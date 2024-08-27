@@ -13,17 +13,18 @@ By using the BroadcastChannel API, you can enable basic communication between br
 According to the MDN documentation, receiving a message during initialization is not supported in the BroadcastChannel, but if you want to support that functionality, you may need to add extra option to atomWithBroadcast, such as local storage.
 
 ```tsx
-import { atom } from 'jotai'
+import { atom, SetStateAction } from 'jotai'
 
 export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
   const baseAtom = atom(initialValue)
   const listeners = new Set<(event: MessageEvent<any>) => void>()
   const channel = new BroadcastChannel(key)
+
   channel.onmessage = (event) => {
     listeners.forEach((l) => l(event))
   }
 
-  const broadcastAtom = atom<Value, { isEvent: boolean; value: Value }>(
+  const broadcastAtom = atom<Value, [{ isEvent: boolean; value: SetStateAction<Value> }], void>(
     (get) => get(baseAtom),
     (get, set, update) => {
       set(baseAtom, update.value)
@@ -31,25 +32,31 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
       if (!update.isEvent) {
         channel.postMessage(get(baseAtom))
       }
-    },
+    }
   )
+
   broadcastAtom.onMount = (setAtom) => {
     const listener = (event: MessageEvent<any>) => {
       setAtom({ isEvent: true, value: event.data })
     }
+
     listeners.add(listener)
+
     return () => {
       listeners.delete(listener)
     }
   }
-  const returnedAtom = atom<Value, Value>(
+
+  const returnedAtom = atom<Value, [SetStateAction<Value>], void>(
     (get) => get(broadcastAtom),
-    (get, set, update) => {
+    (_, set, update) => {
       set(broadcastAtom, { isEvent: false, value: update })
-    },
+    }
   )
+
   return returnedAtom
 }
+
 const broadAtom = atomWithBroadcast('count', 0)
 
 const ListOfThings = () => {
