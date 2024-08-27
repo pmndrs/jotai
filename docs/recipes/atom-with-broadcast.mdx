@@ -24,7 +24,11 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
     listeners.forEach((l) => l(event))
   }
 
-  const broadcastAtom = atom<Value, [{ isEvent: boolean; value: SetStateAction<Value> }], void>(
+  const broadcastAtom = atom<
+    Value,
+    [{ isEvent: boolean; value: SetStateAction<Value> }],
+    void
+  >(
     (get) => get(baseAtom),
     (get, set, update) => {
       set(baseAtom, update.value)
@@ -32,7 +36,7 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
       if (!update.isEvent) {
         channel.postMessage(get(baseAtom))
       }
-    }
+    },
   )
 
   broadcastAtom.onMount = (setAtom) => {
@@ -51,7 +55,7 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
     (get) => get(broadcastAtom),
     (_, set, update) => {
       set(broadcastAtom, { isEvent: false, value: update })
-    }
+    },
   )
 
   return returnedAtom
