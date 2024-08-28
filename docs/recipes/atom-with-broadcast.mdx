@@ -24,13 +24,9 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
     listeners.forEach((l) => l(event))
   }
 
-  const broadcastAtom = atom<
-    Value,
-    [{ isEvent: boolean; value: SetStateAction<Value> }],
-    void
-  >(
+  const broadcastAtom = atom(
     (get) => get(baseAtom),
-    (get, set, update) => {
+    (get, set, update: { isEvent: boolean; value: SetStateAction<Value> }) => {
       set(baseAtom, update.value)
 
       if (!update.isEvent) {
@@ -53,7 +49,7 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
 
   const returnedAtom = atom<Value, [SetStateAction<Value>], void>(
     (get) => get(broadcastAtom),
-    (_, set, update) => {
+    (_get, set, update) => {
       set(broadcastAtom, { isEvent: false, value: update })
     },
   )
