@@ -47,9 +47,9 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
     }
   }
 
-  const returnedAtom = atom<Value, [SetStateAction<Value>], void>(
+  const returnedAtom = atom(
     (get) => get(broadcastAtom),
-    (_get, set, update) => {
+    (_get, set, update: SetStateAction<Value>) => {
       set(broadcastAtom, { isEvent: false, value: update })
     },
   )
