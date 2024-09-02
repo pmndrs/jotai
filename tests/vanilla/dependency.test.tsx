@@ -263,3 +263,28 @@ it('settles never resolving async derivations with deps picked up async', async 
   expect(values).toEqual([1, 1])
   expect(sub).toBe(1)
 })
+
+it('refreshes deps for each async read', async () => {
+  const countAtom = atom(0)
+  const depAtom = atom(false)
+  const resolve: (() => void)[] = []
+  const values: number[] = []
+  const asyncAtom = atom(async (get) => {
+    const count = get(countAtom)
+    values.push(count)
+    if (count === 0) {
+      get(depAtom)
+    }
+    await new Promise<void>((r) => resolve.push(r))
+    return count
+  })
+  const store = createStore()
+  store.get(asyncAtom)
+  store.set(countAtom, (c) => c + 1)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await store.get(asyncAtom)).toBe(1)
+  store.set(depAtom, true)
+  store.get(asyncAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(values).toEqual([0, 1])
+})
