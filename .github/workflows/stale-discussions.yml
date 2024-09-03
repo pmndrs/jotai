@@ -3,6 +3,7 @@ name: Close Stale Discussions
 on:
   schedule:
     - cron: '0 0 * * *' # Runs every day at midnight UTC
+  workflow_dispatch:
 
 jobs:
   close-stale-discussions:
