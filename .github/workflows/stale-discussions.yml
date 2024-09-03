@@ -16,5 +16,4 @@ jobs:
           message: 'This discussion has been closed due to inactivity.'
           days-before-close: 180
           close-unanswered: true
-          dry-run: true
           verbose: true
