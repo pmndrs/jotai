@@ -163,7 +163,7 @@ function Controls() {
 ### Note about functional programming
 
 Jotai's fluid interface is no accident — atoms are monads, just like promises!
-Monads are an [established](https://en.wikipedia.org/wiki/Monad_(functional_programming))
+Monads are an [established](<https://en.wikipedia.org/wiki/Monad_(functional_programming)>)
 pattern for modular, pure, robust and understandable code which is [optimized for change](https://overreacted.io/optimized-for-change/).
 Read more about [Jotai and monads.](https://jotai.org/docs/basics/functional-programming-and-jotai)
 

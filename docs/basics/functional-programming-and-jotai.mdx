@@ -23,12 +23,13 @@ const greetingAtom = atom((get) => {
 ```
 
 Now, compare that code with `async`–`await`:
+
 ```tsx
 const namePromise = Promise.resolve('Visitor')
 const countPromise = Promise.resolve(1)
-const greetingPromise = (async function() {
-  const name = await namePromise;
-  const count = await countPromise;
+const greetingPromise = (async function () {
+  const name = await namePromise
+  const count = await countPromise
   return (
     <div>
       Hello, {nameAtom}! You have visited this page {countAtom} times.
