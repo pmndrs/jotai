@@ -56,10 +56,7 @@ const continuablePromiseMap = new WeakMap<
   Promise<unknown>
 >()
 
-const createContinuablePromise = <T>(
-  promise: PromiseLike<T>,
-  getLatest: () => PromiseLike<T> | T,
-) => {
+const createContinuablePromise = <T>(promise: PromiseLike<T>) => {
   let continuablePromise = continuablePromiseMap.get(promise)
   if (!continuablePromise) {
     continuablePromise = new Promise<T>((resolve, reject) => {
@@ -76,18 +73,18 @@ const createContinuablePromise = <T>(
       }
       const registerCancelHandler = (p: PromiseLike<T>) => {
         if ('onCancel' in p && typeof p.onCancel === 'function') {
-          p.onCancel(() => {
-            const nextValue = getLatest()
-            const nextPromise = isPromiseLike(nextValue)
-              ? nextValue
-              : Promise.resolve(nextValue)
-            if (import.meta.env?.MODE !== 'production' && nextPromise === p) {
+          p.onCancel((nextValue: PromiseLike<T> | T) => {
+            if (import.meta.env?.MODE !== 'production' && nextValue === p) {
               throw new Error('[Bug] p is not updated even after cancelation')
             }
-            continuablePromiseMap.set(nextPromise, continuablePromise!)
-            curr = nextPromise
-            nextPromise.then(onFulfilled(nextPromise), onRejected(nextPromise))
-            registerCancelHandler(nextPromise)
+            if (isPromiseLike(nextValue)) {
+              continuablePromiseMap.set(nextValue, continuablePromise!)
+              curr = nextValue
+              nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
+              registerCancelHandler(nextValue)
+            } else {
+              resolve(nextValue)
+            }
           })
         }
       }
@@ -148,9 +145,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
       if (typeof delay === 'number') {
         const value = store.get(atom)
         if (isPromiseLike(value)) {
-          attachPromiseMeta(
-            createContinuablePromise(value, () => store.get(atom)),
-          )
+          attachPromiseMeta(createContinuablePromise(value))
         }
         // delay rerendering to wait a promise possibly to resolve
         setTimeout(rerender, delay)
@@ -166,7 +161,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   // The use of isPromiseLike is to be consistent with `use` type.
   // `instanceof Promise` actually works fine in this case.
   if (isPromiseLike(value)) {
-    const promise = createContinuablePromise(value, () => store.get(atom))
+    const promise = createContinuablePromise(value)
     return use(promise)
   }
   return value as Awaited<Value>

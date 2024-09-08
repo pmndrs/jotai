@@ -23,7 +23,7 @@ const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
 // Cancelable Promise
 //
 
-type CancelHandler = () => void
+type CancelHandler = (nextValue: unknown) => void
 type PromiseState = [cancelHandlers: Set<CancelHandler>, settled: boolean]
 
 const cancelablePromiseMap = new WeakMap<PromiseLike<unknown>, PromiseState>()
@@ -31,11 +31,11 @@ const cancelablePromiseMap = new WeakMap<PromiseLike<unknown>, PromiseState>()
 const isPendingPromise = (value: unknown): value is PromiseLike<unknown> =>
   isPromiseLike(value) && !cancelablePromiseMap.get(value)?.[1]
 
-const cancelPromise = <T>(promise: PromiseLike<T>) => {
+const cancelPromise = <T>(promise: PromiseLike<T>, nextValue: unknown) => {
   const promiseState = cancelablePromiseMap.get(promise)
   if (promiseState) {
     promiseState[1] = true
-    promiseState[0].forEach((fn) => fn())
+    promiseState[0].forEach((fn) => fn(nextValue))
   } else if (import.meta.env?.MODE !== 'production') {
     throw new Error('[Bug] cancelable promise not found')
   }
@@ -279,7 +279,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
       if (pendingPromise) {
-        cancelPromise(pendingPromise)
+        cancelPromise(pendingPromise, valueOrPromise)
       }
     }
   }
