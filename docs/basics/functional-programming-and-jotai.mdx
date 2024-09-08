@@ -16,7 +16,7 @@ const greetingAtom = atom((get) => {
   const count = get(countAtom)
   return (
     <div>
-      Hello, {nameAtom}! You have visited this page {countAtom} times.
+      Hello, {name}! You have visited this page {count} times.
     </div>
   )
 })
@@ -32,7 +32,7 @@ const greetingPromise = (async function () {
   const count = await countPromise
   return (
     <div>
-      Hello, {nameAtom}! You have visited this page {countAtom} times.
+      Hello, {name}! You have visited this page {count} times.
     </div>
   )
 })()
