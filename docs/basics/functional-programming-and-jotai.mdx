@@ -38,7 +38,7 @@ const greetingPromise = (async function () {
 })()
 ```
 
-This similarity is no coincidence. Both atoms and promises are **Monads**, a
+This similarity is no coincidence. Both atoms and promises are **Monads**†, a
 concept from functional programming. The syntax used in both `greetingAtom` and
 `greetingPromise` is known as **do-notation**, a syntax sugar for the plainer
 monad interface.
@@ -50,9 +50,9 @@ interfaces. The monad interface allowed us to define `greetingAtom` in terms of
 `nameAtom` and `countAtom`, and allowed us to define `greetingPromise` in terms
 of `namePromise` and `countPromise`.
 
-If you're curious, a structure (like `Atom` or `Promise`) is a
-monad if you can implement the following functions for it. A fun exercise is
-trying to implement `of`, `map` and `join` for Arrays.
+If you're curious, a structure (like `Atom` or `Promise`) is a monad if you can
+implement the following functions for it. A fun exercise is trying to implement
+`of`, `map` and `join` for Arrays.
 
 ```ts
 type SomeMonad<T> = /* for example... */ Array<T>
@@ -120,3 +120,15 @@ at them! Here are a select few:
 Learning a neat trick on using promises may well translate to atoms, as
 `Promise.all` and `sequenceAtomArray` did. Monads are not magic, just unusually
 useful, and a tool worth knowing.
+
+---
+
+_Notes_
+
+**[†]** The ES6 Promise is not a completely valid monad because it cannot nest other
+Promises, e.g. `Promise<Promise<number>>` is semantically equivalent to
+`Promise<number>`. This is why Promises only have a `.then`, and not both a
+`.map` and `.flatMap`. ES6 Promises are probably more properly described as
+"monadic" rather than as monads.
+
+Unlike ES6 Promises, the ES6 Array is a completely lawful monad.
