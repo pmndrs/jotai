@@ -1,0 +1,68 @@
+---
+title: Functional programming and Jotai
+nav: 6.04
+---
+
+### Unexpected similarities
+
+If you look at getter functions long enough, you may see a striking resemblence
+to a certain JavaScript language feature.
+
+```tsx
+const nameAtom = atom('Visitor')
+const countAtom = atom(1)
+const greetingAtom = atom((get) => {
+  const name = get(nameAtom)
+  const count = get(countAtom)
+  return (
+    <div>
+      Hello, {name}! You have visited this page {count} times.
+    </div>
+  )
+})
+```
+
+Now, compare that code with `async`–`await`:
+
+```tsx
+const namePromise = Promise.resolve('Visitor')
+const countPromise = Promise.resolve(1)
+const greetingPromise = (async function () {
+  const name = await namePromise
+  const count = await countPromise
+  return (
+    <div>
+      Hello, {name}! You have visited this page {count} times.
+    </div>
+  )
+})()
+```
+
+This similarity is no coincidence. Both atoms and promises are **Monads**, a
+concept from **functional programming**. The syntax used in both examples is
+called **do-notation**, a syntax sugar for the plainer monad interface.
+
+---
+
+The monad interface is responsible for the fluidity of the atom and promise
+interfaces. The monad interface allowed us to define `greetingAtom` in terms of
+`nameAtom` and `countAtom`, and allowed us to define `greetingPromise` in terms
+of `namePromise` and `countPromise`.
+
+For the mathematically inclined, a structure (like `Atom` or `Promise`) is a
+monad if you can implement the following functions for it. A fun exercise is
+trying to implement `of`, `map` and `join` for Atoms, Promises and Arrays.
+
+```typescript
+type SomeMonad<T> = /* ... */
+declare function of<T>(plainValue: T): SomeMonad<T>
+declare function map<T, V>(
+  anInstance: SomeMonad<T>,
+  transformContents: (contents: T) => V
+): SomeMonad<V>
+declare function join<T>(nestedInstances: SomeMonad<SomeMonad<T>>): SomeMonad<T>
+```
+
+Monads have been an interest to mathematicians for 60 years, and to programmers
+for 40. There are countless resources out there on patterns for monads, such
+as `Traversable`–`sequence`. Take a look at them!
