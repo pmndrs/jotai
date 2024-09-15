@@ -1,0 +1,134 @@
+---
+title: Functional programming and Jotai
+nav: 6.04
+---
+
+### Unexpected similarities
+
+If you look at getter functions long enough, you may see a striking resemblence
+to a certain JavaScript language feature.
+
+```tsx
+const nameAtom = atom('Visitor')
+const countAtom = atom(1)
+const greetingAtom = atom((get) => {
+  const name = get(nameAtom)
+  const count = get(countAtom)
+  return (
+    <div>
+      Hello, {name}! You have visited this page {count} times.
+    </div>
+  )
+})
+```
+
+Compare that code with `async`–`await`:
+
+```tsx
+const namePromise = Promise.resolve('Visitor')
+const countPromise = Promise.resolve(1)
+const greetingPromise = (async function () {
+  const name = await namePromise
+  const count = await countPromise
+  return (
+    <div>
+      Hello, {name}! You have visited this page {count} times.
+    </div>
+  )
+})()
+```
+
+This similarity is no coincidence. Both atoms and promises are **Monads**†, a
+concept from functional programming. The syntax used in both `greetingAtom` and
+`greetingPromise` is known as **do-notation**, a syntax sugar for the plainer
+monad interface.
+
+### About monads
+
+The monad interface is responsible for the fluidity of the atom and promise
+interfaces. The monad interface allowed us to define `greetingAtom` in terms of
+`nameAtom` and `countAtom`, and allowed us to define `greetingPromise` in terms
+of `namePromise` and `countPromise`.
+
+If you're curious, a structure (like `Atom` or `Promise`) is a monad if you can
+implement the following functions for it. A fun exercise is trying to implement
+`of`, `map` and `join` for Arrays.
+
+```ts
+type SomeMonad<T> = /* for example... */ Array<T>
+declare function of<T>(plainValue: T): SomeMonad<T>
+declare function map<T, V>(
+  anInstance: SomeMonad<T>,
+  transformContents: (contents: T) => V,
+): SomeMonad<V>
+declare function join<T>(nestedInstances: SomeMonad<SomeMonad<T>>): SomeMonad<T>
+```
+
+The shared heritage of Promises and Atoms means many patterns and best-practices
+can be reused between them. Let's take a look at one.
+
+### Sequencing
+
+When talking about callback hell, we often mention the boilerplate, the
+indentation and the easy-to-miss mistakes. However, plumbing a single async
+operation into another single async operation was not the end of the callback
+struggle. What if we made four network calls and needed to wait for them all?
+A snippet like this was common:
+
+```ts
+const nPending = 4
+const results: string[]
+function callback(err, data) {
+  if (err) throw err
+  results.push(data)
+  if (results.length === nPending) {
+    // do something with results...
+  }
+}
+```
+
+But what if the results have different types? and the order was important? Well,
+we'd have a lot more frustrating work to do! This logic would be duplicated at
+each usage, and would be easy to mess up. Since ES6, we simply call `Promise.all`:
+
+```ts
+declare function promiseAll<T>(promises: Array<Promise<T>>): Promise<Array<T>>
+```
+
+`Promise.all` "rearranges" `Array` and `Promise`. It turns out this concept,
+_sequencing_, can be implemented for all monad–_Traversable_ pairs. Many kinds
+of collections are Traversables, including Arrays. For example, this is a case
+of sequencing specialized for atoms and arrays:
+
+```ts
+function sequenceAtomArray<T>(atoms: Array<Atom<T>>): Atom<Array<T>> {
+  return atom((get) => atoms.map(get))
+}
+```
+
+### Culmination
+
+Monads have been an interest to mathematicians for 60 years, and to programmers
+for 40. There are many resources out there on patterns for monads. Take a look
+at them! Here are a select few:
+
+- [_Inventing Monads_](https://stopa.io/post/247) by Stepan Parunashvili
+- [_How Monads Solve Problems_](https://thatsnomoon.dev/posts/ts-monads/) by ThatsNoMoon
+- Wiki page [list of monad tutorials](https://wiki.haskell.org/Monad_tutorials_timeline)
+- [Typeclassopedia](https://wiki.haskell.org/Typeclassopedia) (for the curious)
+
+Learning a neat trick on using promises may well translate to atoms, as
+`Promise.all` and `sequenceAtomArray` did. Monads are not magic, just unusually
+useful, and a tool worth knowing.
+
+---
+
+_Notes_
+
+**[†]** The ES6 Promise is not a completely valid monad because it cannot nest other
+Promises, e.g. `Promise<Promise<number>>` is semantically equivalent to
+`Promise<number>`. This is why Promises only have a `.then`, and not both a
+`.map` and `.flatMap`. ES6 Promises are probably more properly described as
+"monadic" rather than as monads.
+
+Unlike ES6 Promises, the ES6 Array is a completely lawful monad.
