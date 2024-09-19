@@ -273,7 +273,14 @@ type GetAtomState = <Value>(
 // internal & unstable type
 type StoreArgs = readonly [
   getAtomState: GetAtomState,
-  // possible other arguments in the future
+  atomRead: <Value>(
+    atom: Atom<Value>,
+    ...params: Parameters<Atom<Value>['read']>
+  ) => Value,
+  atomWrite: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
+  ) => Result,
 ]
 
 // for debugging purpose only
@@ -300,7 +307,11 @@ type Store = PrdStore | (PrdStore & DevStoreRev4)
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
-const buildStore = (getAtomState: StoreArgs[0]): Store => {
+const buildStore = (
+  getAtomState: StoreArgs[0],
+  atomRead: StoreArgs[1],
+  atomWrite: StoreArgs[2],
+): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
 
@@ -447,7 +458,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
       },
     }
     try {
-      const valueOrPromise = atom.read(getter, options as never)
+      const valueOrPromise = atomRead(atom, getter, options as never)
       setAtomStateValueOrPromise(
         atom,
         atomState,
@@ -590,7 +601,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
       flushPending(pending)
       return r as R
     }
-    const result = atom.write(getter, setter, ...args)
+    const result = atomWrite(atom, getter, setter, ...args)
     return result
   }
 
@@ -718,7 +729,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
   }
 
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
-    buildStore(...fn(getAtomState))
+    buildStore(...fn(getAtomState, atomRead, atomWrite))
 
   const store: Store = {
     get: readAtom,
@@ -773,7 +784,11 @@ export const createStore = (): Store => {
     }
     return atomState
   }
-  return buildStore(getAtomState)
+  return buildStore(
+    getAtomState,
+    (atom, ...params) => atom.read(...params),
+    (atom, ...params) => atom.write(...params),
+  )
 }
 
 let defaultStore: Store | undefined
