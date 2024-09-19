@@ -291,6 +291,7 @@ it('refreshes deps for each async read', async () => {
 
 it('should not re-evaluate stable derived atom values in situations where dependencies are re-ordered (#2738)', () => {
   const callCounter = vi.fn()
+  const countAtom = atom(0)
   const rootAtom = atom(false)
   const stableDep = atom((get) => {
     get(rootAtom)
@@ -299,11 +300,11 @@ it('should not re-evaluate stable derived atom values in situations where depend
   const stableDepDep = atom((get) => {
     get(stableDep)
     callCounter()
-    return 2
+    return 2 + get(countAtom)
   })
 
   const newAtom = atom((get) => {
-    if (get(rootAtom)) {
+    if (get(rootAtom) || get(countAtom) > 0) {
       return get(stableDepDep)
     }
 
@@ -319,4 +320,9 @@ it('should not re-evaluate stable derived atom values in situations where depend
   store.set(rootAtom, true)
   expect(store.get(newAtom)).toBe(2)
   expect(callCounter).toHaveBeenCalledTimes(1)
+
+  store.set(rootAtom, false)
+  store.set(countAtom, 1)
+  expect(store.get(newAtom)).toBe(3)
+  expect(callCounter).toHaveBeenCalledTimes(2)
 })
