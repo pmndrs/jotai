@@ -267,3 +267,103 @@ describe('infinite pending', () => {
     await findByText('count: 3')
   })
 })
+
+describe('write to async atom twice', async () => {
+  it('no wait', async () => {
+    const asyncAtom = atom(Promise.resolve(2))
+    const writer = atom(null, async (get, set) => {
+      set(asyncAtom, async (c) => (await c) + 1)
+      set(asyncAtom, async (c) => (await c) + 1)
+      return get(asyncAtom)
+    })
+
+    const Component = () => {
+      const count = useAtomValue(asyncAtom)
+      const write = useSetAtom(writer)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={write}>button</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Component />
+        </Suspense>
+      </StrictMode>,
+    )
+
+    await findByText('count: 2')
+    await userEvent.click(getByText('button'))
+    await findByText('count: 4')
+  })
+
+  it('wait Promise.resolve()', async () => {
+    const asyncAtom = atom(Promise.resolve(2))
+    const writer = atom(null, async (get, set) => {
+      set(asyncAtom, async (c) => (await c) + 1)
+      await Promise.resolve()
+      set(asyncAtom, async (c) => (await c) + 1)
+      return get(asyncAtom)
+    })
+
+    const Component = () => {
+      const count = useAtomValue(asyncAtom)
+      const write = useSetAtom(writer)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={write}>button</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Component />
+        </Suspense>
+      </StrictMode>,
+    )
+
+    await findByText('count: 2')
+    await userEvent.click(getByText('button'))
+    await findByText('count: 4')
+  })
+
+  it('wait setTimeout()', async () => {
+    const asyncAtom = atom(Promise.resolve(2))
+    const writer = atom(null, async (get, set) => {
+      set(asyncAtom, async (c) => (await c) + 1)
+      await new Promise((r) => setTimeout(r))
+      set(asyncAtom, async (c) => (await c) + 1)
+      return get(asyncAtom)
+    })
+
+    const Component = () => {
+      const count = useAtomValue(asyncAtom)
+      const write = useSetAtom(writer)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={write}>button</button>
+        </>
+      )
+    }
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Component />
+        </Suspense>
+      </StrictMode>,
+    )
+
+    await findByText('count: 2')
+    await userEvent.click(getByText('button'))
+    await findByText('count: 4')
+  })
+})
