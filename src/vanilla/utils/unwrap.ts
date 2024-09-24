@@ -9,13 +9,7 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
   return getCached(create, cache2, dep2)
 }
 
-type PromiseMeta =
-  | { status?: 'pending' }
-  | { status: 'fulfilled'; value: unknown }
-  | { status: 'rejected'; reason: unknown }
-
-const isPromise = (x: unknown): x is Promise<unknown> & PromiseMeta =>
-  x instanceof Promise
+const isPromise = (x: unknown): x is Promise<unknown> => x instanceof Promise
 
 const defaultFallback = () => undefined
 
@@ -66,18 +60,12 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
             return { v: promise as Awaited<Value> }
           }
           if (promise !== prev?.p) {
-            if (promise.status === 'fulfilled') {
-              promiseResultCache.set(promise, promise.value as Awaited<Value>)
-            } else if (promise.status === 'rejected') {
-              promiseErrorCache.set(promise, promise.reason)
-            } else {
-              promise
-                .then(
-                  (v) => promiseResultCache.set(promise, v as Awaited<Value>),
-                  (e) => promiseErrorCache.set(promise, e),
-                )
-                .finally(setSelf)
-            }
+            promise
+              .then(
+                (v) => promiseResultCache.set(promise, v as Awaited<Value>),
+                (e) => promiseErrorCache.set(promise, e),
+              )
+              .finally(setSelf)
           }
           if (promiseErrorCache.has(promise)) {
             throw promiseErrorCache.get(promise)

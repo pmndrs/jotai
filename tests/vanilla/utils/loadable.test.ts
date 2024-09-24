@@ -9,6 +9,10 @@ describe('loadable', () => {
 
     expect(await store.get(asyncAtom)).toEqual('concrete')
     expect(store.get(loadable(asyncAtom))).toEqual({
+      state: 'loading',
+    })
+    await new Promise((r) => setTimeout(r)) // wait for a tick
+    expect(store.get(loadable(asyncAtom))).toEqual({
       state: 'hasData',
       data: 'concrete',
     })
