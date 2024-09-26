@@ -88,6 +88,87 @@ describe('unstable_derive for scoping atoms', () => {
 
   /**
    * a, b(a)
+   * S1[a]: a1, b0(a1)
+   */
+  it('derived atom with subscribe', () => {
+    const a = atom('a')
+    const b = atom(
+      (get) => get(a),
+      (_get, set, v: string) => set(a, v),
+    )
+    const scopedAtoms = new Set<Atom<unknown>>([a])
+
+    function makeStores() {
+      const store = createStore()
+      const derivedStore = store.unstable_derive(
+        (getAtomState, atomRead, atomWrite) => {
+          const scopedAtomStateMap = new WeakMap()
+          return [
+            (atom, originAtomState) => {
+              if (scopedAtoms.has(atom)) {
+                let atomState = scopedAtomStateMap.get(atom)
+                if (!atomState) {
+                  atomState = { d: new Map(), p: new Set(), n: 0 }
+                  scopedAtomStateMap.set(atom, atomState)
+                }
+                return atomState
+              }
+              return getAtomState(atom, originAtomState)
+            },
+            atomRead,
+            atomWrite,
+          ]
+        },
+      )
+      expect(store.get(b)).toBe('a')
+      expect(derivedStore.get(b)).toBe('a')
+      return { store, derivedStore }
+    }
+
+    /**
+     * Ba[ ]: a0, b0(a0)
+     * S1[a]: a1, b0(a1)
+     */
+    {
+      const { store, derivedStore } = makeStores()
+      store.set(b, '*')
+      expect(store.get(b)).toBe('*')
+      expect(derivedStore.get(b)).toBe('a')
+    }
+    {
+      const { store, derivedStore } = makeStores()
+      derivedStore.set(b, '*')
+      expect(store.get(b)).toBe('a')
+      expect(derivedStore.get(b)).toBe('*')
+    }
+    {
+      const { store, derivedStore } = makeStores()
+      const storeCallback = vi.fn()
+      const derivedCallback = vi.fn()
+      store.sub(b, storeCallback)
+      derivedStore.sub(b, derivedCallback)
+      store.set(b, '*')
+      expect(store.get(b)).toBe('*')
+      expect(derivedStore.get(b)).toBe('a') // FIXME: received '*'
+      expect(storeCallback).toHaveBeenCalledTimes(1)
+      expect(derivedCallback).toHaveBeenCalledTimes(0) // FIXME: received 1
+    }
+    {
+      const { store, derivedStore } = makeStores()
+      const storeCallback = vi.fn()
+      const derivedCallback = vi.fn()
+      store.sub(b, storeCallback)
+      derivedStore.sub(b, derivedCallback)
+      derivedStore.set(b, '*')
+      expect(store.get(b)).toBe('a')
+      expect(derivedStore.get(b)).toBe('*') // FIXME: received 'a'
+      expect(storeCallback).toHaveBeenCalledTimes(0)
+      expect(derivedCallback).toHaveBeenCalledTimes(1) // FIXME: received 1
+    }
+  })
+
+  /**
+   * a, b(a)
    * S1[b]: a0, b1(a1)
    */
   it('derived atom (scoping derived)', () => {
