@@ -1,13 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createStore } from 'jotai/vanilla'
 import { RESET, atomWithReset } from 'jotai/vanilla/utils'
-
-vi.mock('jotai/vanilla', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('jotai/vanilla')>()
-  return {
-    ...actual,
-    atom: vi.fn(actual.atom),
-  }
-})
 
 describe('atomWithReset', () => {
   let initialValue: number
@@ -25,6 +18,11 @@ describe('atomWithReset', () => {
   })
 
   it('should reset to initial value using RESET', () => {
+    const store = createStore()
+    store.set(testAtom, 123)
+    store.set(testAtom, RESET)
+    expect(store.get(testAtom)).toBe(initialValue)
+
     const set = vi.fn()
     const get = vi.fn(() => 20)
     testAtom.write(get, set, RESET)
@@ -32,6 +30,11 @@ describe('atomWithReset', () => {
   })
 
   it('should update atom with a new value', () => {
+    const store = createStore()
+    store.set(testAtom, 123)
+    store.set(testAtom, 30)
+    expect(store.get(testAtom)).toBe(30)
+
     const set = vi.fn()
     const get = vi.fn(() => 20)
     testAtom.write(get, set, 30)
@@ -39,6 +42,11 @@ describe('atomWithReset', () => {
   })
 
   it('should update atom using a function', () => {
+    const store = createStore()
+    store.set(testAtom, 123)
+    store.set(testAtom, (prev: number) => prev + 10)
+    expect(store.get(testAtom)).toBe(133)
+
     const set = vi.fn()
     const get = vi.fn(() => 20)
     const updateFn = (prev: number) => prev + 10
