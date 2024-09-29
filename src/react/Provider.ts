@@ -1,5 +1,12 @@
-import { createContext, createElement, useContext, useRef } from 'react'
-import type { FunctionComponentElement, ReactNode } from 'react'
+import ReactExports, {
+  type Context,
+  type FunctionComponentElement,
+  type ReactNode,
+  createContext,
+  createElement,
+  useContext,
+  useRef,
+} from 'react'
 import { createStore, getDefaultStore } from '../vanilla.ts'
 
 type Store = ReturnType<typeof createStore>
@@ -13,8 +20,13 @@ type Options = {
   store?: Store
 }
 
+// In React 19, `use` will allow calling within conditionals and loops.
+//  Refs: https://19.react.dev/reference/react/use#reading-context-with-use
+const hook: <T>(context: Context<T>) => T =
+  'use' in ReactExports ? ReactExports.use : useContext
+
 export const useStore = (options?: Options): Store => {
-  const store = useContext(StoreContext)
+  const store = hook(StoreContext)
   return options?.store || store || getDefaultStore()
 }
 
