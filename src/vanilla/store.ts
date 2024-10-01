@@ -252,10 +252,7 @@ export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (
-  getAtomState: StoreArgs[0],
-  atomRead: StoreArgs[1],
-  atomWrite: StoreArgs[2],
-  atomOnMount: StoreArgs[3],
+  ...[getAtomState, atomRead, atomWrite, atomOnMount]: StoreArgs
 ): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
