@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Atom } from 'jotai/vanilla'
+import type { Atom, Getter } from 'jotai/vanilla'
 
 describe('unstable_derive for scoping atoms', () => {
   /**
@@ -117,7 +117,15 @@ describe('unstable_derive for scoping atoms', () => {
               }
               return getAtomState(atom)
             },
-            atomRead,
+            (a, get, options) => {
+              const myGet: Getter = (aa) => {
+                if (scopedAtoms.has(aa)) {
+                  scopedAtoms.add(a) // Is this too naive?
+                }
+                return get(aa)
+              }
+              return atomRead(a, myGet, options)
+            },
             atomWrite,
             atomOnMount,
           ]
