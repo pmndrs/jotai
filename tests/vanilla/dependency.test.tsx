@@ -285,3 +285,20 @@ it('handles errors in async atoms', async () => {
   await expect(store.get(errorAtom)).rejects.toThrow('Test error')
 })
 
+it('handles complex dependency chains', async () => {
+  const baseAtom = atom(1)
+  const derived1 = atom((get) => get(baseAtom) * 2)
+  const derived2 = atom((get) => get(derived1) + 1)
+  const asyncDerived = atom(async (get) => {
+    const value = get(derived2)
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    return value * 2
+  })
+
+  const store = createStore()
+  expect(await store.get(asyncDerived)).toBe(6)
+
+  store.set(baseAtom, 2)
+  expect(await store.get(asyncDerived)).toBe(10)
+})
+
