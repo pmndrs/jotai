@@ -274,3 +274,14 @@ it('refreshes deps for each async read', async () => {
   resolve.splice(0).forEach((fn) => fn())
   expect(values).toEqual([0, 1])
 })
+
+it('handles errors in async atoms', async () => {
+  const errorAtom = atom(async () => {
+    throw new Error('Test error')
+  })
+
+  const store = createStore()
+
+  await expect(store.get(errorAtom)).rejects.toThrow('Test error')
+})
+
