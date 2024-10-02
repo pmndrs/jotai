@@ -302,3 +302,15 @@ it('handles complex dependency chains', async () => {
   expect(await store.get(asyncDerived)).toBe(10)
 })
 
+it('handles large number of atoms efficiently', () => {
+  const store = createStore()
+  const atoms = new Array(1000).fill(null).map((_, i) => atom(i))
+  const derivedAtom = atom((get) => atoms.reduce((sum, a) => sum + get(a), 0))
+
+  const start = performance.now()
+  const sum = store.get(derivedAtom)
+  const end = performance.now()
+
+  expect(sum).toBe(499500)
+  expect(end - start).toBeLessThan(100)
+})
