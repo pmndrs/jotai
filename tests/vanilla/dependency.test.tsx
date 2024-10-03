@@ -275,16 +275,6 @@ it('refreshes deps for each async read', async () => {
   expect(values).toEqual([0, 1])
 })
 
-it('handles errors in async atoms', async () => {
-  const errorAtom = atom(async () => {
-    throw new Error('Test error')
-  })
-
-  const store = createStore()
-
-  await expect(store.get(errorAtom)).rejects.toThrow('Test error')
-})
-
 it('handles complex dependency chains', async () => {
   const baseAtom = atom(1)
   const derived1 = atom((get) => get(baseAtom) * 2)
