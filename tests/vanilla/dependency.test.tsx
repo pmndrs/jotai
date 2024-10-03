@@ -279,17 +279,22 @@ it('handles complex dependency chains', async () => {
   const baseAtom = atom(1)
   const derived1 = atom((get) => get(baseAtom) * 2)
   const derived2 = atom((get) => get(derived1) + 1)
+  let resolve = () => {}
   const asyncDerived = atom(async (get) => {
     const value = get(derived2)
-    await new Promise((resolve) => setTimeout(resolve, 10))
+    await new Promise<void>((r) => (resolve = r))
     return value * 2
   })
 
   const store = createStore()
-  expect(await store.get(asyncDerived)).toBe(6)
+  const promise = store.get(asyncDerived)
+  resolve()
+  expect(await promise).toBe(6)
 
   store.set(baseAtom, 2)
-  expect(await store.get(asyncDerived)).toBe(10)
+  const promise2 = store.get(asyncDerived)
+  resolve()
+  expect(await promise2).toBe(10)
 })
 
 it('handles large number of atoms efficiently', () => {
