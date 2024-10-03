@@ -274,3 +274,25 @@ it('refreshes deps for each async read', async () => {
   resolve.splice(0).forEach((fn) => fn())
   expect(values).toEqual([0, 1])
 })
+
+it('handles complex dependency chains', async () => {
+  const baseAtom = atom(1)
+  const derived1 = atom((get) => get(baseAtom) * 2)
+  const derived2 = atom((get) => get(derived1) + 1)
+  let resolve = () => {}
+  const asyncDerived = atom(async (get) => {
+    const value = get(derived2)
+    await new Promise<void>((r) => (resolve = r))
+    return value * 2
+  })
+
+  const store = createStore()
+  const promise = store.get(asyncDerived)
+  resolve()
+  expect(await promise).toBe(6)
+
+  store.set(baseAtom, 2)
+  const promise2 = store.get(asyncDerived)
+  resolve()
+  expect(await promise2).toBe(10)
+})
