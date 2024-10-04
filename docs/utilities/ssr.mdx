@@ -24,6 +24,8 @@ const CounterPage = ({ countFromServer }) => {
 
 The primary use case for `useHydrateAtoms` are SSR apps like Next.js, where an initial value is e.g. fetched on the server, which can be passed to a component by props.
 
+⚠️ Note: Although the term "hydrate" might suggest server-side usage, this hook is designed for client-side code and should be used with the [`'use client'` directive](https://react.dev/reference/rsc/use-client).
+
 ```ts
 // Definition
 function useHydrateAtoms(
