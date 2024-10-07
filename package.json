@@ -2,7 +2,6 @@
   "name": "jotai",
   "description": "👻 Primitive and flexible state management for React",
   "private": true,
-  "type": "commonjs",
   "version": "2.10.0",
   "main": "./index.js",
   "types": "./index.d.ts",
