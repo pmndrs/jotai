@@ -289,10 +289,9 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     atom: Atom<Value>,
     atomState: AtomState<Value>,
     dirtyAtoms?: Set<AnyAtom>,
-    force?: boolean,
   ): AtomState<Value> => {
     // See if we can skip recomputing this atom.
-    if (!force && isAtomStateInitialized(atomState)) {
+    if (isAtomStateInitialized(atomState)) {
       // If the atom is mounted, we can use the cache.
       // because it should have been updated by dependencies.
       if (atomState.m && !dirtyAtoms?.has(atom)) {
@@ -471,7 +470,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
         }
       }
       if (hasChangedDeps) {
-        readAtomState(pending, a, aState, markedAtoms, true)
+        readAtomState(pending, a, aState, markedAtoms)
         mountDependencies(pending, a, aState)
         if (prevEpochNumber !== aState.n) {
           addPendingAtom(pending, a, aState)
