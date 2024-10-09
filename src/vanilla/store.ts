@@ -288,13 +288,14 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     pending: Pending | undefined,
     atom: Atom<Value>,
     atomState: AtomState<Value>,
-    force?: (a: AnyAtom) => boolean,
+    dirtyAtoms?: Set<AnyAtom>,
   ): AtomState<Value> => {
     // See if we can skip recomputing this atom.
-    if (!force?.(atom) && isAtomStateInitialized(atomState)) {
-      // If the atom is mounted, we can use the cache.
+    if (isAtomStateInitialized(atomState)) {
+      // If the atom is mounted, we can use cached atom state.
       // because it should have been updated by dependencies.
-      if (atomState.m) {
+      // We can't use the cache if the atom is dirty.
+      if (atomState.m && !dirtyAtoms?.has(atom)) {
         return atomState
       }
       // Otherwise, check if the dependencies have changed.
@@ -304,8 +305,8 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
           ([a, n]) =>
             // Recursively, read the atom state of the dependency, and
             // check if the atom epoch number is unchanged
-            readAtomState(pending, a, getAtomState(a, atomState), force).n ===
-            n,
+            readAtomState(pending, a, getAtomState(a, atomState), dirtyAtoms)
+              .n === n,
         )
       ) {
         return atomState
@@ -332,7 +333,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
         pending,
         a,
         getAtomState(a, atomState),
-        force,
+        dirtyAtoms,
       )
       if (isSync) {
         addDependency(pending, atom, atomState, a, aState)
@@ -460,7 +461,6 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
-    const isMarked = (a: AnyAtom) => markedAtoms.has(a)
     for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
       const [a, aState, prevEpochNumber] = topsortedAtoms[i]!
       let hasChangedDeps = false
@@ -471,7 +471,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
         }
       }
       if (hasChangedDeps) {
-        readAtomState(pending, a, aState, isMarked)
+        readAtomState(pending, a, aState, markedAtoms)
         mountDependencies(pending, a, aState)
         if (prevEpochNumber !== aState.n) {
           addPendingAtom(pending, a, aState)

@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 
 it('can propagate updates with async atom chains', async () => {
@@ -273,6 +273,44 @@ it('refreshes deps for each async read', async () => {
   store.get(asyncAtom)
   resolve.splice(0).forEach((fn) => fn())
   expect(values).toEqual([0, 1])
+})
+
+it('should not re-evaluate stable derived atom values in situations where dependencies are re-ordered (#2738)', () => {
+  const callCounter = vi.fn()
+  const countAtom = atom(0)
+  const rootAtom = atom(false)
+  const stableDep = atom((get) => {
+    get(rootAtom)
+    return 1
+  })
+  const stableDepDep = atom((get) => {
+    get(stableDep)
+    callCounter()
+    return 2 + get(countAtom)
+  })
+
+  const newAtom = atom((get) => {
+    if (get(rootAtom) || get(countAtom) > 0) {
+      return get(stableDepDep)
+    }
+
+    return get(stableDep)
+  })
+
+  const store = createStore()
+  store.sub(stableDepDep, () => {})
+  store.sub(newAtom, () => {})
+  expect(store.get(stableDepDep)).toBe(2)
+  expect(callCounter).toHaveBeenCalledTimes(1)
+
+  store.set(rootAtom, true)
+  expect(store.get(newAtom)).toBe(2)
+  expect(callCounter).toHaveBeenCalledTimes(1)
+
+  store.set(rootAtom, false)
+  store.set(countAtom, 1)
+  expect(store.get(newAtom)).toBe(3)
+  expect(callCounter).toHaveBeenCalledTimes(2)
 })
 
 it('handles complex dependency chains', async () => {
