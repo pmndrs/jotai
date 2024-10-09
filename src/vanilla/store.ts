@@ -292,8 +292,9 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
   ): AtomState<Value> => {
     // See if we can skip recomputing this atom.
     if (isAtomStateInitialized(atomState)) {
-      // If the atom is mounted, we can use the cache.
+      // If the atom is mounted, we can use cached atom state.
       // because it should have been updated by dependencies.
+      // We can't use the cache if the atom is dirty.
       if (atomState.m && !dirtyAtoms?.has(atom)) {
         return atomState
       }
