@@ -1,4 +1,4 @@
-import { createContext, createElement, useContext, useRef } from 'react'
+import { createContext, createElement, useContext, useState } from 'react'
 import type { FunctionComponentElement, ReactNode } from 'react'
 import { createStore, getDefaultStore } from '../vanilla.ts'
 
@@ -18,8 +18,16 @@ export const useStore = (options?: Options): Store => {
   return options?.store || store || getDefaultStore()
 }
 
-/* eslint-disable react-compiler/react-compiler */
-// TODO should we consider using useState instead of useRef?
+const storeCache = new WeakMap<object, Store>()
+const getStoreForProvider = (key: object) => {
+  let store = storeCache.get(key)
+  if (!store) {
+    store = createStore()
+    storeCache.set(key, store)
+  }
+  return store
+}
+
 export const Provider = ({
   children,
   store,
@@ -27,14 +35,11 @@ export const Provider = ({
   children?: ReactNode
   store?: Store
 }): FunctionComponentElement<{ value: Store | undefined }> => {
-  const storeRef = useRef<Store>()
-  if (!store && !storeRef.current) {
-    storeRef.current = createStore()
-  }
+  const [key] = useState<object>({})
   return createElement(
     StoreContext.Provider,
     {
-      value: store || storeRef.current,
+      value: store || getStoreForProvider(key),
     },
     children,
   )
