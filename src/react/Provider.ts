@@ -18,6 +18,8 @@ export const useStore = (options?: Options): Store => {
   return options?.store || store || getDefaultStore()
 }
 
+/* eslint-disable react-compiler/react-compiler */
+// TODO should we consider using useState instead of useRef?
 export const Provider = ({
   children,
   store,

@@ -6,6 +6,15 @@ import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  // eslint-disable-next-line react-compiler/react-compiler
+  return commitCountRef.current
+}
+
 it('useHydrateAtoms should only hydrate on first render', async () => {
   const countAtom = atom(0)
   const statusAtom = atom('fulfilled')
@@ -120,13 +129,10 @@ it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
   const Counter = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
-    const commitCount = useRef(1)
-    useEffect(() => {
-      ++commitCount.current
-    })
+    const commits = useCommitCount()
     return (
       <>
-        <div>commits: {commitCount.current}</div>
+        <div>commits: {commits}</div>
         <div>count: {countValue}</div>
         <button onClick={() => setCount((count) => count + 1)}>dispatch</button>
       </>
