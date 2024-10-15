@@ -142,7 +142,8 @@ const storedAtom = atomWithStorage('stored-key', content, storage)
 
 #### Notes with AsyncStorage (since v2.2.0)
 
-If you use any kinds of AsyncStorage, the atom value can become async. Hence, if you are to update the value, you need to possibly resolve the promise.
+With AsyncStorage (as with any asynchronous storage), the atom value becomes async.
+When updating the atom by referencing the current value, then you'll need to `await` it.
 
 ```js
 const countAtom = atomWithStorage('count-key', 0, anyAsyncStorage)
