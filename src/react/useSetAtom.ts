@@ -34,7 +34,7 @@ export function useSetAtom<Value, Args extends unknown[], Result>(
         throw new Error('not writable atom')
       }
 
-      if (atom === undefined || atom === null) {
+      if (import.meta.env?.MODE !== 'production' && !atom) {
         throw new Error('Atom is undefined or null')
       }
 
