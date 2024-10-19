@@ -113,7 +113,7 @@ export function useAtomValue<AtomType extends Atom<unknown>>(
 export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   const store = useStore(options)
 
-  if (atom === undefined || atom === null) {
+  if (import.meta.env?.MODE !== 'production' && !atom) {
     throw new Error('Atom is undefined or null')
   }
 
