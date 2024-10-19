@@ -113,6 +113,10 @@ export function useAtomValue<AtomType extends Atom<unknown>>(
 export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   const store = useStore(options)
 
+  if (atom === undefined || atom === null) {
+    throw new Error('Atom is undefined or null')
+  }
+
   const [[valueFromReducer, storeFromReducer, atomFromReducer], rerender] =
     useReducer<
       ReducerWithoutAction<readonly [Value, Store, typeof atom]>,

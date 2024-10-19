@@ -33,6 +33,11 @@ export function useSetAtom<Value, Args extends unknown[], Result>(
         // so we should check here.
         throw new Error('not writable atom')
       }
+
+      if (atom === undefined || atom === null) {
+        throw new Error('Atom is undefined or null')
+      }
+
       return store.set(atom, ...args)
     },
     [store, atom],
