@@ -399,8 +399,12 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     }
   }
 
-  const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(undefined, atom, getAtomState(atom)))
+  const readAtom = <Value>(atom: Atom<Value>): Value => {
+    if (import.meta.env?.MODE !== 'production' && !atom) {
+      throw new Error('Atom is undefined or null')
+    }
+    return returnAtomValue(readAtomState(undefined, atom, getAtomState(atom)))
+  }
 
   const getDependents = <Value>(
     pending: Pending,
@@ -524,6 +528,9 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
+    if (import.meta.env?.MODE !== 'production' && !atom) {
+      throw new Error('Atom is undefined or null')
+    }
     const pending = createPending()
     const result = writeAtomState(pending, atom, getAtomState(atom), ...args)
     flushPending(pending)
