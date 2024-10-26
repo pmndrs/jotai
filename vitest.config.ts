@@ -20,6 +20,7 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json', 'html', 'text-summary'],
       reportsDirectory: './coverage/',
+      include: ['src/**'],
     },
     onConsoleLog(log) {
       if (log.includes('DOMException')) return false
