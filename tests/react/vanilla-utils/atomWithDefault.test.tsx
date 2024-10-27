@@ -1,6 +1,6 @@
 import { StrictMode, Suspense } from 'react'
-import { render, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen, waitFor } from '@testing-library/react'
+import { userEvent } from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -222,11 +222,11 @@ it('can be set synchronously by passing value', async () => {
     )
   }
 
-  const { getByText, getByRole } = render(<Counter />)
+  render(<Counter />)
 
-  expect(getByText('count: 1')).toBeDefined()
+  expect(screen.getByText('count: 1')).toBeDefined()
 
-  await user.click(getByRole('button', { name: 'Set to 10' }))
+  await user.click(screen.getByRole('button', { name: 'Set to 10' }))
 
-  expect(getByText('count: 10')).toBeDefined()
+  expect(screen.getByText('count: 10')).toBeDefined()
 })
