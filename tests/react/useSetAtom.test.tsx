@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
@@ -50,30 +50,30 @@ it('useSetAtom does not trigger rerender in component', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <>
       <Parent />
     </>,
   )
 
   await waitFor(() => {
-    getByText('count: 0, commits: 1')
-    getByText('updater commits: 1')
+    screen.getByText('count: 0, commits: 1')
+    screen.getByText('updater commits: 1')
   })
-  await userEvent.click(getByText('increment'))
+  await userEvent.click(screen.getByText('increment'))
   await waitFor(() => {
-    getByText('count: 1, commits: 2')
-    getByText('updater commits: 1')
+    screen.getByText('count: 1, commits: 2')
+    screen.getByText('updater commits: 1')
   })
-  await userEvent.click(getByText('increment'))
+  await userEvent.click(screen.getByText('increment'))
   await waitFor(() => {
-    getByText('count: 2, commits: 3')
-    getByText('updater commits: 1')
+    screen.getByText('count: 2, commits: 3')
+    screen.getByText('updater commits: 1')
   })
-  await userEvent.click(getByText('increment'))
+  await userEvent.click(screen.getByText('increment'))
   await waitFor(() => {
-    getByText('count: 3, commits: 4')
-    getByText('updater commits: 1')
+    screen.getByText('count: 3, commits: 4')
+    screen.getByText('updater commits: 1')
   })
 })
 
@@ -105,17 +105,18 @@ it('useSetAtom with write without an argument', async () => {
       </>
     )
   }
-  const { getByText } = render(
+
+  render(
     <StrictMode>
       <Parent />
     </StrictMode>,
   )
 
   await waitFor(() => {
-    getByText('count: 0')
+    screen.getByText('count: 0')
   })
-  await userEvent.click(getByText('increment'))
+  await userEvent.click(screen.getByText('increment'))
   await waitFor(() => {
-    getByText('count: 1')
+    screen.getByText('count: 1')
   })
 })

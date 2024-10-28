@@ -1,5 +1,5 @@
 import { StrictMode, Suspense } from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -19,19 +19,19 @@ it('sync counter', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 2')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 2')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 3')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 3')
 
   expect(counter).toBe(3)
 })
@@ -54,7 +54,7 @@ it('async counter', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -62,18 +62,18 @@ it('async counter', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   resolve()
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
   resolve()
-  await findByText('count: 2')
+  await screen.findByText('count: 2')
 
-  await userEvent.click(getByText('button'))
+  await userEvent.click(screen.getByText('button'))
   resolve()
-  await findByText('count: 3')
+  await screen.findByText('count: 3')
 
   expect(counter).toBe(3)
 })
@@ -98,23 +98,23 @@ it('writable counter', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 2')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 2')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 3')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 3')
 
-  await userEvent.click(getByText('set9'))
-  await findByText('count: 3')
+  await userEvent.click(screen.getByText('set9'))
+  await screen.findByText('count: 3')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 10')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 10')
 })

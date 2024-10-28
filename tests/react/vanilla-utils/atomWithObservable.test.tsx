@@ -1,6 +1,6 @@
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import { act, render, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BehaviorSubject, Observable, Subject, delay, map, of } from 'rxjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -67,7 +67,7 @@ it('count state', async () => {
     return <>count: {state}</>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -75,7 +75,7 @@ it('count state', async () => {
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 })
 
 it('writable count state', async () => {
@@ -92,7 +92,7 @@ it('writable count state', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -100,13 +100,13 @@ it('writable count state', async () => {
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
   act(() => subject.next(2))
-  await findByText('count: 2')
+  await screen.findByText('count: 2')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 9')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 9')
   expect(subject.value).toBe(9)
 
   expect(subject)
@@ -126,7 +126,7 @@ it('writable count state without initial value', async () => {
     return <button onClick={() => dispatch(9)}>button</button>
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <CounterValue />
@@ -135,13 +135,13 @@ it('writable count state without initial value', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 9')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 9')
 
   act(() => subject.next(3))
-  await findByText('count: 3')
+  await screen.findByText('count: 3')
 })
 
 it('writable count state with delayed value', async () => {
@@ -168,7 +168,7 @@ it('writable count state with delayed value', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -176,12 +176,12 @@ it('writable count state with delayed value', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   act(() => vi.runOnlyPendingTimers())
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 9')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 9')
 })
 
 it('only subscribe once per atom', async () => {
@@ -198,16 +198,16 @@ it('only subscribe once per atom', async () => {
     return <>count: {state}</>
   }
 
-  const { findByText, rerender } = render(
+  const { rerender } = render(
     <>
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
     </>,
   )
-  await findByText('loading')
+  await screen.findByText('loading')
   act(() => subject.next(1))
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
   rerender(<div />)
   expect(totalSubscriptions).toEqual(1)
@@ -220,7 +220,7 @@ it('only subscribe once per atom', async () => {
     </>,
   )
   act(() => subject.next(2))
-  await findByText('count: 2')
+  await screen.findByText('count: 2')
 
   expect(totalSubscriptions).toEqual(2)
 })
@@ -242,7 +242,7 @@ it('cleanup subscription', async () => {
     return <>count: {state}</>
   }
 
-  const { findByText, rerender } = render(
+  const { rerender } = render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -250,10 +250,10 @@ it('cleanup subscription', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
 
   act(() => subject.next(1))
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
   expect(activeSubscriptions).toEqual(1)
   rerender(<div />)
@@ -279,7 +279,7 @@ it('resubscribe on remount', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Toggle>
@@ -289,15 +289,15 @@ it('resubscribe on remount', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   act(() => subject.next(1))
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('Toggle'))
-  await userEvent.click(getByText('Toggle'))
+  await userEvent.click(screen.getByText('Toggle'))
+  await userEvent.click(screen.getByText('Toggle'))
 
   act(() => subject.next(2))
-  await findByText('count: 2')
+  await screen.findByText('count: 2')
 })
 
 it("count state with initialValue doesn't suspend", async () => {
@@ -309,17 +309,17 @@ it("count state with initialValue doesn't suspend", async () => {
     return <>count: {state}</>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 5')
+  await screen.findByText('count: 5')
 
   act(() => subject.next(10))
 
-  await findByText('count: 10')
+  await screen.findByText('count: 10')
 })
 
 it('writable count state with initialValue', async () => {
@@ -336,7 +336,7 @@ it('writable count state with initialValue', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -344,12 +344,12 @@ it('writable count state with initialValue', async () => {
     </StrictMode>,
   )
 
-  await findByText('count: 5')
+  await screen.findByText('count: 5')
   act(() => subject.next(1))
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 9')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 9')
 })
 
 it('writable count state with error', async () => {
@@ -366,7 +366,7 @@ it('writable count state with error', async () => {
     )
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <ErrorBoundary>
         <Suspense fallback="loading">
@@ -376,10 +376,10 @@ it('writable count state with error', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
 
   act(() => subject.error(new Error('Test Error')))
-  await findByText('Error: Test Error')
+  await screen.findByText('Error: Test Error')
 })
 
 it('synchronous subscription with initial value', async () => {
@@ -390,13 +390,13 @@ it('synchronous subscription with initial value', async () => {
     return <>count: {state}</>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 })
 
 it('synchronous subscription with BehaviorSubject', async () => {
@@ -407,13 +407,13 @@ it('synchronous subscription with BehaviorSubject', async () => {
     return <>count: {state}</>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 })
 
 it('synchronous subscription with already emitted value', async () => {
@@ -425,13 +425,13 @@ it('synchronous subscription with already emitted value', async () => {
     return <>count: {state}</>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 })
 
 it('with falsy initial value', async () => {
@@ -444,13 +444,13 @@ it('with falsy initial value', async () => {
     return <>count: {state}</>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 })
 
 it('with initially emitted undefined value', async () => {
@@ -462,7 +462,7 @@ it('with initially emitted undefined value', async () => {
     return <>count: {state === undefined ? '-' : state}</>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -470,11 +470,11 @@ it('with initially emitted undefined value', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   act(() => subject.next(undefined))
-  await findByText('count: -')
+  await screen.findByText('count: -')
   act(() => subject.next(1))
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 })
 
 it("don't omit values emitted between init and mount", async () => {
@@ -497,7 +497,7 @@ it("don't omit values emitted between init and mount", async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -505,15 +505,15 @@ it("don't omit values emitted between init and mount", async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   act(() => {
     subject.next(1)
     subject.next(2)
   })
-  await findByText('count: 2')
+  await screen.findByText('count: 2')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 9')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 9')
 })
 
 describe('error handling', () => {
@@ -562,7 +562,7 @@ describe('error handling', () => {
       )
     }
 
-    const { findByText } = render(
+    render(
       <StrictMode>
         <ErrorBoundary>
           <Suspense fallback="loading">
@@ -572,9 +572,9 @@ describe('error handling', () => {
       </StrictMode>,
     )
 
-    await findByText('loading')
+    await screen.findByText('loading')
     act(() => subject.error(new Error('Test Error')))
-    await findByText('errored')
+    await screen.findByText('errored')
   })
 
   it('can recover from error with dependency', async () => {
@@ -616,30 +616,30 @@ describe('error handling', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <App />
       </StrictMode>,
     )
 
-    await findByText('loading')
+    await screen.findByText('loading')
     act(() => vi.runOnlyPendingTimers())
-    await findByText('errored')
+    await screen.findByText('errored')
 
-    await userEvent.click(getByText('retry'))
-    await findByText('loading')
+    await userEvent.click(screen.getByText('retry'))
+    await screen.findByText('loading')
     act(() => vi.runOnlyPendingTimers())
-    await findByText('count: 1')
+    await screen.findByText('count: 1')
 
-    await userEvent.click(getByText('next'))
-    await findByText('loading')
+    await userEvent.click(screen.getByText('next'))
+    await screen.findByText('loading')
     act(() => vi.runOnlyPendingTimers())
-    await findByText('errored')
+    await screen.findByText('errored')
 
-    await userEvent.click(getByText('retry'))
-    await findByText('loading')
+    await userEvent.click(screen.getByText('retry'))
+    await screen.findByText('loading')
     act(() => vi.runOnlyPendingTimers())
-    await findByText('count: 3')
+    await screen.findByText('count: 3')
   })
 
   it('can recover with intermediate atom', async () => {
@@ -705,30 +705,30 @@ describe('error handling', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <App />
       </StrictMode>,
     )
 
-    await findByText('loading')
+    await screen.findByText('loading')
     act(() => vi.runOnlyPendingTimers())
-    await findByText('errored')
+    await screen.findByText('errored')
 
-    await userEvent.click(getByText('retry'))
-    await findByText('loading')
+    await userEvent.click(screen.getByText('retry'))
+    await screen.findByText('loading')
     act(() => vi.runOnlyPendingTimers())
-    await findByText('count: 1')
+    await screen.findByText('count: 1')
 
-    await userEvent.click(getByText('refresh'))
-    await findByText('loading')
+    await userEvent.click(screen.getByText('refresh'))
+    await screen.findByText('loading')
     act(() => vi.runOnlyPendingTimers())
-    await findByText('errored')
+    await screen.findByText('errored')
 
-    await userEvent.click(getByText('retry'))
-    await findByText('loading')
+    await userEvent.click(screen.getByText('retry'))
+    await screen.findByText('loading')
     act(() => vi.runOnlyPendingTimers())
-    await findByText('count: 3')
+    await screen.findByText('count: 3')
   })
 })
 
@@ -743,7 +743,7 @@ describe('wonka', () => {
       return <>count: {count}</>
     }
 
-    const { findByText } = render(
+    render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
@@ -751,7 +751,7 @@ describe('wonka', () => {
       </StrictMode>,
     )
 
-    await findByText('count: 1')
+    await screen.findByText('count: 1')
   })
 
   it('make subject', async () => {
@@ -775,7 +775,7 @@ describe('wonka', () => {
       return <button onClick={() => setCount(1)}>button</button>
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Controls />
         <Suspense fallback="loading">
@@ -784,10 +784,10 @@ describe('wonka', () => {
       </StrictMode>,
     )
 
-    await findByText('loading')
+    await screen.findByText('loading')
 
-    await userEvent.click(getByText('button'))
-    await findByText('count: 1')
+    await userEvent.click(screen.getByText('button'))
+    await screen.findByText('count: 1')
   })
 })
 

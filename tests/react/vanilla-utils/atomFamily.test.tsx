@@ -1,5 +1,5 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom, useSetAtom } from 'jotai/react'
@@ -14,13 +14,14 @@ it('new atomFamily impl', async () => {
     const [count] = useAtom(myFamily(index))
     return <div>count: {count}</div>
   }
-  const { findByText } = render(
+
+  render(
     <StrictMode>
       <Displayer index={'a'} />
     </StrictMode>,
   )
 
-  await findByText('count: a')
+  await screen.findByText('count: a')
 })
 
 it('primitive atomFamily returns same reference for same parameters', async () => {
@@ -85,22 +86,22 @@ it('primitive atomFamily initialized with props', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Parent />
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 11')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 11')
 
-  await userEvent.click(getByText('increment'))
-  await findByText('count: 2')
+  await userEvent.click(screen.getByText('increment'))
+  await screen.findByText('count: 2')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 12')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 12')
 })
 
 it('derived atomFamily functionality as usual', async () => {
@@ -162,37 +163,37 @@ it('derived atomFamily functionality as usual', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <StrictMode>
       <Parent />
     </StrictMode>,
   )
 
   await waitFor(() => {
-    getByText('index: 0, count: 0')
-    getByText('index: 1, count: 0')
-    getByText('index: 2, count: 0')
+    screen.getByText('index: 0, count: 0')
+    screen.getByText('index: 1, count: 0')
+    screen.getByText('index: 2, count: 0')
   })
 
-  await userEvent.click(getByText('increment #1'))
+  await userEvent.click(screen.getByText('increment #1'))
   await waitFor(() => {
-    getByText('index: 0, count: 0')
-    getByText('index: 1, count: 1')
-    getByText('index: 2, count: 0')
+    screen.getByText('index: 0, count: 0')
+    screen.getByText('index: 1, count: 1')
+    screen.getByText('index: 2, count: 0')
   })
 
-  await userEvent.click(getByText('increment #0'))
+  await userEvent.click(screen.getByText('increment #0'))
   await waitFor(() => {
-    getByText('index: 0, count: 1')
-    getByText('index: 1, count: 1')
-    getByText('index: 2, count: 0')
+    screen.getByText('index: 0, count: 1')
+    screen.getByText('index: 1, count: 1')
+    screen.getByText('index: 2, count: 0')
   })
 
-  await userEvent.click(getByText('increment #2'))
+  await userEvent.click(screen.getByText('increment #2'))
   await waitFor(() => {
-    getByText('index: 0, count: 1')
-    getByText('index: 1, count: 1')
-    getByText('index: 2, count: 1')
+    screen.getByText('index: 0, count: 1')
+    screen.getByText('index: 1, count: 1')
+    screen.getByText('index: 2, count: 1')
   })
 })
 
@@ -238,7 +239,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -246,19 +247,19 @@ it('a derived atom from an async atomFamily (#351)', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   resolve.splice(0).forEach((fn) => fn())
-  await findByText('derived: 11')
+  await screen.findByText('derived: 11')
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
   resolve.splice(0).forEach((fn) => fn())
-  await findByText('derived: 12')
+  await screen.findByText('derived: 12')
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
   resolve.splice(0).forEach((fn) => fn())
-  await findByText('derived: 13')
+  await screen.findByText('derived: 13')
 })
 
 it('setShouldRemove with custom equality function', async () => {

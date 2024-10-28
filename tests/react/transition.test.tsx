@@ -1,7 +1,6 @@
 /// <reference types="react/experimental" />
-
 import ReactExports, { StrictMode, Suspense, useEffect } from 'react'
-import { act, render, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
@@ -42,7 +41,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
         )
       }
 
-      const { getByText } = render(
+      render(
         <>
           <Suspense fallback="loading">
             <Counter />
@@ -51,15 +50,15 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       )
 
       resolve()
-      await waitFor(() => expect(getByText('delayed: 0')).toBeTruthy())
+      await waitFor(() => expect(screen.getByText('delayed: 0')).toBeTruthy())
 
-      await userEvent.click(getByText('button'))
+      await userEvent.click(screen.getByText('button'))
 
       act(() => {
         resolve()
       })
 
-      await waitFor(() => expect(getByText('delayed: 1')).toBeTruthy())
+      await waitFor(() => expect(screen.getByText('delayed: 1')).toBeTruthy())
 
       expect(commited).toEqual([
         { pending: false, delayed: 0 },
@@ -96,7 +95,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       )
     }
 
-    const { getByText, findByText } = render(
+    render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
@@ -104,15 +103,15 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       </StrictMode>,
     )
 
-    await findByText('count: 0')
+    await screen.findByText('count: 0')
 
-    await userEvent.click(getByText('toggle'))
-    await waitFor(() => expect(findByText('pending')).toBeTruthy())
+    await userEvent.click(screen.getByText('toggle'))
+    await waitFor(() => expect(screen.findByText('pending')).toBeTruthy())
 
-    await userEvent.click(getByText('increment'))
-    await waitFor(() => expect(findByText('count: 1')).toBeTruthy())
+    await userEvent.click(screen.getByText('increment'))
+    await waitFor(() => expect(screen.findByText('count: 1')).toBeTruthy())
 
-    await userEvent.click(getByText('increment'))
-    await waitFor(() => expect(findByText('count: 2')).toBeTruthy())
+    await userEvent.click(screen.getByText('increment'))
+    await waitFor(() => expect(screen.findByText('count: 2')).toBeTruthy())
   })
 })
