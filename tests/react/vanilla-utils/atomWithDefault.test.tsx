@@ -1,6 +1,6 @@
 import { StrictMode, Suspense } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
-import { userEvent } from '@testing-library/user-event'
+import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -209,8 +209,6 @@ it('refresh async atoms to default values', async () => {
 it('can be set synchronously by passing value', async () => {
   const countAtom = atomWithDefault(() => 1)
 
-  const user = userEvent.setup()
-
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
 
@@ -226,7 +224,7 @@ it('can be set synchronously by passing value', async () => {
 
   expect(screen.getByText('count: 1')).toBeDefined()
 
-  await user.click(screen.getByRole('button', { name: 'Set to 10' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Set to 10' }))
 
   expect(screen.getByText('count: 10')).toBeDefined()
 })
