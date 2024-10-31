@@ -17,4 +17,22 @@ describe('loadable', () => {
       data: 'concrete',
     })
   })
+
+  it('should get the latest loadable state after the promise resolves', async () => {
+    const delayPromise = new Promise((r) => setTimeout(r, 10))
+    const store = createStore()
+    const asyncAtom = atom(delayPromise)
+    const loadableAtom = loadable(asyncAtom)
+
+    expect(store.get(loadableAtom)).toEqual({
+      state: 'loading',
+    })
+
+    await store.get(asyncAtom)
+
+    expect(store.get(loadableAtom)).toEqual({
+      state: 'hasData',
+      data: undefined,
+    })
+  })
 })
