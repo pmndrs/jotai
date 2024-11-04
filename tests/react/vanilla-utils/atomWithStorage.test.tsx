@@ -1,5 +1,5 @@
 import { StrictMode, Suspense } from 'react'
-import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -66,20 +66,20 @@ describe('atomWithStorage (sync)', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     )
 
-    await findByText('count: 10')
+    await screen.findByText('count: 10')
 
-    await userEvent.click(getByText('button'))
-    await findByText('count: 11')
+    await userEvent.click(screen.getByText('button'))
+    await screen.findByText('count: 11')
     expect(storageData.count).toBe(11)
 
-    await userEvent.click(getByText('reset'))
-    await findByText('count: 1')
+    await userEvent.click(screen.getByText('reset'))
+    await screen.findByText('count: 1')
     expect(storageData.count).toBeUndefined()
   })
 
@@ -96,13 +96,13 @@ describe('atomWithStorage (sync)', () => {
       return <div>count: {count}</div>
     }
 
-    const { findByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     )
 
-    await findByText('count: 9')
+    await screen.findByText('count: 9')
   })
 })
 
@@ -161,28 +161,28 @@ describe('with sync string storage', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     )
 
-    await findByText('count: 10')
+    await screen.findByText('count: 10')
 
-    await userEvent.click(getByText('button'))
-    await findByText('count: 11')
+    await userEvent.click(screen.getByText('button'))
+    await screen.findByText('count: 11')
     expect(storageData.count).toBe('11')
 
-    await userEvent.click(getByText('reset'))
-    await findByText('count: 1')
+    await userEvent.click(screen.getByText('reset'))
+    await screen.findByText('count: 1')
     expect(storageData.count).toBeUndefined()
 
-    await userEvent.click(getByText('button'))
-    await findByText('count: 2')
+    await userEvent.click(screen.getByText('button'))
+    await screen.findByText('count: 2')
     expect(storageData.count).toBe('2')
 
-    await userEvent.click(getByText('conditional reset'))
-    await findByText('count: 1')
+    await userEvent.click(screen.getByText('conditional reset'))
+    await screen.findByText('count: 1')
     expect(storageData.count).toBeUndefined()
   })
 
@@ -194,13 +194,13 @@ describe('with sync string storage', () => {
       return <div>noentry: {noentry}</div>
     }
 
-    const { findByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     )
 
-    await findByText('noentry: -1')
+    await screen.findByText('noentry: -1')
   })
 })
 
@@ -242,7 +242,7 @@ describe('atomWithStorage (async)', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
@@ -251,19 +251,19 @@ describe('atomWithStorage (async)', () => {
     )
 
     act(() => resolve.splice(0).forEach((fn) => fn()))
-    await findByText('count: 10')
+    await screen.findByText('count: 10')
 
-    await userEvent.click(getByText('button'))
+    await userEvent.click(screen.getByText('button'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
-    await findByText('count: 11')
+    await screen.findByText('count: 11')
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await waitFor(() => {
       expect(asyncStorageData.count).toBe(11)
     })
 
-    await userEvent.click(getByText('reset'))
+    await userEvent.click(screen.getByText('reset'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
-    await findByText('count: 1')
+    await screen.findByText('count: 1')
     await waitFor(() => {
       expect(asyncStorageData.count).toBeUndefined()
     })
@@ -284,7 +284,7 @@ describe('atomWithStorage (async)', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
@@ -292,11 +292,11 @@ describe('atomWithStorage (async)', () => {
       </StrictMode>,
     )
 
-    await findByText('count: 20')
+    await screen.findByText('count: 20')
 
-    await userEvent.click(getByText('button'))
+    await userEvent.click(screen.getByText('button'))
     act(() => resolve.splice(0).forEach((fn) => fn()))
-    await findByText('count: 21')
+    await screen.findByText('count: 21')
     act(() => resolve.splice(0).forEach((fn) => fn()))
     await waitFor(() => {
       expect(asyncStorageData.count2).toBe(21)
@@ -324,13 +324,13 @@ describe('atomWithStorage (without localStorage) (#949)', () => {
       )
     }
 
-    const { findByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     )
 
-    await findByText('count: 1')
+    await screen.findByText('count: 1')
   })
 })
 
@@ -532,7 +532,7 @@ describe('atomWithStorage (with browser storage)', () => {
       ) : null
     }
 
-    const { getByRole } = render(
+    render(
       <StrictMode>
         <DummyComponent />
       </StrictMode>,
@@ -540,7 +540,7 @@ describe('atomWithStorage (with browser storage)', () => {
 
     act(() => store.set(isLoggedAtom, true))
 
-    const checkbox = getByRole('checkbox') as HTMLInputElement
+    const checkbox = screen.getByRole('checkbox') as HTMLInputElement
 
     expect(store.get(isLoggedAtom)).toBeTruthy()
     expect(store.get(isDevModeStorageAtom)).toBeTruthy()
@@ -580,13 +580,13 @@ describe('atomWithStorage (with disabled browser storage)', () => {
       )
     }
 
-    const { findByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     )
 
-    await findByText('count: 4')
+    await screen.findByText('count: 4')
   })
 })
 
@@ -724,13 +724,13 @@ describe('with subscribe method in string storage', () => {
       )
     }
 
-    const { findByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     )
 
-    await findByText('count: 10')
+    await screen.findByText('count: 10')
 
     storageData.count = '12'
     fireEvent(
@@ -739,7 +739,7 @@ describe('with subscribe method in string storage', () => {
         detail: '12',
       }),
     )
-    await findByText('count: 12')
+    await screen.findByText('count: 12')
     // expect(storageData.count).toBe('11')
   })
 })

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -34,7 +34,7 @@ it('only relevant render function called (#156)', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <>
       <Counter1 />
       <Counter2 />
@@ -42,24 +42,24 @@ it('only relevant render function called (#156)', async () => {
   )
 
   await waitFor(() => {
-    getByText('count1: 0')
-    getByText('count2: 0')
+    screen.getByText('count1: 0')
+    screen.getByText('count2: 0')
   })
   const renderCount1AfterMount = renderCount1
   const renderCount2AfterMount = renderCount2
 
-  await userEvent.click(getByText('button1'))
+  await userEvent.click(screen.getByText('button1'))
   await waitFor(() => {
-    getByText('count1: 1')
-    getByText('count2: 0')
+    screen.getByText('count1: 1')
+    screen.getByText('count2: 0')
   })
   expect(renderCount1).toBe(renderCount1AfterMount + 1)
   expect(renderCount2).toBe(renderCount2AfterMount + 0)
 
-  await userEvent.click(getByText('button2'))
+  await userEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    getByText('count1: 1')
-    getByText('count2: 1')
+    screen.getByText('count1: 1')
+    screen.getByText('count2: 1')
   })
   expect(renderCount1).toBe(renderCount1AfterMount + 1)
   expect(renderCount2).toBe(renderCount2AfterMount + 1)
@@ -91,22 +91,22 @@ it('only render once using atoms with write-only atom', async () => {
     return <button onClick={increment}>button</button>
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Counter />
       <Control />
     </>,
   )
 
-  await findByText('count1: 0, count2: 0')
+  await screen.findByText('count1: 0, count2: 0')
   const renderCountAfterMount = renderCount
 
-  await userEvent.click(getByText('button'))
-  await findByText('count1: 1, count2: 1')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count1: 1, count2: 1')
   expect(renderCount).toBe(renderCountAfterMount + 1)
 
-  await userEvent.click(getByText('button'))
-  await findByText('count1: 2, count2: 2')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count1: 2, count2: 2')
   expect(renderCount).toBe(renderCountAfterMount + 2)
 })
 
@@ -130,21 +130,21 @@ it('useless re-renders with static atoms (#355)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Counter />
     </>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
   const renderCountAfterMount = renderCount
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 1')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
   expect(renderCount).toBe(renderCountAfterMount + 1)
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 2')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 2')
   expect(renderCount).toBe(renderCountAfterMount + 2)
 })
 
@@ -165,29 +165,29 @@ it('does not re-render if value is the same (#1158)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Counter />
     </>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
   const renderCountAfterMount = renderCount
 
-  await userEvent.click(getByText('noop'))
-  await findByText('count: 0')
+  await userEvent.click(screen.getByText('noop'))
+  await screen.findByText('count: 0')
   expect(renderCount).toBe(renderCountAfterMount + 0)
 
-  await userEvent.click(getByText('inc'))
-  await findByText('count: 1')
+  await userEvent.click(screen.getByText('inc'))
+  await screen.findByText('count: 1')
   expect(renderCount).toBe(renderCountAfterMount + 1)
 
-  await userEvent.click(getByText('noop'))
-  await findByText('count: 1')
+  await userEvent.click(screen.getByText('noop'))
+  await screen.findByText('count: 1')
   expect(renderCount).toBe(renderCountAfterMount + 1)
 
-  await userEvent.click(getByText('inc'))
-  await findByText('count: 2')
+  await userEvent.click(screen.getByText('inc'))
+  await screen.findByText('count: 2')
   expect(renderCount).toBe(renderCountAfterMount + 2)
 })
 
@@ -236,7 +236,7 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <>
       <Counter1 />
       <Counter2 />
@@ -245,30 +245,30 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
   )
 
   await waitFor(() => {
-    getByText('count1: 0')
-    getByText('count2: 0')
+    screen.getByText('count1: 0')
+    screen.getByText('count2: 0')
   })
   expect(renderCount1 > 0).toBeTruthy()
   expect(renderCount2 > 0).toBeTruthy()
 
-  await userEvent.click(getByText('inc1'))
+  await userEvent.click(screen.getByText('inc1'))
   await waitFor(() => {
-    getByText('count1: 1')
-    getByText('count2: 0')
+    screen.getByText('count1: 1')
+    screen.getByText('count2: 0')
   })
   expect(renderCount1).toBe(renderCount1AfterCommit)
 
-  await userEvent.click(getByText('inc2'))
+  await userEvent.click(screen.getByText('inc2'))
   await waitFor(() => {
-    getByText('count1: 1')
-    getByText('count2: 1')
+    screen.getByText('count1: 1')
+    screen.getByText('count2: 1')
   })
   expect(renderCount2).toBe(renderCount2AfterCommit)
 
-  await userEvent.click(getByText('inc1'))
+  await userEvent.click(screen.getByText('inc1'))
   await waitFor(() => {
-    getByText('count1: 2')
-    getByText('count2: 1')
+    screen.getByText('count1: 2')
+    screen.getByText('count2: 1')
   })
   expect(renderCount1).toBe(renderCount1AfterCommit)
 })
