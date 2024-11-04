@@ -544,6 +544,8 @@ describe('error handling', () => {
           )}
         </div>
       ) : (
+        // below rule should not consider render() inside class component
+        // eslint-disable-next-line testing-library/no-node-access
         this.props.children
       )
     }

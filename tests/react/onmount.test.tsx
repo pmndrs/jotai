@@ -145,10 +145,9 @@ it('mount/unmount test', async () => {
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
   await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(onMountFn).toHaveBeenCalledTimes(1)
-    expect(onUnMountFn).toHaveBeenCalledTimes(1)
-  })
+
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onUnMountFn).toHaveBeenCalledTimes(1)
 })
 
 it('one derived atom, one onMount for the derived one, and one for the regular atom + onUnMount', async () => {
@@ -198,12 +197,11 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
   await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
-    expect(derivedOnUnMountFn).toHaveBeenCalledTimes(1)
-    expect(onMountFn).toHaveBeenCalledTimes(1)
-    expect(onUnMountFn).toHaveBeenCalledTimes(1)
-  })
+
+  expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
+  expect(derivedOnUnMountFn).toHaveBeenCalledTimes(1)
+  expect(onMountFn).toHaveBeenCalledTimes(1)
+  expect(onUnMountFn).toHaveBeenCalledTimes(1)
 })
 
 it('mount/unMount order', async () => {
