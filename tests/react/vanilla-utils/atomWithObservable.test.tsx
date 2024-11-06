@@ -108,8 +108,6 @@ it('writable count state', async () => {
   await userEvent.click(screen.getByText('button'))
   await screen.findByText('count: 9')
   expect(subject.value).toBe(9)
-
-  expect(subject)
 })
 
 it('writable count state without initial value', async () => {
