@@ -132,3 +132,16 @@ function defaultWrite<Value>(
       : arg,
   )
 }
+
+export type Cleanup = () => void
+
+type Effect = (get: Getter, set: Setter) => void | Cleanup
+
+export type SyncEffectAtom = Atom<undefined> & { effect: Effect }
+
+export function atomSyncEffect(effect: Effect): SyncEffectAtom {
+  return Object.assign(
+    atom(() => undefined),
+    { effect },
+  )
+}
