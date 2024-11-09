@@ -150,6 +150,7 @@
     "eslint-plugin-react": "^7.37.1",
     "eslint-plugin-react-compiler": "0.0.0-experimental-fa06e2c-20241014",
     "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-testing-library": "^6.4.0",
     "eslint-plugin-vitest": "^0.5.4",
     "jest-leak-detector": "^29.7.0",
     "jsdom": "^25.0.1",

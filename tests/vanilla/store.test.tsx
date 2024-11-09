@@ -1,4 +1,4 @@
-import { waitFor } from '@testing-library/dom'
+import { waitFor } from '@testing-library/react'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Getter } from 'jotai/vanilla'
