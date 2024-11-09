@@ -9,12 +9,12 @@ it('only relevant render function called (#156)', async () => {
   const count1Atom = atom(0)
   const count2Atom = atom(0)
 
-  let renderCount1 = 0
-  let renderCount2 = 0
+  let viewCount1 = 0
+  let viewCount2 = 0
 
   const Counter1 = () => {
     const [count, setCount] = useAtom(count1Atom)
-    ++renderCount1
+    ++viewCount1
     return (
       <>
         <div>count1: {count}</div>
@@ -25,7 +25,7 @@ it('only relevant render function called (#156)', async () => {
 
   const Counter2 = () => {
     const [count, setCount] = useAtom(count2Atom)
-    ++renderCount2
+    ++viewCount2
     return (
       <>
         <div>count2: {count}</div>
@@ -41,28 +41,27 @@ it('only relevant render function called (#156)', async () => {
     </>,
   )
 
-  await waitFor(() => {
-    screen.getByText('count1: 0')
-    screen.getByText('count2: 0')
-  })
-  const renderCount1AfterMount = renderCount1
-  const renderCount2AfterMount = renderCount2
+  expect(screen.getByText('count1: 0')).toBeDefined()
+  expect(screen.getByText('count2: 0')).toBeDefined()
+
+  const viewCount1AfterMount = viewCount1
+  const viewCount2AfterMount = viewCount2
 
   await userEvent.click(screen.getByText('button1'))
-  await waitFor(() => {
-    screen.getByText('count1: 1')
-    screen.getByText('count2: 0')
-  })
-  expect(renderCount1).toBe(renderCount1AfterMount + 1)
-  expect(renderCount2).toBe(renderCount2AfterMount + 0)
+
+  expect(screen.getByText('count1: 1')).toBeDefined()
+  expect(screen.getByText('count2: 0')).toBeDefined()
+
+  expect(viewCount1).toBe(viewCount1AfterMount + 1)
+  expect(viewCount2).toBe(viewCount2AfterMount + 0)
 
   await userEvent.click(screen.getByText('button2'))
-  await waitFor(() => {
-    screen.getByText('count1: 1')
-    screen.getByText('count2: 1')
-  })
-  expect(renderCount1).toBe(renderCount1AfterMount + 1)
-  expect(renderCount2).toBe(renderCount2AfterMount + 1)
+
+  expect(screen.getByText('count1: 1')).toBeDefined()
+  expect(screen.getByText('count2: 1')).toBeDefined()
+
+  expect(viewCount1).toBe(viewCount1AfterMount + 1)
+  expect(viewCount2).toBe(viewCount2AfterMount + 1)
 })
 
 it('only render once using atoms with write-only atom', async () => {
@@ -73,12 +72,12 @@ it('only render once using atoms with write-only atom', async () => {
     set(count2Atom, (c) => c + 1)
   })
 
-  let renderCount = 0
+  let viewCount = 0
 
   const Counter = () => {
     const [count1] = useAtom(count1Atom)
     const [count2] = useAtom(count2Atom)
-    ++renderCount
+    ++viewCount
     return (
       <div>
         count1: {count1}, count2: {count2}
@@ -99,15 +98,15 @@ it('only render once using atoms with write-only atom', async () => {
   )
 
   await screen.findByText('count1: 0, count2: 0')
-  const renderCountAfterMount = renderCount
+  const viewCountAfterMount = viewCount
 
   await userEvent.click(screen.getByText('button'))
   await screen.findByText('count1: 1, count2: 1')
-  expect(renderCount).toBe(renderCountAfterMount + 1)
+  expect(viewCount).toBe(viewCountAfterMount + 1)
 
   await userEvent.click(screen.getByText('button'))
   await screen.findByText('count1: 2, count2: 2')
-  expect(renderCount).toBe(renderCountAfterMount + 2)
+  expect(viewCount).toBe(viewCountAfterMount + 2)
 })
 
 it('useless re-renders with static atoms (#355)', async () => {
@@ -115,12 +114,12 @@ it('useless re-renders with static atoms (#355)', async () => {
   const countAtom = atom(0)
   const unrelatedAtom = atom(0)
 
-  let renderCount = 0
+  let viewCount = 0
 
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
     useAtom(unrelatedAtom)
-    ++renderCount
+    ++viewCount
 
     return (
       <>
@@ -137,25 +136,25 @@ it('useless re-renders with static atoms (#355)', async () => {
   )
 
   await screen.findByText('count: 0')
-  const renderCountAfterMount = renderCount
+  const viewCountAfterMount = viewCount
 
   await userEvent.click(screen.getByText('button'))
   await screen.findByText('count: 1')
-  expect(renderCount).toBe(renderCountAfterMount + 1)
+  expect(viewCount).toBe(viewCountAfterMount + 1)
 
   await userEvent.click(screen.getByText('button'))
   await screen.findByText('count: 2')
-  expect(renderCount).toBe(renderCountAfterMount + 2)
+  expect(viewCount).toBe(viewCountAfterMount + 2)
 })
 
 it('does not re-render if value is the same (#1158)', async () => {
   const countAtom = atom(0)
 
-  let renderCount = 0
+  let viewCount = 0
 
   const Counter = () => {
     const [count, setCount] = useAtom(countAtom)
-    ++renderCount
+    ++viewCount
     return (
       <>
         <div>count: {count}</div>
@@ -172,23 +171,23 @@ it('does not re-render if value is the same (#1158)', async () => {
   )
 
   await screen.findByText('count: 0')
-  const renderCountAfterMount = renderCount
+  const viewCountAfterMount = viewCount
 
   await userEvent.click(screen.getByText('noop'))
   await screen.findByText('count: 0')
-  expect(renderCount).toBe(renderCountAfterMount + 0)
+  expect(viewCount).toBe(viewCountAfterMount + 0)
 
   await userEvent.click(screen.getByText('inc'))
   await screen.findByText('count: 1')
-  expect(renderCount).toBe(renderCountAfterMount + 1)
+  expect(viewCount).toBe(viewCountAfterMount + 1)
 
   await userEvent.click(screen.getByText('noop'))
   await screen.findByText('count: 1')
-  expect(renderCount).toBe(renderCountAfterMount + 1)
+  expect(viewCount).toBe(viewCountAfterMount + 1)
 
   await userEvent.click(screen.getByText('inc'))
   await screen.findByText('count: 2')
-  expect(renderCount).toBe(renderCountAfterMount + 2)
+  expect(viewCount).toBe(viewCountAfterMount + 2)
 })
 
 it('no extra rerenders after commit with derived atoms (#1213)', async () => {
@@ -196,26 +195,26 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
   const count1Atom = atom((get) => get(baseAtom).count1)
   const count2Atom = atom((get) => get(baseAtom).count2)
 
-  let renderCount1 = 0
-  let renderCount1AfterCommit = 0
+  let viewCount1 = 0
+  let viewCount1AfterCommit = 0
 
   const Counter1 = () => {
     const [count1] = useAtom(count1Atom)
-    ++renderCount1
+    ++viewCount1
     useEffect(() => {
-      renderCount1AfterCommit = renderCount1
+      viewCount1AfterCommit = viewCount1
     })
     return <div>count1: {count1}</div>
   }
 
-  let renderCount2 = 0
-  let renderCount2AfterCommit = 0
+  let viewCount2 = 0
+  let viewCount2AfterCommit = 0
 
   const Counter2 = () => {
     const [count2] = useAtom(count2Atom)
-    ++renderCount2
+    ++viewCount2
     useEffect(() => {
-      renderCount2AfterCommit = renderCount2
+      viewCount2AfterCommit = viewCount2
     })
     return <div>count2: {count2}</div>
   }
@@ -248,27 +247,26 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
     screen.getByText('count1: 0')
     screen.getByText('count2: 0')
   })
-  expect(renderCount1 > 0).toBeTruthy()
-  expect(renderCount2 > 0).toBeTruthy()
+  expect(viewCount1 > 0).toBeTruthy()
+  expect(viewCount2 > 0).toBeTruthy()
 
   await userEvent.click(screen.getByText('inc1'))
-  await waitFor(() => {
-    screen.getByText('count1: 1')
-    screen.getByText('count2: 0')
-  })
-  expect(renderCount1).toBe(renderCount1AfterCommit)
+
+  expect(screen.getByText('count1: 1')).toBeDefined()
+  expect(screen.getByText('count2: 0')).toBeDefined()
+
+  expect(viewCount1).toBe(viewCount1AfterCommit)
 
   await userEvent.click(screen.getByText('inc2'))
-  await waitFor(() => {
-    screen.getByText('count1: 1')
-    screen.getByText('count2: 1')
-  })
-  expect(renderCount2).toBe(renderCount2AfterCommit)
+
+  expect(screen.getByText('count1: 1')).toBeDefined()
+  expect(screen.getByText('count2: 1')).toBeDefined()
+
+  expect(viewCount2).toBe(viewCount2AfterCommit)
 
   await userEvent.click(screen.getByText('inc1'))
-  await waitFor(() => {
-    screen.getByText('count1: 2')
-    screen.getByText('count2: 1')
-  })
-  expect(renderCount1).toBe(renderCount1AfterCommit)
+
+  expect(screen.getByText('count1: 2')).toBeDefined()
+  expect(screen.getByText('count2: 1')).toBeDefined()
+  expect(viewCount1).toBe(viewCount1AfterCommit)
 })

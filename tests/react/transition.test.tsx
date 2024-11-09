@@ -50,7 +50,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       )
 
       resolve()
-      await waitFor(() => expect(screen.getByText('delayed: 0')).toBeTruthy())
+      await screen.findByText('delayed: 0')
 
       await userEvent.click(screen.getByText('button'))
 
@@ -58,7 +58,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
         resolve()
       })
 
-      await waitFor(() => expect(screen.getByText('delayed: 1')).toBeTruthy())
+      await screen.findByText('delayed: 1')
 
       expect(commited).toEqual([
         { pending: false, delayed: 0 },
@@ -106,12 +106,12 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
     await screen.findByText('count: 0')
 
     await userEvent.click(screen.getByText('toggle'))
-    await waitFor(() => expect(screen.findByText('pending')).toBeTruthy())
+    await screen.findByText('pending')
 
     await userEvent.click(screen.getByText('increment'))
-    await waitFor(() => expect(screen.findByText('count: 1')).toBeTruthy())
+    await screen.findByText('count: 1')
 
     await userEvent.click(screen.getByText('increment'))
-    await waitFor(() => expect(screen.findByText('count: 2')).toBeTruthy())
+    await screen.findByText('count: 2')
   })
 })

@@ -1,5 +1,12 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -61,10 +68,8 @@ it('does not show async stale result', async () => {
   await screen.findByText('loading')
   resolve1()
   resolve2()
-  await waitFor(() => {
-    screen.getByText('count: 0')
-    screen.getByText('delayedCount: 0')
-  })
+  await screen.findByText('count: 0')
+  await screen.findByText('delayedCount: 0')
   expect(committed).toEqual([0])
 
   await userEvent.click(screen.getByText('button'))
@@ -75,10 +80,8 @@ it('does not show async stale result', async () => {
     await Promise.resolve()
     resolve2()
   })
-  await waitFor(() => {
-    screen.getByText('count: 2')
-    screen.getByText('delayedCount: 2')
-  })
+  await screen.findByText('count: 2')
+  await screen.findByText('delayedCount: 2')
   expect(committed).toEqual([0, 2])
 })
 
@@ -125,36 +128,25 @@ it('does not show async stale result on derived atom', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    screen.getByText('count: 0')
-    screen.getByText('loading async value')
-    screen.getByText('loading derived value')
-  })
+  await screen.findByText('count: 0')
+  await screen.findByText('loading async value')
+  await screen.findByText('loading derived value')
+
   resolve()
-  await waitFor(() => {
-    expect(screen.queryByText('loading async value')).toBeNull()
-    expect(screen.queryByText('loading derived value')).toBeNull()
-  })
-  await waitFor(() => {
-    screen.getByText('async value: null')
-    screen.getByText('derived value: null')
-  })
+
+  await screen.findByText('async value: null')
+  await screen.findByText('derived value: null')
 
   await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('loading async value')
-    screen.getByText('loading derived value')
-  })
+
+  await screen.findByText('count: 1')
+  await screen.findByText('loading async value')
+  await screen.findByText('loading derived value')
+
   resolve()
-  await waitFor(() => {
-    expect(screen.queryByText('loading async value')).toBeNull()
-    expect(screen.queryByText('loading derived value')).toBeNull()
-  })
-  await waitFor(() => {
-    screen.getByText('async value: null')
-    screen.getByText('derived value: null')
-  })
+
+  await screen.findByText('async value: null')
+  await screen.findByText('derived value: null')
 })
 
 it('works with async get with extra deps', async () => {
@@ -192,19 +184,19 @@ it('works with async get with extra deps', async () => {
   )
 
   await screen.findByText('loading')
+
   resolve()
-  await waitFor(() => {
-    screen.getByText('count: 0')
-    screen.getByText('delayedCount: 0')
-  })
+
+  await screen.findByText('count: 0')
+  await screen.findByText('delayedCount: 0')
 
   await userEvent.click(screen.getByText('button'))
   await screen.findByText('loading')
+
   resolve()
-  await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('delayedCount: 1')
-  })
+
+  await screen.findByText('count: 1')
+  await screen.findByText('delayedCount: 1')
 })
 
 it('reuses promises on initial read', async () => {
