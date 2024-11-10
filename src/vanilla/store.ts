@@ -488,36 +488,44 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
     atomState: AtomState<Value>,
     ...args: Args
   ): Result => {
-    const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(pending, a, getAtomState(a, atomState)))
-    const setter: Setter = <V, As extends unknown[], R>(
-      a: WritableAtom<V, As, R>,
-      ...args: As
-    ) => {
-      const aState = getAtomState(a, atomState)
-      let r: R | undefined
-      if (isSelfAtom(atom, a)) {
-        if (!hasInitialValue(a)) {
-          // NOTE technically possible but restricted as it may cause bugs
-          throw new Error('atom not writable')
+    let isSync = true
+    try {
+      const getter: Getter = <V>(a: Atom<V>) =>
+        returnAtomValue(readAtomState(pending, a, getAtomState(a, atomState)))
+      const setter: Setter = <V, As extends unknown[], R>(
+        a: WritableAtom<V, As, R>,
+        ...args: As
+      ) => {
+        const aState = getAtomState(a, atomState)
+        let r: R | undefined
+        if (isSelfAtom(atom, a)) {
+          if (!hasInitialValue(a)) {
+            // NOTE technically possible but restricted as it may cause bugs
+            throw new Error('atom not writable')
+          }
+          const hasPrevValue = 'v' in aState
+          const prevValue = aState.v
+          const v = args[0] as V
+          setAtomStateValueOrPromise(a, aState, v)
+          mountDependencies(pending, a, aState)
+          if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
+            addPendingAtom(pending, a, aState)
+            recomputeDependents(pending, a, aState)
+          }
+        } else {
+          r = writeAtomState(pending, a, aState, ...args) as R
         }
-        const hasPrevValue = 'v' in aState
-        const prevValue = aState.v
-        const v = args[0] as V
-        setAtomStateValueOrPromise(a, aState, v)
-        mountDependencies(pending, a, aState)
-        if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
-          addPendingAtom(pending, a, aState)
-          recomputeDependents(pending, a, aState)
+        if (!isSync) {
+          flushPending(pending)
         }
-      } else {
-        r = writeAtomState(pending, a, aState, ...args) as R
+        return r as R
       }
-      flushPending(pending)
-      return r as R
+
+      const result = atom.write(getter, setter, ...args)
+      return result
+    } finally {
+      isSync = false
     }
-    const result = atom.write(getter, setter, ...args)
-    return result
   }
 
   const writeAtom = <Value, Args extends unknown[], Result>(
