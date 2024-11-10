@@ -520,9 +520,7 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
         }
         return r as R
       }
-
-      const result = atom.write(getter, setter, ...args)
-      return result
+      return atom.write(getter, setter, ...args)
     } finally {
       isSync = false
     }
@@ -587,11 +585,20 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
         const mounted = atomState.m
         const { onMount } = atom
         addPendingFunction(pending, () => {
-          const onUnmount = onMount((...args) =>
-            writeAtomState(pending, atom, atomState, ...args),
-          )
-          if (onUnmount) {
-            mounted.u = onUnmount
+          let isSync = true
+          try {
+            const onUnmount = onMount((...args) => {
+              const result = writeAtomState(pending, atom, atomState, ...args)
+              if (!isSync) {
+                flushPending(pending)
+              }
+              return result
+            })
+            if (onUnmount) {
+              mounted.u = onUnmount
+            }
+          } finally {
+            isSync = false
           }
         })
       }
