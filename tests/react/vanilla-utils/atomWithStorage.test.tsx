@@ -545,9 +545,9 @@ describe('atomWithStorage (with browser storage)', () => {
     expect(store.get(isLoggedAtom)).toBeTruthy()
     expect(store.get(isDevModeStorageAtom)).toBeTruthy()
 
-    expect(checkbox.checked).toBeTruthy()
+    expect(checkbox).toBeChecked()
     await userEvent.click(checkbox)
-    expect(checkbox.checked).toBeFalsy()
+    expect(checkbox).not.toBeChecked()
   })
 })
 
