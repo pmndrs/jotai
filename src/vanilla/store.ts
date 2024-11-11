@@ -485,6 +485,7 @@ const buildStore = (
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
+    let isSync = true
     const getter: Getter = <V>(a: Atom<V>) =>
       returnAtomValue(readAtomState(pending, a))
     const setter: Setter = <V, As extends unknown[], R>(
@@ -510,11 +511,16 @@ const buildStore = (
       } else {
         r = writeAtomState(pending, a, ...args) as R
       }
-      flushPending(pending)
+      if (!isSync) {
+        flushPending(pending)
+      }
       return r as R
     }
-    const result = atomWrite(atom, getter, setter, ...args)
-    return result
+    try {
+      return atomWrite(atom, getter, setter, ...args)
+    } finally {
+      isSync = false
+    }
   }
 
   const writeAtom = <Value, Args extends unknown[], Result>(
@@ -575,11 +581,20 @@ const buildStore = (
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
         addPendingFunction(pending, () => {
-          const onUnmount = atomOnMount(atom, (...args) =>
-            writeAtomState(pending, atom, ...args),
-          )
-          if (onUnmount) {
-            mounted.u = onUnmount
+          let isSync = true
+          try {
+            const onUnmount = atomOnMount(atom, (...args) => {
+              const result = writeAtomState(pending, atom, ...args)
+              if (!isSync) {
+                flushPending(pending)
+              }
+              return result
+            })
+            if (onUnmount) {
+              mounted.u = onUnmount
+            }
+          } finally {
+            isSync = false
           }
         })
       }
