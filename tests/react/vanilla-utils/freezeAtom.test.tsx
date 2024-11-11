@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -23,16 +23,16 @@ it('freezeAtom basic test', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Component />
     </StrictMode>,
   )
 
-  await findByText('isFrozen: true')
+  await screen.findByText('isFrozen: true')
 
-  await userEvent.click(getByText('change'))
-  await findByText('isFrozen: true')
+  await userEvent.click(screen.getByText('change'))
+  await screen.findByText('isFrozen: true')
 })
 
 describe('freezeAtomCreator', () => {
@@ -63,15 +63,15 @@ describe('freezeAtomCreator', () => {
       )
     }
 
-    const { getByText, findByText } = render(
+    render(
       <StrictMode>
         <Component />
       </StrictMode>,
     )
 
-    await findByText('isFrozen: true')
+    await screen.findByText('isFrozen: true')
 
-    await userEvent.click(getByText('change'))
-    await findByText('isFrozen: true')
+    await userEvent.click(screen.getByText('change'))
+    await screen.findByText('isFrozen: true')
   })
 })

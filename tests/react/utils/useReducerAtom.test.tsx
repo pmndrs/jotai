@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, it, vi } from 'vitest'
 import { useReducerAtom } from 'jotai/react/utils'
@@ -28,19 +28,19 @@ it('useReducerAtom with no action argument', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Parent />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  await userEvent.click(getByText('dispatch'))
-  await findByText('count: 2')
+  await userEvent.click(screen.getByText('dispatch'))
+  await screen.findByText('count: 2')
 
-  await userEvent.click(getByText('dispatch'))
-  await findByText('count: 4')
+  await userEvent.click(screen.getByText('dispatch'))
+  await screen.findByText('count: 4')
 })
 
 it('useReducerAtom with optional action argument', async () => {
@@ -68,22 +68,22 @@ it('useReducerAtom with optional action argument', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Parent />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  await userEvent.click(getByText('dispatch INCREASE'))
-  await findByText('count: 1')
+  await userEvent.click(screen.getByText('dispatch INCREASE'))
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('dispatch empty'))
-  await findByText('count: 1')
+  await userEvent.click(screen.getByText('dispatch empty'))
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('dispatch DECREASE'))
-  await findByText('count: 0')
+  await userEvent.click(screen.getByText('dispatch DECREASE'))
+  await screen.findByText('count: 0')
 })
 
 it('useReducerAtom with non-optional action argument', async () => {
@@ -108,17 +108,17 @@ it('useReducerAtom with non-optional action argument', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Parent />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  await userEvent.click(getByText('dispatch INCREASE'))
-  await findByText('count: 1')
+  await userEvent.click(screen.getByText('dispatch INCREASE'))
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('dispatch DECREASE'))
-  await findByText('count: 0')
+  await userEvent.click(screen.getByText('dispatch DECREASE'))
+  await screen.findByText('count: 0')
 })
