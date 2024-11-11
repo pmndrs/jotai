@@ -680,6 +680,9 @@ const buildStore = (
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap()
   const getAtomState = <Value>(atom: Atom<Value>) => {
+    if (import.meta.env?.MODE !== 'production' && !atom) {
+      throw new Error('Atom is undefined or null')
+    }
     let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
