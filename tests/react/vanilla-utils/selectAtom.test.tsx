@@ -1,5 +1,5 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
@@ -43,21 +43,21 @@ it('selectAtom works as expected', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Parent />
       <Selector />
     </StrictMode>,
   )
 
-  await findByText('a: 0')
+  await screen.findByText('a: 0')
 
-  await userEvent.click(getByText('increment'))
-  await findByText('a: 1')
-  await userEvent.click(getByText('increment'))
-  await findByText('a: 2')
-  await userEvent.click(getByText('increment'))
-  await findByText('a: 3')
+  await userEvent.click(screen.getByText('increment'))
+  await screen.findByText('a: 1')
+  await userEvent.click(screen.getByText('increment'))
+  await screen.findByText('a: 2')
+  await userEvent.click(screen.getByText('increment'))
+  await screen.findByText('a: 3')
 })
 
 it('do not update unless equality function says value has changed', async () => {
@@ -97,37 +97,37 @@ it('do not update unless equality function says value has changed', async () => 
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <>
       <Parent />
       <Selector />
     </>,
   )
 
-  await findByText('value: {"a":0}')
-  await findByText('commits: 1')
-  await userEvent.click(getByText('copy'))
-  await findByText('value: {"a":0}')
-  await findByText('commits: 1')
+  await screen.findByText('value: {"a":0}')
+  await screen.findByText('commits: 1')
+  await userEvent.click(screen.getByText('copy'))
+  await screen.findByText('value: {"a":0}')
+  await screen.findByText('commits: 1')
 
-  await userEvent.click(getByText('increment'))
-  await findByText('value: {"a":1}')
-  await findByText('commits: 2')
-  await userEvent.click(getByText('copy'))
-  await findByText('value: {"a":1}')
-  await findByText('commits: 2')
+  await userEvent.click(screen.getByText('increment'))
+  await screen.findByText('value: {"a":1}')
+  await screen.findByText('commits: 2')
+  await userEvent.click(screen.getByText('copy'))
+  await screen.findByText('value: {"a":1}')
+  await screen.findByText('commits: 2')
 
-  await userEvent.click(getByText('increment'))
-  await findByText('value: {"a":2}')
-  await findByText('commits: 3')
-  await userEvent.click(getByText('copy'))
-  await findByText('value: {"a":2}')
-  await findByText('commits: 3')
+  await userEvent.click(screen.getByText('increment'))
+  await screen.findByText('value: {"a":2}')
+  await screen.findByText('commits: 3')
+  await userEvent.click(screen.getByText('copy'))
+  await screen.findByText('value: {"a":2}')
+  await screen.findByText('commits: 3')
 
-  await userEvent.click(getByText('increment'))
-  await findByText('value: {"a":3}')
-  await findByText('commits: 4')
-  await userEvent.click(getByText('copy'))
-  await findByText('value: {"a":3}')
-  await findByText('commits: 4')
+  await userEvent.click(screen.getByText('increment'))
+  await screen.findByText('value: {"a":3}')
+  await screen.findByText('commits: 4')
+  await userEvent.click(screen.getByText('copy'))
+  await screen.findByText('value: {"a":3}')
+  await screen.findByText('commits: 4')
 })

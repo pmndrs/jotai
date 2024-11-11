@@ -60,12 +60,16 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
             return { v: promise as Awaited<Value> }
           }
           if (promise !== prev?.p) {
-            promise
-              .then(
-                (v) => promiseResultCache.set(promise, v as Awaited<Value>),
-                (e) => promiseErrorCache.set(promise, e),
-              )
-              .finally(setSelf)
+            promise.then(
+              (v) => {
+                promiseResultCache.set(promise, v as Awaited<Value>)
+                setSelf()
+              },
+              (e) => {
+                promiseErrorCache.set(promise, e)
+                setSelf()
+              },
+            )
           }
           if (promiseErrorCache.has(promise)) {
             throw promiseErrorCache.get(promise)
