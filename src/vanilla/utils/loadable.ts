@@ -44,16 +44,17 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
         if (cached1) {
           return cached1
         }
-        promise
-          .then(
-            (data) => {
-              loadableCache.set(promise, { state: 'hasData', data })
-            },
-            (error) => {
-              loadableCache.set(promise, { state: 'hasError', error })
-            },
-          )
-          .finally(setSelf)
+        promise.then(
+          (data) => {
+            loadableCache.set(promise, { state: 'hasData', data })
+            setSelf()
+          },
+          (error) => {
+            loadableCache.set(promise, { state: 'hasError', error })
+            setSelf()
+          },
+        )
+
         const cached2 = loadableCache.get(promise)
         if (cached2) {
           return cached2
