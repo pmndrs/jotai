@@ -1,5 +1,5 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
@@ -33,7 +33,7 @@ describe('abortable atom test', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Suspense fallback="loading">
           <Component />
@@ -42,22 +42,22 @@ describe('abortable atom test', () => {
       </StrictMode>,
     )
 
-    await findByText('loading')
+    await screen.findByText('loading')
 
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 0')
+    await screen.findByText('count: 0')
     expect(abortedCount).toBe(0)
 
-    await userEvent.click(getByText('button'))
-    await userEvent.click(getByText('button'))
+    await userEvent.click(screen.getByText('button'))
+    await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 2')
+    await screen.findByText('count: 2')
 
     expect(abortedCount).toBe(1)
 
-    await userEvent.click(getByText('button'))
+    await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 3')
+    await screen.findByText('count: 3')
     expect(abortedCount).toBe(1)
   })
 
@@ -90,7 +90,7 @@ describe('abortable atom test', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Suspense fallback="loading">
           <Component />
@@ -99,22 +99,22 @@ describe('abortable atom test', () => {
       </StrictMode>,
     )
 
-    await findByText('loading')
+    await screen.findByText('loading')
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 0')
+    await screen.findByText('count: 0')
 
     expect(abortedCount).toBe(0)
 
-    await userEvent.click(getByText('button'))
-    await userEvent.click(getByText('button'))
+    await userEvent.click(screen.getByText('button'))
+    await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 2')
+    await screen.findByText('count: 2')
 
     expect(abortedCount).toBe(1)
 
-    await userEvent.click(getByText('button'))
+    await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 3')
+    await screen.findByText('count: 3')
 
     expect(abortedCount).toBe(1)
   })
@@ -149,7 +149,7 @@ describe('abortable atom test', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Suspense fallback="loading">
           <Parent />
@@ -157,16 +157,16 @@ describe('abortable atom test', () => {
       </StrictMode>,
     )
 
-    await findByText('loading')
+    await screen.findByText('loading')
 
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 0')
+    await screen.findByText('count: 0')
     expect(abortedCount).toBe(0)
 
-    await userEvent.click(getByText('button'))
-    await userEvent.click(getByText('toggle'))
+    await userEvent.click(screen.getByText('button'))
+    await userEvent.click(screen.getByText('toggle'))
 
-    await findByText('hidden')
+    await screen.findByText('hidden')
 
     resolve.splice(0).forEach((fn) => fn())
     await waitFor(() => expect(abortedCount).toBe(0))
@@ -198,7 +198,7 @@ describe('abortable atom test', () => {
       )
     }
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Suspense fallback="loading">
           <Component />
@@ -207,18 +207,18 @@ describe('abortable atom test', () => {
       </StrictMode>,
     )
 
-    await findByText('loading')
+    await screen.findByText('loading')
 
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 0')
+    await screen.findByText('count: 0')
 
-    await userEvent.click(getByText('button'))
-    await userEvent.click(getByText('button'))
+    await userEvent.click(screen.getByText('button'))
+    await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 2')
+    await screen.findByText('count: 2')
 
-    await userEvent.click(getByText('button'))
+    await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await findByText('count: 3')
+    await screen.findByText('count: 3')
   })
 })
