@@ -595,7 +595,14 @@ const buildStore = (getAtomState: StoreArgs[0]): Store => {
               return result
             })
             if (onUnmount) {
-              mounted.u = onUnmount
+              mounted.u = () => {
+                isSync = true
+                try {
+                  onUnmount()
+                } finally {
+                  isSync = false
+                }
+              }
             }
           } finally {
             isSync = false
