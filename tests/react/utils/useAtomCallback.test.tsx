@@ -1,5 +1,5 @@
 import { StrictMode, useCallback, useEffect, useState } from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -43,18 +43,18 @@ it('useAtomCallback with get', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Counter />
       <Monitor />
     </StrictMode>,
   )
 
-  await findByText('atom count: 0')
-  await userEvent.click(getByText('dispatch'))
+  await screen.findByText('atom count: 0')
+  await userEvent.click(screen.getByText('dispatch'))
   await waitFor(() => {
-    getByText('atom count: 1')
-    getByText('state count: 1')
+    screen.getByText('atom count: 1')
+    screen.getByText('state count: 1')
   })
 })
 
@@ -95,18 +95,18 @@ it('useAtomCallback with set and update', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Counter />
       <Monitor />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
-  await userEvent.click(getByText('dispatch'))
+  await screen.findByText('count: 0')
+  await userEvent.click(screen.getByText('dispatch'))
   await waitFor(() => {
-    getByText('count: 1')
-    getByText('changeable count: 1')
+    screen.getByText('count: 1')
+    screen.getByText('changeable count: 1')
   })
 })
 
@@ -130,16 +130,16 @@ it('useAtomCallback with set and update and arg', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <App />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
-  await userEvent.click(getByText('dispatch'))
+  await screen.findByText('count: 0')
+  await userEvent.click(screen.getByText('dispatch'))
   await waitFor(() => {
-    getByText('count: 42')
+    screen.getByText('count: 42')
   })
 })
 
@@ -163,14 +163,14 @@ it('useAtomCallback with sync atom (#1100)', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('atom count: 0')
+  await screen.findByText('atom count: 0')
 
-  await userEvent.click(getByText('dispatch'))
-  await findByText('atom count: 1')
+  await userEvent.click(screen.getByText('dispatch'))
+  await screen.findByText('atom count: 1')
 })

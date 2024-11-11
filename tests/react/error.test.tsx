@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -67,7 +67,7 @@ it('can throw an initial error in read function', async () => {
     )
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <ErrorBoundary>
         <Counter />
@@ -75,7 +75,7 @@ it('can throw an initial error in read function', async () => {
     </StrictMode>,
   )
 
-  await findByText('Errored:')
+  await screen.findByText('Errored:')
 })
 
 it('can throw an error in read function', async () => {
@@ -99,7 +99,7 @@ it('can throw an error in read function', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <ErrorBoundary>
         <Counter />
@@ -107,10 +107,10 @@ it('can throw an error in read function', async () => {
     </StrictMode>,
   )
 
-  await findByText('no error')
+  await screen.findByText('no error')
 
-  await userEvent.click(getByText('button'))
-  await findByText('Errored:')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('Errored:')
 })
 
 it('can throw an initial chained error in read function', async () => {
@@ -128,7 +128,7 @@ it('can throw an initial chained error in read function', async () => {
     )
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <ErrorBoundary>
         <Counter />
@@ -136,7 +136,7 @@ it('can throw an initial chained error in read function', async () => {
     </StrictMode>,
   )
 
-  await findByText('Errored:')
+  await screen.findByText('Errored:')
 })
 
 it('can throw a chained error in read function', async () => {
@@ -161,7 +161,7 @@ it('can throw a chained error in read function', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <ErrorBoundary>
         <Counter />
@@ -169,10 +169,10 @@ it('can throw a chained error in read function', async () => {
     </StrictMode>,
   )
 
-  await findByText('no error')
+  await screen.findByText('no error')
 
-  await userEvent.click(getByText('button'))
-  await findByText('Errored:')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('Errored:')
 })
 
 it('can throw an initial error in async read function', async () => {
@@ -189,7 +189,7 @@ it('can throw an initial error in async read function', async () => {
     )
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <ErrorBoundary>
         <Suspense fallback={null}>
@@ -199,7 +199,7 @@ it('can throw an initial error in async read function', async () => {
     </StrictMode>,
   )
 
-  await findByText('Errored:')
+  await screen.findByText('Errored:')
 })
 
 it('can throw an error in async read function', async () => {
@@ -223,7 +223,7 @@ it('can throw an error in async read function', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <ErrorBoundary>
         <Suspense fallback={null}>
@@ -233,10 +233,10 @@ it('can throw an error in async read function', async () => {
     </StrictMode>,
   )
 
-  await findByText('no error')
+  await screen.findByText('no error')
 
-  await userEvent.click(getByText('button'))
-  await findByText('Errored:')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('Errored:')
 })
 
 it('can throw an error in write function', async () => {
@@ -266,16 +266,16 @@ it('can throw an error in write function', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('no error')
+  await screen.findByText('no error')
   expect(errorMessages).not.toContain('Error: error_in_write_function')
 
-  await userEvent.click(getByText('button'))
+  await userEvent.click(screen.getByText('button'))
   expect(errorMessages).toContain('Error: error_in_write_function')
 })
 
@@ -306,7 +306,7 @@ it('can throw an error in async write function', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback={null}>
         <Counter />
@@ -314,10 +314,10 @@ it('can throw an error in async write function', async () => {
     </StrictMode>,
   )
 
-  await findByText('no error')
+  await screen.findByText('no error')
   expect(errorMessages).not.toContain('Error: error_in_async_write_function')
 
-  await userEvent.click(getByText('button'))
+  await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
     expect(errorMessages).toContain('Error: error_in_async_write_function')
   })
@@ -356,16 +356,16 @@ it('can throw a chained error in write function', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('no error')
+  await screen.findByText('no error')
   expect(errorMessages).not.toContain('Error: chained_err_in_write')
 
-  await userEvent.click(getByText('button'))
+  await userEvent.click(screen.getByText('button'))
   expect(errorMessages).toContain('Error: chained_err_in_write')
 })
 
@@ -390,7 +390,7 @@ it('throws an error while updating in effect', async () => {
     )
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <ErrorBoundary>
         <Counter />
@@ -398,7 +398,7 @@ it('throws an error while updating in effect', async () => {
     </StrictMode>,
   )
 
-  await findByText('no error')
+  await screen.findByText('no error')
   expect(errorMessages).toContain('Error: err_updating_in_effect')
 })
 
@@ -437,7 +437,7 @@ describe('throws an error while updating in effect cleanup', () => {
   }
 
   it('[DEV-ONLY] single setCount', async () => {
-    const { getByText, findByText } = render(
+    render(
       <>
         <ErrorBoundary>
           <Main />
@@ -445,25 +445,25 @@ describe('throws an error while updating in effect cleanup', () => {
       </>,
     )
 
-    await findByText('no error')
+    await screen.findByText('no error')
     expect(errorMessages).not.toContain(
       'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
 
-    await userEvent.click(getByText('close'))
+    await userEvent.click(screen.getByText('close'))
     if (reactVersion.startsWith('17.')) {
       expect(errorMessages).toContain(
         'Error: Uncaught [Error: err_in_effect_cleanup]',
       )
     } else {
-      await findByText('Errored: err_in_effect_cleanup')
+      await screen.findByText('Errored: err_in_effect_cleanup')
     }
   })
 
   it('[DEV-ONLY] dobule setCount', async () => {
     doubleSetCount = true
 
-    const { getByText, findByText } = render(
+    render(
       <>
         <ErrorBoundary>
           <Main />
@@ -471,18 +471,18 @@ describe('throws an error while updating in effect cleanup', () => {
       </>,
     )
 
-    await findByText('no error')
+    await screen.findByText('no error')
     expect(errorMessages).not.toContain(
       'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
 
-    await userEvent.click(getByText('close'))
+    await userEvent.click(screen.getByText('close'))
     if (reactVersion.startsWith('17.')) {
       expect(errorMessages).toContain(
         'Error: Uncaught [Error: err_in_effect_cleanup]',
       )
     } else {
-      await findByText('Errored: err_in_effect_cleanup')
+      await screen.findByText('Errored: err_in_effect_cleanup')
     }
   })
 })
@@ -516,7 +516,7 @@ describe('error recovery', () => {
       return <div>Value: {useAtom(syncAtom)[0]}</div>
     }
 
-    const { getByText, findByText } = render(
+    render(
       <StrictMode>
         <Counter />
         <ErrorBoundary>
@@ -525,11 +525,11 @@ describe('error recovery', () => {
       </StrictMode>,
     )
 
-    await findByText('Errored: An error occurred')
+    await screen.findByText('Errored: An error occurred')
 
-    await userEvent.click(getByText('increment'))
-    await userEvent.click(getByText('retry'))
-    await findByText('Value: 1')
+    await userEvent.click(screen.getByText('increment'))
+    await userEvent.click(screen.getByText('retry'))
+    await screen.findByText('Value: 1')
   })
 
   it('recovers from async errors', async () => {
@@ -548,7 +548,7 @@ describe('error recovery', () => {
       return <div>Value: {useAtom(asyncAtom)[0]}</div>
     }
 
-    const { getByText, findByText } = render(
+    render(
       <StrictMode>
         <Counter />
         <ErrorBoundary>
@@ -560,11 +560,11 @@ describe('error recovery', () => {
     )
 
     resolve()
-    await findByText('Errored: An error occurred')
+    await screen.findByText('Errored: An error occurred')
 
-    await userEvent.click(getByText('increment'))
-    await userEvent.click(getByText('retry'))
+    await userEvent.click(screen.getByText('increment'))
+    await userEvent.click(screen.getByText('retry'))
     resolve()
-    await findByText('Value: 1')
+    await screen.findByText('Value: 1')
   })
 })

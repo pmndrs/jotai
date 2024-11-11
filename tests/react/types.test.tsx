@@ -1,3 +1,4 @@
+import { screen } from '@testing-library/react'
 import { expectType } from 'ts-expect'
 import type { TypeEqual } from 'ts-expect'
 import { expect, it } from 'vitest'

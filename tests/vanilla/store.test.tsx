@@ -1,4 +1,4 @@
-import { waitFor } from '@testing-library/dom'
+import { waitFor } from '@testing-library/react'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Getter } from 'jotai/vanilla'
@@ -484,8 +484,8 @@ describe('aborting atoms', () => {
     const promise2 = store.get(derivedAtom)
 
     resolve.splice(0).forEach((fn) => fn())
-    expect(promise).rejects.toThrow('aborted')
-    expect(await promise2).toEqual(4)
+    await expect(promise).rejects.toThrow('aborted')
+    await expect(promise2).resolves.toEqual(4)
     expect(callBeforeAbort).toHaveBeenCalledTimes(2)
     expect(callAfterAbort).toHaveBeenCalledTimes(1)
   })

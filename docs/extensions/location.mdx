@@ -23,6 +23,9 @@ atomWithLocation(options): PrimitiveAtom
 
 `atomWithLocation` creates a new atom that links to `window.location`.
 
+Typically, you should only instantiate `atomWithLocation` once per application. This is because changes made to one instance might not be reflected in others.
+As this atom is designed to synchronize with the `window.location` object, using multiple instances can lead to unpredictable behavior.
+
 ### Parameters
 
 **options** (optional): an object of options to customize the behavior of the atom
@@ -104,9 +107,9 @@ const App = () => {
 }
 ```
 
-### Codesandbox
+### Stackblitz
 
-<CodeSandbox id="kism55" />
+<Stackblitz id="vitejs-vite-9v72fq" file="src%2FApp.tsx" />
 
 ## atomWithHash
 
@@ -157,9 +160,9 @@ const Counter = () => {
 }
 ```
 
-### Codesandbox
+### Stackblitz
 
-<CodeSandbox id="2mocd1" />
+<Stackblitz id="vitejs-vite-zngpjt" file="src%2FApp.tsx" />
 
 ### Deleting Item
 
