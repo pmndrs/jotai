@@ -584,11 +584,13 @@ const buildStore = (
           let isSync = true
           try {
             const onUnmount = atomOnMount(atom, (...args) => {
-              const result = writeAtomState(pending, atom, ...args)
-              if (!isSync) {
-                flushPending(pending)
+              try {
+                return writeAtomState(pending, atom, ...args)
+              } finally {
+                if (!isSync) {
+                  flushPending(pending)
+                }
               }
-              return result
             })
             if (onUnmount) {
               mounted.u = () => {
