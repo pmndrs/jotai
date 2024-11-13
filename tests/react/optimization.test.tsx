@@ -41,24 +41,24 @@ it('only relevant render function called (#156)', async () => {
     </>,
   )
 
-  expect(screen.getByText('count1: 0')).toBeDefined()
-  expect(screen.getByText('count2: 0')).toBeDefined()
+  expect(screen.getByText('count1: 0')).toBeInTheDocument()
+  expect(screen.getByText('count2: 0')).toBeInTheDocument()
 
   const viewCount1AfterMount = viewCount1
   const viewCount2AfterMount = viewCount2
 
   await userEvent.click(screen.getByText('button1'))
 
-  expect(screen.getByText('count1: 1')).toBeDefined()
-  expect(screen.getByText('count2: 0')).toBeDefined()
+  expect(screen.getByText('count1: 1')).toBeInTheDocument()
+  expect(screen.getByText('count2: 0')).toBeInTheDocument()
 
   expect(viewCount1).toBe(viewCount1AfterMount + 1)
   expect(viewCount2).toBe(viewCount2AfterMount + 0)
 
   await userEvent.click(screen.getByText('button2'))
 
-  expect(screen.getByText('count1: 1')).toBeDefined()
-  expect(screen.getByText('count2: 1')).toBeDefined()
+  expect(screen.getByText('count1: 1')).toBeInTheDocument()
+  expect(screen.getByText('count2: 1')).toBeInTheDocument()
 
   expect(viewCount1).toBe(viewCount1AfterMount + 1)
   expect(viewCount2).toBe(viewCount2AfterMount + 1)
@@ -252,21 +252,21 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
 
   await userEvent.click(screen.getByText('inc1'))
 
-  expect(screen.getByText('count1: 1')).toBeDefined()
-  expect(screen.getByText('count2: 0')).toBeDefined()
+  expect(screen.getByText('count1: 1')).toBeInTheDocument()
+  expect(screen.getByText('count2: 0')).toBeInTheDocument()
 
   expect(viewCount1).toBe(viewCount1AfterCommit)
 
   await userEvent.click(screen.getByText('inc2'))
 
-  expect(screen.getByText('count1: 1')).toBeDefined()
-  expect(screen.getByText('count2: 1')).toBeDefined()
+  expect(screen.getByText('count1: 1')).toBeInTheDocument()
+  expect(screen.getByText('count2: 1')).toBeInTheDocument()
 
   expect(viewCount2).toBe(viewCount2AfterCommit)
 
   await userEvent.click(screen.getByText('inc1'))
 
-  expect(screen.getByText('count1: 2')).toBeDefined()
-  expect(screen.getByText('count2: 1')).toBeDefined()
+  expect(screen.getByText('count1: 2')).toBeInTheDocument()
+  expect(screen.getByText('count2: 1')).toBeInTheDocument()
   expect(viewCount1).toBe(viewCount1AfterCommit)
 })

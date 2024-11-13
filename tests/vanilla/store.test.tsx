@@ -358,7 +358,7 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
   resolve[3]!()
   resolve[4]!()
 
-  await new Promise(setImmediate)
+  await Promise.resolve()
   await waitFor(() => assert(store.get(countAtom) === 4))
 
   expect(result).toBe(4) // 3
