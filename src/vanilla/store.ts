@@ -199,14 +199,27 @@ const addPendingFunction = (pending: Pending, fn: () => void) => {
 }
 
 const flushPending = (pending: Pending) => {
+  let error: unknown | undefined
+  const call = (fn: () => void) => {
+    try {
+      fn()
+    } catch (e) {
+      if (!error) {
+        error = e
+      }
+    }
+  }
   while (pending[1].size || pending[2].size) {
     pending[0].clear()
     const atomStates = new Set(pending[1].values())
     pending[1].clear()
     const functions = new Set(pending[2])
     pending[2].clear()
-    atomStates.forEach((atomState) => atomState.m?.l.forEach((l) => l()))
-    functions.forEach((fn) => fn())
+    atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
+    functions.forEach(call)
+  }
+  if (error) {
+    throw error
   }
 }
 
