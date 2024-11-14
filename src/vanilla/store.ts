@@ -331,17 +331,21 @@ const buildStore = (
         }
         return returnAtomValue(aState)
       }
-      // a !== atom
-      const aState = readAtomState(pending, a, dirtyAtoms)
-      if (isSync) {
-        addDependency(pending, atom, atomState, a, aState)
-      } else {
-        const pending = createPending()
-        addDependency(pending, atom, atomState, a, aState)
-        mountDependencies(pending, atom, atomState)
-        flushPending(pending)
+      let aState: AtomState<V>
+      try {
+        // a !== atom
+        aState = readAtomState(pending, a, dirtyAtoms)
+        return returnAtomValue(aState)
+      } finally {
+        if (isSync) {
+          addDependency(pending, atom, atomState, a, aState!)
+        } else {
+          const pending = createPending()
+          addDependency(pending, atom, atomState, a, aState!)
+          mountDependencies(pending, atom, atomState)
+          flushPending(pending)
+        }
       }
-      return returnAtomValue(aState)
     }
     let controller: AbortController | undefined
     let setSelf: ((...args: unknown[]) => unknown) | undefined
@@ -528,9 +532,11 @@ const buildStore = (
     ...args: Args
   ): Result => {
     const pending = createPending()
-    const result = writeAtomState(pending, atom, ...args)
-    flushPending(pending)
-    return result
+    try {
+      return writeAtomState(pending, atom, ...args)
+    } finally {
+      flushPending(pending)
+    }
   }
 
   const mountDependencies = (
@@ -643,7 +649,8 @@ const buildStore = (
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
     const pending = createPending()
     const atomState = getAtomState(atom)
-    const mounted = mountAtom(pending, atom, atomState)
+    let mounted: Mounted
+    mounted = mountAtom(pending, atom, atomState)
     flushPending(pending)
     const listeners = mounted.l
     listeners.add(listener)

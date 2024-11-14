@@ -582,6 +582,7 @@ it('should update derived atom even if dependances changed (#2697)', () => {
 
 describe('should invoke flushPending only after all atoms are updated (#2804)', () => {
   const store = createStore()
+
   it('should invoke flushPending only after all atoms are updated with set', () => {
     const a = atom(0)
     const setResult = []
@@ -611,6 +612,7 @@ describe('should invoke flushPending only after all atoms are updated (#2804)', 
       'after store.set',
     ])
   })
+
   it('should invoke flushPending only after all atoms are updated with mount', () => {
     const mountResult = []
     const a = atom(0)
