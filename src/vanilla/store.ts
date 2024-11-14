@@ -77,7 +77,7 @@ type Mounted = {
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
-  u?: OnUnmount
+  u?: (pending: Pending) => void
 }
 
 /**
@@ -604,18 +604,20 @@ const buildStore = (
         const mounted = atomState.m
         addPendingFunction(pending, () => {
           let isSync = true
+          let currPending = pending
           try {
             const onUnmount = atomOnMount(atom, (...args) => {
               try {
-                return writeAtomState(pending, atom, ...args)
+                return writeAtomState(currPending, atom, ...args)
               } finally {
                 if (!isSync) {
-                  flushPending(pending)
+                  flushPending(currPending)
                 }
               }
             })
             if (onUnmount) {
-              mounted.u = () => {
+              mounted.u = (pending) => {
+                currPending = pending
                 isSync = true
                 try {
                   onUnmount()
@@ -646,7 +648,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addPendingFunction(pending, onUnmount)
+        addPendingFunction(pending, () => onUnmount(pending))
       }
       delete atomState.m
       if (import.meta.env?.MODE !== 'production') {

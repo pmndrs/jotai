@@ -896,3 +896,17 @@ it('throws falsy errors in onMount, onUnmount, and listeners', () => {
   })
   expect(() => store.set(c, 1)).toThrow('')
 })
+
+it('should use the correct pending on unmount', () => {
+  const store = createStore()
+  const a = atom(0)
+  const b = atom(0, (_, set, update: number) => set(a, update))
+  b.onMount = (setAtom) => () => setAtom(1)
+  const aListener = vi.fn()
+  store.sub(a, aListener)
+  const unsub = store.sub(b, () => {})
+  aListener.mockClear()
+  unsub()
+  expect(store.get(a)).toBe(1)
+  expect(aListener).toHaveBeenCalledTimes(1)
+})
