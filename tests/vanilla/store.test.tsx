@@ -646,3 +646,215 @@ describe('should invoke flushPending only after all atoms are updated (#2804)', 
     ])
   })
 })
+
+describe('should mount and trigger listeners even when an error is thrown', () => {
+  it('in asynchronous read', async () => {
+    const store = createStore()
+    const a = atom(0)
+    a.onMount = vi.fn()
+    const e = atom(
+      () => {
+        throw new Error('error')
+      },
+      () => {},
+    )
+    e.onMount = vi.fn()
+    const b = atom((get) => {
+      setTimeout(() => {
+        get(a)
+        try {
+          get(e)
+        } catch {}
+      })
+    })
+    store.sub(b, () => {})
+    await new Promise((r) => setTimeout(r))
+    expect(a.onMount).toHaveBeenCalledOnce()
+    expect(e.onMount).toHaveBeenCalledOnce()
+  })
+
+  it('in read setSelf', async () => {
+    const store = createStore()
+    const a = atom(0)
+    const e = atom(
+      () => {
+        throw new Error('error')
+      },
+      () => {},
+    )
+    const b = atom(
+      (_, { setSelf }) => {
+        setTimeout(() => {
+          try {
+            setSelf()
+          } catch {}
+        })
+      },
+      (get, set) => {
+        set(a, 1)
+        get(e)
+      },
+    )
+    const listener = vi.fn()
+    store.sub(a, listener)
+    store.sub(b, () => {})
+    await new Promise((r) => setTimeout(r))
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('in read promise on settled', async () => {
+    const store = createStore()
+    const a = atom(0)
+    a.onMount = vi.fn()
+    const e = atom(
+      () => {
+        throw new Error('error')
+      },
+      () => {},
+    )
+    const b = atom(async (get) => {
+      await new Promise((r) => setTimeout(r))
+      get(a)
+      get(e)
+    })
+    store.sub(b, () => {})
+    await new Promise((r) => setTimeout(r))
+    expect(a.onMount).toHaveBeenCalledOnce()
+  })
+
+  it('in asynchronous write', async () => {
+    const store = createStore()
+    const a = atom(0)
+    const e = atom(() => {
+      throw new Error('error')
+    })
+    const b = atom(null, (get, set) => {
+      set(a, 1)
+      get(e)
+    })
+    const w = atom(null, async (get, set) => {
+      setTimeout(() => {
+        try {
+          set(b)
+        } catch {}
+      })
+    })
+    const listener = vi.fn()
+    store.sub(a, listener)
+    store.set(w)
+    await new Promise((r) => setTimeout(r))
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('in synchronous write', () => {
+    const store = createStore()
+    const a = atom(0)
+    a.debugLabel = 'a'
+    const e = atom(() => {
+      throw new Error('error')
+    })
+    e.debugLabel = 'e'
+    const b = atom(null, (get, set) => {
+      set(a, 1)
+      get(e)
+    })
+    b.debugLabel = 'b'
+    const listener = vi.fn()
+    store.sub(a, listener)
+    try {
+      store.set(b)
+    } catch {}
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('in onmount/onunmount asynchronous setAtom', async () => {
+    const store = createStore()
+    const a = atom(0)
+    const e = atom(() => {
+      throw new Error('error')
+    })
+    const b = atom(null, (get, set) => {
+      set(a, (v) => ++v)
+      get(e)
+    })
+    b.onMount = (setAtom) => {
+      setTimeout(() => {
+        try {
+          setAtom()
+        } catch {}
+      })
+      return () => {
+        setTimeout(() => {
+          try {
+            setAtom()
+          } catch {}
+        })
+      }
+    }
+    const listener = vi.fn()
+    store.sub(a, listener)
+    const unsub = store.sub(b, () => {})
+    await new Promise((r) => setTimeout(r))
+    expect(listener).toHaveBeenCalledOnce()
+    listener.mockClear()
+    unsub()
+    await new Promise((r) => setTimeout(r))
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('in synchronous onmount', () => {
+    const store = createStore()
+    const a = atom(0)
+    const aUnmount = vi.fn()
+    a.onMount = vi.fn(() => aUnmount)
+    const b = atom(
+      (get) => get(a),
+      () => {},
+    )
+    b.onMount = () => {
+      throw new Error('error')
+    }
+    try {
+      store.sub(b, () => {})
+    } catch {}
+    expect(a.onMount).toHaveBeenCalledOnce()
+  })
+
+  it('in synchronous onunmount', () => {
+    const store = createStore()
+    const a = atom(0)
+    const aUnmount = vi.fn()
+    a.onMount = () => aUnmount
+    const b = atom(
+      (get) => get(a),
+      () => {},
+    )
+    b.onMount = () => () => {
+      throw new Error('error')
+    }
+    const unsub = store.sub(b, () => {})
+    try {
+      unsub()
+    } catch {}
+    expect(aUnmount).toHaveBeenCalledOnce()
+  })
+
+  it('in synchronous listener', () => {
+    const store = createStore()
+    const a = atom(0)
+    const e = atom(0)
+    const b = atom(null, (_, set) => {
+      set(a, 1)
+      set(e, 1)
+    })
+    store.sub(e, () => {
+      throw new Error('error')
+    })
+    const listener = vi.fn()
+    store.sub(a, listener)
+    try {
+      store.set(b)
+    } catch {}
+    expect(listener).toHaveBeenCalledOnce()
+  })
+})
