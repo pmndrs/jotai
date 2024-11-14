@@ -664,7 +664,9 @@ describe('should mount and trigger listeners even when an error is thrown', () =
         get(a)
         try {
           get(e)
-        } catch {}
+        } catch {
+          // expect error
+        }
       })
     })
     store.sub(b, () => {})
@@ -687,7 +689,9 @@ describe('should mount and trigger listeners even when an error is thrown', () =
         setTimeout(() => {
           try {
             setSelf()
-          } catch {}
+          } catch {
+            // expect error
+          }
         })
       },
       (get, set) => {
@@ -736,7 +740,9 @@ describe('should mount and trigger listeners even when an error is thrown', () =
       setTimeout(() => {
         try {
           set(b)
-        } catch {}
+        } catch {
+          // expect error
+        }
       })
     })
     const listener = vi.fn()
@@ -763,7 +769,9 @@ describe('should mount and trigger listeners even when an error is thrown', () =
     store.sub(a, listener)
     try {
       store.set(b)
-    } catch {}
+    } catch {
+      // expect error
+    }
     expect(listener).toHaveBeenCalledOnce()
   })
 
@@ -781,13 +789,17 @@ describe('should mount and trigger listeners even when an error is thrown', () =
       setTimeout(() => {
         try {
           setAtom()
-        } catch {}
+        } catch {
+          // expect error
+        }
       })
       return () => {
         setTimeout(() => {
           try {
             setAtom()
-          } catch {}
+          } catch {
+            // expect error
+          }
         })
       }
     }
@@ -816,7 +828,9 @@ describe('should mount and trigger listeners even when an error is thrown', () =
     }
     try {
       store.sub(b, () => {})
-    } catch {}
+    } catch {
+      // expect error
+    }
     expect(a.onMount).toHaveBeenCalledOnce()
   })
 
@@ -835,7 +849,9 @@ describe('should mount and trigger listeners even when an error is thrown', () =
     const unsub = store.sub(b, () => {})
     try {
       unsub()
-    } catch {}
+    } catch {
+      // expect error
+    }
     expect(aUnmount).toHaveBeenCalledOnce()
   })
 
@@ -854,7 +870,9 @@ describe('should mount and trigger listeners even when an error is thrown', () =
     store.sub(a, listener)
     try {
       store.set(b)
-    } catch {}
+    } catch {
+      // expect error
+    }
     expect(listener).toHaveBeenCalledOnce()
   })
 })
