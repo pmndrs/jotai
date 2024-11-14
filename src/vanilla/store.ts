@@ -331,17 +331,21 @@ const buildStore = (
         }
         return returnAtomValue(aState)
       }
-      // a !== atom
-      const aState = readAtomState(pending, a, dirtyAtoms)
-      if (isSync) {
-        addDependency(pending, atom, atomState, a, aState)
-      } else {
-        const pending = createPending()
-        addDependency(pending, atom, atomState, a, aState)
-        mountDependencies(pending, atom, atomState)
-        flushPending(pending)
+      let aState: AtomState<V>
+      try {
+        // a !== atom
+        aState = readAtomState(pending, a, dirtyAtoms)
+        return returnAtomValue(aState)
+      } finally {
+        if (isSync) {
+          addDependency(pending, atom, atomState, a, aState!)
+        } else {
+          const pending = createPending()
+          addDependency(pending, atom, atomState, a, aState!)
+          mountDependencies(pending, atom, atomState)
+          flushPending(pending)
+        }
       }
-      return returnAtomValue(aState)
     }
     let controller: AbortController | undefined
     let setSelf: ((...args: unknown[]) => unknown) | undefined
@@ -492,29 +496,32 @@ const buildStore = (
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
-      const aState = getAtomState(a)
-      let r: R | undefined
-      if (isSelfAtom(atom, a)) {
-        if (!hasInitialValue(a)) {
-          // NOTE technically possible but restricted as it may cause bugs
-          throw new Error('atom not writable')
+      let aState: AtomState<V>
+      aState = getAtomState(a)
+      try {
+        if (isSelfAtom(atom, a)) {
+          if (!hasInitialValue(a)) {
+            // NOTE technically possible but restricted as it may cause bugs
+            throw new Error('atom not writable')
+          }
+          const hasPrevValue = 'v' in aState
+          const prevValue = aState.v
+          const v = args[0] as V
+          setAtomStateValueOrPromise(a, aState, v)
+          mountDependencies(pending, a, aState)
+          if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
+            addPendingAtom(pending, a, aState)
+            recomputeDependents(pending, a, aState)
+          }
+          return undefined as R
+        } else {
+          return writeAtomState(pending, a, ...args)
         }
-        const hasPrevValue = 'v' in aState
-        const prevValue = aState.v
-        const v = args[0] as V
-        setAtomStateValueOrPromise(a, aState, v)
-        mountDependencies(pending, a, aState)
-        if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
-          addPendingAtom(pending, a, aState)
-          recomputeDependents(pending, a, aState)
+      } finally {
+        if (!isSync) {
+          flushPending(pending)
         }
-      } else {
-        r = writeAtomState(pending, a, ...args) as R
       }
-      if (!isSync) {
-        flushPending(pending)
-      }
-      return r as R
     }
     try {
       return atomWrite(atom, getter, setter, ...args)
@@ -528,9 +535,11 @@ const buildStore = (
     ...args: Args
   ): Result => {
     const pending = createPending()
-    const result = writeAtomState(pending, atom, ...args)
-    flushPending(pending)
-    return result
+    try {
+      return writeAtomState(pending, atom, ...args)
+    } finally {
+      flushPending(pending)
+    }
   }
 
   const mountDependencies = (
@@ -643,7 +652,8 @@ const buildStore = (
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
     const pending = createPending()
     const atomState = getAtomState(atom)
-    const mounted = mountAtom(pending, atom, atomState)
+    let mounted: Mounted
+    mounted = mountAtom(pending, atom, atomState)
     flushPending(pending)
     const listeners = mounted.l
     listeners.add(listener)
