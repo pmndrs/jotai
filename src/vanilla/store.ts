@@ -604,20 +604,23 @@ const buildStore = (
         const mounted = atomState.m
         addPendingFunction(pending, () => {
           let isSync = true
-          let currPending = pending
-          try {
-            const onUnmount = atomOnMount(atom, (...args) => {
+          const createSetAtom = (pending: Pending) => {
+            return (...args: unknown[]) => {
               try {
-                return writeAtomState(currPending, atom, ...args)
+                return writeAtomState(pending, atom, ...args)
               } finally {
                 if (!isSync) {
-                  flushPending(currPending)
+                  flushPending(pending)
                 }
               }
-            })
+            }
+          }
+          let setAtom = createSetAtom(pending)
+          try {
+            const onUnmount = atomOnMount(atom, (...args) => setAtom(...args))
             if (onUnmount) {
               mounted.u = (pending) => {
-                currPending = pending
+                setAtom = createSetAtom(pending)
                 isSync = true
                 try {
                   onUnmount()
