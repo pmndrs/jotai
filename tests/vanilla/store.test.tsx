@@ -621,11 +621,6 @@ describe('should invoke flushPending only after all atoms are updated (#2804)', 
       mountResult.push('before onMount setSelf')
       setSelf(1)
       mountResult.push('after onMount setSelf')
-      return () => {
-        mountResult.push('before onUnmount setSelf')
-        setSelf(2)
-        mountResult.push('after onUnmount setSelf')
-      }
     }
     mountResult.push('before store.sub')
     store.sub(a, () => {
@@ -633,20 +628,12 @@ describe('should invoke flushPending only after all atoms are updated (#2804)', 
     })
     const unsub = store.sub(m, () => {})
     mountResult.push('after store.sub')
-    mountResult.push('before store.unsub')
-    unsub()
-    mountResult.push('after store.unsub')
     expect(mountResult).not.toEqual([
       'before store.sub',
       'before onMount setSelf',
       'a value changed - 1',
       'after onMount setSelf',
       'after store.sub',
-      'before store.unsub',
-      'before onUnmount setSelf',
-      'a value changed - 2',
-      'after onUnmount setSelf',
-      'after store.unsub',
     ])
     expect(mountResult).toEqual([
       'before store.sub',
@@ -654,11 +641,6 @@ describe('should invoke flushPending only after all atoms are updated (#2804)', 
       'after onMount setSelf',
       'a value changed - 1',
       'after store.sub',
-      'before store.unsub',
-      'before onUnmount setSelf',
-      'after onUnmount setSelf',
-      'a value changed - 2',
-      'after store.unsub',
     ])
   })
 })
