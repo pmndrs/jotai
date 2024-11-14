@@ -1,12 +1,5 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  waitForElementToBeRemoved,
-} from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'

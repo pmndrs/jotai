@@ -222,9 +222,9 @@ it('can be set synchronously by passing value', async () => {
 
   render(<Counter />)
 
-  expect(screen.getByText('count: 1')).toBeDefined()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('button', { name: 'Set to 10' }))
 
-  expect(screen.getByText('count: 10')).toBeDefined()
+  expect(screen.getByText('count: 10')).toBeInTheDocument()
 })

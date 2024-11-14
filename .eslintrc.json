@@ -22,6 +22,7 @@
     "import",
     "@vitest",
     "eslint-plugin-react-compiler",
+    "jest-dom",
     "testing-library"
   ],
   "parser": "@typescript-eslint/parser",
@@ -107,6 +108,7 @@
   "overrides": [
     {
       "extends": [
+        "plugin:jest-dom/recommended",
         "plugin:testing-library/react",
         "plugin:@vitest/legacy-recommended"
       ],

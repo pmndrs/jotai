@@ -85,6 +85,9 @@ jobs:
         if: ${{ matrix.typescript == '4.4.4' || matrix.typescript == '4.3.5' || matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
           pnpm add -D vitest@0.33.0 @vitest/coverage-v8@0.33.0 @vitest/ui@0.33.0
+          pnpm add -D @testing-library/jest-dom@5 @types/testing-library__jest-dom@5 
+          pnpm add -D @types/jest@27.4.1
+          sed -i~ 's/"@testing-library\/jest-dom"/"@types\/testing-library__jest-dom"/' tsconfig.json
       - name: Patch testing setup for older TS
         if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
