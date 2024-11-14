@@ -876,3 +876,23 @@ describe('should mount and trigger listeners even when an error is thrown', () =
     expect(listener).toHaveBeenCalledOnce()
   })
 })
+
+it('throws falsy errors in onMount, onUnmount, and listeners', () => {
+  const store = createStore()
+  const a = atom(0)
+  a.onMount = () => {
+    throw ''
+  }
+  expect(() => store.sub(a, () => {})).toThrow('')
+  const b = atom(0)
+  b.onMount = () => () => {
+    throw ''
+  }
+  const unsub = store.sub(b, () => {})
+  expect(() => unsub()).toThrow('')
+  const c = atom(0)
+  store.sub(c, () => {
+    throw ''
+  })
+  expect(() => store.set(c, 1)).toThrow('')
+})

@@ -199,13 +199,15 @@ const addPendingFunction = (pending: Pending, fn: () => void) => {
 }
 
 const flushPending = (pending: Pending) => {
-  let error: unknown | undefined
+  let error: AnyError
+  let hasError = false
   const call = (fn: () => void) => {
     try {
       fn()
     } catch (e) {
-      if (!error) {
+      if (!hasError) {
         error = e
+        hasError = true
       }
     }
   }
@@ -218,7 +220,7 @@ const flushPending = (pending: Pending) => {
     atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
     functions.forEach(call)
   }
-  if (error) {
+  if (hasError) {
     throw error
   }
 }
