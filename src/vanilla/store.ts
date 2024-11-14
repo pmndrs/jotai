@@ -331,10 +331,9 @@ const buildStore = (
         }
         return returnAtomValue(aState)
       }
-      let aState: AtomState<V>
+      // a !== atom
+      const aState = readAtomState(pending, a, dirtyAtoms)
       try {
-        // a !== atom
-        aState = readAtomState(pending, a, dirtyAtoms)
         return returnAtomValue(aState)
       } finally {
         if (isSync) {
@@ -496,8 +495,7 @@ const buildStore = (
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
-      let aState: AtomState<V>
-      aState = getAtomState(a)
+      const aState = getAtomState(a)
       try {
         if (isSelfAtom(atom, a)) {
           if (!hasInitialValue(a)) {
@@ -652,8 +650,7 @@ const buildStore = (
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
     const pending = createPending()
     const atomState = getAtomState(atom)
-    let mounted: Mounted
-    mounted = mountAtom(pending, atom, atomState)
+    const mounted = mountAtom(pending, atom, atomState)
     flushPending(pending)
     const listeners = mounted.l
     listeners.add(listener)
