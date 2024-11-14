@@ -337,10 +337,10 @@ const buildStore = (
         return returnAtomValue(aState)
       } finally {
         if (isSync) {
-          addDependency(pending, atom, atomState, a, aState!)
+          addDependency(pending, atom, atomState, a, aState)
         } else {
           const pending = createPending()
-          addDependency(pending, atom, atomState, a, aState!)
+          addDependency(pending, atom, atomState, a, aState)
           mountDependencies(pending, atom, atomState)
           flushPending(pending)
         }
