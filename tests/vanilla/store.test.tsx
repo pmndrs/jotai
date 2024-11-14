@@ -579,3 +579,70 @@ it('should update derived atom even if dependances changed (#2697)', () => {
   store.set(primitiveAtom, 1)
   expect(onChangeDerived).toHaveBeenCalledTimes(1)
 })
+
+describe('should invoke flushPending only after all atoms are updated (#2804)', () => {
+  const store = createStore()
+
+  it('should invoke flushPending only after all atoms are updated with set', () => {
+    const a = atom(0)
+    const setResult = []
+    const w = atom(null, (_get, set, value: number) => {
+      setResult.push('before set')
+      set(a, value)
+      setResult.push('after set')
+    })
+    store.sub(a, () => {
+      setResult.push('a value changed - ' + store.get(a))
+    })
+    setResult.push('before store.set')
+    store.set(w, 1)
+    setResult.push('after store.set')
+    expect(setResult).not.toEqual([
+      'before store.set',
+      'before set',
+      'a value changed - 1',
+      'after set',
+      'after store.set',
+    ])
+    expect(setResult).toEqual([
+      'before store.set',
+      'before set',
+      'after set',
+      'a value changed - 1',
+      'after store.set',
+    ])
+  })
+
+  it('should invoke flushPending only after all atoms are updated with mount', () => {
+    const mountResult = []
+    const a = atom(0)
+    const m = atom(null, (_get, set, value: number) => {
+      set(a, value)
+    })
+    m.onMount = (setSelf) => {
+      mountResult.push('before onMount setSelf')
+      setSelf(1)
+      mountResult.push('after onMount setSelf')
+    }
+    mountResult.push('before store.sub')
+    store.sub(a, () => {
+      mountResult.push('a value changed - ' + store.get(a))
+    })
+    const unsub = store.sub(m, () => {})
+    mountResult.push('after store.sub')
+    expect(mountResult).not.toEqual([
+      'before store.sub',
+      'before onMount setSelf',
+      'a value changed - 1',
+      'after onMount setSelf',
+      'after store.sub',
+    ])
+    expect(mountResult).toEqual([
+      'before store.sub',
+      'before onMount setSelf',
+      'after onMount setSelf',
+      'a value changed - 1',
+      'after store.sub',
+    ])
+  })
+})
