@@ -910,3 +910,26 @@ it('should use the correct pending on unmount', () => {
   expect(store.get(a)).toBe(1)
   expect(aListener).toHaveBeenCalledTimes(1)
 })
+
+it('should call subscribers after setAtom updates atom value on mount but not on unmount', () => {
+  const store = createStore()
+  const a = atom(0)
+  let unmount
+  a.onMount = vi.fn(((setAtom) => {
+    setAtom(1)
+    unmount = vi.fn(() => {
+      setAtom(2)
+    })
+    return unmount
+  }) as NonNullable<(typeof a)['onMount']>)
+  const listener = vi.fn()
+  const unsub = store.sub(a, listener)
+  expect(store.get(a)).toBe(1)
+  expect(a.onMount).toHaveBeenCalledTimes(1)
+  expect(listener).toHaveBeenCalledTimes(1)
+  listener.mockClear()
+  unsub()
+  expect(store.get(a)).toBe(2)
+  expect(unmount).toHaveBeenCalledTimes(1)
+  expect(listener).toHaveBeenCalledTimes(0)
+})

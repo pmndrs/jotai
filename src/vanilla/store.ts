@@ -666,9 +666,9 @@ const buildStore = (
     const pending = createPending()
     const atomState = getAtomState(atom)
     const mounted = mountAtom(pending, atom, atomState)
-    flushPending(pending)
     const listeners = mounted.l
     listeners.add(listener)
+    flushPending(pending)
     return () => {
       listeners.delete(listener)
       const pending = createPending()
