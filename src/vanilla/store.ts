@@ -602,30 +602,29 @@ const buildStore = (
       }
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
-        addPendingFunction(pending, () => {
-          const createSetAtom = (pending: Pending, isSync = true) => {
-            return (...args: unknown[]) => {
-              try {
-                return writeAtomState(pending, atom, ...args)
-              } finally {
-                if (!isSync) {
+        const createSetAtom = (pending: Pending, isSync: boolean) =>
+          isSync
+            ? (...args: unknown[]) => writeAtomState(pending, atom, ...args)
+            : (...args: unknown[]) => {
+                try {
+                  return writeAtomState(pending, atom, ...args)
+                } finally {
                   flushPending(pending)
                 }
               }
-            }
-          }
+        addPendingFunction(pending, () => {
           let onUnmount: OnUnmount | void
-          let setAtom = createSetAtom(pending)
+          let setAtom = createSetAtom(pending, true)
           try {
             onUnmount = atomOnMount(atom, (...args) => setAtom(...args))
           } finally {
             setAtom = createSetAtom(pending, false)
           }
-          if (typeof onUnmount === 'function') {
+          if (onUnmount) {
             mounted.u = (pending) => {
-              setAtom = createSetAtom(pending)
+              setAtom = createSetAtom(pending, true)
               try {
-                onUnmount()
+                ;(onUnmount as OnUnmount)()
               } finally {
                 setAtom = createSetAtom(pending, false)
               }
