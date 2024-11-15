@@ -603,9 +603,9 @@ const buildStore = (
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
         let setAtom: (...args: unknown[]) => unknown
-        const createSetAtom =
-          (pending: Pending, isSync: boolean) =>
-          (...args: unknown[]) => {
+        const createInvocationContext = <T>(pending: Pending, fn: () => T) => {
+          let isSync = true
+          setAtom = (...args: unknown[]) => {
             try {
               return writeAtomState(pending, atom, ...args)
             } finally {
@@ -614,12 +614,10 @@ const buildStore = (
               }
             }
           }
-        const createInvocationContext = <T>(pending: Pending, fn: () => T) => {
-          setAtom = createSetAtom(pending, true)
           try {
             return fn()
           } finally {
-            setAtom = createSetAtom(pending, false)
+            isSync = false
           }
         }
         addPendingFunction(pending, () => {
