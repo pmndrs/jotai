@@ -602,6 +602,7 @@ const buildStore = (
       }
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
+        let setAtom: (...args: unknown[]) => unknown
         const createSetAtom =
           (pending: Pending, isSync: boolean) =>
           (...args: unknown[]) => {
@@ -614,22 +615,22 @@ const buildStore = (
             }
           }
         addPendingFunction(pending, () => {
-          let onUnmount: OnUnmount | void
-          let setAtom = createSetAtom(pending, true)
-          try {
-            onUnmount = atomOnMount(atom, (...args) => setAtom(...args))
-          } finally {
-            setAtom = createSetAtom(pending, false)
-          }
-          if (onUnmount) {
-            mounted.u = (pending) => {
-              setAtom = createSetAtom(pending, true)
-              try {
-                ;(onUnmount as OnUnmount)()
-              } finally {
-                setAtom = createSetAtom(pending, false)
-              }
+          const createInvocationContext = (
+            pending: Pending,
+            fn: () => void,
+          ) => {
+            setAtom = createSetAtom(pending, true)
+            try {
+              return fn()
+            } finally {
+              setAtom = createSetAtom(pending, false)
             }
+          }
+          const onUnmount = createInvocationContext(pending, () =>
+            atomOnMount(atom, (...args) => setAtom(...args)),
+          )
+          if (typeof onUnmount === 'function') {
+            mounted.u = (pending) => createInvocationContext(pending, onUnmount)
           }
         })
       }
