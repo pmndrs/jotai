@@ -614,22 +614,19 @@ const buildStore = (
               }
             }
           }
-        addPendingFunction(pending, () => {
-          const createInvocationContext = (
-            pending: Pending,
-            fn: () => void,
-          ) => {
-            setAtom = createSetAtom(pending, true)
-            try {
-              return fn()
-            } finally {
-              setAtom = createSetAtom(pending, false)
-            }
+        const createInvocationContext = <T>(pending: Pending, fn: () => T) => {
+          setAtom = createSetAtom(pending, true)
+          try {
+            return fn()
+          } finally {
+            setAtom = createSetAtom(pending, false)
           }
+        }
+        addPendingFunction(pending, () => {
           const onUnmount = createInvocationContext(pending, () =>
             atomOnMount(atom, (...args) => setAtom(...args)),
           )
-          if (typeof onUnmount === 'function') {
+          if (onUnmount) {
             mounted.u = (pending) => createInvocationContext(pending, onUnmount)
           }
         })
