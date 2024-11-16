@@ -901,7 +901,7 @@ it('throws falsy errors in onMount, onUnmount, and listeners', () => {
   expect(() => store.set(c, 1)).toThrow('')
 })
 
-it.only('supports cycles in the atom graph', () => {
+it('supports cycles in the atom graph', () => {
   const store = createStore() as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
   const v = atom(0)
   v.debugLabel = 'v'
@@ -926,11 +926,17 @@ it.only('supports cycles in the atom graph', () => {
   store.sub(a, () => {})
 
   const vState = getAtomState(v) as AtomState
-  // vState.label = 'v'
+  if (vState) {
+    vState.label = 'v'
+  }
   const aState = getAtomState(a) as AtomState
-  // aState.label = 'a'
+  if (vState) {
+    aState.label = 'a'
+  }
   const bState = getAtomState(b) as AtomState
-  // bState.label = 'b'
+  if (vState) {
+    bState.label = 'b'
+  }
 
   let unsub: () => void
 
