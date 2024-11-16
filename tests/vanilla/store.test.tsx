@@ -2,6 +2,10 @@ import { waitFor } from '@testing-library/react'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Getter } from 'jotai/vanilla'
+import type {
+  INTERNAL_DevStoreRev4,
+  INTERNAL_PrdStore,
+} from 'jotai/vanilla/store'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -895,4 +899,44 @@ it('throws falsy errors in onMount, onUnmount, and listeners', () => {
     throw ''
   })
   expect(() => store.set(c, 1)).toThrow('')
+})
+
+it.only('supports cycles in the atom graph', () => {
+  const store = createStore() as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
+  const v = atom(0)
+  v.debugLabel = 'v'
+  const a = atom((get) => {
+    get(v)
+    get(b)
+    return 1
+  })
+  a.debugLabel = 'a'
+  const b = atom((get) => {
+    get(v)
+    get(a)
+    return 1
+  })
+  b.debugLabel = 'b'
+
+  const getAtomState = store.dev4_get_internal_weak_map().get
+  type AtomState = NonNullable<ReturnType<typeof getAtomState>> & {
+    label: string
+  }
+
+  store.sub(a, () => {})
+
+  const vState = getAtomState(v) as AtomState
+  // vState.label = 'v'
+  const aState = getAtomState(a) as AtomState
+  // aState.label = 'a'
+  const bState = getAtomState(b) as AtomState
+  // bState.label = 'b'
+
+  let unsub: () => void
+
+  expect(() => (unsub = store.sub(b, () => {}))).not.toThrow()
+  expect(() => store.get(a)).not.toThrow()
+  expect(() => store.get(b)).not.toThrow()
+  expect(() => store.set(v, 1)).not.toThrow()
+  expect(() => unsub()).not.toThrow()
 })
