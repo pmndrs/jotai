@@ -439,41 +439,62 @@ const buildStore = (
     return dependents
   }
 
+  // This is a topological sort via depth-first search, slightly modified from
+  // what's described here for simplicity and performance reasons:
+  // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+  function getSortedDependents(
+    pending: Pending,
+    rootAtom: AnyAtom,
+    rootAtomState: AtomState,
+  ): [[AnyAtom, AtomState, number][], Set<AnyAtom>] {
+    const sorted: [atom: AnyAtom, atomState: AtomState, epochNumber: number][] =
+      []
+    const visiting = new Set<AnyAtom>()
+    const visited = new Set<AnyAtom>()
+    // Visit the root atom. This is the only atom in the dependency graph
+    // without incoming edges, which is one reason we can simplify the algorithm
+    const stack: [a: AnyAtom, aState: AtomState][] = [[rootAtom, rootAtomState]]
+    while (stack.length > 0) {
+      const [a, aState] = stack[stack.length - 1]!
+      if (visited.has(a)) {
+        // All dependents have been processed, now process this atom
+        stack.pop()
+        continue
+      }
+      if (visiting.has(a)) {
+        // The algorithm calls for pushing onto the front of the list. For
+        // performance, we will simply push onto the end, and then will iterate in
+        // reverse order later.
+        sorted.push([a, aState, aState.n])
+        // Atom has been visited but not yet processed
+        visited.add(a)
+        stack.pop()
+        continue
+      }
+      visiting.add(a)
+      // Push unvisited dependents onto the stack
+      for (const [d, s] of getDependents(pending, a, aState)) {
+        if (a !== d && !visiting.has(d)) {
+          stack.push([d, s])
+        }
+      }
+    }
+    return [sorted, visited]
+  }
+
   const recomputeDependents = <Value>(
     pending: Pending,
     atom: Atom<Value>,
     atomState: AtomState<Value>,
   ) => {
-    // This is a topological sort via depth-first search, slightly modified from
-    // what's described here for simplicity and performance reasons:
-    // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
-    const topsortedAtoms: (readonly [
-      atom: AnyAtom,
-      atomState: AtomState,
-      epochNumber: number,
-    ])[] = []
-    const markedAtoms = new Set<AnyAtom>()
-    const visit = (a: AnyAtom, aState: AtomState) => {
-      if (markedAtoms.has(a)) {
-        return
-      }
-      markedAtoms.add(a)
-      for (const [d, s] of getDependents(pending, a, aState)) {
-        if (a !== d) {
-          visit(d, s)
-        }
-      }
-      // The algorithm calls for pushing onto the front of the list. For
-      // performance, we will simply push onto the end, and then will iterate in
-      // reverse order later.
-      topsortedAtoms.push([a, aState, aState.n])
-    }
-    // Visit the root atom. This is the only atom in the dependency graph
-    // without incoming edges, which is one reason we can simplify the algorithm
-    visit(atom, atomState)
+    const [topsortedAtoms, markedAtoms] = getSortedDependents(
+      pending,
+      atom,
+      atomState,
+    )
+
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])

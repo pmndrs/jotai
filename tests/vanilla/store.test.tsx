@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/react'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Getter } from 'jotai/vanilla'
+import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -932,4 +932,34 @@ it('should call subscribers after setAtom updates atom value on mount but not on
   expect(store.get(a)).toBe(2)
   expect(unmount).toHaveBeenCalledTimes(1)
   expect(listener).toHaveBeenCalledTimes(0)
+})
+
+it('processes deep atom a graph beyond maxDepth', () => {
+  function getMaxDepth() {
+    let depth = 0
+    function d(): number {
+      ++depth
+      try {
+        return d()
+      } catch (error) {
+        return depth
+      }
+    }
+    return d()
+  }
+  const maxDepth = getMaxDepth()
+  const store = createStore()
+  const baseAtom = atom(0)
+  const atoms: [PrimitiveAtom<number>, ...Atom<number>[]] = [baseAtom]
+  Array.from({ length: maxDepth }, (_, i) => {
+    const prevAtom = atoms[i]!
+    const a = atom((get) => get(prevAtom))
+    atoms.push(a)
+  })
+  const lastAtom = atoms[maxDepth]!
+  // store.get(lastAtom) // FIXME: This is causing a stack overflow
+  expect(() => store.sub(lastAtom, () => {})).not.toThrow()
+  // store.get(lastAtom) // FIXME: This is causing a stack overflow
+  expect(() => store.set(baseAtom, 1)).not.toThrow()
+  // store.set(lastAtom) // FIXME: This is causing a stack overflow
 })
