@@ -334,3 +334,15 @@ it('handles complex dependency chains', async () => {
   resolve()
   expect(await promise2).toBe(10)
 })
+
+it('can read sync derived atom in write without initializing', () => {
+  const store = createStore()
+  const a = atom(0)
+  const b = atom((get) => get(a) + 1)
+  const c = atom(null, (get, set) => set(a, get(b)))
+  store.set(c)
+  expect(store.get(a)).toBe(1)
+  store.set(c)
+  // note: this is why write get needs to update deps
+  expect(store.get(a)).toBe(2)
+})
