@@ -1,5 +1,9 @@
 import { expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
+import type {
+  INTERNAL_DevStoreRev4,
+  INTERNAL_PrdStore,
+} from 'jotai/vanilla/store'
 
 it('can propagate updates with async atom chains', async () => {
   const store = createStore()
@@ -404,4 +408,41 @@ it('can cache reading an atom in write function (with mounting)', () => {
   expect(aReadCount).toBe(1)
   store.set(w)
   expect(aReadCount).toBe(1)
+})
+
+it('batches sync writes', () => {
+  const a = atom(0)
+  a.debugLabel = 'a'
+  const b = atom((get) => get(a) + 1)
+  b.debugLabel = 'b'
+  const fetch = vi.fn()
+  const c = atom((get) => fetch(get(a)))
+  c.debugLabel = 'c'
+  const w = atom(null, (get, set) => {
+    const b1 = get(b) // 1
+    set(a, b1)
+    expect(fetch).toHaveBeenCalledTimes(0)
+    const b2 = get(b) // 2
+    set(a, b2)
+    expect(fetch).toHaveBeenCalledTimes(0)
+  })
+  w.debugLabel = 'w'
+  const store = createStore() as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
+  store.sub(b, () => {})
+  store.sub(c, () => {})
+  const getAtomState = store.dev4_get_internal_weak_map().get
+  const aState = getAtomState(a) as any
+  aState.label = 'a'
+  const bState = getAtomState(b) as any
+  bState.label = 'b'
+  const cState = getAtomState(c) as any
+  cState.label = 'c'
+  fetch.mockClear()
+  store.set(w)
+  // we expect b to be recomputed when a's value is changed by `set`
+  // we expect c to be recomputed in flushPending after the graph has updated
+  // this distinction is possible by tracking what atoms are accessed with w.write's `get`
+  expect(store.get(a)).toBe(2)
+  expect(fetch).toHaveBeenCalledOnce()
+  expect(fetch).toBeCalledWith(2)
 })
