@@ -77,7 +77,7 @@ type Mounted = {
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
-  u?: OnUnmount
+  u?: (pending: Pending) => void
 }
 
 /**
@@ -602,30 +602,30 @@ const buildStore = (
       }
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
-        addPendingFunction(pending, () => {
+        let setAtom: (...args: unknown[]) => unknown
+        const createInvocationContext = <T>(pending: Pending, fn: () => T) => {
           let isSync = true
-          try {
-            const onUnmount = atomOnMount(atom, (...args) => {
-              try {
-                return writeAtomState(pending, atom, ...args)
-              } finally {
-                if (!isSync) {
-                  flushPending(pending)
-                }
-              }
-            })
-            if (onUnmount) {
-              mounted.u = () => {
-                isSync = true
-                try {
-                  onUnmount()
-                } finally {
-                  isSync = false
-                }
+          setAtom = (...args: unknown[]) => {
+            try {
+              return writeAtomState(pending, atom, ...args)
+            } finally {
+              if (!isSync) {
+                flushPending(pending)
               }
             }
+          }
+          try {
+            return fn()
           } finally {
             isSync = false
+          }
+        }
+        addPendingFunction(pending, () => {
+          const onUnmount = createInvocationContext(pending, () =>
+            atomOnMount(atom, (...args) => setAtom(...args)),
+          )
+          if (onUnmount) {
+            mounted.u = (pending) => createInvocationContext(pending, onUnmount)
           }
         })
       }
@@ -646,7 +646,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addPendingFunction(pending, onUnmount)
+        addPendingFunction(pending, () => onUnmount(pending))
       }
       delete atomState.m
       if (import.meta.env?.MODE !== 'production') {
