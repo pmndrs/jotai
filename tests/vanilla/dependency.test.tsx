@@ -1,6 +1,5 @@
 import { expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Getter } from 'jotai/vanilla'
 
 it('can propagate updates with async atom chains', async () => {
   const store = createStore()
