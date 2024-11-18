@@ -538,12 +538,11 @@ const buildStore = (
             // NOTE technically possible but restricted as it may cause bugs
             throw new Error('atom not writable')
           }
-          const hasPrevValue = 'v' in aState
-          const prevValue = aState.v
+          const prevEpochNumber = aState.n
           const v = args[0] as V
           setAtomStateValueOrPromise(a, aState, v)
           mountDependencies(pending, a, aState)
-          if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
+          if (prevEpochNumber !== aState.n) {
             addPendingAtom(pending, a, aState)
             recomputeDependents(pending, a, aState)
           }
@@ -726,11 +725,10 @@ const buildStore = (
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
             const atomState = getAtomState(atom)
-            const hasPrevValue = 'v' in atomState
-            const prevValue = atomState.v
+            const prevEpochNumber = atomState.n
             setAtomStateValueOrPromise(atom, atomState, value)
             mountDependencies(pending, atom, atomState)
-            if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
+            if (prevEpochNumber !== atomState.n) {
               addPendingAtom(pending, atom, atomState)
               recomputeDependents(pending, atom, atomState)
             }
