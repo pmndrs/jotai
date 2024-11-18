@@ -12,8 +12,10 @@ export default function DocsPage({ data }) {
       <div className="mb-4 lg:hidden">
         <Jotai isDocsPage small />
       </div>
-      <h1>{title}</h1>
-      <MDXRenderer>{body}</MDXRenderer>
+      <h1 className="-mt-1">{title}</h1>
+      <div className="text-pretty">
+        <MDXRenderer>{body}</MDXRenderer>
+      </div>
     </>
   );
 }

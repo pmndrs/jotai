@@ -73,6 +73,9 @@ dependencies:
     version: 2.5.9(react@18.3.1)
 
 devDependencies:
+  '@gatsbyjs/reach-router':
+    specifier: ^2.0.1
+    version: 2.0.1(react-dom@18.3.1)(react@18.3.1)
   '@tailwindcss/forms':
     specifier: ^0.5.6
     version: 0.5.7(tailwindcss@3.4.3)
@@ -1687,6 +1690,18 @@ packages:
       react-dom: 18.3.1(react@18.3.1)
       react-lifecycles-compat: 3.0.4
     dev: false
+
+  /@gatsbyjs/reach-router@2.0.1(react-dom@18.3.1)(react@18.3.1):
+    resolution: {integrity: sha512-gmSZniS9/phwgEgpFARMpNg21PkYDZEpfgEzvkgpE/iku4uvXqCrxr86fXbTpI9mkrhKS1SCTYmLGe60VdHcdQ==}
+    peerDependencies:
+      react: 18.x
+      react-dom: 18.x
+    dependencies:
+      invariant: 2.2.4
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    dev: true
 
   /@gatsbyjs/webpack-hot-middleware@2.25.3:
     resolution: {integrity: sha512-ul17OZ8Dlw+ATRbnuU+kwxuAlq9lKbYz/2uBS1FLCdgoPTF1H2heP7HbUbgfMZbfRQNcCG2rMscMnr32ritCDw==}
@@ -10344,7 +10359,6 @@ packages:
       loose-envify: 1.4.0
       object-assign: 4.1.1
       react-is: 16.13.1
-    dev: false
 
   /proper-lockfile@4.1.2:
     resolution: {integrity: sha512-TjNPblN4BwAWMXU8s9AEz4JmQxnD1NNL7bNOY/AKUzyamc379FWASUhc/K1pL2noVb+XmZKLL68cjzLsiOAMaA==}
@@ -10523,7 +10537,6 @@ packages:
       loose-envify: 1.4.0
       react: 18.3.1
       scheduler: 0.23.2
-    dev: false
 
   /react-error-overlay@6.0.11:
     resolution: {integrity: sha512-/6UZ2qgEyH2aqzYZgQPxEnz33NJ2gNsnHA2o5+o4wW9bLM/JYQitNP9xPhsXwC08hMMovfGe/8retsdDsczPRg==}
@@ -10562,7 +10575,6 @@ packages:
 
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
-    dev: false
 
   /react-lifecycles-compat@3.0.4:
     resolution: {integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==}
@@ -10641,7 +10653,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
-    dev: false
 
   /read-cache@1.0.0:
     resolution: {integrity: sha512-Owdv/Ft7IjOgm/i0xvNDZ1LrRANRfew4b2prF3OWMQLxLfu3bS8FVhCsrSCMK4lR56Y9ya+AThoTpDCTxCmpRA==}
@@ -11092,7 +11103,6 @@ packages:
     resolution: {integrity: sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==}
     dependencies:
       loose-envify: 1.4.0
-    dev: false
 
   /schema-utils@2.7.0:
     resolution: {integrity: sha512-0ilKFI6QQF5nxDZLFn2dMjvc4hjg/Wkg7rHd3jK6/A4a1Hl9VFdQWvgB1UMGoU94pad1P/8N7fMcEnLnSiju8A==}
