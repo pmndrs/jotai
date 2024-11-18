@@ -14,7 +14,7 @@ export const TOC = ({ section = '' }) => {
           key={sectionLink.slug}
           to={`/docs/${sectionLink.slug}`}
           title={sectionLink.meta.title}
-          className="inline-flex aspect-[21/9] items-center justify-center rounded-md border border-gray-200 bg-gray-100 p-2 text-center leading-snug !text-black !no-underline hover:border-blue-200 hover:bg-blue-100 dark:border-gray-800 dark:bg-gray-900 dark:!text-gray-300 dark:!border-none dark:hover:bg-white sm:rounded-lg sm:p-4 dark:hover:!text-black text-base text-pretty"
+          className="inline-flex aspect-[21/9] items-center justify-center rounded-md border border-gray-200 bg-gray-100 p-2 text-center leading-snug !text-black !no-underline hover:border-blue-200 hover:bg-blue-100 dark:border-gray-800 dark:bg-gray-900 dark:!text-gray-300 dark:!border-none dark:hover:bg-white sm:rounded-lg sm:p-4 dark:hover:!text-black text-sm lg:text-base text-pretty"
         >
           <div
             className={cx(
