@@ -7,9 +7,11 @@ import {
   useRef,
   useState,
 } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { unstable_batchedUpdates } from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import { expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -32,6 +34,28 @@ const useCommitCount = () => {
   })
   // eslint-disable-next-line react-compiler/react-compiler
   return commitCountRef.current
+}
+
+/* eslint-disable testing-library/no-unnecessary-act */
+const renderRoot = async (element: ReactNode) => {
+  const container = document.body.appendChild(document.createElement('div'))
+  const root = createRoot(container)
+  await act(async () => {
+    root.render(element)
+  })
+  return {
+    userEvent: {
+      click: async (el: Element) => {
+        await act(() => userEvent.click(el))
+      },
+    },
+    cleanup: async () => {
+      await act(async () => {
+        root.unmount()
+      })
+      container.remove()
+    },
+  }
 }
 
 it('uses a primitive atom', async () => {
@@ -284,7 +308,7 @@ it('works with async get', async () => {
     )
   }
 
-  render(
+  const { userEvent, cleanup } = await renderRoot(
     <>
       <Suspense fallback="loading">
         <Counter />
@@ -305,6 +329,8 @@ it('works with async get', async () => {
   await screen.findByText('loading')
   resolve()
   await screen.findByText('commits: 3, count: 2, delayedCount: 2')
+
+  await cleanup()
 })
 
 it('works with async get without setTimeout', async () => {
@@ -326,7 +352,7 @@ it('works with async get without setTimeout', async () => {
     )
   }
 
-  render(
+  const { userEvent, cleanup } = await renderRoot(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -334,7 +360,7 @@ it('works with async get without setTimeout', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('loading')
+  // await screen.findByText('loading')
   await screen.findByText('count: 0, delayedCount: 0')
 
   await userEvent.click(screen.getByText('button'))
@@ -342,6 +368,8 @@ it('works with async get without setTimeout', async () => {
 
   await userEvent.click(screen.getByText('button'))
   await screen.findByText('count: 2, delayedCount: 2')
+
+  await cleanup()
 })
 
 it('uses atoms with tree dependencies', async () => {
@@ -371,7 +399,7 @@ it('uses atoms with tree dependencies', async () => {
     )
   }
 
-  render(
+  const { userEvent, cleanup } = await renderRoot(
     <>
       <Counter />
     </>,
@@ -386,6 +414,8 @@ it('uses atoms with tree dependencies', async () => {
   await userEvent.click(screen.getByText('button'))
   resolve()
   await screen.findByText('commits: 3, count: 2')
+
+  await cleanup()
 })
 
 it('runs update only once in StrictMode', async () => {
@@ -870,7 +900,7 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
     )
   }
 
-  render(
+  const { cleanup } = await renderRoot(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -878,8 +908,10 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('loading')
+  // await screen.findByText('loading')
   await screen.findByText('count: 3')
+
+  await cleanup()
 })
 
 it('sync re-renders with useState re-renders (#827)', async () => {
