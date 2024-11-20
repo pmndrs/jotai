@@ -13,6 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         typescript:
+          - 5.5.4
           - 5.4.5
           - 5.3.3
           - 5.2.2
@@ -40,6 +41,9 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: Patch for all TS
+        run: |
+          sed -i~ 's/"isolatedDeclarations": true,//' tsconfig.json
       - name: Patch for v4/v3 TS
         if: ${{ startsWith(matrix.typescript, '4.') || startsWith(matrix.typescript, '3.') }}
         run: |
@@ -63,7 +67,7 @@ jobs:
           sed -i~ 's/"jotai": \["\.\/src\/index\.ts"\],/"jotai": [".\/dist\/ts3.8\/index.d.ts"],/' tsconfig.json
           sed -i~ 's/"jotai\/\*": \["\.\/src\/\*\.ts"\]/"jotai\/*": [".\/dist\/ts3.8\/*.d.ts"]/' tsconfig.json
           sed -i~ 's/"include": .*/"include": ["src\/types.d.ts", "dist\/**\/*", "tests\/**\/*"],/' tsconfig.json
-          pnpm add -D @testing-library/user-event@14.4.3
+          pnpm add -D @testing-library/user-event@14.4.3 @types/node@22.2.0
       - name: Patch for Older TS
         if: ${{ matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
@@ -81,6 +85,9 @@ jobs:
         if: ${{ matrix.typescript == '4.4.4' || matrix.typescript == '4.3.5' || matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
           pnpm add -D vitest@0.33.0 @vitest/coverage-v8@0.33.0 @vitest/ui@0.33.0
+          pnpm add -D @testing-library/jest-dom@5 @types/testing-library__jest-dom@5 
+          pnpm add -D @types/jest@27.4.1
+          sed -i~ 's/"@testing-library\/jest-dom"/"@types\/testing-library__jest-dom"/' tsconfig.json
       - name: Patch testing setup for older TS
         if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |

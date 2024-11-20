@@ -5,14 +5,8 @@ const cache1 = new WeakMap()
 const memo1 = <T>(create: () => T, dep1: object): T =>
   (cache1.has(dep1) ? cache1 : cache1.set(dep1, create())).get(dep1)
 
-type PromiseMeta<Value> =
-  | { status?: 'pending' }
-  | { status: 'fulfilled'; value: Awaited<Value> }
-  | { status: 'rejected'; reason: unknown }
-
-const isPromise = <Value>(
-  x: unknown,
-): x is Promise<Awaited<Value>> & PromiseMeta<Value> => x instanceof Promise
+const isPromise = <Value>(x: unknown): x is Promise<Awaited<Value>> =>
+  x instanceof Promise
 
 export type Loadable<Value> =
   | { state: 'loading' }
@@ -50,25 +44,17 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
         if (cached1) {
           return cached1
         }
-        if (promise.status === 'fulfilled') {
-          loadableCache.set(promise, { state: 'hasData', data: promise.value })
-        } else if (promise.status === 'rejected') {
-          loadableCache.set(promise, {
-            state: 'hasError',
-            error: promise.reason,
-          })
-        } else {
-          promise
-            .then(
-              (data) => {
-                loadableCache.set(promise, { state: 'hasData', data })
-              },
-              (error) => {
-                loadableCache.set(promise, { state: 'hasError', error })
-              },
-            )
-            .finally(setSelf)
-        }
+        promise.then(
+          (data) => {
+            loadableCache.set(promise, { state: 'hasData', data })
+            setSelf()
+          },
+          (error) => {
+            loadableCache.set(promise, { state: 'hasError', error })
+            setSelf()
+          },
+        )
+
         const cached2 = loadableCache.get(promise)
         if (cached2) {
           return cached2

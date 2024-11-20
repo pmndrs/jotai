@@ -1,5 +1,5 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
@@ -14,6 +14,7 @@ const useCommitCount = () => {
   useEffect(() => {
     commitCountRef.current += 1
   })
+  // eslint-disable-next-line react-compiler/react-compiler
   return commitCountRef.current
 }
 
@@ -61,45 +62,41 @@ it('no unnecessary updates when updating atoms', async () => {
     )
   }
 
-  const { getByTestId, getByText } = render(
+  render(
     <>
       <TaskList listAtom={todosAtom} />
     </>,
   )
 
-  await waitFor(() => {
-    getByText('TaskListUpdates: 1')
-    getByText('get cat food commits: 1')
-    getByText('get dragon food commits: 1')
-  })
+  expect(screen.getByText('TaskListUpdates: 1')).toBeInTheDocument()
+  expect(screen.getByText('get cat food commits: 1')).toBeInTheDocument()
+  expect(screen.getByText('get dragon food commits: 1')).toBeInTheDocument()
 
-  const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
-  const dragonBox = getByTestId('get dragon food-checkbox') as HTMLInputElement
+  const catBox = screen.getByTestId('get cat food-checkbox') as HTMLInputElement
+  const dragonBox = screen.getByTestId(
+    'get dragon food-checkbox',
+  ) as HTMLInputElement
 
-  expect(catBox.checked).toBeFalsy()
-  expect(dragonBox.checked).toBeFalsy()
+  expect(catBox).not.toBeChecked()
+  expect(dragonBox).not.toBeChecked()
 
   await userEvent.click(catBox)
 
-  await waitFor(() => {
-    getByText('TaskListUpdates: 1')
-    getByText('get cat food commits: 2')
-    getByText('get dragon food commits: 1')
-  })
+  expect(screen.getByText('TaskListUpdates: 1')).toBeInTheDocument()
+  expect(screen.getByText('get cat food commits: 2')).toBeInTheDocument()
+  expect(screen.getByText('get dragon food commits: 1')).toBeInTheDocument()
 
-  expect(catBox.checked).toBeTruthy()
-  expect(dragonBox.checked).toBeFalsy()
+  expect(catBox).toBeChecked()
+  expect(dragonBox).not.toBeChecked()
 
   await userEvent.click(dragonBox)
 
-  await waitFor(() => {
-    getByText('TaskListUpdates: 1')
-    getByText('get cat food commits: 2')
-    getByText('get dragon food commits: 2')
-  })
+  expect(screen.getByText('TaskListUpdates: 1')).toBeInTheDocument()
+  expect(screen.getByText('get cat food commits: 2')).toBeInTheDocument()
+  expect(screen.getByText('get dragon food commits: 2')).toBeInTheDocument()
 
-  expect(catBox.checked).toBeTruthy()
-  expect(dragonBox.checked).toBeTruthy()
+  expect(catBox).toBeChecked()
+  expect(dragonBox).toBeChecked()
 })
 
 it('removing atoms', async () => {
@@ -142,41 +139,33 @@ it('removing atoms', async () => {
     )
   }
 
-  const { getByTestId, queryByText } = render(
+  render(
     <StrictMode>
       <TaskList listAtom={todosAtom} />
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(queryByText('get cat food')).toBeTruthy()
-    expect(queryByText('get dragon food')).toBeTruthy()
-    expect(queryByText('help nana')).toBeTruthy()
-  })
+  expect(screen.getByText('get cat food')).toBeInTheDocument()
+  expect(screen.getByText('get dragon food')).toBeInTheDocument()
+  expect(screen.getByText('help nana')).toBeInTheDocument()
 
-  await userEvent.click(getByTestId('get cat food-removebutton'))
+  await userEvent.click(screen.getByTestId('get cat food-removebutton'))
 
-  await waitFor(() => {
-    expect(queryByText('get cat food')).toBeFalsy()
-    expect(queryByText('get dragon food')).toBeTruthy()
-    expect(queryByText('help nana')).toBeTruthy()
-  })
+  expect(screen.queryByText('get cat food')).not.toBeInTheDocument()
+  expect(screen.getByText('get dragon food')).toBeInTheDocument()
+  expect(screen.getByText('help nana')).toBeInTheDocument()
 
-  await userEvent.click(getByTestId('get dragon food-removebutton'))
+  await userEvent.click(screen.getByTestId('get dragon food-removebutton'))
 
-  await waitFor(() => {
-    expect(queryByText('get cat food')).toBeFalsy()
-    expect(queryByText('get dragon food')).toBeFalsy()
-    expect(queryByText('help nana')).toBeTruthy()
-  })
+  expect(screen.queryByText('get cat food')).not.toBeInTheDocument()
+  expect(screen.queryByText('get dragon food')).not.toBeInTheDocument()
+  expect(screen.getByText('help nana')).toBeInTheDocument()
 
-  await userEvent.click(getByTestId('help nana-removebutton'))
+  await userEvent.click(screen.getByTestId('help nana-removebutton'))
 
-  await waitFor(() => {
-    expect(queryByText('get cat food')).toBeFalsy()
-    expect(queryByText('get dragon food')).toBeFalsy()
-    expect(queryByText('help nana')).toBeFalsy()
-  })
+  expect(screen.queryByText('get cat food')).not.toBeInTheDocument()
+  expect(screen.queryByText('get dragon food')).not.toBeInTheDocument()
+  expect(screen.queryByText('help nana')).not.toBeInTheDocument()
 })
 
 it('inserting atoms', async () => {
@@ -242,38 +231,30 @@ it('inserting atoms', async () => {
     )
   }
 
-  const { getByTestId, queryByTestId } = render(
+  render(
     <StrictMode>
       <TaskList listAtom={todosAtom} />
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(queryByTestId('list')?.textContent).toBe(
-      'get cat food+get dragon food+help nana+',
-    )
-  })
+  expect(screen.getByTestId('list')).toHaveTextContent(
+    'get cat food+get dragon food+help nana+',
+  )
 
-  await userEvent.click(getByTestId('help nana-insertbutton'))
-  await waitFor(() => {
-    expect(queryByTestId('list')?.textContent).toBe(
-      'get cat food+get dragon food+new task1+help nana+',
-    )
-  })
+  await userEvent.click(screen.getByTestId('help nana-insertbutton'))
+  expect(screen.getByTestId('list')).toHaveTextContent(
+    'get cat food+get dragon food+new task1+help nana+',
+  )
 
-  await userEvent.click(getByTestId('get cat food-insertbutton'))
-  await waitFor(() => {
-    expect(queryByTestId('list')?.textContent).toBe(
-      'new task2+get cat food+get dragon food+new task1+help nana+',
-    )
-  })
+  await userEvent.click(screen.getByTestId('get cat food-insertbutton'))
+  expect(screen.getByTestId('list')).toHaveTextContent(
+    'new task2+get cat food+get dragon food+new task1+help nana+',
+  )
 
-  await userEvent.click(getByTestId('addtaskbutton'))
-  await waitFor(() => {
-    expect(queryByTestId('list')?.textContent).toBe(
-      'new task2+get cat food+get dragon food+new task1+help nana+end+',
-    )
-  })
+  await userEvent.click(screen.getByTestId('addtaskbutton'))
+  expect(screen.getByTestId('list')).toHaveTextContent(
+    'new task2+get cat food+get dragon food+new task1+help nana+end+',
+  )
 })
 
 it('moving atoms', async () => {
@@ -348,45 +329,35 @@ it('moving atoms', async () => {
     )
   }
 
-  const { getByTestId, queryByTestId } = render(
+  render(
     <StrictMode>
       <TaskList listAtom={todosAtom} />
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(queryByTestId('list')?.textContent).toBe(
-      'get cat food<>get dragon food<>help nana<>',
-    )
-  })
+  expect(screen.getByTestId('list')).toHaveTextContent(
+    'get cat food<>get dragon food<>help nana<>',
+  )
 
-  await userEvent.click(getByTestId('help nana-leftbutton'))
-  await waitFor(() => {
-    expect(queryByTestId('list')?.textContent).toBe(
-      'get cat food<>help nana<>get dragon food<>',
-    )
-  })
+  await userEvent.click(screen.getByTestId('help nana-leftbutton'))
+  expect(screen.getByTestId('list')).toHaveTextContent(
+    'get cat food<>help nana<>get dragon food<>',
+  )
 
-  await userEvent.click(getByTestId('get cat food-rightbutton'))
-  await waitFor(() => {
-    expect(queryByTestId('list')?.textContent).toBe(
-      'help nana<>get cat food<>get dragon food<>',
-    )
-  })
+  await userEvent.click(screen.getByTestId('get cat food-rightbutton'))
+  expect(screen.getByTestId('list')).toHaveTextContent(
+    'help nana<>get cat food<>get dragon food<>',
+  )
 
-  await userEvent.click(getByTestId('get cat food-rightbutton'))
-  await waitFor(() => {
-    expect(queryByTestId('list')?.textContent).toBe(
-      'help nana<>get dragon food<>get cat food<>',
-    )
-  })
+  await userEvent.click(screen.getByTestId('get cat food-rightbutton'))
+  expect(screen.getByTestId('list')).toHaveTextContent(
+    'help nana<>get dragon food<>get cat food<>',
+  )
 
-  await userEvent.click(getByTestId('help nana-leftbutton'))
-  await waitFor(() => {
-    expect(queryByTestId('list')?.textContent).toBe(
-      'get dragon food<>get cat food<>help nana<>',
-    )
-  })
+  await userEvent.click(screen.getByTestId('help nana-leftbutton'))
+  expect(screen.getByTestId('list')).toHaveTextContent(
+    'get dragon food<>get cat food<>help nana<>',
+  )
 })
 
 it('read-only array atom', async () => {
@@ -420,19 +391,19 @@ it('read-only array atom', async () => {
     )
   }
 
-  const { getByTestId } = render(
+  render(
     <StrictMode>
       <TaskList listAtom={todosAtom} />
     </StrictMode>,
   )
 
-  const catBox = getByTestId('get cat food-checkbox') as HTMLInputElement
-  const dragonBox = getByTestId('get dragon food-checkbox') as HTMLInputElement
+  const catBox = screen.getByTestId('get cat food-checkbox') as HTMLInputElement
+  const dragonBox = screen.getByTestId(
+    'get dragon food-checkbox',
+  ) as HTMLInputElement
 
-  await waitFor(() => {
-    expect(catBox.checked).toBeFalsy()
-    expect(dragonBox.checked).toBeFalsy()
-  })
+  expect(catBox).not.toBeChecked()
+  expect(dragonBox).not.toBeChecked()
 })
 
 it('no error with cached atoms (fix 510)', async () => {
@@ -450,6 +421,7 @@ it('no error with cached atoms (fix 510)', async () => {
 
   function useCachedAtoms<T>(atoms: T[]) {
     const prevAtoms = useRef<T[]>(atoms)
+    // eslint-disable-next-line react-compiler/react-compiler
     return prevAtoms.current
   }
 
@@ -481,14 +453,14 @@ it('no error with cached atoms (fix 510)', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <StrictMode>
       <Filter />
       <Filtered />
     </StrictMode>,
   )
 
-  await userEvent.click(getByText('button'))
+  await userEvent.click(screen.getByText('button'))
 })
 
 it('variable sized splitted atom', async () => {
@@ -514,16 +486,16 @@ it('variable sized splitted atom', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <App />
     </StrictMode>,
   )
 
-  await findByText('numbers: 1,2,3')
+  await screen.findByText('numbers: 1,2,3')
 
-  await userEvent.click(getByText('button'))
-  await findByText('numbers: 1,2')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('numbers: 1,2')
 })
 
 it('should not update splitted atom when single item is set to identical value', async () => {
@@ -543,14 +515,14 @@ it('should not update splitted atom when single item is set to identical value',
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <App />
     </StrictMode>,
   )
 
-  await findByText('changed: false')
+  await screen.findByText('changed: false')
 
-  await userEvent.click(getByText('button'))
-  await findByText('changed: false')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('changed: false')
 })

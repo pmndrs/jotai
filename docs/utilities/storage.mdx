@@ -47,7 +47,7 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 
 If not specified, the default storage implementation uses `localStorage` for storage/retrieval, `JSON.stringify()`/`JSON.parse()` for serialization/deserialization, and subscribes to `storage` events for cross-tab synchronization.
 
-<CodeSandbox id="vuwi7" />
+<Stackblitz id="vitejs-vite-wewrmi" file="src%2FApp.tsx" />
 
 ### `createJSONStorage` util
 
@@ -142,7 +142,8 @@ const storedAtom = atomWithStorage('stored-key', content, storage)
 
 #### Notes with AsyncStorage (since v2.2.0)
 
-If you use any kinds of AsyncStorage, the atom value can become async. Hence, if you are to update the value, you need to possibly resolve the promise.
+With AsyncStorage (as with any asynchronous storage), the atom value becomes async.
+When updating the atom by referencing the current value, then you'll need to `await` it.
 
 ```js
 const countAtom = atomWithStorage('count-key', 0, anyAsyncStorage)
@@ -216,7 +217,7 @@ import {
 import { z } from 'zod'
 
 const myNumberSchema = z.number().int().nonnegative()
-const isMyNumber = (v) => myNumberSchema.safeParse(v).success);
+const isMyNumber = (v) => myNumberSchema.safeParse(v).success
 
 const storedNumberAtom = atomWithStorage(
   'my-number',

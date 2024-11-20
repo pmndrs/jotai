@@ -1,6 +1,6 @@
 ---
 title: atomWithBroadcast
-nav: 8.09
+nav: 9.09
 keywords: creators,broadcast
 ---
 
@@ -13,19 +13,20 @@ By using the BroadcastChannel API, you can enable basic communication between br
 According to the MDN documentation, receiving a message during initialization is not supported in the BroadcastChannel, but if you want to support that functionality, you may need to add extra option to atomWithBroadcast, such as local storage.
 
 ```tsx
-import { atom } from 'jotai'
+import { atom, SetStateAction } from 'jotai'
 
 export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
   const baseAtom = atom(initialValue)
   const listeners = new Set<(event: MessageEvent<any>) => void>()
   const channel = new BroadcastChannel(key)
+
   channel.onmessage = (event) => {
     listeners.forEach((l) => l(event))
   }
 
-  const broadcastAtom = atom<Value, { isEvent: boolean; value: Value }>(
+  const broadcastAtom = atom(
     (get) => get(baseAtom),
-    (get, set, update) => {
+    (get, set, update: { isEvent: boolean; value: SetStateAction<Value> }) => {
       set(baseAtom, update.value)
 
       if (!update.isEvent) {
@@ -33,23 +34,29 @@ export function atomWithBroadcast<Value>(key: string, initialValue: Value) {
       }
     },
   )
+
   broadcastAtom.onMount = (setAtom) => {
     const listener = (event: MessageEvent<any>) => {
       setAtom({ isEvent: true, value: event.data })
     }
+
     listeners.add(listener)
+
     return () => {
       listeners.delete(listener)
     }
   }
-  const returnedAtom = atom<Value, Value>(
+
+  const returnedAtom = atom(
     (get) => get(broadcastAtom),
-    (get, set, update) => {
+    (_get, set, update: SetStateAction<Value>) => {
       set(broadcastAtom, { isEvent: false, value: update })
     },
   )
+
   return returnedAtom
 }
+
 const broadAtom = atomWithBroadcast('count', 0)
 
 const ListOfThings = () => {
@@ -64,4 +71,4 @@ const ListOfThings = () => {
 }
 ```
 
-<CodeSandbox id="ugkzm0" />
+<Stackblitz id="vitejs-vite-imqbzg" file="src%2FApp.tsx" />

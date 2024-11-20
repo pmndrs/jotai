@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 
 it('can propagate updates with async atom chains', async () => {
@@ -201,25 +201,18 @@ it('settles never resolving async derivations with deps picked up sync', async (
   let sub = 0
   const values: unknown[] = []
   store.get(asyncAtom).then((value) => values.push(value))
-
   store.sub(asyncAtom, () => {
     sub++
     store.get(asyncAtom).then((value) => values.push(value))
   })
 
-  await new Promise((r) => setTimeout(r))
-
   store.set(syncAtom, {
     promise: new Promise<number>((r) => resolve.push(r)),
   })
-
-  await new Promise((r) => setTimeout(r))
-
   resolve[1]?.(1)
 
-  await new Promise((r) => setTimeout(r))
-
-  expect(values).toEqual([1, 1])
+  await new Promise((r) => setTimeout(r)) // wait for a tick
+  expect(values).toEqual([1])
   expect(sub).toBe(1)
 })
 
@@ -233,7 +226,6 @@ it('settles never resolving async derivations with deps picked up async', async 
   const asyncAtom = atom(async (get) => {
     // we want to pick up `syncAtom` as an async dep
     await Promise.resolve()
-
     return await get(syncAtom).promise
   })
 
@@ -242,24 +234,115 @@ it('settles never resolving async derivations with deps picked up async', async 
   let sub = 0
   const values: unknown[] = []
   store.get(asyncAtom).then((value) => values.push(value))
-
   store.sub(asyncAtom, () => {
     sub++
     store.get(asyncAtom).then((value) => values.push(value))
   })
 
-  await new Promise((r) => setTimeout(r))
-
+  await new Promise((r) => setTimeout(r)) // wait for a tick
   store.set(syncAtom, {
     promise: new Promise<number>((r) => resolve.push(r)),
   })
-
-  await new Promise((r) => setTimeout(r))
-
   resolve[1]?.(1)
 
-  await new Promise((r) => setTimeout(r))
-
-  expect(values).toEqual([1, 1])
+  await new Promise((r) => setTimeout(r)) // wait for a tick
+  expect(values).toEqual([1])
   expect(sub).toBe(1)
+})
+
+it('refreshes deps for each async read', async () => {
+  const countAtom = atom(0)
+  const depAtom = atom(false)
+  const resolve: (() => void)[] = []
+  const values: number[] = []
+  const asyncAtom = atom(async (get) => {
+    const count = get(countAtom)
+    values.push(count)
+    if (count === 0) {
+      get(depAtom)
+    }
+    await new Promise<void>((r) => resolve.push(r))
+    return count
+  })
+  const store = createStore()
+  store.get(asyncAtom)
+  store.set(countAtom, (c) => c + 1)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(await store.get(asyncAtom)).toBe(1)
+  store.set(depAtom, true)
+  store.get(asyncAtom)
+  resolve.splice(0).forEach((fn) => fn())
+  expect(values).toEqual([0, 1])
+})
+
+it('should not re-evaluate stable derived atom values in situations where dependencies are re-ordered (#2738)', () => {
+  const callCounter = vi.fn()
+  const countAtom = atom(0)
+  const rootAtom = atom(false)
+  const stableDep = atom((get) => {
+    get(rootAtom)
+    return 1
+  })
+  const stableDepDep = atom((get) => {
+    get(stableDep)
+    callCounter()
+    return 2 + get(countAtom)
+  })
+
+  const newAtom = atom((get) => {
+    if (get(rootAtom) || get(countAtom) > 0) {
+      return get(stableDepDep)
+    }
+
+    return get(stableDep)
+  })
+
+  const store = createStore()
+  store.sub(stableDepDep, () => {})
+  store.sub(newAtom, () => {})
+  expect(store.get(stableDepDep)).toBe(2)
+  expect(callCounter).toHaveBeenCalledTimes(1)
+
+  store.set(rootAtom, true)
+  expect(store.get(newAtom)).toBe(2)
+  expect(callCounter).toHaveBeenCalledTimes(1)
+
+  store.set(rootAtom, false)
+  store.set(countAtom, 1)
+  expect(store.get(newAtom)).toBe(3)
+  expect(callCounter).toHaveBeenCalledTimes(2)
+})
+
+it('handles complex dependency chains', async () => {
+  const baseAtom = atom(1)
+  const derived1 = atom((get) => get(baseAtom) * 2)
+  const derived2 = atom((get) => get(derived1) + 1)
+  let resolve = () => {}
+  const asyncDerived = atom(async (get) => {
+    const value = get(derived2)
+    await new Promise<void>((r) => (resolve = r))
+    return value * 2
+  })
+
+  const store = createStore()
+  const promise = store.get(asyncDerived)
+  resolve()
+  expect(await promise).toBe(6)
+
+  store.set(baseAtom, 2)
+  const promise2 = store.get(asyncDerived)
+  resolve()
+  expect(await promise2).toBe(10)
+})
+
+it('can read sync derived atom in write without initializing', () => {
+  const store = createStore()
+  const a = atom(0)
+  const b = atom((get) => get(a) + 1)
+  const c = atom(null, (get, set) => set(a, get(b)))
+  store.set(c)
+  expect(store.get(a)).toBe(1)
+  store.set(c)
+  // note: this is why write get needs to update deps
+  expect(store.get(a)).toBe(2)
 })

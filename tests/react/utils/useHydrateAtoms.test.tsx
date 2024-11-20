@@ -1,10 +1,19 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
+
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  // eslint-disable-next-line react-compiler/react-compiler
+  return commitCountRef.current
+}
 
 it('useHydrateAtoms should only hydrate on first render', async () => {
   const countAtom = atom(0)
@@ -41,26 +50,26 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
       </>
     )
   }
-  const { findByText, getByText, rerender } = render(
+  const { rerender } = render(
     <StrictMode>
       <Counter initialCount={42} initialStatus="rejected" />
     </StrictMode>,
   )
 
-  await findByText('count: 42')
-  await findByText('status: rejected')
-  await userEvent.click(getByText('dispatch'))
-  await userEvent.click(getByText('update'))
-  await findByText('count: 43')
-  await findByText('status: fulfilled')
+  await screen.findByText('count: 42')
+  await screen.findByText('status: rejected')
+  await userEvent.click(screen.getByText('dispatch'))
+  await userEvent.click(screen.getByText('update'))
+  await screen.findByText('count: 43')
+  await screen.findByText('status: fulfilled')
 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialStatus="rejected" />
     </StrictMode>,
   )
-  await findByText('count: 43')
-  await findByText('status: fulfilled')
+  await screen.findByText('count: 43')
+  await screen.findByText('status: fulfilled')
 })
 
 it('useHydrateAtoms should only hydrate on first render using a Map', async () => {
@@ -94,24 +103,24 @@ it('useHydrateAtoms should only hydrate on first render using a Map', async () =
       </>
     )
   }
-  const { findByText, getByText, rerender } = render(
+  const { rerender } = render(
     <StrictMode>
       <Counter initialCount={42} />
     </StrictMode>,
   )
 
-  await findByText('count: 42')
-  await findByText('is active: no')
-  await userEvent.click(getByText('dispatch'))
-  await findByText('count: 43')
+  await screen.findByText('count: 42')
+  await screen.findByText('is active: no')
+  await userEvent.click(screen.getByText('dispatch'))
+  await screen.findByText('count: 43')
 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialActive={true} />
     </StrictMode>,
   )
-  await findByText('count: 43')
-  await findByText('is active: no')
+  await screen.findByText('count: 43')
+  await screen.findByText('is active: no')
 })
 
 it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
@@ -120,30 +129,27 @@ it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
   const Counter = ({ initialCount }: { initialCount: number }) => {
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
-    const commitCount = useRef(1)
-    useEffect(() => {
-      ++commitCount.current
-    })
+    const commits = useCommitCount()
     return (
       <>
-        <div>commits: {commitCount.current}</div>
+        <div>commits: {commits}</div>
         <div>count: {countValue}</div>
         <button onClick={() => setCount((count) => count + 1)}>dispatch</button>
       </>
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <>
       <Counter initialCount={42} />
     </>,
   )
 
-  await findByText('count: 42')
-  await findByText('commits: 1')
-  await userEvent.click(getByText('dispatch'))
-  await findByText('count: 43')
-  await findByText('commits: 2')
+  await screen.findByText('count: 42')
+  await screen.findByText('commits: 1')
+  await userEvent.click(screen.getByText('dispatch'))
+  await screen.findByText('count: 43')
+  await screen.findByText('commits: 2')
 })
 
 it('useHydrateAtoms should work with derived atoms', async () => {
@@ -163,17 +169,17 @@ it('useHydrateAtoms should work with derived atoms', async () => {
     )
   }
 
-  const { findByText, getByText } = render(
+  render(
     <StrictMode>
       <Counter initialCount={42} />
     </StrictMode>,
   )
 
-  await findByText('count: 42')
-  await findByText('doubleCount: 84')
-  await userEvent.click(getByText('dispatch'))
-  await findByText('count: 43')
-  await findByText('doubleCount: 86')
+  await screen.findByText('count: 42')
+  await screen.findByText('doubleCount: 84')
+  await userEvent.click(screen.getByText('dispatch'))
+  await screen.findByText('count: 43')
+  await screen.findByText('doubleCount: 86')
 })
 
 it('useHydrateAtoms can only restore an atom once', async () => {
@@ -201,15 +207,15 @@ it('useHydrateAtoms can only restore an atom once', async () => {
       </>
     )
   }
-  const { findByText, getByText, rerender } = render(
+  const { rerender } = render(
     <StrictMode>
       <Counter initialCount={42} />
     </StrictMode>,
   )
 
-  await findByText('count: 42')
-  await userEvent.click(getByText('dispatch'))
-  await findByText('count: 43')
+  await screen.findByText('count: 42')
+  await userEvent.click(screen.getByText('dispatch'))
+  await screen.findByText('count: 43')
 
   rerender(
     <StrictMode>
@@ -217,9 +223,9 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     </StrictMode>,
   )
 
-  await findByText('count: 43')
-  await userEvent.click(getByText('dispatch'))
-  await findByText('count: 44')
+  await screen.findByText('count: 43')
+  await userEvent.click(screen.getByText('dispatch'))
+  await screen.findByText('count: 44')
 })
 
 it('useHydrateAtoms should respect onMount', async () => {
@@ -233,13 +239,14 @@ it('useHydrateAtoms should respect onMount', async () => {
 
     return <div>count: {countValue}</div>
   }
-  const { findByText } = render(
+
+  render(
     <>
       <Counter initialCount={42} />
     </>,
   )
 
-  await findByText('count: 42')
+  await screen.findByText('count: 42')
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
@@ -285,26 +292,26 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
       </>
     )
   }
-  const { findByText, getByText, rerender } = render(
+  const { rerender } = render(
     <StrictMode>
       <Counter initialCount={42} initialStatus="rejected" />
     </StrictMode>,
   )
 
-  await findByText('count: 42')
-  await findByText('status: rejected')
-  await userEvent.click(getByText('dispatch'))
-  await userEvent.click(getByText('update'))
-  await findByText('count: 43')
-  await findByText('status: fulfilled')
+  await screen.findByText('count: 42')
+  await screen.findByText('status: rejected')
+  await userEvent.click(screen.getByText('dispatch'))
+  await userEvent.click(screen.getByText('update'))
+  await screen.findByText('count: 43')
+  await screen.findByText('status: fulfilled')
 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialStatus="rejected" />
     </StrictMode>,
   )
-  await findByText('count: 43')
-  await findByText('status: fulfilled')
+  await screen.findByText('count: 43')
+  await screen.findByText('status: fulfilled')
 
   rerender(
     <StrictMode>
@@ -315,6 +322,6 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
       />
     </StrictMode>,
   )
-  await findByText('count: 11')
-  await findByText('status: rejected')
+  await screen.findByText('count: 11')
+  await screen.findByText('status: rejected')
 })

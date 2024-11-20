@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
@@ -19,13 +19,14 @@ it('useAtomValue basic test', async () => {
       </>
     )
   }
-  const { findByText, getByText } = render(
+
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
-  await userEvent.click(getByText('dispatch'))
-  await findByText('count: 1')
+  await screen.findByText('count: 0')
+  await userEvent.click(screen.getByText('dispatch'))
+  await screen.findByText('count: 1')
 })

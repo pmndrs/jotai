@@ -71,7 +71,7 @@ This is crucial if you use infinite number of params.
 There are two ways to remove params.
 
 - `myFamily.remove(param)` allows you to remove a specific param.
-- `myFamily.setShouldRemove(shouldRemove)` is to register `shouldRemove` function which runs immediately **and** when you are to get an atom from a cache.
+- `myFamily.setShouldRemove(shouldRemove)` is to register `shouldRemove` function which runs immediately **and** when you are about to get an atom from a cache.
   - shouldRemove is a function that takes two arguments `createdAt` in milliseconds and `param`, and returns a boolean value.
   - setting `null` will remove the previously registered function.
 
@@ -112,6 +112,6 @@ const todoFamily = atomFamily(
 )
 ```
 
-### Codesandbox
+### Stackblitz
 
-<CodeSandbox id="huxd4i" />
+<Stackblitz id="vitejs-vite-rx6npn" file="src%2FApp.tsx" />

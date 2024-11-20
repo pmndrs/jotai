@@ -15,20 +15,9 @@ export const Sidebar = ({ showDocs = false }) => {
         <Jotai isDocsPage={showDocs} />
         <div className="mt-8 flex flex-col space-y-4">
           <SearchButton />
-          {showDocs ? (
-            <Button to="/" icon="home">
-              Home
-            </Button>
-          ) : (
-            <Button to="/docs/introduction" icon="book">
-              Documentation
-            </Button>
-          )}
-          {showDocs && (
-            <div className="px-3">
-              <Docs />
-            </div>
-          )}
+          <Button to="/docs" icon="book">
+            Documentation
+          </Button>
           <Button icon="chalkboard" to="https://tutorial.jotai.org" external>
             Tutorial
           </Button>
@@ -38,13 +27,28 @@ export const Sidebar = ({ showDocs = false }) => {
           <Button icon="github" to="https://github.com/pmndrs/jotai" external>
             Repository
           </Button>
-          <Button icon="npm" to="https://www.npmjs.com/package/jotai" external>
+          <Button
+            icon="npm"
+            to="https://www.npmjs.com/package/jotai"
+            external
+            className="hidden 2xl:inline-flex"
+          >
             Package
           </Button>
-          <Button icon="discord" to="https://discord.gg/poimandres" external>
+          <Button
+            icon="discord"
+            to="https://discord.gg/poimandres"
+            external
+            className="hidden 2xl:inline-flex"
+          >
             Community
           </Button>
-          <Button icon="twitter" to="https://twitter.com/jotaijs" external>
+          <Button
+            icon="twitter"
+            to="https://twitter.com/jotaijs"
+            external
+            className="hidden 2xl:inline-flex"
+          >
             Updates
           </Button>
         </div>

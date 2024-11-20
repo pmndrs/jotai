@@ -1,6 +1,6 @@
 ---
 title: atomWithRefreshAndDefault
-nav: 8.07
+nav: 9.07
 keywords: creators,refresh,default
 ---
 
@@ -8,7 +8,7 @@ keywords: creators,refresh,default
 
 ### Look back to atomWithDefault behavior
 
-As you can see in the example code in atomWithDefault section, the two atoms' relation is disconnected after updating created one, `count2Atom = atomWithDefault((get) => get(count1Atom) * 2)`.  
+As you can see in the example code in atomWithDefault section, the two atoms' relation is disconnected after updating created one, `count2Atom = atomWithDefault((get) => get(count1Atom) * 2)`.
 Let's confirm what's occurred,
 
 - 1. Click "increment count1", then count1 is 2 and count2 is 4
@@ -72,4 +72,4 @@ const resetRootAtom = atom(null, (get, set) => {
 })
 ```
 
-<CodeSandbox id="tcx2mk" />
+<Stackblitz id="vitejs-vite-1m7ce3" file="src%2FApp.tsx" />

@@ -1,6 +1,7 @@
+import { screen } from '@testing-library/react'
 import { expectType } from 'ts-expect'
 import type { TypeEqual } from 'ts-expect'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtom, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
@@ -29,7 +30,7 @@ it('useAtom should return the correct types', () => {
     })
     expectType<[null, (arg: number) => void]>(useAtom(writeonlyDerivedAtom))
   }
-  Component
+  expect(Component).toBeDefined()
 })
 
 it('useAtom should handle inference of atoms (#1831 #1387)', () => {
@@ -67,7 +68,7 @@ it('useAtom should handle inference of atoms (#1831 #1387)', () => {
       >
     >(true)
   }
-  Component
+  expect(Component).toBeDefined()
 })
 
 it('useAtom should handle inference of read-only atoms', () => {
@@ -84,7 +85,7 @@ it('useAtom should handle inference of read-only atoms', () => {
     expectType<[number, never]>(useField('age'))
     expectType<[boolean, never]>(useField('checked'))
   }
-  Component
+  expect(Component).toBeDefined()
 })
 
 it('useSetAtom should handle inference of atoms', () => {
@@ -119,7 +120,7 @@ it('useSetAtom should handle inference of atoms', () => {
       >
     >(true)
   }
-  Component
+  expect(Component).toBeDefined()
 })
 
 it('useAtom should handle primitive atom with one type argeument', () => {
@@ -134,5 +135,5 @@ it('useAtom should handle primitive atom with one type argeument', () => {
       >
     >(true)
   }
-  Component
+  expect(Component).toBeDefined()
 })
