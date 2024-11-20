@@ -15,9 +15,20 @@ export const Sidebar = ({ showDocs = false }) => {
         <Jotai isDocsPage={showDocs} />
         <div className="mt-8 flex flex-col space-y-4">
           <SearchButton />
-          <Button to="/docs" icon="book">
-            Documentation
-          </Button>
+          {showDocs ? (
+            <Button to="/" icon="home">
+              Home
+            </Button>
+          ) : (
+            <Button to="/docs" icon="book">
+              Documentation
+            </Button>
+          )}
+          {showDocs && (
+            <div className="px-3">
+              <Docs />
+            </div>
+          )}
           <Button icon="chalkboard" to="https://tutorial.jotai.org" external>
             Tutorial
           </Button>
