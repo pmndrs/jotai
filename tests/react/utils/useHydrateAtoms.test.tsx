@@ -50,10 +50,12 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
       </>
     )
   }
-  const { rerender } = render(
-    <StrictMode>
-      <Counter initialCount={42} initialStatus="rejected" />
-    </StrictMode>,
+  const { rerender } = await Promise.resolve(
+    render(
+      <StrictMode>
+        <Counter initialCount={42} initialStatus="rejected" />
+      </StrictMode>,
+    ),
   )
 
   await screen.findByText('count: 42')
@@ -103,10 +105,13 @@ it('useHydrateAtoms should only hydrate on first render using a Map', async () =
       </>
     )
   }
-  const { rerender } = render(
-    <StrictMode>
-      <Counter initialCount={42} />
-    </StrictMode>,
+
+  const { rerender } = await Promise.resolve(
+    render(
+      <StrictMode>
+        <Counter initialCount={42} />
+      </StrictMode>,
+    ),
   )
 
   await screen.findByText('count: 42')
@@ -207,10 +212,13 @@ it('useHydrateAtoms can only restore an atom once', async () => {
       </>
     )
   }
-  const { rerender } = render(
-    <StrictMode>
-      <Counter initialCount={42} />
-    </StrictMode>,
+
+  const { rerender } = await Promise.resolve(
+    render(
+      <StrictMode>
+        <Counter initialCount={42} />
+      </StrictMode>,
+    ),
   )
 
   await screen.findByText('count: 42')
@@ -292,10 +300,13 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
       </>
     )
   }
-  const { rerender } = render(
-    <StrictMode>
-      <Counter initialCount={42} initialStatus="rejected" />
-    </StrictMode>,
+
+  const { rerender } = await Promise.resolve(
+    render(
+      <StrictMode>
+        <Counter initialCount={42} initialStatus="rejected" />
+      </StrictMode>,
+    ),
   )
 
   await screen.findByText('count: 42')

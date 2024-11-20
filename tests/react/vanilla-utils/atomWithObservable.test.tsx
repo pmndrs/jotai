@@ -1,13 +1,18 @@
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import userEventOrig from '@testing-library/user-event'
 import { BehaviorSubject, Observable, Subject, delay, map, of } from 'rxjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
+
+const userEvent = {
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  click: (element: Element) => act(() => userEventOrig.click(element)),
+}
 
 const consoleError = console.error
 beforeEach(() => {
@@ -196,13 +201,16 @@ it('only subscribe once per atom', async () => {
     return <>count: {state}</>
   }
 
-  const { rerender } = render(
-    <>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </>,
+  const { rerender } = await Promise.resolve(
+    render(
+      <>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </>,
+    ),
   )
+
   await screen.findByText('loading')
   act(() => subject.next(1))
   await screen.findByText('count: 1')
@@ -240,12 +248,14 @@ it('cleanup subscription', async () => {
     return <>count: {state}</>
   }
 
-  const { rerender } = render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>,
+  const { rerender } = await Promise.resolve(
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    ),
   )
 
   await screen.findByText('loading')

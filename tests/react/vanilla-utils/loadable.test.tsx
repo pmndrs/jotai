@@ -159,12 +159,14 @@ it('loadable can use resolved promises synchronously', async () => {
     return <div>Ready</div>
   }
 
-  const { rerender } = render(
-    <StrictMode>
-      <Suspense fallback={null}>
-        <ResolveAtomComponent />
-      </Suspense>
-    </StrictMode>,
+  const { rerender } = await Promise.resolve(
+    render(
+      <StrictMode>
+        <Suspense fallback={null}>
+          <ResolveAtomComponent />
+        </Suspense>
+      </StrictMode>,
+    ),
   )
 
   await screen.findByText('Ready')
