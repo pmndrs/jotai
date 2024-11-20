@@ -33,9 +33,9 @@ jobs:
           - 18.1.0
           - 18.2.0
           - 18.3.1
-          - 19.0.0-rc.0
-          - 19.0.0-rc-5c56b873-20241107
-          - 0.0.0-experimental-5c56b873-20241107
+          - 19.0.0-rc.1
+          - 19.0.0-rc-e1ef8c95-20241115
+          - 0.0.0-experimental-e1ef8c95-20241115
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -47,7 +47,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install legacy testing-library
         if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
-        run: pnpm add -D @testing-library/react@12.1.4
+        run: |
+          pnpm json -I -f package.json -e "this.pnpm.patchedDependencies={};"
+          pnpm add -D @testing-library/react@12.1.4
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
