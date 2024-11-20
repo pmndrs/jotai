@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/react'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Getter } from 'jotai/vanilla'
+import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -358,7 +358,7 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
   resolve[3]!()
   resolve[4]!()
 
-  await new Promise(setImmediate)
+  await Promise.resolve()
   await waitFor(() => assert(store.get(countAtom) === 4))
 
   expect(result).toBe(4) // 3
@@ -578,4 +578,388 @@ it('should update derived atom even if dependances changed (#2697)', () => {
   expect(onChangeDerived).toHaveBeenCalledTimes(0)
   store.set(primitiveAtom, 1)
   expect(onChangeDerived).toHaveBeenCalledTimes(1)
+})
+
+describe('should invoke flushPending only after all atoms are updated (#2804)', () => {
+  const store = createStore()
+
+  it('should invoke flushPending only after all atoms are updated with set', () => {
+    const a = atom(0)
+    const setResult = []
+    const w = atom(null, (_get, set, value: number) => {
+      setResult.push('before set')
+      set(a, value)
+      setResult.push('after set')
+    })
+    store.sub(a, () => {
+      setResult.push('a value changed - ' + store.get(a))
+    })
+    setResult.push('before store.set')
+    store.set(w, 1)
+    setResult.push('after store.set')
+    expect(setResult).not.toEqual([
+      'before store.set',
+      'before set',
+      'a value changed - 1',
+      'after set',
+      'after store.set',
+    ])
+    expect(setResult).toEqual([
+      'before store.set',
+      'before set',
+      'after set',
+      'a value changed - 1',
+      'after store.set',
+    ])
+  })
+
+  it('should invoke flushPending only after all atoms are updated with mount', () => {
+    const mountResult = []
+    const a = atom(0)
+    const m = atom(null, (_get, set, value: number) => {
+      set(a, value)
+    })
+    m.onMount = (setSelf) => {
+      mountResult.push('before onMount setSelf')
+      setSelf(1)
+      mountResult.push('after onMount setSelf')
+    }
+    mountResult.push('before store.sub')
+    store.sub(a, () => {
+      mountResult.push('a value changed - ' + store.get(a))
+    })
+    const unsub = store.sub(m, () => {})
+    mountResult.push('after store.sub')
+    expect(mountResult).not.toEqual([
+      'before store.sub',
+      'before onMount setSelf',
+      'a value changed - 1',
+      'after onMount setSelf',
+      'after store.sub',
+    ])
+    expect(mountResult).toEqual([
+      'before store.sub',
+      'before onMount setSelf',
+      'after onMount setSelf',
+      'a value changed - 1',
+      'after store.sub',
+    ])
+  })
+})
+
+describe('should mount and trigger listeners even when an error is thrown', () => {
+  it('in asynchronous read', async () => {
+    const store = createStore()
+    const a = atom(0)
+    a.onMount = vi.fn()
+    const e = atom(
+      () => {
+        throw new Error('error')
+      },
+      () => {},
+    )
+    e.onMount = vi.fn()
+    const b = atom((get) => {
+      setTimeout(() => {
+        get(a)
+        try {
+          get(e)
+        } catch {
+          // expect error
+        }
+      })
+    })
+    store.sub(b, () => {})
+    await new Promise((r) => setTimeout(r))
+    expect(a.onMount).toHaveBeenCalledOnce()
+    expect(e.onMount).toHaveBeenCalledOnce()
+  })
+
+  it('in read setSelf', async () => {
+    const store = createStore()
+    const a = atom(0)
+    const e = atom(
+      () => {
+        throw new Error('error')
+      },
+      () => {},
+    )
+    const b = atom(
+      (_, { setSelf }) => {
+        setTimeout(() => {
+          try {
+            setSelf()
+          } catch {
+            // expect error
+          }
+        })
+      },
+      (get, set) => {
+        set(a, 1)
+        get(e)
+      },
+    )
+    const listener = vi.fn()
+    store.sub(a, listener)
+    store.sub(b, () => {})
+    await new Promise((r) => setTimeout(r))
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('in read promise on settled', async () => {
+    const store = createStore()
+    const a = atom(0)
+    a.onMount = vi.fn()
+    const e = atom(
+      () => {
+        throw new Error('error')
+      },
+      () => {},
+    )
+    const b = atom(async (get) => {
+      await new Promise((r) => setTimeout(r))
+      get(a)
+      get(e)
+    })
+    store.sub(b, () => {})
+    await new Promise((r) => setTimeout(r))
+    expect(a.onMount).toHaveBeenCalledOnce()
+  })
+
+  it('in asynchronous write', async () => {
+    const store = createStore()
+    const a = atom(0)
+    const e = atom(() => {
+      throw new Error('error')
+    })
+    const b = atom(null, (get, set) => {
+      set(a, 1)
+      get(e)
+    })
+    const w = atom(null, async (get, set) => {
+      setTimeout(() => {
+        try {
+          set(b)
+        } catch {
+          // expect error
+        }
+      })
+    })
+    const listener = vi.fn()
+    store.sub(a, listener)
+    store.set(w)
+    await new Promise((r) => setTimeout(r))
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('in synchronous write', () => {
+    const store = createStore()
+    const a = atom(0)
+    a.debugLabel = 'a'
+    const e = atom(() => {
+      throw new Error('error')
+    })
+    e.debugLabel = 'e'
+    const b = atom(null, (get, set) => {
+      set(a, 1)
+      get(e)
+    })
+    b.debugLabel = 'b'
+    const listener = vi.fn()
+    store.sub(a, listener)
+    try {
+      store.set(b)
+    } catch {
+      // expect error
+    }
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('in onmount/onunmount asynchronous setAtom', async () => {
+    const store = createStore()
+    const a = atom(0)
+    const e = atom(() => {
+      throw new Error('error')
+    })
+    const b = atom(null, (get, set) => {
+      set(a, (v) => ++v)
+      get(e)
+    })
+    b.onMount = (setAtom) => {
+      setTimeout(() => {
+        try {
+          setAtom()
+        } catch {
+          // expect error
+        }
+      })
+      return () => {
+        setTimeout(() => {
+          try {
+            setAtom()
+          } catch {
+            // expect error
+          }
+        })
+      }
+    }
+    const listener = vi.fn()
+    store.sub(a, listener)
+    const unsub = store.sub(b, () => {})
+    await new Promise((r) => setTimeout(r))
+    expect(listener).toHaveBeenCalledOnce()
+    listener.mockClear()
+    unsub()
+    await new Promise((r) => setTimeout(r))
+    expect(listener).toHaveBeenCalledOnce()
+  })
+
+  it('in synchronous onmount', () => {
+    const store = createStore()
+    const a = atom(0)
+    const aUnmount = vi.fn()
+    a.onMount = vi.fn(() => aUnmount)
+    const b = atom(
+      (get) => get(a),
+      () => {},
+    )
+    b.onMount = () => {
+      throw new Error('error')
+    }
+    try {
+      store.sub(b, () => {})
+    } catch {
+      // expect error
+    }
+    expect(a.onMount).toHaveBeenCalledOnce()
+  })
+
+  it('in synchronous onunmount', () => {
+    const store = createStore()
+    const a = atom(0)
+    const aUnmount = vi.fn()
+    a.onMount = () => aUnmount
+    const b = atom(
+      (get) => get(a),
+      () => {},
+    )
+    b.onMount = () => () => {
+      throw new Error('error')
+    }
+    const unsub = store.sub(b, () => {})
+    try {
+      unsub()
+    } catch {
+      // expect error
+    }
+    expect(aUnmount).toHaveBeenCalledOnce()
+  })
+
+  it('in synchronous listener', () => {
+    const store = createStore()
+    const a = atom(0)
+    const e = atom(0)
+    const b = atom(null, (_, set) => {
+      set(a, 1)
+      set(e, 1)
+    })
+    store.sub(e, () => {
+      throw new Error('error')
+    })
+    const listener = vi.fn()
+    store.sub(a, listener)
+    try {
+      store.set(b)
+    } catch {
+      // expect error
+    }
+    expect(listener).toHaveBeenCalledOnce()
+  })
+})
+
+it('throws falsy errors in onMount, onUnmount, and listeners', () => {
+  const store = createStore()
+  const a = atom(0)
+  a.onMount = () => {
+    throw ''
+  }
+  expect(() => store.sub(a, () => {})).toThrow('')
+  const b = atom(0)
+  b.onMount = () => () => {
+    throw ''
+  }
+  const unsub = store.sub(b, () => {})
+  expect(() => unsub()).toThrow('')
+  const c = atom(0)
+  store.sub(c, () => {
+    throw ''
+  })
+  expect(() => store.set(c, 1)).toThrow('')
+})
+
+it('should use the correct pending on unmount', () => {
+  const store = createStore()
+  const a = atom(0)
+  const b = atom(0, (_, set, update: number) => set(a, update))
+  b.onMount = (setAtom) => () => setAtom(1)
+  const aListener = vi.fn()
+  store.sub(a, aListener)
+  const unsub = store.sub(b, () => {})
+  aListener.mockClear()
+  unsub()
+  expect(store.get(a)).toBe(1)
+  expect(aListener).toHaveBeenCalledTimes(1)
+})
+
+it('should call subscribers after setAtom updates atom value on mount but not on unmount', () => {
+  const store = createStore()
+  const a = atom(0)
+  let unmount
+  a.onMount = vi.fn(((setAtom) => {
+    setAtom(1)
+    unmount = vi.fn(() => {
+      setAtom(2)
+    })
+    return unmount
+  }) as NonNullable<(typeof a)['onMount']>)
+  const listener = vi.fn()
+  const unsub = store.sub(a, listener)
+  expect(store.get(a)).toBe(1)
+  expect(a.onMount).toHaveBeenCalledTimes(1)
+  expect(listener).toHaveBeenCalledTimes(1)
+  listener.mockClear()
+  unsub()
+  expect(store.get(a)).toBe(2)
+  expect(unmount).toHaveBeenCalledTimes(1)
+  expect(listener).toHaveBeenCalledTimes(0)
+})
+
+it('processes deep atom a graph beyond maxDepth', () => {
+  function getMaxDepth() {
+    let depth = 0
+    function d(): number {
+      ++depth
+      try {
+        return d()
+      } catch (error) {
+        return depth
+      }
+    }
+    return d()
+  }
+  const maxDepth = getMaxDepth()
+  const store = createStore()
+  const baseAtom = atom(0)
+  const atoms: [PrimitiveAtom<number>, ...Atom<number>[]] = [baseAtom]
+  Array.from({ length: maxDepth }, (_, i) => {
+    const prevAtom = atoms[i]!
+    const a = atom((get) => get(prevAtom))
+    atoms.push(a)
+  })
+  const lastAtom = atoms[maxDepth]!
+  // store.get(lastAtom) // FIXME: This is causing a stack overflow
+  expect(() => store.sub(lastAtom, () => {})).not.toThrow()
+  // store.get(lastAtom) // FIXME: This is causing a stack overflow
+  expect(() => store.set(baseAtom, 1)).not.toThrow()
+  // store.set(lastAtom) // FIXME: This is causing a stack overflow
 })

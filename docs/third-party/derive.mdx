@@ -1,0 +1,145 @@
+---
+title: Derive
+description: This doc describes Derive extension.
+nav: 5.01
+keywords: derive,derived,async,zalgo,suspense,promise,react
+---
+
+#### When is this useful?
+
+- When local updates to the cache cause micro-suspensions
+- When unnecessary recomputation causes performance issues
+
+Jōtai offers powerful primitives for working with asynchronous data outside of the web framework (e.g. React), and allows the UI and business logic to properly integrate with the data layer. Many data-fetching integrations offer a peek into the client-side cache via atoms. When the cache is not yet populated, the atom has to resolve to a Promise of the value. However, if the value already exists in cache, and we do an optimistic update, then the value can be made available downstream immediately.
+
+Building data graphs with these dual-natured (sometimes async, sometimes sync) atoms as a base can lead to unnecessary rerenders, stale values and micro-suspensions (in case of React) if not handled with care.
+
+**jotai-derive** provides a primitive for building asynchronous data graphs that act on values as soon as they are available (either awaiting for them, or acting on them synchronously).
+
+### Install
+
+You have to install `jotai-derive` to use this feature.
+
+```
+npm i jotai-derive
+```
+
+## derive
+
+Lets say we have a _dual-natured_ atom, meaning that sometimes we are yet to
+know the value (e.g. fetching the data), but other times we update the atom
+locally and can know its value immediately (e.g. optimistic updates).
+
+```ts
+// `jotai-derive` is applicable to most data-fetching solutions, not just `jotai-apollo`
+import { atomWithQuery } from 'jotai-apollo';
+
+// An example of a dual-natured atom
+const userAtom: Atom<User | Promise<User>> =
+  atomWithQuery(...);
+
+```
+
+Below is how a derived atom is usually created. The drawback is that always awaiting (even though the value can be known)
+introduces unnecessary deferring and recomputation.
+
+```ts
+// Without `jotai-derive`
+
+import { atom } from 'jotai'
+
+// Type is Atom<Promise<string>>, even though
+// get(userAtom) does not always return a promise,
+// meaning we could compute `uppercaseNameAtom`
+// synchronously.
+const uppercaseNameAtom = atom(async (get) => {
+  const user = await get(userAtom)
+  return user.name.toUppercase()
+})
+```
+
+Here is how `jotai-derive` is used to create a tighter async data-processing pipeline.
+
+```ts
+// With `jotai-derive`
+
+import { derive } from 'jotai-derive'
+
+// Atom<string | Promise<string>>
+const uppercaseNameAtom = derive(
+  [userAtom], // will be awaited only when necessary
+  (user) => user.name.toUppercase(),
+)
+```
+
+### Multiple async dependencies
+
+To derive a value from multiple atoms, the array accepts more than one atom. The corresponding values are then passed
+into the producer function in the same order.
+
+```ts
+import { derive } from 'jotai-derive'
+
+// Atom<string | Promise<string>>
+const welcomeMessageAtom = derive(
+  [userAtom, serverNameAtom],
+  (user, serverName) => `Welcome ${user.name} to ${serverName}!`,
+)
+```
+
+## soon
+
+For more advances usage, for example **conditional dependencies**, the `soon` and `soonAll` functions
+can be used instead (`derive` is a utility wrapper around them).
+
+### Conditional dependency
+
+```ts
+// pipes allow for cleaner code when using `soon` directly.
+import { pipe } from 'remeda';
+import { soon } from 'jotai-derive';
+
+// Atom<RestrictedItem | Promise<RestrictedItem>>
+const queryAtom = ...;
+
+// Atom<boolean | Promise<boolean>>
+const isAdminAtom = ...;
+
+// Atom<null | RestrictedItem | Promise<null | RestrictedItem>>
+const restrictedItemAtom = atom((get) =>
+  pipe(
+    get(isAdminAtom),
+    soon((isAdmin) => (isAdmin ? get(queryAtom) : null))
+  )
+);
+```
+
+### Conditional dependency (multiple conditions)
+
+```ts
+// pipes allow for cleaner code when using `soon` directly.
+import { pipe } from 'remeda';
+import { soon, soonAll } from 'jotai-derive';
+
+// Atom<RestrictedItem | Promise<RestrictedItem>>
+const queryAtom = ...;
+
+// Atom<boolean | Promise<boolean>>
+const isAdminAtom = ...;
+
+// Atom<boolean | Promise<boolean>>
+const enabledAtom = ...;
+
+// Atom<null | RestrictedItem | Promise<null | RestrictedItem>>
+const restrictedItemAtom = atom((get) =>
+  pipe(
+    soonAll(get(isAdminAtom), get(enabledAtom)),
+    soon(([isAdmin, enabled]) => (isAdmin && enabled ? get(queryAtom) : null))
+  )
+);
+
+```
+
+## Demo
+
+<CodeSandbox id="jotai-derive-example-7422pk" />

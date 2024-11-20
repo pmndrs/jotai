@@ -77,7 +77,7 @@ type Mounted = {
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
-  u?: OnUnmount
+  u?: (pending: Pending) => void
 }
 
 /**
@@ -199,14 +199,29 @@ const addPendingFunction = (pending: Pending, fn: () => void) => {
 }
 
 const flushPending = (pending: Pending) => {
+  let error: AnyError
+  let hasError = false
+  const call = (fn: () => void) => {
+    try {
+      fn()
+    } catch (e) {
+      if (!hasError) {
+        error = e
+        hasError = true
+      }
+    }
+  }
   while (pending[1].size || pending[2].size) {
     pending[0].clear()
     const atomStates = new Set(pending[1].values())
     pending[1].clear()
     const functions = new Set(pending[2])
     pending[2].clear()
-    atomStates.forEach((atomState) => atomState.m?.l.forEach((l) => l()))
-    functions.forEach((fn) => fn())
+    atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
+    functions.forEach(call)
+  }
+  if (hasError) {
+    throw error
   }
 }
 
@@ -333,15 +348,18 @@ const buildStore = (
       }
       // a !== atom
       const aState = readAtomState(pending, a, dirtyAtoms)
-      if (isSync) {
-        addDependency(pending, atom, atomState, a, aState)
-      } else {
-        const pending = createPending()
-        addDependency(pending, atom, atomState, a, aState)
-        mountDependencies(pending, atom, atomState)
-        flushPending(pending)
+      try {
+        return returnAtomValue(aState)
+      } finally {
+        if (isSync) {
+          addDependency(pending, atom, atomState, a, aState)
+        } else {
+          const pending = createPending()
+          addDependency(pending, atom, atomState, a, aState)
+          mountDependencies(pending, atom, atomState)
+          flushPending(pending)
+        }
       }
-      return returnAtomValue(aState)
     }
     let controller: AbortController | undefined
     let setSelf: ((...args: unknown[]) => unknown) | undefined
@@ -421,41 +439,62 @@ const buildStore = (
     return dependents
   }
 
+  // This is a topological sort via depth-first search, slightly modified from
+  // what's described here for simplicity and performance reasons:
+  // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+  function getSortedDependents(
+    pending: Pending,
+    rootAtom: AnyAtom,
+    rootAtomState: AtomState,
+  ): [[AnyAtom, AtomState, number][], Set<AnyAtom>] {
+    const sorted: [atom: AnyAtom, atomState: AtomState, epochNumber: number][] =
+      []
+    const visiting = new Set<AnyAtom>()
+    const visited = new Set<AnyAtom>()
+    // Visit the root atom. This is the only atom in the dependency graph
+    // without incoming edges, which is one reason we can simplify the algorithm
+    const stack: [a: AnyAtom, aState: AtomState][] = [[rootAtom, rootAtomState]]
+    while (stack.length > 0) {
+      const [a, aState] = stack[stack.length - 1]!
+      if (visited.has(a)) {
+        // All dependents have been processed, now process this atom
+        stack.pop()
+        continue
+      }
+      if (visiting.has(a)) {
+        // The algorithm calls for pushing onto the front of the list. For
+        // performance, we will simply push onto the end, and then will iterate in
+        // reverse order later.
+        sorted.push([a, aState, aState.n])
+        // Atom has been visited but not yet processed
+        visited.add(a)
+        stack.pop()
+        continue
+      }
+      visiting.add(a)
+      // Push unvisited dependents onto the stack
+      for (const [d, s] of getDependents(pending, a, aState)) {
+        if (a !== d && !visiting.has(d)) {
+          stack.push([d, s])
+        }
+      }
+    }
+    return [sorted, visited]
+  }
+
   const recomputeDependents = <Value>(
     pending: Pending,
     atom: Atom<Value>,
     atomState: AtomState<Value>,
   ) => {
-    // This is a topological sort via depth-first search, slightly modified from
-    // what's described here for simplicity and performance reasons:
-    // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
-    const topsortedAtoms: (readonly [
-      atom: AnyAtom,
-      atomState: AtomState,
-      epochNumber: number,
-    ])[] = []
-    const markedAtoms = new Set<AnyAtom>()
-    const visit = (a: AnyAtom, aState: AtomState) => {
-      if (markedAtoms.has(a)) {
-        return
-      }
-      markedAtoms.add(a)
-      for (const [d, s] of getDependents(pending, a, aState)) {
-        if (a !== d) {
-          visit(d, s)
-        }
-      }
-      // The algorithm calls for pushing onto the front of the list. For
-      // performance, we will simply push onto the end, and then will iterate in
-      // reverse order later.
-      topsortedAtoms.push([a, aState, aState.n])
-    }
-    // Visit the root atom. This is the only atom in the dependency graph
-    // without incoming edges, which is one reason we can simplify the algorithm
-    visit(atom, atomState)
+    const [topsortedAtoms, markedAtoms] = getSortedDependents(
+      pending,
+      atom,
+      atomState,
+    )
+
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
     const changedAtoms = new Set<AnyAtom>([atom])
@@ -485,6 +524,7 @@ const buildStore = (
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
+    let isSync = true
     const getter: Getter = <V>(a: Atom<V>) =>
       returnAtomValue(readAtomState(pending, a))
     const setter: Setter = <V, As extends unknown[], R>(
@@ -492,29 +532,35 @@ const buildStore = (
       ...args: As
     ) => {
       const aState = getAtomState(a)
-      let r: R | undefined
-      if (isSelfAtom(atom, a)) {
-        if (!hasInitialValue(a)) {
-          // NOTE technically possible but restricted as it may cause bugs
-          throw new Error('atom not writable')
+      try {
+        if (isSelfAtom(atom, a)) {
+          if (!hasInitialValue(a)) {
+            // NOTE technically possible but restricted as it may cause bugs
+            throw new Error('atom not writable')
+          }
+          const prevEpochNumber = aState.n
+          const v = args[0] as V
+          setAtomStateValueOrPromise(a, aState, v)
+          mountDependencies(pending, a, aState)
+          if (prevEpochNumber !== aState.n) {
+            addPendingAtom(pending, a, aState)
+            recomputeDependents(pending, a, aState)
+          }
+          return undefined as R
+        } else {
+          return writeAtomState(pending, a, ...args)
         }
-        const hasPrevValue = 'v' in aState
-        const prevValue = aState.v
-        const v = args[0] as V
-        setAtomStateValueOrPromise(a, aState, v)
-        mountDependencies(pending, a, aState)
-        if (!hasPrevValue || !Object.is(prevValue, aState.v)) {
-          addPendingAtom(pending, a, aState)
-          recomputeDependents(pending, a, aState)
+      } finally {
+        if (!isSync) {
+          flushPending(pending)
         }
-      } else {
-        r = writeAtomState(pending, a, ...args) as R
       }
-      flushPending(pending)
-      return r as R
     }
-    const result = atomWrite(atom, getter, setter, ...args)
-    return result
+    try {
+      return atomWrite(atom, getter, setter, ...args)
+    } finally {
+      isSync = false
+    }
   }
 
   const writeAtom = <Value, Args extends unknown[], Result>(
@@ -522,9 +568,11 @@ const buildStore = (
     ...args: Args
   ): Result => {
     const pending = createPending()
-    const result = writeAtomState(pending, atom, ...args)
-    flushPending(pending)
-    return result
+    try {
+      return writeAtomState(pending, atom, ...args)
+    } finally {
+      flushPending(pending)
+    }
   }
 
   const mountDependencies = (
@@ -574,12 +622,30 @@ const buildStore = (
       }
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
+        let setAtom: (...args: unknown[]) => unknown
+        const createInvocationContext = <T>(pending: Pending, fn: () => T) => {
+          let isSync = true
+          setAtom = (...args: unknown[]) => {
+            try {
+              return writeAtomState(pending, atom, ...args)
+            } finally {
+              if (!isSync) {
+                flushPending(pending)
+              }
+            }
+          }
+          try {
+            return fn()
+          } finally {
+            isSync = false
+          }
+        }
         addPendingFunction(pending, () => {
-          const onUnmount = atomOnMount(atom, (...args) =>
-            writeAtomState(pending, atom, ...args),
+          const onUnmount = createInvocationContext(pending, () =>
+            atomOnMount(atom, (...args) => setAtom(...args)),
           )
           if (onUnmount) {
-            mounted.u = onUnmount
+            mounted.u = (pending) => createInvocationContext(pending, onUnmount)
           }
         })
       }
@@ -600,7 +666,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addPendingFunction(pending, onUnmount)
+        addPendingFunction(pending, () => onUnmount(pending))
       }
       delete atomState.m
       if (import.meta.env?.MODE !== 'production') {
@@ -620,9 +686,9 @@ const buildStore = (
     const pending = createPending()
     const atomState = getAtomState(atom)
     const mounted = mountAtom(pending, atom, atomState)
-    flushPending(pending)
     const listeners = mounted.l
     listeners.add(listener)
+    flushPending(pending)
     return () => {
       listeners.delete(listener)
       const pending = createPending()
@@ -659,11 +725,10 @@ const buildStore = (
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
             const atomState = getAtomState(atom)
-            const hasPrevValue = 'v' in atomState
-            const prevValue = atomState.v
+            const prevEpochNumber = atomState.n
             setAtomStateValueOrPromise(atom, atomState, value)
             mountDependencies(pending, atom, atomState)
-            if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
+            if (prevEpochNumber !== atomState.n) {
               addPendingAtom(pending, atom, atomState)
               recomputeDependents(pending, atom, atomState)
             }

@@ -14,7 +14,7 @@ export default function HomePage() {
   return (
     <>
       <Intro />
-      <div className="mt-12 space-y-12 lg:mt-24 lg:space-y-24">
+      <div className="mt-12 space-y-12 lg:mt-24 lg:space-y-24 text-pretty">
         <div className="space-y-4">
           <Headline>Introduction</Headline>
           <p>Jotai takes an atomic approach to global React state management.</p>
@@ -145,7 +145,7 @@ const countryAtom = atom('Japan')
 
 const citiesAtom = atom(['Tokyo', 'Kyoto', 'Osaka'])
 
-const animeAtom = atom([
+export const animeAtom = atom([
   {
     title: 'Ghost in the Shell',
     year: 1995,
@@ -175,6 +175,8 @@ const animeAtom = atom([
         <InlineCode>useAtom</InlineCode> hook for simplicity.
       </p>
       <Code>{`import { useAtom } from 'jotai'
+
+import { animeAtom } from './atoms'
 
 const AnimeApp = () => {
   const [anime, setAnime] = useAtom(animeAtom)
@@ -208,6 +210,8 @@ const AnimeApp = () => {
         optimize re-renders.
       </p>
       <Code>{`import { useAtomValue, useSetAtom } from 'jotai'
+
+import { animeAtom } from './atoms'
 
 const AnimeList = () => {
   const anime = useAtomValue(animeAtom)
