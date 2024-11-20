@@ -7,11 +7,16 @@ import {
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { act, render, screen, waitFor } from '@testing-library/react'
+import userEventOrig from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+
+const userEvent = {
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  click: (element: Element) => act(() => userEventOrig.click(element)),
+}
 
 const consoleError = console.error
 const errorMessages: string[] = []

@@ -1,11 +1,16 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { act, render, screen, waitFor } from '@testing-library/react'
+import userEventOrig from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { SetStateAction, WritableAtom } from 'jotai/vanilla'
 import { atomFamily } from 'jotai/vanilla/utils'
+
+const userEvent = {
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  click: (element: Element) => act(() => userEventOrig.click(element)),
+}
 
 it('new atomFamily impl', async () => {
   const myFamily = atomFamily((param: string) => atom(param))

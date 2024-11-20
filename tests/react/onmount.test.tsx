@@ -1,9 +1,14 @@
 import { StrictMode, Suspense, useState } from 'react'
 import { act, render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import userEventOrig from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+
+const userEvent = {
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  click: (element: Element) => act(() => userEventOrig.click(element)),
+}
 
 it('one atom, one effect', async () => {
   const countAtom = atom(1)

@@ -1,9 +1,14 @@
 import { StrictMode, Suspense } from 'react'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { act, render, screen } from '@testing-library/react'
+import userEventOrig from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atomWithRefresh } from 'jotai/vanilla/utils'
+
+const userEvent = {
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  click: (element: Element) => act(() => userEventOrig.click(element)),
+}
 
 it('sync counter', async () => {
   let counter = 0

@@ -1,9 +1,14 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { act, render, screen, waitFor } from '@testing-library/react'
+import userEventOrig from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+
+const userEvent = {
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  click: (element: Element) => act(() => userEventOrig.click(element)),
+}
 
 describe('abortable atom test', () => {
   it('can abort with signal.aborted', async () => {

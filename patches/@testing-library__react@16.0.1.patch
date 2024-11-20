@@ -1,0 +1,22 @@
+diff --git a/dist/pure.js b/dist/pure.js
+index 7b62fa743198d1928e02501cc99f5dd7c230e9a6..757cbc4f46ae9fce59cb770da88ebb34b3daf2af 100644
+--- a/dist/pure.js
++++ b/dist/pure.js
+@@ -169,7 +169,7 @@ function createLegacyRoot(container) {
+     }
+   };
+ }
+-function renderRoot(ui, {
++async function renderRoot(ui, {
+   baseElement,
+   container,
+   hydrate,
+@@ -177,7 +177,7 @@ function renderRoot(ui, {
+   root,
+   wrapper: WrapperComponent
+ }) {
+-  (0, _actCompat.default)(() => {
++  await (0, _actCompat.default)(() => {
+     if (hydrate) {
+       root.hydrate(strictModeIfNeeded(wrapUiIfNeeded(ui, WrapperComponent)), container);
+     } else {
