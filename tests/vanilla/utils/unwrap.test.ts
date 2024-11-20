@@ -133,6 +133,20 @@ describe('unwrap', () => {
     const asyncAtom = atom(Promise.resolve('concrete'))
 
     expect(await store.get(asyncAtom)).toEqual('concrete')
+    expect(store.get(unwrap(asyncAtom))).toEqual(undefined)
+    await new Promise((r) => setTimeout(r)) // wait for a tick
     expect(store.get(unwrap(asyncAtom))).toEqual('concrete')
+  })
+
+  it('should get a fulfilled value after the promise resolves', async () => {
+    const store = createStore()
+    const asyncAtom = atom(Promise.resolve('concrete'))
+    const syncAtom = unwrap(asyncAtom)
+
+    expect(store.get(syncAtom)).toEqual(undefined)
+
+    await store.get(asyncAtom)
+
+    expect(store.get(syncAtom)).toEqual('concrete')
   })
 })

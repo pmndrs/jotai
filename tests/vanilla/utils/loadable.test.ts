@@ -9,8 +9,24 @@ describe('loadable', () => {
 
     expect(await store.get(asyncAtom)).toEqual('concrete')
     expect(store.get(loadable(asyncAtom))).toEqual({
+      state: 'loading',
+    })
+    await new Promise((r) => setTimeout(r)) // wait for a tick
+    expect(store.get(loadable(asyncAtom))).toEqual({
       state: 'hasData',
       data: 'concrete',
     })
+  })
+
+  it('should get the latest loadable state after the promise resolves', async () => {
+    const store = createStore()
+    const asyncAtom = atom(Promise.resolve())
+    const loadableAtom = loadable(asyncAtom)
+
+    expect(store.get(loadableAtom)).toHaveProperty('state', 'loading')
+
+    await store.get(asyncAtom)
+
+    expect(store.get(loadableAtom)).toHaveProperty('state', 'hasData')
   })
 })

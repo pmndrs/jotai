@@ -1,5 +1,5 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
-import { act, fireEvent, render, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -11,6 +11,7 @@ const useCommitCount = () => {
   useEffect(() => {
     commitCountRef.current += 1
   })
+  // eslint-disable-next-line react-compiler/react-compiler
   return commitCountRef.current
 }
 
@@ -48,7 +49,7 @@ it('does not show async stale result', async () => {
     return <div>delayedCount: {delayedCount}</div>
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Counter />
       <Suspense fallback="loading">
@@ -57,27 +58,23 @@ it('does not show async stale result', async () => {
     </>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   resolve1()
   resolve2()
-  await waitFor(() => {
-    getByText('count: 0')
-    getByText('delayedCount: 0')
-  })
+  await screen.findByText('count: 0')
+  await screen.findByText('delayedCount: 0')
   expect(committed).toEqual([0])
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
   await act(async () => {
     resolve1()
     resolve2()
     await Promise.resolve()
     resolve2()
   })
-  await waitFor(() => {
-    getByText('count: 2')
-    getByText('delayedCount: 2')
-  })
+  await screen.findByText('count: 2')
+  await screen.findByText('delayedCount: 2')
   expect(committed).toEqual([0, 2])
 })
 
@@ -118,42 +115,31 @@ it('does not show async stale result on derived atom', async () => {
     )
   }
 
-  const { getByText, queryByText } = render(
+  render(
     <StrictMode>
       <Test />
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    getByText('count: 0')
-    getByText('loading async value')
-    getByText('loading derived value')
-  })
-  resolve()
-  await waitFor(() => {
-    expect(queryByText('loading async value')).toBeNull()
-    expect(queryByText('loading derived value')).toBeNull()
-  })
-  await waitFor(() => {
-    getByText('async value: null')
-    getByText('derived value: null')
-  })
+  await screen.findByText('count: 0')
+  await screen.findByText('loading async value')
+  await screen.findByText('loading derived value')
 
-  await userEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('count: 1')
-    getByText('loading async value')
-    getByText('loading derived value')
-  })
   resolve()
-  await waitFor(() => {
-    expect(queryByText('loading async value')).toBeNull()
-    expect(queryByText('loading derived value')).toBeNull()
-  })
-  await waitFor(() => {
-    getByText('async value: null')
-    getByText('derived value: null')
-  })
+
+  await screen.findByText('async value: null')
+  await screen.findByText('derived value: null')
+
+  await userEvent.click(screen.getByText('button'))
+
+  await screen.findByText('count: 1')
+  await screen.findByText('loading async value')
+  await screen.findByText('loading derived value')
+
+  resolve()
+
+  await screen.findByText('async value: null')
+  await screen.findByText('derived value: null')
 })
 
 it('works with async get with extra deps', async () => {
@@ -181,7 +167,7 @@ it('works with async get with extra deps', async () => {
     return <div>delayedCount: {delayedCount}</div>
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -190,20 +176,20 @@ it('works with async get with extra deps', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
-  resolve()
-  await waitFor(() => {
-    getByText('count: 0')
-    getByText('delayedCount: 0')
-  })
+  await screen.findByText('loading')
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
   resolve()
-  await waitFor(() => {
-    getByText('count: 1')
-    getByText('delayedCount: 1')
-  })
+
+  await screen.findByText('count: 0')
+  await screen.findByText('delayedCount: 0')
+
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
+
+  resolve()
+
+  await screen.findByText('count: 1')
+  await screen.findByText('delayedCount: 1')
 })
 
 it('reuses promises on initial read', async () => {
@@ -220,7 +206,7 @@ it('reuses promises on initial read', async () => {
     return <div>{str}</div>
   }
 
-  const { findByText, findAllByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Child />
@@ -229,9 +215,9 @@ it('reuses promises on initial read', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   resolve()
-  await findAllByText('ready')
+  await screen.findAllByText('ready')
   expect(invokeCount).toBe(1)
 })
 
@@ -258,7 +244,7 @@ it('uses multiple async atoms at once', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Component />
@@ -266,10 +252,10 @@ it('uses multiple async atoms at once', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   await waitFor(() => {
     resolve.splice(0).forEach((fn) => fn())
-    getByText('ready ready2')
+    screen.getByText('ready ready2')
   })
 })
 
@@ -295,7 +281,7 @@ it('uses async atom in the middle of dependency chain', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -303,14 +289,14 @@ it('uses async atom in the middle of dependency chain', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   resolve()
-  await findByText('count: 0, delayed: 0')
+  await screen.findByText('count: 0, delayed: 0')
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
   resolve()
-  await findByText('count: 1, delayed: 1')
+  await screen.findByText('count: 1, delayed: 1')
 })
 
 it('updates an async atom in child useEffect on remount without setTimeout', async () => {
@@ -339,7 +325,7 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Suspense fallback="loading">
         <Parent />
@@ -347,14 +333,14 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
     </>,
   )
 
-  await findByText('count: 0')
-  await findByText('count: 1')
+  await screen.findByText('count: 0')
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('button'))
-  await findByText('no child')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('no child')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 2')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 2')
 })
 
 it('updates an async atom in child useEffect on remount', async () => {
@@ -390,7 +376,7 @@ it('updates an async atom in child useEffect on remount', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Suspense fallback="loading">
         <Parent />
@@ -398,28 +384,28 @@ it('updates an async atom in child useEffect on remount', async () => {
     </>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
 
   act(() => resolve.splice(0).forEach((fn) => fn()))
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
   await act(async () => {
     resolve.splice(0).forEach((fn) => fn())
     await new Promise((r) => setTimeout(r)) // wait for a tick
     resolve.splice(0).forEach((fn) => fn())
   })
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
-  await userEvent.click(getByText('button'))
-  await findByText('no child')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('no child')
 
-  await userEvent.click(getByText('button'))
+  await userEvent.click(screen.getByText('button'))
   await act(async () => {
     resolve.splice(0).forEach((fn) => fn())
     await new Promise((r) => setTimeout(r)) // wait for a tick
     resolve.splice(0).forEach((fn) => fn())
   })
-  await findByText('count: 2')
+  await screen.findByText('count: 2')
 })
 
 it('async get and useEffect on parent', async () => {
@@ -449,7 +435,7 @@ it('async get and useEffect on parent', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Suspense fallback="loading">
         <Parent />
@@ -457,10 +443,10 @@ it('async get and useEffect on parent', async () => {
     </>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   await waitFor(() => {
-    getByText('count: 1')
-    getByText('text: resolved')
+    screen.getByText('count: 1')
+    screen.getByText('text: resolved')
   })
 })
 
@@ -492,7 +478,7 @@ it('async get with another dep and useEffect on parent', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Suspense fallback="loading">
         <Parent />
@@ -500,16 +486,16 @@ it('async get with another dep and useEffect on parent', async () => {
     </>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   await waitFor(() => {
-    getByText('count: 1')
-    getByText('async: 1')
+    screen.getByText('count: 1')
+    screen.getByText('async: 1')
   })
 
-  await userEvent.click(getByText('button'))
+  await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    getByText('count: 2')
-    getByText('async: 2')
+    screen.getByText('count: 2')
+    screen.getByText('async: 2')
   })
 })
 
@@ -540,7 +526,7 @@ it('set promise atom value on write (#304)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Parent />
@@ -548,13 +534,13 @@ it('set promise atom value on write (#304)', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
-  await findByText('count: 0')
+  await screen.findByText('loading')
+  await screen.findByText('count: 0')
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
   resolve()
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 })
 
 it('uses async atom double chain (#306)', async () => {
@@ -581,7 +567,7 @@ it('uses async atom double chain (#306)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -589,14 +575,14 @@ it('uses async atom double chain (#306)', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   resolve()
-  await findByText('count: 0, delayed: 0')
+  await screen.findByText('count: 0, delayed: 0')
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
   resolve()
-  await findByText('count: 1, delayed: 1')
+  await screen.findByText('count: 1, delayed: 1')
 })
 
 it('uses an async atom that depends on another async atom', async () => {
@@ -615,7 +601,7 @@ it('uses an async atom that depends on another async atom', async () => {
     return <div>num: {num}</div>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -623,9 +609,9 @@ it('uses an async atom that depends on another async atom', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   resolve()
-  await findByText('num: 1')
+  await screen.findByText('num: 1')
 })
 
 it('a derived atom from a newly created async atom (#351)', async () => {
@@ -657,7 +643,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Suspense fallback="loading">
         <Counter />
@@ -665,18 +651,18 @@ it('a derived atom from a newly created async atom (#351)', async () => {
     </>,
   )
 
-  await findByText('loading')
-  await findByText('derived: 11, commits: 1')
+  await screen.findByText('loading')
+  await screen.findByText('derived: 11, commits: 1')
 
   // The use of fireEvent is required to reproduce the issue
-  fireEvent.click(getByText('button'))
-  await findByText('loading')
-  await findByText('derived: 12, commits: 2')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
+  await screen.findByText('derived: 12, commits: 2')
 
   // The use of fireEvent is required to reproduce the issue
-  fireEvent.click(getByText('button'))
-  await findByText('loading')
-  await findByText('derived: 13, commits: 3')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
+  await screen.findByText('derived: 13, commits: 3')
 })
 
 it('Handles synchronously invoked async set (#375)', async () => {
@@ -712,15 +698,15 @@ it('Handles synchronously invoked async set (#375)', async () => {
     )
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <ListDocuments />
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   resolve()
-  await findByText('great document')
+  await screen.findByText('great document')
 })
 
 it('async write self atom', async () => {
@@ -741,17 +727,17 @@ it('async write self atom', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  await userEvent.click(getByText('button'))
+  await userEvent.click(screen.getByText('button'))
   resolve()
-  await findByText('count: -1')
+  await screen.findByText('count: -1')
 })
 
 it('non suspense async write self atom with setTimeout (#389)', async () => {
@@ -770,18 +756,18 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
   // The use of fireEvent is required to reproduce the issue
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
-  await findByText('count: -1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
+  await screen.findByText('count: -1')
 })
 
 it('should override promise as atom value (#430)', async () => {
@@ -800,7 +786,7 @@ it('should override promise as atom value (#430)', async () => {
     return <button onClick={() => setCount(1)}>button</button>
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -809,10 +795,10 @@ it('should override promise as atom value (#430)', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 1')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
 })
 
 it('combine two promise atom values (#442)', async () => {
@@ -839,7 +825,7 @@ it('combine two promise atom values (#442)', async () => {
     return null
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -848,8 +834,8 @@ it('combine two promise atom values (#442)', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
-  await findByText('count: 3')
+  await screen.findByText('loading')
+  await screen.findByText('count: 3')
 })
 
 it('set two promise atoms at once', async () => {
@@ -873,7 +859,7 @@ it('set two promise atoms at once', async () => {
     return <button onClick={() => setCounts()}>button</button>
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -882,10 +868,10 @@ it('set two promise atoms at once', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 3')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 3')
 })
 
 it('async write chain', async () => {
@@ -913,21 +899,21 @@ it('async write chain', async () => {
     return <button onClick={invoke}>button</button>
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
       <Control />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  await userEvent.click(getByText('button'))
-  await findByText('count: 1')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
   resolve1()
-  await findByText('count: 2')
+  await screen.findByText('count: 2')
   resolve2()
-  await findByText('count: 3')
+  await screen.findByText('count: 3')
 })
 
 it('async atom double chain without setTimeout (#751)', async () => {
@@ -968,19 +954,19 @@ it('async atom double chain without setTimeout (#751)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Parent />
     </StrictMode>,
   )
 
-  await findByText('loading')
-  await findByText('async: init')
+  await screen.findByText('loading')
+  await screen.findByText('async: init')
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
   resolve()
-  await findByText('async: ready')
+  await screen.findByText('async: ready')
 })
 
 it('async atom double chain with setTimeout', async () => {
@@ -1027,26 +1013,26 @@ it('async atom double chain with setTimeout', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Parent />
     </StrictMode>,
   )
 
   act(() => resolve.splice(0).forEach((fn) => fn()))
-  await findByText('loading')
+  await screen.findByText('loading')
 
   act(() => resolve.splice(0).forEach((fn) => fn()))
   await act(() => new Promise((r) => setTimeout(r))) // wait for a tick
   act(() => resolve.splice(0).forEach((fn) => fn()))
-  await findByText('async: init')
+  await screen.findByText('async: init')
 
-  await userEvent.click(getByText('button'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
   act(() => resolve.splice(0).forEach((fn) => fn()))
   await act(() => new Promise((r) => setTimeout(r))) // wait for a tick
   act(() => resolve.splice(0).forEach((fn) => fn()))
-  await findByText('async: ready')
+  await screen.findByText('async: ready')
 })
 
 it('update unmounted async atom with intermediate atom', async () => {
@@ -1087,7 +1073,7 @@ it('update unmounted async atom with intermediate atom', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <DerivedCounter />
@@ -1096,18 +1082,18 @@ it('update unmounted async atom with intermediate atom', async () => {
     </StrictMode>,
   )
 
-  await findByText('loading')
+  await screen.findByText('loading')
   resolve.splice(0).forEach((fn) => fn())
-  await findByText('derived: 2')
+  await screen.findByText('derived: 2')
 
-  await userEvent.click(getByText('toggle enabled'))
-  await userEvent.click(getByText('increment count'))
-  await findByText('derived: -1')
+  await userEvent.click(screen.getByText('toggle enabled'))
+  await userEvent.click(screen.getByText('increment count'))
+  await screen.findByText('derived: -1')
 
-  await userEvent.click(getByText('toggle enabled'))
-  await findByText('loading')
+  await userEvent.click(screen.getByText('toggle enabled'))
+  await screen.findByText('loading')
   resolve.splice(0).forEach((fn) => fn())
-  await findByText('derived: 4')
+  await screen.findByText('derived: 4')
 })
 
 it('multiple derived atoms with dependency chaining and async write (#813)', async () => {
@@ -1141,14 +1127,14 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
     )
   }
 
-  const { getByText } = render(
+  render(
     <StrictMode>
       <App />
     </StrictMode>,
   )
 
   await waitFor(() => {
-    getByText('aName: alpha')
-    getByText('bName: beta')
+    screen.getByText('aName: alpha')
+    screen.getByText('bName: beta')
   })
 })

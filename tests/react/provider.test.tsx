@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { it } from 'vitest'
 import { Provider, useAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
@@ -24,7 +24,7 @@ it('uses initial values from provider', async () => {
   store.set(countAtom, 0)
   store.set(petAtom, 'dog')
 
-  const { getByText } = render(
+  render(
     <StrictMode>
       <Provider store={store}>
         <Display />
@@ -33,8 +33,8 @@ it('uses initial values from provider', async () => {
   )
 
   await waitFor(() => {
-    getByText('count: 0')
-    getByText('pet: dog')
+    screen.getByText('count: 0')
+    screen.getByText('pet: dog')
   })
 })
 
@@ -57,7 +57,7 @@ it('only uses initial value from provider for specific atom', async () => {
   const store = createStore()
   store.set(petAtom, 'dog')
 
-  const { getByText } = render(
+  render(
     <StrictMode>
       <Provider store={store}>
         <Display />
@@ -66,8 +66,8 @@ it('only uses initial value from provider for specific atom', async () => {
   )
 
   await waitFor(() => {
-    getByText('count: 1')
-    getByText('pet: dog')
+    screen.getByText('count: 1')
+    screen.getByText('pet: dog')
   })
 })
 
