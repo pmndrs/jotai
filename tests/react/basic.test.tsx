@@ -36,17 +36,16 @@ const useCommitCount = () => {
   return commitCountRef.current
 }
 
+/* eslint-disable testing-library/no-unnecessary-act */
 const renderRoot = async (element: ReactNode) => {
   const container = document.body.appendChild(document.createElement('div'))
   const root = createRoot(container)
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     root.render(element)
   })
   return {
     userEvent: {
       click: async (el: Element) => {
-        // eslint-disable-next-line testing-library/no-unnecessary-act
         await act(() => userEvent.click(el))
       },
     },
