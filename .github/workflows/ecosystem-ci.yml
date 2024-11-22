@@ -1,0 +1,33 @@
+name: Ecosystem CI
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'jotaijs/jotai-ecosystem-ci'
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run ecosystem-ci
+        id: run_command
+        env:
+          JOTAI_PKG: https://pkg.csb.dev/pmndrs/jotai/commit/${{ github.event.pull_request.head.sha.substring(0, 8) }}/jotai
+      - uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Ecosystem CI Output
+            ```
+            ${{ steps.run_command.outputs.command_output }}
+            ```
