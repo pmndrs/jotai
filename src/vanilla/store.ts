@@ -490,7 +490,7 @@ const buildStore = (
     function createQueue<T>() {
       let head = 0
       let tail = 0
-      const items: Record<number, T> = {}
+      const items: T[] = []
       const isEmpty = () => head === tail
       const enqueue = (item: T) => {
         items[tail++] = item
@@ -506,38 +506,47 @@ const buildStore = (
       return { enqueue, dequeue, isEmpty }
     }
     // Kahn's algorithm for topological sorting
-    const graph = new Map<
-      AnyAtom,
-      [dependents: AnyAtom[], atomState: AtomState]
-    >()
-    const inDegree: Map<AnyAtom, number> = new Map([[rootAtom, 0]])
+    const atomLookup = []
+    const stateMap: AtomState[] = [rootAtomState]
+    const adjacencyMap: number[][] = []
+    const visited = new Set([rootAtom])
     {
       // 1: build the dependency graph
       // and calculate in-degrees (number of incomming edges aka dependencies)
-      const queue = createQueue<[a: AnyAtom, aState: AtomState]>()
-      queue.enqueue([rootAtom, rootAtomState])
+      let nextId = 0
+      const queue = createQueue<[a: AnyAtom, aState: AtomState, id: number]>()
+      queue.enqueue([rootAtom, rootAtomState, nextId])
       while (!queue.isEmpty()) {
-        const [a, aState] = queue.dequeue()!
-        if (graph.has(a)) {
-          continue
-        }
-        const dependentAtoms = []
+        const [a, aState, id] = queue.dequeue()!
+        atomLookup[id] = a
+        stateMap[id] = aState
+        const dependentAtoms = (adjacencyMap[id] ??= [])
         for (const [d, ds] of getDependents(pending, a, aState).entries()) {
-          inDegree.set(d, (inDegree.get(d) || 0) + 1)
-          dependentAtoms.push(d)
-          queue.enqueue([d, ds])
+          if (visited.has(d)) {
+            continue
+          }
+          dependentAtoms.push(++nextId)
+          queue.enqueue([d, ds, nextId])
+          visited.add(d)
         }
-        graph.set(a, [dependentAtoms, aState])
       }
     }
-    const queue = createQueue<AnyAtom>()
+    const inDegree: number[] = []
+    {
+      for (let i = 0; i < visited.size; i++) {
+        inDegree[i] = 0
+        for (const vertex of adjacencyMap[i]!) {
+          inDegree[vertex]!++
+        }
+      }
+    }
+    const queue = createQueue<number>()
     {
       // 2. Initialize queue with nodes that have no incoming edges
-      for (const a of graph.keys()) {
-        if (inDegree.get(a) || 0 !== 0) {
-          continue
+      for (let i = 0; i < visited.size; i++) {
+        if (inDegree[i] === 0) {
+          queue.enqueue(i)
         }
-        queue.enqueue(a)
       }
     }
     const sorted: [
@@ -549,18 +558,18 @@ const buildStore = (
       // 3. Process each node
       while (!queue.isEmpty()) {
         const a = queue.dequeue()!
-        const [dependents, aState] = graph.get(a)!
-        sorted.push([a, aState, aState.n])
-        for (const d of dependents) {
-          const degree = (inDegree.get(d)! || 0) - 1
-          inDegree.set(d, degree)
-          if (degree === 0) {
-            queue.enqueue(d)
+        const aState = stateMap[a]!
+        sorted.push([atomLookup[a]!, aState, aState.n])
+        for (const adjacent of adjacencyMap[a]!) {
+          inDegree[adjacent]!--
+          // If indegree becomes 0, push it to the queue
+          if (inDegree[adjacent] === 0) {
+            queue.enqueue(adjacent)
           }
         }
       }
     }
-    return [sorted, new Set<AnyAtom>(graph.keys())]
+    return [sorted, visited]
   }
 
   const recomputeDependents = <Value>(
