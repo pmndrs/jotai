@@ -482,6 +482,87 @@ const buildStore = (
     return [sorted, visited]
   }
 
+  function kahnsToposort(
+    pending: Pending,
+    rootAtom: AnyAtom,
+    rootAtomState: AtomState,
+  ): [[AnyAtom, AtomState, number][], Set<AnyAtom>] {
+    function createQueue<T>() {
+      let head = 0
+      let tail = 0
+      const items: Record<number, T> = {}
+      const isEmpty = () => head === tail
+      const enqueue = (item: T) => {
+        items[tail++] = item
+      }
+      const dequeue = () => {
+        if (head === tail) {
+          return undefined
+        }
+        const item = items[head]
+        items[head++] = undefined as any
+        return item
+      }
+      return { enqueue, dequeue, isEmpty }
+    }
+    // Kahn's algorithm for topological sorting
+    const graph = new Map<
+      AnyAtom,
+      [dependents: AnyAtom[], atomState: AtomState]
+    >()
+    const inDegree: Map<AnyAtom, number> = new Map([[rootAtom, 0]])
+    {
+      // 1: build the dependency graph
+      // and calculate in-degrees (number of incomming edges aka dependencies)
+      const queue = createQueue<[a: AnyAtom, aState: AtomState]>()
+      queue.enqueue([rootAtom, rootAtomState])
+      while (!queue.isEmpty()) {
+        const [a, aState] = queue.dequeue()!
+        if (graph.has(a)) {
+          continue
+        }
+        const dependentAtoms = []
+        for (const [d, ds] of getDependents(pending, a, aState).entries()) {
+          inDegree.set(d, (inDegree.get(d) || 0) + 1)
+          dependentAtoms.push(d)
+          queue.enqueue([d, ds])
+        }
+        graph.set(a, [dependentAtoms, aState])
+      }
+    }
+    const queue = createQueue<AnyAtom>()
+    {
+      // 2. Initialize queue with nodes that have no incoming edges
+      for (const a of graph.keys()) {
+        if (inDegree.get(a) || 0 !== 0) {
+          continue
+        }
+        queue.enqueue(a)
+      }
+    }
+    const sorted: [
+      atom: AnyAtom,
+      atomState: AtomState,
+      epochNumber: number, //
+    ][] = []
+    {
+      // 3. Process each node
+      while (!queue.isEmpty()) {
+        const a = queue.dequeue()!
+        const [dependents, aState] = graph.get(a)!
+        sorted.push([a, aState, aState.n])
+        for (const d of dependents) {
+          const degree = (inDegree.get(d)! || 0) - 1
+          inDegree.set(d, degree)
+          if (degree === 0) {
+            queue.enqueue(d)
+          }
+        }
+      }
+    }
+    return [sorted, new Set<AnyAtom>(graph.keys())]
+  }
+
   const recomputeDependents = <Value>(
     pending: Pending,
     atom: Atom<Value>,
@@ -489,6 +570,26 @@ const buildStore = (
   ) => {
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
+
+    const kahnTimes = []
+    const toposortTimes = []
+    for (let i = 0; i < 100; i++) {
+      let start = performance.now()
+      kahnsToposort(pending, atom, atomState)
+      kahnTimes.push(performance.now() - start)
+      start = performance.now()
+      getSortedDependents(pending, atom, atomState)
+      toposortTimes.push(performance.now() - start)
+    }
+    const kahnAverage = kahnTimes.reduce((a, b) => a + b) / 100
+    console.log('kahnsToposort:', kahnAverage.toFixed(4))
+    const toposortAverage = toposortTimes.reduce((a, b) => a + b) / 100
+    console.log('getSortedDependents:', toposortAverage.toFixed(4))
+    const fasterBy = ((toposortAverage - kahnAverage) / toposortAverage) * 100
+    console.log(
+      `kahn times are ${Math.abs(fasterBy).toFixed(4)} percent ${fasterBy > 0 ? 'faster' : 'slower'} than toposort`,
+    )
+
     const [topsortedAtoms, markedAtoms] = getSortedDependents(
       pending,
       atom,
@@ -685,8 +786,7 @@ const buildStore = (
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
     const pending = createPending()
     const atomState = getAtomState(atom)
-    const mounted = mountAtom(pending, atom, atomState)
-    const listeners = mounted.l
+    const listeners = mountAtom(pending, atom, atomState).l
     listeners.add(listener)
     flushPending(pending)
     return () => {

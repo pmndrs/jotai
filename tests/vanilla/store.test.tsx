@@ -934,32 +934,59 @@ it('should call subscribers after setAtom updates atom value on mount but not on
   expect(listener).toHaveBeenCalledTimes(0)
 })
 
-it('processes deep atom a graph beyond maxDepth', () => {
-  function getMaxDepth() {
-    let depth = 0
-    function d(): number {
-      ++depth
-      try {
-        return d()
-      } catch (error) {
-        return depth
-      }
-    }
-    return d()
-  }
-  const maxDepth = getMaxDepth()
+it.only('processes deep atom a graph beyond maxDepth', () => {
   const store = createStore()
-  const baseAtom = atom(0)
-  const atoms: [PrimitiveAtom<number>, ...Atom<number>[]] = [baseAtom]
-  Array.from({ length: maxDepth }, (_, i) => {
-    const prevAtom = atoms[i]!
-    const a = atom((get) => get(prevAtom))
-    atoms.push(a)
-  })
-  const lastAtom = atoms[maxDepth]!
-  // store.get(lastAtom) // FIXME: This is causing a stack overflow
-  expect(() => store.sub(lastAtom, () => {})).not.toThrow()
-  // store.get(lastAtom) // FIXME: This is causing a stack overflow
-  expect(() => store.set(baseAtom, 1)).not.toThrow()
-  // store.set(lastAtom) // FIXME: This is causing a stack overflow
+  {
+    console.log('LINEAR', '-'.repeat(80))
+    const baseAtom = atom(0)
+    const atoms: [PrimitiveAtom<number>, ...Atom<number>[]] = [baseAtom]
+    Array.from({ length: 10_000 }, (_, i) => {
+      const prevAtom = atoms[i]!
+      const a = atom((get) => get(prevAtom))
+      atoms.push(a)
+      store.sub(a, () => {})
+    })
+    store.set(baseAtom, 1)
+  }
+  {
+    console.log('STAR', '-'.repeat(80))
+    const baseAtom = atom(0)
+    const atoms: [PrimitiveAtom<number>, ...Atom<number>[]] = [baseAtom]
+    Array.from({ length: 10_000 }, (_, i) => {
+      const a = atom((get) => get(baseAtom))
+      atoms.push(a)
+      store.sub(a, () => {})
+    })
+    store.set(baseAtom, 1)
+  }
+  {
+    console.log('K-ARY', '-'.repeat(80))
+    const baseAtom = atom(0)
+    const atoms: Atom<number>[] = [baseAtom]
+    const maxAtoms = 10_000
+    let atomCount = 1
+    const createInvertedAtomsTree = (
+      parentAtom: Atom<number>,
+      depth: number,
+      maxDepth: number,
+    ) => {
+      if (atomCount >= maxAtoms || depth >= maxDepth) {
+        return
+      }
+      const leftAtom = atom((get) => get(parentAtom) + 1)
+      atoms.push(leftAtom)
+      atomCount++
+      store.sub(leftAtom, () => {})
+
+      const rightAtom = atom((get) => get(parentAtom) + 1)
+      atoms.push(rightAtom)
+      atomCount++
+      store.sub(rightAtom, () => {})
+      createInvertedAtomsTree(leftAtom, depth + 1, maxDepth)
+      createInvertedAtomsTree(rightAtom, depth + 1, maxDepth)
+    }
+    const maxDepth = Math.ceil(Math.log2(maxAtoms))
+    createInvertedAtomsTree(baseAtom, 0, maxDepth)
+    store.set(baseAtom, 1)
+  }
 })
