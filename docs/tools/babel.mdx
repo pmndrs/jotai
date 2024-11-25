@@ -19,7 +19,9 @@ With a `babel` configuration file:
 }
 ```
 
-You can also supply your atom names to the plugin:
+The plugin recognizes a predefined list of atom function names (e.g. 'atom', 'atomFamily', 'atomWithDefault'). If you’re using custom atom function names, you can explicitly supply them to ensure they are recognized.
+
+Here’s how you can configure it in your Babel setup:
 
 ```json
 {
@@ -70,6 +72,8 @@ export default countAtom
 
 ### Usage
 
+It is recommended to disable this plugin for production builds to avoid unnecessary overhead. You can conditionally include it in your Babel configuration based on the environment.
+
 With a `babel` configuration file:
 
 ```json
@@ -78,7 +82,9 @@ With a `babel` configuration file:
 }
 ```
 
-You can also supply your atom names to the plugin:
+The plugin recognizes a predefined list of atom function names (e.g. 'atom', 'atomFamily', 'atomWithDefault'). If you’re using custom atom function names, you can explicitly supply them to ensure they are recognized.
+
+Here’s how you can configure it in your Babel setup:
 
 ```json
 {
@@ -92,7 +98,7 @@ Examples can be found below.
 
 ## babel/preset
 
-Jotai ships with a `babel` containing the plugins created for Jotai.
+Jotai ships with a `babel preset` containing the plugins created for Jotai.
 
 ### Usage
 
