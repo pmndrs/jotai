@@ -24,7 +24,7 @@ jobs:
       - id: run_command
         run: |
           echo "x<<EOF" >> $GITHUB_ENV
-          pnpm run ecosystem-ci | grep -A999 '---- Jotai Ecosystem CI Results ----' >> $GITHUB_ENV
+          pnpm run ecosystem-ci | grep -A999 -- '---- Jotai Ecosystem CI Results ----' >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
         env:
           JOTAI_PKG: https://pkg.csb.dev/pmndrs/jotai/commit/${{ steps.short_sha.outputs.x }}/jotai
