@@ -20,7 +20,7 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
       - run: pnpm install --frozen-lockfile
       - id: short_sha
-        run: echo "x=${{ github.event.issue.pull_request.head.sha }}" | cut -c1-10 >> $GITHUB_OUTPUT
+        run: echo "x=${{ github.event.issue.head.sha }}" | cut -c1-10 >> $GITHUB_OUTPUT
       - id: run_command
         run: |
           echo "x<<EOF" >> $GITHUB_OUTPUT
@@ -30,7 +30,7 @@ jobs:
           JOTAI_PKG: https://pkg.csb.dev/pmndrs/jotai/commit/${{ steps.short_sha.outputs.x }}/jotai
       - uses: peter-evans/create-or-update-comment@v4
         with:
-          issue-number: ${{ github.event.issue.pull_request.number }}
+          issue-number: ${{ github.event.issue.number }}
           body: |
             ## Ecosystem CI Output
             ```
