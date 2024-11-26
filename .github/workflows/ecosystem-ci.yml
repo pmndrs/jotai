@@ -23,7 +23,7 @@ jobs:
         id: short_sha
         run: |
           api="https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}"
-          sha=$(curl -s -H "Authorization: token $GITHUB_TOKEN" $api | jq -r '.head.sha' | cut -c1-10)
+          sha=$(curl -s -H "Authorization: token $GITHUB_TOKEN" $api | jq -r '.head.sha' | cut -c1-8)
           echo "x=$sha" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
