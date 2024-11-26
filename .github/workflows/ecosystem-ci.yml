@@ -9,9 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run') }}
     steps:
-      - run: echo "$GITHUB_CONTEXT"
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
       - uses: actions/checkout@v4
         with:
           repository: 'jotaijs/jotai-ecosystem-ci'
@@ -22,9 +19,16 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - run: pnpm install --frozen-lockfile
-      - id: short_sha
-        run: echo "x=${{ github.event.issue.head.sha }}" | cut -c1-10 >> $GITHUB_OUTPUT
-      - id: run_command
+      - name: Get Short SHA
+        id: short_sha
+        run: |
+          api="https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}"
+          sha=$(curl -s -H "Authorization: token $GITHUB_TOKEN" $api | jq -r '.head.sha' | cut -c1-10)
+          echo "x=$sha" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Ecosystem CI
+        id: run_command
         run: |
           echo "x<<EOF" >> $GITHUB_OUTPUT
           pnpm run ecosystem-ci | grep -A999 -- '---- Jotai Ecosystem CI Results ----' >> $GITHUB_OUTPUT
