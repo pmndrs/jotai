@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run') }}
     steps:
+      - run: echo "$GITHUB_CONTEXT"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
       - uses: actions/checkout@v4
         with:
           repository: 'jotaijs/jotai-ecosystem-ci'
