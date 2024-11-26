@@ -19,15 +19,20 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run ecosystem-ci
-        id: run_command
+      - id: short_sha
+        run: echo "x=${{ github.sha }}" | cut -c1-10 >> $GITHUB_OUTPUT
+      - id: run_command
+        run: |
+          echo "x<<EOF" >> $GITHUB_ENV
+          pnpm run ecosystem-ci | grep -A999 '---- Jotai Ecosystem CI Results ----' >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
         env:
-          JOTAI_PKG: https://pkg.csb.dev/pmndrs/jotai/commit/${{ github.event.pull_request.head.sha.substring(0, 8) }}/jotai
+          JOTAI_PKG: https://pkg.csb.dev/pmndrs/jotai/commit/${{ steps.short_sha.outputs.x }}/jotai
       - uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ## Ecosystem CI Output
             ```
-            ${{ steps.run_command.outputs.command_output }}
+            ${{ steps.run_command.outputs.x }}
             ```
