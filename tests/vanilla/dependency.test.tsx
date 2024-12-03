@@ -351,7 +351,7 @@ it('can read sync derived atom in write without initializing', () => {
   expect(store.get(a)).toBe(2)
 })
 
-it.only('batches sync writes', () => {
+it('batches sync writes', () => {
   const a = atom(0)
   a.debugLabel = 'a'
   const b = atom((get) => get(a) + 1)
