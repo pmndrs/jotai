@@ -55,14 +55,14 @@ jobs:
       - name: Patch for UMD
         if: ${{ matrix.build == 'umd' }}
         run: |
-          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/umd\1.${NODE_ENV}.js')/" vitest.config.ts
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/umd\1.${NODE_ENV}.js')/" vitest.config.mts
           rm tests/react/utils/useResetAtom.test.tsx # FIXME we skip this for now. Actually I'm not sure if we really run tests with UMD build
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Patch for SystemJS
         if: ${{ matrix.build == 'system' }}
         run: |
-          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/system\1.${NODE_ENV}.js')/" vitest.config.ts
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/system\1.${NODE_ENV}.js')/" vitest.config.mts
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
