@@ -303,39 +303,11 @@ const buildStore = (
     }
   }
 
-  const readAtomState = <Value>(
-    pending: Pending | undefined,
-    atom: Atom<Value>,
-    dirtyAtoms?: Set<AnyAtom>,
-    mode: 'read' | 'peek' = 'read',
-  ): AtomState<Value> => {
-    const atomState = getAtomState(atom)
-
-    // See if we can skip recomputing this atom.
-    if (mode === 'read' && isAtomStateInitialized(atomState)) {
-      // If the atom is mounted, we can use cached atom state.
-      // because it should have been updated by dependencies.
-      // We can't use the cache if the atom is dirty.
-      if (atomState.m && !dirtyAtoms?.has(atom)) {
-        return atomState
-      }
-      // Otherwise, check if the dependencies have changed.
-      // If all dependencies haven't changed, we can use the cache.
-      if (
-        Array.from(atomState.d).every(
-          ([a, n]) =>
-            // Recursively, read the atom state of the dependency, and
-            // check if the atom epoch number is unchanged
-            readAtomState(pending, a, dirtyAtoms, mode).n === n,
-        )
-      ) {
-        return atomState
-      }
-    }
-    // Compute a new state for this atom.
-    mode === 'read' && atomState.d.clear()
-    let isSync = true
-    const getter: Getter = <V>(a: Atom<V>) => {
+  const createGetter = (
+    atom: AnyAtom,
+    atomStateReader: <V>(a: Atom<V>) => AtomState<V>,
+  ) => {
+    return <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
         const aState = getAtomState(a)
         if (!isAtomStateInitialized(aState)) {
@@ -349,12 +321,110 @@ const buildStore = (
         return returnAtomValue(aState)
       }
       // a !== atom
-      const aState = readAtomState(pending, a, dirtyAtoms, mode)
+      return returnAtomValue(atomStateReader(a))
+    }
+  }
+
+  const createOptions = (
+    atom: AnyAtom,
+    isSyncRef: { v: boolean },
+    controllerRef: { v?: AbortController },
+    setSelfRef: { v?: (...args: unknown[]) => unknown },
+  ) => ({
+    get signal() {
+      if (!controllerRef.v) {
+        controllerRef.v = new AbortController()
+      }
+      return controllerRef.v.signal
+    },
+    get setSelf() {
+      if (
+        import.meta.env?.MODE !== 'production' &&
+        !isActuallyWritableAtom(atom)
+      ) {
+        console.warn('setSelf function cannot be used with read-only atom')
+      }
+      if (!setSelfRef.v && isActuallyWritableAtom(atom)) {
+        setSelfRef.v = (...args) => {
+          if (import.meta.env?.MODE !== 'production' && isSyncRef.v) {
+            console.warn('setSelf function cannot be called in sync')
+          }
+          if (!isSyncRef.v) {
+            return writeAtom(atom, ...args)
+          }
+        }
+      }
+      return setSelfRef.v
+    },
+  })
+
+  const peekAtomState = <Value>(
+    pending: Pending | undefined,
+    atom: Atom<Value>,
+  ): AtomState<Value> => {
+    const atomState = getAtomState(atom)
+    const isSyncRef: { v: boolean } = { v: true }
+    const getter = createGetter(atom, (a) => peekAtomState(pending, a))
+    const controllerRef: { v?: AbortController } = {}
+    const setSelfRef: { v?: (...args: unknown[]) => unknown } = {}
+    const options = createOptions(atom, isSyncRef, controllerRef, setSelfRef)
+    try {
+      const valueOrPromise = atomRead(atom, getter, options as never)
+      setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
+      if (isPromiseLike(valueOrPromise)) {
+        valueOrPromise.onCancel?.(() => controllerRef.v?.abort())
+      }
+      return atomState
+    } catch (error) {
+      delete atomState.v
+      atomState.e = error
+      ++atomState.n
+      return atomState
+    } finally {
+      isSyncRef.v = false
+    }
+  }
+
+  const readAtomState = <Value>(
+    pending: Pending | undefined,
+    atom: Atom<Value>,
+    dirtyAtoms?: Set<AnyAtom>,
+  ): AtomState<Value> => {
+    const atomState = getAtomState(atom)
+    // See if we can skip recomputing this atom.
+    if (isAtomStateInitialized(atomState)) {
+      // If the atom is mounted, we can use cached atom state.
+      // because it should have been updated by dependencies.
+      // We can't use the cache if the atom is dirty.
+      if (atomState.m && !dirtyAtoms?.has(atom)) {
+        return atomState
+      }
+      // Otherwise, check if the dependencies have changed.
+      // If all dependencies haven't changed, we can use the cache.
+      if (
+        Array.from(atomState.d).every(
+          ([a, n]) =>
+            // Recursively, read the atom state of the dependency, and
+            // check if the atom epoch number is unchanged
+            readAtomState(pending, a, dirtyAtoms).n === n,
+        )
+      ) {
+        return atomState
+      }
+    }
+    // Compute a new state for this atom.
+    atomState.d.clear()
+    const isSyncRef: { v: boolean } = { v: true }
+    const baseGetter = createGetter(atom, (a) =>
+      readAtomState(pending, a, dirtyAtoms),
+    )
+    const getter: Getter = (a) => {
       try {
-        return returnAtomValue(aState)
+        return baseGetter(a)
       } finally {
-        if (mode === 'read') {
-          if (isSync) {
+        if (!isSelfAtom(atom, a)) {
+          const aState = getAtomState(a)
+          if (isSyncRef.v) {
             addDependency(pending, atom, atomState, a, aState)
           } else {
             const pending = createPending()
@@ -365,50 +435,22 @@ const buildStore = (
         }
       }
     }
-    let controller: AbortController | undefined
-    let setSelf: ((...args: unknown[]) => unknown) | undefined
-    const options = {
-      get signal() {
-        if (!controller) {
-          controller = new AbortController()
-        }
-        return controller.signal
-      },
-      get setSelf() {
-        if (
-          import.meta.env?.MODE !== 'production' &&
-          !isActuallyWritableAtom(atom)
-        ) {
-          console.warn('setSelf function cannot be used with read-only atom')
-        }
-        if (!setSelf && isActuallyWritableAtom(atom)) {
-          setSelf = (...args) => {
-            if (import.meta.env?.MODE !== 'production' && isSync) {
-              console.warn('setSelf function cannot be called in sync')
-            }
-            if (!isSync) {
-              return writeAtom(atom, ...args)
-            }
-          }
-        }
-        return setSelf
-      },
-    }
+    const controllerRef: { v?: AbortController } = {}
+    const setSelfRef: { v?: (...args: unknown[]) => unknown } = {}
+    const options = createOptions(atom, isSyncRef, controllerRef, setSelfRef)
     try {
       const valueOrPromise = atomRead(atom, getter, options as never)
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
       if (isPromiseLike(valueOrPromise)) {
-        valueOrPromise.onCancel?.(() => controller?.abort())
-        if (mode === 'read') {
-          const complete = () => {
-            if (atomState.m) {
-              const pending = createPending()
-              mountDependencies(pending, atom, atomState)
-              flushPending(pending)
-            }
+        valueOrPromise.onCancel?.(() => controllerRef.v?.abort())
+        const complete = () => {
+          if (atomState.m) {
+            const pending = createPending()
+            mountDependencies(pending, atom, atomState)
+            flushPending(pending)
           }
-          valueOrPromise.then(complete, complete)
         }
+        valueOrPromise.then(complete, complete)
       }
       return atomState
     } catch (error) {
@@ -417,7 +459,7 @@ const buildStore = (
       ++atomState.n
       return atomState
     } finally {
-      isSync = false
+      isSyncRef.v = false
     }
   }
 
@@ -532,7 +574,7 @@ const buildStore = (
   ): Result => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(pending, a, undefined, 'peek'))
+      returnAtomValue(peekAtomState(pending, a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
