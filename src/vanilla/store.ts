@@ -519,6 +519,75 @@ const buildStore = (
     }
   }
 
+  const peekAtomState = <Value>(
+    pending: Pending | undefined,
+    atom: Atom<Value>,
+    dirtyAtoms?: Set<AnyAtom>,
+  ): AtomState<Value> => {
+    const atomState = getAtomState(atom)
+    let isSync = true
+    const getter: Getter = <V>(a: Atom<V>) => {
+      if (isSelfAtom(atom, a)) {
+        const aState = getAtomState(a)
+        if (!isAtomStateInitialized(aState)) {
+          if (hasInitialValue(a)) {
+            setAtomStateValueOrPromise(a, aState, a.init)
+          } else {
+            // NOTE invalid derived atoms can reach here
+            throw new Error('no atom init')
+          }
+        }
+        return returnAtomValue(aState)
+      }
+      // a !== atom
+      return returnAtomValue(peekAtomState(pending, a, dirtyAtoms))
+    }
+    let controller: AbortController | undefined
+    let setSelf: ((...args: unknown[]) => unknown) | undefined
+    const options = {
+      get signal() {
+        if (!controller) {
+          controller = new AbortController()
+        }
+        return controller.signal
+      },
+      get setSelf() {
+        if (
+          import.meta.env?.MODE !== 'production' &&
+          !isActuallyWritableAtom(atom)
+        ) {
+          console.warn('setSelf function cannot be used with read-only atom')
+        }
+        if (!setSelf && isActuallyWritableAtom(atom)) {
+          setSelf = (...args) => {
+            if (import.meta.env?.MODE !== 'production' && isSync) {
+              console.warn('setSelf function cannot be called in sync')
+            }
+            if (!isSync) {
+              return writeAtom(atom, ...args)
+            }
+          }
+        }
+        return setSelf
+      },
+    }
+    try {
+      const valueOrPromise = atomRead(atom, getter, options as never)
+      setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
+      if (isPromiseLike(valueOrPromise)) {
+        valueOrPromise.onCancel?.(() => controller?.abort())
+      }
+      return atomState
+    } catch (error) {
+      delete atomState.v
+      atomState.e = error
+      ++atomState.n
+      return atomState
+    } finally {
+      isSync = false
+    }
+  }
+
   const writeAtomState = <Value, Args extends unknown[], Result>(
     pending: Pending,
     atom: WritableAtom<Value, Args, Result>,
@@ -526,7 +595,7 @@ const buildStore = (
   ): Result => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(pending, a))
+      returnAtomValue(peekAtomState(pending, a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
