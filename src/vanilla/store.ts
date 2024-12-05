@@ -307,10 +307,12 @@ const buildStore = (
     pending: Pending | undefined,
     atom: Atom<Value>,
     dirtyAtoms?: Set<AnyAtom>,
+    mode: 'read' | 'peek' = 'read',
   ): AtomState<Value> => {
     const atomState = getAtomState(atom)
+
     // See if we can skip recomputing this atom.
-    if (isAtomStateInitialized(atomState)) {
+    if (mode === 'read' && isAtomStateInitialized(atomState)) {
       // If the atom is mounted, we can use cached atom state.
       // because it should have been updated by dependencies.
       // We can't use the cache if the atom is dirty.
@@ -324,14 +326,14 @@ const buildStore = (
           ([a, n]) =>
             // Recursively, read the atom state of the dependency, and
             // check if the atom epoch number is unchanged
-            readAtomState(pending, a, dirtyAtoms).n === n,
+            readAtomState(pending, a, dirtyAtoms, mode).n === n,
         )
       ) {
         return atomState
       }
     }
     // Compute a new state for this atom.
-    atomState.d.clear()
+    mode === 'read' && atomState.d.clear()
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
@@ -347,17 +349,19 @@ const buildStore = (
         return returnAtomValue(aState)
       }
       // a !== atom
-      const aState = readAtomState(pending, a, dirtyAtoms)
+      const aState = readAtomState(pending, a, dirtyAtoms, mode)
       try {
         return returnAtomValue(aState)
       } finally {
-        if (isSync) {
-          addDependency(pending, atom, atomState, a, aState)
-        } else {
-          const pending = createPending()
-          addDependency(pending, atom, atomState, a, aState)
-          mountDependencies(pending, atom, atomState)
-          flushPending(pending)
+        if (mode === 'read') {
+          if (isSync) {
+            addDependency(pending, atom, atomState, a, aState)
+          } else {
+            const pending = createPending()
+            addDependency(pending, atom, atomState, a, aState)
+            mountDependencies(pending, atom, atomState)
+            flushPending(pending)
+          }
         }
       }
     }
@@ -395,14 +399,16 @@ const buildStore = (
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
       if (isPromiseLike(valueOrPromise)) {
         valueOrPromise.onCancel?.(() => controller?.abort())
-        const complete = () => {
-          if (atomState.m) {
-            const pending = createPending()
-            mountDependencies(pending, atom, atomState)
-            flushPending(pending)
+        if (mode === 'read') {
+          const complete = () => {
+            if (atomState.m) {
+              const pending = createPending()
+              mountDependencies(pending, atom, atomState)
+              flushPending(pending)
+            }
           }
+          valueOrPromise.then(complete, complete)
         }
-        valueOrPromise.then(complete, complete)
       }
       return atomState
     } catch (error) {
@@ -519,75 +525,6 @@ const buildStore = (
     }
   }
 
-  const peekAtomState = <Value>(
-    pending: Pending | undefined,
-    atom: Atom<Value>,
-    dirtyAtoms?: Set<AnyAtom>,
-  ): AtomState<Value> => {
-    const atomState = getAtomState(atom)
-    let isSync = true
-    const getter: Getter = <V>(a: Atom<V>) => {
-      if (isSelfAtom(atom, a)) {
-        const aState = getAtomState(a)
-        if (!isAtomStateInitialized(aState)) {
-          if (hasInitialValue(a)) {
-            setAtomStateValueOrPromise(a, aState, a.init)
-          } else {
-            // NOTE invalid derived atoms can reach here
-            throw new Error('no atom init')
-          }
-        }
-        return returnAtomValue(aState)
-      }
-      // a !== atom
-      return returnAtomValue(peekAtomState(pending, a, dirtyAtoms))
-    }
-    let controller: AbortController | undefined
-    let setSelf: ((...args: unknown[]) => unknown) | undefined
-    const options = {
-      get signal() {
-        if (!controller) {
-          controller = new AbortController()
-        }
-        return controller.signal
-      },
-      get setSelf() {
-        if (
-          import.meta.env?.MODE !== 'production' &&
-          !isActuallyWritableAtom(atom)
-        ) {
-          console.warn('setSelf function cannot be used with read-only atom')
-        }
-        if (!setSelf && isActuallyWritableAtom(atom)) {
-          setSelf = (...args) => {
-            if (import.meta.env?.MODE !== 'production' && isSync) {
-              console.warn('setSelf function cannot be called in sync')
-            }
-            if (!isSync) {
-              return writeAtom(atom, ...args)
-            }
-          }
-        }
-        return setSelf
-      },
-    }
-    try {
-      const valueOrPromise = atomRead(atom, getter, options as never)
-      setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
-      if (isPromiseLike(valueOrPromise)) {
-        valueOrPromise.onCancel?.(() => controller?.abort())
-      }
-      return atomState
-    } catch (error) {
-      delete atomState.v
-      atomState.e = error
-      ++atomState.n
-      return atomState
-    } finally {
-      isSync = false
-    }
-  }
-
   const writeAtomState = <Value, Args extends unknown[], Result>(
     pending: Pending,
     atom: WritableAtom<Value, Args, Result>,
@@ -595,7 +532,7 @@ const buildStore = (
   ): Result => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(peekAtomState(pending, a))
+      returnAtomValue(readAtomState(pending, a, undefined, 'peek'))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
