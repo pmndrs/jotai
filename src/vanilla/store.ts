@@ -104,6 +104,8 @@ type AtomState<Value = AnyValue> = {
   v?: Value
   /** Atom error */
   e?: AnyError
+  /** Whether the atom value is has been changed */
+  isDirty?: boolean
 }
 
 const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
@@ -165,19 +167,6 @@ type Pending = readonly [
   dependents: Map<AnyAtom, Set<AnyAtom>>,
   atomStates: Map<AnyAtom, AtomState>,
   functions: Set<() => void>,
-  pendingRecompute: [
-    // dependents map of the dirty atoms
-    dependentMap: Map<
-      AnyAtom,
-      [dependents: Set<AnyAtom>, atomState: AtomState, epoch: number]
-    >,
-    // set of dirty atoms
-    changedAtoms: Set<AnyAtom>,
-    // set of already recomputed atoms
-    completed: Set<AnyAtom>,
-    // recompute function to be processed in flushPending
-    recomputeFn?: () => void,
-  ],
 ]
 
 const createPending = (): Pending => [
@@ -187,8 +176,6 @@ const createPending = (): Pending => [
   new Map(),
   /** functions */
   new Set(),
-  /** pendingRecompute */
-  [new Map(), new Set(), new Set()],
 ]
 
 const addPendingAtom = (
@@ -218,45 +205,6 @@ const getPendingDependents = (pending: Pending, atom: AnyAtom) =>
 
 const addPendingFunction = (pending: Pending, fn: () => void) => {
   pending[2].add(fn)
-}
-
-const hasPendingRecompute = (pending: Pending) => {
-  return pending[3][0].size > pending[3][2].size
-}
-
-const flushPending = (pending: Pending) => {
-  let error: AnyError
-  let hasError = false
-  const call = (fn: () => void) => {
-    try {
-      fn()
-    } catch (e) {
-      if (!hasError) {
-        error = e
-        hasError = true
-      }
-    }
-  }
-  while (pending[1].size || pending[2].size || hasPendingRecompute(pending)) {
-    pending[3][3]?.()
-    pending[0].clear()
-    const atomStates = new Set(pending[1].values())
-    pending[1].clear()
-    const functions = new Set(pending[2])
-    pending[2].clear()
-    for (const atomState of atomStates) {
-      if (atomState.m) {
-        atomState.m.l.forEach(call)
-      }
-    }
-    functions.forEach(call)
-  }
-  pending[3][1].clear()
-  pending[3][2].clear()
-  delete pending[3][3]
-  if (hasError) {
-    throw error
-  }
 }
 
 // internal & unstable type
@@ -310,50 +258,32 @@ const buildStore = (
     debugMountedAtoms = new Set()
   }
 
-  /**
-   * 1. adds the atom and its dependents to dependentsMap
-   * 2. adds the atom to changedAtoms
-   * 3. schedules recompute to run in flushPending
-   */
-  const addRecomputeDependent = (pending: Pending, atom: AnyAtom) => {
-    const getDependents = (a: AnyAtom, aState: AtomState) => {
-      return new Set<AnyAtom>([
-        ...(aState.m?.t || []),
-        ...aState.p,
-        ...(getPendingDependents(pending, a) || []),
-      ])
-    }
-    for (const [dependent, entry] of getAllDeps(atom, getDependents)) {
-      pending[3][0].set(dependent, entry)
-    }
-    pending[3][1].add(atom)
-    scheduleRecompute(pending)
-  }
-
-  const markRecomputeComplete = (pending: Pending, dependent: AnyAtom) => {
-    pending[3][2].add(dependent)
-  }
-
-  const isRecomputeComplete = (pending: Pending, dependent: AnyAtom) => {
-    return pending[3][2].has(dependent)
-  }
-
-  /**
-   * Schedules recompute if not already scheduled
-   */
-  const scheduleRecompute = (pending: Pending) => {
-    if (!pending[3][3]) {
-      pending[3][3] = () => {
-        if (hasPendingRecompute(pending)) {
-          recomputeDependents(pending)
+  const flushPending = (pending: Pending) => {
+    let error: AnyError
+    let hasError = false
+    const call = (fn: () => void) => {
+      try {
+        fn()
+      } catch (e) {
+        if (!hasError) {
+          error = e
+          hasError = true
         }
       }
     }
+    while (pending[0].size || pending[1].size || pending[2].size) {
+      recomputeDependents(pending, new Set(pending[0].keys()))
+      const atomStates = new Set(pending[1].values())
+      pending[1].clear()
+      const functions = new Set(pending[2])
+      pending[2].clear()
+      atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
+      functions.forEach(call)
+    }
+    if (hasError) {
+      throw error
+    }
   }
-
-  const getRecomputeDependents = (pending: Pending) => pending[3][0]
-
-  const getRecomputeChangedAtoms = (pending: Pending) => pending[3][1]
 
   const setAtomStateValueOrPromise = (
     atom: AnyAtom,
@@ -385,7 +315,6 @@ const buildStore = (
   const readAtomState = <Value>(
     pending: Pending | undefined,
     atom: Atom<Value>,
-    dirtyAtoms?: { has: (atom: AnyAtom) => boolean },
   ): AtomState<Value> => {
     const atomState = getAtomState(atom)
     // See if we can skip recomputing this atom.
@@ -393,7 +322,7 @@ const buildStore = (
       // If the atom is mounted, we can use cached atom state.
       // because it should have been updated by dependencies.
       // We can't use the cache if the atom is dirty.
-      if (atomState.m && !dirtyAtoms?.has(atom)) {
+      if (atomState.m && !atomState.isDirty) {
         return atomState
       }
       // Otherwise, check if the dependencies have changed.
@@ -403,7 +332,7 @@ const buildStore = (
           ([a, n]) =>
             // Recursively, read the atom state of the dependency, and
             // check if the atom epoch number is unchanged
-            readAtomState(pending, a, dirtyAtoms).n === n,
+            readAtomState(pending, a).n === n,
         )
       ) {
         return atomState
@@ -426,7 +355,7 @@ const buildStore = (
         return returnAtomValue(aState)
       }
       // a !== atom
-      const aState = readAtomState(pending, a, dirtyAtoms)
+      const aState = readAtomState(pending, a)
       try {
         return returnAtomValue(aState)
       } finally {
@@ -497,16 +426,48 @@ const buildStore = (
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(undefined, atom))
 
-  /**
-   * @returns map of all dependents or dependencies (deep) of the atom
-   */
-  function getAllDeps(
-    rootAtom: AnyAtom,
+  const markRecomputePending = (
+    pending: Pending,
+    atom: AnyAtom,
+    atomState: AtomState,
+  ) => {
+    addPendingAtom(pending, atom, atomState)
+    if (isPendingRecompute(atom)) {
+      return
+    }
+    const dependents = getAllDependents(pending, [atom])
+    for (const [dependent] of dependents) {
+      getAtomState(dependent).isDirty = true
+    }
+  }
+
+  const markRecomputeComplete = (
+    pending: Pending,
+    atom: AnyAtom,
+    atomState: AtomState,
+  ) => {
+    atomState.isDirty = false
+    pending[0].delete(atom)
+  }
+
+  const isPendingRecompute = (atom: AnyAtom) => getAtomState(atom).isDirty
+
+  const getDependents = (pending: Pending, a: AnyAtom, aState: AtomState) => {
+    return new Set<AnyAtom>([
+      ...(aState.m?.t || []),
+      ...aState.p,
+      ...(getPendingDependents(pending, a) || []),
+    ])
+  }
+
+  /** @returns map of all dependents or dependencies (deep) of the root atoms */
+  const getDeep = (
     /** function to get immediate dependents or dependencies of the atom */
     getDeps: (a: AnyAtom, aState: AtomState) => Iterable<AnyAtom>,
-  ) {
-    const visited: Pending[3][0] = new Map()
-    const stack: AnyAtom[] = [rootAtom]
+    rootAtoms: Iterable<AnyAtom>,
+  ) => {
+    const visited = new Map<AnyAtom, Set<AnyAtom>>()
+    const stack: AnyAtom[] = Array.from(rootAtoms)
     while (stack.length > 0) {
       const a = stack.pop()!
       const aState = getAtomState(a)
@@ -514,7 +475,7 @@ const buildStore = (
         continue
       }
       const deps = new Set(getDeps(a, aState))
-      visited.set(a, [deps, aState, aState.n])
+      visited.set(a, deps)
       for (const d of deps) {
         if (!visited.has(d)) {
           stack.push(d)
@@ -524,50 +485,37 @@ const buildStore = (
     return visited
   }
 
-  const recomputeInteresectedDependencies = (pending: Pending, a: AnyAtom) => {
-    const pendingRecompute = getRecomputeDependents(pending)
-    const isIntersected = (a: AnyAtom) =>
-      pendingRecompute.has(a) && !isRecomputeComplete(pending, a)
-    if (!isIntersected(a)) {
-      return
-    }
-    const getDependencies = (_: unknown, aState: AtomState) => aState.d.keys()
-    const dependencies = getAllDeps(a, getDependencies)
-    const intersectedDependencies = new Map(
-      Array.from(dependencies).filter(([d]) => isIntersected(d)),
-    )
-    recomputeDependents(pending, intersectedDependencies, new Set([a]))
-  }
+  const getAllDependents = (pending: Pending, atoms: Iterable<AnyAtom>) =>
+    getDeep((a, aState) => getDependents(pending, a, aState), atoms)
 
   // This is a topological sort via depth-first search, slightly modified from
   // what's described here for simplicity and performance reasons:
   // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-  function getSortedDependents(
-    dependents: Map<AnyAtom, [Set<AnyAtom>, ...unknown[]]>,
-    rootAtoms: Set<AnyAtom>,
-  ): Iterable<AnyAtom, void, void> {
+  const getSortedDependents = (
+    pending: Pending,
+    rootAtoms: Iterable<AnyAtom>,
+  ) => {
+    const atomMap = getAllDependents(pending, rootAtoms)
     const sorted: AnyAtom[] = []
     const visiting = new Set<AnyAtom>()
     const visited = new Set<AnyAtom>()
-    // Visit the root atom. This is the only atom in the dependency graph
+    // Visit the root atoms. These are the only atoms in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
-    const stack: [a: AnyAtom, depSet: Set<AnyAtom>][] = []
+    const stack: [a: AnyAtom, dependents: Set<AnyAtom>][] = []
     for (const a of rootAtoms) {
-      if (dependents.has(a)) {
-        stack.push([a, dependents.get(a)![0]])
+      if (atomMap.has(a)) {
+        stack.push([a, atomMap.get(a)!])
       }
     }
     while (stack.length > 0) {
-      const [a, depSet] = stack[stack.length - 1]!
+      const [a, dependents] = stack[stack.length - 1]!
       if (visited.has(a)) {
-        // All dependents have been processed, now process this atom
         stack.pop()
         continue
       }
       if (visiting.has(a)) {
-        // The algorithm calls for pushing onto the front of the list. For
-        // performance, we will simply push onto the end, and then will iterate in
-        // reverse order later.
+        // The algorithm calls for pushing onto the front of the list.
+        // For performance we push on the end, and will reverse the order later.
         sorted.push(a)
         // Atom has been visited but not yet processed
         visited.add(a)
@@ -576,49 +524,46 @@ const buildStore = (
       }
       visiting.add(a)
       // Push unvisited dependents onto the stack
-      for (const d of depSet) {
-        if (a !== d && !visiting.has(d) && dependents.has(d)) {
-          stack.push([d, dependents.get(d)![0]])
+      for (const d of dependents) {
+        if (a !== d && !visiting.has(d) && atomMap.has(d)) {
+          stack.push([d, atomMap.get(d)!])
         }
       }
     }
-    function* reverse<T>(items: ReadonlyArray<T>) {
-      for (let i = items.length - 1; i >= 0; i--) {
-        yield items[i]!
-      }
-    }
-    return reverse(sorted)
+    return sorted.reverse()
   }
 
-  const recomputeDependents = (
-    pending: Pending,
-    /** map of dependents to their dependencies */
-    atomMap = getRecomputeDependents(pending),
-    rootAtoms = getRecomputeChangedAtoms(pending),
-  ) => {
-    const changedAtoms = getRecomputeChangedAtoms(pending)
-    const hasChangedDeps = (aState: AtomState, a: AnyAtom) =>
-      Array.from(aState.d.keys()).some(
-        (d) => !isSelfAtom(d, a) && changedAtoms.has(d),
-      )
-    const sorted = Array.from(getSortedDependents(atomMap, rootAtoms))
+  const recomputeDependents = (pending: Pending, rootAtoms: Set<AnyAtom>) => {
+    if (rootAtoms.size === 0) {
+      return
+    }
+    const hasChangedDeps = (aState: AtomState) =>
+      Array.from(aState.d.keys()).some((d) => rootAtoms.has(d))
     // traverse the dependency graph to build the topsorted atom list
-    for (const a of sorted) {
+    for (const a of getSortedDependents(pending, rootAtoms)) {
       // use the topsorted atom list to recompute all affected atoms
       // Track what's changed, so that we can short circuit when possible
-      const [, aState, prevEpochNumber] = atomMap.get(a)!
-      const shouldRecompute =
-        !isRecomputeComplete(pending, a) && hasChangedDeps(aState, a)
-      markRecomputeComplete(pending, a)
-      if (shouldRecompute) {
-        readAtomState(pending, a, atomMap)
+      const aState = getAtomState(a)
+      const prevEpochNumber = aState.n
+      if (isPendingRecompute(a) || hasChangedDeps(aState)) {
+        readAtomState(pending, a)
         mountDependencies(pending, a, aState)
         if (prevEpochNumber !== aState.n) {
-          addPendingAtom(pending, a, aState)
-          changedAtoms.add(a)
+          markRecomputePending(pending, a, aState)
         }
       }
+      markRecomputeComplete(pending, a, aState)
     }
+  }
+
+  const recomputeDependencies = (pending: Pending, a: AnyAtom) => {
+    if (!isPendingRecompute(a)) {
+      return
+    }
+    const getDependencies = (_: unknown, aState: AtomState) => aState.d.keys()
+    const dependencies = Array.from(getDeep(getDependencies, [a]).keys())
+    const dirtyDependencies = new Set(dependencies.filter(isPendingRecompute))
+    recomputeDependents(pending, dirtyDependencies)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
@@ -628,8 +573,7 @@ const buildStore = (
   ): Result => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      // recompute dependencies (deep) that are pending recompute
-      recomputeInteresectedDependencies(pending, a)
+      recomputeDependencies(pending, atom)
       return returnAtomValue(readAtomState(pending, a))
     }
     const setter: Setter = <V, As extends unknown[], R>(
@@ -648,8 +592,7 @@ const buildStore = (
           setAtomStateValueOrPromise(a, aState, v)
           mountDependencies(pending, a, aState)
           if (prevEpochNumber !== aState.n) {
-            addPendingAtom(pending, a, aState)
-            addRecomputeDependent(pending, a)
+            markRecomputePending(pending, a, aState)
           }
           return undefined as R
         } else {
@@ -834,10 +777,7 @@ const buildStore = (
             setAtomStateValueOrPromise(atom, atomState, value)
             mountDependencies(pending, atom, atomState)
             if (prevEpochNumber !== atomState.n) {
-              addPendingAtom(pending, atom, atomState)
-              if (!pending[3][0].has(atom)) {
-                addRecomputeDependent(pending, atom)
-              }
+              markRecomputePending(pending, atom, atomState)
             }
           }
         }
