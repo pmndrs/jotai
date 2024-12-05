@@ -303,35 +303,40 @@ const buildStore = (
     }
   }
 
-  const readAtomStateCore = <Value>(
+  const readAtomState = <Value>(
     pending: Pending | undefined,
     atom: Atom<Value>,
     dirtyAtoms?: Set<AnyAtom>,
-    hooks: {
-      shouldSkipRead?: (
-        atom: AnyAtom,
-        atomState: AtomState,
-      ) => AtomState<Value> | undefined
-      onAfterReadAtomValue?: (
-        isSyncRef: { v: boolean },
-        atom: AnyAtom,
-        atomState: AtomState,
-        a: AnyAtom,
-        aState: AtomState,
-      ) => void
-      onValuePromise?: (
-        promiseValue: PromiseLike<unknown>,
-        atom: AnyAtom,
-        atomState: AtomState,
-      ) => void
-    } = {},
+    mode: 'read' | 'peek' = 'read',
   ): AtomState<Value> => {
     const atomState = getAtomState(atom)
-    const shouldSkipRead = hooks.shouldSkipRead?.(atom, atomState)
-    if (shouldSkipRead) {
-      return shouldSkipRead as AtomState<Value>
+
+    // See if we can skip recomputing this atom.
+    if (mode === 'read' && isAtomStateInitialized(atomState)) {
+      // If the atom is mounted, we can use cached atom state.
+      // because it should have been updated by dependencies.
+      // We can't use the cache if the atom is dirty.
+      if (atomState.m && !dirtyAtoms?.has(atom)) {
+        return atomState
+      }
+      // Otherwise, check if the dependencies have changed.
+      // If all dependencies haven't changed, we can use the cache.
+      if (
+        Array.from(atomState.d).every(
+          ([a, n]) =>
+            // Recursively, read the atom state of the dependency, and
+            // check if the atom epoch number is unchanged
+            readAtomState(pending, a, dirtyAtoms, mode).n === n,
+        )
+      ) {
+        return atomState
+      }
     }
-    const isSyncRef = { v: true }
+    if (mode === 'read') {
+      // Compute a new state for this atom.
+      atomState.d.clear()
+    }
+    let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
         const aState = getAtomState(a)
@@ -346,11 +351,20 @@ const buildStore = (
         return returnAtomValue(aState)
       }
       // a !== atom
-      const aState = readAtomStateCore(pending, a, dirtyAtoms, hooks as never)
+      const aState = readAtomState(pending, a, dirtyAtoms, mode)
       try {
         return returnAtomValue(aState)
       } finally {
-        hooks.onAfterReadAtomValue?.(isSyncRef, atom, atomState, a, aState)
+        if (mode === 'read') {
+          if (isSync) {
+            addDependency(pending, atom, atomState, a, aState)
+          } else {
+            const pending = createPending()
+            addDependency(pending, atom, atomState, a, aState)
+            mountDependencies(pending, atom, atomState)
+            flushPending(pending)
+          }
+        }
       }
     }
     let controller: AbortController | undefined
@@ -371,10 +385,10 @@ const buildStore = (
         }
         if (!setSelf && isActuallyWritableAtom(atom)) {
           setSelf = (...args) => {
-            if (import.meta.env?.MODE !== 'production' && isSyncRef.v) {
+            if (import.meta.env?.MODE !== 'production' && isSync) {
               console.warn('setSelf function cannot be called in sync')
             }
-            if (!isSyncRef.v) {
+            if (!isSync) {
               return writeAtom(atom, ...args)
             }
           }
@@ -387,7 +401,16 @@ const buildStore = (
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
       if (isPromiseLike(valueOrPromise)) {
         valueOrPromise.onCancel?.(() => controller?.abort())
-        hooks.onValuePromise?.(valueOrPromise, atom, atomState)
+        if (mode === 'read') {
+          const complete = () => {
+            if (atomState.m) {
+              const pending = createPending()
+              mountDependencies(pending, atom, atomState)
+              flushPending(pending)
+            }
+          }
+          valueOrPromise.then(complete, complete)
+        }
       }
       return atomState
     } catch (error) {
@@ -396,64 +419,8 @@ const buildStore = (
       ++atomState.n
       return atomState
     } finally {
-      isSyncRef.v = false
+      isSync = false
     }
-  }
-
-  const peekAtomState = readAtomStateCore
-
-  const readAtomState = <Value>(
-    pending: Pending | undefined,
-    atom: Atom<Value>,
-    dirtyAtoms?: Set<AnyAtom>,
-  ): AtomState<Value> => {
-    return readAtomStateCore(pending, atom, dirtyAtoms, {
-      shouldSkipRead(atom, atomState) {
-        // See if we can skip recomputing this atom.
-        if (isAtomStateInitialized(atomState)) {
-          // If the atom is mounted, we can use cached atom state.
-          // because it should have been updated by dependencies.
-          // We can't use the cache if the atom is dirty.
-          if (atomState.m && !dirtyAtoms?.has(atom)) {
-            return atomState
-          }
-          // Otherwise, check if the dependencies have changed.
-          // If all dependencies haven't changed, we can use the cache.
-          if (
-            Array.from(atomState.d).every(
-              ([a, n]) =>
-                // Recursively, read the atom state of the dependency, and
-                // check if the atom epoch number is unchanged
-                readAtomState(pending, a, dirtyAtoms).n === n,
-            )
-          ) {
-            return atomState
-          }
-        }
-        // Compute a new state for this atom.
-        atomState.d.clear()
-      },
-      onAfterReadAtomValue(isSyncRef, atom, atomState, a, aState) {
-        if (isSyncRef.v) {
-          addDependency(pending, atom, atomState, a, aState)
-        } else {
-          const pending = createPending()
-          addDependency(pending, atom, atomState, a, aState)
-          mountDependencies(pending, atom, atomState)
-          flushPending(pending)
-        }
-      },
-      onValuePromise(valueOrPromise, atom, atomState) {
-        const complete = () => {
-          if (atomState.m) {
-            const pending = createPending()
-            mountDependencies(pending, atom, atomState)
-            flushPending(pending)
-          }
-        }
-        valueOrPromise.then(complete, complete)
-      },
-    }) as AtomState<Value>
   }
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
@@ -567,7 +534,7 @@ const buildStore = (
   ): Result => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(peekAtomState(pending, a))
+      returnAtomValue(readAtomState(pending, a, undefined, 'peek'))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
