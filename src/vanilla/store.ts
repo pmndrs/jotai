@@ -165,18 +165,21 @@ type Pending = readonly [
   dependents: Map<AnyAtom, Set<AnyAtom>>,
   atomStates: Map<AnyAtom, AtomState>,
   functions: Set<() => void>,
-  updates: readonly [
-    changed: Set<AnyAtom>,
-    mounted: Set<AnyAtom>,
-    unmounted: Set<AnyAtom>,
-  ],
+  mounted: Set<AnyAtom>,
+  unmounted: Set<AnyAtom>,
 ]
 
 const createPending = (): Pending => [
+  /** dependents */
   new Map(),
+  /** atomStates */
   new Map(),
+  /** functions */
   new Set(),
-  [new Set(), new Set(), new Set()],
+  /** mounted */
+  new Set(),
+  /** unmounted */
+  new Set(),
 ]
 
 const addPendingAtom = (
@@ -188,7 +191,6 @@ const addPendingAtom = (
     pending[0].set(atom, new Set())
   }
   pending[1].set(atom, atomState)
-  pending[3][0].add(atom)
 }
 
 const addPendingDependent = (
@@ -210,11 +212,13 @@ const addPendingFunction = (pending: Pending, fn: () => void) => {
 }
 
 const addMountedAtom = (pending: Pending, atom: AnyAtom) => {
-  pending[3][1].add(atom)
+  pending[3].add(atom)
+  pending[4].delete(atom)
 }
 
 const addUnmountedAtom = (pending: Pending, atom: AnyAtom) => {
-  pending[3][2].add(atom)
+  pending[3].delete(atom)
+  pending[4].add(atom)
 }
 
 // internal & unstable type
@@ -724,6 +728,7 @@ const buildStore = (
       }
     }
     do {
+      const changedAtoms = new Set<AnyAtom>(pending[0].keys())
       while (pending[1].size || pending[2].size) {
         pending[0].clear()
         const atomStates = new Set(pending[1].values())
@@ -732,14 +737,19 @@ const buildStore = (
         pending[2].clear()
         atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
         functions.forEach(call)
+        const moreChangedAtoms = new Set(pending[0].keys())
+        moreChangedAtoms.forEach((a) => changedAtoms.add(a))
       }
 
       // Process onChange handlers after all atoms are updated
-      if (pending[3].some((s) => s.size)) {
+      if (changedAtoms.size || pending[3].size || pending[4].size) {
+        const mountedAtoms = new Set(pending[4])
+        const unmountedAtoms = new Set(pending[4])
+        pending[3].clear()
+        pending[4].clear()
         for (const handler of onChangeHandlers) {
-          handler(...pending[3])
+          handler(changedAtoms, mountedAtoms, unmountedAtoms)
         }
-        pending[3].forEach((s) => s.clear())
       }
     } while (pending[1].size || pending[2].size)
     if (hasError) {
