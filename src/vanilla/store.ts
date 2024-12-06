@@ -165,9 +165,22 @@ type Pending = readonly [
   dependents: Map<AnyAtom, Set<AnyAtom>>,
   atomStates: Map<AnyAtom, AtomState>,
   functions: Set<() => void>,
+  mounted: Set<AnyAtom>,
+  unmounted: Set<AnyAtom>,
 ]
 
-const createPending = (): Pending => [new Map(), new Map(), new Set()]
+const createPending = (): Pending => [
+  /** dependents */
+  new Map(),
+  /** atomStates */
+  new Map(),
+  /** functions */
+  new Set(),
+  /** mounted */
+  new Set(),
+  /** unmounted */
+  new Set(),
+]
 
 const addPendingAtom = (
   pending: Pending,
@@ -198,31 +211,14 @@ const addPendingFunction = (pending: Pending, fn: () => void) => {
   pending[2].add(fn)
 }
 
-const flushPending = (pending: Pending) => {
-  let error: AnyError
-  let hasError = false
-  const call = (fn: () => void) => {
-    try {
-      fn()
-    } catch (e) {
-      if (!hasError) {
-        error = e
-        hasError = true
-      }
-    }
-  }
-  while (pending[1].size || pending[2].size) {
-    pending[0].clear()
-    const atomStates = new Set(pending[1].values())
-    pending[1].clear()
-    const functions = new Set(pending[2])
-    pending[2].clear()
-    atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
-    functions.forEach(call)
-  }
-  if (hasError) {
-    throw error
-  }
+const addMountedAtom = (pending: Pending, atom: AnyAtom) => {
+  pending[3].add(atom)
+  pending[4].delete(atom)
+}
+
+const addUnmountedAtom = (pending: Pending, atom: AnyAtom) => {
+  pending[3].delete(atom)
+  pending[4].add(atom)
 }
 
 // internal & unstable type
@@ -259,12 +255,19 @@ type PrdStore = {
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
   unstable_derive: (fn: (...args: StoreArgs) => StoreArgs) => Store
+  unstable_onChange: (handler: OnChangeHandler) => () => void
 }
 
-type Store = PrdStore | (PrdStore & DevStoreRev4)
+export type Store = PrdStore | (PrdStore & DevStoreRev4)
 
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
+
+type OnChangeHandler = (
+  changedAtoms: Set<AnyAtom>,
+  mountedAtoms: Set<AnyAtom>,
+  unmountedAtoms: Set<AnyAtom>,
+) => void
 
 const buildStore = (
   ...[getAtomState, atomRead, atomWrite, atomOnMount]: StoreArgs
@@ -620,6 +623,7 @@ const buildStore = (
       if (import.meta.env?.MODE !== 'production') {
         debugMountedAtoms.add(atom)
       }
+      addMountedAtom(pending, atom)
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
         let setAtom: (...args: unknown[]) => unknown
@@ -672,6 +676,7 @@ const buildStore = (
       if (import.meta.env?.MODE !== 'production') {
         debugMountedAtoms.delete(atom)
       }
+      addUnmountedAtom(pending, atom)
       // unmount dependencies
       for (const a of atomState.d.keys()) {
         const aMounted = unmountAtom(pending, a, getAtomState(a))
@@ -700,11 +705,64 @@ const buildStore = (
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
     buildStore(...fn(getAtomState, atomRead, atomWrite, atomOnMount))
 
+  const onChangeHandlers = new Set<OnChangeHandler>()
+
+  const unstable_onChange = (handler: OnChangeHandler) => {
+    onChangeHandlers.add(handler)
+    return () => {
+      onChangeHandlers.delete(handler)
+    }
+  }
+
+  const flushPending = (pending: Pending) => {
+    let error: AnyError
+    let hasError = false
+    const call = (fn: () => void) => {
+      try {
+        fn()
+      } catch (e) {
+        if (!hasError) {
+          error = e
+          hasError = true
+        }
+      }
+    }
+    do {
+      const changedAtoms = new Set<AnyAtom>(pending[0].keys())
+      while (pending[1].size || pending[2].size) {
+        pending[0].clear()
+        const atomStates = new Set(pending[1].values())
+        pending[1].clear()
+        const functions = new Set(pending[2])
+        pending[2].clear()
+        atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
+        functions.forEach(call)
+        const moreChangedAtoms = new Set(pending[0].keys())
+        moreChangedAtoms.forEach((a) => changedAtoms.add(a))
+      }
+
+      // Process onChange handlers after all atoms are updated
+      if (changedAtoms.size || pending[3].size || pending[4].size) {
+        const mountedAtoms = new Set(pending[4])
+        const unmountedAtoms = new Set(pending[4])
+        pending[3].clear()
+        pending[4].clear()
+        for (const handler of onChangeHandlers) {
+          handler(changedAtoms, mountedAtoms, unmountedAtoms)
+        }
+      }
+    } while (pending[1].size || pending[2].size)
+    if (hasError) {
+      throw error
+    }
+  }
+
   const store: Store = {
     get: readAtom,
     set: writeAtom,
     sub: subscribeAtom,
     unstable_derive,
+    unstable_onChange,
   }
   if (import.meta.env?.MODE !== 'production') {
     const devStore: DevStoreRev4 = {
@@ -752,15 +810,19 @@ export const createStore = (): Store => {
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
+      if (typeof atom.unstable_onInit === 'function') {
+        atom.unstable_onInit(store)
+      }
     }
     return atomState
   }
-  return buildStore(
+  const store = buildStore(
     getAtomState,
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
   )
+  return store
 }
 
 let defaultStore: Store | undefined
