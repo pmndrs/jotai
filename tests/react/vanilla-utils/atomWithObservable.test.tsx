@@ -11,7 +11,7 @@ import { atomWithObservable } from 'jotai/vanilla/utils'
 
 const userEvent = {
   // eslint-disable-next-line testing-library/no-unnecessary-act
-  click: (element: Element) => userEventOrig.click(element),
+  click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
 const consoleError = console.error
