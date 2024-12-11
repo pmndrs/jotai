@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@testing-library/react@16.0.1':
-    hash: llqdntmyj43tflmxbwolkfasxa
-    path: patches/@testing-library__react@16.0.1.patch
-
 devDependencies:
   '@babel/core':
     specifier: ^7.26.0
@@ -50,8 +45,8 @@ devDependencies:
     specifier: ^6.6.3
     version: 6.6.3
   '@testing-library/react':
-    specifier: ^16.0.1
-    version: 16.0.1(patch_hash=llqdntmyj43tflmxbwolkfasxa)(@testing-library/dom@10.4.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@19.0.0-rc.1)(react@19.0.0-rc.1)
+    specifier: ^16.1.0
+    version: 16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@19.0.0)(react@19.0.0)
   '@testing-library/user-event':
     specifier: ^14.5.2
     version: 14.5.2(@testing-library/dom@10.4.0)
@@ -116,8 +111,8 @@ devDependencies:
     specifier: ^7.37.2
     version: 7.37.2(eslint@8.57.0)
   eslint-plugin-react-compiler:
-    specifier: 19.0.0-beta-a7bf2bd-20241110
-    version: 19.0.0-beta-a7bf2bd-20241110(eslint@8.57.0)
+    specifier: 19.0.0-beta-37ed2a7-20241206
+    version: 19.0.0-beta-37ed2a7-20241206(eslint@8.57.0)
   eslint-plugin-react-hooks:
     specifier: ^5.0.0
     version: 5.0.0(eslint@8.57.0)
@@ -137,11 +132,11 @@ devDependencies:
     specifier: ^3.3.3
     version: 3.3.3
   react:
-    specifier: 19.0.0-rc.1
-    version: 19.0.0-rc.1
+    specifier: 19.0.0
+    version: 19.0.0
   react-dom:
-    specifier: 19.0.0-rc.1
-    version: 19.0.0-rc.1(react@19.0.0-rc.1)
+    specifier: 19.0.0
+    version: 19.0.0(react@19.0.0)
   rollup:
     specifier: ^4.27.2
     version: 4.27.2
@@ -2234,15 +2229,15 @@ packages:
       redent: 3.0.0
     dev: true
 
-  /@testing-library/react@16.0.1(patch_hash=llqdntmyj43tflmxbwolkfasxa)(@testing-library/dom@10.4.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@19.0.0-rc.1)(react@19.0.0-rc.1):
-    resolution: {integrity: sha512-dSmwJVtJXmku+iocRhWOUFbrERC76TX2Mnf0ATODz8brzAZrMBbzLwQixlBSanZxR6LddK3eiwpSFZgDET1URg==}
+  /@testing-library/react@16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@19.0.0)(react@19.0.0):
+    resolution: {integrity: sha512-Q2ToPvg0KsVL0ohND9A3zLJWcOXXcO8IDu3fj11KhNt0UlCWyFyvnCIBkd12tidB2lkiVRG8VFqdhcqhqnAQtg==}
     engines: {node: '>=18'}
     peerDependencies:
       '@testing-library/dom': ^10.0.0
-      '@types/react': ^18.0.0
-      '@types/react-dom': ^18.0.0
-      react: ^18.0.0
-      react-dom: ^18.0.0
+      '@types/react': ^18.0.0 || ^19.0.0
+      '@types/react-dom': ^18.0.0 || ^19.0.0
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -2253,10 +2248,9 @@ packages:
       '@testing-library/dom': 10.4.0
       '@types/react': 18.3.12
       '@types/react-dom': 18.3.1
-      react: 19.0.0-rc.1
-      react-dom: 19.0.0-rc.1(react@19.0.0-rc.1)
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
     dev: true
-    patched: true
 
   /@testing-library/user-event@14.5.2(@testing-library/dom@10.4.0):
     resolution: {integrity: sha512-YAh82Wh4TIrxYLmfGcixwD18oIjyC1pFQC2Y01F2lzV2HTMiYrI0nze0FD0ocB//CKS/7jIUgae+adPqxK5yCQ==}
@@ -3249,7 +3243,7 @@ packages:
     dependencies:
       semver: 7.6.3
       shelljs: 0.8.5
-      typescript: 5.8.0-dev.20241119
+      typescript: 5.8.0-dev.20241211
     dev: true
 
   /eastasianwidth@0.2.0:
@@ -3597,8 +3591,8 @@ packages:
       synckit: 0.9.2
     dev: true
 
-  /eslint-plugin-react-compiler@19.0.0-beta-a7bf2bd-20241110(eslint@8.57.0):
-    resolution: {integrity: sha512-b5/hRnOQlnH9CEnJQ6UrPoIAG4y/wIGv+OVEHTeAkbq+1uojfcuQyLToYvK1T9a6vz5WQHeMjQqFOZk3mtWorg==}
+  /eslint-plugin-react-compiler@19.0.0-beta-37ed2a7-20241206(eslint@8.57.0):
+    resolution: {integrity: sha512-5Pex1fUCJwLwwqEJe6NkgTn45kUjjj9TZP6IrW4IcpWM/YaEe+QvcOeF60huDjBq0kz1svGeW2nw8WdY+qszAw==}
     engines: {node: ^14.17.0 || ^16.0.0 || >= 18.0.0}
     peerDependencies:
       eslint: '>=7'
@@ -3607,7 +3601,7 @@ packages:
       '@babel/parser': 7.26.2
       '@babel/plugin-proposal-private-methods': 7.18.6(@babel/core@7.26.0)
       eslint: 8.57.0
-      hermes-parser: 0.20.1
+      hermes-parser: 0.25.1
       zod: 3.23.8
       zod-validation-error: 3.4.0(zod@3.23.8)
     transitivePeerDependencies:
@@ -4083,14 +4077,14 @@ packages:
       function-bind: 1.1.2
     dev: true
 
-  /hermes-estree@0.20.1:
-    resolution: {integrity: sha512-SQpZK4BzR48kuOg0v4pb3EAGNclzIlqMj3Opu/mu7bbAoFw6oig6cEt/RAi0zTFW/iW6Iz9X9ggGuZTAZ/yZHg==}
+  /hermes-estree@0.25.1:
+    resolution: {integrity: sha512-0wUoCcLp+5Ev5pDW2OriHC2MJCbwLwuRx+gAqMTOkGKJJiBCLjtrvy4PWUGn6MIVefecRpzoOZ/UV6iGdOr+Cw==}
     dev: true
 
-  /hermes-parser@0.20.1:
-    resolution: {integrity: sha512-BL5P83cwCogI8D7rrDCgsFY0tdYUtmFP9XaXtl2IQjC+2Xo+4okjfXintlTxcIwl4qeGddEl28Z11kbVIw0aNA==}
+  /hermes-parser@0.25.1:
+    resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
     dependencies:
-      hermes-estree: 0.20.1
+      hermes-estree: 0.25.1
     dev: true
 
   /html-encoding-sniffer@4.0.0:
@@ -4999,13 +4993,13 @@ packages:
       safe-buffer: 5.2.1
     dev: true
 
-  /react-dom@19.0.0-rc.1(react@19.0.0-rc.1):
-    resolution: {integrity: sha512-k8MfDX+4G+eaa1cXXI9QF4d+pQtYol3nx8vauqRWUEOPqC7NQn2qmEqUsLoSd28rrZUL+R3T2VC+kZ2Hyx1geQ==}
+  /react-dom@19.0.0(react@19.0.0):
+    resolution: {integrity: sha512-4GV5sHFG0e/0AD4X+ySy6UJd3jVl1iNsNHdpad0qhABJ11twS3TTBnseqsKurKcsNqCEFeGL3uLpVChpIO3QfQ==}
     peerDependencies:
-      react: 19.0.0-rc.1
+      react: ^19.0.0
     dependencies:
-      react: 19.0.0-rc.1
-      scheduler: 0.25.0-rc.1
+      react: 19.0.0
+      scheduler: 0.25.0
     dev: true
 
   /react-is@16.13.1:
@@ -5020,8 +5014,8 @@ packages:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
     dev: true
 
-  /react@19.0.0-rc.1:
-    resolution: {integrity: sha512-NZKln+uyPuyHchzP07I6GGYFxdAoaKhehgpCa3ltJGzwE31OYumLeshGaitA1R/fS5d9D2qpZVwTFAr6zCLM9w==}
+  /react@19.0.0:
+    resolution: {integrity: sha512-V8AVnmPIICiWpGfm6GLzCR/W5FXLchHop40W4nXBmdlEceh16rCN8O8LNWm5bh5XUX91fh7KpA+W0TgMKmgTpQ==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -5262,8 +5256,8 @@ packages:
       xmlchars: 2.2.0
     dev: true
 
-  /scheduler@0.25.0-rc.1:
-    resolution: {integrity: sha512-fVinv2lXqYpKConAMdergOl5owd0rY1O4P/QTe0aWKCqGtu7VsCt1iqQFxSJtqK4Lci/upVSBpGwVC7eWcuS9Q==}
+  /scheduler@0.25.0:
+    resolution: {integrity: sha512-xFVuu11jh+xcO7JOAGJNOXld8/TcEHK/4CituBUeUb5hqxJLj9YuemAEuvm9gQ/+pgXYfbQuqAkiYu+u7YEsNA==}
     dev: true
 
   /semver@6.3.1:
@@ -5740,8 +5734,8 @@ packages:
     hasBin: true
     dev: true
 
-  /typescript@5.8.0-dev.20241119:
-    resolution: {integrity: sha512-qj+yMCPvzsR5XXQ2Xq5k5O1tfzhHx94vxSdGWAuagZQJ2tS8CTuQSXGoCsvaKg2rpSnxtCjPECFifCqFB9t5Dw==}
+  /typescript@5.8.0-dev.20241211:
+    resolution: {integrity: sha512-0Y3jLj2YHE2oulcW2viCZKxvWZpHMqnwuw9umTFCRA1/BNs2bkmh1pDH50lqh+4yQa7ukGLJfV22Bva7nOvm+w==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
