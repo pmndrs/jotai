@@ -182,5 +182,10 @@
     "react": {
       "optional": true
     }
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@testing-library/react@16.1.0": "patches/@testing-library__react@16.1.0.patch"
+    }
   }
 }

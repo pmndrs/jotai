@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@testing-library/react@16.1.0':
+    hash: llqdntmyj43tflmxbwolkfasxa
+    path: patches/@testing-library__react@16.1.0.patch
+
 devDependencies:
   '@babel/core':
     specifier: ^7.26.0
@@ -46,7 +51,7 @@ devDependencies:
     version: 6.6.3
   '@testing-library/react':
     specifier: ^16.1.0
-    version: 16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@19.0.0)(react@19.0.0)
+    version: 16.1.0(patch_hash=llqdntmyj43tflmxbwolkfasxa)(@testing-library/dom@10.4.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@19.0.0)(react@19.0.0)
   '@testing-library/user-event':
     specifier: ^14.5.2
     version: 14.5.2(@testing-library/dom@10.4.0)
@@ -2229,7 +2234,7 @@ packages:
       redent: 3.0.0
     dev: true
 
-  /@testing-library/react@16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@19.0.0)(react@19.0.0):
+  /@testing-library/react@16.1.0(patch_hash=llqdntmyj43tflmxbwolkfasxa)(@testing-library/dom@10.4.0)(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@19.0.0)(react@19.0.0):
     resolution: {integrity: sha512-Q2ToPvg0KsVL0ohND9A3zLJWcOXXcO8IDu3fj11KhNt0UlCWyFyvnCIBkd12tidB2lkiVRG8VFqdhcqhqnAQtg==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -2251,6 +2256,7 @@ packages:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
     dev: true
+    patched: true
 
   /@testing-library/user-event@14.5.2(@testing-library/dom@10.4.0):
     resolution: {integrity: sha512-YAh82Wh4TIrxYLmfGcixwD18oIjyC1pFQC2Y01F2lzV2HTMiYrI0nze0FD0ocB//CKS/7jIUgae+adPqxK5yCQ==}
