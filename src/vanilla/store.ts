@@ -732,7 +732,9 @@ const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
     }),
     dev4_get_mounted_atoms: () => debugMountedAtoms,
     dev4_restore_atoms: (values) => {
-      throw new Error('TODO: not implemented yet' || values)
+      throw new Error(
+        'TODO: not implemented yet' + ('TODO'.length ? '' : values),
+      )
       /*
       const pending = createPending()
       for (const [atom, value] of values) {
