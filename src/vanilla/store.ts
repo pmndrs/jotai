@@ -695,26 +695,38 @@ const buildStore = (
 }
 
 const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
+  const proxyAtomStateMap = new WeakMap()
   const debugMountedAtoms = new Set<AnyAtom>()
   let savedGetAtomState: StoreArgs[0]
   const derivedStore = store.unstable_derive(
     (getAtomState, atomRead, atomWrite, atomOnMount) => {
       savedGetAtomState = getAtomState
       return [
-        getAtomState,
+        (atom) => {
+          let proxyAtomState = proxyAtomStateMap.get(atom)
+          if (!proxyAtomState) {
+            const atomState = getAtomState(atom)
+            proxyAtomState = new Proxy(atomState, {
+              set(target, prop, value) {
+                if (prop === 'm') {
+                  debugMountedAtoms.add(atom)
+                }
+                return Reflect.set(target, prop, value)
+              },
+              deleteProperty(target, prop) {
+                if (prop === 'm') {
+                  debugMountedAtoms.delete(atom)
+                }
+                return Reflect.deleteProperty(target, prop)
+              },
+            })
+            proxyAtomStateMap.set(atom, proxyAtomState)
+          }
+          return proxyAtomState
+        },
         atomRead,
         atomWrite,
-        (atom, setAtom) => {
-          try {
-            const onUnmount = atomOnMount(atom, setAtom)
-            return () => {
-              debugMountedAtoms.delete(atom)
-              onUnmount?.()
-            }
-          } finally {
-            debugMountedAtoms.add(atom)
-          }
-        },
+        atomOnMount,
       ]
     },
   )
