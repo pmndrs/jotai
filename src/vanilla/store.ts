@@ -251,7 +251,7 @@ type DevStoreRev4 = {
   dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
-type PrdStore = {
+type Store = {
   get: <Value>(atom: Atom<Value>) => Value
   set: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
@@ -261,21 +261,12 @@ type PrdStore = {
   unstable_derive: (fn: (...args: StoreArgs) => StoreArgs) => Store
 }
 
-type Store = PrdStore | (PrdStore & DevStoreRev4)
-
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
-export type INTERNAL_PrdStore = PrdStore
+export type INTERNAL_PrdStore = Store
 
 const buildStore = (
   ...[getAtomState, atomRead, atomWrite, atomOnMount]: StoreArgs
 ): Store => {
-  // for debugging purpose only
-  let debugMountedAtoms: Set<AnyAtom>
-
-  if (import.meta.env?.MODE !== 'production') {
-    debugMountedAtoms = new Set()
-  }
-
   const setAtomStateValueOrPromise = (
     atom: AnyAtom,
     atomState: AtomState,
@@ -617,9 +608,6 @@ const buildStore = (
         d: new Set(atomState.d.keys()),
         t: new Set(),
       }
-      if (import.meta.env?.MODE !== 'production') {
-        debugMountedAtoms.add(atom)
-      }
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
         let setAtom: (...args: unknown[]) => unknown
@@ -669,9 +657,6 @@ const buildStore = (
         addPendingFunction(pending, () => onUnmount(pending))
       }
       delete atomState.m
-      if (import.meta.env?.MODE !== 'production') {
-        debugMountedAtoms.delete(atom)
-      }
       // unmount dependencies
       for (const a of atomState.d.keys()) {
         const aMounted = unmountAtom(pending, a, getAtomState(a))
@@ -706,43 +691,72 @@ const buildStore = (
     sub: subscribeAtom,
     unstable_derive,
   }
-  if (import.meta.env?.MODE !== 'production') {
-    const devStore: DevStoreRev4 = {
-      // store dev methods (these are tentative and subject to change without notice)
-      dev4_get_internal_weak_map: () => ({
-        get: (atom) => {
-          const atomState = getAtomState(atom)
-          if (atomState.n === 0) {
-            // for backward compatibility
-            return undefined
-          }
-          return atomState
-        },
-      }),
-      dev4_get_mounted_atoms: () => debugMountedAtoms,
-      dev4_restore_atoms: (values) => {
-        const pending = createPending()
-        for (const [atom, value] of values) {
-          if (hasInitialValue(atom)) {
-            const atomState = getAtomState(atom)
-            const prevEpochNumber = atomState.n
-            setAtomStateValueOrPromise(atom, atomState, value)
-            mountDependencies(pending, atom, atomState)
-            if (prevEpochNumber !== atomState.n) {
-              addPendingAtom(pending, atom, atomState)
-              recomputeDependents(pending, atom, atomState)
-            }
-          }
-        }
-        flushPending(pending)
-      },
-    }
-    Object.assign(store, devStore)
-  }
   return store
 }
 
-export const createStore = (): Store => {
+const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
+  const debugMountedAtoms = new Set<AnyAtom>()
+  let savedGetAtomState: StoreArgs[0]
+  const derivedStore = store.unstable_derive(
+    (getAtomState, atomRead, atomWrite, atomOnMount) => {
+      savedGetAtomState = getAtomState
+      return [
+        getAtomState,
+        atomRead,
+        atomWrite,
+        (atom, setAtom) => {
+          try {
+            const onUnmount = atomOnMount(atom, setAtom)
+            return () => {
+              debugMountedAtoms.delete(atom)
+              onUnmount?.()
+            }
+          } finally {
+            debugMountedAtoms.add(atom)
+          }
+        },
+      ]
+    },
+  )
+  const devStore: DevStoreRev4 = {
+    // store dev methods (these are tentative and subject to change without notice)
+    dev4_get_internal_weak_map: () => ({
+      get: (atom) => {
+        const atomState = savedGetAtomState(atom)
+        if (atomState.n === 0) {
+          // for backward compatibility
+          return undefined
+        }
+        return atomState
+      },
+    }),
+    dev4_get_mounted_atoms: () => debugMountedAtoms,
+    dev4_restore_atoms: (values) => {
+      throw new Error('TODO: not implemented yet' || values)
+      /*
+      const pending = createPending()
+      for (const [atom, value] of values) {
+        if (hasInitialValue(atom)) {
+          const atomState = savedGetAtomState(atom)
+          const prevEpochNumber = atomState.n
+          setAtomStateValueOrPromise(atom, atomState, value)
+          mountDependencies(pending, atom, atomState)
+          if (prevEpochNumber !== atomState.n) {
+            addPendingAtom(pending, atom, atomState)
+            recomputeDependents(pending, atom, atomState)
+          }
+        }
+      }
+      flushPending(pending)
+      */
+    },
+  }
+  return Object.assign(derivedStore, devStore)
+}
+
+type PrdOrDevStore = Store | (Store & DevStoreRev4)
+
+export const createStore = (): PrdOrDevStore => {
   const atomStateMap = new WeakMap()
   const getAtomState = <Value>(atom: Atom<Value>) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
@@ -755,17 +769,21 @@ export const createStore = (): Store => {
     }
     return atomState
   }
-  return buildStore(
+  const store = buildStore(
     getAtomState,
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
   )
+  if (import.meta.env?.MODE !== 'production') {
+    return deriveDevStore(store)
+  }
+  return store
 }
 
-let defaultStore: Store | undefined
+let defaultStore: PrdOrDevStore | undefined
 
-export const getDefaultStore = (): Store => {
+export const getDefaultStore = (): PrdOrDevStore => {
   if (!defaultStore) {
     defaultStore = createStore()
     if (import.meta.env?.MODE !== 'production') {
