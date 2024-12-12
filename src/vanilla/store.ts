@@ -165,7 +165,7 @@ type Pending = readonly [
   dependents: Map<AnyAtom, Set<AnyAtom>>,
   atomStates: Map<AnyAtom, AtomState>,
   functions: Set<() => void>,
-  ...unknown[],
+  ...custom: unknown[],
 ]
 
 const addPendingAtom = (

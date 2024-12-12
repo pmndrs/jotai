@@ -13,27 +13,23 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive(
-      (getAtomState, atomRead, atomWrite, atomOnMount) => {
-        const scopedAtomStateMap = new WeakMap()
-        return [
-          (atom) => {
-            if (scopedAtoms.has(atom)) {
-              let atomState = scopedAtomStateMap.get(atom)
-              if (!atomState) {
-                atomState = { d: new Map(), p: new Set(), n: 0 }
-                scopedAtomStateMap.set(atom, atomState)
-              }
-              return atomState
+    const derivedStore = store.unstable_derive((getAtomState, ...args) => {
+      const scopedAtomStateMap = new WeakMap()
+      return [
+        (pending, atom) => {
+          if (scopedAtoms.has(atom)) {
+            let atomState = scopedAtomStateMap.get(atom)
+            if (!atomState) {
+              atomState = { d: new Map(), p: new Set(), n: 0 }
+              scopedAtomStateMap.set(atom, atomState)
             }
-            return getAtomState(atom)
-          },
-          atomRead,
-          atomWrite,
-          atomOnMount,
-        ]
-      },
-    )
+            return atomState
+          }
+          return getAtomState(pending, atom)
+        },
+        ...args,
+      ]
+    })
 
     expect(store.get(a)).toBe('a')
     expect(derivedStore.get(a)).toBe('a')
@@ -58,27 +54,23 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive(
-      (getAtomState, atomRead, atomWrite, atomOnMount) => {
-        const scopedAtomStateMap = new WeakMap()
-        return [
-          (atom) => {
-            if (scopedAtoms.has(atom)) {
-              let atomState = scopedAtomStateMap.get(atom)
-              if (!atomState) {
-                atomState = { d: new Map(), p: new Set(), n: 0 }
-                scopedAtomStateMap.set(atom, atomState)
-              }
-              return atomState
+    const derivedStore = store.unstable_derive((getAtomState, ...args) => {
+      const scopedAtomStateMap = new WeakMap()
+      return [
+        (pending, atom) => {
+          if (scopedAtoms.has(atom)) {
+            let atomState = scopedAtomStateMap.get(atom)
+            if (!atomState) {
+              atomState = { d: new Map(), p: new Set(), n: 0 }
+              scopedAtomStateMap.set(atom, atomState)
             }
-            return getAtomState(atom)
-          },
-          atomRead,
-          atomWrite,
-          atomOnMount,
-        ]
-      },
-    )
+            return atomState
+          }
+          return getAtomState(pending, atom)
+        },
+        ...args,
+      ]
+    })
 
     expect(store.get(c)).toBe('ab')
     expect(derivedStore.get(c)).toBe('ab')
@@ -103,10 +95,10 @@ describe('unstable_derive for scoping atoms', () => {
     function makeStores() {
       const store = createStore()
       const derivedStore = store.unstable_derive(
-        (getAtomState, atomRead, atomWrite, atomOnMount) => {
+        (getAtomState, atomRead, ...args) => {
           const scopedAtomStateMap = new WeakMap()
           return [
-            (atom) => {
+            (pending, atom) => {
               if (scopedAtoms.has(atom)) {
                 let atomState = scopedAtomStateMap.get(atom)
                 if (!atomState) {
@@ -115,19 +107,18 @@ describe('unstable_derive for scoping atoms', () => {
                 }
                 return atomState
               }
-              return getAtomState(atom)
+              return getAtomState(pending, atom)
             },
-            (a, get, options) => {
+            (pending, a, get, options) => {
               const myGet: Getter = (aa) => {
                 if (scopedAtoms.has(aa)) {
                   scopedAtoms.add(a) // Is this too naive?
                 }
                 return get(aa)
               }
-              return atomRead(a, myGet, options)
+              return atomRead(pending, a, myGet, options)
             },
-            atomWrite,
-            atomOnMount,
+            ...args,
           ]
         },
       )
