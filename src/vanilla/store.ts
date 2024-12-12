@@ -245,7 +245,7 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
-  createPending: (pending?: Pending | undefined) => Pending,
+  createPending: (prevPending?: Pending | undefined) => Pending,
   flushPending: (pending: Pending) => void,
 ]
 
@@ -790,7 +790,7 @@ export const createStore = (): Store => {
     (_, atom, ...params) => atom.read(...params),
     (_, atom, ...params) => atom.write(...params),
     (_, atom, ...params) => atom.onMount?.(...params),
-    () => [new Map(), new Map(), new Set()],
+    (_) => [new Map(), new Map(), new Set()],
     flushPending,
   )
 }
