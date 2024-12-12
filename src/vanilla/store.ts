@@ -165,7 +165,7 @@ type Pending = readonly [
   dependents: Map<AnyAtom, Set<AnyAtom>>,
   atomStates: Map<AnyAtom, AtomState>,
   functions: Set<() => void>,
-  ...unknown[]
+  ...unknown[],
 ]
 
 const addPendingAtom = (
@@ -226,7 +226,10 @@ const flushPending = (pending: Pending) => {
 
 // internal & unstable type
 type StoreArgs = readonly [
-  getAtomState: <Value>(pending: Pending | undefined, atom: Atom<Value>) => AtomState<Value>,
+  getAtomState: <Value>(
+    pending: Pending | undefined,
+    atom: Atom<Value>,
+  ) => AtomState<Value>,
   atomRead: <Value>(
     pending: Pending | undefined,
     atom: Atom<Value>,
@@ -271,7 +274,14 @@ export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (
-  ...[getAtomState, atomRead, atomWrite, atomOnMount, createPending, flushPending]: StoreArgs
+  ...[
+    getAtomState,
+    atomRead,
+    atomWrite,
+    atomOnMount,
+    createPending,
+    flushPending,
+  ]: StoreArgs
 ): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
@@ -292,7 +302,11 @@ const buildStore = (
     if (isPromiseLike(valueOrPromise)) {
       patchPromiseForCancelability(valueOrPromise)
       for (const a of atomState.d.keys()) {
-        addPendingPromiseToDependency(atom, valueOrPromise, getAtomState(pending, a))
+        addPendingPromiseToDependency(
+          atom,
+          valueOrPromise,
+          getAtomState(pending, a),
+        )
       }
       atomState.v = valueOrPromise
       delete atomState.e
@@ -666,7 +680,9 @@ const buildStore = (
     if (
       atomState.m &&
       !atomState.m.l.size &&
-      !Array.from(atomState.m.t).some((a) => getAtomState(pending, a).m?.d.has(atom))
+      !Array.from(atomState.m.t).some((a) =>
+        getAtomState(pending, a).m?.d.has(atom),
+      )
     ) {
       // unmount self
       const onUnmount = atomState.m.u
@@ -703,7 +719,16 @@ const buildStore = (
   }
 
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
-    buildStore(...fn(getAtomState, atomRead, atomWrite, atomOnMount, createPending, flushPending))
+    buildStore(
+      ...fn(
+        getAtomState,
+        atomRead,
+        atomWrite,
+        atomOnMount,
+        createPending,
+        flushPending,
+      ),
+    )
 
   const store: Store = {
     get: readAtom,
