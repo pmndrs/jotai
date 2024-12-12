@@ -138,7 +138,7 @@ const addPendingPromiseToDependency = (
 }
 
 const addDependency = <Value>(
-  pending: Pending | undefined,
+  pending: Pending,
   atom: Atom<Value>,
   atomState: AtomState<Value>,
   a: AnyAtom,
@@ -227,11 +227,11 @@ const flushPending = (pending: Pending) => {
 // internal & unstable type
 type StoreArgs = readonly [
   getAtomState: <Value>(
-    pending: Pending | undefined,
+    pending: Pending,
     atom: Atom<Value>,
   ) => AtomState<Value>,
   atomRead: <Value>(
-    pending: Pending | undefined,
+    pending: Pending,
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
   ) => Value,
@@ -245,7 +245,7 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
-  createPending: (prevPending?: Pending | undefined) => Pending,
+  createPending: (prevPending?: Pending) => Pending,
   flushPending: (pending: Pending) => void,
 ]
 
@@ -291,7 +291,7 @@ const buildStore = (
   }
 
   const setAtomStateValueOrPromise = (
-    pending: Pending | undefined,
+    pending: Pending,
     atom: AnyAtom,
     atomState: AtomState,
     valueOrPromise: unknown,
@@ -323,7 +323,7 @@ const buildStore = (
   }
 
   const readAtomState = <Value>(
-    pending: Pending | undefined,
+    pending: Pending,
     atom: Atom<Value>,
     dirtyAtoms?: Set<AnyAtom>,
   ): AtomState<Value> => {
@@ -435,7 +435,7 @@ const buildStore = (
   }
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(undefined, atom))
+    returnAtomValue(readAtomState(createPending(), atom))
 
   const getDependents = <Value>(
     pending: Pending,
@@ -741,7 +741,7 @@ const buildStore = (
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => ({
         get: (atom) => {
-          const atomState = getAtomState(undefined, atom)
+          const atomState = getAtomState(createPending(), atom)
           if (atomState.n === 0) {
             // for backward compatibility
             return undefined
@@ -774,7 +774,7 @@ const buildStore = (
 
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap()
-  const getAtomState = <Value>(_: Pending | undefined, atom: Atom<Value>) => {
+  const getAtomState = <Value>(_: Pending, atom: Atom<Value>) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
       throw new Error('Atom is undefined or null')
     }
