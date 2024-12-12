@@ -243,6 +243,7 @@ type StoreArgs = readonly [
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
   createPending: (pending?: Pending | undefined) => Pending,
+  flushPending: (pending: Pending) => void,
 ]
 
 // for debugging purpose only
@@ -270,7 +271,7 @@ export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (
-  ...[getAtomState, atomRead, atomWrite, atomOnMount, createPending]: StoreArgs
+  ...[getAtomState, atomRead, atomWrite, atomOnMount, createPending, flushPending]: StoreArgs
 ): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
@@ -702,7 +703,7 @@ const buildStore = (
   }
 
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
-    buildStore(...fn(getAtomState, atomRead, atomWrite, atomOnMount, createPending))
+    buildStore(...fn(getAtomState, atomRead, atomWrite, atomOnMount, createPending, flushPending))
 
   const store: Store = {
     get: readAtom,
@@ -765,6 +766,7 @@ export const createStore = (): Store => {
     (_, atom, ...params) => atom.write(...params),
     (_, atom, ...params) => atom.onMount?.(...params),
     () => [new Map(), new Map(), new Set()],
+    flushPending,
   )
 }
 
