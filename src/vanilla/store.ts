@@ -165,9 +165,8 @@ type Pending = readonly [
   dependents: Map<AnyAtom, Set<AnyAtom>>,
   atomStates: Map<AnyAtom, AtomState>,
   functions: Set<() => void>,
+  ...unknown[]
 ]
-
-const createPending = (): Pending => [new Map(), new Map(), new Set()]
 
 const addPendingAtom = (
   pending: Pending,
@@ -240,6 +239,7 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
+  createPending: () => Pending,
 ]
 
 // for debugging purpose only
@@ -267,7 +267,7 @@ export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (
-  ...[getAtomState, atomRead, atomWrite, atomOnMount]: StoreArgs
+  ...[getAtomState, atomRead, atomWrite, atomOnMount, createPending]: StoreArgs
 ): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
@@ -760,6 +760,7 @@ export const createStore = (): Store => {
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
+    () => [new Map(), new Map(), new Set()],
   )
 }
 
