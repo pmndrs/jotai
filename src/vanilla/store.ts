@@ -138,7 +138,7 @@ const addPendingPromiseToDependency = (
 }
 
 const addDependency = <Value>(
-  pending: Pending | undefined,
+  pending: Pending,
   atom: Atom<Value>,
   atomState: AtomState<Value>,
   a: AnyAtom,
@@ -165,9 +165,8 @@ type Pending = readonly [
   dependents: Map<AnyAtom, Set<AnyAtom>>,
   atomStates: Map<AnyAtom, AtomState>,
   functions: Set<() => void>,
+  ...custom: unknown[],
 ]
-
-const createPending = (): Pending => [new Map(), new Map(), new Set()]
 
 const addPendingAtom = (
   pending: Pending,
@@ -227,19 +226,27 @@ const flushPending = (pending: Pending) => {
 
 // internal & unstable type
 type StoreArgs = readonly [
-  getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  getAtomState: <Value>(
+    pending: Pending,
+    atom: Atom<Value>,
+  ) => AtomState<Value>,
   atomRead: <Value>(
+    pending: Pending,
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
   ) => Value,
   atomWrite: <Value, Args extends unknown[], Result>(
+    pending: Pending,
     atom: WritableAtom<Value, Args, Result>,
     ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
   ) => Result,
   atomOnMount: <Value, Args extends unknown[], Result>(
+    pending: Pending,
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
+  createPending: (prevPending?: Pending) => Pending,
+  flushPending: (pending: Pending) => void,
 ]
 
 // for debugging purpose only
@@ -267,7 +274,14 @@ export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (
-  ...[getAtomState, atomRead, atomWrite, atomOnMount]: StoreArgs
+  ...[
+    getAtomState,
+    atomRead,
+    atomWrite,
+    atomOnMount,
+    createPending,
+    flushPending,
+  ]: StoreArgs
 ): Store => {
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
@@ -277,6 +291,7 @@ const buildStore = (
   }
 
   const setAtomStateValueOrPromise = (
+    pending: Pending,
     atom: AnyAtom,
     atomState: AtomState,
     valueOrPromise: unknown,
@@ -287,7 +302,11 @@ const buildStore = (
     if (isPromiseLike(valueOrPromise)) {
       patchPromiseForCancelability(valueOrPromise)
       for (const a of atomState.d.keys()) {
-        addPendingPromiseToDependency(atom, valueOrPromise, getAtomState(a))
+        addPendingPromiseToDependency(
+          atom,
+          valueOrPromise,
+          getAtomState(pending, a),
+        )
       }
       atomState.v = valueOrPromise
       delete atomState.e
@@ -304,11 +323,11 @@ const buildStore = (
   }
 
   const readAtomState = <Value>(
-    pending: Pending | undefined,
+    pending: Pending,
     atom: Atom<Value>,
     dirtyAtoms?: Set<AnyAtom>,
   ): AtomState<Value> => {
-    const atomState = getAtomState(atom)
+    const atomState = getAtomState(pending, atom)
     // See if we can skip recomputing this atom.
     if (isAtomStateInitialized(atomState)) {
       // If the atom is mounted, we can use cached atom state.
@@ -335,10 +354,10 @@ const buildStore = (
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
-        const aState = getAtomState(a)
+        const aState = getAtomState(pending, a)
         if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
-            setAtomStateValueOrPromise(a, aState, a.init)
+            setAtomStateValueOrPromise(pending, a, aState, a.init)
           } else {
             // NOTE invalid derived atoms can reach here
             throw new Error('no atom init')
@@ -354,10 +373,10 @@ const buildStore = (
         if (isSync) {
           addDependency(pending, atom, atomState, a, aState)
         } else {
-          const pending = createPending()
-          addDependency(pending, atom, atomState, a, aState)
-          mountDependencies(pending, atom, atomState)
-          flushPending(pending)
+          const pending2 = createPending(pending)
+          addDependency(pending2, atom, atomState, a, aState)
+          mountDependencies(pending2, atom, atomState)
+          flushPending(pending2)
         }
       }
     }
@@ -391,15 +410,15 @@ const buildStore = (
       },
     }
     try {
-      const valueOrPromise = atomRead(atom, getter, options as never)
-      setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
+      const valueOrPromise = atomRead(pending, atom, getter, options as never)
+      setAtomStateValueOrPromise(pending, atom, atomState, valueOrPromise)
       if (isPromiseLike(valueOrPromise)) {
         valueOrPromise.onCancel?.(() => controller?.abort())
         const complete = () => {
           if (atomState.m) {
-            const pending = createPending()
-            mountDependencies(pending, atom, atomState)
-            flushPending(pending)
+            const pending2 = createPending(pending)
+            mountDependencies(pending2, atom, atomState)
+            flushPending(pending2)
           }
         }
         valueOrPromise.then(complete, complete)
@@ -416,7 +435,7 @@ const buildStore = (
   }
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(undefined, atom))
+    returnAtomValue(readAtomState(createPending(), atom))
 
   const getDependents = <Value>(
     pending: Pending,
@@ -425,16 +444,16 @@ const buildStore = (
   ): Map<AnyAtom, AtomState> => {
     const dependents = new Map<AnyAtom, AtomState>()
     for (const a of atomState.m?.t || []) {
-      dependents.set(a, getAtomState(a))
+      dependents.set(a, getAtomState(pending, a))
     }
     for (const atomWithPendingPromise of atomState.p) {
       dependents.set(
         atomWithPendingPromise,
-        getAtomState(atomWithPendingPromise),
+        getAtomState(pending, atomWithPendingPromise),
       )
     }
     getPendingDependents(pending, atom)?.forEach((dependent) => {
-      dependents.set(dependent, getAtomState(dependent))
+      dependents.set(dependent, getAtomState(pending, dependent))
     })
     return dependents
   }
@@ -531,7 +550,7 @@ const buildStore = (
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
-      const aState = getAtomState(a)
+      const aState = getAtomState(pending, a)
       try {
         if (isSelfAtom(atom, a)) {
           if (!hasInitialValue(a)) {
@@ -540,7 +559,7 @@ const buildStore = (
           }
           const prevEpochNumber = aState.n
           const v = args[0] as V
-          setAtomStateValueOrPromise(a, aState, v)
+          setAtomStateValueOrPromise(pending, a, aState, v)
           mountDependencies(pending, a, aState)
           if (prevEpochNumber !== aState.n) {
             addPendingAtom(pending, a, aState)
@@ -557,7 +576,7 @@ const buildStore = (
       }
     }
     try {
-      return atomWrite(atom, getter, setter, ...args)
+      return atomWrite(pending, atom, getter, setter, ...args)
     } finally {
       isSync = false
     }
@@ -583,7 +602,7 @@ const buildStore = (
     if (atomState.m && !isPendingPromise(atomState.v)) {
       for (const a of atomState.d.keys()) {
         if (!atomState.m.d.has(a)) {
-          const aMounted = mountAtom(pending, a, getAtomState(a))
+          const aMounted = mountAtom(pending, a, getAtomState(pending, a))
           aMounted.t.add(atom)
           atomState.m.d.add(a)
         }
@@ -591,7 +610,7 @@ const buildStore = (
       for (const a of atomState.m.d || []) {
         if (!atomState.d.has(a)) {
           atomState.m.d.delete(a)
-          const aMounted = unmountAtom(pending, a, getAtomState(a))
+          const aMounted = unmountAtom(pending, a, getAtomState(pending, a))
           aMounted?.t.delete(atom)
         }
       }
@@ -608,7 +627,7 @@ const buildStore = (
       readAtomState(pending, atom)
       // mount dependencies first
       for (const a of atomState.d.keys()) {
-        const aMounted = mountAtom(pending, a, getAtomState(a))
+        const aMounted = mountAtom(pending, a, getAtomState(pending, a))
         aMounted.t.add(atom)
       }
       // mount self
@@ -642,7 +661,7 @@ const buildStore = (
         }
         addPendingFunction(pending, () => {
           const onUnmount = createInvocationContext(pending, () =>
-            atomOnMount(atom, (...args) => setAtom(...args)),
+            atomOnMount(pending, atom, (...args) => setAtom(...args)),
           )
           if (onUnmount) {
             mounted.u = (pending) => createInvocationContext(pending, onUnmount)
@@ -661,7 +680,9 @@ const buildStore = (
     if (
       atomState.m &&
       !atomState.m.l.size &&
-      !Array.from(atomState.m.t).some((a) => getAtomState(a).m?.d.has(atom))
+      !Array.from(atomState.m.t).some((a) =>
+        getAtomState(pending, a).m?.d.has(atom),
+      )
     ) {
       // unmount self
       const onUnmount = atomState.m.u
@@ -674,7 +695,7 @@ const buildStore = (
       }
       // unmount dependencies
       for (const a of atomState.d.keys()) {
-        const aMounted = unmountAtom(pending, a, getAtomState(a))
+        const aMounted = unmountAtom(pending, a, getAtomState(pending, a))
         aMounted?.t.delete(atom)
       }
       return undefined
@@ -684,21 +705,30 @@ const buildStore = (
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
     const pending = createPending()
-    const atomState = getAtomState(atom)
+    const atomState = getAtomState(pending, atom)
     const mounted = mountAtom(pending, atom, atomState)
     const listeners = mounted.l
     listeners.add(listener)
     flushPending(pending)
     return () => {
       listeners.delete(listener)
-      const pending = createPending()
-      unmountAtom(pending, atom, atomState)
-      flushPending(pending)
+      const pending2 = createPending(pending)
+      unmountAtom(pending2, atom, atomState)
+      flushPending(pending2)
     }
   }
 
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
-    buildStore(...fn(getAtomState, atomRead, atomWrite, atomOnMount))
+    buildStore(
+      ...fn(
+        getAtomState,
+        atomRead,
+        atomWrite,
+        atomOnMount,
+        createPending,
+        flushPending,
+      ),
+    )
 
   const store: Store = {
     get: readAtom,
@@ -711,7 +741,7 @@ const buildStore = (
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => ({
         get: (atom) => {
-          const atomState = getAtomState(atom)
+          const atomState = getAtomState(createPending(), atom)
           if (atomState.n === 0) {
             // for backward compatibility
             return undefined
@@ -724,9 +754,9 @@ const buildStore = (
         const pending = createPending()
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
-            const atomState = getAtomState(atom)
+            const atomState = getAtomState(pending, atom)
             const prevEpochNumber = atomState.n
-            setAtomStateValueOrPromise(atom, atomState, value)
+            setAtomStateValueOrPromise(pending, atom, atomState, value)
             mountDependencies(pending, atom, atomState)
             if (prevEpochNumber !== atomState.n) {
               addPendingAtom(pending, atom, atomState)
@@ -744,7 +774,7 @@ const buildStore = (
 
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap()
-  const getAtomState = <Value>(atom: Atom<Value>) => {
+  const getAtomState = <Value>(_: Pending, atom: Atom<Value>) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
       throw new Error('Atom is undefined or null')
     }
@@ -757,9 +787,11 @@ export const createStore = (): Store => {
   }
   return buildStore(
     getAtomState,
-    (atom, ...params) => atom.read(...params),
-    (atom, ...params) => atom.write(...params),
-    (atom, ...params) => atom.onMount?.(...params),
+    (_, atom, ...params) => atom.read(...params),
+    (_, atom, ...params) => atom.write(...params),
+    (_, atom, ...params) => atom.onMount?.(...params),
+    (_) => [new Map(), new Map(), new Set()],
+    flushPending,
   )
 }
 
