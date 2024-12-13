@@ -180,7 +180,7 @@ it('writable count state with delayed value', async () => {
   )
 
   await screen.findByText('loading')
-  act(() => vi.runOnlyPendingTimers())
+  await act(() => vi.runOnlyPendingTimers())
   await screen.findByText('count: 1')
 
   await userEvent.click(screen.getByText('button'))
@@ -633,22 +633,22 @@ describe('error handling', () => {
     )
 
     await screen.findByText('loading')
-    act(() => vi.runOnlyPendingTimers())
+    await act(() => vi.runOnlyPendingTimers())
     await screen.findByText('errored')
 
     await userEvent.click(screen.getByText('retry'))
     await screen.findByText('loading')
-    act(() => vi.runOnlyPendingTimers())
+    await act(() => vi.runOnlyPendingTimers())
     await screen.findByText('count: 1')
 
     await userEvent.click(screen.getByText('next'))
     await screen.findByText('loading')
-    act(() => vi.runOnlyPendingTimers())
+    await act(() => vi.runOnlyPendingTimers())
     await screen.findByText('errored')
 
     await userEvent.click(screen.getByText('retry'))
     await screen.findByText('loading')
-    act(() => vi.runOnlyPendingTimers())
+    await act(() => vi.runOnlyPendingTimers())
     await screen.findByText('count: 3')
   })
 
@@ -722,22 +722,22 @@ describe('error handling', () => {
     )
 
     await screen.findByText('loading')
-    act(() => vi.runOnlyPendingTimers())
+    await act(() => vi.runOnlyPendingTimers())
     await screen.findByText('errored')
 
     await userEvent.click(screen.getByText('retry'))
     await screen.findByText('loading')
-    act(() => vi.runOnlyPendingTimers())
+    await act(() => vi.runOnlyPendingTimers())
     await screen.findByText('count: 1')
 
     await userEvent.click(screen.getByText('refresh'))
     await screen.findByText('loading')
-    act(() => vi.runOnlyPendingTimers())
+    await act(() => vi.runOnlyPendingTimers())
     await screen.findByText('errored')
 
     await userEvent.click(screen.getByText('retry'))
     await screen.findByText('loading')
-    act(() => vi.runOnlyPendingTimers())
+    await act(() => vi.runOnlyPendingTimers())
     await screen.findByText('count: 3')
   })
 })
