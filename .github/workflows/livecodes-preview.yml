@@ -15,6 +15,6 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
       - uses: live-codes/preview-in-livecodes@v1
         with:
-          install-command: 'pnpm install --frozen-lockfile'
-          build-command: 'pnpm build'
+          install-command: pnpm install --frozen-lockfile
+          build-command: pnpm build
           base-url: 'https://{{LC::REF}}.preview-in-livecodes-demo.pages.dev'
