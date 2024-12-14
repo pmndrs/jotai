@@ -20,9 +20,9 @@
     "react-hooks",
     "import",
     "@vitest",
-    "eslint-plugin-react-compiler",
     "jest-dom",
-    "testing-library"
+    "testing-library",
+    "react-compiler"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
