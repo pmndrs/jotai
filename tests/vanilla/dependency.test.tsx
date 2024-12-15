@@ -1,5 +1,9 @@
 import { expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
+import type {
+  INTERNAL_DevStoreRev4,
+  INTERNAL_PrdStore,
+} from 'jotai/vanilla/store'
 
 it('can propagate updates with async atom chains', async () => {
   const store = createStore()
@@ -250,30 +254,47 @@ it('settles never resolving async derivations with deps picked up async', async 
   expect(sub).toBe(1)
 })
 
-it('refreshes deps for each async read', async () => {
-  const countAtom = atom(0)
-  const depAtom = atom(false)
+it.only('refreshes deps for each async read', async () => {
+  const store = createStore().unstable_derive((getAtomState, ...rest) => [
+    (a) => Object.assign(getAtomState(a), { label: a.debugLabel }),
+    ...rest,
+  ]) as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
+  const getAtomState = store.dev4_get_internal_weak_map().get
+
+  const a = atom(0)
+  a.debugLabel = 'a'
+  const b = atom(false)
+  b.debugLabel = 'b'
   const resolve: (() => void)[] = []
   const values: number[] = []
-  const asyncAtom = atom(async (get) => {
-    const count = get(countAtom)
-    values.push(count)
-    if (count === 0) {
-      get(depAtom)
+  const c = atom(async (get) => {
+    const v = get(a)
+    values.push(v)
+    if (v === 0) {
+      get(b)
     }
     await new Promise<void>((r) => resolve.push(r))
-    return count
+    return v
   })
-  const store = createStore()
-  store.get(asyncAtom)
-  store.set(countAtom, (c) => c + 1)
-  resolve.splice(0).forEach((fn) => fn())
-  expect(await store.get(asyncAtom)).toBe(1)
-  store.set(depAtom, true)
-  store.get(asyncAtom)
-  resolve.splice(0).forEach((fn) => fn())
+  c.debugLabel = 'c'
+
+  await new Promise((r) => setTimeout(r))
+  store.get(c)
+  store.set(a, (c) => c + 1)
+  resolve.pop()!()
+  await new Promise((r) => setTimeout(r))
+  await new Promise((r) => setTimeout(r))
+  await new Promise((r) => setTimeout(r))
+  await Promise.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
+  const v = await store.get(c) // freezes
+  expect(v).toBe(1)
+  store.set(b, true)
+  store.get(c)
+  resolve.pop()!()
   expect(values).toEqual([0, 1])
-})
+}, 500)
 
 it('should not re-evaluate stable derived atom values in situations where dependencies are re-ordered (#2738)', () => {
   const callCounter = vi.fn()

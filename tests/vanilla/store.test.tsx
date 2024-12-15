@@ -2,6 +2,10 @@ import { waitFor } from '@testing-library/react'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
+import type {
+  INTERNAL_DevStoreRev4,
+  INTERNAL_PrdStore,
+} from 'jotai/vanilla/store'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -312,6 +316,52 @@ it('should update derived atoms during write (#2107)', async () => {
   expect(store.get(countAtom)).toBe(2)
 })
 
+it.only('mounts dependencies in async edge case', async () => {
+  const store = createStore().unstable_derive((getAtomState, ...rest) => [
+    (a) => Object.assign(getAtomState(a), { label: a.debugLabel }),
+    ...rest,
+  ]) as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
+  const getAtomState = store.dev4_get_internal_weak_map().get
+
+  const a = atom(0)
+  a.debugLabel = 'a'
+  const resolve: (() => void)[] = []
+  const b = atom((get) => {
+    get(a)
+    return new Promise<void>((r) => {
+      resolve.push(() => {
+        r()
+      })
+    })
+  })
+  b.debugLabel = 'b'
+  const c = atom(async (get) => {
+    await Promise.resolve()
+    await get(b)
+  })
+  c.debugLabel = 'c'
+
+  store.sub(c, () => {})
+
+  await Promise.resolve()
+  expect(resolve.length).toBe(1)
+  resolve[0]!()
+  // --- Need to wait two microtasks to make it work ---
+  await Promise.resolve()
+  await Promise.resolve()
+  const aState = getAtomState(a)
+  const bState = getAtomState(b)
+  const cState = getAtomState(c)
+  console.log('aState', aState)
+  console.log('bState', bState)
+  console.log('cState', cState)
+
+  store.set(a, 20)
+  store.set(a, 30)
+  await Promise.resolve()
+  expect(resolve.length).toBe(3)
+})
+
 it('resolves dependencies reliably after a delay (#2192)', async () => {
   expect.assertions(1)
   const countAtom = atom(0)
@@ -340,6 +390,9 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
   await waitFor(() => assert(resolve.length === 1))
 
   resolve[0]!()
+  await Promise.resolve()
+  await Promise.resolve()
+  await Promise.resolve()
   const increment = (c: number) => c + 1
   store.set(countAtom, increment)
   store.set(countAtom, increment)
