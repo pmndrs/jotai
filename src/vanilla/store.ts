@@ -104,8 +104,8 @@ type AtomState<Value = AnyValue> = {
   v?: Value
   /** Atom error */
   e?: AnyError
-  /** Indicates whether the atom value is has been changed */
-  x?: boolean
+  /** Indicates that the atom value has been changed */
+  x?: true
 }
 
 const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
@@ -446,24 +446,18 @@ const buildStore = (
     atom: AnyAtom,
     atomState: AtomState,
   ) => {
-    atomState.x = false
+    delete atomState.x
     pending[0].delete(atom)
   }
 
   const isPendingRecompute = (atom: AnyAtom) => getAtomState(atom).x
 
-  const getMountedDependents = (
-    pending: Pending,
-    a: AnyAtom,
-    aState: AtomState,
-  ) => {
-    return new Set<AnyAtom>(
-      [
-        ...(aState.m?.t || []),
-        ...aState.p,
-        ...(getPendingDependents(pending, a) || []),
-      ].filter((a) => getAtomState(a).m),
-    )
+  const getDependents = (pending: Pending, a: AnyAtom, aState: AtomState) => {
+    return new Set<AnyAtom>([
+      ...(aState.m?.t || []),
+      ...aState.p,
+      ...(getPendingDependents(pending, a) || []),
+    ])
   }
 
   /** @returns map of all dependents or dependencies (deep) of the root atoms */
@@ -492,7 +486,7 @@ const buildStore = (
   }
 
   const getAllDependents = (pending: Pending, atoms: Iterable<AnyAtom>) =>
-    getDeep((a, aState) => getMountedDependents(pending, a, aState), atoms)
+    getDeep((a, aState) => getDependents(pending, a, aState), atoms)
 
   // This is a topological sort via depth-first search, slightly modified from
   // what's described here for simplicity and performance reasons:
