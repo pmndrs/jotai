@@ -14,6 +14,9 @@ dependencies:
   jotai:
     specifier: ^2.0.0
     version: 2.10.3(@types/react@18.3.16)(react@18.3.1)
+  jotai-optics:
+    specifier: ^0.4.0
+    version: 0.4.0(jotai@2.10.3)(optics-ts@2.4.1)
   optics-ts:
     specifier: ^2.0.0
     version: 2.4.1
@@ -613,6 +616,16 @@ packages:
       fp-ts: ^2.5.0
     dependencies:
       fp-ts: 2.16.9
+    dev: false
+
+  /jotai-optics@0.4.0(jotai@2.10.3)(optics-ts@2.4.1):
+    resolution: {integrity: sha512-osbEt9AgS55hC4YTZDew2urXKZkaiLmLqkTS/wfW5/l0ib8bmmQ7kBXSFaosV6jDDWSp00IipITcJARFHdp42g==}
+    peerDependencies:
+      jotai: '>=2.0.0'
+      optics-ts: '>=2.0.0'
+    dependencies:
+      jotai: 2.10.3(@types/react@18.3.16)(react@18.3.1)
+      optics-ts: 2.4.1
     dev: false
 
   /jotai@2.10.3(@types/react@18.3.16)(react@18.3.1):
