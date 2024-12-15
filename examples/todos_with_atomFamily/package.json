@@ -9,6 +9,7 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.5.2",
     "@react-spring/web": "^9.2.3",
     "antd": "^4.16.2",
     "jotai": "^2.0.4",
