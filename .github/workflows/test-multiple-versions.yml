@@ -14,7 +14,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - run: pnpm install --frozen-lockfile
@@ -33,15 +33,15 @@ jobs:
           - 18.1.0
           - 18.2.0
           - 18.3.1
-          - 19.0.0-rc.1
-          - 19.0.0-rc-e1ef8c95-20241115
-          - 0.0.0-experimental-e1ef8c95-20241115
+          - 19.0.0
+          - 19.1.0-canary-4dff0e62-20241213
+          - 0.0.0-experimental-4dff0e62-20241213
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - run: pnpm install --frozen-lockfile
