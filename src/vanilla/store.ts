@@ -104,6 +104,8 @@ type AtomState<Value = AnyValue> = {
   v?: Value
   /** Atom error */
   e?: AnyError
+  /** Indicates that the atom value has been changed */
+  x?: true
 }
 
 const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
@@ -306,7 +308,6 @@ const buildStore = (
   const readAtomState = <Value>(
     pending: Pending | undefined,
     atom: Atom<Value>,
-    dirtyAtoms?: Set<AnyAtom>,
   ): AtomState<Value> => {
     const atomState = getAtomState(atom)
     // See if we can skip recomputing this atom.
@@ -314,7 +315,7 @@ const buildStore = (
       // If the atom is mounted, we can use cached atom state.
       // because it should have been updated by dependencies.
       // We can't use the cache if the atom is dirty.
-      if (atomState.m && !dirtyAtoms?.has(atom)) {
+      if (atomState.m && !atomState.x) {
         return atomState
       }
       // Otherwise, check if the dependencies have changed.
@@ -324,7 +325,7 @@ const buildStore = (
           ([a, n]) =>
             // Recursively, read the atom state of the dependency, and
             // check if the atom epoch number is unchanged
-            readAtomState(pending, a, dirtyAtoms).n === n,
+            readAtomState(pending, a).n === n,
         )
       ) {
         return atomState
@@ -332,6 +333,7 @@ const buildStore = (
     }
     // Compute a new state for this atom.
     atomState.d.clear()
+    delete atomState.x
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
@@ -347,7 +349,7 @@ const buildStore = (
         return returnAtomValue(aState)
       }
       // a !== atom
-      const aState = readAtomState(pending, a, dirtyAtoms)
+      const aState = readAtomState(pending, a)
       try {
         return returnAtomValue(aState)
       } finally {
@@ -497,29 +499,35 @@ const buildStore = (
       atom,
       atomState,
     )
+    // TODO this should be refactored
+    markedAtoms.forEach((a) => {
+      getAtomState(a).x = true
+    })
 
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
-    const changedAtoms = new Set<AnyAtom>([atom])
-    for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
-      const [a, aState, prevEpochNumber] = topsortedAtoms[i]!
-      let hasChangedDeps = false
-      for (const dep of aState.d.keys()) {
-        if (dep !== a && changedAtoms.has(dep)) {
-          hasChangedDeps = true
-          break
+    addPendingFunction(pending, () => {
+      const changedAtoms = new Set<AnyAtom>([atom])
+      for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
+        const [a, aState, prevEpochNumber] = topsortedAtoms[i]!
+        let hasChangedDeps = false
+        for (const dep of aState.d.keys()) {
+          if (dep !== a && changedAtoms.has(dep)) {
+            hasChangedDeps = true
+            break
+          }
         }
-      }
-      if (hasChangedDeps) {
-        readAtomState(pending, a, markedAtoms)
-        mountDependencies(pending, a, aState)
-        if (prevEpochNumber !== aState.n) {
-          addPendingAtom(pending, a, aState)
-          changedAtoms.add(a)
+        if (hasChangedDeps) {
+          readAtomState(pending, a)
+          mountDependencies(pending, a, aState)
+          if (prevEpochNumber !== aState.n) {
+            addPendingAtom(pending, a, aState)
+            changedAtoms.add(a)
+          }
         }
+        delete aState.x
       }
-      markedAtoms.delete(a)
-    }
+    })
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
