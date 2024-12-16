@@ -346,3 +346,62 @@ it('can read sync derived atom in write without initializing', () => {
   // note: this is why write get needs to update deps
   expect(store.get(a)).toBe(2)
 })
+
+it('can read in write function without changing dependencies', () => {
+  // https://github.com/pmndrs/jotai/discussions/2789
+  const a = atom(0)
+  let bReadCount = 0
+  const b = atom(
+    (get) => {
+      ++bReadCount
+      return get(a)
+    },
+    () => {},
+  )
+  let bIsMounted = false
+  b.onMount = () => {
+    bIsMounted = true
+  }
+  const c = atom((get) => get(a))
+  const w = atom(null, (get, set) => {
+    expect(bReadCount).toBe(0)
+    const bValue = get(b)
+    expect(bReadCount).toBe(1)
+    set(a, bValue + 1)
+    expect(bReadCount).toBe(1)
+  })
+
+  const store = createStore()
+  store.sub(c, () => {}) // mounts c,a
+  store.set(w)
+  expect(bIsMounted).toBe(false)
+})
+
+it('can cache reading an atom in write function (without mounting)', () => {
+  let aReadCount = 0
+  const a = atom(() => {
+    ++aReadCount
+    return 'a'
+  })
+  const w = atom(null, (get) => get(a))
+  const store = createStore()
+  store.set(w)
+  expect(aReadCount).toBe(1)
+  store.set(w)
+  expect(aReadCount).toBe(1)
+})
+
+it('can cache reading an atom in write function (with mounting)', () => {
+  let aReadCount = 0
+  const a = atom(() => {
+    ++aReadCount
+    return 'a'
+  })
+  const w = atom(null, (get) => get(a))
+  const store = createStore()
+  store.sub(a, () => {}) // mounts a
+  store.set(w)
+  expect(aReadCount).toBe(1)
+  store.set(w)
+  expect(aReadCount).toBe(1)
+})

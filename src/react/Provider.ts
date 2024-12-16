@@ -1,5 +1,5 @@
 import { createContext, createElement, useContext, useState } from 'react'
-import type { FunctionComponentElement, ReactNode } from 'react'
+import type { FunctionComponent, ReactElement, ReactNode } from 'react'
 import { createStore, getDefaultStore } from '../vanilla.ts'
 
 type Store = ReturnType<typeof createStore>
@@ -34,7 +34,10 @@ export const Provider = ({
 }: {
   children?: ReactNode
   store?: Store
-}): FunctionComponentElement<{ value: Store | undefined }> => {
+}): ReactElement<
+  { value: Store | undefined },
+  FunctionComponent<{ value: Store | undefined }>
+> => {
   const [key] = useState<object>({})
   return createElement(
     StoreContext.Provider,
