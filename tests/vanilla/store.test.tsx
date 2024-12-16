@@ -340,7 +340,6 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
   await waitFor(() => assert(resolve.length === 1))
 
   resolve[0]!()
-  await new Promise((r) => setTimeout(r))
   const increment = (c: number) => c + 1
   store.set(countAtom, increment)
   store.set(countAtom, increment)
