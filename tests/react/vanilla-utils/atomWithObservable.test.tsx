@@ -188,9 +188,9 @@ it('writable count state with delayed value', async () => {
 })
 
 it('only subscribe once per atom', async () => {
-  const subject = new Subject()
+  const subject = new Subject<number>()
   let totalSubscriptions = 0
-  const observable = new Observable((subscriber) => {
+  const observable = new Observable<number>((subscriber) => {
     totalSubscriptions++
     subject.subscribe(subscriber)
   })
@@ -232,9 +232,9 @@ it('only subscribe once per atom', async () => {
 })
 
 it('cleanup subscription', async () => {
-  const subject = new Subject()
+  const subject = new Subject<number>()
   let activeSubscriptions = 0
-  const observable = new Observable((subscriber) => {
+  const observable = new Observable<number>((subscriber) => {
     activeSubscriptions++
     subject.subscribe(subscriber)
     return () => {
