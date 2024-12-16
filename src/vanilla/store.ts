@@ -77,7 +77,7 @@ type Mounted = {
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
-  u?: (pending: Pending) => void
+  u?: (batch: Batch) => void
 }
 
 /**
@@ -138,7 +138,7 @@ const addPendingPromiseToDependency = (
 }
 
 const addDependency = <Value>(
-  pending: Pending | undefined,
+  batch: Batch | undefined,
   atom: Atom<Value>,
   atomState: AtomState<Value>,
   a: AnyAtom,
@@ -152,53 +152,44 @@ const addDependency = <Value>(
     addPendingPromiseToDependency(atom, atomState.v, aState)
   }
   aState.m?.t.add(atom)
-  if (pending) {
-    addPendingDependent(pending, a, atom)
+  if (batch) {
+    addBatchDependent(batch, a, atom)
   }
 }
 
 //
-// Pending
+// Batch
 //
 
-type Pending = readonly [
+type Batch = readonly [
   dependents: Map<AnyAtom, Set<AnyAtom>>,
   atomStates: Map<AnyAtom, AtomState>,
   functions: Set<() => void>,
 ]
 
-const createPending = (): Pending => [new Map(), new Map(), new Set()]
+const createBatch = (): Batch => [new Map(), new Map(), new Set()]
 
-const addPendingAtom = (
-  pending: Pending,
-  atom: AnyAtom,
-  atomState: AtomState,
-) => {
-  if (!pending[0].has(atom)) {
-    pending[0].set(atom, new Set())
+const addBatchAtom = (batch: Batch, atom: AnyAtom, atomState: AtomState) => {
+  if (!batch[0].has(atom)) {
+    batch[0].set(atom, new Set())
   }
-  pending[1].set(atom, atomState)
+  batch[1].set(atom, atomState)
 }
 
-const addPendingDependent = (
-  pending: Pending,
-  atom: AnyAtom,
-  dependent: AnyAtom,
-) => {
-  const dependents = pending[0].get(atom)
+const addBatchDependent = (batch: Batch, atom: AnyAtom, dependent: AnyAtom) => {
+  const dependents = batch[0].get(atom)
   if (dependents) {
     dependents.add(dependent)
   }
 }
 
-const getPendingDependents = (pending: Pending, atom: AnyAtom) =>
-  pending[0].get(atom)
+const getBatchDependents = (batch: Batch, atom: AnyAtom) => batch[0].get(atom)
 
-const addPendingFunction = (pending: Pending, fn: () => void) => {
-  pending[2].add(fn)
+const addBatchFunction = (batch: Batch, fn: () => void) => {
+  batch[2].add(fn)
 }
 
-const flushPending = (pending: Pending) => {
+const flushBatch = (batch: Batch) => {
   let error: AnyError
   let hasError = false
   const call = (fn: () => void) => {
@@ -211,12 +202,12 @@ const flushPending = (pending: Pending) => {
       }
     }
   }
-  while (pending[1].size || pending[2].size) {
-    pending[0].clear()
-    const atomStates = new Set(pending[1].values())
-    pending[1].clear()
-    const functions = new Set(pending[2])
-    pending[2].clear()
+  while (batch[1].size || batch[2].size) {
+    batch[0].clear()
+    const atomStates = new Set(batch[1].values())
+    batch[1].clear()
+    const functions = new Set(batch[2])
+    batch[2].clear()
     atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
     functions.forEach(call)
   }
@@ -304,7 +295,7 @@ const buildStore = (
   }
 
   const readAtomState = <Value>(
-    pending: Pending | undefined,
+    batch: Batch | undefined,
     atom: Atom<Value>,
     dirtyAtoms?: Set<AnyAtom>,
   ): AtomState<Value> => {
@@ -324,7 +315,7 @@ const buildStore = (
           ([a, n]) =>
             // Recursively, read the atom state of the dependency, and
             // check if the atom epoch number is unchanged
-            readAtomState(pending, a, dirtyAtoms).n === n,
+            readAtomState(batch, a, dirtyAtoms).n === n,
         )
       ) {
         return atomState
@@ -347,17 +338,17 @@ const buildStore = (
         return returnAtomValue(aState)
       }
       // a !== atom
-      const aState = readAtomState(pending, a, dirtyAtoms)
+      const aState = readAtomState(batch, a, dirtyAtoms)
       try {
         return returnAtomValue(aState)
       } finally {
         if (isSync) {
-          addDependency(pending, atom, atomState, a, aState)
+          addDependency(batch, atom, atomState, a, aState)
         } else {
-          const pending = createPending()
-          addDependency(pending, atom, atomState, a, aState)
-          mountDependencies(pending, atom, atomState)
-          flushPending(pending)
+          const batch = createBatch()
+          addDependency(batch, atom, atomState, a, aState)
+          mountDependencies(batch, atom, atomState)
+          flushBatch(batch)
         }
       }
     }
@@ -397,9 +388,9 @@ const buildStore = (
         valueOrPromise.onCancel?.(() => controller?.abort())
         const complete = () => {
           if (atomState.m) {
-            const pending = createPending()
-            mountDependencies(pending, atom, atomState)
-            flushPending(pending)
+            const batch = createBatch()
+            mountDependencies(batch, atom, atomState)
+            flushBatch(batch)
           }
         }
         valueOrPromise.then(complete, complete)
@@ -418,8 +409,8 @@ const buildStore = (
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(undefined, atom))
 
-  const getMountedOrPendingDependents = <Value>(
-    pending: Pending,
+  const getMountedOrBatchDependents = <Value>(
+    batch: Batch,
     atom: Atom<Value>,
     atomState: AtomState<Value>,
   ): Map<AnyAtom, AtomState> => {
@@ -436,7 +427,7 @@ const buildStore = (
         getAtomState(atomWithPendingPromise),
       )
     }
-    getPendingDependents(pending, atom)?.forEach((dependent) => {
+    getBatchDependents(batch, atom)?.forEach((dependent) => {
       dependents.set(dependent, getAtomState(dependent))
     })
     return dependents
@@ -446,7 +437,7 @@ const buildStore = (
   // what's described here for simplicity and performance reasons:
   // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
   function getSortedDependents(
-    pending: Pending,
+    batch: Batch,
     rootAtom: AnyAtom,
     rootAtomState: AtomState,
   ): [[AnyAtom, AtomState, number][], Set<AnyAtom>] {
@@ -476,7 +467,7 @@ const buildStore = (
       }
       visiting.add(a)
       // Push unvisited dependents onto the stack
-      for (const [d, s] of getMountedOrPendingDependents(pending, a, aState)) {
+      for (const [d, s] of getMountedOrBatchDependents(batch, a, aState)) {
         if (a !== d && !visiting.has(d)) {
           stack.push([d, s])
         }
@@ -486,14 +477,14 @@ const buildStore = (
   }
 
   const recomputeDependents = <Value>(
-    pending: Pending,
+    batch: Batch,
     atom: Atom<Value>,
     atomState: AtomState<Value>,
   ) => {
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
     const [topsortedAtoms, markedAtoms] = getSortedDependents(
-      pending,
+      batch,
       atom,
       atomState,
     )
@@ -511,10 +502,10 @@ const buildStore = (
         }
       }
       if (hasChangedDeps) {
-        readAtomState(pending, a, markedAtoms)
-        mountDependencies(pending, a, aState)
+        readAtomState(batch, a, markedAtoms)
+        mountDependencies(batch, a, aState)
         if (prevEpochNumber !== aState.n) {
-          addPendingAtom(pending, a, aState)
+          addBatchAtom(batch, a, aState)
           changedAtoms.add(a)
         }
       }
@@ -523,13 +514,13 @@ const buildStore = (
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
-    pending: Pending,
+    batch: Batch,
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(pending, a))
+      returnAtomValue(readAtomState(batch, a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
@@ -544,18 +535,18 @@ const buildStore = (
           const prevEpochNumber = aState.n
           const v = args[0] as V
           setAtomStateValueOrPromise(a, aState, v)
-          mountDependencies(pending, a, aState)
+          mountDependencies(batch, a, aState)
           if (prevEpochNumber !== aState.n) {
-            addPendingAtom(pending, a, aState)
-            recomputeDependents(pending, a, aState)
+            addBatchAtom(batch, a, aState)
+            recomputeDependents(batch, a, aState)
           }
           return undefined as R
         } else {
-          return writeAtomState(pending, a, ...args)
+          return writeAtomState(batch, a, ...args)
         }
       } finally {
         if (!isSync) {
-          flushPending(pending)
+          flushBatch(batch)
         }
       }
     }
@@ -570,23 +561,23 @@ const buildStore = (
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
-    const pending = createPending()
+    const batch = createBatch()
     try {
-      return writeAtomState(pending, atom, ...args)
+      return writeAtomState(batch, atom, ...args)
     } finally {
-      flushPending(pending)
+      flushBatch(batch)
     }
   }
 
   const mountDependencies = (
-    pending: Pending,
+    batch: Batch,
     atom: AnyAtom,
     atomState: AtomState,
   ) => {
     if (atomState.m && !isPendingPromise(atomState.v)) {
       for (const a of atomState.d.keys()) {
         if (!atomState.m.d.has(a)) {
-          const aMounted = mountAtom(pending, a, getAtomState(a))
+          const aMounted = mountAtom(batch, a, getAtomState(a))
           aMounted.t.add(atom)
           atomState.m.d.add(a)
         }
@@ -594,7 +585,7 @@ const buildStore = (
       for (const a of atomState.m.d || []) {
         if (!atomState.d.has(a)) {
           atomState.m.d.delete(a)
-          const aMounted = unmountAtom(pending, a, getAtomState(a))
+          const aMounted = unmountAtom(batch, a, getAtomState(a))
           aMounted?.t.delete(atom)
         }
       }
@@ -602,16 +593,16 @@ const buildStore = (
   }
 
   const mountAtom = <Value>(
-    pending: Pending,
+    batch: Batch,
     atom: Atom<Value>,
     atomState: AtomState<Value>,
   ): Mounted => {
     if (!atomState.m) {
       // recompute atom state
-      readAtomState(pending, atom)
+      readAtomState(batch, atom)
       // mount dependencies first
       for (const a of atomState.d.keys()) {
-        const aMounted = mountAtom(pending, a, getAtomState(a))
+        const aMounted = mountAtom(batch, a, getAtomState(a))
         aMounted.t.add(atom)
       }
       // mount self
@@ -626,14 +617,14 @@ const buildStore = (
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
         let setAtom: (...args: unknown[]) => unknown
-        const createInvocationContext = <T>(pending: Pending, fn: () => T) => {
+        const createInvocationContext = <T>(batch: Batch, fn: () => T) => {
           let isSync = true
           setAtom = (...args: unknown[]) => {
             try {
-              return writeAtomState(pending, atom, ...args)
+              return writeAtomState(batch, atom, ...args)
             } finally {
               if (!isSync) {
-                flushPending(pending)
+                flushBatch(batch)
               }
             }
           }
@@ -643,12 +634,12 @@ const buildStore = (
             isSync = false
           }
         }
-        addPendingFunction(pending, () => {
-          const onUnmount = createInvocationContext(pending, () =>
+        addBatchFunction(batch, () => {
+          const onUnmount = createInvocationContext(batch, () =>
             atomOnMount(atom, (...args) => setAtom(...args)),
           )
           if (onUnmount) {
-            mounted.u = (pending) => createInvocationContext(pending, onUnmount)
+            mounted.u = (batch) => createInvocationContext(batch, onUnmount)
           }
         })
       }
@@ -657,7 +648,7 @@ const buildStore = (
   }
 
   const unmountAtom = <Value>(
-    pending: Pending,
+    batch: Batch,
     atom: Atom<Value>,
     atomState: AtomState<Value>,
   ): Mounted | undefined => {
@@ -669,7 +660,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addPendingFunction(pending, () => onUnmount(pending))
+        addBatchFunction(batch, () => onUnmount(batch))
       }
       delete atomState.m
       if (import.meta.env?.MODE !== 'production') {
@@ -677,7 +668,7 @@ const buildStore = (
       }
       // unmount dependencies
       for (const a of atomState.d.keys()) {
-        const aMounted = unmountAtom(pending, a, getAtomState(a))
+        const aMounted = unmountAtom(batch, a, getAtomState(a))
         aMounted?.t.delete(atom)
       }
       return undefined
@@ -686,17 +677,17 @@ const buildStore = (
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    const pending = createPending()
+    const batch = createBatch()
     const atomState = getAtomState(atom)
-    const mounted = mountAtom(pending, atom, atomState)
+    const mounted = mountAtom(batch, atom, atomState)
     const listeners = mounted.l
     listeners.add(listener)
-    flushPending(pending)
+    flushBatch(batch)
     return () => {
       listeners.delete(listener)
-      const pending = createPending()
-      unmountAtom(pending, atom, atomState)
-      flushPending(pending)
+      const batch = createBatch()
+      unmountAtom(batch, atom, atomState)
+      flushBatch(batch)
     }
   }
 
@@ -724,20 +715,20 @@ const buildStore = (
       }),
       dev4_get_mounted_atoms: () => debugMountedAtoms,
       dev4_restore_atoms: (values) => {
-        const pending = createPending()
+        const batch = createBatch()
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
             const atomState = getAtomState(atom)
             const prevEpochNumber = atomState.n
             setAtomStateValueOrPromise(atom, atomState, value)
-            mountDependencies(pending, atom, atomState)
+            mountDependencies(batch, atom, atomState)
             if (prevEpochNumber !== atomState.n) {
-              addPendingAtom(pending, atom, atomState)
-              recomputeDependents(pending, atom, atomState)
+              addBatchAtom(batch, atom, atomState)
+              recomputeDependents(batch, atom, atomState)
             }
           }
         }
-        flushPending(pending)
+        flushBatch(batch)
       },
     }
     Object.assign(store, devStore)
