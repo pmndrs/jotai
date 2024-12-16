@@ -1,40 +1,26 @@
 {
   "name": "mega-form",
   "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
+  "type": "module",
   "scripts": {
-    "start": "SKIP_PREFLIGHT_CHECK=true react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "serve": "vite preview"
   },
   "dependencies": {
     "fp-ts": "^2.9.5",
     "io-ts": "^2.2.15",
-    "jotai": "^1.0.0",
+    "jotai": "^2.0.0",
+    "jotai-optics": "^0.4.0",
     "optics-ts": "^2.0.0",
-    "react": "^17.0.2",
-    "react-app-polyfill": "^1.0.0",
-    "react-dom": "^17.0.2",
-    "react-scripts": "^4.0.3",
-    "todomvc-app-css": "^2.3.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/react": "^17.0.11",
-    "@types/react-dom": "^17.0.7",
-    "typescript": "^4.3.2"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^4.0.0"
   }
 }

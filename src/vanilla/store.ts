@@ -418,14 +418,17 @@ const buildStore = (
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(undefined, atom))
 
-  const getDependents = <Value>(
+  const getMountedOrPendingDependents = <Value>(
     pending: Pending,
     atom: Atom<Value>,
     atomState: AtomState<Value>,
   ): Map<AnyAtom, AtomState> => {
     const dependents = new Map<AnyAtom, AtomState>()
     for (const a of atomState.m?.t || []) {
-      dependents.set(a, getAtomState(a))
+      const aState = getAtomState(a)
+      if (aState.m) {
+        dependents.set(a, aState)
+      }
     }
     for (const atomWithPendingPromise of atomState.p) {
       dependents.set(
@@ -473,7 +476,7 @@ const buildStore = (
       }
       visiting.add(a)
       // Push unvisited dependents onto the stack
-      for (const [d, s] of getDependents(pending, a, aState)) {
+      for (const [d, s] of getMountedOrPendingDependents(pending, a, aState)) {
         if (a !== d && !visiting.has(d)) {
           stack.push([d, s])
         }

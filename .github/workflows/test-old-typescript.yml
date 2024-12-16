@@ -36,7 +36,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
       - run: pnpm install --frozen-lockfile
@@ -92,7 +92,7 @@ jobs:
         if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
           pnpm json -I -f package.json -e "this.pnpm.patchedDependencies={};"
-          pnpm add -D @testing-library/user-event@12.1.7 @testing-library/react@11.0.4
+          pnpm add -D @testing-library/user-event@12.1.7 @testing-library/react@11.0.4 @types/react-dom@18.3.1
           rm node_modules/vitest/dist/*.d.ts
           echo "declare module 'vitest'" >> ./src/types.d.ts
       - name: Test ${{ matrix.typescript }}

@@ -1,0 +1,45 @@
+name: Ecosystem CI
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'jotaijs/jotai-ecosystem-ci'
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - run: pnpm install --frozen-lockfile
+      - name: Get Short SHA
+        id: short_sha
+        run: |
+          api="https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}"
+          sha=$(curl -s -H "Authorization: token $GITHUB_TOKEN" $api | jq -r '.head.sha' | cut -c1-8)
+          echo "x=$sha" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Ecosystem CI
+        id: run_command
+        run: |
+          echo "x<<EOF" >> $GITHUB_OUTPUT
+          pnpm run ecosystem-ci | grep -A999 -- '---- Jotai Ecosystem CI Results ----' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          JOTAI_PKG: https://pkg.csb.dev/pmndrs/jotai/commit/${{ steps.short_sha.outputs.x }}/jotai
+      - uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ## Ecosystem CI Output
+            ```
+            ${{ steps.run_command.outputs.x }}
+            ```
