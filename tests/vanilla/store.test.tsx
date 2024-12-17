@@ -628,7 +628,7 @@ describe('should invoke flushPending only after all atoms are updated (#2804)', 
     store.sub(a, () => {
       mountResult.push('a value changed - ' + store.get(a))
     })
-    const unsub = store.sub(m, () => {})
+    store.sub(m, () => {})
     mountResult.push('after store.sub')
     expect(mountResult).not.toEqual([
       'before store.sub',
@@ -736,7 +736,7 @@ describe('should mount and trigger listeners even when an error is thrown', () =
       set(a, 1)
       get(e)
     })
-    const w = atom(null, async (get, set) => {
+    const w = atom(null, async (_get, set) => {
       setTimeout(() => {
         try {
           set(b)
