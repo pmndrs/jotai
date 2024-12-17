@@ -161,32 +161,41 @@ const addDependency = <Value>(
 // Batch
 //
 
-type Batch = readonly [
-  dependents: Map<AnyAtom, Set<AnyAtom>>,
-  atomStates: Map<AnyAtom, AtomState>,
-  functions: Set<() => void>,
-]
+const BATCH_DEPENDENTS = 'd'
+const BATCH_ATOM_STATES = 'a'
+const BATCH_FUNCTIONS = 'f'
 
-const createBatch = (): Batch => [new Map(), new Map(), new Set()]
+type Batch = Readonly<{
+  [BATCH_DEPENDENTS]: Map<AnyAtom, Set<AnyAtom>>
+  [BATCH_ATOM_STATES]: Map<AnyAtom, AtomState>
+  [BATCH_FUNCTIONS]: Set<() => void>
+}>
+
+const createBatch = (): Batch => ({
+  [BATCH_DEPENDENTS]: new Map(),
+  [BATCH_ATOM_STATES]: new Map(),
+  [BATCH_FUNCTIONS]: new Set(),
+})
 
 const addBatchAtom = (batch: Batch, atom: AnyAtom, atomState: AtomState) => {
-  if (!batch[0].has(atom)) {
-    batch[0].set(atom, new Set())
+  if (!batch[BATCH_DEPENDENTS].has(atom)) {
+    batch[BATCH_DEPENDENTS].set(atom, new Set())
   }
-  batch[1].set(atom, atomState)
+  batch[BATCH_ATOM_STATES].set(atom, atomState)
 }
 
 const addBatchDependent = (batch: Batch, atom: AnyAtom, dependent: AnyAtom) => {
-  const dependents = batch[0].get(atom)
+  const dependents = batch[BATCH_DEPENDENTS].get(atom)
   if (dependents) {
     dependents.add(dependent)
   }
 }
 
-const getBatchDependents = (batch: Batch, atom: AnyAtom) => batch[0].get(atom)
+const getBatchDependents = (batch: Batch, atom: AnyAtom) =>
+  batch[BATCH_DEPENDENTS].get(atom)
 
 const addBatchFunction = (batch: Batch, fn: () => void) => {
-  batch[2].add(fn)
+  batch[BATCH_FUNCTIONS].add(fn)
 }
 
 const flushBatch = (batch: Batch) => {
@@ -202,12 +211,12 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch[1].size || batch[2].size) {
-    batch[0].clear()
-    const atomStates = new Set(batch[1].values())
-    batch[1].clear()
-    const functions = new Set(batch[2])
-    batch[2].clear()
+  while (batch[BATCH_ATOM_STATES].size || batch[BATCH_FUNCTIONS].size) {
+    batch[BATCH_DEPENDENTS].clear()
+    const atomStates = new Set(batch[BATCH_ATOM_STATES].values())
+    batch[BATCH_ATOM_STATES].clear()
+    const functions = new Set(batch[BATCH_FUNCTIONS])
+    batch[BATCH_FUNCTIONS].clear()
     atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
     functions.forEach(call)
   }
