@@ -161,37 +161,40 @@ const addDependency = <Value>(
 // Batch
 //
 
-const BATCH_ATOM_DEPENDENTS = 'd'
-const BATCH_FUNC_MEDIUM = 'm'
-const BATCH_FUNC_LOW = 'l'
-
 type Batch = Readonly<{
-  [BATCH_ATOM_DEPENDENTS]: Map<AnyAtom, Set<AnyAtom>>
-  [BATCH_FUNC_MEDIUM]: Set<() => void>
-  [BATCH_FUNC_LOW]: Set<() => void>
+  /** Atom dependents map */
+  D: Map<AnyAtom, Set<AnyAtom>>
+  /** Medium priority functions */
+  M: Set<() => void>
+  /** Low priority functions */
+  L: Set<() => void>
 }>
 
 const createBatch = (): Batch => ({
-  [BATCH_ATOM_DEPENDENTS]: new Map(),
-  [BATCH_FUNC_MEDIUM]: new Set(),
-  [BATCH_FUNC_LOW]: new Set(),
+  D: new Map(),
+  M: new Set(),
+  L: new Set(),
 })
 
 const addBatchFuncMedium = (batch: Batch, fn: () => void) => {
-  batch[BATCH_FUNC_MEDIUM].add(fn)
+  batch.M.add(fn)
 }
 
 const addBatchFuncLow = (batch: Batch, fn: () => void) => {
-  batch[BATCH_FUNC_LOW].add(fn)
+  batch.L.add(fn)
 }
 
-const addBatchAtom = (batch: Batch, atom: AnyAtom, atomState: AtomState) => {
-  if (!batch[BATCH_ATOM_DEPENDENTS].has(atom)) {
-    batch[BATCH_ATOM_DEPENDENTS].set(atom, new Set())
+const registerBatchAtom = (
+  batch: Batch,
+  atom: AnyAtom,
+  atomState: AtomState,
+) => {
+  if (!batch.D.has(atom)) {
+    batch.D.set(atom, new Set())
+    addBatchFuncMedium(batch, () => {
+      atomState.m?.l.forEach((listener) => listener())
+    })
   }
-  addBatchFuncMedium(batch, () => {
-    atomState.m?.l.forEach((listener) => listener())
-  })
 }
 
 const addBatchAtomDependent = (
@@ -199,14 +202,14 @@ const addBatchAtomDependent = (
   atom: AnyAtom,
   dependent: AnyAtom,
 ) => {
-  const dependents = batch[BATCH_ATOM_DEPENDENTS].get(atom)
+  const dependents = batch.D.get(atom)
   if (dependents) {
     dependents.add(dependent)
   }
 }
 
 const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
-  batch[BATCH_ATOM_DEPENDENTS].get(atom)
+  batch.D.get(atom)
 
 const copySetAndClear = <T>(origSet: Set<T>): Set<T> => {
   const newSet = new Set(origSet)
@@ -227,10 +230,10 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch[BATCH_FUNC_MEDIUM].size || batch[BATCH_FUNC_LOW].size) {
-    batch[BATCH_ATOM_DEPENDENTS].clear()
-    copySetAndClear(batch[BATCH_FUNC_MEDIUM]).forEach(call)
-    copySetAndClear(batch[BATCH_FUNC_LOW]).forEach(call)
+  while (batch.M.size || batch.L.size) {
+    batch.D.clear()
+    copySetAndClear(batch.M).forEach(call)
+    copySetAndClear(batch.L).forEach(call)
   }
   if (hasError) {
     throw error
@@ -526,7 +529,7 @@ const buildStore = (
         readAtomState(batch, a, markedAtoms)
         mountDependencies(batch, a, aState)
         if (prevEpochNumber !== aState.n) {
-          addBatchAtom(batch, a, aState)
+          registerBatchAtom(batch, a, aState)
           changedAtoms.add(a)
         }
       }
@@ -558,7 +561,7 @@ const buildStore = (
           setAtomStateValueOrPromise(a, aState, v)
           mountDependencies(batch, a, aState)
           if (prevEpochNumber !== aState.n) {
-            addBatchAtom(batch, a, aState)
+            registerBatchAtom(batch, a, aState)
             recomputeDependents(batch, a, aState)
           }
           return undefined as R
@@ -744,7 +747,7 @@ const buildStore = (
             setAtomStateValueOrPromise(atom, atomState, value)
             mountDependencies(batch, atom, atomState)
             if (prevEpochNumber !== atomState.n) {
-              addBatchAtom(batch, atom, atomState)
+              registerBatchAtom(batch, atom, atomState)
               recomputeDependents(batch, atom, atomState)
             }
           }
