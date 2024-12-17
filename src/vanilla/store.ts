@@ -292,11 +292,11 @@ const buildStore = (
         addPendingPromiseToDependency(atom, valueOrPromise, getAtomState(a))
       }
       atomState.v = valueOrPromise
-      delete atomState.e
     } else {
       atomState.v = valueOrPromise
-      delete atomState.e
     }
+    delete atomState.e
+    delete atomState.x
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
       if (pendingPromise) {
@@ -333,7 +333,6 @@ const buildStore = (
     }
     // Compute a new state for this atom.
     atomState.d.clear()
-    delete atomState.x
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
@@ -410,6 +409,7 @@ const buildStore = (
     } catch (error) {
       delete atomState.v
       atomState.e = error
+      delete atomState.x
       ++atomState.n
       return atomState
     } finally {
