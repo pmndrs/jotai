@@ -201,7 +201,7 @@ const registerBatchAtom = (
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
     addBatchFuncMedium(batch, () => {
-      atomState.m?.l.forEach((listener) => listener())
+      atomState.m?.l.forEach((listener) => addBatchFuncMedium(batch, listener))
     })
   }
 }
@@ -220,12 +220,6 @@ const addBatchAtomDependent = (
 const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
   batch.D.get(atom)
 
-const copySetAndClear = <T>(origSet: Set<T>): Set<T> => {
-  const newSet = new Set(origSet)
-  origSet.clear()
-  return newSet
-}
-
 const flushBatch = (batch: Batch) => {
   let error: AnyError
   let hasError = false
@@ -241,9 +235,12 @@ const flushBatch = (batch: Batch) => {
   }
   while (batch.M.size || batch.L.size) {
     batch.D.clear()
-    copySetAndClear(batch.H).forEach(call)
-    copySetAndClear(batch.M).forEach(call)
-    copySetAndClear(batch.L).forEach(call)
+    batch.H.forEach(call)
+    batch.H.clear()
+    batch.M.forEach(call)
+    batch.M.clear()
+    batch.L.forEach(call)
+    batch.L.clear()
   }
   if (hasError) {
     throw error
