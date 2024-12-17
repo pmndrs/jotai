@@ -166,6 +166,8 @@ const addDependency = <Value>(
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
+  /** High priority functions */
+  H: Set<() => void>
   /** Medium priority functions */
   M: Set<() => void>
   /** Low priority functions */
@@ -174,9 +176,14 @@ type Batch = Readonly<{
 
 const createBatch = (): Batch => ({
   D: new Map(),
+  H: new Set(),
   M: new Set(),
   L: new Set(),
 })
+
+const addBatchFuncHigh = (batch: Batch, fn: () => void) => {
+  batch.H.add(fn)
+}
 
 const addBatchFuncMedium = (batch: Batch, fn: () => void) => {
   batch.M.add(fn)
@@ -234,6 +241,7 @@ const flushBatch = (batch: Batch) => {
   }
   while (batch.M.size || batch.L.size) {
     batch.D.clear()
+    copySetAndClear(batch.H).forEach(call)
     copySetAndClear(batch.M).forEach(call)
     copySetAndClear(batch.L).forEach(call)
   }
@@ -521,7 +529,7 @@ const buildStore = (
 
     // Step 2: use the topsorted atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
-    addBatchFuncMedium(batch, () => {
+    addBatchFuncHigh(batch, () => {
       const changedAtoms = new Set<AnyAtom>([atom])
       for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
         const [a, aState, prevEpochNumber] = topsortedAtoms[i]!
