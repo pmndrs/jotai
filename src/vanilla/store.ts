@@ -153,7 +153,7 @@ const addDependency = <Value>(
   }
   aState.m?.t.add(atom)
   if (batch) {
-    addBatchDependent(batch, a, atom)
+    addBatchAtomDependent(batch, a, atom)
   }
 }
 
@@ -161,41 +161,57 @@ const addDependency = <Value>(
 // Batch
 //
 
-const BATCH_DEPENDENTS = 'd'
-const BATCH_ATOM_STATES = 'a'
-const BATCH_FUNCTIONS = 'f'
+const BATCH_ATOM_DEPENDENTS = 'd'
+const BATCH_FUNC_MEDIUM = 'm'
+const BATCH_FUNC_LOW = 'l'
 
 type Batch = Readonly<{
-  [BATCH_DEPENDENTS]: Map<AnyAtom, Set<AnyAtom>>
-  [BATCH_ATOM_STATES]: Map<AnyAtom, AtomState>
-  [BATCH_FUNCTIONS]: Set<() => void>
+  [BATCH_ATOM_DEPENDENTS]: Map<AnyAtom, Set<AnyAtom>>
+  [BATCH_FUNC_MEDIUM]: Set<() => void>
+  [BATCH_FUNC_LOW]: Set<() => void>
 }>
 
 const createBatch = (): Batch => ({
-  [BATCH_DEPENDENTS]: new Map(),
-  [BATCH_ATOM_STATES]: new Map(),
-  [BATCH_FUNCTIONS]: new Set(),
+  [BATCH_ATOM_DEPENDENTS]: new Map(),
+  [BATCH_FUNC_MEDIUM]: new Set(),
+  [BATCH_FUNC_LOW]: new Set(),
 })
 
-const addBatchAtom = (batch: Batch, atom: AnyAtom, atomState: AtomState) => {
-  if (!batch[BATCH_DEPENDENTS].has(atom)) {
-    batch[BATCH_DEPENDENTS].set(atom, new Set())
-  }
-  batch[BATCH_ATOM_STATES].set(atom, atomState)
+const addBatchFuncMedium = (batch: Batch, fn: () => void) => {
+  batch[BATCH_FUNC_MEDIUM].add(fn)
 }
 
-const addBatchDependent = (batch: Batch, atom: AnyAtom, dependent: AnyAtom) => {
-  const dependents = batch[BATCH_DEPENDENTS].get(atom)
+const addBatchFuncLow = (batch: Batch, fn: () => void) => {
+  batch[BATCH_FUNC_LOW].add(fn)
+}
+
+const addBatchAtom = (batch: Batch, atom: AnyAtom, atomState: AtomState) => {
+  if (!batch[BATCH_ATOM_DEPENDENTS].has(atom)) {
+    batch[BATCH_ATOM_DEPENDENTS].set(atom, new Set())
+  }
+  addBatchFuncMedium(batch, () => {
+    atomState.m?.l.forEach((listener) => listener())
+  })
+}
+
+const addBatchAtomDependent = (
+  batch: Batch,
+  atom: AnyAtom,
+  dependent: AnyAtom,
+) => {
+  const dependents = batch[BATCH_ATOM_DEPENDENTS].get(atom)
   if (dependents) {
     dependents.add(dependent)
   }
 }
 
-const getBatchDependents = (batch: Batch, atom: AnyAtom) =>
-  batch[BATCH_DEPENDENTS].get(atom)
+const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
+  batch[BATCH_ATOM_DEPENDENTS].get(atom)
 
-const addBatchFunction = (batch: Batch, fn: () => void) => {
-  batch[BATCH_FUNCTIONS].add(fn)
+const copySetAndClear = <T>(origSet: Set<T>): Set<T> => {
+  const newSet = new Set(origSet)
+  origSet.clear()
+  return newSet
 }
 
 const flushBatch = (batch: Batch) => {
@@ -211,14 +227,10 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch[BATCH_ATOM_STATES].size || batch[BATCH_FUNCTIONS].size) {
-    batch[BATCH_DEPENDENTS].clear()
-    const atomStates = new Set(batch[BATCH_ATOM_STATES].values())
-    batch[BATCH_ATOM_STATES].clear()
-    const functions = new Set(batch[BATCH_FUNCTIONS])
-    batch[BATCH_FUNCTIONS].clear()
-    atomStates.forEach((atomState) => atomState.m?.l.forEach(call))
-    functions.forEach(call)
+  while (batch[BATCH_FUNC_MEDIUM].size || batch[BATCH_FUNC_LOW].size) {
+    batch[BATCH_ATOM_DEPENDENTS].clear()
+    copySetAndClear(batch[BATCH_FUNC_MEDIUM]).forEach(call)
+    copySetAndClear(batch[BATCH_FUNC_LOW]).forEach(call)
   }
   if (hasError) {
     throw error
@@ -436,7 +448,7 @@ const buildStore = (
         getAtomState(atomWithPendingPromise),
       )
     }
-    getBatchDependents(batch, atom)?.forEach((dependent) => {
+    getBatchAtomDependents(batch, atom)?.forEach((dependent) => {
       dependents.set(dependent, getAtomState(dependent))
     })
     return dependents
@@ -643,7 +655,7 @@ const buildStore = (
             isSync = false
           }
         }
-        addBatchFunction(batch, () => {
+        addBatchFuncLow(batch, () => {
           const onUnmount = createInvocationContext(batch, () =>
             atomOnMount(atom, (...args) => setAtom(...args)),
           )
@@ -669,7 +681,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFunction(batch, () => onUnmount(batch))
+        addBatchFuncLow(batch, () => onUnmount(batch))
       }
       delete atomState.m
       if (import.meta.env?.MODE !== 'production') {
