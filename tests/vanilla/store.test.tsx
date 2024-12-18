@@ -983,3 +983,25 @@ it('mounted atom should be recomputed eagerly', () => {
   store.set(a, 1)
   expect(result).toEqual(['bRead', 'aCallback', 'bCallback'])
 })
+
+it('should process all atom listeners even if some of them throw errors', () => {
+  const store = createStore()
+  const a = atom(0)
+  const listenerA = vi.fn()
+  const listenerB = vi.fn(() => {
+    throw new Error('error')
+  })
+  const listenerC = vi.fn()
+
+  store.sub(a, listenerA)
+  store.sub(a, listenerB)
+  store.sub(a, listenerC)
+  try {
+    store.set(a, 1)
+  } catch {
+    // expect empty
+  }
+  expect(listenerA).toHaveBeenCalledTimes(1)
+  expect(listenerB).toHaveBeenCalledTimes(1)
+  expect(listenerC).toHaveBeenCalledTimes(1)
+})
