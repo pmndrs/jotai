@@ -6,7 +6,6 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 

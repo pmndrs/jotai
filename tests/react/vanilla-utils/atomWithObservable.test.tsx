@@ -10,7 +10,6 @@ import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -552,8 +551,6 @@ describe('error handling', () => {
           )}
         </div>
       ) : (
-        // below rule should not consider render() inside class component
-        // eslint-disable-next-line testing-library/no-node-access
         this.props.children
       )
     }
