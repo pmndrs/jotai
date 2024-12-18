@@ -233,7 +233,7 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.M.size || batch.L.size) {
+  while (batch.H.size || batch.M.size || batch.L.size) {
     batch.D.clear()
     batch.H.forEach(call)
     batch.H.clear()
