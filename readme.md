@@ -5,7 +5,7 @@
 
 <br>
 
-visit [jotai.org](https://jotai.org) or `npm install jotai`
+visit [jotai.org](https://jotai.org) or `npm i jotai`
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/pmndrs/jotai/lint-and-type.yml?branch=main&style=flat&colorA=000000&colorB=000000)](https://github.com/pmndrs/jotai/actions?query=workflow%3ALint)
 [![Build Size](https://img.shields.io/bundlephobia/minzip/jotai?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=jotai)
