@@ -13,21 +13,21 @@ const Counter = () => {
   const inc = () => setCount((c) => c + 1);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6">
-      <span className="text-3xl leading-none">{count}</span>
+    <>
+      <span className="text-3xl">{count}</span>
       <button
-        className="bg-blue-200 text-black font-bold py-2 px-4 rounded"
+        className="bg-white text-black font-bold py-2 px-4 rounded"
         onClick={inc}
       >
         +1
       </button>
-    </div>
+    </>
   );
 };
 
 function App() {
   return (
-    <div className="grid place-items-center gap-4">
+    <div className="grid place-items-center gap-6">
       <a href="https://jotai.org/" target="_blank" rel="noreferrer">
         <img
           src={mascot}
