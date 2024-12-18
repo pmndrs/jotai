@@ -15,6 +15,7 @@ type Ref = {
   inProgress: number
   isPending: boolean
   deps: Set<AnyAtom>
+  unsub?: () => void
 }
 
 function atomSyncEffect(effect: Effect) {
@@ -51,6 +52,7 @@ function atomSyncEffect(effect: Effect) {
         ref.cleanup = null
         ref.isPending = false
         ref.deps.clear()
+        ref.unsub?.()
       }
     },
   )
@@ -67,7 +69,7 @@ function atomSyncEffect(effect: Effect) {
     ref.isPending = true
   })
   internalAtom.unstable_onInit = (store) => {
-    store.unstable_onChange(() => {
+    const unsub = store.unstable_onChange(() => {
       const ref = store.get(refAtom)
       if (!ref.isPending || ref.inProgress > 0) {
         return
@@ -87,6 +89,7 @@ function atomSyncEffect(effect: Effect) {
             }
           : null
     })
+    new FinalizationRegistry(unsub).register(internalAtom, null)
   }
   if (process.env.NODE_ENV !== 'production') {
     refAtom.debugPrivate = true
