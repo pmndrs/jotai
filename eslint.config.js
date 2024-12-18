@@ -123,6 +123,7 @@ module.exports = tseslint.config(
         'error',
         { fn: 'it', withinDescribe: 'it' },
       ],
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
   {
