@@ -963,3 +963,23 @@ it('processes deep atom a graph beyond maxDepth', () => {
   expect(() => store.set(baseAtom, 1)).not.toThrow()
   // store.set(lastAtom) // FIXME: This is causing a stack overflow
 })
+
+it('mounted atom should be recomputed eagerly', () => {
+  const result: string[] = []
+  const a = atom(0)
+  const b = atom((get) => {
+    result.push('bRead')
+    return get(a)
+  })
+  const store = createStore()
+  store.sub(a, () => {
+    result.push('aCallback')
+  })
+  store.sub(b, () => {
+    result.push('bCallback')
+  })
+  expect(result).toEqual(['bRead'])
+  result.splice(0)
+  store.set(a, 1)
+  expect(result).toEqual(['bRead', 'aCallback', 'bCallback'])
+})
