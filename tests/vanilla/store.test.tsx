@@ -340,7 +340,6 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
   await waitFor(() => assert(resolve.length === 1))
 
   resolve[0]!()
-  await new Promise((r) => setTimeout(r))
   const increment = (c: number) => c + 1
   store.set(countAtom, increment)
   store.set(countAtom, increment)
@@ -963,4 +962,24 @@ it('processes deep atom a graph beyond maxDepth', () => {
   // store.get(lastAtom) // FIXME: This is causing a stack overflow
   expect(() => store.set(baseAtom, 1)).not.toThrow()
   // store.set(lastAtom) // FIXME: This is causing a stack overflow
+})
+
+it('mounted atom should be recomputed eagerly', () => {
+  const result: string[] = []
+  const a = atom(0)
+  const b = atom((get) => {
+    result.push('bRead')
+    return get(a)
+  })
+  const store = createStore()
+  store.sub(a, () => {
+    result.push('aCallback')
+  })
+  store.sub(b, () => {
+    result.push('bCallback')
+  })
+  expect(result).toEqual(['bRead'])
+  result.splice(0)
+  store.set(a, 1)
+  expect(result).toEqual(['bRead', 'aCallback', 'bCallback'])
 })
