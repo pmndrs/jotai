@@ -163,8 +163,6 @@ const addDependency = <Value>(
 // Batch
 //
 
-type BatchPriority = 'H' | 'M' | 'L'
-
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
@@ -176,6 +174,8 @@ type Batch = Readonly<{
   L: Set<() => void>
 }>
 
+type BatchPriority = 'H' | 'M' | 'L'
+
 const createBatch = (): Batch => ({
   D: new Map(),
   H: new Set(),
@@ -183,12 +183,8 @@ const createBatch = (): Batch => ({
   L: new Set(),
 })
 
-const addBatchFunc = (
-  batch: Batch,
-  priority: BatchPriority,
-  fn: () => void,
-) => {
-  batch[priority].add(fn)
+const addBatchFunc = (batch: Batch, p: BatchPriority, fn: () => void) => {
+  batch[p].add(fn)
 }
 
 const registerBatchAtom = (
@@ -217,33 +213,6 @@ const addBatchAtomDependent = (
 
 const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
   batch.D.get(atom)
-
-const flushBatch = (batch: Batch) => {
-  let error: AnyError
-  let hasError = false
-  const call = (fn: () => void) => {
-    try {
-      fn()
-    } catch (e) {
-      if (!hasError) {
-        error = e
-        hasError = true
-      }
-    }
-  }
-  while (batch.H.size || batch.M.size || batch.L.size) {
-    batch.D.clear()
-    batch.H.forEach(call)
-    batch.H.clear()
-    batch.M.forEach(call)
-    batch.M.clear()
-    batch.L.forEach(call)
-    batch.L.clear()
-  }
-  if (hasError) {
-    throw error
-  }
-}
 
 // internal & unstable type
 type StoreArgs = readonly [
@@ -279,12 +248,19 @@ type PrdStore = {
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
   unstable_derive: (fn: (...args: StoreArgs) => StoreArgs) => Store
+  unstable_onChange: (handler: OnChangeHandler) => () => void
 }
 
-type Store = PrdStore | (PrdStore & DevStoreRev4)
+export type Store = PrdStore | (PrdStore & DevStoreRev4)
 
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
+
+type OnChangeHandler = (
+  changedAtoms: Set<AnyAtom>,
+  mountedAtoms: Set<AnyAtom>,
+  unmountedAtoms: Set<AnyAtom>,
+) => void
 
 const buildStore = (
   ...[getAtomState, atomRead, atomWrite, atomOnMount]: StoreArgs
@@ -717,11 +693,66 @@ const buildStore = (
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
     buildStore(...fn(getAtomState, atomRead, atomWrite, atomOnMount))
 
+  const onChangeHandlers = new Set<OnChangeHandler>()
+
+  const unstable_onChange = (handler: OnChangeHandler) => {
+    onChangeHandlers.add(handler)
+    return () => {
+      onChangeHandlers.delete(handler)
+    }
+  }
+
+  const flushBatch = (batch: Batch) => {
+    let error: AnyError
+    let hasError = false
+    const call = (fn: () => void) => {
+      try {
+        fn()
+      } catch (e) {
+        if (!hasError) {
+          error = e
+          hasError = true
+        }
+      }
+    }
+    const shouldContinue = () => ([1, 2, 3] as const).some((p) => batch[p].size)
+    do {
+      const changedAtoms = new Set<AnyAtom>(batch.D.keys())
+      while (shouldContinue()) {
+        batch.D.clear()
+        batch.H.forEach(call)
+        batch.H.clear()
+        batch.M.forEach(call)
+        batch.M.clear()
+        batch.L.forEach(call)
+        batch.L.clear()
+        const moreChangedAtoms = new Set<AnyAtom>(batch.D.keys())
+        for (const atom of moreChangedAtoms) {
+          changedAtoms.add(atom)
+        }
+      }
+      // Process onChange handlers after all atoms are updated
+      if (changedAtoms.size || batch.M.size || batch.U.size) {
+        const mountedAtoms = new Set(batch.M)
+        const unmountedAtoms = new Set(batch.U)
+        batch.M.clear()
+        batch.U.clear()
+        for (const handler of onChangeHandlers) {
+          handler(changedAtoms, mountedAtoms, unmountedAtoms)
+        }
+      }
+    } while (shouldContinue())
+    if (hasError) {
+      throw error
+    }
+  }
+
   const store: Store = {
     get: readAtom,
     set: writeAtom,
     sub: subscribeAtom,
     unstable_derive,
+    unstable_onChange,
   }
   if (import.meta.env?.MODE !== 'production') {
     const devStore: DevStoreRev4 = {
@@ -769,15 +800,19 @@ export const createStore = (): Store => {
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
+      if (typeof atom.unstable_onInit === 'function') {
+        atom.unstable_onInit(store)
+      }
     }
     return atomState
   }
-  return buildStore(
+  const store = buildStore(
     getAtomState,
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
   )
+  return store
 }
 
 let defaultStore: Store | undefined
