@@ -1,3 +1,5 @@
+import type { Store } from './store'
+
 type Getter = <Value>(atom: Atom<Value>) => Value
 
 type Setter = <Value, Args extends unknown[], Result>(
@@ -47,6 +49,10 @@ export interface Atom<Value> {
    * @private
    */
   debugPrivate?: boolean
+  /**
+   * Fires after atom is referenced by the store for the first time
+   */
+  unstable_onInit?: (store: Store) => void
 }
 
 export interface WritableAtom<Value, Args extends unknown[], Result>
