@@ -8,6 +8,7 @@ import type { Atom } from 'jotai/vanilla'
 import { loadable } from 'jotai/vanilla/utils'
 
 const IS_REACT18 = /^18\./.test(reactVersion)
+const IS_REACT19 = /^19\./.test(reactVersion)
 
 it('loadable turns suspense into values', async () => {
   let resolve: (x: number) => void = () => {}
@@ -171,7 +172,7 @@ it('loadable can use resolved promises synchronously', async () => {
     ),
   )
 
-  if (IS_REACT18) {
+  if (IS_REACT18 || IS_REACT19) {
     await screen.findByText('loading')
     // FIXME React 18 Suspense does not show "Ready"
   } else {

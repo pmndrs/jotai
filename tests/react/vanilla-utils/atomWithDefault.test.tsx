@@ -71,13 +71,16 @@ it('simple async get default', async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>,
-  )
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
   resolve()
@@ -165,13 +168,16 @@ it('refresh async atoms to default values', async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>,
-  )
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
   await waitFor(() => {
