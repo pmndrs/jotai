@@ -207,25 +207,26 @@ it('only subscribe once per atom', async () => {
     return <>count: {state}</>
   }
 
+  let rerender: (ui: ReactNode) => void
   // eslint-disable-next-line testing-library/no-unnecessary-act
-  const { rerender } = await act(async () => {
-    return render(
+  await act(async () => {
+    ;({ rerender } = render(
       <>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </>,
-    )
+    ))
   })
 
   await screen.findByText('loading')
   act(() => subject.next(1))
   await screen.findByText('count: 1')
 
-  rerender(<div />)
+  rerender!(<div />)
   expect(totalSubscriptions).toEqual(1)
 
-  rerender(
+  rerender!(
     <>
       <Suspense fallback="loading">
         <Counter />
@@ -255,15 +256,16 @@ it('cleanup subscription', async () => {
     return <>count: {state}</>
   }
 
+  let rerender: (ui: ReactNode) => void
   // eslint-disable-next-line testing-library/no-unnecessary-act
-  const { rerender } = await act(async () => {
-    return render(
+  await act(async () => {
+    ;({ rerender } = render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
+    ))
   })
 
   await screen.findByText('loading')
@@ -272,7 +274,7 @@ it('cleanup subscription', async () => {
   await screen.findByText('count: 1')
 
   expect(activeSubscriptions).toEqual(1)
-  rerender(<div />)
+  rerender!(<div />)
   await waitFor(() => expect(activeSubscriptions).toEqual(0))
 })
 
