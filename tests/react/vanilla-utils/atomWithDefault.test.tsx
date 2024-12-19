@@ -7,7 +7,6 @@ import { atom } from 'jotai/vanilla'
 import { RESET, atomWithDefault } from 'jotai/vanilla/utils'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
