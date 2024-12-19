@@ -717,6 +717,7 @@ const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
   const proxyAtomStateMap = new WeakMap()
   const debugMountedAtoms = new Set<AnyAtom>()
   let savedGetAtomState: StoreArgs[0]
+  const RESTORE_ATOM = Symbol()
   const derivedStore = store.unstable_derive(
     (getAtomState, atomRead, atomWrite, atomOnMount) => {
       savedGetAtomState = getAtomState
@@ -744,7 +745,20 @@ const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
           return proxyAtomState
         },
         atomRead,
-        atomWrite,
+        (atom, getter, setter, ...args) => {
+          if (RESTORE_ATOM in atom) {
+            const values = atom[RESTORE_ATOM] as Iterable<
+              readonly [AnyAtom, AnyValue]
+            >
+            for (const [atom, value] of values) {
+              if (hasInitialValue(atom)) {
+                setter(atom as never, value)
+              }
+            }
+            return undefined as never
+          }
+          return atomWrite(atom, getter, setter, ...args)
+        },
         atomOnMount,
       ]
     },
@@ -763,25 +777,13 @@ const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
     }),
     dev4_get_mounted_atoms: () => debugMountedAtoms,
     dev4_restore_atoms: (values) => {
-      throw new Error(
-        'TODO: not implemented yet' + ('TODO'.length ? '' : values),
-      )
-      /*
-      const pending = createPending()
-      for (const [atom, value] of values) {
-        if (hasInitialValue(atom)) {
-          const atomState = savedGetAtomState(atom)
-          const prevEpochNumber = atomState.n
-          setAtomStateValueOrPromise(atom, atomState, value)
-          mountDependencies(pending, atom, atomState)
-          if (prevEpochNumber !== atomState.n) {
-            addPendingAtom(pending, atom, atomState)
-            recomputeDependents(pending, atom, atomState)
-          }
-        }
+      const restoreAtom: WritableAtom<null, [], void> &
+        Record<typeof RESTORE_ATOM, typeof values> = {
+        [RESTORE_ATOM]: values,
+        read: () => null,
+        write: () => {},
       }
-      flushPending(pending)
-      */
+      derivedStore.set(restoreAtom)
     },
   }
   return Object.assign(derivedStore, devStore)
