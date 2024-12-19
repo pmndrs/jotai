@@ -717,7 +717,7 @@ const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
   const proxyAtomStateMap = new WeakMap()
   const debugMountedAtoms = new Set<AnyAtom>()
   let savedGetAtomState: StoreArgs[0]
-  let inRestoreAtom = false
+  let inRestoreAtom = 0
   const derivedStore = store.unstable_derive(
     (getAtomState, atomRead, atomWrite, atomOnMount) => {
       savedGetAtomState = getAtomState
@@ -773,16 +773,16 @@ const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
       const restoreAtom: WritableAtom<null, [], void> = {
         read: () => null,
         write: (_get, set) => {
-          if (inRestoreAtom) {
-            throw new Error('[Bug] restoreAtoms cannot be called recursively')
-          }
-          inRestoreAtom = true
-          for (const [atom, value] of values) {
-            if (hasInitialValue(atom)) {
-              set(atom as never, value)
+          ++inRestoreAtom
+          try {
+            for (const [atom, value] of values) {
+              if (hasInitialValue(atom)) {
+                set(atom as never, value)
+              }
             }
+          } finally {
+            --inRestoreAtom
           }
-          inRestoreAtom = false
         },
       }
       savedStoreSet(restoreAtom)
