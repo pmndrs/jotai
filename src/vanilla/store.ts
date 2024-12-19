@@ -163,6 +163,8 @@ const addDependency = <Value>(
 // Batch
 //
 
+type BatchPriority = 'H' | 'M' | 'L'
+
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
@@ -181,16 +183,12 @@ const createBatch = (): Batch => ({
   L: new Set(),
 })
 
-const addBatchFuncHigh = (batch: Batch, fn: () => void) => {
-  batch.H.add(fn)
-}
-
-const addBatchFuncMedium = (batch: Batch, fn: () => void) => {
-  batch.M.add(fn)
-}
-
-const addBatchFuncLow = (batch: Batch, fn: () => void) => {
-  batch.L.add(fn)
+const addBatchFunc = (
+  batch: Batch,
+  priority: BatchPriority,
+  fn: () => void,
+) => {
+  batch[priority].add(fn)
 }
 
 const registerBatchAtom = (
@@ -200,8 +198,8 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    addBatchFuncMedium(batch, () => {
-      atomState.m?.l.forEach((listener) => addBatchFuncMedium(batch, listener))
+    addBatchFunc(batch, 'M', () => {
+      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
     })
   }
 }
@@ -505,7 +503,7 @@ const buildStore = (
 
     // Step 2: use the topSortedReversed atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
-    addBatchFuncHigh(batch, () => {
+    addBatchFunc(batch, 'H', () => {
       const changedAtoms = new Set<AnyAtom>([atom])
       for (let i = topSortedReversed.length - 1; i >= 0; --i) {
         const [a, aState, prevEpochNumber] = topSortedReversed[i]!
@@ -647,7 +645,7 @@ const buildStore = (
             isSync = false
           }
         }
-        addBatchFuncLow(batch, () => {
+        addBatchFunc(batch, 'L', () => {
           const onUnmount = createInvocationContext(batch, () =>
             atomOnMount(atom, (...args) => setAtom(...args)),
           )
@@ -673,7 +671,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFuncLow(batch, () => onUnmount(batch))
+        addBatchFunc(batch, 'L', () => onUnmount(batch))
       }
       delete atomState.m
       // unmount dependencies
