@@ -1005,3 +1005,65 @@ it('should process all atom listeners even if some of them throw errors', () => 
   expect(listenerB).toHaveBeenCalledTimes(1)
   expect(listenerC).toHaveBeenCalledTimes(1)
 })
+
+it('should call onInit only once per atom', () => {
+  const store = createStore()
+  const a = atom(0)
+  const onInit = vi.fn()
+  a.unstable_onInit = onInit
+  store.get(a)
+  expect(onInit).toHaveBeenCalledTimes(1)
+  expect(onInit).toHaveBeenCalledWith(store)
+  onInit.mockClear()
+  store.get(a)
+  store.set(a, 1)
+  const unsub = store.sub(a, () => {})
+  unsub()
+  const b = atom((get) => get(a))
+  store.get(b)
+  store.sub(b, () => {})
+  expect(onInit).not.toHaveBeenCalled()
+})
+
+it('should call onInit only once per store', () => {
+  const a = atom(0)
+  const aOnInit = vi.fn()
+  a.unstable_onInit = aOnInit
+  const b = atom(0)
+  const bOnInit = vi.fn()
+  b.unstable_onInit = bOnInit
+  type Store = ReturnType<typeof createStore>
+  function testInStore(store: Store) {
+    store.get(a)
+    store.get(b)
+    expect(aOnInit).toHaveBeenCalledTimes(1)
+    expect(bOnInit).toHaveBeenCalledTimes(1)
+    expect(aOnInit).toHaveBeenCalledWith(store)
+    expect(bOnInit).toHaveBeenCalledWith(store)
+    aOnInit.mockClear()
+    bOnInit.mockClear()
+    return store
+  }
+  testInStore(createStore())
+  const store = testInStore(createStore())
+  testInStore(
+    store.unstable_derive(
+      (getAtomState, readAtom, writeAtom, atomOnMount, atomOnInit) => {
+        const initializedAtoms = new WeakSet()
+        return [
+          (a, atomOnInit) => {
+            if (!initializedAtoms.has(a)) {
+              initializedAtoms.add(a)
+              atomOnInit?.(a)
+            }
+            return getAtomState(a, atomOnInit)
+          },
+          readAtom,
+          writeAtom,
+          atomOnMount,
+          atomOnInit,
+        ]
+      },
+    ),
+  )
+})

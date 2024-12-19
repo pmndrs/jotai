@@ -185,10 +185,6 @@ const addBatchFuncHigh = (batch: Batch, fn: () => void) => {
   batch.H.add(fn)
 }
 
-const addBatchFuncMedium = (batch: Batch, fn: () => void) => {
-  batch.M.add(fn)
-}
-
 const addBatchFuncLow = (batch: Batch, fn: () => void) => {
   batch.L.add(fn)
 }
@@ -200,8 +196,12 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    addBatchFuncMedium(batch, () => {
-      atomState.m?.l.forEach((listener) => addBatchFuncMedium(batch, listener))
+    addBatchFuncHigh(batch, () => {
+      atomState.m?.l.forEach(
+        (listener: (() => void) & { INTERNAL_priority?: 'H' | 'M' | 'L' }) => {
+          batch[listener.INTERNAL_priority || 'M'].add(listener)
+        },
+      )
     })
   }
 }
@@ -249,7 +249,10 @@ const flushBatch = (batch: Batch) => {
 
 // internal & unstable type
 type StoreArgs = readonly [
-  getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  getAtomState: <Value>(
+    atom: Atom<Value>,
+    atomOnInit?: (atom: AnyAtom) => void,
+  ) => AtomState<Value>,
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -262,6 +265,7 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
+  atomOnInit: (store: Store) => (atom: AnyAtom) => void,
 ]
 
 // for debugging purpose only
@@ -283,14 +287,17 @@ type PrdStore = {
   unstable_derive: (fn: (...args: StoreArgs) => StoreArgs) => Store
 }
 
-type Store = PrdStore | (PrdStore & DevStoreRev4)
+export type Store = PrdStore | (PrdStore & DevStoreRev4)
 
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (
-  ...[getAtomState, atomRead, atomWrite, atomOnMount]: StoreArgs
+  ...[baseGetAtomState, atomRead, atomWrite, atomOnMount, atomOnInit]: StoreArgs
 ): Store => {
+  const getAtomState = <Value>(atom: Atom<Value>) =>
+    baseGetAtomState(atom, atomOnInit(store))
+
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
 
@@ -717,7 +724,9 @@ const buildStore = (
   }
 
   const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
-    buildStore(...fn(getAtomState, atomRead, atomWrite, atomOnMount))
+    buildStore(
+      ...fn(baseGetAtomState, atomRead, atomWrite, atomOnMount, atomOnInit),
+    )
 
   const store: Store = {
     get: readAtom,
@@ -763,14 +772,15 @@ const buildStore = (
 
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap()
-  const getAtomState = <Value>(atom: Atom<Value>) => {
+  const getAtomState: StoreArgs[0] = (atom, onInit) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
       throw new Error('Atom is undefined or null')
     }
-    let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
+    let atomState = atomStateMap.get(atom) as AtomState<any> | undefined
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
+      onInit?.(atom)
     }
     return atomState
   }
@@ -779,6 +789,7 @@ export const createStore = (): Store => {
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
+    (store) => (atom) => atom.unstable_onInit?.(store),
   )
 }
 
