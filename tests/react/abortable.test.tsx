@@ -38,14 +38,17 @@ describe('abortable atom test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-          <Controls />
-        </Suspense>
-      </StrictMode>,
-    )
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+            <Controls />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
 
@@ -95,14 +98,17 @@ describe('abortable atom test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-          <Controls />
-        </Suspense>
-      </StrictMode>,
-    )
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+            <Controls />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
     resolve.splice(0).forEach((fn) => fn())
@@ -154,13 +160,16 @@ describe('abortable atom test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Parent />
-        </Suspense>
-      </StrictMode>,
-    )
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Parent />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
 
@@ -203,14 +212,17 @@ describe('abortable atom test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-          <Controls />
-        </Suspense>
-      </StrictMode>,
-    )
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+            <Controls />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
 

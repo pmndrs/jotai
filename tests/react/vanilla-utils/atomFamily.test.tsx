@@ -244,13 +244,16 @@ it('a derived atom from an async atomFamily (#351)', async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>,
-  )
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
   resolve.splice(0).forEach((fn) => fn())

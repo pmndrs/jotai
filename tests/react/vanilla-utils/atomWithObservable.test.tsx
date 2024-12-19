@@ -129,14 +129,17 @@ it('writable count state without initial value', async () => {
     return <button onClick={() => dispatch(9)}>button</button>
   }
 
-  render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <CounterValue />
-      </Suspense>
-      <CounterButton />
-    </StrictMode>,
-  )
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <CounterValue />
+        </Suspense>
+        <CounterButton />
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
 
@@ -171,13 +174,16 @@ it('writable count state with delayed value', async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>,
-  )
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
   await act(() => vi.runOnlyPendingTimers())
@@ -201,24 +207,26 @@ it('only subscribe once per atom', async () => {
     return <>count: {state}</>
   }
 
-  const { rerender } = await Promise.resolve(
-    render(
+  let rerender: (ui: ReactNode) => void
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    ;({ rerender } = render(
       <>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </>,
-    ),
-  )
+    ))
+  })
 
   await screen.findByText('loading')
   act(() => subject.next(1))
   await screen.findByText('count: 1')
 
-  rerender(<div />)
+  rerender!(<div />)
   expect(totalSubscriptions).toEqual(1)
 
-  rerender(
+  rerender!(
     <>
       <Suspense fallback="loading">
         <Counter />
@@ -248,15 +256,17 @@ it('cleanup subscription', async () => {
     return <>count: {state}</>
   }
 
-  const { rerender } = await Promise.resolve(
-    render(
+  let rerender: (ui: ReactNode) => void
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    ;({ rerender } = render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    ),
-  )
+    ))
+  })
 
   await screen.findByText('loading')
 
@@ -264,7 +274,7 @@ it('cleanup subscription', async () => {
   await screen.findByText('count: 1')
 
   expect(activeSubscriptions).toEqual(1)
-  rerender(<div />)
+  rerender!(<div />)
   await waitFor(() => expect(activeSubscriptions).toEqual(0))
 })
 
@@ -287,15 +297,18 @@ it('resubscribe on remount', async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Toggle>
-          <Counter />
-        </Toggle>
-      </Suspense>
-    </StrictMode>,
-  )
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Toggle>
+            <Counter />
+          </Toggle>
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
   act(() => subject.next(1))
@@ -374,15 +387,18 @@ it('writable count state with error', async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <ErrorBoundary>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </ErrorBoundary>
-    </StrictMode>,
-  )
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    render(
+      <StrictMode>
+        <ErrorBoundary>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
 
@@ -470,13 +486,16 @@ it('with initially emitted undefined value', async () => {
     return <>count: {state === undefined ? '-' : state}</>
   }
 
-  render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>,
-  )
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
   act(() => subject.next(undefined))
@@ -505,13 +524,16 @@ it("don't omit values emitted between init and mount", async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>,
-  )
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
   act(() => {
@@ -572,15 +594,18 @@ describe('error handling', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <ErrorBoundary>
-          <Suspense fallback="loading">
-            <Counter />
-          </Suspense>
-        </ErrorBoundary>
-      </StrictMode>,
-    )
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () => {
+      render(
+        <StrictMode>
+          <ErrorBoundary>
+            <Suspense fallback="loading">
+              <Counter />
+            </Suspense>
+          </ErrorBoundary>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
     act(() => subject.error(new Error('Test Error')))
@@ -626,11 +651,14 @@ describe('error handling', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <App />
-      </StrictMode>,
-    )
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () => {
+      render(
+        <StrictMode>
+          <App />
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
     await act(() => vi.runOnlyPendingTimers())
@@ -715,11 +743,14 @@ describe('error handling', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <App />
-      </StrictMode>,
-    )
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () => {
+      render(
+        <StrictMode>
+          <App />
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
     await act(() => vi.runOnlyPendingTimers())
@@ -753,13 +784,16 @@ describe('wonka', () => {
       return <>count: {count}</>
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </StrictMode>,
-    )
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('count: 1')
   })
@@ -785,14 +819,17 @@ describe('wonka', () => {
       return <button onClick={() => setCount(1)}>button</button>
     }
 
-    render(
-      <StrictMode>
-        <Controls />
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </StrictMode>,
-    )
+    // eslint-disable-next-line testing-library/no-unnecessary-act
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Controls />
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
 

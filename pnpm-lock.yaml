@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@testing-library/react@16.1.0':
-    hash: llqdntmyj43tflmxbwolkfasxa
-    path: patches/@testing-library__react@16.1.0.patch
-
 devDependencies:
   '@babel/core':
     specifier: ^7.26.0
@@ -51,7 +46,7 @@ devDependencies:
     version: 6.6.3
   '@testing-library/react':
     specifier: ^16.1.0
-    version: 16.1.0(patch_hash=llqdntmyj43tflmxbwolkfasxa)(@testing-library/dom@10.4.0)(@types/react-dom@19.0.2)(@types/react@19.0.1)(react-dom@19.0.0)(react@19.0.0)
+    version: 16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@19.0.2)(@types/react@19.0.1)(react-dom@19.0.0)(react@19.0.0)
   '@testing-library/user-event':
     specifier: ^14.5.2
     version: 14.5.2(@testing-library/dom@10.4.0)
@@ -137,10 +132,10 @@ devDependencies:
     specifier: ^3.4.2
     version: 3.4.2
   react:
-    specifier: 19.0.0
+    specifier: ^19.0.0
     version: 19.0.0
   react-dom:
-    specifier: 19.0.0
+    specifier: ^19.0.0
     version: 19.0.0(react@19.0.0)
   rollup:
     specifier: ^4.28.1
@@ -2218,7 +2213,7 @@ packages:
       redent: 3.0.0
     dev: true
 
-  /@testing-library/react@16.1.0(patch_hash=llqdntmyj43tflmxbwolkfasxa)(@testing-library/dom@10.4.0)(@types/react-dom@19.0.2)(@types/react@19.0.1)(react-dom@19.0.0)(react@19.0.0):
+  /@testing-library/react@16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@19.0.2)(@types/react@19.0.1)(react-dom@19.0.0)(react@19.0.0):
     resolution: {integrity: sha512-Q2ToPvg0KsVL0ohND9A3zLJWcOXXcO8IDu3fj11KhNt0UlCWyFyvnCIBkd12tidB2lkiVRG8VFqdhcqhqnAQtg==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -2240,7 +2235,6 @@ packages:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
     dev: true
-    patched: true
 
   /@testing-library/user-event@14.5.2(@testing-library/dom@10.4.0):
     resolution: {integrity: sha512-YAh82Wh4TIrxYLmfGcixwD18oIjyC1pFQC2Y01F2lzV2HTMiYrI0nze0FD0ocB//CKS/7jIUgae+adPqxK5yCQ==}
@@ -3148,7 +3142,7 @@ packages:
     dependencies:
       semver: 7.6.3
       shelljs: 0.8.5
-      typescript: 5.8.0-dev.20241216
+      typescript: 5.8.0-dev.20241219
     dev: true
 
   /dunder-proto@1.0.0:
@@ -5679,8 +5673,8 @@ packages:
     hasBin: true
     dev: true
 
-  /typescript@5.8.0-dev.20241216:
-    resolution: {integrity: sha512-qNAT1xMB511YG1+ayBaUjx/+poPP/vsQlMNIu9h+lK8aIu9HKcuxVr2R2BZHt67dO+JV6vPXyLEeUYFcUG8Oqw==}
+  /typescript@5.8.0-dev.20241219:
+    resolution: {integrity: sha512-PTUvyFVjlvuUrbfji2OvYDaTN499msaIy6xkbjllGZyBmvr8N7QdGq7Q8ZwD2BatydUQXBQzSSVIqcn2Px8YFA==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
