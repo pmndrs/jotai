@@ -21,8 +21,7 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install
       - run: pnpm build
       - name: Use React 17 for production test
         if: ${{ matrix.env == 'production' }}
