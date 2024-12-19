@@ -162,14 +162,12 @@ it('loadable can use resolved promises synchronously', async () => {
     return <div>Ready</div>
   }
 
-  const { rerender } = await Promise.resolve(
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <ResolveAtomComponent />
-        </Suspense>
-      </StrictMode>,
-    ),
+  const { rerender } = render(
+    <StrictMode>
+      <Suspense fallback="loading">
+        <ResolveAtomComponent />
+      </Suspense>
+    </StrictMode>,
   )
 
   if (IS_REACT18 || IS_REACT19) {
