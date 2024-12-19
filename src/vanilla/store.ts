@@ -163,6 +163,8 @@ const addDependency = <Value>(
 // Batch
 //
 
+type BatchPriority = 'H' | 'M' | 'L'
+
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
@@ -181,16 +183,12 @@ const createBatch = (): Batch => ({
   L: new Set(),
 })
 
-const addBatchFuncHigh = (batch: Batch, fn: () => void) => {
-  batch.H.add(fn)
-}
-
-const addBatchFuncMedium = (batch: Batch, fn: () => void) => {
-  batch.M.add(fn)
-}
-
-const addBatchFuncLow = (batch: Batch, fn: () => void) => {
-  batch.L.add(fn)
+const addBatchFunc = (
+  batch: Batch,
+  priority: BatchPriority,
+  fn: () => void,
+) => {
+  batch[priority].add(fn)
 }
 
 const registerBatchAtom = (
@@ -200,8 +198,8 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    addBatchFuncMedium(batch, () => {
-      atomState.m?.l.forEach((listener) => listener())
+    addBatchFunc(batch, 'M', () => {
+      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
     })
   }
 }
@@ -220,12 +218,6 @@ const addBatchAtomDependent = (
 const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
   batch.D.get(atom)
 
-const copySetAndClear = <T>(origSet: Set<T>): Set<T> => {
-  const newSet = new Set(origSet)
-  origSet.clear()
-  return newSet
-}
-
 const flushBatch = (batch: Batch) => {
   let error: AnyError
   let hasError = false
@@ -239,11 +231,14 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.M.size || batch.L.size) {
+  while (batch.H.size || batch.M.size || batch.L.size) {
     batch.D.clear()
-    copySetAndClear(batch.H).forEach(call)
-    copySetAndClear(batch.M).forEach(call)
-    copySetAndClear(batch.L).forEach(call)
+    batch.H.forEach(call)
+    batch.H.clear()
+    batch.M.forEach(call)
+    batch.M.clear()
+    batch.L.forEach(call)
+    batch.L.clear()
   }
   if (hasError) {
     throw error
@@ -517,7 +512,7 @@ const buildStore = (
 
     // Step 2: use the topSortedReversed atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
-    addBatchFuncHigh(batch, () => {
+    addBatchFunc(batch, 'H', () => {
       const changedAtoms = new Set<AnyAtom>([atom])
       for (let i = topSortedReversed.length - 1; i >= 0; --i) {
         const [a, aState, prevEpochNumber] = topSortedReversed[i]!
@@ -662,7 +657,7 @@ const buildStore = (
             isSync = false
           }
         }
-        addBatchFuncLow(batch, () => {
+        addBatchFunc(batch, 'L', () => {
           const onUnmount = createInvocationContext(batch, () =>
             atomOnMount(atom, (...args) => setAtom(...args)),
           )
@@ -688,7 +683,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFuncLow(batch, () => onUnmount(batch))
+        addBatchFunc(batch, 'L', () => onUnmount(batch))
       }
       delete atomState.m
       if (import.meta.env?.MODE !== 'production') {

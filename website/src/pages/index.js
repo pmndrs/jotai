@@ -118,7 +118,7 @@ const gettingStartedTabs = {
       <h2>Installation</h2>
       <p>First add Jotai as a dependency to your React project.</p>
       <Code language="bash">{`# npm
-npm i jotai
+npm install jotai
 
 # yarn
 yarn add jotai
