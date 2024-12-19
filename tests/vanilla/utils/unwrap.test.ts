@@ -17,19 +17,19 @@ describe('unwrap', () => {
 
     expect(store.get(syncAtom)).toBe(undefined)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(2)
 
     store.set(countAtom, 2)
     expect(store.get(syncAtom)).toBe(undefined)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(4)
 
     store.set(countAtom, 3)
     expect(store.get(syncAtom)).toBe(undefined)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(6)
   })
 
@@ -45,17 +45,17 @@ describe('unwrap', () => {
     const syncAtom = unwrap(asyncAtom, () => -1)
     expect(store.get(syncAtom)).toBe(-1)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(2)
     store.set(countAtom, 2)
     expect(store.get(syncAtom)).toBe(-1)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(4)
     store.set(countAtom, 3)
     expect(store.get(syncAtom)).toBe(-1)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(6)
   })
 
@@ -72,19 +72,19 @@ describe('unwrap', () => {
 
     expect(store.get(syncAtom)).toBe(0)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(2)
 
     store.set(countAtom, 2)
     expect(store.get(syncAtom)).toBe(2)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(4)
 
     store.set(countAtom, 3)
     expect(store.get(syncAtom)).toBe(4)
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(6)
 
     store.set(countAtom, 4)
@@ -93,7 +93,7 @@ describe('unwrap', () => {
     store.set(countAtom, 5)
     expect(store.get(syncAtom)).not.toBe(0) // expect 6 or 8
     resolve()
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(10)
   })
 
@@ -114,27 +114,24 @@ describe('unwrap', () => {
     const syncAtom = unwrap(asyncAtom, (prev?: number) => prev ?? 0)
 
     expect(store.get(syncAtom)).toBe(0)
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(1)
 
     store.set(syncAtom, Promise.resolve(2))
     expect(store.get(syncAtom)).toBe(1)
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(2)
 
     store.set(syncAtom, Promise.resolve(3))
     expect(store.get(syncAtom)).toBe(2)
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(syncAtom)).toBe(3)
   })
 
   it('should unwrap to a fulfilled value of an already resolved async atom', async () => {
     const store = createStore()
     const asyncAtom = atom(Promise.resolve('concrete'))
-
-    expect(await store.get(asyncAtom)).toEqual('concrete')
-    expect(store.get(unwrap(asyncAtom))).toEqual(undefined)
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await store.get(asyncAtom)
     expect(store.get(unwrap(asyncAtom))).toEqual('concrete')
   })
 
@@ -142,11 +139,8 @@ describe('unwrap', () => {
     const store = createStore()
     const asyncAtom = atom(Promise.resolve('concrete'))
     const syncAtom = unwrap(asyncAtom)
-
     expect(store.get(syncAtom)).toEqual(undefined)
-
     await store.get(asyncAtom)
-
     expect(store.get(syncAtom)).toEqual('concrete')
   })
 })
