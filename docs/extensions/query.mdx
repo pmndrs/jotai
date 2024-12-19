@@ -257,11 +257,13 @@ Alternatively, you can specify your `queryClient` with `getQueryClient` paramete
 
 In the example below, we have a mutation hook, `useTodoMutation` and a query `todosAtom`.
 
-We included an initialisation step in our root `<App>` node.
+We included an initialisation step in our root `<App>` node. 
 
 Although they reference methods same query key (`'todos'`), the `onSuccess` invalidation in `useTodoMutation` will not trigger **if the `Provider` initialisation step was not done.**
 
 This will result in `todosAtom` showing stale data as it was not prompted to refetch.
+
+⚠️ Note: If using **Typescript**, it is recommended to use a Map when passing the queryClient value to the useHydrateAtoms. You can find a working example in the [Initializing State on Render docs](https://jotai.org/docs/guides/initialize-atom-on-render#using-typescript)
 
 ```jsx
 import { Provider } from 'jotai/react'
