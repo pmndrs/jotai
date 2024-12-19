@@ -102,6 +102,8 @@ type AtomState<Value = AnyValue> = {
   m?: Mounted // only available if the atom is mounted
   /** Atom value */
   v?: Value
+  /** Awaited atom value if the promise value has been resolved */
+  w?: { v: Awaited<Value> } | { e: AnyError }
   /** Atom error */
   e?: AnyError
   /** Indicates that the atom value has been changed */
@@ -306,14 +308,17 @@ const buildStore = (
     const pendingPromise = isPendingPromise(atomState.v) ? atomState.v : null
     if (isPromiseLike(valueOrPromise)) {
       patchPromiseForCancelability(valueOrPromise)
+      valueOrPromise.then(
+        (v) => (atomState.w = { v }),
+        (e) => (atomState.w = { e }),
+      )
       for (const a of atomState.d.keys()) {
         addPendingPromiseToDependency(atom, valueOrPromise, getAtomState(a))
       }
-      atomState.v = valueOrPromise
-    } else {
-      atomState.v = valueOrPromise
     }
+    atomState.v = valueOrPromise
     delete atomState.e
+    delete atomState.w
     delete atomState.x
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
@@ -426,6 +431,7 @@ const buildStore = (
       return atomState
     } catch (error) {
       delete atomState.v
+      delete atomState.w
       atomState.e = error
       delete atomState.x
       ++atomState.n
