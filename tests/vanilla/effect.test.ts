@@ -15,12 +15,13 @@ type Ref = {
   inProgress: number
   isPending: boolean
   deps: Set<AnyAtom>
-  unsub?: () => void
+  sub: () => () => void
+  epoch: number
 }
 
 function atomSyncEffect(effect: Effect) {
   const refAtom = atom(
-    () => ({ deps: new Set(), inProgress: 0 }) as Ref,
+    () => ({ deps: new Set(), inProgress: 0, epoch: 0 }) as Ref,
     (get, set) => {
       const ref = get(refAtom)
       if (!ref.get.peak) {
@@ -36,7 +37,7 @@ function atomSyncEffect(effect: Effect) {
       }
       const recurse: Setter = (a, ...args) => {
         if (ref.fromCleanup) {
-          if (process.env.NODE_ENV !== 'production') {
+          if (import.meta.env?.MODE !== 'production') {
             console.warn('cannot recurse inside cleanup')
           }
           return undefined as any
@@ -52,12 +53,13 @@ function atomSyncEffect(effect: Effect) {
         ref.cleanup = null
         ref.isPending = false
         ref.deps.clear()
-        ref.unsub?.()
       }
     },
   )
   refAtom.onMount = (mount) => mount()
+  const refreshAtom = atom(0)
   const internalAtom = atom((get) => {
+    get(refreshAtom)
     const ref = get(refAtom)
     if (!ref.get) {
       ref.get = ((a) => {
@@ -67,36 +69,46 @@ function atomSyncEffect(effect: Effect) {
     }
     ref.deps.forEach(get)
     ref.isPending = true
+    return ++ref.epoch
   })
-  internalAtom.unstable_onInit = (store) => {
-    const unsub = store.unstable_onChange(() => {
-      const ref = store.get(refAtom)
-      if (!ref.isPending || ref.inProgress > 0) {
-        return
-      }
-      ref.isPending = false
-      ref.cleanup?.()
-      const cleanup = effectAtom.effect(ref.get!, ref.set!)
-      ref.cleanup =
-        typeof cleanup === 'function'
-          ? () => {
-              try {
-                ref.fromCleanup = true
-                cleanup()
-              } finally {
-                ref.fromCleanup = false
-              }
-            }
-          : null
-    })
-    new FinalizationRegistry(unsub).register(internalAtom, null)
-  }
-  if (process.env.NODE_ENV !== 'production') {
-    refAtom.debugPrivate = true
-    internalAtom.debugPrivate = true
+  const bridgeAtom = atom(
+    (get) => get(internalAtom),
+    (get, set) => {
+      set(refreshAtom, (v) => ++v)
+      return get(refAtom).sub()
+    },
+  )
+  bridgeAtom.onMount = (mount) => mount()
+  bridgeAtom.unstable_onInit = (store) => {
+    store.get(refAtom).sub = () => {
+      const listener = Object.assign(
+        () => {
+          const ref = store.get(refAtom)
+          if (!ref.isPending || ref.inProgress > 0) {
+            return
+          }
+          ref.isPending = false
+          ref.cleanup?.()
+          const cleanup = effectAtom.effect(ref.get!, ref.set!)
+          ref.cleanup =
+            typeof cleanup === 'function'
+              ? () => {
+                  try {
+                    ref.fromCleanup = true
+                    cleanup()
+                  } finally {
+                    ref.fromCleanup = false
+                  }
+                }
+              : null
+        },
+        { INTERNAL_priority: 'H' },
+      )
+      return store.sub(internalAtom, listener)
+    }
   }
   const effectAtom = Object.assign(
-    atom((get) => void get(internalAtom)),
+    atom((get) => void get(bridgeAtom)),
     { effect },
   )
   return effectAtom
@@ -105,14 +117,11 @@ function atomSyncEffect(effect: Effect) {
 it('responds to changes to atoms when subscribed', () => {
   const store = createStore()
   const a = atom(1)
-  a.debugLabel = 'a'
   const b = atom(1)
-  b.debugLabel = 'b'
   const w = atom(null, (_get, set, value: number) => {
     set(a, value)
     set(b, value)
   })
-  w.debugLabel = 'w'
   const results: number[] = []
   const cleanup = vi.fn()
   const effect = vi.fn((get: Getter) => {
@@ -120,7 +129,6 @@ it('responds to changes to atoms when subscribed', () => {
     return cleanup
   })
   const e = atomSyncEffect(effect)
-  e.debugLabel = 'e'
   const unsub = store.sub(e, () => {}) // mount syncEffect
   expect(effect).toBeCalledTimes(1)
   expect(results).toStrictEqual([11]) // initial values at time of effect mount
@@ -145,14 +153,11 @@ it('responds to changes to atoms when subscribed', () => {
 it('responds to changes to atoms when mounted with get', () => {
   const store = createStore()
   const a = atom(1)
-  a.debugLabel = 'a'
   const b = atom(1)
-  b.debugLabel = 'b'
   const w = atom(null, (_get, set, value: number) => {
     set(a, value)
     set(b, value)
   })
-  w.debugLabel = 'w'
   const results: number[] = []
   const cleanup = vi.fn()
   const effect = vi.fn((get: Getter) => {
@@ -160,9 +165,7 @@ it('responds to changes to atoms when mounted with get', () => {
     return cleanup
   })
   const e = atomSyncEffect(effect)
-  e.debugLabel = 'e'
   const d = atom((get) => get(e))
-  d.debugLabel = 'd'
   const unsub = store.sub(d, () => {}) // mount syncEffect
   expect(effect).toBeCalledTimes(1)
   expect(results).toStrictEqual([11]) // initial values at time of effect mount
@@ -183,12 +186,10 @@ it('responds to changes to atoms when mounted with get', () => {
 it('sets values to atoms without causing infinite loop', () => {
   const store = createStore()
   const a = atom(1)
-  a.debugLabel = 'a'
   const effect = vi.fn((get: Getter, set: Setter) => {
     set(a, get(a) + 1)
   })
   const e = atomSyncEffect(effect)
-  e.debugLabel = 'e'
   const unsub = store.sub(e, () => {}) // mount syncEffect
   expect(effect).toBeCalledTimes(1)
   expect(store.get(a)).toBe(2) // initial values at time of effect mount
@@ -202,13 +203,11 @@ it('sets values to atoms without causing infinite loop', () => {
 it('reads the value with peak without subscribing to updates', () => {
   const store = createStore()
   const a = atom(1)
-  a.debugLabel = 'a'
   let result = 0
   const effect = vi.fn((get: GetterWithPeak) => {
     result = get.peak(a)
   })
   const e = atomSyncEffect(effect)
-  e.debugLabel = 'e'
   store.sub(e, () => {}) // mount syncEffect
   expect(effect).toBeCalledTimes(1)
   expect(result).toBe(1) // initial values at time of effect mount
@@ -219,15 +218,13 @@ it('reads the value with peak without subscribing to updates', () => {
 it('supports recursion', () => {
   const store = createStore()
   const a = atom(1)
-  a.debugLabel = 'a'
   const effect = vi.fn((get: Getter, set: SetterWithRecurse) => {
     if (get(a) < 3) {
       set.recurse(a, (v) => ++v)
     }
   })
   const e = atomSyncEffect(effect)
-  e.debugLabel = 'e'
-  const unsub = store.sub(e, () => {}) // mount syncEffect
+  store.sub(e, () => {}) // mount syncEffect
   expect(effect).toBeCalledTimes(3)
   expect(store.get(a)).toBe(3)
 })
