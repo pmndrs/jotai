@@ -7,7 +7,7 @@ import type {
 
 describe('[DEV-ONLY] dev-only methods rev4', () => {
   it('should get atom value', () => {
-    const store = createStore() as any
+    const store = createStore() as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
     if (!('dev4_get_internal_weak_map' in store)) {
       throw new Error('dev methods are not available')
     }
@@ -19,7 +19,7 @@ describe('[DEV-ONLY] dev-only methods rev4', () => {
   })
 
   it('should restore atoms and its dependencies correctly', () => {
-    const store = createStore() as any
+    const store = createStore() as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
     if (!('dev4_restore_atoms' in store)) {
       throw new Error('dev methods are not available')
     }
@@ -32,7 +32,7 @@ describe('[DEV-ONLY] dev-only methods rev4', () => {
   })
 
   it('should restore atoms and call store listeners correctly', () => {
-    const store = createStore() as any
+    const store = createStore() as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
     if (!('dev4_restore_atoms' in store)) {
       throw new Error('dev methods are not available')
     }
@@ -95,5 +95,15 @@ describe('[DEV-ONLY] dev-only methods rev4', () => {
     unsub()
     const result = store.dev4_get_mounted_atoms()
     expect(Array.from(result)).toStrictEqual([])
+  })
+
+  it('should restore atoms with custom write function', () => {
+    const store = createStore() as INTERNAL_DevStoreRev4 & INTERNAL_PrdStore
+    if (!('dev4_restore_atoms' in store)) {
+      throw new Error('dev methods are not available')
+    }
+    const countAtom = atom(0, () => {})
+    store.dev4_restore_atoms([[countAtom, 1]])
+    expect(store.get(countAtom)).toBe(1)
   })
 })
