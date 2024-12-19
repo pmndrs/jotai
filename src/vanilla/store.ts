@@ -763,6 +763,7 @@ const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
       ]
     },
   )
+  const savedStoreSet = derivedStore.set
   const devStore: DevStoreRev4 = {
     // store dev methods (these are tentative and subject to change without notice)
     dev4_get_internal_weak_map: () => ({
@@ -783,7 +784,7 @@ const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
         read: () => null,
         write: () => {},
       }
-      derivedStore.set(restoreAtom)
+      savedStoreSet(restoreAtom)
     },
   }
   return Object.assign(derivedStore, devStore)
