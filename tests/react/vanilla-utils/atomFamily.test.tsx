@@ -8,7 +8,6 @@ import type { SetStateAction, WritableAtom } from 'jotai/vanilla'
 import { atomFamily } from 'jotai/vanilla/utils'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
