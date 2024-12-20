@@ -46,7 +46,6 @@ jobs:
       - name: Install legacy testing-library
         if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
         run: |
-          pnpm json -I -f package.json -e "this.pnpm.patchedDependencies={};"
           pnpm add -D @testing-library/react@12.1.4
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
