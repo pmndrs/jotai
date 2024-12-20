@@ -1,4 +1,4 @@
-# Hacker News [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/main/examples/hacker_news)
+# Hacker News [![Open in StackBlitz](https://img.shields.io/badge/Open%20in-StackBlitz-blue?style=flat-square&logo=stackblitz)](https://stackblitz.com/github/pmndrs/jotai/tree/main/examples/hacker_news)
 
 ## Description
 
@@ -10,15 +10,15 @@ Demonstrate a news articles with jotai, hit next to see more articles.
 git clone https://github.com/pmndrs/jotai
 
 # install project dependencies & build the library
-cd jotai && yarn
+cd jotai && pnpm i
 
 # move to the examples folder & install dependencies
-cd examples/hacker_news && yarn
+cd examples/hacker_news && pnpm i
 
 # start the dev server
-yarn start
+pnpm dev
 ```
 
-## Set up on codesandbox
+## Set up on `StackBlitz`
 
-Link: https://githubbox.com/pmndrs/jotai/tree/main/examples/hacker_news
+Link: https://stackblitz.com/github/pmndrs/jotai/tree/main/examples/hacker_news
