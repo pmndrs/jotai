@@ -1,18 +1,20 @@
-# Hello [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/main/examples/starter)
+# Starter [![Open in StackBlitz](https://img.shields.io/badge/Open%20in-StackBlitz-blue?style=flat-square&logo=stackblitz)](https://stackblitz.com/github/pmndrs/jotai/tree/main/examples/starter)
+
+## Set up locally
 
 ```bash
 git clone https://github.com/pmndrs/jotai
 
 # install project dependencies & build the library
-cd jotai && yarn
+cd jotai && pnpm i
 
 # move to the examples folder & install dependencies
-cd examples/hello && yarn
+cd examples/starter && pnpm i
 
 # start the dev server
-yarn start
+pnpm dev
 ```
 
-## Set up on codesandbox
+## Set up on `StackBlitz`
 
-Link: https://githubbox.com/pmndrs/jotai/tree/main/examples/starter
+Link: https://stackblitz.com/github/pmndrs/jotai/tree/main/examples/starter
