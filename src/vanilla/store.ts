@@ -711,7 +711,7 @@ const buildStore = (
   return store
 }
 
-const deriveDevStore = (store: Store): Store & DevStoreRev4 => {
+const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
   const proxyAtomStateMap = new WeakMap()
   const debugMountedAtoms = new Set<AnyAtom>()
   let savedGetAtomState: StoreArgs[0]
@@ -811,7 +811,7 @@ export const createStore = (): PrdOrDevStore => {
     (atom, ...params) => atom.onMount?.(...params),
   )
   if (import.meta.env?.MODE !== 'production') {
-    return deriveDevStore(store)
+    return deriveDevStoreRev4(store)
   }
   return store
 }
