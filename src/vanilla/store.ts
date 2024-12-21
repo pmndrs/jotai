@@ -789,7 +789,7 @@ export const createStore = (): Store => {
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
-    (store) => (atom) => atom.unstable_onInit?.(store),
+    (store) => (atom) => atom.INTERNAL_onInit?.(store),
   )
 }
 

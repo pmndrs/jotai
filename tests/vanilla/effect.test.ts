@@ -79,7 +79,7 @@ function atomSyncEffect(effect: Effect) {
     },
   )
   bridgeAtom.onMount = (mount) => mount()
-  bridgeAtom.unstable_onInit = (store) => {
+  bridgeAtom.INTERNAL_onInit = (store) => {
     store.get(refAtom).sub = () => {
       const listener = Object.assign(
         () => {

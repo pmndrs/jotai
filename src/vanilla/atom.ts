@@ -51,8 +51,9 @@ export interface Atom<Value> {
   debugPrivate?: boolean
   /**
    * Fires after atom is referenced by the store for the first time
+   * For internal use only and subject to change without notice.
    */
-  unstable_onInit?: (store: Store) => void
+  INTERNAL_onInit?: (store: Store) => void
 }
 
 export interface WritableAtom<Value, Args extends unknown[], Result>
