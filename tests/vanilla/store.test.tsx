@@ -1013,7 +1013,12 @@ it('should call onInit only once per atom', () => {
   a.INTERNAL_onInit = onInit
   store.get(a)
   expect(onInit).toHaveBeenCalledTimes(1)
-  expect(onInit).toHaveBeenCalledWith(store)
+  const aAtomState = expect.objectContaining({
+    d: expect.any(Map),
+    p: expect.any(Set),
+    n: expect.any(Number),
+  })
+  expect(onInit).toHaveBeenCalledWith(store, aAtomState)
   onInit.mockClear()
   store.get(a)
   store.set(a, 1)
@@ -1027,19 +1032,32 @@ it('should call onInit only once per atom', () => {
 
 it('should call onInit only once per store', () => {
   const a = atom(0)
-  const aOnInit = vi.fn()
+  type AtomState = Parameters<NonNullable<Atom<unknown>['INTERNAL_onInit']>>[1]
+  let aAtomState: AtomState
+  const aOnInit = vi.fn((_store, atomState) => {
+    aAtomState = atomState
+  })
   a.INTERNAL_onInit = aOnInit
   const b = atom(0)
-  const bOnInit = vi.fn()
+  let bAtomState: AtomState
+  const bOnInit = vi.fn((_store, atomState) => {
+    bAtomState = atomState
+  })
   b.INTERNAL_onInit = bOnInit
   type Store = ReturnType<typeof createStore>
   function testInStore(store: Store) {
     store.get(a)
     store.get(b)
+    const mockAtomState = expect.objectContaining({
+      d: expect.any(Map),
+      p: expect.any(Set),
+      n: expect.any(Number),
+    })
     expect(aOnInit).toHaveBeenCalledTimes(1)
     expect(bOnInit).toHaveBeenCalledTimes(1)
-    expect(aOnInit).toHaveBeenCalledWith(store)
-    expect(bOnInit).toHaveBeenCalledWith(store)
+    expect(aOnInit).toHaveBeenCalledWith(store, mockAtomState)
+    expect(bOnInit).toHaveBeenCalledWith(store, mockAtomState)
+    expect(aAtomState).not.toBe(bAtomState)
     aOnInit.mockClear()
     bOnInit.mockClear()
     return store
@@ -1052,11 +1070,12 @@ it('should call onInit only once per store', () => {
         const initializedAtoms = new WeakSet()
         return [
           (a, atomOnInit) => {
+            const atomState = getAtomState(a)
             if (!initializedAtoms.has(a)) {
               initializedAtoms.add(a)
-              atomOnInit?.(a)
+              atomOnInit?.(a, atomState)
             }
-            return getAtomState(a, atomOnInit)
+            return atomState
           },
           readAtom,
           writeAtom,
@@ -1064,6 +1083,6 @@ it('should call onInit only once per store', () => {
           atomOnInit,
         ]
       },
-    ),
+    ) as Store,
   )
 })

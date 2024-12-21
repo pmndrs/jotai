@@ -102,7 +102,7 @@ function atomSyncEffect(effect: Effect) {
               }
             : null
       }
-      const entry = ['H', listener] as const
+      const entry = [listener, 'H'] as const
       atomState.l!.add(entry)
       return () => atomState.l!.delete(entry)
     }
