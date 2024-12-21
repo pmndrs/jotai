@@ -79,32 +79,32 @@ function atomSyncEffect(effect: Effect) {
     },
   )
   bridgeAtom.onMount = (mount) => mount()
-  bridgeAtom.INTERNAL_onInit = (store) => {
-    store.get(refAtom).sub = () => {
-      const listener = Object.assign(
-        () => {
-          const ref = store.get(refAtom)
-          if (!ref.isPending || ref.inProgress > 0) {
-            return
-          }
-          ref.isPending = false
-          ref.cleanup?.()
-          const cleanup = effectAtom.effect(ref.get!, ref.set!)
-          ref.cleanup =
-            typeof cleanup === 'function'
-              ? () => {
-                  try {
-                    ref.fromCleanup = true
-                    cleanup()
-                  } finally {
-                    ref.fromCleanup = false
-                  }
+  bridgeAtom.INTERNAL_onInit = (store, atomState) => {
+    atomState.l ||= new Set()
+    store.get(refAtom).sub = function subscribe() {
+      function listener() {
+        const ref = store.get(refAtom)
+        if (!ref.isPending || ref.inProgress > 0) {
+          return
+        }
+        ref.isPending = false
+        ref.cleanup?.()
+        const cleanup = effectAtom.effect(ref.get!, ref.set!)
+        ref.cleanup =
+          typeof cleanup === 'function'
+            ? () => {
+                try {
+                  ref.fromCleanup = true
+                  cleanup()
+                } finally {
+                  ref.fromCleanup = false
                 }
-              : null
-        },
-        { INTERNAL_priority: 'H' },
-      )
-      return store.sub(internalAtom, listener)
+              }
+            : null
+      }
+      const entry = ['H', listener] as const
+      atomState.l!.add(entry)
+      return () => atomState.l!.delete(entry)
     }
   }
   const effectAtom = Object.assign(

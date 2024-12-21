@@ -90,6 +90,8 @@ export type AtomState<Value = AnyValue> = {
    * The map value is the epoch number of the dependency.
    */
   readonly d: Map<AnyAtom, number>
+  /** Set of listeners to run when the atom value changes. */
+  l?: Set<readonly [priority: BatchPriority, function: () => void]>
   /**
    * Set of atoms with pending promise that depend on the atom.
    *
@@ -195,12 +197,11 @@ const registerBatchAtom = (
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
     addBatchFunc(batch, 'H', () => {
+      for (const [p, f] of atomState.l || []) {
+        addBatchFunc(batch, p, f)
+      }
       for (const listener of atomState.m?.l || []) {
-        let priority: BatchPriority = 'M'
-        if ('INTERNAL_priority' in listener) {
-          priority = listener.INTERNAL_priority as BatchPriority
-        }
-        addBatchFunc(batch, priority, listener)
+        addBatchFunc(batch, 'M', listener)
       }
     })
   }
