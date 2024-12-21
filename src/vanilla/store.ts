@@ -165,6 +165,8 @@ const addDependency = <Value>(
 // Batch
 //
 
+type BatchPriority = 'H' | 'M' | 'L'
+
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
@@ -175,8 +177,6 @@ type Batch = Readonly<{
   /** Low priority functions */
   L: Set<() => void>
 }>
-
-type BatchPriority = 'H' | 'M' | 'L'
 
 const createBatch = (): Batch => ({
   D: new Map(),
@@ -197,8 +197,8 @@ const registerBatchAtom = (
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
     addBatchFunc(batch, 'H', () => {
-      for (const [p, f] of atomState.l || []) {
-        addBatchFunc(batch, p, f)
+      for (const [priority, listener] of atomState.l || []) {
+        addBatchFunc(batch, priority, listener)
       }
       for (const listener of atomState.m?.l || []) {
         addBatchFunc(batch, 'M', listener)
@@ -250,10 +250,9 @@ const flushBatch = (batch: Batch) => {
 
 // internal & unstable type
 type StoreArgs = readonly [
-  getAtomState: <Value>(
-    atom: Atom<Value>,
+  getAtomState: (
     atomOnInit: ReturnType<StoreArgs[4]>,
-  ) => AtomState<Value>,
+  ) => <Value>(atom: Atom<Value>) => AtomState<Value>,
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -298,9 +297,6 @@ export type INTERNAL_PrdStore = PrdStore
 const buildStore = (
   ...[baseGetAtomState, atomRead, atomWrite, atomOnMount, atomOnInit]: StoreArgs
 ): Store => {
-  const getAtomState = <Value>(atom: Atom<Value>) =>
-    baseGetAtomState(atom, atomOnInit(store))
-
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
 
@@ -737,6 +733,7 @@ const buildStore = (
     sub: subscribeAtom,
     unstable_derive,
   }
+  const getAtomState = baseGetAtomState(atomOnInit(store))
   if (import.meta.env?.MODE !== 'production') {
     const devStore: DevStoreRev4 = {
       // store dev methods (these are tentative and subject to change without notice)
@@ -774,21 +771,21 @@ const buildStore = (
 }
 
 export const createStore = (): Store => {
-  const atomStateMap = new WeakMap()
-  const getAtomState: StoreArgs[0] = (atom, atomOnInit) => {
-    if (import.meta.env?.MODE !== 'production' && !atom) {
-      throw new Error('Atom is undefined or null')
-    }
-    let atomState = atomStateMap.get(atom) as AtomState<any> | undefined
-    if (!atomState) {
-      atomState = { d: new Map(), p: new Set(), n: 0 }
-      atomStateMap.set(atom, atomState)
-      atomOnInit(atom, atomState)
-    }
-    return atomState
-  }
+  const atomStateMap = new WeakMap<AnyAtom, AtomState>()
   return buildStore(
-    getAtomState,
+    (atomOnInit) =>
+      function getAtomState<Value>(atom: Atom<Value>) {
+        if (import.meta.env?.MODE !== 'production' && !atom) {
+          throw new Error('Atom is undefined or null')
+        }
+        let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
+        if (!atomState) {
+          atomState = { d: new Map(), p: new Set(), n: 0 }
+          atomStateMap.set(atom, atomState)
+          atomOnInit(atom, atomState)
+        }
+        return atomState
+      },
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
