@@ -84,7 +84,7 @@ type Mounted = {
  * Mutable atom state,
  * tracked for both mounted and unmounted atoms in a store.
  */
-type AtomState<Value = AnyValue> = {
+export type AtomState<Value = AnyValue> = {
   /**
    * Map of atoms that the atom depends on.
    * The map value is the epoch number of the dependency.
@@ -265,7 +265,9 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
-  atomOnInit: (store: Store) => (atom: AnyAtom) => void,
+  atomOnInit: (
+    store: Store,
+  ) => <Value>(atom: Atom<Value>, atomState: AtomState<Value>) => void,
 ]
 
 // for debugging purpose only
@@ -780,7 +782,7 @@ export const createStore = (): Store => {
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
-      atomOnInit(atom)
+      atomOnInit(atom, atomState)
     }
     return atomState
   }
@@ -789,7 +791,7 @@ export const createStore = (): Store => {
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
-    (store) => (atom) => atom.INTERNAL_onInit?.(store),
+    (store) => (atom, atomState) => atom.INTERNAL_onInit?.(store, atomState),
   )
 }
 

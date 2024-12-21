@@ -1,4 +1,4 @@
-import type { Store } from './store'
+import type { AtomState, Store } from './store'
 
 type Getter = <Value>(atom: Atom<Value>) => Value
 
@@ -53,7 +53,7 @@ export interface Atom<Value> {
    * Fires after atom is referenced by the store for the first time
    * For internal use only and subject to change without notice.
    */
-  INTERNAL_onInit?: (store: Store) => void
+  INTERNAL_onInit?: (store: Store, atomState: AtomState) => void
 }
 
 export interface WritableAtom<Value, Args extends unknown[], Result>
