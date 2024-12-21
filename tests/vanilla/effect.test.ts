@@ -19,6 +19,13 @@ type Ref = {
   epoch: number
 }
 
+type INTERNAL_onInit = NonNullable<AnyAtom['INTERNAL_onInit']>
+type AtomState = Parameters<INTERNAL_onInit>[1]
+type BatchListeners = NonNullable<AtomState['l']>
+type BatchEntry = BatchListeners extends Set<infer U> ? U : never
+type BatchListener = BatchEntry[0]
+type BatchPriority = NonNullable<BatchEntry[1]>
+
 function atomSyncEffect(effect: Effect) {
   const refAtom = atom(
     () => ({ deps: new Set(), inProgress: 0, epoch: 0 }) as Ref,
@@ -58,31 +65,32 @@ function atomSyncEffect(effect: Effect) {
   )
   refAtom.onMount = (mount) => mount()
   const refreshAtom = atom(0)
-  const internalAtom = atom((get) => {
-    get(refreshAtom)
-    const ref = get(refAtom)
-    if (!ref.get) {
-      ref.get = ((a) => {
-        ref.deps.add(a)
-        return get(a)
-      }) as Getter & { peak: Getter }
-    }
-    ref.deps.forEach(get)
-    ref.isPending = true
-    return ++ref.epoch
-  })
-  const bridgeAtom = atom(
-    (get) => get(internalAtom),
+  const internalAtom = atom(
+    (get) => {
+      get(refreshAtom)
+      const ref = get(refAtom)
+      if (!ref.get) {
+        ref.get = ((a) => {
+          ref.deps.add(a)
+          return get(a)
+        }) as Getter & { peak: Getter }
+      }
+      ref.deps.forEach(get)
+      ref.isPending = true
+      return ++ref.epoch
+    },
     (get, set) => {
       set(refreshAtom, (v) => ++v)
       return get(refAtom).sub()
     },
   )
-  bridgeAtom.onMount = (mount) => mount()
-  bridgeAtom.INTERNAL_onInit = (store, atomState) => {
-    atomState.l ||= new Set()
+  internalAtom.onMount = (mount) => mount()
+  internalAtom.INTERNAL_onInit = (store, atomState) => {
+    if (!('l' in atomState)) {
+      atomState.l = new Set()
+    }
     store.get(refAtom).sub = function subscribe() {
-      function listener() {
+      const batchListener: BatchListener = (_batch) => {
         const ref = store.get(refAtom)
         if (!ref.isPending || ref.inProgress > 0) {
           return
@@ -102,13 +110,14 @@ function atomSyncEffect(effect: Effect) {
               }
             : null
       }
-      const entry = [listener, 'H'] as const
+      const priority: BatchPriority = 'H'
+      const entry = [batchListener, priority] as const
       atomState.l!.add(entry)
       return () => atomState.l!.delete(entry)
     }
   }
   const effectAtom = Object.assign(
-    atom((get) => void get(bridgeAtom)),
+    atom((get) => void get(internalAtom)),
     { effect },
   )
   return effectAtom

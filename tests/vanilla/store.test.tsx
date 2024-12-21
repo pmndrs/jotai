@@ -1034,13 +1034,13 @@ it('should call onInit only once per store', () => {
   const a = atom(0)
   type AtomState = Parameters<NonNullable<Atom<unknown>['INTERNAL_onInit']>>[1]
   let aAtomState: AtomState
-  const aOnInit = vi.fn((_store, atomState) => {
+  const aOnInit = vi.fn((_store: Store, atomState: AtomState) => {
     aAtomState = atomState
   })
   a.INTERNAL_onInit = aOnInit
   const b = atom(0)
   let bAtomState: AtomState
-  const bOnInit = vi.fn((_store, atomState) => {
+  const bOnInit = vi.fn((_store: Store, atomState: AtomState) => {
     bAtomState = atomState
   })
   b.INTERNAL_onInit = bOnInit
@@ -1084,5 +1084,56 @@ it('should call onInit only once per store', () => {
         ]
       },
     ) as Store,
+  )
+})
+
+it('should pass store and atomState to the atom initializer', () => {
+  expect.assertions(2)
+  const store = createStore()
+  const a = atom(null)
+  a.INTERNAL_onInit = (store, atomState) => {
+    expect(store).toBe(store)
+    expect(atomState).toEqual(expect.objectContaining({}))
+  }
+  store.get(a)
+})
+
+it('should call the batch listener with batch and respect the priority', () => {
+  type INTERNAL_onInit = NonNullable<Atom<unknown>['INTERNAL_onInit']>
+  type AtomState = Parameters<INTERNAL_onInit>[1]
+  type BatchListeners = NonNullable<AtomState['l']>
+  type BatchEntry = BatchListeners extends Set<infer U> ? U : never
+  type BatchListener = BatchEntry[0]
+
+  const a = atom(0)
+  const highPriorityBatchListener = vi.fn() as BatchListener
+  const mediumPriorityBatchListener = vi.fn() as BatchListener
+  const defaultPriorityBatchListener = vi.fn() as BatchListener // medium
+  const lowPriorityBatchListener = vi.fn() as BatchListener
+  a.INTERNAL_onInit = (_store, atomState) => {
+    atomState.l = new Set([
+      [lowPriorityBatchListener, 'L'],
+      [defaultPriorityBatchListener],
+      [highPriorityBatchListener, 'H'],
+      [mediumPriorityBatchListener, 'M'],
+    ])
+  }
+  const store = createStore()
+  store.set(a, 1)
+  const mockBatch = expect.objectContaining({})
+  expect(highPriorityBatchListener).toHaveBeenCalledWith(mockBatch)
+  expect(mediumPriorityBatchListener).toHaveBeenCalledWith(mockBatch)
+  expect(lowPriorityBatchListener).toHaveBeenCalledWith(mockBatch)
+  // @ts-expect-error toHaveBeenCalledBefore is a custom matcher
+  expect(highPriorityBatchListener).toHaveBeenCalledBefore(
+    mediumPriorityBatchListener,
+  )
+  // @ts-expect-error toHaveBeenCalledBefore is a custom matcher
+  expect(mediumPriorityBatchListener).toHaveBeenCalledBefore(
+    lowPriorityBatchListener,
+  )
+  // @ts-expect-error toHaveBeenCalledBefore is a custom matcher
+  expect(defaultPriorityBatchListener).toHaveBeenCalledBefore(
+    lowPriorityBatchListener,
   )
 })

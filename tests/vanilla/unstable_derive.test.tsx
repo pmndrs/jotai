@@ -13,23 +13,28 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive((getAtomState, ...args) => {
-      const scopedAtomStateMap = new WeakMap()
-      return [
-        (atom) => {
-          if (scopedAtoms.has(atom)) {
-            let atomState = scopedAtomStateMap.get(atom)
-            if (!atomState) {
-              atomState = { d: new Map(), p: new Set(), n: 0 }
-              scopedAtomStateMap.set(atom, atomState)
+    const derivedStore = store.unstable_derive(
+      (getAtomState, atomRead, atomWrite, atomOnMount, atomOnInit) => {
+        const scopedAtomStateMap = new WeakMap()
+        return [
+          (atom) => {
+            if (scopedAtoms.has(atom)) {
+              let atomState = scopedAtomStateMap.get(atom)
+              if (!atomState) {
+                atomState = { d: new Map(), p: new Set(), n: 0 }
+                scopedAtomStateMap.set(atom, atomState)
+              }
+              return atomState
             }
-            return atomState
-          }
-          return getAtomState(atom)
-        },
-        ...args,
-      ]
-    })
+            return getAtomState(atom)
+          },
+          atomRead,
+          atomWrite,
+          atomOnMount,
+          atomOnInit,
+        ]
+      },
+    )
 
     expect(store.get(a)).toBe('a')
     expect(derivedStore.get(a)).toBe('a')
@@ -54,23 +59,28 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive((getAtomState, ...args) => {
-      const scopedAtomStateMap = new WeakMap()
-      return [
-        (atom) => {
-          if (scopedAtoms.has(atom)) {
-            let atomState = scopedAtomStateMap.get(atom)
-            if (!atomState) {
-              atomState = { d: new Map(), p: new Set(), n: 0 }
-              scopedAtomStateMap.set(atom, atomState)
+    const derivedStore = store.unstable_derive(
+      (getAtomState, atomRead, atomWrite, atomOnMount, atomOnInit) => {
+        const scopedAtomStateMap = new WeakMap()
+        return [
+          (atom) => {
+            if (scopedAtoms.has(atom)) {
+              let atomState = scopedAtomStateMap.get(atom)
+              if (!atomState) {
+                atomState = { d: new Map(), p: new Set(), n: 0 }
+                scopedAtomStateMap.set(atom, atomState)
+              }
+              return atomState
             }
-            return atomState
-          }
-          return getAtomState(atom)
-        },
-        ...args,
-      ]
-    })
+            return getAtomState(atom)
+          },
+          atomRead,
+          atomWrite,
+          atomOnMount,
+          atomOnInit,
+        ]
+      },
+    )
 
     expect(store.get(c)).toBe('ab')
     expect(derivedStore.get(c)).toBe('ab')
@@ -95,7 +105,7 @@ describe('unstable_derive for scoping atoms', () => {
     function makeStores() {
       const store = createStore()
       const derivedStore = store.unstable_derive(
-        (getAtomState, atomRead, ...args) => {
+        (getAtomState, atomRead, atomWrite, atomOnMount, atomOnInit) => {
           const scopedAtomStateMap = new WeakMap()
           return [
             (atom) => {
@@ -118,7 +128,9 @@ describe('unstable_derive for scoping atoms', () => {
               }
               return atomRead(a, myGet, options)
             },
-            ...args,
+            atomWrite,
+            atomOnMount,
+            atomOnInit,
           ]
         },
       )
@@ -173,14 +185,19 @@ describe('unstable_derive for scoping atoms', () => {
 it('should pass the correct store instance to the atom initializer', () => {
   expect.assertions(2)
   const baseStore = createStore()
-  const derivedStore = baseStore.unstable_derive((getAtomState, ...args) => [
-    (a, atomOnInit) => {
-      const atomState = getAtomState(a)
-      atomOnInit?.(a, atomState)
-      return atomState
-    },
-    ...args,
-  ])
+  const derivedStore = baseStore.unstable_derive(
+    (getAtomState, atomRead, atomWrite, atomOnMount, atomOnInit) => [
+      (a, atomOnInit) => {
+        const atomState = getAtomState(a)
+        atomOnInit?.(a, atomState)
+        return atomState
+      },
+      atomRead,
+      atomWrite,
+      atomOnMount,
+      atomOnInit,
+    ],
+  )
   const a = atom(null)
   a.INTERNAL_onInit = (store) => {
     expect(store).toBe(baseStore)
