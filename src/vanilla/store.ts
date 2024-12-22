@@ -104,6 +104,8 @@ type AtomState<Value = AnyValue> = {
   v?: Value
   /** Atom error */
   e?: AnyError
+  /** Indicates that the atom value has been changed */
+  x?: true
 }
 
 const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
@@ -161,9 +163,13 @@ const addDependency = <Value>(
 // Batch
 //
 
+type BatchPriority = 'H' | 'M' | 'L'
+
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
+  /** High priority functions */
+  H: Set<() => void>
   /** Medium priority functions */
   M: Set<() => void>
   /** Low priority functions */
@@ -172,16 +178,17 @@ type Batch = Readonly<{
 
 const createBatch = (): Batch => ({
   D: new Map(),
+  H: new Set(),
   M: new Set(),
   L: new Set(),
 })
 
-const addBatchFuncMedium = (batch: Batch, fn: () => void) => {
-  batch.M.add(fn)
-}
-
-const addBatchFuncLow = (batch: Batch, fn: () => void) => {
-  batch.L.add(fn)
+const addBatchFunc = (
+  batch: Batch,
+  priority: BatchPriority,
+  fn: () => void,
+) => {
+  batch[priority].add(fn)
 }
 
 const registerBatchAtom = (
@@ -191,8 +198,8 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    addBatchFuncMedium(batch, () => {
-      atomState.m?.l.forEach((listener) => listener())
+    addBatchFunc(batch, 'M', () => {
+      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
     })
   }
 }
@@ -211,12 +218,6 @@ const addBatchAtomDependent = (
 const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
   batch.D.get(atom)
 
-const copySetAndClear = <T>(origSet: Set<T>): Set<T> => {
-  const newSet = new Set(origSet)
-  origSet.clear()
-  return newSet
-}
-
 const flushBatch = (batch: Batch) => {
   let error: AnyError
   let hasError = false
@@ -230,10 +231,14 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.M.size || batch.L.size) {
+  while (batch.H.size || batch.M.size || batch.L.size) {
     batch.D.clear()
-    copySetAndClear(batch.M).forEach(call)
-    copySetAndClear(batch.L).forEach(call)
+    batch.H.forEach(call)
+    batch.H.clear()
+    batch.M.forEach(call)
+    batch.M.clear()
+    batch.L.forEach(call)
+    batch.L.clear()
   }
   if (hasError) {
     throw error
@@ -305,11 +310,11 @@ const buildStore = (
         addPendingPromiseToDependency(atom, valueOrPromise, getAtomState(a))
       }
       atomState.v = valueOrPromise
-      delete atomState.e
     } else {
       atomState.v = valueOrPromise
-      delete atomState.e
     }
+    delete atomState.e
+    delete atomState.x
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
       if (pendingPromise) {
@@ -321,7 +326,6 @@ const buildStore = (
   const readAtomState = <Value>(
     batch: Batch | undefined,
     atom: Atom<Value>,
-    dirtyAtoms?: Set<AnyAtom>,
   ): AtomState<Value> => {
     const atomState = getAtomState(atom)
     // See if we can skip recomputing this atom.
@@ -329,7 +333,7 @@ const buildStore = (
       // If the atom is mounted, we can use cached atom state.
       // because it should have been updated by dependencies.
       // We can't use the cache if the atom is dirty.
-      if (atomState.m && !dirtyAtoms?.has(atom)) {
+      if (atomState.m && !atomState.x) {
         return atomState
       }
       // Otherwise, check if the dependencies have changed.
@@ -339,7 +343,7 @@ const buildStore = (
           ([a, n]) =>
             // Recursively, read the atom state of the dependency, and
             // check if the atom epoch number is unchanged
-            readAtomState(batch, a, dirtyAtoms).n === n,
+            readAtomState(batch, a).n === n,
         )
       ) {
         return atomState
@@ -362,7 +366,7 @@ const buildStore = (
         return returnAtomValue(aState)
       }
       // a !== atom
-      const aState = readAtomState(batch, a, dirtyAtoms)
+      const aState = readAtomState(batch, a)
       try {
         return returnAtomValue(aState)
       } finally {
@@ -423,6 +427,7 @@ const buildStore = (
     } catch (error) {
       delete atomState.v
       atomState.e = error
+      delete atomState.x
       ++atomState.n
       return atomState
     } finally {
@@ -457,21 +462,26 @@ const buildStore = (
     return dependents
   }
 
-  // This is a topological sort via depth-first search, slightly modified from
-  // what's described here for simplicity and performance reasons:
-  // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-  function getSortedDependents(
+  const recomputeDependents = <Value>(
     batch: Batch,
-    rootAtom: AnyAtom,
-    rootAtomState: AtomState,
-  ): [[AnyAtom, AtomState, number][], Set<AnyAtom>] {
-    const sorted: [atom: AnyAtom, atomState: AtomState, epochNumber: number][] =
-      []
+    atom: Atom<Value>,
+    atomState: AtomState<Value>,
+  ) => {
+    // Step 1: traverse the dependency graph to build the topsorted atom list
+    // We don't bother to check for cycles, which simplifies the algorithm.
+    // This is a topological sort via depth-first search, slightly modified from
+    // what's described here for simplicity and performance reasons:
+    // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+    const topSortedReversed: [
+      atom: AnyAtom,
+      atomState: AtomState,
+      epochNumber: number,
+    ][] = []
     const visiting = new Set<AnyAtom>()
     const visited = new Set<AnyAtom>()
     // Visit the root atom. This is the only atom in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
-    const stack: [a: AnyAtom, aState: AtomState][] = [[rootAtom, rootAtomState]]
+    const stack: [a: AnyAtom, aState: AtomState][] = [[atom, atomState]]
     while (stack.length > 0) {
       const [a, aState] = stack[stack.length - 1]!
       if (visited.has(a)) {
@@ -483,9 +493,11 @@ const buildStore = (
         // The algorithm calls for pushing onto the front of the list. For
         // performance, we will simply push onto the end, and then will iterate in
         // reverse order later.
-        sorted.push([a, aState, aState.n])
+        topSortedReversed.push([a, aState, aState.n])
         // Atom has been visited but not yet processed
         visited.add(a)
+        // Mark atom dirty
+        aState.x = true
         stack.pop()
         continue
       }
@@ -497,44 +509,31 @@ const buildStore = (
         }
       }
     }
-    return [sorted, visited]
-  }
 
-  const recomputeDependents = <Value>(
-    batch: Batch,
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-  ) => {
-    // Step 1: traverse the dependency graph to build the topsorted atom list
-    // We don't bother to check for cycles, which simplifies the algorithm.
-    const [topsortedAtoms, markedAtoms] = getSortedDependents(
-      batch,
-      atom,
-      atomState,
-    )
-
-    // Step 2: use the topsorted atom list to recompute all affected atoms
+    // Step 2: use the topSortedReversed atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
-    const changedAtoms = new Set<AnyAtom>([atom])
-    for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
-      const [a, aState, prevEpochNumber] = topsortedAtoms[i]!
-      let hasChangedDeps = false
-      for (const dep of aState.d.keys()) {
-        if (dep !== a && changedAtoms.has(dep)) {
-          hasChangedDeps = true
-          break
+    addBatchFunc(batch, 'H', () => {
+      const changedAtoms = new Set<AnyAtom>([atom])
+      for (let i = topSortedReversed.length - 1; i >= 0; --i) {
+        const [a, aState, prevEpochNumber] = topSortedReversed[i]!
+        let hasChangedDeps = false
+        for (const dep of aState.d.keys()) {
+          if (dep !== a && changedAtoms.has(dep)) {
+            hasChangedDeps = true
+            break
+          }
         }
-      }
-      if (hasChangedDeps) {
-        readAtomState(batch, a, markedAtoms)
-        mountDependencies(batch, a, aState)
-        if (prevEpochNumber !== aState.n) {
-          registerBatchAtom(batch, a, aState)
-          changedAtoms.add(a)
+        if (hasChangedDeps) {
+          readAtomState(batch, a)
+          mountDependencies(batch, a, aState)
+          if (prevEpochNumber !== aState.n) {
+            registerBatchAtom(batch, a, aState)
+            changedAtoms.add(a)
+          }
         }
+        delete aState.x
       }
-      markedAtoms.delete(a)
-    }
+    })
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
@@ -658,7 +657,7 @@ const buildStore = (
             isSync = false
           }
         }
-        addBatchFuncLow(batch, () => {
+        addBatchFunc(batch, 'L', () => {
           const onUnmount = createInvocationContext(batch, () =>
             atomOnMount(atom, (...args) => setAtom(...args)),
           )
@@ -684,7 +683,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFuncLow(batch, () => onUnmount(batch))
+        addBatchFunc(batch, 'L', () => onUnmount(batch))
       }
       delete atomState.m
       if (import.meta.env?.MODE !== 'production') {
