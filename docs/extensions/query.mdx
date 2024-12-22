@@ -263,6 +263,8 @@ Although they reference methods same query key (`'todos'`), the `onSuccess` inva
 
 This will result in `todosAtom` showing stale data as it was not prompted to refetch.
 
+⚠️ Note: When using **Typescript**, it is recommended to use a Map when passing the queryClient value to useHydrateAtoms. You can find a working example in the [Initializing State on Render docs](https://jotai.org/docs/guides/initialize-atom-on-render#using-typescript)
+
 ```jsx
 import { Provider } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
