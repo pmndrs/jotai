@@ -10,10 +10,10 @@ Record your todo list by typing them into this app, check them if you have compl
 git clone https://github.com/pmndrs/jotai
 
 # install project dependencies & build the library
-cd jotai && pnpm i
+cd jotai && pnpm install
 
 # move to the examples folder & install dependencies
-cd examples/todos && pnpm i
+cd examples/todos && pnpm install
 
 # start the dev server
 pnpm dev

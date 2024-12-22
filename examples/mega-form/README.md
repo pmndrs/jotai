@@ -6,10 +6,10 @@
 git clone https://github.com/pmndrs/jotai
 
 # install project dependencies & build the library
-cd jotai && pnpm i
+cd jotai && pnpm install
 
 # move to the examples folder & install dependencies
-cd examples/mega-form && pnpm i
+cd examples/mega-form && pnpm install
 
 # start the dev server
 pnpm dev

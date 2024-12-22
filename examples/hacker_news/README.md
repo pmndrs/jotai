@@ -10,10 +10,10 @@ Demonstrate a news articles with jotai, hit next to see more articles.
 git clone https://github.com/pmndrs/jotai
 
 # install project dependencies & build the library
-cd jotai && pnpm i
+cd jotai && pnpm install
 
 # move to the examples folder & install dependencies
-cd examples/hacker_news && pnpm i
+cd examples/hacker_news && pnpm install
 
 # start the dev server
 pnpm dev

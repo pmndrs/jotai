@@ -6,10 +6,10 @@
 git clone https://github.com/pmndrs/jotai
 
 # install project dependencies & build the library
-cd jotai && pnpm i
+cd jotai && pnpm install
 
 # move to the examples folder & install dependencies
-cd examples/hello && pnpm i
+cd examples/hello && pnpm install
 
 # start the dev server
 pnpm dev
