@@ -1,4 +1,4 @@
-import type { AtomState, Store } from './store'
+import type { INTERNAL_PrdStore as Store } from './store'
 
 type Getter = <Value>(atom: Atom<Value>) => Value
 
@@ -51,9 +51,9 @@ export interface Atom<Value> {
   debugPrivate?: boolean
   /**
    * Fires after atom is referenced by the store for the first time
-   * For internal use only and subject to change without notice.
+   * For advanced use only and subject to change without notice.
    */
-  INTERNAL_onInit?: (store: Store, atomState: AtomState) => void
+  unstable_onInit?: <S extends Store>(store: S) => void
 }
 
 export interface WritableAtom<Value, Args extends unknown[], Result>

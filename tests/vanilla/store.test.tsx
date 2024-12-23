@@ -1010,15 +1010,10 @@ it('should call onInit only once per atom', () => {
   const store = createStore()
   const a = atom(0)
   const onInit = vi.fn()
-  a.INTERNAL_onInit = onInit
+  a.unstable_onInit = onInit
   store.get(a)
   expect(onInit).toHaveBeenCalledTimes(1)
-  const aAtomState = expect.objectContaining({
-    d: expect.any(Map),
-    p: expect.any(Set),
-    n: expect.any(Number),
-  })
-  expect(onInit).toHaveBeenCalledWith(store, aAtomState)
+  expect(onInit).toHaveBeenCalledWith(store)
   onInit.mockClear()
   store.get(a)
   store.set(a, 1)
@@ -1032,32 +1027,17 @@ it('should call onInit only once per atom', () => {
 
 it('should call onInit only once per store', () => {
   const a = atom(0)
-  type AtomState = Parameters<NonNullable<Atom<unknown>['INTERNAL_onInit']>>[1]
-  let aAtomState: AtomState
-  const aOnInit = vi.fn((_store: Store, atomState: AtomState) => {
-    aAtomState = atomState
-  })
-  a.INTERNAL_onInit = aOnInit
+  const aOnInit = vi.fn()
+  a.unstable_onInit = aOnInit
   const b = atom(0)
-  let bAtomState: AtomState
-  const bOnInit = vi.fn((_store: Store, atomState: AtomState) => {
-    bAtomState = atomState
-  })
-  b.INTERNAL_onInit = bOnInit
+  const bOnInit = vi.fn()
+  b.unstable_onInit = bOnInit
   type Store = ReturnType<typeof createStore>
   function testInStore(store: Store) {
     store.get(a)
     store.get(b)
-    const mockAtomState = expect.objectContaining({
-      d: expect.any(Map),
-      p: expect.any(Set),
-      n: expect.any(Number),
-    })
     expect(aOnInit).toHaveBeenCalledTimes(1)
     expect(bOnInit).toHaveBeenCalledTimes(1)
-    expect(aOnInit).toHaveBeenCalledWith(store, mockAtomState)
-    expect(bOnInit).toHaveBeenCalledWith(store, mockAtomState)
-    expect(aAtomState).not.toBe(bAtomState)
     aOnInit.mockClear()
     bOnInit.mockClear()
     return store
@@ -1065,75 +1045,31 @@ it('should call onInit only once per store', () => {
   testInStore(createStore())
   const store = testInStore(createStore())
   testInStore(
-    store.unstable_derive(
-      (getAtomState, readAtom, writeAtom, atomOnMount, atomOnInit) => {
-        const initializedAtoms = new WeakSet()
-        return [
-          (a, atomOnInit) => {
-            const atomState = getAtomState(a)
-            if (!initializedAtoms.has(a)) {
-              initializedAtoms.add(a)
-              atomOnInit?.(a, atomState)
-            }
-            return atomState
-          },
-          readAtom,
-          writeAtom,
-          atomOnMount,
-          atomOnInit,
-        ]
-      },
-    ) as Store,
+    store.unstable_derive((getAtomState, setAtomState, ...rest) => {
+      const initializedAtoms = new WeakSet()
+      return [
+        (a) => {
+          if (!initializedAtoms.has(a)) {
+            return undefined
+          }
+          return getAtomState(a)
+        },
+        (a, s) => {
+          initializedAtoms.add(a)
+          setAtomState(a, s)
+        },
+        ...rest,
+      ]
+    }) as Store,
   )
 })
 
 it('should pass store and atomState to the atom initializer', () => {
-  expect.assertions(2)
+  expect.assertions(1)
   const store = createStore()
   const a = atom(null)
-  a.INTERNAL_onInit = (store, atomState) => {
+  a.unstable_onInit = (store) => {
     expect(store).toBe(store)
-    expect(atomState).toEqual(expect.objectContaining({}))
   }
   store.get(a)
-})
-
-it('should call the batch listener with batch and respect the priority', () => {
-  type INTERNAL_onInit = NonNullable<Atom<unknown>['INTERNAL_onInit']>
-  type AtomState = Parameters<INTERNAL_onInit>[1]
-  type BatchListeners = NonNullable<AtomState['l']>
-  type BatchEntry = BatchListeners extends Set<infer U> ? U : never
-  type BatchListener = BatchEntry[0]
-
-  const a = atom(0)
-  const highPriorityBatchListener = vi.fn() as BatchListener
-  const mediumPriorityBatchListener = vi.fn() as BatchListener
-  const defaultPriorityBatchListener = vi.fn() as BatchListener // medium
-  const lowPriorityBatchListener = vi.fn() as BatchListener
-  a.INTERNAL_onInit = (_store, atomState) => {
-    atomState.l = new Set([
-      [lowPriorityBatchListener, 'L'],
-      [defaultPriorityBatchListener],
-      [highPriorityBatchListener, 'H'],
-      [mediumPriorityBatchListener, 'M'],
-    ])
-  }
-  const store = createStore()
-  store.set(a, 1)
-  const mockBatch = expect.objectContaining({})
-  expect(highPriorityBatchListener).toHaveBeenCalledWith(mockBatch)
-  expect(mediumPriorityBatchListener).toHaveBeenCalledWith(mockBatch)
-  expect(lowPriorityBatchListener).toHaveBeenCalledWith(mockBatch)
-  // @ts-expect-error toHaveBeenCalledBefore is a custom matcher
-  expect(highPriorityBatchListener).toHaveBeenCalledBefore(
-    mediumPriorityBatchListener,
-  )
-  // @ts-expect-error toHaveBeenCalledBefore is a custom matcher
-  expect(mediumPriorityBatchListener).toHaveBeenCalledBefore(
-    lowPriorityBatchListener,
-  )
-  // @ts-expect-error toHaveBeenCalledBefore is a custom matcher
-  expect(defaultPriorityBatchListener).toHaveBeenCalledBefore(
-    lowPriorityBatchListener,
-  )
 })

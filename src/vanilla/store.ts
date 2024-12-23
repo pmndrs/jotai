@@ -62,8 +62,6 @@ const isPromiseLike = (
 ): x is PromiseLike<unknown> & { onCancel?: (fn: CancelHandler) => void } =>
   typeof (x as any)?.then === 'function'
 
-type BatchListener = (batch: Batch) => void
-
 /**
  * State tracked for mounted atoms. An atom is considered "mounted" if it has a
  * subscriber, or is a transitive dependency of another atom that has a
@@ -79,21 +77,19 @@ type Mounted = {
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
-  u?: BatchListener
+  u?: (batch: Batch) => void
 }
 
 /**
  * Mutable atom state,
  * tracked for both mounted and unmounted atoms in a store.
  */
-export type AtomState<Value = AnyValue> = {
+type AtomState<Value = AnyValue> = {
   /**
    * Map of atoms that the atom depends on.
    * The map value is the epoch number of the dependency.
    */
   readonly d: Map<AnyAtom, number>
-  /** Set of priority listeners to run when the atom value changes. */
-  l?: Set<readonly [listener: BatchListener, priority?: BatchPriority]>
   /**
    * Set of atoms with pending promise that depend on the atom.
    *
@@ -173,11 +169,11 @@ type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
   /** High priority functions */
-  H: Set<BatchListener>
+  H: Set<() => void>
   /** Medium priority functions */
-  M: Set<BatchListener>
+  M: Set<() => void>
   /** Low priority functions */
-  L: Set<BatchListener>
+  L: Set<() => void>
 }>
 
 const createBatch = (): Batch => ({
@@ -189,8 +185,8 @@ const createBatch = (): Batch => ({
 
 const addBatchFunc = (
   batch: Batch,
-  fn: BatchListener,
   priority: BatchPriority,
+  fn: () => void,
 ) => {
   batch[priority].add(fn)
 }
@@ -202,15 +198,9 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    const scheduleListeners = () => {
-      for (const [listener, priority = 'M'] of atomState.l || []) {
-        addBatchFunc(batch, listener, priority)
-      }
-      for (const listener of atomState.m?.l || []) {
-        addBatchFunc(batch, () => listener(), 'M')
-      }
-    }
-    addBatchFunc(batch, scheduleListeners, 'H')
+    addBatchFunc(batch, 'M', () => {
+      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
+    })
   }
 }
 
@@ -231,9 +221,9 @@ const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
 const flushBatch = (batch: Batch) => {
   let error: AnyError
   let hasError = false
-  const call = (fn: BatchListener) => {
+  const call = (fn: () => void) => {
     try {
-      fn(batch)
+      fn()
     } catch (e) {
       if (!hasError) {
         error = e
@@ -255,17 +245,10 @@ const flushBatch = (batch: Batch) => {
   }
 }
 
-type AtomOnInit = <Value>(
-  atom: Atom<Value>,
-  atomState: AtomState<Value>,
-) => void
-
 // internal & unstable type
 type StoreArgs = readonly [
-  getAtomState: <Value>(
-    atom: Atom<Value>,
-    atomOnInit?: AtomOnInit,
-  ) => AtomState<Value>,
+  getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
+  setAtomState: <Value>(atom: Atom<Value>, atomState: AtomState<Value>) => void,
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -278,7 +261,7 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
-  createAtomOnInit: (store: Store) => AtomOnInit,
+  atomOnInit: <Value>(atom: Atom<Value>, store: PrdStore) => void,
 ]
 
 // for debugging purpose only
@@ -300,16 +283,33 @@ type PrdStore = {
   unstable_derive: (fn: (...args: StoreArgs) => StoreArgs) => Store
 }
 
-export type Store = PrdStore | (PrdStore & DevStoreRev4)
+type Store = PrdStore | (PrdStore & DevStoreRev4)
 
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = PrdStore
 
 const buildStore = (...storeArgs: StoreArgs): Store => {
-  const [_getAtomState, atomRead, atomWrite, atomOnMount, createAtomOnInit] =
-    storeArgs
-  const getAtomState = <Value>(atom: Atom<Value>) =>
-    _getAtomState(atom, createAtomOnInit(store))
+  const [
+    getAtomState,
+    setAtomState,
+    atomRead,
+    atomWrite,
+    atomOnMount,
+    atomOnInit,
+  ] = storeArgs
+  const ensureAtomState = <Value>(atom: Atom<Value>) => {
+    if (import.meta.env?.MODE !== 'production' && !atom) {
+      throw new Error('Atom is undefined or null')
+    }
+    let atomState = getAtomState(atom)
+    if (!atomState) {
+      atomState = { d: new Map(), p: new Set(), n: 0 }
+      setAtomState(atom, atomState)
+      atomOnInit?.(atom, store)
+    }
+    return atomState
+  }
+
   // for debugging purpose only
   let debugMountedAtoms: Set<AnyAtom>
 
@@ -328,7 +328,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     if (isPromiseLike(valueOrPromise)) {
       patchPromiseForCancelability(valueOrPromise)
       for (const a of atomState.d.keys()) {
-        addPendingPromiseToDependency(atom, valueOrPromise, getAtomState(a))
+        addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
       }
       atomState.v = valueOrPromise
     } else {
@@ -348,7 +348,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     batch: Batch | undefined,
     atom: Atom<Value>,
   ): AtomState<Value> => {
-    const atomState = getAtomState(atom)
+    const atomState = ensureAtomState(atom)
     // See if we can skip recomputing this atom.
     if (isAtomStateInitialized(atomState)) {
       // If the atom is mounted, we can use cached atom state.
@@ -375,7 +375,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
-        const aState = getAtomState(a)
+        const aState = ensureAtomState(a)
         if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
             setAtomStateValueOrPromise(a, aState, a.init)
@@ -466,7 +466,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
   ): Map<AnyAtom, AtomState> => {
     const dependents = new Map<AnyAtom, AtomState>()
     for (const a of atomState.m?.t || []) {
-      const aState = getAtomState(a)
+      const aState = ensureAtomState(a)
       if (aState.m) {
         dependents.set(a, aState)
       }
@@ -474,11 +474,11 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     for (const atomWithPendingPromise of atomState.p) {
       dependents.set(
         atomWithPendingPromise,
-        getAtomState(atomWithPendingPromise),
+        ensureAtomState(atomWithPendingPromise),
       )
     }
     getBatchAtomDependents(batch, atom)?.forEach((dependent) => {
-      dependents.set(dependent, getAtomState(dependent))
+      dependents.set(dependent, ensureAtomState(dependent))
     })
     return dependents
   }
@@ -555,7 +555,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         delete aState.x
       }
     }
-    addBatchFunc(batch, finishRecompute, 'H')
+    addBatchFunc(batch, 'H', finishRecompute)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
@@ -570,7 +570,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
-      const aState = getAtomState(a)
+      const aState = ensureAtomState(a)
       try {
         if (isSelfAtom(atom, a)) {
           if (!hasInitialValue(a)) {
@@ -622,7 +622,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     if (atomState.m && !isPendingPromise(atomState.v)) {
       for (const a of atomState.d.keys()) {
         if (!atomState.m.d.has(a)) {
-          const aMounted = mountAtom(batch, a, getAtomState(a))
+          const aMounted = mountAtom(batch, a, ensureAtomState(a))
           aMounted.t.add(atom)
           atomState.m.d.add(a)
         }
@@ -630,7 +630,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       for (const a of atomState.m.d || []) {
         if (!atomState.d.has(a)) {
           atomState.m.d.delete(a)
-          const aMounted = unmountAtom(batch, a, getAtomState(a))
+          const aMounted = unmountAtom(batch, a, ensureAtomState(a))
           aMounted?.t.delete(atom)
         }
       }
@@ -647,7 +647,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       readAtomState(batch, atom)
       // mount dependencies first
       for (const a of atomState.d.keys()) {
-        const aMounted = mountAtom(batch, a, getAtomState(a))
+        const aMounted = mountAtom(batch, a, ensureAtomState(a))
         aMounted.t.add(atom)
       }
       // mount self
@@ -687,7 +687,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
             mounted.u = (batch) => createInvocationContext(batch, onUnmount)
           }
         }
-        addBatchFunc(batch, processOnMount, 'L')
+        addBatchFunc(batch, 'L', processOnMount)
       }
     }
     return atomState.m
@@ -701,12 +701,12 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     if (
       atomState.m &&
       !atomState.m.l.size &&
-      !Array.from(atomState.m.t).some((a) => getAtomState(a).m?.d.has(atom))
+      !Array.from(atomState.m.t).some((a) => ensureAtomState(a).m?.d.has(atom))
     ) {
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFunc(batch, () => onUnmount(batch), 'L')
+        addBatchFunc(batch, 'L', () => onUnmount(batch))
       }
       delete atomState.m
       if (import.meta.env?.MODE !== 'production') {
@@ -714,7 +714,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       }
       // unmount dependencies
       for (const a of atomState.d.keys()) {
-        const aMounted = unmountAtom(batch, a, getAtomState(a))
+        const aMounted = unmountAtom(batch, a, ensureAtomState(a))
         aMounted?.t.delete(atom)
       }
       return undefined
@@ -724,7 +724,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
     const batch = createBatch()
-    const atomState = getAtomState(atom)
+    const atomState = ensureAtomState(atom)
     const mounted = mountAtom(batch, atom, atomState)
     const listeners = mounted.l
     listeners.add(listener)
@@ -751,7 +751,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       // store dev methods (these are tentative and subject to change without notice)
       dev4_get_internal_weak_map: () => ({
         get: (atom) => {
-          const atomState = getAtomState(atom)
+          const atomState = ensureAtomState(atom)
           if (atomState.n === 0) {
             // for backward compatibility
             return undefined
@@ -764,7 +764,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         const batch = createBatch()
         for (const [atom, value] of values) {
           if (hasInitialValue(atom)) {
-            const atomState = getAtomState(atom)
+            const atomState = ensureAtomState(atom)
             const prevEpochNumber = atomState.n
             setAtomStateValueOrPromise(atom, atomState, value)
             mountDependencies(batch, atom, atomState)
@@ -784,25 +784,15 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
 
 export const createStore = (): Store => {
   const atomStateMap = new WeakMap()
-  const getAtomState = <Value>(atom: Atom<Value>, atomOnInit?: AtomOnInit) => {
-    if (import.meta.env?.MODE !== 'production' && !atom) {
-      throw new Error('Atom is undefined or null')
-    }
-    let atomState = atomStateMap.get(atom) as AtomState<Value> | undefined
-    if (!atomState) {
-      atomState = { d: new Map(), p: new Set(), n: 0 }
-      atomStateMap.set(atom, atomState)
-      atomOnInit?.(atom, atomState)
-    }
-    return atomState
-  }
-  return buildStore(
-    getAtomState,
+  const store = buildStore(
+    (atom) => atomStateMap.get(atom),
+    (atom, atomState) => atomStateMap.set(atom, atomState),
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
-    (store) => (atom, atomState) => atom.INTERNAL_onInit?.(store, atomState),
+    (atom, ...params) => atom.unstable_onInit?.(...params),
   )
+  return store
 }
 
 let defaultStore: Store | undefined
