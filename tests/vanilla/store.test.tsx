@@ -1005,3 +1005,127 @@ it('should process all atom listeners even if some of them throw errors', () => 
   expect(listenerB).toHaveBeenCalledTimes(1)
   expect(listenerC).toHaveBeenCalledTimes(1)
 })
+
+it('should call onInit only once per atom', () => {
+  const store = createStore()
+  const a = atom(0)
+  const onInit = vi.fn()
+  a.INTERNAL_onInit = onInit
+  store.get(a)
+  expect(onInit).toHaveBeenCalledTimes(1)
+  const aAtomState = expect.objectContaining({
+    d: expect.any(Map),
+    p: expect.any(Set),
+    n: expect.any(Number),
+  })
+  expect(onInit).toHaveBeenCalledWith(store, aAtomState)
+  onInit.mockClear()
+  store.get(a)
+  store.set(a, 1)
+  const unsub = store.sub(a, () => {})
+  unsub()
+  const b = atom((get) => get(a))
+  store.get(b)
+  store.sub(b, () => {})
+  expect(onInit).not.toHaveBeenCalled()
+})
+
+it('should call onInit only once per store', () => {
+  const a = atom(0)
+  type AtomState = Parameters<NonNullable<Atom<unknown>['INTERNAL_onInit']>>[1]
+  let aAtomState: AtomState
+  const aOnInit = vi.fn((_store: Store, atomState: AtomState) => {
+    aAtomState = atomState
+  })
+  a.INTERNAL_onInit = aOnInit
+  const b = atom(0)
+  let bAtomState: AtomState
+  const bOnInit = vi.fn((_store: Store, atomState: AtomState) => {
+    bAtomState = atomState
+  })
+  b.INTERNAL_onInit = bOnInit
+  type Store = ReturnType<typeof createStore>
+  function testInStore(store: Store) {
+    store.get(a)
+    store.get(b)
+    const mockAtomState = expect.objectContaining({
+      d: expect.any(Map),
+      p: expect.any(Set),
+      n: expect.any(Number),
+    })
+    expect(aOnInit).toHaveBeenCalledTimes(1)
+    expect(bOnInit).toHaveBeenCalledTimes(1)
+    expect(aOnInit).toHaveBeenCalledWith(store, mockAtomState)
+    expect(bOnInit).toHaveBeenCalledWith(store, mockAtomState)
+    expect(aAtomState).not.toBe(bAtomState)
+    aOnInit.mockClear()
+    bOnInit.mockClear()
+    return store
+  }
+  testInStore(createStore())
+  const store = testInStore(createStore())
+  testInStore(
+    store.unstable_derive(
+      (getAtomState, readAtom, writeAtom, atomOnMount, atomOnInit) => {
+        const initializedAtoms = new WeakSet()
+        return [
+          (a, atomOnInit) => {
+            const atomState = getAtomState(a)
+            if (!initializedAtoms.has(a)) {
+              initializedAtoms.add(a)
+              atomOnInit?.(a, atomState)
+            }
+            return atomState
+          },
+          readAtom,
+          writeAtom,
+          atomOnMount,
+          atomOnInit,
+        ]
+      },
+    ) as Store,
+  )
+})
+
+it('should pass store and atomState to the atom initializer', () => {
+  expect.assertions(2)
+  const store = createStore()
+  const a = atom(null)
+  a.INTERNAL_onInit = (store, atomState) => {
+    expect(store).toBe(store)
+    expect(atomState).toEqual(expect.objectContaining({}))
+  }
+  store.get(a)
+})
+
+it('should call the batch listener with batch and respect the priority', () => {
+  type INTERNAL_onInit = NonNullable<Atom<unknown>['INTERNAL_onInit']>
+  type AtomState = Parameters<INTERNAL_onInit>[1]
+  type BatchListeners = NonNullable<AtomState['l']>
+  type BatchEntry = BatchListeners extends Set<infer U> ? U : never
+  type BatchListener = BatchEntry[0]
+
+  const a = atom(0)
+  const highPriorityBatchListener = vi.fn() as BatchListener
+  const mediumPriorityBatchListener = vi.fn() as BatchListener
+  const lowPriorityBatchListener = vi.fn() as BatchListener
+  a.INTERNAL_onInit = (_store, atomState) => {
+    atomState.l.add([lowPriorityBatchListener, 'L'])
+    atomState.l.add([highPriorityBatchListener, 'H'])
+    atomState.l.add([mediumPriorityBatchListener, 'M'])
+  }
+  const store = createStore()
+  store.set(a, 1)
+  const mockBatch = expect.objectContaining({})
+  expect(highPriorityBatchListener).toHaveBeenCalledWith(mockBatch)
+  expect(mediumPriorityBatchListener).toHaveBeenCalledWith(mockBatch)
+  expect(lowPriorityBatchListener).toHaveBeenCalledWith(mockBatch)
+  // eslint-disable-next-line @vitest/valid-expect
+  ;(expect(highPriorityBatchListener) as any).toHaveBeenCalledBefore(
+    mediumPriorityBatchListener,
+  )
+  // eslint-disable-next-line @vitest/valid-expect
+  ;(expect(mediumPriorityBatchListener) as any).toHaveBeenCalledBefore(
+    lowPriorityBatchListener,
+  )
+})
