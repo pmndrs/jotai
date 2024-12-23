@@ -18,8 +18,8 @@ exports.createPages = ({ actions }) => {
   });
 
   createRedirect({
-    fromPath: `/docs`,
-    toPath: `/docs/introduction`,
+    fromPath: `/docs/introduction`,
+    toPath: `/docs`,
     isPermanent: false,
   });
 
