@@ -1,3 +1,5 @@
+import type { AtomState, PrdOrDevStore as Store } from './store'
+
 type Getter = <Value>(atom: Atom<Value>) => Value
 
 type Setter = <Value, Args extends unknown[], Result>(
@@ -47,6 +49,11 @@ export interface Atom<Value> {
    * @private
    */
   debugPrivate?: boolean
+  /**
+   * Fires after atom is referenced by the store for the first time
+   * For internal use only and subject to change without notice.
+   */
+  INTERNAL_onInit?: (store: Store, atomState: AtomState) => void
 }
 
 export interface WritableAtom<Value, Args extends unknown[], Result>
