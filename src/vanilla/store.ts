@@ -737,20 +737,22 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
 const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
   const proxyAtomStateMap = new WeakMap()
   const debugMountedAtoms = new Set<AnyAtom>()
-  const getAtomState: StoreArgs[0] = (atom) => proxyAtomStateMap.get(atom)
+  let savedGetAtomState: StoreArgs[0]
   let inRestoreAtom = 0
   const derivedStore = store.unstable_derive(
     (
-      _getAtomState,
-      _setAtomState,
+      getAtomState,
+      setAtomState,
       atomRead,
       atomWrite,
       atomOnMount,
       atomOnInit,
     ) => {
+      savedGetAtomState = getAtomState
       return [
-        getAtomState,
+        (atom) => proxyAtomStateMap.get(atom),
         (atom, atomState) => {
+          setAtomState(atom, atomState)
           const proxyAtomState = new Proxy(atomState, {
             set(target, prop, value) {
               if (prop === 'm') {
@@ -765,7 +767,6 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
               return Reflect.deleteProperty(target, prop)
             },
           })
-          proxyAtomStateMap.set(atom, proxyAtomState)
           return proxyAtomState
         },
         atomRead,
@@ -785,7 +786,7 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
     // store dev methods (these are tentative and subject to change without notice)
     dev4_get_internal_weak_map: () => ({
       get: (atom) => {
-        const atomState = getAtomState(atom)
+        const atomState = savedGetAtomState(atom)
         if (!atomState || atomState.n === 0) {
           // for backward compatibility
           return undefined
