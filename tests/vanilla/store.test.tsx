@@ -628,7 +628,7 @@ describe('should invoke flushPending only after all atoms are updated (#2804)', 
     store.sub(a, () => {
       mountResult.push('a value changed - ' + store.get(a))
     })
-    const unsub = store.sub(m, () => {})
+    store.sub(m, () => {})
     mountResult.push('after store.sub')
     expect(mountResult).not.toEqual([
       'before store.sub',
@@ -736,7 +736,7 @@ describe('should mount and trigger listeners even when an error is thrown', () =
       set(a, 1)
       get(e)
     })
-    const w = atom(null, async (get, set) => {
+    const w = atom(null, async (_get, set) => {
       setTimeout(() => {
         try {
           set(b)
@@ -962,4 +962,46 @@ it('processes deep atom a graph beyond maxDepth', () => {
   // store.get(lastAtom) // FIXME: This is causing a stack overflow
   expect(() => store.set(baseAtom, 1)).not.toThrow()
   // store.set(lastAtom) // FIXME: This is causing a stack overflow
+})
+
+it('mounted atom should be recomputed eagerly', () => {
+  const result: string[] = []
+  const a = atom(0)
+  const b = atom((get) => {
+    result.push('bRead')
+    return get(a)
+  })
+  const store = createStore()
+  store.sub(a, () => {
+    result.push('aCallback')
+  })
+  store.sub(b, () => {
+    result.push('bCallback')
+  })
+  expect(result).toEqual(['bRead'])
+  result.splice(0)
+  store.set(a, 1)
+  expect(result).toEqual(['bRead', 'aCallback', 'bCallback'])
+})
+
+it('should process all atom listeners even if some of them throw errors', () => {
+  const store = createStore()
+  const a = atom(0)
+  const listenerA = vi.fn()
+  const listenerB = vi.fn(() => {
+    throw new Error('error')
+  })
+  const listenerC = vi.fn()
+
+  store.sub(a, listenerA)
+  store.sub(a, listenerB)
+  store.sub(a, listenerC)
+  try {
+    store.set(a, 1)
+  } catch {
+    // expect empty
+  }
+  expect(listenerA).toHaveBeenCalledTimes(1)
+  expect(listenerB).toHaveBeenCalledTimes(1)
+  expect(listenerC).toHaveBeenCalledTimes(1)
 })

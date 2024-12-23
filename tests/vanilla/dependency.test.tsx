@@ -405,3 +405,23 @@ it('can cache reading an atom in write function (with mounting)', () => {
   store.set(w)
   expect(aReadCount).toBe(1)
 })
+
+it('batches sync writes', () => {
+  const a = atom(0)
+  const b = atom((get) => get(a))
+  const fetch = vi.fn()
+  const c = atom((get) => fetch(get(a)))
+  const w = atom(null, (get, set) => {
+    set(a, 1)
+    expect(get(b)).toBe(1)
+    expect(fetch).toHaveBeenCalledTimes(0)
+  })
+  const store = createStore()
+  store.sub(b, () => {})
+  store.sub(c, () => {})
+  fetch.mockClear()
+  store.set(w)
+  expect(fetch).toHaveBeenCalledOnce()
+  expect(fetch).toBeCalledWith(1)
+  expect(store.get(a)).toBe(1)
+})
