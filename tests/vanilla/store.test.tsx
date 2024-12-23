@@ -1045,23 +1045,35 @@ it('should call onInit only once per store', () => {
   testInStore(createStore())
   const store = testInStore(createStore())
   testInStore(
-    store.unstable_derive((getAtomState, setAtomState, ...rest) => {
-      const initializedAtoms = new WeakSet()
-      return [
-        (a) => {
-          if (!initializedAtoms.has(a)) {
-            return undefined
-          }
-          return getAtomState(a)
-        },
-        (a, s) => {
-          initializedAtoms.add(a)
-          setAtomState(a, s)
-          return s
-        },
-        ...rest,
-      ]
-    }) as Store,
+    store.unstable_derive(
+      (
+        getAtomState,
+        setAtomState,
+        atomRead,
+        atomWrite,
+        atomOnMount,
+        atomOnInit,
+      ) => {
+        const initializedAtoms = new WeakSet()
+        return [
+          (a) => {
+            if (!initializedAtoms.has(a)) {
+              return undefined
+            }
+            return getAtomState(a)
+          },
+          (a, s) => {
+            initializedAtoms.add(a)
+            setAtomState(a, s)
+            return s
+          },
+          atomRead,
+          atomWrite,
+          atomOnMount,
+          atomOnInit,
+        ]
+      },
+    ) as Store,
   )
 })
 
