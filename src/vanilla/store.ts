@@ -77,7 +77,7 @@ type Mounted = {
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
-  u?: (batch: Batch) => void
+  u?: BatchListener
 }
 
 /**
@@ -163,17 +163,19 @@ const addDependency = <Value>(
 // Batch
 //
 
+type BatchListener = (batch: Batch) => void
+
 type BatchPriority = 'H' | 'M' | 'L'
 
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
   /** High priority functions */
-  H: Set<() => void>
+  H: Set<BatchListener>
   /** Medium priority functions */
-  M: Set<() => void>
+  M: Set<BatchListener>
   /** Low priority functions */
-  L: Set<() => void>
+  L: Set<BatchListener>
 }>
 
 const createBatch = (): Batch => ({
@@ -185,8 +187,8 @@ const createBatch = (): Batch => ({
 
 const addBatchFunc = (
   batch: Batch,
+  fn: BatchListener,
   priority: BatchPriority,
-  fn: () => void,
 ) => {
   batch[priority].add(fn)
 }
@@ -200,7 +202,7 @@ const registerBatchAtom = (
     batch.D.set(atom, new Set())
     const scheduleListeners = () => {
       for (const listener of atomState.m?.l ?? []) {
-        addBatchFunc(batch, listener, 'M')
+        addBatchFunc(batch, () => listener(), 'M')
       }
     }
     addBatchFunc(batch, scheduleListeners, 'M')
@@ -224,9 +226,9 @@ const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
 const flushBatch = (batch: Batch) => {
   let error: AnyError
   let hasError = false
-  const call = (fn: () => void) => {
+  const call = (fn: BatchListener) => {
     try {
-      fn()
+      fn(batch)
     } catch (e) {
       if (!hasError) {
         error = e
@@ -676,7 +678,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFunc(batch, () => onUnmount(batch), 'L')
+        addBatchFunc(batch, onUnmount, 'L')
       }
       delete atomState.m
       // unmount dependencies
