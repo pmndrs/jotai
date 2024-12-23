@@ -300,8 +300,6 @@ type Store = {
   unstable_derive: (fn: (...args: StoreArgs) => StoreArgs) => Store
 }
 
-export type Store = PrdStore | (PrdStore & DevStoreRev4)
-
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = Store
 
@@ -743,7 +741,7 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
   let savedGetAtomState: StoreArgs[0]
   let inRestoreAtom = 0
   const derivedStore = store.unstable_derive(
-    (getAtomState, atomRead, atomWrite, atomOnMount) => {
+    (getAtomState, atomRead, atomWrite, atomOnMount, atomOnInit) => {
       savedGetAtomState = getAtomState
       return [
         (atom) => {
@@ -776,6 +774,7 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
           return atomWrite(atom, getter, setter, ...args)
         },
         atomOnMount,
+        atomOnInit,
       ]
     },
   )
