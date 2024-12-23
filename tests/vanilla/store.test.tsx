@@ -1057,6 +1057,7 @@ it('should call onInit only once per store', () => {
         (a, s) => {
           initializedAtoms.add(a)
           setAtomState(a, s)
+          return s
         },
         ...rest,
       ]

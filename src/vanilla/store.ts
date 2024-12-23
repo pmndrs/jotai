@@ -248,7 +248,10 @@ const flushBatch = (batch: Batch) => {
 // internal & unstable type
 type StoreArgs = readonly [
   getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
-  setAtomState: <Value>(atom: Atom<Value>, atomState: AtomState<Value>) => void,
+  setAtomState: <Value>(
+    atom: Atom<Value>,
+    atomState: AtomState<Value>,
+  ) => AtomState<Value>,
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -302,7 +305,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     let atomState = getAtomState(atom)
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
-      setAtomState(atom, atomState)
+      atomState = setAtomState(atom, atomState)
       atomOnInit?.(atom, store)
     }
     return atomState
@@ -767,6 +770,7 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
               return Reflect.deleteProperty(target, prop)
             },
           })
+          proxyAtomStateMap.set(atom, proxyAtomState)
           return proxyAtomState
         },
         atomRead,
@@ -823,7 +827,7 @@ export const createStore = (): PrdOrDevStore => {
   const atomStateMap = new WeakMap()
   const store = buildStore(
     (atom) => atomStateMap.get(atom),
-    (atom, atomState) => atomStateMap.set(atom, atomState),
+    (atom, atomState) => atomStateMap.set(atom, atomState).get(atom),
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),

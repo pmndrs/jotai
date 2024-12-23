@@ -29,6 +29,7 @@ describe('unstable_derive for scoping atoms', () => {
             } else {
               setAtomState(atom, atomState)
             }
+            return atomState
           },
           ...rest,
         ]
@@ -74,6 +75,7 @@ describe('unstable_derive for scoping atoms', () => {
             } else {
               setAtomState(atom, atomState)
             }
+            return atomState
           },
           ...rest,
         ]
@@ -118,6 +120,7 @@ describe('unstable_derive for scoping atoms', () => {
               } else {
                 setAtomState(atom, atomState)
               }
+              return atomState
             },
             (a, get, options) => {
               const myGet: Getter = (aa) => {
@@ -196,6 +199,7 @@ it('should pass the correct store instance to the atom initializer', () => {
         (atom, atomState) => {
           initializedAtoms.add(atom)
           setAtomState(atom, atomState)
+          return atomState
         },
         ...rest,
       ]
