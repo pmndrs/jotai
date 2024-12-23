@@ -13,48 +13,18 @@ type Ref = {
   cleanup?: Cleanup | null
   fromCleanup: boolean
   inProgress: number
-  isPending: boolean
   deps: Set<AnyAtom>
-  run: () => void
-  epoch: number
+  init: () => void
 }
 
 function atomSyncEffect(effect: Effect) {
-  const initRef = (ref: Ref, get: Getter, set: Setter) => {
-    if (!ref.get.peak) {
-      ref.get.peak = get
-    }
-    const setter: Setter = (a, ...args) => {
-      try {
-        ++ref.inProgress
-        return set(a, ...args)
-      } finally {
-        --ref.inProgress
-        ref.get(a) // FIXME why do we need this?
-      }
-    }
-    const recurse: Setter = (a, ...args) => {
-      if (ref.fromCleanup) {
-        if (import.meta.env?.MODE !== 'production') {
-          console.warn('cannot recurse inside cleanup')
-        }
-        return undefined as any
-      }
-      return set(a, ...args)
-    }
-    if (!ref.set) {
-      ref.set = Object.assign(setter, { recurse })
-    }
-    ref.isPending = ref.inProgress === 0
-  }
   const refAtom = atom(
-    () => ({ deps: new Set(), inProgress: 0, epoch: 0 }) as Ref,
+    () => ({ deps: new Set(), inProgress: 0 }) as Ref,
     (get) => {
       const ref = get(refAtom)
       return () => {
         ref.cleanup?.()
         ref.cleanup = null
-        ref.isPending = false
         ref.deps.clear()
       }
     },
@@ -68,32 +38,54 @@ function atomSyncEffect(effect: Effect) {
         return get(a)
       }) as Getter & { peak: Getter }
     }
+    ref.init()
     ref.deps.forEach(get)
-    ref.isPending = true
-    ++ref.epoch
-    ref.run()
+    if (ref.inProgress > 0) {
+      return
+    }
+    ref.cleanup?.()
+    const cleanup = effectAtom.effect(ref.get!, ref.set!)
+    ref.cleanup =
+      typeof cleanup === 'function'
+        ? () => {
+            try {
+              ref.fromCleanup = true
+              cleanup()
+            } finally {
+              ref.fromCleanup = false
+            }
+          }
+        : null
   })
   internalAtom.unstable_onInit = (store) => {
-    store.get(refAtom).run = () => {
-      initRef(store.get(refAtom), store.get, store.set)
-      const ref = store.get(refAtom)
-      if (!ref.isPending || ref.inProgress > 0) {
-        return
+    const ref = store.get(refAtom)
+    const get = store.get
+    const set = store.set
+    ref.init = () => {
+      if (!ref.get.peak) {
+        ref.get.peak = get
       }
-      ref.isPending = false
-      ref.cleanup?.()
-      const cleanup = effectAtom.effect(ref.get!, ref.set!)
-      ref.cleanup =
-        typeof cleanup === 'function'
-          ? () => {
-              try {
-                ref.fromCleanup = true
-                cleanup()
-              } finally {
-                ref.fromCleanup = false
-              }
+      if (!ref.set) {
+        const setter: Setter = (a, ...args) => {
+          try {
+            ++ref.inProgress
+            return set(a, ...args)
+          } finally {
+            --ref.inProgress
+            ref.get(a) // FIXME why do we need this?
+          }
+        }
+        const recurse: Setter = (a, ...args) => {
+          if (ref.fromCleanup) {
+            if (import.meta.env?.MODE !== 'production') {
+              console.warn('cannot recurse inside cleanup')
             }
-          : null
+            return undefined as any
+          }
+          return set(a, ...args)
+        }
+        ref.set = Object.assign(setter, { recurse })
+      }
     }
   }
   const effectAtom = Object.assign(
