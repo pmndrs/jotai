@@ -9,9 +9,8 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "jotai": "^2.0.4",
+    "jotai": "^2.10.4",
     "prismjs": "^1.23.0",
-    "prop-types": "^15.7.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-prism": "4.3.2"
@@ -19,8 +18,8 @@
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@vitejs/plugin-react": "^4.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.0.0",
-    "vite": "^4.0.0"
+    "vite": "^6.0.5"
   }
 }
