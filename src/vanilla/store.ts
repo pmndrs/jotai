@@ -77,7 +77,7 @@ type Mounted = {
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
-  u?: (batch: Batch) => void
+  u?: BatchListener
 }
 
 /**
@@ -163,17 +163,19 @@ const addDependency = <Value>(
 // Batch
 //
 
+type BatchListener = (batch: Batch) => void
+
 type BatchPriority = 'H' | 'M' | 'L'
 
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
   /** High priority functions */
-  H: Set<() => void>
+  H: Set<BatchListener>
   /** Medium priority functions */
-  M: Set<() => void>
+  M: Set<BatchListener>
   /** Low priority functions */
-  L: Set<() => void>
+  L: Set<BatchListener>
 }>
 
 const createBatch = (): Batch => ({
@@ -185,8 +187,8 @@ const createBatch = (): Batch => ({
 
 const addBatchFunc = (
   batch: Batch,
+  fn: BatchListener,
   priority: BatchPriority,
-  fn: () => void,
 ) => {
   batch[priority].add(fn)
 }
@@ -198,9 +200,12 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    addBatchFunc(batch, 'M', () => {
-      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
-    })
+    const scheduleListeners = () => {
+      for (const listener of atomState.m?.l ?? []) {
+        addBatchFunc(batch, () => listener(), 'M')
+      }
+    }
+    addBatchFunc(batch, scheduleListeners, 'M')
   }
 }
 
@@ -221,9 +226,9 @@ const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
 const flushBatch = (batch: Batch) => {
   let error: AnyError
   let hasError = false
-  const call = (fn: () => void) => {
+  const call = (fn: BatchListener) => {
     try {
-      fn()
+      fn(batch)
     } catch (e) {
       if (!hasError) {
         error = e
@@ -503,7 +508,7 @@ const buildStore = (
 
     // Step 2: use the topSortedReversed atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
-    addBatchFunc(batch, 'H', () => {
+    const finishRecompute = () => {
       const changedAtoms = new Set<AnyAtom>([atom])
       for (let i = topSortedReversed.length - 1; i >= 0; --i) {
         const [a, aState, prevEpochNumber] = topSortedReversed[i]!
@@ -524,7 +529,8 @@ const buildStore = (
         }
         delete aState.x
       }
-    })
+    }
+    addBatchFunc(batch, finishRecompute, 'H')
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
@@ -645,14 +651,15 @@ const buildStore = (
             isSync = false
           }
         }
-        addBatchFunc(batch, 'L', () => {
+        const processOnMount = () => {
           const onUnmount = createInvocationContext(batch, () =>
             atomOnMount(atom, (...args) => setAtom(...args)),
           )
           if (onUnmount) {
             mounted.u = (batch) => createInvocationContext(batch, onUnmount)
           }
-        })
+        }
+        addBatchFunc(batch, processOnMount, 'L')
       }
     }
     return atomState.m
@@ -671,7 +678,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFunc(batch, 'L', () => onUnmount(batch))
+        addBatchFunc(batch, onUnmount, 'L')
       }
       delete atomState.m
       // unmount dependencies
