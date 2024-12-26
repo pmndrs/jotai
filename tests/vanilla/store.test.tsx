@@ -1051,8 +1051,8 @@ it('should call onInit only once per store', () => {
         setAtomState,
         atomRead,
         atomWrite,
-        atomOnMount,
         atomOnInit,
+        atomOnMount,
       ) => {
         const initializedAtoms = new WeakSet()
         return [
@@ -1069,8 +1069,8 @@ it('should call onInit only once per store', () => {
           },
           atomRead,
           atomWrite,
-          atomOnMount,
           atomOnInit,
+          atomOnMount,
         ]
       },
     ) as Store,

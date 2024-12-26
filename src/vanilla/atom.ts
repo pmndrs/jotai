@@ -53,7 +53,7 @@ export interface Atom<Value> {
    * Fires after atom is referenced by the store for the first time
    * For advanced use only and subject to change without notice.
    */
-  unstable_onInit?: <S extends Store>(store: S) => void
+  unstable_onInit?: (store: Store) => void
 }
 
 export interface WritableAtom<Value, Args extends unknown[], Result>

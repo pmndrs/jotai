@@ -19,8 +19,8 @@ describe('unstable_derive for scoping atoms', () => {
         setAtomState,
         atomRead,
         atomWrite,
-        atomOnMount,
         atomOnInit,
+        atomOnMount,
       ) => {
         const scopedAtomStateMap = new WeakMap()
         return [
@@ -40,8 +40,8 @@ describe('unstable_derive for scoping atoms', () => {
           },
           atomRead,
           atomWrite,
-          atomOnMount,
           atomOnInit,
+          atomOnMount,
         ]
       },
     )
@@ -75,8 +75,8 @@ describe('unstable_derive for scoping atoms', () => {
         setAtomState,
         atomRead,
         atomWrite,
-        atomOnMount,
         atomOnInit,
+        atomOnMount,
       ) => {
         const scopedAtomStateMap = new WeakMap()
         return [
@@ -96,8 +96,8 @@ describe('unstable_derive for scoping atoms', () => {
           },
           atomRead,
           atomWrite,
-          atomOnMount,
           atomOnInit,
+          atomOnMount,
         ]
       },
     )
@@ -130,8 +130,8 @@ describe('unstable_derive for scoping atoms', () => {
           setAtomState,
           atomRead,
           atomWrite,
-          atomOnMount,
           atomOnInit,
+          atomOnMount,
         ) => {
           const scopedAtomStateMap = new WeakMap()
           return [
@@ -159,8 +159,8 @@ describe('unstable_derive for scoping atoms', () => {
               return atomRead(a, myGet, options)
             },
             atomWrite,
-            atomOnMount,
             atomOnInit,
+            atomOnMount,
           ]
         },
       )
@@ -221,8 +221,8 @@ it('should pass the correct store instance to the atom initializer', () => {
       setAtomState,
       atomRead,
       atomWrite,
-      atomOnMount,
       atomOnInit,
+      atomOnMount,
     ) => {
       const initializedAtoms = new WeakSet()
       return [
@@ -239,8 +239,8 @@ it('should pass the correct store instance to the atom initializer', () => {
         },
         atomRead,
         atomWrite,
-        atomOnMount,
         atomOnInit,
+        atomOnMount,
       ]
     },
   )

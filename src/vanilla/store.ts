@@ -248,10 +248,10 @@ const flushBatch = (batch: Batch) => {
 // internal & unstable type
 type StoreArgs = readonly [
   getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
-  setAtomState: <Value>(
+  setAtomState: <Value, CustomAtomState extends AtomState<Value>>(
     atom: Atom<Value>,
-    atomState: AtomState<Value>,
-  ) => AtomState<Value>,
+    atomState: CustomAtomState,
+  ) => CustomAtomState,
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -260,11 +260,11 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
   ) => Result,
+  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
   atomOnMount: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
-  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
 ]
 
 // for debugging purpose only
@@ -295,8 +295,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     setAtomState,
     atomRead,
     atomWrite,
-    atomOnMount,
     atomOnInit,
+    atomOnMount,
   ] = storeArgs
   const ensureAtomState = <Value>(atom: Atom<Value>) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
@@ -830,8 +830,8 @@ export const createStore = (): PrdOrDevStore => {
     (atom, atomState) => atomStateMap.set(atom, atomState).get(atom),
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
-    (atom, ...params) => atom.onMount?.(...params),
     (atom, ...params) => atom.unstable_onInit?.(...params),
+    (atom, ...params) => atom.onMount?.(...params),
   )
   if (import.meta.env?.MODE !== 'production') {
     return deriveDevStoreRev4(store)
