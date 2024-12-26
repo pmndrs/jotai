@@ -210,3 +210,21 @@ it('supports recursion', () => {
   expect(effect).toBeCalledTimes(2) // expect(effect).toBeCalledTimes(3)
   expect(store.get(a)).toBe(3)
 })
+
+it('read two atoms', () => {
+  const store = createStore()
+  const a = atom(0)
+  const b = atom(0)
+  const r = atom([] as number[])
+  const w = atom(null, (_, set) => {
+    set(a, (v) => v + 1)
+    set(b, (v) => v + 1)
+  })
+  const e = atomSyncEffect((get, set) => {
+    set(r, (v) => [...v, get(a) * 10 + get(b)])
+  })
+  store.sub(e, () => {})
+  expect(store.get(r)).toEqual([0])
+  store.set(w)
+  expect(store.get(r)).toEqual([0, 11])
+})
