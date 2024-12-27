@@ -104,6 +104,8 @@ type AtomState<Value = AnyValue> = {
   v?: Value
   /** Atom error */
   e?: AnyError
+  /** Indicates that the atom value has been changed */
+  x?: true
 }
 
 const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
@@ -161,9 +163,13 @@ const addDependency = <Value>(
 // Batch
 //
 
+type BatchPriority = 'H' | 'M' | 'L'
+
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
+  /** High priority functions */
+  H: Set<() => void>
   /** Medium priority functions */
   M: Set<() => void>
   /** Low priority functions */
@@ -172,16 +178,17 @@ type Batch = Readonly<{
 
 const createBatch = (): Batch => ({
   D: new Map(),
+  H: new Set(),
   M: new Set(),
   L: new Set(),
 })
 
-const addBatchFuncMedium = (batch: Batch, fn: () => void) => {
-  batch.M.add(fn)
-}
-
-const addBatchFuncLow = (batch: Batch, fn: () => void) => {
-  batch.L.add(fn)
+const addBatchFunc = (
+  batch: Batch,
+  priority: BatchPriority,
+  fn: () => void,
+) => {
+  batch[priority].add(fn)
 }
 
 const registerBatchAtom = (
@@ -191,8 +198,8 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    addBatchFuncMedium(batch, () => {
-      atomState.m?.l.forEach((listener) => listener())
+    addBatchFunc(batch, 'M', () => {
+      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
     })
   }
 }
@@ -211,12 +218,6 @@ const addBatchAtomDependent = (
 const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
   batch.D.get(atom)
 
-const copySetAndClear = <T>(origSet: Set<T>): Set<T> => {
-  const newSet = new Set(origSet)
-  origSet.clear()
-  return newSet
-}
-
 const flushBatch = (batch: Batch) => {
   let error: AnyError
   let hasError = false
@@ -230,10 +231,14 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.M.size || batch.L.size) {
+  while (batch.H.size || batch.M.size || batch.L.size) {
     batch.D.clear()
-    copySetAndClear(batch.M).forEach(call)
-    copySetAndClear(batch.L).forEach(call)
+    batch.H.forEach(call)
+    batch.H.clear()
+    batch.M.forEach(call)
+    batch.M.clear()
+    batch.L.forEach(call)
+    batch.L.clear()
   }
   if (hasError) {
     throw error
@@ -266,7 +271,7 @@ type DevStoreRev4 = {
   dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
 
-type PrdStore = {
+type Store = {
   get: <Value>(atom: Atom<Value>) => Value
   set: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
@@ -276,21 +281,12 @@ type PrdStore = {
   unstable_derive: (fn: (...args: StoreArgs) => StoreArgs) => Store
 }
 
-type Store = PrdStore | (PrdStore & DevStoreRev4)
-
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
-export type INTERNAL_PrdStore = PrdStore
+export type INTERNAL_PrdStore = Store
 
 const buildStore = (
   ...[getAtomState, atomRead, atomWrite, atomOnMount]: StoreArgs
 ): Store => {
-  // for debugging purpose only
-  let debugMountedAtoms: Set<AnyAtom>
-
-  if (import.meta.env?.MODE !== 'production') {
-    debugMountedAtoms = new Set()
-  }
-
   const setAtomStateValueOrPromise = (
     atom: AnyAtom,
     atomState: AtomState,
@@ -305,11 +301,11 @@ const buildStore = (
         addPendingPromiseToDependency(atom, valueOrPromise, getAtomState(a))
       }
       atomState.v = valueOrPromise
-      delete atomState.e
     } else {
       atomState.v = valueOrPromise
-      delete atomState.e
     }
+    delete atomState.e
+    delete atomState.x
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
       if (pendingPromise) {
@@ -321,7 +317,6 @@ const buildStore = (
   const readAtomState = <Value>(
     batch: Batch | undefined,
     atom: Atom<Value>,
-    dirtyAtoms?: Set<AnyAtom>,
   ): AtomState<Value> => {
     const atomState = getAtomState(atom)
     // See if we can skip recomputing this atom.
@@ -329,7 +324,7 @@ const buildStore = (
       // If the atom is mounted, we can use cached atom state.
       // because it should have been updated by dependencies.
       // We can't use the cache if the atom is dirty.
-      if (atomState.m && !dirtyAtoms?.has(atom)) {
+      if (atomState.m && !atomState.x) {
         return atomState
       }
       // Otherwise, check if the dependencies have changed.
@@ -339,7 +334,7 @@ const buildStore = (
           ([a, n]) =>
             // Recursively, read the atom state of the dependency, and
             // check if the atom epoch number is unchanged
-            readAtomState(batch, a, dirtyAtoms).n === n,
+            readAtomState(batch, a).n === n,
         )
       ) {
         return atomState
@@ -362,7 +357,7 @@ const buildStore = (
         return returnAtomValue(aState)
       }
       // a !== atom
-      const aState = readAtomState(batch, a, dirtyAtoms)
+      const aState = readAtomState(batch, a)
       try {
         return returnAtomValue(aState)
       } finally {
@@ -423,6 +418,7 @@ const buildStore = (
     } catch (error) {
       delete atomState.v
       atomState.e = error
+      delete atomState.x
       ++atomState.n
       return atomState
     } finally {
@@ -457,21 +453,26 @@ const buildStore = (
     return dependents
   }
 
-  // This is a topological sort via depth-first search, slightly modified from
-  // what's described here for simplicity and performance reasons:
-  // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-  function getSortedDependents(
+  const recomputeDependents = <Value>(
     batch: Batch,
-    rootAtom: AnyAtom,
-    rootAtomState: AtomState,
-  ): [[AnyAtom, AtomState, number][], Set<AnyAtom>] {
-    const sorted: [atom: AnyAtom, atomState: AtomState, epochNumber: number][] =
-      []
+    atom: Atom<Value>,
+    atomState: AtomState<Value>,
+  ) => {
+    // Step 1: traverse the dependency graph to build the topsorted atom list
+    // We don't bother to check for cycles, which simplifies the algorithm.
+    // This is a topological sort via depth-first search, slightly modified from
+    // what's described here for simplicity and performance reasons:
+    // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+    const topSortedReversed: [
+      atom: AnyAtom,
+      atomState: AtomState,
+      epochNumber: number,
+    ][] = []
     const visiting = new Set<AnyAtom>()
     const visited = new Set<AnyAtom>()
     // Visit the root atom. This is the only atom in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
-    const stack: [a: AnyAtom, aState: AtomState][] = [[rootAtom, rootAtomState]]
+    const stack: [a: AnyAtom, aState: AtomState][] = [[atom, atomState]]
     while (stack.length > 0) {
       const [a, aState] = stack[stack.length - 1]!
       if (visited.has(a)) {
@@ -483,9 +484,11 @@ const buildStore = (
         // The algorithm calls for pushing onto the front of the list. For
         // performance, we will simply push onto the end, and then will iterate in
         // reverse order later.
-        sorted.push([a, aState, aState.n])
+        topSortedReversed.push([a, aState, aState.n])
         // Atom has been visited but not yet processed
         visited.add(a)
+        // Mark atom dirty
+        aState.x = true
         stack.pop()
         continue
       }
@@ -497,44 +500,31 @@ const buildStore = (
         }
       }
     }
-    return [sorted, visited]
-  }
 
-  const recomputeDependents = <Value>(
-    batch: Batch,
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-  ) => {
-    // Step 1: traverse the dependency graph to build the topsorted atom list
-    // We don't bother to check for cycles, which simplifies the algorithm.
-    const [topsortedAtoms, markedAtoms] = getSortedDependents(
-      batch,
-      atom,
-      atomState,
-    )
-
-    // Step 2: use the topsorted atom list to recompute all affected atoms
+    // Step 2: use the topSortedReversed atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
-    const changedAtoms = new Set<AnyAtom>([atom])
-    for (let i = topsortedAtoms.length - 1; i >= 0; --i) {
-      const [a, aState, prevEpochNumber] = topsortedAtoms[i]!
-      let hasChangedDeps = false
-      for (const dep of aState.d.keys()) {
-        if (dep !== a && changedAtoms.has(dep)) {
-          hasChangedDeps = true
-          break
+    addBatchFunc(batch, 'H', () => {
+      const changedAtoms = new Set<AnyAtom>([atom])
+      for (let i = topSortedReversed.length - 1; i >= 0; --i) {
+        const [a, aState, prevEpochNumber] = topSortedReversed[i]!
+        let hasChangedDeps = false
+        for (const dep of aState.d.keys()) {
+          if (dep !== a && changedAtoms.has(dep)) {
+            hasChangedDeps = true
+            break
+          }
         }
-      }
-      if (hasChangedDeps) {
-        readAtomState(batch, a, markedAtoms)
-        mountDependencies(batch, a, aState)
-        if (prevEpochNumber !== aState.n) {
-          registerBatchAtom(batch, a, aState)
-          changedAtoms.add(a)
+        if (hasChangedDeps) {
+          readAtomState(batch, a)
+          mountDependencies(batch, a, aState)
+          if (prevEpochNumber !== aState.n) {
+            registerBatchAtom(batch, a, aState)
+            changedAtoms.add(a)
+          }
         }
+        delete aState.x
       }
-      markedAtoms.delete(a)
-    }
+    })
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
@@ -635,9 +625,6 @@ const buildStore = (
         d: new Set(atomState.d.keys()),
         t: new Set(),
       }
-      if (import.meta.env?.MODE !== 'production') {
-        debugMountedAtoms.add(atom)
-      }
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
         let setAtom: (...args: unknown[]) => unknown
@@ -658,7 +645,7 @@ const buildStore = (
             isSync = false
           }
         }
-        addBatchFuncLow(batch, () => {
+        addBatchFunc(batch, 'L', () => {
           const onUnmount = createInvocationContext(batch, () =>
             atomOnMount(atom, (...args) => setAtom(...args)),
           )
@@ -684,12 +671,9 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFuncLow(batch, () => onUnmount(batch))
+        addBatchFunc(batch, 'L', () => onUnmount(batch))
       }
       delete atomState.m
-      if (import.meta.env?.MODE !== 'production') {
-        debugMountedAtoms.delete(atom)
-      }
       // unmount dependencies
       for (const a of atomState.d.keys()) {
         const aMounted = unmountAtom(batch, a, getAtomState(a))
@@ -724,43 +708,90 @@ const buildStore = (
     sub: subscribeAtom,
     unstable_derive,
   }
-  if (import.meta.env?.MODE !== 'production') {
-    const devStore: DevStoreRev4 = {
-      // store dev methods (these are tentative and subject to change without notice)
-      dev4_get_internal_weak_map: () => ({
-        get: (atom) => {
-          const atomState = getAtomState(atom)
-          if (atomState.n === 0) {
-            // for backward compatibility
-            return undefined
-          }
-          return atomState
-        },
-      }),
-      dev4_get_mounted_atoms: () => debugMountedAtoms,
-      dev4_restore_atoms: (values) => {
-        const batch = createBatch()
-        for (const [atom, value] of values) {
-          if (hasInitialValue(atom)) {
-            const atomState = getAtomState(atom)
-            const prevEpochNumber = atomState.n
-            setAtomStateValueOrPromise(atom, atomState, value)
-            mountDependencies(batch, atom, atomState)
-            if (prevEpochNumber !== atomState.n) {
-              registerBatchAtom(batch, atom, atomState)
-              recomputeDependents(batch, atom, atomState)
-            }
-          }
-        }
-        flushBatch(batch)
-      },
-    }
-    Object.assign(store, devStore)
-  }
   return store
 }
 
-export const createStore = (): Store => {
+const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
+  const proxyAtomStateMap = new WeakMap()
+  const debugMountedAtoms = new Set<AnyAtom>()
+  let savedGetAtomState: StoreArgs[0]
+  let inRestoreAtom = 0
+  const derivedStore = store.unstable_derive(
+    (getAtomState, atomRead, atomWrite, atomOnMount) => {
+      savedGetAtomState = getAtomState
+      return [
+        (atom) => {
+          let proxyAtomState = proxyAtomStateMap.get(atom)
+          if (!proxyAtomState) {
+            const atomState = getAtomState(atom)
+            proxyAtomState = new Proxy(atomState, {
+              set(target, prop, value) {
+                if (prop === 'm') {
+                  debugMountedAtoms.add(atom)
+                }
+                return Reflect.set(target, prop, value)
+              },
+              deleteProperty(target, prop) {
+                if (prop === 'm') {
+                  debugMountedAtoms.delete(atom)
+                }
+                return Reflect.deleteProperty(target, prop)
+              },
+            })
+            proxyAtomStateMap.set(atom, proxyAtomState)
+          }
+          return proxyAtomState
+        },
+        atomRead,
+        (atom, getter, setter, ...args) => {
+          if (inRestoreAtom) {
+            return setter(atom, ...args)
+          }
+          return atomWrite(atom, getter, setter, ...args)
+        },
+        atomOnMount,
+      ]
+    },
+  )
+  const savedStoreSet = derivedStore.set
+  const devStore: DevStoreRev4 = {
+    // store dev methods (these are tentative and subject to change without notice)
+    dev4_get_internal_weak_map: () => ({
+      get: (atom) => {
+        const atomState = savedGetAtomState(atom)
+        if (atomState.n === 0) {
+          // for backward compatibility
+          return undefined
+        }
+        return atomState
+      },
+    }),
+    dev4_get_mounted_atoms: () => debugMountedAtoms,
+    dev4_restore_atoms: (values) => {
+      const restoreAtom: WritableAtom<null, [], void> = {
+        read: () => null,
+        write: (_get, set) => {
+          ++inRestoreAtom
+          try {
+            for (const [atom, value] of values) {
+              if (hasInitialValue(atom)) {
+                set(atom as never, value)
+              }
+            }
+          } finally {
+            --inRestoreAtom
+          }
+        },
+      }
+      savedStoreSet(restoreAtom)
+    },
+  }
+  return Object.assign(derivedStore, devStore)
+}
+
+type PrdOrDevStore = Store | (Store & DevStoreRev4)
+
+export const createStore = (): PrdOrDevStore => {
   const atomStateMap = new WeakMap()
   const getAtomState = <Value>(atom: Atom<Value>) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
@@ -773,17 +804,21 @@ export const createStore = (): Store => {
     }
     return atomState
   }
-  return buildStore(
+  const store = buildStore(
     getAtomState,
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
   )
+  if (import.meta.env?.MODE !== 'production') {
+    return deriveDevStoreRev4(store)
+  }
+  return store
 }
 
-let defaultStore: Store | undefined
+let defaultStore: PrdOrDevStore | undefined
 
-export const getDefaultStore = (): Store => {
+export const getDefaultStore = (): PrdOrDevStore => {
   if (!defaultStore) {
     defaultStore = createStore()
     if (import.meta.env?.MODE !== 'production') {
