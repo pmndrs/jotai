@@ -71,7 +71,9 @@ const isPromiseLike = (
  */
 type Mounted = {
   /** Set of listeners to notify when the atom value changes. */
-  readonly l: Set<() => void>
+  readonly l: Set<
+    readonly [listener: () => void, priority?: BatchPriority | undefined]
+  >
   /** Set of mounted atoms that the atom depends on. */
   readonly d: Set<AnyAtom>
   /** Set of mounted atoms that depends on the atom. */
@@ -198,8 +200,10 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    addBatchFunc(batch, 'M', () => {
-      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
+    addBatchFunc(batch, 'H', () => {
+      for (const [listener, priority = 'M'] of atomState.m?.l || []) {
+        addBatchFunc(batch, priority, listener)
+      }
     })
   }
 }
@@ -710,15 +714,20 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     return atomState.m
   }
 
-  const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
+  const subscribeAtom = (
+    atom: AnyAtom,
+    listener: () => void,
+    priority?: BatchPriority,
+  ) => {
     const batch = createBatch()
     const atomState = ensureAtomState(atom)
     const mounted = mountAtom(batch, atom, atomState)
     const listeners = mounted.l
-    listeners.add(listener)
+    const priorityListener = [listener, priority] as const
+    listeners.add(priorityListener)
     flushBatch(batch)
     return () => {
-      listeners.delete(listener)
+      listeners.delete(priorityListener)
       const batch = createBatch()
       unmountAtom(batch, atom, atomState)
       flushBatch(batch)
