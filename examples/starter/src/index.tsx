@@ -46,9 +46,7 @@ function App() {
   );
 }
 
-const root = document.getElementById('app');
-
-createRoot(root!).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
