@@ -216,15 +216,15 @@ it('read two atoms', () => {
   const a = atom(0)
   const b = atom(0)
   const r = atom([] as number[])
-  const w = atom(null, (_, set) => {
-    set(a, (v) => v + 1)
-    set(b, (v) => v + 1)
-  })
   const e = atomSyncEffect((get, set) => {
     set(r, (v) => [...v, get(a) * 10 + get(b)])
   })
   store.sub(e, () => {})
-  expect(store.get(r)).toEqual([0])
+  const w = atom(null, (_get, set) => {
+    set(a, (v) => v + 1)
+    set(b, (v) => v + 1)
+  })
   store.set(w)
   expect(store.get(r)).toEqual([0, 11])
+  expect(store.get(r)).not.toEqual([0, 10, 11])
 })
