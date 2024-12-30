@@ -100,8 +100,8 @@ type AtomState<Value = AnyValue> = {
   n: number
   /** Object to store mounted state of the atom. */
   m?: Mounted // only available if the atom is mounted
-  /** Listener to notify when the atom value is updated. */
-  u?: () => void
+  /** Listener to notify when the atom is mounted or unmounted. */
+  h?: () => void
   /** Atom value */
   v?: Value
   /** Atom error */
@@ -653,6 +653,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         d: new Set(atomState.d.keys()),
         t: new Set(),
       }
+      atomState.h?.()
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
         let setAtom: (...args: unknown[]) => unknown
@@ -703,6 +704,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         addBatchFunc(batch, 'L', () => onUnmount(batch))
       }
       delete atomState.m
+      atomState.h?.()
       // unmount dependencies
       for (const a of atomState.d.keys()) {
         const aMounted = unmountAtom(batch, a, ensureAtomState(a))
@@ -741,7 +743,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
 }
 
 const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
-  const proxyAtomStateMap = new WeakMap()
   const debugMountedAtoms = new Set<AnyAtom>()
   let savedGetAtomState: StoreArgs[0]
   let inRestoreAtom = 0
@@ -756,25 +757,19 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
     ) => {
       savedGetAtomState = getAtomState
       return [
-        (atom) => proxyAtomStateMap.get(atom),
+        getAtomState,
         (atom, atomState) => {
-          setAtomState(atom, atomState)
-          const proxyAtomState = new Proxy(atomState, {
-            set(target, prop, value) {
-              if (prop === 'm') {
-                debugMountedAtoms.add(atom)
-              }
-              return Reflect.set(target, prop, value)
-            },
-            deleteProperty(target, prop) {
-              if (prop === 'm') {
-                debugMountedAtoms.delete(atom)
-              }
-              return Reflect.deleteProperty(target, prop)
-            },
-          })
-          proxyAtomStateMap.set(atom, proxyAtomState)
-          return proxyAtomState
+          const newAtomState = setAtomState(atom, atomState)
+          let originalMounted = newAtomState.h
+          newAtomState.h = () => {
+            originalMounted?.()
+            if (newAtomState.m) {
+              debugMountedAtoms.add(atom)
+            } else {
+              debugMountedAtoms.delete(atom)
+            }
+          }
+          return newAtomState
         },
         atomRead,
         (atom, getter, setter, ...args) => {
