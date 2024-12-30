@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEventOrig from '@testing-library/user-event'
