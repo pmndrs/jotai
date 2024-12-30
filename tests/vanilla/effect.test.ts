@@ -3,12 +3,12 @@ import type { Atom, Getter, Setter } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 
 type AnyAtom = Atom<unknown>
-type GetterWithPeak = Getter & { peak: Getter }
+type GetterWithPeek = Getter & { peek: Getter }
 type SetterWithRecurse = Setter & { recurse: Setter }
 type Cleanup = () => void
-type Effect = (get: GetterWithPeak, set: SetterWithRecurse) => void | Cleanup
+type Effect = (get: GetterWithPeek, set: SetterWithRecurse) => void | Cleanup
 type Ref = {
-  get: GetterWithPeak
+  get: GetterWithPeek
   set?: SetterWithRecurse
   cleanup?: Cleanup | null
   fromCleanup: boolean
@@ -36,7 +36,7 @@ function atomSyncEffect(effect: Effect) {
       ref.get = ((a) => {
         ref.deps.add(a)
         return get(a)
-      }) as Getter & { peak: Getter }
+      }) as Getter & { peek: Getter }
     }
     ref.init()
     ref.deps.forEach(get)
@@ -62,8 +62,8 @@ function atomSyncEffect(effect: Effect) {
     const get = store.get
     const set = store.set
     ref.init = () => {
-      if (!ref.get.peak) {
-        ref.get.peak = get
+      if (!ref.get.peek) {
+        ref.get.peek = get
       }
       if (!ref.set) {
         const setter: Setter = (a, ...args) => {
@@ -78,7 +78,7 @@ function atomSyncEffect(effect: Effect) {
         const recurse: Setter = (a, ...args) => {
           if (ref.fromCleanup) {
             if (import.meta.env?.MODE !== 'production') {
-              console.warn('cannot recurse inside cleanup')
+              throw new Error('set.recurse is not allowed in cleanup')
             }
             return undefined as any
           }
@@ -93,6 +93,39 @@ function atomSyncEffect(effect: Effect) {
     { effect },
   )
   return effectAtom
+}
+
+type AtomWithEffect<T extends Atom<unknown>> = T & { effect: Effect }
+
+export function withAtomEffect<T extends Atom<unknown>>(
+  targetAtom: T,
+  effect: Effect,
+): AtomWithEffect<T> {
+  const effectAtom = atomSyncEffect((get, set) => {
+    const getter = ((a) =>
+      a === targetWithEffect ? get(targetAtom) : get(a)) as typeof get
+    getter.peek = get.peek
+    return targetWithEffect.effect(getter, set)
+  })
+  const descriptors = Object.getOwnPropertyDescriptors(
+    targetAtom as AtomWithEffect<T>,
+  )
+  descriptors.read.value = (get) => {
+    try {
+      return get(targetAtom)
+    } finally {
+      get(effectAtom)
+    }
+  }
+  if ('write' in targetAtom && typeof targetAtom.write === 'function') {
+    descriptors.write!.value = targetAtom.write.bind(targetAtom)
+    delete descriptors.onMount
+  }
+  // avoid reading `init` to preserve lazy initialization
+  const targetPrototype = Object.getPrototypeOf(targetAtom)
+  const targetWithEffect = Object.create(targetPrototype, descriptors)
+  targetWithEffect.effect = effect
+  return targetWithEffect
 }
 
 it('responds to changes to atoms when subscribed', () => {
@@ -181,12 +214,12 @@ it('sets values to atoms without causing infinite loop', () => {
   expect(effect).toBeCalledTimes(2)
 })
 
-it('reads the value with peak without subscribing to updates', () => {
+it('reads the value with peek without subscribing to updates', () => {
   const store = createStore()
   const a = atom(1)
   let result = 0
-  const effect = vi.fn((get: GetterWithPeak) => {
-    result = get.peak(a)
+  const effect = vi.fn((get: GetterWithPeek) => {
+    result = get.peek(a)
   })
   const e = atomSyncEffect(effect)
   store.sub(e, () => {}) // mount syncEffect
@@ -227,4 +260,18 @@ it('read two atoms', () => {
   store.set(w)
   expect(store.get(r)).toEqual([0, 11])
   expect(store.get(r)).not.toEqual([0, 10, 11])
+})
+
+it('does not cause infinite loops when it references itself', async () => {
+  const countWithEffectAtom = withAtomEffect(atom(0), (get, set) => {
+    get(countWithEffectAtom)
+    set(countWithEffectAtom, (v) => v + 1)
+  })
+  const store = createStore()
+  store.sub(countWithEffectAtom, () => {})
+  expect(store.get(countWithEffectAtom)).toBe(1) //     Expected: 1, Received: 0
+  store.set(countWithEffectAtom, (v) => {
+    return v + 1
+  })
+  expect(store.get(countWithEffectAtom)).toBe(3)
 })
