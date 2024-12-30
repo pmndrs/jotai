@@ -17,16 +17,6 @@ export default tseslint.config(
   tseslint.configs.recommended,
   react.configs.flat['jsx-runtime'],
   {
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        ecmaVersion: 2018,
-        sourceType: 'module',
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-    },
     plugins: {
       'react-compiler': reactCompiler,
       'react-hooks': reactHooks,
