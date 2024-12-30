@@ -20,6 +20,9 @@ devDependencies:
   '@babel/template':
     specifier: ^7.25.9
     version: 7.25.9
+  '@eslint/js':
+    specifier: ^9.17.0
+    version: 9.17.0
   '@rollup/plugin-alias':
     specifier: ^5.1.1
     version: 5.1.1(rollup@4.29.1)
