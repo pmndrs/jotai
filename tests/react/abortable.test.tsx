@@ -6,7 +6,6 @@ import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -38,7 +37,6 @@ describe('abortable atom test', () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -98,7 +96,6 @@ describe('abortable atom test', () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -160,7 +157,6 @@ describe('abortable atom test', () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -212,7 +208,6 @@ describe('abortable atom test', () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>

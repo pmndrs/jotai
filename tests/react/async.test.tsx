@@ -7,7 +7,6 @@ import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -54,7 +53,6 @@ it('does not show async stale result', async () => {
     return <div>delayedCount: {delayedCount}</div>
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <>
@@ -123,7 +121,6 @@ it('does not show async stale result on derived atom', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -178,7 +175,6 @@ it('works with async get with extra deps', async () => {
     return <div>delayedCount: {delayedCount}</div>
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -220,7 +216,6 @@ it('reuses promises on initial read', async () => {
     return <div>{str}</div>
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -261,7 +256,6 @@ it('uses multiple async atoms at once', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -301,7 +295,6 @@ it('uses async atom in the middle of dependency chain', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -348,7 +341,6 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <>
@@ -404,7 +396,6 @@ it('updates an async atom in child useEffect on remount', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <>
@@ -462,7 +453,6 @@ it('async get and useEffect on parent', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <>
@@ -510,7 +500,6 @@ it('async get with another dep and useEffect on parent', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <>
@@ -563,7 +552,6 @@ it('set promise atom value on write (#304)', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -609,7 +597,6 @@ it('uses async atom double chain (#306)', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -646,7 +633,6 @@ it('uses an async atom that depends on another async atom', async () => {
     return <div>num: {num}</div>
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -835,7 +821,6 @@ it('should override promise as atom value (#430)', async () => {
     return <button onClick={() => setCount(1)}>button</button>
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -877,7 +862,6 @@ it('combine two promise atom values (#442)', async () => {
     return null
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -916,7 +900,6 @@ it('set two promise atoms at once', async () => {
     return <button onClick={() => setCounts()}>button</button>
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -1014,7 +997,6 @@ it('async atom double chain without setTimeout (#751)', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -1078,7 +1060,6 @@ it('async atom double chain with setTimeout', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -1137,7 +1118,6 @@ it('update unmounted async atom with intermediate atom', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
