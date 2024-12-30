@@ -13,10 +13,9 @@ export default tseslint.config(
     ignores: ['dist/', 'examples/', 'website/'],
   },
   eslint.configs.recommended,
+  importPlugin.flatConfigs.recommended,
   tseslint.configs.recommended,
   react.configs.flat['jsx-runtime'],
-  importPlugin.flatConfigs.errors,
-  importPlugin.flatConfigs.warnings,
   {
     languageOptions: {
       parser: tseslint.parser,
@@ -36,18 +35,8 @@ export default tseslint.config(
       react: {
         version: 'detect',
       },
-      'import/extensions': ['.js', '.jsx', '.ts', '.tsx'],
-      'import/parsers': {
-        '@typescript-eslint/parser': ['.js', '.jsx', '.ts', '.tsx'],
-      },
       'import/resolver': {
-        alias: {
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
-          map: [
-            ['^jotai$', './src/index.ts'],
-            ['jotai', './src'],
-          ],
-        },
+        typescript: true,
       },
     },
     rules: {
@@ -58,20 +47,18 @@ export default tseslint.config(
       'prefer-const': 'error',
       curly: ['warn', 'multi-line', 'consistent'],
       'no-console': 'off',
-      'import/extensions': ['error', 'always'],
-      'import/no-unresolved': ['error', { commonjs: true, amd: true }],
-      'import/export': 'error',
-      'import/no-duplicates': ['error'],
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      'sort-imports': [
+        'error',
+        {
+          ignoreDeclarationSort: true,
+        },
       ],
-      '@typescript-eslint/no-use-before-define': 'off',
-      '@typescript-eslint/no-empty-function': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      'import/namespace': 'off',
+      'import/no-unresolved': ['error', { commonjs: true, amd: true }],
       'import/named': 'off',
+      'import/namespace': 'off',
+      'import/no-named-as-default-member': 'off',
+      'import/no-duplicates': 'error',
+      'import/extensions': ['error', 'always'],
       'import/order': [
         'error',
         {
@@ -96,12 +83,14 @@ export default tseslint.config(
           pathGroupsExcludedImportTypes: ['builtin'],
         },
       ],
-      'sort-imports': [
-        'error',
-        {
-          ignoreDeclarationSort: true,
-        },
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      '@typescript-eslint/no-use-before-define': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
   {
