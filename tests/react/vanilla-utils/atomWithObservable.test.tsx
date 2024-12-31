@@ -10,7 +10,6 @@ import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -129,7 +128,6 @@ it('writable count state without initial value', async () => {
     return <button onClick={() => dispatch(9)}>button</button>
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -174,7 +172,6 @@ it('writable count state with delayed value', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -208,7 +205,6 @@ it('only subscribe once per atom', async () => {
   }
 
   let rerender: (ui: ReactNode) => void
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     ;({ rerender } = render(
       <>
@@ -257,7 +253,6 @@ it('cleanup subscription', async () => {
   }
 
   let rerender: (ui: ReactNode) => void
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     ;({ rerender } = render(
       <StrictMode>
@@ -297,7 +292,6 @@ it('resubscribe on remount', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -387,7 +381,6 @@ it('writable count state with error', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -486,7 +479,6 @@ it('with initially emitted undefined value', async () => {
     return <>count: {state === undefined ? '-' : state}</>
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -524,7 +516,6 @@ it("don't omit values emitted between init and mount", async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -574,8 +565,6 @@ describe('error handling', () => {
           )}
         </div>
       ) : (
-        // below rule should not consider render() inside class component
-        // eslint-disable-next-line testing-library/no-node-access
         this.props.children
       )
     }
@@ -594,7 +583,6 @@ describe('error handling', () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -651,7 +639,6 @@ describe('error handling', () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -743,7 +730,6 @@ describe('error handling', () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -784,7 +770,6 @@ describe('wonka', () => {
       return <>count: {count}</>
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -819,7 +804,6 @@ describe('wonka', () => {
       return <button onClick={() => setCount(1)}>button</button>
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>

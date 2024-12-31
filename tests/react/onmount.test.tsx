@@ -6,7 +6,6 @@ import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -328,7 +327,6 @@ it('mount/unmount test with async atom', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <>
@@ -510,7 +508,6 @@ it('create atom with onMount in async get', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
