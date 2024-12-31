@@ -100,6 +100,8 @@ type AtomState<Value = AnyValue> = {
   n: number
   /** Object to store mounted state of the atom. */
   m?: Mounted // only available if the atom is mounted
+  /** Listener to notify when the atom value is updated. */
+  u?: () => void
   /** Listener to notify when the atom is mounted or unmounted. */
   h?: () => void
   /** Atom value */
