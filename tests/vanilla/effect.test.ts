@@ -80,7 +80,7 @@ function atomSyncEffect(effect: Effect) {
             if (import.meta.env?.MODE !== 'production') {
               throw new Error('set.recurse is not allowed in cleanup')
             }
-            return undefined as any
+            return undefined as never
           }
           return set(a, ...args)
         }
@@ -95,7 +95,7 @@ function atomSyncEffect(effect: Effect) {
   return effectAtom
 }
 
-const withAtomEffect = <T extends WritableAtom<unknown, any[], unknown>>(
+const withAtomEffect = <T extends WritableAtom<unknown, never[], unknown>>(
   a: T,
   effect: Effect,
 ): T => {
@@ -105,7 +105,7 @@ const withAtomEffect = <T extends WritableAtom<unknown, any[], unknown>>(
       get(effectAtom)
       return get(a)
     },
-    (_, set, ...args) => set(a, ...args),
+    (_get, set, ...args) => set(a, ...args),
   ) as T
 }
 
