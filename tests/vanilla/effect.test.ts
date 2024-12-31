@@ -1,69 +1,71 @@
 import { expect, it, vi } from 'vitest'
-import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
+import type { Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 
-type AnyAtom = Atom<unknown>
 type GetterWithPeek = Getter & { peek: Getter }
 type SetterWithRecurse = Setter & { recurse: Setter }
 type Cleanup = () => void
 type Effect = (get: GetterWithPeek, set: SetterWithRecurse) => void | Cleanup
 type Ref = {
-  get: GetterWithPeek
+  get?: GetterWithPeek
   set?: SetterWithRecurse
   cleanup?: Cleanup | null
-  fromCleanup: boolean
+  fromCleanup?: boolean
   inProgress: number
-  deps: Set<AnyAtom>
-  init: () => void
+  init?: () => void
 }
 
 function atomSyncEffect(effect: Effect) {
   const refAtom = atom(
-    () => ({ deps: new Set(), inProgress: 0 }) as Ref,
+    () => ({ inProgress: 0 }) as Ref,
     (get) => {
       const ref = get(refAtom)
       return () => {
         ref.cleanup?.()
         ref.cleanup = null
-        ref.deps.clear()
       }
     },
   )
   refAtom.onMount = (mount) => mount()
+  const runAtom = atom({ fn: () => {} })
   const internalAtom = atom((get) => {
     const ref = get(refAtom)
-    if (!ref.get) {
-      ref.get = ((a) => {
-        ref.deps.add(a)
-        return get(a)
-      }) as Getter & { peek: Getter }
-    }
-    ref.init()
-    ref.deps.forEach(get)
+    ref.get = ((a) => {
+      return get(a)
+    }) as Getter & { peek: Getter }
+    ref.init!()
     if (ref.inProgress > 0) {
       return
     }
-    ref.cleanup?.()
-    const cleanup = effectAtom.effect(ref.get!, ref.set!)
-    ref.cleanup =
-      typeof cleanup === 'function'
-        ? () => {
-            try {
-              ref.fromCleanup = true
-              cleanup()
-            } finally {
-              ref.fromCleanup = false
-            }
-          }
-        : null
+    const fn = () => {
+      ref.cleanup?.()
+      const cleanup = effectAtom.effect(ref.get!, ref.set!)
+      ref.cleanup = () => {
+        try {
+          ref.fromCleanup = true
+          cleanup?.()
+        } finally {
+          ref.fromCleanup = false
+        }
+      }
+    }
+    const tmp = atom(undefined)
+    tmp.unstable_onInit = (store) => {
+      store.set(runAtom, { fn })
+    }
+    get(tmp)
   })
   internalAtom.unstable_onInit = (store) => {
+    store.sub(runAtom, () => {
+      const { fn } = store.get(runAtom)
+      fn()
+    }) // FIXME unsubscribe
     const ref = store.get(refAtom)
     const get = store.get
     const set = store.set
     ref.init = () => {
-      if (!ref.get.peek) {
-        ref.get.peek = get
+      if (!ref.get!.peek) {
+        ref.get!.peek = get
       }
       if (!ref.set) {
         const setter: Setter = (a, ...args) => {
@@ -72,7 +74,7 @@ function atomSyncEffect(effect: Effect) {
             return set(a, ...args)
           } finally {
             --ref.inProgress
-            ref.get(a) // FIXME why do we need this?
+            ref.get!(a) // FIXME why do we need this?
           }
         }
         const recurse: Setter = (a, ...args) => {
