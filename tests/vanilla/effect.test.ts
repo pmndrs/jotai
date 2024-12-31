@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest'
-import type { Atom, Getter, Setter } from 'jotai/vanilla'
+import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 
 type AnyAtom = Atom<unknown>
@@ -95,37 +95,18 @@ function atomSyncEffect(effect: Effect) {
   return effectAtom
 }
 
-type AtomWithEffect<T extends Atom<unknown>> = T & { effect: Effect }
-
-export function withAtomEffect<T extends Atom<unknown>>(
-  targetAtom: T,
+const withAtomEffect = <T extends WritableAtom<unknown, any[], unknown>>(
+  a: T,
   effect: Effect,
-): AtomWithEffect<T> {
-  const effectAtom = atomSyncEffect((get, set) => {
-    const getter = ((a) =>
-      a === targetWithEffect ? get(targetAtom) : get(a)) as typeof get
-    getter.peek = get.peek
-    return targetWithEffect.effect(getter, set)
-  })
-  const descriptors = Object.getOwnPropertyDescriptors(
-    targetAtom as AtomWithEffect<T>,
-  )
-  descriptors.read.value = (get) => {
-    try {
-      return get(targetAtom)
-    } finally {
+): T => {
+  const effectAtom = atomSyncEffect(effect)
+  return atom(
+    (get) => {
       get(effectAtom)
-    }
-  }
-  if ('write' in targetAtom && typeof targetAtom.write === 'function') {
-    descriptors.write!.value = targetAtom.write.bind(targetAtom)
-    delete descriptors.onMount
-  }
-  // avoid reading `init` to preserve lazy initialization
-  const targetPrototype = Object.getPrototypeOf(targetAtom)
-  const targetWithEffect = Object.create(targetPrototype, descriptors)
-  targetWithEffect.effect = effect
-  return targetWithEffect
+      return get(a)
+    },
+    (_, set, ...args) => set(a, ...args),
+  ) as T
 }
 
 it('responds to changes to atoms when subscribed', () => {
@@ -269,7 +250,7 @@ it('does not cause infinite loops when it references itself', async () => {
   })
   const store = createStore()
   store.sub(countWithEffectAtom, () => {})
-  expect(store.get(countWithEffectAtom)).toBe(1) //     Expected: 1, Received: 0
+  expect(store.get(countWithEffectAtom)).toBe(1)
   store.set(countWithEffectAtom, (v) => {
     return v + 1
   })
