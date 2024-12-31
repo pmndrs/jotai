@@ -256,3 +256,25 @@ it('does not cause infinite loops when it references itself', async () => {
   })
   expect(store.get(countWithEffectAtom)).toBe(3)
 })
+
+it('fires after recomputeDependents and before atom listeners', async () => {
+  const store = createStore()
+  const a = atom({} as { v?: number })
+  let r
+  const e = atomSyncEffect((get) => {
+    r = get(a).v
+  })
+  const b = atom((get) => {
+    const aValue = get(a)
+    get(e)
+    // sets property `v` inside recomputeDependents
+    aValue.v = 1
+    return aValue
+  })
+  store.sub(b, () => {
+    // sets property `v` inside atom listener
+    store.get(a).v = 2
+  })
+  store.set(a, { v: 0 })
+  expect(r).toStrictEqual(1)
+})
