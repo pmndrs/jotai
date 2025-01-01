@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const path = require('path')
 const alias = require('@rollup/plugin-alias')
 const babelPlugin = require('@rollup/plugin-babel')
