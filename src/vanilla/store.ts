@@ -179,8 +179,8 @@ const createBatch = (): Batch =>
 
 const addBatchFunc = (
   batch: Batch,
-  fn: () => void,
   priority: BatchPriority,
+  fn: () => void,
 ) => {
   batch[priority].add(fn)
 }
@@ -193,9 +193,9 @@ const registerBatchAtom = (
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
     const scheduleListeners = () => {
-      atomState.m?.l.forEach((listener) => addBatchFunc(batch, listener, 1))
+      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 1, listener))
     }
-    addBatchFunc(batch, scheduleListeners, 1)
+    addBatchFunc(batch, 1, scheduleListeners)
   }
 }
 
@@ -518,7 +518,7 @@ const buildStore = (
         delete aState.x
       }
     }
-    addBatchFunc(batch, finishRecompute, 0)
+    addBatchFunc(batch, 0, finishRecompute)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
@@ -647,7 +647,7 @@ const buildStore = (
             mounted.u = (batch) => createInvocationContext(batch, onUnmount)
           }
         }
-        addBatchFunc(batch, processOnMount, 2)
+        addBatchFunc(batch, 2, processOnMount)
       }
     }
     return atomState.m
@@ -666,7 +666,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFunc(batch, () => onUnmount(batch), 2)
+        addBatchFunc(batch, 2, () => onUnmount(batch))
       }
       delete atomState.m
       // unmount dependencies
