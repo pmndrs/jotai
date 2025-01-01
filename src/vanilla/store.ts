@@ -1,4 +1,5 @@
 import type { Atom, WritableAtom } from './atom.ts'
+import type { ExtractAtomValue } from './typeUtils.ts'
 
 type AnyValue = unknown
 type AnyError = unknown
@@ -8,59 +9,8 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 
-const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
-  atom.unstable_is ? atom.unstable_is(a) : a === atom
-
-const hasInitialValue = <T extends Atom<AnyValue>>(
-  atom: T,
-): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) =>
-  'init' in atom
-
-const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
-  !!(atom as AnyWritableAtom).write
-
-//
-// Cancelable Promise
-//
-
 type CancelHandler = (nextValue: unknown) => void
 type PromiseState = [cancelHandlers: Set<CancelHandler>, settled: boolean]
-
-const cancelablePromiseMap = new WeakMap<PromiseLike<unknown>, PromiseState>()
-
-const isPendingPromise = (value: unknown): value is PromiseLike<unknown> =>
-  isPromiseLike(value) && !cancelablePromiseMap.get(value)?.[1]
-
-const cancelPromise = <T>(promise: PromiseLike<T>, nextValue: unknown) => {
-  const promiseState = cancelablePromiseMap.get(promise)
-  if (promiseState) {
-    promiseState[1] = true
-    promiseState[0].forEach((fn) => fn(nextValue))
-  } else if (import.meta.env?.MODE !== 'production') {
-    throw new Error('[Bug] cancelable promise not found')
-  }
-}
-
-const patchPromiseForCancelability = <T>(promise: PromiseLike<T>) => {
-  if (cancelablePromiseMap.has(promise)) {
-    // already patched
-    return
-  }
-  const promiseState: PromiseState = [new Set(), false]
-  cancelablePromiseMap.set(promise, promiseState)
-  const settle = () => {
-    promiseState[1] = true
-  }
-  promise.then(settle, settle)
-  ;(promise as { onCancel?: (fn: CancelHandler) => void }).onCancel = (fn) => {
-    promiseState[0].add(fn)
-  }
-}
-
-const isPromiseLike = (
-  x: unknown,
-): x is PromiseLike<unknown> & { onCancel?: (fn: CancelHandler) => void } =>
-  typeof (x as any)?.then === 'function'
 
 /**
  * State tracked for mounted atoms. An atom is considered "mounted" if it has a
@@ -108,61 +58,6 @@ type AtomState<Value = AnyValue> = {
   x?: true
 }
 
-const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
-  'v' in atomState || 'e' in atomState
-
-const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
-  if ('e' in atomState) {
-    throw atomState.e
-  }
-  if (import.meta.env?.MODE !== 'production' && !('v' in atomState)) {
-    throw new Error('[Bug] atom state is not initialized')
-  }
-  return atomState.v!
-}
-
-const addPendingPromiseToDependency = (
-  atom: AnyAtom,
-  promise: PromiseLike<AnyValue>,
-  dependencyAtomState: AtomState,
-) => {
-  if (!dependencyAtomState.p.has(atom)) {
-    dependencyAtomState.p.add(atom)
-    promise.then(
-      () => {
-        dependencyAtomState.p.delete(atom)
-      },
-      () => {
-        dependencyAtomState.p.delete(atom)
-      },
-    )
-  }
-}
-
-const addDependency = <Value>(
-  batch: Batch | undefined,
-  atom: Atom<Value>,
-  atomState: AtomState<Value>,
-  a: AnyAtom,
-  aState: AtomState,
-) => {
-  if (import.meta.env?.MODE !== 'production' && a === atom) {
-    throw new Error('[Bug] atom cannot depend on itself')
-  }
-  atomState.d.set(a, aState.n)
-  if (isPendingPromise(atomState.v)) {
-    addPendingPromiseToDependency(atom, atomState.v, aState)
-  }
-  aState.m?.t.add(atom)
-  if (batch) {
-    addBatchAtomDependent(batch, a, atom)
-  }
-}
-
-//
-// Batch
-//
-
 type BatchPriority = 'H' | 'M' | 'L'
 
 type Batch = Readonly<{
@@ -175,75 +70,6 @@ type Batch = Readonly<{
   /** Low priority functions */
   L: Set<() => void>
 }>
-
-const createBatch = (): Batch => ({
-  D: new Map(),
-  H: new Set(),
-  M: new Set(),
-  L: new Set(),
-})
-
-const addBatchFunc = (
-  batch: Batch,
-  priority: BatchPriority,
-  fn: () => void,
-) => {
-  batch[priority].add(fn)
-}
-
-const registerBatchAtom = (
-  batch: Batch,
-  atom: AnyAtom,
-  atomState: AtomState,
-) => {
-  if (!batch.D.has(atom)) {
-    batch.D.set(atom, new Set())
-    addBatchFunc(batch, 'M', () => {
-      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
-    })
-  }
-}
-
-const addBatchAtomDependent = (
-  batch: Batch,
-  atom: AnyAtom,
-  dependent: AnyAtom,
-) => {
-  const dependents = batch.D.get(atom)
-  if (dependents) {
-    dependents.add(dependent)
-  }
-}
-
-const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
-  batch.D.get(atom)
-
-const flushBatch = (batch: Batch) => {
-  let error: AnyError
-  let hasError = false
-  const call = (fn: () => void) => {
-    try {
-      fn()
-    } catch (e) {
-      if (!hasError) {
-        error = e
-        hasError = true
-      }
-    }
-  }
-  while (batch.H.size || batch.M.size || batch.L.size) {
-    batch.D.clear()
-    batch.H.forEach(call)
-    batch.H.clear()
-    batch.M.forEach(call)
-    batch.M.clear()
-    batch.L.forEach(call)
-    batch.L.clear()
-  }
-  if (hasError) {
-    throw error
-  }
-}
 
 // internal & unstable type
 type StoreArgs = readonly [
@@ -260,6 +86,7 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
+  internals: Record<string, unknown>,
 ]
 
 // for debugging purpose only
@@ -285,428 +112,598 @@ export type INTERNAL_DevStoreRev4 = DevStoreRev4
 export type INTERNAL_PrdStore = Store
 
 const buildStore = (
-  ...[getAtomState, atomRead, atomWrite, atomOnMount]: StoreArgs
+  ...[getAtomState, atomRead, atomWrite, atomOnMount, internals]: StoreArgs
 ): Store => {
-  const setAtomStateValueOrPromise = (
-    atom: AnyAtom,
-    atomState: AtomState,
-    valueOrPromise: unknown,
-  ) => {
-    const hasPrevValue = 'v' in atomState
-    const prevValue = atomState.v
-    const pendingPromise = isPendingPromise(atomState.v) ? atomState.v : null
-    if (isPromiseLike(valueOrPromise)) {
-      patchPromiseForCancelability(valueOrPromise)
-      for (const a of atomState.d.keys()) {
-        addPendingPromiseToDependency(atom, valueOrPromise, getAtomState(a))
-      }
-      atomState.v = valueOrPromise
-    } else {
-      atomState.v = valueOrPromise
-    }
-    delete atomState.e
-    delete atomState.x
-    if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
-      ++atomState.n
-      if (pendingPromise) {
-        cancelPromise(pendingPromise, valueOrPromise)
-      }
-    }
-  }
+  const f = {
+    isSelfAtom: (atom: AnyAtom, a: AnyAtom): boolean =>
+      atom.unstable_is ? atom.unstable_is(a) : a === atom,
 
-  const readAtomState = <Value>(
-    batch: Batch | undefined,
-    atom: Atom<Value>,
-  ): AtomState<Value> => {
-    const atomState = getAtomState(atom)
-    // See if we can skip recomputing this atom.
-    if (isAtomStateInitialized(atomState)) {
-      // If the atom is mounted, we can use cached atom state.
-      // because it should have been updated by dependencies.
-      // We can't use the cache if the atom is dirty.
-      if (atomState.m && !atomState.x) {
-        return atomState
+    hasInitialValue: <T extends Atom<AnyValue>>(
+      atom: T,
+    ): atom is T & { init: ExtractAtomValue<T> } => 'init' in atom,
+
+    isActuallyWritableAtom: (atom: AnyAtom): atom is AnyWritableAtom =>
+      !!(atom as AnyWritableAtom).write,
+
+    //
+    // Cancelable Promise
+    //
+
+    cancelablePromiseMap: new WeakMap<PromiseLike<unknown>, PromiseState>(),
+
+    isPendingPromise: (value: unknown): value is PromiseLike<unknown> =>
+      f.isPromiseLike(value) && !f.cancelablePromiseMap.get(value)?.[1],
+
+    cancelPromise: <T>(promise: PromiseLike<T>, nextValue: unknown) => {
+      const promiseState = f.cancelablePromiseMap.get(promise)
+      if (promiseState) {
+        promiseState[1] = true
+        promiseState[0].forEach((fn) => fn(nextValue))
+      } else if (import.meta.env?.MODE !== 'production') {
+        throw new Error('[Bug] cancelable promise not found')
       }
-      // Otherwise, check if the dependencies have changed.
-      // If all dependencies haven't changed, we can use the cache.
-      if (
-        Array.from(atomState.d).every(
-          ([a, n]) =>
-            // Recursively, read the atom state of the dependency, and
-            // check if the atom epoch number is unchanged
-            readAtomState(batch, a).n === n,
+    },
+
+    patchPromiseForCancelability: <T>(promise: PromiseLike<T>) => {
+      if (f.cancelablePromiseMap.has(promise)) {
+        // already patched
+        return
+      }
+      const promiseState: PromiseState = [new Set(), false]
+      f.cancelablePromiseMap.set(promise, promiseState)
+      const settle = () => {
+        promiseState[1] = true
+      }
+      promise.then(settle, settle)
+      ;(promise as { onCancel?: (fn: CancelHandler) => void }).onCancel = (
+        fn,
+      ) => {
+        promiseState[0].add(fn)
+      }
+    },
+
+    isPromiseLike: (
+      x: unknown,
+    ): x is PromiseLike<unknown> & { onCancel?: (fn: CancelHandler) => void } =>
+      typeof (x as any)?.then === 'function',
+
+    isAtomStateInitialized: <Value>(atomState: AtomState<Value>) =>
+      'v' in atomState || 'e' in atomState,
+
+    returnAtomValue: <Value>(atomState: AtomState<Value>): Value => {
+      if ('e' in atomState) {
+        throw atomState.e
+      }
+      if (import.meta.env?.MODE !== 'production' && !('v' in atomState)) {
+        throw new Error('[Bug] atom state is not initialized')
+      }
+      return atomState.v!
+    },
+
+    addPendingPromiseToDependency: (
+      atom: AnyAtom,
+      promise: PromiseLike<AnyValue>,
+      dependencyAtomState: AtomState,
+    ) => {
+      if (!dependencyAtomState.p.has(atom)) {
+        dependencyAtomState.p.add(atom)
+        promise.then(
+          () => {
+            dependencyAtomState.p.delete(atom)
+          },
+          () => {
+            dependencyAtomState.p.delete(atom)
+          },
         )
-      ) {
-        return atomState
       }
-    }
-    // Compute a new state for this atom.
-    atomState.d.clear()
-    let isSync = true
-    const getter: Getter = <V>(a: Atom<V>) => {
-      if (isSelfAtom(atom, a)) {
-        const aState = getAtomState(a)
-        if (!isAtomStateInitialized(aState)) {
-          if (hasInitialValue(a)) {
-            setAtomStateValueOrPromise(a, aState, a.init)
-          } else {
-            // NOTE invalid derived atoms can reach here
-            throw new Error('no atom init')
+    },
+
+    addDependency: <Value>(
+      batch: Batch | undefined,
+      atom: Atom<Value>,
+      atomState: AtomState<Value>,
+      a: AnyAtom,
+      aState: AtomState,
+    ) => {
+      if (import.meta.env?.MODE !== 'production' && a === atom) {
+        throw new Error('[Bug] atom cannot depend on itself')
+      }
+      atomState.d.set(a, aState.n)
+      if (f.isPendingPromise(atomState.v)) {
+        f.addPendingPromiseToDependency(atom, atomState.v, aState)
+      }
+      aState.m?.t.add(atom)
+      if (batch) {
+        f.addBatchAtomDependent(batch, a, atom)
+      }
+    },
+
+    //
+    // Batch
+    //
+
+    createBatch: (): Batch => ({
+      D: new Map(),
+      H: new Set(),
+      M: new Set(),
+      L: new Set(),
+    }),
+
+    addBatchFunc: (batch: Batch, priority: BatchPriority, fn: () => void) => {
+      batch[priority].add(fn)
+    },
+
+    registerBatchAtom: (batch: Batch, atom: AnyAtom, atomState: AtomState) => {
+      if (!batch.D.has(atom)) {
+        batch.D.set(atom, new Set())
+        f.addBatchFunc(batch, 'M', () => {
+          atomState.m?.l.forEach((listener) =>
+            f.addBatchFunc(batch, 'M', listener),
+          )
+        })
+      }
+    },
+
+    addBatchAtomDependent: (
+      batch: Batch,
+      atom: AnyAtom,
+      dependent: AnyAtom,
+    ) => {
+      const dependents = batch.D.get(atom)
+      if (dependents) {
+        dependents.add(dependent)
+      }
+    },
+
+    getBatchAtomDependents: (batch: Batch, atom: AnyAtom) => batch.D.get(atom),
+
+    flushBatch: (batch: Batch) => {
+      let error: AnyError
+      let hasError = false
+      const call = (fn: () => void) => {
+        try {
+          fn()
+        } catch (e) {
+          if (!hasError) {
+            error = e
+            hasError = true
           }
         }
-        return returnAtomValue(aState)
       }
-      // a !== atom
-      const aState = readAtomState(batch, a)
-      try {
-        return returnAtomValue(aState)
-      } finally {
-        if (isSync) {
-          addDependency(batch, atom, atomState, a, aState)
-        } else {
-          const batch = createBatch()
-          addDependency(batch, atom, atomState, a, aState)
-          mountDependencies(batch, atom, atomState)
-          flushBatch(batch)
-        }
+      while (batch.H.size || batch.M.size || batch.L.size) {
+        batch.D.clear()
+        batch.H.forEach(call)
+        batch.H.clear()
+        batch.M.forEach(call)
+        batch.M.clear()
+        batch.L.forEach(call)
+        batch.L.clear()
       }
-    }
-    let controller: AbortController | undefined
-    let setSelf: ((...args: unknown[]) => unknown) | undefined
-    const options = {
-      get signal() {
-        if (!controller) {
-          controller = new AbortController()
-        }
-        return controller.signal
-      },
-      get setSelf() {
-        if (
-          import.meta.env?.MODE !== 'production' &&
-          !isActuallyWritableAtom(atom)
-        ) {
-          console.warn('setSelf function cannot be used with read-only atom')
-        }
-        if (!setSelf && isActuallyWritableAtom(atom)) {
-          setSelf = (...args) => {
-            if (import.meta.env?.MODE !== 'production' && isSync) {
-              console.warn('setSelf function cannot be called in sync')
-            }
-            if (!isSync) {
-              return writeAtom(atom, ...args)
-            }
-          }
-        }
-        return setSelf
-      },
-    }
-    try {
-      const valueOrPromise = atomRead(atom, getter, options as never)
-      setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
-      if (isPromiseLike(valueOrPromise)) {
-        valueOrPromise.onCancel?.(() => controller?.abort())
-        const complete = () => {
-          if (atomState.m) {
-            const batch = createBatch()
-            mountDependencies(batch, atom, atomState)
-            flushBatch(batch)
-          }
-        }
-        valueOrPromise.then(complete, complete)
+      if (hasError) {
+        throw error
       }
-      return atomState
-    } catch (error) {
-      delete atomState.v
-      atomState.e = error
-      delete atomState.x
-      ++atomState.n
-      return atomState
-    } finally {
-      isSync = false
-    }
-  }
+    },
 
-  const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(undefined, atom))
-
-  const getMountedOrBatchDependents = <Value>(
-    batch: Batch,
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-  ): Map<AnyAtom, AtomState> => {
-    const dependents = new Map<AnyAtom, AtomState>()
-    for (const a of atomState.m?.t || []) {
-      const aState = getAtomState(a)
-      if (aState.m) {
-        dependents.set(a, aState)
-      }
-    }
-    for (const atomWithPendingPromise of atomState.p) {
-      dependents.set(
-        atomWithPendingPromise,
-        getAtomState(atomWithPendingPromise),
-      )
-    }
-    getBatchAtomDependents(batch, atom)?.forEach((dependent) => {
-      dependents.set(dependent, getAtomState(dependent))
-    })
-    return dependents
-  }
-
-  const recomputeDependents = <Value>(
-    batch: Batch,
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-  ) => {
-    // Step 1: traverse the dependency graph to build the topsorted atom list
-    // We don't bother to check for cycles, which simplifies the algorithm.
-    // This is a topological sort via depth-first search, slightly modified from
-    // what's described here for simplicity and performance reasons:
-    // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-    const topSortedReversed: [
+    setAtomStateValueOrPromise: (
       atom: AnyAtom,
       atomState: AtomState,
-      epochNumber: number,
-    ][] = []
-    const visiting = new Set<AnyAtom>()
-    const visited = new Set<AnyAtom>()
-    // Visit the root atom. This is the only atom in the dependency graph
-    // without incoming edges, which is one reason we can simplify the algorithm
-    const stack: [a: AnyAtom, aState: AtomState][] = [[atom, atomState]]
-    while (stack.length > 0) {
-      const [a, aState] = stack[stack.length - 1]!
-      if (visited.has(a)) {
-        // All dependents have been processed, now process this atom
-        stack.pop()
-        continue
-      }
-      if (visiting.has(a)) {
-        // The algorithm calls for pushing onto the front of the list. For
-        // performance, we will simply push onto the end, and then will iterate in
-        // reverse order later.
-        topSortedReversed.push([a, aState, aState.n])
-        // Atom has been visited but not yet processed
-        visited.add(a)
-        // Mark atom dirty
-        aState.x = true
-        stack.pop()
-        continue
-      }
-      visiting.add(a)
-      // Push unvisited dependents onto the stack
-      for (const [d, s] of getMountedOrBatchDependents(batch, a, aState)) {
-        if (a !== d && !visiting.has(d)) {
-          stack.push([d, s])
-        }
-      }
-    }
-
-    // Step 2: use the topSortedReversed atom list to recompute all affected atoms
-    // Track what's changed, so that we can short circuit when possible
-    addBatchFunc(batch, 'H', () => {
-      const changedAtoms = new Set<AnyAtom>([atom])
-      for (let i = topSortedReversed.length - 1; i >= 0; --i) {
-        const [a, aState, prevEpochNumber] = topSortedReversed[i]!
-        let hasChangedDeps = false
-        for (const dep of aState.d.keys()) {
-          if (dep !== a && changedAtoms.has(dep)) {
-            hasChangedDeps = true
-            break
-          }
-        }
-        if (hasChangedDeps) {
-          readAtomState(batch, a)
-          mountDependencies(batch, a, aState)
-          if (prevEpochNumber !== aState.n) {
-            registerBatchAtom(batch, a, aState)
-            changedAtoms.add(a)
-          }
-        }
-        delete aState.x
-      }
-    })
-  }
-
-  const writeAtomState = <Value, Args extends unknown[], Result>(
-    batch: Batch,
-    atom: WritableAtom<Value, Args, Result>,
-    ...args: Args
-  ): Result => {
-    let isSync = true
-    const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(batch, a))
-    const setter: Setter = <V, As extends unknown[], R>(
-      a: WritableAtom<V, As, R>,
-      ...args: As
+      valueOrPromise: unknown,
     ) => {
-      const aState = getAtomState(a)
-      try {
-        if (isSelfAtom(atom, a)) {
-          if (!hasInitialValue(a)) {
-            // NOTE technically possible but restricted as it may cause bugs
-            throw new Error('atom not writable')
+      const hasPrevValue = 'v' in atomState
+      const prevValue = atomState.v
+      const pendingPromise = f.isPendingPromise(atomState.v)
+        ? atomState.v
+        : null
+      if (f.isPromiseLike(valueOrPromise)) {
+        f.patchPromiseForCancelability(valueOrPromise)
+        for (const a of atomState.d.keys()) {
+          f.addPendingPromiseToDependency(atom, valueOrPromise, getAtomState(a))
+        }
+        atomState.v = valueOrPromise
+      } else {
+        atomState.v = valueOrPromise
+      }
+      delete atomState.e
+      delete atomState.x
+      if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
+        ++atomState.n
+        if (pendingPromise) {
+          f.cancelPromise(pendingPromise, valueOrPromise)
+        }
+      }
+    },
+
+    readAtomState: <Value>(
+      batch: Batch | undefined,
+      atom: Atom<Value>,
+    ): AtomState<Value> => {
+      const atomState = getAtomState(atom)
+      // See if we can skip recomputing this atom.
+      if (f.isAtomStateInitialized(atomState)) {
+        // If the atom is mounted, we can use cached atom state.
+        // because it should have been updated by dependencies.
+        // We can't use the cache if the atom is dirty.
+        if (atomState.m && !atomState.x) {
+          return atomState
+        }
+        // Otherwise, check if the dependencies have changed.
+        // If all dependencies haven't changed, we can use the cache.
+        if (
+          Array.from(atomState.d).every(
+            ([a, n]) =>
+              // Recursively, read the atom state of the dependency, and
+              // check if the atom epoch number is unchanged
+              f.readAtomState(batch, a).n === n,
+          )
+        ) {
+          return atomState
+        }
+      }
+      // Compute a new state for this atom.
+      atomState.d.clear()
+      let isSync = true
+      const getter: Getter = <V>(a: Atom<V>) => {
+        if (f.isSelfAtom(atom, a)) {
+          const aState = getAtomState(a)
+          if (!f.isAtomStateInitialized(aState)) {
+            if (f.hasInitialValue(a)) {
+              f.setAtomStateValueOrPromise(a, aState, a.init)
+            } else {
+              // NOTE invalid derived atoms can reach here
+              throw new Error('no atom init')
+            }
           }
-          const prevEpochNumber = aState.n
-          const v = args[0] as V
-          setAtomStateValueOrPromise(a, aState, v)
-          mountDependencies(batch, a, aState)
-          if (prevEpochNumber !== aState.n) {
-            registerBatchAtom(batch, a, aState)
-            recomputeDependents(batch, a, aState)
+          return f.returnAtomValue(aState)
+        }
+        // a !== atom
+        const aState = f.readAtomState(batch, a)
+        try {
+          return f.returnAtomValue(aState)
+        } finally {
+          if (isSync) {
+            f.addDependency(batch, atom, atomState, a, aState)
+          } else {
+            const batch = f.createBatch()
+            f.addDependency(batch, atom, atomState, a, aState)
+            f.mountDependencies(batch, atom, atomState)
+            f.flushBatch(batch)
           }
-          return undefined as R
-        } else {
-          return writeAtomState(batch, a, ...args)
-        }
-      } finally {
-        if (!isSync) {
-          flushBatch(batch)
         }
       }
-    }
-    try {
-      return atomWrite(atom, getter, setter, ...args)
-    } finally {
-      isSync = false
-    }
-  }
-
-  const writeAtom = <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    ...args: Args
-  ): Result => {
-    const batch = createBatch()
-    try {
-      return writeAtomState(batch, atom, ...args)
-    } finally {
-      flushBatch(batch)
-    }
-  }
-
-  const mountDependencies = (
-    batch: Batch,
-    atom: AnyAtom,
-    atomState: AtomState,
-  ) => {
-    if (atomState.m && !isPendingPromise(atomState.v)) {
-      for (const a of atomState.d.keys()) {
-        if (!atomState.m.d.has(a)) {
-          const aMounted = mountAtom(batch, a, getAtomState(a))
-          aMounted.t.add(atom)
-          atomState.m.d.add(a)
-        }
-      }
-      for (const a of atomState.m.d || []) {
-        if (!atomState.d.has(a)) {
-          atomState.m.d.delete(a)
-          const aMounted = unmountAtom(batch, a, getAtomState(a))
-          aMounted?.t.delete(atom)
-        }
-      }
-    }
-  }
-
-  const mountAtom = <Value>(
-    batch: Batch,
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-  ): Mounted => {
-    if (!atomState.m) {
-      // recompute atom state
-      readAtomState(batch, atom)
-      // mount dependencies first
-      for (const a of atomState.d.keys()) {
-        const aMounted = mountAtom(batch, a, getAtomState(a))
-        aMounted.t.add(atom)
-      }
-      // mount self
-      atomState.m = {
-        l: new Set(),
-        d: new Set(atomState.d.keys()),
-        t: new Set(),
-      }
-      if (isActuallyWritableAtom(atom)) {
-        const mounted = atomState.m
-        let setAtom: (...args: unknown[]) => unknown
-        const createInvocationContext = <T>(batch: Batch, fn: () => T) => {
-          let isSync = true
-          setAtom = (...args: unknown[]) => {
-            try {
-              return writeAtomState(batch, atom, ...args)
-            } finally {
+      let controller: AbortController | undefined
+      let setSelf: ((...args: unknown[]) => unknown) | undefined
+      const options = {
+        get signal() {
+          if (!controller) {
+            controller = new AbortController()
+          }
+          return controller.signal
+        },
+        get setSelf() {
+          if (
+            import.meta.env?.MODE !== 'production' &&
+            !f.isActuallyWritableAtom(atom)
+          ) {
+            console.warn('setSelf function cannot be used with read-only atom')
+          }
+          if (!setSelf && f.isActuallyWritableAtom(atom)) {
+            setSelf = (...args) => {
+              if (import.meta.env?.MODE !== 'production' && isSync) {
+                console.warn('setSelf function cannot be called in sync')
+              }
               if (!isSync) {
-                flushBatch(batch)
+                return f.writeAtom(atom, ...args)
               }
             }
           }
-          try {
-            return fn()
-          } finally {
-            isSync = false
+          return setSelf
+        },
+      }
+      try {
+        const valueOrPromise = atomRead(atom, getter, options as never)
+        f.setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
+        if (f.isPromiseLike(valueOrPromise)) {
+          valueOrPromise.onCancel?.(() => controller?.abort())
+          const complete = () => {
+            if (atomState.m) {
+              const batch = f.createBatch()
+              f.mountDependencies(batch, atom, atomState)
+              f.flushBatch(batch)
+            }
+          }
+          valueOrPromise.then(complete, complete)
+        }
+        return atomState
+      } catch (error) {
+        delete atomState.v
+        atomState.e = error
+        delete atomState.x
+        ++atomState.n
+        return atomState
+      } finally {
+        isSync = false
+      }
+    },
+
+    readAtom: <Value>(atom: Atom<Value>): Value =>
+      f.returnAtomValue(f.readAtomState(undefined, atom)),
+
+    getMountedOrBatchDependents: <Value>(
+      batch: Batch,
+      atom: Atom<Value>,
+      atomState: AtomState<Value>,
+    ): Map<AnyAtom, AtomState> => {
+      const dependents = new Map<AnyAtom, AtomState>()
+      for (const a of atomState.m?.t || []) {
+        const aState = getAtomState(a)
+        if (aState.m) {
+          dependents.set(a, aState)
+        }
+      }
+      for (const atomWithPendingPromise of atomState.p) {
+        dependents.set(
+          atomWithPendingPromise,
+          getAtomState(atomWithPendingPromise),
+        )
+      }
+      f.getBatchAtomDependents(batch, atom)?.forEach((dependent) => {
+        dependents.set(dependent, getAtomState(dependent))
+      })
+      return dependents
+    },
+
+    recomputeDependents: <Value>(
+      batch: Batch,
+      atom: Atom<Value>,
+      atomState: AtomState<Value>,
+    ) => {
+      // Step 1: traverse the dependency graph to build the topsorted atom list
+      // We don't bother to check for cycles, which simplifies the algorithm.
+      // This is a topological sort via depth-first search, slightly modified from
+      // what's described here for simplicity and performance reasons:
+      // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+      const topSortedReversed: [
+        atom: AnyAtom,
+        atomState: AtomState,
+        epochNumber: number,
+      ][] = []
+      const visiting = new Set<AnyAtom>()
+      const visited = new Set<AnyAtom>()
+      // Visit the root atom. This is the only atom in the dependency graph
+      // without incoming edges, which is one reason we can simplify the algorithm
+      const stack: [a: AnyAtom, aState: AtomState][] = [[atom, atomState]]
+      while (stack.length > 0) {
+        const [a, aState] = stack[stack.length - 1]!
+        if (visited.has(a)) {
+          // All dependents have been processed, now process this atom
+          stack.pop()
+          continue
+        }
+        if (visiting.has(a)) {
+          // The algorithm calls for pushing onto the front of the list. For
+          // performance, we will simply push onto the end, and then will iterate in
+          // reverse order later.
+          topSortedReversed.push([a, aState, aState.n])
+          // Atom has been visited but not yet processed
+          visited.add(a)
+          // Mark atom dirty
+          aState.x = true
+          stack.pop()
+          continue
+        }
+        visiting.add(a)
+        // Push unvisited dependents onto the stack
+        for (const [d, s] of f.getMountedOrBatchDependents(batch, a, aState)) {
+          if (a !== d && !visiting.has(d)) {
+            stack.push([d, s])
           }
         }
-        addBatchFunc(batch, 'L', () => {
-          const onUnmount = createInvocationContext(batch, () =>
-            atomOnMount(atom, (...args) => setAtom(...args)),
-          )
-          if (onUnmount) {
-            mounted.u = (batch) => createInvocationContext(batch, onUnmount)
+      }
+
+      // Step 2: use the topSortedReversed atom list to recompute all affected atoms
+      // Track what's changed, so that we can short circuit when possible
+      f.addBatchFunc(batch, 'H', () => {
+        const changedAtoms = new Set<AnyAtom>([atom])
+        for (let i = topSortedReversed.length - 1; i >= 0; --i) {
+          const [a, aState, prevEpochNumber] = topSortedReversed[i]!
+          let hasChangedDeps = false
+          for (const dep of aState.d.keys()) {
+            if (dep !== a && changedAtoms.has(dep)) {
+              hasChangedDeps = true
+              break
+            }
           }
-        })
-      }
-    }
-    return atomState.m
-  }
+          if (hasChangedDeps) {
+            f.readAtomState(batch, a)
+            f.mountDependencies(batch, a, aState)
+            if (prevEpochNumber !== aState.n) {
+              f.registerBatchAtom(batch, a, aState)
+              changedAtoms.add(a)
+            }
+          }
+          delete aState.x
+        }
+      })
+    },
 
-  const unmountAtom = <Value>(
-    batch: Batch,
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-  ): Mounted | undefined => {
-    if (
-      atomState.m &&
-      !atomState.m.l.size &&
-      !Array.from(atomState.m.t).some((a) => getAtomState(a).m?.d.has(atom))
-    ) {
-      // unmount self
-      const onUnmount = atomState.m.u
-      if (onUnmount) {
-        addBatchFunc(batch, 'L', () => onUnmount(batch))
+    writeAtomState: <Value, Args extends unknown[], Result>(
+      batch: Batch,
+      atom: WritableAtom<Value, Args, Result>,
+      ...args: Args
+    ): Result => {
+      let isSync = true
+      const getter: Getter = <V>(a: Atom<V>) =>
+        f.returnAtomValue(f.readAtomState(batch, a))
+      const setter: Setter = <V, As extends unknown[], R>(
+        a: WritableAtom<V, As, R>,
+        ...args: As
+      ) => {
+        const aState = getAtomState(a)
+        try {
+          if (f.isSelfAtom(atom, a)) {
+            if (!f.hasInitialValue(a)) {
+              // NOTE technically possible but restricted as it may cause bugs
+              throw new Error('atom not writable')
+            }
+            const prevEpochNumber = aState.n
+            const v = args[0] as V
+            f.setAtomStateValueOrPromise(a, aState, v)
+            f.mountDependencies(batch, a, aState)
+            if (prevEpochNumber !== aState.n) {
+              f.registerBatchAtom(batch, a, aState)
+              f.recomputeDependents(batch, a, aState)
+            }
+            return undefined as R
+          } else {
+            return f.writeAtomState(batch, a, ...args)
+          }
+        } finally {
+          if (!isSync) {
+            f.flushBatch(batch)
+          }
+        }
       }
-      delete atomState.m
-      // unmount dependencies
-      for (const a of atomState.d.keys()) {
-        const aMounted = unmountAtom(batch, a, getAtomState(a))
-        aMounted?.t.delete(atom)
+      try {
+        return atomWrite(atom, getter, setter, ...args)
+      } finally {
+        isSync = false
       }
-      return undefined
-    }
-    return atomState.m
-  }
+    },
 
-  const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    const batch = createBatch()
-    const atomState = getAtomState(atom)
-    const mounted = mountAtom(batch, atom, atomState)
-    const listeners = mounted.l
-    listeners.add(listener)
-    flushBatch(batch)
-    return () => {
-      listeners.delete(listener)
-      const batch = createBatch()
-      unmountAtom(batch, atom, atomState)
-      flushBatch(batch)
-    }
-  }
+    writeAtom: <Value, Args extends unknown[], Result>(
+      atom: WritableAtom<Value, Args, Result>,
+      ...args: Args
+    ): Result => {
+      const batch = f.createBatch()
+      try {
+        return f.writeAtomState(batch, atom, ...args)
+      } finally {
+        f.flushBatch(batch)
+      }
+    },
 
-  const unstable_derive = (fn: (...args: StoreArgs) => StoreArgs) =>
-    buildStore(...fn(getAtomState, atomRead, atomWrite, atomOnMount))
+    mountDependencies: (batch: Batch, atom: AnyAtom, atomState: AtomState) => {
+      if (atomState.m && !f.isPendingPromise(atomState.v)) {
+        for (const a of atomState.d.keys()) {
+          if (!atomState.m.d.has(a)) {
+            const aMounted = f.mountAtom(batch, a, getAtomState(a))
+            aMounted.t.add(atom)
+            atomState.m.d.add(a)
+          }
+        }
+        for (const a of atomState.m.d || []) {
+          if (!atomState.d.has(a)) {
+            atomState.m.d.delete(a)
+            const aMounted = f.unmountAtom(batch, a, getAtomState(a))
+            aMounted?.t.delete(atom)
+          }
+        }
+      }
+    },
+
+    mountAtom: <Value>(
+      batch: Batch,
+      atom: Atom<Value>,
+      atomState: AtomState<Value>,
+    ): Mounted => {
+      if (!atomState.m) {
+        // recompute atom state
+        f.readAtomState(batch, atom)
+        // mount dependencies first
+        for (const a of atomState.d.keys()) {
+          const aMounted = f.mountAtom(batch, a, getAtomState(a))
+          aMounted.t.add(atom)
+        }
+        // mount self
+        atomState.m = {
+          l: new Set(),
+          d: new Set(atomState.d.keys()),
+          t: new Set(),
+        }
+        if (f.isActuallyWritableAtom(atom)) {
+          const mounted = atomState.m
+          let setAtom: (...args: unknown[]) => unknown
+          const createInvocationContext = <T>(batch: Batch, fn: () => T) => {
+            let isSync = true
+            setAtom = (...args: unknown[]) => {
+              try {
+                return f.writeAtomState(batch, atom, ...args)
+              } finally {
+                if (!isSync) {
+                  f.flushBatch(batch)
+                }
+              }
+            }
+            try {
+              return fn()
+            } finally {
+              isSync = false
+            }
+          }
+          f.addBatchFunc(batch, 'L', () => {
+            const onUnmount = createInvocationContext(batch, () =>
+              atomOnMount(atom, (...args) => setAtom(...args)),
+            )
+            if (onUnmount) {
+              mounted.u = (batch) => createInvocationContext(batch, onUnmount)
+            }
+          })
+        }
+      }
+      return atomState.m
+    },
+
+    unmountAtom: <Value>(
+      batch: Batch,
+      atom: Atom<Value>,
+      atomState: AtomState<Value>,
+    ): Mounted | undefined => {
+      if (
+        atomState.m &&
+        !atomState.m.l.size &&
+        !Array.from(atomState.m.t).some((a) => getAtomState(a).m?.d.has(atom))
+      ) {
+        // unmount self
+        const onUnmount = atomState.m.u
+        if (onUnmount) {
+          f.addBatchFunc(batch, 'L', () => onUnmount(batch))
+        }
+        delete atomState.m
+        // unmount dependencies
+        for (const a of atomState.d.keys()) {
+          const aMounted = f.unmountAtom(batch, a, getAtomState(a))
+          aMounted?.t.delete(atom)
+        }
+        return undefined
+      }
+      return atomState.m
+    },
+
+    subscribeAtom: (atom: AnyAtom, listener: () => void) => {
+      const batch = f.createBatch()
+      const atomState = getAtomState(atom)
+      const mounted = f.mountAtom(batch, atom, atomState)
+      const listeners = mounted.l
+      listeners.add(listener)
+      f.flushBatch(batch)
+      return () => {
+        listeners.delete(listener)
+        const batch = f.createBatch()
+        f.unmountAtom(batch, atom, atomState)
+        f.flushBatch(batch)
+      }
+    },
+
+    unstable_derive: (fn: (...args: StoreArgs) => StoreArgs) =>
+      buildStore(...fn(getAtomState, atomRead, atomWrite, atomOnMount, f)),
+  } as const
+  Object.assign(f, internals)
 
   const store: Store = {
-    get: readAtom,
-    set: writeAtom,
-    sub: subscribeAtom,
-    unstable_derive,
+    get: f.readAtom,
+    set: f.writeAtom,
+    sub: f.subscribeAtom,
+    unstable_derive: f.unstable_derive,
   }
   return store
 }
@@ -716,8 +713,13 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
   const debugMountedAtoms = new Set<AnyAtom>()
   let savedGetAtomState: StoreArgs[0]
   let inRestoreAtom = 0
+  type HasInitialValue = <T extends Atom<AnyValue>>(
+    atom: T,
+  ) => atom is T & { init: ExtractAtomValue<T> }
+  let hasInitialValue: HasInitialValue
   const derivedStore = store.unstable_derive(
-    (getAtomState, atomRead, atomWrite, atomOnMount) => {
+    (getAtomState, atomRead, atomWrite, atomOnMount, internals) => {
+      hasInitialValue = internals.hasInitialValue as HasInitialValue
       savedGetAtomState = getAtomState
       return [
         (atom) => {
@@ -750,6 +752,7 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
           return atomWrite(atom, getter, setter, ...args)
         },
         atomOnMount,
+        internals,
       ]
     },
   )
@@ -809,6 +812,7 @@ export const createStore = (): PrdOrDevStore => {
     (atom, ...params) => atom.read(...params),
     (atom, ...params) => atom.write(...params),
     (atom, ...params) => atom.onMount?.(...params),
+    {},
   )
   if (import.meta.env?.MODE !== 'production') {
     return deriveDevStoreRev4(store)

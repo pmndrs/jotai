@@ -31,6 +31,7 @@ describe('unstable_derive for scoping atoms', () => {
           atomRead,
           atomWrite,
           atomOnMount,
+          {},
         ]
       },
     )
@@ -76,6 +77,7 @@ describe('unstable_derive for scoping atoms', () => {
           atomRead,
           atomWrite,
           atomOnMount,
+          {},
         ]
       },
     )
@@ -128,6 +130,7 @@ describe('unstable_derive for scoping atoms', () => {
             },
             atomWrite,
             atomOnMount,
+            {},
           ]
         },
       )
