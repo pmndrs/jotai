@@ -2,106 +2,68 @@ import { expect, it, vi } from 'vitest'
 import type { Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 
-type GetterWithPeek = Getter & { peek: Getter }
-type SetterWithRecurse = Setter & { recurse: Setter }
 type Cleanup = () => void
-type Effect = (get: GetterWithPeek, set: SetterWithRecurse) => void | Cleanup
+type Effect = (get: Getter, set: Setter) => void | Cleanup
 type Ref = {
-  get?: GetterWithPeek
-  set?: SetterWithRecurse
-  cleanup?: Cleanup | null
-  fromCleanup?: boolean
-  inProgress: number
-  init?: () => void
+  set?: Setter
+  update?: () => void
+  cleanup?: Cleanup | undefined
 }
 
-function atomSyncEffect(effect: Effect) {
+function syncEffect(effect: Effect) {
   const refAtom = atom(
-    () => ({ inProgress: 0 }) as Ref,
+    () => ({}) as Ref,
     (get) => {
       const ref = get(refAtom)
       return () => {
         ref.cleanup?.()
-        ref.cleanup = null
+        ref.cleanup = undefined
       }
     },
   )
   refAtom.onMount = (mount) => mount()
-  const runAtom = atom({ fn: () => {} })
   const internalAtom = atom((get) => {
     const ref = get(refAtom)
-    ref.get = ((a) => {
-      return get(a)
-    }) as Getter & { peek: Getter }
-    ref.init!()
-    if (ref.inProgress > 0) {
-      return
-    }
     const fn = () => {
       ref.cleanup?.()
-      const cleanup = effectAtom.effect(ref.get!, ref.set!)
-      ref.cleanup = () => {
-        try {
-          ref.fromCleanup = true
-          cleanup?.()
-        } finally {
-          ref.fromCleanup = false
-        }
-      }
+      ref.cleanup = effect(get, ref.set!) || undefined
     }
-    const tmp = atom(undefined)
-    tmp.unstable_onInit = (store) => {
-      store.set(runAtom, { fn })
-    }
-    get(tmp)
+    ref.update = fn
+    return { fn }
   })
   internalAtom.unstable_onInit = (store) => {
-    store.sub(runAtom, () => {
-      const { fn } = store.get(runAtom)
-      fn()
-    }) // FIXME unsubscribe
     const ref = store.get(refAtom)
-    const get = store.get
-    const set = store.set
-    ref.init = () => {
-      if (!ref.get!.peek) {
-        ref.get!.peek = get
-      }
-      if (!ref.set) {
-        const setter: Setter = (a, ...args) => {
-          try {
-            ++ref.inProgress
-            return set(a, ...args)
-          } finally {
-            --ref.inProgress
-            ref.get!(a) // FIXME why do we need this?
-          }
-        }
-        const recurse: Setter = (a, ...args) => {
-          if (ref.fromCleanup) {
-            if (import.meta.env?.MODE !== 'production') {
-              throw new Error('set.recurse is not allowed in cleanup')
-            }
-            return undefined as never
-          }
-          return set(a, ...args)
-        }
-        ref.set = Object.assign(setter, { recurse })
+    ref.set = (a, ...args) => {
+      try {
+        return store.set(a, ...args)
+      } finally {
+        store.get(a)
       }
     }
+    const runAtom = atom((get) => get(internalAtom))
+    const unsub = store.sub(runAtom, () => {}) 
+    ref.update?.()
+    unsub()
+    store.unstable_derive((...storeArgs) => {
+      const getAtomState = storeArgs[0]
+      const atomState = getAtomState(internalAtom)
+      if (!atomState) {
+        throw new Error('atomState is undefined unexpectedly')
+      }
+      atomState.u = () => ref.update?.()
+      return storeArgs
+    })
   }
-  const effectAtom = Object.assign(
-    atom((get) => get(internalAtom)),
-    { effect },
-  )
-  return effectAtom
+  return atom((get) => {
+    get(internalAtom)
+  })
 }
 
-const withAtomEffect = <T extends WritableAtom<unknown, never[], unknown>>(
+const withSyncEffect = <T extends WritableAtom<unknown, never[], unknown>>(
   a: T,
   effect: Effect,
 ): T => {
-  const effectAtom = atomSyncEffect(effect)
+  const effectAtom = syncEffect(effect)
   return atom(
     (get) => {
       get(effectAtom)
@@ -125,7 +87,7 @@ it('responds to changes to atoms when subscribed', () => {
     results.push(get(a) * 10 + get(b))
     return cleanup
   })
-  const e = atomSyncEffect(effect)
+  const e = syncEffect(effect)
   const unsub = store.sub(e, () => {}) // mount syncEffect
   expect(effect).toBeCalledTimes(1)
   expect(results).toStrictEqual([11]) // initial values at time of effect mount
@@ -161,7 +123,7 @@ it('responds to changes to atoms when mounted with get', () => {
     results.push(get(a) * 10 + get(b))
     return cleanup
   })
-  const e = atomSyncEffect(effect)
+  const e = syncEffect(effect)
   const d = atom((get) => get(e))
   const unsub = store.sub(d, () => {}) // mount syncEffect
   expect(effect).toBeCalledTimes(1)
@@ -186,7 +148,7 @@ it('sets values to atoms without causing infinite loop', () => {
   const effect = vi.fn((get: Getter, set: Setter) => {
     set(a, get(a) + 1)
   })
-  const e = atomSyncEffect(effect)
+  const e = syncEffect(effect)
   const unsub = store.sub(e, () => {}) // mount syncEffect
   expect(effect).toBeCalledTimes(1)
   expect(store.get(a)).toBe(2) // initial values at time of effect mount
@@ -197,42 +159,12 @@ it('sets values to atoms without causing infinite loop', () => {
   expect(effect).toBeCalledTimes(2)
 })
 
-it('reads the value with peek without subscribing to updates', () => {
-  const store = createStore()
-  const a = atom(1)
-  let result = 0
-  const effect = vi.fn((get: GetterWithPeek) => {
-    result = get.peek(a)
-  })
-  const e = atomSyncEffect(effect)
-  store.sub(e, () => {}) // mount syncEffect
-  expect(effect).toBeCalledTimes(1)
-  expect(result).toBe(1) // initial values at time of effect mount
-  store.set(a, 2)
-  expect(effect).toBeCalledTimes(1)
-})
-
-it('supports recursion', () => {
-  const store = createStore()
-  const a = atom(1)
-  const effect = vi.fn((get: Getter, set: SetterWithRecurse) => {
-    if (get(a) < 3) {
-      set.recurse(a, (v) => ++v)
-    }
-  })
-  const e = atomSyncEffect(effect)
-  store.sub(e, () => {}) // mount syncEffect
-  // FIXME which is correct?
-  expect(effect).toBeCalledTimes(2) // expect(effect).toBeCalledTimes(3)
-  expect(store.get(a)).toBe(3)
-})
-
 it('read two atoms', () => {
   const store = createStore()
   const a = atom(0)
   const b = atom(0)
   const r = atom([] as number[])
-  const e = atomSyncEffect((get, set) => {
+  const e = syncEffect((get, set) => {
     set(r, (v) => [...v, get(a) * 10 + get(b)])
   })
   store.sub(e, () => {})
@@ -246,7 +178,7 @@ it('read two atoms', () => {
 })
 
 it('does not cause infinite loops when it references itself', async () => {
-  const countWithEffectAtom = withAtomEffect(atom(0), (get, set) => {
+  const countWithEffectAtom = withSyncEffect(atom(0), (get, set) => {
     get(countWithEffectAtom)
     set(countWithEffectAtom, (v) => v + 1)
   })
@@ -263,7 +195,7 @@ it('fires after recomputeDependents and before atom listeners', async () => {
   const store = createStore()
   const a = atom({} as { v?: number })
   let r
-  const e = atomSyncEffect((get) => {
+  const e = syncEffect((get) => {
     r = get(a).v
   })
   const b = atom((get) => {
