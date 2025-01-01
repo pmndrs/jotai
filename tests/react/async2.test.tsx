@@ -6,7 +6,6 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -252,7 +251,6 @@ describe('infinite pending', () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -297,7 +295,6 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -333,7 +330,6 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
@@ -369,7 +365,6 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>

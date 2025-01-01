@@ -1,0 +1,14 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  place-items: center;
+  justify-content: center;
+
+  color: #fff;
+  background-color: hsl(0, 0%, 4%);
+}

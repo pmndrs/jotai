@@ -14,7 +14,6 @@ import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -194,7 +193,6 @@ it('can throw an initial error in async read function', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -231,7 +229,6 @@ it('can throw an error in async read function', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -559,7 +556,6 @@ describe('error recovery', () => {
       return <div>Value: {useAtom(asyncAtom)[0]}</div>
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>

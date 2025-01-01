@@ -16,7 +16,6 @@ import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -289,7 +288,6 @@ it('works with async get', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <>
@@ -334,7 +332,6 @@ it('works with async get without setTimeout', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -883,7 +880,6 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>

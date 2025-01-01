@@ -242,7 +242,6 @@ describe('atomWithStorage (async)', () => {
       )
     }
 
-    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(async () => {
       render(
         <StrictMode>
