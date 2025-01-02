@@ -46,11 +46,11 @@ function syncEffect(effect: Effect) {
     unsub()
     store.unstable_derive((...storeArgs) => {
       const getAtomState = storeArgs[0]
-      const atomState = getAtomState(internalAtom)
+      const atomState = getAtomState(undefined, internalAtom)
       if (!atomState) {
         throw new Error('atomState is undefined unexpectedly')
       }
-      atomState.u = () => ref.update?.()
+      // atomState.u = () => ref.update?.()
       return storeArgs
     })
   }
