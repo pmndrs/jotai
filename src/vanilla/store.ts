@@ -169,23 +169,27 @@ const addDependency = <Value>(
 
 type BatchPriority = 'H' | 'M' | 'L'
 
-type Batch = Readonly<{
-  /** Atom dependents map */
-  D: Map<AnyAtom, Set<AnyAtom>>
+type Batch = [
+  /** Batch channels */
+  recomputeDependents: Set<() => void>,
+  atomListeners: Set<() => void>,
+  atomMountHooks: Set<() => void>,
+] & {
   /** High priority functions */
   H: Set<() => void>
   /** Medium priority functions */
   M: Set<() => void>
   /** Low priority functions */
   L: Set<() => void>
-}>
+  /** Atom dependents map */
+  D: Map<AnyAtom, Set<AnyAtom>>
+}
 
-const createBatch = (): Batch => ({
-  D: new Map(),
-  H: new Set(),
-  M: new Set(),
-  L: new Set(),
-})
+const createBatch = (): Batch => {
+  const batch = Array(3).fill(new Set()) as Batch
+  const [H, M, L] = batch
+  return Object.assign(batch, { H, M, L, D: new Map() })
+}
 
 const addBatchFunc = (
   batch: Batch,
@@ -202,10 +206,10 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    addBatchFunc(batch, 'M', () => {
-      atomState.u?.(batch)
+    const scheduleListeners = () => {
       atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
-    })
+    }
+    addBatchFunc(batch, 'M', scheduleListeners)
   }
 }
 
