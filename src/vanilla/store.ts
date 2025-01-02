@@ -207,9 +207,10 @@ const registerBatchAtom = (
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
     const scheduleListeners = () => {
+      atomState.u?.(batch)
       atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
     }
-    addBatchFunc(batch, 'M', scheduleListeners)
+    addBatchFunc(batch, 'H', scheduleListeners)
   }
 }
 
