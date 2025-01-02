@@ -41,7 +41,7 @@ function syncEffect(effect: Effect) {
       }
     }
     const runAtom = atom((get) => get(internalAtom))
-    const unsub = store.sub(runAtom, () => {}) 
+    const unsub = store.sub(runAtom, () => {})
     ref.update?.()
     unsub()
     store.unstable_derive((...storeArgs) => {
