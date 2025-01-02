@@ -165,9 +165,9 @@ const addDependency = <Value>(
 // Batch
 //
 
-const BATCH_PRIORITY_HIGH = 0
-const BATCH_PRIORITY_MEDIUM = 1
-const BATCH_PRIORITY_LOW = 2
+const BATCH_PRIORITY_HIGH = 2
+const BATCH_PRIORITY_MEDIUM = 5
+const BATCH_PRIORITY_LOW = 8
 
 export type INTERNAL_BatchPriorityHigh = typeof BATCH_PRIORITY_HIGH
 export type INTERNAL_BatchPriorityMedium = typeof BATCH_PRIORITY_MEDIUM
@@ -703,7 +703,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFunc(batch, 2, () => onUnmount(batch))
+        addBatchFunc(batch, BATCH_PRIORITY_LOW, () => onUnmount(batch))
       }
       delete atomState.m
       // unmount dependencies
