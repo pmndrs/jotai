@@ -2,14 +2,14 @@ import cx from 'classnames';
 import { Link } from 'gatsby';
 import { Logo } from '../components/logo.js';
 
-export const Jotai = ({ isDocsPage = false, small = false, ...rest }) => {
+export const Jotai = ({ isDocs = false, small = false, ...rest }) => {
   return (
     <div {...rest}>
-      <Headline mainTitle={!isDocsPage}>
+      <Headline mainTitle={!isDocs}>
         <Link to="/" className="inline-block rounded-lg focus:ring-offset-4">
           <Logo
             className={cx(
-              isDocsPage
+              isDocs
                 ? 'text-gray-300 transition duration-300 ease-in-out hover:text-black dark:text-white dark:hover:text-white '
                 : 'text-black dark:text-white',
               !small ? 'w-full max-w-[12rem] lg:max-w-[16rem] 2xl:max-w-[18rem]' : 'w-[4rem]',
