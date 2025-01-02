@@ -163,19 +163,23 @@ const addDependency = <Value>(
 // Batch
 //
 
-type BatchPriority = 0 | 1 | 2
+type BatchPriority = 'H' | 'M' | 'L'
 
-type Batch = [
-  recomputeDependents: Set<() => void>,
-  atomListeners: Set<() => void>,
-  atomMountHooks: Set<() => void>,
-] & {
+type Batch = Set<() => void>[] & {
+  /** High priority functions */
+  H: Set<() => void>
+  /** Medium priority functions */
+  M: Set<() => void>
+  /** Low priority functions */
+  L: Set<() => void>
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
 }
 
-const createBatch = (): Batch =>
-  Object.assign(Array(3).fill(new Set()), { D: new Map() }) as Batch
+const createBatch = (): Batch => {
+  const [H, M, L] = [new Set(), new Set(), new Set()]
+  return Object.assign([H, M, L], { H, M, L, D: new Map() }) as Batch
+}
 
 const addBatchFunc = (
   batch: Batch,
@@ -193,9 +197,9 @@ const registerBatchAtom = (
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
     const scheduleListeners = () => {
-      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 1, listener))
+      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
     }
-    addBatchFunc(batch, 1, scheduleListeners)
+    addBatchFunc(batch, 'M', scheduleListeners)
   }
 }
 
@@ -518,7 +522,7 @@ const buildStore = (
         delete aState.x
       }
     }
-    addBatchFunc(batch, 0, finishRecompute)
+    addBatchFunc(batch, 'H', finishRecompute)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
@@ -647,7 +651,7 @@ const buildStore = (
             mounted.u = (batch) => createInvocationContext(batch, onUnmount)
           }
         }
-        addBatchFunc(batch, 2, processOnMount)
+        addBatchFunc(batch, 'L', processOnMount)
       }
     }
     return atomState.m
@@ -666,7 +670,7 @@ const buildStore = (
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFunc(batch, 2, () => onUnmount(batch))
+        addBatchFunc(batch, 'L', () => onUnmount(batch))
       }
       delete atomState.m
       // unmount dependencies
