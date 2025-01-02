@@ -84,7 +84,7 @@ type Mounted = {
  * Mutable atom state,
  * tracked for both mounted and unmounted atoms in a store.
  */
-export type AtomState<Value = AnyValue> = {
+type AtomState<Value = AnyValue> = {
   /**
    * Map of atoms that the atom depends on.
    * The map value is the epoch number of the dependency.
@@ -200,11 +200,11 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
+    atomState.u?.(batch)
     const scheduleListeners = () => {
-      atomState.u?.(batch)
       atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
     }
-    addBatchFunc(batch, 'H', scheduleListeners)
+    addBatchFunc(batch, 'M', scheduleListeners)
   }
 }
 
@@ -262,11 +262,7 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
   ) => Result,
-  atomOnInit: <Value>(
-    atom: Atom<Value>,
-    store: Store,
-    atomState: AtomState<Value>,
-  ) => void,
+  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
   atomOnMount: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
@@ -312,7 +308,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomState = setAtomState(atom, atomState)
-      atomOnInit?.(atom, store, atomState)
+      atomOnInit?.(atom, store)
     }
     return atomState
   }
@@ -749,43 +745,30 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
   const debugMountedAtoms = new Set<AnyAtom>()
   let savedGetAtomState: StoreArgs[0]
   let inRestoreAtom = 0
-  const derivedStore = store.unstable_derive(
-    (
-      getAtomState,
-      setAtomState,
-      atomRead,
-      atomWrite,
-      atomOnMount,
-      atomOnInit,
-    ) => {
-      savedGetAtomState = getAtomState
-      return [
-        getAtomState,
-        (atom, atomState) => {
-          const newAtomState = setAtomState(atom, atomState)
-          const originalMounted = newAtomState.h
-          newAtomState.h = (batch) => {
-            originalMounted?.(batch)
-            if (newAtomState.m) {
-              debugMountedAtoms.add(atom)
-            } else {
-              debugMountedAtoms.delete(atom)
-            }
-          }
-          return newAtomState
-        },
-        atomRead,
-        (atom, getter, setter, ...args) => {
-          if (inRestoreAtom) {
-            return setter(atom, ...args)
-          }
-          return atomWrite(atom, getter, setter, ...args)
-        },
-        atomOnMount,
-        atomOnInit,
-      ]
-    },
-  )
+  const derivedStore = store.unstable_derive((...storeArgs: [...StoreArgs]) => {
+    const [getAtomState, setAtomState, , atomWrite] = storeArgs
+    savedGetAtomState = getAtomState
+    storeArgs[1] = (atom, atomState) => {
+      const newAtomState = setAtomState(atom, atomState)
+      const originalMounted = newAtomState.h
+      newAtomState.h = (batch) => {
+        originalMounted?.(batch)
+        if (newAtomState.m) {
+          debugMountedAtoms.add(atom)
+        } else {
+          debugMountedAtoms.delete(atom)
+        }
+      }
+      return newAtomState
+    }
+    storeArgs[3] = (atom, getter, setter, ...args) => {
+      if (inRestoreAtom) {
+        return setter(atom, ...args)
+      }
+      return atomWrite(atom, getter, setter, ...args)
+    }
+    return storeArgs
+  })
   const savedStoreSet = derivedStore.set
   const devStore: DevStoreRev4 = {
     // store dev methods (these are tentative and subject to change without notice)

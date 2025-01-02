@@ -53,7 +53,7 @@ export function atomSyncEffect(effect: Effect): Atom<void> {
     return ++ref.epoch
   })
   internalAtom.debugLabel = 'internal'
-  internalAtom.unstable_onInit = (store, atomState) => {
+  internalAtom.unstable_onInit = (store) => {
     console.log(':onInit')
     const ref = store.get(refAtom)
     ref.refresh = () => {
@@ -65,7 +65,7 @@ export function atomSyncEffect(effect: Effect): Atom<void> {
         ++ref.isRefreshing
       }
     }
-    ref.atomState = atomState
+    ref.atomState = getAtomState(store, internalAtom)
     ref.init = (get) => {
       console.log(':init')
       const currDeps = new Map<AnyAtom, unknown>()
@@ -131,6 +131,7 @@ export function atomSyncEffect(effect: Effect): Atom<void> {
     }
     const originalMountHook = ref.atomState.h
     ref.atomState.h = (batch) => {
+      originalMountHook?.(batch)
       console.log(':mountHook')
       if (ref.atomState.m) {
         // mount
@@ -145,10 +146,10 @@ export function atomSyncEffect(effect: Effect): Atom<void> {
           ref.cleanup = null
         })
       }
-      originalMountHook?.(batch)
     }
     const originalUpdateHook = ref.atomState.u
     ref.atomState.u = (batch) => {
+      originalUpdateHook?.(batch)
       console.log(':updateHook', ref.isRefreshing, !ref.isMounted)
       // update
       if (ref.isRefreshing || !ref.isMounted) {
@@ -161,7 +162,6 @@ export function atomSyncEffect(effect: Effect): Atom<void> {
         syncEffectChannel.add(function scheduledEffect() {
           runEffect()
         })
-        originalUpdateHook?.(batch)
       }
     }
   }
@@ -183,4 +183,23 @@ function ensureBatchChannel(ref: Ref, batch: Batch) {
     batch.splice(syncEffectIndex, 0, syncEffectChannel)
   }
   return ref.batches.get(batch)!
+}
+
+/**
+ * HACK: steal atomState to synchronously determine if
+ * the atom is mounted
+ * We return void 0 to cause the buildStore(...args) to throw
+ * to abort creating a derived store
+ */
+function getAtomState(store: Store, atom: AnyAtom): AtomState {
+  let atomState: AtomState
+  try {
+    store.unstable_derive((getAtomState) => {
+      atomState = getAtomState(atom)!
+      return null as any
+    })
+  } catch {
+    // expect error
+  }
+  return atomState!
 }
