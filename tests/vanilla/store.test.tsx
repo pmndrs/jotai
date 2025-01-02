@@ -1012,8 +1012,15 @@ it('should call onInit only once per atom', () => {
   const onInit = vi.fn()
   a.unstable_onInit = onInit
   store.get(a)
+  type Store = ReturnType<typeof createStore>
+  let getAtomState: Parameters<Parameters<Store['unstable_derive']>[0]>[0]
+  store.unstable_derive((...storeArgs) => {
+    ;[getAtomState] = storeArgs
+    return storeArgs
+  })
+  const atomState = getAtomState!(a)
   expect(onInit).toHaveBeenCalledTimes(1)
-  expect(onInit).toHaveBeenCalledWith(store)
+  expect(onInit).toHaveBeenCalledWith(store, atomState)
   onInit.mockClear()
   store.get(a)
   store.set(a, 1)

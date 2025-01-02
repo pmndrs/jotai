@@ -32,18 +32,13 @@ it('fires after recomputeDependents and before atom listeners', async function t
 })
 
 function createSelfLabelStore() {
-  return createStore().unstable_derive(function deriveSelfLabel(
-    getAtomState,
-    setAtomState,
-    ...rest
-  ) {
-    return [
-      getAtomState,
-      (atom, atomState) =>
-        Object.assign(setAtomState(atom, atomState), {
-          label: atom.debugLabel,
-        }),
-      ...rest,
-    ]
+  return createStore().unstable_derive(function deriveSelfLabel(...storeArgs) {
+    const [, origSetAtomState] = storeArgs
+    storeArgs[1] = function setAtomState(atom, atomState) {
+      return Object.assign(origSetAtomState(atom, atomState), {
+        label: atom.debugLabel,
+      })
+    }
+    return storeArgs
   })
 }

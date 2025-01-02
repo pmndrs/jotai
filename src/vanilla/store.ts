@@ -84,7 +84,7 @@ type Mounted = {
  * Mutable atom state,
  * tracked for both mounted and unmounted atoms in a store.
  */
-type AtomState<Value = AnyValue> = {
+export type AtomState<Value = AnyValue> = {
   /**
    * Map of atoms that the atom depends on.
    * The map value is the epoch number of the dependency.
@@ -103,7 +103,7 @@ type AtomState<Value = AnyValue> = {
   /** Listener to notify when the atom value is updated. */
   u?: (batch: Batch) => void
   /** Listener to notify when the atom is mounted or unmounted. */
-  h?: () => void
+  h?: (batch: Batch) => void
   /** Atom value */
   v?: Value
   /** Atom error */
@@ -169,12 +169,7 @@ const addDependency = <Value>(
 
 type BatchPriority = 'H' | 'M' | 'L'
 
-type Batch = [
-  /** Batch channels */
-  recomputeDependents: Set<() => void>,
-  atomListeners: Set<() => void>,
-  atomMountHooks: Set<() => void>,
-] & {
+type Batch = Set<() => void>[] & {
   /** High priority functions */
   H: Set<() => void>
   /** Medium priority functions */
@@ -186,9 +181,8 @@ type Batch = [
 }
 
 const createBatch = (): Batch => {
-  const batch = Array(3).fill(new Set()) as Batch
-  const [H, M, L] = batch
-  return Object.assign(batch, { H, M, L, D: new Map() })
+  const [H, M, L] = [new Set(), new Set(), new Set()]
+  return Object.assign([H, M, L], { H, M, L, D: new Map() }) as Batch
 }
 
 const addBatchFunc = (
@@ -241,14 +235,12 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.H.size || batch.M.size || batch.L.size) {
+  while (batch.some((channel) => channel.size)) {
     batch.D.clear()
-    batch.H.forEach(call)
-    batch.H.clear()
-    batch.M.forEach(call)
-    batch.M.clear()
-    batch.L.forEach(call)
-    batch.L.clear()
+    for (const channel of batch) {
+      channel.forEach(call)
+      channel.clear()
+    }
   }
   if (hasError) {
     throw error
@@ -258,10 +250,10 @@ const flushBatch = (batch: Batch) => {
 // internal & unstable type
 type StoreArgs = readonly [
   getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
-  setAtomState: <Value, CustomAtomState extends AtomState<Value>>(
+  setAtomState: <Value>(
     atom: Atom<Value>,
-    atomState: CustomAtomState,
-  ) => CustomAtomState,
+    atomState: AtomState<Value>,
+  ) => AtomState<Value>,
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -270,7 +262,11 @@ type StoreArgs = readonly [
     atom: WritableAtom<Value, Args, Result>,
     ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
   ) => Result,
-  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
+  atomOnInit: <Value>(
+    atom: Atom<Value>,
+    store: Store,
+    atomState: AtomState<Value>,
+  ) => void,
   atomOnMount: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
@@ -316,7 +312,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomState = setAtomState(atom, atomState)
-      atomOnInit?.(atom, store)
+      atomOnInit?.(atom, store, atomState)
     }
     return atomState
   }
@@ -660,7 +656,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         d: new Set(atomState.d.keys()),
         t: new Set(),
       }
-      atomState.h?.()
+      atomState.h?.(batch)
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
         let setAtom: (...args: unknown[]) => unknown
@@ -711,7 +707,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         addBatchFunc(batch, 'L', () => onUnmount(batch))
       }
       delete atomState.m
-      atomState.h?.()
+      atomState.h?.(batch)
       // unmount dependencies
       for (const a of atomState.d.keys()) {
         const aMounted = unmountAtom(batch, a, ensureAtomState(a))
@@ -767,9 +763,9 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
         getAtomState,
         (atom, atomState) => {
           const newAtomState = setAtomState(atom, atomState)
-          let originalMounted = newAtomState.h
-          newAtomState.h = () => {
-            originalMounted?.()
+          const originalMounted = newAtomState.h
+          newAtomState.h = (batch) => {
+            originalMounted?.(batch)
             if (newAtomState.m) {
               debugMountedAtoms.add(atom)
             } else {
