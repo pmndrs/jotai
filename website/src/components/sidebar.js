@@ -24,7 +24,7 @@ export const Sidebar = ({ isDocs = false }) => {
               <Button to="/docs" icon="book" className="xl:hidden">
                 Documentation
               </Button>
-              <Button onClick={() => setIsMenuOpen(true)} icon="book" className="xl:flex">
+              <Button onClick={() => setIsMenuOpen(true)} icon="book" className="!hidden xl:!flex">
                 Documentation
               </Button>
             </>
