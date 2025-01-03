@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEventOrig from '@testing-library/user-event'
@@ -7,7 +8,6 @@ import { atom } from 'jotai/vanilla'
 import type { Atom, Getter } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -73,7 +73,6 @@ it('works a primitive atom and a dependent async atom', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -725,7 +724,6 @@ it('Should bail for derived async chains (#877)', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
@@ -1037,7 +1035,6 @@ it('works with async dependencies (#2565)', async () => {
     )
   }
 
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     render(
       <StrictMode>
