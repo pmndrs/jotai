@@ -24,17 +24,17 @@ describe('unstable_derive for scoping atoms', () => {
       ) => {
         const scopedAtomStateMap = new WeakMap()
         return [
-          (batch, atom) => {
+          (atom) => {
             if (scopedAtoms.has(atom)) {
               return scopedAtomStateMap.get(atom)
             }
-            return getAtomState(batch, atom)
+            return getAtomState(atom)
           },
-          (batch, atom, atomState) => {
+          (atom, atomState) => {
             if (scopedAtoms.has(atom)) {
               scopedAtomStateMap.set(atom, atomState)
             } else {
-              setAtomState(batch, atom, atomState)
+              setAtomState(atom, atomState)
             }
             return atomState
           },
@@ -80,17 +80,17 @@ describe('unstable_derive for scoping atoms', () => {
       ) => {
         const scopedAtomStateMap = new WeakMap()
         return [
-          (batch, atom) => {
+          (atom) => {
             if (scopedAtoms.has(atom)) {
               return scopedAtomStateMap.get(atom)
             }
-            return getAtomState(batch, atom)
+            return getAtomState(atom)
           },
-          (batch, atom, atomState) => {
+          (atom, atomState) => {
             if (scopedAtoms.has(atom)) {
               scopedAtomStateMap.set(atom, atomState)
             } else {
-              setAtomState(batch, atom, atomState)
+              setAtomState(atom, atomState)
             }
             return atomState
           },
@@ -135,28 +135,28 @@ describe('unstable_derive for scoping atoms', () => {
         ) => {
           const scopedAtomStateMap = new WeakMap()
           return [
-            (batch, atom) => {
+            (atom) => {
               if (scopedAtoms.has(atom)) {
                 return scopedAtomStateMap.get(atom)
               }
-              return getAtomState(batch, atom)
+              return getAtomState(atom)
             },
-            (batch, atom, atomState) => {
+            (atom, atomState) => {
               if (scopedAtoms.has(atom)) {
                 scopedAtomStateMap.set(atom, atomState)
               } else {
-                setAtomState(batch, atom, atomState)
+                setAtomState(atom, atomState)
               }
               return atomState
             },
-            (batch, a, get, options) => {
+            (a, get, options) => {
               const myGet: Getter = (aa) => {
                 if (scopedAtoms.has(aa)) {
                   scopedAtoms.add(a) // Is this too naive?
                 }
                 return get(aa)
               }
-              return atomRead(batch, a, myGet, options)
+              return atomRead(a, myGet, options)
             },
             atomWrite,
             atomOnInit,
@@ -226,15 +226,15 @@ it('should pass the correct store instance to the atom initializer', () => {
     ) => {
       const initializedAtoms = new WeakSet()
       return [
-        (batch, atom) => {
+        (atom) => {
           if (!initializedAtoms.has(atom)) {
             return undefined
           }
-          return getAtomState(batch, atom)
+          return getAtomState(atom)
         },
-        (batch, atom, atomState) => {
+        (atom, atomState) => {
           initializedAtoms.add(atom)
-          setAtomState(batch, atom, atomState)
+          setAtomState(atom, atomState)
           return atomState
         },
         atomRead,

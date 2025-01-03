@@ -49,8 +49,7 @@ const patchStoreForSyncEffect = (store: ReturnType<typeof createStore>) => {
     return
   }
   const derivedStore = store.unstable_derive((...storeArgs) => {
-    storeArgs[2] = (batch, atom, get, options) =>
-      atom.read(get, { ...options, batch } as never)
+    // TODO
     return storeArgs
   })
   Object.assign(store, derivedStore, { patchedForSyncEffect: true })

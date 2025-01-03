@@ -1056,15 +1056,15 @@ it('should call onInit only once per store', () => {
       ) => {
         const initializedAtoms = new WeakSet()
         return [
-          (batch, a) => {
+          (a) => {
             if (!initializedAtoms.has(a)) {
               return undefined
             }
-            return getAtomState(batch, a)
+            return getAtomState(a)
           },
-          (batch, a, s) => {
+          (a, s) => {
             initializedAtoms.add(a)
-            setAtomState(batch, a, s)
+            setAtomState(a, s)
             return s
           },
           atomRead,
