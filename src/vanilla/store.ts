@@ -167,21 +167,23 @@ const addDependency = <Value>(
 
 type BatchPriority = 'H' | 'M' | 'L'
 
-type Batch = Set<() => void>[] & {
+type Batch = Readonly<{
+  /** Atom dependents map */
+  D: Map<AnyAtom, Set<AnyAtom>>
   /** High priority functions */
   H: Set<() => void>
   /** Medium priority functions */
   M: Set<() => void>
   /** Low priority functions */
   L: Set<() => void>
-  /** Atom dependents map */
-  D: Map<AnyAtom, Set<AnyAtom>>
-}
+}>
 
-const createBatch = (): Batch => {
-  const [H, M, L] = [new Set(), new Set(), new Set()]
-  return Object.assign([H, M, L], { H, M, L, D: new Map() }) as Batch
-}
+const createBatch = (): Batch => ({
+  D: new Map(),
+  H: new Set(),
+  M: new Set(),
+  L: new Set(),
+})
 
 const addBatchFunc = (
   batch: Batch,
@@ -232,12 +234,14 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.some((channel) => channel.size)) {
+  while (batch.H.size || batch.M.size || batch.L.size) {
     batch.D.clear()
-    for (const channel of batch) {
-      channel.forEach(call)
-      channel.clear()
-    }
+    batch.H.forEach(call)
+    batch.H.clear()
+    batch.M.forEach(call)
+    batch.M.clear()
+    batch.L.forEach(call)
+    batch.L.clear()
   }
   if (hasError) {
     throw error
