@@ -10,7 +10,6 @@ type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => void | Cleanup
 type Ref = {
   set?: Setter
-  update?: () => void
   cleanup?: Cleanup | undefined
 }
 
@@ -50,8 +49,8 @@ const patchStoreForSyncEffect = (store: ReturnType<typeof createStore>) => {
     return
   }
   const derivedStore = store.unstable_derive((...storeArgs) => {
-    storeArgs[4] = (batch, atom, store) =>
-      atom.unstable_onInit?.(...([store, batch] as unknown as [typeof store]))
+    storeArgs[2] = (batch, atom, get, options) =>
+      atom.read(get, { ...options, batch } as never)
     return storeArgs
   })
   Object.assign(store, derivedStore, { patchedForSyncEffect: true })
@@ -69,22 +68,18 @@ function syncEffect(effect: Effect) {
     },
   )
   refAtom.onMount = (mount) => mount()
-  const internalAtom = atom((get) => {
+  const internalAtom = atom((get, options) => {
     const ref = get(refAtom)
     const fn = () => {
       ref.cleanup?.()
       ref.cleanup = effect(get, ref.set!) || undefined
     }
-    ref.update = fn
-    const tmp = atom()
-    tmp.unstable_onInit = ((_store: unknown, batch: unknown) => {
-      if (Array.isArray(batch)) {
-        ;(batch[BATCH_PRIORITY_BEFORE_MEDIUM] ||= new Set()).add(fn)
-      } else {
-        throw new Error('store is not patched for sync effect')
-      }
-    }) as never
-    get(tmp)
+    const { batch } = options as unknown as { batch: unknown }
+    if (Array.isArray(batch)) {
+      ;(batch[BATCH_PRIORITY_BEFORE_MEDIUM] ||= new Set()).add(fn)
+    } else {
+      throw new Error('store is not patched for sync effect')
+    }
   })
   internalAtom.unstable_onInit = (store) => {
     const ref = store.get(refAtom)
