@@ -1,6 +1,10 @@
 import { expect, it, vi } from 'vitest'
 import type { Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
+import type {
+  INTERNAL_BatchPriorityHigh,
+  INTERNAL_BatchPriorityMedium,
+} from '../../src/vanilla/store'
 
 type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => void | Cleanup
@@ -8,6 +12,49 @@ type Ref = {
   set?: Setter
   update?: () => void
   cleanup?: Cleanup | undefined
+}
+
+type BuildArray<
+  N extends number,
+  Arr extends unknown[] = [],
+> = Arr['length'] extends N ? Arr : BuildArray<N, [...Arr, unknown]>
+
+type Decrement<N extends number> =
+  BuildArray<N> extends [infer _, ...infer Rest] ? Rest['length'] : never
+
+type CompareNumbers<A extends number, B extends number> = A extends B
+  ? 'equal'
+  : Decrement<A> extends never
+    ? 'less'
+    : Decrement<B> extends never
+      ? 'greater'
+      : CompareNumbers<Decrement<A>, Decrement<B>>
+
+type AssertPriorityBetweenHighAndMedium<P extends number> =
+  CompareNumbers<INTERNAL_BatchPriorityHigh, P> extends 'less'
+    ? CompareNumbers<P, INTERNAL_BatchPriorityMedium> extends 'less'
+      ? true
+      : false
+    : false
+
+function assertType<T>(_: T): void {}
+
+const BATCH_PRIORITY_BEFORE_MEDIUM = 4
+
+assertType<
+  AssertPriorityBetweenHighAndMedium<typeof BATCH_PRIORITY_BEFORE_MEDIUM>
+>(true)
+
+const patchStoreForSyncEffect = (store: ReturnType<typeof createStore>) => {
+  if ('patchedForSyncEffect' in store) {
+    return
+  }
+  const derivedStore = store.unstable_derive((...storeArgs) => {
+    storeArgs[4] = (batch, atom, store) =>
+      atom.unstable_onInit?.(...([store, batch] as unknown as [typeof store]))
+    return storeArgs
+  })
+  Object.assign(store, derivedStore, { patchedForSyncEffect: true })
 }
 
 function syncEffect(effect: Effect) {
@@ -29,7 +76,15 @@ function syncEffect(effect: Effect) {
       ref.cleanup = effect(get, ref.set!) || undefined
     }
     ref.update = fn
-    return { fn }
+    const tmp = atom()
+    tmp.unstable_onInit = ((_store: unknown, batch: unknown) => {
+      if (Array.isArray(batch)) {
+        ;(batch[BATCH_PRIORITY_BEFORE_MEDIUM] ||= new Set()).add(fn)
+      } else {
+        throw new Error('store is not patched for sync effect')
+      }
+    }) as never
+    get(tmp)
   })
   internalAtom.unstable_onInit = (store) => {
     const ref = store.get(refAtom)
@@ -40,23 +95,9 @@ function syncEffect(effect: Effect) {
         store.get(a)
       }
     }
-    const runAtom = atom((get) => get(internalAtom))
-    const unsub = store.sub(runAtom, () => {})
-    ref.update?.()
-    unsub()
-    store.unstable_derive((...storeArgs) => {
-      const getAtomState = storeArgs[0]
-      const atomState = getAtomState(undefined, internalAtom)
-      if (!atomState) {
-        throw new Error('atomState is undefined unexpectedly')
-      }
-      // atomState.u = () => ref.update?.()
-      return storeArgs
-    })
+    patchStoreForSyncEffect(store)
   }
-  return atom((get) => {
-    get(internalAtom)
-  })
+  return atom((get) => get(internalAtom))
 }
 
 const withSyncEffect = <T extends WritableAtom<unknown, never[], unknown>>(
