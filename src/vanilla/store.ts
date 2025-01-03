@@ -165,25 +165,38 @@ const addDependency = <Value>(
 // Batch
 //
 
-type BatchPriority = 'H' | 'M' | 'L'
+const BATCH_PRIORITY_HIGH = 'H'
+const BATCH_PRIORITY_MEDIUM = 'M'
+const BATCH_PRIORITY_LOW = 'L'
+
+type BatchPriority =
+  | typeof BATCH_PRIORITY_HIGH
+  | typeof BATCH_PRIORITY_MEDIUM
+  | typeof BATCH_PRIORITY_LOW
 
 type Batch = Readonly<{
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
   /** High priority functions */
-  H: Set<() => void>
+  [BATCH_PRIORITY_HIGH]: Set<() => void>
   /** Medium priority functions */
-  M: Set<() => void>
+  [BATCH_PRIORITY_MEDIUM]: Set<() => void>
   /** Low priority functions */
-  L: Set<() => void>
+  [BATCH_PRIORITY_LOW]: Set<() => void>
 }>
 
-const createBatch = (): Batch => ({
-  D: new Map(),
-  H: new Set(),
-  M: new Set(),
-  L: new Set(),
-})
+const createBatch = (): Batch => {
+  const batch = { D: new Map() } as {
+    D: Map<AnyAtom, Set<AnyAtom>>
+    [BATCH_PRIORITY_HIGH]: Set<() => void>
+    [BATCH_PRIORITY_MEDIUM]: Set<() => void>
+    [BATCH_PRIORITY_LOW]: Set<() => void>
+  }
+  batch[BATCH_PRIORITY_HIGH] = new Set()
+  batch[BATCH_PRIORITY_MEDIUM] = new Set()
+  batch[BATCH_PRIORITY_LOW] = new Set()
+  return batch
+}
 
 const addBatchFunc = (
   batch: Batch,
@@ -201,9 +214,11 @@ const registerBatchAtom = (
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
     const scheduleListeners = () => {
-      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
+      atomState.m?.l.forEach((listener) =>
+        addBatchFunc(batch, BATCH_PRIORITY_MEDIUM, listener),
+      )
     }
-    addBatchFunc(batch, 'M', scheduleListeners)
+    addBatchFunc(batch, BATCH_PRIORITY_MEDIUM, scheduleListeners)
   }
 }
 
@@ -528,7 +543,7 @@ const buildStore = (
         delete aState.x
       }
     }
-    addBatchFunc(batch, 'H', finishRecompute)
+    addBatchFunc(batch, BATCH_PRIORITY_HIGH, finishRecompute)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
@@ -658,7 +673,7 @@ const buildStore = (
             mounted.u = (batch) => createInvocationContext(batch, onUnmount)
           }
         }
-        addBatchFunc(batch, 'L', processOnMount)
+        addBatchFunc(batch, BATCH_PRIORITY_LOW, processOnMount)
       }
     }
     return atomState.m
