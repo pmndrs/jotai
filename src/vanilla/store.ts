@@ -100,8 +100,6 @@ type AtomState<Value = AnyValue> = {
   n: number
   /** Object to store mounted state of the atom. */
   m?: Mounted // only available if the atom is mounted
-  /** Listener to notify when the atom value is updated. */
-  u?: () => void
   /** Listener to notify when the atom is mounted or unmounted. */
   h?: () => void
   /** Atom value */
@@ -202,7 +200,6 @@ const registerBatchAtom = (
 ) => {
   if (!batch.D.has(atom)) {
     batch.D.set(atom, new Set())
-    atomState.u?.()
     addBatchFunc(batch, 'M', () => {
       atomState.m?.l.forEach((listener) => addBatchFunc(batch, 'M', listener))
     })
