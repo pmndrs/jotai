@@ -1,17 +1,10 @@
 import { expect, it, vi } from 'vitest'
-import type { Getter, Setter, WritableAtom } from 'jotai/vanilla'
+import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 import type {
   INTERNAL_BatchPriorityHigh,
   INTERNAL_BatchPriorityMedium,
 } from '../../src/vanilla/store'
-
-type Cleanup = () => void
-type Effect = (get: Getter, set: Setter) => void | Cleanup
-type Ref = {
-  set?: Setter
-  cleanup?: Cleanup | undefined
-}
 
 type BuildArray<
   N extends number,
@@ -44,15 +37,45 @@ assertType<
   AssertPriorityBetweenHighAndMedium<typeof BATCH_PRIORITY_BEFORE_MEDIUM>
 >(true)
 
-const patchStoreForSyncEffect = (store: ReturnType<typeof createStore>) => {
-  if ('patchedForSyncEffect' in store) {
-    return
+// TODO we temporarily copy the code
+type Batch =
+  /** Batch functions */
+  Set<() => void>[] & {
+    /** Atom dependents map */
+    D: Map<Atom<unknown>, Set<Atom<unknown>>>
   }
-  const derivedStore = store.unstable_derive((...storeArgs) => {
-    // TODO
-    return storeArgs
-  })
-  Object.assign(store, derivedStore, { patchedForSyncEffect: true })
+const createBatch = (): Batch => Object.assign([], { D: new Map() })
+const flushBatch = (batch: Batch) => {
+  let error: unknown
+  let hasError = false
+  const call = (fn: () => void) => {
+    try {
+      fn()
+    } catch (e) {
+      if (!hasError) {
+        error = e
+        hasError = true
+      }
+    }
+  }
+  while (batch.some(Boolean)) {
+    batch.D.clear()
+    batch.forEach((channel, i, a) => {
+      delete a[i]
+      channel.forEach(call)
+    })
+  }
+  if (hasError) {
+    throw error
+  }
+}
+
+type Cleanup = () => void
+type Effect = (get: Getter, set: Setter) => void | Cleanup
+type Ref = {
+  set?: Setter
+  batch?: Batch
+  cleanup?: Cleanup | undefined
 }
 
 function syncEffect(effect: Effect) {
@@ -67,29 +90,35 @@ function syncEffect(effect: Effect) {
     },
   )
   refAtom.onMount = (mount) => mount()
-  const internalAtom = atom((get, options) => {
+  const internalAtom = atom((get) => {
     const ref = get(refAtom)
     const fn = () => {
       ref.cleanup?.()
       ref.cleanup = effect(get, ref.set!) || undefined
     }
-    const { batch } = options as unknown as { batch: unknown }
-    if (Array.isArray(batch)) {
-      ;(batch[BATCH_PRIORITY_BEFORE_MEDIUM] ||= new Set()).add(fn)
+    if (ref.batch) {
+      ;(ref.batch[BATCH_PRIORITY_BEFORE_MEDIUM] ||= new Set()).add(fn)
     } else {
-      throw new Error('store is not patched for sync effect')
+      fn()
     }
   })
   internalAtom.unstable_onInit = (store) => {
     const ref = store.get(refAtom)
-    ref.set = (a, ...args) => {
-      try {
-        return store.set(a, ...args)
-      } finally {
-        store.get(a)
+    store.unstable_derive((...storeArgs) => {
+      const writeAtomState = storeArgs[2]
+      ref.set = (a, ...args) => {
+        const batch = createBatch()
+        ref.batch = batch
+        try {
+          return writeAtomState(batch, a, ...args)
+        } finally {
+          delete ref.batch
+          flushBatch(batch)
+          //store.get(a)
+        }
       }
-    }
-    patchStoreForSyncEffect(store)
+      return storeArgs
+    })
   }
   return atom((get) => get(internalAtom))
 }

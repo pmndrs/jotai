@@ -253,7 +253,7 @@ const flushBatch = (batch: Batch) => {
 // internal & unstable type
 // TODO refactor later
 type StoreArgsOld = readonly [
-  getStore: () => Store,
+  getStore: () => Store, // FIXME I don't like this
   getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
   atomRead: <Value>(
     atom: Atom<Value>,
@@ -825,7 +825,7 @@ export const createStore = (): PrdOrDevStore => {
     let atomState = atomStateMap.get(atom)
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
-      atomState = atomStateMap.set(atom, atomState)
+      atomStateMap.set(atom, atomState)
       atom.unstable_onInit?.(getStore())
     }
     return atomState
