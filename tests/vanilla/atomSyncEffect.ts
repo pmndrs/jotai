@@ -27,7 +27,7 @@ type Ref = {
   error?: unknown
 }
 
-export function atomSyncEffect(effect: Effect): Atom<void> {
+export function syncEffect(effect: Effect): Atom<void> {
   const refAtom = atom(
     () => ({ batches: new WeakMap(), inProgress: 0, epoch: 0 }) as Ref,
   )
