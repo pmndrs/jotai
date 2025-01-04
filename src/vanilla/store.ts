@@ -288,6 +288,11 @@ type DevStoreRev4 = {
   dev4_get_mounted_atoms: () => Set<AnyAtom>
   dev4_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
 }
+type DevStoreRev5 = {
+  dev5_get_atom_state: (atom: AnyAtom) => AtomState | undefined
+  dev5_get_mounted_atoms: () => Set<AnyAtom>
+  dev5_restore_atoms: (values: Iterable<readonly [AnyAtom, AnyValue]>) => void
+}
 
 type Store = {
   get: <Value>(atom: Atom<Value>) => Value
@@ -300,6 +305,7 @@ type Store = {
 }
 
 export type INTERNAL_DevStoreRev4 = DevStoreRev4
+export type INTERNAL_DevStoreRev5 = DevStoreRev5
 export type INTERNAL_PrdStore = Store
 
 const buildStore = (
@@ -780,6 +786,67 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
     }),
     dev4_get_mounted_atoms: () => debugMountedAtoms,
     dev4_restore_atoms: (values) => {
+      const restoreAtom: WritableAtom<null, [], void> = {
+        read: () => null,
+        write: (_get, set) => {
+          ++inRestoreAtom
+          try {
+            for (const [atom, value] of values) {
+              if (hasInitialValue(atom)) {
+                set(atom as never, value)
+              }
+            }
+          } finally {
+            --inRestoreAtom
+          }
+        },
+      }
+      savedStoreSet(restoreAtom)
+    },
+  }
+  return Object.assign(derivedStore, devStore)
+}
+
+export function unstable_deriveDevStoreRev5(
+  store: Store,
+): Store & DevStoreRev5 {
+  const debugMountedAtoms = new Set<AnyAtom>()
+  let savedGetAtomState: StoreArgs[0]
+  let inRestoreAtom = 0
+  const derivedStore = store.unstable_derive(
+    (getAtomState, atomRead, atomWrite, atomOnMount) => {
+      savedGetAtomState = getAtomState
+      return [
+        (atom) => {
+          const atomState = getAtomState(atom)
+          const originalMounted = atomState.h
+          atomState.h = () => {
+            originalMounted?.()
+            if (atomState.m) {
+              debugMountedAtoms.add(atom)
+            } else {
+              debugMountedAtoms.delete(atom)
+            }
+          }
+          return atomState
+        },
+        atomRead,
+        (atom, getter, setter, ...args) => {
+          if (inRestoreAtom) {
+            return setter(atom, ...args)
+          }
+          return atomWrite(atom, getter, setter, ...args)
+        },
+        atomOnMount,
+      ]
+    },
+  )
+  const savedStoreSet = derivedStore.set
+  const devStore: DevStoreRev5 = {
+    // store dev methods (these are tentative and subject to change without notice)
+    dev5_get_atom_state: (atom) => savedGetAtomState(atom),
+    dev5_get_mounted_atoms: () => debugMountedAtoms,
+    dev5_restore_atoms: (values) => {
       const restoreAtom: WritableAtom<null, [], void> = {
         read: () => null,
         write: (_get, set) => {
