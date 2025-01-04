@@ -1086,3 +1086,64 @@ it('should pass store and atomState to the atom initializer', () => {
   }
   store.get(a)
 })
+
+it('runs recomputeDependents on atoms in the correct order', async () => {
+  const store = createStore().unstable_derive((getAtomState, ...storeArgs) => [
+    (a) => Object.assign(getAtomState(a), { label: a.debugLabel }),
+    ...storeArgs,
+  ])
+  let i = 0
+  function createHistoryAtoms<T>(initialValue: T) {
+    const historyStackAtom = atom<T[]>([initialValue])
+    historyStackAtom.debugLabel = `${i}:historyStackAtom`
+    const historyIndexAtom = atom(0)
+    historyIndexAtom.debugLabel = `${i}:historyIndexAtom`
+    const valueAtom = atom(
+      (get) => get(historyStackAtom)[get(historyIndexAtom)]!,
+    )
+    valueAtom.debugLabel = `${i}:valueAtom`
+    const resetAtom = atom(null, (_, set, value: T) => {
+      set(historyStackAtom, [value])
+      set(historyIndexAtom, 0)
+    })
+    resetAtom.debugLabel = `${i}:resetAtom`
+    i++
+    return { valueAtom, resetAtom }
+  }
+
+  const val1Atoms = createHistoryAtoms('foo')
+  const val2Atoms = createHistoryAtoms<string | null>(null)
+
+  const initAtom = atom(null, (_get, set) => {
+    // if comment out this line, the test will pass
+    console.log('initAtom write val2Atoms')
+    set(val2Atoms.resetAtom, null)
+    console.log('initAtom write val1Atoms')
+    set(val1Atoms.resetAtom, 'bar')
+  })
+  initAtom.debugLabel = 'initAtom'
+
+  const computedValAtom = atom((get) => {
+    const v2Value = get(val2Atoms.valueAtom)
+    if (v2Value !== null) {
+      console.log('computedValAtom read val2Atoms', v2Value)
+      return v2Value
+    }
+    const v1Value = get(val1Atoms.valueAtom)
+    console.log('computedValAtom read val2Atoms', v1Value)
+    return v1Value
+  })
+  computedValAtom.debugLabel = 'computedValAtom'
+
+  const asyncInitAtom = atom(null, async (_get, set) => {
+    // if comment out this line, the test will pass [DOES NOT WORK]
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    set(initAtom)
+  })
+  store.sub(computedValAtom, () => {})
+  console.log('set asyncInitAtom')
+  await store.set(asyncInitAtom)
+  const result = store.get(computedValAtom)
+  expect(result).toBe('bar')
+})
