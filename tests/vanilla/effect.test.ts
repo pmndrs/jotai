@@ -28,7 +28,7 @@ type Ref = {
 const sentinelListener = () => {}
 const syncEffectChannelSymbol = Symbol()
 
-export function syncEffect(effect: Effect): Atom<void> {
+function syncEffect(effect: Effect): Atom<void> {
   const refAtom = atom(() => ({ inProgress: 0, epoch: 0 }) as Ref)
   const refreshAtom = atom(0)
   const internalAtom = atom((get) => {
