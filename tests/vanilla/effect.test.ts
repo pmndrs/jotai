@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 
@@ -70,7 +70,9 @@ export function syncEffect(effect: Effect): Atom<void> {
           ++ref.inProgress
           return store.set(a, ...args)
         } finally {
-          Array.from(currDeps.keys(), get) // TODO: do we still need this?
+          // we previously needed this because jotai store would forget deps between runs
+          // TODO - do we still need this?
+          Array.from(currDeps.keys(), get)
           --ref.inProgress
         }
       }
@@ -199,4 +201,90 @@ it('fires after recomputeDependents and before atom listeners', async function t
   })
   store.set(a, { v: 0 })
   expect(r).toBe(1)
+})
+
+it('responds to changes to atoms when subscribed', () => {
+  const store = createStore()
+  const a = atom(1)
+  const b = atom(1)
+  const w = atom(null, (_get, set, value: number) => {
+    set(a, value)
+    set(b, value)
+  })
+  const results: number[] = []
+  const cleanup = vi.fn()
+  const effect = vi.fn((get: Getter) => {
+    results.push(get(a) * 10 + get(b))
+    return cleanup
+  })
+  const e = syncEffect(effect)
+  const unsub = store.sub(e, () => {}) // mount syncEffect
+  expect(effect).toBeCalledTimes(1)
+  expect(results).toStrictEqual([11]) // initial values at time of effect mount
+  store.set(a, 2)
+  expect(results).toStrictEqual([11, 21])
+  store.set(b, 2)
+  expect(results).toStrictEqual([11, 21, 22])
+  store.set(w, 3)
+  // intermediate state of '32' should not be recorded since the effect runs _after_ graph has been computed
+  expect(results).toStrictEqual([11, 21, 22, 33])
+  expect(cleanup).toBeCalledTimes(3)
+  expect(effect).toBeCalledTimes(4)
+  unsub()
+  expect(cleanup).toBeCalledTimes(4)
+  expect(effect).toBeCalledTimes(4)
+  store.set(a, 4)
+  // the effect is unmounted so no more updates
+  expect(results).toStrictEqual([11, 21, 22, 33])
+  expect(effect).toBeCalledTimes(4)
+})
+
+it('responds to changes to atoms when mounted with get', () => {
+  const store = createStore()
+  const a = atom(1)
+  const b = atom(1)
+  const w = atom(null, (_get, set, value: number) => {
+    set(a, value)
+    set(b, value)
+  })
+  const results: number[] = []
+  const cleanup = vi.fn()
+  const effect = vi.fn((get: Getter) => {
+    results.push(get(a) * 10 + get(b))
+    return cleanup
+  })
+  const e = syncEffect(effect)
+  const d = atom((get) => get(e))
+  const unsub = store.sub(d, () => {}) // mount syncEffect
+  expect(effect).toBeCalledTimes(1)
+  expect(results).toStrictEqual([11]) // initial values at time of effect mount
+  store.set(a, 2)
+  expect(results).toStrictEqual([11, 21])
+  store.set(b, 2)
+  expect(results).toStrictEqual([11, 21, 22])
+  store.set(w, 3)
+  // intermediate state of '32' should not be recorded since the effect runs _after_ graph has been computed
+  expect(results).toStrictEqual([11, 21, 22, 33])
+  expect(cleanup).toBeCalledTimes(3)
+  expect(effect).toBeCalledTimes(4)
+  unsub()
+  expect(cleanup).toBeCalledTimes(4)
+  expect(effect).toBeCalledTimes(4)
+})
+
+it('sets values to atoms without causing infinite loop', () => {
+  const store = createStore()
+  const a = atom(1)
+  const effect = vi.fn((get: Getter, set: Setter) => {
+    set(a, get(a) + 1)
+  })
+  const e = syncEffect(effect)
+  const unsub = store.sub(e, () => {}) // mount syncEffect
+  expect(effect).toBeCalledTimes(1)
+  expect(store.get(a)).toBe(2) // initial values at time of effect mount
+  store.set(a, (v) => ++v)
+  expect(store.get(a)).toBe(4)
+  expect(effect).toBeCalledTimes(2)
+  unsub()
+  expect(effect).toBeCalledTimes(2)
 })
