@@ -167,6 +167,8 @@ const addDependency = <Value>(
 // Batch
 //
 
+type BatchPriority = 0 | 1 | 2
+
 type Batch = Set<() => void>[] & {
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
@@ -174,7 +176,11 @@ type Batch = Set<() => void>[] & {
 
 const createBatch = (): Batch => Object.assign([], { D: new Map() })
 
-const addBatchFunc = (batch: Batch, priority: number, fn: () => void) => {
+const addBatchFunc = (
+  batch: Batch,
+  priority: BatchPriority,
+  fn: () => void,
+) => {
   ;(batch[priority] ||= new Set()).add(fn)
 }
 
