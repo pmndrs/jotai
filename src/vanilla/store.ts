@@ -174,14 +174,18 @@ type Batch = Set<() => void>[] & {
   D: Map<AnyAtom, Set<AnyAtom>>
 }
 
-const createBatch = (): Batch => Object.assign([], { D: new Map() })
+const createBatch = (): Batch =>
+  Object.assign(
+    [new Set<() => void>(), new Set<() => void>(), new Set<() => void>()],
+    { D: new Map() },
+  )
 
 const addBatchFunc = (
   batch: Batch,
   priority: BatchPriority,
   fn: () => void,
 ) => {
-  ;(batch[priority] ||= new Set()).add(fn)
+  batch[priority]!.add(fn)
 }
 
 const registerBatchAtom = (
@@ -241,10 +245,7 @@ const flushBatch = (batch: Batch) => {
 // internal & unstable type
 type StoreArgs = readonly [
   getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
-  setAtomState: <Value>(
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-  ) => AtomState<Value>,
+  setAtomState: <Value>(atom: Atom<Value>, atomState: AtomState<Value>) => void,
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -298,7 +299,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     let atomState = getAtomState(atom)
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
-      atomState = setAtomState(atom, atomState)
+      setAtomState(atom, atomState)
       atomOnInit?.(atom, store)
     }
     return atomState
@@ -740,17 +741,16 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
     const [getAtomState, setAtomState, , atomWrite] = storeArgs
     savedGetAtomState = getAtomState
     storeArgs[1] = (atom, atomState) => {
-      const newAtomState = setAtomState(atom, atomState)
-      const originalMounted = newAtomState.h
-      newAtomState.h = (batch) => {
+      setAtomState(atom, atomState)
+      const originalMounted = atomState.h
+      atomState.h = (batch) => {
         originalMounted?.(batch)
-        if (newAtomState.m) {
+        if (atomState.m) {
           debugMountedAtoms.add(atom)
         } else {
           debugMountedAtoms.delete(atom)
         }
       }
-      return newAtomState
     }
     storeArgs[3] = (atom, getter, setter, ...args) => {
       if (inRestoreAtom) {
