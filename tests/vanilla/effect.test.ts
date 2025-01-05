@@ -16,7 +16,7 @@ type Ref = {
   inProgress: number
   isRefreshing: number
   epoch: number
-  cleanup?: Cleanup | void
+  cleanup?: Cleanup | undefined
   error?: unknown
 }
 
@@ -52,21 +52,22 @@ function syncEffect(effect: Effect): Atom<void> {
       try {
         ref.cleanup?.()
         const deps = new Set<AnyAtom>()
-        ref.cleanup = effect(
-          (a) => {
-            deps.add(a)
-            return ref.get!(a)
-          },
-          (a, ...args) => {
-            try {
-              ++ref.inProgress
-              return store.set(a, ...args)
-            } finally {
-              deps.forEach(ref.get!)
-              --ref.inProgress
-            }
-          },
-        )
+        ref.cleanup =
+          effect(
+            (a) => {
+              deps.add(a)
+              return ref.get!(a)
+            },
+            (a, ...args) => {
+              try {
+                ++ref.inProgress
+                return store.set(a, ...args)
+              } finally {
+                deps.forEach(ref.get!)
+                --ref.inProgress
+              }
+            },
+          ) || undefined
       } catch (e) {
         ref.error = e
         // FIXME no test case that requires this refreshing
