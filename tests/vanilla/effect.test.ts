@@ -119,16 +119,26 @@ type BatchWithSyncEffect = Batch & {
 }
 function ensureBatchChannel(batch: BatchWithSyncEffect) {
   // ensure continuation of the flushBatch while loop
-  if (!batch[1]) {
+  const originalQueue = batch[1]
+  if (!originalQueue) {
     throw new Error('batch[1] must be present')
   }
   if (!batch[syncEffectChannelSymbol]) {
     batch[syncEffectChannelSymbol] = new Set<() => void>()
-    const originalForEach = batch[1].forEach
-    batch[1].forEach = function (callback) {
-      // Inject syncEffect immediately before batch[1]
-      batch[syncEffectChannelSymbol]!.forEach(callback)
-      originalForEach.call(this, callback)
+    batch[1] = {
+      ...originalQueue,
+      add(item) {
+        originalQueue.add(item)
+        return this
+      },
+      clear() {
+        batch[syncEffectChannelSymbol]!.clear()
+        originalQueue.clear()
+      },
+      forEach(callback) {
+        batch[syncEffectChannelSymbol]!.forEach(callback)
+        originalQueue.forEach(callback)
+      },
     }
   }
   return batch[syncEffectChannelSymbol]!
