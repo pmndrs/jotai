@@ -12,72 +12,46 @@ type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => Cleanup | void
 type Ref = {
   get?: Getter
-  isMounted?: boolean
   inProgress: number
-  isRefreshing: number
   epoch: number
   cleanup?: Cleanup | undefined
-  error?: unknown
 }
 
 const syncEffectChannelSymbol = Symbol()
 
 function syncEffect(effect: Effect): Atom<void> {
-  const refAtom = atom<Ref>(() => ({
-    inProgress: 0,
-    isRefreshing: 0,
-    epoch: 0,
-  }))
+  const refAtom = atom<Ref>(() => ({ inProgress: 0, epoch: 0 }))
   const refreshAtom = atom(0)
   const internalAtom = atom((get) => {
     get(refreshAtom)
     const ref = get(refAtom)
-    if (ref.error) {
-      const { error } = ref
-      delete ref.error
-      // FIXME no test case that requires throwing an error
-      throw error
-    }
-    if (!ref.isMounted || ref.inProgress) {
+    if (ref.inProgress) {
       return ref.epoch
     }
-    if (!ref.isRefreshing) {
-      ref.get = get
-    }
+    ref.get = get
     return ++ref.epoch
   })
   internalAtom.unstable_onInit = (store) => {
     const ref = store.get(refAtom)
-    function runEffect() {
-      try {
-        ref.cleanup?.()
-        const deps = new Set<AnyAtom>()
-        ref.cleanup =
-          effect(
-            (a) => {
-              deps.add(a)
-              return ref.get!(a)
-            },
-            (a, ...args) => {
-              try {
-                ++ref.inProgress
-                return store.set(a, ...args)
-              } finally {
-                deps.forEach(ref.get!)
-                --ref.inProgress
-              }
-            },
-          ) || undefined
-      } catch (e) {
-        ref.error = e
-        // FIXME no test case that requires this refreshing
-        try {
-          ++ref.isRefreshing
-          store.set(refreshAtom, (v) => v + 1)
-        } finally {
-          ++ref.isRefreshing
-        }
-      }
+    const runEffect = () => {
+      const deps = new Set<AnyAtom>()
+      ref.cleanup?.()
+      ref.cleanup =
+        effect(
+          (a) => {
+            deps.add(a)
+            return ref.get!(a)
+          },
+          (a, ...args) => {
+            try {
+              ++ref.inProgress
+              return store.set(a, ...args)
+            } finally {
+              deps.forEach(ref.get!)
+              --ref.inProgress
+            }
+          },
+        ) || undefined
     }
     const internalAtomState = getAtomState(store, internalAtom)
     const originalMountHook = internalAtomState.h
@@ -85,26 +59,17 @@ function syncEffect(effect: Effect): Atom<void> {
       originalMountHook?.(batch)
       if (internalAtomState.m) {
         // mount
-        ref.isMounted = true
         store.set(refreshAtom, (v) => v + 1)
       } else {
         // unmount
-        ref.isMounted = false
-        // FIXME As it's not in the batch, we can't schedule it.
-        //const syncEffectChannel = ensureBatchChannel(batch)
-        //syncEffectChannel.add(() => {
         ref.cleanup?.()
         delete ref.cleanup
-        //})
       }
     }
     const originalUpdateHook = internalAtomState.u
     internalAtomState.u = (batch) => {
       originalUpdateHook?.(batch)
       // update
-      if (ref.isRefreshing || !ref.isMounted) {
-        return
-      }
       const syncEffectChannel = ensureBatchChannel(batch)
       syncEffectChannel.add(runEffect)
     }
