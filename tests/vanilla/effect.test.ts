@@ -9,24 +9,25 @@ type AnyAtom = Atom<unknown>
 type Batch = Parameters<NonNullable<AtomState['u']>>[0]
 
 type Cleanup = () => void
-type Effect = (get: Getter, set: Setter) => void | Cleanup
+type Effect = (get: Getter, set: Setter) => Cleanup | void
 type Ref = {
-  get: Getter
-  set: Setter
-  isMounted: boolean
+  get?: Getter
+  isMounted?: boolean
   inProgress: number
   isRefreshing: number
-  init: (get: Getter) => void
-  refresh: () => void
-  cleanup?: Cleanup | null
   epoch: number
+  cleanup?: Cleanup | void
   error?: unknown
 }
 
 const syncEffectChannelSymbol = Symbol()
 
 function syncEffect(effect: Effect): Atom<void> {
-  const refAtom = atom(() => ({ inProgress: 0, epoch: 0 }) as Ref)
+  const refAtom = atom<Ref>(() => ({
+    inProgress: 0,
+    isRefreshing: 0,
+    epoch: 0,
+  }))
   const refreshAtom = atom(0)
   const internalAtom = atom((get) => {
     get(refreshAtom)
@@ -37,55 +38,47 @@ function syncEffect(effect: Effect): Atom<void> {
       // FIXME no test case that requires throwing an error
       throw error
     }
-    if (!ref.isMounted || (ref.inProgress && !ref.isRefreshing)) {
+    if (!ref.isMounted || ref.inProgress) {
       return ref.epoch
     }
     if (!ref.isRefreshing) {
-      ref.init(get)
+      ref.get = get
     }
     return ++ref.epoch
   })
   internalAtom.unstable_onInit = (store) => {
     const ref = store.get(refAtom)
-    ref.refresh = () => {
-      try {
-        ++ref.isRefreshing
-        ref.set(refreshAtom, (v) => v + 1)
-      } finally {
-        ++ref.isRefreshing
-      }
-    }
-    const internalAtomState = getAtomState(store, internalAtom)
-    ref.init = (get) => {
-      const currDeps = new Map<AnyAtom, unknown>()
-      ref.get = (a) => {
-        const value = get(a)
-        currDeps.set(a, value)
-        return value
-      }
-      ref.set = (a, ...args) => {
-        try {
-          ++ref.inProgress
-          return store.set(a, ...args)
-        } finally {
-          // we previously needed this because jotai store would forget deps between runs
-          // do we still need this?
-          // we still need this because of recursive nature of the effect
-          Array.from(currDeps.keys(), get)
-          --ref.inProgress
-        }
-      }
-    }
     function runEffect() {
       try {
         ref.cleanup?.()
-        ref.cleanup = effect(ref.get!, ref.set!) || null
+        const deps = new Set<AnyAtom>()
+        ref.cleanup = effect(
+          (a) => {
+            deps.add(a)
+            return ref.get!(a)
+          },
+          (a, ...args) => {
+            try {
+              ++ref.inProgress
+              return store.set(a, ...args)
+            } finally {
+              deps.forEach(ref.get!)
+              --ref.inProgress
+            }
+          },
+        )
       } catch (e) {
         ref.error = e
-        // FIXME no test case that requires ref.refresh()
-        ref.refresh()
+        // FIXME no test case that requires this refreshing
+        try {
+          ++ref.isRefreshing
+          store.set(refreshAtom, (v) => v + 1)
+        } finally {
+          ++ref.isRefreshing
+        }
       }
     }
+    const internalAtomState = getAtomState(store, internalAtom)
     const originalMountHook = internalAtomState.h
     internalAtomState.h = (batch) => {
       originalMountHook?.(batch)
@@ -100,7 +93,7 @@ function syncEffect(effect: Effect): Atom<void> {
         //const syncEffectChannel = ensureBatchChannel(batch)
         //syncEffectChannel.add(() => {
         ref.cleanup?.()
-        ref.cleanup = null
+        delete ref.cleanup
         //})
       }
     }
