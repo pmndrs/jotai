@@ -13,8 +13,6 @@ type Effect = (get: Getter, set: Setter) => void | Cleanup
 type Ref = {
   get: Getter
   set: Setter
-  atomState: AtomState
-  fromCleanup: boolean
   isMounted: boolean
   inProgress: number
   isRefreshing: number
@@ -36,6 +34,7 @@ function syncEffect(effect: Effect): Atom<void> {
     if (ref.error) {
       const { error } = ref
       delete ref.error
+      // FIXME no test case that requires throwing an error
       throw error
     }
     if (!ref.isMounted || (ref.inProgress && !ref.isRefreshing)) {
@@ -56,7 +55,7 @@ function syncEffect(effect: Effect): Atom<void> {
         ++ref.isRefreshing
       }
     }
-    ref.atomState = getAtomState(store, internalAtom)
+    const internalAtomState = getAtomState(store, internalAtom)
     ref.init = (get) => {
       const currDeps = new Map<AnyAtom, unknown>()
       ref.get = (a) => {
@@ -70,7 +69,8 @@ function syncEffect(effect: Effect): Atom<void> {
           return store.set(a, ...args)
         } finally {
           // we previously needed this because jotai store would forget deps between runs
-          // TODO - do we still need this?
+          // do we still need this?
+          // we still need this because of recursive nature of the effect
           Array.from(currDeps.keys(), get)
           --ref.inProgress
         }
@@ -79,26 +79,17 @@ function syncEffect(effect: Effect): Atom<void> {
     function runEffect() {
       try {
         ref.cleanup?.()
-        const cleanup = effectAtom.effect(ref.get!, ref.set!)
-        ref.cleanup = cleanup
-          ? () => {
-              try {
-                ref.fromCleanup = true
-                cleanup?.()
-              } finally {
-                ref.fromCleanup = false
-              }
-            }
-          : null
+        ref.cleanup = effect(ref.get!, ref.set!) || null
       } catch (e) {
         ref.error = e
+        // FIXME no test case that requires ref.refresh()
         ref.refresh()
       }
     }
-    const originalMountHook = ref.atomState.h
-    ref.atomState.h = (batch) => {
+    const originalMountHook = internalAtomState.h
+    internalAtomState.h = (batch) => {
       originalMountHook?.(batch)
-      if (ref.atomState.m) {
+      if (internalAtomState.m) {
         // mount
         ref.isMounted = true
         store.set(refreshAtom, (v) => v + 1)
@@ -113,8 +104,8 @@ function syncEffect(effect: Effect): Atom<void> {
         //})
       }
     }
-    const originalUpdateHook = ref.atomState.u
-    ref.atomState.u = (batch) => {
+    const originalUpdateHook = internalAtomState.u
+    internalAtomState.u = (batch) => {
       originalUpdateHook?.(batch)
       // update
       if (ref.isRefreshing || !ref.isMounted) {
@@ -124,13 +115,9 @@ function syncEffect(effect: Effect): Atom<void> {
       syncEffectChannel.add(runEffect)
     }
   }
-  const effectAtom = Object.assign(
-    atom((get) => {
-      get(internalAtom)
-    }),
-    { effect },
-  )
-  return effectAtom
+  return atom((get) => {
+    get(internalAtom)
+  })
 }
 
 type BatchWithSyncEffect = Batch & {
@@ -150,7 +137,7 @@ function ensureBatchChannel(batch: BatchWithSyncEffect) {
       originalForEach.call(this, callback)
     }
   }
-  return batch[syncEffectChannelSymbol]
+  return batch[syncEffectChannelSymbol]!
 }
 
 /**
