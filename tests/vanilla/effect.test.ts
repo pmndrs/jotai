@@ -25,7 +25,6 @@ type Ref = {
   error?: unknown
 }
 
-const sentinelListener = () => {}
 const syncEffectChannelSymbol = Symbol()
 
 function syncEffect(effect: Effect): Atom<void> {
@@ -79,7 +78,6 @@ function syncEffect(effect: Effect): Atom<void> {
     }
     function runEffect() {
       try {
-        ++ref.inProgress
         ref.cleanup?.()
         const cleanup = effectAtom.effect(ref.get!, ref.set!)
         ref.cleanup = cleanup
@@ -95,7 +93,6 @@ function syncEffect(effect: Effect): Atom<void> {
       } catch (e) {
         ref.error = e
         ref.refresh()
-        --ref.inProgress
       }
     }
     const originalMountHook = ref.atomState.h
@@ -108,11 +105,12 @@ function syncEffect(effect: Effect): Atom<void> {
       } else {
         // unmount
         ref.isMounted = false
-        const syncEffectChannel = ensureBatchChannel(batch)
-        syncEffectChannel.add(() => {
-          ref.cleanup?.()
-          ref.cleanup = null
-        })
+        // FIXME As it's not in the batch, we can't schedule it.
+        //const syncEffectChannel = ensureBatchChannel(batch)
+        //syncEffectChannel.add(() => {
+        ref.cleanup?.()
+        ref.cleanup = null
+        //})
       }
     }
     const originalUpdateHook = ref.atomState.u
@@ -140,23 +138,16 @@ type BatchWithSyncEffect = Batch & {
 }
 function ensureBatchChannel(batch: BatchWithSyncEffect) {
   // ensure continuation of the flushBatch while loop
-  ;(batch[0] ||= new Set())?.add(sentinelListener)
+  if (!batch[1]) {
+    throw new Error('batch[1] must be present')
+  }
   if (!batch[syncEffectChannelSymbol]) {
     batch[syncEffectChannelSymbol] = new Set<() => void>()
-    const originalIterator = batch[Symbol.iterator]
-    batch[Symbol.iterator] = function* (): ArrayIterator<Set<() => void>> {
-      const iterator = originalIterator.call(this)
-      let result = iterator.next()
-      let index = 0
-      while (!result.done) {
-        yield result.value
-        // Inject syncEffect immediately after batch[0]
-        if (index === 0) {
-          yield this[syncEffectChannelSymbol]!
-        }
-        result = iterator.next()
-        index++
-      }
+    const originalForEach = batch[1].forEach
+    batch[1].forEach = function (callback) {
+      // Inject syncEffect immediately before batch[1]
+      batch[syncEffectChannelSymbol]!.forEach(callback)
+      originalForEach.call(this, callback)
     }
   }
   return batch[syncEffectChannelSymbol]
