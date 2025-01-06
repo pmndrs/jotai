@@ -176,7 +176,7 @@ const addDependency = <Value>(
 type BatchPriority = 0 | 1 | 2
 
 type Batch = [
-  /** finish recompute */
+  /** high priority listeners */
   priority0: Set<() => void>,
   /** atom listeners */
   priority1: Set<() => void>,
@@ -242,7 +242,7 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.some((channel) => channel.size)) {
+  while (batch.D.size || batch.some((channel) => channel.size)) {
     batch.R?.(batch)
     batch.D.clear()
     for (const channel of batch) {
