@@ -1136,19 +1136,23 @@ it('runs recomputeDependents on atoms in the correct order', async () => {
     // if comment out this line, the test will pass
     set(val2Atoms.resetAtom, null)
     set(val1Atoms.resetAtom, 'bar')
-  })
-  initAtom.debugLabel = 'initAtom'
+  }
+})
 
-  const computedValAtom = atom((get) => {
-    get(val2Atoms.valueAtom)
-    const v1Value = get(val1Atoms.valueAtom)
-    return v1Value
+it('recomputes all changed atom dependents together', async () => {
+  const a = atom([0])
+  const b = atom([0])
+  const a0 = atom((get) => get(a)[0]!)
+  const b0 = atom((get) => get(b)[0]!)
+  const a0b0 = atom((get) => [get(a0), get(b0)])
+  const w = atom(null, (_, set) => {
+    set(a, [0])
+    set(b, [1])
   })
-  computedValAtom.debugLabel = 'computedValAtom'
-
   const store = createStore()
-  store.sub(computedValAtom, () => {})
-  store.set(initAtom)
-  const result = store.get(computedValAtom)
-  expect(result).toBe('bar')
+  store.sub(a0b0, () => {})
+  store.set(w)
+  expect(store.get(a0)).toBe(0)
+  expect(store.get(b0)).toBe(1)
+  expect(store.get(a0b0)).toEqual([0, 1])
 })
