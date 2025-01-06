@@ -1110,10 +1110,6 @@ it('recomputes dependents of unmounted atoms', () => {
 })
 
 it('runs recomputeDependents on atoms in the correct order', async () => {
-  const store = createStore().unstable_derive((getAtomState, ...storeArgs) => [
-    (a) => Object.assign(getAtomState(a), { label: a.debugLabel }),
-    ...storeArgs,
-  ])
   let i = 0
   function createHistoryAtoms<T>(initialValue: T) {
     const historyStackAtom = atom<T[]>([initialValue])
