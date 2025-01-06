@@ -6,7 +6,6 @@ type Store = ReturnType<typeof createStore>
 type GetAtomState = Parameters<Parameters<Store['unstable_derive']>[0]>[0]
 type AtomState = NonNullable<ReturnType<GetAtomState>>
 type AnyAtom = Atom<unknown>
-type Batch = Parameters<NonNullable<AtomState['u']>>[0]
 
 type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => Cleanup | void
@@ -16,8 +15,6 @@ type Ref = {
   epoch: number
   cleanup?: Cleanup | undefined
 }
-
-const syncEffectChannelSymbol = Symbol()
 
 function syncEffect(effect: Effect): Atom<void> {
   const refAtom = atom<Ref>(() => ({ inProgress: 0, epoch: 0 }))
@@ -62,8 +59,7 @@ function syncEffect(effect: Effect): Atom<void> {
         store.set(refreshAtom, (v) => v + 1)
       } else {
         // unmount
-        const syncEffectChannel = ensureBatchChannel(batch)
-        syncEffectChannel.add(() => {
+        batch[0].add(() => {
           ref.cleanup?.()
           delete ref.cleanup
         })
@@ -73,46 +69,12 @@ function syncEffect(effect: Effect): Atom<void> {
     internalAtomState.u = (batch) => {
       originalUpdateHook?.(batch)
       // update
-      const syncEffectChannel = ensureBatchChannel(batch)
-      syncEffectChannel.add(runEffect)
+      batch[0].add(runEffect)
     }
   }
   return atom((get) => {
     get(internalAtom)
   })
-}
-
-type BatchWithSyncEffect = Batch & {
-  [syncEffectChannelSymbol]?: Set<() => void>
-}
-function ensureBatchChannel(batch: BatchWithSyncEffect) {
-  // ensure continuation of the flushBatch while loop
-  const originalQueue = batch[1]
-  if (!originalQueue) {
-    throw new Error('batch[1] must be present')
-  }
-  if (!batch[syncEffectChannelSymbol]) {
-    batch[syncEffectChannelSymbol] = new Set<() => void>()
-    batch[1] = {
-      ...originalQueue,
-      add(item) {
-        originalQueue.add(item)
-        return this
-      },
-      clear() {
-        batch[syncEffectChannelSymbol]!.clear()
-        originalQueue.clear()
-      },
-      forEach(callback) {
-        batch[syncEffectChannelSymbol]!.forEach(callback)
-        originalQueue.forEach(callback)
-      },
-      get size() {
-        return batch[syncEffectChannelSymbol]!.size + originalQueue.size
-      },
-    }
-  }
-  return batch[syncEffectChannelSymbol]!
 }
 
 const getAtomStateMap = new WeakMap<Store, GetAtomState>()
