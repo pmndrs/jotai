@@ -263,7 +263,7 @@ type DevStoreRev4 = {
 
 const INTERNAL_STORE_METHODS: unique symbol = Symbol() // no description intentionally
 
-const getInternalStoreMethods = (store: Store): SecretStoreMethods =>
+const getSecretStoreMethods = (store: Store): SecretStoreMethods =>
   store[INTERNAL_STORE_METHODS]
 
 type SecretStoreMethods = readonly [
@@ -858,8 +858,8 @@ export const getDefaultStore = (): PrdOrDevStore => {
 }
 
 // Internal functions (subject to change without notice)
-export const INTERNAL_getInternalStoreMethods: typeof getInternalStoreMethods =
-  getInternalStoreMethods
+export const INTERNAL_getSecretStoreMethods: typeof getSecretStoreMethods =
+  getSecretStoreMethods
 export const INTERNAL_buildStore: typeof buildStore = buildStore
 
 // Internal types (subject to change without notice)

@@ -6,7 +6,7 @@ export {
   getDefaultStore,
 
   // Internal functions (subject to change without notice)
-  INTERNAL_getInternalStoreMethods,
+  INTERNAL_getSecretStoreMethods,
   INTERNAL_buildStore,
 } from './vanilla/store.ts'
 
