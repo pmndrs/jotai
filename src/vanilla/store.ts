@@ -177,11 +177,11 @@ type BatchPriority = 0 | 1 | 2
 
 type Batch = [
   /** finish recompute */
-  highPriority: Set<() => void>,
+  priority0: Set<() => void>,
   /** atom listeners */
-  mediumPriority: Set<() => void>,
+  priority1: Set<() => void>,
   /** atom mount hooks */
-  lowPriority: Set<() => void>,
+  priority2: Set<() => void>,
 ] & {
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
