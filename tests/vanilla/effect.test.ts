@@ -87,9 +87,11 @@ type BatchWithSyncEffect = Batch & {
 }
 function ensureBatchChannel(batch: BatchWithSyncEffect) {
   // ensure continuation of the flushBatch while loop
+  const originalQueue = batch[1]
+  if (!originalQueue) {
+    throw new Error('batch[1] must be present')
+  }
   if (!batch[syncEffectChannelSymbol]) {
-    batch[1] ||= new Set()
-    const originalQueue = batch[1]
     batch[syncEffectChannelSymbol] = new Set<() => void>()
     batch[1] = {
       ...originalQueue,
