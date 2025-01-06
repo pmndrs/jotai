@@ -188,7 +188,7 @@ const getSecretStoreMethods = (store: Store): SecretStoreMethods =>
   store[INTERNAL_STORE_METHODS]
 
 type SecretStoreMethods = readonly [
-  ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  ensureAtomState: Parameters<BuildStore>[0],
   readAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
   writeAtomState: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
@@ -217,7 +217,10 @@ type Store = {
 const INTERNAL_flushStoreHook = Symbol.for('JOTAI.EXPERIMENTAL.FLUSHSTOREHOOK')
 
 type BuildStore = (
-  ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  ensureAtomState: <Value>(
+    atom: Atom<Value>,
+    onInit?: (store: Store) => void,
+  ) => AtomState<Value>,
   atomRead?: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -706,7 +709,9 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
   const [ensureAtomState] = store[INTERNAL_STORE_METHODS]
   let inRestoreAtom = 0
   const newEnsureAtomState: typeof ensureAtomState = (atom) => {
-    const atomState = ensureAtomState(atom)
+    const atomState = ensureAtomState(atom, () => {
+      atom.unstable_onInit?.(derivedStore)
+    })
     const originalMounted = atomState.h
     atomState.h = () => {
       originalMounted?.()
@@ -770,7 +775,10 @@ type PrdOrDevStore = Store | (Store & DevStoreRev4)
 
 export const createStore = (): PrdOrDevStore => {
   const atomStateMap = new WeakMap()
-  const ensureAtomState = <Value>(atom: Atom<Value>) => {
+  const ensureAtomState: Parameters<BuildStore>[0] = (
+    atom,
+    onInit = (s) => atom.unstable_onInit?.(s),
+  ) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
       throw new Error('Atom is undefined or null')
     }
@@ -778,7 +786,7 @@ export const createStore = (): PrdOrDevStore => {
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
-      atom.unstable_onInit?.(store)
+      onInit(store)
     }
     return atomState
   }

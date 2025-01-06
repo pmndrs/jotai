@@ -1,10 +1,13 @@
 import { expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
-import { atom, createStore } from 'jotai/vanilla'
+import {
+  atom,
+  createStore,
+  INTERNAL_getSecretStoreMethods as getSecretStoreMethods,
+} from 'jotai/vanilla'
 
 type Store = ReturnType<typeof createStore>
-type GetAtomState = Parameters<Parameters<Store['unstable_derive']>[0]>[0]
-type AtomState = NonNullable<ReturnType<GetAtomState>>
+type AtomState = ReturnType<ReturnType<typeof getSecretStoreMethods>[0]>
 type AnyAtom = Atom<unknown>
 
 type Cleanup = () => void
@@ -108,28 +111,9 @@ function ensureSyncEffectChannel(store: any) {
   return store[syncEffectChannelSymbol] as Set<() => void>
 }
 
-const getAtomStateMap = new WeakMap<Store, GetAtomState>()
-
-/**
- * HACK: steal atomState to synchronously determine if
- * the atom is mounted
- * We return null to cause the buildStore(...args) to throw
- * to abort creating a derived store
- */
 function getAtomState(store: Store, atom: AnyAtom): AtomState {
-  let getAtomStateFn = getAtomStateMap.get(store)
-  if (!getAtomStateFn) {
-    try {
-      store.unstable_derive((...storeArgs) => {
-        getAtomStateFn = storeArgs[0]
-        return null as any
-      })
-    } catch {
-      // expect error
-    }
-    getAtomStateMap.set(store, getAtomStateFn!)
-  }
-  return getAtomStateFn!(atom)!
+  const [ensureAtomState] = getSecretStoreMethods(store)
+  return ensureAtomState(atom)!
 }
 
 it('fires after recomputeDependents and before atom listeners', async function test() {
@@ -240,7 +224,7 @@ it('sets values to atoms without causing infinite loop', () => {
   expect(effect).toBeCalledTimes(2)
 })
 
-// TODO: consider removing this after we provide a new syncEffect implementation
+// TODO(dmaskasky): consider removing this after we provide a new syncEffect implementation
 it('supports recursive setting synchronous in read', async () => {
   const store = createStore()
   const a = atom(0)
