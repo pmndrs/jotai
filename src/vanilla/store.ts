@@ -180,11 +180,11 @@ type Batch = [
   priority2: Set<() => void>,
 ] & {
   /** changed Atoms */
-  D: Set<AnyAtom>
+  C: Set<AnyAtom>
 }
 
 const createBatch = (): Batch =>
-  Object.assign([new Set(), new Set(), new Set()], { D: new Set() }) as Batch
+  Object.assign([new Set(), new Set(), new Set()], { C: new Set() }) as Batch
 
 const addBatchFunc = (
   batch: Batch,
@@ -199,8 +199,8 @@ const registerBatchAtom = (
   atom: AnyAtom,
   atomState: AtomState,
 ) => {
-  if (!batch.D.has(atom)) {
-    batch.D.add(atom)
+  if (!batch.C.has(atom)) {
+    batch.C.add(atom)
     atomState.u?.(batch)
     const scheduleListeners = () => {
       atomState.m?.l.forEach((listener) => addBatchFunc(batch, 1, listener))
@@ -222,8 +222,8 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.D.size || batch.some((channel) => channel.size)) {
-    batch.D.clear()
+  while (batch.C.size || batch.some((channel) => channel.size)) {
+    batch.C.clear()
     for (const channel of batch) {
       channel.forEach(call)
       channel.clear()
