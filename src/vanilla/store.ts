@@ -172,7 +172,7 @@ const addDependency = <Value>(
 type BatchPriority = 0 | 1 | 2
 
 type Batch = [
-  /** finish recompute */
+  /** high priority listeners */
   priority0: Set<() => void>,
   /** atom listeners */
   priority1: Set<() => void>,
