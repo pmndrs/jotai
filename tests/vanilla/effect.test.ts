@@ -62,8 +62,11 @@ function syncEffect(effect: Effect): Atom<void> {
         store.set(refreshAtom, (v) => v + 1)
       } else {
         // unmount
-        ref.cleanup?.()
-        delete ref.cleanup
+        const syncEffectChannel = ensureBatchChannel(batch)
+        syncEffectChannel.add(() => {
+          ref.cleanup?.()
+          delete ref.cleanup
+        })
       }
     }
     const originalUpdateHook = internalAtomState.u
@@ -84,11 +87,8 @@ type BatchWithSyncEffect = Batch & {
 }
 function ensureBatchChannel(batch: BatchWithSyncEffect) {
   // ensure continuation of the flushBatch while loop
-  const originalQueue = batch[1]
-  if (!originalQueue) {
-    throw new Error('batch[1] must be present')
-  }
   if (!batch[syncEffectChannelSymbol]) {
+    const originalQueue = (batch[1] ||= new Set())
     batch[syncEffectChannelSymbol] = new Set<() => void>()
     batch[1] = {
       ...originalQueue,
@@ -104,28 +104,36 @@ function ensureBatchChannel(batch: BatchWithSyncEffect) {
         batch[syncEffectChannelSymbol]!.forEach(callback)
         originalQueue.forEach(callback)
       },
+      get size() {
+        return batch[syncEffectChannelSymbol]!.size + originalQueue.size
+      },
     }
   }
   return batch[syncEffectChannelSymbol]!
 }
 
+const getAtomStateMap = new WeakMap<Store>()
+
 /**
  * HACK: steal atomState to synchronously determine if
  * the atom is mounted
- * We return void 0 to cause the buildStore(...args) to throw
+ * We return null to cause the buildStore(...args) to throw
  * to abort creating a derived store
  */
 function getAtomState(store: Store, atom: AnyAtom): AtomState {
-  let atomState: AtomState
-  try {
-    store.unstable_derive((getAtomState) => {
-      atomState = getAtomState(atom)!
-      return null as any
-    })
-  } catch {
-    // expect error
+  let _getAtomState: GetAtomState = getAtomStateMap.get(store)
+  if (!_getAtomState) {
+    try {
+      store.unstable_derive((...storeArgs) => {
+        _getAtomState = storeArgs[0]
+        return null as any
+      })
+    } catch {
+      // expect error
+    }
+    getAtomStateMap.set(store, _getAtomState)
   }
-  return atomState!
+  return _getAtomState(atom)!
 }
 
 it('fires after recomputeDependents and before atom listeners', async function test() {

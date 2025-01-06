@@ -175,23 +175,27 @@ const addDependency = <Value>(
 
 type BatchPriority = 0 | 1 | 2
 
-type Batch = Set<() => void>[] & {
+type Batch = [
+  /** finish recompute */
+  highPriority: Set<() => void>,
+  /** atom listeners */
+  mediumPriority: Set<() => void>,
+  /** atom mount hooks */
+  lowPriority: Set<() => void>,
+] & {
   /** Atom dependents map */
   D: Map<AnyAtom, Set<AnyAtom>>
 }
 
 const createBatch = (): Batch =>
-  Object.assign(
-    [new Set<() => void>(), new Set<() => void>(), new Set<() => void>()],
-    { D: new Map() },
-  )
+  Object.assign([new Set(), new Set(), new Set()], { D: new Map() }) as Batch
 
 const addBatchFunc = (
   batch: Batch,
   priority: BatchPriority,
   fn: () => void,
 ) => {
-  batch[priority]!.add(fn)
+  batch[priority].add(fn)
 }
 
 const registerBatchAtom = (
