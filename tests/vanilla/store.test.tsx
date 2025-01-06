@@ -1086,3 +1086,17 @@ it('should pass store and atomState to the atom initializer', () => {
   }
   store.get(a)
 })
+
+it.only('uses recomputes dependents of unmounted atoms', () => {
+  const a = atom(0)
+  const bRead = vi.fn((get) => get(a))
+  const b = atom(bRead)
+  const w = atom(null, (get, set) => {
+    get(b)
+    bRead.mockClear()
+    set(a, 1)
+    expect(bRead).toHaveBeenCalled()
+  })
+  const store = createStore()
+  store.set(w)
+})
