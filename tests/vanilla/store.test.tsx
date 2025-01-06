@@ -1137,35 +1137,22 @@ it('runs recomputeDependents on atoms in the correct order', async () => {
   const val2Atoms = createHistoryAtoms<string | null>(null)
 
   const initAtom = atom(null, (_get, set) => {
-    console.log('  initAtom write val2Atoms')
     // if comment out this line, the test will pass
     set(val2Atoms.resetAtom, null)
-    console.log('  initAtom write val1Atoms')
     set(val1Atoms.resetAtom, 'bar')
   })
   initAtom.debugLabel = 'initAtom'
 
   const computedValAtom = atom((get) => {
-    const v2Value = get(val2Atoms.valueAtom)
+    get(val2Atoms.valueAtom)
     const v1Value = get(val1Atoms.valueAtom)
-    console.log('  computedValAtom read val1Atoms', v1Value, v2Value)
     return v1Value
   })
   computedValAtom.debugLabel = 'computedValAtom'
 
-  type Store = ReturnType<typeof createStore>
-  function testStore(store: Store) {
-    console.log('sub computedValAtom ----')
-    store.sub(computedValAtom, () => {})
-    console.log('set initAtom ----')
-    store.set(initAtom)
-    const result = store.get(computedValAtom)
-    expect(result).toBe('bar')
-  }
-  // console.log('\n2.10.0')
-  // testStore(createStores['2.10.0']!())
-  // console.log('\n2.10.4')
-  // testStore(createStores['2.10.4']!())
-  console.log('\n2.11.0')
-  testStore(createStore())
+  const store = createStore()
+  store.sub(computedValAtom, () => {})
+  store.set(initAtom)
+  const result = store.get(computedValAtom)
+  expect(result).toBe('bar')
 })
