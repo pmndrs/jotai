@@ -554,12 +554,11 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
 
     // Step 2: use the topSortedReversed atom list to recompute all affected atoms
     // Track what's changed, so that we can short circuit when possible
-    const changedAtoms = new Set<AnyAtom>(batch.D.keys())
     for (let i = topSortedReversed.length - 1; i >= 0; --i) {
       const [a, aState, prevEpochNumber] = topSortedReversed[i]!
       let hasChangedDeps = false
       for (const dep of aState.d.keys()) {
-        if (dep !== a && changedAtoms.has(dep)) {
+        if (dep !== a && batch.D.has(dep)) {
           hasChangedDeps = true
           break
         }
@@ -569,7 +568,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         mountDependencies(batch, a, aState)
         if (prevEpochNumber !== aState.n) {
           registerBatchAtom(batch, a, aState)
-          changedAtoms.add(a)
         }
       }
       delete aState.x
