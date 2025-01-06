@@ -463,7 +463,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     atom: Atom<Value>,
     atomState: AtomState<Value>,
   ) => {
-    const dependents = new Map<AnyAtom, AtomState>()
+    const dependents = new Map<AnyAtom, AtomState>([[atom, atomState]])
     const stack: [AnyAtom, AtomState][] = [[atom, atomState]]
     while (stack.length > 0) {
       const [a, aState] = stack.pop()!
