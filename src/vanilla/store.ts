@@ -116,8 +116,6 @@ type AtomState<Value = AnyValue> = {
   e?: AnyError
   /** Indicates that the atom value has been changed */
   x?: true
-  /** Debug label for the atom. */
-  _?: string | undefined
 }
 
 const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
@@ -763,7 +761,6 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
           debugMountedAtoms.delete(atom)
         }
       }
-      atomState._ = atom.debugLabel
     }
     storeArgs[3] = function devAtomWrite(atom, getter, setter, ...args) {
       if (inRestoreAtom) {
