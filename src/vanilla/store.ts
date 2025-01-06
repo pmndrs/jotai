@@ -194,7 +194,7 @@ const addBatchFunc = (
   batch: Batch,
   priority: BatchPriority,
   fn: () => void,
-) => {
+): void => {
   batch[priority].add(fn)
 }
 
@@ -227,7 +227,7 @@ const addBatchAtomDependent = (
 const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
   batch.D.get(atom)
 
-const flushBatch = (batch: Batch) => {
+const flushBatch = (batch: Batch): void => {
   let error: AnyError
   let hasError = false
   const call = (fn: () => void) => {
@@ -267,7 +267,7 @@ const getSecretStoreMethods = (store: Store): SecretStoreMethods =>
   store[INTERNAL_STORE_METHODS]
 
 type SecretStoreMethods = readonly [
-  ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  ensureAtomState: Parameters<BuildStore>[0],
   readAtomState: <Value>(
     batch: Batch | undefined,
     atom: Atom<Value>,
@@ -300,7 +300,10 @@ type Store = {
 }
 
 type BuildStore = (
-  ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  ensureAtomState: <Value>(
+    atom: Atom<Value>,
+    onInit?: (store: Store) => void,
+  ) => AtomState<Value>,
   atomRead?: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -757,7 +760,9 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
   const [ensureAtomState] = store[INTERNAL_STORE_METHODS]
   let inRestoreAtom = 0
   const newEnsureAtomState: typeof ensureAtomState = (atom) => {
-    const atomState = ensureAtomState(atom)
+    const atomState = ensureAtomState(atom, () => {
+      atom.unstable_onInit?.(derivedStore)
+    })
     const originalMounted = atomState.h
     atomState.h = (batch) => {
       originalMounted?.(batch)
@@ -821,7 +826,10 @@ type PrdOrDevStore = Store | (Store & DevStoreRev4)
 
 export const createStore = (): PrdOrDevStore => {
   const atomStateMap = new WeakMap()
-  const ensureAtomState = <Value>(atom: Atom<Value>) => {
+  const ensureAtomState: Parameters<BuildStore>[0] = (
+    atom,
+    onInit = (s) => atom.unstable_onInit?.(s),
+  ) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
       throw new Error('Atom is undefined or null')
     }
@@ -829,7 +837,7 @@ export const createStore = (): PrdOrDevStore => {
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
-      atom.unstable_onInit?.(store)
+      onInit(store)
     }
     return atomState
   }
@@ -861,6 +869,9 @@ export const getDefaultStore = (): PrdOrDevStore => {
 export const INTERNAL_getSecretStoreMethods: typeof getSecretStoreMethods =
   getSecretStoreMethods
 export const INTERNAL_buildStore: typeof buildStore = buildStore
+export const INTERNAL_createBatch: typeof createBatch = createBatch
+export const INTERNAL_addBatchFunc: typeof addBatchFunc = addBatchFunc
+export const INTERNAL_flushBatch: typeof flushBatch = flushBatch
 
 // Internal types (subject to change without notice)
 export type INTERNAL_AtomState = AtomState
