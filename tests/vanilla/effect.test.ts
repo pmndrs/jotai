@@ -113,7 +113,7 @@ function ensureBatchChannel(batch: BatchWithSyncEffect) {
   return batch[syncEffectChannelSymbol]!
 }
 
-const getAtomStateMap = new WeakMap<Store>()
+const getAtomStateMap = new WeakMap<Store, GetAtomState>()
 
 /**
  * HACK: steal atomState to synchronously determine if
@@ -122,7 +122,7 @@ const getAtomStateMap = new WeakMap<Store>()
  * to abort creating a derived store
  */
 function getAtomState(store: Store, atom: AnyAtom): AtomState {
-  let _getAtomState: GetAtomState = getAtomStateMap.get(store)
+  let _getAtomState = getAtomStateMap.get(store)
   if (!_getAtomState) {
     try {
       store.unstable_derive((...storeArgs) => {
@@ -132,9 +132,9 @@ function getAtomState(store: Store, atom: AnyAtom): AtomState {
     } catch {
       // expect error
     }
-    getAtomStateMap.set(store, _getAtomState)
+    getAtomStateMap.set(store, _getAtomState!)
   }
-  return _getAtomState(atom)!
+  return _getAtomState!(atom)!
 }
 
 it('fires after recomputeDependents and before atom listeners', async function test() {
