@@ -729,7 +729,7 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
   const derivedStore = store.unstable_derive((...storeArgs: [...StoreArgs]) => {
     const [getAtomState, setAtomState, , atomWrite] = storeArgs
     savedGetAtomState = getAtomState
-    storeArgs[1] = (atom, atomState) => {
+    storeArgs[1] = function devSetAtomState(atom, atomState) {
       setAtomState(atom, atomState)
       const originalMounted = atomState.h
       atomState.h = (batch) => {
@@ -741,7 +741,7 @@ const deriveDevStoreRev4 = (store: Store): Store & DevStoreRev4 => {
         }
       }
     }
-    storeArgs[3] = (atom, getter, setter, ...args) => {
+    storeArgs[3] = function devAtomWrite(atom, getter, setter, ...args) {
       if (inRestoreAtom) {
         return setter(atom, ...args)
       }
