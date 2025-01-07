@@ -1091,7 +1091,6 @@ it('recomputes dependents of unmounted atoms', () => {
   const a = atom(0)
   a.debugLabel = 'a'
   const bRead = vi.fn((get: Getter) => {
-    console.log('bRead')
     return get(a)
   })
   const b = atom(bRead)
@@ -1147,38 +1146,29 @@ it('runs recomputeDependents on atoms in the correct order', async () => {
     i++
     return { valueAtom, resetAtom }
   }
-
   const val1Atoms = createHistoryAtoms('foo')
   const val2Atoms = createHistoryAtoms<string | null>(null)
-
   const initAtom = atom(null, (_get, set) => {
     // if comment out this line, the test will pass
-    console.log('initAtom write val2Atoms')
     set(val2Atoms.resetAtom, null)
-    console.log('initAtom write val1Atoms')
     set(val1Atoms.resetAtom, 'bar')
   })
   initAtom.debugLabel = 'initAtom'
-
   const computedValAtom = atom((get) => {
     const v2Value = get(val2Atoms.valueAtom)
     if (v2Value !== null) {
-      console.log('computedValAtom read val2Atoms', v2Value)
       return v2Value
     }
     const v1Value = get(val1Atoms.valueAtom)
-    console.log('computedValAtom read val2Atoms', v1Value)
     return v1Value
   })
   computedValAtom.debugLabel = 'computedValAtom'
-
   const asyncInitAtom = atom(null, async (_get, set) => {
     // if comment out this line, the test will pass [DOES NOT WORK]
     await new Promise((resolve) => setTimeout(resolve, 0))
     set(initAtom)
   })
   store.sub(computedValAtom, () => {})
-  console.log('set asyncInitAtom')
   await store.set(asyncInitAtom)
   const result = store.get(computedValAtom)
   expect(result).toBe('bar')
