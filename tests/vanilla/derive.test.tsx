@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
-import { atom, createStore } from 'jotai/vanilla'
-import type { Atom, Getter } from 'jotai/vanilla'
 import {
+  atom,
   INTERNAL_buildStore as buildStore,
+  createStore,
   INTERNAL_getSecretStoreMethods as getSecretStoreMethods,
-} from 'jotai/vanilla/internals'
+} from 'jotai/vanilla'
+import type { Atom, Getter } from 'jotai/vanilla'
 
 type EnsureAtomState = ReturnType<typeof getSecretStoreMethods>[0]
 

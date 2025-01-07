@@ -1,11 +1,12 @@
 import { waitFor } from '@testing-library/react'
 import { assert, describe, expect, it, vi } from 'vitest'
-import { atom, createStore } from 'jotai/vanilla'
-import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 import {
+  atom,
   INTERNAL_buildStore as buildStore,
+  createStore,
   INTERNAL_getSecretStoreMethods as getSecretStoreMethods,
-} from 'jotai/vanilla/internals'
+} from 'jotai/vanilla'
+import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
