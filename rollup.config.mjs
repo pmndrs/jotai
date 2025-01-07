@@ -12,7 +12,7 @@ import createBabelConfig from './babel.config.js'
 
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
-export const entries = [
+const entries = [
   {
     find: /.*\/vanilla\/internals\.ts$/,
     replacement: 'jotai/vanilla/internals',
@@ -129,6 +129,7 @@ function createUMDConfig(input, output, env, clientOnly) {
         'jotai/react': 'jotaiReact',
         'jotai/vanilla/utils': 'jotaiVanillaUtils',
         'jotai/react/utils': 'jotaiReactUtils',
+        'jotai/vanilla/internals': 'jotaiVanillaInternals',
       },
     },
     external,
