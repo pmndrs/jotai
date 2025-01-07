@@ -150,7 +150,6 @@ const addPendingPromiseToDependency = (
 }
 
 const addDependency = <Value>(
-  batch: Batch | undefined,
   atom: Atom<Value>,
   atomState: AtomState<Value>,
   a: AnyAtom,
@@ -164,9 +163,6 @@ const addDependency = <Value>(
     addPendingPromiseToDependency(atom, atomState.v, aState)
   }
   aState.m?.t.add(atom)
-  if (batch) {
-    addBatchAtomDependent(batch, a, atom)
-  }
 }
 
 //
@@ -183,12 +179,12 @@ type Batch = [
   /** atom mount hooks */
   priority2: Set<() => void>,
 ] & {
-  /** Atom dependents map */
-  D: Map<AnyAtom, Set<AnyAtom>>
+  /** changed Atoms */
+  C: Set<AnyAtom>
 }
 
 const createBatch = (): Batch =>
-  Object.assign([new Set(), new Set(), new Set()], { D: new Map() }) as Batch
+  Object.assign([new Set(), new Set(), new Set()], { C: new Set() }) as Batch
 
 const addBatchFunc = (
   batch: Batch,
@@ -203,8 +199,8 @@ const registerBatchAtom = (
   atom: AnyAtom,
   atomState: AtomState,
 ) => {
-  if (!batch.D.has(atom)) {
-    batch.D.set(atom, new Set())
+  if (!batch.C.has(atom)) {
+    batch.C.add(atom)
     atomState.u?.(batch)
     const scheduleListeners = () => {
       atomState.m?.l.forEach((listener) => addBatchFunc(batch, 1, listener))
@@ -212,20 +208,6 @@ const registerBatchAtom = (
     addBatchFunc(batch, 1, scheduleListeners)
   }
 }
-
-const addBatchAtomDependent = (
-  batch: Batch,
-  atom: AnyAtom,
-  dependent: AnyAtom,
-) => {
-  const dependents = batch.D.get(atom)
-  if (dependents) {
-    dependents.add(dependent)
-  }
-}
-
-const getBatchAtomDependents = (batch: Batch, atom: AnyAtom) =>
-  batch.D.get(atom)
 
 const flushBatch = (batch: Batch) => {
   let error: AnyError
@@ -240,8 +222,8 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.some((channel) => channel.size)) {
-    batch.D.clear()
+  while (batch.C.size || batch.some((channel) => channel.size)) {
+    batch.C.clear()
     for (const channel of batch) {
       channel.forEach(call)
       channel.clear()
@@ -390,10 +372,10 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         return returnAtomValue(aState)
       } finally {
         if (isSync) {
-          addDependency(batch, atom, atomState, a, aState)
+          addDependency(atom, atomState, a, aState)
         } else {
           const batch = createBatch()
-          addDependency(batch, atom, atomState, a, aState)
+          addDependency(atom, atomState, a, aState)
           mountDependencies(batch, atom, atomState)
           flushBatch(batch)
         }
@@ -475,9 +457,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         ensureAtomState(atomWithPendingPromise),
       )
     }
-    getBatchAtomDependents(batch, atom)?.forEach((dependent) => {
-      dependents.set(dependent, ensureAtomState(dependent))
-    })
     return dependents
   }
 
