@@ -115,7 +115,7 @@ type AtomState<Value = AnyValue> = {
   /** Atom error */
   e?: AnyError
   /** Indicates that the atom value has been changed */
-  x?: true
+  x: number
 }
 
 const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
@@ -285,7 +285,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     }
     let atomState = getAtomState(atom)
     if (!atomState) {
-      atomState = { d: new Map(), p: new Set(), n: 0 }
+      atomState = { d: new Map(), p: new Set(), n: 0, x: 0 }
       setAtomState(atom, atomState)
       atomOnInit?.(atom, store)
     }
@@ -310,7 +310,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       atomState.v = valueOrPromise
     }
     delete atomState.e
-    delete atomState.x
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
       if (pendingPromise) {
@@ -423,7 +422,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     } catch (error) {
       delete atomState.v
       atomState.e = error
-      delete atomState.x
       ++atomState.n
       return atomState
     } finally {
@@ -488,7 +486,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         // Atom has been visited but not yet processed
         visited.add(a)
         // Mark atom dirty
-        aState.x = true
+        ++aState.x
         stack.pop()
         continue
       }
@@ -522,7 +520,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
             changedAtoms.add(a)
           }
         }
-        delete aState.x
+        --aState.x
       }
     }
     addBatchFunc(batch, 0, finishRecompute, finishRecompute)
