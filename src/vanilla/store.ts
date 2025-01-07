@@ -173,25 +173,22 @@ type BatchPriority = 0 | 1 | 2
 
 type Batch = [
   /** finish recompute */
-  priority0: Set<() => void>,
+  priority0: Map<object, () => void>,
   /** atom listeners */
-  priority1: Set<() => void>,
+  priority1: Map<object, () => void>,
   /** atom mount hooks */
-  priority2: Set<() => void>,
-] & {
-  /** changed Atoms */
-  C: Set<AnyAtom>
-}
+  priority2: Map<object, () => void>,
+]
 
-const createBatch = (): Batch =>
-  Object.assign([new Set(), new Set(), new Set()], { C: new Set() }) as Batch
+const createBatch = (): Batch => [new Map(), new Map(), new Map()]
 
 const addBatchFunc = (
   batch: Batch,
   priority: BatchPriority,
+  key: object,
   fn: () => void,
 ) => {
-  batch[priority].add(fn)
+  batch[priority].set(key, fn)
 }
 
 const registerBatchAtom = (
@@ -199,14 +196,13 @@ const registerBatchAtom = (
   atom: AnyAtom,
   atomState: AtomState,
 ) => {
-  if (!batch.C.has(atom)) {
-    batch.C.add(atom)
-    atomState.u?.(batch)
-    const scheduleListeners = () => {
-      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 1, listener))
-    }
-    addBatchFunc(batch, 1, scheduleListeners)
+  atomState.u?.(batch)
+  const scheduleListeners = () => {
+    atomState.m?.l.forEach((listener) =>
+      addBatchFunc(batch, 1, listener, listener),
+    )
   }
+  addBatchFunc(batch, 1, atom, scheduleListeners)
 }
 
 const flushBatch = (batch: Batch) => {
@@ -222,8 +218,7 @@ const flushBatch = (batch: Batch) => {
       }
     }
   }
-  while (batch.C.size || batch.some((channel) => channel.size)) {
-    batch.C.clear()
+  while (batch.some((channel) => channel.size)) {
     for (const channel of batch) {
       channel.forEach(call)
       channel.clear()
@@ -530,7 +525,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         delete aState.x
       }
     }
-    addBatchFunc(batch, 0, finishRecompute)
+    addBatchFunc(batch, 0, finishRecompute, finishRecompute)
   }
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
@@ -660,7 +655,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
             mounted.u = (batch) => createInvocationContext(batch, onUnmount)
           }
         }
-        addBatchFunc(batch, 2, processOnMount)
+        addBatchFunc(batch, 2, processOnMount, processOnMount)
       }
     }
     return atomState.m
@@ -679,7 +674,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFunc(batch, 2, () => onUnmount(batch))
+        const processOnUnmount = () => onUnmount(batch)
+        addBatchFunc(batch, 2, processOnUnmount, processOnUnmount)
       }
       delete atomState.m
       atomState.h?.(batch)
