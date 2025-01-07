@@ -63,10 +63,11 @@ function syncEffect(effect: Effect): Atom<void> {
       } else {
         // unmount
         const syncEffectChannel = ensureBatchChannel(batch)
-        syncEffectChannel.add(() => {
+        const processCleanup = () => {
           ref.cleanup?.()
           delete ref.cleanup
-        })
+        }
+        syncEffectChannel.set(processCleanup, processCleanup)
       }
     }
     const originalUpdateHook = internalAtomState.u
@@ -74,7 +75,7 @@ function syncEffect(effect: Effect): Atom<void> {
       originalUpdateHook?.(batch)
       // update
       const syncEffectChannel = ensureBatchChannel(batch)
-      syncEffectChannel.add(runEffect)
+      syncEffectChannel.set(runEffect, runEffect)
     }
   }
   return atom((get) => {
@@ -83,7 +84,7 @@ function syncEffect(effect: Effect): Atom<void> {
 }
 
 type BatchWithSyncEffect = Batch & {
-  [syncEffectChannelSymbol]?: Set<() => void>
+  [syncEffectChannelSymbol]?: Map<object, () => void>
 }
 function ensureBatchChannel(batch: BatchWithSyncEffect) {
   // ensure continuation of the flushBatch while loop
@@ -92,11 +93,11 @@ function ensureBatchChannel(batch: BatchWithSyncEffect) {
     throw new Error('batch[1] must be present')
   }
   if (!batch[syncEffectChannelSymbol]) {
-    batch[syncEffectChannelSymbol] = new Set<() => void>()
+    batch[syncEffectChannelSymbol] = new Map<object, () => void>()
     batch[1] = {
       ...originalQueue,
-      add(item) {
-        originalQueue.add(item)
+      set(key, item) {
+        originalQueue.set(key, item)
         return this
       },
       clear() {
