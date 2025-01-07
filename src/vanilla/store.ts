@@ -209,31 +209,6 @@ const registerBatchAtom = (
   }
 }
 
-const flushBatch = (batch: Batch) => {
-  let error: AnyError
-  let hasError = false
-  const call = (fn: () => void) => {
-    try {
-      fn()
-    } catch (e) {
-      if (!hasError) {
-        error = e
-        hasError = true
-      }
-    }
-  }
-  while (batch.C.size || batch.some((channel) => channel.size)) {
-    batch.C.clear()
-    for (const channel of batch) {
-      channel.forEach(call)
-      channel.clear()
-    }
-  }
-  if (hasError) {
-    throw error
-  }
-}
-
 // internal & unstable type
 type StoreArgs = readonly [
   getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
@@ -458,24 +433,20 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     return dependents
   }
 
-  const dirtyDependents = <Value>(
-    batch: Batch,
-    atom: Atom<Value>,
-    atomState: AtomState<Value>,
-  ) => {
-    const dependents = new Map<AnyAtom, AtomState>([[atom, atomState]])
-    const stack: [AnyAtom, AtomState][] = [[atom, atomState]]
+  const dirtyDependents = <Value>(atomState: AtomState<Value>) => {
+    const dependents = new Set<AtomState>([atomState])
+    const stack: AtomState[] = [atomState]
     while (stack.length > 0) {
-      const [a, aState] = stack.pop()!
+      const aState = stack.pop()!
       if (aState.x) {
         // already dirty
         continue
       }
       aState.x = true
-      for (const [d, s] of getMountedOrBatchDependents(batch, a, aState)) {
-        if (!dependents.has(d)) {
-          dependents.set(d, s)
-          stack.push([d, s])
+      for (const [, s] of getMountedOrBatchDependents(aState)) {
+        if (!dependents.has(s)) {
+          dependents.add(s)
+          stack.push(s)
         }
       }
     }
@@ -497,7 +468,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     // Visit the root atom. This is the only atom in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
     const stack: [a: AnyAtom, aState: AtomState][] = Array.from(
-      batch.D.keys(),
+      batch.C,
       (atom) => [atom, ensureAtomState(atom)],
     )
     while (stack.length > 0) {
@@ -532,7 +503,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       const [a, aState, prevEpochNumber] = topSortedReversed[i]!
       let hasChangedDeps = false
       for (const dep of aState.d.keys()) {
-        if (dep !== a && batch.D.has(dep)) {
+        if (dep !== a && batch.C.has(dep)) {
           hasChangedDeps = true
           break
         }
@@ -545,6 +516,32 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         }
       }
       delete aState.x
+    }
+  }
+
+  const flushBatch = (batch: Batch) => {
+    let error: AnyError
+    let hasError = false
+    const call = (fn: () => void) => {
+      try {
+        fn()
+      } catch (e) {
+        if (!hasError) {
+          error = e
+          hasError = true
+        }
+      }
+    }
+    while (batch.C.size || batch.some((channel) => channel.size)) {
+      recomputeDependents(batch)
+      batch.C.clear()
+      for (const channel of batch) {
+        channel.forEach(call)
+        channel.clear()
+      }
+    }
+    if (hasError) {
+      throw error
     }
   }
 
@@ -572,8 +569,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
           setAtomStateValueOrPromise(a, aState, v)
           mountDependencies(batch, a, aState)
           if (prevEpochNumber !== aState.n) {
-            dirtyDependents(batch, a, aState)
-            batch.R = recomputeDependents
+            dirtyDependents(aState)
             registerBatchAtom(batch, a, aState)
           }
           return undefined as R

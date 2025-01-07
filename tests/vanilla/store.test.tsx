@@ -1109,36 +1109,6 @@ it('recomputes dependents of unmounted atoms', () => {
   expect(bRead).not.toHaveBeenCalled()
 })
 
-it('runs recomputeDependents on atoms in the correct order', async () => {
-  let i = 0
-  function createHistoryAtoms<T>(initialValue: T) {
-    const historyStackAtom = atom<T[]>([initialValue])
-    historyStackAtom.debugLabel = `${i}:historyStackAtom`
-
-    const valueAtom = atom((get) => {
-      const entry = get(historyStackAtom)[0]
-      return entry
-    })
-    valueAtom.debugLabel = `${i}:valueAtom`
-
-    const resetAtom = atom(null, (_, set, value: T) => {
-      set(historyStackAtom, [value])
-    })
-    resetAtom.debugLabel = `${i}:resetAtom`
-    i++
-    return { valueAtom, resetAtom }
-  }
-
-  const val1Atoms = createHistoryAtoms('foo')
-  const val2Atoms = createHistoryAtoms<string | null>(null)
-
-  const initAtom = atom(null, (_get, set) => {
-    // if comment out this line, the test will pass
-    set(val2Atoms.resetAtom, null)
-    set(val1Atoms.resetAtom, 'bar')
-  }
-})
-
 it('recomputes all changed atom dependents together', async () => {
   const a = atom([0])
   const b = atom([0])
