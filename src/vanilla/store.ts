@@ -58,9 +58,9 @@ const patchPromiseForCancelability = <T>(promise: PromiseLike<T>) => {
 }
 
 const isPromiseLike = (
-  x: unknown,
-): x is PromiseLike<unknown> & { onCancel?: (fn: CancelHandler) => void } =>
-  typeof (x as any)?.then === 'function'
+  p: unknown,
+): p is PromiseLike<unknown> & { onCancel?: (fn: CancelHandler) => void } =>
+  typeof (p as any)?.then === 'function'
 
 /**
  * State tracked for mounted atoms. An atom is considered "mounted" if it has a
@@ -449,8 +449,6 @@ const buildStore: BuildStore = (
     returnAtomValue(readAtomState(undefined, atom))
 
   const getMountedOrBatchDependents = <Value>(
-    batch: Batch,
-    atom: Atom<Value>,
     atomState: AtomState<Value>,
   ): Map<AnyAtom, AtomState> => {
     const dependents = new Map<AnyAtom, AtomState>()
@@ -510,7 +508,7 @@ const buildStore: BuildStore = (
       }
       visiting.add(a)
       // Push unvisited dependents onto the stack
-      for (const [d, s] of getMountedOrBatchDependents(batch, a, aState)) {
+      for (const [d, s] of getMountedOrBatchDependents(aState)) {
         if (a !== d && !visiting.has(d)) {
           stack.push([d, s])
         }
