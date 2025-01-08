@@ -1091,7 +1091,6 @@ it('recomputes dependents of unmounted atoms', () => {
   const a = atom(0)
   a.debugLabel = 'a'
   const bRead = vi.fn((get: Getter) => {
-    console.log('bRead')
     return get(a)
   })
   const b = atom(bRead)

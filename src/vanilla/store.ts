@@ -594,7 +594,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     atom: AnyAtom,
     atomState: AtomState,
   ) => {
-    if (atomState.m && !isPendingPromise(atomState.v)) {
+    if (atomState.m) {
       for (const a of atomState.d.keys()) {
         if (!atomState.m.d.has(a)) {
           const aMounted = mountAtom(batch, a, ensureAtomState(a))
@@ -602,11 +602,13 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
           atomState.m.d.add(a)
         }
       }
-      for (const a of atomState.m.d || []) {
-        if (!atomState.d.has(a)) {
-          atomState.m.d.delete(a)
-          const aMounted = unmountAtom(batch, a, ensureAtomState(a))
-          aMounted?.t.delete(atom)
+      if (!isPendingPromise(atomState.v)) {
+        for (const a of atomState.m.d || []) {
+          if (!atomState.d.has(a)) {
+            atomState.m.d.delete(a)
+            const aMounted = unmountAtom(batch, a, ensureAtomState(a))
+            aMounted?.t.delete(atom)
+          }
         }
       }
     }
