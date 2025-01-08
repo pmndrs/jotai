@@ -74,6 +74,8 @@ type Mounted = {
   readonly l: Set<() => void>
   /** Set of mounted atoms that the atom depends on. */
   readonly d: Set<AnyAtom>
+  /** Set of dependencies added asynchronously */
+  readonly q: Set<AnyAtom>
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
@@ -310,10 +312,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       for (const a of atomState.d.keys()) {
         addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
       }
-      atomState.v = valueOrPromise
-    } else {
-      atomState.v = valueOrPromise
     }
+    atomState.v = valueOrPromise
     delete atomState.e
     delete atomState.x
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
@@ -375,6 +375,9 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
           addDependency(atom, atomState, a, aState)
         } else {
           const batch = createBatch()
+          if (isPendingPromise(atomState.v) && !atomState.m?.d.has(a)) {
+            atomState.m?.q.add(a)
+          }
           addDependency(atom, atomState, a, aState)
           mountDependencies(batch, atom, atomState)
           flushBatch(batch)
@@ -414,6 +417,11 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       const valueOrPromise = atomRead(atom, getter, options as never)
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
       if (isPromiseLike(valueOrPromise)) {
+        if (batch) {
+          addBatchFunc(batch, 0, () => atomState.m?.q.clear())
+        } else {
+          atomState.m?.q.clear()
+        }
         valueOrPromise.onCancel?.(() => controller?.abort())
         const complete = () => {
           if (atomState.m) {
@@ -602,13 +610,11 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
           atomState.m.d.add(a)
         }
       }
-      if (!isPendingPromise(atomState.v)) {
-        for (const a of atomState.m.d || []) {
-          if (!atomState.d.has(a)) {
-            atomState.m.d.delete(a)
-            const aMounted = unmountAtom(batch, a, ensureAtomState(a))
-            aMounted?.t.delete(atom)
-          }
+      for (const a of atomState.m.d || []) {
+        if (!atomState.d.has(a) && !atomState.m.q.has(a)) {
+          atomState.m.d.delete(a)
+          const aMounted = unmountAtom(batch, a, ensureAtomState(a))
+          aMounted?.t.delete(atom)
         }
       }
     }
@@ -631,6 +637,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       atomState.m = {
         l: new Set(),
         d: new Set(atomState.d.keys()),
+        q: new Set(),
         t: new Set(),
       }
       atomState.h?.(batch)
