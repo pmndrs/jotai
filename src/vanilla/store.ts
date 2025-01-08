@@ -319,7 +319,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       atomState.v = valueOrPromise
     }
     delete atomState.e
-    delete atomState.x
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
       if (pendingPromise) {
@@ -432,7 +431,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     } catch (error) {
       delete atomState.v
       atomState.e = error
-      delete atomState.x
       ++atomState.n
       return atomState
     } finally {
