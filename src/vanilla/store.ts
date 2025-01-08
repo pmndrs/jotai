@@ -443,23 +443,18 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(undefined, atom))
 
-  const getMountedOrBatchDependents = <Value>(
+  const getMountedDependents = <Value>(
     atomState: AtomState<Value>,
   ): Map<AnyAtom, AtomState> => {
-    const dependents = new Map<AnyAtom, AtomState>()
-    for (const a of atomState.m?.t || []) {
+    const mountedDependents = new Map<AnyAtom, AtomState>()
+    const dependents = new Set([...(atomState.m?.t || []), ...atomState.p])
+    for (const a of dependents) {
       const aState = ensureAtomState(a)
       if (aState.m) {
-        dependents.set(a, aState)
+        mountedDependents.set(a, aState)
       }
     }
-    for (const atomWithPendingPromise of atomState.p) {
-      dependents.set(
-        atomWithPendingPromise,
-        ensureAtomState(atomWithPendingPromise),
-      )
-    }
-    return dependents
+    return mountedDependents
   }
 
   const dirtyDependents = <Value>(atomState: AtomState<Value>) => {
@@ -472,7 +467,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         continue
       }
       aState.x = true
-      for (const [, s] of getMountedOrBatchDependents(aState)) {
+      for (const [, s] of getMountedDependents(aState)) {
         if (!dependents.has(s)) {
           dependents.add(s)
           stack.push(s)
@@ -519,7 +514,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       }
       visiting.add(a)
       // Push unvisited dependents onto the stack
-      for (const [d, s] of getMountedOrBatchDependents(aState)) {
+      for (const [d, s] of getMountedDependents(aState)) {
         if (a !== d && !visiting.has(d)) {
           stack.push([d, s])
         }
