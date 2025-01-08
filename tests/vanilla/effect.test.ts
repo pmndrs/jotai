@@ -6,6 +6,7 @@ type Store = ReturnType<typeof createStore>
 type GetAtomState = Parameters<Parameters<Store['unstable_derive']>[0]>[0]
 type AtomState = NonNullable<ReturnType<GetAtomState>>
 type AnyAtom = Atom<unknown>
+type Batch = Parameters<NonNullable<AtomState['u']>>[0]
 
 type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => Cleanup | void
@@ -59,7 +60,7 @@ function syncEffect(effect: Effect): Atom<void> {
         store.set(refreshAtom, (v) => v + 1)
       } else {
         // unmount
-        batch[0].add(() => {
+        scheduleListenerAfterRecompute(batch, () => {
           ref.cleanup?.()
           delete ref.cleanup
         })
@@ -69,7 +70,22 @@ function syncEffect(effect: Effect): Atom<void> {
     internalAtomState.u = (batch) => {
       originalUpdateHook?.(batch)
       // update
-      batch[0].add(runEffect)
+      scheduleListenerAfterRecompute(batch, runEffect)
+    }
+    function scheduleListenerAfterRecompute(
+      batch: Batch,
+      listener: () => void,
+    ) {
+      const scheduleListener = () => {
+        batch[0].add(listener)
+      }
+      if (batch[0].size === 0) {
+        // no other listeners
+        // schedule after recomputeDependents
+        batch[0].add(scheduleListener)
+      } else {
+        scheduleListener()
+      }
     }
   }
   return atom((get) => {

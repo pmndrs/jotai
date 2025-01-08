@@ -172,12 +172,12 @@ const addDependency = <Value>(
 type BatchPriority = 0 | 1 | 2
 
 type Batch = [
-  /** high priority listeners */
-  priority0: Set<() => void>,
+  /** finish recompute */
+  priority0: Set<(batch: Batch) => void>,
   /** atom listeners */
-  priority1: Set<() => void>,
+  priority1: Set<(batch: Batch) => void>,
   /** atom mount hooks */
-  priority2: Set<() => void>,
+  priority2: Set<(batch: Batch) => void>,
 ] & {
   /** changed Atoms */
   C: Set<AnyAtom>
@@ -189,7 +189,7 @@ const createBatch = (): Batch =>
 const addBatchFunc = (
   batch: Batch,
   priority: BatchPriority,
-  fn: () => void,
+  fn: (batch: Batch) => void,
 ) => {
   batch[priority].add(fn)
 }
@@ -203,21 +203,20 @@ const registerBatchAtom = (
     batch.C.add(atom)
     atomState.u?.(batch)
     const scheduleListeners = () => {
-      atomState.m?.l.forEach((listener) => addBatchFunc(batch, 1, listener))
+      atomState.m?.l.forEach((listener) =>
+        addBatchFunc(batch, 1, () => listener()),
+      )
     }
     addBatchFunc(batch, 1, scheduleListeners)
   }
 }
 
-const flushBatch = (
-  batch: Batch,
-  recomputeDependents: (batch: Batch) => void,
-) => {
+const flushBatch = (batch: Batch) => {
   let error: AnyError
   let hasError = false
-  const call = (fn: () => void) => {
+  const call = (fn: (batch: Batch) => void) => {
     try {
-      fn()
+      fn(batch)
     } catch (e) {
       if (!hasError) {
         error = e
@@ -226,8 +225,6 @@ const flushBatch = (
     }
   }
   while (batch.C.size || batch.some((channel) => channel.size)) {
-    recomputeDependents(batch)
-    batch.C.clear()
     for (const channel of batch) {
       channel.forEach(call)
       channel.clear()
@@ -380,7 +377,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
           const batch = createBatch()
           addDependency(atom, atomState, a, aState)
           mountDependencies(batch, atom, atomState)
-          recomputeAndFlushBatch(batch)
+          flushBatch(batch)
         }
       }
     }
@@ -422,7 +419,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
           if (atomState.m) {
             const batch = createBatch()
             mountDependencies(batch, atom, atomState)
-            recomputeAndFlushBatch(batch)
+            flushBatch(batch)
           }
         }
         valueOrPromise.then(complete, complete)
@@ -441,18 +438,23 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(undefined, atom))
 
-  const getMountedDependents = <Value>(
+  const getMountedOrBatchDependents = <Value>(
     atomState: AtomState<Value>,
   ): Map<AnyAtom, AtomState> => {
-    const mountedDependents = new Map<AnyAtom, AtomState>()
-    const dependents = new Set([...(atomState.m?.t || []), ...atomState.p])
-    for (const a of dependents) {
+    const dependents = new Map<AnyAtom, AtomState>()
+    for (const a of atomState.m?.t || []) {
       const aState = ensureAtomState(a)
       if (aState.m) {
-        mountedDependents.set(a, aState)
+        dependents.set(a, aState)
       }
     }
-    return mountedDependents
+    for (const atomWithPendingPromise of atomState.p) {
+      dependents.set(
+        atomWithPendingPromise,
+        ensureAtomState(atomWithPendingPromise),
+      )
+    }
+    return dependents
   }
 
   const dirtyDependents = <Value>(atomState: AtomState<Value>) => {
@@ -465,7 +467,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         continue
       }
       aState.x = true
-      for (const [, s] of getMountedDependents(aState)) {
+      for (const [, s] of getMountedOrBatchDependents(aState)) {
         if (!dependents.has(s)) {
           dependents.add(s)
           stack.push(s)
@@ -512,7 +514,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       }
       visiting.add(a)
       // Push unvisited dependents onto the stack
-      for (const [d, s] of getMountedDependents(aState)) {
+      for (const [d, s] of getMountedOrBatchDependents(aState)) {
         if (a !== d && !visiting.has(d)) {
           stack.push([d, s])
         }
@@ -539,10 +541,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       }
       delete aState.x
     }
+    batch.C.clear()
   }
-
-  const recomputeAndFlushBatch = (batch: Batch) =>
-    flushBatch(batch, recomputeDependents)
 
   const writeAtomState = <Value, Args extends unknown[], Result>(
     batch: Batch,
@@ -570,6 +570,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
           if (prevEpochNumber !== aState.n) {
             dirtyDependents(aState)
             registerBatchAtom(batch, a, aState)
+            addBatchFunc(batch, 0, recomputeDependents)
           }
           return undefined as R
         } else {
@@ -577,7 +578,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         }
       } finally {
         if (!isSync) {
-          recomputeAndFlushBatch(batch)
+          flushBatch(batch)
         }
       }
     }
@@ -596,7 +597,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     try {
       return writeAtomState(batch, atom, ...args)
     } finally {
-      recomputeAndFlushBatch(batch)
+      flushBatch(batch)
     }
   }
 
@@ -653,7 +654,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
               return writeAtomState(batch, atom, ...args)
             } finally {
               if (!isSync) {
-                recomputeAndFlushBatch(batch)
+                flushBatch(batch)
               }
             }
           }
@@ -690,7 +691,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       // unmount self
       const onUnmount = atomState.m.u
       if (onUnmount) {
-        addBatchFunc(batch, 2, () => onUnmount(batch))
+        addBatchFunc(batch, 2, onUnmount)
       }
       delete atomState.m
       atomState.h?.(batch)
@@ -710,12 +711,12 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     const mounted = mountAtom(batch, atom, atomState)
     const listeners = mounted.l
     listeners.add(listener)
-    recomputeAndFlushBatch(batch)
+    flushBatch(batch)
     return () => {
       listeners.delete(listener)
       const batch = createBatch()
       unmountAtom(batch, atom, atomState)
-      recomputeAndFlushBatch(batch)
+      flushBatch(batch)
     }
   }
 
