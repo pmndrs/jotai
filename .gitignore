@@ -32,5 +32,6 @@ yarn-error.log*
 
 # examples
 examples/**/*/package-lock.json
-examples/**/*/pnpm-lock.yaml
 examples/**/*/yarn.lock
+examples/**/*/pnpm-lock.yaml
+examples/**/*/bun.lockb
