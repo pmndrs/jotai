@@ -1,12 +1,13 @@
 import { expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
+// For this test only
+import { INTERNAL_flushStoreHook } from '../../src/vanilla/store.js'
 
 type Store = ReturnType<typeof createStore>
 type GetAtomState = Parameters<Parameters<Store['unstable_derive']>[0]>[0]
 type AtomState = NonNullable<ReturnType<GetAtomState>>
 type AnyAtom = Atom<unknown>
-type Batch = Parameters<NonNullable<AtomState['u']>>[0]
 
 type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => Cleanup | void
@@ -16,8 +17,6 @@ type Ref = {
   epoch: number
   cleanup?: Cleanup | undefined
 }
-
-const syncEffectChannelSymbol = Symbol()
 
 function syncEffect(effect: Effect): Atom<void> {
   const refAtom = atom<Ref>(() => ({ inProgress: 0, epoch: 0 }))
@@ -35,34 +34,37 @@ function syncEffect(effect: Effect): Atom<void> {
     const ref = store.get(refAtom)
     const runEffect = () => {
       const deps = new Set<AnyAtom>()
-      ref.cleanup?.()
-      ref.cleanup =
-        effect(
-          (a) => {
-            deps.add(a)
-            return ref.get!(a)
-          },
-          (a, ...args) => {
-            try {
-              ++ref.inProgress
-              return store.set(a, ...args)
-            } finally {
-              deps.forEach(ref.get!)
-              --ref.inProgress
-            }
-          },
-        ) || undefined
+      try {
+        ref.cleanup?.()
+        ref.cleanup =
+          effect(
+            (a) => {
+              deps.add(a)
+              return store.get(a)
+            },
+            (a, ...args) => {
+              try {
+                ++ref.inProgress
+                return store.set(a, ...args)
+              } finally {
+                --ref.inProgress
+              }
+            },
+          ) || undefined
+      } finally {
+        deps.forEach(ref.get!)
+      }
     }
     const internalAtomState = getAtomState(store, internalAtom)
     const originalMountHook = internalAtomState.h
-    internalAtomState.h = (batch) => {
-      originalMountHook?.(batch)
+    internalAtomState.h = () => {
+      originalMountHook?.()
       if (internalAtomState.m) {
         // mount
         store.set(refreshAtom, (v) => v + 1)
       } else {
         // unmount
-        const syncEffectChannel = ensureBatchChannel(batch)
+        const syncEffectChannel = ensureSyncEffectChannel(store)
         syncEffectChannel.add(() => {
           ref.cleanup?.()
           delete ref.cleanup
@@ -70,10 +72,10 @@ function syncEffect(effect: Effect): Atom<void> {
       }
     }
     const originalUpdateHook = internalAtomState.u
-    internalAtomState.u = (batch) => {
-      originalUpdateHook?.(batch)
+    internalAtomState.u = () => {
+      originalUpdateHook?.()
       // update
-      const syncEffectChannel = ensureBatchChannel(batch)
+      const syncEffectChannel = ensureSyncEffectChannel(store)
       syncEffectChannel.add(runEffect)
     }
   }
@@ -82,37 +84,23 @@ function syncEffect(effect: Effect): Atom<void> {
   })
 }
 
-type BatchWithSyncEffect = Batch & {
-  [syncEffectChannelSymbol]?: Set<() => void>
-}
-function ensureBatchChannel(batch: BatchWithSyncEffect) {
-  // ensure continuation of the flushBatch while loop
-  const originalQueue = batch[1]
-  if (!originalQueue) {
-    throw new Error('batch[1] must be present')
-  }
-  if (!batch[syncEffectChannelSymbol]) {
-    batch[syncEffectChannelSymbol] = new Set<() => void>()
-    batch[1] = {
-      ...originalQueue,
-      add(item) {
-        originalQueue.add(item)
-        return this
-      },
-      clear() {
-        batch[syncEffectChannelSymbol]!.clear()
-        originalQueue.clear()
-      },
-      forEach(callback) {
-        batch[syncEffectChannelSymbol]!.forEach(callback)
-        originalQueue.forEach(callback)
-      },
-      get size() {
-        return batch[syncEffectChannelSymbol]!.size + originalQueue.size
-      },
+const syncEffectChannelSymbol = Symbol()
+
+function ensureSyncEffectChannel(store: any) {
+  if (!store[syncEffectChannelSymbol]) {
+    store[syncEffectChannelSymbol] = new Set<() => void>()
+    const originalFlushHook = store[INTERNAL_flushStoreHook]
+    store[INTERNAL_flushStoreHook] = () => {
+      originalFlushHook?.()
+      const syncEffectChannel = store[syncEffectChannelSymbol] as Set<
+        () => void
+      >
+      const fns = Array.from(syncEffectChannel)
+      syncEffectChannel.clear()
+      fns.forEach((fn: () => void) => fn())
     }
   }
-  return batch[syncEffectChannelSymbol]!
+  return store[syncEffectChannelSymbol] as Set<() => void>
 }
 
 const getAtomStateMap = new WeakMap<Store, GetAtomState>()
