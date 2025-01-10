@@ -1,8 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
-// For this test only
-import { INTERNAL_flushStoreHook } from '../../src/vanilla/store.js'
 
 type Store = ReturnType<typeof createStore>
 type GetAtomState = Parameters<Parameters<Store['unstable_derive']>[0]>[0]
@@ -84,6 +82,7 @@ function syncEffect(effect: Effect): Atom<void> {
   })
 }
 
+const INTERNAL_flushStoreHook = Symbol.for('JOTAI.EXPERIMENTAL.FLUSHSTOREHOOK')
 const syncEffectChannelSymbol = Symbol()
 
 function ensureSyncEffectChannel(store: any) {

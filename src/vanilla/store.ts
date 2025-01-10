@@ -209,7 +209,7 @@ export type INTERNAL_PrdStore = Store
 /**
  * This is an experimental API and will be changed in the next minor.
  */
-export const INTERNAL_flushStoreHook: unique symbol = Symbol()
+const INTERNAL_flushStoreHook = Symbol.for('JOTAI.EXPERIMENTAL.FLUSHSTOREHOOK')
 
 const buildStore = (...storeArgs: StoreArgs): Store => {
   const [
