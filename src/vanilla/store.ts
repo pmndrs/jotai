@@ -468,7 +468,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       visiting.add(a)
       // Push unvisited dependents onto the stack
       for (const [d, s] of getMountedOrPendingDependents(aState)) {
-        if (a !== d && !visiting.has(d)) {
+        if (!visiting.has(d)) {
           stack.push([d, s])
         }
       }
