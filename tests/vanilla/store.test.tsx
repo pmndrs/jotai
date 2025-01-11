@@ -1133,7 +1133,12 @@ it('should not inf on subscribe or unsubscribe', async () => {
   effectAtom.onMount = (setAtom) => {
     const set = setAtom()
     set(countAtom, 1)
+    return () => {
+      set(countAtom, 2)
+    }
   }
-  store.sub(effectAtom, () => {})
+  const unsub = store.sub(effectAtom, () => {})
   expect(store.get(countAtom)).toBe(1)
+  unsub()
+  expect(store.get(countAtom)).toBe(2)
 })
