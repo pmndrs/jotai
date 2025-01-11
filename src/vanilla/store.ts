@@ -7,6 +7,7 @@ type AnyWritableAtom = WritableAtom<AnyValue, unknown[], unknown>
 type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
+type EpochNumber = number
 
 const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
   atom.unstable_is ? atom.unstable_is(a) : a === atom
@@ -89,7 +90,7 @@ type AtomState<Value = AnyValue> = {
    * Map of atoms that the atom depends on.
    * The map value is the epoch number of the dependency.
    */
-  readonly d: Map<AnyAtom, number>
+  readonly d: Map<AnyAtom, EpochNumber>
   /**
    * Set of atoms with pending promise that depend on the atom.
    *
@@ -97,7 +98,7 @@ type AtomState<Value = AnyValue> = {
    */
   readonly p: Set<AnyAtom>
   /** The epoch number of the atom. */
-  n: number
+  n: EpochNumber
   /** Object to store mounted state of the atom. */
   m?: Mounted // only available if the atom is mounted
   /**
@@ -114,8 +115,6 @@ type AtomState<Value = AnyValue> = {
   v?: Value
   /** Atom error */
   e?: AnyError
-  /** Indicates that the atom value has to be recomputed */
-  x?: true
 }
 
 const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
@@ -233,6 +232,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     return atomState
   }
 
+  const invalidatedAtoms = new WeakMap<AnyAtom, EpochNumber>()
   const changedAtoms = new Map<AnyAtom, AtomState>()
   const unmountCallbacks = new Set<() => void>()
   const mountCallbacks = new Set<() => void>()
@@ -279,7 +279,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       atomState.v = valueOrPromise
     }
     delete atomState.e
-    delete atomState.x
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
       if (pendingPromise) {
@@ -295,7 +294,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       // If the atom is mounted, we can use cached atom state.
       // because it should have been updated by dependencies.
       // We can't use the cache if the atom is invalidated.
-      if (atomState.m && !atomState.x) {
+      if (atomState.m && invalidatedAtoms.get(atom) !== atomState.n) {
         return atomState
       }
       // Otherwise, check if the dependencies have changed.
@@ -385,7 +384,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     } catch (error) {
       delete atomState.v
       atomState.e = error
-      delete atomState.x
       ++atomState.n
       return atomState
     } finally {
@@ -422,8 +420,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       const aState = stack.pop()!
       if (!visited.has(aState)) {
         visited.add(aState)
-        for (const s of getMountedOrPendingDependents(aState).values()) {
-          s.x = true
+        for (const [d, s] of getMountedOrPendingDependents(aState)) {
+          invalidatedAtoms.set(d, s.n)
           stack.push(s)
         }
       }
@@ -439,7 +437,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     const topSortedReversed: [
       atom: AnyAtom,
       atomState: AtomState,
-      epochNumber: number,
+      epochNumber: EpochNumber,
     ][] = []
     const visiting = new WeakSet<AnyAtom>()
     const visited = new WeakSet<AnyAtom>()
@@ -457,8 +455,11 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         // The algorithm calls for pushing onto the front of the list. For
         // performance, we will simply push onto the end, and then will iterate in
         // reverse order later.
-        if (aState.x) {
+        if (invalidatedAtoms.get(a) === aState.n) {
           topSortedReversed.push([a, aState, aState.n])
+        } else {
+          invalidatedAtoms.delete(a)
+          changedAtoms.set(a, aState)
         }
         // Atom has been visited but not yet processed
         visited.add(a)
@@ -493,7 +494,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
           aState.u?.()
         }
       }
-      delete aState.x
+      invalidatedAtoms.delete(a)
     }
   }
 
