@@ -330,6 +330,12 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     // Compute a new state for this atom.
     atomState.d.clear()
     let isSync = true
+    const mountDependenciesIfAsync = () => {
+      if (atomState.m) {
+        mountDependencies(atom, atomState)
+        flushCallbacks()
+      }
+    }
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
         const aState = ensureAtomState(a)
@@ -350,8 +356,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       } finally {
         addDependency(atom, atomState, a, aState)
         if (!isSync) {
-          mountDependencies(atom, atomState)
-          flushCallbacks()
+          mountDependenciesIfAsync()
         }
       }
     }
@@ -389,13 +394,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
       if (isPromiseLike(valueOrPromise)) {
         valueOrPromise.onCancel?.(() => controller?.abort())
-        const complete = () => {
-          if (atomState.m) {
-            mountDependencies(atom, atomState)
-            flushCallbacks()
-          }
-        }
-        valueOrPromise.then(complete, complete)
+        valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
       }
       return atomState
     } catch (error) {
