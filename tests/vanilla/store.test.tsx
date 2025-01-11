@@ -1122,3 +1122,18 @@ it('recomputes dependents of unmounted atoms', () => {
   store.set(w)
   expect(bRead).not.toHaveBeenCalled()
 })
+
+it('should not inf on subscribe or unsubscribe', async () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const effectAtom = atom(
+    (get) => get(countAtom),
+    (_, set) => set,
+  )
+  effectAtom.onMount = (setAtom) => {
+    const set = setAtom()
+    set(countAtom, 1)
+  }
+  store.sub(effectAtom, () => {})
+  expect(store.get(countAtom)).toBe(1)
+})
