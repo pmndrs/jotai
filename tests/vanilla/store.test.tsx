@@ -984,6 +984,21 @@ it('mounted atom should be recomputed eagerly', () => {
   expect(result).toEqual(['bRead', 'aCallback', 'bCallback'])
 })
 
+it('reading atom in write should notify subscribers', () => {
+  const a = atom(1)
+  const b = atom((get) => get(a) * 2)
+  const c = atom((get) => get(b) + 1)
+  const d = atom(null, (get, set) => {
+    set(a, 2)
+    get(b)
+  })
+  const store = createStore()
+  const callback = vi.fn()
+  store.sub(c, callback)
+  store.set(d)
+  expect(callback).toHaveBeenCalledTimes(1)
+})
+
 it('should process all atom listeners even if some of them throw errors', () => {
   const store = createStore()
   const a = atom(0)
@@ -1091,7 +1106,6 @@ it('recomputes dependents of unmounted atoms', () => {
   const a = atom(0)
   a.debugLabel = 'a'
   const bRead = vi.fn((get: Getter) => {
-    console.log('bRead')
     return get(a)
   })
   const b = atom(bRead)
