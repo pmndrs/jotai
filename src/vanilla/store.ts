@@ -248,12 +248,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
   const unmountCallbacks = new Set<() => void>()
   const mountCallbacks = new Set<() => void>()
 
-  let isFlushing = false
-  const flushCallbacks = () => {
-    if (isFlushing) {
-      return
-    }
-    isFlushing = true
+  let inTransaction = 0
+  const runWithTransaction = <T>(fn: () => T): T => {
     const errors: unknown[] = []
     const call = (fn: () => void) => {
       try {
@@ -262,20 +258,31 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         errors.push(e)
       }
     }
-    do {
-      ;(store as any)[INTERNAL_flushStoreHook]?.()
-      changedAtoms.forEach((atomState) => atomState.m?.l.forEach(call))
-      changedAtoms.clear()
-      unmountCallbacks.forEach(call)
-      unmountCallbacks.clear()
-      mountCallbacks.forEach(call)
-      mountCallbacks.clear()
-      recomputeInvalidatedAtoms()
-    } while (changedAtoms.size)
-    isFlushing = false
+    let result: T
+    ++inTransaction
+    try {
+      result = fn()
+    } finally {
+      if (inTransaction === 1) {
+        do {
+          if (changedAtoms.size) {
+            recomputeInvalidatedAtoms()
+          }
+          ;(store as any)[INTERNAL_flushStoreHook]?.()
+          changedAtoms.forEach((atomState) => atomState.m?.l.forEach(call))
+          changedAtoms.clear()
+          unmountCallbacks.forEach(call)
+          unmountCallbacks.clear()
+          mountCallbacks.forEach(call)
+          mountCallbacks.clear()
+        } while (changedAtoms.size)
+      }
+      --inTransaction
+    }
     if (errors.length) {
       throw errors[0]
     }
+    return result
   }
 
   const setAtomStateValueOrPromise = (
@@ -332,8 +339,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     let isSync = true
     const mountDependenciesIfAsync = () => {
       if (atomState.m) {
-        mountDependencies(atom, atomState)
-        flushCallbacks()
+        runWithTransaction(() => mountDependencies(atom, atomState))
       }
     }
     const getter: Getter = <V>(a: Atom<V>) => {
@@ -518,14 +524,13 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
-    let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
       const aState = ensureAtomState(a)
-      try {
+      return runWithTransaction(() => {
         if (isSelfAtom(atom, a)) {
           if (!hasInitialValue(a)) {
             // NOTE technically possible but restricted as it may cause bugs
@@ -544,31 +549,15 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         } else {
           return writeAtomState(a, ...args)
         }
-      } finally {
-        if (!isSync) {
-          recomputeInvalidatedAtoms()
-          flushCallbacks()
-        }
-      }
+      })
     }
-    try {
-      return atomWrite(atom, getter, setter, ...args)
-    } finally {
-      isSync = false
-    }
+    return atomWrite(atom, getter, setter, ...args)
   }
 
   const writeAtom = <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
-  ): Result => {
-    try {
-      return writeAtomState(atom, ...args)
-    } finally {
-      recomputeInvalidatedAtoms()
-      flushCallbacks()
-    }
-  }
+  ): Result => runWithTransaction(() => writeAtomState(atom, ...args))
 
   const mountDependencies = (atom: AnyAtom, atomState: AtomState) => {
     if (atomState.m && !isPendingPromise(atomState.v)) {
@@ -610,31 +599,12 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       atomState.h?.()
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
-        let setAtom: (...args: unknown[]) => unknown
-        const createInvocationContext = <T>(fn: () => T) => {
-          let isSync = true
-          setAtom = (...args: unknown[]) => {
-            try {
-              return writeAtomState(atom, ...args)
-            } finally {
-              if (!isSync) {
-                recomputeInvalidatedAtoms()
-                flushCallbacks()
-              }
-            }
-          }
-          try {
-            return fn()
-          } finally {
-            isSync = false
-          }
-        }
         const processOnMount = () => {
-          const onUnmount = createInvocationContext(() =>
-            atomOnMount(atom, (...args) => setAtom(...args)),
+          const onUnmount = atomOnMount(atom, (...args) =>
+            runWithTransaction(() => writeAtomState(atom, ...args)),
           )
           if (onUnmount) {
-            mounted.u = () => createInvocationContext(onUnmount)
+            mounted.u = onUnmount
           }
         }
         mountCallbacks.add(processOnMount)
@@ -671,15 +641,17 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
     const atomState = ensureAtomState(atom)
-    const mounted = mountAtom(atom, atomState)
-    const listeners = mounted.l
-    listeners.add(listener)
-    flushCallbacks()
-    return () => {
-      listeners.delete(listener)
-      unmountAtom(atom, atomState)
-      flushCallbacks()
-    }
+    return runWithTransaction(() => {
+      const mounted = mountAtom(atom, atomState)
+      const listeners = mounted.l
+      listeners.add(listener)
+      return () => {
+        runWithTransaction(() => {
+          listeners.delete(listener)
+          unmountAtom(atom, atomState)
+        })
+      }
+    })
   }
 
   const unstable_derive: Store['unstable_derive'] = (fn) =>
