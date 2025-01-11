@@ -248,7 +248,12 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
   const unmountCallbacks = new Set<() => void>()
   const mountCallbacks = new Set<() => void>()
 
+  let isFlushing = false
   const flushCallbacks = () => {
+    if (isFlushing) {
+      return
+    }
+    isFlushing = true
     const errors: unknown[] = []
     const call = (fn: () => void) => {
       try {
@@ -267,6 +272,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       mountCallbacks.clear()
       recomputeInvalidatedAtoms()
     } while (changedAtoms.size)
+    isFlushing = false
     if (errors.length) {
       throw errors[0]
     }
