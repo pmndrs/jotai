@@ -84,6 +84,9 @@ type Mounted = {
 /**
  * Mutable atom state,
  * tracked for both mounted and unmounted atoms in a store.
+ *
+ * This should be garbage collectable.
+ * We can mutate it during atom read. (except for fields with TODO)
  */
 type AtomState<Value = AnyValue> = {
   /**
@@ -95,20 +98,26 @@ type AtomState<Value = AnyValue> = {
    * Set of atoms with pending promise that depend on the atom.
    *
    * This may cause memory leaks, but it's for the capability to continue promises
+   * TODO(daishi): revisit how to handle this
    */
   readonly p: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: EpochNumber
-  /** Object to store mounted state of the atom. */
+  /**
+   * Object to store mounted state of the atom.
+   * TODO(daishi): move this out of AtomState
+   */
   m?: Mounted // only available if the atom is mounted
   /**
    * Listener to notify when the atom value is updated.
    * This is an experimental API and will be changed in the next minor.
+   * TODO(daishi): move this store hooks
    */
   u?: () => void
   /**
    * Listener to notify when the atom is mounted or unmounted.
    * This is an experimental API and will be changed in the next minor.
+   * TODO(daishi): move this store hooks
    */
   h?: () => void
   /** Atom value */
@@ -232,6 +241,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     return atomState
   }
 
+  // These are store state.
+  // As they are not garbage collectable, they shouldn't be mutated during atom read.
   const invalidatedAtoms = new WeakMap<AnyAtom, EpochNumber>()
   const changedAtoms = new Map<AnyAtom, AtomState>()
   const unmountCallbacks = new Set<() => void>()

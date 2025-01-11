@@ -984,7 +984,7 @@ it('mounted atom should be recomputed eagerly', () => {
   expect(result).toEqual(['bRead', 'aCallback', 'bCallback'])
 })
 
-it('reading atom in write should notify subscribers', () => {
+it('should notify subscription even with reading atom in write', () => {
   const a = atom(1)
   const b = atom((get) => get(a) * 2)
   const c = atom((get) => get(b) + 1)
