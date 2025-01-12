@@ -66,7 +66,7 @@ function createESMConfig(input, output, clientOnly) {
     output: { file: output, format: 'esm' },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         ...(output.endsWith('.js')
@@ -92,7 +92,7 @@ function createCommonJSConfig(input, output, clientOnly) {
     output: { file: `${output}.js`, format: 'cjs' },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': 'process.env.NODE_ENV',
@@ -129,7 +129,7 @@ function createUMDConfig(input, output, env, clientOnly) {
     },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),
@@ -152,7 +152,7 @@ function createSystemConfig(input, output, env, clientOnly) {
     },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),
