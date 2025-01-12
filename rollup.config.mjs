@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+/*global process*/
 import path from 'path'
 import alias from '@rollup/plugin-alias'
 import babelPlugin from '@rollup/plugin-babel'
