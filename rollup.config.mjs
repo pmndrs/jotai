@@ -108,7 +108,7 @@ function createCommonJSConfig(input, output, clientOnly) {
 function createUMDConfig(input, output, env, clientOnly) {
   let name = 'jotai'
   const fileName = output.slice('dist/umd/'.length)
-  const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
+  const capitalize = (str) => str.slice(0, 1).toUpperCase() + str.slice(1)
   if (fileName !== 'index') {
     name += fileName.replace(/(\w+)\W*/g, (_, p) => capitalize(p))
   }
