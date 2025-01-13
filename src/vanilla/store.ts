@@ -173,15 +173,6 @@ const addDependency = <Value>(
   aState.m?.t.add(atom)
 }
 
-const clearThenForEach = <T>(
-  items: { values: () => Iterable<T>; clear: () => void },
-  callback: (item: T) => void,
-) => {
-  const values = new Set(items.values())
-  items.clear()
-  values.forEach(callback)
-}
-
 // internal & unstable type
 type StoreArgs = readonly [
   getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
@@ -278,15 +269,15 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
             recomputeInvalidatedAtoms()
           }
           ;(store as any)[INTERNAL_flushStoreHook]?.()
-          const callbacks = [
-            ...changedAtoms.map((atomState) => atomState.m?.l ?? []),
-            ...unmountCallbacks,
-            ...mountCallbacks,
-          ]          
-          callbacks.forEach(call)
+          const callbacks = new Set<() => void>()
+          const add = callbacks.add.bind(callbacks)
+          changedAtoms.forEach((atomState) => atomState.m?.l.forEach(add))
+          unmountCallbacks.forEach(add)
+          mountCallbacks.forEach(add)
           changedAtoms.clear()
           unmountCallbacks.clear()
           mountCallbacks.clear()
+          callbacks.forEach(call)
         } while (changedAtoms.size)
       }
       --inTransaction
