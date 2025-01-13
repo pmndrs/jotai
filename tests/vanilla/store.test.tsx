@@ -1142,3 +1142,15 @@ it('should not inf on subscribe or unsubscribe', async () => {
   unsub()
   expect(store.get(countAtom)).toBe(2)
 })
+
+it('supports recursion in an atom subscriber', () => {
+  const a = atom(0)
+  const store = createStore()
+  store.sub(a, () => {
+    if (store.get(a) < 3) {
+      store.set(a, (v) => v + 1)
+    }
+  })
+  store.set(a, 1)
+  expect(store.get(a)).toBe(3)
+})
