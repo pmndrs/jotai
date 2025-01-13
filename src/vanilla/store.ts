@@ -278,11 +278,15 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
             recomputeInvalidatedAtoms()
           }
           ;(store as any)[INTERNAL_flushStoreHook]?.()
-          clearThenForEach(changedAtoms, (atomState) =>
-            atomState.m?.l.forEach(call),
-          )
-          clearThenForEach(unmountCallbacks, call)
-          clearThenForEach(mountCallbacks, call)
+          const callbacks = [
+            ...changedAtoms.map((atomState) => atomState.m?.l ?? []),
+            ...unmountCallbacks,
+            ...mountCallbacks,
+          ]          
+          callbacks.forEach(call)
+          changedAtoms.clear()
+          unmountCallbacks.clear()
+          mountCallbacks.clear()
         } while (changedAtoms.size)
       }
       --inTransaction
