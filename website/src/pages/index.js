@@ -200,7 +200,7 @@ const AnimeApp = () => {
       }}>
         Add Cowboy Bebop
       </button>
-    <>
+    </>
   )
 }`}</Code>
       <h3>Read and write from separate components</h3>
