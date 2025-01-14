@@ -264,6 +264,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       result = fn()
     } finally {
       if (inTransaction === 1) {
+        ;(store as any)[INTERNAL_flushStoreHook]?.() // FIXME we would like to avoid this
         while (
           changedAtoms.size ||
           unmountCallbacks.size ||
