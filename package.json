@@ -81,7 +81,7 @@
     "test:lint": "eslint .",
     "test:spec": "vitest run",
     "test-build:spec": "vitest run",
-    "patch-d-ts": "node --input-type=module -e \"import { entries } from './rollup.config.mjs'; import shelljs from 'shelljs'; const { find, sed } = shelljs; find('dist/**/*.d.ts').forEach(f => { entries.forEach(({ find, replacement }) => sed('-i', new RegExp(' from \\'' + find.source.slice(0, -1) + '\\';$'), ' from \\'' + replacement + '\\';', f)); sed('-i', / from '(\\.[^']+)\\.ts';$/, ' from \\'\\$1\\';', f); });\"",
+    "patch-d-ts": "node --input-type=module -e \"import { entries } from './rollup.config.mjs'; import shelljs from 'shelljs'; const { find, sed } = shelljs; find('dist/**/*.d.ts').forEach(f => { entries.forEach(({ find, replacement }) => { sed('-i', new RegExp(' from \\'' + find.source.slice(0, -1) + '\\';$'), ' from \\'' + replacement + '\\';', f); }); sed('-i', / from '(\\.[^']+)\\.ts';$/, ' from \\'\\$1\\';', f); });\"",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.8 --to=3.8 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined;\"",
     "patch-ts3.8": "node -e \"require('shelljs').find('dist/ts3.8/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
     "patch-old-ts": "shx touch dist/ts_version_3.8_and_above_is_required.d.ts",
