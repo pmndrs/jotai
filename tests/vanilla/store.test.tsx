@@ -1154,3 +1154,18 @@ it('supports recursion in an atom subscriber', () => {
   store.set(a, 1)
   expect(store.get(a)).toBe(3)
 })
+
+it('allows subcribing to atoms during mount', () => {
+  const store = createStore()
+  const a = atom(0)
+  a.onMount = () => {
+    store.sub(b, () => {})
+  }
+  const b = atom(0)
+  let bMounted = false
+  b.onMount = () => {
+    bMounted = true
+  }
+  store.sub(a, () => {})
+  expect(bMounted).toBe(true)
+})
