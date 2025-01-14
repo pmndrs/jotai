@@ -30,3 +30,8 @@ yarn-error.log*
 .DS_Store
 .idea
 
+# examples
+examples/**/*/package-lock.json
+examples/**/*/yarn.lock
+examples/**/*/pnpm-lock.yaml
+examples/**/*/bun.lockb

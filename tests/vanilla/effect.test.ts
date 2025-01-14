@@ -1,12 +1,11 @@
 import { expect, it, vi } from 'vitest'
-import type { Atom, Getter, Setter } from 'jotai/vanilla'
+import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 
 type Store = ReturnType<typeof createStore>
 type GetAtomState = Parameters<Parameters<Store['unstable_derive']>[0]>[0]
 type AtomState = NonNullable<ReturnType<GetAtomState>>
 type AnyAtom = Atom<unknown>
-type Batch = Parameters<NonNullable<AtomState['u']>>[0]
 
 type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => Cleanup | void
@@ -20,77 +19,93 @@ type Ref = {
 function syncEffect(effect: Effect): Atom<void> {
   const refAtom = atom<Ref>(() => ({ inProgress: 0, epoch: 0 }))
   const refreshAtom = atom(0)
-  const internalAtom = atom((get) => {
-    get(refreshAtom)
-    const ref = get(refAtom)
-    if (ref.inProgress) {
-      return ref.epoch
-    }
-    ref.get = get
-    return ++ref.epoch
-  })
+  const internalAtom = atom(
+    (get) => {
+      get(refreshAtom)
+      const ref = get(refAtom)
+      if (ref.inProgress) {
+        return ref.epoch
+      }
+      ref.get = get
+      return ++ref.epoch
+    },
+    () => {},
+  )
+  internalAtom.onMount = () => {
+    return () => {}
+  }
   internalAtom.unstable_onInit = (store) => {
     const ref = store.get(refAtom)
     const runEffect = () => {
       const deps = new Set<AnyAtom>()
-      ref.cleanup?.()
-      ref.cleanup =
-        effect(
-          (a) => {
-            deps.add(a)
-            return ref.get!(a)
-          },
-          (a, ...args) => {
-            try {
-              ++ref.inProgress
-              return store.set(a, ...args)
-            } finally {
-              deps.forEach(ref.get!)
-              --ref.inProgress
-            }
-          },
-        ) || undefined
+      try {
+        ref.cleanup?.()
+        ref.cleanup =
+          effect(
+            (a) => {
+              deps.add(a)
+              return store.get(a)
+            },
+            (a, ...args) => {
+              try {
+                ++ref.inProgress
+                return store.set(a, ...args)
+              } finally {
+                --ref.inProgress
+              }
+            },
+          ) || undefined
+      } finally {
+        deps.forEach(ref.get!)
+      }
     }
     const internalAtomState = getAtomState(store, internalAtom)
     const originalMountHook = internalAtomState.h
-    internalAtomState.h = (batch) => {
-      originalMountHook?.(batch)
+    internalAtomState.h = () => {
+      originalMountHook?.()
       if (internalAtomState.m) {
         // mount
         store.set(refreshAtom, (v) => v + 1)
       } else {
         // unmount
-        scheduleListenerAfterRecompute(batch, () => {
+        const syncEffectChannel = ensureSyncEffectChannel(store)
+        syncEffectChannel.add(() => {
           ref.cleanup?.()
           delete ref.cleanup
         })
       }
     }
     const originalUpdateHook = internalAtomState.u
-    internalAtomState.u = (batch) => {
-      originalUpdateHook?.(batch)
+    internalAtomState.u = () => {
+      originalUpdateHook?.()
       // update
-      scheduleListenerAfterRecompute(batch, runEffect)
-    }
-    function scheduleListenerAfterRecompute(
-      batch: Batch,
-      listener: () => void,
-    ) {
-      const scheduleListener = () => {
-        batch[0].add(listener)
-      }
-      if (batch[0].size === 0) {
-        // no other listeners
-        // schedule after recomputeDependents
-        batch[0].add(scheduleListener)
-      } else {
-        scheduleListener()
-      }
+      const syncEffectChannel = ensureSyncEffectChannel(store)
+      syncEffectChannel.add(runEffect)
     }
   }
   return atom((get) => {
     get(internalAtom)
   })
+}
+
+const INTERNAL_flushStoreHook = Symbol.for('JOTAI.EXPERIMENTAL.FLUSHSTOREHOOK')
+const syncEffectChannelSymbol = Symbol()
+
+function ensureSyncEffectChannel(store: any) {
+  if (!store[syncEffectChannelSymbol]) {
+    store[syncEffectChannelSymbol] = new Set<() => void>()
+    const originalFlushHook = store[INTERNAL_flushStoreHook]
+    store[INTERNAL_flushStoreHook] = () => {
+      originalFlushHook?.()
+      const syncEffectChannel = store[syncEffectChannelSymbol] as Set<
+        () => void
+      >
+      const fns = Array.from(syncEffectChannel)
+      syncEffectChannel.clear()
+      fns.forEach((fn: () => void) => fn())
+    }
+  }
+  return store[syncEffectChannelSymbol] as Set<() => void>
 }
 
 const getAtomStateMap = new WeakMap<Store, GetAtomState>()
@@ -223,4 +238,60 @@ it('sets values to atoms without causing infinite loop', () => {
   expect(effect).toBeCalledTimes(2)
   unsub()
   expect(effect).toBeCalledTimes(2)
+})
+
+// TODO: consider removing this after we provide a new syncEffect implementation
+it('supports recursive setting synchronous in read', async () => {
+  const store = createStore()
+  const a = atom(0)
+  const refreshAtom = atom(0)
+  type Ref = {
+    isMounted?: true
+    recursing: number
+    set: Setter
+  }
+  const refAtom = atom(
+    () => ({ recursing: 0 }) as Ref,
+    (get, set) => {
+      const ref = get(refAtom)
+      ref.isMounted = true
+      ref.set = set
+      set(refreshAtom, (v) => v + 1)
+    },
+  )
+  refAtom.onMount = (mount) => mount()
+  const effectAtom = atom((get) => {
+    get(refreshAtom)
+    const ref = get(refAtom)
+    if (!ref.isMounted) {
+      return
+    }
+    const recurse = <Value, Args extends unknown[], Result>(
+      a: WritableAtom<Value, Args, Result>,
+      ...args: Args
+    ): Result => {
+      ++ref.recursing
+      const value = ref.set(a, ...args)
+      return value as Result
+    }
+    function runEffect() {
+      const v = get(a)
+      if (v < 5) {
+        recurse(a, (v) => v + 1)
+      }
+    }
+    if (ref.recursing) {
+      let prevRecursing = ref.recursing
+      do {
+        prevRecursing = ref.recursing
+        runEffect()
+      } while (prevRecursing !== ref.recursing)
+      ref.recursing = 0
+      return Promise.resolve()
+    }
+    return Promise.resolve().then(runEffect)
+  })
+  store.sub(effectAtom, () => {})
+  await Promise.resolve()
+  expect(store.get(a)).toBe(5)
 })

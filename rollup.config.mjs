@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+/*global process*/
 import path from 'path'
 import alias from '@rollup/plugin-alias'
 import babelPlugin from '@rollup/plugin-babel'
@@ -66,7 +66,7 @@ function createESMConfig(input, output, clientOnly) {
     output: { file: output, format: 'esm' },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         ...(output.endsWith('.js')
@@ -92,7 +92,7 @@ function createCommonJSConfig(input, output, clientOnly) {
     output: { file: `${output}.js`, format: 'cjs' },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': 'process.env.NODE_ENV',
@@ -108,7 +108,7 @@ function createCommonJSConfig(input, output, clientOnly) {
 function createUMDConfig(input, output, env, clientOnly) {
   let name = 'jotai'
   const fileName = output.slice('dist/umd/'.length)
-  const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
+  const capitalize = (str) => str.slice(0, 1).toUpperCase() + str.slice(1)
   if (fileName !== 'index') {
     name += fileName.replace(/(\w+)\W*/g, (_, p) => capitalize(p))
   }
@@ -129,7 +129,7 @@ function createUMDConfig(input, output, env, clientOnly) {
     },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),
@@ -152,7 +152,7 @@ function createSystemConfig(input, output, env, clientOnly) {
     },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),
