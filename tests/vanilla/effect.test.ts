@@ -19,15 +19,21 @@ type Ref = {
 function syncEffect(effect: Effect): Atom<void> {
   const refAtom = atom<Ref>(() => ({ inProgress: 0, epoch: 0 }))
   const refreshAtom = atom(0)
-  const internalAtom = atom((get) => {
-    get(refreshAtom)
-    const ref = get(refAtom)
-    if (ref.inProgress) {
-      return ref.epoch
-    }
-    ref.get = get
-    return ++ref.epoch
-  })
+  const internalAtom = atom(
+    (get) => {
+      get(refreshAtom)
+      const ref = get(refAtom)
+      if (ref.inProgress) {
+        return ref.epoch
+      }
+      ref.get = get
+      return ++ref.epoch
+    },
+    () => {},
+  )
+  internalAtom.onMount = () => {
+    return () => {}
+  }
   internalAtom.unstable_onInit = (store) => {
     const ref = store.get(refAtom)
     const runEffect = () => {
