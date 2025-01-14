@@ -380,3 +380,35 @@ describe('write to async atom twice', async () => {
     await screen.findByText('count: 4')
   })
 })
+
+describe('with onMount', () => {
+  it('does not infinite loop with setting a promise (#2931)', async () => {
+    const asyncAtom = atom(Promise.resolve(1))
+    asyncAtom.onMount = (setCount) => {
+      setCount((p) => p.then((c) => c + 1))
+    }
+    const Component = () => {
+      const [count, setCount] = useAtom(asyncAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount((p) => p.then((c) => c + 1))}>
+            button
+          </button>
+        </>
+      )
+    }
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
+    await screen.findByText('count: 2')
+    await userEvent.click(screen.getByText('button'))
+    await screen.findByText('count: 3')
+  })
+})
