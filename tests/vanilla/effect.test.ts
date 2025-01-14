@@ -241,11 +241,11 @@ it('supports recursive setting synchronous in read', async () => {
   const refreshAtom = atom(0)
   type Ref = {
     isMounted?: true
-    isRecursing?: true
+    recursing: number
     set: Setter
   }
   const refAtom = atom(
-    () => ({}) as Ref,
+    () => ({ recursing: 0 }) as Ref,
     (get, set) => {
       const ref = get(refAtom)
       ref.isMounted = true
@@ -264,9 +264,8 @@ it('supports recursive setting synchronous in read', async () => {
       a: WritableAtom<Value, Args, Result>,
       ...args: Args
     ): Result => {
-      ref.isRecursing = true
+      ++ref.recursing
       const value = ref.set(a, ...args)
-      delete ref.isRecursing
       return value as Result
     }
     function runEffect() {
@@ -275,9 +274,18 @@ it('supports recursive setting synchronous in read', async () => {
         recurse(a, (v) => v + 1)
       }
     }
+    if (ref.recursing) {
+      let prevRecursing = ref.recursing
+      do {
+        prevRecursing = ref.recursing
+        runEffect()
+      } while (prevRecursing !== ref.recursing)
+      ref.recursing = 0
+      return Promise.resolve()
+    }
     return Promise.resolve().then(runEffect)
   })
   store.sub(effectAtom, () => {})
-  await new Promise((r) => setTimeout(r))
+  await Promise.resolve()
   expect(store.get(a)).toBe(5)
 })
