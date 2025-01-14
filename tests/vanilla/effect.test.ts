@@ -233,3 +233,51 @@ it('sets values to atoms without causing infinite loop', () => {
   unsub()
   expect(effect).toBeCalledTimes(2)
 })
+
+// TODO: consider removing this after we provide a new syncEffect implementation
+it('supports recursive setting synchronous in read', async () => {
+  const store = createStore()
+  const a = atom(0)
+  const refreshAtom = atom(0)
+  type Ref = {
+    isMounted?: true
+    isRecursing?: true
+    set: Setter
+  }
+  const refAtom = atom(
+    () => ({}) as Ref,
+    (get, set) => {
+      const ref = get(refAtom)
+      ref.isMounted = true
+      ref.set = set
+      set(refreshAtom, (v) => v + 1)
+    },
+  )
+  refAtom.onMount = (mount) => mount()
+  const effectAtom = atom((get) => {
+    get(refreshAtom)
+    const ref = get(refAtom)
+    if (!ref.isMounted) {
+      return
+    }
+    const recurse = ((...args) => {
+      ref.isRecursing = true
+      const value = ref.set(...args)
+      delete ref.isRecursing
+      return value
+    }) as Setter
+    function runEffect() {
+      const v = get(a)
+      if (v < 5) {
+        recurse(a, (v) => v + 1)
+      }
+    }
+    if (ref.isRecursing) {
+      return runEffect()
+    }
+    return Promise.resolve().then(runEffect)
+  })
+  store.sub(effectAtom, () => {})
+  await Promise.resolve()
+  expect(store.get(a)).toBe(5)
+})
