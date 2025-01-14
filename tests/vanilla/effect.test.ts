@@ -272,12 +272,9 @@ it('supports recursive setting synchronous in read', async () => {
         recurse(a, (v) => v + 1)
       }
     }
-    if (ref.isRecursing) {
-      return runEffect()
-    }
     return Promise.resolve().then(runEffect)
   })
   store.sub(effectAtom, () => {})
-  await Promise.resolve()
+  await new Promise((r) => setTimeout(r))
   expect(store.get(a)).toBe(5)
 })
