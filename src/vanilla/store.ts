@@ -264,21 +264,23 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       result = fn()
     } finally {
       if (inTransaction === 1) {
-        do {
-          if (changedAtoms.size) {
-            recomputeInvalidatedAtoms()
-          }
+        while (
+          changedAtoms.size ||
+          unmountCallbacks.size ||
+          mountCallbacks.size
+        ) {
+          recomputeInvalidatedAtoms()
           ;(store as any)[INTERNAL_flushStoreHook]?.()
           const callbacks = new Set<() => void>()
           const add = callbacks.add.bind(callbacks)
           changedAtoms.forEach((atomState) => atomState.m?.l.forEach(add))
-          unmountCallbacks.forEach(add)
-          mountCallbacks.forEach(add)
           changedAtoms.clear()
+          unmountCallbacks.forEach(add)
           unmountCallbacks.clear()
+          mountCallbacks.forEach(add)
           mountCallbacks.clear()
           callbacks.forEach(call)
-        } while (changedAtoms.size)
+        }
       }
       --inTransaction
     }
