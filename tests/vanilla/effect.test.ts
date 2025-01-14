@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest'
-import type { Atom, Getter, Setter } from 'jotai/vanilla'
+import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 
 type Store = ReturnType<typeof createStore>
@@ -260,12 +260,15 @@ it('supports recursive setting synchronous in read', async () => {
     if (!ref.isMounted) {
       return
     }
-    const recurse = ((...args) => {
+    const recurse = <Value, Args extends unknown[], Result>(
+      a: WritableAtom<Value, Args, Result>,
+      ...args: Args
+    ): Result => {
       ref.isRecursing = true
-      const value = ref.set(...args)
+      const value = ref.set(a, ...args)
       delete ref.isRecursing
-      return value
-    }) as Setter
+      return value as Result
+    }
     function runEffect() {
       const v = get(a)
       if (v < 5) {
