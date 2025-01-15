@@ -1,5 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
+import { createDebugStore } from '../../tests/testUtils'
 
 it('can propagate updates with async atom chains', async () => {
   const store = createStore()
@@ -429,6 +430,7 @@ it('batches sync writes', () => {
 it('mounts and unmounts sync and async dependencies correctly', async () => {
   const mounted = [0, 0, 0, 0, 0] as [number, number, number, number, number]
   const a = atom(0)
+  a.debugLabel = 'a'
   a.onMount = () => {
     ++mounted[0]
     return () => {
@@ -437,6 +439,7 @@ it('mounts and unmounts sync and async dependencies correctly', async () => {
   }
 
   const b = atom(0)
+  b.debugLabel = 'b'
   b.onMount = () => {
     ++mounted[1]
     return () => {
@@ -445,6 +448,7 @@ it('mounts and unmounts sync and async dependencies correctly', async () => {
   }
 
   const c = atom(0)
+  c.debugLabel = 'c'
   c.onMount = () => {
     ++mounted[2]
     return () => {
@@ -453,6 +457,7 @@ it('mounts and unmounts sync and async dependencies correctly', async () => {
   }
 
   const d = atom(0)
+  d.debugLabel = 'd'
   d.onMount = () => {
     ++mounted[3]
     return () => {
@@ -461,6 +466,7 @@ it('mounts and unmounts sync and async dependencies correctly', async () => {
   }
 
   const e = atom(0)
+  e.debugLabel = 'e'
   e.onMount = () => {
     ++mounted[4]
     return () => {
@@ -489,8 +495,9 @@ it('mounts and unmounts sync and async dependencies correctly', async () => {
     })
     return promise
   })
+  f.debugLabel = 'f'
 
-  const store = createStore()
+  const store = createDebugStore()
   // mount a, b synchronously
   const unsub = store.sub(f, () => {})
   expect(mounted).toEqual([1, 1, 0, 0, 0])
