@@ -75,8 +75,6 @@ type Mounted = {
   readonly l: Set<() => void>
   /** Set of mounted atoms that the atom depends on. */
   readonly d: Set<AnyAtom>
-  /** Set of dependencies added asynchronously */
-  readonly q: Set<AnyAtom>
   /** Set of mounted atoms that depends on the atom. */
   readonly t: Set<AnyAtom>
   /** Function to run when the atom is unmounted. */
@@ -305,8 +303,10 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       for (const a of atomState.d.keys()) {
         addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
       }
+      atomState.v = valueOrPromise
+    } else {
+      atomState.v = valueOrPromise
     }
-    atomState.v = valueOrPromise
     delete atomState.e
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
@@ -404,11 +404,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       const valueOrPromise = atomRead(atom, getter, options as never)
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
       if (isPromiseLike(valueOrPromise)) {
-        if (batch) {
-          addBatchFunc(batch, 0, () => atomState.m?.q.clear())
-        } else {
-          atomState.m?.q.clear()
-        }
         valueOrPromise.onCancel?.(() => controller?.abort())
         valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
       }
@@ -604,7 +599,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       atomState.m = {
         l: new Set(),
         d: new Set(atomState.d.keys()),
-        q: new Set(),
         t: new Set(),
       }
       atomState.h?.()
