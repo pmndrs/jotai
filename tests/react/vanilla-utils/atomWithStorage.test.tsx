@@ -789,5 +789,7 @@ describe('with custom async storage', () => {
     await screen.findByText('count: 0')
     await userEvent.click(screen.getByText('button'))
     await screen.findByText('count: 1')
+    await userEvent.click(screen.getByText('button'))
+    await screen.findByText('count: 2')
   })
 })
