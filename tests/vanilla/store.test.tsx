@@ -984,6 +984,21 @@ it('mounted atom should be recomputed eagerly', () => {
   expect(result).toEqual(['bRead', 'aCallback', 'bCallback'])
 })
 
+it('should notify subscription even with reading atom in write', () => {
+  const a = atom(1)
+  const b = atom((get) => get(a) * 2)
+  const c = atom((get) => get(b) + 1)
+  const d = atom(null, (get, set) => {
+    set(a, 2)
+    get(b)
+  })
+  const store = createStore()
+  const callback = vi.fn()
+  store.sub(c, callback)
+  store.set(d)
+  expect(callback).toHaveBeenCalledTimes(1)
+})
+
 it('should process all atom listeners even if some of them throw errors', () => {
   const store = createStore()
   const a = atom(0)
@@ -1106,4 +1121,69 @@ it('recomputes dependents of unmounted atoms', () => {
   const store = createStore()
   store.set(w)
   expect(bRead).not.toHaveBeenCalled()
+})
+
+it('recomputes all changed atom dependents together', async () => {
+  const a = atom([0])
+  const b = atom([0])
+  const a0 = atom((get) => get(a)[0]!)
+  const b0 = atom((get) => get(b)[0]!)
+  const a0b0 = atom((get) => [get(a0), get(b0)])
+  const w = atom(null, (_, set) => {
+    set(a, [0])
+    set(b, [1])
+  })
+  const store = createStore()
+  store.sub(a0b0, () => {})
+  store.set(w)
+  expect(store.get(a0)).toBe(0)
+  expect(store.get(b0)).toBe(1)
+  expect(store.get(a0b0)).toEqual([0, 1])
+})
+
+it('should not inf on subscribe or unsubscribe', async () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const effectAtom = atom(
+    (get) => get(countAtom),
+    (_, set) => set,
+  )
+  effectAtom.onMount = (setAtom) => {
+    const set = setAtom()
+    set(countAtom, 1)
+    return () => {
+      set(countAtom, 2)
+    }
+  }
+  const unsub = store.sub(effectAtom, () => {})
+  expect(store.get(countAtom)).toBe(1)
+  unsub()
+  expect(store.get(countAtom)).toBe(2)
+})
+
+it('supports recursion in an atom subscriber', () => {
+  const a = atom(0)
+  const store = createStore()
+  store.sub(a, () => {
+    if (store.get(a) < 3) {
+      store.set(a, (v) => v + 1)
+    }
+  })
+  store.set(a, 1)
+  expect(store.get(a)).toBe(3)
+})
+
+it('allows subcribing to atoms during mount', () => {
+  const store = createStore()
+  const a = atom(0)
+  a.onMount = () => {
+    store.sub(b, () => {})
+  }
+  const b = atom(0)
+  let bMounted = false
+  b.onMount = () => {
+    bMounted = true
+  }
+  store.sub(a, () => {})
+  expect(bMounted).toBe(true)
 })
