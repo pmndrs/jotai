@@ -385,14 +385,17 @@ describe('with onMount', () => {
   it('does not infinite loop with setting a promise (#2931)', async () => {
     const asyncAtom = atom(Promise.resolve(1))
     asyncAtom.onMount = (setCount) => {
-      setCount((p) => p.then((c) => c + 1))
+      // We need to delay setting a new promise to avoid infinite loop
+      setTimeout(() => {
+        setCount(Promise.resolve(2))
+      })
     }
     const Component = () => {
       const [count, setCount] = useAtom(asyncAtom)
       return (
         <>
           <div>count: {count}</div>
-          <button onClick={() => setCount((p) => p.then((c) => c + 1))}>
+          <button onClick={() => setCount(async (c) => (await c) + 1)}>
             button
           </button>
         </>
