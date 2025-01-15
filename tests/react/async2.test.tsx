@@ -387,7 +387,7 @@ describe('with onMount', () => {
     const secondPromise = Promise.resolve(2)
     const asyncAtom = atom(firstPromise)
     asyncAtom.onMount = (setCount) => {
-      setCount(secondPromise)
+      setCount((prev) => (prev === firstPromise ? secondPromise : prev))
     }
     const Component = () => {
       const [count, setCount] = useAtom(asyncAtom)
@@ -411,7 +411,6 @@ describe('with onMount', () => {
     })
     await screen.findByText('count: 2')
     await userEvent.click(screen.getByText('button'))
-    // FIXME this fails with the current test environment.
-    //await screen.findByText('count: 3')
+    await screen.findByText('count: 3')
   })
 })
