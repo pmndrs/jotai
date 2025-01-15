@@ -19,7 +19,7 @@ If you would like to contribute by fixing an open issue or developing a new feat
 1. Fork this repository
 2. Create a new feature branch based off the `main` branch
 3. Follow the [Core lib](#core-lib) and/or the [docs](#docs) guide below and come back to this once done
-4. Run `pnpm run prettier` to format the code
+4. Run `pnpm run fix:format` to format the code
 5. Git stage your required changes and commit (review the commit guidelines below)
 6. Submit the PR for review
 
@@ -37,7 +37,7 @@ If you would like to contribute by fixing an open issue or developing a new feat
 
 1. Navigate to the `website` folder. Eg. `cd website`
 2. Install dependencies by running `pnpm` in the `website` folder
-3. Run `pnpm dev` to start the dev server
+3. Run `pnpm run dev` to start the dev server
 4. Navigate to [`http://localhost:9000`](http://localhost:9000) to view the docs
 5. Navigate to the `docs` folder and make necessary changes to the docs
 6. Add your changes to the docs and see them live reloaded in the browser
