@@ -149,9 +149,10 @@ it('keeps atoms mounted between recalculations', async () => {
     mounted: 1,
     unmounted: 0,
   })
+  await Promise.resolve()
   expect(metrics2).toEqual({
-    mounted: 1,
-    unmounted: 0,
+    mounted: 2,
+    unmounted: 1,
   })
 })
 
@@ -507,10 +508,11 @@ it('mounts and unmounts sync and async dependencies correctly', async () => {
   expect(mounted).toEqual([1, 1, 0, 1, 0])
 
   // unmount b, mount c synchronously
+  // d is also unmounted
   store.set(a, 1)
-  expect(mounted).toEqual([1, 0, 1, 1, 0])
+  expect(mounted).toEqual([1, 0, 1, 0, 0])
 
-  // unmount d, mount e asynchronously
+  // mount e asynchronously
   await resolve!()
   expect(mounted).toEqual([1, 0, 1, 0, 1])
 

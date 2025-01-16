@@ -405,7 +405,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
       if (isPromiseLike(valueOrPromise)) {
         valueOrPromise.onCancel?.(() => controller?.abort())
-        valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
       }
       return atomState
     } catch (error) {
@@ -565,7 +564,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
   ): Result => runWithTransaction(() => writeAtomState(atom, ...args))
 
   const mountDependencies = (atom: AnyAtom, atomState: AtomState) => {
-    if (atomState.m && !isPendingPromise(atomState.v)) {
+    if (atomState.m) {
       for (const a of atomState.d.keys()) {
         if (!atomState.m.d.has(a)) {
           const aMounted = mountAtom(a, ensureAtomState(a))
