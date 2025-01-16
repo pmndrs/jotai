@@ -94,7 +94,7 @@ it('correctly handles the same promise being returned twice from an atom getter 
   await expect(store.get(derivedAtom)).resolves.toBe('Asynchronous Data')
 })
 
-it('keeps atoms mounted between recalculations', async () => {
+it('keeps sync atoms mounted between recalculations', async () => {
   const metrics1 = {
     mounted: 0,
     unmounted: 0,
@@ -149,6 +149,7 @@ it('keeps atoms mounted between recalculations', async () => {
     unmounted: 0,
   })
   await Promise.resolve()
+  // async atom has been re-mounted
   expect(metrics2).toEqual({
     mounted: 2,
     unmounted: 1,

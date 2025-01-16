@@ -342,11 +342,6 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     // Compute a new state for this atom.
     atomState.d.clear()
     let isSync = true
-    const mountDependenciesIfAsync = () => {
-      if (atomState.m) {
-        runWithTransaction(() => mountDependencies(atom, atomState))
-      }
-    }
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
         const aState = ensureAtomState(a)
@@ -366,8 +361,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         return returnAtomValue(aState)
       } finally {
         addDependency(atom, atomState, a, aState)
-        if (!isSync) {
-          mountDependenciesIfAsync()
+        if (!isSync && atomState.m) {
+          runWithTransaction(() => mountDependencies(atom, atomState))
         }
       }
     }
