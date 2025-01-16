@@ -1,6 +1,5 @@
 import { expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import { createDebugStore } from '../../tests/testUtils'
 
 it('can propagate updates with async atom chains', async () => {
   const store = createStore()
@@ -498,7 +497,7 @@ it('mounts and unmounts sync and async dependencies correctly', async () => {
   })
   f.debugLabel = 'f'
 
-  const store = createDebugStore()
+  const store = createStore()
   // mount a, b synchronously
   const unsub = store.sub(f, () => {})
   expect(mounted).toEqual([1, 1, 0, 0, 0])
