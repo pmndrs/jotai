@@ -58,79 +58,62 @@ function MyComponent() {
 
 If you want to manage a state with a broad lifetime and another state with a narrower lifetime, you can create a (narrower) bunja that depends on a (broader) bunja.
 
-For example, you can think of a bunja that manages the WebSocket connection and disconnection, and another bunja that subscribes to a specific resource over the connected WebSocket.
+For example, you can think of a bunja that holds the page state and another bunja that holds the modal state.
 
-In an application composed of multiple pages, you might want to subscribe to the Foo resource on page A and the Bar resource on page B, while using the same WebSocket connection regardless of which page you're on.
+The page state lives longer than the modal state, and the modal state should exist from the moment the modal opens until it closes.
 
 In such a case, you can write the following code.
 
-```ts
-// To simplify the example, code for buffering and reconnection has been omitted.
-const websocketBunja = bunja([], () => {
-  let socket
-  const send = (message) => socket.send(JSON.stringify(message))
-
-  const emitter = new EventEmitter()
-  const on = (handler) => {
-    emitter.on('message', handler)
-    return () => emitter.off('message', handler)
-  }
-
-  return {
-    send,
-    on,
-    [bunja.effect]() {
-      socket = new WebSocket('...')
-      socket.onmessage = (e) => emitter.emit('message', JSON.parse(e.data))
-      return () => socket.close()
-    },
-  }
+```tsx
+const pageBunja = bunja([], () => {
+  const pageStateAtom = atom({})
+  return { pageStateAtom }
 })
 
-const resourceFooBunja = bunja([websocketBunja], ({ send, on }) => {
-  const resourceFooAtom = atom()
-  return {
-    resourceFooAtom,
-    [bunja.effect]() {
-      const off = on((message) => {
-        if (message.type === 'foo') store.set(resourceAtom, message.value)
-      })
-      send('subscribe-foo')
-      return () => {
-        send('unsubscribe-foo')
-        off()
-      }
-    },
-  }
+const childBunja = bunja([pageBunja], ({ pageStateAtom }) => {
+  const childStateAtom = atom((get) => ({
+    ...get(pageStateAtom),
+    child: 'state',
+  }))
+  return { childStateAtom }
 })
 
-const resourceBarBunja = bunja([websocketBunja], ({ send, on }) => {
-  const resourceBarAtom = atom()
-  // ...
+const modalBunja = bunja([pageBunja], ({ pageStateAtom }) => {
+  const modalStateAtom = atom((get) => ({
+    ...get(pageStateAtom),
+    modal: 'state',
+  }))
+  return { modalStateAtom }
 })
 
-function PageA() {
-  const { resourceFooAtom } = useBunja(resourceFooBunja)
-  const resourceFoo = useAtomValue(resourceFooAtom)
+function Page() {
+  const [modalOpen, setModalOpen] = useState(false)
+  return (
+    <>
+      <Child />
+      {modalOpen && <Modal />}
+    </>
+  )
+}
+
+function Child() {
+  const { childStateAtom } = useBunja(childBunja)
+  const childState = useAtomValue(childStateAtom)
   // ...
 }
 
-function PageB() {
-  const { resourceBarAtom } = useBunja(resourceBarBunja)
-  const resourceBar = useAtomValue(resourceBarAtom)
+function Modal() {
+  const { modalStateAtom } = useBunja(modalBunja)
+  const modalState = useAtomValue(modalStateAtom)
   // ...
 }
 ```
 
-Notice that `websocketBunja` is not directly `useBunja`-ed.
-When you `useBunja` either `resourceFooBunja` or `resourceBarBunja`, since they depend on `websocketBunja`,
-it has the same effect as if `websocketBunja` were also `useBunja`-ed.
+Notice that `pageBunja` is not directly `useBunja`-ed.
 
-> When a bunja starts, the initialization effect of the bunja with a broader lifetime is called first.
-> Similarly, when a bunja ends, the cleanup effect of the bunja with the broader lifetime is called first.
-> This behavior is aligned with how React's `useEffect` cleanup function is invoked, where the parent’s cleanup is executed before the child’s in the render tree.
->
-> See: https://github.com/facebook/react/issues/16728
+When you `useBunja` either `childBunja` or `modalBunja`, since they depend on `pageBunja`, it has the same effect as if `pageBunja` were also `useBunja`-ed.
+
+When the modal is unmounted, there are no longer any places using `useBunja(modalBunja)`, so the instance of `modalBunja` is automatically destroyed.
 
 ### Dependency injection using Scope
 
@@ -178,12 +161,12 @@ const fetchBunja = bunja([UrlScope], (url) => {
 function ParentComponent() {
   return (
     <>
-      <UrlContext.Provider value="https://example.com/foo">
+      <UrlContext value="https://example.com/foo">
         <ChildComponent />
-      </UrlContext.Provider>
-      <UrlContext.Provider value="https://example.com/bar">
+      </UrlContext>
+      <UrlContext value="https://example.com/bar">
         <ChildComponent />
-      </UrlContext.Provider>
+      </UrlContext>
     </>
   )
 }
