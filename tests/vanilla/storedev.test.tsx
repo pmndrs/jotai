@@ -12,7 +12,6 @@ describe('[DEV-ONLY] dev-only methods rev4', () => {
       throw new Error('dev methods are not available')
     }
     const countAtom = atom(0)
-    countAtom.debugLabel = 'countAtom'
     store.set(countAtom, 1)
     const weakMap = store.dev4_get_internal_weak_map()
     expect(weakMap.get(countAtom)?.v).toEqual(1)
@@ -60,15 +59,17 @@ describe('[DEV-ONLY] dev-only methods rev4', () => {
       throw new Error('dev methods are not available')
     }
     const countAtom = atom(0)
-    countAtom.debugLabel = 'countAtom'
     const derivedAtom = atom((get) => get(countAtom) * 2)
     const unsub = store.sub(derivedAtom, vi.fn())
     store.set(countAtom, 1)
     const result = store.dev4_get_mounted_atoms()
     expect(
-      Array.from(result).sort(
-        (a, b) => Object.keys(a).length - Object.keys(b).length,
-      ),
+      Array.from(result)
+        .sort((a, b) => Object.keys(a).length - Object.keys(b).length)
+        .map((item) => {
+          const { debugLabel: _, ...rest } = item
+          return rest
+        }),
     ).toStrictEqual([
       { toString: expect.any(Function), read: expect.any(Function) },
       {
@@ -76,7 +77,6 @@ describe('[DEV-ONLY] dev-only methods rev4', () => {
         init: 0,
         read: expect.any(Function),
         write: expect.any(Function),
-        debugLabel: 'countAtom',
       },
     ])
     unsub()
@@ -88,7 +88,6 @@ describe('[DEV-ONLY] dev-only methods rev4', () => {
       throw new Error('dev methods are not available')
     }
     const countAtom = atom(0)
-    countAtom.debugLabel = 'countAtom'
     const derivedAtom = atom((get) => get(countAtom) * 2)
     const unsub = store.sub(derivedAtom, vi.fn())
     store.set(countAtom, 1)
