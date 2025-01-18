@@ -15,15 +15,24 @@ import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
-export function useSelectAtom(anAtom, keyFn) {
-  return useAtomValue(selectAtom(anAtom, keyFn))
+export function useSelectAtom(anAtom, selector, deps) {
+   const selectorAtom = useMemo(
+    () => selectAtom(
+        anAtom,
+        (v, prevSlice) => selector(v, prevSlice),
+        // alternatively, you can customize `equalityFn` to determine when it will rerender
+        undefined,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    deps
+  );
+  return useAtomValue(selectorAtom)
 }
 
 // how to use it
-useSelectAtom(
-  useMemo(() => atom(initValue), [initValue]),
-  useCallback((state) => state.prop, []),
-)
+function useN(n) {
+  return useSelectAtom(arrayAtom, v => v[n], [n])
+}
 ```
 
 Please note that in this case `keyFn` must be stable, either define outside render or wrap with `useCallback`.
