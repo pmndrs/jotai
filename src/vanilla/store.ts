@@ -247,6 +247,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
   const changedAtoms = new Map<AnyAtom, AtomState>()
   const unmountCallbacks = new Set<() => void>()
   const mountCallbacks = new Set<() => void>()
+  let inTransaction = 0
 
   const flushCallbacks = () => {
     const errors: unknown[] = []
@@ -257,8 +258,13 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         errors.push(e)
       }
     }
+    ++inTransaction
     while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size) {
       recomputeInvalidatedAtoms()
+      if (inTransaction > 1) {
+        --inTransaction
+        return
+      }
       ;(store as any)[INTERNAL_flushStoreHook]?.()
       const callbacks = new Set<() => void>()
       const add = callbacks.add.bind(callbacks)
@@ -270,6 +276,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       mountCallbacks.clear()
       callbacks.forEach(call)
     }
+    --inTransaction
     if (errors.length) {
       throw errors[0]
     }
