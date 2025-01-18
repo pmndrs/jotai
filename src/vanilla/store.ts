@@ -433,7 +433,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     return dependents
   }
 
-  const invalidateDependents = <Value>(atomState: AtomState<Value>) => {
+  const invalidateDependents = (atomState: AtomState) => {
     const visited = new WeakSet<AtomState>()
     const stack: AtomState[] = [atomState]
     while (stack.length) {
@@ -441,8 +441,10 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       if (!visited.has(aState)) {
         visited.add(aState)
         for (const [d, s] of getMountedOrPendingDependents(aState)) {
-          invalidatedAtoms.set(d, s.n)
-          stack.push(s)
+          if (!invalidatedAtoms.has(d)) {
+            invalidatedAtoms.set(d, s.n)
+            stack.push(s)
+          }
         }
       }
     }
@@ -528,8 +530,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
+      const aState = ensureAtomState(a)
       try {
-        const aState = ensureAtomState(a)
         if (isSelfAtom(atom, a)) {
           if (!hasInitialValue(a)) {
             // NOTE technically possible but restricted as it may cause bugs
