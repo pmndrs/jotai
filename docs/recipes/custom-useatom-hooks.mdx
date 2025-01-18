@@ -15,15 +15,11 @@ import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
 export function useSelectAtom(anAtom, selector) {
-  const selectorAtom = useMemo(
-    () =>
-      selectAtom(
-        anAtom,
-        (v, prevSlice) => selector(v, prevSlice),
-        // alternatively, you can customize `equalityFn` to determine when it will rerender
-        undefined,
-      ),
-    [anAtom, selector],
+  const selectorAtom = selectAtom(
+    anAtom,
+    selector,
+    // Alternatively, you can customize `equalityFn` to determine when it will rerender
+    // Check selectAtom's signature for details.
   )
   return useAtomValue(selectorAtom)
 }
