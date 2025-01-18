@@ -53,6 +53,7 @@ export function syncEffect(effect: Effect): Atom<void> & { effect: Effect } {
     },
     () => {},
   )
+  internalAtom.onMount = () => () => {}
 
   internalAtom.unstable_onInit = (store) => {
     const ref = store.get(refAtom)
@@ -116,19 +117,16 @@ export function syncEffect(effect: Effect): Atom<void> & { effect: Effect } {
             try {
               fromCleanup = true
               return cleanup()
-            } /* catch (error) {
-              ref.error = error
-              refresh()
-            }  */ finally {
+            } finally {
               fromCleanup = false
               runCleanup = undefined
             }
           }
         }
-      } /* catch (error) {
+      } catch (error) {
         ref.error = error
-        refresh()
-      }  */ finally {
+        throw error
+      } finally {
         Array.from(deps.keys(), ref.get!)
         --inProgress
       }
@@ -169,7 +167,6 @@ export function syncEffect(effect: Effect): Atom<void> & { effect: Effect } {
       syncEffectChannel.add(runEffect)
     })
   }
-  internalAtom.onMount = () => () => {}
 
   if (process.env.NODE_ENV !== 'production') {
     function setLabel(atom: Atom<unknown>, label: string) {
@@ -209,7 +206,7 @@ function ensureSyncEffectChannel(store: Store) {
       () => void
     >()
     hookInto(storeWithHooks, INTERNAL_flushStoreHook, () => {
-      syncEffectChannel!.forEach((fn: () => void) => fn())
+      syncEffectChannel!.forEach((fn) => fn())
       syncEffectChannel!.clear()
     })
   }

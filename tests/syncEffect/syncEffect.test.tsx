@@ -358,7 +358,6 @@ it('should disallow synchronous set.recurse in cleanup', () => {
   })
   const store = createDebugStore()
   store.sub(effectAtom, () => {})
-  store.set(anotherAtom, increment)
   expect(() => store.set(anotherAtom, increment)).toThrowError(
     'set.recurse is not allowed in cleanup',
   )
