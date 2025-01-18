@@ -16,22 +16,23 @@ import { selectAtom } from 'jotai/utils'
 
 /* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
 export function useSelectAtom(anAtom, selector, deps) {
-   const selectorAtom = useMemo(
-    () => selectAtom(
+  const selectorAtom = useMemo(
+    () =>
+      selectAtom(
         anAtom,
         (v, prevSlice) => selector(v, prevSlice),
         // alternatively, you can customize `equalityFn` to determine when it will rerender
         undefined,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    deps
-  );
+    deps,
+  )
   return useAtomValue(selectorAtom)
 }
 
 // how to use it
 function useN(n) {
-  return useSelectAtom(arrayAtom, v => v[n], [n])
+  return useSelectAtom(arrayAtom, (v) => v[n], [n])
 }
 ```
 
