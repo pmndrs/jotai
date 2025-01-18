@@ -609,31 +609,21 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       atomState.h?.()
       if (isActuallyWritableAtom(atom)) {
         const mounted = atomState.m
-        const createInvocationContext = <T>(
-          fn: (setAtom: (...args: unknown[]) => unknown) => T,
-        ) => {
-          let isSync = true
-          try {
-            return fn((...args: unknown[]) => {
-              try {
-                return writeAtomState(atom, ...args)
-              } finally {
-                if (!isSync) {
-                  recomputeInvalidatedAtoms()
-                  flushCallbacks()
-                }
-              }
-            })
-          } finally {
-            isSync = false
-          }
-        }
         const processOnMount = () => {
-          const onUnmount = createInvocationContext((setAtom) =>
-            atomOnMount(atom, setAtom),
-          )
+          let isSync = true
+          const onUnmount = atomOnMount(atom, (...args: unknown[]) => {
+            try {
+              return writeAtomState(atom, ...args)
+            } finally {
+              if (!isSync) {
+                recomputeInvalidatedAtoms()
+                flushCallbacks()
+              }
+            }
+          })
+          isSync = false
           if (onUnmount) {
-            mounted.u = () => createInvocationContext(onUnmount)
+            mounted.u = onUnmount
           }
         }
         mountCallbacks.add(processOnMount)
