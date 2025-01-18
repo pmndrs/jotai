@@ -14,7 +14,7 @@ This page shows the ways of creating different utility functions. Utility functi
 import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
-export function useSelectAtom(anAtom, selector, deps) {
+export function useSelectAtom(anAtom, selector) {
   const selectorAtom = useMemo(
     () =>
       selectAtom(
@@ -23,15 +23,15 @@ export function useSelectAtom(anAtom, selector, deps) {
         // alternatively, you can customize `equalityFn` to determine when it will rerender
         undefined,
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    deps,
+    [anAtom, selector],
   )
   return useAtomValue(selectorAtom)
 }
 
 // how to use it
 function useN(n) {
-  return useSelectAtom(arrayAtom, (v) => v[n], [n])
+  const selector = useCallback((v) => v[n], [n])
+  return useSelectAtom(arrayAtom, selector)
 }
 ```
 
