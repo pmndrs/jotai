@@ -1,0 +1,208 @@
+---
+title: Bunja
+description: State Lifetime Manager
+nav: 5.03
+keywords: scope,di,raii,lifetime
+---
+
+[Bunja](https://github.com/disjukr/bunja) is lightweight State Lifetime Manager.
+
+It provides an RAII wrapper for jōtai atoms.
+
+---
+
+See also:
+
+- [Bunja README](https://github.com/disjukr/bunja/blob/main/README.md)
+- [Presentations](https://github.com/disjukr/bunja/tree/main/presentations)
+
+## install
+
+```
+npm install bunja
+```
+
+### Defining a Bunja
+
+You can define a bunja using the `bunja` function.
+
+When you access the defined bunja with the `useBunja` hook, a bunja instance is created.
+
+If all components in the render tree that refer to the bunja disappear, the bunja instance is automatically destroyed.
+
+If you want to trigger effects when the lifetime of a bunja starts and ends, you can use the `bunja.effect` field.
+
+```ts
+import { bunja } from 'bunja'
+import { useBunja } from 'bunja/react'
+
+const countBunja = bunja([], () => {
+  const countAtom = atom(0)
+  return {
+    countAtom,
+    [bunja.effect]() {
+      console.log('mounted')
+      return () => console.log('unmounted')
+    },
+  }
+})
+
+function MyComponent() {
+  const { countAtom } = useBunja(countBunja)
+  const [count, setCount] = useAtom(countAtom)
+  // Your component logic here
+}
+```
+
+### Defining a Bunja that relies on other Bunja
+
+If you want to manage a state with a broad lifetime and another state with a narrower lifetime, you can create a (narrower) bunja that depends on a (broader) bunja.
+
+For example, you can think of a bunja that holds the page state and another bunja that holds the modal state.
+
+The page state lives longer than the modal state, and the modal state should exist from the moment the modal opens until it closes.
+
+In such a case, you can write the following code.
+
+```tsx
+const pageBunja = bunja([], () => {
+  const pageStateAtom = atom({})
+  return { pageStateAtom }
+})
+
+const childBunja = bunja([pageBunja], ({ pageStateAtom }) => {
+  const childStateAtom = atom((get) => ({
+    ...get(pageStateAtom),
+    child: 'state',
+  }))
+  return { childStateAtom }
+})
+
+const modalBunja = bunja([pageBunja], ({ pageStateAtom }) => {
+  const modalStateAtom = atom((get) => ({
+    ...get(pageStateAtom),
+    modal: 'state',
+  }))
+  return { modalStateAtom }
+})
+
+function Page() {
+  const [modalOpen, setModalOpen] = useState(false)
+  return (
+    <>
+      <Child />
+      {modalOpen && <Modal />}
+    </>
+  )
+}
+
+function Child() {
+  const { childStateAtom } = useBunja(childBunja)
+  const childState = useAtomValue(childStateAtom)
+  // ...
+}
+
+function Modal() {
+  const { modalStateAtom } = useBunja(modalBunja)
+  const modalState = useAtomValue(modalStateAtom)
+  // ...
+}
+```
+
+Notice that `pageBunja` is not directly `useBunja`-ed.
+
+When you `useBunja` either `childBunja` or `modalBunja`, since they depend on `pageBunja`, it has the same effect as if `pageBunja` were also `useBunja`-ed.
+
+When the modal is unmounted, there are no longer any places using `useBunja(modalBunja)`, so the instance of `modalBunja` is automatically destroyed.
+
+### Dependency injection using Scope
+
+You can use a bunja for local state management.
+
+When you specify a scope as a dependency of the bunja, separate bunja instances are created based on the values injected into the scope.
+
+```ts
+import { bunja, createScope } from 'bunja'
+
+const UrlScope = createScope()
+
+const fetchBunja = bunja([UrlScope], (url) => {
+  const queryAtom = atomWithQuery((get) => ({
+    queryKey: [url],
+    queryFn: async () => (await fetch(url)).json(),
+  }))
+  return { queryAtom }
+})
+```
+
+#### Injecting dependencies via React context
+
+If you bind a scope to a React context, bunjas that depend on the scope can retrieve values from the corresponding React context.
+
+In the example below, there are two React instances (`<ChildComponent />`) that reference the same `fetchBunja`, but since each looks at a different context value, two separate bunja instances are also created.
+
+```tsx
+import { createContext } from 'react'
+import { bunja, createScope } from 'bunja'
+import { bindScope } from 'bunja/react'
+
+const UrlContext = createContext('https://example.com/')
+const UrlScope = createScope()
+bindScope(UrlScope, UrlContext)
+
+const fetchBunja = bunja([UrlScope], (url) => {
+  const queryAtom = atomWithQuery((get) => ({
+    queryKey: [url],
+    queryFn: async () => (await fetch(url)).json(),
+  }))
+  return { queryAtom }
+})
+
+function ParentComponent() {
+  return (
+    <>
+      <UrlContext value="https://example.com/foo">
+        <ChildComponent />
+      </UrlContext>
+      <UrlContext value="https://example.com/bar">
+        <ChildComponent />
+      </UrlContext>
+    </>
+  )
+}
+
+function ChildComponent() {
+  const { queryAtom } = useBunja(fetchBunja)
+  const { data, isPending, isError } = useAtomValue(queryAtom)
+  // Your component logic here
+}
+```
+
+You can use the `createScopeFromContext` function to handle both the creation of the scope and the binding to the context in one step.
+
+```ts
+import { createContext } from 'react'
+import { createScopeFromContext } from 'bunja/react'
+
+const UrlContext = createContext('https://example.com/')
+const UrlScope = createScopeFromContext(UrlContext)
+```
+
+#### Injecting dependencies directly into the scope
+
+You might want to use a bunja directly within a React component where the values to be injected into the scope are created.
+
+In such cases, you can use the inject function to inject values into the scope without wrapping the context separately.
+
+```tsx
+import { inject } from 'bunja/react'
+
+function MyComponent() {
+  const { queryAtom } = useBunja(
+    fetchBunja,
+    inject([[UrlScope, 'https://example.com/']]),
+  )
+  const { data, isPending, isError } = useAtomValue(queryAtom)
+  // Your component logic here
+}
+```
