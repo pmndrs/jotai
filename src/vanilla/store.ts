@@ -428,7 +428,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     return dependents
   }
 
-  const invalidateDependents = <Value>(atomState: AtomState<Value>) => {
+  const invalidateDependents = (atomState: AtomState) => {
     const visited = new WeakSet<AtomState>()
     const stack: AtomState[] = [atomState]
     while (stack.length) {
