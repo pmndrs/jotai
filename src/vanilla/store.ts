@@ -429,13 +429,11 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
   }
 
   const invalidateDependents = (atomState: AtomState) => {
-    const visited = new WeakSet<AtomState>()
     const stack: AtomState[] = [atomState]
     while (stack.length) {
       const aState = stack.pop()!
-      if (!visited.has(aState)) {
-        visited.add(aState)
-        for (const [d, s] of getMountedOrPendingDependents(aState)) {
+      for (const [d, s] of getMountedOrPendingDependents(aState)) {
+        if (!invalidatedAtoms.has(d)) {
           invalidatedAtoms.set(d, s.n)
           stack.push(s)
         }
