@@ -645,6 +645,34 @@ describe('should invoke flushPending only after all atoms are updated (#2804)', 
       'after store.sub',
     ])
   })
+
+  it('should flush only after all atoms are updated with unmount', () => {
+    const result: string[] = []
+    const a = atom(0)
+    const b = atom(null, (_get, set, value: number) => {
+      set(a, value)
+    })
+    b.onMount = (setAtom) => {
+      return () => {
+        result.push('onUmount: before setAtom')
+        setAtom(1)
+        result.push('onUmount: after setAtom')
+      }
+    }
+    const c = atom(true)
+    const d = atom((get) => get(c) && get(b))
+    store.sub(a, () => {
+      result.push('a value changed - ' + store.get(a))
+    })
+    store.sub(d, () => {})
+    expect(store.get(d)).toEqual(null)
+    store.set(c, false)
+    expect(result).toEqual([
+      'onUmount: before setAtom',
+      'onUmount: after setAtom',
+      'a value changed - 1',
+    ])
+  })
 })
 
 describe('should mount and trigger listeners even when an error is thrown', () => {
