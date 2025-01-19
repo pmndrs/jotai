@@ -611,7 +611,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         const mounted = atomState.m
         const processOnMount = () => {
           let isSync = true
-          const onUnmount = atomOnMount(atom, (...args: unknown[]) => {
+          const setAtom = (...args: unknown[]) => {
             try {
               return writeAtomState(atom, ...args)
             } finally {
@@ -620,10 +620,22 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
                 flushCallbacks()
               }
             }
-          })
-          isSync = false
-          if (onUnmount) {
-            mounted.u = onUnmount
+          }
+          try {
+            const onUnmount = atomOnMount(atom, setAtom)
+            if (onUnmount) {
+              mounted.u = () => {
+                // FIXME needs a test to require isSync
+                //isSync = true
+                try {
+                  onUnmount()
+                } finally {
+                  isSync = false
+                }
+              }
+            }
+          } finally {
+            isSync = false
           }
         }
         mountCallbacks.add(processOnMount)
