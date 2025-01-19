@@ -625,8 +625,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
             const onUnmount = atomOnMount(atom, setAtom)
             if (onUnmount) {
               mounted.u = () => {
-                // FIXME needs a test to require isSync
-                //isSync = true
+                isSync = true
                 try {
                   onUnmount()
                 } finally {
