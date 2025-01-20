@@ -114,10 +114,10 @@ npm install bunshi
 import { atom, useAtom } from 'jotai'
 import { molecule, useMolecule, createScope, ScopeProvider } from 'bunshi/react'
 
-const InitialCountScope = createScope(0)
+const InitialCountScope = createScope({ initialCount: 0 })
 const countMolecule = molecule((getMol, getScope) => {
-  const initialCont = getScope(InitialCountScope)
-  return atom(initialCont)
+  const { initialCount } = getScope(InitialCountScope)
+  return atom(initialCount)
 })
 
 const Counter = () => {
@@ -133,12 +133,12 @@ const Counter = () => {
 const App = () => (
   <div>
     <h1>With initial value 1</h1>
-    <ScopeProvider scope={InitialCountScope} value={1}>
+    <ScopeProvider scope={InitialCountScope} value={{ initialCount: 1 }}>
       <Counter />
       <Counter />
     </ScopeProvider>
     <h1>With initial value 2</h1>
-    <ScopeProvider scope={InitialCountScope} value={2}>
+    <ScopeProvider scope={InitialCountScope} value={{ initialCount: 2 }}>
       <Counter />
       <Counter />
     </ScopeProvider>
