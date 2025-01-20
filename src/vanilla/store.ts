@@ -332,6 +332,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     const mountDependenciesIfAsync = () => {
       if (atomState.m) {
         mountDependencies(atom, atomState)
+        recomputeInvalidatedAtoms()
         flushCallbacks()
       }
     }
