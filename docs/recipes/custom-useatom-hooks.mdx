@@ -14,16 +14,21 @@ This page shows the ways of creating different utility functions. Utility functi
 import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 
-/* if an atom is created here, please use `useMemo(() => atom(initValue), [initValue])` instead. */
-export function useSelectAtom(anAtom, keyFn) {
-  return useAtomValue(selectAtom(anAtom, keyFn))
+export function useSelectAtom(anAtom, selector) {
+  const selectorAtom = selectAtom(
+    anAtom,
+    selector,
+    // Alternatively, you can customize `equalityFn` to determine when it will rerender
+    // Check selectAtom's signature for details.
+  )
+  return useAtomValue(selectorAtom)
 }
 
 // how to use it
-useSelectAtom(
-  useMemo(() => atom(initValue), [initValue]),
-  useCallback((state) => state.prop, []),
-)
+function useN(n) {
+  const selector = useCallback((v) => v[n], [n])
+  return useSelectAtom(arrayAtom, selector)
+}
 ```
 
 Please note that in this case `keyFn` must be stable, either define outside render or wrap with `useCallback`.
