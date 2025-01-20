@@ -6,7 +6,6 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -252,14 +251,16 @@ describe('infinite pending', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Controls />
-        <Suspense fallback="loading">
-          <Component />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Controls />
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
 
@@ -294,13 +295,15 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('count: 2')
     await userEvent.click(screen.getByText('button'))
@@ -327,13 +330,15 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('count: 2')
     await userEvent.click(screen.getByText('button'))
@@ -360,13 +365,15 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('count: 2')
     await userEvent.click(screen.getByText('button'))

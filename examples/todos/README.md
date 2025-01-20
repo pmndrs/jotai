@@ -1,4 +1,4 @@
-# Todos [![Open in CodeSandbox](https://img.shields.io/badge/Open%20in-CodeSandbox-blue?style=flat-square&logo=codesandbox)](https://githubbox.com/pmndrs/jotai/tree/main/examples/todos)
+# Todos [![Open in StackBlitz](https://img.shields.io/badge/Open%20in-StackBlitz-blue?style=flat-square&logo=stackblitz)](https://stackblitz.com/github/pmndrs/jotai/tree/main/examples/todos)
 
 ## Description
 
@@ -10,15 +10,15 @@ Record your todo list by typing them into this app, check them if you have compl
 git clone https://github.com/pmndrs/jotai
 
 # install project dependencies & build the library
-cd jotai && yarn
+cd jotai && pnpm install
 
 # move to the examples folder & install dependencies
-cd examples/todos && yarn
+cd examples/todos && pnpm install
 
 # start the dev server
-yarn start
+pnpm dev
 ```
 
-## Set up on codesandbox
+## Set up on `StackBlitz`
 
-Link: https://githubbox.com/pmndrs/jotai/tree/main/examples/todos
+Link: https://stackblitz.com/github/pmndrs/jotai/tree/main/examples/todos

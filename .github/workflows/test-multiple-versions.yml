@@ -14,10 +14,9 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 'lts/*'
           cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install
       - run: pnpm build # we don't have any other workflows to test build
       - run: pnpm test:spec
 
@@ -34,21 +33,19 @@ jobs:
           - 18.2.0
           - 18.3.1
           - 19.0.0
-          - 19.1.0-canary-4dff0e62-20241213
-          - 0.0.0-experimental-4dff0e62-20241213
+          - 19.1.0-canary-d46b04a2-20250117
+          - 0.0.0-experimental-d46b04a2-20250117
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 'lts/*'
           cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install
       - name: Install legacy testing-library
         if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
         run: |
-          pnpm json -I -f package.json -e "this.pnpm.patchedDependencies={};"
           pnpm add -D @testing-library/react@12.1.4
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}

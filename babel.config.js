@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 module.exports = (api, targets) => {
   // https://babeljs.io/docs/en/config-files#config-function-api
   const isTestEnv = api.env('test')

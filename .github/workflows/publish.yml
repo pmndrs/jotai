@@ -12,12 +12,10 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 'lts/*'
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
-          cache-dependency-path: '**/pnpm-lock.yaml'
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      - run: pnpm install
       - run: pnpm build
       - run: npm publish
         env:

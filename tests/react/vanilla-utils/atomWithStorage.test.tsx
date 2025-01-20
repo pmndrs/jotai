@@ -242,27 +242,29 @@ describe('atomWithStorage (async)', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
-    act(() => resolve.splice(0).forEach((fn) => fn()))
+    resolve.splice(0).forEach((fn) => fn())
     await screen.findByText('count: 10')
 
     await userEvent.click(screen.getByText('button'))
-    act(() => resolve.splice(0).forEach((fn) => fn()))
+    resolve.splice(0).forEach((fn) => fn())
     await screen.findByText('count: 11')
-    act(() => resolve.splice(0).forEach((fn) => fn()))
+    resolve.splice(0).forEach((fn) => fn())
     await waitFor(() => {
       expect(asyncStorageData.count).toBe(11)
     })
 
     await userEvent.click(screen.getByText('reset'))
-    act(() => resolve.splice(0).forEach((fn) => fn()))
+    resolve.splice(0).forEach((fn) => fn())
     await screen.findByText('count: 1')
     await waitFor(() => {
       expect(asyncStorageData.count).toBeUndefined()
@@ -295,9 +297,9 @@ describe('atomWithStorage (async)', () => {
     await screen.findByText('count: 20')
 
     await userEvent.click(screen.getByText('button'))
-    act(() => resolve.splice(0).forEach((fn) => fn()))
+    resolve.splice(0).forEach((fn) => fn())
     await screen.findByText('count: 21')
-    act(() => resolve.splice(0).forEach((fn) => fn()))
+    resolve.splice(0).forEach((fn) => fn())
     await waitFor(() => {
       expect(asyncStorageData.count2).toBe(21)
     })

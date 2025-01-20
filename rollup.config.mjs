@@ -1,17 +1,18 @@
-const path = require('path')
-const alias = require('@rollup/plugin-alias')
-const babelPlugin = require('@rollup/plugin-babel')
-const resolve = require('@rollup/plugin-node-resolve')
-const replace = require('@rollup/plugin-replace')
-const terser = require('@rollup/plugin-terser')
-const typescript = require('@rollup/plugin-typescript')
-const banner2 = require('rollup-plugin-banner2')
-const { default: esbuild } = require('rollup-plugin-esbuild')
-const createBabelConfig = require('./babel.config.js')
+/*global process*/
+import path from 'path'
+import alias from '@rollup/plugin-alias'
+import babelPlugin from '@rollup/plugin-babel'
+import resolve from '@rollup/plugin-node-resolve'
+import replace from '@rollup/plugin-replace'
+import terser from '@rollup/plugin-terser'
+import typescript from '@rollup/plugin-typescript'
+import banner2 from 'rollup-plugin-banner2'
+import esbuild from 'rollup-plugin-esbuild'
+import createBabelConfig from './babel.config.js'
 
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
-const entries = [
+export const entries = [
   { find: /.*\/vanilla\/utils\.ts$/, replacement: 'jotai/vanilla/utils' },
   { find: /.*\/react\/utils\.ts$/, replacement: 'jotai/react/utils' },
   { find: /.*\/vanilla\.ts$/, replacement: 'jotai/vanilla' },
@@ -65,7 +66,7 @@ function createESMConfig(input, output, clientOnly) {
     output: { file: output, format: 'esm' },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         ...(output.endsWith('.js')
@@ -91,7 +92,7 @@ function createCommonJSConfig(input, output, clientOnly) {
     output: { file: `${output}.js`, format: 'cjs' },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': 'process.env.NODE_ENV',
@@ -107,7 +108,7 @@ function createCommonJSConfig(input, output, clientOnly) {
 function createUMDConfig(input, output, env, clientOnly) {
   let name = 'jotai'
   const fileName = output.slice('dist/umd/'.length)
-  const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
+  const capitalize = (str) => str.slice(0, 1).toUpperCase() + str.slice(1)
   if (fileName !== 'index') {
     name += fileName.replace(/(\w+)\W*/g, (_, p) => capitalize(p))
   }
@@ -128,7 +129,7 @@ function createUMDConfig(input, output, env, clientOnly) {
     },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),
@@ -151,7 +152,7 @@ function createSystemConfig(input, output, env, clientOnly) {
     },
     external,
     plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
+      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),
@@ -164,7 +165,7 @@ function createSystemConfig(input, output, env, clientOnly) {
   }
 }
 
-module.exports = function (args) {
+export default function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   const clientOnly = Object.keys(args).some((key) => key === 'client-only')
   if (c) {
@@ -192,5 +193,3 @@ module.exports = function (args) {
     ),
   ]
 }
-
-module.exports.entries = entries

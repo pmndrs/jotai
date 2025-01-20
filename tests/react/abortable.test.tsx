@@ -6,7 +6,6 @@ import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -38,14 +37,16 @@ describe('abortable atom test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-          <Controls />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+            <Controls />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
 
@@ -95,14 +96,16 @@ describe('abortable atom test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-          <Controls />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+            <Controls />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
     resolve.splice(0).forEach((fn) => fn())
@@ -154,13 +157,15 @@ describe('abortable atom test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Parent />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Parent />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
 
@@ -203,14 +208,16 @@ describe('abortable atom test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-          <Controls />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+            <Controls />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
 
