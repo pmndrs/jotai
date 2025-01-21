@@ -13,10 +13,6 @@ import createBabelConfig from './babel.config.js'
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
 const entries = [
-  {
-    find: /.*\/vanilla\/internals\.ts$/,
-    replacement: 'jotai/vanilla/internals',
-  },
   { find: /.*\/vanilla\/utils\.ts$/, replacement: 'jotai/vanilla/utils' },
   { find: /.*\/react\/utils\.ts$/, replacement: 'jotai/react/utils' },
   { find: /.*\/vanilla\.ts$/, replacement: 'jotai/vanilla' },

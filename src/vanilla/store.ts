@@ -199,6 +199,7 @@ type SecretStoreMethods = readonly [
     atom: Atom<Value>,
     atomState: AtomState<Value>,
   ) => Mounted | undefined,
+  recomputeInvalidatedAtoms: () => void,
 ]
 
 type Store = {
@@ -229,7 +230,6 @@ type BuildStore = (
     atom: WritableAtom<Value, Args, Result>,
     ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
   ) => Result,
-  atomOnInit?: (atom: AnyAtom, store: Store) => void,
   atomOnMount?: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
@@ -240,7 +240,6 @@ const buildStore: BuildStore = (
   ensureAtomState,
   atomRead = (atom, ...params) => atom.read(...params),
   atomWrite = (atom, ...params) => atom.write(...params),
-  atomOnInit = (atom, store) => atom.unstable_onInit?.(store),
   atomOnMount = (atom, setAtom) => atom.onMount?.(setAtom),
 ): Store => {
   // These are store state.
@@ -699,6 +698,7 @@ const buildStore: BuildStore = (
       writeAtomState,
       mountAtom,
       unmountAtom,
+      recomputeInvalidatedAtoms,
     ],
   }
   return store
