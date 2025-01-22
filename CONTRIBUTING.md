@@ -1,18 +1,18 @@
 # Contributing
 
-## General guideline
+## General Guideline
 
-### Reporting issues
+### Reporting Issues
 
 If you have found what you think is a bug, please [start a discussion](https://github.com/pmndrs/jotai/discussions/new).
 
 For any usage questions, please [start a discussion](https://github.com/pmndrs/jotai/discussions/new).
 
-### Suggesting new features
+### Suggesting New Features
 
 If you are here to suggest a feature, first [start a discussion](https://github.com/pmndrs/jotai/discussions/new) if it does not already exist. From there, we will discuss use-cases for the feature and then finally discuss how it could be implemented.
 
-### Pull requests
+### Pull Requests
 
 Please try to keep your pull request focused in scope and avoid including unrelated commits.
 
@@ -47,7 +47,7 @@ You can also specify the scope of the commit in the parentheses after a type:
 fix(react): change the 'useAtom' parameter type
 ```
 
-## Jotai guideline
+## Jotai Guideline
 
 ### Development
 
