@@ -24,7 +24,6 @@ Your commit type must be one of the following:
 - **chore**: Changes to the build process, configuration, dependencies, CI/CD pipelines, or other auxiliary tools and libraries.
 - **docs**: Documentation-only changes.
 - **test**: Adding missing or correcting existing tests.
-- **style**: Changes that do not affect the meaning of the code (e.g., formatting, whitespace, missing semicolons).
 
 If you are unfamiliar with the usage of conventional commits,
 the short version is to simply specify the type as a first word,
