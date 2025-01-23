@@ -70,7 +70,7 @@ Please try to keep your pull request focused in scope and avoid including unrela
 
 After you have submitted your pull request, we'll try to get back to you as soon as possible. We may suggest some changes or request improvements, therefore, please check ✅ ["Allow edits from maintainers"](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) on your PR
 
-## Jotai Guideline
+## Jotai-specific Guideline
 
 ##### Documentation
 
