@@ -12,12 +12,6 @@ For any usage questions, please [start a discussion](https://github.com/pmndrs/j
 
 If you are here to suggest a feature, first [start a discussion](https://github.com/pmndrs/jotai/discussions/new) if it does not already exist. From there, we will discuss use-cases for the feature and then finally discuss how it could be implemented.
 
-### Pull Requests
-
-Please try to keep your pull request focused in scope and avoid including unrelated commits.
-
-After you have submitted your pull request, we'll try to get back to you as soon as possible. We may suggest some changes or request improvements, therefore, please check ✅ ["Allow edits from maintainers"](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) on your PR
-
 ### Committing
 
 We are applying [conventional commit spec](https://www.conventionalcommits.org/en/v1.0.0/) here. In short, that means a commit has to be one of the following types:
@@ -47,8 +41,6 @@ You can also specify the scope of the commit in the parentheses after a type:
 fix(react): change the 'useAtom' parameter type
 ```
 
-## Jotai Guideline
-
 ### Development
 
 If you would like to contribute by fixing an open issue or developing a new feature you can use this suggested workflow:
@@ -71,6 +63,14 @@ If you would like to contribute by fixing an open issue or developing a new feat
 5. Run the tests by running `pnpm run test` and ensure that they pass.
 6. You can use `pnpm link` to sym-link this package and test it locally on your own project. Alternatively, you may use CodeSandbox CI's canary releases to test the changes in your own project (requires a PR to be created first)
 7. Follow step 4 and onwards from the [General](#General) guide above to bring it to the finish line
+
+### Pull Requests
+
+Please try to keep your pull request focused in scope and avoid including unrelated commits.
+
+After you have submitted your pull request, we'll try to get back to you as soon as possible. We may suggest some changes or request improvements, therefore, please check ✅ ["Allow edits from maintainers"](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) on your PR
+
+## Jotai Guideline
 
 ##### Documentation
 
