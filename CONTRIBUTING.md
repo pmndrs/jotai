@@ -37,7 +37,7 @@ feat: add a 'foo' type support
 You can also specify the scope of the commit in the parentheses after a type:
 
 ```
-fix(react): change the 'useAtom' parameter type
+fix(react): change the 'bar' parameter type
 ```
 
 ### Development
