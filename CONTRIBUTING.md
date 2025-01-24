@@ -10,7 +10,7 @@ For any usage questions, please [start a discussion](https://github.com/pmndrs/j
 
 ### Suggesting New Features
 
-If you are here to suggest a feature, first [start a discussion](https://github.com/pmndrs/jotai/discussions/new) if it does not already exist. From there, we will discuss use-cases for the feature and then finally discuss how it could be implemented.
+If you are here to suggest a feature, first [start a discussion](https://github.com/pmndrs/jotai/discussions/new?category=ideas) if it does not already exist. From there, we will discuss use-cases for the feature and then finally discuss how it could be implemented.
 
 ### Committing
 
