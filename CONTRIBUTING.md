@@ -31,7 +31,7 @@ and follow it with a colon and a space, then start your message
 from a lowercase letter, like this:
 
 ```
-feat: add a 'atomWithStorage' type support
+feat: add a 'foo' type support
 ```
 
 You can also specify the scope of the commit in the parentheses after a type:
