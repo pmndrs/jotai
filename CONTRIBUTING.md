@@ -6,7 +6,7 @@
 
 If you have found what you think is a bug, please [start a discussion](https://github.com/pmndrs/jotai/discussions/new?category=bug-report).
 
-For any usage questions, please [start a discussion](https://github.com/pmndrs/jotai/discussions/new).
+For any usage questions, please [start a discussion](https://github.com/pmndrs/jotai/discussions/new?category=q-a).
 
 ### Suggesting New Features
 
