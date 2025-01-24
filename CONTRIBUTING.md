@@ -4,7 +4,7 @@
 
 ### Reporting Issues
 
-If you have found what you think is a bug, please [start a discussion](https://github.com/pmndrs/jotai/discussions/new).
+If you have found what you think is a bug, please [start a discussion](https://github.com/pmndrs/jotai/discussions/new?category=bug-report).
 
 For any usage questions, please [start a discussion](https://github.com/pmndrs/jotai/discussions/new).
 
