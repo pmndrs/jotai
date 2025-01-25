@@ -56,7 +56,7 @@ If you would like to contribute by fixing an open issue or developing a new feat
 ##### Core
 
 1. Install dependencies by running `pnpm install`.
-2. Create failing tests for your fix or new feature in the [`tests`](./tests/) folder. (e.g., `cd tests`)
+2. Create failing tests for your fix or new feature in the [`tests`](./tests/) folder.
 3. Implement your changes
 4. Build the library by running `pnpm run build` _(Pro-tip: `pnpm run build-watch` runs the build in watch mode)_
 5. Run the tests by running `pnpm run test` and ensure that they pass.
@@ -77,7 +77,7 @@ After you have submitted your pull request, we'll try to get back to you as soon
 2. Install dependencies by running `pnpm install` in the `website` folder
 3. Run `pnpm run dev` to start the dev server
 4. Navigate to [`http://localhost:9000`](http://localhost:9000) to view the documents
-5. Navigate to the [`docs`](./docs/) folder and make necessary changes to the documents. (e.g., `cd docs`)
+5. Navigate to the [`docs`](./docs/) folder and make necessary changes to the documents.
 6. Add your changes to the documents and see them live reloaded in the browser
 7. Follow step 4 and onwards from the [General](#General) guide above to bring it to the finish line
 
