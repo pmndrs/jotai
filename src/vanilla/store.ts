@@ -434,10 +434,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     while (stack.length) {
       const aState = stack.pop()!
       for (const [d, s] of getMountedOrPendingDependents(aState)) {
-        if (!invalidatedAtoms.has(d)) {
-          invalidatedAtoms.set(d, s.n)
-          stack.push(s)
-        }
+        invalidatedAtoms.set(d, s.n)
+        stack.push(s)
       }
     }
   }
