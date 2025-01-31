@@ -440,26 +440,28 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     }
   }
 
-  const getMountedDependencies = (
+  const getInvalidAtomAndDependencies = (
     atom: AnyAtom,
     atomState: AtomState,
-  ): Array<AnyAtom> => {
+  ): Iterable<[AnyAtom, AtomState]> => {
     // recursively get mounted dependencies from atomState.m.d
-    const mountedDependencies = new Set<AnyAtom>()
+    const atomAndDependencies = new Map<AnyAtom, AtomState>([[atom, atomState]])
     const stack: AnyAtom[] = [atom]
     while (stack.length) {
       const a = stack.pop()!
       const aState = ensureAtomState(a)
       if (aState.m) {
         for (const d of aState.m.d) {
-          if (!mountedDependencies.has(d)) {
-            mountedDependencies.add(d)
+          if (!atomAndDependencies.has(d)) {
+            atomAndDependencies.set(d, ensureAtomState(d))
             stack.push(d)
           }
         }
       }
     }
-    return Array.from(mountedDependencies)
+    return Array.from(atomAndDependencies.entries()).filter(
+      ([a, aState]) => invalidatedAtoms.get(a) === aState.n,
+    )
   }
 
   const recomputeInvalidatedAtoms = (
@@ -542,14 +544,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     const getter: Getter = <V>(a: Atom<V>) => {
       const aState = ensureAtomState(a)
       if (invalidatedAtoms.get(a) === aState.n) {
-        const atomAndDependencies = new Map<AnyAtom, AtomState>([
-          [a, aState],
-          ...getMountedOrPendingDependents(aState),
-        ])
-        const relevantInvalidated = Array.from(
-          atomAndDependencies.entries(),
-        ).filter(([a, aState]) => invalidatedAtoms.get(a) === aState.n)
-        recomputeInvalidatedAtoms(relevantInvalidated)
+        recomputeInvalidatedAtoms(getInvalidAtomAndDependencies(a, aState))
       }
       return returnAtomValue(readAtomState(a))
     }
