@@ -1,11 +1,6 @@
 import { waitFor } from '@testing-library/react'
 import { assert, describe, expect, it, vi } from 'vitest'
-import {
-  atom,
-  INTERNAL_buildStore as buildStore,
-  createStore,
-  INTERNAL_getSecretStoreMethods as getSecretStoreMethods,
-} from 'jotai/vanilla'
+import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 
 it('should not fire on subscribe', async () => {
@@ -650,6 +645,34 @@ describe('should invoke flushPending only after all atoms are updated (#2804)', 
       'after store.sub',
     ])
   })
+
+  it('should flush only after all atoms are updated with unmount', () => {
+    const result: string[] = []
+    const a = atom(0)
+    const b = atom(null, (_get, set, value: number) => {
+      set(a, value)
+    })
+    b.onMount = (setAtom) => {
+      return () => {
+        result.push('onUmount: before setAtom')
+        setAtom(1)
+        result.push('onUmount: after setAtom')
+      }
+    }
+    const c = atom(true)
+    const d = atom((get) => get(c) && get(b))
+    store.sub(a, () => {
+      result.push('a value changed - ' + store.get(a))
+    })
+    store.sub(d, () => {})
+    expect(store.get(d)).toEqual(null)
+    store.set(c, false)
+    expect(result).toEqual([
+      'onUmount: before setAtom',
+      'onUmount: after setAtom',
+      'a value changed - 1',
+    ])
+  })
 })
 
 describe('should mount and trigger listeners even when an error is thrown', () => {
@@ -760,16 +783,13 @@ describe('should mount and trigger listeners even when an error is thrown', () =
   it('in synchronous write', () => {
     const store = createStore()
     const a = atom(0)
-    a.debugLabel = 'a'
     const e = atom(() => {
       throw new Error('error')
     })
-    e.debugLabel = 'e'
     const b = atom(null, (get, set) => {
       set(a, 1)
       get(e)
     })
-    b.debugLabel = 'b'
     const listener = vi.fn()
     store.sub(a, listener)
     try {
@@ -989,6 +1009,21 @@ it('mounted atom should be recomputed eagerly', () => {
   expect(result).toEqual(['bRead', 'aCallback', 'bCallback'])
 })
 
+it('should notify subscription even with reading atom in write', () => {
+  const a = atom(1)
+  const b = atom((get) => get(a) * 2)
+  const c = atom((get) => get(b) + 1)
+  const d = atom(null, (get, set) => {
+    set(a, 2)
+    get(b)
+  })
+  const store = createStore()
+  const callback = vi.fn()
+  store.sub(c, callback)
+  store.set(d)
+  expect(callback).toHaveBeenCalledTimes(1)
+})
+
 it('should process all atom listeners even if some of them throw errors', () => {
   const store = createStore()
   const a = atom(0)
@@ -1030,18 +1065,6 @@ it('should call onInit only once per atom', () => {
   expect(onInit).not.toHaveBeenCalled()
 })
 
-type EnsureAtomState = ReturnType<typeof getSecretStoreMethods>[0]
-
-const deriveStore = (
-  store: ReturnType<typeof createStore>,
-  enhanceEnsureAtomState: (fn: EnsureAtomState) => EnsureAtomState,
-) => {
-  const [ensureAtomState] = getSecretStoreMethods(store)
-  const newEnsureAtomState = enhanceEnsureAtomState(ensureAtomState)
-  const derivedStore = buildStore(newEnsureAtomState)
-  return derivedStore
-}
-
 it('should call onInit only once per store', () => {
   const a = atom(0)
   const aOnInit = vi.fn()
@@ -1061,19 +1084,37 @@ it('should call onInit only once per store', () => {
   }
   testInStore(createStore())
   const store = testInStore(createStore())
-  const derivedStore = deriveStore(store, (ensureAtomState) => {
-    const initializedAtoms = new WeakSet()
-    return (atom) => {
-      if (!initializedAtoms.has(atom)) {
-        initializedAtoms.add(atom)
-        const atomState = ensureAtomState(atom, () => {})
-        atom.unstable_onInit?.(derivedStore)
-        return atomState
-      }
-      return ensureAtomState(atom)
-    }
-  })
-  testInStore(derivedStore)
+  testInStore(
+    store.unstable_derive(
+      (
+        getAtomState,
+        setAtomState,
+        atomRead,
+        atomWrite,
+        atomOnInit,
+        atomOnMount,
+      ) => {
+        const initializedAtoms = new WeakSet()
+        return [
+          (a) => {
+            if (!initializedAtoms.has(a)) {
+              return undefined
+            }
+            return getAtomState(a)
+          },
+          (a, s) => {
+            initializedAtoms.add(a)
+            setAtomState(a, s)
+            return s
+          },
+          atomRead,
+          atomWrite,
+          atomOnInit,
+          atomOnMount,
+        ]
+      },
+    ) as Store,
+  )
 })
 
 it('should pass store and atomState to the atom initializer', () => {
@@ -1088,15 +1129,11 @@ it('should pass store and atomState to the atom initializer', () => {
 
 it('recomputes dependents of unmounted atoms', () => {
   const a = atom(0)
-  a.debugLabel = 'a'
   const bRead = vi.fn((get: Getter) => {
-    console.log('bRead')
     return get(a)
   })
   const b = atom(bRead)
-  b.debugLabel = 'b'
   const c = atom((get) => get(b))
-  c.debugLabel = 'c'
   const w = atom(null, (get, set) => {
     set(a, 1)
     get(c)
@@ -1106,4 +1143,83 @@ it('recomputes dependents of unmounted atoms', () => {
   const store = createStore()
   store.set(w)
   expect(bRead).not.toHaveBeenCalled()
+})
+
+it('recomputes all changed atom dependents together', async () => {
+  const a = atom([0])
+  const b = atom([0])
+  const a0 = atom((get) => get(a)[0]!)
+  const b0 = atom((get) => get(b)[0]!)
+  const a0b0 = atom((get) => [get(a0), get(b0)])
+  const w = atom(null, (_, set) => {
+    set(a, [0])
+    set(b, [1])
+  })
+  const store = createStore()
+  store.sub(a0b0, () => {})
+  store.set(w)
+  expect(store.get(a0)).toBe(0)
+  expect(store.get(b0)).toBe(1)
+  expect(store.get(a0b0)).toEqual([0, 1])
+})
+
+it('should not inf on subscribe or unsubscribe', async () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const effectAtom = atom(
+    (get) => get(countAtom),
+    (_, set) => set,
+  )
+  effectAtom.onMount = (setAtom) => {
+    const set = setAtom()
+    set(countAtom, 1)
+    return () => {
+      set(countAtom, 2)
+    }
+  }
+  const unsub = store.sub(effectAtom, () => {})
+  expect(store.get(countAtom)).toBe(1)
+  unsub()
+  expect(store.get(countAtom)).toBe(2)
+})
+
+it('supports recursion in an atom subscriber', () => {
+  const a = atom(0)
+  const store = createStore()
+  store.sub(a, () => {
+    if (store.get(a) < 3) {
+      store.set(a, (v) => v + 1)
+    }
+  })
+  store.set(a, 1)
+  expect(store.get(a)).toBe(3)
+})
+
+it('allows subcribing to atoms during mount', () => {
+  const store = createStore()
+  const a = atom(0)
+  a.onMount = () => {
+    store.sub(b, () => {})
+  }
+  const b = atom(0)
+  let bMounted = false
+  b.onMount = () => {
+    bMounted = true
+  }
+  store.sub(a, () => {})
+  expect(bMounted).toBe(true)
+})
+
+it('updates with reading derived atoms (#2959)', () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const countDerivedAtom = atom((get) => get(countAtom))
+  const countUpAtom = atom(null, (get, set) => {
+    set(countAtom, 1)
+    get(countDerivedAtom)
+    set(countAtom, 2)
+  })
+  store.sub(countDerivedAtom, () => {})
+  store.set(countUpAtom)
+  expect(store.get(countDerivedAtom)).toBe(2)
 })
