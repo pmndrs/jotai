@@ -125,7 +125,7 @@ function createUMDConfig(input, output, env, clientOnly) {
         'jotai/utils': 'jotaiUtils',
         'jotai/react': 'jotaiReact',
         'jotai/vanilla/utils': 'jotaiVanillaUtils',
-        'jotai/vanilla/internals': 'jotaiInternals',
+        'jotai/vanilla/internals': 'jotaiVanillaInternals',
         'jotai/react/utils': 'jotaiReactUtils',
       },
     },
