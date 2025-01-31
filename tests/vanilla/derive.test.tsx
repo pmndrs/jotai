@@ -1,6 +1,22 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, Getter } from 'jotai/vanilla'
+import {
+  INTERNAL_buildStore,
+  INTERNAL_getSecretStoreMethods,
+} from 'jotai/vanilla/internals'
+
+type StoreArgs = Parameters<typeof INTERNAL_buildStore>
+
+const deriveStore = (
+  store: ReturnType<typeof createStore>,
+  enhanceStoreArgs: (...storeArgs: StoreArgs) => StoreArgs,
+) => {
+  const [storeArgs] = INTERNAL_getSecretStoreMethods(store)
+  const newStoreArgs = enhanceStoreArgs(...storeArgs)
+  const derivedStore = INTERNAL_buildStore(...newStoreArgs)
+  return derivedStore
+}
 
 describe('unstable_derive for scoping atoms', () => {
   /**
@@ -13,7 +29,8 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive(
+    const derivedStore = deriveStore(
+      store,
       (
         getAtomState,
         setAtomState,
@@ -69,7 +86,8 @@ describe('unstable_derive for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = store.unstable_derive(
+    const derivedStore = deriveStore(
+      store,
       (
         getAtomState,
         setAtomState,
@@ -124,7 +142,8 @@ describe('unstable_derive for scoping atoms', () => {
 
     function makeStores() {
       const store = createStore()
-      const derivedStore = store.unstable_derive(
+      const derivedStore = deriveStore(
+        store,
         (
           getAtomState,
           setAtomState,
@@ -215,7 +234,8 @@ describe('unstable_derive for scoping atoms', () => {
 it('should pass the correct store instance to the atom initializer', () => {
   expect.assertions(2)
   const baseStore = createStore()
-  const derivedStore = baseStore.unstable_derive(
+  const derivedStore = deriveStore(
+    baseStore,
     (
       getAtomState,
       setAtomState,
