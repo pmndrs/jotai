@@ -9,6 +9,7 @@ describe('memory leaks (get & set only)', () => {
     let objAtom: Atom<object> | undefined = atom({})
     const detector = new LeakDetector(store.get(objAtom))
     objAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -22,6 +23,7 @@ describe('memory leaks (get & set only)', () => {
     const detector2 = new LeakDetector(store.get(derivedAtom))
     objAtom = undefined
     derivedAtom = undefined
+    await Promise.resolve()
     expect(await detector1.isLeaking()).toBe(false)
     expect(await detector2.isLeaking()).toBe(false)
   })
@@ -33,6 +35,7 @@ describe('memory leaks (get & set only)', () => {
     const detector = new LeakDetector(depAtom)
     store.get(depAtom)
     depAtom = undefined
+    await Promise.resolve()
     await expect(detector.isLeaking()).resolves.toBe(false)
   })
 
@@ -44,6 +47,7 @@ describe('memory leaks (get & set only)', () => {
     }))
     const detector = new LeakDetector(store.get(derivedAtom))
     derivedAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 })
@@ -57,6 +61,7 @@ describe('memory leaks (with subscribe)', () => {
     unsub()
     unsub = undefined
     objAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -73,6 +78,7 @@ describe('memory leaks (with subscribe)', () => {
     unsub = undefined
     objAtom = undefined
     derivedAtom = undefined
+    await Promise.resolve()
     expect(await detector1.isLeaking()).toBe(false)
     expect(await detector2.isLeaking()).toBe(false)
   })
@@ -88,6 +94,7 @@ describe('memory leaks (with subscribe)', () => {
     unsub()
     unsub = undefined
     derivedAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 })
@@ -102,6 +109,7 @@ describe('memory leaks (with dependencies)', () => {
     store.sub(atom2, () => {})
     store.set(atom1, 1)
     objAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -130,6 +138,7 @@ describe('memory leaks (with dependencies)', () => {
     store.sub(atom2, () => {})
     store.set(atom1, 1)
     objAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
