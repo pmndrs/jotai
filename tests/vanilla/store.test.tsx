@@ -14,10 +14,8 @@ const deriveStore = (
   enhanceStoreArgs: (...storeArgs: StoreArgs) => StoreArgs,
 ): ReturnType<typeof createStore> => {
   const [storeArgs] = INTERNAL_getSecretStoreMethods(store)
-  const newStoreArgs = enhanceStoreArgs(...storeArgs)
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const derivedStore = INTERNAL_buildStore(...newStoreArgs)
+  const newStoreArgs = (enhanceStoreArgs as any)(...storeArgs)
+  const derivedStore = (INTERNAL_buildStore as any)(...newStoreArgs)
   return derivedStore
 }
 
