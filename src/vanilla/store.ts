@@ -541,15 +541,16 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
       const aState = ensureAtomState(a)
-      // FIXME: the code below is attempting to find all dirty dependencies (deep), but it doesn't work
-      const atomAndDependencies = new Map<AnyAtom, AtomState>([
-        [a, aState],
-        ...getMountedOrPendingDependents(aState),
-      ])
-      const relevantInvalidated = Array.from(
-        atomAndDependencies.entries(),
-      ).filter(([a, aState]) => invalidatedAtoms.get(a) === aState.n)
-      recomputeInvalidatedAtoms(relevantInvalidated)
+      if (invalidatedAtoms.get(a) === aState.n) {
+        const atomAndDependencies = new Map<AnyAtom, AtomState>([
+          [a, aState],
+          ...getMountedOrPendingDependents(aState),
+        ])
+        const relevantInvalidated = Array.from(
+          atomAndDependencies.entries(),
+        ).filter(([a, aState]) => invalidatedAtoms.get(a) === aState.n)
+        recomputeInvalidatedAtoms(relevantInvalidated)
+      }
       return returnAtomValue(readAtomState(a))
     }
     const setter: Setter = <V, As extends unknown[], R>(
