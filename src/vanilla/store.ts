@@ -515,7 +515,10 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     ...args: Args
   ): Result => {
     let isSync = true
-    const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
+    const getter: Getter = <V>(a: Atom<V>) => {
+      recomputeInvalidatedAtoms()
+      return returnAtomValue(readAtomState(a))
+    }
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
