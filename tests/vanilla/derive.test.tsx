@@ -18,7 +18,7 @@ const deriveStore = (
   return derivedStore
 }
 
-describe('unstable_derive for scoping atoms', () => {
+describe('deriveStore for scoping atoms', () => {
   /**
    * a
    * S1[a]: a1
