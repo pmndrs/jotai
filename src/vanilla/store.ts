@@ -440,7 +440,31 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     }
   }
 
-  const recomputeInvalidatedAtoms = () => {
+  const getMountedDependencies = (
+    atom: AnyAtom,
+    atomState: AtomState,
+  ): Array<AnyAtom> => {
+    // recursively get mounted dependencies from atomState.m.d
+    const mountedDependencies = new Set<AnyAtom>()
+    const stack: AnyAtom[] = [atom]
+    while (stack.length) {
+      const a = stack.pop()!
+      const aState = ensureAtomState(a)
+      if (aState.m) {
+        for (const d of aState.m.d) {
+          if (!mountedDependencies.has(d)) {
+            mountedDependencies.add(d)
+            stack.push(d)
+          }
+        }
+      }
+    }
+    return Array.from(mountedDependencies)
+  }
+
+  const recomputeInvalidatedAtoms = (
+    atoms: Iterable<[AnyAtom, AtomState]> = changedAtoms.entries(),
+  ) => {
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
     // This is a topological sort via depth-first search, slightly modified from
@@ -455,7 +479,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     const visited = new WeakSet<AnyAtom>()
     // Visit the root atom. This is the only atom in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
-    const stack: [a: AnyAtom, aState: AtomState][] = Array.from(changedAtoms)
+    const stack: [a: AnyAtom, aState: AtomState][] = Array.from(atoms)
     while (stack.length) {
       const [a, aState] = stack[stack.length - 1]!
       if (visited.has(a)) {
@@ -516,7 +540,16 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
   ): Result => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) => {
-      recomputeInvalidatedAtoms([[a, ensureAtomState(a)]])
+      const aState = ensureAtomState(a)
+      // FIXME: the code below is attempting to find all dirty dependencies (deep), but it doesn't work
+      const atomAndDependencies = new Map<AnyAtom, AtomState>([
+        [a, aState],
+        ...getMountedOrPendingDependents(aState),
+      ])
+      const relevantInvalidated = Array.from(
+        atomAndDependencies.entries(),
+      ).filter(([a, aState]) => invalidatedAtoms.get(a) === aState.n)
+      recomputeInvalidatedAtoms(relevantInvalidated)
       return returnAtomValue(readAtomState(a))
     }
     const setter: Setter = <V, As extends unknown[], R>(
