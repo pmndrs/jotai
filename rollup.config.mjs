@@ -14,10 +14,7 @@ const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
 export const entries = [
   { find: /.*\/vanilla\/utils\.ts$/, replacement: 'jotai/vanilla/utils' },
-  {
-    find: /.*\/vanilla\/internals\.ts$/,
-    replacement: 'jotai/vanilla/internals',
-  },
+  { find: /.*\/internals\.ts$/, replacement: 'jotai/vanilla/internals' },
   { find: /.*\/react\/utils\.ts$/, replacement: 'jotai/react/utils' },
   { find: /.*\/vanilla\.ts$/, replacement: 'jotai/vanilla' },
   { find: /.*\/react\.ts$/, replacement: 'jotai/react' },
