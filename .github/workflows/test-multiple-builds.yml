@@ -43,7 +43,7 @@ jobs:
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.mts
           sed -i~ "s/import { useResetAtom } from 'jotai\/react\/utils'/const { useResetAtom } = require('..\/..\/..\/dist\/react\/utils.js')/" tests/react/utils/useResetAtom.test.tsx
           sed -i~ "s/import { RESET, atomWithReducer, atomWithReset } from 'jotai\/vanilla\/utils'/const { RESET, atomWithReducer, atomWithReset } = require('..\/..\/..\/dist\/vanilla\/utils.js')/" tests/react/utils/useResetAtom.test.tsx
-          perl -i~ -0777 -pe "s/import {[^}]+} from 'jotai\/vanilla\/internals'/const { INTERNAL_buildStore, INTERNAL_getSecretStoreMethods } = require('..\/..\/dist\/vanilla\/internals.js')/g" tests/vanilla/derive.test.tsx tests/vanilla/effect.test.ts
+          perl -i~ -0777 -pe "s/import {[^}]+} from 'jotai\/vanilla\/internals'/const { INTERNAL_buildStore, INTERNAL_getSecretStoreMethods } = require('..\/..\/dist\/vanilla\/internals.js')/g" tests/vanilla/store.test.tsx tests/vanilla/derive.test.tsx tests/vanilla/effect.test.ts
       - name: Patch for ESM
         if: ${{ matrix.build == 'esm' }}
         run: |
@@ -56,8 +56,7 @@ jobs:
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/umd\1.${NODE_ENV}.js')/" vitest.config.mts
           rm tests/react/utils/useResetAtom.test.tsx # FIXME we skip this for now. Actually I'm not sure if we really run tests with UMD build
-          rm tests/vanilla/derive.test.tsx # FIXME we skip this for now. Actually I'm not sure if we really run tests with UMD build
-          rm tests/vanilla/effect.test.ts # FIXME we skip this for now. Actually I'm not sure if we really run tests with UMD build
+          rm tests/vanilla/store.test.tsx tests/vanilla/derive.test.tsx tests/vanilla/effect.test.ts # FIXME we skip this for now. Actually I'm not sure if we really run tests with UMD build
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Patch for SystemJS
