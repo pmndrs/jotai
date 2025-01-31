@@ -180,7 +180,7 @@ type StoreHooks = {
    * Listener to notify when the atom value is changed.
    * This is an experimental API.
    */
-  c?: () => void
+  c?: (atom: AnyAtom) => void
   /**
    * Listener to notify when the atom is mounted.
    * This is an experimental API.
@@ -538,7 +538,7 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
         mountDependencies(a, aState)
         if (prevEpochNumber !== aState.n) {
           changedAtoms.set(a, aState)
-          storeHooks.c?.()
+          storeHooks.c?.(a)
         }
       }
       invalidatedAtoms.delete(a)
@@ -568,7 +568,7 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
           mountDependencies(a, aState)
           if (prevEpochNumber !== aState.n) {
             changedAtoms.set(a, aState)
-            storeHooks.c?.()
+            storeHooks.c?.(a)
             invalidateDependents(aState)
           }
           return undefined as R
@@ -611,7 +611,7 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
           atomState.m.d.add(a)
           if (n !== aState.n) {
             changedAtoms.set(a, aState)
-            storeHooks.c?.()
+            storeHooks.c?.(a)
             invalidateDependents(aState)
           }
         }

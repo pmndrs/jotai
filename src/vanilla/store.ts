@@ -5,7 +5,8 @@ import {
 } from './internals.ts'
 import type { INTERNAL_AtomState } from './internals.ts'
 
-export type Store = {
+// TODO: rename this to `Store` in the near future
+export type INTERNAL_PrdStore = {
   get: <Value>(atom: Atom<Value>) => Value
   set: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
@@ -26,7 +27,7 @@ export type INTERNAL_DevStoreRev4 = {
   ) => void
 }
 
-const createDevStoreRev4 = (): Store & INTERNAL_DevStoreRev4 => {
+const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   let inRestoreAtom = 0
   const atomStateMap = new WeakMap()
   const store = INTERNAL_buildStore(
@@ -76,7 +77,9 @@ const createDevStoreRev4 = (): Store & INTERNAL_DevStoreRev4 => {
   return Object.assign(store, devStore)
 }
 
-type PrdOrDevStore = Store | (Store & INTERNAL_DevStoreRev4)
+type PrdOrDevStore =
+  | INTERNAL_PrdStore
+  | (INTERNAL_PrdStore & INTERNAL_DevStoreRev4)
 
 export const createStore = (): PrdOrDevStore => {
   if (import.meta.env?.MODE !== 'production') {
