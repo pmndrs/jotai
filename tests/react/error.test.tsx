@@ -14,7 +14,6 @@ import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -194,15 +193,17 @@ it('can throw an initial error in async read function', async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <ErrorBoundary>
-        <Suspense fallback={null}>
-          <Counter />
-        </Suspense>
-      </ErrorBoundary>
-    </StrictMode>,
-  )
+  await act(async () => {
+    render(
+      <StrictMode>
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('Errored:')
 })
@@ -228,15 +229,17 @@ it('can throw an error in async read function', async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <ErrorBoundary>
-        <Suspense fallback={null}>
-          <Counter />
-        </Suspense>
-      </ErrorBoundary>
-    </StrictMode>,
-  )
+  await act(async () => {
+    render(
+      <StrictMode>
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <Counter />
+          </Suspense>
+        </ErrorBoundary>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('no error')
 
@@ -553,16 +556,18 @@ describe('error recovery', () => {
       return <div>Value: {useAtom(asyncAtom)[0]}</div>
     }
 
-    render(
-      <StrictMode>
-        <Counter />
-        <ErrorBoundary>
-          <Suspense fallback={null}>
-            <Display />
-          </Suspense>
-        </ErrorBoundary>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Counter />
+          <ErrorBoundary>
+            <Suspense fallback={null}>
+              <Display />
+            </Suspense>
+          </ErrorBoundary>
+        </StrictMode>,
+      )
+    })
 
     resolve()
     await screen.findByText('Errored: An error occurred')

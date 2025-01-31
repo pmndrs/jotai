@@ -36,5 +36,5 @@ export const wrapRootElement = ({ element }) => (
 );
 
 export const wrapPageElement = ({ element, props }) => {
-  return <Layout showDocs={props.path.startsWith('/docs')}>{element}</Layout>;
+  return <Layout isDocs={props.path.startsWith('/docs')}>{element}</Layout>;
 };

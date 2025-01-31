@@ -6,7 +6,6 @@ import { useAtom } from 'jotai/react'
 import { atomWithRefresh } from 'jotai/vanilla/utils'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -59,13 +58,15 @@ it('async counter', async () => {
     )
   }
 
-  render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>,
-  )
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
   await screen.findByText('loading')
   resolve()

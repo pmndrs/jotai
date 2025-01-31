@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
 
-describe('test memory leaks (get & set only)', () => {
+describe('memory leaks (get & set only)', () => {
   it('one atom', async () => {
     const store = createStore()
     let objAtom: Atom<object> | undefined = atom({})
     const detector = new LeakDetector(store.get(objAtom))
     objAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -22,6 +23,7 @@ describe('test memory leaks (get & set only)', () => {
     const detector2 = new LeakDetector(store.get(derivedAtom))
     objAtom = undefined
     derivedAtom = undefined
+    await Promise.resolve()
     expect(await detector1.isLeaking()).toBe(false)
     expect(await detector2.isLeaking()).toBe(false)
   })
@@ -33,6 +35,7 @@ describe('test memory leaks (get & set only)', () => {
     const detector = new LeakDetector(depAtom)
     store.get(depAtom)
     depAtom = undefined
+    await Promise.resolve()
     await expect(detector.isLeaking()).resolves.toBe(false)
   })
 
@@ -44,11 +47,12 @@ describe('test memory leaks (get & set only)', () => {
     }))
     const detector = new LeakDetector(store.get(derivedAtom))
     derivedAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 })
 
-describe('test memory leaks (with subscribe)', () => {
+describe('memory leaks (with subscribe)', () => {
   it('one atom', async () => {
     const store = createStore()
     let objAtom: Atom<object> | undefined = atom({})
@@ -57,6 +61,7 @@ describe('test memory leaks (with subscribe)', () => {
     unsub()
     unsub = undefined
     objAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -73,6 +78,7 @@ describe('test memory leaks (with subscribe)', () => {
     unsub = undefined
     objAtom = undefined
     derivedAtom = undefined
+    await Promise.resolve()
     expect(await detector1.isLeaking()).toBe(false)
     expect(await detector2.isLeaking()).toBe(false)
   })
@@ -88,6 +94,51 @@ describe('test memory leaks (with subscribe)', () => {
     unsub()
     unsub = undefined
     derivedAtom = undefined
+    await Promise.resolve()
+    expect(await detector.isLeaking()).toBe(false)
+  })
+})
+
+describe('memory leaks (with dependencies)', () => {
+  it('sync dependency', async () => {
+    const store = createStore()
+    let objAtom: Atom<object> | undefined = atom({})
+    const detector = new LeakDetector(store.get(objAtom))
+    const atom1 = atom(0)
+    const atom2 = atom((get) => get(atom1) || (objAtom && get(objAtom)))
+    store.sub(atom2, () => {})
+    store.set(atom1, 1)
+    objAtom = undefined
+    await Promise.resolve()
+    expect(await detector.isLeaking()).toBe(false)
+  })
+
+  it('async dependency', async () => {
+    const store = createStore()
+    let objAtom: Atom<object> | undefined = atom({})
+    const detector = new LeakDetector(store.get(objAtom))
+    const atom1 = atom(0)
+    const atom2 = atom(async (get) => get(atom1) || (objAtom && get(objAtom)))
+    store.sub(atom2, () => {})
+    store.set(atom1, 1)
+    objAtom = undefined
+    await Promise.resolve()
+    expect(await detector.isLeaking()).toBe(false)
+  })
+
+  it('async await dependency', async () => {
+    const store = createStore()
+    let objAtom: Atom<object> | undefined = atom({})
+    const detector = new LeakDetector(store.get(objAtom))
+    const atom1 = atom(0)
+    const atom2 = atom(async (get) => {
+      await Promise.resolve()
+      return get(atom1) || (objAtom && get(objAtom))
+    })
+    store.sub(atom2, () => {})
+    store.set(atom1, 1)
+    objAtom = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 })

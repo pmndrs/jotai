@@ -6,7 +6,6 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
 const userEvent = {
-  // eslint-disable-next-line testing-library/no-unnecessary-act
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
 
@@ -252,14 +251,16 @@ describe('infinite pending', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Controls />
-        <Suspense fallback="loading">
-          <Component />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Controls />
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
 
@@ -294,13 +295,15 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('count: 2')
     await userEvent.click(screen.getByText('button'))
@@ -327,13 +330,15 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('count: 2')
     await userEvent.click(screen.getByText('button'))
@@ -360,16 +365,52 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Component />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('count: 2')
     await userEvent.click(screen.getByText('button'))
     await screen.findByText('count: 4')
+  })
+})
+
+describe('with onMount', () => {
+  it('does not infinite loop with setting a promise (#2931)', async () => {
+    const firstPromise = Promise.resolve(1)
+    const secondPromise = Promise.resolve(2)
+    const asyncAtom = atom(firstPromise)
+    asyncAtom.onMount = (setCount) => {
+      setCount((prev) => (prev === firstPromise ? secondPromise : prev))
+    }
+    const Component = () => {
+      const [count, setCount] = useAtom(asyncAtom)
+      return (
+        <>
+          <div>count: {count}</div>
+          <button onClick={() => setCount(async (c) => (await c) + 1)}>
+            button
+          </button>
+        </>
+      )
+    }
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Component />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
+    await screen.findByText('count: 2')
+    await userEvent.click(screen.getByText('button'))
+    await screen.findByText('count: 3')
   })
 })

@@ -4,8 +4,6 @@ Fixes #
 
 ## Summary
 
-
-
 ## Check List
 
-- [ ] `pnpm run prettier` for formatting code and docs
+- [ ] `pnpm run fix:format` for formatting code and docs

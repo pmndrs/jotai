@@ -5,81 +5,144 @@ nav: 4.03
 keywords: effect, atom effect, side effect, side-effect, sideeffect
 ---
 
-[jotai-effect](https://github.com/jotaijs/jotai-effect) is a utility package for reactive side effects.
+[jotai-effect](https://github.com/jotaijs/jotai-effect) is a utility package for reactive side effects in Jotai.
 
-## install
+## Install
 
 ```
-npm i jotai-effect
+npm install jotai-effect
 ```
 
-## atomEffect
+## observe
 
-`atomEffect` is a utility function for declaring side effects and synchronizing atoms in Jotai. It is useful for observing and reacting to state changes.
+`observe` mounts an `effect` to watch state changes on a Jotai `store`. It's useful for running global side effects or logic at the store level.
 
-### Parameters
+If you don't have access to the store object and are not using the default store, use `atomEffect` or `withAtomEffect` instead.
+
+### Signature
 
 ```ts
-type CleanupFn = () => void
+type Cleanup = () => void
 
-type EffectFn = (
-  get: Getter & { peek: Getter },
-  set: Setter & { recurse: Setter },
-) => CleanupFn | void
+type Effect = (
+  get: Getter & { peek: Getter }
+  set: Setter & { recurse: Setter }
+) => Cleanup | void
 
-declare function atomEffect(effectFn: EffectFn): Atom<void>
+type Unobserve = () => void
+
+function observe(effect: Effect, store?: Store): Unobserve
 ```
 
-**effectFn** (required): A function for listening to state updates with `get` and writing state updates with `set`. The `effectFn` is useful for creating side effects that interact with other Jotai atoms. You can cleanup these side effects by returning a cleanup function.
+**effect:** A function for observing and reacting to atom state changes.
+
+**store:** A Jotai store to mount the effect on. Defaults to the global store if not provided.
+
+**returns:** A stable function that removes the effect from the store and cleans up any internal references.
 
 ### Usage
 
-Subscribe to Atom Changes
-
 ```js
-import { atomEffect } from 'jotai-effect'
+import { observe } from 'jotai-effect'
 
-const loggingEffect = atomEffect((get, set) => {
-  // runs on mount or whenever someAtom changes
-  const value = get(someAtom)
-  loggingService.setValue(value)
+// activate the effect on the default store
+const unobserve = observe((get, set) => {
+  set(logAtom, `someAtom changed: ${get(someAtom)}`)
 })
+
+// Clean up the effect
+unobserve()
 ```
 
-Setup and Teardown Side Effects
+This allows you to run Jotai state-dependent logic outside React's lifecycle, ideal for application-wide effects.
+
+### Usage With React
+
+When using a Jotai Provider, pass the store to both `observe` and the `Provider` to ensure the effect is mounted on the correct store.
+
+```tsx
+const store = createStore()
+const unobserve = observe((get, set) => {
+  set(logAtom, `someAtom changed: ${get(someAtom)}`)
+}, store)
+
+<Provider store={store}>...</Provider>
+```
+
+Using `observe` in a `useEffect`
+
+```tsx
+function effect(get: Getter, set: Setter) {
+  set(logAtom, `someAtom changed: ${get(someAtom)}`)
+}
+
+function Component() {
+  const store = useStore()
+  useEffect(() => observe(effect, store), [store])
+}
+```
+
+<Stackblitz id="vitejs-vite-uk7p8i5q" file="src%2FApp.tsx" />
+
+## atomEffect
+
+`atomEffect` creates an atom for declaring side effects that react to state changes when mounted.
+
+### Signature
+
+```ts
+function atomEffect(effect: Effect): Atom<void>
+```
+
+**effect:** A function for observing and reacting to atom state changes.
+
+### Usage
 
 ```js
 import { atomEffect } from 'jotai-effect'
 
-const subscriptionEffect = atomEffect((get, set) => {
-  const unsubscribe = subscribe((value) => {
-    set(valueAtom, value)
-  })
+const logEffect = atomEffect((get, set) => {
+  set(logAtom, get(someAtom)) // Runs on mount or when someAtom changes
+
+  return () => {
+    set(logAtom, 'unmounting') // Cleanup on unmount
+  }
+})
+
+// activates the atomEffect while Component is mounted
+function Component() {
+  useAtom(logEffect)
+}
+```
+
+## withAtomEffect
+
+`withAtomEffect` binds an effect to a clone of the target atom. The effect is active while the cloned atom is mounted.
+
+### Signature
+
+```ts
+function withAtomEffect<T>(targetAtom: Atom<T>, effect: Effect): Atom<T>
+```
+
+**targetAtom:** The atom to which the effect is bound.
+
+**effect:** A function for observing and reacting to atom state changes.
+
+**Returns:** An atom that is equivalent to the target atom but having a bound effect.
+
+### Usage
+
+```js
+import { withAtomEffect } from 'jotai-effect'
+
+const valuesAtom = withAtomEffect(atom(null), (get, set) => {
+  set(valuesAtom, get(countAtom))
   return unsubscribe
 })
 ```
 
-### Mounting with Atoms or Hooks
-
-After defining an effect using `atomEffect`, it can be integrated within another atom's read function or passed to Jotai hooks.
-
-```js
-const anAtom = atom((get) => {
-  // mounts the atomEffect when anAtom mounts
-  get(loggingEffect)
-  // ...
-})
-
-// mounts the atomEffect when the component mounts
-function MyComponent() {
-  useAtom(subscriptionEffect)
-  // ...
-}
-```
-
-<Stackblitz id="vitejs-vite-fj5zjp" file="src%2FApp.tsx" />
-
-### The `atomEffect` behavior
+## Effect Behavior
 
 - **Cleanup Function:**
   The cleanup function is invoked on unmount or before re-evaluation.
@@ -97,8 +160,8 @@ function MyComponent() {
 
   </details>
 
-- **Resistant To Infinite Loops:**
-  `atomEffect` does not rerun when it changes a value with `set` that it is watching.
+- **Resistant to Infinite Loops:**
+  `atomEffect` avoids rerunning when it updates a value that it is watching.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -107,16 +170,15 @@ function MyComponent() {
   ```js
   const countAtom = atom(0)
   atomEffect((get, set) => {
-    // this will not infinite loop
-    get(countAtom) // after mount, count will be 1
-    set(countAtom, increment)
+    get(countAtom)
+    set(countAtom, increment) // Will not loop
   })
   ```
 
   </details>
 
 - **Supports Recursion:**
-  Recursion is supported with `set.recurse` for both sync and async use cases, but is not supported in the cleanup function.
+  Recursion is supported with `set.recurse` but not in cleanup.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -125,7 +187,6 @@ function MyComponent() {
   ```js
   const countAtom = atom(0)
   atomEffect((get, set) => {
-    // increments count once per second
     const count = get(countAtom)
     const timeoutId = setTimeout(() => {
       set.recurse(countAtom, increment)
@@ -137,7 +198,7 @@ function MyComponent() {
   </details>
 
 - **Supports Peek:**
-  Read atom data without subscribing to changes with `get.peek`.
+  Use `get.peek` to read atom data without subscribing.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -146,15 +207,14 @@ function MyComponent() {
   ```js
   const countAtom = atom(0)
   atomEffect((get, set) => {
-    // will not rerun when countAtom changes
-    const count = get.peek(countAtom)
+    const count = get.peek(countAtom) // Will not add countAtom as a dependency
   })
   ```
 
   </details>
 
 - **Executes In The Next Microtask:**
-  `effectFn` runs in the next available microtask, after all Jotai synchronous read evaluations have completed.
+  `effect` runs in the next available microtask after synchronous evaluations complete.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -162,48 +222,51 @@ function MyComponent() {
 
   ```js
   const countAtom = atom(0)
-  const logAtom = atom([])
+  const logAtom = atom('')
   const logCounts = atomEffect((get, set) => {
-    set(logAtom, (curr) => [...curr, get(countAtom)])
+    set(logAtom, `count is now ${get(countAtom)}`)
   })
   const setCountAndReadLog = atom(null, async (get, set) => {
-    get(logAtom) // [0]
+    get(logAtom) // 'count is now 0'
     set(countAtom, increment) // effect runs in next microtask
-    get(logAtom) // [0]
-    await Promise.resolve().then()
-    get(logAtom) // [0, 1]
+    get(logAtom) // 'count is now 0'
+    await Promise.resolve()
+    get(logAtom) // 'count is now 1'
   })
+  store.sub(logCounts, () => {})
   store.set(setCountAndReadLog)
   ```
 
   </details>
 
-- **Batches Synchronous Updates (Atomic Transactions):**
-  Multiple synchronous updates to `atomEffect` atom dependencies are batched. The effect is run with the final values as a single atomic transaction.
+- **Batched Updates:**
+  Multiple synchronous updates are batched as a single atomic transaction.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
     <summary>Example</summary>
 
   ```js
-  const enabledAtom = atom(false)
-  const countAtom = atom(0)
-  const updateEnabledAndCount = atom(null, (get, set) => {
-    set(enabledAtom, (value) => !value)
-    set(countAtom, (value) => value + 1)
+  const tensAtom = atom(0)
+  const onesAtom = atom(0)
+  const updateTensAndOnes = atom(null, (get, set) => {
+    set(tensAtom, (value) => value + 1)
+    set(onesAtom, (value) => value + 1)
   })
   const combos = atom([])
-  const combosEffect = atomEffect((get, set) => {
-    set(combos, (arr) => [...arr, [get(enabledAtom), get(countAtom)]])
+  const effectAtom = atomEffect((get, set) => {
+    const value = get(tensAtom) * 10 + get(onesAtom)
+    set(combos, (arr) => [...arr, value])
   })
-  store.set(updateEnabledAndCount)
-  store.get(combos) // [[false, 0], [true, 1]]
+  store.sub(effectAtom, () => {})
+  store.set(updateTensAndOnes)
+  store.get(combos) // [00, 11]
   ```
 
   </details>
 
-- **Conditionally Running atomEffect:**
-  `atomEffect` is active only when it is mounted within the application. This prevents unnecessary computations and side effects when they are not needed. You can disable the effect by unmounting it.
+- **Conditionally Running Effects:**
+  `atomEffect` only runs when mounted.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -219,8 +282,8 @@ function MyComponent() {
 
   </details>
 
-- **Idempotent:**
-  `atomEffect` runs once when state changes regardless of how many times it is mounted.
+- **Idempotency:**
+  `atomEffect` runs once per state change, regardless of how many times it is referenced.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -232,19 +295,16 @@ function MyComponent() {
     get(countAtom)
     i++
   })
-  const mountTwice = atom(() => {
-    get(effectAtom)
-    get(effectAtom)
-  })
+  store.sub(effectAtom, () => {})
+  store.sub(effectAtom, () => {})
   store.set(countAtom, increment)
-  Promise.resolve.then(() => {
-    console.log(i) // 1
-  })
+  await Promise.resolve()
+  console.log(i) // 1
   ```
 
-  </details>
+    </details>
 
-### Dependency Management
+## Dependency Management
 
 Aside from mount events, the effect runs when any of its dependencies change value.
 
@@ -268,40 +328,32 @@ Aside from mount events, the effect runs when any of its dependencies change val
   </details>
 
 - **Async:**
-  For async effects, you should use an abort controller to cancel pending fetch requests and promises.
+  Use an abort controller to cancel pending fetch requests and promises.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
     <summary>Example</summary>
 
   ```js
+  class AbortError extends Error {}
+
   atomEffect((get, set) => {
-    const count = get(countAtom) // countAtom is an atom dependency
     const abortController = new AbortController()
-    ;(async () => {
-      try {
-        await delay(1000)
-        abortController.signal.throwIfAborted()
-        get(dataAtom) // dataAtom is not an atom dependency
-      } catch (e) {
-        if (e instanceof AbortError) {
-          // async cleanup logic here
-        } else {
-          console.error(e)
-        }
+    fetchData(abortController.signal).catch((error) => {
+      if (error instanceof AbortError) {
+        // async cleanup logic here
+      } else {
+        throw error
       }
-    })()
-    return () => {
-      // abort when countAtom changes
-      abortController.abort(new AbortError())
-    }
+    })
+    return () => abortController.abort(new AbortError())
   })
   ```
 
   </details>
 
 - **Cleanup:**
-  Accessing atoms with `get` in the cleanup function does not add them to the atom's internal dependency map.
+  `get` calls in cleanup do not add dependencies.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -309,23 +361,17 @@ Aside from mount events, the effect runs when any of its dependencies change val
 
   ```js
   atomEffect((get, set) => {
-    // runs once on mount
-    // does not update when `idAtom` changes
-    const unsubscribe = subscribe((valueAtom) => {
-      const value = get(valueAtom)
-      // ...
-    })
+    set(logAtom, get(valueAtom))
     return () => {
-      const id = get(idAtom)
-      unsubscribe(id)
+      get(idAtom) // Not a dependency
     }
   })
   ```
 
   </details>
 
-- **Recalculation of Dependency Map:**
-  The dependency map is recalculated on every run. If an atom was not watched during the current run, it will not be in the current run's dependency map. Only actively watched atoms are considered dependencies.
+- **Dependency Map Recalculation:**
+  Dependencies are recalculated on every run.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
@@ -346,39 +392,6 @@ Aside from mount events, the effect runs when any of its dependencies change val
   ```
 
   </details>
-
-## withAtomEffect
-
-`withAtomEffect` binds an effect to a clone of the target atom. This is useful for creating effects that are active when the clone of the target atom is mounted.
-
-### Parameters
-
-```ts
-declare function withAtomEffect<T>(
-  targetAtom: Atom<T>,
-  effectFn: EffectFn,
-): Atom<T>
-```
-
-**targetAtom** (required): The atom to which the effect is bound.
-
-**effectFn** (required): A function for listening to state updates with `get` and writing state updates with `set`.
-
-**Returns:** An atom that is equivalent to the target atom but having a bound effect.
-
-### Usage
-
-```js
-import { withAtomEffect } from 'jotai-effect'
-
-const valuesAtom = withAtomEffect(atom(null), (get, set) => {
-  // runs when valuesAtom is mounted
-  const unsubscribe = subscribe((value) => {
-    set(valuesAtom, value)
-  })
-  return unsubscribe
-})
-```
 
 ## Comparison with useEffect
 
@@ -407,5 +420,5 @@ atomEffects are distinguished from useEffect in a few other ways. They can direc
 
 ### It's up to you
 
-Both useEffect and atomEffect have their own advantages and applications. Your project’s specific needs and your comfort level should guide your selection.
+Both useEffect and atomEffect have their own advantages and applications. Your project's specific needs and your comfort level should guide your selection.
 Always lean towards an approach that gives you a smoother, more intuitive development experience. Happy coding!
