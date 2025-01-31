@@ -42,7 +42,7 @@ const createDevStoreRev4 = (): Store & INTERNAL_DevStoreRev4 => {
     (atom, ...params) => atom.unstable_onInit?.(...params),
     (atom, ...params) => atom.onMount?.(...params),
   )
-  const [storeHooks] = INTERNAL_getSecretStoreMethods(store)
+  const [, storeHooks] = INTERNAL_getSecretStoreMethods(store)
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m = (atom) => {
     debugMountedAtoms.add(atom)

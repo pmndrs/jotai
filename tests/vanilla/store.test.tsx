@@ -2,6 +2,22 @@ import { waitFor } from '@testing-library/react'
 import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
+import {
+  INTERNAL_buildStore,
+  INTERNAL_getSecretStoreMethods,
+} from 'jotai/vanilla/internals'
+
+type StoreArgs = Parameters<typeof INTERNAL_buildStore>
+
+const deriveStore = (
+  store: ReturnType<typeof createStore>,
+  enhanceStoreArgs: (...storeArgs: StoreArgs) => StoreArgs,
+) => {
+  const [storeArgs] = INTERNAL_getSecretStoreMethods(store)
+  const newStoreArgs = enhanceStoreArgs(...storeArgs)
+  const derivedStore = INTERNAL_buildStore(...newStoreArgs)
+  return derivedStore
+}
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -1085,7 +1101,8 @@ it('should call onInit only once per store', () => {
   testInStore(createStore())
   const store = testInStore(createStore())
   testInStore(
-    store.unstable_derive(
+    deriveStore(
+      store,
       (
         getAtomState,
         setAtomState,

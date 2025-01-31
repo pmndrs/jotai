@@ -198,9 +198,28 @@ type StoreHooks = {
   f?: () => void
 }
 
+type StoreArgs = [
+  getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
+  setAtomState: <Value>(atom: Atom<Value>, atomState: AtomState<Value>) => void,
+  atomRead: <Value>(
+    atom: Atom<Value>,
+    ...params: Parameters<Atom<Value>['read']>
+  ) => Value,
+  atomWrite: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
+  ) => Result,
+  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
+  atomOnMount: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    setAtom: (...args: Args) => Result,
+  ) => OnUnmount | void,
+]
+
 const SECRET_STORE_METHODS: unique symbol = Symbol() // no description intentionally
 
 type SecretStoreMethods = readonly [
+  storeArgs: StoreArgs,
   storeHooks: StoreHooks,
   ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
   readAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
@@ -234,23 +253,15 @@ export const INTERNAL_getSecretStoreMethods = (
   store: unknown,
 ): SecretStoreMethods => (store as Store)[SECRET_STORE_METHODS]
 
-export const INTERNAL_buildStore = (
-  getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
-  setAtomState: <Value>(atom: Atom<Value>, atomState: AtomState<Value>) => void,
-  atomRead: <Value>(
-    atom: Atom<Value>,
-    ...params: Parameters<Atom<Value>['read']>
-  ) => Value,
-  atomWrite: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
-  ) => Result,
-  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
-  atomOnMount: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    setAtom: (...args: Args) => Result,
-  ) => OnUnmount | void,
-): Store => {
+export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
+  const [
+    getAtomState,
+    setAtomState,
+    atomRead,
+    atomWrite,
+    atomOnInit,
+    atomOnMount,
+  ] = storeArgs
   const storeHooks: StoreHooks = {}
   const ensureAtomState = <Value>(atom: Atom<Value>) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
@@ -714,6 +725,7 @@ export const INTERNAL_buildStore = (
     set: writeAtom,
     sub: subscribeAtom,
     [SECRET_STORE_METHODS]: [
+      storeArgs,
       storeHooks,
       ensureAtomState,
       readAtomState,
