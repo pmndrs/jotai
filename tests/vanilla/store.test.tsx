@@ -15,7 +15,9 @@ const deriveStore = (
 ): ReturnType<typeof createStore> => {
   const [storeArgs] = INTERNAL_getSecretStoreMethods(store)
   const newStoreArgs = enhanceStoreArgs(...storeArgs)
-  const derivedStore = (INTERNAL_buildStore as any)(...newStoreArgs)
+  const derivedStore = INTERNAL_buildStore(
+    ...(newStoreArgs as unknown as StoreArgs),
+  )
   return derivedStore
 }
 
