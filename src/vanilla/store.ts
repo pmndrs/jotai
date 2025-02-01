@@ -290,10 +290,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       for (const a of atomState.d.keys()) {
         addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
       }
-      atomState.v = valueOrPromise
-    } else {
-      atomState.v = valueOrPromise
     }
+    atomState.v = valueOrPromise
     delete atomState.e
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
@@ -478,8 +476,11 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         // reverse order later.
         if (invalidatedAtoms.get(a) === aState.n) {
           topSortedReversed.push([a, aState, aState.n])
-        } else {
-          invalidatedAtoms.delete(a)
+        } else if (
+          import.meta.env?.MODE !== 'production' &&
+          invalidatedAtoms.has(a)
+        ) {
+          throw new Error('[Bug] invalidated atom exists')
         }
         // Atom has been visited but not yet processed
         visited.add(a)
