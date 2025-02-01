@@ -63,7 +63,7 @@ type AtomState<Value = AnyValue> = {
   e?: AnyError
 }
 
-export type INTERNAL_AtomState = AtomState
+export type INTERNAL_AtomState<Value = AnyValue> = AtomState<Value>
 
 //
 // Some util functions (not for export)
