@@ -384,6 +384,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         return setSelf
       },
     }
+    const prevEpochNumber = atomState.n
     try {
       const valueOrPromise = atomRead(atom, getter, options as never)
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
@@ -398,6 +399,14 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       return atomState
     } finally {
       isSync = false
+      if (
+        prevEpochNumber !== atomState.n &&
+        invalidatedAtoms.get(atom) === prevEpochNumber
+      ) {
+        invalidatedAtoms.set(atom, atomState.n)
+        changedAtoms.set(atom, atomState)
+        atomState.u?.()
+      }
     }
   }
 
