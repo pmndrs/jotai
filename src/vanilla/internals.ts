@@ -242,7 +242,7 @@ type Store = {
     ...args: Args
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
-  [SECRET_STORE_METHODS]: SecretStoreMethods
+  [SECRET_STORE_METHODS]?: SecretStoreMethods
 }
 
 //
@@ -251,7 +251,7 @@ type Store = {
 
 export const INTERNAL_getSecretStoreMethods = (
   store: unknown,
-): SecretStoreMethods => (store as Store)[SECRET_STORE_METHODS]
+): SecretStoreMethods => (store as Store)[SECRET_STORE_METHODS]!
 
 export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
   const [
@@ -732,7 +732,9 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
     get: readAtom,
     set: writeAtom,
     sub: subscribeAtom,
-    [SECRET_STORE_METHODS]: [
+  }
+  Object.defineProperty(store, SECRET_STORE_METHODS, {
+    value: [
       storeArgs,
       storeHooks,
       ensureAtomState,
@@ -741,6 +743,6 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
       mountAtom,
       unmountAtom,
     ],
-  }
+  })
   return store
 }
