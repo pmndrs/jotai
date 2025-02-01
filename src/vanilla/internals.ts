@@ -325,10 +325,8 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
       for (const a of atomState.d.keys()) {
         addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
       }
-      atomState.v = valueOrPromise
-    } else {
-      atomState.v = valueOrPromise
     }
+    atomState.v = valueOrPromise
     delete atomState.e
     if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
       ++atomState.n
