@@ -389,6 +389,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
         return setSelf
       },
     }
+    const prevEpochNumber = atomState.n
     try {
       const valueOrPromise = atomRead(atom, getter, options as never)
       setAtomStateValueOrPromise(atom, atomState, valueOrPromise)
@@ -404,6 +405,14 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
       return atomState
     } finally {
       isSync = false
+      if (
+        prevEpochNumber !== atomState.n &&
+        invalidatedAtoms.get(atom) === prevEpochNumber
+      ) {
+        invalidatedAtoms.set(atom, atomState.n)
+        changedAtoms.set(atom, atomState)
+        atomState.u?.()
+      }
     }
   }
 
@@ -440,33 +449,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     }
   }
 
-  const getInvalidAtomAndDependencies = (
-    atom: AnyAtom,
-    atomState: AtomState,
-  ): Iterable<[AnyAtom, AtomState]> => {
-    // recursively get mounted dependencies from atomState.m.d
-    const atomAndDependencies = new Map<AnyAtom, AtomState>([[atom, atomState]])
-    const stack: AnyAtom[] = [atom]
-    while (stack.length) {
-      const a = stack.pop()!
-      const aState = ensureAtomState(a)
-      if (aState.m) {
-        for (const d of aState.m.d) {
-          if (!atomAndDependencies.has(d)) {
-            atomAndDependencies.set(d, ensureAtomState(d))
-            stack.push(d)
-          }
-        }
-      }
-    }
-    return Array.from(atomAndDependencies.entries()).filter(
-      ([a, aState]) => invalidatedAtoms.get(a) === aState.n,
-    )
-  }
-
-  const recomputeInvalidatedAtoms = (
-    atoms: Iterable<[AnyAtom, AtomState]> = changedAtoms.entries(),
-  ) => {
+  const recomputeInvalidatedAtoms = () => {
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
     // This is a topological sort via depth-first search, slightly modified from
@@ -481,7 +464,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     const visited = new WeakSet<AnyAtom>()
     // Visit the root atom. This is the only atom in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
-    const stack: [a: AnyAtom, aState: AtomState][] = Array.from(atoms)
+    const stack: [a: AnyAtom, aState: AtomState][] = Array.from(changedAtoms)
     while (stack.length) {
       const [a, aState] = stack[stack.length - 1]!
       if (visited.has(a)) {
@@ -541,13 +524,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
     ...args: Args
   ): Result => {
     let isSync = true
-    const getter: Getter = <V>(a: Atom<V>) => {
-      const aState = ensureAtomState(a)
-      if (invalidatedAtoms.get(a) === aState.n) {
-        recomputeInvalidatedAtoms(getInvalidAtomAndDependencies(a, aState))
-      }
-      return returnAtomValue(readAtomState(a))
-    }
+    const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
