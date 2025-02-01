@@ -1209,3 +1209,36 @@ it('allows subcribing to atoms during mount', () => {
   store.sub(a, () => {})
   expect(bMounted).toBe(true)
 })
+
+it('updates with reading derived atoms (#2959)', () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const countDerivedAtom = atom((get) => get(countAtom))
+  const countUpAtom = atom(null, (get, set) => {
+    set(countAtom, 1)
+    get(countDerivedAtom)
+    set(countAtom, 2)
+  })
+  store.sub(countDerivedAtom, () => {})
+  store.set(countUpAtom)
+  expect(store.get(countDerivedAtom)).toBe(2)
+})
+
+it('updates dependents when it eagerly recomputes dirty atoms', () => {
+  const countAtom = atom(0)
+  const isActiveAtom = atom(false)
+  const activeCountAtom = atom((get) =>
+    get(isActiveAtom) ? get(countAtom) : undefined,
+  )
+  const activateAction = atom(null, (get, set, value: boolean) => {
+    set(isActiveAtom, value)
+    get(activeCountAtom)
+  })
+
+  const store = createStore()
+  store.sub(activeCountAtom, () => {})
+  store.set(activateAction, true)
+  store.set(countAtom, 1)
+
+  expect(store.get(activeCountAtom)).toBe(1)
+})
