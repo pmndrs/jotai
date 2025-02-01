@@ -1223,3 +1223,22 @@ it('updates with reading derived atoms (#2959)', () => {
   store.set(countUpAtom)
   expect(store.get(countDerivedAtom)).toBe(2)
 })
+
+it('updates dependents when it eagerly recomputes dirty atoms', () => {
+  const countAtom = atom(0)
+  const isActiveAtom = atom(false)
+  const activeCountAtom = atom((get) =>
+    get(isActiveAtom) ? get(countAtom) : undefined,
+  )
+  const activateAction = atom(null, (get, set, value: boolean) => {
+    set(isActiveAtom, value)
+    get(activeCountAtom)
+  })
+
+  const store = createStore()
+  store.sub(activeCountAtom, () => {})
+  store.set(activateAction, true)
+  store.set(countAtom, 1)
+
+  expect(store.get(activeCountAtom)).toBe(1)
+})
