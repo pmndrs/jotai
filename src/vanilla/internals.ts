@@ -515,7 +515,6 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
           topSortedReversed.push([a, aState, aState.n])
         } else {
           invalidatedAtoms.delete(a)
-          changedAtoms.set(a, aState)
         }
         // Atom has been visited but not yet processed
         visited.add(a)
