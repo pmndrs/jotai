@@ -513,8 +513,11 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
         // reverse order later.
         if (invalidatedAtoms.get(a) === aState.n) {
           topSortedReversed.push([a, aState, aState.n])
-        } else if (invalidatedAtoms.has(a)) {
-          throw new Error('')
+        } else if (
+          import.meta.env?.MODE !== 'production' &&
+          invalidatedAtoms.has(a)
+        ) {
+          throw new Error('[Bug] invalidated atom exists')
         }
         // Atom has been visited but not yet processed
         visited.add(a)
