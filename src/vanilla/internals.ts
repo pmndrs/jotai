@@ -513,8 +513,8 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
         // reverse order later.
         if (invalidatedAtoms.get(a) === aState.n) {
           topSortedReversed.push([a, aState, aState.n])
-        } else {
-          invalidatedAtoms.delete(a)
+        } else if (invalidatedAtoms.has(a)) {
+          throw new Error('')
         }
         // Atom has been visited but not yet processed
         visited.add(a)
