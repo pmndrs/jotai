@@ -101,13 +101,16 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
 type CancelHandler = (nextValue: unknown) => void
 type PromiseState = [cancelHandlers: Set<CancelHandler>, settled: boolean]
 
-const cancelablePromiseMap = new WeakMap<PromiseLike<unknown>, PromiseState>()
+const PROMISE_STATE = Symbol.for('jotai.unstable.promise.state')
+
+const getPromiseState = <T>(promise: PromiseLike<T>) =>
+  (promise as any)[PROMISE_STATE] as PromiseState | undefined
 
 const isPendingPromise = (value: unknown): value is PromiseLike<unknown> =>
-  isPromiseLike(value) && !cancelablePromiseMap.get(value)?.[1]
+  isPromiseLike(value) && !getPromiseState(value)?.[1]
 
 const cancelPromise = <T>(promise: PromiseLike<T>, nextValue: unknown) => {
-  const promiseState = cancelablePromiseMap.get(promise)
+  const promiseState = getPromiseState(promise)
   if (promiseState) {
     promiseState[1] = true
     promiseState[0].forEach((fn) => fn(nextValue))
@@ -117,12 +120,13 @@ const cancelPromise = <T>(promise: PromiseLike<T>, nextValue: unknown) => {
 }
 
 const patchPromiseForCancelability = <T>(promise: PromiseLike<T>) => {
-  if (cancelablePromiseMap.has(promise)) {
+  let promiseState = getPromiseState(promise)
+  if (promiseState) {
     // already patched
     return
   }
-  const promiseState: PromiseState = [new Set(), false]
-  cancelablePromiseMap.set(promise, promiseState)
+  promiseState = [new Set(), false]
+  ;(promise as any)[PROMISE_STATE] = promiseState
   const settle = () => {
     promiseState[1] = true
   }
