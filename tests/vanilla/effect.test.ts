@@ -59,32 +59,26 @@ function syncEffect(effect: Effect): Atom<void> {
       }
     }
     const [, storeHooks] = INTERNAL_getStoreState(store)
-    ;(storeHooks.m ||= INTERNAL_createStoreHookForAtom()).add(
-      internalAtom,
-      () => {
-        // mount
-        store.set(refreshAtom, (v) => v + 1)
-      },
-    )
-    ;(storeHooks.u ||= INTERNAL_createStoreHookForAtom()).add(
-      internalAtom,
-      () => {
-        // unmount
-        const syncEffectChannel = ensureSyncEffectChannel(store)
-        syncEffectChannel.add(() => {
-          ref.cleanup?.()
-          delete ref.cleanup
-        })
-      },
-    )
-    ;(storeHooks.c ||= INTERNAL_createStoreHookForAtom()).add(
-      internalAtom,
-      () => {
-        // update
-        const syncEffectChannel = ensureSyncEffectChannel(store)
-        syncEffectChannel.add(runEffect)
-      },
-    )
+    const mountHook = (storeHooks.m ||= INTERNAL_createStoreHookForAtom())
+    mountHook.add(internalAtom, () => {
+      // mount
+      store.set(refreshAtom, (v) => v + 1)
+    })
+    const unmountHook = (storeHooks.u ||= INTERNAL_createStoreHookForAtom())
+    unmountHook.add(internalAtom, () => {
+      // unmount
+      const syncEffectChannel = ensureSyncEffectChannel(store)
+      syncEffectChannel.add(() => {
+        ref.cleanup?.()
+        delete ref.cleanup
+      })
+    })
+    const changedHook = (storeHooks.c ||= INTERNAL_createStoreHookForAtom())
+    changedHook.add(internalAtom, () => {
+      // update
+      const syncEffectChannel = ensureSyncEffectChannel(store)
+      syncEffectChannel.add(runEffect)
+    })
   }
   return atom((get) => {
     get(internalAtom)
