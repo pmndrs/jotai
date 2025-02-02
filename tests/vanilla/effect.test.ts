@@ -59,12 +59,14 @@ function syncEffect(effect: Effect): Atom<void> {
       }
     }
     const [, storeHooks] = INTERNAL_getStoreState(store)
-    const mountHook = (storeHooks.m ||= INTERNAL_createStoreHookForAtom())
+    const mountHook = (storeHooks.m =
+      storeHooks.m || INTERNAL_createStoreHookForAtom())
     mountHook.add(internalAtom, () => {
       // mount
       store.set(refreshAtom, (v) => v + 1)
     })
-    const unmountHook = (storeHooks.u ||= INTERNAL_createStoreHookForAtom())
+    const unmountHook = (storeHooks.u =
+      storeHooks.u || INTERNAL_createStoreHookForAtom())
     unmountHook.add(internalAtom, () => {
       // unmount
       const syncEffectChannel = ensureSyncEffectChannel(store)
@@ -73,7 +75,8 @@ function syncEffect(effect: Effect): Atom<void> {
         delete ref.cleanup
       })
     })
-    const changedHook = (storeHooks.c ||= INTERNAL_createStoreHookForAtom())
+    const changedHook = (storeHooks.c =
+      storeHooks.c || INTERNAL_createStoreHookForAtom())
     changedHook.add(internalAtom, () => {
       // update
       const syncEffectChannel = ensureSyncEffectChannel(store)
