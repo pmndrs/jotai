@@ -168,12 +168,13 @@ const addPendingPromiseToDependency = (
 const flushCallbacks = (storeState: StoreState): void => {
   const [, storeHooks, , , changedAtoms, mountCallbacks, unmountCallbacks] =
     storeState
-  const errors: unknown[] = []
+  let error: unknown | undefined
   const call = (fn?: () => void) => {
     try {
       fn?.()
     } catch (e) {
-      errors.push(e)
+      // Limitation: This skips falsy errors
+      error ||= e
     }
   }
   do {
@@ -191,8 +192,8 @@ const flushCallbacks = (storeState: StoreState): void => {
       recomputeInvalidatedAtoms(storeState)
     }
   } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
-  if (errors.length) {
-    throw errors[0]
+  if (error) {
+    throw error
   }
 }
 
