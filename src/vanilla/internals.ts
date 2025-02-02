@@ -781,7 +781,7 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
   return store
 }
 
-export const INTERNAL_flushCallback: typeof flushCallbacks = flushCallbacks
+export const INTERNAL_flushCallbacks: typeof flushCallbacks = flushCallbacks
 export const INTERNAL_recomputeInvalidatedAtoms: typeof recomputeInvalidatedAtoms =
   recomputeInvalidatedAtoms
 export const INTERNAL_setAtomStateValueOrPromise: typeof setAtomStateValueOrPromise =
