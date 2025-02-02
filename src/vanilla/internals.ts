@@ -168,14 +168,16 @@ const addPendingPromiseToDependency = (
 const flushCallbacks = (storeState: StoreState): void => {
   const [, storeHooks, , , changedAtoms, mountCallbacks, unmountCallbacks] =
     storeState
+  let hasError: true | undefined
   let error: unknown | undefined
   const call = (fn?: () => void) => {
     try {
       fn?.()
     } catch (e) {
-      // Limitation: This skips undefined or null errors
-      // TODO do we want to support falsy errors?
-      error ??= e
+      if (!hasError) {
+        hasError = true
+        error = e
+      }
     }
   }
   do {
@@ -193,7 +195,7 @@ const flushCallbacks = (storeState: StoreState): void => {
       recomputeInvalidatedAtoms(storeState)
     }
   } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
-  if (error !== undefined) {
+  if (hasError) {
     throw error
   }
 }
