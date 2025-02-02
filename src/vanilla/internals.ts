@@ -66,9 +66,10 @@ type AtomState<Value = AnyValue> = {
 export type INTERNAL_AtomState<Value = AnyValue> = AtomState<Value>
 
 //
-// Some util functions (not for export)
+// Some util functions
 //
 
+// TODO this will be gone soon
 const isSelfAtom = (atom: AnyAtom, a: AnyAtom): boolean =>
   atom.unstable_is ? atom.unstable_is(a) : a === atom
 
@@ -80,7 +81,7 @@ const hasInitialValue = <T extends Atom<AnyValue>>(
 const isActuallyWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
   !!(atom as AnyWritableAtom).write
 
-const isAtomStateInitialized = <Value>(atomState: AtomState<Value>) =>
+const isAtomStateInitialized = <Value>(atomState: AtomState<Value>): boolean =>
   'v' in atomState || 'e' in atomState
 
 const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
@@ -94,7 +95,7 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
 }
 
 //
-// Cancelable Promise (not for export)
+// Cancelable Promise
 // TODO(daishi): revisit this implementation
 //
 
@@ -103,14 +104,16 @@ type PromiseState = [cancelHandlers: Set<CancelHandler>, settled: boolean]
 
 const PROMISE_STATE = Symbol.for('jotai.unstable.promise.state')
 
-const getPromiseState = <T>(promise: PromiseLike<T>) =>
-  (promise as any)[PROMISE_STATE] as PromiseState | undefined
-
 const isPendingPromise = (value: unknown): value is PromiseLike<unknown> =>
-  isPromiseLike(value) && !getPromiseState(value)?.[1]
+  isPromiseLike(value) && !(value as any)[PROMISE_STATE]?.[1]
 
-const cancelPromise = <T>(promise: PromiseLike<T>, nextValue: unknown) => {
-  const promiseState = getPromiseState(promise)
+const cancelPromise = <T>(
+  promise: PromiseLike<T>,
+  nextValue: unknown,
+): void => {
+  const promiseState = (promise as any)[PROMISE_STATE] as
+    | PromiseState
+    | undefined
   if (promiseState) {
     promiseState[1] = true
     promiseState[0].forEach((fn) => fn(nextValue))
@@ -119,8 +122,8 @@ const cancelPromise = <T>(promise: PromiseLike<T>, nextValue: unknown) => {
   }
 }
 
-const patchPromiseForCancelability = <T>(promise: PromiseLike<T>) => {
-  let promiseState = getPromiseState(promise)
+const patchPromiseForCancelability = <T>(promise: PromiseLike<T>): void => {
+  let promiseState = (promise as any)[PROMISE_STATE] as PromiseState | undefined
   if (promiseState) {
     // already patched
     return
@@ -145,7 +148,7 @@ const addPendingPromiseToDependency = (
   atom: AnyAtom,
   promise: PromiseLike<AnyValue>,
   dependencyAtomState: AtomState,
-) => {
+): void => {
   if (!dependencyAtomState.p.has(atom)) {
     dependencyAtomState.p.add(atom)
     promise.then(
@@ -157,22 +160,6 @@ const addPendingPromiseToDependency = (
       },
     )
   }
-}
-
-const addDependency = <Value>(
-  atom: Atom<Value>,
-  atomState: AtomState<Value>,
-  a: AnyAtom,
-  aState: AtomState,
-) => {
-  if (import.meta.env?.MODE !== 'production' && a === atom) {
-    throw new Error('[Bug] atom cannot depend on itself')
-  }
-  atomState.d.set(a, aState.n)
-  if (isPendingPromise(atomState.v)) {
-    addPendingPromiseToDependency(atom, atomState.v, aState)
-  }
-  aState.m?.t.add(atom)
 }
 
 //
@@ -371,7 +358,11 @@ const readAtomState = <Value>(
     try {
       return returnAtomValue(aState)
     } finally {
-      addDependency(atom, atomState, a, aState)
+      atomState.d.set(a, aState.n)
+      if (isPendingPromise(atomState.v)) {
+        addPendingPromiseToDependency(atom, atomState.v, aState)
+      }
+      aState.m?.t.add(atom)
       if (!isSync) {
         mountDependenciesIfAsync()
       }
@@ -796,3 +787,23 @@ export const INTERNAL_mountDependencies: typeof mountDependencies =
   mountDependencies
 export const INTERNAL_mountAtom: typeof mountAtom = mountAtom
 export const INTERNAL_unmountAtom: typeof unmountAtom = unmountAtom
+
+//
+// Still experimental and some of them will be gone soon
+//
+
+export const INTERNAL_isSelfAtom: typeof isSelfAtom = isSelfAtom
+export const INTERNAL_hasInitialValue: typeof hasInitialValue = hasInitialValue
+export const INTERNAL_isActuallyWritableAtom: typeof isActuallyWritableAtom =
+  isActuallyWritableAtom
+export const INTERNAL_isAtomStateInitialized: typeof isAtomStateInitialized =
+  isAtomStateInitialized
+export const INTERNAL_returnAtomValue: typeof returnAtomValue = returnAtomValue
+export const INTERNAL_isPendingPromise: typeof isPendingPromise =
+  isPendingPromise
+export const INTERNAL_cancelPromise: typeof cancelPromise = cancelPromise
+export const INTERNAL_patchPromiseForCancelability: typeof patchPromiseForCancelability =
+  patchPromiseForCancelability
+export const INTERNAL_isPromiseLike: typeof isPromiseLike = isPromiseLike
+export const INTERNAL_addPendingPromiseToDependency: typeof addPendingPromiseToDependency =
+  addPendingPromiseToDependency
