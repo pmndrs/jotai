@@ -123,12 +123,11 @@ const cancelPromise = <T>(
 }
 
 const patchPromiseForCancelability = <T>(promise: PromiseLike<T>): void => {
-  let promiseState = (promise as any)[PROMISE_STATE] as PromiseState | undefined
-  if (promiseState) {
+  if ((promise as any)[PROMISE_STATE]) {
     // already patched
     return
   }
-  promiseState = [new Set(), false]
+  const promiseState: PromiseState = [new Set(), false]
   ;(promise as any)[PROMISE_STATE] = promiseState
   const settle = () => {
     promiseState[1] = true
@@ -429,6 +428,7 @@ const readAtomState = <Value>(
   }
 }
 
+// TODO(daishi): revisit this implementation
 const getMountedOrPendingDependents = (
   storeState: StoreState,
   atom: AnyAtom,
