@@ -1,7 +1,7 @@
 import type { Atom, WritableAtom } from './atom.ts'
 import {
   INTERNAL_buildStore,
-  INTERNAL_getSecretStoreMethods,
+  INTERNAL_getStoreStateRev1 as INTERNAL_getStoreState,
 } from './internals.ts'
 import type { INTERNAL_AtomState } from './internals.ts'
 
@@ -43,7 +43,7 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     (atom, ...params) => atom.unstable_onInit?.(...params),
     (atom, ...params) => atom.onMount?.(...params),
   )
-  const [, storeHooks] = INTERNAL_getSecretStoreMethods(store)
+  const [, storeHooks] = INTERNAL_getStoreState(store)
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m = (atom) => {
     debugMountedAtoms.add(atom)

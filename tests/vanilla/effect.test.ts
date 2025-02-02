@@ -1,7 +1,7 @@
 import { expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
-import { INTERNAL_getSecretStoreMethods } from 'jotai/vanilla/internals'
+import { INTERNAL_getStoreStateRev1 as INTERNAL_getStoreState } from 'jotai/vanilla/internals'
 
 type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => Cleanup | void
@@ -55,7 +55,7 @@ function syncEffect(effect: Effect): Atom<void> {
         deps.forEach(ref.get!)
       }
     }
-    const [, storeHooks] = INTERNAL_getSecretStoreMethods(store)
+    const [, storeHooks] = INTERNAL_getStoreState(store)
     const originalMountHook = storeHooks.m
     storeHooks.m = (a) => {
       originalMountHook?.(a)
@@ -96,7 +96,7 @@ const syncEffectChannelSymbol = Symbol()
 function ensureSyncEffectChannel(store: any) {
   if (!store[syncEffectChannelSymbol]) {
     store[syncEffectChannelSymbol] = new Set<() => void>()
-    const [, storeHooks] = INTERNAL_getSecretStoreMethods(store)
+    const [, storeHooks] = INTERNAL_getStoreState(store)
     const originalFlushHook = storeHooks.f
     storeHooks.f = () => {
       originalFlushHook?.()
