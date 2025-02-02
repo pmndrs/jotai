@@ -173,8 +173,9 @@ const flushCallbacks = (storeState: StoreState): void => {
     try {
       fn?.()
     } catch (e) {
-      // Limitation: This skips falsy errors
-      error ||= e
+      // Limitation: This skips undefined or null errors
+      // TODO do we want to support falsy errors?
+      error ??= e
     }
   }
   do {
@@ -192,7 +193,7 @@ const flushCallbacks = (storeState: StoreState): void => {
       recomputeInvalidatedAtoms(storeState)
     }
   } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
-  if (error) {
+  if (error !== undefined) {
     throw error
   }
 }
