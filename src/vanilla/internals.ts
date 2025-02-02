@@ -169,15 +169,15 @@ const flushCallbacks = (storeState: StoreState): void => {
   const [, storeHooks, , , changedAtoms, mountCallbacks, unmountCallbacks] =
     storeState
   const errors: unknown[] = []
-  const call = (fn: () => void) => {
+  const call = (fn?: () => void) => {
     try {
-      fn()
+      fn?.()
     } catch (e) {
       errors.push(e)
     }
   }
   do {
-    storeHooks.f?.()
+    call(storeHooks.f)
     const callbacks = new Set<() => void>()
     const add = callbacks.add.bind(callbacks)
     changedAtoms.forEach((atomState) => atomState.m?.l.forEach(add))
