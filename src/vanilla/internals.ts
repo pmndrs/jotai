@@ -30,6 +30,15 @@ type Mounted = {
   u?: () => void
 }
 
+type AtomHooks = {
+  /** Listeners to notify when the atom value is changed. */
+  c?: Set<() => void>
+  /** Listeners to notify when the atom is mounted. */
+  m?: Set<() => void>
+  /** Listeners to notify when the atom is unmounted. */
+  u?: Set<() => void>
+}
+
 /**
  * Mutable atom state,
  * tracked for both mounted and unmounted atoms in a store.
@@ -61,6 +70,8 @@ type AtomState<Value = AnyValue> = {
   v?: Value
   /** Atom error */
   e?: AnyError
+  /** Atom hooks */
+  h?: AtomHooks
 }
 
 export type INTERNAL_AtomState<Value = AnyValue> = AtomState<Value>
@@ -264,7 +275,7 @@ const recomputeInvalidatedAtoms = (storeState: StoreState): void => {
       mountDependencies(storeState, a)
       if (prevEpochNumber !== aState.n) {
         changedAtoms.set(a, aState)
-        storeHooks.c?.get(a)?.forEach(call)
+        aState.h?.c?.forEach(call)
       }
     }
     invalidatedAtoms.delete(a)
@@ -425,7 +436,7 @@ const readAtomState = <Value>(
     ) {
       invalidatedAtoms.set(atom, atomState.n)
       changedAtoms.set(atom, atomState)
-      storeHooks.c?.get(atom)?.forEach(call)
+      atomState.h?.c?.forEach(call)
     }
   }
 }
@@ -490,7 +501,7 @@ const writeAtomState = <Value, Args extends unknown[], Result>(
         mountDependencies(storeState, a)
         if (prevEpochNumber !== aState.n) {
           changedAtoms.set(a, aState)
-          storeHooks.c?.get(a)?.forEach(call)
+          aState.h?.c?.forEach(call)
           invalidateDependents(storeState, a)
         }
         return undefined as R
@@ -523,7 +534,7 @@ const mountDependencies = (storeState: StoreState, atom: AnyAtom): void => {
         atomState.m.d.add(a)
         if (n !== aState.n) {
           changedAtoms.set(a, aState)
-          storeHooks.c?.get(a)?.forEach(call)
+          aState.h?.c?.forEach(call)
           invalidateDependents(storeState, a)
         }
       }
@@ -565,7 +576,7 @@ const mountAtom = <Value>(
       d: new Set(atomState.d.keys()),
       t: new Set(),
     }
-    storeHooks.m?.get(atom)?.forEach(call)
+    atomState.h?.m?.forEach(call)
     if (isActuallyWritableAtom(atom)) {
       const mounted = atomState.m
       const processOnMount = () => {
@@ -619,7 +630,7 @@ const unmountAtom = <Value>(
       unmountCallbacks.add(onUnmount)
     }
     delete atomState.m
-    storeHooks.u?.get(atom)?.forEach(call)
+    atomState.h?.u?.forEach(call)
     // unmount dependencies
     for (const a of atomState.d.keys()) {
       const aMounted = unmountAtom(storeState, a)
@@ -635,21 +646,6 @@ const unmountAtom = <Value>(
 //
 
 type StoreHooks = {
-  /**
-   * Listeners to notify when the atom value is changed.
-   * This is an experimental API.
-   */
-  c?: WeakMap<AnyAtom, Set<() => void>>
-  /**
-   * Listeners to notify when the atom is mounted.
-   * This is an experimental API.
-   */
-  m?: WeakMap<AnyAtom, Set<() => void>>
-  /**
-   * Listeners to notify when the atom is unmounted.
-   * This is an experimental API.
-   */
-  u?: WeakMap<AnyAtom, Set<() => void>>
   /**
    * Listeners to notify when callbacks are being flushed.
    * This is an experimental API.
