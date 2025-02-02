@@ -636,27 +636,60 @@ const unmountAtom = <Value>(
 // Secret store methods (not for export)
 //
 
+type StoreHookForAtoms = {
+  (atom: AnyAtom): void
+  add(atom: AnyAtom, callback: () => void): void
+  add(atom: undefined, callback: (atom: AnyAtom) => void): void
+  delete(atom: AnyAtom, callback: () => void): void
+  delete(undefined: AnyAtom, callback: (atom: AnyAtom) => void): void
+}
+
 type StoreHooks = {
   /**
    * Listener to notify when the atom value is changed.
    * This is an experimental API.
    */
-  c?: (atom: AnyAtom) => void
+  c?: StoreHookForAtoms
   /**
    * Listener to notify when the atom is mounted.
    * This is an experimental API.
    */
-  m?: (atom: AnyAtom) => void
+  m?: StoreHookForAtoms
   /**
    * Listener to notify when the atom is unmounted.
    * This is an experimental API.
    */
-  u?: (atom: AnyAtom) => void
+  u?: StoreHookForAtoms
   /**
    * Listener to notify when callbacks are being flushed.
    * This is an experimental API.
    */
   f?: () => void
+}
+
+const createStoreHookForAtoms = (): StoreHookForAtoms => {
+  const callbacks = new Map<
+    AnyAtom | undefined,
+    Set<(atom?: AnyAtom) => void>
+  >()
+  const notify = (atom: AnyAtom) => {
+    callbacks.get(undefined)?.forEach((fn) => fn(atom))
+    callbacks.get(atom)?.forEach((fn) => fn())
+  }
+  notify.add = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
+    const fns = (
+      callbacks.has(atom) ? callbacks : callbacks.set(atom, new Set())
+    ).get(atom)!
+    fns.add(fn)
+  }
+  notify.delete = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
+    const fns = callbacks.get(atom)
+    fns?.delete(fn)
+    if (!fns?.size) {
+      callbacks.delete(atom)
+    }
+  }
+  return notify as never
 }
 
 type StoreArgs = [
@@ -791,6 +824,8 @@ export const INTERNAL_mountDependencies: typeof mountDependencies =
   mountDependencies
 export const INTERNAL_mountAtom: typeof mountAtom = mountAtom
 export const INTERNAL_unmountAtom: typeof unmountAtom = unmountAtom
+export const INTERNAL_createStoreHookForAtom: typeof createStoreHookForAtoms =
+  createStoreHookForAtoms
 
 //
 // Still experimental and some of them will be gone soon

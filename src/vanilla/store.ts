@@ -1,6 +1,7 @@
 import type { Atom, WritableAtom } from './atom.ts'
 import {
   INTERNAL_buildStore,
+  INTERNAL_createStoreHookForAtom,
   INTERNAL_getStoreStateRev1 as INTERNAL_getStoreState,
 } from './internals.ts'
 import type { INTERNAL_AtomState } from './internals.ts'
@@ -45,12 +46,18 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   )
   const [, storeHooks] = INTERNAL_getStoreState(store)
   const debugMountedAtoms = new Set<Atom<unknown>>()
-  storeHooks.m = (atom) => {
-    debugMountedAtoms.add(atom)
-  }
-  storeHooks.u = (atom) => {
-    debugMountedAtoms.delete(atom)
-  }
+  ;(storeHooks.m ||= INTERNAL_createStoreHookForAtom()).add(
+    undefined,
+    (atom) => {
+      debugMountedAtoms.add(atom)
+    },
+  )
+  ;(storeHooks.u ||= INTERNAL_createStoreHookForAtom()).add(
+    undefined,
+    (atom) => {
+      debugMountedAtoms.delete(atom)
+    },
+  )
   const devStore: INTERNAL_DevStoreRev4 = {
     // store dev methods (these are tentative and subject to change without notice)
     dev4_get_internal_weak_map: () => atomStateMap,

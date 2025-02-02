@@ -1,7 +1,10 @@
 import { expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
-import { INTERNAL_getStoreStateRev1 as INTERNAL_getStoreState } from 'jotai/vanilla/internals'
+import {
+  INTERNAL_createStoreHookForAtom,
+  INTERNAL_getStoreStateRev1 as INTERNAL_getStoreState,
+} from 'jotai/vanilla/internals'
 
 type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => Cleanup | void
@@ -56,35 +59,32 @@ function syncEffect(effect: Effect): Atom<void> {
       }
     }
     const [, storeHooks] = INTERNAL_getStoreState(store)
-    const originalMountHook = storeHooks.m
-    storeHooks.m = (a) => {
-      originalMountHook?.(a)
-      if (a === internalAtom) {
+    ;(storeHooks.m ||= INTERNAL_createStoreHookForAtom()).add(
+      internalAtom,
+      () => {
         // mount
         store.set(refreshAtom, (v) => v + 1)
-      }
-    }
-    const originalUnmountHook = storeHooks.u
-    storeHooks.u = (a) => {
-      originalUnmountHook?.(a)
-      if (a === internalAtom) {
+      },
+    )
+    ;(storeHooks.u ||= INTERNAL_createStoreHookForAtom()).add(
+      internalAtom,
+      () => {
         // unmount
         const syncEffectChannel = ensureSyncEffectChannel(store)
         syncEffectChannel.add(() => {
           ref.cleanup?.()
           delete ref.cleanup
         })
-      }
-    }
-    const originalChangeHook = storeHooks.c
-    storeHooks.c = (a) => {
-      originalChangeHook?.(a)
-      if (a === internalAtom) {
+      },
+    )
+    ;(storeHooks.c ||= INTERNAL_createStoreHookForAtom()).add(
+      internalAtom,
+      () => {
         // update
         const syncEffectChannel = ensureSyncEffectChannel(store)
         syncEffectChannel.add(runEffect)
-      }
-    }
+      },
+    )
   }
   return atom((get) => {
     get(internalAtom)
