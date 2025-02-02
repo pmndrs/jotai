@@ -282,10 +282,10 @@ const recomputeInvalidatedAtoms = (storeState: StoreState): void => {
 const setAtomStateValueOrPromise = (
   storeState: StoreState,
   atom: AnyAtom,
-  atomState: INTERNAL_AtomState,
   valueOrPromise: unknown,
 ): void => {
   const [, , ensureAtomState] = storeState
+  const atomState = ensureAtomState(atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
   const pendingPromise = isPendingPromise(atomState.v) ? atomState.v : null
@@ -354,7 +354,7 @@ const readAtomState = <Value>(
       const aState = ensureAtomState(a)
       if (!isAtomStateInitialized(aState)) {
         if (hasInitialValue(a)) {
-          setAtomStateValueOrPromise(storeState, a, aState, a.init)
+          setAtomStateValueOrPromise(storeState, a, a.init)
         } else {
           // NOTE invalid derived atoms can reach here
           throw new Error('no atom init')
@@ -410,7 +410,7 @@ const readAtomState = <Value>(
   const prevEpochNumber = atomState.n
   try {
     const valueOrPromise = atomRead(atom, getter, options as never)
-    setAtomStateValueOrPromise(storeState, atom, atomState, valueOrPromise)
+    setAtomStateValueOrPromise(storeState, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
       valueOrPromise.onCancel?.(() => controller?.abort())
       valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
@@ -495,7 +495,7 @@ const writeAtomState = <Value, Args extends unknown[], Result>(
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
-        setAtomStateValueOrPromise(storeState, a, aState, v)
+        setAtomStateValueOrPromise(storeState, a, v)
         mountDependencies(storeState, a, aState)
         if (prevEpochNumber !== aState.n) {
           changedAtoms.set(a, aState)
