@@ -94,6 +94,8 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
   return atomState.v!
 }
 
+const call = (fn: () => void) => fn()
+
 //
 // Cancelable Promise
 // TODO(daishi): revisit this implementation
@@ -169,7 +171,7 @@ const flushCallbacks = (storeState: StoreState): void => {
   const [, storeHooks, , , changedAtoms, mountCallbacks, unmountCallbacks] =
     storeState
   const errors: unknown[] = []
-  const call = (fn: () => void) => {
+  const safeCall = (fn: () => void) => {
     try {
       fn()
     } catch (e) {
@@ -177,7 +179,7 @@ const flushCallbacks = (storeState: StoreState): void => {
     }
   }
   do {
-    storeHooks.f?.()
+    storeHooks.f?.forEach(call)
     const callbacks = new Set<() => void>()
     const add = callbacks.add.bind(callbacks)
     changedAtoms.forEach((atomState) => atomState.m?.l.forEach(add))
@@ -186,7 +188,7 @@ const flushCallbacks = (storeState: StoreState): void => {
     unmountCallbacks.clear()
     mountCallbacks.forEach(add)
     mountCallbacks.clear()
-    callbacks.forEach(call)
+    callbacks.forEach(safeCall)
     if (changedAtoms.size) {
       recomputeInvalidatedAtoms(storeState)
     }
@@ -262,7 +264,7 @@ const recomputeInvalidatedAtoms = (storeState: StoreState): void => {
       mountDependencies(storeState, a)
       if (prevEpochNumber !== aState.n) {
         changedAtoms.set(a, aState)
-        storeHooks.c?.(a)
+        storeHooks.c?.get(a)?.forEach(call)
       }
     }
     invalidatedAtoms.delete(a)
@@ -423,7 +425,7 @@ const readAtomState = <Value>(
     ) {
       invalidatedAtoms.set(atom, atomState.n)
       changedAtoms.set(atom, atomState)
-      storeHooks.c?.(atom)
+      storeHooks.c?.get(atom)?.forEach(call)
     }
   }
 }
@@ -488,7 +490,7 @@ const writeAtomState = <Value, Args extends unknown[], Result>(
         mountDependencies(storeState, a)
         if (prevEpochNumber !== aState.n) {
           changedAtoms.set(a, aState)
-          storeHooks.c?.(a)
+          storeHooks.c?.get(a)?.forEach(call)
           invalidateDependents(storeState, a)
         }
         return undefined as R
@@ -521,7 +523,7 @@ const mountDependencies = (storeState: StoreState, atom: AnyAtom): void => {
         atomState.m.d.add(a)
         if (n !== aState.n) {
           changedAtoms.set(a, aState)
-          storeHooks.c?.(a)
+          storeHooks.c?.get(a)?.forEach(call)
           invalidateDependents(storeState, a)
         }
       }
@@ -563,7 +565,7 @@ const mountAtom = <Value>(
       d: new Set(atomState.d.keys()),
       t: new Set(),
     }
-    storeHooks.m?.(atom)
+    storeHooks.m?.get(atom)?.forEach(call)
     if (isActuallyWritableAtom(atom)) {
       const mounted = atomState.m
       const processOnMount = () => {
@@ -617,7 +619,7 @@ const unmountAtom = <Value>(
       unmountCallbacks.add(onUnmount)
     }
     delete atomState.m
-    storeHooks.u?.(atom)
+    storeHooks.u?.get(atom)?.forEach(call)
     // unmount dependencies
     for (const a of atomState.d.keys()) {
       const aMounted = unmountAtom(storeState, a)
@@ -634,25 +636,25 @@ const unmountAtom = <Value>(
 
 type StoreHooks = {
   /**
-   * Listener to notify when the atom value is changed.
+   * Listeners to notify when the atom value is changed.
    * This is an experimental API.
    */
-  c?: (atom: AnyAtom) => void
+  c?: WeakMap<AnyAtom, Set<() => void>>
   /**
-   * Listener to notify when the atom is mounted.
+   * Listeners to notify when the atom is mounted.
    * This is an experimental API.
    */
-  m?: (atom: AnyAtom) => void
+  m?: WeakMap<AnyAtom, Set<() => void>>
   /**
-   * Listener to notify when the atom is unmounted.
+   * Listeners to notify when the atom is unmounted.
    * This is an experimental API.
    */
-  u?: (atom: AnyAtom) => void
+  u?: WeakMap<AnyAtom, Set<() => void>>
   /**
-   * Listener to notify when callbacks are being flushed.
+   * Listeners to notify when callbacks are being flushed.
    * This is an experimental API.
    */
-  f?: () => void
+  f?: Set<() => void>
 }
 
 type StoreArgs = [
