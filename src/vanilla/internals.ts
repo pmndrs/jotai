@@ -181,7 +181,9 @@ const flushCallbacks = (storeState: StoreState): void => {
     }
   }
   do {
-    call(storeHooks.f)
+    if (storeHooks.f) {
+      call(storeHooks.f)
+    }
     const callbacks = new Set<() => void>()
     const add = callbacks.add.bind(callbacks)
     changedAtoms.forEach((atomState) => atomState.m?.l.forEach(add))
@@ -266,7 +268,7 @@ const recomputeInvalidatedAtoms = (storeState: StoreState): void => {
       mountDependencies(storeState, a)
       if (prevEpochNumber !== aState.n) {
         changedAtoms.set(a, aState)
-        storeHooks.c(a)
+        storeHooks.c?.(a)
       }
     }
     invalidatedAtoms.delete(a)
@@ -427,7 +429,7 @@ const readAtomState = <Value>(
     ) {
       invalidatedAtoms.set(atom, atomState.n)
       changedAtoms.set(atom, atomState)
-      storeHooks.c(atom)
+      storeHooks.c?.(atom)
     }
   }
 }
@@ -492,7 +494,7 @@ const writeAtomState = <Value, Args extends unknown[], Result>(
         mountDependencies(storeState, a)
         if (prevEpochNumber !== aState.n) {
           changedAtoms.set(a, aState)
-          storeHooks.c(a)
+          storeHooks.c?.(a)
           invalidateDependents(storeState, a)
         }
         return undefined as R
@@ -525,7 +527,7 @@ const mountDependencies = (storeState: StoreState, atom: AnyAtom): void => {
         atomState.m.d.add(a)
         if (n !== aState.n) {
           changedAtoms.set(a, aState)
-          storeHooks.c(a)
+          storeHooks.c?.(a)
           invalidateDependents(storeState, a)
         }
       }
@@ -567,7 +569,7 @@ const mountAtom = <Value>(
       d: new Set(atomState.d.keys()),
       t: new Set(),
     }
-    storeHooks.m(atom)
+    storeHooks.m?.(atom)
     if (isActuallyWritableAtom(atom)) {
       const mounted = atomState.m
       const processOnMount = () => {
@@ -621,7 +623,7 @@ const unmountAtom = <Value>(
       unmountCallbacks.add(onUnmount)
     }
     delete atomState.m
-    storeHooks.u(atom)
+    storeHooks.u?.(atom)
     // unmount dependencies
     for (const a of atomState.d.keys()) {
       const aMounted = unmountAtom(storeState, a)
@@ -655,22 +657,22 @@ type StoreHooks = Readonly<{
    * Listener to notify when the atom value is changed.
    * This is an experimental API.
    */
-  c: StoreHookForAtoms
+  c?: StoreHookForAtoms
   /**
    * Listener to notify when the atom is mounted.
    * This is an experimental API.
    */
-  m: StoreHookForAtoms
+  m?: StoreHookForAtoms
   /**
    * Listener to notify when the atom is unmounted.
    * This is an experimental API.
    */
-  u: StoreHookForAtoms
+  u?: StoreHookForAtoms
   /**
    * Listener to notify when callbacks are being flushed.
    * This is an experimental API.
    */
-  f: StoreHook
+  f?: StoreHook
 }>
 
 const createStoreHook = (): StoreHook => {
@@ -715,6 +717,16 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
     }
   }
   return notify as never
+}
+
+const initializeStoreHooks = (storeState: StoreState): Required<StoreHooks> => {
+  type Mutable<T> = { -readonly [P in keyof T]: T[P] }
+  const storeHooks = storeState[1] as Mutable<Required<StoreHooks>>
+  storeHooks.c ||= createStoreHookForAtoms()
+  storeHooks.m ||= createStoreHookForAtoms()
+  storeHooks.u ||= createStoreHookForAtoms()
+  storeHooks.f ||= createStoreHook()
+  return storeHooks
 }
 
 type StoreArgs = [
@@ -767,24 +779,7 @@ export const INTERNAL_getStoreStateRev1 = (store: unknown): StoreState =>
 
 export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
   const [getAtomState, setAtomState, , , atomOnInit] = storeArgs
-  let changedHook: StoreHookForAtoms | undefined
-  let mountHook: StoreHookForAtoms | undefined
-  let unmountHook: StoreHookForAtoms | undefined
-  let flushHook: StoreHook | undefined
-  const storeHooks: StoreHooks = {
-    get c() {
-      return (changedHook ||= createStoreHookForAtoms())
-    },
-    get m() {
-      return (mountHook ||= createStoreHookForAtoms())
-    },
-    get u() {
-      return (unmountHook ||= createStoreHookForAtoms())
-    },
-    get f() {
-      return (flushHook ||= createStoreHook())
-    },
-  }
+  const storeHooks: StoreHooks = {}
   const ensureAtomState = <Value>(atom: Atom<Value>) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
       throw new Error('Atom is undefined or null')
@@ -866,6 +861,8 @@ export const INTERNAL_mountDependencies: typeof mountDependencies =
   mountDependencies
 export const INTERNAL_mountAtom: typeof mountAtom = mountAtom
 export const INTERNAL_unmountAtom: typeof unmountAtom = unmountAtom
+export const INTERNAL_initializeStoreHooks: typeof initializeStoreHooks =
+  initializeStoreHooks
 
 //
 // Still experimental and some of them will be gone soon
