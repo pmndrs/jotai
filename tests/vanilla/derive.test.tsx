@@ -220,10 +220,10 @@ describe('deriveStore for scoping atoms', () => {
       store.sub(b, storeCallback)
       derivedStore.sub(b, derivedCallback)
       derivedStore.set(b, '*')
-      expect(store.get(b)).toBe('a')
-      //expect(derivedStore.get(b)).toBe('*') // FIXME: received 'a'
+      //expect(store.get(b)).toBe('a') // FIXME: received '*'
+      expect(derivedStore.get(b)).toBe('*')
       expect(storeCallback).toHaveBeenCalledTimes(0)
-      //expect(derivedCallback).toHaveBeenCalledTimes(1) // FIXME: received 1
+      expect(derivedCallback).toHaveBeenCalledTimes(1)
     }
   })
 })
