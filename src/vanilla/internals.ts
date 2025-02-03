@@ -648,16 +648,13 @@ const unmountAtom = <Value>(
 
 type StoreHook = {
   (): void
-  add(callback: () => void): void
-  delete(callback: () => void): void
+  add(callback: () => void): () => void
 }
 
 type StoreHookForAtoms = {
   (atom: AnyAtom): void
-  add(atom: AnyAtom, callback: () => void): void
-  add(atom: undefined, callback: (atom: AnyAtom) => void): void
-  delete(atom: AnyAtom, callback: () => void): void
-  delete(atom: undefined, callback: (atom: AnyAtom) => void): void
+  add(atom: AnyAtom, callback: () => void): () => void
+  add(atom: undefined, callback: (atom: AnyAtom) => void): () => void
 }
 
 type StoreHooks = Readonly<{
@@ -690,9 +687,9 @@ const createStoreHook = (): StoreHook => {
   }
   notify.add = (fn: () => void) => {
     callbacks.add(fn)
-  }
-  notify.delete = (fn: () => void) => {
-    callbacks.delete(fn)
+    return () => {
+      callbacks.delete(fn)
+    }
   }
   return notify
 }
@@ -713,13 +710,11 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
       callbacks.has(key) ? callbacks : callbacks.set(key, new Set())
     ).get(key)!
     fns.add(fn)
-  }
-  notify.delete = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
-    const key = atom || all
-    const fns = callbacks.get(key)
-    fns?.delete(fn)
-    if (!fns?.size) {
-      callbacks.delete(key)
+    return () => {
+      fns?.delete(fn)
+      if (!fns.size) {
+        callbacks.delete(key)
+      }
     }
   }
   return notify as never

@@ -60,13 +60,13 @@ function syncEffect(effect: Effect): Atom<void> {
     }
     const storeState = INTERNAL_getStoreState(store)
     const storeHooks = INTERNAL_initializeStoreHooks(storeState)
+    const syncEffectChannel = ensureSyncEffectChannel(store)
     storeHooks.m.add(internalAtom, () => {
       // mount
       store.set(refreshAtom, (v) => v + 1)
     })
     storeHooks.u.add(internalAtom, () => {
       // unmount
-      const syncEffectChannel = ensureSyncEffectChannel(store)
       syncEffectChannel.add(() => {
         ref.cleanup?.()
         delete ref.cleanup
@@ -74,7 +74,6 @@ function syncEffect(effect: Effect): Atom<void> {
     })
     storeHooks.c.add(internalAtom, () => {
       // update
-      const syncEffectChannel = ensureSyncEffectChannel(store)
       syncEffectChannel.add(runEffect)
     })
   }
