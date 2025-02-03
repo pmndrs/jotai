@@ -690,9 +690,7 @@ const createStoreHook = (): StoreHook => {
 }
 
 const createStoreHookForAtoms = (): StoreHookForAtoms => {
-  // TS3.9 requires wrapper object type weakmap key
-  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
-  const all: Symbol = Symbol()
+  const all: object = {}
   const callbacks = new WeakMap<
     AnyAtom | typeof all,
     Set<(atom?: AnyAtom) => void>
