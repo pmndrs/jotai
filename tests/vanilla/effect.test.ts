@@ -2,8 +2,8 @@ import { expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 import {
-  INTERNAL_createStoreHookForAtom,
   INTERNAL_getStoreStateRev1 as INTERNAL_getStoreState,
+  INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
 type Cleanup = () => void
@@ -58,16 +58,13 @@ function syncEffect(effect: Effect): Atom<void> {
         deps.forEach(ref.get!)
       }
     }
-    const [, storeHooks] = INTERNAL_getStoreState(store)
-    const mountHook = (storeHooks.m =
-      storeHooks.m || INTERNAL_createStoreHookForAtom())
-    mountHook.add(internalAtom, () => {
+    const storeState = INTERNAL_getStoreState(store)
+    const storeHooks = INTERNAL_initializeStoreHooks(storeState)
+    storeHooks.m.add(internalAtom, () => {
       // mount
       store.set(refreshAtom, (v) => v + 1)
     })
-    const unmountHook = (storeHooks.u =
-      storeHooks.u || INTERNAL_createStoreHookForAtom())
-    unmountHook.add(internalAtom, () => {
+    storeHooks.u.add(internalAtom, () => {
       // unmount
       const syncEffectChannel = ensureSyncEffectChannel(store)
       syncEffectChannel.add(() => {
@@ -75,9 +72,7 @@ function syncEffect(effect: Effect): Atom<void> {
         delete ref.cleanup
       })
     })
-    const changedHook = (storeHooks.c =
-      storeHooks.c || INTERNAL_createStoreHookForAtom())
-    changedHook.add(internalAtom, () => {
+    storeHooks.c.add(internalAtom, () => {
       // update
       const syncEffectChannel = ensureSyncEffectChannel(store)
       syncEffectChannel.add(runEffect)
@@ -93,17 +88,16 @@ const syncEffectChannelSymbol = Symbol()
 function ensureSyncEffectChannel(store: any) {
   if (!store[syncEffectChannelSymbol]) {
     store[syncEffectChannelSymbol] = new Set<() => void>()
-    const [, storeHooks] = INTERNAL_getStoreState(store)
-    const originalFlushHook = storeHooks.f
-    storeHooks.f = () => {
-      originalFlushHook?.()
+    const storeState = INTERNAL_getStoreState(store)
+    const storeHooks = INTERNAL_initializeStoreHooks(storeState)
+    storeHooks.f.add(() => {
       const syncEffectChannel = store[syncEffectChannelSymbol] as Set<
         () => void
       >
       const fns = Array.from(syncEffectChannel)
       syncEffectChannel.clear()
       fns.forEach((fn: () => void) => fn())
-    }
+    })
   }
   return store[syncEffectChannelSymbol] as Set<() => void>
 }

@@ -170,9 +170,9 @@ const flushCallbacks = (storeState: StoreState): void => {
     storeState
   let hasError: true | undefined
   let error: unknown | undefined
-  const call = (fn?: () => void) => {
+  const call = (fn: () => void) => {
     try {
-      fn?.()
+      fn()
     } catch (e) {
       if (!hasError) {
         hasError = true
@@ -181,7 +181,9 @@ const flushCallbacks = (storeState: StoreState): void => {
     }
   }
   do {
-    call(storeHooks.f)
+    if (storeHooks.f) {
+      call(storeHooks.f)
+    }
     const callbacks = new Set<() => void>()
     const add = callbacks.add.bind(callbacks)
     changedAtoms.forEach((atomState) => atomState.m?.l.forEach(add))
@@ -636,15 +638,21 @@ const unmountAtom = <Value>(
 // Secret store methods (not for export)
 //
 
+type StoreHook = {
+  (): void
+  add(callback: () => void): void
+  delete(callback: () => void): void
+}
+
 type StoreHookForAtoms = {
   (atom: AnyAtom): void
   add(atom: AnyAtom, callback: () => void): void
   add(atom: undefined, callback: (atom: AnyAtom) => void): void
   delete(atom: AnyAtom, callback: () => void): void
-  delete(undefined: AnyAtom, callback: (atom: AnyAtom) => void): void
+  delete(atom: undefined, callback: (atom: AnyAtom) => void): void
 }
 
-type StoreHooks = {
+type StoreHooks = Readonly<{
   /**
    * Listener to notify when the atom value is changed.
    * This is an experimental API.
@@ -664,32 +672,61 @@ type StoreHooks = {
    * Listener to notify when callbacks are being flushed.
    * This is an experimental API.
    */
-  f?: () => void
+  f?: StoreHook
+}>
+
+const createStoreHook = (): StoreHook => {
+  const callbacks = new Set<() => void>()
+  const notify = () => {
+    callbacks.forEach((fn) => fn())
+  }
+  notify.add = (fn: () => void) => {
+    callbacks.add(fn)
+  }
+  notify.delete = (fn: () => void) => {
+    callbacks.delete(fn)
+  }
+  return notify
 }
 
 const createStoreHookForAtoms = (): StoreHookForAtoms => {
-  const callbacks = new Map<
-    AnyAtom | undefined,
+  // TS3.9 requires wrapper object type weakmap key
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  const all: Symbol = Symbol()
+  const callbacks = new WeakMap<
+    AnyAtom | typeof all,
     Set<(atom?: AnyAtom) => void>
   >()
   const notify = (atom: AnyAtom) => {
-    callbacks.get(undefined)?.forEach((fn) => fn(atom))
+    callbacks.get(all)?.forEach((fn) => fn(atom))
     callbacks.get(atom)?.forEach((fn) => fn())
   }
   notify.add = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
+    const key = atom || all
     const fns = (
-      callbacks.has(atom) ? callbacks : callbacks.set(atom, new Set())
-    ).get(atom)!
+      callbacks.has(key) ? callbacks : callbacks.set(key, new Set())
+    ).get(key)!
     fns.add(fn)
   }
   notify.delete = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
-    const fns = callbacks.get(atom)
+    const key = atom || all
+    const fns = callbacks.get(key)
     fns?.delete(fn)
     if (!fns?.size) {
-      callbacks.delete(atom)
+      callbacks.delete(key)
     }
   }
   return notify as never
+}
+
+const initializeStoreHooks = (storeState: StoreState): Required<StoreHooks> => {
+  type Mutable<T> = { -readonly [P in keyof T]: T[P] }
+  const storeHooks = storeState[1] as Mutable<Required<StoreHooks>>
+  storeHooks.c ||= createStoreHookForAtoms()
+  storeHooks.m ||= createStoreHookForAtoms()
+  storeHooks.u ||= createStoreHookForAtoms()
+  storeHooks.f ||= createStoreHook()
+  return storeHooks
 }
 
 type StoreArgs = [
@@ -824,8 +861,8 @@ export const INTERNAL_mountDependencies: typeof mountDependencies =
   mountDependencies
 export const INTERNAL_mountAtom: typeof mountAtom = mountAtom
 export const INTERNAL_unmountAtom: typeof unmountAtom = unmountAtom
-export const INTERNAL_createStoreHookForAtom: typeof createStoreHookForAtoms =
-  createStoreHookForAtoms
+export const INTERNAL_initializeStoreHooks: typeof initializeStoreHooks =
+  initializeStoreHooks
 
 //
 // Still experimental and some of them will be gone soon
