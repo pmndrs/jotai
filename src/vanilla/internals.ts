@@ -687,7 +687,9 @@ const createStoreHook = (): StoreHook => {
   }
   notify.add = (fn: () => void) => {
     callbacks.add(fn)
-    return () => void callbacks.delete(fn)
+    return () => {
+      callbacks.delete(fn)
+    }
   }
   return notify
 }
