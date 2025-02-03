@@ -46,12 +46,19 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   )
   const storeState = INTERNAL_getStoreState(store)
   const storeHooks = INTERNAL_initializeStoreHooks(storeState)
+  const mountedAtoms = storeState[3]
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)
+    const atomState = atomStateMap.get(atom)
+    // For DevStoreRev4 compatibility
+    atomState.t = mountedAtoms.get(atom)
   })
   storeHooks.u.add(undefined, (atom) => {
     debugMountedAtoms.delete(atom)
+    const atomState = atomStateMap.get(atom)
+    // For DevStoreRev4 compatibility
+    delete atomState.t
   })
   const devStore: INTERNAL_DevStoreRev4 = {
     // store dev methods (these are tentative and subject to change without notice)
