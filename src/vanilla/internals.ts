@@ -101,18 +101,20 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
 type CancelHandler = (nextValue: unknown) => void
 type PromiseState = [cancelHandlers: Set<CancelHandler>, settled: boolean]
 
-const PROMISE_STATE = Symbol.for('jotai.unstable.promise.state')
+const PROMISE_STATE = Symbol()
+
+const getPromiseState = <T>(
+  promise: PromiseLike<T>,
+): PromiseState | undefined => (promise as any)[PROMISE_STATE]
 
 const isPendingPromise = (value: unknown): value is PromiseLike<unknown> =>
-  isPromiseLike(value) && !(value as any)[PROMISE_STATE]?.[1]
+  isPromiseLike(value) && !getPromiseState(value)?.[1]
 
 const cancelPromise = <T>(
   promise: PromiseLike<T>,
   nextValue: unknown,
 ): void => {
-  const promiseState = (promise as any)[PROMISE_STATE] as
-    | PromiseState
-    | undefined
+  const promiseState = getPromiseState(promise)
   if (promiseState) {
     promiseState[1] = true
     promiseState[0].forEach((fn) => fn(nextValue))
@@ -122,7 +124,7 @@ const cancelPromise = <T>(
 }
 
 const patchPromiseForCancelability = <T>(promise: PromiseLike<T>): void => {
-  if ((promise as any)[PROMISE_STATE]) {
+  if (getPromiseState(promise)) {
     // already patched
     return
   }
@@ -164,7 +166,32 @@ const addPendingPromiseToDependency = (
 // Some building-block functions
 //
 
-const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
+type BuildingBlocks = Readonly<
+  [
+    flushCallbacks: () => void,
+    recomputeInvalidatedAtoms: () => void,
+    readAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+    writeAtomState: <Value, Args extends unknown[], Result>(
+      atom: WritableAtom<Value, Args, Result>,
+      ...args: Args
+    ) => Result,
+    mountAtom: <Value>(atom: Atom<Value>) => Mounted,
+    unmountAtom: <Value>(atom: Atom<Value>) => Mounted | undefined,
+    ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+    setAtomStateValueOrPromise: (
+      atom: AnyAtom,
+      valueOrPromise: unknown,
+    ) => void,
+    getMountedOrPendingDependents: (atom: AnyAtom) => Set<AnyAtom>,
+    invalidateDependents: (atom: AnyAtom) => void,
+    mountDependencies: (atom: AnyAtom) => void,
+  ]
+>
+
+const createBuildingBlocks = (
+  storeArgs: StoreArgs,
+  getStore: () => Store,
+): BuildingBlocks => {
   const [
     atomStateMap,
     mountedAtoms,
@@ -189,7 +216,7 @@ const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
       atomStateMap.set(atom, atomState)
       atomOnInit?.(atom, getStore())
     }
-    return atomState as never
+    return atomState as AtomState<Value>
   }
 
   const flushCallbacks = (): void => {
@@ -718,17 +745,16 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
       }
     }
   }
-  return notify as never
+  return notify as StoreHookForAtoms
 }
 
 const initializeStoreHooks = (storeHooks: StoreHooks): Required<StoreHooks> => {
-  type Mutable<T> = { -readonly [P in keyof T]: T[P] }
-  type SH = Mutable<Required<StoreHooks>>
+  type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
   ;(storeHooks as SH).c ||= createStoreHookForAtoms()
   ;(storeHooks as SH).m ||= createStoreHookForAtoms()
   ;(storeHooks as SH).u ||= createStoreHookForAtoms()
   ;(storeHooks as SH).f ||= createStoreHook()
-  return storeHooks as never
+  return storeHooks as Required<StoreHooks>
 }
 
 //
@@ -866,8 +892,8 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
 export const INTERNAL_createStoreArgs: typeof createStoreArgs = createStoreArgs
 export const INTERNAL_buildStore: typeof buildStore = buildStore
 export const INTERNAL_getStoreArgsRev1: typeof getStoreArgs = getStoreArgs
-// TODO type it
-export const INTERNAL_createBuildingBlocksRev1: unknown = createBuildingBlocks
+export const INTERNAL_createBuildingBlocksRev1: typeof createBuildingBlocks =
+  createBuildingBlocks
 export const INTERNAL_initializeStoreHooks: typeof initializeStoreHooks =
   initializeStoreHooks
 
@@ -882,6 +908,7 @@ export const INTERNAL_isActuallyWritableAtom: typeof isActuallyWritableAtom =
 export const INTERNAL_isAtomStateInitialized: typeof isAtomStateInitialized =
   isAtomStateInitialized
 export const INTERNAL_returnAtomValue: typeof returnAtomValue = returnAtomValue
+export const INTERNAL_getPromiseState: typeof getPromiseState = getPromiseState
 export const INTERNAL_isPendingPromise: typeof isPendingPromise =
   isPendingPromise
 export const INTERNAL_cancelPromise: typeof cancelPromise = cancelPromise
