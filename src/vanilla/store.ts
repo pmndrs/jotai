@@ -37,7 +37,7 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     atomStateMap,
     mountedAtoms,
     new WeakMap(),
-    new Map(),
+    new Set(),
     new Set(),
     new Set(),
     storeHooks,

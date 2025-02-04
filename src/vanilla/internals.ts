@@ -242,9 +242,10 @@ const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
     const visited = new WeakSet<AnyAtom>()
     // Visit the root atom. This is the only atom in the dependency graph
     // without incoming edges, which is one reason we can simplify the algorithm
-    const stack: [a: AnyAtom, aState: AtomState][] = Array.from(changedAtoms)
+    const stack: AnyAtom[] = Array.from(changedAtoms)
     while (stack.length) {
-      const [a, aState] = stack[stack.length - 1]!
+      const a = stack[stack.length - 1]!
+      const aState = ensureAtomState(a)
       if (visited.has(a)) {
         // All dependents have been processed, now process this atom
         stack.pop()
@@ -271,7 +272,7 @@ const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
       // Push unvisited dependents onto the stack
       for (const d of getMountedOrPendingDependents(a)) {
         if (!visiting.has(d)) {
-          stack.push([d, ensureAtomState(d)])
+          stack.push(d)
         }
       }
     }
@@ -290,7 +291,7 @@ const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
         readAtomState(a)
         mountDependencies(a)
         if (prevEpochNumber !== aState.n) {
-          changedAtoms.set(a, aState)
+          changedAtoms.add(a)
           storeHooks.c?.(a)
         }
       }
@@ -442,7 +443,7 @@ const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
         invalidatedAtoms.get(atom) === prevEpochNumber
       ) {
         invalidatedAtoms.set(atom, atomState.n)
-        changedAtoms.set(atom, atomState)
+        changedAtoms.add(atom)
         storeHooks.c?.(atom)
       }
     }
@@ -497,7 +498,7 @@ const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
           setAtomStateValueOrPromise(a, v)
           mountDependencies(a)
           if (prevEpochNumber !== aState.n) {
-            changedAtoms.set(a, aState)
+            changedAtoms.add(a)
             storeHooks.c?.(a)
             invalidateDependents(a)
           }
@@ -530,7 +531,7 @@ const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
           aMounted.t.add(atom)
           mounted.d.add(a)
           if (n !== aState.n) {
-            changedAtoms.set(a, aState)
+            changedAtoms.add(a)
             storeHooks.c?.(a)
             invalidateDependents(a)
           }
@@ -739,7 +740,7 @@ type StoreArgs = Readonly<
     atomStateMap: AtomStateMap,
     mountedAtoms: WeakMap<AnyAtom, Mounted>,
     invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
-    changedAtoms: Map<AnyAtom, AtomState>,
+    changedAtoms: Set<AnyAtom>,
     mountCallbacks: Set<() => void>,
     unmountCallbacks: Set<() => void>,
     storeHooks: StoreHooks,
@@ -778,7 +779,7 @@ const createStoreArgs = (
   atomStateMap: AtomStateMap = new WeakMap(),
   mountedAtoms: WeakMap<AnyAtom, Mounted> = new WeakMap(),
   invalidatedAtoms: WeakMap<AnyAtom, EpochNumber> = new WeakMap(),
-  changedAtoms: Map<AnyAtom, AtomState> = new Map(),
+  changedAtoms: Set<AnyAtom> = new Set(),
   mountCallbacks: Set<() => void> = new Set(),
   unmountCallbacks: Set<() => void> = new Set(),
   storeHooks: StoreHooks = {},
