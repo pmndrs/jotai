@@ -168,27 +168,22 @@ const addPendingPromiseToDependency = (
 // Some building-block functions
 //
 
-type BuildingBlocks = Readonly<
-  [
-    flushCallbacks: () => void,
-    recomputeInvalidatedAtoms: () => void,
-    readAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
-    writeAtomState: <Value, Args extends unknown[], Result>(
-      atom: WritableAtom<Value, Args, Result>,
-      ...args: Args
-    ) => Result,
-    mountAtom: <Value>(atom: Atom<Value>) => Mounted,
-    unmountAtom: <Value>(atom: Atom<Value>) => Mounted | undefined,
-    ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
-    setAtomStateValueOrPromise: (
-      atom: AnyAtom,
-      valueOrPromise: unknown,
-    ) => void,
-    getMountedOrPendingDependents: (atom: AnyAtom) => Set<AnyAtom>,
-    invalidateDependents: (atom: AnyAtom) => void,
-    mountDependencies: (atom: AnyAtom) => void,
-  ]
->
+type BuildingBlocks = readonly [
+  flushCallbacks: () => void,
+  recomputeInvalidatedAtoms: () => void,
+  readAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  writeAtomState: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...args: Args
+  ) => Result,
+  mountAtom: <Value>(atom: Atom<Value>) => Mounted,
+  unmountAtom: <Value>(atom: Atom<Value>) => Mounted | undefined,
+  ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  setAtomStateValueOrPromise: (atom: AnyAtom, valueOrPromise: unknown) => void,
+  getMountedOrPendingDependents: (atom: AnyAtom) => Set<AnyAtom>,
+  invalidateDependents: (atom: AnyAtom) => void,
+  mountDependencies: (atom: AnyAtom) => void,
+]
 
 const createBuildingBlocks = (
   storeArgs: StoreArgs,
@@ -687,28 +682,28 @@ type StoreHookForAtoms = {
   add(atom: undefined, callback: (atom: AnyAtom) => void): () => void
 }
 
-type StoreHooks = Readonly<{
+type StoreHooks = {
   /**
    * Listener to notify when the atom value is changed.
    * This is an experimental API.
    */
-  c?: StoreHookForAtoms
+  readonly c?: StoreHookForAtoms
   /**
    * Listener to notify when the atom is mounted.
    * This is an experimental API.
    */
-  m?: StoreHookForAtoms
+  readonly m?: StoreHookForAtoms
   /**
    * Listener to notify when the atom is unmounted.
    * This is an experimental API.
    */
-  u?: StoreHookForAtoms
+  readonly u?: StoreHookForAtoms
   /**
    * Listener to notify when callbacks are being flushed.
    * This is an experimental API.
    */
-  f?: StoreHook
-}>
+  readonly f?: StoreHook
+}
 
 const createStoreHook = (): StoreHook => {
   const callbacks = new Set<() => void>()
@@ -763,30 +758,28 @@ const initializeStoreHooks = (storeHooks: StoreHooks): Required<StoreHooks> => {
 // Main functions
 //
 
-type StoreArgs = Readonly<
-  [
-    atomStateMap: AtomStateMap,
-    mountedAtoms: WeakMap<AnyAtom, Mounted>,
-    invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
-    changedAtoms: Set<AnyAtom>,
-    mountCallbacks: Set<() => void>,
-    unmountCallbacks: Set<() => void>,
-    storeHooks: StoreHooks,
-    atomRead: <Value>(
-      atom: Atom<Value>,
-      ...params: Parameters<Atom<Value>['read']>
-    ) => Value,
-    atomWrite: <Value, Args extends unknown[], Result>(
-      atom: WritableAtom<Value, Args, Result>,
-      ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
-    ) => Result,
-    atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
-    atomOnMount: <Value, Args extends unknown[], Result>(
-      atom: WritableAtom<Value, Args, Result>,
-      setAtom: (...args: Args) => Result,
-    ) => OnUnmount | void,
-  ]
->
+type StoreArgs = readonly [
+  atomStateMap: AtomStateMap,
+  mountedAtoms: WeakMap<AnyAtom, Mounted>,
+  invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
+  changedAtoms: Set<AnyAtom>,
+  mountCallbacks: Set<() => void>,
+  unmountCallbacks: Set<() => void>,
+  storeHooks: StoreHooks,
+  atomRead: <Value>(
+    atom: Atom<Value>,
+    ...params: Parameters<Atom<Value>['read']>
+  ) => Value,
+  atomWrite: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
+  ) => Result,
+  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
+  atomOnMount: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    setAtom: (...args: Args) => Result,
+  ) => OnUnmount | void,
+]
 
 // Do not export this type.
 type Store = {
