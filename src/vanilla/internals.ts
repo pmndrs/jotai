@@ -166,17 +166,17 @@ const addPendingPromiseToDependency = (
 
 const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
   const [
-    atomRead,
-    atomWrite,
-    atomOnInit,
-    atomOnMount,
-    storeHooks,
     atomStateMap,
     mountedAtoms,
     invalidatedAtoms,
     changedAtoms,
     mountCallbacks,
     unmountCallbacks,
+    storeHooks,
+    atomRead,
+    atomWrite,
+    atomOnInit,
+    atomOnMount,
   ] = storeArgs
 
   const ensureAtomState = <Value>(atom: Atom<Value>): AtomState<Value> => {
@@ -643,7 +643,7 @@ const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
 }
 
 //
-// Secret store methods (not for export)
+// Store hooks
 //
 
 type StoreHook = {
@@ -736,6 +736,13 @@ const initializeStoreHooks = (storeHooks: StoreHooks): Required<StoreHooks> => {
 
 type StoreArgs = Readonly<
   [
+    atomStateMap: AtomStateMap,
+    mountedAtoms: WeakMap<AnyAtom, Mounted>,
+    invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
+    changedAtoms: Map<AnyAtom, AtomState>,
+    mountCallbacks: Set<() => void>,
+    unmountCallbacks: Set<() => void>,
+    storeHooks: StoreHooks,
     atomRead: <Value>(
       atom: Atom<Value>,
       ...params: Parameters<Atom<Value>['read']>
@@ -749,19 +756,8 @@ type StoreArgs = Readonly<
       atom: WritableAtom<Value, Args, Result>,
       setAtom: (...args: Args) => Result,
     ) => OnUnmount | void,
-    storeHooks: StoreHooks,
-    atomStateMap: AtomStateMap,
-    mountedAtoms: WeakMap<AnyAtom, Mounted>,
-    invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
-    changedAtoms: Map<AnyAtom, AtomState>,
-    mountCallbacks: Set<() => void>,
-    unmountCallbacks: Set<() => void>,
   ]
 >
-
-const STORE_ARGS: unique symbol = Symbol() // no description intentionally
-
-const getStoreArgs = (store: unknown): StoreArgs => (store as Store)[STORE_ARGS]
 
 // Do not export this type.
 type Store = {
@@ -773,6 +769,48 @@ type Store = {
   sub: (atom: AnyAtom, listener: () => void) => () => void
   [STORE_ARGS]: StoreArgs
 }
+
+const STORE_ARGS: unique symbol = Symbol() // no description intentionally
+
+const getStoreArgs = (store: unknown): StoreArgs => (store as Store)[STORE_ARGS]
+
+const createStoreArgs = (
+  atomStateMap: AtomStateMap = new WeakMap(),
+  mountedAtoms: WeakMap<AnyAtom, Mounted> = new WeakMap(),
+  invalidatedAtoms: WeakMap<AnyAtom, EpochNumber> = new WeakMap(),
+  changedAtoms: Map<AnyAtom, AtomState> = new Map(),
+  mountCallbacks: Set<() => void> = new Set(),
+  unmountCallbacks: Set<() => void> = new Set(),
+  storeHooks: StoreHooks = {},
+  atomRead: <Value>(
+    atom: Atom<Value>,
+    ...params: Parameters<Atom<Value>['read']>
+  ) => Value = (atom, ...params) => atom.read(...params),
+  atomWrite: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
+  ) => Result = (atom, ...params) => atom.write(...params),
+  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void = (
+    atom,
+    ...params
+  ) => atom.unstable_onInit?.(...params),
+  atomOnMount: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    setAtom: (...args: Args) => Result,
+  ) => OnUnmount | void = (atom, ...params) => atom.onMount?.(...params),
+): StoreArgs => [
+  atomStateMap,
+  mountedAtoms,
+  invalidatedAtoms,
+  changedAtoms,
+  mountCallbacks,
+  unmountCallbacks,
+  storeHooks,
+  atomRead,
+  atomWrite,
+  atomOnInit,
+  atomOnMount,
+]
 
 const buildStore = (...storeArgs: StoreArgs): Store => {
   const [
@@ -824,6 +862,7 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
 // Export internal functions
 //
 
+export const INTERNAL_createStoreArgs: typeof createStoreArgs = createStoreArgs
 export const INTERNAL_buildStore: typeof buildStore = buildStore
 export const INTERNAL_getStoreArgsRev1: typeof getStoreArgs = getStoreArgs
 // TODO type it

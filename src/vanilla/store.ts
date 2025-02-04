@@ -1,6 +1,7 @@
 import type { Atom, WritableAtom } from './atom.ts'
 import {
   INTERNAL_buildStore,
+  INTERNAL_createStoreArgs,
   INTERNAL_initializeStoreHooks,
 } from './internals.ts'
 import type { INTERNAL_AtomState } from './internals.ts'
@@ -33,6 +34,13 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   const atomStateMap = new WeakMap()
   const mountedAtoms = new WeakMap()
   const store = INTERNAL_buildStore(
+    atomStateMap,
+    mountedAtoms,
+    new WeakMap(),
+    new Map(),
+    new Set(),
+    new Set(),
+    storeHooks,
     (atom, ...params) => atom.read(...params),
     (atom, get, set, ...args) => {
       if (inRestoreAtom) {
@@ -42,13 +50,6 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     },
     (atom, ...params) => atom.unstable_onInit?.(...params),
     (atom, ...params) => atom.onMount?.(...params),
-    storeHooks,
-    atomStateMap,
-    mountedAtoms,
-    new WeakMap(),
-    new Map(),
-    new Set(),
-    new Set(),
   )
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
@@ -97,19 +98,7 @@ export const createStore = (): PrdOrDevStore => {
   if (import.meta.env?.MODE !== 'production') {
     return createDevStoreRev4()
   }
-  const store = INTERNAL_buildStore(
-    (atom, ...params) => atom.read(...params),
-    (atom, ...params) => atom.write(...params),
-    (atom, ...params) => atom.unstable_onInit?.(...params),
-    (atom, ...params) => atom.onMount?.(...params),
-    {},
-    new WeakMap(),
-    new WeakMap(),
-    new WeakMap(),
-    new Map(),
-    new Set(),
-    new Set(),
-  )
+  const store = INTERNAL_buildStore(...INTERNAL_createStoreArgs())
   return store
 }
 
