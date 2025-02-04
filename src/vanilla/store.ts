@@ -1,7 +1,7 @@
 import type { Atom, WritableAtom } from './atom.ts'
 import {
   INTERNAL_buildStore,
-  INTERNAL_getStoreStateRev1 as INTERNAL_getStoreState,
+  INTERNAL_createStoreArgs,
   INTERNAL_initializeStoreHooks,
 } from './internals.ts'
 import type { INTERNAL_AtomState } from './internals.ts'
@@ -30,10 +30,17 @@ export type INTERNAL_DevStoreRev4 = {
 
 const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   let inRestoreAtom = 0
+  const storeHooks = INTERNAL_initializeStoreHooks({})
   const atomStateMap = new WeakMap()
+  const mountedAtoms = new WeakMap()
   const store = INTERNAL_buildStore(
-    (atom) => atomStateMap.get(atom),
-    (atom, atomState) => atomStateMap.set(atom, atomState).get(atom),
+    atomStateMap,
+    mountedAtoms,
+    new WeakMap(),
+    new Set(),
+    new Set(),
+    new Set(),
+    storeHooks,
     (atom, ...params) => atom.read(...params),
     (atom, get, set, ...args) => {
       if (inRestoreAtom) {
@@ -44,21 +51,18 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     (atom, ...params) => atom.unstable_onInit?.(...params),
     (atom, ...params) => atom.onMount?.(...params),
   )
-  const storeState = INTERNAL_getStoreState(store)
-  const storeHooks = INTERNAL_initializeStoreHooks(storeState)
-  const mountedAtoms = storeState[3]
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)
     const atomState = atomStateMap.get(atom)
     // For DevStoreRev4 compatibility
-    atomState.m = mountedAtoms.get(atom)
+    ;(atomState as any).m = mountedAtoms.get(atom)
   })
   storeHooks.u.add(undefined, (atom) => {
     debugMountedAtoms.delete(atom)
     const atomState = atomStateMap.get(atom)
     // For DevStoreRev4 compatibility
-    delete atomState.m
+    delete (atomState as any).m
   })
   const devStore: INTERNAL_DevStoreRev4 = {
     // store dev methods (these are tentative and subject to change without notice)
@@ -94,15 +98,7 @@ export const createStore = (): PrdOrDevStore => {
   if (import.meta.env?.MODE !== 'production') {
     return createDevStoreRev4()
   }
-  const atomStateMap = new WeakMap()
-  const store = INTERNAL_buildStore(
-    (atom) => atomStateMap.get(atom),
-    (atom, atomState) => atomStateMap.set(atom, atomState).get(atom),
-    (atom, ...params) => atom.read(...params),
-    (atom, ...params) => atom.write(...params),
-    (atom, ...params) => atom.unstable_onInit?.(...params),
-    (atom, ...params) => atom.onMount?.(...params),
-  )
+  const store = INTERNAL_buildStore(...INTERNAL_createStoreArgs())
   return store
 }
 

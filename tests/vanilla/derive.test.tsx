@@ -1,19 +1,23 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Atom, Getter } from 'jotai/vanilla'
+import type { Atom } from 'jotai/vanilla'
 import {
   INTERNAL_buildStore,
-  INTERNAL_getStoreStateRev1 as INTERNAL_getStoreState,
+  INTERNAL_createStoreArgs,
+  INTERNAL_getStoreArgsRev1 as INTERNAL_getStoreArgs,
 } from 'jotai/vanilla/internals'
 
-type StoreArgs = Parameters<typeof INTERNAL_buildStore>
+type AtomStateMapType = ReturnType<typeof INTERNAL_getStoreArgs>[0]
 
 const deriveStore = (
   store: ReturnType<typeof createStore>,
-  enhanceStoreArgs: (...storeArgs: StoreArgs) => StoreArgs,
+  enhanceAtomStateMap: (atomStateMap: AtomStateMapType) => AtomStateMapType,
 ): ReturnType<typeof createStore> => {
-  const [storeArgs] = INTERNAL_getStoreState(store)
-  const newStoreArgs = (enhanceStoreArgs as any)(...storeArgs)
+  const storeArgs = INTERNAL_getStoreArgs(store)
+  const atomStateMap = storeArgs[0]
+  const newStoreArgs = INTERNAL_createStoreArgs(
+    enhanceAtomStateMap(atomStateMap),
+  )
   const derivedStore = (INTERNAL_buildStore as any)(...newStoreArgs)
   return derivedStore
 }
@@ -29,38 +33,24 @@ describe('deriveStore for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = deriveStore(
-      store,
-      (
-        getAtomState,
-        setAtomState,
-        atomRead,
-        atomWrite,
-        atomOnInit,
-        atomOnMount,
-      ) => {
-        const scopedAtomStateMap = new WeakMap()
-        return [
-          (atom) => {
-            if (scopedAtoms.has(atom)) {
-              return scopedAtomStateMap.get(atom)
-            }
-            return getAtomState(atom)
-          },
-          (atom, atomState) => {
-            if (scopedAtoms.has(atom)) {
-              scopedAtomStateMap.set(atom, atomState)
-            } else {
-              setAtomState(atom, atomState)
-            }
-          },
-          atomRead,
-          atomWrite,
-          atomOnInit,
-          atomOnMount,
-        ]
-      },
-    )
+    const derivedStore = deriveStore(store, (atomStateMap) => {
+      const scopedAtomStateMap = new WeakMap()
+      return {
+        get: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.get(atom)
+          }
+          return atomStateMap.get(atom)
+        },
+        set: (atom, atomState) => {
+          if (scopedAtoms.has(atom)) {
+            scopedAtomStateMap.set(atom, atomState)
+          } else {
+            atomStateMap.set(atom, atomState)
+          }
+        },
+      }
+    })
 
     expect(store.get(a)).toBe('a')
     expect(derivedStore.get(a)).toBe('a')
@@ -85,38 +75,24 @@ describe('deriveStore for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = deriveStore(
-      store,
-      (
-        getAtomState,
-        setAtomState,
-        atomRead,
-        atomWrite,
-        atomOnInit,
-        atomOnMount,
-      ) => {
-        const scopedAtomStateMap = new WeakMap()
-        return [
-          (atom) => {
-            if (scopedAtoms.has(atom)) {
-              return scopedAtomStateMap.get(atom)
-            }
-            return getAtomState(atom)
-          },
-          (atom, atomState) => {
-            if (scopedAtoms.has(atom)) {
-              scopedAtomStateMap.set(atom, atomState)
-            } else {
-              setAtomState(atom, atomState)
-            }
-          },
-          atomRead,
-          atomWrite,
-          atomOnInit,
-          atomOnMount,
-        ]
-      },
-    )
+    const derivedStore = deriveStore(store, (atomStateMap) => {
+      const scopedAtomStateMap = new WeakMap()
+      return {
+        get: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.get(atom)
+          }
+          return atomStateMap.get(atom)
+        },
+        set: (atom, atomState) => {
+          if (scopedAtoms.has(atom)) {
+            scopedAtomStateMap.set(atom, atomState)
+          } else {
+            atomStateMap.set(atom, atomState)
+          }
+        },
+      }
+    })
 
     expect(store.get(c)).toBe('ab')
     expect(derivedStore.get(c)).toBe('ab')
@@ -140,46 +116,24 @@ describe('deriveStore for scoping atoms', () => {
 
     function makeStores() {
       const store = createStore()
-      const derivedStore = deriveStore(
-        store,
-        (
-          getAtomState,
-          setAtomState,
-          atomRead,
-          atomWrite,
-          atomOnInit,
-          atomOnMount,
-        ) => {
-          const scopedAtomStateMap = new WeakMap()
-          return [
-            (atom) => {
-              if (scopedAtoms.has(atom)) {
-                return scopedAtomStateMap.get(atom)
-              }
-              return getAtomState(atom)
-            },
-            (atom, atomState) => {
-              if (scopedAtoms.has(atom)) {
-                scopedAtomStateMap.set(atom, atomState)
-              } else {
-                setAtomState(atom, atomState)
-              }
-            },
-            (a, get, options) => {
-              const myGet: Getter = (aa) => {
-                if (scopedAtoms.has(aa)) {
-                  //scopedAtoms.add(a) // FIXME Is this too naive?
-                }
-                return get(aa)
-              }
-              return atomRead(a, myGet, options)
-            },
-            atomWrite,
-            atomOnInit,
-            atomOnMount,
-          ]
-        },
-      )
+      const derivedStore = deriveStore(store, (atomStateMap) => {
+        const scopedAtomStateMap = new WeakMap()
+        return {
+          get: (atom) => {
+            if (scopedAtoms.has(atom)) {
+              return scopedAtomStateMap.get(atom)
+            }
+            return atomStateMap.get(atom)
+          },
+          set: (atom, atomState) => {
+            if (scopedAtoms.has(atom)) {
+              scopedAtomStateMap.set(atom, atomState)
+            } else {
+              atomStateMap.set(atom, atomState)
+            }
+          },
+        }
+      })
       expect(store.get(b)).toBe('a')
       expect(derivedStore.get(b)).toBe('a')
       return { store, derivedStore }
@@ -231,35 +185,21 @@ describe('deriveStore for scoping atoms', () => {
 it('should pass the correct store instance to the atom initializer', () => {
   expect.assertions(2)
   const baseStore = createStore()
-  const derivedStore = deriveStore(
-    baseStore,
-    (
-      getAtomState,
-      setAtomState,
-      atomRead,
-      atomWrite,
-      atomOnInit,
-      atomOnMount,
-    ) => {
-      const initializedAtoms = new WeakSet()
-      return [
-        (atom) => {
-          if (!initializedAtoms.has(atom)) {
-            return undefined
-          }
-          return getAtomState(atom)
-        },
-        (atom, atomState) => {
-          initializedAtoms.add(atom)
-          setAtomState(atom, atomState)
-        },
-        atomRead,
-        atomWrite,
-        atomOnInit,
-        atomOnMount,
-      ]
-    },
-  )
+  const derivedStore = deriveStore(baseStore, (atomStateMap) => {
+    const initializedAtoms = new WeakSet()
+    return {
+      get: (atom) => {
+        if (!initializedAtoms.has(atom)) {
+          return undefined
+        }
+        return atomStateMap.get(atom)
+      },
+      set: (atom, atomState) => {
+        initializedAtoms.add(atom)
+        atomStateMap.set(atom, atomState)
+      },
+    }
+  })
   const a = atom(null)
   a.unstable_onInit = (store) => {
     expect(store).toBe(baseStore)
