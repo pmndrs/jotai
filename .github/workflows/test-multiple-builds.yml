@@ -22,7 +22,7 @@ jobs:
           node-version: 'lts/*'
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm build
+      - run: pnpm run build
       - name: Use React 17 for production test
         if: ${{ matrix.env == 'production' }}
         run: |
@@ -65,6 +65,6 @@ jobs:
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
         run: |
-          pnpm test-build:spec # test:spec
+          pnpm run test-build:spec # test:spec
         env:
           NODE_ENV: ${{ matrix.env }}
