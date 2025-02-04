@@ -822,16 +822,17 @@ const createStoreArgs: (...storeArgs: Partial<StoreArgs>) => StoreArgs = (
   atomOnMount,
 ]
 
-const buildStore = (...storeArgs: StoreArgs): Store => {
-  const [
+const buildStore = (
+  storeArgs: StoreArgs,
+  [
     flushCallbacks,
     recomputeInvalidatedAtoms,
     readAtomState,
     writeAtomState,
     mountAtom,
     unmountAtom,
-  ] = createBuildingBlocks(storeArgs, () => store as Store)
-
+  ]: BuildingBlocks,
+): Store => {
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(atom))
 
@@ -872,11 +873,12 @@ const buildStore = (...storeArgs: StoreArgs): Store => {
 // Export internal functions
 //
 
-export const INTERNAL_createStoreArgs: typeof createStoreArgs = createStoreArgs
 export const INTERNAL_buildStore: typeof buildStore = buildStore
-export const INTERNAL_getStoreArgsRev1: typeof getStoreArgs = getStoreArgs
 export const INTERNAL_createBuildingBlocksRev1: typeof createBuildingBlocks =
   createBuildingBlocks
+export const INTERNAL_createStoreArgsRev1: typeof createStoreArgs =
+  createStoreArgs
+export const INTERNAL_getStoreArgsRev1: typeof getStoreArgs = getStoreArgs
 export const INTERNAL_initializeStoreHooks: typeof initializeStoreHooks =
   initializeStoreHooks
 

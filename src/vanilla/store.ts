@@ -1,7 +1,8 @@
 import type { Atom, WritableAtom } from './atom.ts'
 import {
   INTERNAL_buildStore,
-  INTERNAL_createStoreArgs,
+  INTERNAL_createBuildingBlocksRev1 as INTERNAL_createBuildingBlocks,
+  INTERNAL_createStoreArgsRev1 as INTERNAL_createStoreArgs,
   INTERNAL_initializeStoreHooks,
 } from './internals.ts'
 import type { INTERNAL_AtomState } from './internals.ts'
@@ -33,7 +34,7 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
   const atomStateMap = new WeakMap()
   const mountedAtoms = new WeakMap()
-  const store = INTERNAL_buildStore(
+  const storeArgs = INTERNAL_createStoreArgs(
     atomStateMap,
     mountedAtoms,
     new WeakMap(),
@@ -51,6 +52,8 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     (atom, ...params) => atom.unstable_onInit?.(...params),
     (atom, ...params) => atom.onMount?.(...params),
   )
+  const buildingBlocks = INTERNAL_createBuildingBlocks(storeArgs, () => store)
+  const store = INTERNAL_buildStore(storeArgs, buildingBlocks)
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)
@@ -98,7 +101,9 @@ export const createStore = (): PrdOrDevStore => {
   if (import.meta.env?.MODE !== 'production') {
     return createDevStoreRev4()
   }
-  const store = INTERNAL_buildStore(...INTERNAL_createStoreArgs())
+  const storeArgs = INTERNAL_createStoreArgs()
+  const buildingBlocks = INTERNAL_createBuildingBlocks(storeArgs, () => store)
+  const store = INTERNAL_buildStore(storeArgs, buildingBlocks)
   return store
 }
 
