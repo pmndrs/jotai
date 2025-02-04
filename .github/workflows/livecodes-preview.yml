@@ -15,5 +15,5 @@ jobs:
       - uses: live-codes/preview-in-livecodes@v1
         with:
           install-command: pnpm install
-          build-command: pnpm build
+          build-command: pnpm run build
           base-url: 'https://{{LC::REF}}.preview-in-livecodes-demo.pages.dev'
