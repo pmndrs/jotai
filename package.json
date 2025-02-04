@@ -72,7 +72,7 @@
     "build:vanilla:utils": "rollup -c --config-vanilla_utils",
     "build:react": "rollup -c --config-react --client-only",
     "build:react:utils": "rollup -c --config-react_utils --client-only",
-    "postbuild": "pnpm patch-d-ts && pnpm copy && pnpm patch-ts3.8 && pnpm patch-old-ts && pnpm patch-esm-ts && pnpm patch-readme",
+    "postbuild": "pnpm run patch-d-ts && pnpm run copy && pnpm run patch-ts3.8 && pnpm run patch-old-ts && pnpm run patch-esm-ts && pnpm run patch-readme",
     "fix:format": "prettier \"*.{js,json,md}\" \"{src,tests,benchmarks,docs}/**/*.{ts,tsx,md,mdx}\" --write",
     "fix:lint": "eslint . --fix",
     "test": "pnpm run \"/^test:.*/\"",
