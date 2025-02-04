@@ -4,24 +4,20 @@ import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 import {
   INTERNAL_buildStore,
-  INTERNAL_getStoreStateRev1 as INTERNAL_getStoreState,
+  INTERNAL_getStoreArgsRev1 as INTERNAL_getStoreArgs,
 } from 'jotai/vanilla/internals'
 
-type StoreArgs = Parameters<typeof INTERNAL_buildStore>
-type AtomStateMapType = ReturnType<typeof INTERNAL_getStoreState>[7]
+type AtomStateMapType = ReturnType<typeof INTERNAL_getStoreArgs>[5]
 
 const deriveStore = (
   store: ReturnType<typeof createStore>,
   enhanceAtomStateMap: (atomStateMap: AtomStateMapType) => AtomStateMapType,
-  enhanceStoreArgs: (...storeArgs: StoreArgs) => StoreArgs = (...args) => args,
 ): ReturnType<typeof createStore> => {
-  const storeState = INTERNAL_getStoreState(store)
-  const atomStateMap = storeState[7]
-  const storeArgs = storeState[0]
-  const newStoreArgs = (enhanceStoreArgs as any)(...storeArgs)
+  const storeArgs = INTERNAL_getStoreArgs(store)
+  const atomStateMap = storeArgs[5]
+  const newStoreArgs = [...storeArgs]
+  newStoreArgs[5] = enhanceAtomStateMap(atomStateMap)
   const derivedStore = (INTERNAL_buildStore as any)(...newStoreArgs)
-  const derivedStoreState = INTERNAL_getStoreState(derivedStore)
-  derivedStoreState[7] = enhanceAtomStateMap(atomStateMap)
   return derivedStore
 }
 

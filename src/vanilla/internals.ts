@@ -164,491 +164,482 @@ const addPendingPromiseToDependency = (
 // Some building-block functions
 //
 
-const ensureAtomState = <Value>(
-  storeState: StoreState,
-  atom: Atom<Value>,
-): AtomState<Value> => {
-  const [, , atomOnInit] = storeState[0]
-  const atomStateMap = storeState[7]
-  const getStore = storeState[8]
-  if (import.meta.env?.MODE !== 'production' && !atom) {
-    throw new Error('Atom is undefined or null')
-  }
-  let atomState = atomStateMap.get(atom)
-  if (!atomState) {
-    atomState = { d: new Map(), p: new Set(), n: 0 }
-    atomStateMap.set(atom, atomState)
-    atomOnInit?.(atom, getStore())
-  }
-  return atomState as never
-}
-
-const flushCallbacks = (storeState: StoreState): void => {
+const createBuildingBlocks = (storeArgs: StoreArgs, getStore: () => Store) => {
   const [
-    ,
+    atomRead,
+    atomWrite,
+    atomOnInit,
+    atomOnMount,
     storeHooks,
+    atomStateMap,
     mountedAtoms,
-    ,
+    invalidatedAtoms,
     changedAtoms,
     mountCallbacks,
     unmountCallbacks,
-  ] = storeState
-  let hasError: true | undefined
-  let error: unknown | undefined
-  const call = (fn: () => void) => {
-    try {
-      fn()
-    } catch (e) {
-      if (!hasError) {
-        hasError = true
-        error = e
-      }
-    }
-  }
-  do {
-    if (storeHooks.f) {
-      call(storeHooks.f)
-    }
-    const callbacks = new Set<() => void>()
-    const add = callbacks.add.bind(callbacks)
-    changedAtoms.forEach((_, atom) => mountedAtoms.get(atom)?.l.forEach(add))
-    changedAtoms.clear()
-    unmountCallbacks.forEach(add)
-    unmountCallbacks.clear()
-    mountCallbacks.forEach(add)
-    mountCallbacks.clear()
-    callbacks.forEach(call)
-    if (changedAtoms.size) {
-      recomputeInvalidatedAtoms(storeState)
-    }
-  } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
-  if (hasError) {
-    throw error
-  }
-}
+  ] = storeArgs
 
-const recomputeInvalidatedAtoms = (storeState: StoreState): void => {
-  const [, storeHooks, , invalidatedAtoms, changedAtoms] = storeState
-  // Step 1: traverse the dependency graph to build the topsorted atom list
-  // We don't bother to check for cycles, which simplifies the algorithm.
-  // This is a topological sort via depth-first search, slightly modified from
-  // what's described here for simplicity and performance reasons:
-  // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-  const topSortedReversed: [
-    atom: AnyAtom,
-    atomState: AtomState,
-    epochNumber: EpochNumber,
-  ][] = []
-  const visiting = new WeakSet<AnyAtom>()
-  const visited = new WeakSet<AnyAtom>()
-  // Visit the root atom. This is the only atom in the dependency graph
-  // without incoming edges, which is one reason we can simplify the algorithm
-  const stack: [a: AnyAtom, aState: AtomState][] = Array.from(changedAtoms)
-  while (stack.length) {
-    const [a, aState] = stack[stack.length - 1]!
-    if (visited.has(a)) {
-      // All dependents have been processed, now process this atom
-      stack.pop()
-      continue
+  const ensureAtomState = <Value>(atom: Atom<Value>): AtomState<Value> => {
+    if (import.meta.env?.MODE !== 'production' && !atom) {
+      throw new Error('Atom is undefined or null')
     }
-    if (visiting.has(a)) {
-      // The algorithm calls for pushing onto the front of the list. For
-      // performance, we will simply push onto the end, and then will iterate in
-      // reverse order later.
-      if (invalidatedAtoms.get(a) === aState.n) {
-        topSortedReversed.push([a, aState, aState.n])
-      } else if (
-        import.meta.env?.MODE !== 'production' &&
-        invalidatedAtoms.has(a)
-      ) {
-        throw new Error('[Bug] invalidated atom exists')
-      }
-      // Atom has been visited but not yet processed
-      visited.add(a)
-      stack.pop()
-      continue
+    let atomState = atomStateMap.get(atom)
+    if (!atomState) {
+      atomState = { d: new Map(), p: new Set(), n: 0 }
+      atomStateMap.set(atom, atomState)
+      atomOnInit?.(atom, getStore())
     }
-    visiting.add(a)
-    // Push unvisited dependents onto the stack
-    for (const d of getMountedOrPendingDependents(storeState, a)) {
-      if (!visiting.has(d)) {
-        stack.push([d, ensureAtomState(storeState, d)])
-      }
-    }
+    return atomState as never
   }
-  // Step 2: use the topSortedReversed atom list to recompute all affected atoms
-  // Track what's changed, so that we can short circuit when possible
-  for (let i = topSortedReversed.length - 1; i >= 0; --i) {
-    const [a, aState, prevEpochNumber] = topSortedReversed[i]!
-    let hasChangedDeps = false
-    for (const dep of aState.d.keys()) {
-      if (dep !== a && changedAtoms.has(dep)) {
-        hasChangedDeps = true
-        break
-      }
-    }
-    if (hasChangedDeps) {
-      readAtomState(storeState, a)
-      mountDependencies(storeState, a)
-      if (prevEpochNumber !== aState.n) {
-        changedAtoms.set(a, aState)
-        storeHooks.c?.(a)
-      }
-    }
-    invalidatedAtoms.delete(a)
-  }
-}
 
-// TODO(daishi): revisit this implementation
-const setAtomStateValueOrPromise = (
-  storeState: StoreState,
-  atom: AnyAtom,
-  valueOrPromise: unknown,
-): void => {
-  const atomState = ensureAtomState(storeState, atom)
-  const hasPrevValue = 'v' in atomState
-  const prevValue = atomState.v
-  const pendingPromise = isPendingPromise(atomState.v) ? atomState.v : null
-  if (isPromiseLike(valueOrPromise)) {
-    patchPromiseForCancelability(valueOrPromise)
-    for (const a of atomState.d.keys()) {
-      addPendingPromiseToDependency(
-        atom,
-        valueOrPromise,
-        ensureAtomState(storeState, a),
-      )
-    }
-  }
-  atomState.v = valueOrPromise
-  delete atomState.e
-  if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
-    ++atomState.n
-    if (pendingPromise) {
-      cancelPromise(pendingPromise, valueOrPromise)
-    }
-  }
-}
-
-const readAtomState = <Value>(
-  storeState: StoreState,
-  atom: Atom<Value>,
-): AtomState<Value> => {
-  const [[atomRead], storeHooks, mountedAtoms, invalidatedAtoms, changedAtoms] =
-    storeState
-  const atomState = ensureAtomState(storeState, atom)
-  // See if we can skip recomputing this atom.
-  if (isAtomStateInitialized(atomState)) {
-    // If the atom is mounted, we can use cached atom state.
-    // because it should have been updated by dependencies.
-    // We can't use the cache if the atom is invalidated.
-    if (mountedAtoms.has(atom) && invalidatedAtoms.get(atom) !== atomState.n) {
-      return atomState
-    }
-    // Otherwise, check if the dependencies have changed.
-    // If all dependencies haven't changed, we can use the cache.
-    if (
-      Array.from(atomState.d).every(
-        ([a, n]) =>
-          // Recursively, read the atom state of the dependency, and
-          // check if the atom epoch number is unchanged
-          readAtomState(storeState, a).n === n,
-      )
-    ) {
-      return atomState
-    }
-  }
-  // Compute a new state for this atom.
-  atomState.d.clear()
-  let isSync = true
-  const mountDependenciesIfAsync = () => {
-    if (mountedAtoms.has(atom)) {
-      mountDependencies(storeState, atom)
-      recomputeInvalidatedAtoms(storeState)
-      flushCallbacks(storeState)
-    }
-  }
-  const getter: Getter = <V>(a: Atom<V>) => {
-    if (isSelfAtom(atom, a)) {
-      const aState = ensureAtomState(storeState, a)
-      if (!isAtomStateInitialized(aState)) {
-        if (hasInitialValue(a)) {
-          setAtomStateValueOrPromise(storeState, a, a.init)
-        } else {
-          // NOTE invalid derived atoms can reach here
-          throw new Error('no atom init')
+  const flushCallbacks = (): void => {
+    let hasError: true | undefined
+    let error: unknown | undefined
+    const call = (fn: () => void) => {
+      try {
+        fn()
+      } catch (e) {
+        if (!hasError) {
+          hasError = true
+          error = e
         }
       }
-      return returnAtomValue(aState)
     }
-    // a !== atom
-    const aState = readAtomState(storeState, a)
-    try {
-      return returnAtomValue(aState)
-    } finally {
-      atomState.d.set(a, aState.n)
-      if (isPendingPromise(atomState.v)) {
-        addPendingPromiseToDependency(atom, atomState.v, aState)
+    do {
+      if (storeHooks.f) {
+        call(storeHooks.f)
       }
-      mountedAtoms.get(a)?.t.add(atom)
-      if (!isSync) {
-        mountDependenciesIfAsync()
+      const callbacks = new Set<() => void>()
+      const add = callbacks.add.bind(callbacks)
+      changedAtoms.forEach((_, atom) => mountedAtoms.get(atom)?.l.forEach(add))
+      changedAtoms.clear()
+      unmountCallbacks.forEach(add)
+      unmountCallbacks.clear()
+      mountCallbacks.forEach(add)
+      mountCallbacks.clear()
+      callbacks.forEach(call)
+      if (changedAtoms.size) {
+        recomputeInvalidatedAtoms()
       }
+    } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
+    if (hasError) {
+      throw error
     }
   }
-  let controller: AbortController | undefined
-  let setSelf: ((...args: unknown[]) => unknown) | undefined
-  const options = {
-    get signal() {
-      if (!controller) {
-        controller = new AbortController()
+
+  const recomputeInvalidatedAtoms = (): void => {
+    // Step 1: traverse the dependency graph to build the topsorted atom list
+    // We don't bother to check for cycles, which simplifies the algorithm.
+    // This is a topological sort via depth-first search, slightly modified from
+    // what's described here for simplicity and performance reasons:
+    // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+    const topSortedReversed: [
+      atom: AnyAtom,
+      atomState: AtomState,
+      epochNumber: EpochNumber,
+    ][] = []
+    const visiting = new WeakSet<AnyAtom>()
+    const visited = new WeakSet<AnyAtom>()
+    // Visit the root atom. This is the only atom in the dependency graph
+    // without incoming edges, which is one reason we can simplify the algorithm
+    const stack: [a: AnyAtom, aState: AtomState][] = Array.from(changedAtoms)
+    while (stack.length) {
+      const [a, aState] = stack[stack.length - 1]!
+      if (visited.has(a)) {
+        // All dependents have been processed, now process this atom
+        stack.pop()
+        continue
       }
-      return controller.signal
-    },
-    get setSelf() {
-      if (
-        import.meta.env?.MODE !== 'production' &&
-        !isActuallyWritableAtom(atom)
-      ) {
-        console.warn('setSelf function cannot be used with read-only atom')
+      if (visiting.has(a)) {
+        // The algorithm calls for pushing onto the front of the list. For
+        // performance, we will simply push onto the end, and then will iterate in
+        // reverse order later.
+        if (invalidatedAtoms.get(a) === aState.n) {
+          topSortedReversed.push([a, aState, aState.n])
+        } else if (
+          import.meta.env?.MODE !== 'production' &&
+          invalidatedAtoms.has(a)
+        ) {
+          throw new Error('[Bug] invalidated atom exists')
+        }
+        // Atom has been visited but not yet processed
+        visited.add(a)
+        stack.pop()
+        continue
       }
-      if (!setSelf && isActuallyWritableAtom(atom)) {
-        setSelf = (...args) => {
-          if (import.meta.env?.MODE !== 'production' && isSync) {
-            console.warn('setSelf function cannot be called in sync')
-          }
-          if (!isSync) {
-            try {
-              return writeAtomState(storeState, atom, ...args)
-            } finally {
-              recomputeInvalidatedAtoms(storeState)
-              flushCallbacks(storeState)
-            }
-          }
+      visiting.add(a)
+      // Push unvisited dependents onto the stack
+      for (const d of getMountedOrPendingDependents(a)) {
+        if (!visiting.has(d)) {
+          stack.push([d, ensureAtomState(d)])
         }
       }
-      return setSelf
-    },
-  }
-  const prevEpochNumber = atomState.n
-  try {
-    const valueOrPromise = atomRead(atom, getter, options as never)
-    setAtomStateValueOrPromise(storeState, atom, valueOrPromise)
-    if (isPromiseLike(valueOrPromise)) {
-      valueOrPromise.onCancel?.(() => controller?.abort())
-      valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
     }
-    return atomState
-  } catch (error) {
-    delete atomState.v
-    atomState.e = error
-    ++atomState.n
-    return atomState
-  } finally {
-    isSync = false
-    if (
-      prevEpochNumber !== atomState.n &&
-      invalidatedAtoms.get(atom) === prevEpochNumber
-    ) {
-      invalidatedAtoms.set(atom, atomState.n)
-      changedAtoms.set(atom, atomState)
-      storeHooks.c?.(atom)
-    }
-  }
-}
-
-// TODO(daishi): revisit this implementation
-const getMountedOrPendingDependents = (
-  storeState: StoreState,
-  atom: AnyAtom,
-): Set<AnyAtom> => {
-  const mountedAtoms = storeState[2]
-  const atomState = ensureAtomState(storeState, atom)
-  const dependents = new Set<AnyAtom>()
-  for (const a of mountedAtoms.get(atom)?.t || []) {
-    if (mountedAtoms.has(a)) {
-      dependents.add(a)
-    }
-  }
-  for (const atomWithPendingPromise of atomState.p) {
-    dependents.add(atomWithPendingPromise)
-  }
-  return dependents
-}
-
-const invalidateDependents = (storeState: StoreState, atom: AnyAtom): void => {
-  const invalidatedAtoms = storeState[3]
-  const stack: AnyAtom[] = [atom]
-  while (stack.length) {
-    const a = stack.pop()!
-    for (const d of getMountedOrPendingDependents(storeState, a)) {
-      const dState = ensureAtomState(storeState, d)
-      invalidatedAtoms.set(d, dState.n)
-      stack.push(d)
-    }
-  }
-}
-
-const writeAtomState = <Value, Args extends unknown[], Result>(
-  storeState: StoreState,
-  atom: WritableAtom<Value, Args, Result>,
-  ...args: Args
-): Result => {
-  const [[, atomWrite], storeHooks, , , changedAtoms] = storeState
-  let isSync = true
-  const getter: Getter = <V>(a: Atom<V>) =>
-    returnAtomValue(readAtomState(storeState, a))
-  const setter: Setter = <V, As extends unknown[], R>(
-    a: WritableAtom<V, As, R>,
-    ...args: As
-  ) => {
-    const aState = ensureAtomState(storeState, a)
-    try {
-      if (isSelfAtom(atom, a)) {
-        if (!hasInitialValue(a)) {
-          // NOTE technically possible but restricted as it may cause bugs
-          throw new Error('atom not writable')
+    // Step 2: use the topSortedReversed atom list to recompute all affected atoms
+    // Track what's changed, so that we can short circuit when possible
+    for (let i = topSortedReversed.length - 1; i >= 0; --i) {
+      const [a, aState, prevEpochNumber] = topSortedReversed[i]!
+      let hasChangedDeps = false
+      for (const dep of aState.d.keys()) {
+        if (dep !== a && changedAtoms.has(dep)) {
+          hasChangedDeps = true
+          break
         }
-        const prevEpochNumber = aState.n
-        const v = args[0] as V
-        setAtomStateValueOrPromise(storeState, a, v)
-        mountDependencies(storeState, a)
+      }
+      if (hasChangedDeps) {
+        readAtomState(a)
+        mountDependencies(a)
         if (prevEpochNumber !== aState.n) {
           changedAtoms.set(a, aState)
           storeHooks.c?.(a)
-          invalidateDependents(storeState, a)
-        }
-        return undefined as R
-      } else {
-        return writeAtomState(storeState, a, ...args)
-      }
-    } finally {
-      if (!isSync) {
-        recomputeInvalidatedAtoms(storeState)
-        flushCallbacks(storeState)
-      }
-    }
-  }
-  try {
-    return atomWrite(atom, getter, setter, ...args)
-  } finally {
-    isSync = false
-  }
-}
-
-const mountDependencies = (storeState: StoreState, atom: AnyAtom): void => {
-  const [, storeHooks, mountedAtoms, , changedAtoms] = storeState
-  const atomState = ensureAtomState(storeState, atom)
-  const mounted = mountedAtoms.get(atom)
-  if (mounted && !isPendingPromise(atomState.v)) {
-    for (const [a, n] of atomState.d) {
-      if (!mounted.d.has(a)) {
-        const aState = ensureAtomState(storeState, a)
-        const aMounted = mountAtom(storeState, a)
-        aMounted.t.add(atom)
-        mounted.d.add(a)
-        if (n !== aState.n) {
-          changedAtoms.set(a, aState)
-          storeHooks.c?.(a)
-          invalidateDependents(storeState, a)
         }
       }
+      invalidatedAtoms.delete(a)
     }
-    for (const a of mounted.d || []) {
-      if (!atomState.d.has(a)) {
-        mounted.d.delete(a)
-        const aMounted = unmountAtom(storeState, a)
-        aMounted?.t.delete(atom)
+  }
+
+  // TODO(daishi): revisit this implementation
+  const setAtomStateValueOrPromise = (
+    atom: AnyAtom,
+    valueOrPromise: unknown,
+  ): void => {
+    const atomState = ensureAtomState(atom)
+    const hasPrevValue = 'v' in atomState
+    const prevValue = atomState.v
+    const pendingPromise = isPendingPromise(atomState.v) ? atomState.v : null
+    if (isPromiseLike(valueOrPromise)) {
+      patchPromiseForCancelability(valueOrPromise)
+      for (const a of atomState.d.keys()) {
+        addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
+      }
+    }
+    atomState.v = valueOrPromise
+    delete atomState.e
+    if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
+      ++atomState.n
+      if (pendingPromise) {
+        cancelPromise(pendingPromise, valueOrPromise)
       }
     }
   }
-}
 
-const mountAtom = <Value>(
-  storeState: StoreState,
-  atom: Atom<Value>,
-): Mounted => {
-  const [[, , , atomOnMount], storeHooks, mountedAtoms, , , mountCallbacks] =
-    storeState
-  const atomState = ensureAtomState(storeState, atom)
-  let mounted = mountedAtoms.get(atom)
-  if (!mounted) {
-    // recompute atom state
-    readAtomState(storeState, atom)
-    // mount dependencies first
-    for (const a of atomState.d.keys()) {
-      const aMounted = mountAtom(storeState, a)
-      aMounted.t.add(atom)
+  const readAtomState = <Value>(atom: Atom<Value>): AtomState<Value> => {
+    const atomState = ensureAtomState(atom)
+    // See if we can skip recomputing this atom.
+    if (isAtomStateInitialized(atomState)) {
+      // If the atom is mounted, we can use cached atom state.
+      // because it should have been updated by dependencies.
+      // We can't use the cache if the atom is invalidated.
+      if (
+        mountedAtoms.has(atom) &&
+        invalidatedAtoms.get(atom) !== atomState.n
+      ) {
+        return atomState
+      }
+      // Otherwise, check if the dependencies have changed.
+      // If all dependencies haven't changed, we can use the cache.
+      if (
+        Array.from(atomState.d).every(
+          ([a, n]) =>
+            // Recursively, read the atom state of the dependency, and
+            // check if the atom epoch number is unchanged
+            readAtomState(a).n === n,
+        )
+      ) {
+        return atomState
+      }
     }
-    // mount self
-    mounted = {
-      l: new Set(),
-      d: new Set(atomState.d.keys()),
-      t: new Set(),
+    // Compute a new state for this atom.
+    atomState.d.clear()
+    let isSync = true
+    const mountDependenciesIfAsync = () => {
+      if (mountedAtoms.has(atom)) {
+        mountDependencies(atom)
+        recomputeInvalidatedAtoms()
+        flushCallbacks()
+      }
     }
-    mountedAtoms.set(atom, mounted)
-    storeHooks.m?.(atom)
-    if (isActuallyWritableAtom(atom)) {
-      const processOnMount = () => {
-        let isSync = true
-        const setAtom = (...args: unknown[]) => {
-          try {
-            return writeAtomState(storeState, atom, ...args)
-          } finally {
-            if (!isSync) {
-              recomputeInvalidatedAtoms(storeState)
-              flushCallbacks(storeState)
-            }
+    const getter: Getter = <V>(a: Atom<V>) => {
+      if (isSelfAtom(atom, a)) {
+        const aState = ensureAtomState(a)
+        if (!isAtomStateInitialized(aState)) {
+          if (hasInitialValue(a)) {
+            setAtomStateValueOrPromise(a, a.init)
+          } else {
+            // NOTE invalid derived atoms can reach here
+            throw new Error('no atom init')
           }
         }
-        try {
-          const onUnmount = atomOnMount(atom, setAtom)
-          if (onUnmount) {
-            mounted!.u = () => {
-              isSync = true
+        return returnAtomValue(aState)
+      }
+      // a !== atom
+      const aState = readAtomState(a)
+      try {
+        return returnAtomValue(aState)
+      } finally {
+        atomState.d.set(a, aState.n)
+        if (isPendingPromise(atomState.v)) {
+          addPendingPromiseToDependency(atom, atomState.v, aState)
+        }
+        mountedAtoms.get(a)?.t.add(atom)
+        if (!isSync) {
+          mountDependenciesIfAsync()
+        }
+      }
+    }
+    let controller: AbortController | undefined
+    let setSelf: ((...args: unknown[]) => unknown) | undefined
+    const options = {
+      get signal() {
+        if (!controller) {
+          controller = new AbortController()
+        }
+        return controller.signal
+      },
+      get setSelf() {
+        if (
+          import.meta.env?.MODE !== 'production' &&
+          !isActuallyWritableAtom(atom)
+        ) {
+          console.warn('setSelf function cannot be used with read-only atom')
+        }
+        if (!setSelf && isActuallyWritableAtom(atom)) {
+          setSelf = (...args) => {
+            if (import.meta.env?.MODE !== 'production' && isSync) {
+              console.warn('setSelf function cannot be called in sync')
+            }
+            if (!isSync) {
               try {
-                onUnmount()
+                return writeAtomState(atom, ...args)
               } finally {
-                isSync = false
+                recomputeInvalidatedAtoms()
+                flushCallbacks()
               }
             }
           }
-        } finally {
-          isSync = false
+        }
+        return setSelf
+      },
+    }
+    const prevEpochNumber = atomState.n
+    try {
+      const valueOrPromise = atomRead(atom, getter, options as never)
+      setAtomStateValueOrPromise(atom, valueOrPromise)
+      if (isPromiseLike(valueOrPromise)) {
+        valueOrPromise.onCancel?.(() => controller?.abort())
+        valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
+      }
+      return atomState
+    } catch (error) {
+      delete atomState.v
+      atomState.e = error
+      ++atomState.n
+      return atomState
+    } finally {
+      isSync = false
+      if (
+        prevEpochNumber !== atomState.n &&
+        invalidatedAtoms.get(atom) === prevEpochNumber
+      ) {
+        invalidatedAtoms.set(atom, atomState.n)
+        changedAtoms.set(atom, atomState)
+        storeHooks.c?.(atom)
+      }
+    }
+  }
+
+  // TODO(daishi): revisit this implementation
+  const getMountedOrPendingDependents = (atom: AnyAtom): Set<AnyAtom> => {
+    const atomState = ensureAtomState(atom)
+    const dependents = new Set<AnyAtom>()
+    for (const a of mountedAtoms.get(atom)?.t || []) {
+      if (mountedAtoms.has(a)) {
+        dependents.add(a)
+      }
+    }
+    for (const atomWithPendingPromise of atomState.p) {
+      dependents.add(atomWithPendingPromise)
+    }
+    return dependents
+  }
+
+  const invalidateDependents = (atom: AnyAtom): void => {
+    const stack: AnyAtom[] = [atom]
+    while (stack.length) {
+      const a = stack.pop()!
+      for (const d of getMountedOrPendingDependents(a)) {
+        const dState = ensureAtomState(d)
+        invalidatedAtoms.set(d, dState.n)
+        stack.push(d)
+      }
+    }
+  }
+
+  const writeAtomState = <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...args: Args
+  ): Result => {
+    let isSync = true
+    const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
+    const setter: Setter = <V, As extends unknown[], R>(
+      a: WritableAtom<V, As, R>,
+      ...args: As
+    ) => {
+      const aState = ensureAtomState(a)
+      try {
+        if (isSelfAtom(atom, a)) {
+          if (!hasInitialValue(a)) {
+            // NOTE technically possible but restricted as it may cause bugs
+            throw new Error('atom not writable')
+          }
+          const prevEpochNumber = aState.n
+          const v = args[0] as V
+          setAtomStateValueOrPromise(a, v)
+          mountDependencies(a)
+          if (prevEpochNumber !== aState.n) {
+            changedAtoms.set(a, aState)
+            storeHooks.c?.(a)
+            invalidateDependents(a)
+          }
+          return undefined as R
+        } else {
+          return writeAtomState(a, ...args)
+        }
+      } finally {
+        if (!isSync) {
+          recomputeInvalidatedAtoms()
+          flushCallbacks()
         }
       }
-      mountCallbacks.add(processOnMount)
+    }
+    try {
+      return atomWrite(atom, getter, setter, ...args)
+    } finally {
+      isSync = false
     }
   }
-  return mounted
-}
 
-const unmountAtom = <Value>(
-  storeState: StoreState,
-  atom: Atom<Value>,
-): Mounted | undefined => {
-  const [, storeHooks, mountedAtoms, , , , unmountCallbacks] = storeState
-  const atomState = ensureAtomState(storeState, atom)
-  let mounted = mountedAtoms.get(atom)
-  if (
-    mounted &&
-    !mounted.l.size &&
-    !Array.from(mounted.t).some((a) => mountedAtoms.get(a)?.d.has(atom))
-  ) {
-    // unmount self
-    if (mounted.u) {
-      unmountCallbacks.add(mounted.u)
+  const mountDependencies = (atom: AnyAtom): void => {
+    const atomState = ensureAtomState(atom)
+    const mounted = mountedAtoms.get(atom)
+    if (mounted && !isPendingPromise(atomState.v)) {
+      for (const [a, n] of atomState.d) {
+        if (!mounted.d.has(a)) {
+          const aState = ensureAtomState(a)
+          const aMounted = mountAtom(a)
+          aMounted.t.add(atom)
+          mounted.d.add(a)
+          if (n !== aState.n) {
+            changedAtoms.set(a, aState)
+            storeHooks.c?.(a)
+            invalidateDependents(a)
+          }
+        }
+      }
+      for (const a of mounted.d || []) {
+        if (!atomState.d.has(a)) {
+          mounted.d.delete(a)
+          const aMounted = unmountAtom(a)
+          aMounted?.t.delete(atom)
+        }
+      }
     }
-    mounted = undefined
-    mountedAtoms.delete(atom)
-    storeHooks.u?.(atom)
-    // unmount dependencies
-    for (const a of atomState.d.keys()) {
-      const aMounted = unmountAtom(storeState, a)
-      aMounted?.t.delete(atom)
-    }
-    return undefined
   }
-  return mounted
+
+  const mountAtom = <Value>(atom: Atom<Value>): Mounted => {
+    const atomState = ensureAtomState(atom)
+    let mounted = mountedAtoms.get(atom)
+    if (!mounted) {
+      // recompute atom state
+      readAtomState(atom)
+      // mount dependencies first
+      for (const a of atomState.d.keys()) {
+        const aMounted = mountAtom(a)
+        aMounted.t.add(atom)
+      }
+      // mount self
+      mounted = {
+        l: new Set(),
+        d: new Set(atomState.d.keys()),
+        t: new Set(),
+      }
+      mountedAtoms.set(atom, mounted)
+      storeHooks.m?.(atom)
+      if (isActuallyWritableAtom(atom)) {
+        const processOnMount = () => {
+          let isSync = true
+          const setAtom = (...args: unknown[]) => {
+            try {
+              return writeAtomState(atom, ...args)
+            } finally {
+              if (!isSync) {
+                recomputeInvalidatedAtoms()
+                flushCallbacks()
+              }
+            }
+          }
+          try {
+            const onUnmount = atomOnMount(atom, setAtom)
+            if (onUnmount) {
+              mounted!.u = () => {
+                isSync = true
+                try {
+                  onUnmount()
+                } finally {
+                  isSync = false
+                }
+              }
+            }
+          } finally {
+            isSync = false
+          }
+        }
+        mountCallbacks.add(processOnMount)
+      }
+    }
+    return mounted
+  }
+
+  const unmountAtom = <Value>(atom: Atom<Value>): Mounted | undefined => {
+    const atomState = ensureAtomState(atom)
+    let mounted = mountedAtoms.get(atom)
+    if (
+      mounted &&
+      !mounted.l.size &&
+      !Array.from(mounted.t).some((a) => mountedAtoms.get(a)?.d.has(atom))
+    ) {
+      // unmount self
+      if (mounted.u) {
+        unmountCallbacks.add(mounted.u)
+      }
+      mounted = undefined
+      mountedAtoms.delete(atom)
+      storeHooks.u?.(atom)
+      // unmount dependencies
+      for (const a of atomState.d.keys()) {
+        const aMounted = unmountAtom(a)
+        aMounted?.t.delete(atom)
+      }
+      return undefined
+    }
+    return mounted
+  }
+
+  return [
+    // main functions for buildStore
+    flushCallbacks,
+    recomputeInvalidatedAtoms,
+    readAtomState,
+    writeAtomState,
+    mountAtom,
+    unmountAtom,
+    // exposing other functions for ecosystem
+    ensureAtomState,
+    setAtomStateValueOrPromise,
+    getMountedOrPendingDependents,
+    invalidateDependents,
+    mountDependencies,
+  ] as const
 }
 
 //
@@ -729,45 +720,48 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
   return notify as never
 }
 
-const initializeStoreHooks = (storeState: StoreState): Required<StoreHooks> => {
+const initializeStoreHooks = (storeHooks: StoreHooks): Required<StoreHooks> => {
   type Mutable<T> = { -readonly [P in keyof T]: T[P] }
-  const storeHooks = storeState[1] as Mutable<Required<StoreHooks>>
-  storeHooks.c ||= createStoreHookForAtoms()
-  storeHooks.m ||= createStoreHookForAtoms()
-  storeHooks.u ||= createStoreHookForAtoms()
-  storeHooks.f ||= createStoreHook()
-  return storeHooks
+  type SH = Mutable<Required<StoreHooks>>
+  ;(storeHooks as SH).c ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).m ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).u ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).f ||= createStoreHook()
+  return storeHooks as never
 }
 
-type StoreArgs = [
-  atomRead: <Value>(
-    atom: Atom<Value>,
-    ...params: Parameters<Atom<Value>['read']>
-  ) => Value,
-  atomWrite: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
-  ) => Result,
-  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
-  atomOnMount: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    setAtom: (...args: Args) => Result,
-  ) => OnUnmount | void,
-]
+//
+// Main function
+//
 
-const STORE_STATE: unique symbol = Symbol() // no description intentionally
+type StoreArgs = Readonly<
+  [
+    atomRead: <Value>(
+      atom: Atom<Value>,
+      ...params: Parameters<Atom<Value>['read']>
+    ) => Value,
+    atomWrite: <Value, Args extends unknown[], Result>(
+      atom: WritableAtom<Value, Args, Result>,
+      ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
+    ) => Result,
+    atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void,
+    atomOnMount: <Value, Args extends unknown[], Result>(
+      atom: WritableAtom<Value, Args, Result>,
+      setAtom: (...args: Args) => Result,
+    ) => OnUnmount | void,
+    storeHooks: StoreHooks,
+    atomStateMap: AtomStateMap,
+    mountedAtoms: WeakMap<AnyAtom, Mounted>,
+    invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
+    changedAtoms: Map<AnyAtom, AtomState>,
+    mountCallbacks: Set<() => void>,
+    unmountCallbacks: Set<() => void>,
+  ]
+>
 
-type StoreState = [
-  storeArgs: StoreArgs,
-  storeHooks: StoreHooks,
-  mountedAtoms: WeakMap<AnyAtom, Mounted>,
-  invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
-  changedAtoms: Map<AnyAtom, INTERNAL_AtomState>,
-  mountCallbacks: Set<() => void>,
-  unmountCallbacks: Set<() => void>,
-  atomStateMap: AtomStateMap,
-  getStore: () => Store, // HACK is there a better way?
-]
+const STORE_ARGS: unique symbol = Symbol() // no description intentionally
+
+const getStoreArgs = (store: unknown): StoreArgs => (store as Store)[STORE_ARGS]
 
 // Do not export this type.
 type Store = {
@@ -777,91 +771,63 @@ type Store = {
     ...args: Args
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
-  [STORE_STATE]?: StoreState
+  [STORE_ARGS]: StoreArgs
 }
 
-//
-// Internal functions
-//
-
-export const INTERNAL_getStoreStateRev1 = (store: unknown): StoreState =>
-  (store as Store)[STORE_STATE]!
-
-export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
-  const storeHooks: StoreHooks = {}
-
-  // These are store state.
-  const mountedAtoms = new WeakMap<AnyAtom, Mounted>()
-  const invalidatedAtoms = new WeakMap<AnyAtom, EpochNumber>()
-  const changedAtoms = new Map<AnyAtom, INTERNAL_AtomState>()
-  const mountCallbacks = new Set<() => void>()
-  const unmountCallbacks = new Set<() => void>()
-  const atomStateMap = new WeakMap<AnyAtom, AtomState>()
-
-  const storeState: StoreState = [
-    storeArgs,
-    storeHooks,
-    mountedAtoms,
-    invalidatedAtoms,
-    changedAtoms,
-    mountCallbacks,
-    unmountCallbacks,
-    atomStateMap,
-    () => store,
-  ]
+const buildStore = (...storeArgs: StoreArgs): Store => {
+  const [
+    flushCallbacks,
+    recomputeInvalidatedAtoms,
+    readAtomState,
+    writeAtomState,
+    mountAtom,
+    unmountAtom,
+  ] = createBuildingBlocks(storeArgs, () => store as Store)
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(storeState, atom))
+    returnAtomValue(readAtomState(atom))
 
   const writeAtom = <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ): Result => {
     try {
-      return writeAtomState(storeState, atom, ...args)
+      return writeAtomState(atom, ...args)
     } finally {
-      recomputeInvalidatedAtoms(storeState)
-      flushCallbacks(storeState)
+      recomputeInvalidatedAtoms()
+      flushCallbacks()
     }
   }
 
   const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    const mounted = mountAtom(storeState, atom)
+    const mounted = mountAtom(atom)
     const listeners = mounted.l
     listeners.add(listener)
-    flushCallbacks(storeState)
+    flushCallbacks()
     return () => {
       listeners.delete(listener)
-      unmountAtom(storeState, atom)
-      flushCallbacks(storeState)
+      unmountAtom(atom)
+      flushCallbacks()
     }
   }
 
-  const store: Store = {
+  const store: Omit<Store, typeof STORE_ARGS> = {
     get: readAtom,
     set: writeAtom,
     sub: subscribeAtom,
   }
-  Object.defineProperty(store, STORE_STATE, { value: storeState })
-  return store
+  Object.defineProperty(store, STORE_ARGS, { value: storeArgs })
+  return store as Store
 }
 
-export const INTERNAL_ensureAtomState: typeof ensureAtomState = ensureAtomState
-export const INTERNAL_flushCallbacks: typeof flushCallbacks = flushCallbacks
-export const INTERNAL_recomputeInvalidatedAtoms: typeof recomputeInvalidatedAtoms =
-  recomputeInvalidatedAtoms
-export const INTERNAL_setAtomStateValueOrPromise: typeof setAtomStateValueOrPromise =
-  setAtomStateValueOrPromise
-export const INTERNAL_readAtomState: typeof readAtomState = readAtomState
-export const INTERNAL_getMountedOrPendingDependents: typeof getMountedOrPendingDependents =
-  getMountedOrPendingDependents
-export const INTERNAL_invalidateDependents: typeof invalidateDependents =
-  invalidateDependents
-export const INTERNAL_writeAtomState: typeof writeAtomState = writeAtomState
-export const INTERNAL_mountDependencies: typeof mountDependencies =
-  mountDependencies
-export const INTERNAL_mountAtom: typeof mountAtom = mountAtom
-export const INTERNAL_unmountAtom: typeof unmountAtom = unmountAtom
+//
+// Export internal functions
+//
+
+export const INTERNAL_buildStore: typeof buildStore = buildStore
+export const INTERNAL_getStoreArgsRev1: typeof getStoreArgs = getStoreArgs
+// TODO type it
+export const INTERNAL_createBuildingBlocksRev1: unknown = createBuildingBlocks
 export const INTERNAL_initializeStoreHooks: typeof initializeStoreHooks =
   initializeStoreHooks
 
