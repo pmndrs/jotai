@@ -803,31 +803,19 @@ const STORE_ARGS: unique symbol = Symbol() // no description intentionally
 
 const getStoreArgs = (store: unknown): StoreArgs => (store as Store)[STORE_ARGS]
 
-const createStoreArgs = (
-  atomStateMap: AtomStateMap = new WeakMap(),
-  mountedAtoms: WeakMap<AnyAtom, Mounted> = new WeakMap(),
-  invalidatedAtoms: WeakMap<AnyAtom, EpochNumber> = new WeakMap(),
-  changedAtoms: Set<AnyAtom> = new Set(),
-  mountCallbacks: Set<() => void> = new Set(),
-  unmountCallbacks: Set<() => void> = new Set(),
-  storeHooks: StoreHooks = {},
-  atomRead: <Value>(
-    atom: Atom<Value>,
-    ...params: Parameters<Atom<Value>['read']>
-  ) => Value = (atom, ...params) => atom.read(...params),
-  atomWrite: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
-  ) => Result = (atom, ...params) => atom.write(...params),
-  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void = (
-    atom,
-    ...params
-  ) => atom.unstable_onInit?.(...params),
-  atomOnMount: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    setAtom: (...args: Args) => Result,
-  ) => OnUnmount | void = (atom, ...params) => atom.onMount?.(...params),
-): StoreArgs => [
+const createStoreArgs: (...storeArgs: Partial<StoreArgs>) => StoreArgs = (
+  atomStateMap = new WeakMap(),
+  mountedAtoms = new WeakMap(),
+  invalidatedAtoms = new WeakMap(),
+  changedAtoms = new Set(),
+  mountCallbacks = new Set(),
+  unmountCallbacks = new Set(),
+  storeHooks = {},
+  atomRead = (atom, ...params) => atom.read(...params),
+  atomWrite = (atom, ...params) => atom.write(...params),
+  atomOnInit = (atom, ...params) => atom.unstable_onInit?.(...params),
+  atomOnMount = (atom, ...params) => atom.onMount?.(...params),
+) => [
   atomStateMap,
   mountedAtoms,
   invalidatedAtoms,
