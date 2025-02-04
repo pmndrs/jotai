@@ -62,7 +62,9 @@ type AtomStateMap = {
   set(atom: AnyAtom, atomState: AtomState): void
 }
 
+export type INTERNAL_Mounted = Mounted
 export type INTERNAL_AtomState<Value = AnyValue> = AtomState<Value>
+export type INTERNAL_AtomStateMap = AtomStateMap
 
 //
 // Some util functions
@@ -758,7 +760,7 @@ const initializeStoreHooks = (storeHooks: StoreHooks): Required<StoreHooks> => {
 }
 
 //
-// Main function
+// Main functions
 //
 
 type StoreArgs = Readonly<
