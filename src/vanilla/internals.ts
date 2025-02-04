@@ -57,6 +57,11 @@ type AtomState<Value = AnyValue> = {
   e?: AnyError
 }
 
+type AtomStateMap = {
+  get(atom: AnyAtom): AtomState | undefined
+  set(atom: AnyAtom, atomState: AtomState): void
+}
+
 export type INTERNAL_AtomState<Value = AnyValue> = AtomState<Value>
 
 //
@@ -159,11 +164,29 @@ const addPendingPromiseToDependency = (
 // Some building-block functions
 //
 
+const ensureAtomState = <Value>(
+  storeState: StoreState,
+  atom: Atom<Value>,
+): AtomState<Value> => {
+  const [, , atomOnInit] = storeState[0]
+  const atomStateMap = storeState[7]
+  const getStore = storeState[8]
+  if (import.meta.env?.MODE !== 'production' && !atom) {
+    throw new Error('Atom is undefined or null')
+  }
+  let atomState = atomStateMap.get(atom)
+  if (!atomState) {
+    atomState = { d: new Map(), p: new Set(), n: 0 }
+    atomStateMap.set(atom, atomState)
+    atomOnInit?.(atom, getStore())
+  }
+  return atomState as never
+}
+
 const flushCallbacks = (storeState: StoreState): void => {
   const [
     ,
     storeHooks,
-    ,
     mountedAtoms,
     ,
     changedAtoms,
@@ -205,8 +228,7 @@ const flushCallbacks = (storeState: StoreState): void => {
 }
 
 const recomputeInvalidatedAtoms = (storeState: StoreState): void => {
-  const [, storeHooks, ensureAtomState, , invalidatedAtoms, changedAtoms] =
-    storeState
+  const [, storeHooks, , invalidatedAtoms, changedAtoms] = storeState
   // Step 1: traverse the dependency graph to build the topsorted atom list
   // We don't bother to check for cycles, which simplifies the algorithm.
   // This is a topological sort via depth-first search, slightly modified from
@@ -250,7 +272,7 @@ const recomputeInvalidatedAtoms = (storeState: StoreState): void => {
     // Push unvisited dependents onto the stack
     for (const d of getMountedOrPendingDependents(storeState, a)) {
       if (!visiting.has(d)) {
-        stack.push([d, ensureAtomState(d)])
+        stack.push([d, ensureAtomState(storeState, d)])
       }
     }
   }
@@ -283,15 +305,18 @@ const setAtomStateValueOrPromise = (
   atom: AnyAtom,
   valueOrPromise: unknown,
 ): void => {
-  const [, , ensureAtomState] = storeState
-  const atomState = ensureAtomState(atom)
+  const atomState = ensureAtomState(storeState, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
   const pendingPromise = isPendingPromise(atomState.v) ? atomState.v : null
   if (isPromiseLike(valueOrPromise)) {
     patchPromiseForCancelability(valueOrPromise)
     for (const a of atomState.d.keys()) {
-      addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
+      addPendingPromiseToDependency(
+        atom,
+        valueOrPromise,
+        ensureAtomState(storeState, a),
+      )
     }
   }
   atomState.v = valueOrPromise
@@ -308,15 +333,9 @@ const readAtomState = <Value>(
   storeState: StoreState,
   atom: Atom<Value>,
 ): AtomState<Value> => {
-  const [
-    [, , atomRead],
-    storeHooks,
-    ensureAtomState,
-    mountedAtoms,
-    invalidatedAtoms,
-    changedAtoms,
-  ] = storeState
-  const atomState = ensureAtomState(atom)
+  const [[atomRead], storeHooks, mountedAtoms, invalidatedAtoms, changedAtoms] =
+    storeState
+  const atomState = ensureAtomState(storeState, atom)
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
     // If the atom is mounted, we can use cached atom state.
@@ -350,7 +369,7 @@ const readAtomState = <Value>(
   }
   const getter: Getter = <V>(a: Atom<V>) => {
     if (isSelfAtom(atom, a)) {
-      const aState = ensureAtomState(a)
+      const aState = ensureAtomState(storeState, a)
       if (!isAtomStateInitialized(aState)) {
         if (hasInitialValue(a)) {
           setAtomStateValueOrPromise(storeState, a, a.init)
@@ -442,8 +461,8 @@ const getMountedOrPendingDependents = (
   storeState: StoreState,
   atom: AnyAtom,
 ): Set<AnyAtom> => {
-  const [, , ensureAtomState, mountedAtoms] = storeState
-  const atomState = ensureAtomState(atom)
+  const mountedAtoms = storeState[2]
+  const atomState = ensureAtomState(storeState, atom)
   const dependents = new Set<AnyAtom>()
   for (const a of mountedAtoms.get(atom)?.t || []) {
     if (mountedAtoms.has(a)) {
@@ -457,12 +476,12 @@ const getMountedOrPendingDependents = (
 }
 
 const invalidateDependents = (storeState: StoreState, atom: AnyAtom): void => {
-  const [, , ensureAtomState, , invalidatedAtoms] = storeState
+  const invalidatedAtoms = storeState[3]
   const stack: AnyAtom[] = [atom]
   while (stack.length) {
     const a = stack.pop()!
     for (const d of getMountedOrPendingDependents(storeState, a)) {
-      const dState = ensureAtomState(d)
+      const dState = ensureAtomState(storeState, d)
       invalidatedAtoms.set(d, dState.n)
       stack.push(d)
     }
@@ -474,8 +493,7 @@ const writeAtomState = <Value, Args extends unknown[], Result>(
   atom: WritableAtom<Value, Args, Result>,
   ...args: Args
 ): Result => {
-  const [[, , , atomWrite], storeHooks, ensureAtomState, , , changedAtoms] =
-    storeState
+  const [[, atomWrite], storeHooks, , , changedAtoms] = storeState
   let isSync = true
   const getter: Getter = <V>(a: Atom<V>) =>
     returnAtomValue(readAtomState(storeState, a))
@@ -483,7 +501,7 @@ const writeAtomState = <Value, Args extends unknown[], Result>(
     a: WritableAtom<V, As, R>,
     ...args: As
   ) => {
-    const aState = ensureAtomState(a)
+    const aState = ensureAtomState(storeState, a)
     try {
       if (isSelfAtom(atom, a)) {
         if (!hasInitialValue(a)) {
@@ -518,14 +536,13 @@ const writeAtomState = <Value, Args extends unknown[], Result>(
 }
 
 const mountDependencies = (storeState: StoreState, atom: AnyAtom): void => {
-  const [, storeHooks, ensureAtomState, mountedAtoms, , changedAtoms] =
-    storeState
-  const atomState = ensureAtomState(atom)
+  const [, storeHooks, mountedAtoms, , changedAtoms] = storeState
+  const atomState = ensureAtomState(storeState, atom)
   const mounted = mountedAtoms.get(atom)
   if (mounted && !isPendingPromise(atomState.v)) {
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
-        const aState = ensureAtomState(a)
+        const aState = ensureAtomState(storeState, a)
         const aMounted = mountAtom(storeState, a)
         aMounted.t.add(atom)
         mounted.d.add(a)
@@ -550,16 +567,9 @@ const mountAtom = <Value>(
   storeState: StoreState,
   atom: Atom<Value>,
 ): Mounted => {
-  const [
-    [, , , , , atomOnMount],
-    storeHooks,
-    ensureAtomState,
-    mountedAtoms,
-    ,
-    ,
-    mountCallbacks,
-  ] = storeState
-  const atomState = ensureAtomState(atom)
+  const [[, , , atomOnMount], storeHooks, mountedAtoms, , , mountCallbacks] =
+    storeState
+  const atomState = ensureAtomState(storeState, atom)
   let mounted = mountedAtoms.get(atom)
   if (!mounted) {
     // recompute atom state
@@ -616,9 +626,8 @@ const unmountAtom = <Value>(
   storeState: StoreState,
   atom: Atom<Value>,
 ): Mounted | undefined => {
-  const [, storeHooks, ensureAtomState, mountedAtoms, , , , unmountCallbacks] =
-    storeState
-  const atomState = ensureAtomState(atom)
+  const [, storeHooks, mountedAtoms, , , , unmountCallbacks] = storeState
+  const atomState = ensureAtomState(storeState, atom)
   let mounted = mountedAtoms.get(atom)
   if (
     mounted &&
@@ -731,8 +740,6 @@ const initializeStoreHooks = (storeState: StoreState): Required<StoreHooks> => {
 }
 
 type StoreArgs = [
-  getAtomState: <Value>(atom: Atom<Value>) => AtomState<Value> | undefined,
-  setAtomState: <Value>(atom: Atom<Value>, atomState: AtomState<Value>) => void,
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -750,15 +757,16 @@ type StoreArgs = [
 
 const STORE_STATE: unique symbol = Symbol() // no description intentionally
 
-type StoreState = readonly [
+type StoreState = [
   storeArgs: StoreArgs,
   storeHooks: StoreHooks,
-  ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
   mountedAtoms: WeakMap<AnyAtom, Mounted>,
   invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
   changedAtoms: Map<AnyAtom, INTERNAL_AtomState>,
   mountCallbacks: Set<() => void>,
   unmountCallbacks: Set<() => void>,
+  atomStateMap: AtomStateMap,
+  getStore: () => Store, // HACK is there a better way?
 ]
 
 // Do not export this type.
@@ -780,38 +788,26 @@ export const INTERNAL_getStoreStateRev1 = (store: unknown): StoreState =>
   (store as Store)[STORE_STATE]!
 
 export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
-  const [getAtomState, setAtomState, , , atomOnInit] = storeArgs
   const storeHooks: StoreHooks = {}
-  const ensureAtomState = <Value>(atom: Atom<Value>) => {
-    if (import.meta.env?.MODE !== 'production' && !atom) {
-      throw new Error('Atom is undefined or null')
-    }
-    let atomState = getAtomState(atom)
-    if (!atomState) {
-      atomState = { d: new Map(), p: new Set(), n: 0 }
-      setAtomState(atom, atomState)
-      atomOnInit?.(atom, store)
-    }
-    return atomState
-  }
 
   // These are store state.
-  // As they are not garbage collectable, they shouldn't be mutated during atom read.
   const mountedAtoms = new WeakMap<AnyAtom, Mounted>()
   const invalidatedAtoms = new WeakMap<AnyAtom, EpochNumber>()
   const changedAtoms = new Map<AnyAtom, INTERNAL_AtomState>()
   const mountCallbacks = new Set<() => void>()
   const unmountCallbacks = new Set<() => void>()
+  const atomStateMap = new WeakMap<AnyAtom, AtomState>()
 
   const storeState: StoreState = [
     storeArgs,
     storeHooks,
-    ensureAtomState,
     mountedAtoms,
     invalidatedAtoms,
     changedAtoms,
     mountCallbacks,
     unmountCallbacks,
+    atomStateMap,
+    () => store,
   ]
 
   const readAtom = <Value>(atom: Atom<Value>): Value =>
@@ -850,6 +846,7 @@ export const INTERNAL_buildStore = (...storeArgs: StoreArgs): Store => {
   return store
 }
 
+export const INTERNAL_ensureAtomState: typeof ensureAtomState = ensureAtomState
 export const INTERNAL_flushCallbacks: typeof flushCallbacks = flushCallbacks
 export const INTERNAL_recomputeInvalidatedAtoms: typeof recomputeInvalidatedAtoms =
   recomputeInvalidatedAtoms

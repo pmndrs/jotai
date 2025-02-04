@@ -8,14 +8,20 @@ import {
 } from 'jotai/vanilla/internals'
 
 type StoreArgs = Parameters<typeof INTERNAL_buildStore>
+type AtomStateMapType = ReturnType<typeof INTERNAL_getStoreState>[7]
 
 const deriveStore = (
   store: ReturnType<typeof createStore>,
-  enhanceStoreArgs: (...storeArgs: StoreArgs) => StoreArgs,
+  enhanceAtomStateMap: (atomStateMap: AtomStateMapType) => AtomStateMapType,
+  enhanceStoreArgs: (...storeArgs: StoreArgs) => StoreArgs = (...args) => args,
 ): ReturnType<typeof createStore> => {
-  const [storeArgs] = INTERNAL_getStoreState(store)
+  const storeState = INTERNAL_getStoreState(store)
+  const atomStateMap = storeState[7]
+  const storeArgs = storeState[0]
   const newStoreArgs = (enhanceStoreArgs as any)(...storeArgs)
   const derivedStore = (INTERNAL_buildStore as any)(...newStoreArgs)
+  const derivedStoreState = INTERNAL_getStoreState(derivedStore)
+  derivedStoreState[7] = enhanceAtomStateMap(atomStateMap)
   return derivedStore
 }
 
@@ -1101,36 +1107,21 @@ it('should call onInit only once per store', () => {
   testInStore(createStore())
   const store = testInStore(createStore())
   testInStore(
-    deriveStore(
-      store,
-      (
-        getAtomState,
-        setAtomState,
-        atomRead,
-        atomWrite,
-        atomOnInit,
-        atomOnMount,
-      ) => {
-        const initializedAtoms = new WeakSet()
-        return [
-          (a) => {
-            if (!initializedAtoms.has(a)) {
-              return undefined
-            }
-            return getAtomState(a)
-          },
-          (a, s) => {
-            initializedAtoms.add(a)
-            setAtomState(a, s)
-            return s
-          },
-          atomRead,
-          atomWrite,
-          atomOnInit,
-          atomOnMount,
-        ]
-      },
-    ) as Store,
+    deriveStore(store, (atomStateMap) => {
+      const initializedAtoms = new WeakSet()
+      return {
+        get: (atom) => {
+          if (!initializedAtoms.has(atom)) {
+            return undefined
+          }
+          return atomStateMap.get(atom)
+        },
+        set: (atom, atomState) => {
+          initializedAtoms.add(atom)
+          atomStateMap.set(atom, atomState)
+        },
+      }
+    }) as Store,
   )
 })
 
