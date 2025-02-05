@@ -227,7 +227,7 @@ type BuildingBlocks = readonly [
 
 const createBuildingBlocks = (
   getStore: () => Store,
-  [
+  ...[
     atomStateMap = new WeakMap(),
     mountedAtoms = new WeakMap(),
     invalidatedAtoms = new WeakMap(),
@@ -235,13 +235,11 @@ const createBuildingBlocks = (
     mountCallbacks = new Set(),
     unmountCallbacks = new Set(),
     storeHooks = {},
-  ]: Partial<StoreState>,
-  [
     atomRead = (atom, ...params) => atom.read(...params),
     atomWrite = (atom, ...params) => atom.write(...params),
     atomOnInit = (atom, ...params) => atom.unstable_onInit?.(...params),
     atomOnMount = (atom, ...params) => atom.onMount?.(...params),
-  ]: Partial<StoreIntercepters> = [],
+  ]: Partial<[...StoreState, ...StoreIntercepters]>
 ): BuildingBlocks => {
   const readAtom = <Value>(atom: Atom<Value>): Value =>
     returnAtomValue(readAtomState(atom))
