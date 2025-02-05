@@ -59,7 +59,7 @@ function syncEffect(effect: Effect): Atom<void> {
       }
     }
     const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks[12])
+    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks[6])
     const syncEffectChannel = ensureSyncEffectChannel(store)
     storeHooks.m.add(internalAtom, () => {
       // mount
@@ -88,7 +88,7 @@ function ensureSyncEffectChannel(store: any) {
   if (!store[syncEffectChannelSymbol]) {
     store[syncEffectChannelSymbol] = new Set<() => void>()
     const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks[12])
+    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks[6])
     storeHooks.f.add(() => {
       const syncEffectChannel = store[syncEffectChannelSymbol] as Set<
         () => void
