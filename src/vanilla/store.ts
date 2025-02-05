@@ -2,7 +2,6 @@ import type { Atom, WritableAtom } from './atom.ts'
 import {
   INTERNAL_buildStore,
   INTERNAL_createBuildingBlocksRev1 as INTERNAL_createBuildingBlocks,
-  INTERNAL_createStoreArgsRev1 as INTERNAL_createStoreArgs,
   INTERNAL_initializeStoreHooks,
 } from './internals.ts'
 import type { INTERNAL_AtomState } from './internals.ts'
@@ -34,26 +33,24 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
   const atomStateMap = new WeakMap()
   const mountedAtoms = new WeakMap()
-  const storeArgs = INTERNAL_createStoreArgs(
+  const buildingBlocks = INTERNAL_createBuildingBlocks(
+    () => store,
     atomStateMap,
     mountedAtoms,
-    new WeakMap(),
-    new Set(),
-    new Set(),
-    new Set(),
+    undefined,
+    undefined,
+    undefined,
+    undefined,
     storeHooks,
-    (atom, ...params) => atom.read(...params),
+    undefined,
     (atom, get, set, ...args) => {
       if (inRestoreAtom) {
         return set(atom, ...args)
       }
       return atom.write(get, set, ...args)
     },
-    (atom, ...params) => atom.unstable_onInit?.(...params),
-    (atom, ...params) => atom.onMount?.(...params),
   )
-  const buildingBlocks = INTERNAL_createBuildingBlocks(storeArgs, () => store)
-  const store = INTERNAL_buildStore(storeArgs, buildingBlocks)
+  const store = INTERNAL_buildStore(buildingBlocks)
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)
@@ -101,9 +98,8 @@ export const createStore = (): PrdOrDevStore => {
   if (import.meta.env?.MODE !== 'production') {
     return createDevStoreRev4()
   }
-  const storeArgs = INTERNAL_createStoreArgs()
-  const buildingBlocks = INTERNAL_createBuildingBlocks(storeArgs, () => store)
-  const store = INTERNAL_buildStore(storeArgs, buildingBlocks)
+  const buildingBlocks = INTERNAL_createBuildingBlocks(() => store)
+  const store = INTERNAL_buildStore(buildingBlocks)
   return store
 }
 
