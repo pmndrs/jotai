@@ -62,9 +62,19 @@ type AtomStateMap = {
   set(atom: AnyAtom, atomState: AtomState): void
 }
 
+type Store = {
+  get: <Value>(atom: Atom<Value>) => Value
+  set: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...args: Args
+  ) => Result
+  sub: (atom: AnyAtom, listener: () => void) => () => void
+}
+
 export type INTERNAL_Mounted = Mounted
 export type INTERNAL_AtomState<Value = AnyValue> = AtomState<Value>
 export type INTERNAL_AtomStateMap = AtomStateMap
+export type INTERNAL_Store = Store
 
 //
 // Some util functions
@@ -165,9 +175,98 @@ const addPendingPromiseToDependency = (
 }
 
 //
-// Some building-block functions
+// Store hooks
 //
-type StoreState = [
+
+type StoreHook = {
+  (): void
+  add(callback: () => void): () => void
+}
+
+type StoreHookForAtoms = {
+  (atom: AnyAtom): void
+  add(atom: AnyAtom, callback: () => void): () => void
+  add(atom: undefined, callback: (atom: AnyAtom) => void): () => void
+}
+
+type StoreHooks = {
+  /**
+   * Listener to notify when the atom value is changed.
+   * This is an experimental API.
+   */
+  readonly c?: StoreHookForAtoms
+  /**
+   * Listener to notify when the atom is mounted.
+   * This is an experimental API.
+   */
+  readonly m?: StoreHookForAtoms
+  /**
+   * Listener to notify when the atom is unmounted.
+   * This is an experimental API.
+   */
+  readonly u?: StoreHookForAtoms
+  /**
+   * Listener to notify when callbacks are being flushed.
+   * This is an experimental API.
+   */
+  readonly f?: StoreHook
+}
+
+const createStoreHook = (): StoreHook => {
+  const callbacks = new Set<() => void>()
+  const notify = () => {
+    callbacks.forEach((fn) => fn())
+  }
+  notify.add = (fn: () => void) => {
+    callbacks.add(fn)
+    return () => {
+      callbacks.delete(fn)
+    }
+  }
+  return notify
+}
+
+const createStoreHookForAtoms = (): StoreHookForAtoms => {
+  const all: object = {}
+  const callbacks = new WeakMap<
+    AnyAtom | typeof all,
+    Set<(atom?: AnyAtom) => void>
+  >()
+  const notify = (atom: AnyAtom) => {
+    callbacks.get(all)?.forEach((fn) => fn(atom))
+    callbacks.get(atom)?.forEach((fn) => fn())
+  }
+  notify.add = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
+    const key = atom || all
+    const fns = (
+      callbacks.has(key) ? callbacks : callbacks.set(key, new Set())
+    ).get(key)!
+    fns.add(fn)
+    return () => {
+      fns?.delete(fn)
+      if (!fns.size) {
+        callbacks.delete(key)
+      }
+    }
+  }
+  return notify as StoreHookForAtoms
+}
+
+const initializeStoreHooks = (storeHooks: StoreHooks): Required<StoreHooks> => {
+  type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
+  ;(storeHooks as SH).c ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).m ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).u ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).f ||= createStoreHook()
+  return storeHooks as Required<StoreHooks>
+}
+
+//
+// Main functions
+//
+
+type BuildingBlocks = readonly [
+  // store state
   atomStateMap: AtomStateMap,
   mountedAtoms: WeakMap<AnyAtom, Mounted>,
   invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
@@ -175,9 +274,7 @@ type StoreState = [
   mountCallbacks: Set<() => void>,
   unmountCallbacks: Set<() => void>,
   storeHooks: StoreHooks,
-]
-
-type StoreIntercepters = [
+  // store intercepters
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -191,83 +288,53 @@ type StoreIntercepters = [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
-]
-
-type StoreFunctions = [
-  // top level functions for buildStore
-  readAtom: <Value>(atom: Atom<Value>) => Value,
-  writeAtom: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    ...args: Args
-  ) => Result,
-  subscribeAtom: (atom: AnyAtom, listener: () => void) => () => void,
-  // main functions
+  // functions
+  ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
   flushCallbacks: () => void,
   recomputeInvalidatedAtoms: () => void,
+  setAtomStateValueOrPromise: (atom: AnyAtom, valueOrPromise: unknown) => void,
   readAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  getMountedOrPendingDependents: (atom: AnyAtom) => Set<AnyAtom>,
+  invalidateDependents: (atom: AnyAtom) => void,
   writeAtomState: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
   ) => Result,
+  mountDependencies: (atom: AnyAtom) => void,
   mountAtom: <Value>(atom: Atom<Value>) => Mounted,
   unmountAtom: <Value>(atom: Atom<Value>) => Mounted | undefined,
-  // other functions for ecosystem
-  ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
-  setAtomStateValueOrPromise: (atom: AnyAtom, valueOrPromise: unknown) => void,
-  getMountedOrPendingDependents: (atom: AnyAtom) => Set<AnyAtom>,
-  invalidateDependents: (atom: AnyAtom) => void,
-  mountDependencies: (atom: AnyAtom) => void,
 ]
 
-type BuildingBlocks = readonly [
-  storeState: StoreState,
-  interceptors: StoreIntercepters,
-  functions: StoreFunctions,
-]
+const BUILDING_BLOCKS: unique symbol = Symbol() // no description intentionally
 
-const createBuildingBlocks = (
-  getStore: () => Store,
-  ...[
-    atomStateMap = new WeakMap(),
-    mountedAtoms = new WeakMap(),
-    invalidatedAtoms = new WeakMap(),
-    changedAtoms = new Set(),
-    mountCallbacks = new Set(),
-    unmountCallbacks = new Set(),
-    storeHooks = {},
-    atomRead = (atom, ...params) => atom.read(...params),
-    atomWrite = (atom, ...params) => atom.write(...params),
-    atomOnInit = (atom, ...params) => atom.unstable_onInit?.(...params),
-    atomOnMount = (atom, ...params) => atom.onMount?.(...params),
-  ]: Partial<[...StoreState, ...StoreIntercepters]>
-): BuildingBlocks => {
-  const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(atom))
+const getBuildingBlocks = (store: unknown): BuildingBlocks =>
+  (store as any)[BUILDING_BLOCKS]
 
-  const writeAtom = <Value, Args extends unknown[], Result>(
+const buildStore = (
+  atomStateMap: AtomStateMap = new WeakMap(),
+  mountedAtoms: WeakMap<AnyAtom, Mounted> = new WeakMap(),
+  invalidatedAtoms: WeakMap<AnyAtom, EpochNumber> = new WeakMap(),
+  changedAtoms: Set<AnyAtom> = new Set(),
+  mountCallbacks: Set<() => void> = new Set(),
+  unmountCallbacks: Set<() => void> = new Set(),
+  storeHooks: StoreHooks = {},
+  atomRead: <Value>(
+    atom: Atom<Value>,
+    ...params: Parameters<Atom<Value>['read']>
+  ) => Value = (atom, ...params) => atom.read(...params),
+  atomWrite: <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
-    ...args: Args
-  ): Result => {
-    try {
-      return writeAtomState(atom, ...args)
-    } finally {
-      recomputeInvalidatedAtoms()
-      flushCallbacks()
-    }
-  }
-
-  const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    const mounted = mountAtom(atom)
-    const listeners = mounted.l
-    listeners.add(listener)
-    flushCallbacks()
-    return () => {
-      listeners.delete(listener)
-      unmountAtom(atom)
-      flushCallbacks()
-    }
-  }
-
+    ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
+  ) => Result = (atom, ...params) => atom.write(...params),
+  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void = (
+    atom,
+    store,
+  ) => atom.unstable_onInit?.(store),
+  atomOnMount: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    setAtom: (...args: Args) => Result,
+  ) => OnUnmount | void = (atom, setAtom) => atom.onMount?.(setAtom),
+): Store => {
   const ensureAtomState = <Value>(atom: Atom<Value>): AtomState<Value> => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
       throw new Error('Atom is undefined or null')
@@ -276,7 +343,7 @@ const createBuildingBlocks = (
     if (!atomState) {
       atomState = { d: new Map(), p: new Set(), n: 0 }
       atomStateMap.set(atom, atomState)
-      atomOnInit?.(atom, getStore())
+      atomOnInit?.(atom, store)
     }
     return atomState as AtomState<Value>
   }
@@ -714,7 +781,9 @@ const createBuildingBlocks = (
     }
     return mounted
   }
-  const storeState: StoreState = [
+
+  const buildingBlocks: BuildingBlocks = [
+    // store state
     atomStateMap,
     mountedAtoms,
     invalidatedAtoms,
@@ -722,152 +791,59 @@ const createBuildingBlocks = (
     mountCallbacks,
     unmountCallbacks,
     storeHooks,
-  ]
-  const storeInterceptors: StoreIntercepters = [
+    // store intercepters
     atomRead,
     atomWrite,
     atomOnInit,
     atomOnMount,
-  ]
-  const storeFunctions: StoreFunctions = [
-    // top level functions
-    readAtom,
-    writeAtom,
-    subscribeAtom,
-    // main functions for buildStore
+    // functions
+    ensureAtomState,
     flushCallbacks,
     recomputeInvalidatedAtoms,
-    readAtomState,
-    writeAtomState,
-    mountAtom,
-    unmountAtom,
-    // other things for ecosystem
-    ensureAtomState,
     setAtomStateValueOrPromise,
+    readAtomState,
     getMountedOrPendingDependents,
     invalidateDependents,
+    writeAtomState,
     mountDependencies,
+    mountAtom,
+    unmountAtom,
   ]
-  return [storeState, storeInterceptors, storeFunctions] as const
-}
 
-//
-// Store hooks
-//
+  const readAtom = <Value>(atom: Atom<Value>): Value =>
+    returnAtomValue(readAtomState(atom))
 
-type StoreHook = {
-  (): void
-  add(callback: () => void): () => void
-}
-
-type StoreHookForAtoms = {
-  (atom: AnyAtom): void
-  add(atom: AnyAtom, callback: () => void): () => void
-  add(atom: undefined, callback: (atom: AnyAtom) => void): () => void
-}
-
-type StoreHooks = {
-  /**
-   * Listener to notify when the atom value is changed.
-   * This is an experimental API.
-   */
-  readonly c?: StoreHookForAtoms
-  /**
-   * Listener to notify when the atom is mounted.
-   * This is an experimental API.
-   */
-  readonly m?: StoreHookForAtoms
-  /**
-   * Listener to notify when the atom is unmounted.
-   * This is an experimental API.
-   */
-  readonly u?: StoreHookForAtoms
-  /**
-   * Listener to notify when callbacks are being flushed.
-   * This is an experimental API.
-   */
-  readonly f?: StoreHook
-}
-
-const createStoreHook = (): StoreHook => {
-  const callbacks = new Set<() => void>()
-  const notify = () => {
-    callbacks.forEach((fn) => fn())
-  }
-  notify.add = (fn: () => void) => {
-    callbacks.add(fn)
-    return () => {
-      callbacks.delete(fn)
-    }
-  }
-  return notify
-}
-
-const createStoreHookForAtoms = (): StoreHookForAtoms => {
-  const all: object = {}
-  const callbacks = new WeakMap<
-    AnyAtom | typeof all,
-    Set<(atom?: AnyAtom) => void>
-  >()
-  const notify = (atom: AnyAtom) => {
-    callbacks.get(all)?.forEach((fn) => fn(atom))
-    callbacks.get(atom)?.forEach((fn) => fn())
-  }
-  notify.add = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
-    const key = atom || all
-    const fns = (
-      callbacks.has(key) ? callbacks : callbacks.set(key, new Set())
-    ).get(key)!
-    fns.add(fn)
-    return () => {
-      fns?.delete(fn)
-      if (!fns.size) {
-        callbacks.delete(key)
-      }
-    }
-  }
-  return notify as StoreHookForAtoms
-}
-
-const initializeStoreHooks = (storeHooks: StoreHooks): Required<StoreHooks> => {
-  type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
-  ;(storeHooks as SH).c ||= createStoreHookForAtoms()
-  ;(storeHooks as SH).m ||= createStoreHookForAtoms()
-  ;(storeHooks as SH).u ||= createStoreHookForAtoms()
-  ;(storeHooks as SH).f ||= createStoreHook()
-  return storeHooks as Required<StoreHooks>
-}
-
-//
-// Main functions
-//
-
-// Do not export this type.
-type Store = {
-  get: <Value>(atom: Atom<Value>) => Value
-  set: <Value, Args extends unknown[], Result>(
+  const writeAtom = <Value, Args extends unknown[], Result>(
     atom: WritableAtom<Value, Args, Result>,
     ...args: Args
-  ) => Result
-  sub: (atom: AnyAtom, listener: () => void) => () => void
-  [BUILDING_BLOCKS]: BuildingBlocks
-}
+  ): Result => {
+    try {
+      return writeAtomState(atom, ...args)
+    } finally {
+      recomputeInvalidatedAtoms()
+      flushCallbacks()
+    }
+  }
 
-const BUILDING_BLOCKS: unique symbol = Symbol() // no description intentionally
+  const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
+    const mounted = mountAtom(atom)
+    const listeners = mounted.l
+    listeners.add(listener)
+    flushCallbacks()
+    return () => {
+      listeners.delete(listener)
+      unmountAtom(atom)
+      flushCallbacks()
+    }
+  }
 
-const getBuildingBlocks = (store: unknown): BuildingBlocks =>
-  (store as Store)[BUILDING_BLOCKS]
-
-const buildStore = (buildingBlocks: BuildingBlocks): Store => {
-  const [readAtom, writeAtom, subscribeAtom] = buildingBlocks[2]
-
-  const store: Omit<Store, typeof BUILDING_BLOCKS> = {
+  const store: Store = {
     get: readAtom,
     set: writeAtom,
     sub: subscribeAtom,
   }
   Object.defineProperty(store, BUILDING_BLOCKS, { value: buildingBlocks })
-  return store as Store
+  return store
 }
 
 //
@@ -875,8 +851,6 @@ const buildStore = (buildingBlocks: BuildingBlocks): Store => {
 //
 
 export const INTERNAL_buildStore: typeof buildStore = buildStore
-export const INTERNAL_createBuildingBlocksRev1: typeof createBuildingBlocks =
-  createBuildingBlocks
 export const INTERNAL_getBuildingBlocksRev1: typeof getBuildingBlocks =
   getBuildingBlocks
 export const INTERNAL_initializeStoreHooks: typeof initializeStoreHooks =

@@ -1,20 +1,12 @@
 import type { Atom, WritableAtom } from './atom.ts'
 import {
   INTERNAL_buildStore,
-  INTERNAL_createBuildingBlocksRev1 as INTERNAL_createBuildingBlocks,
   INTERNAL_initializeStoreHooks,
 } from './internals.ts'
-import type { INTERNAL_AtomState } from './internals.ts'
+import type { INTERNAL_AtomState, INTERNAL_Store } from './internals.ts'
 
 // TODO: rename this to `Store` in the near future
-export type INTERNAL_PrdStore = {
-  get: <Value>(atom: Atom<Value>) => Value
-  set: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    ...args: Args
-  ) => Result
-  sub: (atom: Atom<unknown>, listener: () => void) => () => void
-}
+export type INTERNAL_PrdStore = INTERNAL_Store
 
 // For debugging purpose only
 // This will be removed in the near future
@@ -33,28 +25,22 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
   const atomStateMap = new WeakMap()
   const mountedAtoms = new WeakMap()
-  type BuildingBlocks = ReturnType<typeof INTERNAL_createBuildingBlocks>
-  type StoreState = BuildingBlocks[0]
-  type StoreInterceptors = BuildingBlocks[1]
-  type AtomWrite = StoreInterceptors[1]
-  const atomWrite: AtomWrite = (atom, get, set, ...args) => {
-    if (inRestoreAtom) {
-      return set(atom, ...args)
-    }
-    return atom.write(get, set, ...args)
-  }
-  const storeState: Partial<StoreState> = []
-  storeState[0] = atomStateMap
-  storeState[1] = mountedAtoms
-  storeState[6] = storeHooks
-  const storeInterceptors: Partial<StoreInterceptors> = []
-  storeInterceptors[1] = atomWrite
-  const buildingBlocks = INTERNAL_createBuildingBlocks(
-    () => store,
-    ...storeState,
-    ...storeInterceptors,
+  const store = INTERNAL_buildStore(
+    atomStateMap,
+    mountedAtoms,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    storeHooks,
+    undefined,
+    (atom, get, set, ...args) => {
+      if (inRestoreAtom) {
+        return set(atom, ...args)
+      }
+      return atom.write(get, set, ...args)
+    },
   )
-  const store = INTERNAL_buildStore(buildingBlocks)
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)
@@ -102,8 +88,7 @@ export const createStore = (): PrdOrDevStore => {
   if (import.meta.env?.MODE !== 'production') {
     return createDevStoreRev4()
   }
-  const buildingBlocks = INTERNAL_createBuildingBlocks(() => store)
-  const store = INTERNAL_buildStore(buildingBlocks)
+  const store = INTERNAL_buildStore()
   return store
 }
 
