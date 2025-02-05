@@ -167,19 +167,7 @@ const addPendingPromiseToDependency = (
 //
 // Some building-block functions
 //
-
-type BuildingBlocks = readonly [
-  // main functions for buildStore
-  flushCallbacks: () => void,
-  recomputeInvalidatedAtoms: () => void,
-  readAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
-  writeAtomState: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    ...args: Args
-  ) => Result,
-  mountAtom: <Value>(atom: Atom<Value>) => Mounted,
-  unmountAtom: <Value>(atom: Atom<Value>) => Mounted | undefined,
-  // other things for ecosystem
+type StoreState = [
   atomStateMap: AtomStateMap,
   mountedAtoms: WeakMap<AnyAtom, Mounted>,
   invalidatedAtoms: WeakMap<AnyAtom, EpochNumber>,
@@ -187,6 +175,9 @@ type BuildingBlocks = readonly [
   mountCallbacks: Set<() => void>,
   unmountCallbacks: Set<() => void>,
   storeHooks: StoreHooks,
+]
+
+type StoreIntercepters = [
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -200,6 +191,27 @@ type BuildingBlocks = readonly [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
+]
+
+type StoreFunctions = [
+  // top level functions for buildStore
+  readAtom: <Value>(atom: Atom<Value>) => Value,
+  writeAtom: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...args: Args
+  ) => Result,
+  subscribeAtom: (atom: AnyAtom, listener: () => void) => () => void,
+  // main functions
+  flushCallbacks: () => void,
+  recomputeInvalidatedAtoms: () => void,
+  readAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
+  writeAtomState: <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...args: Args
+  ) => Result,
+  mountAtom: <Value>(atom: Atom<Value>) => Mounted,
+  unmountAtom: <Value>(atom: Atom<Value>) => Mounted | undefined,
+  // other functions for ecosystem
   ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
   setAtomStateValueOrPromise: (atom: AnyAtom, valueOrPromise: unknown) => void,
   getMountedOrPendingDependents: (atom: AnyAtom) => Set<AnyAtom>,
@@ -207,32 +219,57 @@ type BuildingBlocks = readonly [
   mountDependencies: (atom: AnyAtom) => void,
 ]
 
+type BuildingBlocks = readonly [
+  storeState: StoreState,
+  interceptors: StoreIntercepters,
+  functions: StoreFunctions,
+]
+
 const createBuildingBlocks = (
   getStore: () => Store,
-  atomStateMap: AtomStateMap = new WeakMap(),
-  mountedAtoms: WeakMap<AnyAtom, Mounted> = new WeakMap(),
-  invalidatedAtoms: WeakMap<AnyAtom, EpochNumber> = new WeakMap(),
-  changedAtoms: Set<AnyAtom> = new Set(),
-  mountCallbacks: Set<() => void> = new Set(),
-  unmountCallbacks: Set<() => void> = new Set(),
-  storeHooks: StoreHooks = {},
-  atomRead: <Value>(
-    atom: Atom<Value>,
-    ...params: Parameters<Atom<Value>['read']>
-  ) => Value = (atom, ...params) => atom.read(...params),
-  atomWrite: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    ...params: Parameters<WritableAtom<Value, Args, Result>['write']>
-  ) => Result = (atom, ...params) => atom.write(...params),
-  atomOnInit: <Value>(atom: Atom<Value>, store: Store) => void = (
-    atom,
-    store,
-  ) => atom.unstable_onInit?.(store),
-  atomOnMount: <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    setAtom: (...args: Args) => Result,
-  ) => OnUnmount | void = (atom, setAtom) => atom.onMount?.(setAtom),
+  [
+    atomStateMap = new WeakMap(),
+    mountedAtoms = new WeakMap(),
+    invalidatedAtoms = new WeakMap(),
+    changedAtoms = new Set(),
+    mountCallbacks = new Set(),
+    unmountCallbacks = new Set(),
+    storeHooks = {},
+  ]: Partial<StoreState>,
+  [
+    atomRead = (atom, ...params) => atom.read(...params),
+    atomWrite = (atom, ...params) => atom.write(...params),
+    atomOnInit = (atom, ...params) => atom.unstable_onInit?.(...params),
+    atomOnMount = (atom, ...params) => atom.onMount?.(...params),
+  ]: Partial<StoreIntercepters> = [],
 ): BuildingBlocks => {
+  const readAtom = <Value>(atom: Atom<Value>): Value =>
+    returnAtomValue(readAtomState(atom))
+
+  const writeAtom = <Value, Args extends unknown[], Result>(
+    atom: WritableAtom<Value, Args, Result>,
+    ...args: Args
+  ): Result => {
+    try {
+      return writeAtomState(atom, ...args)
+    } finally {
+      recomputeInvalidatedAtoms()
+      flushCallbacks()
+    }
+  }
+
+  const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
+    const mounted = mountAtom(atom)
+    const listeners = mounted.l
+    listeners.add(listener)
+    flushCallbacks()
+    return () => {
+      listeners.delete(listener)
+      unmountAtom(atom)
+      flushCallbacks()
+    }
+  }
+
   const ensureAtomState = <Value>(atom: Atom<Value>): AtomState<Value> => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
       throw new Error('Atom is undefined or null')
@@ -679,8 +716,26 @@ const createBuildingBlocks = (
     }
     return mounted
   }
-
-  return [
+  const storeState: StoreState = [
+    atomStateMap,
+    mountedAtoms,
+    invalidatedAtoms,
+    changedAtoms,
+    mountCallbacks,
+    unmountCallbacks,
+    storeHooks,
+  ]
+  const storeInterceptors: StoreIntercepters = [
+    atomRead,
+    atomWrite,
+    atomOnInit,
+    atomOnMount,
+  ]
+  const storeFunctions: StoreFunctions = [
+    // top level functions
+    readAtom,
+    writeAtom,
+    subscribeAtom,
     // main functions for buildStore
     flushCallbacks,
     recomputeInvalidatedAtoms,
@@ -689,23 +744,13 @@ const createBuildingBlocks = (
     mountAtom,
     unmountAtom,
     // other things for ecosystem
-    atomStateMap,
-    mountedAtoms,
-    invalidatedAtoms,
-    changedAtoms,
-    mountCallbacks,
-    unmountCallbacks,
-    storeHooks,
-    atomRead,
-    atomWrite,
-    atomOnInit,
-    atomOnMount,
     ensureAtomState,
     setAtomStateValueOrPromise,
     getMountedOrPendingDependents,
     invalidateDependents,
     mountDependencies,
-  ] as const
+  ]
+  return [storeState, storeInterceptors, storeFunctions] as const
 }
 
 //
@@ -816,41 +861,7 @@ const getBuildingBlocks = (store: unknown): BuildingBlocks =>
   (store as Store)[BUILDING_BLOCKS]
 
 const buildStore = (buildingBlocks: BuildingBlocks): Store => {
-  const [
-    flushCallbacks,
-    recomputeInvalidatedAtoms,
-    readAtomState,
-    writeAtomState,
-    mountAtom,
-    unmountAtom,
-  ] = buildingBlocks
-
-  const readAtom = <Value>(atom: Atom<Value>): Value =>
-    returnAtomValue(readAtomState(atom))
-
-  const writeAtom = <Value, Args extends unknown[], Result>(
-    atom: WritableAtom<Value, Args, Result>,
-    ...args: Args
-  ): Result => {
-    try {
-      return writeAtomState(atom, ...args)
-    } finally {
-      recomputeInvalidatedAtoms()
-      flushCallbacks()
-    }
-  }
-
-  const subscribeAtom = (atom: AnyAtom, listener: () => void) => {
-    const mounted = mountAtom(atom)
-    const listeners = mounted.l
-    listeners.add(listener)
-    flushCallbacks()
-    return () => {
-      listeners.delete(listener)
-      unmountAtom(atom)
-      flushCallbacks()
-    }
-  }
+  const [readAtom, writeAtom, subscribeAtom] = buildingBlocks[2]
 
   const store: Omit<Store, typeof BUILDING_BLOCKS> = {
     get: readAtom,
