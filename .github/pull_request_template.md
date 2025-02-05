@@ -6,4 +6,4 @@ Fixes #
 
 ## Check List
 
-- [ ] `pnpm run fix:format` for formatting code and docs
+- [ ] `pnpm run fix` for formatting and linting code and docs
