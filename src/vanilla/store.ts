@@ -43,16 +43,12 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     }
     return atom.write(get, set, ...args)
   }
-  const storeState: Partial<StoreState> = [
-    atomStateMap,
-    mountedAtoms,
-    ,
-    ,
-    ,
-    ,
-    storeHooks,
-  ]
-  const storeInterceptors: Partial<StoreInterceptors> = [, atomWrite]
+  const storeState: Partial<StoreState> = []
+  storeState[0] = atomStateMap
+  storeState[1] = mountedAtoms
+  storeState[6] = storeHooks
+  const storeInterceptors: Partial<StoreInterceptors> = []
+  storeInterceptors[1] = atomWrite
   const buildingBlocks = INTERNAL_createBuildingBlocks(
     () => store,
     ...storeState,
