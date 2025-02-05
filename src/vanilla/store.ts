@@ -33,22 +33,30 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
   const atomStateMap = new WeakMap()
   const mountedAtoms = new WeakMap()
-  const buildingBlocks = INTERNAL_createBuildingBlocks(
-    () => store,
+  type BuildingBlocks = ReturnType<typeof INTERNAL_createBuildingBlocks>
+  type StoreState = BuildingBlocks[0]
+  type StoreInterceptors = BuildingBlocks[1]
+  type AtomWrite = StoreInterceptors[1]
+  const atomWrite: AtomWrite = (atom, get, set, ...args) => {
+    if (inRestoreAtom) {
+      return set(atom, ...args)
+    }
+    return atom.write(get, set, ...args)
+  }
+  const storeState: Partial<StoreState> = [
     atomStateMap,
     mountedAtoms,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
+    ,
+    ,
+    ,
+    ,
     storeHooks,
-    undefined,
-    (atom, get, set, ...args) => {
-      if (inRestoreAtom) {
-        return set(atom, ...args)
-      }
-      return atom.write(get, set, ...args)
-    },
+  ]
+  const storeInterceptors: Partial<StoreInterceptors> = [, atomWrite]
+  const buildingBlocks = INTERNAL_createBuildingBlocks(
+    () => store,
+    ...storeState,
+    ...storeInterceptors,
   )
   const store = INTERNAL_buildStore(buildingBlocks)
   const debugMountedAtoms = new Set<Atom<unknown>>()
