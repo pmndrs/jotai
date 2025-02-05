@@ -274,7 +274,7 @@ type BuildingBlocks = readonly [
   mountCallbacks: Set<() => void>,
   unmountCallbacks: Set<() => void>,
   storeHooks: StoreHooks,
-  // store intercepters
+  // atom intercepters
   atomRead: <Value>(
     atom: Atom<Value>,
     ...params: Parameters<Atom<Value>['read']>
@@ -288,7 +288,7 @@ type BuildingBlocks = readonly [
     atom: WritableAtom<Value, Args, Result>,
     setAtom: (...args: Args) => Result,
   ) => OnUnmount | void,
-  // functions
+  // building-block functions
   ensureAtomState: <Value>(atom: Atom<Value>) => AtomState<Value>,
   flushCallbacks: () => void,
   recomputeInvalidatedAtoms: () => void,
@@ -791,12 +791,12 @@ const buildStore = (
     mountCallbacks,
     unmountCallbacks,
     storeHooks,
-    // store intercepters
+    // atom intercepters
     atomRead,
     atomWrite,
     atomOnInit,
     atomOnMount,
-    // functions
+    // building-block functions
     ensureAtomState,
     flushCallbacks,
     recomputeInvalidatedAtoms,
