@@ -587,8 +587,8 @@ const buildStore = (
     const mountDependenciesIfAsync = () => {
       if (mountedAtoms.has(atom)) {
         mountDependencies!(atom)
-        recomputeInvalidatedAtoms()
-        flushCallbacks()
+        recomputeInvalidatedAtoms!()
+        flushCallbacks!()
       }
     }
     const getter: Getter = <V>(a: Atom<V>) => {
@@ -644,8 +644,8 @@ const buildStore = (
               try {
                 return writeAtomState!(atom, ...args)
               } finally {
-                recomputeInvalidatedAtoms()
-                flushCallbacks()
+                recomputeInvalidatedAtoms!()
+                flushCallbacks!()
               }
             }
           }
@@ -695,7 +695,7 @@ const buildStore = (
 
   writeAtomState ||= (atom, ...args) => {
     let isSync = true
-    const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
+    const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState!(a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
@@ -714,7 +714,7 @@ const buildStore = (
           if (prevEpochNumber !== aState.n) {
             changedAtoms.add(a)
             storeHooks.c?.(a)
-            invalidateDependents(a)
+            invalidateDependents!(a)
           }
           return undefined as R
         } else {
@@ -722,8 +722,8 @@ const buildStore = (
         }
       } finally {
         if (!isSync) {
-          recomputeInvalidatedAtoms()
-          flushCallbacks()
+          recomputeInvalidatedAtoms!()
+          flushCallbacks!()
         }
       }
     }
@@ -747,7 +747,7 @@ const buildStore = (
           if (n !== aState.n) {
             changedAtoms.add(a)
             storeHooks.c?.(a)
-            invalidateDependents(a)
+            invalidateDependents!(a)
           }
         }
       }
@@ -766,7 +766,7 @@ const buildStore = (
     let mounted = mountedAtoms.get(atom)
     if (!mounted) {
       // recompute atom state
-      readAtomState(atom)
+      readAtomState!(atom)
       // mount dependencies first
       for (const a of atomState.d.keys()) {
         const aMounted = mountAtom!(a)
@@ -785,11 +785,11 @@ const buildStore = (
           let isSync = true
           const setAtom = (...args: unknown[]) => {
             try {
-              return writeAtomState(atom, ...args)
+              return writeAtomState!(atom, ...args)
             } finally {
               if (!isSync) {
-                recomputeInvalidatedAtoms()
-                flushCallbacks()
+                recomputeInvalidatedAtoms!()
+                flushCallbacks!()
               }
             }
           }
@@ -867,24 +867,24 @@ const buildStore = (
   ]
 
   const store: Store = {
-    get: (atom) => returnAtomValue(readAtomState(atom)),
+    get: (atom) => returnAtomValue(readAtomState!(atom)),
     set: (atom, ...args) => {
       try {
-        return writeAtomState(atom, ...args)
+        return writeAtomState!(atom, ...args)
       } finally {
-        recomputeInvalidatedAtoms()
-        flushCallbacks()
+        recomputeInvalidatedAtoms!()
+        flushCallbacks!()
       }
     },
     sub: (atom, listener) => {
-      const mounted = mountAtom(atom)
+      const mounted = mountAtom!(atom)
       const listeners = mounted.l
       listeners.add(listener)
-      flushCallbacks()
+      flushCallbacks!()
       return () => {
         listeners.delete(listener)
-        unmountAtom(atom)
-        flushCallbacks()
+        unmountAtom!(atom)
+        flushCallbacks!()
       }
     },
   }
