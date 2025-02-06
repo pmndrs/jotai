@@ -409,8 +409,9 @@ type BuildingBlocks = readonly [
 
 const BUILDING_BLOCKS: unique symbol = Symbol() // no description intentionally
 
-const getBuildingBlocks = (store: unknown): BuildingBlocks =>
-  (store as any)[BUILDING_BLOCKS]
+const getBuildingBlocks = (store: unknown): Mutable<BuildingBlocks> => [
+  ...((store as any)[BUILDING_BLOCKS] as BuildingBlocks),
+]
 
 const buildStore = (
   ...buildingBlocks: Partial<Mutable<BuildingBlocks>>
