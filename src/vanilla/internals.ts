@@ -61,7 +61,7 @@ type AtomStateMap = {
   get(atom: AnyAtom): AtomState | undefined
   set(atom: AnyAtom, atomState: AtomState): void
 }
-type MountedAtoms = {
+type MountedMap = {
   get(atom: AnyAtom): Mounted | undefined
   has(atom: AnyAtom): boolean
   set(atom: AnyAtom, mounted: Mounted): void
@@ -70,7 +70,7 @@ type MountedAtoms = {
 type InvalidatedAtoms = {
   get(atom: AnyAtom): EpochNumber | undefined
   has(atom: AnyAtom): boolean
-  set(atom: AnyAtom, mounted: EpochNumber): void
+  set(atom: AnyAtom, n: EpochNumber): void
   delete(atom: AnyAtom): void
 }
 type ChangedAtoms = {
@@ -127,7 +127,7 @@ type Store = {
 export type INTERNAL_AtomState<Value = AnyValue> = AtomState<Value>
 export type INTERNAL_Mounted = Mounted
 export type INTERNAL_AtomStateMap = AtomStateMap
-export type INTERNAL_MountedAtoms = MountedAtoms
+export type INTERNAL_MountedMap = MountedMap
 export type INTERNAL_InvalidatedAtoms = InvalidatedAtoms
 export type INTERNAL_ChangedAtoms = ChangedAtoms
 export type INTERNAL_Callbacks = Callbacks
@@ -274,11 +274,11 @@ const setAtomStateValueOrPromise = (
 const getMountedOrPendingDependents = (
   atom: AnyAtom,
   atomState: AtomState,
-  mountedAtoms: MountedAtoms,
+  mountedMap: MountedMap,
 ): Set<AnyAtom> => {
   const dependents = new Set<AnyAtom>()
-  for (const a of mountedAtoms.get(atom)?.t || []) {
-    if (mountedAtoms.has(a)) {
+  for (const a of mountedMap.get(atom)?.t || []) {
+    if (mountedMap.has(a)) {
       dependents.add(a)
     }
   }
@@ -382,7 +382,7 @@ const initializeStoreHooks = (storeHooks: StoreHooks): Required<StoreHooks> => {
 type BuildingBlocks = readonly [
   // store state
   atomStateMap: AtomStateMap,
-  mountedAtoms: MountedAtoms,
+  mountedMap: MountedMap,
   invalidatedAtoms: InvalidatedAtoms,
   changedAtoms: ChangedAtoms,
   mountCallbacks: Callbacks,
@@ -414,7 +414,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
   const [
     // store state
     atomStateMap = new WeakMap(),
-    mountedAtoms = new WeakMap(),
+    mountedMap = new WeakMap(),
     invalidatedAtoms = new WeakMap(),
     changedAtoms = new Set(),
     mountCallbacks = new Set(),
@@ -463,7 +463,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
         }
         const callbacks = new Set<() => void>()
         const add = callbacks.add.bind(callbacks)
-        changedAtoms.forEach((atom) => mountedAtoms.get(atom)?.l.forEach(add))
+        changedAtoms.forEach((atom) => mountedMap.get(atom)?.l.forEach(add))
         changedAtoms.clear()
         unmountCallbacks.forEach(add)
         unmountCallbacks.clear()
@@ -528,11 +528,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
         }
         visiting.add(a)
         // Push unvisited dependents onto the stack
-        for (const d of getMountedOrPendingDependents(
-          a,
-          aState,
-          mountedAtoms,
-        )) {
+        for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
           if (!visiting.has(d)) {
             stack.push(d)
           }
@@ -571,7 +567,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
         // because it should have been updated by dependencies.
         // We can't use the cache if the atom is invalidated.
         if (
-          mountedAtoms.has(atom) &&
+          mountedMap.has(atom) &&
           invalidatedAtoms.get(atom) !== atomState.n
         ) {
           return atomState
@@ -593,7 +589,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
       atomState.d.clear()
       let isSync = true
       const mountDependenciesIfAsync = () => {
-        if (mountedAtoms.has(atom)) {
+        if (mountedMap.has(atom)) {
           mountDependencies(atom)
           recomputeInvalidatedAtoms()
           flushCallbacks()
@@ -621,7 +617,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
           if (isPendingPromise(atomState.v)) {
             addPendingPromiseToDependency(atom, atomState.v, aState)
           }
-          mountedAtoms.get(a)?.t.add(atom)
+          mountedMap.get(a)?.t.add(atom)
           if (!isSync) {
             mountDependenciesIfAsync()
           }
@@ -698,11 +694,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
       while (stack.length) {
         const a = stack.pop()!
         const aState = ensureAtomState(a)
-        for (const d of getMountedOrPendingDependents(
-          a,
-          aState,
-          mountedAtoms,
-        )) {
+        for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
           const dState = ensureAtomState(d)
           invalidatedAtoms.set(d, dState.n)
           stack.push(d)
@@ -758,7 +750,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     buildingBlocks[17] ||
     ((atom) => {
       const atomState = ensureAtomState(atom)
-      const mounted = mountedAtoms.get(atom)
+      const mounted = mountedMap.get(atom)
       if (mounted && !isPendingPromise(atomState.v)) {
         for (const [a, n] of atomState.d) {
           if (!mounted.d.has(a)) {
@@ -787,7 +779,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     buildingBlocks[18] ||
     ((atom) => {
       const atomState = ensureAtomState(atom)
-      let mounted = mountedAtoms.get(atom)
+      let mounted = mountedMap.get(atom)
       if (!mounted) {
         // recompute atom state
         readAtomState(atom)
@@ -802,7 +794,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
           d: new Set(atomState.d.keys()),
           t: new Set(),
         }
-        mountedAtoms.set(atom, mounted)
+        mountedMap.set(atom, mounted)
         storeHooks.m?.(atom)
         if (isActuallyWritableAtom(atom)) {
           const processOnMount = () => {
@@ -843,18 +835,18 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     buildingBlocks[19] ||
     ((atom) => {
       const atomState = ensureAtomState(atom)
-      let mounted = mountedAtoms.get(atom)
+      let mounted = mountedMap.get(atom)
       if (
         mounted &&
         !mounted.l.size &&
-        !Array.from(mounted.t).some((a) => mountedAtoms.get(a)?.d.has(atom))
+        !Array.from(mounted.t).some((a) => mountedMap.get(a)?.d.has(atom))
       ) {
         // unmount self
         if (mounted.u) {
           unmountCallbacks.add(mounted.u)
         }
         mounted = undefined
-        mountedAtoms.delete(atom)
+        mountedMap.delete(atom)
         storeHooks.u?.(atom)
         // unmount dependencies
         for (const a of atomState.d.keys()) {
