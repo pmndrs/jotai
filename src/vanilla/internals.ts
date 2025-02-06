@@ -448,7 +448,7 @@ const buildStore = (
     return atomState as never
   }
 
-  flushCallbacks ||= (): void => {
+  flushCallbacks ||= () => {
     let hasError: true | undefined
     let error: unknown | undefined
     const call = (fn: () => void) => {
@@ -483,7 +483,7 @@ const buildStore = (
     }
   }
 
-  recomputeInvalidatedAtoms ||= (): void => {
+  recomputeInvalidatedAtoms ||= () => {
     // Step 1: traverse the dependency graph to build the topsorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
     // This is a topological sort via depth-first search, slightly modified from
