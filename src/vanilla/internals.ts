@@ -501,7 +501,7 @@ const buildStore = (
     const stack: AnyAtom[] = Array.from(changedAtoms)
     while (stack.length) {
       const a = stack[stack.length - 1]!
-      const aState = ensureAtomState(a)
+      const aState = ensureAtomState!(a)
       if (visited.has(a)) {
         // All dependents have been processed, now process this atom
         stack.pop()
@@ -556,7 +556,7 @@ const buildStore = (
   }
 
   readAtomState ||= (atom) => {
-    const atomState = ensureAtomState(atom)
+    const atomState = ensureAtomState!(atom)
     // See if we can skip recomputing this atom.
     if (isAtomStateInitialized(atomState)) {
       // If the atom is mounted, we can use cached atom state.
@@ -593,10 +593,10 @@ const buildStore = (
     }
     const getter: Getter = <V>(a: Atom<V>) => {
       if (isSelfAtom(atom, a)) {
-        const aState = ensureAtomState(a)
+        const aState = ensureAtomState!(a)
         if (!isAtomStateInitialized(aState)) {
           if (hasInitialValue(a)) {
-            setAtomStateValueOrPromise(a, a.init, ensureAtomState)
+            setAtomStateValueOrPromise(a, a.init, ensureAtomState!)
           } else {
             // NOTE invalid derived atoms can reach here
             throw new Error('no atom init')
@@ -656,7 +656,7 @@ const buildStore = (
     const prevEpochNumber = atomState.n
     try {
       const valueOrPromise = atomRead(atom, getter, options as never)
-      setAtomStateValueOrPromise(atom, valueOrPromise, ensureAtomState)
+      setAtomStateValueOrPromise(atom, valueOrPromise, ensureAtomState!)
       if (isPromiseLike(valueOrPromise)) {
         valueOrPromise.onCancel?.(() => controller?.abort())
         valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
@@ -684,9 +684,9 @@ const buildStore = (
     const stack: AnyAtom[] = [atom]
     while (stack.length) {
       const a = stack.pop()!
-      const aState = ensureAtomState(a)
+      const aState = ensureAtomState!(a)
       for (const d of getMountedOrPendingDependents(a, aState, mountedAtoms)) {
-        const dState = ensureAtomState(d)
+        const dState = ensureAtomState!(d)
         invalidatedAtoms.set(d, dState.n)
         stack.push(d)
       }
@@ -700,7 +700,7 @@ const buildStore = (
       a: WritableAtom<V, As, R>,
       ...args: As
     ) => {
-      const aState = ensureAtomState(a)
+      const aState = ensureAtomState!(a)
       try {
         if (isSelfAtom(atom, a)) {
           if (!hasInitialValue(a)) {
@@ -709,7 +709,7 @@ const buildStore = (
           }
           const prevEpochNumber = aState.n
           const v = args[0] as V
-          setAtomStateValueOrPromise(a, v, ensureAtomState)
+          setAtomStateValueOrPromise(a, v, ensureAtomState!)
           mountDependencies!(a)
           if (prevEpochNumber !== aState.n) {
             changedAtoms.add(a)
@@ -735,12 +735,12 @@ const buildStore = (
   }
 
   mountDependencies ||= (atom) => {
-    const atomState = ensureAtomState(atom)
+    const atomState = ensureAtomState!(atom)
     const mounted = mountedAtoms.get(atom)
     if (mounted && !isPendingPromise(atomState.v)) {
       for (const [a, n] of atomState.d) {
         if (!mounted.d.has(a)) {
-          const aState = ensureAtomState(a)
+          const aState = ensureAtomState!(a)
           const aMounted = mountAtom!(a)
           aMounted.t.add(atom)
           mounted.d.add(a)
@@ -762,7 +762,7 @@ const buildStore = (
   }
 
   mountAtom ||= (atom) => {
-    const atomState = ensureAtomState(atom)
+    const atomState = ensureAtomState!(atom)
     let mounted = mountedAtoms.get(atom)
     if (!mounted) {
       // recompute atom state
@@ -816,7 +816,7 @@ const buildStore = (
   }
 
   unmountAtom ||= (atom) => {
-    const atomState = ensureAtomState(atom)
+    const atomState = ensureAtomState!(atom)
     let mounted = mountedAtoms.get(atom)
     if (
       mounted &&
