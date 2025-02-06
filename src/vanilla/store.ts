@@ -1,6 +1,6 @@
 import type { Atom, WritableAtom } from './atom.ts'
 import {
-  INTERNAL_buildStore,
+  INTERNAL_buildStoreRev1 as INTERNAL_buildStore,
   INTERNAL_initializeStoreHooks,
 } from './internals.ts'
 import type { INTERNAL_AtomState, INTERNAL_Store } from './internals.ts'
