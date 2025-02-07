@@ -410,25 +410,37 @@ const BUILDING_BLOCKS: unique symbol = Symbol() // no description intentionally
 const getBuildingBlocks = (store: unknown): BuildingBlocks =>
   (store as any)[BUILDING_BLOCKS]
 
-const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
-  const [
-    // store state
-    atomStateMap = new WeakMap(),
-    mountedMap = new WeakMap(),
-    invalidatedAtoms = new WeakMap(),
-    changedAtoms = new Set(),
-    mountCallbacks = new Set(),
-    unmountCallbacks = new Set(),
-    storeHooks = {},
-    // atom intercepters
-    atomRead = (atom, ...params) => atom.read(...params),
-    atomWrite = (atom, ...params) => atom.write(...params),
-    atomOnInit = (atom, store) => atom.unstable_onInit?.(store),
-    atomOnMount = (atom, setAtom) => atom.onMount?.(setAtom),
-  ] = buildingBlocks
-
+const buildStore = (
+  // store state
+  atomStateMap: AtomStateMap = new WeakMap(),
+  mountedMap: MountedMap = new WeakMap(),
+  invalidatedAtoms: InvalidatedAtoms = new WeakMap(),
+  changedAtoms: ChangedAtoms = new Set(),
+  mountCallbacks: Callbacks = new Set(),
+  unmountCallbacks: Callbacks = new Set(),
+  storeHooks: StoreHooks = {},
+  // atom intercepters
+  atomRead: AtomRead = (atom, ...params) => atom.read(...params),
+  atomWrite: AtomWrite = (atom, ...params) => atom.write(...params),
+  atomOnInit: AtomOnInit = (atom, store) => atom.unstable_onInit?.(store),
+  atomOnMount: AtomOnMount = (atom, setAtom) => atom.onMount?.(setAtom),
+  // building-block functions
+  ...buildingBlockFunctions: Partial<
+    [
+      ensureAtomState: EnsureAtomState,
+      flushCallbacks: FlushCallbacks,
+      recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms,
+      readAtomState: ReadAtomState,
+      invalidateDependents: InvalidateDependents,
+      writeAtomState: WriteAtomState,
+      mountDependencies: MountDependencies,
+      mountAtom: MountAtom,
+      unmountAtom: UnmountAtom,
+    ]
+  >
+): Store => {
   const ensureAtomState =
-    buildingBlocks[11] ||
+    buildingBlockFunctions[0] ||
     ((atom) => {
       if (import.meta.env?.MODE !== 'production' && !atom) {
         throw new Error('Atom is undefined or null')
@@ -443,7 +455,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     })
 
   const flushCallbacks =
-    buildingBlocks[12] ||
+    buildingBlockFunctions[1] ||
     (() => {
       let hasError: true | undefined
       let error: unknown | undefined
@@ -484,7 +496,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     })
 
   const recomputeInvalidatedAtoms =
-    buildingBlocks[13] ||
+    buildingBlockFunctions[2] ||
     (() => {
       // Step 1: traverse the dependency graph to build the topsorted atom list
       // We don't bother to check for cycles, which simplifies the algorithm.
@@ -558,7 +570,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     })
 
   const readAtomState =
-    buildingBlocks[14] ||
+    buildingBlockFunctions[3] ||
     ((atom) => {
       const atomState = ensureAtomState(atom)
       // See if we can skip recomputing this atom.
@@ -688,7 +700,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     })
 
   const invalidateDependents =
-    buildingBlocks[15] ||
+    buildingBlockFunctions[4] ||
     ((atom) => {
       const stack: AnyAtom[] = [atom]
       while (stack.length) {
@@ -703,7 +715,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     })
 
   const writeAtomState =
-    buildingBlocks[16] ||
+    buildingBlockFunctions[5] ||
     ((atom, ...args) => {
       let isSync = true
       const getter: Getter = <V>(a: Atom<V>) =>
@@ -747,7 +759,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     })
 
   const mountDependencies =
-    buildingBlocks[17] ||
+    buildingBlockFunctions[6] ||
     ((atom) => {
       const atomState = ensureAtomState(atom)
       const mounted = mountedMap.get(atom)
@@ -776,7 +788,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     })
 
   const mountAtom =
-    buildingBlocks[18] ||
+    buildingBlockFunctions[7] ||
     ((atom) => {
       const atomState = ensureAtomState(atom)
       let mounted = mountedMap.get(atom)
@@ -832,7 +844,7 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
     })
 
   const unmountAtom =
-    buildingBlocks[19] ||
+    buildingBlockFunctions[8] ||
     ((atom) => {
       const atomState = ensureAtomState(atom)
       let mounted = mountedMap.get(atom)
@@ -857,6 +869,32 @@ const buildStore = (...buildingBlocks: Partial<BuildingBlocks>): Store => {
       }
       return mounted
     })
+
+  const buildingBlocks: BuildingBlocks = [
+    // store state
+    atomStateMap,
+    mountedMap,
+    invalidatedAtoms,
+    changedAtoms,
+    mountCallbacks,
+    unmountCallbacks,
+    storeHooks,
+    // atom intercepters
+    atomRead,
+    atomWrite,
+    atomOnInit,
+    atomOnMount,
+    // building-block functions
+    ensureAtomState,
+    flushCallbacks,
+    recomputeInvalidatedAtoms,
+    readAtomState,
+    invalidateDependents,
+    writeAtomState,
+    mountDependencies,
+    mountAtom,
+    unmountAtom,
+  ]
 
   const store: Store = {
     get: (atom) => returnAtomValue(readAtomState(atom)),
