@@ -1,11 +1,10 @@
 import { expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
-
-type Store = ReturnType<typeof createStore>
-type GetAtomState = Parameters<Parameters<Store['unstable_derive']>[0]>[0]
-type AtomState = NonNullable<ReturnType<GetAtomState>>
-type AnyAtom = Atom<unknown>
+import {
+  INTERNAL_getBuildingBlocksRev1 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooks,
+} from 'jotai/vanilla/internals'
 
 type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => Cleanup | void
@@ -37,7 +36,7 @@ function syncEffect(effect: Effect): Atom<void> {
   internalAtom.unstable_onInit = (store) => {
     const ref = store.get(refAtom)
     const runEffect = () => {
-      const deps = new Set<AnyAtom>()
+      const deps = new Set<Atom<unknown>>()
       try {
         ref.cleanup?.()
         ref.cleanup =
@@ -59,77 +58,47 @@ function syncEffect(effect: Effect): Atom<void> {
         deps.forEach(ref.get!)
       }
     }
-    const internalAtomState = getAtomState(store, internalAtom)
-    const originalMountHook = internalAtomState.h
-    internalAtomState.h = () => {
-      originalMountHook?.()
-      if (internalAtomState.m) {
-        // mount
-        store.set(refreshAtom, (v) => v + 1)
-      } else {
-        // unmount
-        const syncEffectChannel = ensureSyncEffectChannel(store)
-        syncEffectChannel.add(() => {
-          ref.cleanup?.()
-          delete ref.cleanup
-        })
-      }
-    }
-    const originalUpdateHook = internalAtomState.u
-    internalAtomState.u = () => {
-      originalUpdateHook?.()
+    const buildingBlocks = INTERNAL_getBuildingBlocks(store)
+    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks[6])
+    const syncEffectChannel = ensureSyncEffectChannel(store)
+    storeHooks.m.add(internalAtom, () => {
+      // mount
+      store.set(refreshAtom, (v) => v + 1)
+    })
+    storeHooks.u.add(internalAtom, () => {
+      // unmount
+      syncEffectChannel.add(() => {
+        ref.cleanup?.()
+        delete ref.cleanup
+      })
+    })
+    storeHooks.c.add(internalAtom, () => {
       // update
-      const syncEffectChannel = ensureSyncEffectChannel(store)
       syncEffectChannel.add(runEffect)
-    }
+    })
   }
   return atom((get) => {
     get(internalAtom)
   })
 }
 
-const INTERNAL_flushStoreHook = Symbol.for('JOTAI.EXPERIMENTAL.FLUSHSTOREHOOK')
 const syncEffectChannelSymbol = Symbol()
 
 function ensureSyncEffectChannel(store: any) {
   if (!store[syncEffectChannelSymbol]) {
     store[syncEffectChannelSymbol] = new Set<() => void>()
-    const originalFlushHook = store[INTERNAL_flushStoreHook]
-    store[INTERNAL_flushStoreHook] = () => {
-      originalFlushHook?.()
+    const buildingBlocks = INTERNAL_getBuildingBlocks(store)
+    const storeHooks = INTERNAL_initializeStoreHooks(buildingBlocks[6])
+    storeHooks.f.add(() => {
       const syncEffectChannel = store[syncEffectChannelSymbol] as Set<
         () => void
       >
       const fns = Array.from(syncEffectChannel)
       syncEffectChannel.clear()
       fns.forEach((fn: () => void) => fn())
-    }
+    })
   }
   return store[syncEffectChannelSymbol] as Set<() => void>
-}
-
-const getAtomStateMap = new WeakMap<Store, GetAtomState>()
-
-/**
- * HACK: steal atomState to synchronously determine if
- * the atom is mounted
- * We return null to cause the buildStore(...args) to throw
- * to abort creating a derived store
- */
-function getAtomState(store: Store, atom: AnyAtom): AtomState {
-  let getAtomStateFn = getAtomStateMap.get(store)
-  if (!getAtomStateFn) {
-    try {
-      store.unstable_derive((...storeArgs) => {
-        getAtomStateFn = storeArgs[0]
-        return null as any
-      })
-    } catch {
-      // expect error
-    }
-    getAtomStateMap.set(store, getAtomStateFn!)
-  }
-  return getAtomStateFn!(atom)!
 }
 
 it('fires after recomputeDependents and before atom listeners', async function test() {

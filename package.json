@@ -70,6 +70,7 @@
     "build:babel:preset": "rollup -c --config-babel_preset",
     "build:vanilla": "rollup -c --config-vanilla",
     "build:vanilla:utils": "rollup -c --config-vanilla_utils",
+    "build:vanilla:internals": "rollup -c --config-vanilla_internals",
     "build:react": "rollup -c --config-react --client-only",
     "build:react:utils": "rollup -c --config-react_utils --client-only",
     "postbuild": "pnpm run patch-d-ts && pnpm run copy && pnpm run patch-ts3.8 && pnpm run patch-old-ts && pnpm run patch-esm-ts && pnpm run patch-readme",
