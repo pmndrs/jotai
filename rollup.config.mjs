@@ -14,6 +14,7 @@ const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
 export const entries = [
   { find: /.*\/vanilla\/utils\.ts$/, replacement: 'jotai/vanilla/utils' },
+  { find: /.*\/internals\.ts$/, replacement: 'jotai/vanilla/internals' },
   { find: /.*\/react\/utils\.ts$/, replacement: 'jotai/react/utils' },
   { find: /.*\/vanilla\.ts$/, replacement: 'jotai/vanilla' },
   { find: /.*\/react\.ts$/, replacement: 'jotai/react' },
@@ -124,6 +125,7 @@ function createUMDConfig(input, output, env, clientOnly) {
         'jotai/utils': 'jotaiUtils',
         'jotai/react': 'jotaiReact',
         'jotai/vanilla/utils': 'jotaiVanillaUtils',
+        'jotai/vanilla/internals': 'jotaiVanillaInternals',
         'jotai/react/utils': 'jotaiReactUtils',
       },
     },

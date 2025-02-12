@@ -41,7 +41,7 @@ jobs:
           node-version: 'lts/*'
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm build
+      - run: pnpm run build
       - name: Patch for all TS
         run: |
           sed -i~ 's/"isolatedDeclarations": true,//' tsconfig.json
@@ -99,4 +99,4 @@ jobs:
         run: |
           rm -r node_modules/@types/babel__core/node_modules
           sed -i~ 's/">=4.2": {/">=4.1": {/' node_modules/rxjs/package.json
-          pnpm test:types
+          pnpm run test:types
