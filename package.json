@@ -115,7 +115,7 @@
     "url": "https://github.com/pmndrs/jotai/issues"
   },
   "homepage": "https://github.com/pmndrs/jotai",
-  "packageManager": "pnpm@8.15.0",
+  "packageManager": "pnpm@9.15.5",
   "devDependencies": {
     "@babel/core": "^7.26.8",
     "@babel/plugin-transform-react-jsx": "^7.25.9",
