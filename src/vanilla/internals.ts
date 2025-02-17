@@ -503,11 +503,7 @@ const buildStore = (
       // This is a topological sort via depth-first search, slightly modified from
       // what's described here for simplicity and performance reasons:
       // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-      const topSortedReversed: [
-        atom: AnyAtom,
-        atomState: AtomState,
-        epochNumber: EpochNumber,
-      ][] = []
+      const topSortedReversed: [atom: AnyAtom, atomState: AtomState][] = []
       const visiting = new WeakSet<AnyAtom>()
       const visited = new WeakSet<AnyAtom>()
       // Visit the root atom. This is the only atom in the dependency graph
@@ -526,7 +522,7 @@ const buildStore = (
           // performance, we will simply push onto the end, and then will iterate in
           // reverse order later.
           if (invalidatedAtoms.get(a) === aState.n) {
-            topSortedReversed.push([a, aState, aState.n])
+            topSortedReversed.push([a, aState])
           } else if (
             import.meta.env?.MODE !== 'production' &&
             invalidatedAtoms.has(a)
@@ -549,7 +545,7 @@ const buildStore = (
       // Step 2: use the topSortedReversed atom list to recompute all affected atoms
       // Track what's changed, so that we can short circuit when possible
       for (let i = topSortedReversed.length - 1; i >= 0; --i) {
-        const [a, aState, prevEpochNumber] = topSortedReversed[i]!
+        const [a, aState] = topSortedReversed[i]!
         let hasChangedDeps = false
         for (const dep of aState.d.keys()) {
           if (dep !== a && changedAtoms.has(dep)) {
@@ -560,10 +556,6 @@ const buildStore = (
         if (hasChangedDeps) {
           readAtomState(a)
           mountDependencies(a)
-          if (prevEpochNumber !== aState.n) {
-            changedAtoms.add(a)
-            storeHooks.c?.(a)
-          }
         }
         invalidatedAtoms.delete(a)
       }
