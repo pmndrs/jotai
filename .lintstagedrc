@@ -1,0 +1,3 @@
+{
+  "*": ["eslint --fix", "prettier --write --ignore-unknown"]
+}
