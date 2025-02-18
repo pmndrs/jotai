@@ -1,16 +1,16 @@
-import cx from 'classnames';
-import { useAtom } from 'jotai';
-import { menuAtom } from '../atoms/index.js';
-import { Button } from '../components/button.js';
-import { Docs } from '../components/docs.js';
-import { Icon } from '../components/icon.js';
-import { SearchButton } from '../components/search-button.js';
-import { useOnEscape } from '../hooks/index.js';
+import cx from 'classnames'
+import { useAtom } from 'jotai'
+import { menuAtom } from '../atoms/index.js'
+import { Button } from '../components/button.js'
+import { Docs } from '../components/docs.js'
+import { Icon } from '../components/icon.js'
+import { SearchButton } from '../components/search-button.js'
+import { useOnEscape } from '../hooks/index.js'
 
 export const Menu = () => {
-  const [isMenuOpen, setIsMenuOpen] = useAtom(menuAtom);
+  const [isMenuOpen, setIsMenuOpen] = useAtom(menuAtom)
 
-  useOnEscape(() => setIsMenuOpen(false));
+  useOnEscape(() => setIsMenuOpen(false))
 
   return (
     <div
@@ -51,5 +51,5 @@ export const Menu = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -6,5 +6,5 @@ export const Wrapper = ({ children, ...rest }) => {
     >
       {children}
     </div>
-  );
-};
+  )
+}

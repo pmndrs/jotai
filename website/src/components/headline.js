@@ -1,4 +1,4 @@
-import cx from 'classnames';
+import cx from 'classnames'
 
 export const Headline = ({ className = '', children }) => {
   return (
@@ -10,5 +10,5 @@ export const Headline = ({ className = '', children }) => {
     >
       {children}
     </div>
-  );
-};
+  )
+}

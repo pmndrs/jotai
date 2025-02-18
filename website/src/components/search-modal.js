@@ -1,26 +1,31 @@
-import { useCallback, useMemo, useState } from 'react';
-import algoliasearch from 'algoliasearch/lite.js';
-import cx from 'classnames';
-import { Link } from 'gatsby';
-import { useAtom, useSetAtom } from 'jotai';
-import throttle from 'just-throttle';
-import { Hits, InstantSearch, useInstantSearch, useSearchBox } from 'react-instantsearch-hooks-web';
-import { searchAtom } from '../atoms/index.js';
-import { Button } from '../components/button.js';
-import { Icon } from '../components/icon.js';
-import { Modal } from '../components/modal.js';
+import { useCallback, useMemo, useState } from 'react'
+import algoliasearch from 'algoliasearch/lite.js'
+import cx from 'classnames'
+import { Link } from 'gatsby'
+import { useAtom, useSetAtom } from 'jotai'
+import throttle from 'just-throttle'
+import {
+  Hits,
+  InstantSearch,
+  useInstantSearch,
+  useSearchBox,
+} from 'react-instantsearch-hooks-web'
+import { searchAtom } from '../atoms/index.js'
+import { Button } from '../components/button.js'
+import { Icon } from '../components/icon.js'
+import { Modal } from '../components/modal.js'
 
 const searchClient = algoliasearch(
   process.env.GATSBY_ALGOLIA_APP_ID,
   process.env.GATSBY_ALGOLIA_SEARCH_KEY,
-);
+)
 
 export const SearchModal = () => {
-  const [isSearchOpen, setIsSearchOpen] = useAtom(searchAtom);
+  const [isSearchOpen, setIsSearchOpen] = useAtom(searchAtom)
 
   const onClose = useCallback(() => {
-    setIsSearchOpen(false);
-  }, [setIsSearchOpen]);
+    setIsSearchOpen(false)
+  }, [setIsSearchOpen])
 
   return (
     <Modal isOpen={isSearchOpen} onClose={onClose}>
@@ -46,14 +51,14 @@ export const SearchModal = () => {
         </Button>
       </div>
     </Modal>
-  );
-};
+  )
+}
 
 const Boundary = ({ children, fallback }) => {
-  const { indexUiState, results } = useInstantSearch();
+  const { indexUiState, results } = useInstantSearch()
 
   if (!indexUiState.query) {
-    return fallback;
+    return fallback
   }
 
   if (results.nbHits === 0) {
@@ -63,33 +68,34 @@ const Boundary = ({ children, fallback }) => {
           <Icon icon="warning" className="h-6 w-6 fill-current text-red-400" />
         </div>
         <div className="text-lg font-semibold text-black dark:text-white">
-          No results have been found for “{indexUiState.query}”. Please revise your query.
+          No results have been found for “{indexUiState.query}”. Please revise
+          your query.
         </div>
       </div>
-    );
+    )
   }
 
-  return children;
-};
+  return children
+}
 
 const CustomSearchBox = (props) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState('')
 
-  const { refine } = useSearchBox(props);
+  const { refine } = useSearchBox(props)
 
   const throttledRefine = useMemo(
     () => throttle((value) => refine(value), 200, { trailing: true }),
     [refine],
-  );
+  )
 
   const onChange = useCallback(
     (event) => {
-      const newQuery = event.currentTarget.value;
-      setQuery(newQuery);
-      throttledRefine(newQuery);
+      const newQuery = event.currentTarget.value
+      setQuery(newQuery)
+      throttledRefine(newQuery)
     },
     [throttledRefine],
-  );
+  )
 
   return (
     <div className="relative flex items-center">
@@ -113,12 +119,12 @@ const CustomSearchBox = (props) => {
         <img src="/search-by-algolia.svg" alt="Search by Algolia" aria-hidden />
       </a>
     </div>
-  );
-};
+  )
+}
 
 const Hit = ({ hit }) => {
-  const { title, excerpt, slug, level } = hit;
-  const setIsSearchOpen = useSetAtom(searchAtom);
+  const { title, excerpt, slug, level } = hit
+  const setIsSearchOpen = useSetAtom(searchAtom)
 
   return (
     <Link
@@ -141,11 +147,15 @@ const Hit = ({ hit }) => {
             </span>
           )}
         </div>
-        {excerpt && <div className="mt-1 text-sm leading-snug text-gray-500">{excerpt}</div>}
+        {excerpt && (
+          <div className="mt-1 text-sm leading-snug text-gray-500">
+            {excerpt}
+          </div>
+        )}
         <div className="mt-1 text-xs font-medium tracking-wider text-gray-400 group-hover:underline">
           jotai.org/docs/{slug}
         </div>
       </div>
     </Link>
-  );
-};
+  )
+}

@@ -1,5 +1,5 @@
-import cx from 'classnames';
-import { ExternalLink } from '../components/external-link.js';
+import cx from 'classnames'
+import { ExternalLink } from '../components/external-link.js'
 
 export const LogoCloud = () => {
   return (
@@ -95,8 +95,8 @@ export const LogoCloud = () => {
         </HoverLogo>
       </Logo>
     </div>
-  );
-};
+  )
+}
 
 const Logo = ({ to, className = '', children }) => {
   return (
@@ -109,13 +109,13 @@ const Logo = ({ to, className = '', children }) => {
     >
       {children}
     </ExternalLink>
-  );
-};
+  )
+}
 
 const HoverLogo = ({ children }) => {
   return (
     <div className="absolute inset-0 flex h-full w-full items-center justify-center px-6 opacity-0 transition duration-300 ease-in-out group-hover:opacity-100 text-white">
       {children}
     </div>
-  );
-};
+  )
+}

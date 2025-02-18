@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo } from 'react'
 
 export const Tabs = ({ tabs = {} }) => {
-  const tabContents = useMemo(() => Object.values(tabs), [tabs]);
+  const tabContents = useMemo(() => Object.values(tabs), [tabs])
 
   return (
     <>
@@ -11,5 +11,5 @@ export const Tabs = ({ tabs = {} }) => {
         ))}
       </div>
     </>
-  );
-};
+  )
+}

@@ -1,16 +1,16 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { atom, useAtom } from 'jotai';
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { atom, useAtom } from 'jotai'
 
-import mascot from './assets/jotai-mascot.png';
+import mascot from './assets/jotai-mascot.png'
 
-import './index.css';
+import './index.css'
 
-const countAtom = atom(0);
+const countAtom = atom(0)
 
 const Counter = () => {
-  const [count, setCount] = useAtom(countAtom);
-  const inc = () => setCount((c) => c + 1);
+  const [count, setCount] = useAtom(countAtom)
+  const inc = () => setCount((c) => c + 1)
 
   return (
     <>
@@ -22,8 +22,8 @@ const Counter = () => {
         +1
       </button>
     </>
-  );
-};
+  )
+}
 
 function App() {
   return (
@@ -43,11 +43,11 @@ function App() {
 
       <Counter />
     </div>
-  );
+  )
 }
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
-);
+)

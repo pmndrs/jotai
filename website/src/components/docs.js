@@ -1,15 +1,15 @@
-import { Link, graphql, useStaticQuery } from 'gatsby';
-import { useSetAtom } from 'jotai';
-import { menuAtom } from '../atoms/index.js';
-import { Icon } from '../components/icon.js';
+import { Link, graphql, useStaticQuery } from 'gatsby'
+import { useSetAtom } from 'jotai'
+import { menuAtom } from '../atoms/index.js'
+import { Icon } from '../components/icon.js'
 
 export const Docs = (props) => {
-  const data = useStaticQuery(staticQuery);
-  const setIsMenuOpen = useSetAtom(menuAtom);
+  const data = useStaticQuery(staticQuery)
+  const setIsMenuOpen = useSetAtom(menuAtom)
 
-  const allDocs = data.allMdx.nodes.filter(checkDocs).sort(sortDocs);
-  const allNavLinks = parseDocs(allDocs);
-  const navLinks = allNavLinks.slice(1);
+  const allDocs = data.allMdx.nodes.filter(checkDocs).sort(sortDocs)
+  const allNavLinks = parseDocs(allDocs)
+  const navLinks = allNavLinks.slice(1)
 
   const renderSection = (section, index) => (
     <div key={section.title || index}>
@@ -38,34 +38,37 @@ export const Docs = (props) => {
         ))}
       </ul>
     </div>
-  );
+  )
 
   const renderGroupedSections = () => {
-    const totalSections = navLinks.length;
-    const groupsCount = Math.floor((totalSections - 2) / 2);
-    const result = [];
+    const totalSections = navLinks.length
+    const groupsCount = Math.floor((totalSections - 2) / 2)
+    const result = []
 
     for (let i = 0; i < groupsCount; i++) {
-      const startIndex = i * 2;
+      const startIndex = i * 2
       result.push(
-        <section key={`group-${i}`} className="contents lg:flex lg:flex-col lg:gap-8">
+        <section
+          key={`group-${i}`}
+          className="contents lg:flex lg:flex-col lg:gap-8"
+        >
           {renderSection(navLinks[startIndex], startIndex)}
           {renderSection(navLinks[startIndex + 1], startIndex + 1)}
         </section>,
-      );
+      )
     }
 
-    const remainingStart = groupsCount * 2;
+    const remainingStart = groupsCount * 2
 
     for (let i = remainingStart; i < totalSections; i++) {
-      result.push(renderSection(navLinks[i], i));
+      result.push(renderSection(navLinks[i], i))
     }
 
-    return result;
-  };
+    return result
+  }
 
-  return <div {...props}>{renderGroupedSections()}</div>;
-};
+  return <div {...props}>{renderGroupedSections()}</div>
+}
 
 const staticQuery = graphql`
   query {
@@ -80,31 +83,31 @@ const staticQuery = graphql`
       }
     }
   }
-`;
+`
 
-const checkDocs = (doc) => doc.meta?.nav !== null;
+const checkDocs = (doc) => doc.meta?.nav !== null
 
-const sortDocs = (a, b) => a.meta.nav - b.meta.nav;
+const sortDocs = (a, b) => a.meta.nav - b.meta.nav
 
 const parseDocs = (docs) => {
-  let directories = [];
-  let newDocs = [];
+  let directories = []
+  let newDocs = []
 
   docs.forEach(({ slug }) => {
-    const hasParent = slug.includes('/');
+    const hasParent = slug.includes('/')
 
-    let parent = undefined;
+    let parent = undefined
 
     if (hasParent) {
-      parent = slug.split('/')[0];
+      parent = slug.split('/')[0]
 
       if (!directories.includes(parent)) {
-        directories = [...directories, parent];
+        directories = [...directories, parent]
       }
     }
-  });
+  })
 
-  newDocs = [{ contents: [...docs.filter((doc) => !doc.slug.includes('/'))] }];
+  newDocs = [{ contents: [...docs.filter((doc) => !doc.slug.includes('/'))] }]
 
   directories.forEach((directory) => {
     newDocs = [
@@ -113,8 +116,8 @@ const parseDocs = (docs) => {
         title: directory.replace('-', ' '),
         contents: [...docs.filter((doc) => doc.slug.startsWith(directory))],
       },
-    ];
-  });
+    ]
+  })
 
-  return newDocs;
-};
+  return newDocs
+}

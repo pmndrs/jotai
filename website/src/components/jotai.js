@@ -1,6 +1,6 @@
-import cx from 'classnames';
-import { Link } from 'gatsby';
-import { Logo } from '../components/logo.js';
+import cx from 'classnames'
+import { Link } from 'gatsby'
+import { Logo } from '../components/logo.js'
 
 export const Jotai = ({ isDocs = false, small = false, ...rest }) => {
   return (
@@ -12,7 +12,9 @@ export const Jotai = ({ isDocs = false, small = false, ...rest }) => {
               isDocs
                 ? 'text-gray-300 transition duration-300 ease-in-out hover:text-black dark:text-white dark:hover:text-white '
                 : 'text-black dark:text-white',
-              !small ? 'w-full max-w-[12rem] lg:max-w-[16rem] 2xl:max-w-[18rem]' : 'w-[4rem]',
+              !small
+                ? 'w-full max-w-[12rem] lg:max-w-[16rem] 2xl:max-w-[18rem]'
+                : 'w-[4rem]',
             )}
           />
         </Link>
@@ -26,19 +28,32 @@ export const Jotai = ({ isDocs = false, small = false, ...rest }) => {
           'flex items-center',
         )}
       >
-        <div className={cx(!small ? 'text-lg 2xl:text-xl' : 'text-xs', 'whitespace-nowrap')}>
+        <div
+          className={cx(
+            !small ? 'text-lg 2xl:text-xl' : 'text-xs',
+            'whitespace-nowrap',
+          )}
+        >
           状態
         </div>
         <div
-          className={cx(!small ? 'text-sm leading-snug 2xl:text-base' : 'text-xs leading-tight')}
+          className={cx(
+            !small
+              ? 'text-sm leading-snug 2xl:text-base'
+              : 'text-xs leading-tight',
+          )}
         >
           Primitive and flexible state management for React
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const Headline = ({ mainTitle = false, children, ...rest }) => {
-  return mainTitle ? <h1 {...rest}>{children}</h1> : <h2 {...rest}>{children}</h2>;
-};
+  return mainTitle ? (
+    <h1 {...rest}>{children}</h1>
+  ) : (
+    <h2 {...rest}>{children}</h2>
+  )
+}
