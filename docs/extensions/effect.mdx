@@ -144,18 +144,52 @@ const valuesAtom = withAtomEffect(atom(null), (get, set) => {
 
 ## Effect Behavior
 
-- **Cleanup Function:**
-  The cleanup function is invoked on unmount or before re-evaluation.
+- **Executes Synchronously:**
+  `effect` runs synchronous in the current task after synchronous evaluations complete.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
     <summary>Example</summary>
 
   ```js
-  atomEffect((get, set) => {
-    const intervalId = setInterval(() => set(clockAtom, Date.now()))
-    return () => clearInterval(intervalId)
+  const countAtom = atom(0)
+  const logAtom = atom('')
+  const logCounts = atomEffect((get, set) => {
+    set(logAtom, `count is now ${get(countAtom)}`)
   })
+  const setCountAndReadLog = atom(null, async (get, set) => {
+    get(logAtom) // 'count is now 0'
+    set(countAtom, increment) // effect runs synchronously
+    get(logAtom) // 'count is now 1'
+  })
+  store.sub(logCounts, () => {})
+  store.set(setCountAndReadLog)
+  ```
+
+  </details>
+
+- **Batched Updates:**
+  Multiple synchronous updates are batched as a single atomic transaction.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  const tensAtom = atom(0)
+  const onesAtom = atom(0)
+  const updateTensAndOnes = atom(null, (get, set) => {
+    set(tensAtom, (value) => value + 1)
+    set(onesAtom, (value) => value + 1)
+  })
+  const combos = atom([])
+  const effectAtom = atomEffect((get, set) => {
+    const value = get(tensAtom) * 10 + get(onesAtom)
+    set(combos, (arr) => [...arr, value])
+  })
+  store.sub(effectAtom, () => {})
+  store.set(updateTensAndOnes)
+  store.get(combos) // [00, 11]
   ```
 
   </details>
@@ -172,6 +206,22 @@ const valuesAtom = withAtomEffect(atom(null), (get, set) => {
   atomEffect((get, set) => {
     get(countAtom)
     set(countAtom, increment) // Will not loop
+  })
+  ```
+
+  </details>
+
+- **Cleanup Function:**
+  The cleanup function is invoked on unmount or before re-evaluation.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  atomEffect((get, set) => {
+    const intervalId = setInterval(() => set(clockAtom, Date.now()))
+    return () => clearInterval(intervalId)
   })
   ```
 
@@ -213,54 +263,23 @@ const valuesAtom = withAtomEffect(atom(null), (get, set) => {
 
   </details>
 
-- **Executes In The Next Microtask:**
-  `effect` runs in the next available microtask after synchronous evaluations complete.
+- **Idempotency:**
+  `atomEffect` runs once per state change, regardless of how many times it is referenced.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
     <summary>Example</summary>
 
   ```js
-  const countAtom = atom(0)
-  const logAtom = atom('')
-  const logCounts = atomEffect((get, set) => {
-    set(logAtom, `count is now ${get(countAtom)}`)
-  })
-  const setCountAndReadLog = atom(null, async (get, set) => {
-    get(logAtom) // 'count is now 0'
-    set(countAtom, increment) // effect runs in next microtask
-    get(logAtom) // 'count is now 0'
-    await Promise.resolve()
-    get(logAtom) // 'count is now 1'
-  })
-  store.sub(logCounts, () => {})
-  store.set(setCountAndReadLog)
-  ```
-
-  </details>
-
-- **Batched Updates:**
-  Multiple synchronous updates are batched as a single atomic transaction.
-
-  <!-- prettier-ignore -->
-  <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
-
-  ```js
-  const tensAtom = atom(0)
-  const onesAtom = atom(0)
-  const updateTensAndOnes = atom(null, (get, set) => {
-    set(tensAtom, (value) => value + 1)
-    set(onesAtom, (value) => value + 1)
-  })
-  const combos = atom([])
-  const effectAtom = atomEffect((get, set) => {
-    const value = get(tensAtom) * 10 + get(onesAtom)
-    set(combos, (arr) => [...arr, value])
+  let i = 0
+  const effectAtom = atomEffect(() => {
+    get(countAtom)
+    i++
   })
   store.sub(effectAtom, () => {})
-  store.set(updateTensAndOnes)
-  store.get(combos) // [00, 11]
+  store.sub(effectAtom, () => {})
+  store.set(countAtom, increment)
+  console.log(i) // 1
   ```
 
   </details>
@@ -281,28 +300,6 @@ const valuesAtom = withAtomEffect(atom(null), (get, set) => {
   ```
 
   </details>
-
-- **Idempotency:**
-  `atomEffect` runs once per state change, regardless of how many times it is referenced.
-
-  <!-- prettier-ignore -->
-  <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
-
-  ```js
-  let i = 0
-  const effectAtom = atomEffect(() => {
-    get(countAtom)
-    i++
-  })
-  store.sub(effectAtom, () => {})
-  store.sub(effectAtom, () => {})
-  store.set(countAtom, increment)
-  await Promise.resolve()
-  console.log(i) // 1
-  ```
-
-    </details>
 
 ## Dependency Management
 
