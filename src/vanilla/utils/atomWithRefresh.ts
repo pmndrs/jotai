@@ -35,10 +35,10 @@ export function atomWithRefresh<Value, Args extends unknown[], Result>(
       return read(get, options as never)
     },
     (get, set, ...args: Args) => {
-      if (args.length === 0) {
-        set(refreshAtom, (c) => c + 1)
-      } else if (write) {
+      if (write && args.length > 0) {
         return write(get, set, ...args)
+      } else {
+        set(refreshAtom, (c) => c + 1)
       }
     },
   )
