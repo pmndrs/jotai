@@ -1,19 +1,21 @@
-import { graphql, useStaticQuery } from 'gatsby';
+import { graphql, useStaticQuery } from 'gatsby'
 
 export const Meta = ({ lang = 'en', title, description, uri }) => {
-  const data = useStaticQuery(staticQuery);
+  const data = useStaticQuery(staticQuery)
 
-  const { site } = data;
+  const { site } = data
 
-  const siteTitle = site.siteMetadata.title;
-  const siteUrl = site.siteMetadata.siteUrl;
-  const siteIcon = `/favicon.svg`;
-  const socialMediaCardImage = `https://cdn.candycode.com/jotai/jotai-opengraph-v2.png`;
-  const shortName = site.siteMetadata.shortName;
+  const siteTitle = site.siteMetadata.title
+  const siteUrl = site.siteMetadata.siteUrl
+  const siteIcon = `/favicon.svg`
+  const socialMediaCardImage = `https://cdn.candycode.com/jotai/jotai-opengraph-v2.png`
+  const shortName = site.siteMetadata.shortName
 
-  const pageTitle = title ? `${title} — ${title.length <= 10 ? siteTitle : shortName}` : siteTitle;
-  const pageDescription = description || site.siteMetadata.description;
-  const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl;
+  const pageTitle = title
+    ? `${title} — ${title.length <= 10 ? siteTitle : shortName}`
+    : siteTitle
+  const pageDescription = description || site.siteMetadata.description
+  const pageUrl = uri ? `${siteUrl}/${uri}` : siteUrl
 
   return (
     <>
@@ -34,12 +36,24 @@ export const Meta = ({ lang = 'en', title, description, uri }) => {
       <link rel="icon" type="image/svg+xml" href={siteIcon} />
       <link rel="canonical" href={pageUrl} />
       <link rel="dns-prefetch" href="appid-dsn.algolia.net" />
-      <link rel="preconnect" href="https://98qz5x9lgr-dsn.algolia.net" crossOrigin="true" />
-      <link rel="preconnect" href="https://cdn.candycode.com" crossOrigin="true" />
-      <link rel="preconnect" href="https://storage.googleapis.com" crossOrigin="true" />
+      <link
+        rel="preconnect"
+        href="https://98qz5x9lgr-dsn.algolia.net"
+        crossOrigin="true"
+      />
+      <link
+        rel="preconnect"
+        href="https://cdn.candycode.com"
+        crossOrigin="true"
+      />
+      <link
+        rel="preconnect"
+        href="https://storage.googleapis.com"
+        crossOrigin="true"
+      />
     </>
-  );
-};
+  )
+}
 
 const staticQuery = graphql`
   query {
@@ -52,4 +66,4 @@ const staticQuery = graphql`
       }
     }
   }
-`;
+`

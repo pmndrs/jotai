@@ -1,11 +1,11 @@
-import { graphql } from 'gatsby';
-import { MDXRenderer } from 'gatsby-plugin-mdx';
-import { Jotai } from '../../components/jotai.js';
-import { Meta } from '../../components/meta.js';
+import { graphql } from 'gatsby'
+import { MDXRenderer } from 'gatsby-plugin-mdx'
+import { Jotai } from '../../components/jotai.js'
+import { Meta } from '../../components/meta.js'
 
 export default function DocsPage({ data }) {
-  const { frontmatter, body } = data.mdx;
-  const { title } = frontmatter;
+  const { frontmatter, body } = data.mdx
+  const { title } = frontmatter
 
   return (
     <>
@@ -17,16 +17,16 @@ export default function DocsPage({ data }) {
         <MDXRenderer>{body}</MDXRenderer>
       </div>
     </>
-  );
+  )
 }
 
 export const Head = ({ data }) => {
-  const { slug, frontmatter } = data.mdx;
-  const { title, description } = frontmatter;
-  const uri = `docs/${slug}`;
+  const { slug, frontmatter } = data.mdx
+  const { title, description } = frontmatter
+  const uri = `docs/${slug}`
 
-  return <Meta title={title} description={description} uri={uri} />;
-};
+  return <Meta title={title} description={description} uri={uri} />
+}
 
 export const pageQuery = graphql`
   query PageQuery($slug: String) {
@@ -39,4 +39,4 @@ export const pageQuery = graphql`
       body
     }
   }
-`;
+`

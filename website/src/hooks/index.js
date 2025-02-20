@@ -1,20 +1,20 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react'
 
 export const useOnEscape = (handler) => {
   const handleEscape = useCallback(
     ({ code }) => {
       if (code === 'Escape') {
-        handler();
+        handler()
       }
     },
     [handler],
-  );
+  )
 
   useEffect(() => {
-    document.addEventListener('keydown', handleEscape, false);
+    document.addEventListener('keydown', handleEscape, false)
 
     return () => {
-      document.removeEventListener('keydown', handleEscape, false);
-    };
-  }, [handleEscape]);
-};
+      document.removeEventListener('keydown', handleEscape, false)
+    }
+  }, [handleEscape])
+}

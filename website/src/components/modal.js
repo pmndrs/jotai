@@ -1,5 +1,5 @@
-import { Dialog } from '@headlessui/react';
-import { RemoveScroll } from 'react-remove-scroll';
+import { Dialog } from '@headlessui/react'
+import { RemoveScroll } from 'react-remove-scroll'
 
 export const Modal = ({ isOpen, onClose, children, ...rest }) => {
   return (
@@ -16,5 +16,5 @@ export const Modal = ({ isOpen, onClose, children, ...rest }) => {
         </RemoveScroll>
       </div>
     </Dialog>
-  );
-};
+  )
+}

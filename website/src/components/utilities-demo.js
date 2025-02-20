@@ -1,11 +1,11 @@
-import cx from 'classnames';
-import { useAtom } from 'jotai';
-import { darkModeAtom } from '../atoms/index.js';
-import { ClientOnly } from '../components/client-only.js';
-import { Code } from '../components/code.js';
+import cx from 'classnames'
+import { useAtom } from 'jotai'
+import { darkModeAtom } from '../atoms/index.js'
+import { ClientOnly } from '../components/client-only.js'
+import { Code } from '../components/code.js'
 
 export const UtilitiesDemo = () => {
-  const [darkMode, setDarkMode] = useAtom(darkModeAtom);
+  const [darkMode, setDarkMode] = useAtom(darkModeAtom)
 
   const code = `import { useAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
@@ -23,7 +23,7 @@ const Page = () => {
       <button onClick={toggleDarkMode}>toggle theme</button>
     </>
   )
-}`;
+}`
 
   return (
     <>
@@ -31,7 +31,9 @@ const Page = () => {
         <ClientOnly>
           <div
             className={cx(
-              darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900',
+              darkMode
+                ? 'bg-gray-900 text-gray-100'
+                : 'bg-gray-100 text-gray-900',
               'flex items-center space-x-4 rounded-xl p-4 transition duration-300 ease-in-out lg:space-x-8 lg:p-8',
             )}
           >
@@ -53,12 +55,13 @@ const Page = () => {
               </button>
             </div>
             <div className="text-sm leading-relaxed lg:text-lg">
-              This toggle will be persisted between user sessions via localStorage.
+              This toggle will be persisted between user sessions via
+              localStorage.
             </div>
           </div>
         </ClientOnly>
       </div>
       <Code>{code}</Code>
     </>
-  );
-};
+  )
+}

@@ -1,4 +1,4 @@
-import { Button } from '../components/button.js';
+import { Button } from '../components/button.js'
 
 export const Credits = () => {
   return (
@@ -44,5 +44,5 @@ export const Credits = () => {
         </div>
       </Button>
     </>
-  );
-};
+  )
+}

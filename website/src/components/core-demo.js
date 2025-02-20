@@ -1,10 +1,10 @@
-import { useAtom } from 'jotai';
-import { textAtom, uppercaseAtom } from '../atoms/index.js';
-import { Code } from '../components/code.js';
+import { useAtom } from 'jotai'
+import { textAtom, uppercaseAtom } from '../atoms/index.js'
+import { Code } from '../components/code.js'
 
 export const CoreDemo = () => {
   const Input = () => {
-    const [text, setText] = useAtom(textAtom);
+    const [text, setText] = useAtom(textAtom)
 
     return (
       <input
@@ -12,14 +12,14 @@ export const CoreDemo = () => {
         onChange={(event) => setText(event.target.value)}
         className="w-full bg-transparent focus:!ring-transparent !border-none"
       />
-    );
-  };
+    )
+  }
 
   const Uppercase = () => {
-    const [uppercase] = useAtom(uppercaseAtom);
+    const [uppercase] = useAtom(uppercaseAtom)
 
-    return <span className="flex-shrink-0 font-bold">{uppercase}</span>;
-  };
+    return <span className="flex-shrink-0 font-bold">{uppercase}</span>
+  }
 
   const code = `import { atom, useAtom } from 'jotai'
 
@@ -53,7 +53,7 @@ const App = () => {
       <Uppercase />
     </>
   )
-}`;
+}`
 
   return (
     <>
@@ -65,5 +65,5 @@ const App = () => {
       </div>
       <Code>{code}</Code>
     </>
-  );
-};
+  )
+}

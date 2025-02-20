@@ -1,25 +1,25 @@
-import { useCallback, useEffect } from 'react';
-import cx from 'classnames';
-import { useAtom } from 'jotai';
-import { darkModeAtom } from '../atoms/index.js';
-import { Icon } from '../components/icon.js';
+import { useCallback, useEffect } from 'react'
+import cx from 'classnames'
+import { useAtom } from 'jotai'
+import { darkModeAtom } from '../atoms/index.js'
+import { Icon } from '../components/icon.js'
 
 export const Toggle = () => {
-  const [darkMode, setDarkMode] = useAtom(darkModeAtom);
+  const [darkMode, setDarkMode] = useAtom(darkModeAtom)
 
   const toggleDarkMode = useCallback(() => {
-    setDarkMode(!darkMode);
-  }, [darkMode, setDarkMode]);
+    setDarkMode(!darkMode)
+  }, [darkMode, setDarkMode])
 
   useEffect(() => {
     if (darkMode) {
-      document.body.classList.add('dark');
-      document.body.classList.remove('light');
+      document.body.classList.add('dark')
+      document.body.classList.remove('light')
     } else {
-      document.body.classList.add('light');
-      document.body.classList.remove('dark');
+      document.body.classList.add('light')
+      document.body.classList.remove('dark')
     }
-  }, [darkMode]);
+  }, [darkMode])
 
   return (
     <div className="absolute top-0 right-0 lg:fixed">
@@ -46,5 +46,5 @@ export const Toggle = () => {
         </div>
       </button>
     </div>
-  );
-};
+  )
+}

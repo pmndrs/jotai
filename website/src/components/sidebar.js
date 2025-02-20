@@ -1,13 +1,13 @@
-import { useSetAtom } from 'jotai';
-import { menuAtom, helpAtom } from '../atoms/index.js';
-import { Button } from '../components/button.js';
-import { Credits } from '../components/credits.js';
-import { Jotai } from '../components/jotai.js';
-import { SearchButton } from '../components/search-button.js';
+import { useSetAtom } from 'jotai'
+import { menuAtom, helpAtom } from '../atoms/index.js'
+import { Button } from '../components/button.js'
+import { Credits } from '../components/credits.js'
+import { Jotai } from '../components/jotai.js'
+import { SearchButton } from '../components/search-button.js'
 
 export const Sidebar = ({ isDocs = false }) => {
-  const setIsMenuOpen = useSetAtom(menuAtom);
-  const setShowHelp = useSetAtom(helpAtom);
+  const setIsMenuOpen = useSetAtom(menuAtom)
+  const setShowHelp = useSetAtom(helpAtom)
 
   return (
     <aside className="scrollbar sticky top-0 hidden h-full max-h-screen min-h-full w-full flex-shrink-0 flex-col justify-between overflow-y-scroll overscroll-none p-8 lg:flex lg:max-w-[288px] xl:max-w-[384px] xl:p-16 2xl:max-w-[448px]">
@@ -24,7 +24,11 @@ export const Sidebar = ({ isDocs = false }) => {
               <Button to="/docs" icon="book" className="xl:hidden">
                 Documentation
               </Button>
-              <Button onClick={() => setIsMenuOpen(true)} icon="book" className="!hidden xl:!flex">
+              <Button
+                onClick={() => setIsMenuOpen(true)}
+                icon="book"
+                className="!hidden xl:!flex"
+              >
                 Documentation
               </Button>
             </>
@@ -68,5 +72,5 @@ export const Sidebar = ({ isDocs = false }) => {
         <Credits />
       </div>
     </aside>
-  );
-};
+  )
+}
