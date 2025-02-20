@@ -18,7 +18,7 @@ it('sync counter', async () => {
     return (
       <>
         <div>count: {count}</div>
-        <button onClick={() => setCount()}>button</button>
+        <button onClick={setCount}>button</button>
       </>
     )
   }
@@ -53,7 +53,7 @@ it('async counter', async () => {
     return (
       <>
         <div>count: {count}</div>
-        <button onClick={() => setCount()}>button</button>
+        <button onClick={setCount}>button</button>
       </>
     )
   }
