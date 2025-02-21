@@ -7,7 +7,7 @@ keywords: tanstack,query
 
 [TanStack Query](https://tanstack.com/query/) provides a set of functions for managing async state (typically external data).
 
-From the [Overview docs](https://tanstack.com/query/v5/docs/overview):
+From the [Overview docs](https://tanstack.com/query/v5/docs/framework/react/overview):
 
 > React Query is often described as the missing data-fetching library for React, but in more technical terms, it makes **fetching, caching, synchronizing and updating server state** in your React applications a breeze.
 
@@ -91,7 +91,7 @@ const UserData = () => {
 
 ### atomWithInfiniteQuery usage
 
-`atomWithInfiniteQuery` is very similar to `atomWithQuery`, however it is for an `InfiniteQuery`, which is used for data that is meant to be paginated. You can [read more about Infinite Queries here](https://tanstack.com/query/v5/docs/guides/infinite-queries).
+`atomWithInfiniteQuery` is very similar to `atomWithQuery`, however it is for an `InfiniteQuery`, which is used for data that is meant to be paginated. You can [read more about Infinite Queries here](https://tanstack.com/query/v5/docs/framework/react/guides/infinite-queries).
 
 > Rendering lists that can additively "load more" data onto an existing set of data or "infinite scroll" is also a very common UI pattern. React Query supports a useful version of useQuery called useInfiniteQuery for querying these types of lists.
 
@@ -135,7 +135,7 @@ const Posts = () => {
 
 ### atomWithMutation usage
 
-`atomWithMutation` creates a new atom that implements a standard [`Mutation`](https://tanstack.com/query/v5/docs/guides/mutations) from TanStack Query.
+`atomWithMutation` creates a new atom that implements a standard [`Mutation`](https://tanstack.com/query/v5/docs/framework/react/guides/mutations) from TanStack Query.
 
 > Unlike queries, mutations are typically used to create/update/delete data or perform server side-effects.
 
@@ -326,7 +326,7 @@ export const useTodoMutation = () => {
 
 ### SSR support
 
-All atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://tanstack.com/query/v5/docs/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://tanstack.com/query/v5/docs/react/guides/ssr#using-the-hydration-apis) or [`initialData`](https://tanstack.com/query/v5/docs/react/guides/ssr#get-started-fast-with-initialdata).
+All atoms can be used within the context of a server side rendered app, such as a next.js app or Gatsby app. You can [use both options](https://tanstack.com/query/v5/docs/framework/react/guides/ssr) that React Query supports for use within SSR apps, [hydration](https://tanstack.com/query/v5/docs/react/guides/ssr#using-the-hydration-apis) or [`initialData`](https://tanstack.com/query/v5/docs/react/guides/ssr#get-started-fast-with-initialdata).
 
 ### Error handling
 
