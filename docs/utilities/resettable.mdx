@@ -198,7 +198,7 @@ const PostsList = () => {
       </ul>
 
       {/* Clicking this button will re-fetch the posts */}
-      <button type="button" onClick={refreshPosts}>
+      <button type="button" onClick={() => refreshPosts()}>
         Refresh posts
       </button>
     </div>
