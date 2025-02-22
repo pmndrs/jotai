@@ -30,13 +30,13 @@ jobs:
       - name: Patch for DEV-ONLY
         if: ${{ matrix.env == 'development' }}
         run: |
-          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[DEV-ONLY\]/\1('/" tests/*/*.ts? tests/*/*/*.ts?
-          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[PRD-ONLY\]/\1.skip('/" tests/*/*.ts? tests/*/*/*.ts?
+          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[DEV-ONLY\]/\1('/" tests/*/*.ts* tests/*/*/*.ts*
+          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[PRD-ONLY\]/\1.skip('/" tests/*/*.ts* tests/*/*/*.ts*
       - name: Patch for PRD-ONLY
         if: ${{ matrix.env == 'production' }}
         run: |
-          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\PRD-ONLY\]/\1('/" tests/*/*.ts? tests/*/*/*.ts?
-          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[DEV-ONLY\]/\1.skip('/" tests/*/*.ts? tests/*/*/*.ts?
+          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\PRD-ONLY\]/\1('/" tests/*/*.ts* tests/*/*/*.ts*
+          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[DEV-ONLY\]/\1.skip('/" tests/*/*.ts* tests/*/*/*.ts*
       - name: Patch for CJS
         if: ${{ matrix.build == 'cjs' }}
         run: |
