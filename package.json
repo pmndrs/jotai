@@ -75,7 +75,7 @@
     "build:react:utils": "rollup -c --config-react_utils --client-only",
     "postbuild": "pnpm run patch-d-ts && pnpm run copy && pnpm run patch-ts3.8 && pnpm run patch-old-ts && pnpm run patch-esm-ts && pnpm run patch-readme",
     "fix": "pnpm run fix:lint && pnpm run fix:format",
-    "fix:format": "prettier .  --write",
+    "fix:format": "prettier . --write",
     "fix:lint": "eslint . --fix",
     "test": "pnpm run \"/^test:.*/\"",
     "test:format": "prettier . --list-different",
