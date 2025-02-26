@@ -64,11 +64,11 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
     return newAtom
   }
 
-  function notifyListeners(
+  const notifyListeners = (
     type: 'CREATE' | 'REMOVE',
     param: Param,
     atom: AtomType,
-  ) {
+  ) => {
     for (const listener of listeners) {
       listener({ type, param, atom })
     }
