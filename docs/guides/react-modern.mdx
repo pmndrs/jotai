@@ -1,0 +1,469 @@
+---
+title: React 18+ and 19 Integration
+description: How to use Jotai with React 18+ and 19 features
+nav: 8.04
+keywords: react18,react19,transition,suspense,concurrent,deferred,server-components
+---
+
+# Using Jotai with React 18+ and 19
+
+React 18 and 19 introduced powerful features that enhance how we build applications, particularly around concurrent rendering and state management. Jotai's atomic model works exceptionally well with these features. This guide will help you leverage the best of both worlds.
+
+## Suspense Integration
+
+Jotai has built-in support for Suspense, allowing elegant handling of asynchronous operations:
+
+```jsx
+import { Suspense } from 'react'
+import { atom, useAtom } from 'jotai'
+
+const userAtom = atom(async () => {
+  const response = await fetch('https://jsonplaceholder.typicode.com/users/1')
+  return response.json()
+})
+
+function UserData() {
+  const [user] = useAtom(userAtom)
+  return <div>User name: {user.name}</div>
+}
+
+function App() {
+  return (
+    <Suspense fallback={<div>Loading user data...</div>}>
+      <UserData />
+    </Suspense>
+  )
+}
+```
+
+## useTransition for Non-Blocking Updates
+
+React 18's `useTransition` API lets you mark state updates as non-urgent, keeping your application responsive during large updates:
+
+```jsx
+import { useTransition } from 'react'
+import { atom, useAtom } from 'jotai'
+
+const countAtom = atom(0)
+const expensiveComputationAtom = atom((get) => {
+  const count = get(countAtom)
+  // Simulate expensive computation
+  let result = 0
+  for (let i = 0; i < 1000000 * count; i++) {
+    result += Math.random()
+  }
+  return result
+})
+
+function ExpensiveCounter() {
+  const [count, setCount] = useAtom(countAtom)
+  const [result] = useAtom(expensiveComputationAtom)
+  const [isPending, startTransition] = useTransition()
+
+  const handleClick = () => {
+    startTransition(() => {
+      setCount(c => c + 1)
+    })
+  }
+
+  return (
+    <div>
+      <button onClick={handleClick} disabled={isPending}>
+        Increment ({count})
+      </button>
+      {isPending ?
+        <p>Calculating...</p> :
+        <p>Result: {result.toFixed(2)}</p>
+      }
+    </div>
+  )
+}
+```
+
+## useDeferredValue for UI Responsiveness
+
+`useDeferredValue` lets you defer updating parts of the UI, useful for maintaining responsiveness during expensive operations:
+
+```jsx
+import { useDeferredValue } from 'react'
+import { atom, useAtom, useAtomValue } from 'jotai'
+
+const searchQueryAtom = atom('')
+const searchResultsAtom = atom(async (get) => {
+  const query = get(searchQueryAtom)
+  if (!query.trim()) return []
+
+  const response = await fetch(`https://api.example.com/search?q=${query}`)
+  return response.json()
+})
+
+function SearchComponent() {
+  const [query, setQuery] = useAtom(searchQueryAtom)
+  const results = useAtomValue(searchResultsAtom)
+
+  // Defer the value to avoid unnecessary suspension
+  const deferredResults = useDeferredValue(results)
+
+  return (
+    <div>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search..."
+      />
+      <ul>
+        {deferredResults.map((item) => (
+          <li key={item.id}>{item.name}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+```
+
+## React 19 Features
+
+### Enhanced Server Components
+
+React 19 improves Server Components, and Jotai is designed to work seamlessly with them:
+
+```jsx
+// app/atoms.js - can be imported by both server and client components
+import { atom } from 'jotai'
+
+export const countAtom = atom(0)
+export const doubledCountAtom = atom((get) => get(countAtom) * 2)
+
+// app/Counter.js - client component
+'use client'
+
+import { useAtom } from 'jotai'
+import { countAtom } from './atoms'
+
+export default function Counter() {
+  const [count, setCount] = useAtom(countAtom)
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(c => c + 1)}>Increment</button>
+    </div>
+  )
+}
+
+// app/page.js - server component
+import Counter from './Counter'
+import { doubledCountAtom } from './atoms'
+
+// In React 19, you can use atomValue (server side API) from jotai/server
+import { atomValue } from 'jotai/server'
+
+export default async function Page() {
+  // Get the default value of doubledCountAtom on the server
+  const initialDoubledValue = atomValue(doubledCountAtom)
+
+  return (
+    <div>
+      <h1>Counter App</h1>
+      <p>Initial doubled value: {initialDoubledValue}</p>
+      <Counter />
+    </div>
+  )
+}
+```
+
+### Streaming Data with Suspense
+
+React 19 enhances streaming capabilities, which Jotai can leverage with Suspense:
+
+```jsx
+import { Suspense } from 'react'
+import { atom, useAtom } from 'jotai'
+
+// Stream data with increasing latency
+const streamedItemsAtom = atom(async () => {
+  const items = []
+  for (let i = 1; i <= 5; i++) {
+    await new Promise(r => setTimeout(r, i * 1000))
+    items.push(`Item ${i}`)
+  }
+  return items
+})
+
+function StreamedList() {
+  const [items] = useAtom(streamedItemsAtom)
+  return (
+    <ul>
+      {items.map((item, i) => (
+        <li key={i}>{item}</li>
+      ))}
+    </ul>
+  )
+}
+
+function App() {
+  return (
+    <div>
+      <h1>Streamed Content</h1>
+      <Suspense fallback={<div>Loading streamed content...</div>}>
+        <StreamedList />
+      </Suspense>
+    </div>
+  )
+}
+```
+
+## Optimizing for Concurrent Rendering
+
+Both React 18 and 19 focus on concurrent rendering. Here's how to optimize your Jotai usage:
+
+### 1. Granular Atoms for Better Performance
+
+```jsx
+// Instead of one large atom:
+const userDataAtom = atom({
+  profile: { /* ... */ },
+  preferences: { /* ... */ },
+  history: { /* ... */ }
+})
+
+// Prefer smaller, focused atoms:
+const userProfileAtom = atom({ /* ... */ })
+const userPreferencesAtom = atom({ /* ... */ })
+const userHistoryAtom = atom({ /* ... */ })
+```
+
+### 2. Selective Reading/Writing with useAtomValue and useSetAtom
+
+```jsx
+import { useAtomValue, useSetAtom } from 'jotai'
+
+function ProfileDisplay() {
+  // Only re-renders when profile changes
+  const profile = useAtomValue(userProfileAtom)
+  return <div>{profile.name}</div>
+}
+
+function ProfileEditor() {
+  // Doesn't subscribe to profile value changes
+  const setProfile = useSetAtom(userProfileAtom)
+  return <button onClick={() => setProfile({...})}>Edit</button>
+}
+```
+
+### 3. Leverage React.memo with Jotai
+
+```jsx
+import { memo } from 'react'
+import { useAtomValue } from 'jotai'
+
+const ExpensiveComponent = memo(function ExpensiveComponent() {
+  const value = useAtomValue(someAtom)
+  // Render using value...
+})
+```
+
+## Advanced Patterns with React 18+ and 19
+
+### Coordinating Multiple Atoms with useTransition
+
+```jsx
+import { useTransition } from 'react'
+import { useSetAtom } from 'jotai'
+
+function FormSubmitButton() {
+  const [isPending, startTransition] = useTransition()
+  const setFormStatus = useSetAtom(formStatusAtom)
+  const setUser = useSetAtom(userAtom)
+  const setNotification = useSetAtom(notificationAtom)
+
+  const handleSubmit = () => {
+    // Update UI immediately
+    setFormStatus('submitting')
+
+    // Transition less critical updates
+    startTransition(() => {
+      setUser(newUserData)
+      setNotification('Profile updated')
+    })
+  }
+
+  return (
+    <button
+      onClick={handleSubmit}
+      disabled={isPending}
+    >
+      {isPending ? 'Saving...' : 'Save'}
+    </button>
+  )
+}
+```
+
+### Handling Asynchronous Operations with Suspense and Error Boundaries
+
+```jsx
+import { Suspense } from 'react'
+import { ErrorBoundary } from 'react-error-boundary'
+import { atom, useAtom } from 'jotai'
+
+const userProfileAtom = atom(async () => {
+  const response = await fetch('/api/profile')
+  if (!response.ok) throw new Error('Failed to fetch profile')
+  return response.json()
+})
+
+function UserProfile() {
+  const [profile] = useAtom(userProfileAtom)
+  return <div>{profile.name}</div>
+}
+
+function ProfilePage() {
+  return (
+    <ErrorBoundary
+      fallback={<div>Error loading profile. Please try again.</div>}
+    >
+      <Suspense fallback={<div>Loading profile...</div>}>
+        <UserProfile />
+      </Suspense>
+    </ErrorBoundary>
+  )
+}
+```
+
+### Integration with React 19's Progressive Rendering
+
+```jsx
+import { Fragment } from 'react'
+import { atom, useAtom } from 'jotai'
+
+// Simulated large dataset
+const largeDataAtom = atom(async () => {
+  // Fetch large data set...
+  return Array.from({ length: 10000 }, (_, i) => ({
+    id: i,
+    name: `Item ${i}`
+  }))
+})
+
+function LargeList() {
+  const [items] = useAtom(largeDataAtom)
+
+  return (
+    <div>
+      {items.map((item, index) => (
+        // Use Fragment with key to help React's reconciliation
+        <Fragment key={item.id}>
+          {index % 100 === 0 && (
+            // Insert yield boundaries for progressive rendering
+            <div style={{ height: 0 }} aria-hidden />
+          )}
+          <div>{item.name}</div>
+        </Fragment>
+      ))}
+    </div>
+  )
+}
+```
+
+## Server Components Best Practices
+
+When using Jotai with Server Components in React 18+ and 19:
+
+1. **Keep atom definitions pure and sharable**:
+
+```jsx
+// shared/atoms.js
+import { atom } from 'jotai'
+
+// This is safe to import in both server and client components
+export const counterAtom = atom(0)
+```
+
+2. **Use hooks only in client components**:
+
+```jsx
+'use client'
+
+import { useAtom } from 'jotai'
+import { counterAtom } from '@/shared/atoms'
+
+export default function Counter() {
+  const [count, setCount] = useAtom(counterAtom)
+  // Component code...
+}
+```
+
+3. **Provide initial state from server to client**:
+
+```jsx
+// In Server Component
+import { hydrateAtoms } from 'jotai/utils'
+import { Provider } from 'jotai/react'
+
+export default async function Layout({ children }) {
+  // Fetch initial data on the server
+  const initialData = await fetchInitialData()
+
+  return (
+    <Provider>
+      <ClientHydration initialData={initialData}>
+        {children}
+      </ClientHydration>
+    </Provider>
+  )
+}
+
+// In Client Component
+'use client'
+
+import { useHydrateAtoms } from 'jotai/utils'
+
+function ClientHydration({ initialData, children }) {
+  useHydrateAtoms([
+    [userAtom, initialData.user],
+    [postsAtom, initialData.posts]
+  ])
+
+  return children
+}
+```
+
+## Performance Testing and Optimization
+
+With React 18+ and 19's concurrent features, it's important to verify performance:
+
+```jsx
+import { useEffect } from 'react'
+import { useAtomValue } from 'jotai'
+
+function PerformanceMonitor() {
+  const value = useAtomValue(complexAtom)
+
+  useEffect(() => {
+    const markerName = 'render-with-complex-atom'
+    performance.mark(markerName)
+
+    return () => {
+      performance.measure('Complex Atom Render Time', markerName)
+      console.log(performance.getEntriesByName('Complex Atom Render Time'))
+    }
+  })
+
+  return null
+}
+```
+
+## Conclusion
+
+Jotai's atomic model pairs perfectly with React 18+ and 19's concurrent features. By following these patterns, you can build applications that are both reactive and responsive, taking full advantage of modern React capabilities.
+
+Remember these key points:
+
+1. **Keep atoms granular** for better concurrency
+2. **Use Suspense** for loading states
+3. **Leverage useTransition** for non-blocking updates
+4. **Adopt useDeferredValue** for smoother UI
+5. **Separate client and server concerns** when using Server Components
+
+These practices will help you build high-performance React applications with Jotai in the era of concurrent rendering.
+```
+
