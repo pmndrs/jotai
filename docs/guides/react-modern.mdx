@@ -62,7 +62,7 @@ function ExpensiveCounter() {
 
   const handleClick = () => {
     startTransition(() => {
-      setCount(c => c + 1)
+      setCount((c) => c + 1)
     })
   }
 
@@ -71,10 +71,7 @@ function ExpensiveCounter() {
       <button onClick={handleClick} disabled={isPending}>
         Increment ({count})
       </button>
-      {isPending ?
-        <p>Calculating...</p> :
-        <p>Result: {result.toFixed(2)}</p>
-      }
+      {isPending ? <p>Calculating...</p> : <p>Result: {result.toFixed(2)}</p>}
     </div>
   )
 }
@@ -183,7 +180,7 @@ import { atom, useAtom } from 'jotai'
 const streamedItemsAtom = atom(async () => {
   const items = []
   for (let i = 1; i <= 5; i++) {
-    await new Promise(r => setTimeout(r, i * 1000))
+    await new Promise((r) => setTimeout(r, i * 1000))
     items.push(`Item ${i}`)
   }
   return items
@@ -221,15 +218,27 @@ Both React 18 and 19 focus on concurrent rendering. Here's how to optimize your 
 ```jsx
 // Instead of one large atom:
 const userDataAtom = atom({
-  profile: { /* ... */ },
-  preferences: { /* ... */ },
-  history: { /* ... */ }
+  profile: {
+    /* ... */
+  },
+  preferences: {
+    /* ... */
+  },
+  history: {
+    /* ... */
+  },
 })
 
 // Prefer smaller, focused atoms:
-const userProfileAtom = atom({ /* ... */ })
-const userPreferencesAtom = atom({ /* ... */ })
-const userHistoryAtom = atom({ /* ... */ })
+const userProfileAtom = atom({
+  /* ... */
+})
+const userPreferencesAtom = atom({
+  /* ... */
+})
+const userHistoryAtom = atom({
+  /* ... */
+})
 ```
 
 ### 2. Selective Reading/Writing with useAtomValue and useSetAtom
@@ -288,10 +297,7 @@ function FormSubmitButton() {
   }
 
   return (
-    <button
-      onClick={handleSubmit}
-      disabled={isPending}
-    >
+    <button onClick={handleSubmit} disabled={isPending}>
       {isPending ? 'Saving...' : 'Save'}
     </button>
   )
@@ -340,7 +346,7 @@ const largeDataAtom = atom(async () => {
   // Fetch large data set...
   return Array.from({ length: 10000 }, (_, i) => ({
     id: i,
-    name: `Item ${i}`
+    name: `Item ${i}`,
   }))
 })
 
@@ -405,22 +411,20 @@ export default async function Layout({ children }) {
 
   return (
     <Provider>
-      <ClientHydration initialData={initialData}>
-        {children}
-      </ClientHydration>
+      <ClientHydration initialData={initialData}>{children}</ClientHydration>
     </Provider>
   )
 }
 
 // In Client Component
-'use client'
+;('use client')
 
 import { useHydrateAtoms } from 'jotai/utils'
 
 function ClientHydration({ initialData, children }) {
   useHydrateAtoms([
     [userAtom, initialData.user],
-    [postsAtom, initialData.posts]
+    [postsAtom, initialData.posts],
   ])
 
   return children
@@ -465,5 +469,7 @@ Remember these key points:
 5. **Separate client and server concerns** when using Server Components
 
 These practices will help you build high-performance React applications with Jotai in the era of concurrent rendering.
+
 ```
 
+```
