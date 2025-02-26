@@ -158,12 +158,12 @@ const countAtom = atomWithStorage('count-key', 0, storage)
 
 const Counter = () => {
   const [count, setCount] = useAtom(countAtom)
-  
+
   // Simple increment without referencing current value
   const incrementDirect = () => {
     setCount(1) // Directly sets value to 1, no need to await
   }
-  
+
   // Increment that needs current value
   const increment = () => {
     setCount(async (promiseOrValue) => {
@@ -171,7 +171,7 @@ const Counter = () => {
       return currentValue + 1
     })
   }
-  
+
   // Error handling example
   const incrementWithErrorHandling = async () => {
     try {
@@ -180,20 +180,20 @@ const Counter = () => {
           const currentValue = await promiseOrValue
           return currentValue + 1
         } catch (error) {
-          console.error("Error accessing current value:", error)
+          console.error('Error accessing current value:', error)
           return 0 // Fallback value
         }
       })
     } catch (error) {
-      console.error("Error updating value:", error)
+      console.error('Error updating value:', error)
     }
   }
-  
+
   // Using the value in UI requires handling the Promise
   if (count instanceof Promise) {
     return <Text>Loading...</Text>
   }
-  
+
   return (
     <View>
       <Text>Count: {count}</Text>
@@ -212,23 +212,23 @@ const robustCountAtom = atomWithStorage('robust-count', 0, storage)
 const RobustCounter = () => {
   const [count, setCount] = useAtom(robustCountAtom)
   const [error, setError] = useState(null)
-  
+
   // Using loadable to handle async state more elegantly
   const [countState] = useAtom(loadable(robustCountAtom))
-  
+
   if (countState.state === 'hasError') {
     return <Text>Error loading count: {countState.error.message}</Text>
   }
-  
+
   if (countState.state === 'loading') {
     return <Text>Loading count...</Text>
   }
-  
+
   return (
     <View>
       <Text>Count: {countState.data}</Text>
-      <Button 
-        title="Increment" 
+      <Button
+        title="Increment"
         onPress={() => {
           setCount(async (promiseOrValue) => {
             try {
@@ -238,7 +238,7 @@ const RobustCounter = () => {
               return 0 // Fallback value
             }
           })
-        }} 
+        }}
       />
       {error && <Text>Error: {error.message}</Text>}
     </View>
@@ -247,6 +247,7 @@ const RobustCounter = () => {
 ```
 
 4. **Performance Considerations**: AsyncStorage operations are asynchronous and can be slower than localStorage, so consider:
+
    - Batching updates when possible
    - Implementing caching for frequently accessed values
    - Using `loadable` to avoid suspense boundaries for better UX
