@@ -140,20 +140,132 @@ const content = {} // anything JSON serializable
 const storedAtom = atomWithStorage('stored-key', content, storage)
 ```
 
-#### Notes with AsyncStorage (since v2.2.0)
+#### Working with AsyncStorage (since v2.2.0)
 
-With AsyncStorage (as with any asynchronous storage), the atom value becomes async.
-When updating the atom by referencing the current value, then you'll need to `await` it.
+When using AsyncStorage (or any asynchronous storage implementation) with Jotai, there are important differences compared to synchronous storage like localStorage:
 
-```js
-const countAtom = atomWithStorage('count-key', 0, anyAsyncStorage)
-const Component = () => {
+1. **Asynchronous Value Access**: The atom value becomes a Promise, which means you need to handle it asynchronously.
+
+2. **Updating Based on Current Value**: When updating the atom and referencing its current value, you'll need to `await` the Promise:
+
+```jsx
+import { useAtom } from 'jotai'
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+const storage = createJSONStorage(() => AsyncStorage)
+const countAtom = atomWithStorage('count-key', 0, storage)
+
+const Counter = () => {
   const [count, setCount] = useAtom(countAtom)
-  const increment = () => {
-    setCount(async (promiseOrValue) => (await promiseOrValue) + 1)
+  
+  // Simple increment without referencing current value
+  const incrementDirect = () => {
+    setCount(1) // Directly sets value to 1, no need to await
   }
-  // ...
+  
+  // Increment that needs current value
+  const increment = () => {
+    setCount(async (promiseOrValue) => {
+      const currentValue = await promiseOrValue
+      return currentValue + 1
+    })
+  }
+  
+  // Error handling example
+  const incrementWithErrorHandling = async () => {
+    try {
+      setCount(async (promiseOrValue) => {
+        try {
+          const currentValue = await promiseOrValue
+          return currentValue + 1
+        } catch (error) {
+          console.error("Error accessing current value:", error)
+          return 0 // Fallback value
+        }
+      })
+    } catch (error) {
+      console.error("Error updating value:", error)
+    }
+  }
+  
+  // Using the value in UI requires handling the Promise
+  if (count instanceof Promise) {
+    return <Text>Loading...</Text>
+  }
+  
+  return (
+    <View>
+      <Text>Count: {count}</Text>
+      <Button title="Increment" onPress={increment} />
+      <Button title="Reset" onPress={() => setCount(0)} />
+    </View>
+  )
 }
+```
+
+3. **Error Handling**: When working with AsyncStorage, it's important to handle potential errors:
+
+```jsx
+const robustCountAtom = atomWithStorage('robust-count', 0, storage)
+
+const RobustCounter = () => {
+  const [count, setCount] = useAtom(robustCountAtom)
+  const [error, setError] = useState(null)
+  
+  // Using loadable to handle async state more elegantly
+  const [countState] = useAtom(loadable(robustCountAtom))
+  
+  if (countState.state === 'hasError') {
+    return <Text>Error loading count: {countState.error.message}</Text>
+  }
+  
+  if (countState.state === 'loading') {
+    return <Text>Loading count...</Text>
+  }
+  
+  return (
+    <View>
+      <Text>Count: {countState.data}</Text>
+      <Button 
+        title="Increment" 
+        onPress={() => {
+          setCount(async (promiseOrValue) => {
+            try {
+              return (await promiseOrValue) + 1
+            } catch (err) {
+              setError(err)
+              return 0 // Fallback value
+            }
+          })
+        }} 
+      />
+      {error && <Text>Error: {error.message}</Text>}
+    </View>
+  )
+}
+```
+
+4. **Performance Considerations**: AsyncStorage operations are asynchronous and can be slower than localStorage, so consider:
+   - Batching updates when possible
+   - Implementing caching for frequently accessed values
+   - Using `loadable` to avoid suspense boundaries for better UX
+
+5. **Testing AsyncStorage Atoms**: When testing components that use AsyncStorage atoms, make sure to:
+   - Mock AsyncStorage in your tests
+   - Account for the asynchronous nature of the storage operations
+   - Test error cases and recovery
+
+```jsx
+// Example of mocking AsyncStorage in tests
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+}))
+
+// Then in your test
+AsyncStorage.getItem.mockResolvedValue(JSON.stringify(5))
 ```
 
 ### Validating stored values
