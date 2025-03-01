@@ -6,7 +6,8 @@ import type {
 } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
 
-type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
+export type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
+
 type Options = Parameters<typeof useStore>[0]
 
 export function useSetAtom<Value, Args extends unknown[], Result>(

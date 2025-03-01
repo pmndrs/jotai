@@ -8,9 +8,7 @@ import type {
   WritableAtom,
 } from '../vanilla.ts'
 import { useAtomValue } from './useAtomValue.ts'
-import { useSetAtom } from './useSetAtom.ts'
-
-type SetAtom<Args extends unknown[], Result> = (...args: Args) => Result
+import { type SetAtom, useSetAtom } from './useSetAtom.ts'
 
 type Options = Parameters<typeof useAtomValue>[1]
 
