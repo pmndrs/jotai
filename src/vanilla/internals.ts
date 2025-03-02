@@ -838,7 +838,11 @@ const buildStore = (
   const unmountAtom =
     buildingBlockFunctions[8] ||
     ((atom) => {
-      const atomState = ensureAtomState(atom)
+      const atomState = atomStateMap.get(atom)
+      if (!atomState) {
+        return
+      }
+
       let mounted = mountedMap.get(atom)
       if (
         mounted &&
