@@ -457,16 +457,12 @@ const buildStore = (
   const flushCallbacks =
     buildingBlockFunctions[1] ||
     (() => {
-      let hasError: true | undefined
-      let error: unknown | undefined
+      const errors: unknown[] = []
       const call = (fn: () => void) => {
         try {
           fn()
         } catch (e) {
-          if (!hasError) {
-            hasError = true
-            error = e
-          }
+          errors.push(e)
         }
       }
       do {
@@ -490,8 +486,9 @@ const buildStore = (
         unmountCallbacks.size ||
         mountCallbacks.size
       )
-      if (hasError) {
-        throw error
+
+      if (errors.length) {
+        throw new AggregateError(errors)
       }
     })
 
