@@ -486,7 +486,6 @@ const buildStore = (
         unmountCallbacks.size ||
         mountCallbacks.size
       )
-
       if (errors.length) {
         throw new AggregateError(errors)
       }
