@@ -78,7 +78,6 @@ const staticQuery = graphql`
         meta: frontmatter {
           title
           nav
-          published
         }
       }
     }

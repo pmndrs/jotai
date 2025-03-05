@@ -39,7 +39,6 @@ const staticQuery = graphql`
         meta: frontmatter {
           title
           nav
-          published
         }
       }
     }
@@ -73,12 +72,7 @@ const parseDocs = (docs, section) => {
       ...newDocs,
       {
         title: directory,
-        contents: [
-          ...docs.filter(
-            (doc) =>
-              doc.slug.startsWith(directory) && doc.meta.published !== false,
-          ),
-        ],
+        contents: [...docs.filter((doc) => doc.slug.startsWith(directory))],
       },
     ]
   })
