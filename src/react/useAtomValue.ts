@@ -138,16 +138,11 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   const delay = options?.delay
   useEffect(() => {
     const unsub = store.sub(atom, () => {
-      try {
+      if (typeof delay === 'number') {
         const value = store.get(atom)
         if (isPromiseLike(value)) {
           attachPromiseMeta(createContinuablePromise(value))
         }
-      } catch {
-        /* empty */
-      }
-
-      if (typeof delay === 'number') {
         // delay rerendering to wait a promise possibly to resolve
         setTimeout(rerender, delay)
         return
