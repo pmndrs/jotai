@@ -2,15 +2,17 @@ import type { Atom, WritableAtom } from '../../vanilla.ts'
 
 const frozenAtoms = new WeakSet<Atom<any>>()
 
-const deepFreeze = (obj: unknown) => {
-  if (typeof obj !== 'object' || obj === null) return
-  Object.freeze(obj)
-  const propNames = Object.getOwnPropertyNames(obj)
+const deepFreeze = (value: unknown) => {
+  if (typeof value !== 'object' || value === null) {
+    return value;
+  }
+  Object.freeze(value)
+  const propNames = Object.getOwnPropertyNames(value)
   for (const name of propNames) {
-    const value = (obj as never)[name]
+    const value = (value as never)[name]
     deepFreeze(value)
   }
-  return obj
+  return value
 }
 
 export function freezeAtom<AtomType extends Atom<unknown>>(
