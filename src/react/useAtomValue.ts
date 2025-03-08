@@ -54,11 +54,13 @@ const use =
     }
   })
 
+type ContinuablePromiseCache = WeakMap<PromiseLike<unknown>, Promise<unknown>>
+
 type StoreHelpers = readonly [
   changedHook: { add(atom: Atom<unknown>, callback: () => void): () => void },
   promiseCache: {
-    get(promise: PromiseLike<unknown>): Promise<unknown> | undefined
-    set(promise: PromiseLike<unknown>, value: Promise<unknown>): void
+    get(atom: Atom<unknown>): ContinuablePromiseCache | undefined
+    set(atom: Atom<unknown>, value: ContinuablePromiseCache): void
   },
 ]
 
@@ -70,7 +72,7 @@ const getStoreHelpers = (store: Store) => {
     const buildingBlocks = getBuildingBlocks(store)
     const storeHooks = initializeStoreHooks(buildingBlocks[6])
     const changedHook = storeHooks.c
-    const promiseCache = new Map<PromiseLike<unknown>, Promise<unknown>>()
+    const promiseCache = new WeakMap<Atom<unknown>, ContinuablePromiseCache>()
     helpers = [changedHook, promiseCache]
     StoreHelpersMap.set(store, helpers)
   }
@@ -83,17 +85,30 @@ const createContinuablePromise = <T>(
   promise: PromiseLike<T>,
 ) => {
   const [changedHook, promiseCache] = getStoreHelpers(store)
-  let continuablePromise = promiseCache.get(promise)
+  let continuablePromiseCache = promiseCache.get(atom)
+  if (!continuablePromiseCache) {
+    continuablePromiseCache = new WeakMap()
+    promiseCache.set(atom, continuablePromiseCache)
+  }
+  let continuablePromise = continuablePromiseCache.get(promise)
   if (!continuablePromise) {
     continuablePromise = new Promise<T>((resolve, reject) => {
-      let curr = promise
+      let curr: PromiseLike<T> | undefined = promise
       const cleanup = changedHook.add(atom, () => {
-        const nextValue = store.get(atom)
-        if (isPromiseLike(nextValue)) {
-          curr = nextValue
-          nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
-        } else {
-          resolve(nextValue as T)
+        try {
+          const nextValue = store.get(atom)
+          if (isPromiseLike(nextValue)) {
+            curr = nextValue
+            nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
+          } else {
+            curr = undefined
+            resolve(nextValue as T)
+            cleanup()
+          }
+        } catch (e) {
+          curr = undefined
+          reject(e)
+          cleanup()
         }
       })
       const onFulfilled = (me: PromiseLike<T>) => (v: T) => {
@@ -110,7 +125,7 @@ const createContinuablePromise = <T>(
       }
       promise.then(onFulfilled(promise), onRejected(promise))
     })
-    promiseCache.set(promise, continuablePromise)
+    continuablePromiseCache.set(promise, continuablePromise)
   }
   return continuablePromise
 }
