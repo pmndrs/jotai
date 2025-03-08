@@ -890,14 +890,13 @@ it('should not trigger micro-suspense', async () => {
     switchMap(async (i) => i),
   )
 
-  const counterAtom = atomWithObservable(() => counterSubject, {
-    unstable_timeout: 1000,
-  })
+  const _countAtom = atomWithObservable(() => counterSubject)
 
-  const countAtom = atom(async (get) => get(counterAtom))
+  const countAtom = atom(async (get) => await get(_countAtom))
 
   const Counter = () => {
     const count = useAtomValue(countAtom)
+
     return <div>count: {count}</div>
   }
 
@@ -913,16 +912,15 @@ it('should not trigger micro-suspense', async () => {
 
   await screen.findByText('loading')
 
-  //FIXME how can we test this?
-  //await act(() => vi.runOnlyPendingTimers())
-  //await screen.findByText('count: 0')
+  await act(() => vi.runOnlyPendingTimers())
+  await screen.findByText('count: 0')
 
-  //await act(() => vi.runOnlyPendingTimers())
-  //await screen.findByText('count: 1')
+  await act(() => vi.runOnlyPendingTimers())
+  await screen.findByText('count: 1')
 
-  //await act(() => vi.runOnlyPendingTimers())
-  //await screen.findByText('count: 2')
+  await act(() => vi.runOnlyPendingTimers())
+  await screen.findByText('count: 2')
 
-  //await act(() => vi.runOnlyPendingTimers())
+  await act(() => vi.runOnlyPendingTimers())
   await screen.findByText('count: 3')
 })
