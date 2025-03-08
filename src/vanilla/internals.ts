@@ -176,54 +176,42 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
 }
 
 //
-// Cancelable Promise
-// TODO(daishi): revisit this implementation
+// Abortable Promise
 //
 
-type CancelHandler = (nextValue: unknown) => void
-type PromiseState = [cancelHandlers: Set<CancelHandler>, settled: boolean]
-
-const PROMISE_STATE = Symbol()
-
-const getPromiseState = <T>(
-  promise: PromiseLike<T>,
-): PromiseState | undefined => (promise as any)[PROMISE_STATE]
+const promiseStateMap: WeakMap<
+  PromiseLike<unknown>,
+  [abortHandlers: Set<() => void>, settled: boolean]
+> = new WeakMap()
 
 const isPendingPromise = (value: unknown): value is PromiseLike<unknown> =>
-  isPromiseLike(value) && !getPromiseState(value)?.[1]
+  isPromiseLike(value) && !promiseStateMap.get(value as never)?.[1]
 
-const cancelPromise = <T>(
-  promise: PromiseLike<T>,
-  nextValue: unknown,
-): void => {
-  const promiseState = getPromiseState(promise)
+const abortPromise = <T>(promise: PromiseLike<T>): void => {
+  const promiseState = promiseStateMap.get(promise)
   if (promiseState) {
     promiseState[1] = true
-    promiseState[0].forEach((fn) => fn(nextValue))
-  } else if (import.meta.env?.MODE !== 'production') {
-    throw new Error('[Bug] cancelable promise not found')
+    promiseState[0].forEach((fn) => fn())
   }
 }
 
-const patchPromiseForCancelability = <T>(promise: PromiseLike<T>): void => {
-  if (getPromiseState(promise)) {
-    // already patched
-    return
+const registerAbortHandler = <T>(
+  promise: PromiseLike<T>,
+  abortHandler: () => void,
+): void => {
+  let promiseState = promiseStateMap.get(promise)
+  if (!promiseState) {
+    promiseState = [new Set(), false]
+    promiseStateMap.set(promise, promiseState)
+    const settle = () => {
+      promiseState![1] = true
+    }
+    promise.then(settle, settle)
   }
-  const promiseState: PromiseState = [new Set(), false]
-  ;(promise as any)[PROMISE_STATE] = promiseState
-  const settle = () => {
-    promiseState[1] = true
-  }
-  promise.then(settle, settle)
-  ;(promise as { onCancel?: (fn: CancelHandler) => void }).onCancel = (fn) => {
-    promiseState[0].add(fn)
-  }
+  promiseState[0].add(abortHandler)
 }
 
-const isPromiseLike = (
-  p: unknown,
-): p is PromiseLike<unknown> & { onCancel?: (fn: CancelHandler) => void } =>
+const isPromiseLike = (p: unknown): p is PromiseLike<unknown> =>
   typeof (p as any)?.then === 'function'
 
 const addPendingPromiseToDependency = (
@@ -255,7 +243,6 @@ const setAtomStateValueOrPromise = (
   const prevValue = atomState.v
   const pendingPromise = isPendingPromise(atomState.v) ? atomState.v : null
   if (isPromiseLike(valueOrPromise)) {
-    patchPromiseForCancelability(valueOrPromise)
     for (const a of atomState.d.keys()) {
       addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
     }
@@ -265,7 +252,7 @@ const setAtomStateValueOrPromise = (
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
     ++atomState.n
     if (pendingPromise) {
-      cancelPromise(pendingPromise, valueOrPromise)
+      abortPromise(pendingPromise)
     }
   }
 }
@@ -666,7 +653,7 @@ const buildStore = (
         const valueOrPromise = atomRead(atom, getter, options as never)
         setAtomStateValueOrPromise(atom, valueOrPromise, ensureAtomState!)
         if (isPromiseLike(valueOrPromise)) {
-          valueOrPromise.onCancel?.(() => controller?.abort())
+          registerAbortHandler(valueOrPromise, () => controller?.abort())
           valueOrPromise.then(
             mountDependenciesIfAsync,
             mountDependenciesIfAsync,
@@ -935,12 +922,12 @@ export const INTERNAL_isActuallyWritableAtom: typeof isActuallyWritableAtom =
 export const INTERNAL_isAtomStateInitialized: typeof isAtomStateInitialized =
   isAtomStateInitialized
 export const INTERNAL_returnAtomValue: typeof returnAtomValue = returnAtomValue
-export const INTERNAL_getPromiseState: typeof getPromiseState = getPromiseState
+export const INTERNAL_promiseStateMap: typeof promiseStateMap = promiseStateMap
 export const INTERNAL_isPendingPromise: typeof isPendingPromise =
   isPendingPromise
-export const INTERNAL_cancelPromise: typeof cancelPromise = cancelPromise
-export const INTERNAL_patchPromiseForCancelability: typeof patchPromiseForCancelability =
-  patchPromiseForCancelability
+export const INTERNAL_abortPromise: typeof abortPromise = abortPromise
+export const INTERNAL_registerAbortHandler: typeof registerAbortHandler =
+  registerAbortHandler
 export const INTERNAL_isPromiseLike: typeof isPromiseLike = isPromiseLike
 export const INTERNAL_addPendingPromiseToDependency: typeof addPendingPromiseToDependency =
   addPendingPromiseToDependency
