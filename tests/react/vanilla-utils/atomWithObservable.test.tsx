@@ -884,7 +884,7 @@ describe('atomWithObservable vanilla tests', () => {
   })
 })
 
-it('should not trigger micro-suspense', async () => {
+it('should update continus values in React 19', async () => {
   const counterSubject = interval(100).pipe(
     take(4),
     switchMap(async (i) => i),
@@ -912,17 +912,5 @@ it('should not trigger micro-suspense', async () => {
   )
 
   await screen.findByText('loading')
-
-  //FIXME how can we test this?
-  //await act(() => vi.runOnlyPendingTimers())
-  //await screen.findByText('count: 0')
-
-  //await act(() => vi.runOnlyPendingTimers())
-  //await screen.findByText('count: 1')
-
-  //await act(() => vi.runOnlyPendingTimers())
-  //await screen.findByText('count: 2')
-
-  //await act(() => vi.runOnlyPendingTimers())
   await screen.findByText('count: 3')
 })
