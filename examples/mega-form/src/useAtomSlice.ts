@@ -6,7 +6,11 @@ import { splitAtom } from 'jotai/utils'
 const useAtomSlice = <Item>(arrAtom: PrimitiveAtom<Item[]>) => {
   const [atoms, remove] = useAtom(useMemo(() => splitAtom(arrAtom), [arrAtom]))
   return useMemo(
-    () => atoms.map((itemAtom) => [itemAtom, () => remove(itemAtom)] as const),
+    () =>
+      atoms.map(
+        (itemAtom) =>
+          [itemAtom, () => remove({ type: 'remove', atom: itemAtom })] as const,
+      ),
     [atoms, remove],
   )
 }
