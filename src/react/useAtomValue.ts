@@ -1,6 +1,10 @@
 /// <reference types="react/experimental" />
 
 import ReactExports, { useDebugValue, useEffect, useReducer } from 'react'
+import {
+  INTERNAL_getBuildingBlocksRev1 as getBuildingBlocks,
+  INTERNAL_initializeStoreHooks as initializeStoreHooks,
+} from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
 
@@ -50,47 +54,78 @@ const use =
     }
   })
 
-const continuablePromiseMap = new WeakMap<
-  PromiseLike<unknown>,
-  Promise<unknown>
->()
+type ContinuablePromiseCache = WeakMap<PromiseLike<unknown>, Promise<unknown>>
 
-const createContinuablePromise = <T>(promise: PromiseLike<T>) => {
-  let continuablePromise = continuablePromiseMap.get(promise)
+type StoreHelpers = readonly [
+  changedHook: { add(atom: Atom<unknown>, callback: () => void): () => void },
+  promiseCache: {
+    get(atom: Atom<unknown>): ContinuablePromiseCache | undefined
+    set(atom: Atom<unknown>, value: ContinuablePromiseCache): void
+  },
+]
+
+const StoreHelpersMap = new WeakMap<Store, StoreHelpers>()
+
+const getStoreHelpers = (store: Store) => {
+  let helpers = StoreHelpersMap.get(store)
+  if (!helpers) {
+    const buildingBlocks = getBuildingBlocks(store)
+    const storeHooks = initializeStoreHooks(buildingBlocks[6])
+    const changedHook = storeHooks.c
+    const promiseCache = new WeakMap<Atom<unknown>, ContinuablePromiseCache>()
+    helpers = [changedHook, promiseCache]
+    StoreHelpersMap.set(store, helpers)
+  }
+  return helpers
+}
+
+const createContinuablePromise = <T>(
+  store: Store,
+  atom: Atom<PromiseLike<T> | T>,
+  promise: PromiseLike<T>,
+) => {
+  const [changedHook, promiseCache] = getStoreHelpers(store)
+  let continuablePromiseCache = promiseCache.get(atom)
+  if (!continuablePromiseCache) {
+    continuablePromiseCache = new WeakMap()
+    promiseCache.set(atom, continuablePromiseCache)
+  }
+  let continuablePromise = continuablePromiseCache.get(promise)
   if (!continuablePromise) {
     continuablePromise = new Promise<T>((resolve, reject) => {
-      let curr = promise
+      let curr: PromiseLike<T> | undefined = promise
+      const cleanup = changedHook.add(atom, () => {
+        try {
+          const nextValue = store.get(atom)
+          if (isPromiseLike(nextValue)) {
+            curr = nextValue
+            nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
+          } else {
+            curr = undefined
+            resolve(nextValue as T)
+            cleanup()
+          }
+        } catch (e) {
+          curr = undefined
+          reject(e)
+          cleanup()
+        }
+      })
       const onFulfilled = (me: PromiseLike<T>) => (v: T) => {
         if (curr === me) {
           resolve(v)
+          cleanup()
         }
       }
       const onRejected = (me: PromiseLike<T>) => (e: unknown) => {
         if (curr === me) {
           reject(e)
-        }
-      }
-      const registerCancelHandler = (p: PromiseLike<T>) => {
-        if ('onCancel' in p && typeof p.onCancel === 'function') {
-          p.onCancel((nextValue: PromiseLike<T> | T) => {
-            if (import.meta.env?.MODE !== 'production' && nextValue === p) {
-              throw new Error('[Bug] p is not updated even after cancelation')
-            }
-            if (isPromiseLike(nextValue)) {
-              continuablePromiseMap.set(nextValue, continuablePromise!)
-              curr = nextValue
-              nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
-              registerCancelHandler(nextValue)
-            } else {
-              resolve(nextValue)
-            }
-          })
+          cleanup()
         }
       }
       promise.then(onFulfilled(promise), onRejected(promise))
-      registerCancelHandler(promise)
     })
-    continuablePromiseMap.set(promise, continuablePromise)
+    continuablePromiseCache.set(promise, continuablePromise)
   }
   return continuablePromise
 }
@@ -141,7 +176,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
       if (typeof delay === 'number') {
         const value = store.get(atom)
         if (isPromiseLike(value)) {
-          attachPromiseMeta(createContinuablePromise(value))
+          attachPromiseMeta(createContinuablePromise(store, atom, value))
         }
         // delay rerendering to wait a promise possibly to resolve
         setTimeout(rerender, delay)
@@ -157,7 +192,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   // The use of isPromiseLike is to be consistent with `use` type.
   // `instanceof Promise` actually works fine in this case.
   if (isPromiseLike(value)) {
-    const promise = createContinuablePromise(value)
+    const promise = createContinuablePromise(store, atom, value)
     return use(promise)
   }
   return value as Awaited<Value>
