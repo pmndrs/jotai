@@ -4,7 +4,7 @@ const frozenAtoms = new WeakSet<Atom<any>>()
 
 const deepFreeze = <T>(value: T): T => {
   if (typeof value !== 'object' || value === null) {
-    return value;
+    return value
   }
   Object.freeze(value)
   const propNames = Object.getOwnPropertyNames(value)
