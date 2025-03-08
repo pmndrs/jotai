@@ -9,8 +9,7 @@ const deepFreeze = <T>(value: T): T => {
   Object.freeze(value)
   const propNames = Object.getOwnPropertyNames(value)
   for (const name of propNames) {
-    const value = (value as never)[name]
-    deepFreeze(value)
+    deepFreeze((value as never)[name])
   }
   return value
 }
