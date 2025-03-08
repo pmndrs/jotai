@@ -62,17 +62,17 @@ type StoreHelpers = readonly [
   },
 ]
 
-const StateHelpersMap = new WeakMap<Store, StoreHelpers>()
+const StoreHelpersMap = new WeakMap<Store, StoreHelpers>()
 
-const getStateHelpers = (store: Store) => {
-  let helpers = StateHelpersMap.get(store)
+const getStoreHelpers = (store: Store) => {
+  let helpers = StoreHelpersMap.get(store)
   if (!helpers) {
     const buildingBlocks = getBuildingBlocks(store)
     const storeHooks = initializeStoreHooks(buildingBlocks[6])
     const changedHook = storeHooks.c
     const promiseCache = new Map<PromiseLike<unknown>, Promise<unknown>>()
     helpers = [changedHook, promiseCache]
-    StateHelpersMap.set(store, helpers)
+    StoreHelpersMap.set(store, helpers)
   }
   return helpers
 }
@@ -82,7 +82,7 @@ const createContinuablePromise = <T>(
   atom: Atom<PromiseLike<T> | T>,
   promise: PromiseLike<T>,
 ) => {
-  const [changedHook, promiseCache] = getStateHelpers(store)
+  const [changedHook, promiseCache] = getStoreHelpers(store)
   let continuablePromise = promiseCache.get(promise)
   if (!continuablePromise) {
     continuablePromise = new Promise<T>((resolve, reject) => {
