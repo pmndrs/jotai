@@ -884,7 +884,7 @@ describe('atomWithObservable vanilla tests', () => {
   })
 })
 
-it('should update continus values in React 19', async () => {
+it('should update continuous values in React 19', async () => {
   const counterSubject = interval(100).pipe(
     take(4),
     switchMap(async (i) => i),
