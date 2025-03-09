@@ -2,7 +2,17 @@ import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEventOrig from '@testing-library/user-event'
-import { BehaviorSubject, Observable, Subject, delay, map, of } from 'rxjs'
+import {
+  BehaviorSubject,
+  Observable,
+  Subject,
+  delay,
+  interval,
+  map,
+  of,
+  switchMap,
+  take,
+} from 'rxjs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fromValue, makeSubject, pipe, toObservable } from 'wonka'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
@@ -872,4 +882,35 @@ describe('atomWithObservable vanilla tests', () => {
 
     unsubs.forEach((unsub) => unsub())
   })
+})
+
+it('should update continuous values in React 19', async () => {
+  const counterSubject = interval(100).pipe(
+    take(4),
+    switchMap(async (i) => i),
+  )
+
+  const counterAtom = atomWithObservable(() => counterSubject, {
+    unstable_timeout: 1000,
+  })
+
+  const countAtom = atom(async (get) => get(counterAtom))
+
+  const Counter = () => {
+    const count = useAtomValue(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  await act(() =>
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    ),
+  )
+
+  await screen.findByText('loading')
+  await screen.findByText('count: 3')
 })
