@@ -241,7 +241,6 @@ const setAtomStateValueOrPromise = (
   const atomState = ensureAtomState(atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
-  const pendingPromise = isPendingPromise(atomState.v) ? atomState.v : null
   if (isPromiseLike(valueOrPromise)) {
     for (const a of atomState.d.keys()) {
       addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
@@ -251,8 +250,8 @@ const setAtomStateValueOrPromise = (
   delete atomState.e
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
     ++atomState.n
-    if (pendingPromise) {
-      abortPromise(pendingPromise)
+    if (isPromiseLike(prevValue)) {
+      abortPromise(prevValue)
     }
   }
 }
