@@ -1,4 +1,4 @@
-import cx from 'classnames';
+import cx from 'classnames'
 
 export const InlineCode = ({ dark = false, children }) => {
   return (
@@ -12,5 +12,5 @@ export const InlineCode = ({ dark = false, children }) => {
     >
       {children}
     </code>
-  );
-};
+  )
+}

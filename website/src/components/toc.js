@@ -1,11 +1,11 @@
-import cx from 'classnames';
-import { Link, graphql, useStaticQuery } from 'gatsby';
+import cx from 'classnames'
+import { Link, graphql, useStaticQuery } from 'gatsby'
 
 export const TOC = ({ section = '' }) => {
-  const data = useStaticQuery(staticQuery);
+  const data = useStaticQuery(staticQuery)
 
-  const docs = data.allMdx.nodes.sort(sortDocs);
-  const sectionLinks = parseDocs(docs, section);
+  const docs = data.allMdx.nodes.sort(sortDocs)
+  const sectionLinks = parseDocs(docs, section)
 
   return (
     <section className="mt-4 grid grid-cols-2 gap-4 text-xs sm:text-sm md:grid-cols-3 md:text-base lg:grid-cols-4">
@@ -28,8 +28,8 @@ export const TOC = ({ section = '' }) => {
         </Link>
       ))}
     </section>
-  );
-};
+  )
+}
 
 const staticQuery = graphql`
   query {
@@ -44,29 +44,29 @@ const staticQuery = graphql`
       }
     }
   }
-`;
+`
 
-const sortDocs = (a, b) => a.meta.nav - b.meta.nav;
+const sortDocs = (a, b) => a.meta.nav - b.meta.nav
 
 const parseDocs = (docs, section) => {
-  let directories = [];
-  let newDocs = [];
+  let directories = []
+  let newDocs = []
 
   docs.forEach(({ slug }) => {
-    const hasParent = slug.includes('/');
+    const hasParent = slug.includes('/')
 
-    let parent = undefined;
+    let parent = undefined
 
     if (hasParent) {
-      parent = slug.split('/')[0];
+      parent = slug.split('/')[0]
 
       if (!directories.includes(parent)) {
-        directories = [...directories, parent];
+        directories = [...directories, parent]
       }
     }
-  });
+  })
 
-  newDocs = [{ contents: [...docs.filter((doc) => !doc.slug.includes('/'))] }];
+  newDocs = [{ contents: [...docs.filter((doc) => !doc.slug.includes('/'))] }]
 
   directories.forEach((directory) => {
     newDocs = [
@@ -74,13 +74,16 @@ const parseDocs = (docs, section) => {
       {
         title: directory,
         contents: [
-          ...docs.filter((doc) => doc.slug.startsWith(directory) && doc.meta.published !== false),
+          ...docs.filter(
+            (doc) =>
+              doc.slug.startsWith(directory) && doc.meta.published !== false,
+          ),
         ],
       },
-    ];
-  });
+    ]
+  })
 
-  newDocs = newDocs.find((docSection) => docSection.title === section)?.contents;
+  newDocs = newDocs.find((docSection) => docSection.title === section)?.contents
 
-  return newDocs;
-};
+  return newDocs
+}

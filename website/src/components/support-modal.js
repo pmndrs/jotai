@@ -1,15 +1,15 @@
-import { useCallback } from 'react';
-import { useAtom } from 'jotai';
-import { helpAtom } from '../atoms/index.js';
-import { Modal } from '../components/modal.js';
-import { Support } from '../components/support.js';
+import { useCallback } from 'react'
+import { useAtom } from 'jotai'
+import { helpAtom } from '../atoms/index.js'
+import { Modal } from '../components/modal.js'
+import { Support } from '../components/support.js'
 
 export const SupportModal = () => {
-  const [showHelp, setShowHelp] = useAtom(helpAtom);
+  const [showHelp, setShowHelp] = useAtom(helpAtom)
 
   const onClose = useCallback(() => {
-    setShowHelp(false);
-  }, [setShowHelp]);
+    setShowHelp(false)
+  }, [setShowHelp])
 
   return (
     <Modal isOpen={showHelp} onClose={onClose}>
@@ -17,5 +17,5 @@ export const SupportModal = () => {
         <Support />
       </div>
     </Modal>
-  );
-};
+  )
+}

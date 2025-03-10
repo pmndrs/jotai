@@ -39,6 +39,8 @@ export function atomWithRefresh<Value, Args extends unknown[], Result>(
         set(refreshAtom, (c) => c + 1)
       } else if (write) {
         return write(get, set, ...args)
+      } else if (import.meta.env?.MODE !== 'production') {
+        throw new Error('refresh must be called without arguments')
       }
     },
   )

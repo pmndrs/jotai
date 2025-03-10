@@ -1,7 +1,7 @@
-export { wrapRootElement, wrapPageElement } from './gatsby-shared.js';
+export { wrapRootElement, wrapPageElement } from './gatsby-shared.js'
 
 export const onRenderBody = ({ setHtmlAttributes, setPreBodyComponents }) => {
-  setHtmlAttributes({ lang: 'en' });
+  setHtmlAttributes({ lang: 'en' })
   setPreBodyComponents([
     <script
       key="dark-mode"
@@ -31,5 +31,5 @@ export const onRenderBody = ({ setHtmlAttributes, setPreBodyComponents }) => {
 })();`,
       }}
     />,
-  ]);
-};
+  ])
+}

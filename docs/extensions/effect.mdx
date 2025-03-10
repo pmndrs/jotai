@@ -45,12 +45,10 @@ function observe(effect: Effect, store?: Store): Unobserve
 ```js
 import { observe } from 'jotai-effect'
 
-// activate the effect on the default store
 const unobserve = observe((get, set) => {
   set(logAtom, `someAtom changed: ${get(someAtom)}`)
 })
 
-// Clean up the effect
 unobserve()
 ```
 
@@ -58,7 +56,7 @@ This allows you to run Jotai state-dependent logic outside React's lifecycle, id
 
 ### Usage With React
 
-When using a Jotai Provider, pass the store to both `observe` and the `Provider` to ensure the effect is mounted on the correct store.
+Pass the store to both `observe` and the `Provider` to ensure the effect is mounted to the correct store.
 
 ```tsx
 const store = createStore()
@@ -67,19 +65,6 @@ const unobserve = observe((get, set) => {
 }, store)
 
 <Provider store={store}>...</Provider>
-```
-
-Using `observe` in a `useEffect`
-
-```tsx
-function effect(get: Getter, set: Setter) {
-  set(logAtom, `someAtom changed: ${get(someAtom)}`)
-}
-
-function Component() {
-  const store = useStore()
-  useEffect(() => observe(effect, store), [store])
-}
 ```
 
 <Stackblitz id="vitejs-vite-uk7p8i5q" file="src%2FApp.tsx" />
@@ -103,7 +88,6 @@ import { atomEffect } from 'jotai-effect'
 
 const logEffect = atomEffect((get, set) => {
   set(logAtom, get(someAtom)) // Runs on mount or when someAtom changes
-
   return () => {
     set(logAtom, 'unmounting') // Cleanup on unmount
   }
@@ -138,103 +122,109 @@ import { withAtomEffect } from 'jotai-effect'
 
 const valuesAtom = withAtomEffect(atom(null), (get, set) => {
   set(valuesAtom, get(countAtom))
-  return unsubscribe
+  return () => {
+    // cleanup
+  }
 })
 ```
 
+## Dependency Management
+
+Aside from mount events, the effect runs when any of its dependencies change value.
+
+- **Sync:**
+  All atoms accessed with `get` inside the effect are added to the atom's dependencies.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  atomEffect((get, set) => {
+    // updates whenever `anAtom` changes value
+    get(anAtom)
+  })
+  ```
+
+  </details>
+
+- **Async:**
+  Asynchronous `get` calls do not add dependencies.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  atomEffect((get, set) => {
+    setTimeout(() => {
+      // does not add `anAtom` as a dependency
+      get(anAtom)
+    })
+  })
+  ```
+
+  </details>
+
+- **Cleanup:**
+  `get` calls in cleanup do not add dependencies.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  atomEffect((get, set) => {
+    return () => {
+      // does not add `anAtom` as a dependency
+      get(anAtom)
+    }
+  })
+  ```
+
+  </details>
+
+- **Dependency Map Recalculation:**
+  Dependencies are recalculated on every run.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  atomEffect((get, set) => {
+    if (get(isEnabledAtom)) {
+      // `isEnabledAtom` and `anAtom` are dependencies
+      const aValue = get(anAtom)
+    } else {
+      // `isEnabledAtom` and `anotherAtom` are dependencies
+      const anotherValue = get(anotherAtom)
+    }
+  })
+  ```
+
+  </details>
+
 ## Effect Behavior
 
-- **Cleanup Function:**
-  The cleanup function is invoked on unmount or before re-evaluation.
+- **Executes Synchronously:**
+  `effect` runs synchronous in the current task after synchronous evaluations complete.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
     <summary>Example</summary>
 
   ```js
-  atomEffect((get, set) => {
-    const intervalId = setInterval(() => set(clockAtom, Date.now()))
-    return () => clearInterval(intervalId)
-  })
-  ```
-
-  </details>
-
-- **Resistant to Infinite Loops:**
-  `atomEffect` avoids rerunning when it updates a value that it is watching.
-
-  <!-- prettier-ignore -->
-  <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
-
-  ```js
-  const countAtom = atom(0)
-  atomEffect((get, set) => {
-    get(countAtom)
-    set(countAtom, increment) // Will not loop
-  })
-  ```
-
-  </details>
-
-- **Supports Recursion:**
-  Recursion is supported with `set.recurse` but not in cleanup.
-
-  <!-- prettier-ignore -->
-  <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
-
-  ```js
-  const countAtom = atom(0)
-  atomEffect((get, set) => {
-    const count = get(countAtom)
-    const timeoutId = setTimeout(() => {
-      set.recurse(countAtom, increment)
-    }, 1000)
-    return () => clearTimeout(timeoutId)
-  })
-  ```
-
-  </details>
-
-- **Supports Peek:**
-  Use `get.peek` to read atom data without subscribing.
-
-  <!-- prettier-ignore -->
-  <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
-
-  ```js
-  const countAtom = atom(0)
-  atomEffect((get, set) => {
-    const count = get.peek(countAtom) // Will not add countAtom as a dependency
-  })
-  ```
-
-  </details>
-
-- **Executes In The Next Microtask:**
-  `effect` runs in the next available microtask after synchronous evaluations complete.
-
-  <!-- prettier-ignore -->
-  <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
-
-  ```js
-  const countAtom = atom(0)
-  const logAtom = atom('')
   const logCounts = atomEffect((get, set) => {
-    set(logAtom, `count is now ${get(countAtom)}`)
+    set(logAtom, `count is ${get(countAtom)}`)
   })
-  const setCountAndReadLog = atom(null, async (get, set) => {
-    get(logAtom) // 'count is now 0'
-    set(countAtom, increment) // effect runs in next microtask
-    get(logAtom) // 'count is now 0'
-    await Promise.resolve()
-    get(logAtom) // 'count is now 1'
+  const actionAtom = atom(null, (get, set) => {
+    get(logAtom) // 'count is 0'
+    set(countAtom, (value) => value + 1) // effect runs synchronously
+    get(logAtom) // 'count is 1'
   })
   store.sub(logCounts, () => {})
-  store.set(setCountAndReadLog)
+  store.set(actionAtom)
   ```
 
   </details>
@@ -265,18 +255,33 @@ const valuesAtom = withAtomEffect(atom(null), (get, set) => {
 
   </details>
 
-- **Conditionally Running Effects:**
-  `atomEffect` only runs when mounted.
+- **Resistant to Infinite Loops:**
+  `atomEffect` avoids rerunning when it updates a value that it is watching.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
     <summary>Example</summary>
 
   ```js
-  atom((get) => {
-    if (get(isEnabledAtom)) {
-      get(effectAtom)
-    }
+  atomEffect((get, set) => {
+    get(countAtom)
+    set(countAtom, (value) => value + 1) // Will not loop
+  })
+  ```
+
+  </details>
+
+- **Cleanup Function:**
+  The cleanup function is invoked on unmount or before re-evaluation.
+
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
+
+  ```js
+  atomEffect((get, set) => {
+    const intervalId = setInterval(() => set(clockAtom, Date.now()))
+    return () => clearInterval(intervalId)
   })
   ```
 
@@ -297,128 +302,60 @@ const valuesAtom = withAtomEffect(atom(null), (get, set) => {
   })
   store.sub(effectAtom, () => {})
   store.sub(effectAtom, () => {})
-  store.set(countAtom, increment)
-  await Promise.resolve()
+  store.set(countAtom, (value) => value + 1)
   console.log(i) // 1
   ```
 
-    </details>
-
-## Dependency Management
-
-Aside from mount events, the effect runs when any of its dependencies change value.
-
-- **Sync:**
-  All atoms accessed with `get` during the synchronous evaluation of the effect are added to the atom's internal dependency map.
-
-  <!-- prettier-ignore -->
-  <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
-
-  ```js
-  atomEffect((get, set) => {
-    // updates whenever `anAtom` changes value but not when `anotherAtom` changes value
-    get(anAtom)
-    setTimeout(() => {
-      get(anotherAtom)
-    }, 5000)
-  })
-  ```
-
   </details>
 
-- **Async:**
-  Use an abort controller to cancel pending fetch requests and promises.
+- **Conditionally Running Effects:**
+  `atomEffect` only runs when mounted.
 
   <!-- prettier-ignore -->
   <details style="cursor: pointer; user-select: none;">
     <summary>Example</summary>
 
   ```js
-  class AbortError extends Error {}
-
-  atomEffect((get, set) => {
-    const abortController = new AbortController()
-    fetchData(abortController.signal).catch((error) => {
-      if (error instanceof AbortError) {
-        // async cleanup logic here
-      } else {
-        throw error
-      }
-    })
-    return () => abortController.abort(new AbortError())
-  })
-  ```
-
-  </details>
-
-- **Cleanup:**
-  `get` calls in cleanup do not add dependencies.
-
-  <!-- prettier-ignore -->
-  <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
-
-  ```js
-  atomEffect((get, set) => {
-    set(logAtom, get(valueAtom))
-    return () => {
-      get(idAtom) // Not a dependency
-    }
-  })
-  ```
-
-  </details>
-
-- **Dependency Map Recalculation:**
-  Dependencies are recalculated on every run.
-
-  <!-- prettier-ignore -->
-  <details style="cursor: pointer; user-select: none;">
-    <summary>Example</summary>
-
-  ```js
-  const isEnabledAtom = atom(true)
-
-  atomEffect((get, set) => {
-    // if `isEnabledAtom` is true, runs when `isEnabledAtom` or `anAtom` changes value
-    // otherwise runs when `isEnabledAtom` or `anotherAtom` changes value
+  atom((get) => {
     if (get(isEnabledAtom)) {
-      const aValue = get(anAtom)
-    } else {
-      const anotherValue = get(anotherAtom)
+      get(effectAtom)
     }
   })
   ```
 
   </details>
 
-## Comparison with useEffect
+- **Supports Peek:**
+  Use `get.peek` to read atom data without subscribing.
 
-### Component Side Effects
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
-[useEffect](https://react.dev/reference/react/useEffect) is a React Hook that lets you synchronize a component with an external system.
+  ```js
+  const countAtom = atom(0)
+  atomEffect((get, set) => {
+    const count = get.peek(countAtom) // Will not add `countAtom` as a dependency
+  })
+  ```
 
-Hooks are functions that let you “hook into” React state and lifecycle features from function components.
-They are a way to reuse, but not centralize, stateful logic.
-Each call to a hook has a completely isolated state.
-This isolation can be referred to as _component-scoped_.
-For synchronizing component props and state with a Jotai atom, you should use the useEffect hook.
+  </details>
 
-### Global Side Effects
+- **Supports Recursion:**
+  Recursion is supported with `set.recurse` but not in cleanup.
 
-For setting up global side-effects, deciding between useEffect and atomEffect comes down to developer preference.
-Whether you prefer to build this logic directly into the component or build this logic into the Jotai state model depends on what mental model you adopt.
+  <!-- prettier-ignore -->
+  <details style="cursor: pointer; user-select: none;">
+    <summary>Example</summary>
 
-atomEffects are more appropriate for modeling behavior in atoms.
-They are scoped to the store context rather than the component.
-This guarantees that a single effect will be used regardless of how many calls they have.
+  ```js
+  atomEffect((get, set) => {
+    const count = get(countAtom)
+    if (count % 10 === 0) {
+      return
+    }
+    set.recurse(countAtom, (value) => value + 1)
+  })
+  ```
 
-The same guarantee can be achieved with the useEffect hook if you ensure that the useEffect is idempotent.
-
-atomEffects are distinguished from useEffect in a few other ways. They can directly react to atom state changes, are resistent to infinite loops, and can be mounted conditionally.
-
-### It's up to you
-
-Both useEffect and atomEffect have their own advantages and applications. Your project's specific needs and your comfort level should guide your selection.
-Always lean towards an approach that gives you a smoother, more intuitive development experience. Happy coding!
+  </details>

@@ -10,5 +10,5 @@ export const Stackblitz = ({ id, file }) => {
         loading="lazy"
       />
     </div>
-  );
-};
+  )
+}

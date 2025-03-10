@@ -1,9 +1,9 @@
-import { useSetAtom } from 'jotai';
-import { menuAtom } from '../atoms/index.js';
-import { Button } from '../components/button.js';
+import { useSetAtom } from 'jotai'
+import { menuAtom } from '../atoms/index.js'
+import { Button } from '../components/button.js'
 
 export const Shelf = () => {
-  const setIsMenuOpen = useSetAtom(menuAtom);
+  const setIsMenuOpen = useSetAtom(menuAtom)
 
   return (
     <div className="fixed left-0 bottom-0 right-0 lg:hidden">
@@ -40,5 +40,5 @@ export const Shelf = () => {
       </div>
       <div className="h-4 w-full bg-black" />
     </div>
-  );
-};
+  )
+}

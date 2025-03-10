@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-require('dotenv').config();
+require('dotenv').config()
 
-const kebabCase = require('just-kebab-case');
+const kebabCase = require('just-kebab-case')
 const getAnchor = (value) => {
-  return typeof value === 'string' ? kebabCase(value.toLowerCase().replaceAll("'", '')) : '';
-};
+  return typeof value === 'string'
+    ? kebabCase(value.toLowerCase().replaceAll("'", ''))
+    : ''
+}
 
 const DOCS_QUERY = `
   query {
@@ -24,13 +26,13 @@ const DOCS_QUERY = `
       }
     }
   }
-`;
+`
 
 const queries = [
   {
     query: DOCS_QUERY,
     transformer: ({ data }) => {
-      const results = [];
+      const results = []
 
       data.allMdx.nodes.forEach((item) => {
         const transformedNode = {
@@ -43,7 +45,7 @@ const queries = [
           headings: item.headings.map((heading) => heading.value).join(' '),
           body: item.rawBody.replace(/(<([^>]+)>)/gi, ''),
           level: 1,
-        };
+        }
 
         if (item.slug !== 'introduction') {
           item.headings
@@ -59,16 +61,16 @@ const queries = [
                 headings: [],
                 body: '',
                 level: 2,
-              };
+              }
 
-              results.push(transformedNode);
-            });
+              results.push(transformedNode)
+            })
         }
 
-        results.push(transformedNode);
-      });
+        results.push(transformedNode)
+      })
 
-      return results;
+      return results
     },
     indexName: 'Docs',
     settings: {
@@ -85,7 +87,7 @@ const queries = [
     },
     mergeSettings: false,
   },
-];
+]
 
 module.exports = {
   siteMetadata: {
@@ -145,4 +147,4 @@ module.exports = {
   jsxRuntime: 'automatic',
   polyfill: false,
   trailingSlash: 'never',
-};
+}

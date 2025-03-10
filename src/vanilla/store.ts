@@ -84,7 +84,7 @@ type PrdOrDevStore =
   | INTERNAL_PrdStore
   | (INTERNAL_PrdStore & INTERNAL_DevStoreRev4)
 
-export const createStore = (): PrdOrDevStore => {
+export function createStore(): PrdOrDevStore {
   if (import.meta.env?.MODE !== 'production') {
     return createDevStoreRev4()
   }
@@ -94,7 +94,7 @@ export const createStore = (): PrdOrDevStore => {
 
 let defaultStore: PrdOrDevStore | undefined
 
-export const getDefaultStore = (): PrdOrDevStore => {
+export function getDefaultStore(): PrdOrDevStore {
   if (!defaultStore) {
     defaultStore = createStore()
     if (import.meta.env?.MODE !== 'production') {

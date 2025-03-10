@@ -12,5 +12,5 @@ export const CodeSandbox = ({ id, tests }) => {
         loading="lazy"
       />
     </div>
-  );
-};
+  )
+}

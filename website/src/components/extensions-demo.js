@@ -1,12 +1,12 @@
-import { useAtom } from 'jotai';
-import { countAtom } from '../atoms/index.js';
-import { Button } from '../components/button.js';
-import { Code } from '../components/code.js';
+import { useAtom } from 'jotai'
+import { countAtom } from '../atoms/index.js'
+import { Button } from '../components/button.js'
+import { Code } from '../components/code.js'
 
 export const ExtensionsDemo = () => {
-  const [count, setCount] = useAtom(countAtom);
+  const [count, setCount] = useAtom(countAtom)
 
-  const increment = () => setCount((c) => (c = c + 1));
+  const increment = () => setCount((c) => (c = c + 1))
 
   const code = `import { useAtom } from 'jotai'
 import { atomWithImmer } from 'jotai-immer'
@@ -28,7 +28,7 @@ const Controls = () => {
   return (
     <button onClick={increment}>+1</button>
   )
-}`;
+}`
 
   return (
     <>
@@ -36,9 +36,11 @@ const Controls = () => {
         <Button onClick={increment} icon="plus" className="focus:ring">
           Increment
         </Button>
-        <span className="text-3xl font-bold ordinal slashed-zero tabular-nums">{count}</span>
+        <span className="text-3xl font-bold ordinal slashed-zero tabular-nums">
+          {count}
+        </span>
       </div>
       <Code>{code}</Code>
     </>
-  );
-};
+  )
+}

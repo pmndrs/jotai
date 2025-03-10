@@ -1,46 +1,46 @@
-import { useCallback, useState } from 'react';
-import cx from 'classnames';
-import { Button } from '../components/button';
+import { useCallback, useState } from 'react'
+import cx from 'classnames'
+import { Button } from '../components/button'
 
 export const Support = () => {
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [hasReceived, setHasReceived] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [honey, setHoney] = useState('');
+  const [hasSubmitted, setHasSubmitted] = useState(false)
+  const [hasReceived, setHasReceived] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [message, setMessage] = useState('')
+  const [honey, setHoney] = useState('')
 
   const handleSubmit = useCallback(async () => {
-    if (honey !== '') return;
-    if (hasReceived) return;
+    if (honey !== '') return
+    if (hasReceived) return
 
-    setHasSubmitted(true);
+    setHasSubmitted(true)
 
     const data = {
       name,
       email,
       message,
-    };
+    }
 
-    const JSONdata = JSON.stringify(data);
-    const endpoint = '/api/contact';
+    const JSONdata = JSON.stringify(data)
+    const endpoint = '/api/contact'
     const options = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSONdata,
-    };
+    }
 
-    const response = await fetch(endpoint, options);
+    const response = await fetch(endpoint, options)
 
     if (response.status === 200) {
-      setHasReceived(true);
-      setName('');
-      setEmail('');
-      setMessage('');
+      setHasReceived(true)
+      setName('')
+      setEmail('')
+      setMessage('')
     }
-  }, [name, email, message, hasReceived, honey]);
+  }, [name, email, message, hasReceived, honey])
 
   return (
     <>
@@ -86,8 +86,8 @@ export const Support = () => {
               Professional support
             </div>
             <div className="text-base">
-              Need more help? Request an expert code architecture review from Daishi Kato, the
-              author of Jotai.
+              Need more help? Request an expert code architecture review from
+              Daishi Kato, the author of Jotai.
             </div>
             <div className="mt-4 flex flex-col gap-4">
               <label>
@@ -128,7 +128,13 @@ export const Support = () => {
                 />
               </label>
               <div className={cx(hasSubmitted && 'opacity-0')}>
-                <Button icon="message" onClick={handleSubmit} dark bold className="dark:!bg-black">
+                <Button
+                  icon="message"
+                  onClick={handleSubmit}
+                  dark
+                  bold
+                  className="dark:!bg-black"
+                >
                   Send inquiry
                 </Button>
               </div>
@@ -156,15 +162,16 @@ export const Support = () => {
             />
           </a>
           <div className="text-sm leading-tight">
-            <span className="font-bold">Daishi Kato</span> is a software engineer who is passionate
-            about open source software. He has been a researcher of peer-to-peer networks and web
-            technologies for decades. His interest is in engineering, and he has been working with
-            start-ups for the last 5 years. He has been actively involved in open source software
-            since the 90s, and his latest work focuses on developing various libraries with
-            JavaScript and React.
+            <span className="font-bold">Daishi Kato</span> is a software
+            engineer who is passionate about open source software. He has been a
+            researcher of peer-to-peer networks and web technologies for
+            decades. His interest is in engineering, and he has been working
+            with start-ups for the last 5 years. He has been actively involved
+            in open source software since the 90s, and his latest work focuses
+            on developing various libraries with JavaScript and React.
           </div>
         </div>
       </div>
     </>
-  );
-};
+  )
+}

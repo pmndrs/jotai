@@ -1,9 +1,12 @@
-import { Credits } from '../components/credits.js';
+import { Credits } from '../components/credits.js'
 
 export const Footer = () => {
   return (
-    <footer className="mt-8 inline-flex flex-col space-y-2 lg:hidden" style={{ marginBottom: 79 }}>
+    <footer
+      className="mt-8 inline-flex flex-col space-y-2 lg:hidden"
+      style={{ marginBottom: 79 }}
+    >
       <Credits />
     </footer>
-  );
-};
+  )
+}
