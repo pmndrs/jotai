@@ -107,6 +107,12 @@ export function atomWithObservable<Data>(
     let subscription: Subscription | undefined
     let timer: Timeout | undefined
     const isNotMounted = () => !setResult
+    const unsubscribe = () => {
+      if (subscription) {
+        subscription.unsubscribe()
+        subscription = undefined
+      }
+    }
     const start = () => {
       if (subscription) {
         clearTimeout(timer)
@@ -118,12 +124,7 @@ export function atomWithObservable<Data>(
         complete: () => {},
       })
       if (isNotMounted() && options?.unstable_timeout) {
-        timer = setTimeout(() => {
-          if (subscription) {
-            subscription.unsubscribe()
-            subscription = undefined
-          }
-        }, options.unstable_timeout)
+        timer = setTimeout(unsubscribe, options.unstable_timeout)
       }
     }
     start()
@@ -146,9 +147,10 @@ export function atomWithObservable<Data>(
       }
       return () => {
         setResult = undefined
-        if (subscription) {
-          subscription.unsubscribe()
-          subscription = undefined
+        if (options?.unstable_timeout) {
+          timer = setTimeout(unsubscribe, options.unstable_timeout)
+        } else {
+          unsubscribe()
         }
       }
     }
