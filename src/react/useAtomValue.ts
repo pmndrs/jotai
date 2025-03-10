@@ -1,10 +1,7 @@
 /// <reference types="react/experimental" />
 
 import ReactExports, { useDebugValue, useEffect, useReducer } from 'react'
-import {
-  INTERNAL_getBuildingBlocksRev1 as getBuildingBlocks,
-  INTERNAL_initializeStoreHooks as initializeStoreHooks,
-} from '../vanilla/internals.ts'
+import { INTERNAL_registerAbortHandler as registerAbortHandler } from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
 
@@ -54,78 +51,48 @@ const use =
     }
   })
 
-type ContinuablePromiseCache = WeakMap<PromiseLike<unknown>, Promise<unknown>>
-
-type StoreHelpers = readonly [
-  changedHook: { add(atom: Atom<unknown>, callback: () => void): () => void },
-  promiseCache: {
-    get(atom: Atom<unknown>): ContinuablePromiseCache | undefined
-    set(atom: Atom<unknown>, value: ContinuablePromiseCache): void
-  },
-]
-
-const StoreHelpersMap = new WeakMap<Store, StoreHelpers>()
-
-const getStoreHelpers = (store: Store) => {
-  let helpers = StoreHelpersMap.get(store)
-  if (!helpers) {
-    const buildingBlocks = getBuildingBlocks(store)
-    const storeHooks = initializeStoreHooks(buildingBlocks[6])
-    const changedHook = storeHooks.c
-    const promiseCache = new WeakMap<Atom<unknown>, ContinuablePromiseCache>()
-    helpers = [changedHook, promiseCache]
-    StoreHelpersMap.set(store, helpers)
-  }
-  return helpers
-}
+const continuablePromiseMap = new WeakMap<
+  PromiseLike<unknown>,
+  Promise<unknown>
+>()
 
 const createContinuablePromise = <T>(
   store: Store,
   atom: Atom<PromiseLike<T> | T>,
   promise: PromiseLike<T>,
 ) => {
-  const [changedHook, promiseCache] = getStoreHelpers(store)
-  let continuablePromiseCache = promiseCache.get(atom)
-  if (!continuablePromiseCache) {
-    continuablePromiseCache = new WeakMap()
-    promiseCache.set(atom, continuablePromiseCache)
-  }
-  let continuablePromise = continuablePromiseCache.get(promise)
+  let continuablePromise = continuablePromiseMap.get(promise)
   if (!continuablePromise) {
     continuablePromise = new Promise<T>((resolve, reject) => {
-      let curr: PromiseLike<T> | undefined = promise
-      const cleanup = changedHook.add(atom, () => {
+      let curr = promise
+      const callback = () => {
         try {
           const nextValue = store.get(atom)
           if (isPromiseLike(nextValue)) {
             curr = nextValue
             nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
+            registerAbortHandler(nextValue, callback)
           } else {
-            curr = undefined
-            resolve(nextValue as T)
-            cleanup()
+            resolve(nextValue)
           }
         } catch (e) {
-          curr = undefined
           reject(e)
-          cleanup()
         }
-      })
+      }
       const onFulfilled = (me: PromiseLike<T>) => (v: T) => {
         if (curr === me) {
           resolve(v)
-          cleanup()
         }
       }
       const onRejected = (me: PromiseLike<T>) => (e: unknown) => {
         if (curr === me) {
           reject(e)
-          cleanup()
         }
       }
       promise.then(onFulfilled(promise), onRejected(promise))
+      registerAbortHandler(promise, callback)
     })
-    continuablePromiseCache.set(promise, continuablePromise)
+    continuablePromiseMap.set(promise, continuablePromise)
   }
   return continuablePromise
 }

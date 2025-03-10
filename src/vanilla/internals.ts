@@ -181,17 +181,17 @@ const returnAtomValue = <Value>(atomState: AtomState<Value>): Value => {
 
 const promiseStateMap: WeakMap<
   PromiseLike<unknown>,
-  [abortHandlers: Set<() => void>, settled: boolean]
+  [pending: boolean, abortHandlers: Set<() => void>]
 > = new WeakMap()
 
 const isPendingPromise = (value: unknown): value is PromiseLike<unknown> =>
-  isPromiseLike(value) && !promiseStateMap.get(value as never)?.[1]
+  isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[0]
 
 const abortPromise = <T>(promise: PromiseLike<T>): void => {
   const promiseState = promiseStateMap.get(promise)
-  if (promiseState) {
-    promiseState[1] = true
-    promiseState[0].forEach((fn) => fn())
+  if (promiseState?.[0]) {
+    promiseState[0] = false
+    promiseState[1].forEach((fn) => fn())
   }
 }
 
@@ -201,14 +201,14 @@ const registerAbortHandler = <T>(
 ): void => {
   let promiseState = promiseStateMap.get(promise)
   if (!promiseState) {
-    promiseState = [new Set(), false]
+    promiseState = [true, new Set()]
     promiseStateMap.set(promise, promiseState)
     const settle = () => {
-      promiseState![1] = true
+      promiseState![0] = false
     }
     promise.then(settle, settle)
   }
-  promiseState[0].add(abortHandler)
+  promiseState[1].add(abortHandler)
 }
 
 const isPromiseLike = (p: unknown): p is PromiseLike<unknown> =>
