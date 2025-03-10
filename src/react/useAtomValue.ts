@@ -65,20 +65,6 @@ const createContinuablePromise = <T>(
   if (!continuablePromise) {
     continuablePromise = new Promise<T>((resolve, reject) => {
       let curr = promise
-      const callback = () => {
-        try {
-          const nextValue = store.get(atom)
-          if (isPromiseLike(nextValue)) {
-            curr = nextValue
-            nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
-            registerAbortHandler(nextValue, callback)
-          } else {
-            resolve(nextValue)
-          }
-        } catch (e) {
-          reject(e)
-        }
-      }
       const onFulfilled = (me: PromiseLike<T>) => (v: T) => {
         if (curr === me) {
           resolve(v)
@@ -89,8 +75,22 @@ const createContinuablePromise = <T>(
           reject(e)
         }
       }
+      const onAbort = () => {
+        try {
+          const nextValue = store.get(atom)
+          if (isPromiseLike(nextValue)) {
+            curr = nextValue
+            nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
+            registerAbortHandler(nextValue, onAbort)
+          } else {
+            resolve(nextValue)
+          }
+        } catch (e) {
+          reject(e)
+        }
+      }
       promise.then(onFulfilled(promise), onRejected(promise))
-      registerAbortHandler(promise, callback)
+      registerAbortHandler(promise, onAbort)
     })
     continuablePromiseMap.set(promise, continuablePromise)
   }
