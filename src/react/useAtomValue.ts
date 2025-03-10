@@ -1,6 +1,7 @@
 /// <reference types="react/experimental" />
 
 import ReactExports, { useDebugValue, useEffect, useReducer } from 'react'
+import { INTERNAL_registerAbortHandler as registerAbortHandler } from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
 
@@ -55,7 +56,10 @@ const continuablePromiseMap = new WeakMap<
   Promise<unknown>
 >()
 
-const createContinuablePromise = <T>(promise: PromiseLike<T>) => {
+const createContinuablePromise = <T>(
+  promise: PromiseLike<T>,
+  getValue: () => PromiseLike<T> | T,
+) => {
   let continuablePromise = continuablePromiseMap.get(promise)
   if (!continuablePromise) {
     continuablePromise = new Promise<T>((resolve, reject) => {
@@ -70,25 +74,23 @@ const createContinuablePromise = <T>(promise: PromiseLike<T>) => {
           reject(e)
         }
       }
-      const registerCancelHandler = (p: PromiseLike<T>) => {
-        if ('onCancel' in p && typeof p.onCancel === 'function') {
-          p.onCancel((nextValue: PromiseLike<T> | T) => {
-            if (import.meta.env?.MODE !== 'production' && nextValue === p) {
-              throw new Error('[Bug] p is not updated even after cancelation')
-            }
-            if (isPromiseLike(nextValue)) {
-              continuablePromiseMap.set(nextValue, continuablePromise!)
-              curr = nextValue
-              nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
-              registerCancelHandler(nextValue)
-            } else {
-              resolve(nextValue)
-            }
-          })
+      const onAbort = () => {
+        try {
+          const nextValue = getValue()
+          if (isPromiseLike(nextValue)) {
+            continuablePromiseMap.set(nextValue, continuablePromise!)
+            curr = nextValue
+            nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
+            registerAbortHandler(nextValue, onAbort)
+          } else {
+            resolve(nextValue)
+          }
+        } catch (e) {
+          reject(e)
         }
       }
       promise.then(onFulfilled(promise), onRejected(promise))
-      registerCancelHandler(promise)
+      registerAbortHandler(promise, onAbort)
     })
     continuablePromiseMap.set(promise, continuablePromise)
   }
@@ -141,7 +143,9 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
       if (typeof delay === 'number') {
         const value = store.get(atom)
         if (isPromiseLike(value)) {
-          attachPromiseMeta(createContinuablePromise(value))
+          attachPromiseMeta(
+            createContinuablePromise(value, () => store.get(atom)),
+          )
         }
         // delay rerendering to wait a promise possibly to resolve
         setTimeout(rerender, delay)
@@ -157,7 +161,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   // The use of isPromiseLike is to be consistent with `use` type.
   // `instanceof Promise` actually works fine in this case.
   if (isPromiseLike(value)) {
-    const promise = createContinuablePromise(value)
+    const promise = createContinuablePromise(value, () => store.get(atom))
     return use(promise)
   }
   return value as Awaited<Value>
