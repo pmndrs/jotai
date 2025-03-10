@@ -57,9 +57,8 @@ const continuablePromiseMap = new WeakMap<
 >()
 
 const createContinuablePromise = <T>(
-  store: Store,
-  atom: Atom<PromiseLike<T> | T>,
   promise: PromiseLike<T>,
+  getValue: () => PromiseLike<T> | T,
 ) => {
   let continuablePromise = continuablePromiseMap.get(promise)
   if (!continuablePromise) {
@@ -77,7 +76,7 @@ const createContinuablePromise = <T>(
       }
       const onAbort = () => {
         try {
-          const nextValue = store.get(atom)
+          const nextValue = getValue()
           if (isPromiseLike(nextValue)) {
             curr = nextValue
             nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
@@ -143,7 +142,9 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
       if (typeof delay === 'number') {
         const value = store.get(atom)
         if (isPromiseLike(value)) {
-          attachPromiseMeta(createContinuablePromise(store, atom, value))
+          attachPromiseMeta(
+            createContinuablePromise(value, () => store.get(atom)),
+          )
         }
         // delay rerendering to wait a promise possibly to resolve
         setTimeout(rerender, delay)
@@ -159,7 +160,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   // The use of isPromiseLike is to be consistent with `use` type.
   // `instanceof Promise` actually works fine in this case.
   if (isPromiseLike(value)) {
-    const promise = createContinuablePromise(store, atom, value)
+    const promise = createContinuablePromise(value, () => store.get(atom))
     return use(promise)
   }
   return value as Awaited<Value>
