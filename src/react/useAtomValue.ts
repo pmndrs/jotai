@@ -78,6 +78,7 @@ const createContinuablePromise = <T>(
         try {
           const nextValue = getValue()
           if (isPromiseLike(nextValue)) {
+            continuablePromiseMap.set(nextValue, continuablePromise!)
             curr = nextValue
             nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
             registerAbortHandler(nextValue, onAbort)
