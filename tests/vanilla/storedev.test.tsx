@@ -34,9 +34,9 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
     undefined,
     (atom, get, set, ...args) => {
       if (inRestoreAtom) {
-        return set(atom, ...args)
+        return set(atom, ...(args as any))
       }
-      return atom.write(get, set, ...args)
+      return atom.write(get, set, ...(args as any))
     },
   )
   const debugMountedAtoms = new Set<Atom<unknown>>()
