@@ -144,7 +144,9 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
         if (!ReactExports.use) {
           const value = store.get(atom)
           if (isPromiseLike(value)) {
-            createContinuablePromise(value, () => store.get(atom))
+            attachPromiseMeta(
+              createContinuablePromise(value, () => store.get(atom)),
+            )
           }
         }
         // delay rerendering to wait a promise possibly to resolve
