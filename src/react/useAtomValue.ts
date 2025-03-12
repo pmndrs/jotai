@@ -1,6 +1,6 @@
 /// <reference types="react/experimental" />
 
-import ReactExports, { useDebugValue, useEffect, useReducer } from 'react'
+import React, { useDebugValue, useEffect, useReducer } from 'react'
 import { INTERNAL_registerAbortHandler as registerAbortHandler } from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
@@ -31,7 +31,8 @@ const attachPromiseMeta = <T>(
 }
 
 const use =
-  ReactExports.use ||
+  React.use ||
+  // A shim for older React versions
   (<T>(
     promise: PromiseLike<T> & {
       status?: 'pending' | 'fulfilled' | 'rejected'
@@ -141,7 +142,8 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   useEffect(() => {
     const unsub = store.sub(atom, () => {
       if (typeof delay === 'number') {
-        if (!ReactExports.use) {
+        if (!React.use) {
+          // A hack for older React versions
           const value = store.get(atom)
           if (isPromiseLike(value)) {
             attachPromiseMeta(
