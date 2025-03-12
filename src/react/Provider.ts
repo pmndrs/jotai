@@ -13,14 +13,14 @@ type Options = {
   store?: Store
 }
 
-export const useStore = (options?: Options): Store => {
+export function useStore(options?: Options): Store {
   const store = useContext(StoreContext)
   return options?.store || store || getDefaultStore()
 }
 
 /* eslint-disable react-compiler/react-compiler */
 // TODO should we consider using useState instead of useRef?
-export const Provider = ({
+export function Provider({
   children,
   store,
 }: {
@@ -29,7 +29,7 @@ export const Provider = ({
 }): ReactElement<
   { value: Store | undefined },
   FunctionComponent<{ value: Store | undefined }>
-> => {
+> {
   const storeRef = useRef<Store>(undefined)
   if (!store && !storeRef.current) {
     storeRef.current = createStore()
