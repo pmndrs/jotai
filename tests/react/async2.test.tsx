@@ -63,7 +63,7 @@ describe('useAtom delay option test', () => {
     })
 
     const Component = () => {
-      const count = useAtomValue(asyncAtom, { delay: 100 })
+      const count = useAtomValue(asyncAtom, { delay: 0 })
       return <div>count: {count}</div>
     }
 
