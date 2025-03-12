@@ -1,110 +1,92 @@
 ---
 title: History
-description: A Jōtai utility package for advanced state history management
-nav: 5.02
-keywords: history,undo,redo,jotai
+description: A Jōtai utility package for state history
+nav: 4.04
+keywords: history, undo, redo, track changes
 ---
 
-[jotai-history](https://github.com/jotaijs/jotai-history) is a utility package for advanced state history management.
+[jotai-history](https://github.com/jotaijs/jotai-history) is a utility package for tracking state history in Jotai.
 
-## install
+## Installation
 
 ```
 npm install jotai-history
 ```
 
-## withHistory
+## `withHistory`
 
-### Signature
-
-```ts
-declare function withHistory<T>(targetAtom: Atom<T>, limit: number): Atom<T[]>
-```
-
-This function creates an atom that keeps a history of states for a given `targetAtom`. The `limit` parameter determines the maximum number of history states to keep.
-This is useful for tracking the changes over time.
-
-The history atom tracks changes to the `targetAtom` and maintains a list of previous states up to the specified `limit`. When the `targetAtom` changes, its new state is added to the history.
-
-### Usage
-
-```jsx
-import { atom, useAtomValue, useSetAtom } from 'jotai'
+```js
 import { withHistory } from 'jotai-history'
 
-const countAtom = atom(0)
-const countWithPrevious = withHistory(countAtom, 2)
+const targetAtom = atom(0)
+const limit = 2
+const historyAtom = withHistory(targetAtom, limit)
 
-function CountComponent() {
-  const [count, previousCount] = useAtomValue(countWithPrevious)
-  const setCount = useSetAtom(countAtom)
-
-  return (
-    <>
-      <p>Count: {count}</p>
-      <p>Previous Count: {previousCount}</p>
-      <button onClick={() => setCount((c) => c + 1)}>Increment</button>
-    </>
-  )
+function Component() {
+  const [current, previous] = useAtomValue(historyAtom)
+  ...
 }
 ```
 
-## withUndo
+### Description
 
-### Signature
+`withHistory` creates an atom that tracks the history of states for a given `targetAtom`. The most recent `limit` states are retained.
 
-```ts
-type Undoable = {
-  undo: () => void
-  redo: () => void
-  canUndo: boolean
-  canRedo: boolean
-}
-declare function withUndo<T>(
-  targetAtom: WritableAtom<T, [T], any>,
-  limit: number,
-): Atom<Undoable>
-```
+### Action Symbols
 
-`withHistory` provides undo and redo capabilities for an atom. It keeps track of the value history of `targetAtom` and provides methods to move back and forth through that history.
+- **RESET**  
+  Clears the entire history, removing all previous states (including the undo/redo stack).
 
-The returned object includes:
+  ```js
+  import { RESET } from 'jotai-history'
 
-- `undo`: A function to revert to the previous state.
-- `redo`: A function to advance to the next state.
-- `canUndo`: A boolean indicating if it's possible to undo.
-- `canRedo`: A boolean indicating if it's possible to redo.
+  ...
 
-### Usage
+  function Component() {
+    const setHistoryAtom = useSetAtom(historyAtom)
+    ...
+    setHistoryAtom(RESET)
+  }
+  ```
 
-```jsx
-import { atom, useAtom, useAtomValue } from 'jotai'
-import { withUndo } from 'jotai-history'
+- **UNDO** and **REDO**  
+  Moves the `targetAtom` backward or forward in its history.
 
-const counterAtom = atom(0)
-const undoCounterAtom = withUndo(counterAtom, 5)
+  ```js
+  import { REDO, UNDO } from 'jotai-history'
 
-function CounterComponent() {
-  const { undo, redo, canUndo, canRedo } = useAtomValue(undoCounterAtom)
-  const [value, setValue] = useAtom(counterAtom)
+  ...
 
-  return (
-    <>
-      <p>Count: {value}</p>
-      <button onClick={() => setValue((c) => c + 1)}>Increment</button>
-      <button onClick={undo} disabled={!canUndo}>
-        Undo
-      </button>
-      <button onClick={redo} disabled={!canRedo}>
-        Redo
-      </button>
-    </>
-  )
-}
-```
+  function Component() {
+    const setHistoryAtom = useSetAtom(historyAtom)
+    ...
+    setHistoryAtom(UNDO)
+    setHistoryAtom(REDO)
+  }
+  ```
+
+### Indicators
+
+- **canUndo** and **canRedo**  
+  Booleans indicating whether undo or redo actions are currently possible. These can be used to disable buttons or conditionally trigger actions.
+
+  ```jsx
+  ...
+
+  function Component() {
+    const history = useAtomValue(historyAtom)
+
+    return (
+      <>
+        <button disabled={!history.canUndo}>Undo</button>
+        <button disabled={!history.canRedo}>Redo</button>
+      </>
+    )
+  }
+  ```
 
 <CodeSandbox id="g6qj3q" />
 
 ## Memory Management
 
-⚠️ Since `withHistory` and `withUndo` keeps a history of states, it's important to manage memory by setting a reasonable `limit`. Excessive history can lead to memory bloat, especially in applications with frequent state updates.
+> Because `withHistory` maintains a list of previous states, be mindful of memory usage by setting a reasonable `limit`. Applications that update state frequently can grow significantly in memory usage.
