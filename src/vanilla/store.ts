@@ -10,6 +10,7 @@ export type INTERNAL_PrdStore = INTERNAL_Store
 
 // For debugging purpose only
 // This will be removed in the near future
+/* @deprecated Deprecated: Use devstore from the devtools library */
 export type INTERNAL_DevStoreRev4 = {
   dev4_get_internal_weak_map: () => {
     get: (atom: Atom<unknown>) => INTERNAL_AtomState | undefined
@@ -20,6 +21,7 @@ export type INTERNAL_DevStoreRev4 = {
   ) => void
 }
 
+/* @deprecated Deprecated: Use devstore from the devtools library */
 const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   let inRestoreAtom = 0
   const storeHooks = INTERNAL_initializeStoreHooks({})
@@ -56,7 +58,10 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   })
   const devStore: INTERNAL_DevStoreRev4 = {
     // store dev methods (these are tentative and subject to change without notice)
-    dev4_get_internal_weak_map: () => atomStateMap,
+    dev4_get_internal_weak_map: () => {
+      console.log('Deprecated: Use devstore from the devtools library')
+      return atomStateMap
+    },
     dev4_get_mounted_atoms: () => debugMountedAtoms,
     dev4_restore_atoms: (values) => {
       const restoreAtom: WritableAtom<null, [], void> = {
