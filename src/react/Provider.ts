@@ -14,8 +14,7 @@ type Options = {
 }
 
 export function useStore(options?: Options): Store {
-  const store = useContext(StoreContext)
-  return options?.store || store || getDefaultStore()
+  return options?.store || useContext(StoreContext) || getDefaultStore()
 }
 
 /* eslint-disable react-compiler/react-compiler */
