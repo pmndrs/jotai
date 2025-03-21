@@ -1,4 +1,4 @@
-// Internal functions (subject to ch>ange without notice)
+// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -374,7 +374,7 @@ type BuildingBlocks = readonly [
   mountCallbacks: Callbacks,
   unmountCallbacks: Callbacks,
   storeHooks: StoreHooks,
-  // atom intercepters
+  // atom interceptors
   atomRead: AtomRead,
   atomWrite: AtomWrite,
   atomOnInit: AtomOnInit,
@@ -405,7 +405,7 @@ const buildStore = (
   mountCallbacks: Callbacks = new Set(),
   unmountCallbacks: Callbacks = new Set(),
   storeHooks: StoreHooks = {},
-  // atom intercepters
+  // atom interceptors
   atomRead: AtomRead = (atom, ...params) => atom.read(...params),
   atomWrite: AtomWrite = (atom, ...params) => atom.write(...params),
   atomOnInit: AtomOnInit = (atom, store) => atom.unstable_onInit?.(store),
@@ -480,7 +480,7 @@ const buildStore = (
   const recomputeInvalidatedAtoms =
     buildingBlockFunctions[2] ||
     (() => {
-      // Step 1: traverse the dependency graph to build the topsorted atom list
+      // Step 1: traverse the dependency graph to build the topologically sorted atom list
       // We don't bother to check for cycles, which simplifies the algorithm.
       // This is a topological sort via depth-first search, slightly modified from
       // what's described here for simplicity and performance reasons:
@@ -853,7 +853,7 @@ const buildStore = (
     mountCallbacks,
     unmountCallbacks,
     storeHooks,
-    // atom intercepters
+    // atom interceptors
     atomRead,
     atomWrite,
     atomOnInit,
