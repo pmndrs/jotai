@@ -89,12 +89,22 @@ type PrdOrDevStore =
   | INTERNAL_PrdStore
   | (INTERNAL_PrdStore & INTERNAL_DevStoreRev4)
 
+let overiddenCreateStore: typeof createStore | undefined
+
+export function INTERNAL_overrideCreateStore(
+  fn: (prev: typeof createStore | undefined) => typeof createStore,
+): void {
+  overiddenCreateStore = fn(overiddenCreateStore)
+}
+
 export function createStore(): PrdOrDevStore {
+  if (overiddenCreateStore) {
+    return overiddenCreateStore()
+  }
   if (import.meta.env?.MODE !== 'production') {
     return createDevStoreRev4()
   }
-  const store = INTERNAL_buildStore()
-  return store
+  return INTERNAL_buildStore()
 }
 
 let defaultStore: PrdOrDevStore | undefined
