@@ -114,7 +114,8 @@ export function useAtomValue<AtomType extends Atom<unknown>>(
 ): Awaited<ExtractAtomValue<AtomType>>
 
 export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
-  const { delay, unstable_promiseStatus: promiseStatus } = options || {}
+  const { delay, unstable_promiseStatus: promiseStatus = !React.use } =
+    options || {}
   const store = useStore(options)
 
   const [[valueFromReducer, storeFromReducer, atomFromReducer], rerender] =
