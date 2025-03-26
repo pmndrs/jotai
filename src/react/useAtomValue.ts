@@ -171,9 +171,6 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   // `instanceof Promise` actually works fine in this case.
   if (isPromiseLike(value)) {
     const promise = createContinuablePromise(value, () => store.get(atom))
-    if (promiseStatus) {
-      attachPromiseStatus(promise)
-    }
     return use(promise)
   }
   return value as Awaited<Value>
