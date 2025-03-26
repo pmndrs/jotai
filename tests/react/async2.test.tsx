@@ -1,4 +1,4 @@
-import { StrictMode, Suspense } from 'react'
+import { StrictMode, Suspense, version as reactVersion } from 'react'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEventOrig from '@testing-library/user-event'
 import { assert, describe, expect, it } from 'vitest'
@@ -8,6 +8,8 @@ import { atom } from 'jotai/vanilla'
 const userEvent = {
   click: (element: Element) => act(() => userEventOrig.click(element)),
 }
+
+const IS_REACT19 = /^19\./.test(reactVersion)
 
 describe('useAtom delay option test', () => {
   // FIXME fireEvent.click doesn't work with the patched RTL and React 19-rc.1
@@ -63,7 +65,10 @@ describe('useAtom delay option test', () => {
     })
 
     const Component = () => {
-      const count = useAtomValue(asyncAtom, { delay: 0 })
+      const count = useAtomValue(asyncAtom, {
+        delay: 0,
+        unstable_promiseStatus: !IS_REACT19,
+      })
       return <div>count: {count}</div>
     }
 

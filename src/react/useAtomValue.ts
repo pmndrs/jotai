@@ -10,7 +10,7 @@ type Store = ReturnType<typeof useStore>
 const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
   typeof (x as any)?.then === 'function'
 
-const attachPromiseMeta = <T>(
+const attachPromiseStatus = <T>(
   promise: PromiseLike<T> & {
     status?: 'pending' | 'fulfilled' | 'rejected'
     value?: T
@@ -47,7 +47,7 @@ const use =
     } else if (promise.status === 'rejected') {
       throw promise.reason
     } else {
-      attachPromiseMeta(promise)
+      attachPromiseStatus(promise)
       throw promise
     }
   })
@@ -100,6 +100,7 @@ const createContinuablePromise = <T>(
 
 type Options = Parameters<typeof useStore>[0] & {
   delay?: number
+  unstable_promiseStatus?: boolean
 }
 
 export function useAtomValue<Value>(
@@ -113,6 +114,7 @@ export function useAtomValue<AtomType extends Atom<unknown>>(
 ): Awaited<ExtractAtomValue<AtomType>>
 
 export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
+  const { delay, unstable_promiseStatus: promiseStatus } = options || {}
   const store = useStore(options)
 
   const [[valueFromReducer, storeFromReducer, atomFromReducer], rerender] =
@@ -138,19 +140,21 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
     value = store.get(atom)
   }
 
-  const delay = options?.delay
   useEffect(() => {
     const unsub = store.sub(atom, () => {
-      if (typeof delay === 'number') {
-        if (!React.use) {
-          // A hack for older React versions
+      if (promiseStatus) {
+        try {
           const value = store.get(atom)
           if (isPromiseLike(value)) {
-            attachPromiseMeta(
+            attachPromiseStatus(
               createContinuablePromise(value, () => store.get(atom)),
             )
           }
+        } catch {
+          // ignore
         }
+      }
+      if (typeof delay === 'number') {
         // delay rerendering to wait a promise possibly to resolve
         setTimeout(rerender, delay)
         return
@@ -159,13 +163,16 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
     })
     rerender()
     return unsub
-  }, [store, atom, delay])
+  }, [store, atom, delay, promiseStatus])
 
   useDebugValue(value)
   // The use of isPromiseLike is to be consistent with `use` type.
   // `instanceof Promise` actually works fine in this case.
   if (isPromiseLike(value)) {
     const promise = createContinuablePromise(value, () => store.get(atom))
+    if (promiseStatus) {
+      attachPromiseStatus(promise)
+    }
     return use(promise)
   }
   return value as Awaited<Value>
