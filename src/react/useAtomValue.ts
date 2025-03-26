@@ -17,17 +17,19 @@ const attachPromiseStatus = <T>(
     reason?: unknown
   },
 ) => {
-  promise.status = 'pending'
-  promise.then(
-    (v) => {
-      promise.status = 'fulfilled'
-      promise.value = v
-    },
-    (e) => {
-      promise.status = 'rejected'
-      promise.reason = e
-    },
-  )
+  if (!promise.status) {
+    promise.status = 'pending'
+    promise.then(
+      (v) => {
+        promise.status = 'fulfilled'
+        promise.value = v
+      },
+      (e) => {
+        promise.status = 'rejected'
+        promise.reason = e
+      },
+    )
+  }
 }
 
 const use =
