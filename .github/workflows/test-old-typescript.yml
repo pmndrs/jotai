@@ -68,7 +68,7 @@ jobs:
           sed -i~ 's/"jotai": \["\.\/src\/index\.ts"\],/"jotai": [".\/dist\/ts3.8\/index.d.ts"],/' tsconfig.json
           sed -i~ 's/"jotai\/\*": \["\.\/src\/\*\.ts"\]/"jotai\/*": [".\/dist\/ts3.8\/*.d.ts"]/' tsconfig.json
           sed -i~ 's/"include": .*/"include": ["src\/types.d.ts", "dist\/**\/*", "tests\/**\/*"],/' tsconfig.json
-          pnpm add -D @testing-library/user-event@14.4.3 @types/node@22.2.0
+          pnpm add -D @testing-library/user-event@14.4.3 @types/node@22.2.0 @types/babel__traverse@7.18.2
       - name: Patch for Older TS
         if: ${{ matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
@@ -78,7 +78,7 @@ jobs:
           sed -i~ 's/"noUncheckedIndexedAccess": true,//' tsconfig.json
           sed -i~ 's/^import type /import /' tests/*/*.tsx tests/*/*/*.tsx
           pnpm json -I -f package.json -e "this.resolutions={};  this.resolutions['@types/prettier']='2.4.2'; this.resolutions['@types/node']='18.11.18'; this.resolutions['@types/react']='18.2.56';"
-          pnpm add -D @types/prettier@2.4.2 @types/node@18.11.18 @types/yargs@17.0.13 @types/babel__traverse@7.18.2 @types/react@18.2.56
+          pnpm add -D @types/prettier@2.4.2 @types/node@18.11.18 @types/yargs@17.0.13 @types/react@18.2.56
           rm -r tests/react/vanilla-utils/atomWithObservable.*
       - name: Install old TypeScript
         run: pnpm add -D typescript@${{ matrix.typescript }}
