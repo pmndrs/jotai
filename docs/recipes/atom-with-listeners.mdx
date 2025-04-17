@@ -15,7 +15,7 @@ those state changes.
 
 ```ts
 import { useEffect } from 'react'
-import { atom, useSetAtom, Getter, Setter, SetStateAction } from 'jotai'
+import { atom, useAtom, useSetAtom, Getter, Setter, SetStateAction } from 'jotai'
 
 type Callback<Value> = (
   get: Getter,
@@ -59,7 +59,7 @@ In a component:
 const [countAtom, useCountListener] = atomWithListeners(0)
 
 function EvenCounter() {
-  const [evenCount, setEvenCount] = useState(0)
+  const [evenCount, setEvenCount] = useAtom(countAtom)
 
   useCountListener(
     useCallback(
