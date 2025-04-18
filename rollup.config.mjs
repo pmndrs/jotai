@@ -179,7 +179,6 @@ export default function (args) {
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
     createCommonJSConfig(`src/${c}.ts`, `dist/${c}`, clientOnly),
     createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`, clientOnly),
-    createESMConfig(`src/${c}.ts`, `dist/react-native/${c}.js`, clientOnly),
     createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development', clientOnly),
     createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production', clientOnly),
     createSystemConfig(
