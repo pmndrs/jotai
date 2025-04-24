@@ -190,7 +190,7 @@ const storedNumberAtom = atomWithStorage('my-number', 0, {
     ) {
       return
     }
-    window.addEventListener('storage', (e) => {
+    const handler = (e) => {
       if (e.storageArea === localStorage && e.key === key) {
         let newValue
         try {
@@ -200,7 +200,9 @@ const storedNumberAtom = atomWithStorage('my-number', 0, {
         }
         callback(newValue)
       }
-    })
+    }
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
   },
 })
 ```
