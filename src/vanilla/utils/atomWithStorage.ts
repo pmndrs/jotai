@@ -11,12 +11,12 @@ type Subscribe<Value> = (
   key: string,
   callback: (value: Value) => void,
   initialValue: Value,
-) => Unsubscribe
+) => Unsubscribe | undefined
 
 type StringSubscribe = (
   key: string,
   callback: (value: string | null) => void,
-) => Unsubscribe
+) => Unsubscribe | undefined
 
 type SetStateActionWithReset<Value> =
   | Value
