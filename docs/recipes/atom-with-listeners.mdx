@@ -15,7 +15,14 @@ those state changes.
 
 ```ts
 import { useEffect } from 'react'
-import { atom, useAtom, useSetAtom, Getter, Setter, SetStateAction } from 'jotai'
+import {
+  atom,
+  useAtom,
+  useSetAtom,
+  Getter,
+  Setter,
+  SetStateAction,
+} from 'jotai'
 
 type Callback<Value> = (
   get: Getter,
