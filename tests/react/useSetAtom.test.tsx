@@ -11,7 +11,6 @@ const useCommitCount = () => {
   useEffect(() => {
     commitCountRef.current += 1
   })
-  // eslint-disable-next-line react-compiler/react-compiler
   return commitCountRef.current
 }
 

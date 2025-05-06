@@ -14,7 +14,6 @@ const useCommitCount = () => {
   useEffect(() => {
     commitCountRef.current += 1
   })
-  // eslint-disable-next-line react-compiler/react-compiler
   return commitCountRef.current
 }
 
@@ -421,7 +420,6 @@ it('no error with cached atoms (fix 510)', async () => {
 
   function useCachedAtoms<T>(atoms: T[]) {
     const prevAtoms = useRef<T[]>(atoms)
-    // eslint-disable-next-line react-compiler/react-compiler
     return prevAtoms.current
   }
 
