@@ -21,8 +21,8 @@ jobs:
           - 18.3.1
           - 19.0.0
           - 19.1.0
-          - 19.2.0-canary-1d6c8168-20250411
-          - 0.0.0-experimental-1d6c8168-20250411
+          - 19.2.0-canary-b9cfa0d3-20250505
+          - 0.0.0-experimental-b9cfa0d3-20250505
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
