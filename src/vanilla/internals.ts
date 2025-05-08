@@ -145,6 +145,7 @@ export type INTERNAL_MountDependencies = MountDependencies
 export type INTERNAL_MountAtom = MountAtom
 export type INTERNAL_UnmountAtom = UnmountAtom
 export type INTERNAL_Store = Store
+export type INTERNAL_StoreHooks = StoreHooks
 
 //
 // Some util functions
@@ -296,6 +297,11 @@ type StoreHooks = {
    */
   readonly c?: StoreHookForAtoms
   /**
+   * Listener to notify when atom dependencies change.
+   * This is an experimental API.
+   */
+  readonly d?: StoreHookForAtoms
+  /**
    * Listener to notify when the atom is mounted.
    * This is an experimental API.
    */
@@ -355,6 +361,7 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
 const initializeStoreHooks = (storeHooks: StoreHooks): Required<StoreHooks> => {
   type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
   ;(storeHooks as SH).c ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).d ||= createStoreHookForAtoms()
   ;(storeHooks as SH).m ||= createStoreHookForAtoms()
   ;(storeHooks as SH).u ||= createStoreHookForAtoms()
   ;(storeHooks as SH).f ||= createStoreHook()
@@ -571,6 +578,9 @@ const buildStore = (
           return atomState
         }
       }
+      const prevDeps = new WeakSet(atomState.d.keys())
+      const depsSize = atomState.d.size
+      let depsChanged = false
       // Compute a new state for this atom.
       atomState.d.clear()
       let isSync = true
@@ -599,6 +609,7 @@ const buildStore = (
         try {
           return returnAtomValue(aState)
         } finally {
+          depsChanged ||= !prevDeps.has(a)
           atomState.d.set(a, aState.n)
           if (isPendingPromise(atomState.v)) {
             addPendingPromiseToDependency(atom, atomState.v, aState)
@@ -606,6 +617,7 @@ const buildStore = (
           mountedMap.get(a)?.t.add(atom)
           if (!isSync) {
             mountDependenciesIfAsync()
+            storeHooks.d?.(atom)
           }
         }
       }
@@ -669,6 +681,9 @@ const buildStore = (
           invalidatedAtoms.set(atom, atomState.n)
           changedAtoms.add(atom)
           storeHooks.c?.(atom)
+        }
+        if (depsChanged || depsSize !== atomState.d.size) {
+          storeHooks.d?.(atom)
         }
       }
     })
