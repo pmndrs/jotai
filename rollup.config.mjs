@@ -8,7 +8,7 @@ import terser from '@rollup/plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 import banner2 from 'rollup-plugin-banner2'
 import esbuild from 'rollup-plugin-esbuild'
-import createBabelConfig from './babel.config.js'
+import createBabelConfig from './babel.config.mjs'
 
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
