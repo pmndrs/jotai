@@ -107,12 +107,9 @@ importers:
       eslint-plugin-react:
         specifier: ^7.37.5
         version: 7.37.5(eslint@9.26.0)
-      eslint-plugin-react-compiler:
-        specifier: 19.1.0-rc.1
-        version: 19.1.0-rc.1(eslint@9.26.0)
       eslint-plugin-react-hooks:
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@9.26.0)
+        specifier: 6.0.0-rc.1
+        version: 6.0.0-rc.1(eslint@9.26.0)
       eslint-plugin-testing-library:
         specifier: ^7.1.1
         version: 7.1.1(eslint@9.26.0)(typescript@5.8.3)
@@ -299,6 +296,11 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
+  '@babel/parser@7.27.2':
+    resolution: {integrity: sha512-QYLs8299NA7WM/bZAdp+CviYYkVoYXlDW2rzliy3chxd1PQjej7JORuMJDJXJUb9g0TT+B99EwaVLKmX+sPXWw==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
+
   '@babel/plugin-bugfix-firefox-class-in-computed-class-key@7.27.1':
     resolution: {integrity: sha512-QPG3C9cCVRQLxAVwmefEmwdTanECuUBMQZ/ym5kiw3XKCGA7qkuQLcjWWHcrD/GKbn/WmJwaezfuuAOcyKlRPA==}
     engines: {node: '>=6.9.0'}
@@ -328,13 +330,6 @@ packages:
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0
-
-  '@babel/plugin-proposal-private-methods@7.18.6':
-    resolution: {integrity: sha512-nutsvktDItsNn4rpGItSNV2sz1XwS+nfU0Rg8aCx3W3NOKVzdMjJRu0O5OkgDp3ZGICSTbgRpxZoWsxoKRvbeA==}
-    engines: {node: '>=6.9.0'}
-    deprecated: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-private-methods instead.
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
 
   '@babel/plugin-proposal-private-property-in-object@7.21.0-placeholder-for-preset-env.2':
     resolution: {integrity: sha512-SOSkfJDddaM7mak6cPEpswyTRnuRltl429hMraQEglW+OkovnCzsiszTmsrlY//qLFjCpQDFRvjdm2wA5pPm9w==}
@@ -1949,15 +1944,9 @@ packages:
       '@testing-library/dom':
         optional: true
 
-  eslint-plugin-react-compiler@19.1.0-rc.1:
-    resolution: {integrity: sha512-3umw5eqZXapBl7aQGmvcjheKhUbsElb9jTETxRZg371e1LG4EPs/zCHt2JzP+wNcdaZWzjU/R730zPUJblY2zw==}
-    engines: {node: ^14.17.0 || ^16.0.0 || >= 18.0.0}
-    peerDependencies:
-      eslint: '>=7'
-
-  eslint-plugin-react-hooks@5.2.0:
-    resolution: {integrity: sha512-+f15FfK64YQwZdJNELETdn5ibXEUQmW1DZL6KXhNnc2heoy/sg9VJJeT7n8TlMWouzWqSWavFkIhHyIbIAEapg==}
-    engines: {node: '>=10'}
+  eslint-plugin-react-hooks@6.0.0-rc.1:
+    resolution: {integrity: sha512-7C4c7bdtd/B7Q+HruZxYhGjwZVvJawvQpilEYlRG1Jncuk1ZNqrFy9bO8SJNieyj3iDh8WPQA7BzzPO7sNAyEA==}
+    engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
 
@@ -3293,8 +3282,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typescript@5.9.0-dev.20250506:
-    resolution: {integrity: sha512-2wpjav7G3l6HcoMPoA7qI7pehXc0KURvGsvSzjjIuGaJZljFwX302AQbXNiXD360tlWJtjPb0/rBT8KZTUYcFg==}
+  typescript@5.9.0-dev.20250516:
+    resolution: {integrity: sha512-H5tS0q9VCKl6i/AUm30HmVtyqV7mrUrFOX5ymYbjc7BZxlwpXaXRGGZ14j5kcPWlBDNN677wsTboMu1CxdtX/g==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -3525,11 +3514,11 @@ packages:
     peerDependencies:
       zod: ^3.24.1
 
-  zod-validation-error@3.4.0:
-    resolution: {integrity: sha512-ZOPR9SVY6Pb2qqO5XHt+MkkTRxGXb4EVtnjc9JpXUOtUB1T9Ru7mZOT361AN3MsetVe7R0a1KZshJDZdgp9miQ==}
+  zod-validation-error@3.4.1:
+    resolution: {integrity: sha512-1KP64yqDPQ3rupxNv7oXhf7KdhHHgaqbKuspVoiN93TT0xrBjql+Svjkdjq/Qh/7GSMmgQs3AfvBT0heE35thw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      zod: ^3.18.0
+      zod: ^3.24.4
 
   zod@3.24.4:
     resolution: {integrity: sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg==}
@@ -3726,6 +3715,10 @@ snapshots:
     dependencies:
       '@babel/types': 7.27.1
 
+  '@babel/parser@7.27.2':
+    dependencies:
+      '@babel/types': 7.27.1
+
   '@babel/plugin-bugfix-firefox-class-in-computed-class-key@7.27.1(@babel/core@7.27.1)':
     dependencies:
       '@babel/core': 7.27.1
@@ -3758,14 +3751,6 @@ snapshots:
       '@babel/core': 7.27.1
       '@babel/helper-plugin-utils': 7.27.1
       '@babel/traverse': 7.27.1
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/plugin-proposal-private-methods@7.18.6(@babel/core@7.27.1)':
-    dependencies:
-      '@babel/core': 7.27.1
-      '@babel/helper-create-class-features-plugin': 7.27.1(@babel/core@7.27.1)
-      '@babel/helper-plugin-utils': 7.27.1
     transitivePeerDependencies:
       - supports-color
 
@@ -5296,7 +5281,7 @@ snapshots:
     dependencies:
       semver: 7.7.1
       shelljs: 0.8.5
-      typescript: 5.9.0-dev.20250506
+      typescript: 5.9.0-dev.20250516
 
   dunder-proto@1.0.1:
     dependencies:
@@ -5526,21 +5511,17 @@ snapshots:
     optionalDependencies:
       '@testing-library/dom': 10.4.0
 
-  eslint-plugin-react-compiler@19.1.0-rc.1(eslint@9.26.0):
+  eslint-plugin-react-hooks@6.0.0-rc.1(eslint@9.26.0):
     dependencies:
       '@babel/core': 7.27.1
-      '@babel/parser': 7.27.1
-      '@babel/plugin-proposal-private-methods': 7.18.6(@babel/core@7.27.1)
+      '@babel/parser': 7.27.2
+      '@babel/plugin-transform-private-methods': 7.27.1(@babel/core@7.27.1)
       eslint: 9.26.0
       hermes-parser: 0.25.1
       zod: 3.24.4
-      zod-validation-error: 3.4.0(zod@3.24.4)
+      zod-validation-error: 3.4.1(zod@3.24.4)
     transitivePeerDependencies:
       - supports-color
-
-  eslint-plugin-react-hooks@5.2.0(eslint@9.26.0):
-    dependencies:
-      eslint: 9.26.0
 
   eslint-plugin-react@7.37.5(eslint@9.26.0):
     dependencies:
@@ -7039,7 +7020,7 @@ snapshots:
 
   typescript@5.8.3: {}
 
-  typescript@5.9.0-dev.20250506: {}
+  typescript@5.9.0-dev.20250516: {}
 
   unbox-primitive@1.1.0:
     dependencies:
@@ -7288,7 +7269,7 @@ snapshots:
     dependencies:
       zod: 3.24.4
 
-  zod-validation-error@3.4.0(zod@3.24.4):
+  zod-validation-error@3.4.1(zod@3.24.4):
     dependencies:
       zod: 3.24.4
 
