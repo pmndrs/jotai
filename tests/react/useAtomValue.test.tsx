@@ -1,5 +1,6 @@
-import { StrictMode } from 'react'
-import { render, screen } from '@testing-library/react'
+import { Component, StrictMode, Suspense } from 'react'
+import type { ReactNode } from 'react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
@@ -29,4 +30,93 @@ it('useAtomValue basic test', async () => {
   await screen.findByText('count: 0')
   await userEvent.click(screen.getByText('dispatch'))
   await screen.findByText('count: 1')
+})
+
+it('useAtomValue with async atom (promise)', async () => {
+  const asyncAtom = atom(async () => 42)
+
+  const AsyncComponent = () => {
+    const value = useAtomValue(asyncAtom)
+
+    return <div>value: {value}</div>
+  }
+
+  await act(async () => {
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <AsyncComponent />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
+
+  await screen.findByText('value: 42')
+})
+
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+
+    this.state = { error: null }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+
+  render() {
+    if (this.state.error) {
+      return <div>error: {this.state.error.message}</div>
+    }
+
+    return this.props.children
+  }
+}
+
+it('useAtomValue with error throwing atom', async () => {
+  const errorAtom = atom(() => {
+    throw new Error('fail')
+  })
+
+  const ErrorComponent = () => {
+    useAtomValue(errorAtom)
+
+    return <div>no error</div>
+  }
+
+  render(
+    <StrictMode>
+      <ErrorBoundary>
+        <ErrorComponent />
+      </ErrorBoundary>
+    </StrictMode>,
+  )
+
+  await screen.findByText('error: fail')
+})
+
+it('useAtomValue with atom returning object', async () => {
+  const objAtom = atom({ a: 1, b: 2 })
+
+  const ObjComponent = () => {
+    const value = useAtomValue(objAtom)
+
+    return (
+      <div>
+        obj: {value.a},{value.b}
+      </div>
+    )
+  }
+
+  render(
+    <StrictMode>
+      <ObjComponent />
+    </StrictMode>,
+  )
+
+  await screen.findByText('obj: 1,2')
 })
