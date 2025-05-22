@@ -1,5 +1,5 @@
 import React, { StrictMode, Suspense } from 'react'
-import { render, screen, act } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
