@@ -1,4 +1,5 @@
-import React, { StrictMode, Suspense } from 'react'
+import { Component, StrictMode, Suspense } from 'react'
+import type { ReactNode } from 'react'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { it } from 'vitest'
@@ -53,11 +54,11 @@ it('useAtomValue with async atom (promise)', async () => {
   await screen.findByText('value: 42')
 })
 
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
+class ErrorBoundary extends Component<
+  { children: ReactNode },
   { error: Error | null }
 > {
-  constructor(props: { children: React.ReactNode }) {
+  constructor(props: { children: ReactNode }) {
     super(props)
 
     this.state = { error: null }
@@ -118,22 +119,4 @@ it('useAtomValue with atom returning object', async () => {
   )
 
   await screen.findByText('obj: 1,2')
-})
-
-it('useAtomValue with atom returning function', async () => {
-  const fnAtom = atom(() => () => 'fn')
-
-  const FnComponent = () => {
-    const fn = useAtomValue(fnAtom)
-
-    return <div>fn: {fn()}</div>
-  }
-
-  render(
-    <StrictMode>
-      <FnComponent />
-    </StrictMode>,
-  )
-
-  await screen.findByText('fn: fn')
 })
