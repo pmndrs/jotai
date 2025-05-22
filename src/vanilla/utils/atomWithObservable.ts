@@ -1,6 +1,9 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom, Getter, WritableAtom } from '../../vanilla.ts'
 
+const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
+  typeof (x as any)?.then === 'function'
+
 type Timeout = ReturnType<typeof setTimeout>
 type AnyError = unknown
 
@@ -165,7 +168,7 @@ export function atomWithObservable<Data>(
     (get) => {
       const [resultAtom] = get(observableResultAtom)
       const result = get(resultAtom)
-      if (result instanceof Promise) {
+      if (isPromiseLike(result)) {
         return result.then(returnResultData)
       }
       return returnResultData(result)
