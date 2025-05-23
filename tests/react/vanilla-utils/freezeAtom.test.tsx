@@ -63,7 +63,7 @@ it('freezeAtom handles null correctly', async () => {
 })
 
 it('freezeAtom handles primitive correctly', async () => {
-  const numberAtom = atom<number, [number], void>(123, (_get, set) => {
+  const numberAtom = atom(123, (_get, set, _arg: number) => {
     set(numberAtom, 456)
   })
 
