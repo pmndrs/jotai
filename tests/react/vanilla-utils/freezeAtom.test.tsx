@@ -59,6 +59,7 @@ it('freezeAtom handles null correctly', async () => {
   await screen.findByText('value is null: true')
 
   await userEvent.click(screen.getByText('set null'))
+
   await screen.findByText('value is null: true')
 })
 
@@ -72,7 +73,6 @@ it('freezeAtom handles primitive correctly', async () => {
     return (
       <>
         <button onClick={() => setValue(456)}>set number</button>
-        <div>value is frozen: {`${Object.isFrozen(value)}`}</div>
         <div>value: {value}</div>
       </>
     )
@@ -84,12 +84,10 @@ it('freezeAtom handles primitive correctly', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('value is frozen: true')
   await screen.findByText('value: 123')
 
   await userEvent.click(screen.getByText('set number'))
 
-  await screen.findByText('value is frozen: true')
   await screen.findByText('value: 456')
 })
 
