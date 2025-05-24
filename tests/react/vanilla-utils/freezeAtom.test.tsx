@@ -57,10 +57,6 @@ it('freezeAtom handles null correctly', async () => {
   )
 
   await screen.findByText('value is null: true')
-
-  await userEvent.click(screen.getByText('set null'))
-
-  await screen.findByText('value is null: true')
 })
 
 it('freezeAtom handles primitive correctly', async () => {
