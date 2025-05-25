@@ -7,15 +7,13 @@ import { atom } from 'jotai/vanilla'
 import { freezeAtom, freezeAtomCreator } from 'jotai/vanilla/utils'
 
 it('freezeAtom basic test', async () => {
-  const objAtom = atom({ deep: {} }, (_get, set, _ignored?) => {
-    set(objAtom, { deep: {} })
-  })
+  const objAtom = atom({ deep: {} })
 
   const Component = () => {
     const [obj, setObj] = useAtom(freezeAtom(objAtom))
     return (
       <>
-        <button onClick={setObj}>change</button>
+        <button onClick={() => setObj({ deep: {} })}>change</button>
         <div>
           isFrozen: {`${Object.isFrozen(obj) && Object.isFrozen(obj.deep)}`}
         </div>
@@ -33,6 +31,54 @@ it('freezeAtom basic test', async () => {
 
   await userEvent.click(screen.getByText('change'))
   await screen.findByText('isFrozen: true')
+})
+
+it('freezeAtom handles null correctly', async () => {
+  const nullAtom = atom(null)
+
+  const Component = () => {
+    const [value, setValue] = useAtom(freezeAtom(nullAtom))
+    return (
+      <>
+        <button onClick={() => setValue(null)}>set null</button>
+        <div>value is null: {`${value === null}`}</div>
+      </>
+    )
+  }
+
+  render(
+    <StrictMode>
+      <Component />
+    </StrictMode>,
+  )
+
+  await screen.findByText('value is null: true')
+})
+
+it('freezeAtom handles primitive correctly', async () => {
+  const numberAtom = atom(123)
+
+  const Component = () => {
+    const [value, setValue] = useAtom(freezeAtom(numberAtom))
+    return (
+      <>
+        <button onClick={() => setValue(456)}>set number</button>
+        <div>value: {value}</div>
+      </>
+    )
+  }
+
+  render(
+    <StrictMode>
+      <Component />
+    </StrictMode>,
+  )
+
+  await screen.findByText('value: 123')
+
+  await userEvent.click(screen.getByText('set number'))
+
+  await screen.findByText('value: 456')
 })
 
 describe('freezeAtomCreator', () => {
