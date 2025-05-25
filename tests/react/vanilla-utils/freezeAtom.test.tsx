@@ -36,9 +36,7 @@ it('freezeAtom basic test', async () => {
 })
 
 it('freezeAtom handles null correctly', async () => {
-  const nullAtom = atom(null, (_get, set, _arg: null) => {
-    set(nullAtom, null)
-  })
+  const nullAtom = atom(null)
 
   const Component = () => {
     const [value, setValue] = useAtom(freezeAtom(nullAtom))
