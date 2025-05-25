@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/vanilla/utils'
@@ -131,25 +131,17 @@ it('do not update unless equality function says value has changed', async () => 
   await screen.findByText('commits: 4')
 })
 
-it('creates fresh cache path when deps differ (memo3)', async () => {
+it('creates fresh cache path when deps differ (memo3)', () => {
   const baseAtom = atom({ a: 0, b: 1 })
-  const derivedAtom1 = selectAtom(baseAtom, (value) => value)
-  const derivedAtom2 = selectAtom(baseAtom, (value) => value)
 
-  const Component1 = () => {
-    const value = useAtomValue(derivedAtom1)
-    return <div>{JSON.stringify(value)}</div>
-  }
+  const derivedAtom1 = selectAtom(baseAtom, (v) => v)
+  const derivedAtom2 = selectAtom(baseAtom, (v) => v)
 
-  const Component2 = () => {
-    const value = useAtomValue(derivedAtom2)
-    return <div>{JSON.stringify(value)}</div>
-  }
+  expect(derivedAtom1).not.toBe(derivedAtom2)
 
-  const { unmount } = render(<Component1 />)
-  await screen.findByText('{"a":0,"b":1}')
-  unmount()
+  const selector = (v: { a: number; b: number }) => v.a
+  const derivedAtom3 = selectAtom(baseAtom, selector)
+  const derivedAtom4 = selectAtom(baseAtom, selector)
 
-  render(<Component2 />)
-  await screen.findByText('{"a":0,"b":1}')
+  expect(derivedAtom3).toBe(derivedAtom4)
 })
