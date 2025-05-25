@@ -7,15 +7,13 @@ import { atom } from 'jotai/vanilla'
 import { freezeAtom, freezeAtomCreator } from 'jotai/vanilla/utils'
 
 it('freezeAtom basic test', async () => {
-  const objAtom = atom({ deep: {} }, (_get, set, _ignored?) => {
-    set(objAtom, { deep: {} })
-  })
+  const objAtom = atom({ deep: {} })
 
   const Component = () => {
     const [obj, setObj] = useAtom(freezeAtom(objAtom))
     return (
       <>
-        <button onClick={setObj}>change</button>
+        <button onClick={() => setObj({ deep: {} })}>change</button>
         <div>
           isFrozen: {`${Object.isFrozen(obj) && Object.isFrozen(obj.deep)}`}
         </div>
