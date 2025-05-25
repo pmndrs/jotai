@@ -130,3 +130,26 @@ it('do not update unless equality function says value has changed', async () => 
   await screen.findByText('value: {"a":3}')
   await screen.findByText('commits: 4')
 })
+
+it('creates fresh cache path when deps differ (memo3)', async () => {
+  const baseAtom = atom({ a: 0, b: 1 })
+  const derivedAtom1 = selectAtom(baseAtom, (value) => value)
+  const derivedAtom2 = selectAtom(baseAtom, (value) => value)
+
+  const Component1 = () => {
+    const value = useAtomValue(derivedAtom1)
+    return <div>{JSON.stringify(value)}</div>
+  }
+
+  const Component2 = () => {
+    const value = useAtomValue(derivedAtom2)
+    return <div>{JSON.stringify(value)}</div>
+  }
+
+  const { unmount } = render(<Component1 />)
+  await screen.findByText('{"a":0,"b":1}')
+  unmount()
+
+  render(<Component2 />)
+  await screen.findByText('{"a":0,"b":1}')
+})
