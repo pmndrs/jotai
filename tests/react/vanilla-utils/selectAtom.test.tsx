@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/vanilla/utils'
@@ -129,4 +129,19 @@ it('do not update unless equality function says value has changed', async () => 
   await userEvent.click(screen.getByText('copy'))
   await screen.findByText('value: {"a":3}')
   await screen.findByText('commits: 4')
+})
+
+it('creates fresh cache path when deps differ (memo3)', () => {
+  const baseAtom = atom({ a: 0, b: 1 })
+
+  const derivedAtom1 = selectAtom(baseAtom, (v) => v)
+  const derivedAtom2 = selectAtom(baseAtom, (v) => v)
+
+  expect(derivedAtom1).not.toBe(derivedAtom2)
+
+  const selector = (v: { a: number; b: number }) => v.a
+  const derivedAtom3 = selectAtom(baseAtom, selector)
+  const derivedAtom4 = selectAtom(baseAtom, selector)
+
+  expect(derivedAtom3).toBe(derivedAtom4)
 })
