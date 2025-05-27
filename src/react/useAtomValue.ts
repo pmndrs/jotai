@@ -169,8 +169,6 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   }, [store, atom, delay, promiseStatus])
 
   useDebugValue(value)
-  // The use of isPromiseLike is to be consistent with `use` type.
-  // `instanceof Promise` actually works fine in this case.
   if (isPromiseLike(value)) {
     const promise = createContinuablePromise(value, () => store.get(atom))
     if (promiseStatus) {

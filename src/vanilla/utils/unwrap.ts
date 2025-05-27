@@ -9,7 +9,8 @@ const memo2 = <T>(create: () => T, dep1: object, dep2: object): T => {
   return getCached(create, cache2, dep2)
 }
 
-const isPromise = (x: unknown): x is Promise<unknown> => x instanceof Promise
+const isPromiseLike = (p: unknown): p is PromiseLike<unknown> =>
+  typeof (p as any)?.then === 'function'
 
 const defaultFallback = () => undefined
 
@@ -37,12 +38,15 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
 ) {
   return memo2(
     () => {
-      type PromiseAndValue = { readonly p?: Promise<unknown> } & (
+      type PromiseAndValue = { readonly p?: PromiseLike<unknown> } & (
         | { readonly v: Awaited<Value> }
         | { readonly f: PendingValue; readonly v?: Awaited<Value> }
       )
-      const promiseErrorCache = new WeakMap<Promise<unknown>, unknown>()
-      const promiseResultCache = new WeakMap<Promise<unknown>, Awaited<Value>>()
+      const promiseErrorCache = new WeakMap<PromiseLike<unknown>, unknown>()
+      const promiseResultCache = new WeakMap<
+        PromiseLike<unknown>,
+        Awaited<Value>
+      >()
       const refreshAtom = atom(0)
 
       if (import.meta.env?.MODE !== 'production') {
@@ -56,7 +60,7 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
           get(refreshAtom)
           const prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
           const promise = get(anAtom)
-          if (!isPromise(promise)) {
+          if (!isPromiseLike(promise)) {
             return { v: promise as Awaited<Value> }
           }
           if (promise !== prev?.p) {
