@@ -1,10 +1,16 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import { type Atom, type WritableAtom, atom } from 'jotai/vanilla'
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -117,5 +123,41 @@ it('useSetAtom with write without an argument', async () => {
   await userEvent.click(screen.getByText('increment'))
   await waitFor(() => {
     screen.getByText('count: 1')
+  })
+})
+
+it('useSetAtom throws when called with a read-only atom', async () => {
+  const originalEnv = import.meta.env
+  Object.defineProperty(import.meta, 'env', {
+    value: { MODE: 'development' },
+    writable: true,
+  })
+
+  const countAtom = atom(0)
+  const readOnlyAtom = atom((get) => get(countAtom))
+
+  let setAtomFn: ((v: number) => void) | undefined
+
+  function TestComponent() {
+    // eslint-disable-next-line react-hooks/react-compiler
+    setAtomFn = useSetAtom(readOnlyAtom as any)
+    return null
+  }
+
+  render(<TestComponent />)
+
+  await waitFor(() => {
+    if (!setAtomFn) throw new Error('setAtomFn not assigned yet')
+  })
+
+  expect(() => {
+    act(() => {
+      setAtomFn?.(1)
+    })
+  }).toThrowError('not writable atom')
+
+  Object.defineProperty(import.meta, 'env', {
+    value: originalEnv,
+    writable: true,
   })
 })
