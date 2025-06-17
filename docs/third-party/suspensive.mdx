@@ -1,0 +1,74 @@
+---
+title: Suspensive
+description: All in one for React Suspense with Jotai
+nav: 5.04
+keywords: react, suspense, async, promise, declarative, render-props, error-boundary
+---
+
+## Installation
+
+```
+npm install @suspensive/jotai
+```
+
+## Why Use?
+
+[@suspensive/jotai](https://suspensive.org/en/docs/jotai/motivation) is utilized for the following reasons:
+
+### Enables Easier and More Intuitive Use of Jotai's Async Atoms
+
+Jotai atoms support asynchronous read/write operations. Async atoms leverage Suspense to handle asynchronous flows, delegating the Promise's pending state to the parent Suspense when an async operation starts.
+
+Props of `<Atom/>` in @suspensive/jotai can be used identically to the interface of `useAtom` in Jotai. Using `<Atom/>` makes it clear internally which atom is being used and intuitively shows how Suspense is triggered at various depths.
+
+```tsx
+import { Atom } from '@suspensive/jotai'
+import { Suspense } from '@suspensive/react'
+import { UserProfile, UserPosts } from '~/components'
+import { userAtom } from '~/atoms'
+
+const MyPage = () => (
+  <Suspense fallback={'pending...'}>
+    {/* It's clear which atom is being used and where Suspense is triggered. */}
+    <Atom atom={userAtom}>{([data]) => <UserProfile {...data} />}</Atom>
+    <Atom atom={userAtom}>{([data]) => <UserPosts {...data} />}</Atom>
+  </Suspense>
+)
+```
+
+### Compatible with Jotai's Extension Libraries
+
+Jotai offers various extension libraries like [tRPC](https://jotai.org/docs/extensions/trpc), [Query](https://jotai.org/docs/extensions/query), and [Cache](https://jotai.org/docs/extensions/cache). Atoms from extension libraries are compatible with @suspensive/jotai's `<Atom/>`, `<SetAtom/>`, `<AtomValue/>`.
+
+Below is an example using the extension library [jotai-tanstack-query](https://github.com/jotaijs/jotai-tanstack-query) introduced in [Query](https://jotai.org/docs/extensions/query#suspense).
+
+```tsx
+import { AtomValue } from '@suspensive/jotai'
+import { Suspense, ErrorBoundary } from '@suspensive/react'
+import { UserProfile } from '~/components'
+import { userQueryAtom } from '~/queries' {/* Used 'atomWithSuspenseQuery' from 'jotai-tanstack-query'. */}
+
+const MyPage = () => (
+  <ErrorBoundary fallback={({ error }) => <>{error.message}</>}>
+    <Suspense fallback={'pending...'}>
+      <AtomValue atom={userQueryAtom}> {/* Atoms from extension libraries are also compatible. */}
+        {({ data: user }) => <UserProfile key={user.id} {...user} />}
+      </AtomValue>
+    </Suspense>
+  </ErrorBoundary>
+)
+```
+
+## API Reference
+
+### `<Atom/>`
+
+The [Atom](https://suspensive.org/en/docs/jotai/Atom) component provides an interface similar to Jotai's [useAtom](https://jotai.org/docs/core/use-atom#useatom) hook as props, allowing declarative usage.
+
+### `<AtomValue/>`
+
+The [AtomValue](https://suspensive.org/en/docs/jotai/AtomValue) component provides an interface similar to Jotai's [useAtomValue](https://jotai.org/docs/core/use-atom#useatomvalue) hook as props, allowing declarative usage.
+
+### `<SetAtom/>`
+
+The [SetAtom](https://suspensive.org/en/docs/jotai/SetAtom) component provides an interface similar to Jotai's [useSetAtom](https://jotai.org/docs/core/use-atom#usesetatom) hook as props, allowing declarative usage.
