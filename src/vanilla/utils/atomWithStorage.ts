@@ -258,7 +258,7 @@ export function atomWithStorage<Value>(
         set(baseAtom, initialValue)
         return storage.removeItem(key)
       }
-      if (nextValue instanceof Promise) {
+      if (isPromiseLike(nextValue)) {
         return nextValue.then((resolvedValue) => {
           set(baseAtom, resolvedValue)
           return storage.setItem(key, resolvedValue)
