@@ -50,7 +50,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       )
 
       resolve()
-      await screen.findByText('delayed: 0')
+      expect(await screen.findByText('delayed: 0')).toBeInTheDocument()
 
       await userEvent.click(screen.getByText('button'))
 
@@ -58,7 +58,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
         resolve()
       })
 
-      await screen.findByText('delayed: 1')
+      expect(await screen.findByText('delayed: 1')).toBeInTheDocument()
 
       expect(commited).toEqual([
         { pending: false, delayed: 0 },
@@ -103,15 +103,15 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('toggle'))
-    await screen.findByText('pending')
+    expect(await screen.findByText('pending')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('increment'))
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('increment'))
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
   })
 })

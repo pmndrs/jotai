@@ -490,10 +490,10 @@ it('variable sized splitted atom', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('numbers: 1,2,3')
+  expect(await screen.findByText('numbers: 1,2,3')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('numbers: 1,2')
+  expect(await screen.findByText('numbers: 1,2')).toBeInTheDocument()
 })
 
 it('should not update splitted atom when single item is set to identical value', async () => {
@@ -519,8 +519,8 @@ it('should not update splitted atom when single item is set to identical value',
     </StrictMode>,
   )
 
-  await screen.findByText('changed: false')
+  expect(await screen.findByText('changed: false')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('changed: false')
+  expect(await screen.findByText('changed: false')).toBeInTheDocument()
 })

@@ -44,12 +44,12 @@ describe('useAtom delay option test', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
     // The use of fireEvent is required to reproduce the issue
     fireEvent.click(screen.getByText('button'))
-    await screen.findByText('loading')
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('loading')).toBeInTheDocument()
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
   })
 
   it('do not suspend for Promise.resolve with delay option', async () => {
@@ -83,11 +83,11 @@ describe('useAtom delay option test', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
     // The use of fireEvent is required to reproduce the issue
     fireEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
   })
 })
 
@@ -141,13 +141,13 @@ describe('atom read function setSelf option test', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('text: pending0')
+    expect(await screen.findByText('text: pending0')).toBeInTheDocument()
     resolve()
-    await screen.findByText('text: hello0')
+    expect(await screen.findByText('text: hello0')).toBeInTheDocument()
 
     // The use of fireEvent is required to reproduce the issue
     fireEvent.click(screen.getByText('button'))
-    await screen.findByText('text: hello1')
+    expect(await screen.findByText('text: hello1')).toBeInTheDocument()
   })
 })
 
@@ -262,16 +262,16 @@ describe('infinite pending', () => {
       )
     })
 
-    await screen.findByText('loading')
+    expect(await screen.findByText('loading')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('loading')
+    expect(await screen.findByText('loading')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 3')
+    expect(await screen.findByText('count: 3')).toBeInTheDocument()
   })
 })
 
@@ -305,9 +305,9 @@ describe('write to async atom twice', async () => {
       )
     })
 
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 4')
+    expect(await screen.findByText('count: 4')).toBeInTheDocument()
   })
 
   it('wait Promise.resolve()', async () => {
@@ -340,9 +340,9 @@ describe('write to async atom twice', async () => {
       )
     })
 
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 4')
+    expect(await screen.findByText('count: 4')).toBeInTheDocument()
   })
 
   it('wait setTimeout()', async () => {
@@ -375,9 +375,9 @@ describe('write to async atom twice', async () => {
       )
     })
 
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 4')
+    expect(await screen.findByText('count: 4')).toBeInTheDocument()
   })
 })
 
@@ -409,8 +409,8 @@ describe('with onMount', () => {
         </StrictMode>,
       )
     })
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 3')
+    expect(await screen.findByText('count: 3')).toBeInTheDocument()
   })
 })

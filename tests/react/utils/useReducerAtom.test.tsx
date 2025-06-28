@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useReducerAtom } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
 
@@ -34,13 +34,13 @@ it('useReducerAtom with no action argument', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 4')
+  expect(await screen.findByText('count: 4')).toBeInTheDocument()
 })
 
 it('useReducerAtom with optional action argument', async () => {
@@ -74,16 +74,16 @@ it('useReducerAtom with optional action argument', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch INCREASE'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch empty'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch DECREASE'))
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 })
 
 it('useReducerAtom with non-optional action argument', async () => {
@@ -114,11 +114,11 @@ it('useReducerAtom with non-optional action argument', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch INCREASE'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch DECREASE'))
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 })

@@ -34,16 +34,16 @@ it('simple sync get default', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count1: 1, count2: 2')
+  expect(await screen.findByText('count1: 1, count2: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button1'))
-  await screen.findByText('count1: 2, count2: 4')
+  expect(await screen.findByText('count1: 2, count2: 4')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button2'))
-  await screen.findByText('count1: 2, count2: 5')
+  expect(await screen.findByText('count1: 2, count2: 5')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button1'))
-  await screen.findByText('count1: 3, count2: 5')
+  expect(await screen.findByText('count1: 3, count2: 5')).toBeInTheDocument()
 })
 
 it('simple async get default', async () => {
@@ -80,22 +80,22 @@ it('simple async get default', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count1: 1, count2: 2')
+  expect(await screen.findByText('count1: 1, count2: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button1'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count1: 2, count2: 4')
+  expect(await screen.findByText('count1: 2, count2: 4')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button2'))
   resolve()
-  await screen.findByText('count1: 2, count2: 5')
+  expect(await screen.findByText('count1: 2, count2: 5')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button1'))
   resolve()
-  await screen.findByText('count1: 3, count2: 5')
+  expect(await screen.findByText('count1: 3, count2: 5')).toBeInTheDocument()
 })
 
 it('refresh sync atoms to default values', async () => {
@@ -123,22 +123,22 @@ it('refresh sync atoms to default values', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count1: 1, count2: 2')
+  expect(await screen.findByText('count1: 1, count2: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button1'))
-  await screen.findByText('count1: 2, count2: 4')
+  expect(await screen.findByText('count1: 2, count2: 4')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button2'))
-  await screen.findByText('count1: 2, count2: 5')
+  expect(await screen.findByText('count1: 2, count2: 5')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button1'))
-  await screen.findByText('count1: 3, count2: 5')
+  expect(await screen.findByText('count1: 3, count2: 5')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('Refresh count2'))
-  await screen.findByText('count1: 3, count2: 6')
+  expect(await screen.findByText('count1: 3, count2: 6')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button1'))
-  await screen.findByText('count1: 4, count2: 8')
+  expect(await screen.findByText('count1: 4, count2: 8')).toBeInTheDocument()
 })
 
 it('refresh async atoms to default values', async () => {
@@ -176,41 +176,41 @@ it('refresh async atoms to default values', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   await waitFor(() => {
     resolve()
-    screen.getByText('count1: 1, count2: 2')
+    expect(screen.getByText('count1: 1, count2: 2')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button1'))
   await screen.findByText('loading')
   await waitFor(() => {
     resolve()
-    screen.getByText('count1: 2, count2: 4')
+    expect(screen.getByText('count1: 2, count2: 4')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button2'))
   await waitFor(() => {
     resolve()
-    screen.getByText('count1: 2, count2: 5')
+    expect(screen.getByText('count1: 2, count2: 5')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button1'))
   await waitFor(() => {
     resolve()
-    screen.getByText('count1: 3, count2: 5')
+    expect(screen.getByText('count1: 3, count2: 5')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('Refresh count2'))
   await waitFor(() => {
     resolve()
-    screen.getByText('count1: 3, count2: 6')
+    expect(screen.getByText('count1: 3, count2: 6')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button1'))
   await waitFor(() => {
     resolve()
-    screen.getByText('count1: 4, count2: 8')
+    expect(screen.getByText('count1: 4, count2: 8')).toBeInTheDocument()
   })
 })
 

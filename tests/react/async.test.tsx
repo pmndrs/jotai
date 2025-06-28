@@ -63,23 +63,23 @@ it('does not show async stale result', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve1()
   resolve2()
-  await screen.findByText('count: 0')
-  await screen.findByText('delayedCount: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(await screen.findByText('delayedCount: 0')).toBeInTheDocument()
   expect(committed).toEqual([0])
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   await act(async () => {
     resolve1()
     resolve2()
     await Promise.resolve()
     resolve2()
   })
-  await screen.findByText('count: 2')
-  await screen.findByText('delayedCount: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  expect(await screen.findByText('delayedCount: 2')).toBeInTheDocument()
   expect(committed).toEqual([0, 2])
 })
 
@@ -128,25 +128,25 @@ it('does not show async stale result on derived atom', async () => {
     )
   })
 
-  await screen.findByText('count: 0')
-  await screen.findByText('loading async value')
-  await screen.findByText('loading derived value')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(await screen.findByText('loading async value')).toBeInTheDocument()
+  expect(await screen.findByText('loading derived value')).toBeInTheDocument()
 
   resolve()
 
-  await screen.findByText('async value: null')
-  await screen.findByText('derived value: null')
+  expect(await screen.findByText('async value: null')).toBeInTheDocument()
+  expect(await screen.findByText('derived value: null')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
 
-  await screen.findByText('count: 1')
-  await screen.findByText('loading async value')
-  await screen.findByText('loading derived value')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(await screen.findByText('loading async value')).toBeInTheDocument()
+  expect(await screen.findByText('loading derived value')).toBeInTheDocument()
 
   resolve()
 
-  await screen.findByText('async value: null')
-  await screen.findByText('derived value: null')
+  expect(await screen.findByText('async value: null')).toBeInTheDocument()
+  expect(await screen.findByText('derived value: null')).toBeInTheDocument()
 })
 
 it('works with async get with extra deps', async () => {
@@ -185,20 +185,20 @@ it('works with async get with extra deps', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
 
   resolve()
 
-  await screen.findByText('count: 0')
-  await screen.findByText('delayedCount: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(await screen.findByText('delayedCount: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
 
   resolve()
 
-  await screen.findByText('count: 1')
-  await screen.findByText('delayedCount: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(await screen.findByText('delayedCount: 1')).toBeInTheDocument()
 })
 
 it('reuses promises on initial read', async () => {
@@ -226,9 +226,12 @@ it('reuses promises on initial read', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findAllByText('ready')
+  const elements = await screen.findAllByText('ready')
+  elements.forEach((element) => {
+    expect(element).toBeInTheDocument()
+  })
   expect(invokeCount).toBe(1)
 })
 
@@ -265,10 +268,10 @@ it('uses multiple async atoms at once', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   await waitFor(() => {
     resolve.splice(0).forEach((fn) => fn())
-    screen.getByText('ready ready2')
+    expect(screen.getByText('ready ready2')).toBeInTheDocument()
   })
 })
 
@@ -304,14 +307,14 @@ it('uses async atom in the middle of dependency chain', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 0, delayed: 0')
+  expect(await screen.findByText('count: 0, delayed: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 1, delayed: 1')
+  expect(await screen.findByText('count: 1, delayed: 1')).toBeInTheDocument()
 })
 
 it('updates an async atom in child useEffect on remount without setTimeout', async () => {
@@ -353,13 +356,13 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
   // FIXME this is not working
   //await screen.findByText('count: 0')
 
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('no child')
+  expect(await screen.findByText('no child')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
 })
 
 it('updates an async atom in child useEffect on remount', async () => {
@@ -405,24 +408,24 @@ it('updates an async atom in child useEffect on remount', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
 
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   resolve.splice(0).forEach((fn) => fn())
   await new Promise((r) => setTimeout(r)) // wait for a tick
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('no child')
+  expect(await screen.findByText('no child')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
   resolve.splice(0).forEach((fn) => fn())
   await new Promise((r) => setTimeout(r)) // wait for a tick
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
 })
 
 it('async get and useEffect on parent', async () => {
@@ -466,8 +469,8 @@ it('async get and useEffect on parent', async () => {
   //await screen.findByText('loading')
 
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('text: resolved')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('text: resolved')).toBeInTheDocument()
   })
 })
 
@@ -513,14 +516,14 @@ it('async get with another dep and useEffect on parent', async () => {
   //await screen.findByText('loading')
 
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('async: 1')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('async: 1')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 2')
-    screen.getByText('async: 2')
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(screen.getByText('async: 2')).toBeInTheDocument()
   })
 })
 
@@ -564,12 +567,12 @@ it('set promise atom value on write (#304)', async () => {
   // FIXME this is not working
   //await screen.findByText('loading')
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it('uses async atom double chain (#306)', async () => {
@@ -606,14 +609,14 @@ it('uses async atom double chain (#306)', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 0, delayed: 0')
+  expect(await screen.findByText('count: 0, delayed: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 1, delayed: 1')
+  expect(await screen.findByText('count: 1, delayed: 1')).toBeInTheDocument()
 })
 
 it('uses an async atom that depends on another async atom', async () => {
@@ -642,9 +645,9 @@ it('uses an async atom that depends on another async atom', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('num: 1')
+  expect(await screen.findByText('num: 1')).toBeInTheDocument()
 })
 
 // FIXME fireEvent.click doesn't work with the patched RTL and React 19-rc.1
@@ -685,18 +688,18 @@ it.skip('a derived atom from a newly created async atom (#351)', async () => {
     </>,
   )
 
-  await screen.findByText('loading')
-  await screen.findByText('derived: 11, commits: 1')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(await screen.findByText('derived: 11, commits: 1')).toBeInTheDocument()
 
   // The use of fireEvent is required to reproduce the issue
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
-  await screen.findByText('derived: 12, commits: 2')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(await screen.findByText('derived: 12, commits: 2')).toBeInTheDocument()
 
   // The use of fireEvent is required to reproduce the issue
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
-  await screen.findByText('derived: 13, commits: 3')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(await screen.findByText('derived: 13, commits: 3')).toBeInTheDocument()
 })
 
 it('Handles synchronously invoked async set (#375)', async () => {
@@ -738,9 +741,9 @@ it('Handles synchronously invoked async set (#375)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('great document')
+  expect(await screen.findByText('great document')).toBeInTheDocument()
 })
 
 it('async write self atom', async () => {
@@ -767,11 +770,11 @@ it('async write self atom', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
   resolve()
-  await screen.findByText('count: -1')
+  expect(await screen.findByText('count: -1')).toBeInTheDocument()
 })
 
 it('non suspense async write self atom with setTimeout (#389)', async () => {
@@ -796,12 +799,12 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   // The use of fireEvent is required to reproduce the issue
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
-  await screen.findByText('count: -1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(await screen.findByText('count: -1')).toBeInTheDocument()
 })
 
 it('should override promise as atom value (#430)', async () => {
@@ -831,10 +834,10 @@ it('should override promise as atom value (#430)', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it('combine two promise atom values (#442)', async () => {
@@ -875,7 +878,7 @@ it('combine two promise atom values (#442)', async () => {
   // FIXME this is not working
   //await screen.findByText('loading')
 
-  await screen.findByText('count: 3')
+  expect(await screen.findByText('count: 3')).toBeInTheDocument()
 })
 
 it('set two promise atoms at once', async () => {
@@ -910,10 +913,10 @@ it('set two promise atoms at once', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 3')
+  expect(await screen.findByText('count: 3')).toBeInTheDocument()
 })
 
 it('async write chain', async () => {
@@ -948,14 +951,14 @@ it('async write chain', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
   resolve1()
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
   resolve2()
-  await screen.findByText('count: 3')
+  expect(await screen.findByText('count: 3')).toBeInTheDocument()
 })
 
 it('async atom double chain without setTimeout (#751)', async () => {
@@ -1007,12 +1010,12 @@ it('async atom double chain without setTimeout (#751)', async () => {
   // FIXME this is not working
   //await screen.findByText('loading')
 
-  await screen.findByText('async: init')
+  expect(await screen.findByText('async: init')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('async: ready')
+  expect(await screen.findByText('async: ready')).toBeInTheDocument()
 })
 
 it('async atom double chain with setTimeout', async () => {
@@ -1068,15 +1071,15 @@ it('async atom double chain with setTimeout', async () => {
   })
 
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
 
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('async: init')
+  expect(await screen.findByText('async: init')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('async: ready')
+  expect(await screen.findByText('async: ready')).toBeInTheDocument()
 })
 
 it('update unmounted async atom with intermediate atom', async () => {
@@ -1128,18 +1131,18 @@ it('update unmounted async atom with intermediate atom', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('derived: 2')
+  expect(await screen.findByText('derived: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('toggle enabled'))
   await userEvent.click(screen.getByText('increment count'))
-  await screen.findByText('derived: -1')
+  expect(await screen.findByText('derived: -1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('toggle enabled'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('derived: 4')
+  expect(await screen.findByText('derived: 4')).toBeInTheDocument()
 })
 
 it('multiple derived atoms with dependency chaining and async write (#813)', async () => {
@@ -1180,7 +1183,7 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
   )
 
   await waitFor(() => {
-    screen.getByText('aName: alpha')
-    screen.getByText('bName: beta')
+    expect(screen.getByText('aName: alpha')).toBeInTheDocument()
+    expect(screen.getByText('bName: beta')).toBeInTheDocument()
   })
 })
