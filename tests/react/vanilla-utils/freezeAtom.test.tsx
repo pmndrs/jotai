@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, describe, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { freezeAtom, freezeAtomCreator } from 'jotai/vanilla/utils'
@@ -28,11 +28,15 @@ it('freezeAtom basic test', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0, isFrozen: true')
+  expect(
+    await screen.findByText('count: 0, isFrozen: true'),
+  ).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('change'))
 
-  await screen.findByText('count: 1, isFrozen: true')
+  expect(
+    await screen.findByText('count: 1, isFrozen: true'),
+  ).toBeInTheDocument()
 })
 
 it('freezeAtom handles null correctly', async () => {
@@ -54,7 +58,7 @@ it('freezeAtom handles null correctly', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('value is null: true')
+  expect(await screen.findByText('value is null: true')).toBeInTheDocument()
 })
 
 it('freezeAtom handles primitive correctly', async () => {
@@ -76,11 +80,11 @@ it('freezeAtom handles primitive correctly', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('value: 123')
+  expect(await screen.findByText('value: 123')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('set number'))
 
-  await screen.findByText('value: 456')
+  expect(await screen.findByText('value: 456')).toBeInTheDocument()
 })
 
 describe('freezeAtomCreator', () => {
@@ -117,9 +121,9 @@ describe('freezeAtomCreator', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('isFrozen: true')
+    expect(await screen.findByText('isFrozen: true')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('change'))
-    await screen.findByText('isFrozen: true')
+    expect(await screen.findByText('isFrozen: true')).toBeInTheDocument()
   })
 })

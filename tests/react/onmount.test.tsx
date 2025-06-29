@@ -30,11 +30,11 @@ it('one atom, one effect', async () => {
     </>,
   )
 
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
   expect(onMountFn).toHaveBeenCalledTimes(1)
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
@@ -72,16 +72,16 @@ it('two atoms, one each', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('count2: 1')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('count2: 1')).toBeInTheDocument()
   })
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onMountFn2).toHaveBeenCalledTimes(1)
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 2')
-    screen.getByText('count2: 2')
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(screen.getByText('count2: 2')).toBeInTheDocument()
   })
 
   expect(onMountFn).toHaveBeenCalledTimes(1)
@@ -109,7 +109,7 @@ it('one derived atom, one onMount', async () => {
     </>,
   )
 
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
@@ -337,7 +337,7 @@ it('mount/unmount test with async atom', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
   await screen.findByText('count: 0')
   expect(onMountFn).toHaveBeenCalledTimes(1)
@@ -393,29 +393,29 @@ it('subscription usage test', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 10')
+  expect(await screen.findByText('count: 10')).toBeInTheDocument()
 
   act(() => {
     store.inc()
   })
-  await screen.findByText('count: 11')
+  expect(await screen.findByText('count: 11')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('N/A')
+  expect(await screen.findByText('N/A')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 11')
+  expect(await screen.findByText('count: 11')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('N/A')
+  expect(await screen.findByText('N/A')).toBeInTheDocument()
 
   act(() => {
     store.inc()
   })
-  await screen.findByText('N/A')
+  expect(await screen.findByText('N/A')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 12')
+  expect(await screen.findByText('count: 12')).toBeInTheDocument()
 })
 
 it('subscription in base atom test', async () => {
@@ -460,13 +460,13 @@ it('subscription in base atom test', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 10')
+  expect(await screen.findByText('count: 10')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 11')
+  expect(await screen.findByText('count: 11')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 12')
+  expect(await screen.findByText('count: 12')).toBeInTheDocument()
 })
 
 it('create atom with onMount in async get', async () => {
@@ -521,11 +521,11 @@ it('create atom with onMount in async get', async () => {
   // FIXME this is not working
   //await screen.findByText('count: 1')
 
-  await screen.findByText('count: 10')
+  expect(await screen.findByText('count: 10')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 11')
+  expect(await screen.findByText('count: 11')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 12')
+  expect(await screen.findByText('count: 12')).toBeInTheDocument()
 })

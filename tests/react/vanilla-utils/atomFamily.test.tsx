@@ -25,7 +25,7 @@ it('new atomFamily impl', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: a')
+  expect(await screen.findByText('count: a')).toBeInTheDocument()
 })
 
 it('primitive atomFamily returns same reference for same parameters', async () => {
@@ -96,16 +96,16 @@ it('primitive atomFamily initialized with props', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 11')
+  expect(await screen.findByText('count: 11')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('increment'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 12')
+  expect(await screen.findByText('count: 12')).toBeInTheDocument()
 })
 
 it('derived atomFamily functionality as usual', async () => {
@@ -174,30 +174,30 @@ it('derived atomFamily functionality as usual', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('index: 0, count: 0')
-    screen.getByText('index: 1, count: 0')
-    screen.getByText('index: 2, count: 0')
+    expect(screen.getByText('index: 0, count: 0')).toBeInTheDocument()
+    expect(screen.getByText('index: 1, count: 0')).toBeInTheDocument()
+    expect(screen.getByText('index: 2, count: 0')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('increment #1'))
   await waitFor(() => {
-    screen.getByText('index: 0, count: 0')
-    screen.getByText('index: 1, count: 1')
-    screen.getByText('index: 2, count: 0')
+    expect(screen.getByText('index: 0, count: 0')).toBeInTheDocument()
+    expect(screen.getByText('index: 1, count: 1')).toBeInTheDocument()
+    expect(screen.getByText('index: 2, count: 0')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('increment #0'))
   await waitFor(() => {
-    screen.getByText('index: 0, count: 1')
-    screen.getByText('index: 1, count: 1')
-    screen.getByText('index: 2, count: 0')
+    expect(screen.getByText('index: 0, count: 1')).toBeInTheDocument()
+    expect(screen.getByText('index: 1, count: 1')).toBeInTheDocument()
+    expect(screen.getByText('index: 2, count: 0')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('increment #2'))
   await waitFor(() => {
-    screen.getByText('index: 0, count: 1')
-    screen.getByText('index: 1, count: 1')
-    screen.getByText('index: 2, count: 1')
+    expect(screen.getByText('index: 0, count: 1')).toBeInTheDocument()
+    expect(screen.getByText('index: 1, count: 1')).toBeInTheDocument()
+    expect(screen.getByText('index: 2, count: 1')).toBeInTheDocument()
   })
 })
 
@@ -253,19 +253,19 @@ it('a derived atom from an async atomFamily (#351)', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('derived: 11')
+  expect(await screen.findByText('derived: 11')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('derived: 12')
+  expect(await screen.findByText('derived: 12')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('derived: 13')
+  expect(await screen.findByText('derived: 13')).toBeInTheDocument()
 })
 
 it('setShouldRemove with custom equality function', async () => {

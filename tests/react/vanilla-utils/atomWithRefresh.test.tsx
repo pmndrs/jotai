@@ -29,13 +29,13 @@ it('sync counter', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 3')
+  expect(await screen.findByText('count: 3')).toBeInTheDocument()
 
   expect(counter).toBe(3)
 })
@@ -68,18 +68,18 @@ it('async counter', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
   resolve()
-  await screen.findByText('count: 3')
+  expect(await screen.findByText('count: 3')).toBeInTheDocument()
 
   expect(counter).toBe(3)
 })
@@ -110,17 +110,17 @@ it('writable counter', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 3')
+  expect(await screen.findByText('count: 3')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('set9'))
-  await screen.findByText('count: 3')
+  expect(await screen.findByText('count: 3')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 10')
+  expect(await screen.findByText('count: 10')).toBeInTheDocument()
 })

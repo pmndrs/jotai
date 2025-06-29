@@ -22,9 +22,9 @@ it('loadable turns suspense into values', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Loading...')
+  expect(await screen.findByText('Loading...')).toBeInTheDocument()
   resolve(5)
-  await screen.findByText('Data: 5')
+  expect(await screen.findByText('Data: 5')).toBeInTheDocument()
 })
 
 it('loadable turns errors into values', async () => {
@@ -39,9 +39,11 @@ it('loadable turns errors into values', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Loading...')
+  expect(await screen.findByText('Loading...')).toBeInTheDocument()
   reject(new Error('An error occurred'))
-  await screen.findByText('Error: An error occurred')
+  expect(
+    await screen.findByText('Error: An error occurred'),
+  ).toBeInTheDocument()
 })
 
 it('loadable turns primitive throws into values', async () => {
@@ -56,9 +58,9 @@ it('loadable turns primitive throws into values', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Loading...')
+  expect(await screen.findByText('Loading...')).toBeInTheDocument()
   reject('An error occurred')
-  await screen.findByText('An error occurred')
+  expect(await screen.findByText('An error occurred')).toBeInTheDocument()
 })
 
 it('loadable goes back to loading after re-fetch', async () => {
@@ -87,13 +89,13 @@ it('loadable goes back to loading after re-fetch', async () => {
     </StrictMode>,
   )
 
-  screen.getByText('Loading...')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
   resolve(5)
-  await screen.findByText('Data: 5')
+  expect(await screen.findByText('Data: 5')).toBeInTheDocument()
   await userEvent.click(screen.getByText('refresh'))
-  await screen.findByText('Loading...')
+  expect(await screen.findByText('Loading...')).toBeInTheDocument()
   resolve(6)
-  await screen.findByText('Data: 6')
+  expect(await screen.findByText('Data: 6')).toBeInTheDocument()
 })
 
 it('loadable can recover from error', async () => {
@@ -126,13 +128,15 @@ it('loadable can recover from error', async () => {
     </StrictMode>,
   )
 
-  screen.getByText('Loading...')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
   reject(new Error('An error occurred'))
-  await screen.findByText('Error: An error occurred')
+  expect(
+    await screen.findByText('Error: An error occurred'),
+  ).toBeInTheDocument()
   await userEvent.click(screen.getByText('refresh'))
-  await screen.findByText('Loading...')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
   resolve(6)
-  await screen.findByText('Data: 6')
+  expect(await screen.findByText('Data: 6')).toBeInTheDocument()
 })
 
 it('loadable immediately resolves sync values', async () => {
@@ -145,7 +149,7 @@ it('loadable immediately resolves sync values', async () => {
     </StrictMode>,
   )
 
-  screen.getByText('Data: 5')
+  expect(screen.getByText('Data: 5')).toBeInTheDocument()
   expect(effectCallback.mock.calls).not.toContain(
     expect.objectContaining({ state: 'loading' }),
   )
@@ -185,7 +189,7 @@ it('loadable can use resolved promises synchronously', async () => {
       />
     </StrictMode>,
   )
-  await screen.findByText('Data: 5')
+  expect(await screen.findByText('Data: 5')).toBeInTheDocument()
 
   expect(effectCallback.mock.calls).not.toContain(
     expect.objectContaining({ state: 'loading' }),
@@ -217,10 +221,10 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
     </StrictMode>,
   )
 
-  screen.getByText('Loading...')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
   await userEvent.click(screen.getByText('trigger'))
   resolve(5)
-  await screen.findByText('Data: 5')
+  expect(await screen.findByText('Data: 5')).toBeInTheDocument()
 })
 
 it('loadable of a derived async atom with error does not trigger infinite loop (#1330)', async () => {
@@ -238,8 +242,10 @@ it('loadable of a derived async atom with error does not trigger infinite loop (
     </StrictMode>,
   )
 
-  screen.getByText('Loading...')
-  await screen.findByText('Error: thrown in baseAtom')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+  expect(
+    await screen.findByText('Error: thrown in baseAtom'),
+  ).toBeInTheDocument()
 })
 
 it('does not repeatedly attempt to get the value of an unresolved promise atom wrapped in a loadable (#1481)', async () => {
@@ -275,7 +281,9 @@ it('should handle sync error (#1843)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Error: thrown in syncAtom')
+  expect(
+    await screen.findByText('Error: thrown in syncAtom'),
+  ).toBeInTheDocument()
 })
 
 type LoadableComponentProps = {

@@ -49,14 +49,14 @@ it('selectAtom works as expected', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('a: 0')
+  expect(await screen.findByText('a: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('increment'))
-  await screen.findByText('a: 1')
+  expect(await screen.findByText('a: 1')).toBeInTheDocument()
   await userEvent.click(screen.getByText('increment'))
-  await screen.findByText('a: 2')
+  expect(await screen.findByText('a: 2')).toBeInTheDocument()
   await userEvent.click(screen.getByText('increment'))
-  await screen.findByText('a: 3')
+  expect(await screen.findByText('a: 3')).toBeInTheDocument()
 })
 
 it('do not update unless equality function says value has changed', async () => {
@@ -103,32 +103,32 @@ it('do not update unless equality function says value has changed', async () => 
     </>,
   )
 
-  await screen.findByText('value: {"a":0}')
-  await screen.findByText('commits: 1')
+  expect(await screen.findByText('value: {"a":0}')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 1')).toBeInTheDocument()
   await userEvent.click(screen.getByText('copy'))
-  await screen.findByText('value: {"a":0}')
-  await screen.findByText('commits: 1')
+  expect(await screen.findByText('value: {"a":0}')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('increment'))
-  await screen.findByText('value: {"a":1}')
-  await screen.findByText('commits: 2')
+  expect(await screen.findByText('value: {"a":1}')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 2')).toBeInTheDocument()
   await userEvent.click(screen.getByText('copy'))
-  await screen.findByText('value: {"a":1}')
-  await screen.findByText('commits: 2')
+  expect(await screen.findByText('value: {"a":1}')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('increment'))
-  await screen.findByText('value: {"a":2}')
-  await screen.findByText('commits: 3')
+  expect(await screen.findByText('value: {"a":2}')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 3')).toBeInTheDocument()
   await userEvent.click(screen.getByText('copy'))
-  await screen.findByText('value: {"a":2}')
-  await screen.findByText('commits: 3')
+  expect(await screen.findByText('value: {"a":2}')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 3')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('increment'))
-  await screen.findByText('value: {"a":3}')
-  await screen.findByText('commits: 4')
+  expect(await screen.findByText('value: {"a":3}')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 4')).toBeInTheDocument()
   await userEvent.click(screen.getByText('copy'))
-  await screen.findByText('value: {"a":3}')
-  await screen.findByText('commits: 4')
+  expect(await screen.findByText('value: {"a":3}')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 4')).toBeInTheDocument()
 })
 
 it('creates fresh cache path when deps differ (memo3)', () => {

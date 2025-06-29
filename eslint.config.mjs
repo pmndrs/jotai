@@ -81,7 +81,6 @@ export default tseslint.config(
     rules: {
       'import/extensions': ['error', 'never'],
       '@typescript-eslint/no-unused-vars': 'off',
-      'vitest/expect-expect': 'off',
       'vitest/consistent-test-it': [
         'error',
         { fn: 'it', withinDescribe: 'it' },
