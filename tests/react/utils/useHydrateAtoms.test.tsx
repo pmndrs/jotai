@@ -55,20 +55,20 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('status: rejected')
+  expect(await screen.findByText('count: 42')).toBeInTheDocument()
+  expect(await screen.findByText('status: rejected')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
   await userEvent.click(screen.getByText('update'))
-  await screen.findByText('count: 43')
-  await screen.findByText('status: fulfilled')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
+  expect(await screen.findByText('status: fulfilled')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialStatus="rejected" />
     </StrictMode>,
   )
-  await screen.findByText('count: 43')
-  await screen.findByText('status: fulfilled')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
+  expect(await screen.findByText('status: fulfilled')).toBeInTheDocument()
 })
 
 it('useHydrateAtoms should only hydrate on first render using a Map', async () => {
@@ -109,18 +109,18 @@ it('useHydrateAtoms should only hydrate on first render using a Map', async () =
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('is active: no')
+  expect(await screen.findByText('count: 42')).toBeInTheDocument()
+  expect(await screen.findByText('is active: no')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 43')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialActive={true} />
     </StrictMode>,
   )
-  await screen.findByText('count: 43')
-  await screen.findByText('is active: no')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
+  expect(await screen.findByText('is active: no')).toBeInTheDocument()
 })
 
 it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
@@ -145,11 +145,11 @@ it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
     </>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('commits: 1')
+  expect(await screen.findByText('count: 42')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 1')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 43')
-  await screen.findByText('commits: 2')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
+  expect(await screen.findByText('commits: 2')).toBeInTheDocument()
 })
 
 it('useHydrateAtoms should work with derived atoms', async () => {
@@ -175,11 +175,11 @@ it('useHydrateAtoms should work with derived atoms', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('doubleCount: 84')
+  expect(await screen.findByText('count: 42')).toBeInTheDocument()
+  expect(await screen.findByText('doubleCount: 84')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 43')
-  await screen.findByText('doubleCount: 86')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
+  expect(await screen.findByText('doubleCount: 86')).toBeInTheDocument()
 })
 
 it('useHydrateAtoms can only restore an atom once', async () => {
@@ -214,9 +214,9 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
+  expect(await screen.findByText('count: 42')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 43')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
@@ -224,9 +224,9 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 43')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 44')
+  expect(await screen.findByText('count: 44')).toBeInTheDocument()
 })
 
 it('useHydrateAtoms should respect onMount', async () => {
@@ -247,7 +247,7 @@ it('useHydrateAtoms should respect onMount', async () => {
     </>,
   )
 
-  await screen.findByText('count: 42')
+  expect(await screen.findByText('count: 42')).toBeInTheDocument()
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
@@ -300,20 +300,20 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('status: rejected')
+  expect(await screen.findByText('count: 42')).toBeInTheDocument()
+  expect(await screen.findByText('status: rejected')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
   await userEvent.click(screen.getByText('update'))
-  await screen.findByText('count: 43')
-  await screen.findByText('status: fulfilled')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
+  expect(await screen.findByText('status: fulfilled')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialStatus="rejected" />
     </StrictMode>,
   )
-  await screen.findByText('count: 43')
-  await screen.findByText('status: fulfilled')
+  expect(await screen.findByText('count: 43')).toBeInTheDocument()
+  expect(await screen.findByText('status: fulfilled')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
@@ -324,6 +324,6 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
       />
     </StrictMode>,
   )
-  await screen.findByText('count: 11')
-  await screen.findByText('status: rejected')
+  expect(await screen.findByText('count: 11')).toBeInTheDocument()
+  expect(await screen.findByText('status: rejected')).toBeInTheDocument()
 })

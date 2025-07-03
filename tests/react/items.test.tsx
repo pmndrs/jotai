@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
@@ -69,27 +69,27 @@ it('remove an item, then add another', async () => {
   )
 
   await userEvent.click(screen.getByText('Add'))
-  await screen.findByText('item1 checked: no')
+  expect(await screen.findByText('item1 checked: no')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('Add'))
   await waitFor(() => {
-    screen.getByText('item1 checked: no')
-    screen.getByText('item2 checked: no')
+    expect(screen.getByText('item1 checked: no')).toBeInTheDocument()
+    expect(screen.getByText('item2 checked: no')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('Check item2'))
   await waitFor(() => {
-    screen.getByText('item1 checked: no')
-    screen.getByText('item2 checked: yes')
+    expect(screen.getByText('item1 checked: no')).toBeInTheDocument()
+    expect(screen.getByText('item2 checked: yes')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('Remove item1'))
-  await screen.findByText('item2 checked: yes')
+  expect(await screen.findByText('item2 checked: yes')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('Add'))
   await waitFor(() => {
-    screen.getByText('item2 checked: yes')
-    screen.getByText('item3 checked: no')
+    expect(screen.getByText('item2 checked: yes')).toBeInTheDocument()
+    expect(screen.getByText('item3 checked: no')).toBeInTheDocument()
   })
 })
 
@@ -200,5 +200,5 @@ it('add an item with filtered list', async () => {
   await userEvent.click(screen.getByText('Checked'))
   await userEvent.click(screen.getByText('Add'))
   await userEvent.click(screen.getByText('All'))
-  await screen.findByText('item1 checked: no')
+  expect(await screen.findByText('item1 checked: no')).toBeInTheDocument()
 })

@@ -72,14 +72,14 @@ describe('atomWithStorage (sync)', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 10')
+    expect(await screen.findByText('count: 10')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 11')
+    expect(await screen.findByText('count: 11')).toBeInTheDocument()
     expect(storageData.count).toBe(11)
 
     await userEvent.click(screen.getByText('reset'))
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
     expect(storageData.count).toBeUndefined()
   })
 
@@ -102,7 +102,7 @@ describe('atomWithStorage (sync)', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 9')
+    expect(await screen.findByText('count: 9')).toBeInTheDocument()
   })
 })
 
@@ -167,22 +167,22 @@ describe('with sync string storage', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 10')
+    expect(await screen.findByText('count: 10')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 11')
+    expect(await screen.findByText('count: 11')).toBeInTheDocument()
     expect(storageData.count).toBe('11')
 
     await userEvent.click(screen.getByText('reset'))
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
     expect(storageData.count).toBeUndefined()
 
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
     expect(storageData.count).toBe('2')
 
     await userEvent.click(screen.getByText('conditional reset'))
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
     expect(storageData.count).toBeUndefined()
   })
 
@@ -200,7 +200,7 @@ describe('with sync string storage', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('noentry: -1')
+    expect(await screen.findByText('noentry: -1')).toBeInTheDocument()
   })
 })
 
@@ -253,11 +253,11 @@ describe('atomWithStorage (async)', () => {
     })
 
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 10')
+    expect(await screen.findByText('count: 10')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 11')
+    expect(await screen.findByText('count: 11')).toBeInTheDocument()
     resolve.splice(0).forEach((fn) => fn())
     await waitFor(() => {
       expect(asyncStorageData.count).toBe(11)
@@ -265,7 +265,7 @@ describe('atomWithStorage (async)', () => {
 
     await userEvent.click(screen.getByText('reset'))
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
     await waitFor(() => {
       expect(asyncStorageData.count).toBeUndefined()
     })
@@ -294,11 +294,11 @@ describe('atomWithStorage (async)', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 20')
+    expect(await screen.findByText('count: 20')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 21')
+    expect(await screen.findByText('count: 20')).toBeInTheDocument()
     resolve.splice(0).forEach((fn) => fn())
     await waitFor(() => {
       expect(asyncStorageData.count2).toBe(21)
@@ -332,7 +332,7 @@ describe('atomWithStorage (without localStorage) (#949)', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
   })
 })
 
@@ -588,7 +588,7 @@ describe('atomWithStorage (with disabled browser storage)', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 4')
+    expect(await screen.findByText('count: 4')).toBeInTheDocument()
   })
 })
 
@@ -732,7 +732,7 @@ describe('with subscribe method in string storage', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 10')
+    expect(await screen.findByText('count: 10')).toBeInTheDocument()
 
     storageData.count = '12'
     fireEvent(
@@ -741,7 +741,7 @@ describe('with subscribe method in string storage', () => {
         detail: '12',
       }),
     )
-    await screen.findByText('count: 12')
+    expect(await screen.findByText('count: 12')).toBeInTheDocument()
     // expect(storageData.count).toBe('11')
   })
 })
@@ -786,10 +786,10 @@ describe('with custom async storage', () => {
         </StrictMode>,
       )
     })
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
   })
 })

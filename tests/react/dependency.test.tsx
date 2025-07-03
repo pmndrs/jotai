@@ -45,10 +45,14 @@ it('works with 2 level dependencies', async () => {
     </>,
   )
 
-  await screen.findByText('commits: 1, count: 1, doubled: 2, tripled: 6')
+  expect(
+    await screen.findByText('commits: 1, count: 1, doubled: 2, tripled: 6'),
+  ).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('commits: 2, count: 2, doubled: 4, tripled: 12')
+  expect(
+    await screen.findByText('commits: 2, count: 2, doubled: 4, tripled: 12'),
+  ).toBeInTheDocument()
 })
 
 it('works a primitive atom and a dependent async atom', async () => {
@@ -82,19 +86,19 @@ it('works a primitive atom and a dependent async atom', async () => {
     )
   })
 
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 1, doubled: 2')
+  expect(await screen.findByText('count: 1, doubled: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 2, doubled: 4')
+  expect(await screen.findByText('count: 2, doubled: 4')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
   resolve()
-  await screen.findByText('count: 3, doubled: 6')
+  expect(await screen.findByText('count: 3, doubled: 6')).toBeInTheDocument()
 })
 
 it('should keep an atom value even if unmounted', async () => {
@@ -141,28 +145,28 @@ it('should keep an atom value even if unmounted', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0')
-    screen.getByText('derived: 0')
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('derived: 0')).toBeInTheDocument()
   })
   expect(derivedFn).toHaveReturnedTimes(1)
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('derived: 1')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('derived: 1')).toBeInTheDocument()
   })
   expect(derivedFn).toHaveReturnedTimes(2)
 
   await userEvent.click(screen.getByText('toggle'))
   await waitFor(() => {
-    screen.getByText('hidden')
+    expect(screen.getByText('hidden')).toBeInTheDocument()
   })
   expect(derivedFn).toHaveReturnedTimes(2)
 
   await userEvent.click(screen.getByText('toggle'))
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('derived: 1')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('derived: 1')).toBeInTheDocument()
   })
   expect(derivedFn).toHaveReturnedTimes(2)
 })
@@ -203,19 +207,19 @@ it('should keep a dependent atom value even if unmounted', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('derived: 0')
+  expect(await screen.findByText('derived: 0')).toBeInTheDocument()
   expect(derivedFn).toHaveReturnedTimes(1)
 
   await userEvent.click(screen.getByText('toggle'))
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
   expect(derivedFn).toHaveReturnedTimes(1)
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
   expect(derivedFn).toHaveReturnedTimes(1)
 
   await userEvent.click(screen.getByText('toggle'))
-  await screen.findByText('derived: 1')
+  expect(await screen.findByText('derived: 1')).toBeInTheDocument()
   expect(derivedFn).toHaveReturnedTimes(2)
 })
 
@@ -247,15 +251,15 @@ it('should bail out updating if not changed', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0')
-    screen.getByText('derived: 0')
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('derived: 0')).toBeInTheDocument()
   })
   expect(derivedFn).toHaveReturnedTimes(1)
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 0')
-    screen.getByText('derived: 0')
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('derived: 0')).toBeInTheDocument()
   })
   expect(derivedFn).toHaveReturnedTimes(1)
 })
@@ -299,8 +303,8 @@ it('should bail out updating if not changed, 2 level', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('anotherCount: 10')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('anotherCount: 10')).toBeInTheDocument()
   })
   expect(getDataCountFn).toHaveReturnedTimes(1)
   expect(getDataObjFn).toHaveReturnedTimes(1)
@@ -308,8 +312,8 @@ it('should bail out updating if not changed, 2 level', async () => {
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 2')
-    screen.getByText('anotherCount: 10')
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(screen.getByText('anotherCount: 10')).toBeInTheDocument()
   })
   expect(getDataCountFn).toHaveReturnedTimes(2)
   expect(getDataObjFn).toHaveReturnedTimes(2)
@@ -346,10 +350,14 @@ it('derived atom to update base atom in callback', async () => {
     </>,
   )
 
-  await screen.findByText('commits: 1, count: 1, doubled: 2')
+  expect(
+    await screen.findByText('commits: 1, count: 1, doubled: 2'),
+  ).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('commits: 2, count: 2, doubled: 4')
+  expect(
+    await screen.findByText('commits: 2, count: 2, doubled: 4'),
+  ).toBeInTheDocument()
 })
 
 it('can read sync derived atom in write without initializing', async () => {
@@ -376,13 +384,13 @@ it('can read sync derived atom in write without initializing', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 3')
+  expect(await screen.findByText('count: 3')).toBeInTheDocument()
 })
 
 it('can remount atoms with dependency (#490)', async () => {
@@ -428,31 +436,31 @@ it('can remount atoms with dependency (#490)', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0')
-    screen.getByText('derived: 0')
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('derived: 0')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('derived: 1')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('derived: 1')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('toggle'))
   await waitFor(() => {
-    screen.getByText('hidden')
+    expect(screen.getByText('hidden')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('toggle'))
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('derived: 1')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('derived: 1')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 2')
-    screen.getByText('derived: 2')
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(screen.getByText('derived: 2')).toBeInTheDocument()
   })
 })
 
@@ -509,38 +517,38 @@ it('can remount atoms with intermediate atom', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('derived: 2')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('derived: 2')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 2')
-    screen.getByText('derived: 4')
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(screen.getByText('derived: 4')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('toggle'))
   await waitFor(() => {
-    screen.getByText('count: 2')
-    screen.getByText('hidden')
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(screen.getByText('hidden')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 3')
-    screen.getByText('hidden')
+    expect(screen.getByText('count: 3')).toBeInTheDocument()
+    expect(screen.getByText('hidden')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('toggle'))
   await waitFor(() => {
-    screen.getByText('count: 3')
-    screen.getByText('derived: 6')
+    expect(screen.getByText('count: 3')).toBeInTheDocument()
+    expect(screen.getByText('derived: 6')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 4')
-    screen.getByText('derived: 8')
+    expect(screen.getByText('count: 4')).toBeInTheDocument()
+    expect(screen.getByText('derived: 8')).toBeInTheDocument()
   })
 })
 
@@ -592,14 +600,14 @@ it('can update dependents with useEffect (#512)', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('derived: 2')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('derived: 2')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 2')
-    screen.getByText('derived: 4')
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(screen.getByText('derived: 4')).toBeInTheDocument()
   })
 })
 
@@ -641,14 +649,14 @@ it('update unmounted atom with intermediate atom', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('derived: 2')
+  expect(await screen.findByText('derived: 2')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('toggle enabled'))
   await userEvent.click(screen.getByText('increment count'))
-  await screen.findByText('derived: -1')
+  expect(await screen.findByText('derived: -1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('toggle enabled'))
-  await screen.findByText('derived: 4')
+  expect(await screen.findByText('derived: 4')).toBeInTheDocument()
 })
 
 it('Should bail for derived sync chains (#877)', async () => {
@@ -686,12 +694,12 @@ it('Should bail for derived sync chains (#877)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('My very long data')
+  expect(await screen.findByText('My very long data')).toBeInTheDocument()
   expect(syncAtomCount).toBe(1)
 
   await userEvent.click(screen.getByText(`set value to 'hello'`))
 
-  await screen.findByText('My very long data')
+  expect(await screen.findByText('My very long data')).toBeInTheDocument()
   expect(syncAtomCount).toBe(1)
 })
 
@@ -734,12 +742,12 @@ it('Should bail for derived async chains (#877)', async () => {
     )
   })
 
-  await screen.findByText('My very long data')
+  expect(await screen.findByText('My very long data')).toBeInTheDocument()
   expect(syncAtomCount).toBe(1)
 
   await userEvent.click(screen.getByText(`set value to 'hello'`))
 
-  await screen.findByText('My very long data')
+  expect(await screen.findByText('My very long data')).toBeInTheDocument()
   expect(syncAtomCount).toBe(1)
 })
 
@@ -778,14 +786,14 @@ it('update correctly with async updates (#1250)', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('alsoCount: 0')
-    screen.getByText('countIsGreaterThanOne: false')
+    expect(screen.getByText('alsoCount: 0')).toBeInTheDocument()
+    expect(screen.getByText('countIsGreaterThanOne: false')).toBeInTheDocument()
   })
 
   await userEvent.click(screen.getByText('Increment Count Twice'))
   await waitFor(() => {
-    screen.getByText('alsoCount: 2')
-    screen.getByText('countIsGreaterThanOne: true')
+    expect(screen.getByText('alsoCount: 2')).toBeInTheDocument()
+    expect(screen.getByText('countIsGreaterThanOne: true')).toBeInTheDocument()
   })
 })
 
@@ -823,11 +831,15 @@ describe('glitch free', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('value: v0: 0, v1: 0, v2: 0')
+    expect(
+      await screen.findByText('value: v0: 0, v1: 0, v2: 0'),
+    ).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(1)
 
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('value: v0: 1, v1: 1, v2: 1')
+    expect(
+      await screen.findByText('value: v0: 1, v1: 1, v2: 1'),
+    ).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
 
@@ -864,11 +876,11 @@ describe('glitch free', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('value: 0')
+    expect(await screen.findByText('value: 0')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(1)
 
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('value: 1')
+    expect(await screen.findByText('value: 1')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
 
@@ -907,11 +919,11 @@ describe('glitch free', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('value: 0')
+    expect(await screen.findByText('value: 0')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(1)
 
     await userEvent.click(screen.getByText('button'))
-    await screen.findByText('value: 1')
+    expect(await screen.findByText('value: 1')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
 })
@@ -1001,10 +1013,10 @@ it('works with unused hook (#2554)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('not running')
+  expect(await screen.findByText('not running')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('Activate'))
-  await screen.findByText('running')
+  expect(await screen.findByText('running')).toBeInTheDocument()
 })
 
 it('works with async dependencies (#2565)', async () => {
@@ -1045,11 +1057,11 @@ it('works with async dependencies (#2565)', async () => {
   // FIXME this is not working
   //await screen.findByText('loading')
 
-  await screen.findByText('count: 100')
+  expect(await screen.findByText('count: 100')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('Count Up'))
-  await screen.findByText('count: 101')
+  expect(await screen.findByText('count: 101')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('Count Up'))
-  await screen.findByText('count: 102')
+  expect(await screen.findByText('count: 102')).toBeInTheDocument()
 })

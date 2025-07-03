@@ -79,7 +79,7 @@ it('can throw an initial error in read function', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Errored:')
+  expect(await screen.findByText('Errored:')).toBeInTheDocument()
 })
 
 it('can throw an error in read function', async () => {
@@ -111,10 +111,10 @@ it('can throw an error in read function', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('no error')
+  expect(await screen.findByText('no error')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('Errored:')
+  expect(await screen.findByText('Errored:')).toBeInTheDocument()
 })
 
 it('can throw an initial chained error in read function', async () => {
@@ -140,7 +140,7 @@ it('can throw an initial chained error in read function', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Errored:')
+  expect(await screen.findByText('Errored:')).toBeInTheDocument()
 })
 
 it('can throw a chained error in read function', async () => {
@@ -173,10 +173,10 @@ it('can throw a chained error in read function', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('no error')
+  expect(await screen.findByText('no error')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('Errored:')
+  expect(await screen.findByText('Errored:')).toBeInTheDocument()
 })
 
 it('can throw an initial error in async read function', async () => {
@@ -205,7 +205,7 @@ it('can throw an initial error in async read function', async () => {
     )
   })
 
-  await screen.findByText('Errored:')
+  expect(await screen.findByText('Errored:')).toBeInTheDocument()
 })
 
 it('can throw an error in async read function', async () => {
@@ -241,10 +241,10 @@ it('can throw an error in async read function', async () => {
     )
   })
 
-  await screen.findByText('no error')
+  expect(await screen.findByText('no error')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('Errored:')
+  expect(await screen.findByText('Errored:')).toBeInTheDocument()
 })
 
 it('can throw an error in write function', async () => {
@@ -280,7 +280,7 @@ it('can throw an error in write function', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('no error')
+  expect(await screen.findByText('no error')).toBeInTheDocument()
   expect(errorMessages).not.toContain('Error: error_in_write_function')
 
   await userEvent.click(screen.getByText('button'))
@@ -322,7 +322,7 @@ it('can throw an error in async write function', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('no error')
+  expect(await screen.findByText('no error')).toBeInTheDocument()
   expect(errorMessages).not.toContain('Error: error_in_async_write_function')
 
   await userEvent.click(screen.getByText('button'))
@@ -370,7 +370,7 @@ it('can throw a chained error in write function', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('no error')
+  expect(await screen.findByText('no error')).toBeInTheDocument()
   expect(errorMessages).not.toContain('Error: chained_err_in_write')
 
   await userEvent.click(screen.getByText('button'))
@@ -406,7 +406,7 @@ it('throws an error while updating in effect', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('no error')
+  expect(await screen.findByText('no error')).toBeInTheDocument()
   expect(errorMessages).toContain('Error: err_updating_in_effect')
 })
 
@@ -453,7 +453,7 @@ describe('throws an error while updating in effect cleanup', () => {
       </>,
     )
 
-    await screen.findByText('no error')
+    expect(await screen.findByText('no error')).toBeInTheDocument()
     expect(errorMessages).not.toContain(
       'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
@@ -464,7 +464,9 @@ describe('throws an error while updating in effect cleanup', () => {
         'Error: Uncaught [Error: err_in_effect_cleanup]',
       )
     } else {
-      await screen.findByText('Errored: err_in_effect_cleanup')
+      expect(
+        await screen.findByText('Errored: err_in_effect_cleanup'),
+      ).toBeInTheDocument()
     }
   })
 
@@ -479,7 +481,7 @@ describe('throws an error while updating in effect cleanup', () => {
       </>,
     )
 
-    await screen.findByText('no error')
+    expect(await screen.findByText('no error')).toBeInTheDocument()
     expect(errorMessages).not.toContain(
       'Error: Uncaught [Error: err_in_effect_cleanup]',
     )
@@ -490,7 +492,9 @@ describe('throws an error while updating in effect cleanup', () => {
         'Error: Uncaught [Error: err_in_effect_cleanup]',
       )
     } else {
-      await screen.findByText('Errored: err_in_effect_cleanup')
+      expect(
+        await screen.findByText('Errored: err_in_effect_cleanup'),
+      ).toBeInTheDocument()
     }
   })
 })
@@ -533,11 +537,13 @@ describe('error recovery', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('Errored: An error occurred')
+    expect(
+      await screen.findByText('Errored: An error occurred'),
+    ).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('increment'))
     await userEvent.click(screen.getByText('retry'))
-    await screen.findByText('Value: 1')
+    expect(await screen.findByText('Value: 1')).toBeInTheDocument()
   })
 
   it('recovers from async errors', async () => {
@@ -570,11 +576,13 @@ describe('error recovery', () => {
     })
 
     resolve()
-    await screen.findByText('Errored: An error occurred')
+    expect(
+      await screen.findByText('Errored: An error occurred'),
+    ).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('increment'))
     await userEvent.click(screen.getByText('retry'))
     resolve()
-    await screen.findByText('Value: 1')
+    expect(await screen.findByText('Value: 1')).toBeInTheDocument()
   })
 })

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { Provider, useAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 
@@ -33,8 +33,8 @@ it('uses initial values from provider', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0')
-    screen.getByText('pet: dog')
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('pet: dog')).toBeInTheDocument()
   })
 })
 
@@ -66,8 +66,8 @@ it('only uses initial value from provider for specific atom', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('pet: dog')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('pet: dog')).toBeInTheDocument()
   })
 })
 

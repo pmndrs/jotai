@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atomWithReducer } from 'jotai/vanilla/utils'
 
@@ -36,16 +36,16 @@ it('atomWithReducer with optional action argument', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch INCREASE'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch empty'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch DECREASE'))
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 })
 
 it('atomWithReducer with non-optional action argument', async () => {
@@ -76,11 +76,11 @@ it('atomWithReducer with non-optional action argument', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch INCREASE'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch DECREASE'))
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 })

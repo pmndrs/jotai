@@ -2,7 +2,7 @@ import { StrictMode, useEffect, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
@@ -56,23 +56,23 @@ it('useSetAtom does not trigger rerender in component', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0, commits: 1')
-    screen.getByText('updater commits: 1')
+    expect(screen.getByText('count: 0, commits: 1')).toBeInTheDocument()
+    expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
   })
   await userEvent.click(screen.getByText('increment'))
   await waitFor(() => {
-    screen.getByText('count: 1, commits: 2')
-    screen.getByText('updater commits: 1')
+    expect(screen.getByText('count: 1, commits: 2')).toBeInTheDocument()
+    expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
   })
   await userEvent.click(screen.getByText('increment'))
   await waitFor(() => {
-    screen.getByText('count: 2, commits: 3')
-    screen.getByText('updater commits: 1')
+    expect(screen.getByText('count: 2, commits: 3')).toBeInTheDocument()
+    expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
   })
   await userEvent.click(screen.getByText('increment'))
   await waitFor(() => {
-    screen.getByText('count: 3, commits: 4')
-    screen.getByText('updater commits: 1')
+    expect(screen.getByText('count: 3, commits: 4')).toBeInTheDocument()
+    expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
   })
 })
 
@@ -112,10 +112,10 @@ it('useSetAtom with write without an argument', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0')
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
   })
   await userEvent.click(screen.getByText('increment'))
   await waitFor(() => {
-    screen.getByText('count: 1')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
 })

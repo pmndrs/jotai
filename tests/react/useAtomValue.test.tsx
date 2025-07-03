@@ -2,7 +2,7 @@ import { Component, StrictMode, Suspense } from 'react'
 import type { ReactNode } from 'react'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
@@ -27,9 +27,9 @@ it('useAtomValue basic test', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it('useAtomValue with async atom (promise)', async () => {
@@ -51,7 +51,7 @@ it('useAtomValue with async atom (promise)', async () => {
     )
   })
 
-  await screen.findByText('value: 42')
+  expect(await screen.findByText('value: 42')).toBeInTheDocument()
 })
 
 class ErrorBoundary extends Component<
@@ -96,7 +96,7 @@ it('useAtomValue with error throwing atom', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('error: fail')
+  expect(await screen.findByText('error: fail')).toBeInTheDocument()
 })
 
 it('useAtomValue with atom returning object', async () => {
@@ -118,5 +118,5 @@ it('useAtomValue with atom returning object', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('obj: 1,2')
+  expect(await screen.findByText('obj: 1,2')).toBeInTheDocument()
 })
