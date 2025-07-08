@@ -31,7 +31,7 @@ This way you have full control over what [router event](https://nextjs.org/docs/
 
 > #### In Next.js 13
 >
-> As of Next.js 13 there have been some changes to the `Router.events.on()` which no longer expose events. There are plans in the [App Router Roadmap](https://beta.nextjs.org/docs/app-directory-roadmap#planned-features) for event intercepting and hash handeling. However there is no ETA on when this will be available or what it will look like. For now when trying to the `atomWithHash()` you will not get the atom loading with any data when navigating using the router, only when the page is reloaded or the component is rerendered. It is also recommended that you set the `setHash` option to `replaceState` as Next.js appears to use window.history in the background and this will allow the user to use the browser back button.
+> As of Next.js 13 there have been some changes to the `Router.events.on()` which no longer expose events. There are plans in the [App Router Roadmap](https://beta.nextjs.org/docs/app-directory-roadmap#planned-features) for event intercepting and hash handling. However there is no ETA on when this will be available or what it will look like. For now when trying to the `atomWithHash()` you will not get the atom loading with any data when navigating using the router, only when the page is reloaded or the component is rerendered. It is also recommended that you set the `setHash` option to `replaceState` as Next.js appears to use window.history in the background and this will allow the user to use the browser back button.
 
 ### You can't return promises in server side rendering
 
