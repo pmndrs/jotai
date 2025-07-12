@@ -461,7 +461,7 @@ it('no error with cached atoms (fix 510)', async () => {
   await userEvent.click(screen.getByText('button'))
 })
 
-it('variable sized splitted atom', async () => {
+it('variable sized split atom', async () => {
   const lengthAtom = atom(3)
   const collectionAtom = atom<number[]>([])
   const collectionAtomsAtom = splitAtom(collectionAtom)
@@ -496,7 +496,7 @@ it('variable sized splitted atom', async () => {
   expect(await screen.findByText('numbers: 1,2')).toBeInTheDocument()
 })
 
-it('should not update splitted atom when single item is set to identical value', async () => {
+it('should not update split atom when single item is set to identical value', async () => {
   const initialCollection = [1, 2, 3]
   const collectionAtom = atom<number[]>(initialCollection)
   const collectionAtomsAtom = splitAtom(collectionAtom)
