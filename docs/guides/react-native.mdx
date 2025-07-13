@@ -16,6 +16,6 @@ When it comes to persistence feature, the implementation specific to React Nativ
 
 There is no known specific overhead when using Jotai in your app. Some libraries will add some/lots of additional properties and methods to the stored data for the practical usage, but Jotai behaves differently and you're always manipulating simple stuff that could barely be shortcuted.
 
-Jotai atomical architecture will encourage you to split logic and data, providing a top-most experience to control every one of your render ([or commits, to be precise](https://legacy.reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html#browsing-commits)) and therefore reach the best performances.
+Jotai atomic architecture will encourage you to split logic and data, providing a top-most experience to control every one of your render ([or commits, to be precise](https://legacy.reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html#browsing-commits)) and therefore reach the best performances.
 
 And always remember that renders have to be fast, split calculation logic to async actions.
