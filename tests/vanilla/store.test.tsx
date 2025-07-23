@@ -3,8 +3,8 @@ import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 import {
-  INTERNAL_buildStoreRev1 as INTERNAL_buildStore,
-  INTERNAL_getBuildingBlocksRev1 as INTERNAL_getBuildingBlocks,
+  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
+  INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
   INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
