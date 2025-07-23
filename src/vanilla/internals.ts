@@ -408,7 +408,7 @@ const atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
   atom.onMount?.(setAtom)
 
 const ensureAtomState: EnsureAtomState = (store, atom) => {
-  const [atomStateMap, atomOnInit] = pick(store, 0, 9)
+  const [atomStateMap, atomOnInit] = pick(store, ...([0, 9] as const))
   if (import.meta.env?.MODE !== 'production' && !atom) {
     throw new Error('Atom is undefined or null')
   }
@@ -429,7 +429,7 @@ const flushCallbacks: FlushCallbacks = (store) => {
     unmountCallbacks,
     storeHooks,
     recomputeInvalidatedAtoms,
-  ] = pick(store, 1, 3, 4, 5, 6, 13)
+  ] = pick(store, ...([1, 3, 4, 5, 6, 13] as const))
   const errors: unknown[] = []
   const call = (fn: () => void) => {
     try {
@@ -468,7 +468,7 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
     ensureAtomState,
     readAtomState,
     mountDependencies,
-  ] = pick(store, 1, 2, 3, 11, 14, 17)
+  ] = pick(store, ...([1, 2, 3, 11, 14, 17] as const))
   // Step 1: traverse the dependency graph to build the topologically sorted atom list
   // We don't bother to check for cycles, which simplifies the algorithm.
   // This is a topological sort via depth-first search, slightly modified from
@@ -545,7 +545,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
     mountDependencies,
     recomputeInvalidatedAtoms,
     flushCallbacks,
-  ] = pick(store, 1, 2, 3, 6, 7, 11, 14, 16, 17, 13, 12)
+  ] = pick(store, ...([1, 2, 3, 6, 7, 11, 14, 16, 17, 13, 12] as const))
   const atomState = ensureAtomState(store, atom)
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
@@ -668,7 +668,11 @@ const readAtomState: ReadAtomState = (store, atom) => {
 }
 
 const invalidateDependents: InvalidateDependents = (store, atom) => {
-  const [mountedMap, invalidatedAtoms, ensureAtomState] = pick(store, 1, 2, 11)
+  const [
+    mountedMap,
+    invalidatedAtoms,
+    ensureAtomState, //
+  ] = pick(store, ...([1, 2, 11] as const))
   const stack: AnyAtom[] = [atom]
   while (stack.length) {
     const a = stack.pop()!
@@ -692,7 +696,7 @@ const writeAtomState: WriteAtomState = (store, atom, ...args) => {
     mountDependencies,
     recomputeInvalidatedAtoms,
     flushCallbacks,
-  ] = pick(store, 3, 11, 14, 6, 8, 15, 17, 13, 12)
+  ] = pick(store, ...([3, 11, 14, 6, 8, 15, 17, 13, 12] as const))
   let isSync = true
   const getter: Getter = <V>(a: Atom<V>) =>
     returnAtomValue(readAtomState(store, a))
@@ -743,7 +747,7 @@ const mountDependencies: MountDependencies = (store, atom) => {
     invalidateDependents,
     mountAtom,
     unmountAtom,
-  ] = pick(store, 1, 3, 11, 6, 15, 18, 19)
+  ] = pick(store, ...([1, 3, 11, 6, 15, 18, 19] as const))
   const atomState = ensureAtomState(store, atom)
   const mounted = mountedMap.get(atom)
   if (mounted && !isPendingPromise(atomState.v)) {
@@ -781,7 +785,7 @@ const mountAtom: MountAtom = (store, atom) => {
     recomputeInvalidatedAtoms,
     readAtomState,
     writeAtomState,
-  ] = pick(store, 1, 4, 6, 10, 11, 12, 13, 14, 16)
+  ] = pick(store, ...([1, 4, 6, 10, 11, 12, 13, 14, 16] as const))
   const atomState = ensureAtomState(store, atom)
   let mounted = mountedMap.get(atom)
   if (!mounted) {
@@ -842,7 +846,7 @@ const unmountAtom: UnmountAtom = (store, atom) => {
     storeHooks,
     ensureAtomState,
     unmountAtom,
-  ] = pick(store, 1, 5, 6, 11, 19)
+  ] = pick(store, ...([1, 5, 6, 11, 19] as const))
   const atomState = ensureAtomState(store, atom)
   let mounted = mountedMap.get(atom)
   if (
@@ -873,7 +877,7 @@ const setAtomStateValueOrPromise = (
   atom: AnyAtom,
   valueOrPromise: unknown,
 ): void => {
-  const [ensureAtomState] = pick(store, 11)
+  const [ensureAtomState] = pick(store, ...([11] as const))
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
@@ -897,17 +901,16 @@ const setAtomStateValueOrPromise = (
 }
 
 const storeGet: StoreGet = (store, atom) => {
-  const [readAtomState] = pick(store, 14)
+  const [readAtomState] = pick(store, ...([14] as const))
   return returnAtomValue(readAtomState(store, atom)) as any
 }
 
 const storeSet: StoreSet = (store, atom, ...args) => {
-  const [writeAtomState, recomputeInvalidatedAtoms, flushCallbacks] = pick(
-    store,
-    16,
-    13,
-    12,
-  )
+  const [
+    writeAtomState,
+    recomputeInvalidatedAtoms,
+    flushCallbacks, //
+  ] = pick(store, ...([16, 13, 12] as const))
   try {
     return writeAtomState(store, atom, ...args) as any
   } finally {
@@ -917,7 +920,11 @@ const storeSet: StoreSet = (store, atom, ...args) => {
 }
 
 const storeSub: StoreSub = (store, atom, listener) => {
-  const [mountAtom, unmountAtom, flushCallbacks] = pick(store, 18, 19, 12)
+  const [
+    mountAtom,
+    unmountAtom,
+    flushCallbacks, //
+  ] = pick(store, ...([18, 19, 12] as const))
   const mounted = mountAtom(store, atom)
   const listeners = mounted.l
   listeners.add(listener)
@@ -931,7 +938,7 @@ const storeSub: StoreSub = (store, atom, listener) => {
 
 const BUILDING_BLOCKS: unique symbol = Symbol() // no description intentionally
 
-const pick = <const T extends number[]>(store: Store, ...indexes: T) => {
+const pick = <T extends number[]>(store: Store, ...indexes: T) => {
   const blocks = getBuildingBlocks(store)
   return indexes.map((i) => blocks[i]) as {
     [K in keyof T]: BuildingBlocks[T[K]]
@@ -944,15 +951,15 @@ const getBuildingBlocks = (store: unknown): BuildingBlocks =>
 const buildStore = (...buildArgs: Partial<BuildingBlocks>): Store => {
   const store = {
     get(atom) {
-      const [storeGet] = pick(store, 21)
+      const [storeGet] = pick(store, ...([21] as const))
       return storeGet(store, atom)
     },
     set(atom, ...args) {
-      const [storeSet] = pick(store, 22)
+      const [storeSet] = pick(store, ...([22] as const))
       return storeSet(store, atom, ...args)
     },
     sub(atom, listener) {
-      const [storeSub] = pick(store, 23)
+      const [storeSub] = pick(store, ...([23] as const))
       return storeSub(store, atom, listener)
     },
   } as Store
