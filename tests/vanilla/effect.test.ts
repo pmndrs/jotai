@@ -2,7 +2,7 @@ import { expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 import {
-  INTERNAL_getBuildingBlocksRev1 as INTERNAL_getBuildingBlocks,
+  INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
   INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 

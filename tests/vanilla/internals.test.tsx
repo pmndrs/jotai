@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createStore } from 'jotai'
 import {
-  INTERNAL_buildStoreRev1 as INTERNAL_buildStore,
-  INTERNAL_getBuildingBlocksRev1 as INTERNAL_getBuildingBlocks,
+  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
+  INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
 } from 'jotai/vanilla/internals'
 
 describe('internals', () => {

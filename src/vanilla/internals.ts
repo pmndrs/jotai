@@ -980,8 +980,8 @@ export {
   //
   // Export internal functions
   //
-  buildStore as INTERNAL_buildStoreRev1,
-  getBuildingBlocks as INTERNAL_getBuildingBlocksRev1,
+  buildStore as INTERNAL_buildStoreRev2,
+  getBuildingBlocks as INTERNAL_getBuildingBlocksRev2,
   initializeStoreHooks as INTERNAL_initializeStoreHooks,
 
   //
