@@ -7,6 +7,7 @@ import {
 } from 'jotai/vanilla/internals'
 import type {
   INTERNAL_AtomState,
+  INTERNAL_BuildingBlocks,
   INTERNAL_Store,
 } from 'jotai/vanilla/internals'
 
@@ -23,7 +24,7 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
   const atomStateMap = new WeakMap()
   const mountedAtoms = new WeakMap()
-  const store = INTERNAL_buildStore(
+  const store = INTERNAL_buildStore([
     atomStateMap,
     mountedAtoms,
     undefined,
@@ -32,13 +33,13 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
     undefined,
     storeHooks,
     undefined,
-    (_store, atom, get, set, ...args) => {
+    (atom, get, set, ...args) => {
       if (inRestoreAtom) {
         return set(atom, ...(args as any))
       }
       return atom.write(get, set, ...(args as any))
     },
-  )
+  ])
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)

@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai'
+import type {
+  INTERNAL_AtomState,
+  INTERNAL_AtomStateMap,
+  INTERNAL_BuildingBlocks,
+} from 'jotai/vanilla/internals'
 import {
-  type INTERNAL_AtomState as AtomState,
-  type INTERNAL_AtomStateMap as AtomStateMap,
-  type INTERNAL_BuildingBlocks as BuildingBlocks,
-  INTERNAL_buildStoreRev2 as buildStore,
-  INTERNAL_getBuildingBlocksRev2 as getBuildingBlocks,
+  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
+  INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
 } from 'jotai/vanilla/internals'
 
 describe('internals', () => {
@@ -15,14 +17,14 @@ describe('internals', () => {
     }
     {
       const store = createStore()
-      const buildingBlocks = getBuildingBlocks(store)
-      expect(buildingBlocks.length).toBe(24)
+      const buildingBlocks = INTERNAL_getBuildingBlocks(store)
+      expect(buildingBlocks.length).toBe(25)
       expect(isSparse(buildingBlocks)).toBe(false)
     }
     {
-      const store = buildStore()
-      const buildingBlocks = getBuildingBlocks(store)
-      expect(buildingBlocks.length).toBe(24)
+      const store = INTERNAL_buildStore()
+      const buildingBlocks = INTERNAL_getBuildingBlocks(store)
+      expect(buildingBlocks.length).toBe(25)
       expect(isSparse(buildingBlocks)).toBe(false)
     }
   })
@@ -36,18 +38,22 @@ describe('internals', () => {
             p: new Set(),
             n: 0,
             v: 0,
-          } satisfies AtomState
+          } as INTERNAL_AtomState
         }),
         set: vi.fn(),
-      } satisfies AtomStateMap
+      } as INTERNAL_AtomStateMap
     }
     const mockAtomStateMap1 = createMockAtomStateMap()
-    const buildingBlocks1: Partial<BuildingBlocks> = [mockAtomStateMap1]
-    const store1 = buildStore(...buildingBlocks1)
-    const buildingBlocks2: BuildingBlocks = [...getBuildingBlocks(store1)]
+    const buildingBlocks1: Partial<INTERNAL_BuildingBlocks> = [
+      mockAtomStateMap1,
+    ]
+    const store1 = INTERNAL_buildStore(buildingBlocks1)
+    const buildingBlocks2 = [
+      ...INTERNAL_getBuildingBlocks(store1),
+    ] as INTERNAL_BuildingBlocks
     const mockAtomStateMap2 = createMockAtomStateMap()
     buildingBlocks2[0] = mockAtomStateMap2
-    const store2 = buildStore(...buildingBlocks2)
+    const store2 = INTERNAL_buildStore(buildingBlocks2)
     store2.get(atom(0))
     expect(mockAtomStateMap1.get).not.toBeCalled()
     expect(mockAtomStateMap2.get).toBeCalled()

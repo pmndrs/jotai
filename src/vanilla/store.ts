@@ -27,7 +27,7 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
   const atomStateMap = new WeakMap()
   const mountedAtoms = new WeakMap()
-  const store = INTERNAL_buildStore(
+  const store = INTERNAL_buildStore([
     atomStateMap,
     mountedAtoms,
     undefined,
@@ -36,13 +36,13 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     undefined,
     storeHooks,
     undefined,
-    (_store, atom, get, set, ...args) => {
+    (atom, get, set, ...args) => {
       if (inRestoreAtom) {
         return set(atom, ...args)
       }
       return atom.write(get, set, ...args)
     },
-  )
+  ])
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)

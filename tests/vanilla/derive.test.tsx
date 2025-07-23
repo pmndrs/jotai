@@ -14,7 +14,7 @@ const deriveStore = (
 ): ReturnType<typeof createStore> => {
   const buildingBlocks = INTERNAL_getBuildingBlocks(store)
   const atomStateMap = buildingBlocks[0]
-  const derivedStore = INTERNAL_buildStore(enhanceAtomStateMap(atomStateMap))
+  const derivedStore = INTERNAL_buildStore([enhanceAtomStateMap(atomStateMap)])
   return derivedStore
 }
 
