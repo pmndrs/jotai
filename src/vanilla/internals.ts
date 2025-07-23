@@ -375,16 +375,12 @@ type StoreState = readonly [
   storeHooks: StoreHooks,
 ]
 
-export type INTERNAL_StoreStateRev2 = StoreState
-
 type AtomInterceptors = readonly [
   atomRead: AtomRead,
   atomWrite: AtomWrite,
   atomOnInit: AtomOnInit,
   atomOnMount: AtomOnMount,
 ]
-
-export type INTERNAL_AtomInterceptorsRev2 = AtomInterceptors
 
 type BuildingBlocks = readonly [
   ensureAtomState: EnsureAtomState,
