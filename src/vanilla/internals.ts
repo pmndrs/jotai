@@ -184,29 +184,31 @@ type BuildingBlocks = [
   storeSub: StoreSub, //                                     23
 ]
 
-export type INTERNAL_AtomState<Value = AnyValue> = AtomState<Value>
-export type INTERNAL_Mounted = Mounted
-export type INTERNAL_AtomStateMap = AtomStateMap
-export type INTERNAL_MountedMap = MountedMap
-export type INTERNAL_InvalidatedAtoms = InvalidatedAtoms
-export type INTERNAL_ChangedAtoms = ChangedAtoms
-export type INTERNAL_Callbacks = Callbacks
-export type INTERNAL_AtomRead = AtomRead
-export type INTERNAL_AtomWrite = AtomWrite
-export type INTERNAL_AtomOnInit = AtomOnInit
-export type INTERNAL_AtomOnMount = AtomOnMount
-export type INTERNAL_EnsureAtomState = EnsureAtomState
-export type INTERNAL_FlushCallbacks = FlushCallbacks
-export type INTERNAL_RecomputeInvalidatedAtoms = RecomputeInvalidatedAtoms
-export type INTERNAL_ReadAtomState = ReadAtomState
-export type INTERNAL_InvalidateDependents = InvalidateDependents
-export type INTERNAL_WriteAtomState = WriteAtomState
-export type INTERNAL_MountDependencies = MountDependencies
-export type INTERNAL_MountAtom = MountAtom
-export type INTERNAL_UnmountAtom = UnmountAtom
-export type INTERNAL_Store = Store
-export type INTERNAL_BuildingBlocks = BuildingBlocks
-export type INTERNAL_StoreHooks = StoreHooks
+export type {
+  AtomState as INTERNAL_AtomState,
+  Mounted as INTERNAL_Mounted,
+  AtomStateMap as INTERNAL_AtomStateMap,
+  MountedMap as INTERNAL_MountedMap,
+  InvalidatedAtoms as INTERNAL_InvalidatedAtoms,
+  ChangedAtoms as INTERNAL_ChangedAtoms,
+  Callbacks as INTERNAL_Callbacks,
+  AtomRead as INTERNAL_AtomRead,
+  AtomWrite as INTERNAL_AtomWrite,
+  AtomOnInit as INTERNAL_AtomOnInit,
+  AtomOnMount as INTERNAL_AtomOnMount,
+  EnsureAtomState as INTERNAL_EnsureAtomState,
+  FlushCallbacks as INTERNAL_FlushCallbacks,
+  RecomputeInvalidatedAtoms as INTERNAL_RecomputeInvalidatedAtoms,
+  ReadAtomState as INTERNAL_ReadAtomState,
+  InvalidateDependents as INTERNAL_InvalidateDependents,
+  WriteAtomState as INTERNAL_WriteAtomState,
+  MountDependencies as INTERNAL_MountDependencies,
+  MountAtom as INTERNAL_MountAtom,
+  UnmountAtom as INTERNAL_UnmountAtom,
+  Store as INTERNAL_Store,
+  BuildingBlocks as INTERNAL_BuildingBlocks,
+  StoreHooks as INTERNAL_StoreHooks,
+}
 
 //
 // Some util functions
@@ -289,14 +291,8 @@ function addPendingPromiseToDependency(
 ): void {
   if (!dependencyAtomState.p.has(atom)) {
     dependencyAtomState.p.add(atom)
-    promise.then(
-      () => {
-        dependencyAtomState.p.delete(atom)
-      },
-      () => {
-        dependencyAtomState.p.delete(atom)
-      },
-    )
+    const cleanup = () => dependencyAtomState.p.delete(atom)
+    promise.then(cleanup, cleanup)
   }
 }
 
@@ -358,14 +354,10 @@ type StoreHooks = {
 
 const createStoreHook = (): StoreHook => {
   const callbacks = new Set<() => void>()
-  const notify = () => {
-    callbacks.forEach((fn) => fn())
-  }
+  const notify = () => callbacks.forEach((fn) => fn())
   notify.add = (fn: () => void) => {
     callbacks.add(fn)
-    return () => {
-      callbacks.delete(fn)
-    }
+    return () => callbacks.delete(fn)
   }
   return notify
 }
@@ -927,7 +919,7 @@ const storeSub: StoreSub = (store, atom, listener) => {
 
 const BUILDING_BLOCKS: unique symbol = Symbol() // no description intentionally
 
-function getBuildingBlocks(store: unknown): BuildingBlocks {
+function getBuildingBlocks(store: unknown): Readonly<BuildingBlocks> {
   return (store as any)[BUILDING_BLOCKS]
 }
 
@@ -957,7 +949,6 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       new Set(), // mountCallbacks
       new Set(), // unmountCallbacks
       {}, // storeHooks
-
       // atom interceptors
       atomRead,
       atomWrite,
@@ -979,39 +970,33 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       storeSub,
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
-  Object.defineProperty(store, BUILDING_BLOCKS, { value: buildingBlocks })
+  Object.defineProperty(store, BUILDING_BLOCKS, {
+    value: Object.freeze(buildingBlocks),
+  })
   return store
 }
 
-//
-// Export internal functions
-//
+export {
+  //
+  // Export internal functions
+  //
+  buildStore as INTERNAL_buildStoreRev1,
+  getBuildingBlocks as INTERNAL_getBuildingBlocksRev1,
+  initializeStoreHooks as INTERNAL_initializeStoreHooks,
 
-export const INTERNAL_buildStoreRev1: typeof buildStore = buildStore
-export const INTERNAL_getBuildingBlocksRev1: typeof getBuildingBlocks =
-  getBuildingBlocks
-export const INTERNAL_initializeStoreHooks: typeof initializeStoreHooks =
-  initializeStoreHooks
-
-//
-// Still experimental and some of them will be gone soon
-//
-
-export const INTERNAL_isSelfAtom: typeof isSelfAtom = isSelfAtom
-export const INTERNAL_hasInitialValue: typeof hasInitialValue = hasInitialValue
-export const INTERNAL_isActuallyWritableAtom: typeof isActuallyWritableAtom =
-  isActuallyWritableAtom
-export const INTERNAL_isAtomStateInitialized: typeof isAtomStateInitialized =
-  isAtomStateInitialized
-export const INTERNAL_returnAtomValue: typeof returnAtomValue = returnAtomValue
-export const INTERNAL_promiseStateMap: typeof promiseStateMap = promiseStateMap
-export const INTERNAL_isPendingPromise: typeof isPendingPromise =
-  isPendingPromise
-export const INTERNAL_abortPromise: typeof abortPromise = abortPromise
-export const INTERNAL_registerAbortHandler: typeof registerAbortHandler =
-  registerAbortHandler
-export const INTERNAL_isPromiseLike: typeof isPromiseLike = isPromiseLike
-export const INTERNAL_addPendingPromiseToDependency: typeof addPendingPromiseToDependency =
-  addPendingPromiseToDependency
-export const INTERNAL_getMountedOrPendingDependents: typeof getMountedOrPendingDependents =
-  getMountedOrPendingDependents
+  //
+  // Still experimental and some of them will be gone soon
+  //
+  isSelfAtom as INTERNAL_isSelfAtom,
+  hasInitialValue as INTERNAL_hasInitialValue,
+  isActuallyWritableAtom as INTERNAL_isActuallyWritableAtom,
+  isAtomStateInitialized as INTERNAL_isAtomStateInitialized,
+  returnAtomValue as INTERNAL_returnAtomValue,
+  promiseStateMap as INTERNAL_promiseStateMap,
+  isPendingPromise as INTERNAL_isPendingPromise,
+  abortPromise as INTERNAL_abortPromise,
+  registerAbortHandler as INTERNAL_registerAbortHandler,
+  isPromiseLike as INTERNAL_isPromiseLike,
+  addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
+  getMountedOrPendingDependents as INTERNAL_getMountedOrPendingDependents,
+}
