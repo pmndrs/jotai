@@ -1,7 +1,10 @@
 import type { Atom, WritableAtom } from './atom.ts'
 import {
-  INTERNAL_buildStoreRev1 as INTERNAL_buildStore,
-  INTERNAL_initializeStoreHooks,
+  INTERNAL_createAtomInterceptorsRev2 as INTERNAL_createAtomInterceptors,
+  INTERNAL_createBuildingBlocksRev2 as INTERNAL_createBuildingBlocks,
+  INTERNAL_createStoreStateRev2 as INTERNAL_createStoreState,
+  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
+  INTERNAL_returnAtomValue,
 } from './internals.ts'
 import type { INTERNAL_AtomState, INTERNAL_Store } from './internals.ts'
 
@@ -27,7 +30,7 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
   const storeHooks = INTERNAL_initializeStoreHooks({})
   const atomStateMap = new WeakMap()
   const mountedAtoms = new WeakMap()
-  const store = INTERNAL_buildStore(
+  const storeState = INTERNAL_createStoreState(
     atomStateMap,
     mountedAtoms,
     undefined,
@@ -35,6 +38,8 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     undefined,
     undefined,
     storeHooks,
+  )
+  const atomInterceptors = INTERNAL_createAtomInterceptors(
     undefined,
     (atom, get, set, ...args) => {
       if (inRestoreAtom) {
@@ -43,6 +48,49 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
       return atom.write(get, set, ...args)
     },
   )
+  const buildingBlocks = INTERNAL_createBuildingBlocks(
+    () => store,
+    storeState,
+    atomInterceptors,
+  )
+  const [
+    _ensureAtomState,
+    flushCallbacks,
+    recomputeInvalidatedAtoms,
+    readAtomState,
+    _invalidateDependents,
+    writeAtomState,
+    _mountDependencies,
+    mountAtom,
+    unmountAtom,
+  ] = buildingBlocks
+  const store: INTERNAL_Store = {
+    get: (atom) => INTERNAL_returnAtomValue(readAtomState(atom)),
+    set: (atom, ...args) => {
+      try {
+        return writeAtomState(atom, ...args)
+      } finally {
+        recomputeInvalidatedAtoms()
+        flushCallbacks()
+      }
+    },
+    sub: (atom, listener) => {
+      const mounted = mountAtom(atom)
+      const listeners = mounted.l
+      listeners.add(listener)
+      flushCallbacks()
+      return () => {
+        listeners.delete(listener)
+        unmountAtom(atom)
+        flushCallbacks()
+      }
+    },
+  }
+  Object.assign(store, {
+    _storeStateRev2: storeState,
+    _atomInterceptorsRev2: atomInterceptors,
+    _buildingBlocksRev2: buildingBlocks,
+  })
   const debugMountedAtoms = new Set<Atom<unknown>>()
   storeHooks.m.add(undefined, (atom) => {
     debugMountedAtoms.add(atom)
@@ -104,7 +152,52 @@ export function createStore(): PrdOrDevStore {
   if (import.meta.env?.MODE !== 'production') {
     return createDevStoreRev4()
   }
-  return INTERNAL_buildStore()
+  const storeState = INTERNAL_createStoreState()
+  const atomInterceptors = INTERNAL_createAtomInterceptors()
+  const buildingBlocks = INTERNAL_createBuildingBlocks(
+    () => store,
+    storeState,
+    atomInterceptors,
+  )
+  const [
+    _ensureAtomState,
+    flushCallbacks,
+    recomputeInvalidatedAtoms,
+    readAtomState,
+    _invalidateDependents,
+    writeAtomState,
+    _mountDependencies,
+    mountAtom,
+    unmountAtom,
+  ] = buildingBlocks
+  const store: INTERNAL_Store = {
+    get: (atom) => INTERNAL_returnAtomValue(readAtomState(atom)),
+    set: (atom, ...args) => {
+      try {
+        return writeAtomState(atom, ...args)
+      } finally {
+        recomputeInvalidatedAtoms()
+        flushCallbacks()
+      }
+    },
+    sub: (atom, listener) => {
+      const mounted = mountAtom(atom)
+      const listeners = mounted.l
+      listeners.add(listener)
+      flushCallbacks()
+      return () => {
+        listeners.delete(listener)
+        unmountAtom(atom)
+        flushCallbacks()
+      }
+    },
+  }
+  Object.assign(store, {
+    _storeStateRev2: storeState,
+    _atomInterceptorsRev2: atomInterceptors,
+    _buildingBlocksRev2: buildingBlocks,
+  })
+  return store
 }
 
 let defaultStore: PrdOrDevStore | undefined
