@@ -857,11 +857,11 @@ const unmountAtom: UnmountAtom = (store, atom) => {
 }
 
 // TODO(daishi): revisit this implementation
-const setAtomStateValueOrPromise = (
-  store: Store,
-  atom: AnyAtom,
-  valueOrPromise: unknown,
-): void => {
+const setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
+  store,
+  atom,
+  valueOrPromise,
+) => {
   const ensureAtomState = getBuildingBlocks(store)[11]
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
