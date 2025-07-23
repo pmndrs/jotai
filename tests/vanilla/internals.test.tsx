@@ -13,13 +13,13 @@ describe('internals', () => {
     {
       const store = createStore()
       const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-      expect(buildingBlocks.length).toBe(20)
+      expect(buildingBlocks.length).toBe(24)
       expect(isSparse(buildingBlocks)).toBe(false)
     }
     {
       const store = INTERNAL_buildStore()
       const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-      expect(buildingBlocks.length).toBe(20)
+      expect(buildingBlocks.length).toBe(24)
       expect(isSparse(buildingBlocks)).toBe(false)
     }
   })

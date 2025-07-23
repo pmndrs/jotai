@@ -36,7 +36,7 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     undefined,
     storeHooks,
     undefined,
-    (atom, get, set, ...args) => {
+    (_store, atom, get, set, ...args) => {
       if (inRestoreAtom) {
         return set(atom, ...args)
       }
