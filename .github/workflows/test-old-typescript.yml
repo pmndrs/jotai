@@ -62,8 +62,8 @@ jobs:
         run: |
           ts_ver_esc=${{ matrix.typescript }}
           ts_ver_esc=${ts_ver_esc//./\\.}
-          sed -i~ "s/\/\/ @ts-expect-error.*\[SKIP-TS-${ts_ver_esc}\].*//" tests/*/*.tsx tests/*/*/*.tsx
-          sed -i~ "s/\/\/ \[ONLY-TS-${ts_ver_esc}\] @ts-ignore.*/\/\/ @ts-ignore/" tests/*/*.tsx tests/*/*/*.tsx
+          sed -i~ "s/\/\/ @ts-expect-error .*\[SKIP-TS-${ts_ver_esc}\].*//" tests/*/*.tsx tests/*/*/*.tsx
+          sed -i~ "s/\/\/ .*\[ONLY-TS-${ts_ver_esc}\].* @ts-ignore/\/\/ @ts-ignore/" tests/*/*.tsx tests/*/*/*.tsx
           cat tests/react/utils/types.test.tsx
       - name: Patch for Old TS
         if: ${{ matrix.typescript == '4.7.4' || matrix.typescript == '4.6.4' || matrix.typescript == '4.5.5' || matrix.typescript == '4.4.4' || matrix.typescript == '4.3.5' || matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
