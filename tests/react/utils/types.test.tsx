@@ -6,19 +6,20 @@ it('useHydrateAtoms should not allow invalid atom types when array is passed', (
   function Component() {
     const countAtom = atom(0)
     const activeAtom = atom(true)
-    // [ONLY-TS-4.1.5] [ONLY-TS-4.0.5] @ts-ignore
-    // @ts-expect-error TS2769 [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
+    // [ONLY-TS-5.0.4] [ONLY-TS-4.0.5] @ts-ignore
+    // @ts-expect-error TS2769 [SKIP-TS-5.0.4] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
     useHydrateAtoms([
       [countAtom, 'foo'],
       [activeAtom, 0],
     ])
-    // [ONLY-TS-4.1.5] [ONLY-TS-4.0.5] @ts-ignore
-    // @ts-expect-error TS2769 [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
+    // [ONLY-TS-5.0.4] [ONLY-TS-4.0.5] @ts-ignore
+    // @ts-expect-error TS2769 [SKIP-TS-5.0.4] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
     useHydrateAtoms([
       [countAtom, 1],
       [activeAtom, 0],
     ])
-    // @ts-expect-error TS2769 [SKIP-TS-3.9.7]
+    // [ONLY-TS-5.0.4] [ONLY-TS-4.0.5] @ts-ignore
+    // @ts-expect-error TS2769 [SKIP-TS-5.0.4] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
     useHydrateAtoms([
       [countAtom, true],
       [activeAtom, false],
