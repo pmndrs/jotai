@@ -10,7 +10,7 @@ type AnyWritableAtom = WritableAtom<unknown, never[], unknown>
 type InferAtomTuples<T> = {
   [K in keyof T]: T[K] extends readonly [infer A, unknown]
     ? A extends WritableAtom<unknown, infer Args, infer _Result>
-      ? readonly [A, ...Args]
+      ? readonly [A, Args[0]]
       : T[K]
     : never
 }
@@ -22,7 +22,7 @@ export type INTERNAL_InferAtomTuples<T> = InferAtomTuples<T>
 const hydratedMap: WeakMap<Store, WeakSet<AnyWritableAtom>> = new WeakMap()
 
 export function useHydrateAtoms<
-  T extends (readonly [AnyWritableAtom, ...unknown[]])[],
+  T extends (readonly [AnyWritableAtom, unknown])[],
 >(values: InferAtomTuples<T>, options?: Options): void
 
 export function useHydrateAtoms<T extends Map<AnyWritableAtom, unknown>>(
@@ -31,19 +31,19 @@ export function useHydrateAtoms<T extends Map<AnyWritableAtom, unknown>>(
 ): void
 
 export function useHydrateAtoms<
-  T extends Iterable<readonly [AnyWritableAtom, ...unknown[]]>,
+  T extends Iterable<readonly [AnyWritableAtom, unknown]>,
 >(values: InferAtomTuples<T>, options?: Options): void
 
 export function useHydrateAtoms<
-  T extends Iterable<readonly [AnyWritableAtom, ...unknown[]]>,
+  T extends Iterable<readonly [AnyWritableAtom, unknown]>,
 >(values: T, options?: Options) {
   const store = useStore(options)
 
   const hydratedSet = getHydratedSet(store)
-  for (const [atom, ...args] of values) {
+  for (const [atom, value] of values) {
     if (!hydratedSet.has(atom) || options?.dangerouslyForceHydrate) {
       hydratedSet.add(atom)
-      store.set(atom, ...(args as never[]))
+      store.set(atom, value as never)
     }
   }
 }
