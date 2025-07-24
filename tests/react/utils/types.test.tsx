@@ -9,7 +9,7 @@ it('useHydrateAtoms should not allow invalid atom types when array is passed', (
     // Adding @ts-ignore for typescript 3.8 support
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    // @ts-expect-error TS2769 [SKIP-TS-4.3.5] [SKIP-TS-4.2.3]
+    // @ts-expect-error TS2769 [SKIP-TS-3.9.7]
     useHydrateAtoms([
       [countAtom, 'foo'],
       [activeAtom, 0],
@@ -17,7 +17,7 @@ it('useHydrateAtoms should not allow invalid atom types when array is passed', (
     // Adding @ts-ignore for typescript 3.8 support
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    // @ts-expect-error TS2769 [SKIP-TS-4.3.5] [SKIP-TS-4.2.3]
+    // @ts-expect-error TS2769 [SKIP-TS-4.3.5] [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
     useHydrateAtoms([
       [countAtom, 1],
       [activeAtom, 0],
@@ -25,7 +25,7 @@ it('useHydrateAtoms should not allow invalid atom types when array is passed', (
     // Adding @ts-ignore for typescript 3.8 support
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    // @ts-expect-error TS2769 [SKIP-TS-4.3.5] [SKIP-TS-4.2.3]
+    // @ts-expect-error TS2769 [SKIP-TS-4.3.5] [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
     useHydrateAtoms([
       [countAtom, true],
       [activeAtom, false],
