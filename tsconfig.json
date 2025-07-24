@@ -12,7 +12,7 @@
     "exactOptionalPropertyTypes": true,
     "verbatimModuleSyntax": true,
     "declaration": true,
-    "isolatedDeclarations": true,
+    "isolatedDeclarations": false,
     "types": ["@testing-library/jest-dom"],
     "noEmit": true,
     "baseUrl": ".",

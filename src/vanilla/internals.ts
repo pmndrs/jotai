@@ -178,37 +178,7 @@ const atomStateMap = 0 as const,
   storeSub = 23 as const,
   store = 24 as const
 
-type BuildingBlocks = [
-  // store state
-  AtomStateMap,
-  MountedMap,
-  InvalidatedAtoms,
-  ChangedAtoms,
-  Callbacks,
-  Callbacks,
-  StoreHooks,
-  // atom interceptor
-  AtomRead,
-  AtomWrite,
-  AtomOnInit,
-  AtomOnMount,
-  // building-block functions
-  EnsureAtomState,
-  FlushCallbacks,
-  RecomputeInvalidatedAtoms,
-  ReadAtomState,
-  InvalidateDependents,
-  WriteAtomState,
-  MountDependencies,
-  MountAtom,
-  UnmountAtom,
-  SetAtomStateValueOrPromise,
-  // store api
-  StoreGet,
-  StoreSet,
-  StoreSub,
-  Store,
-]
+type BuildingBlocksTuple = ObjectToTuple<BuildingBlocks>
 
 export type {
   AtomState as INTERNAL_AtomState,
@@ -232,7 +202,7 @@ export type {
   MountAtom as INTERNAL_MountAtom,
   UnmountAtom as INTERNAL_UnmountAtom,
   Store as INTERNAL_Store,
-  BuildingBlocks as INTERNAL_BuildingBlocks,
+  BuildingBlocksTuple as INTERNAL_BuildingBlocks,
   StoreHooks as INTERNAL_StoreHooks,
 }
 
@@ -426,28 +396,31 @@ function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
 //
 // Main functions
 //
-const buildingBlocks = {
-  [atomStateMap]: new WeakMap(),
-  [mountedMap]: new WeakMap(),
-  [invalidatedAtoms]: new WeakMap(),
-  [changedAtoms]: new Set(),
-  [mountCallbacks]: new Set(),
-  [unmountCallbacks]: new Set(),
-  [storeHooks]: {},
-  [store]: null as any,
-  [atomRead](this, atom, ...params) {
+class BuildingBlocks {
+  [store]!: Store
+  constructor(storeObj: Store) {
+    this[store] = storeObj
+  }
+  [atomStateMap]: AtomStateMap = new WeakMap();
+  [mountedMap]: MountedMap = new WeakMap();
+  [invalidatedAtoms]: InvalidatedAtoms = new WeakMap();
+  [changedAtoms]: ChangedAtoms = new Set();
+  [mountCallbacks]: Callbacks = new Set();
+  [unmountCallbacks]: Callbacks = new Set();
+  [storeHooks]: StoreHooks = {};
+  [atomRead]: AtomRead = (atom, ...params) => {
     return atom.read(...params)
-  },
-  [atomWrite](this, atom, ...params) {
+  };
+  [atomWrite]: AtomWrite = (atom, ...params) => {
     return atom.write(...params)
-  },
-  [atomOnInit](this, atom) {
+  };
+  [atomOnInit]: AtomOnInit = (atom) => {
     return atom.unstable_onInit?.(this[store])
-  },
-  [atomOnMount](this, atom, setAtom) {
+  };
+  [atomOnMount]: AtomOnMount = (atom, setAtom) => {
     return atom.onMount?.(setAtom)
-  },
-  [ensureAtomState](this, atom) {
+  };
+  [ensureAtomState]: EnsureAtomState = (atom) => {
     if (import.meta.env?.MODE !== 'production' && !atom) {
       throw new Error('Atom is undefined or null')
     }
@@ -458,8 +431,8 @@ const buildingBlocks = {
       this[atomOnInit]?.(atom)
     }
     return atomState as never
-  },
-  [flushCallbacks](this) {
+  };
+  [flushCallbacks]: FlushCallbacks = () => {
     const errors: unknown[] = []
     const call = (fn: () => void) => {
       try {
@@ -494,8 +467,8 @@ const buildingBlocks = {
     if (errors.length) {
       throw new AggregateError(errors)
     }
-  },
-  [recomputeInvalidatedAtoms](this) {
+  };
+  [recomputeInvalidatedAtoms]: RecomputeInvalidatedAtoms = () => {
     // Step 1: traverse the dependency graph to build the topologically sorted atom list
     // We don't bother to check for cycles, which simplifies the algorithm.
     // This is a topological sort via depth-first search, slightly modified from
@@ -561,8 +534,8 @@ const buildingBlocks = {
       }
       this[invalidatedAtoms].delete(a)
     }
-  },
-  [readAtomState](this, atom) {
+  };
+  [readAtomState]: ReadAtomState = (atom) => {
     const atomState = this[ensureAtomState](atom)
     // See if we can skip recomputing this atom.
     if (isAtomStateInitialized(atomState)) {
@@ -687,8 +660,8 @@ const buildingBlocks = {
         this[storeHooks].c?.(atom)
       }
     }
-  },
-  [invalidateDependents](this, atom) {
+  };
+  [invalidateDependents]: InvalidateDependents = (atom) => {
     const stack: AnyAtom[] = [atom]
     while (stack.length) {
       const a = stack.pop()!
@@ -703,8 +676,8 @@ const buildingBlocks = {
         stack.push(d)
       }
     }
-  },
-  [writeAtomState](this, atom, ...args) {
+  };
+  [writeAtomState]: WriteAtomState = (atom, ...args) => {
     let isSync = true
     const getter: Getter = <V>(a: Atom<V>) =>
       returnAtomValue(this[readAtomState](a))
@@ -744,8 +717,8 @@ const buildingBlocks = {
     } finally {
       isSync = false
     }
-  },
-  [mountDependencies](this, atom) {
+  };
+  [mountDependencies]: MountDependencies = (atom) => {
     const atomState = this[ensureAtomState](atom)
     const mounted = this[mountedMap].get(atom)
     if (mounted && !isPendingPromise(atomState.v)) {
@@ -770,8 +743,8 @@ const buildingBlocks = {
         }
       }
     }
-  },
-  [mountAtom](this, atom) {
+  };
+  [mountAtom]: MountAtom = (atom) => {
     const atomState = this[ensureAtomState](atom)
     let mounted = this[mountedMap].get(atom)
     if (!mounted) {
@@ -823,8 +796,8 @@ const buildingBlocks = {
       }
     }
     return mounted
-  },
-  [unmountAtom](this, atom) {
+  };
+  [unmountAtom]: UnmountAtom = (atom) => {
     const atomState = this[ensureAtomState](atom)
     let mounted = this[mountedMap].get(atom)
     if (
@@ -847,9 +820,12 @@ const buildingBlocks = {
       return undefined
     }
     return mounted
-  },
+  };
   // TODO(daishi): revisit this implementation
-  [setAtomStateValueOrPromise](this, atom, valueOrPromise) {
+  [setAtomStateValueOrPromise]: SetAtomStateValueOrPromise = (
+    atom,
+    valueOrPromise,
+  ) => {
     const atomState = this[ensureAtomState](atom)
     const hasPrevValue = 'v' in atomState
     const prevValue = atomState.v
@@ -870,19 +846,19 @@ const buildingBlocks = {
         abortPromise(prevValue)
       }
     }
-  },
-  [storeGet](this, atom) {
-    return returnAtomValue(this[readAtomState](atom)) as any
-  },
-  [storeSet](this, atom, ...args) {
+  };
+  [storeGet]: StoreGet = (atom) => {
+    return returnAtomValue(this[readAtomState](atom))
+  };
+  [storeSet]: StoreSet = (atom, ...args) => {
     try {
-      return this[writeAtomState](atom, ...args) as any
+      return this[writeAtomState](atom, ...args)
     } finally {
       this[recomputeInvalidatedAtoms]()
       this[flushCallbacks]()
     }
-  },
-  [storeSub](this, atom, listener) {
+  };
+  [storeSub]: StoreSub = (atom, listener) => {
     const mounted = this[mountAtom](atom)
     const listeners = mounted.l
     listeners.add(listener)
@@ -892,18 +868,21 @@ const buildingBlocks = {
       this[unmountAtom](atom)
       this[flushCallbacks]()
     }
-  },
-} satisfies TupleToObject<BuildingBlocks> as unknown as BuildingBlocks
+  }
+}
 
 type Optional<T> = {
   [K in keyof T]?: T[K] | undefined
 }
 
-type TupleToObject<T extends readonly any[]> = {
-  [K in keyof T as K extends `${infer N extends number}` ? N : never]: T[K]
-}
+type ObjectToTuple<
+  O extends Record<any, any>,
+  Acc extends any[] = [],
+> = Acc['length'] extends keyof O
+  ? ObjectToTuple<O, [...Acc, O[Acc['length']]]>
+  : Acc
 
-function filterOptional<T extends readonly any[]>(
+function filterOptional<T extends Record<number, unknown>>(
   obj: Optional<T>,
 ): Partial<T> {
   return Object.fromEntries(
@@ -913,11 +892,11 @@ function filterOptional<T extends readonly any[]>(
 
 const BUILDING_BLOCKS: unique symbol = Symbol() // no description intentionally
 
-function getBuildingBlocks(store: Store): BuildingBlocks {
+function getBuildingBlocks(store: Store): BuildingBlocksTuple {
   return (store as any)[BUILDING_BLOCKS]
 }
 
-function buildStore(buildArgs: Optional<BuildingBlocks> = []): Store {
+function buildStore(buildArgs: Optional<BuildingBlocksTuple> = []): Store {
   const storeObject: Store = {
     get: (atom) => {
       return getBuildingBlocks(storeObject)[storeGet](atom)
@@ -931,7 +910,7 @@ function buildStore(buildArgs: Optional<BuildingBlocks> = []): Store {
   }
   const storeBuildingBlocks: BuildingBlocks = Object.assign(
     [],
-    buildingBlocks,
+    new BuildingBlocks(storeObject),
     {
       [atomStateMap]: new WeakMap(),
       [mountedMap]: new WeakMap(),
@@ -941,7 +920,7 @@ function buildStore(buildArgs: Optional<BuildingBlocks> = []): Store {
       [unmountCallbacks]: new Set(),
       [storeHooks]: {},
       [store]: storeObject,
-    } satisfies Partial<TupleToObject<BuildingBlocks>>,
+    } satisfies Partial<BuildingBlocks>,
     filterOptional(buildArgs),
   )
   Object.defineProperty(storeObject, BUILDING_BLOCKS, {
@@ -950,7 +929,7 @@ function buildStore(buildArgs: Optional<BuildingBlocks> = []): Store {
   return storeObject
 }
 
-type getBuildingBlocksReadonly = (store: Store) => Readonly<BuildingBlocks>
+type getBuildingBlocksReadonly = (store: Store) => Readonly<BuildingBlocksTuple>
 const INTERNAL_getBuildingBlocksRev2 =
   getBuildingBlocks as getBuildingBlocksReadonly
 
