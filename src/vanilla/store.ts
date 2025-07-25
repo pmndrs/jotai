@@ -1,6 +1,6 @@
 import type { Atom, WritableAtom } from './atom.ts'
 import {
-  INTERNAL_buildStoreRev1 as INTERNAL_buildStore,
+  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
   INTERNAL_initializeStoreHooks,
 } from './internals.ts'
 import type { INTERNAL_AtomState, INTERNAL_Store } from './internals.ts'
@@ -36,7 +36,7 @@ const createDevStoreRev4 = (): INTERNAL_PrdStore & INTERNAL_DevStoreRev4 => {
     undefined,
     storeHooks,
     undefined,
-    (atom, get, set, ...args) => {
+    (_store, atom, get, set, ...args) => {
       if (inRestoreAtom) {
         return set(atom, ...args)
       }
