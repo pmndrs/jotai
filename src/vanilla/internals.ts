@@ -917,10 +917,16 @@ const storeSub: StoreSub = (store, atom, listener) => {
   }
 }
 
-const BUILDING_BLOCKS: unique symbol = Symbol() // no description intentionally
+const buildingBlockMap = new WeakMap<Store, Readonly<BuildingBlocks>>()
 
-function getBuildingBlocks(store: unknown): Readonly<BuildingBlocks> {
-  return (store as any)[BUILDING_BLOCKS]
+function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
+  const buildingBlocks = buildingBlockMap.get(store)
+  if (import.meta.env?.MODE !== 'production' && !buildingBlocks) {
+    throw new Error(
+      'Store must be created by buildStore to read its building blocks',
+    )
+  }
+  return buildingBlocks!
 }
 
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
@@ -970,9 +976,7 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       storeSub,
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
-  Object.defineProperty(store, BUILDING_BLOCKS, {
-    value: Object.freeze(buildingBlocks),
-  })
+  buildingBlockMap.set(store, Object.freeze(buildingBlocks))
   return store
 }
 
