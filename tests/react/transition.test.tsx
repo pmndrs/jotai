@@ -20,14 +20,14 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
         return get(countAtom)
       })
 
-      const commited: { pending: boolean; delayed: number }[] = []
+      const committed: { pending: boolean; delayed: number }[] = []
 
       const Counter = () => {
         const setCount = useSetAtom(countAtom)
         const delayed = useAtomValue(delayedAtom)
         const [pending, startTransition] = useTransition()
         useEffect(() => {
-          commited.push({ pending, delayed })
+          committed.push({ pending, delayed })
         })
         return (
           <>
@@ -60,7 +60,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
 
       expect(await screen.findByText('delayed: 1')).toBeInTheDocument()
 
-      expect(commited).toEqual([
+      expect(committed).toEqual([
         { pending: false, delayed: 0 },
         { pending: true, delayed: 0 },
         { pending: false, delayed: 1 },
