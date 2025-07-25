@@ -5,7 +5,37 @@ import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 import {
   INTERNAL_buildStoreRev1 as INTERNAL_buildStore,
   INTERNAL_getBuildingBlocksRev1 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
+import type { INTERNAL_Store } from 'jotai/vanilla/internals'
+
+type DevStore = {
+  get_mounted_atoms: () => Set<Atom<unknown>>
+}
+
+const createDevStore = (): INTERNAL_Store & DevStore => {
+  const storeHooks = INTERNAL_initializeStoreHooks({})
+  const store = INTERNAL_buildStore(
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    storeHooks,
+  )
+  const debugMountedAtoms = new Set<Atom<unknown>>()
+  storeHooks.m.add(undefined, (atom) => {
+    debugMountedAtoms.add(atom)
+  })
+  storeHooks.u.add(undefined, (atom) => {
+    debugMountedAtoms.delete(atom)
+  })
+  const devStore: DevStore = {
+    get_mounted_atoms: () => debugMountedAtoms,
+  }
+  return Object.assign(store, devStore)
+}
 
 type AtomStateMapType = ReturnType<typeof INTERNAL_getBuildingBlocks>[0]
 
@@ -52,29 +82,25 @@ it('should not fire subscription if derived atom value is the same', async () =>
 })
 
 it('should unmount with store.get', async () => {
-  const store = createStore()
+  const store = createDevStore()
   const countAtom = atom(0)
   const callback = vi.fn()
   const unsub = store.sub(countAtom, callback)
   store.get(countAtom)
   unsub()
-  const result = Array.from(
-    'dev4_get_mounted_atoms' in store ? store.dev4_get_mounted_atoms() : [],
-  )
+  const result = Array.from(store.get_mounted_atoms())
   expect(result).toEqual([])
 })
 
 it('should unmount dependencies with store.get', async () => {
-  const store = createStore()
+  const store = createDevStore()
   const countAtom = atom(0)
   const derivedAtom = atom((get) => get(countAtom) * 2)
   const callback = vi.fn()
   const unsub = store.sub(derivedAtom, callback)
   store.get(derivedAtom)
   unsub()
-  const result = Array.from(
-    'dev4_restore_atoms' in store ? store.dev4_get_mounted_atoms() : [],
-  )
+  const result = Array.from(store.get_mounted_atoms())
   expect(result).toEqual([])
 })
 
