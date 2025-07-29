@@ -1,8 +1,8 @@
-import { Component, StrictMode, Suspense } from 'react'
+import { Component, StrictMode, Suspense, use } from 'react'
 import type { ReactNode } from 'react'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { expect, expectTypeOf, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
@@ -119,4 +119,25 @@ it('useAtomValue with atom returning object', async () => {
   )
 
   expect(await screen.findByText('obj: 1,2')).toBeInTheDocument()
+})
+
+it('useAtomValue with unstable_defaultUse', async () => {
+  const numberAtom = atom(Promise.resolve(1 as const))
+
+  const ObjComponent = () => {
+    const value = useAtomValue(numberAtom, { unstable_defaultUse: false })
+    expectTypeOf(value).toEqualTypeOf<Promise<1>>()
+
+    return <div>number: {use(value)}</div>
+  }
+
+  await act(() =>
+    render(
+      <StrictMode>
+        <ObjComponent />
+      </StrictMode>,
+    ),
+  )
+
+  expect(await screen.findByText('number: 1')).toBeInTheDocument()
 })
