@@ -179,10 +179,18 @@
     "wonka": "^6.3.5"
   },
   "peerDependencies": {
+    "@babel/core": ">=7.0.0",
+    "@babel/template": ">=7.0.0",
     "@types/react": ">=17.0.0",
     "react": ">=17.0.0"
   },
   "peerDependenciesMeta": {
+    "@babel/core": {
+      "optional": true
+    },
+    "@babel/template": {
+      "optional": true
+    },
     "@types/react": {
       "optional": true
     },
