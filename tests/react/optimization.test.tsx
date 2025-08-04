@@ -97,15 +97,15 @@ it('only render once using atoms with write-only atom', async () => {
     </>,
   )
 
-  await screen.findByText('count1: 0, count2: 0')
+  expect(await screen.findByText('count1: 0, count2: 0')).toBeInTheDocument()
   const viewCountAfterMount = viewCount
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count1: 1, count2: 1')
+  expect(await screen.findByText('count1: 1, count2: 1')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 1)
 
   await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count1: 2, count2: 2')
+  expect(await screen.findByText('count1: 2, count2: 2')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 2)
 })
 
@@ -170,23 +170,23 @@ it('does not re-render if value is the same (#1158)', async () => {
     </>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
   const viewCountAfterMount = viewCount
 
   await userEvent.click(screen.getByText('noop'))
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 0)
 
   await userEvent.click(screen.getByText('inc'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 1)
 
   await userEvent.click(screen.getByText('noop'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 1)
 
   await userEvent.click(screen.getByText('inc'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 2)
 })
 
@@ -244,8 +244,8 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count1: 0')
-    screen.getByText('count2: 0')
+    expect(screen.getByText('count1: 0')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0')).toBeInTheDocument()
   })
   expect(viewCount1 > 0).toBeTruthy()
   expect(viewCount2 > 0).toBeTruthy()

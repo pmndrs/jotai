@@ -20,14 +20,14 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
         return get(countAtom)
       })
 
-      const commited: { pending: boolean; delayed: number }[] = []
+      const committed: { pending: boolean; delayed: number }[] = []
 
       const Counter = () => {
         const setCount = useSetAtom(countAtom)
         const delayed = useAtomValue(delayedAtom)
         const [pending, startTransition] = useTransition()
         useEffect(() => {
-          commited.push({ pending, delayed })
+          committed.push({ pending, delayed })
         })
         return (
           <>
@@ -50,7 +50,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       )
 
       resolve()
-      await screen.findByText('delayed: 0')
+      expect(await screen.findByText('delayed: 0')).toBeInTheDocument()
 
       await userEvent.click(screen.getByText('button'))
 
@@ -58,9 +58,9 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
         resolve()
       })
 
-      await screen.findByText('delayed: 1')
+      expect(await screen.findByText('delayed: 1')).toBeInTheDocument()
 
-      expect(commited).toEqual([
+      expect(committed).toEqual([
         { pending: false, delayed: 0 },
         { pending: true, delayed: 0 },
         { pending: false, delayed: 1 },
@@ -103,15 +103,15 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       </StrictMode>,
     )
 
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('toggle'))
-    await screen.findByText('pending')
+    expect(await screen.findByText('pending')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('increment'))
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('increment'))
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
   })
 })

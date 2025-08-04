@@ -1,7 +1,7 @@
 import { StrictMode, useCallback, useEffect, useState } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { useAtomCallback } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
@@ -50,11 +50,11 @@ it('useAtomCallback with get', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('atom count: 0')
+  expect(await screen.findByText('atom count: 0')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
   await waitFor(() => {
-    screen.getByText('atom count: 1')
-    screen.getByText('state count: 1')
+    expect(screen.getByText('atom count: 1')).toBeInTheDocument()
+    expect(screen.getByText('state count: 1')).toBeInTheDocument()
   })
 })
 
@@ -102,11 +102,11 @@ it('useAtomCallback with set and update', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('changeable count: 1')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('changeable count: 1')).toBeInTheDocument()
   })
 })
 
@@ -136,10 +136,10 @@ it('useAtomCallback with set and update and arg', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
   await userEvent.click(screen.getByText('dispatch'))
   await waitFor(() => {
-    screen.getByText('count: 42')
+    expect(screen.getByText('count: 42')).toBeInTheDocument()
   })
 })
 
@@ -169,8 +169,8 @@ it('useAtomCallback with sync atom (#1100)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('atom count: 0')
+  expect(await screen.findByText('atom count: 0')).toBeInTheDocument()
 
   await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('atom count: 1')
+  expect(await screen.findByText('atom count: 1')).toBeInTheDocument()
 })

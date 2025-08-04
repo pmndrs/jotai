@@ -48,22 +48,22 @@ describe('abortable atom test', () => {
       )
     })
 
-    await screen.findByText('loading')
+    expect(await screen.findByText('loading')).toBeInTheDocument()
 
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
     expect(abortedCount).toBe(0)
 
     await userEvent.click(screen.getByText('button'))
     await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
 
     expect(abortedCount).toBe(1)
 
     await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 3')
+    expect(await screen.findByText('count: 3')).toBeInTheDocument()
     expect(abortedCount).toBe(1)
   })
 
@@ -107,22 +107,22 @@ describe('abortable atom test', () => {
       )
     })
 
-    await screen.findByText('loading')
+    expect(await screen.findByText('loading')).toBeInTheDocument()
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
     expect(abortedCount).toBe(0)
 
     await userEvent.click(screen.getByText('button'))
     await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
 
     expect(abortedCount).toBe(1)
 
     await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 3')
+    expect(await screen.findByText('count: 3')).toBeInTheDocument()
 
     expect(abortedCount).toBe(1)
   })
@@ -167,16 +167,16 @@ describe('abortable atom test', () => {
       )
     })
 
-    await screen.findByText('loading')
+    expect(await screen.findByText('loading')).toBeInTheDocument()
 
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
     expect(abortedCount).toBe(0)
 
     await userEvent.click(screen.getByText('button'))
     await userEvent.click(screen.getByText('toggle'))
 
-    await screen.findByText('hidden')
+    expect(await screen.findByText('hidden')).toBeInTheDocument()
 
     resolve.splice(0).forEach((fn) => fn())
     await waitFor(() => expect(abortedCount).toBe(0))
@@ -219,18 +219,18 @@ describe('abortable atom test', () => {
       )
     })
 
-    await screen.findByText('loading')
+    expect(await screen.findByText('loading')).toBeInTheDocument()
 
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('button'))
     await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 2')
+    expect(await screen.findByText('count: 2')).toBeInTheDocument()
 
     await userEvent.click(screen.getByText('button'))
     resolve.splice(0).forEach((fn) => fn())
-    await screen.findByText('count: 3')
+    expect(await screen.findByText('count: 3')).toBeInTheDocument()
   })
 })

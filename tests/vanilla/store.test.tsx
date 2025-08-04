@@ -576,7 +576,7 @@ it('Unmount an atom that is no longer dependent within a derived atom (#2658)', 
   expect(onUnmount).toHaveBeenCalledTimes(1)
 })
 
-it('should update derived atom even if dependances changed (#2697)', () => {
+it('should update derived atom even if dependences changed (#2697)', () => {
   const primitiveAtom = atom<number | undefined>(undefined)
   const derivedAtom = atom((get) => get(primitiveAtom))
   const conditionalAtom = atom((get) => {
@@ -1197,7 +1197,7 @@ it('supports recursion in an atom subscriber', () => {
   expect(store.get(a)).toBe(3)
 })
 
-it('allows subcribing to atoms during mount', () => {
+it('allows subscribing to atoms during mount', () => {
   const store = createStore()
   const a = atom(0)
   a.onMount = () => {
