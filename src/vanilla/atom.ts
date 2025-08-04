@@ -1,4 +1,4 @@
-import type { INTERNAL_PrdStore as Store } from './store'
+import type { Store } from './store'
 
 type Getter = <Value>(atom: Atom<Value>) => Value
 
