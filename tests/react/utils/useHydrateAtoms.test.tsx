@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
+import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai/vanilla'
 import { atom } from 'jotai/vanilla'
 
 const useCommitCount = () => {
@@ -326,4 +327,58 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
   )
   expect(await screen.findByText('count: 11')).toBeInTheDocument()
   expect(await screen.findByText('status: rejected')).toBeInTheDocument()
+})
+
+// types-only tests
+it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
+  const numberAtom = {} as PrimitiveAtom<number>
+  const booleanAtom = {} as PrimitiveAtom<boolean>
+  const stringUnionAtom = {} as PrimitiveAtom<'pending' | 'fulfilled'>
+  const readOnlyAtom = {} as Atom<number>
+  const writeOnlySingleNumberAtom = {} as WritableAtom<number, [number], void>
+  const writeOnlyDoubleNumberAtom = {} as WritableAtom<
+    number,
+    [number, number],
+    void
+  >
+
+  // positive cases (should type-check)
+  /* eslint-disable @typescript-eslint/no-unused-expressions */
+  ;() =>
+    useHydrateAtoms([
+      [numberAtom, 1],
+      [booleanAtom, true],
+      [stringUnionAtom, 'fulfilled'],
+    ] as const)
+  ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 2]])
+  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2]])
+  ;() =>
+    useHydrateAtoms(
+      new Map<
+        typeof numberAtom | typeof stringUnionAtom,
+        number | 'pending' | 'fulfilled'
+      >([
+        [numberAtom, 123],
+        [stringUnionAtom, 'pending'],
+      ]),
+    )
+  type AnyWritableAtom = WritableAtom<unknown, unknown[], unknown>
+  ;() => useHydrateAtoms([] as (readonly [AnyWritableAtom, unknown])[])
+
+  // negative cases (should fail type-check)
+  // @ts-expect-error wrong value type for primitive atom
+  ;() => useHydrateAtoms([[numberAtom, 'oops']])
+  // @ts-expect-error wrong value type for boolean atom
+  ;() => useHydrateAtoms([[booleanAtom, 0]])
+  // @ts-expect-error read-only atom is not writable
+  ;() => useHydrateAtoms([[readOnlyAtom, 1]])
+  // @ts-expect-error wrong arg type for writable derived atom
+  ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 'x']])
+  // @ts-expect-error missing one arg for writable derived with two args
+  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1]])
+  // @ts-expect-error too many args for writable derived with two args
+  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2, 3]])
+  // @ts-expect-error map with read-only atom key
+  ;() => useHydrateAtoms(new Map([[readOnlyAtom, 1]]))
+  /* eslint-enable @typescript-eslint/no-unused-expressions */
 })
