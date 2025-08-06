@@ -81,7 +81,7 @@
     "build:vanilla:internals": "rollup -c --config-vanilla_internals",
     "build:react": "rollup -c --config-react --client-only",
     "build:react:utils": "rollup -c --config-react_utils --client-only",
-    "postbuild": "pnpm run patch-d-ts && pnpm run copy && pnpm run patch-ts3.8 && pnpm run patch-old-ts && pnpm run patch-esm-ts && pnpm run patch-readme",
+    "postbuild": "pnpm run patch-d-ts && pnpm run copy && pnpm run patch-ts3.8 && pnpm run patch-old-ts && pnpm run patch-observable && pnpm run patch-esm-ts && pnpm run patch-readme",
     "fix": "pnpm run fix:lint && pnpm run fix:format",
     "fix:format": "prettier . --write",
     "fix:lint": "eslint . --fix",
@@ -94,6 +94,7 @@
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/src && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.8 --to=3.8 && shx cp package.json README.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined;\"",
     "patch-ts3.8": "node -e \"require('shelljs').find('dist/ts3.8/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"",
     "patch-old-ts": "shx touch dist/ts_version_3.8_and_above_is_required.d.ts",
+    "patch-observable": "node -e \"require('shelljs').find('dist/esm/**/*.d.ts').forEach(f=>{require('shelljs').sed('-i','Symbol.observable','// @ts-ignore: Symbol.observable is optional\\nSymbol.observable',f);})\"",
     "patch-esm-ts": "node -e \"require('shelljs').find('dist/esm/**/*.d.ts').forEach(f=>{var f2=f.replace(/\\.ts$/,'.mts');require('fs').renameSync(f,f2);require('shelljs').sed('-i',/ from '(\\.[^']+)';$/,' from \\'\\$1.mjs\\';',f2);require('shelljs').sed('-i',/^declare module '(\\.[^']+)'/,'declare module \\'\\$1.mjs\\'',f2)})\"",
     "patch-readme": "shx sed -i 's/.*Jotai \\(dark mode\\).*//' dist/README.md"
   },
