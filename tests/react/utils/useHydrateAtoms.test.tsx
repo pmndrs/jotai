@@ -26,7 +26,6 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
     initialCount: number
     initialStatus: string
   }) => {
-    // [SKIP-TS-3.9.7] [SKIP-TS-3.8.3]
     useHydrateAtoms([
       [countAtom, initialCount],
       [statusAtom, initialStatus],
@@ -129,7 +128,6 @@ it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
   const countAtom = atom(0)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
-    // [SKIP-TS-3.9.7] [SKIP-TS-3.8.3]
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
     const commits = useCommitCount()
@@ -189,7 +187,6 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   const countAtom = atom(0)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
-    // [SKIP-TS-3.9.7] [SKIP-TS-3.8.3]
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -201,7 +198,6 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     )
   }
   const Counter2 = ({ count }: { count: number }) => {
-    // [SKIP-TS-3.9.7] [SKIP-TS-3.8.3]
     useHydrateAtoms([[countAtom, count]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -240,7 +236,6 @@ it('useHydrateAtoms should respect onMount', async () => {
   countAtom.onMount = onMountFn
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
-    // [SKIP-TS-3.9.7] [SKIP-TS-3.8.3]
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue] = useAtom(countAtom)
 
@@ -270,7 +265,6 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
     initialStatus: string
     dangerouslyForceHydrate?: boolean
   }) => {
-    // [SKIP-TS-3.9.7] [SKIP-TS-3.8.3]
     useHydrateAtoms(
       [
         [countAtom, initialCount],
@@ -350,7 +344,6 @@ it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
 
   // positive cases (should type-check)
   /* eslint-disable @typescript-eslint/no-unused-expressions */
-  // [SKIP-TS-3.9.7] [SKIP-TS-3.8.3]
   ;() =>
     useHydrateAtoms([
       [numberAtom, 1],
