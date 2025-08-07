@@ -26,6 +26,7 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
     initialCount: number
     initialStatus: string
   }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([
       [countAtom, initialCount],
       [statusAtom, initialStatus],
@@ -128,6 +129,7 @@ it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
   const countAtom = atom(0)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
     const commits = useCommitCount()
@@ -158,6 +160,7 @@ it('useHydrateAtoms should work with derived atoms', async () => {
   const doubleAtom = atom((get) => get(countAtom) * 2)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
     const [doubleCount] = useAtom(doubleAtom)
@@ -187,6 +190,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   const countAtom = atom(0)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -198,6 +202,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     )
   }
   const Counter2 = ({ count }: { count: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, count]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -236,6 +241,7 @@ it('useHydrateAtoms should respect onMount', async () => {
   countAtom.onMount = onMountFn
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue] = useAtom(countAtom)
 
@@ -265,6 +271,7 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
     initialStatus: string
     dangerouslyForceHydrate?: boolean
   }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms(
       [
         [countAtom, initialCount],
@@ -345,14 +352,18 @@ it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
   // positive cases (should type-check)
   /* eslint-disable @typescript-eslint/no-unused-expressions */
   ;() =>
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([
       [numberAtom, 1],
       [booleanAtom, true],
       [stringUnionAtom, 'fulfilled'],
     ] as const)
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
   ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 2]])
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
   ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2]])
   ;() =>
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms(
       new Map<
         typeof numberAtom | typeof stringUnionAtom,
