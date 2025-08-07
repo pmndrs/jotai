@@ -370,7 +370,7 @@ it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
   ;() => useHydrateAtoms([[numberAtom, 'oops']])
   // @ts-expect-error wrong value type for boolean atom
   ;() => useHydrateAtoms([[booleanAtom, 0]])
-  // @ts-expect-error read-only atom is not writable
+  // @ts-expect-error read-only atom is not writable [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
   ;() => useHydrateAtoms([[readOnlyAtom, 1]])
   // @ts-expect-error wrong arg type for writable derived atom
   ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 'x']])
@@ -378,7 +378,7 @@ it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
   ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1]])
   // @ts-expect-error too many args for writable derived with two args
   ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2, 3]])
-  // @ts-expect-error map with read-only atom key
+  // @ts-expect-error map with read-only atom key [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
   ;() => useHydrateAtoms(new Map([[readOnlyAtom, 1]]))
   /* eslint-enable @typescript-eslint/no-unused-expressions */
 })
