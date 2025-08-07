@@ -378,22 +378,22 @@ it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
   ;() => useHydrateAtoms([] as (readonly [AnyWritableAtom, unknown])[])
 
   // negative cases (should fail type-check)
-  // @ts-expect-error wrong value type for primitive atom
+  // @ts-expect-error wrong value type for primitive atom [SKIP-TS-3.9.7]
   // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
   ;() => useHydrateAtoms([[numberAtom, 'oops']])
-  // @ts-expect-error wrong value type for boolean atom
+  // @ts-expect-error wrong value type for boolean atom [SKIP-TS-3.9.7]
   // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
   ;() => useHydrateAtoms([[booleanAtom, 0]])
   // @ts-expect-error read-only atom is not writable [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
   // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
   ;() => useHydrateAtoms([[readOnlyAtom, 1]])
-  // @ts-expect-error wrong arg type for writable derived atom
+  // @ts-expect-error wrong arg type for writable derived atom [SKIP-TS-3.9.7]
   // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
   ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 'x']])
-  // @ts-expect-error missing one arg for writable derived with two args
+  // @ts-expect-error missing one arg for writable derived with two args [SKIP-TS-3.9.7]
   // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
   ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1]])
-  // @ts-expect-error too many args for writable derived with two args
+  // @ts-expect-error too many args for writable derived with two args [SKIP-TS-3.9.7]
   // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
   ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2, 3]])
   // @ts-expect-error map with read-only atom key [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
