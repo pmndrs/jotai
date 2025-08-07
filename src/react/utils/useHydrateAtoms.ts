@@ -1,16 +1,18 @@
 import { useStore } from '../../react.ts'
-import type { WritableAtom } from '../../vanilla.ts'
+import { type WritableAtom } from '../../vanilla.ts'
 
 type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0] & {
   dangerouslyForceHydrate?: boolean
 }
-type AnyWritableAtom = WritableAtom<unknown, never[], unknown>
+type AnyWritableAtom = WritableAtom<any, any[], any>
 
 type InferAtomTuples<T> = {
-  [K in keyof T]: T[K] extends readonly [infer A, unknown]
-    ? A extends WritableAtom<unknown, infer Args, infer _Result>
-      ? readonly [A, ...Args]
+  [K in keyof T]: T[K] extends readonly [infer A, ...infer Rest]
+    ? A extends WritableAtom<unknown, infer Args, unknown>
+      ? Rest extends Args
+        ? readonly [A, ...Rest]
+        : never
       : T[K]
     : never
 }
@@ -43,7 +45,7 @@ export function useHydrateAtoms<
   for (const [atom, ...args] of values) {
     if (!hydratedSet.has(atom) || options?.dangerouslyForceHydrate) {
       hydratedSet.add(atom)
-      store.set(atom, ...(args as never[]))
+      store.set(atom, ...args)
     }
   }
 }
