@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
+import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai/vanilla'
 import { atom } from 'jotai/vanilla'
 
 const useCommitCount = () => {
@@ -25,6 +26,7 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
     initialCount: number
     initialStatus: string
   }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([
       [countAtom, initialCount],
       [statusAtom, initialStatus],
@@ -127,6 +129,7 @@ it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
   const countAtom = atom(0)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
     const commits = useCommitCount()
@@ -157,6 +160,7 @@ it('useHydrateAtoms should work with derived atoms', async () => {
   const doubleAtom = atom((get) => get(countAtom) * 2)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
     const [doubleCount] = useAtom(doubleAtom)
@@ -186,6 +190,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
   const countAtom = atom(0)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -197,6 +202,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     )
   }
   const Counter2 = ({ count }: { count: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, count]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -235,6 +241,7 @@ it('useHydrateAtoms should respect onMount', async () => {
   countAtom.onMount = onMountFn
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue] = useAtom(countAtom)
 
@@ -265,6 +272,7 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
     dangerouslyForceHydrate?: boolean
   }) => {
     useHydrateAtoms(
+      // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
       [
         [countAtom, initialCount],
         [statusAtom, initialStatus],
@@ -326,4 +334,70 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
   )
   expect(await screen.findByText('count: 11')).toBeInTheDocument()
   expect(await screen.findByText('status: rejected')).toBeInTheDocument()
+})
+
+// types-only tests
+it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
+  const numberAtom = {} as PrimitiveAtom<number>
+  const booleanAtom = {} as PrimitiveAtom<boolean>
+  const stringUnionAtom = {} as PrimitiveAtom<'pending' | 'fulfilled'>
+  const readOnlyAtom = {} as Atom<number>
+  const writeOnlySingleNumberAtom = {} as WritableAtom<number, [number], void>
+  const writeOnlyDoubleNumberAtom = {} as WritableAtom<
+    number,
+    [number, number],
+    void
+  >
+
+  // positive cases (should type-check)
+  /* eslint-disable @typescript-eslint/no-unused-expressions */
+  ;() =>
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([
+      [numberAtom, 1],
+      [booleanAtom, true],
+      [stringUnionAtom, 'fulfilled'],
+    ] as const)
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 2]])
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2]])
+  ;() =>
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms(
+      new Map<
+        typeof numberAtom | typeof stringUnionAtom,
+        number | 'pending' | 'fulfilled'
+      >([
+        [numberAtom, 123],
+        [stringUnionAtom, 'pending'],
+      ]),
+    )
+  type AnyWritableAtom = WritableAtom<unknown, unknown[], unknown>
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([] as (readonly [AnyWritableAtom, unknown])[])
+
+  // negative cases (should fail type-check)
+  // @ts-expect-error wrong value type for primitive atom [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[numberAtom, 'oops']])
+  // @ts-expect-error wrong value type for boolean atom [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[booleanAtom, 0]])
+  // @ts-expect-error read-only atom is not writable [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[readOnlyAtom, 1]])
+  // @ts-expect-error wrong arg type for writable derived atom [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 'x']])
+  // @ts-expect-error missing one arg for writable derived with two args [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1]])
+  // @ts-expect-error too many args for writable derived with two args [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2, 3]])
+  // @ts-expect-error map with read-only atom key [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms(new Map([[readOnlyAtom, 1]]))
+  /* eslint-enable @typescript-eslint/no-unused-expressions */
 })
