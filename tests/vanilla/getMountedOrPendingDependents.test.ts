@@ -47,3 +47,20 @@ describe('getMountedOrPendingDependents consistent behavior', () => {
     expect(callback).toHaveBeenCalledTimes(0)
   })
 })
+
+it('pending asyncAtom -> syncAtom++', async () => {
+  const store = createStore()
+  const callback = vi.fn()
+  const syncAtom = atom(0)
+  const asyncAtom = atom((get) => {
+    get(syncAtom)
+    callback()
+    return new Promise((res) => setTimeout(res))
+  })
+
+  store.get(asyncAtom)
+  expect(callback).toHaveBeenCalledTimes(1)
+  callback.mockClear()
+  store.set(syncAtom, 1)
+  expect(callback).toHaveBeenCalledTimes(0) // FAILS: received 1
+})
