@@ -1008,7 +1008,7 @@ it('processes deep atom a graph beyond maxDepth', () => {
       ++depth
       try {
         return d()
-      } catch (error) {
+      } catch {
         return depth
       }
     }
