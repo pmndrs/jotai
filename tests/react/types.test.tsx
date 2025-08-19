@@ -1,4 +1,3 @@
-import { screen } from '@testing-library/react'
 import { expectType } from 'ts-expect'
 import type { TypeEqual } from 'ts-expect'
 import { expect, it } from 'vitest'
@@ -44,6 +43,8 @@ it('useAtom should handle inference of atoms (#1831 #1387)', () => {
   }
   function Component() {
     const [username, setUsername] = useField('username')
+    expect(username).toBeDefined()
+    expect(setUsername).toBeDefined()
     expectType<TypeEqual<string, typeof username>>(true)
     expectType<
       TypeEqual<
@@ -52,6 +53,8 @@ it('useAtom should handle inference of atoms (#1831 #1387)', () => {
       >
     >(true)
     const [age, setAge] = useField('age')
+    expect(age).toBeDefined()
+    expect(setAge).toBeDefined()
     expectType<TypeEqual<number, typeof age>>(true)
     expectType<
       TypeEqual<
@@ -60,6 +63,8 @@ it('useAtom should handle inference of atoms (#1831 #1387)', () => {
       >
     >(true)
     const [checked, setChecked] = useField('checked')
+    expect(checked).toBeDefined()
+    expect(setChecked).toBeDefined()
     expectType<TypeEqual<boolean, typeof checked>>(true)
     expectType<
       TypeEqual<
@@ -99,6 +104,7 @@ it('useSetAtom should handle inference of atoms', () => {
   }
   function Component() {
     const setUsername = useSetField('username')
+    expect(setUsername).toBeDefined()
     expectType<
       TypeEqual<
         (arg: string | ((prev: string) => string)) => void,
@@ -106,6 +112,7 @@ it('useSetAtom should handle inference of atoms', () => {
       >
     >(true)
     const setAge = useSetField('age')
+    expect(setAge).toBeDefined()
     expectType<
       TypeEqual<
         (arg: number | ((prev: number) => number)) => void,
@@ -113,6 +120,7 @@ it('useSetAtom should handle inference of atoms', () => {
       >
     >(true)
     const setChecked = useSetField('checked')
+    expect(setChecked).toBeDefined()
     expectType<
       TypeEqual<
         (arg: boolean | ((prev: boolean) => boolean)) => void,
@@ -127,6 +135,8 @@ it('useAtom should handle primitive atom with one type argeument', () => {
   const countAtom = atom(0)
   function Component() {
     const [count, setCount] = useAtom<number>(countAtom)
+    expect(count).toBeDefined()
+    expect(setCount).toBeDefined()
     expectType<TypeEqual<typeof count, number>>(true)
     expectType<
       TypeEqual<
