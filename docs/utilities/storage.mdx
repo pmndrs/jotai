@@ -179,6 +179,8 @@ const content = {} // anything JSON serializable
 const storedAtom = atomWithStorage('stored-key', content, storage)
 ```
 
+**Note** you probably want to set `getOnInit` to true if you're expecting the storage value to be available immediately instead of the default value
+
 #### Notes with AsyncStorage (since v2.2.0)
 
 With AsyncStorage (as with any asynchronous storage), the atom value becomes async.
