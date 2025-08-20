@@ -43,7 +43,46 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 
 **options** (optional): an object with the following properties:
 
-- **getOnInit** (optional, by default **false**): A boolean value indicating whether to get item from storage on initialization. Note that in an SPA with `getOnInit` either not set or `false` you will always get the initial value instead of the stored value on initialization. If the stored value is preferred set `getOnInit` to `true`.
+- **getOnInit** (optional, by default **false**): A boolean value indicating whether to get item from storage on initialization.
+
+**Important behavior in SPAs and React Native:** When using atomWithStorage in an SPA or React Native app, the default behavior (with `getOnInit` set to `false` or not specified) will **always return the initial value first**, even if a different value exists in storage.
+
+This might be unexpected behavior, as the stored value will only be loaded after the initial render, causing the value to change. This happens even when using Suspense.
+
+When `getOnInit` is set to `true`, the atom will always return the value directly from storage on initialization, avoiding the initial value → stored value change.
+
+**Example of the difference:**
+
+```jsx
+// Assume localStorage already contains: { "symbol": "BTC_USDC" }
+
+// Without getOnInit (default behavior)
+const symbolAtom = atomWithStorage('symbol', 'SOL_USDC')
+
+function App() {
+  const symbol = useAtomValue(symbolAtom)
+  console.log('symbol', symbol)
+  return <div>{symbol}</div>
+}
+
+// Console output WITHOUT getOnInit:
+// LOG "symbol" SOL_USDC  (initial render)
+// LOG "symbol" BTC_USDC  (after storage loads)
+
+// With getOnInit set to true
+const symbolAtom = atomWithStorage('symbol', 'SOL_USDC', undefined, {
+  getOnInit: true
+})
+
+function App() {
+  const symbol = useAtomValue(symbolAtom)
+  console.log('symbol', symbol)
+  return <div>{symbol}</div>
+}
+
+// Console output WITH getOnInit:
+// LOG "symbol" BTC_USDC  (gets stored value immediately)
+```
 
 If not specified, the default storage implementation uses `localStorage` for storage/retrieval, `JSON.stringify()`/`JSON.parse()` for serialization/deserialization, and subscribes to `storage` events for cross-tab synchronization.
 
