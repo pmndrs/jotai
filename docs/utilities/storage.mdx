@@ -47,6 +47,8 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 
 If not specified, the default storage implementation uses `localStorage` for storage/retrieval, `JSON.stringify()`/`JSON.parse()` for serialization/deserialization, and subscribes to `storage` events for cross-tab synchronization.
 
+<Stackblitz id="vitejs-vite-wewrmi" file="src%2FApp.tsx" />
+
 ### `createJSONStorage` util
 
 To create a custom storage implementation with `JSON.stringify()`/`JSON.parse()` for the `storage` option, `createJSONStorage` util is provided.
