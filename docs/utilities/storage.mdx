@@ -143,7 +143,7 @@ const storedAtom = atomWithStorage('stored-key', content, storage)
 
 **Note** set `getOnInit` to `true` if you want the atom to return the stored value immediately on initialization instead of the default value.
 
-**Example of the difference**
+**getOnInit true vs. false example**
 
 <details>
 
@@ -186,11 +186,6 @@ function App() {
 // LOG "symbol" BTC_USDC  (gets stored value immediately)
 ```
 </details>
-
-If not specified, the default storage implementation uses `localStorage` for storage/retrieval, `JSON.stringify()`/`JSON.parse()` for serialization/deserialization, and subscribes to `storage` events for cross-tab synchronization.
-
-<Stackblitz id="vitejs-vite-wewrmi" file="src%2FApp.tsx" />
-
 
 #### Notes with AsyncStorage (since v2.2.0)
 
