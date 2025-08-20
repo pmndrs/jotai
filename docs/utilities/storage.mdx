@@ -43,11 +43,10 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 
 **options** (optional): an object with the following properties:
 
-- **getOnInit** (optional, by default **false**): A boolean value indicating whether to get item from storage on initialization. Note that in an SPA with `getOnInit` either not set or `false` **you will always get the initial value instead of the stored value on initialization**. If the stored value is preferred set `getOnInit` to `true`.
+- **getOnInit** (optional, by default **false**): A boolean value indicating whether to get item from storage on initialization. Note that in an SPA with `getOnInit` either not set or `false` you will always get the initial value instead of the stored value on initialization. If the stored value is preferred set `getOnInit` to `true`.
+
 
 If not specified, the default storage implementation uses `localStorage` for storage/retrieval, `JSON.stringify()`/`JSON.parse()` for serialization/deserialization, and subscribes to `storage` events for cross-tab synchronization.
-
-<Stackblitz id="vitejs-vite-wewrmi" file="src%2FApp.tsx" />
 
 ### `createJSONStorage` util
 
