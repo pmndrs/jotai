@@ -241,12 +241,13 @@ const setAtomStateValueOrPromise = (
   const atomState = ensureAtomState(atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
-  if (isPromiseLike(valueOrPromise)) {
+  atomState.v = valueOrPromise
+  if (isPromiseLike(atomState.v)) {
     for (const a of atomState.d.keys()) {
-      addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
+      const aState = ensureAtomState(a)
+      addPendingPromiseToDependency(atom, atomState.v, aState)
     }
   }
-  atomState.v = valueOrPromise
   delete atomState.e
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
     ++atomState.n
@@ -834,6 +835,11 @@ const buildStore = (
         mounted = undefined
         mountedMap.delete(atom)
         storeHooks.u?.(atom)
+        // clean up pending promises
+        for (const a of atomState.d.keys()) {
+          const aState = ensureAtomState(a)
+          aState.p.delete(atom)
+        }
         // unmount dependencies
         for (const a of atomState.d.keys()) {
           const aMounted = unmountAtom(a)
