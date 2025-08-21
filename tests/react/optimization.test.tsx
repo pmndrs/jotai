@@ -270,3 +270,34 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
   expect(screen.getByText('count2: 1')).toBeInTheDocument()
   expect(viewCount1).toBe(viewCount1AfterCommit)
 })
+
+it('no double renders on initial mount with allowTearing option', async () => {
+  const count1Atom = atom(0)
+
+  let viewCount = 0
+
+  const Counter1 = () => {
+    const [count, setCount] = useAtom(count1Atom, { allowTearing: true })
+    ++viewCount
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>button1</button>
+      </>
+    )
+  }
+
+  render(
+    <>
+      <Counter1 />
+    </>,
+  )
+
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  expect(viewCount).toBe(1)
+
+  await userEvent.click(screen.getByText('button1'))
+
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(viewCount).toBe(2)
+})

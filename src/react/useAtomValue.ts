@@ -1,6 +1,6 @@
 /// <reference types="react/experimental" />
 
-import React, { useDebugValue, useEffect, useReducer } from 'react'
+import React, { useDebugValue, useEffect, useReducer, useRef } from 'react'
 import { INTERNAL_registerAbortHandler as registerAbortHandler } from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
@@ -103,6 +103,7 @@ const createContinuablePromise = <T>(
 type Options = Parameters<typeof useStore>[0] & {
   delay?: number
   unstable_promiseStatus?: boolean
+  allowTearing?: boolean
 }
 
 export function useAtomValue<Value>(
@@ -116,8 +117,11 @@ export function useAtomValue<AtomType extends Atom<unknown>>(
 ): Awaited<ExtractAtomValue<AtomType>>
 
 export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
-  const { delay, unstable_promiseStatus: promiseStatus = !React.use } =
-    options || {}
+  const {
+    delay,
+    unstable_promiseStatus: promiseStatus = !React.use,
+    allowTearing = false,
+  } = options || {}
   const store = useStore(options)
 
   const [[valueFromReducer, storeFromReducer, atomFromReducer], rerender] =
@@ -142,6 +146,8 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
     rerender()
     value = store.get(atom)
   }
+  const valueRef = useRef(value)
+  valueRef.current = value
 
   useEffect(() => {
     const unsub = store.sub(atom, () => {
@@ -164,9 +170,11 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
       }
       rerender()
     })
-    rerender()
+    if (!allowTearing || !Object.is(valueRef.current, store.get(atom))) {
+      rerender()
+    }
     return unsub
-  }, [store, atom, delay, promiseStatus])
+  }, [store, atom, delay, promiseStatus, allowTearing])
 
   useDebugValue(value)
   if (isPromiseLike(value)) {
