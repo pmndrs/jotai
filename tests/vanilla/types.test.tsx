@@ -67,3 +67,12 @@ it('type utils should work', () => {
   }
   expect(Component).toBeDefined()
 })
+
+it('WritableAtom Result type should be covariant', () => {
+  function Component() {
+    const writableAtom = atom(null, () => null)
+
+    expectType<WritableAtom<null, [], number | null>>(writableAtom)
+  }
+  expect(Component).toBeDefined()
+})
