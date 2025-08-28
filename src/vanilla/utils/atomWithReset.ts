@@ -2,7 +2,7 @@ import { atom } from '../../vanilla.ts'
 import type { WritableAtom } from '../../vanilla.ts'
 import { RESET } from './constants.ts'
 
-export type SetStateActionWithReset<Value> =
+type SetStateActionWithReset<Value> =
   | Value
   | typeof RESET
   | ((prev: Value) => Value | typeof RESET)

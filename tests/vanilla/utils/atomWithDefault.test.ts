@@ -27,6 +27,25 @@ describe('atomWithDefault', () => {
     expect(store.get(testAtom)).toBe(20)
   })
 
+  it(`should reflect changes to the initial value atom when main atom hasn't been manually changed`, () => {
+    const initialValueAtom = atom(10)
+    const testAtom = atomWithDefault((get) => get(initialValueAtom))
+    const store = createStore()
+    store.set(initialValueAtom, 20)
+    expect(store.get(testAtom)).toBe(20)
+  })
+
+  it(`should reflect changes to the initial value atom when main atom has been manually changed but then RESET`, () => {
+    const initialValueAtom = atom(10)
+    const testAtom = atomWithDefault((get) => get(initialValueAtom))
+    const store = createStore()
+    store.set(testAtom, 123)
+    // if this RESET were storing 10 rather than EMPTY the next set wouldn't have an effect
+    store.set(testAtom, RESET)
+    store.set(initialValueAtom, 20)
+    expect(store.get(testAtom)).toBe(20)
+  })
+
   it('should update atom with a new value', () => {
     const initialValue = 10
     const testAtom = atomWithDefault(() => initialValue)

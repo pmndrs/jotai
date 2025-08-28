@@ -1,6 +1,5 @@
 import { atom } from '../../vanilla.ts'
 import type { WritableAtom } from '../../vanilla.ts'
-import type { SetStateActionWithReset } from '../utils'
 import { RESET } from './constants.ts'
 
 type Read<Value, Args extends unknown[], Result> = WritableAtom<
@@ -9,9 +8,14 @@ type Read<Value, Args extends unknown[], Result> = WritableAtom<
   Result
 >['read']
 
+type DefaultSetStateAction<Value> =
+  | Value
+  | typeof RESET
+  | ((prev: Value) => Value | typeof RESET)
+
 export function atomWithDefault<Value>(
-  getDefault: Read<Value, [SetStateActionWithReset<Value>], void>,
-): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
+  getDefault: Read<Value, [DefaultSetStateAction<Value>], void>,
+): WritableAtom<Value, [DefaultSetStateAction<Value>], void> {
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
 
@@ -19,7 +23,7 @@ export function atomWithDefault<Value>(
     overwrittenAtom.debugPrivate = true
   }
 
-  const anAtom: WritableAtom<Value, [SetStateActionWithReset<Value>], void> =
+  const anAtom: WritableAtom<Value, [DefaultSetStateAction<Value>], void> =
     atom(
       (get, options) => {
         const overwritten = get(overwrittenAtom)

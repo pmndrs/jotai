@@ -1,8 +1,5 @@
 export { RESET } from './utils/constants.ts'
-export {
-  atomWithReset,
-  type SetStateActionWithReset,
-} from './utils/atomWithReset.ts'
+export { atomWithReset } from './utils/atomWithReset.ts'
 export { atomWithReducer } from './utils/atomWithReducer.ts'
 export { atomFamily } from './utils/atomFamily.ts'
 export { selectAtom } from './utils/selectAtom.ts'
