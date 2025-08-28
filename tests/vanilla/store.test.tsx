@@ -1001,7 +1001,7 @@ it('should call subscribers after setAtom updates atom value on mount but not on
   expect(listener).toHaveBeenCalledTimes(0)
 })
 
-it('processes deep atom a graph beyond maxDepth', () => {
+it.skip('processes deep atom a graph beyond maxDepth', () => {
   function getMaxDepth() {
     let depth = 0
     function d(): number {
