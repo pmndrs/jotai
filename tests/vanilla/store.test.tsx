@@ -1001,6 +1001,36 @@ it('should call subscribers after setAtom updates atom value on mount but not on
   expect(listener).toHaveBeenCalledTimes(0)
 })
 
+it('processes deep atom a graph beyond maxDepth', () => {
+  function getMaxDepth() {
+    let depth = 0
+    function d(): number {
+      ++depth
+      try {
+        return d()
+      } catch {
+        return depth
+      }
+    }
+    return d()
+  }
+  const maxDepth = getMaxDepth()
+  const store = createStore()
+  const baseAtom = atom(0)
+  const atoms: [PrimitiveAtom<number>, ...Atom<number>[]] = [baseAtom]
+  Array.from({ length: maxDepth }, (_, i) => {
+    const prevAtom = atoms[i]!
+    const a = atom((get) => get(prevAtom))
+    atoms.push(a)
+  })
+  const lastAtom = atoms[maxDepth]!
+  // store.get(lastAtom) // FIXME: This is causing a stack overflow
+  expect(() => store.sub(lastAtom, () => {})).not.toThrow()
+  // store.get(lastAtom) // FIXME: This is causing a stack overflow
+  expect(() => store.set(baseAtom, 1)).not.toThrow()
+  // store.set(lastAtom) // FIXME: This is causing a stack overflow
+}, 10_000)
+
 it('mounted atom should be recomputed eagerly', () => {
   const result: string[] = []
   const a = atom(0)
