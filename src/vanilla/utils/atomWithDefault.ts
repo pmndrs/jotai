@@ -1,5 +1,6 @@
 import { atom } from '../../vanilla.ts'
-import type { SetStateAction, WritableAtom } from '../../vanilla.ts'
+import type { WritableAtom } from '../../vanilla.ts'
+import type { SetStateActionWithReset } from '../utils'
 import { RESET } from './constants.ts'
 
 type Read<Value, Args extends unknown[], Result> = WritableAtom<
@@ -9,8 +10,8 @@ type Read<Value, Args extends unknown[], Result> = WritableAtom<
 >['read']
 
 export function atomWithDefault<Value>(
-  getDefault: Read<Value, [SetStateAction<Value> | typeof RESET], void>,
-): WritableAtom<Value, [SetStateAction<Value> | typeof RESET], void> {
+  getDefault: Read<Value, [SetStateActionWithReset<Value>], void>,
+): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
   const EMPTY = Symbol()
   const overwrittenAtom = atom<Value | typeof EMPTY>(EMPTY)
 
@@ -18,28 +19,22 @@ export function atomWithDefault<Value>(
     overwrittenAtom.debugPrivate = true
   }
 
-  const anAtom: WritableAtom<
-    Value,
-    [SetStateAction<Value> | typeof RESET],
-    void
-  > = atom(
-    (get, options) => {
-      const overwritten = get(overwrittenAtom)
-      if (overwritten !== EMPTY) {
-        return overwritten
-      }
-      return getDefault(get, options)
-    },
-    (get, set, update) => {
-      if (update === RESET) {
-        set(overwrittenAtom, EMPTY)
-      } else if (typeof update === 'function') {
-        const prevValue = get(anAtom)
-        set(overwrittenAtom, (update as (prev: Value) => Value)(prevValue))
-      } else {
-        set(overwrittenAtom, update)
-      }
-    },
-  )
+  const anAtom: WritableAtom<Value, [SetStateActionWithReset<Value>], void> =
+    atom(
+      (get, options) => {
+        const overwritten = get(overwrittenAtom)
+        if (overwritten !== EMPTY) {
+          return overwritten
+        }
+        return getDefault(get, options)
+      },
+      (get, set, update) => {
+        const newValue =
+          typeof update === 'function'
+            ? (update as (prev: Value) => Value)(get(anAtom))
+            : update
+        set(overwrittenAtom, newValue === RESET ? EMPTY : newValue)
+      },
+    )
   return anAtom
 }
