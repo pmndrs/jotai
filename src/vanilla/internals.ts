@@ -986,7 +986,7 @@ export {
   //
   buildStore as INTERNAL_buildStoreRev2,
   getBuildingBlocks as INTERNAL_getBuildingBlocksRev2,
-  initializeStoreHooks as INTERNAL_initializeStoreHooks,
+  initializeStoreHooks as INTERNAL_initializeStoreHooksRev2,
 
   //
   // Still experimental and some of them will be gone soon

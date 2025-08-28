@@ -3,7 +3,7 @@ import { atom } from 'jotai/vanilla'
 import type { Atom, WritableAtom } from 'jotai/vanilla'
 import {
   INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
-  INTERNAL_initializeStoreHooks,
+  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 import type {
   INTERNAL_AtomState,

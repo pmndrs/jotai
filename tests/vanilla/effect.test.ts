@@ -3,7 +3,7 @@ import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 import {
   INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
-  INTERNAL_initializeStoreHooks,
+  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
 type Cleanup = () => void

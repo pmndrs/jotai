@@ -5,7 +5,7 @@ import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 import {
   INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
   INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
-  INTERNAL_initializeStoreHooks,
+  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
 
