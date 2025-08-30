@@ -30,21 +30,21 @@ When you access the defined bunja with the `useBunja` hook, a bunja instance is 
 
 If all components in the render tree that refer to the bunja disappear, the bunja instance is automatically destroyed.
 
-If you want to trigger effects when the lifetime of a bunja starts and ends, you can use the `bunja.effect` field.
+If you want to trigger effects when the lifetime of a bunja starts and ends, you can use the `bunja.effect` function.
 
 ```ts
 import { bunja } from 'bunja'
 import { useBunja } from 'bunja/react'
 
-const countBunja = bunja([], () => {
+const countBunja = bunja(() => {
   const countAtom = atom(0)
-  return {
-    countAtom,
-    [bunja.effect]() {
-      console.log('mounted')
-      return () => console.log('unmounted')
-    },
-  }
+
+  bunja.effect(() => {
+    console.log('mounted')
+    return () => console.log('unmounted')
+  })
+
+  return { countAtom }
 })
 
 function MyComponent() {
@@ -65,12 +65,13 @@ The page state lives longer than the modal state, and the modal state should exi
 In such a case, you can write the following code.
 
 ```tsx
-const pageBunja = bunja([], () => {
+const pageBunja = bunja(() => {
   const pageStateAtom = atom({})
   return { pageStateAtom }
 })
 
-const childBunja = bunja([pageBunja], ({ pageStateAtom }) => {
+const childBunja = bunja(() => {
+  const { pageStateAtom } = bunja.use(pageBunja)
   const childStateAtom = atom((get) => ({
     ...get(pageStateAtom),
     child: 'state',
@@ -78,11 +79,18 @@ const childBunja = bunja([pageBunja], ({ pageStateAtom }) => {
   return { childStateAtom }
 })
 
-const modalBunja = bunja([pageBunja], ({ pageStateAtom }) => {
+const modalBunja = bunja(() => {
+  const { pageStateAtom } = bunja.use(pageBunja)
   const modalStateAtom = atom((get) => ({
     ...get(pageStateAtom),
     modal: 'state',
   }))
+
+  bunja.effect(() => {
+    console.log('modal opened')
+    return () => console.log('modal closed')
+  })
+
   return { modalStateAtom }
 })
 
@@ -126,11 +134,14 @@ import { bunja, createScope } from 'bunja'
 
 const UrlScope = createScope()
 
-const fetchBunja = bunja([UrlScope], (url) => {
+const fetchBunja = bunja(() => {
+  const url = bunja.use(UrlScope)
+
   const queryAtom = atomWithQuery((get) => ({
     queryKey: [url],
     queryFn: async () => (await fetch(url)).json(),
   }))
+
   return { queryAtom }
 })
 ```
@@ -150,11 +161,14 @@ const UrlContext = createContext('https://example.com/')
 const UrlScope = createScope()
 bindScope(UrlScope, UrlContext)
 
-const fetchBunja = bunja([UrlScope], (url) => {
+const fetchBunja = bunja(() => {
+  const url = bunja.use(UrlScope)
+
   const queryAtom = atomWithQuery((get) => ({
     queryKey: [url],
     queryFn: async () => (await fetch(url)).json(),
   }))
+
   return { queryAtom }
 })
 
@@ -192,17 +206,31 @@ const UrlScope = createScopeFromContext(UrlContext)
 
 You might want to use a bunja directly within a React component where the values to be injected into the scope are created.
 
-In such cases, you can use the inject function to inject values into the scope without wrapping the context separately.
+In such cases, you can use the second parameter of `useBunja` hook to inject values into the scope without wrapping the context separately.
 
 ```tsx
-import { inject } from 'bunja/react'
-
 function MyComponent() {
-  const { queryAtom } = useBunja(
-    fetchBunja,
-    inject([[UrlScope, 'https://example.com/']]),
-  )
+  const { queryAtom } = useBunja(fetchBunja, [
+    UrlScope.bind('https://example.com/'),
+  ])
   const { data, isPending, isError } = useAtomValue(queryAtom)
   // Your component logic here
 }
+```
+
+##### Doing the same thing inside a bunja
+
+You can use `bunja.fork` to inject scope values from within a bunja initialization function.
+
+```ts
+const myBunja = bunja(() => {
+  const fooData = bunja.fork(fetchBunja, [
+    UrlScope.bind('https://example.com/foo'),
+  ])
+  const barData = bunja.fork(fetchBunja, [
+    UrlScope.bind('https://example.com/bar'),
+  ])
+
+  return { fooData, barData }
+})
 ```
