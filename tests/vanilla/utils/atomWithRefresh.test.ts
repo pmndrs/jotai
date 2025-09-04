@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createStore } from 'jotai/vanilla'
 import { atomWithRefresh } from 'jotai/vanilla/utils'
 

@@ -54,6 +54,7 @@ it('type utils should work', () => {
       (_get) => 1 as number,
       async (_get, _set, _value: string) => {},
     )
+    expect(readWriteAtom).toBeDefined()
 
     const value: ExtractAtomValue<typeof readWriteAtom> = 1
     expectType<number>(value)
