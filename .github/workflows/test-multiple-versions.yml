@@ -24,9 +24,9 @@ jobs:
           - 19.2.0-canary-bdb4a96f-20250801
           - 0.0.0-experimental-bdb4a96f-20250801
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 'lts/*'
           cache: 'pnpm'
