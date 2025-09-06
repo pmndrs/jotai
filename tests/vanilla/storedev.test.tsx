@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type { Atom, WritableAtom } from 'jotai/vanilla'
 import {
-  INTERNAL_buildStoreRev1 as INTERNAL_buildStore,
-  INTERNAL_initializeStoreHooks,
+  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
+  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 import type {
   INTERNAL_AtomState,
@@ -32,7 +32,7 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
     undefined,
     storeHooks,
     undefined,
-    (atom, get, set, ...args) => {
+    (_store, atom, get, set, ...args) => {
       if (inRestoreAtom) {
         return set(atom, ...(args as any))
       }

@@ -1,4 +1,4 @@
-import { INTERNAL_buildStoreRev1 as INTERNAL_buildStore } from './internals.ts'
+import { INTERNAL_buildStoreRev2 as INTERNAL_buildStore } from './internals.ts'
 import type { INTERNAL_Store } from './internals.ts'
 
 export type Store = INTERNAL_Store

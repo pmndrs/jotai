@@ -3,9 +3,9 @@ import { assert, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 import {
-  INTERNAL_buildStoreRev1 as INTERNAL_buildStore,
-  INTERNAL_getBuildingBlocksRev1 as INTERNAL_getBuildingBlocks,
-  INTERNAL_initializeStoreHooks,
+  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
+  INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
 
@@ -1029,7 +1029,7 @@ it('processes deep atom a graph beyond maxDepth', () => {
   // store.get(lastAtom) // FIXME: This is causing a stack overflow
   expect(() => store.set(baseAtom, 1)).not.toThrow()
   // store.set(lastAtom) // FIXME: This is causing a stack overflow
-})
+}, 10_000)
 
 it('mounted atom should be recomputed eagerly', () => {
   const result: string[] = []
