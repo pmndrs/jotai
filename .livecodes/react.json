@@ -16,12 +16,8 @@
   "customSettings": {
     "jotai commit sha": "{{LC::SHORT_SHA}}",
     "imports": {
-      "jotai": "{{LC::TO_DATA_URL(./dist/esm/index.mjs)}}",
-      "jotai/vanilla": "{{LC::TO_DATA_URL(./dist/esm/vanilla.mjs)}}",
-      "jotai/utils": "{{LC::TO_DATA_URL(./dist/esm/utils.mjs)}}",
-      "jotai/react": "{{LC::TO_DATA_URL(./dist/esm/react.mjs)}}",
-      "jotai/vanilla/utils": "{{LC::TO_DATA_URL(./dist/esm/vanilla/utils.mjs)}}",
-      "jotai/react/utils": "{{LC::TO_DATA_URL(./dist/esm/react/utils.mjs)}}"
+      "jotai": "https://esm.sh/pr/jotai@{{LC::SHORT_SHA}}",
+      "jotai/": "https://esm.sh/pr/jotai@{{LC::SHORT_SHA}}/"
     }
   }
 }
