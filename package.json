@@ -174,7 +174,7 @@
     "shx": "^0.4.0",
     "ts-expect": "^1.3.0",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.42.0",
+    "typescript-eslint": "^8.43.0",
     "vitest": "^3.2.4",
     "wonka": "^6.3.5"
   },
