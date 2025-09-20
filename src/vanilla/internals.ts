@@ -184,6 +184,10 @@ type BuildingBlocks = [
   storeSub: StoreSub, //                                     23
 ]
 
+type TransformBuildingBlocks = (
+  buildingBlocks: BuildingBlocks,
+) => BuildingBlocks
+
 export type {
   AtomState as INTERNAL_AtomState,
   Mounted as INTERNAL_Mounted,
@@ -408,7 +412,7 @@ const atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
   atom.onMount?.(setAtom)
 
 const ensureAtomState: EnsureAtomState = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const atomStateMap = buildingBlocks[0]
   const atomOnInit = buildingBlocks[9]
   if (import.meta.env?.MODE !== 'production' && !atom) {
@@ -424,7 +428,7 @@ const ensureAtomState: EnsureAtomState = (store, atom) => {
 }
 
 const flushCallbacks: FlushCallbacks = (store) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const mountedMap = buildingBlocks[1]
   const changedAtoms = buildingBlocks[3]
   const mountCallbacks = buildingBlocks[4]
@@ -462,7 +466,7 @@ const flushCallbacks: FlushCallbacks = (store) => {
 }
 
 const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const changedAtoms = buildingBlocks[3]
@@ -533,7 +537,7 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
 }
 
 const readAtomState: ReadAtomState = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const changedAtoms = buildingBlocks[3]
@@ -667,7 +671,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
 }
 
 const invalidateDependents: InvalidateDependents = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const ensureAtomState = buildingBlocks[11]
@@ -684,7 +688,7 @@ const invalidateDependents: InvalidateDependents = (store, atom) => {
 }
 
 const writeAtomState: WriteAtomState = (store, atom, ...args) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const changedAtoms = buildingBlocks[3]
   const storeHooks = buildingBlocks[6]
   const atomWrite = buildingBlocks[8]
@@ -736,7 +740,7 @@ const writeAtomState: WriteAtomState = (store, atom, ...args) => {
 }
 
 const mountDependencies: MountDependencies = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const mountedMap = buildingBlocks[1]
   const changedAtoms = buildingBlocks[3]
   const storeHooks = buildingBlocks[6]
@@ -771,7 +775,7 @@ const mountDependencies: MountDependencies = (store, atom) => {
 }
 
 const mountAtom: MountAtom = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const mountedMap = buildingBlocks[1]
   const mountCallbacks = buildingBlocks[4]
   const storeHooks = buildingBlocks[6]
@@ -835,7 +839,7 @@ const mountAtom: MountAtom = (store, atom) => {
 }
 
 const unmountAtom: UnmountAtom = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const mountedMap = buildingBlocks[1]
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
@@ -871,7 +875,7 @@ const setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   atom,
   valueOrPromise,
 ) => {
-  const ensureAtomState = getBuildingBlocks(store)[11]
+  const ensureAtomState = getBuildingBlocks(buildingBlockMap, store)[11]
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
@@ -895,12 +899,12 @@ const setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
 }
 
 const storeGet: StoreGet = (store, atom) => {
-  const readAtomState = getBuildingBlocks(store)[14]
+  const readAtomState = getBuildingBlocks(buildingBlockMap, store)[14]
   return returnAtomValue(readAtomState(store, atom)) as any
 }
 
 const storeSet: StoreSet = (store, atom, ...args) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const flushCallbacks = buildingBlocks[12]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const writeAtomState = buildingBlocks[16]
@@ -913,7 +917,7 @@ const storeSet: StoreSet = (store, atom, ...args) => {
 }
 
 const storeSub: StoreSub = (store, atom, listener) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getBuildingBlocks(buildingBlockMap, store)
   const flushCallbacks = buildingBlocks[12]
   const mountAtom = buildingBlocks[18]
   const unmountAtom = buildingBlocks[19]
@@ -928,10 +932,14 @@ const storeSub: StoreSub = (store, atom, listener) => {
   }
 }
 
+const externalBuildingBlockMap = new WeakMap<Store, Readonly<BuildingBlocks>>()
 const buildingBlockMap = new WeakMap<Store, Readonly<BuildingBlocks>>()
 
-function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
-  const buildingBlocks = buildingBlockMap.get(store)
+const getBuildingBlocks = (
+  buildingBlocksMap: WeakMap<Store, Readonly<BuildingBlocks>>,
+  store: Store,
+) => {
+  const buildingBlocks = buildingBlocksMap.get(store)
   if (import.meta.env?.MODE !== 'production' && !buildingBlocks) {
     throw new Error(
       'Store must be created by buildStore to read its building blocks',
@@ -940,18 +948,25 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
   return buildingBlocks!
 }
 
-function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
+const getExternalBuildingBlocks = (store: Store): Readonly<BuildingBlocks> =>
+  getBuildingBlocks(externalBuildingBlockMap, store)
+
+function buildStore(
+  ...buildArgs: Partial<BuildingBlocks> & {
+    [24]?: TransformBuildingBlocks
+  }
+): Store {
   const store = {
     get(atom) {
-      const storeGet = getBuildingBlocks(store)[21]
+      const storeGet = getBuildingBlocks(buildingBlockMap, store)[21]
       return storeGet(store, atom)
     },
     set(atom, ...args) {
-      const storeSet = getBuildingBlocks(store)[22]
+      const storeSet = getBuildingBlocks(buildingBlockMap, store)[22]
       return storeSet(store, atom, ...args)
     },
     sub(atom, listener) {
-      const storeSub = getBuildingBlocks(store)[23]
+      const storeSub = getBuildingBlocks(buildingBlockMap, store)[23]
       return storeSub(store, atom, listener)
     },
   } as Store
@@ -988,6 +1003,12 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
+  const transformBuildingBlocks =
+    buildArgs[24] ?? ((buildingBlocks) => buildingBlocks)
+  externalBuildingBlockMap.set(
+    store,
+    Object.freeze(transformBuildingBlocks(buildingBlocks)),
+  )
   return store
 }
 
@@ -996,7 +1017,7 @@ export {
   // Export internal functions
   //
   buildStore as INTERNAL_buildStoreRev2,
-  getBuildingBlocks as INTERNAL_getBuildingBlocksRev2,
+  getExternalBuildingBlocks as INTERNAL_getBuildingBlocksRev2,
   initializeStoreHooks as INTERNAL_initializeStoreHooksRev2,
 
   //
