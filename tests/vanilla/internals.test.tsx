@@ -18,13 +18,13 @@ describe('internals', () => {
     {
       const store = createStore()
       const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-      expect(buildingBlocks.length).toBe(24)
+      expect(buildingBlocks.length).toBe(25)
       expect(isSparse(buildingBlocks)).toBe(false)
     }
     {
       const store = INTERNAL_buildStore()
       const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-      expect(buildingBlocks.length).toBe(24)
+      expect(buildingBlocks.length).toBe(25)
       expect(isSparse(buildingBlocks)).toBe(false)
     }
   })
@@ -57,5 +57,36 @@ describe('internals', () => {
     store2.get(atom(0))
     expect(mockAtomStateMap1.get).not.toBeCalled()
     expect(mockAtomStateMap2.get).toBeCalled()
+  })
+
+  it('should transform external building blocks differently from internal ones', () => {
+    const didRun = {
+      internal: vi.fn(),
+      external: vi.fn(),
+    }
+    const bb0 = [] as Partial<INTERNAL_BuildingBlocks>
+    bb0[21] = function storeGet1() {
+      didRun.internal()
+    } as INTERNAL_BuildingBlocks[21]
+    bb0[24] = () => {
+      const bb1 = []
+      bb1[21] = function storeGet() {
+        didRun.external()
+      }
+      return bb1 as INTERNAL_BuildingBlocks
+    }
+    const store1 = INTERNAL_buildStore(...bb0)
+    const bb1 = INTERNAL_getBuildingBlocks(store1)
+    const store2 = INTERNAL_buildStore(...bb1)
+    const bb2 = INTERNAL_getBuildingBlocks(store2)
+    expect(bb0[21]).not.toBe(bb1[21])
+    expect(bb1[21]).toBe(bb2[21])
+    store1.get(atom(0))
+    expect(didRun.internal).toBeCalledTimes(1)
+    expect(didRun.external).toBeCalledTimes(0)
+    vi.clearAllMocks()
+    store2.get(atom(0))
+    expect(didRun.internal).toBeCalledTimes(0)
+    expect(didRun.external).toBeCalledTimes(1)
   })
 })
