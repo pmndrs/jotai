@@ -952,7 +952,9 @@ const getExternalBuildingBlocks = (store: Store): Readonly<BuildingBlocks> =>
   getBuildingBlocks(externalBuildingBlockMap, store)
 
 function buildStore(
-  ...buildArgs: Partial<[...BuildingBlocks, TransformBuildingBlocks]>
+  ...buildArgs: Partial<BuildingBlocks> & {
+    [24]?: TransformBuildingBlocks
+  }
 ): Store {
   const store = {
     get(atom) {
@@ -1002,10 +1004,10 @@ function buildStore(
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
   const transformBuildingBlocks =
-    buildArgs[24] ?? ((buildingBlocks: BuildingBlocks) => buildingBlocks)
+    buildArgs[24] ?? ((buildingBlocks) => buildingBlocks)
   externalBuildingBlockMap.set(
     store,
-    Object.freeze(transformBuildingBlocks([...buildingBlocks])),
+    Object.freeze(transformBuildingBlocks(buildingBlocks)),
   )
   return store
 }
