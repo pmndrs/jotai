@@ -225,7 +225,9 @@ function hasInitialValue<T extends Atom<AnyValue>>(
   return 'init' in atom
 }
 
-function isActuallyWritableAtom(atom: AnyAtom): atom is AnyWritableAtom {
+function isActuallyWritableAtom<Value, Args extends unknown[], Result>(
+  atom: AnyAtom,
+): atom is WritableAtom<Value, Args, Result> {
   return !!(atom as AnyWritableAtom).write
 }
 

@@ -65,6 +65,7 @@ export interface WritableAtom<Value, Args extends unknown[], Result>
   extends Atom<Value> {
   read: Read<Value, SetAtom<Args, Result>>
   write: Write<Args, Result>
+  /** @deprecated Use the mixin withMount utility from jotai/utils instead */
   onMount?: OnMount<Args, Result>
 }
 

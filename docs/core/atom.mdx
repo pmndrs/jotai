@@ -117,7 +117,9 @@ The created atom config can have an optional property `debugLabel`. The debug la
 
 Note: While, the debug labels don’t have to be unique, it’s generally recommended to make them distinguishable.
 
-### `onMount` property
+### `onMount` property (deprecated)
+
+⚠️ **Deprecated**: The `onMount` property is deprecated. Use the [`withMount` mixin](../utilities/mixins.mdx#withmount) from `jotai/utils` instead.
 
 The created atom config can have an optional property `onMount`. `onMount` is a function which takes a function `setAtom` and returns `onUnmount` function optionally.
 

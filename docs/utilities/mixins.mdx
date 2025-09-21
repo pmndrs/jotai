@@ -1,7 +1,7 @@
 ---
 title: Mixins
 nav: 3.04
-keywords: mixins,setSelf,withSetSelf,signal,withSignal,abort,abortcontroller
+keywords: mixins,setSelf,withSetSelf,signal,withSignal,abort,abortcontroller,mount,withMount,onMount
 ---
 
 Mixins are utilities that enhance or modify the behavior of atom constructors, providing additional functionality while maintaining the same API.
@@ -162,3 +162,43 @@ function withSetSelf<Value, Args extends unknown[], Result>(
 
 - `setSelf` can only be used with writable atoms (atoms that have a write function)
 - `setSelf` must be called asynchronously - calling it during synchronous read execution will show a warning in development mode
+
+## withMount
+
+The `withMount` utility provides a way to add `onMount` functionality to existing atoms through a mixin pattern. This is the recommended approach for adding mount/unmount lifecycle behavior to writable atoms.
+`onMount` is a function which takes a function `setAtom` and returns `onUnmount` function optionally.
+
+### Usage
+
+```ts
+const anAtom = atom(1)
+anAtom.onMount = (setAtom) => {
+  console.log('atom is mounted in provider')
+  setAtom(c => c + 1) // increment count on mount
+  return () => { ... } // return optional onUnmount function
+}
+
+const Component = () => {
+  // `onMount` will be called when the component is mounted in the following cases:
+  useAtom(anAtom)
+  useAtomValue(anAtom)
+
+  // however, in the following cases,
+  //  `onMount` will not be called because the atom is not subscribed:
+  useSetAtom(anAtom)
+  useAtomCallback(
+    useCallback((get) => get(anAtom), []),
+  )
+  // ...
+}
+```
+
+### Signature
+
+```ts
+// For writable atoms only
+function withMount<Value, Args extends unknown[], Result>(
+  baseAtom: WritableAtom<Value, Args, Result>,
+  onMount: (setAtom: (...args: Args) => Result) => (() => void) | void,
+): WritableAtom<Value, Args, Result>
+```
