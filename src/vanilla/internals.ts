@@ -329,27 +329,18 @@ type StoreHookForAtoms = {
   add(atom: undefined, callback: (atom: AnyAtom) => void): () => void
 }
 
+/** StoreHooks are an experimental API. */
 type StoreHooks = {
-  /**
-   * Listener to notify when the atom value is changed.
-   * This is an experimental API.
-   */
+  /** Listener to notify when the atom value is changed. */
   readonly c?: StoreHookForAtoms
-  /**
-   * Listener to notify when the atom is mounted.
-   * This is an experimental API.
-   */
+  /** Listener to notify when the atom is mounted. */
   readonly m?: StoreHookForAtoms
-  /**
-   * Listener to notify when the atom is unmounted.
-   * This is an experimental API.
-   */
+  /** Listener to notify when the atom is unmounted. */
   readonly u?: StoreHookForAtoms
-  /**
-   * Listener to notify when callbacks are being flushed.
-   * This is an experimental API.
-   */
+  /** Listener to notify when callbacks are being flushed. */
   readonly f?: StoreHook
+  /** Listener to notify when the atom is read. */
+  readonly r?: StoreHookForAtoms
 }
 
 const createStoreHook = (): StoreHook => {
@@ -391,6 +382,7 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
 function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
   type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
   ;(storeHooks as SH).c ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).r ||= createStoreHookForAtoms()
   ;(storeHooks as SH).m ||= createStoreHookForAtoms()
   ;(storeHooks as SH).u ||= createStoreHookForAtoms()
   ;(storeHooks as SH).f ||= createStoreHook()
@@ -642,6 +634,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
   const prevEpochNumber = atomState.n
   try {
     const valueOrPromise = atomRead(store, atom, getter, options as never)
+    storeHooks.r?.(atom)
     setAtomStateValueOrPromise(store, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
       registerAbortHandler(valueOrPromise, () => controller?.abort())
