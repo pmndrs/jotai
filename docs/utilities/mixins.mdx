@@ -1,0 +1,72 @@
+---
+title: Mixins
+nav: 3.04
+keywords: mixins,setSelf,withSetSelf
+---
+
+Mixins are utilities that enhance or modify the behavior of atom constructors, providing additional functionality while maintaining the same API.
+
+## How mixins work
+
+The mixin utility wraps the atom constructor to provide additional functionality.
+
+```ts
+const atomWithSetSelf = withSetSelf(atom)
+const myAtom = atomWithSetSelf(
+  (get, { setSelf }) => {...},
+  (get, set) => {...},
+)
+```
+
+## withSetSelf
+
+#### `options.setSelf`
+
+The `withSetSelf` utility provides access to the `setSelf` functionality through a mixin pattern. It's a special function to invoke the write function of the self atom.
+
+⚠️ It's provided primarily for internal usage and third-party library authors. Read the source code carefully to understand the behavior. Check release notes for any breaking/non-breaking changes.
+
+### Usage
+
+```jsx
+import { atom } from 'jotai'
+import { withSetSelf } from 'jotai/utils'
+
+const atomWithSetSelf = withSetSelf(atom)
+
+const autoRefreshAtom = atomWithSetSelf(
+  (get, { setSelf }) => {
+    const promise = get(someAsyncAtom)
+
+    promise.then((value) => {
+      promiseCache.set(promise, value)
+      setSelf()
+    })
+  },
+  (_get, set) => {
+    // handle write
+  },
+)
+```
+
+### Signature
+
+```ts
+// read-only derived atom
+function withSetSelf<Value>(
+  atomConstructor: typeof atom,
+): (read: (get: Getter, options: { setSelf: never }) => Value) => Atom<Value>
+
+// writable derived atom
+function withSetSelf<Value, Args extends unknown[], Result>(
+  atomConstructor: typeof atom,
+): (
+  read: (get: Getter, options: { setSelf: (...args: Args) => Result }) => Value,
+  write: Write<Args, Result>,
+) => WritableAtom<Value, Args, Result>
+```
+
+### Important Notes
+
+- `setSelf` can only be used with writable atoms (atoms that have a write function)
+- `setSelf` must be called asynchronously - calling it during synchronous read execution will show a warning in development mode

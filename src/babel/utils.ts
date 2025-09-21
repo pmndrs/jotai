@@ -37,6 +37,7 @@ const atomFunctionNames = [
   'selectAtom',
   'splitAtom',
   'unwrap',
+  'withSetSelf',
   // jotai-xstate
   'atomWithMachine',
   // jotai-immer

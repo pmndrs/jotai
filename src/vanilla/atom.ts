@@ -13,6 +13,7 @@ type SetAtom<Args extends unknown[], Result> = <A extends Args>(
 
 /**
  * setSelf is for internal use only and subject to change without notice.
+ * @deprecated Mixin withSetSelf utility from jotai/utils instead
  */
 type Read<Value, SetSelf = never> = (
   get: Getter,
