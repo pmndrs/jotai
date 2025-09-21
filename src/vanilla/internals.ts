@@ -634,12 +634,12 @@ const readAtomState: ReadAtomState = (store, atom) => {
   const prevEpochNumber = atomState.n
   try {
     const valueOrPromise = atomRead(store, atom, getter, options as never)
-    storeHooks.r?.(atom)
     setAtomStateValueOrPromise(store, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
       registerAbortHandler(valueOrPromise, () => controller?.abort())
       valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
     }
+    storeHooks.r?.(atom)
     return atomState
   } catch (error) {
     delete atomState.v

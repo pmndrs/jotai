@@ -187,7 +187,7 @@ const asyncAtom = abortableAtom(async (get, { signal }) => {
 ##### New API
 
 ```js
-const asyncAtom = atom(async (get, { signal }) => {
+const asyncAtom = withSignal(atom)(async (get, { signal }) => {
   ...
 }
 ```

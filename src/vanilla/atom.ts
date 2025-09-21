@@ -1,4 +1,4 @@
-import type { Store } from './store'
+import type { Store } from './store.ts'
 
 type Getter = <Value>(atom: Atom<Value>) => Value
 
@@ -11,13 +11,17 @@ type SetAtom<Args extends unknown[], Result> = <A extends Args>(
   ...args: A
 ) => Result
 
-/**
- * setSelf is for internal use only and subject to change without notice.
- * @deprecated Mixin withSetSelf utility from jotai/utils instead
- */
 type Read<Value, SetSelf = never> = (
   get: Getter,
-  options: { readonly signal: AbortSignal; readonly setSelf: SetSelf },
+  options: {
+    /** @deprecated Use the mixin withSetSelf utility from jotai/utils instead */
+    readonly signal: AbortSignal
+    /**
+     * setSelf is for internal use only and subject to change without notice.
+     * @deprecated Use the mixin withSetSelf utility from jotai/utils instead
+     */
+    readonly setSelf: SetSelf
+  },
 ) => Value
 
 type Write<Args extends unknown[], Result> = (
