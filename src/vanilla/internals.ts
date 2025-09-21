@@ -314,13 +314,23 @@ function getMountedOrPendingDependents(
   return dependents
 }
 
+const onInitMap = new WeakMap<AnyAtom, StoreHook<Store>>()
+function addOnInit(atom: AnyAtom, fn: (store: Store) => void): () => void {
+  let fns = onInitMap.get(atom)
+  if (!fns) {
+    fns = createStoreHook()
+    onInitMap.set(atom, fns)
+  }
+  return fns.add(fn)
+}
+
 //
 // Store hooks
 //
 
-type StoreHook = {
-  (): void
-  add(callback: () => void): () => void
+type StoreHook<T = void> = {
+  (arg: T): void
+  add(callback: (arg: T) => void): () => void
 }
 
 type StoreHookForAtoms = {
@@ -352,10 +362,10 @@ type StoreHooks = {
   readonly f?: StoreHook
 }
 
-const createStoreHook = (): StoreHook => {
-  const callbacks = new Set<() => void>()
-  const notify = () => callbacks.forEach((fn) => fn())
-  notify.add = (fn: () => void) => {
+const createStoreHook = <T = void>(): StoreHook<T> => {
+  const callbacks = new Set<(arg: T) => void>()
+  const notify = (arg: T) => callbacks.forEach((fn) => fn(arg))
+  notify.add = (fn: (arg: T) => void) => {
     callbacks.add(fn)
     return () => callbacks.delete(fn)
   }
@@ -419,6 +429,7 @@ const ensureAtomState: EnsureAtomState = (store, atom) => {
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     atomOnInit?.(store, atom)
+    onInitMap.get(atom)?.(store)
   }
   return atomState as never
 }
@@ -1014,4 +1025,5 @@ export {
   isPromiseLike as INTERNAL_isPromiseLike,
   addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
   getMountedOrPendingDependents as INTERNAL_getMountedOrPendingDependents,
+  addOnInit as INTERNAL_addOnInit,
 }
