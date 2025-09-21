@@ -329,26 +329,17 @@ type StoreHookForAtoms = {
   add(atom: undefined, callback: (atom: AnyAtom) => void): () => void
 }
 
+/** StoreHooks are an experimental API. */
 type StoreHooks = {
-  /**
-   * Listener to notify when the atom value is changed.
-   * This is an experimental API.
-   */
+  /** Listener to notify when the atom is read. */
+  readonly r?: StoreHookForAtoms
+  /** Listener to notify when the atom value is changed. */
   readonly c?: StoreHookForAtoms
-  /**
-   * Listener to notify when the atom is mounted.
-   * This is an experimental API.
-   */
+  /** Listener to notify when the atom is mounted. */
   readonly m?: StoreHookForAtoms
-  /**
-   * Listener to notify when the atom is unmounted.
-   * This is an experimental API.
-   */
+  /** Listener to notify when the atom is unmounted. */
   readonly u?: StoreHookForAtoms
-  /**
-   * Listener to notify when callbacks are being flushed.
-   * This is an experimental API.
-   */
+  /** Listener to notify when callbacks are being flushed. */
   readonly f?: StoreHook
 }
 
@@ -390,6 +381,7 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
 
 function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
   type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
+  ;(storeHooks as SH).r ||= createStoreHookForAtoms()
   ;(storeHooks as SH).c ||= createStoreHookForAtoms()
   ;(storeHooks as SH).m ||= createStoreHookForAtoms()
   ;(storeHooks as SH).u ||= createStoreHookForAtoms()
@@ -647,6 +639,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
       registerAbortHandler(valueOrPromise, () => controller?.abort())
       valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
     }
+    storeHooks.r?.(atom)
     return atomState
   } catch (error) {
     delete atomState.v
