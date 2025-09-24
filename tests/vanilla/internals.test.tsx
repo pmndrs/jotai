@@ -8,6 +8,7 @@ import type {
 import {
   INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
   INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
+  INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
 const buildingBlockLength = 25
@@ -92,6 +93,100 @@ describe('internals', () => {
     store2.get(atom(0))
     expect(didRun.internal).toBeCalledTimes(0)
     expect(didRun.external).toBeCalledTimes(1)
+  })
+})
+
+describe('store hooks', () => {
+  // Helper function to create store with hooks
+  const createStoreWithHooks = () => {
+    const storeHooks = INTERNAL_initializeStoreHooks({})
+    const buildingBlocks = [] as Partial<INTERNAL_BuildingBlocks>
+    buildingBlocks[6] = storeHooks
+    const store = INTERNAL_buildStore(...buildingBlocks)
+    return { store, storeHooks }
+  }
+
+  describe('read hook (r)', () => {
+    it('should call read hook when atom is read', () => {
+      const { store, storeHooks } = createStoreWithHooks()
+      const baseAtom = atom(0)
+      const derivedAtom = atom((get) => get(baseAtom))
+      const readCallback = vi.fn()
+
+      storeHooks.r.add(derivedAtom, readCallback)
+      store.get(derivedAtom)
+      expect(readCallback).toHaveBeenCalledTimes(1)
+      readCallback.mockClear()
+      store.get(derivedAtom)
+      expect(readCallback).toHaveBeenCalledTimes(0)
+      store.set(baseAtom, 1)
+      store.get(derivedAtom)
+      expect(readCallback).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('mount hook (m)', () => {
+    it('should call mount hook when atom is mounted', () => {
+      const { store, storeHooks } = createStoreWithHooks()
+      const countAtom = atom(0)
+      const mountCallback = vi.fn()
+
+      storeHooks.m.add(countAtom, mountCallback)
+      const unsub = store.sub(countAtom, () => {})
+
+      expect(mountCallback).toHaveBeenCalledTimes(1)
+      unsub()
+    })
+  })
+
+  describe('unmount hook (u)', () => {
+    it('should call unmount hook when atom is unmounted', () => {
+      const { store, storeHooks } = createStoreWithHooks()
+      const countAtom = atom(0)
+      const unmountCallback = vi.fn()
+
+      storeHooks.u.add(countAtom, unmountCallback)
+      const unsub = store.sub(countAtom, () => {})
+      unsub()
+
+      expect(unmountCallback).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('change hook (c)', () => {
+    it('should call change hook when atom value changes', () => {
+      const { store, storeHooks } = createStoreWithHooks()
+      const countAtom = atom(0)
+      const changeCallback = vi.fn()
+
+      storeHooks.c.add(countAtom, changeCallback)
+      const unsub = store.sub(countAtom, () => {})
+      store.set(countAtom, 1)
+
+      expect(changeCallback).toHaveBeenCalledTimes(1)
+      changeCallback.mockClear()
+      store.set(countAtom, 1)
+      expect(changeCallback).toHaveBeenCalledTimes(0)
+      unsub()
+    })
+  })
+
+  describe('flush hook (f)', () => {
+    it('should call flush hook when callbacks are flushed', () => {
+      const { store, storeHooks } = createStoreWithHooks()
+      const countAtom = atom(0)
+      const flushCallback = vi.fn()
+
+      storeHooks.f.add(flushCallback)
+      const unsub = store.sub(countAtom, () => {})
+      expect(flushCallback).toHaveBeenCalledTimes(1)
+      flushCallback.mockClear()
+      store.set(countAtom, 1)
+      expect(flushCallback).toHaveBeenCalledTimes(1)
+      flushCallback.mockClear()
+      unsub()
+      expect(flushCallback).toHaveBeenCalledTimes(1)
+    })
   })
 })
 
