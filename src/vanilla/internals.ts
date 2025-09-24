@@ -218,11 +218,6 @@ export type {
 // Some util functions
 //
 
-// TODO this will be gone soon
-function isSelfAtom(atom: AnyAtom, a: AnyAtom): boolean {
-  return atom.unstable_is ? atom.unstable_is(a) : a === atom
-}
-
 function hasInitialValue<T extends Atom<AnyValue>>(
   atom: T,
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) {
@@ -582,7 +577,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
     }
   }
   function getter<V>(a: Atom<V>) {
-    if (isSelfAtom(atom, a)) {
+    if (a === (atom as AnyAtom)) {
       const aState = ensureAtomState(store, a)
       if (!isAtomStateInitialized(aState)) {
         if (hasInitialValue(a)) {
@@ -707,7 +702,7 @@ const writeAtomState: WriteAtomState = (store, atom, ...args) => {
   ) => {
     const aState = ensureAtomState(store, a)
     try {
-      if (isSelfAtom(atom, a)) {
+      if (a === (atom as AnyAtom)) {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
@@ -1016,7 +1011,6 @@ export {
   //
   // Still experimental and some of them will be gone soon
   //
-  isSelfAtom as INTERNAL_isSelfAtom,
   hasInitialValue as INTERNAL_hasInitialValue,
   isActuallyWritableAtom as INTERNAL_isActuallyWritableAtom,
   isAtomStateInitialized as INTERNAL_isAtomStateInitialized,
