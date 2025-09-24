@@ -11,22 +11,19 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
+const buildingBlockLength = 25
+
 describe('internals', () => {
   it('should not return a sparse building blocks array', () => {
-    const isSparse = (arr: ReadonlyArray<unknown>) => {
-      return arr.some((_, i) => !Object.prototype.hasOwnProperty.call(arr, i))
-    }
     {
       const store = createStore()
       const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-      expect(buildingBlocks.length).toBe(24)
-      expect(isSparse(buildingBlocks)).toBe(false)
+      expect(isBuildingBlocks(buildingBlocks)).toBe(true)
     }
     {
       const store = INTERNAL_buildStore()
       const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-      expect(buildingBlocks.length).toBe(24)
-      expect(isSparse(buildingBlocks)).toBe(false)
+      expect(isBuildingBlocks(buildingBlocks)).toBe(true)
     }
   })
 
@@ -58,6 +55,44 @@ describe('internals', () => {
     store2.get(atom(0))
     expect(mockAtomStateMap1.get).not.toBeCalled()
     expect(mockAtomStateMap2.get).toBeCalled()
+  })
+
+  it('should transform external building blocks differently from internal ones', () => {
+    const didRun = {
+      internal: vi.fn(),
+      external: vi.fn(),
+    }
+    const bb0 = [] as Partial<INTERNAL_BuildingBlocks>
+    bb0[21] = function storeGet1() {
+      didRun.internal()
+    } as INTERNAL_BuildingBlocks[21]
+    let bbInternal: Readonly<INTERNAL_BuildingBlocks> | undefined
+    function storeGet() {
+      didRun.external()
+    }
+    bb0[24] = (bbi) => {
+      bbInternal = bbi
+      const bb1 = [...bbi] as INTERNAL_BuildingBlocks
+      bb1[21] = storeGet as INTERNAL_BuildingBlocks[21]
+      return bb1
+    }
+    const store1 = INTERNAL_buildStore(...bb0)
+    const bb1 = INTERNAL_getBuildingBlocks(store1)
+    expect(isBuildingBlocks(bb1)).toBe(true)
+    expect(isBuildingBlocks(bbInternal)).toBe(true)
+    const store2 = INTERNAL_buildStore(...bb1)
+    const bb2 = INTERNAL_getBuildingBlocks(store2)
+    expect(isBuildingBlocks(bb2)).toBe(true)
+    expect(isBuildingBlocks(bbInternal)).toBe(true)
+    expect(bb0[21]).not.toBe(bb1[21])
+    expect(bb1[21]).toBe(bb2[21])
+    store1.get(atom(0))
+    expect(didRun.internal).toBeCalledTimes(1)
+    expect(didRun.external).toBeCalledTimes(0)
+    vi.clearAllMocks()
+    store2.get(atom(0))
+    expect(didRun.internal).toBeCalledTimes(0)
+    expect(didRun.external).toBeCalledTimes(1)
   })
 })
 
@@ -154,3 +189,15 @@ describe('store hooks', () => {
     })
   })
 })
+
+function isSparse(arr: ReadonlyArray<unknown>) {
+  return arr.some((_, i) => !Object.prototype.hasOwnProperty.call(arr, i))
+}
+
+function isBuildingBlocks(blocks: ReadonlyArray<unknown> | undefined) {
+  return (
+    blocks !== undefined &&
+    blocks.length === buildingBlockLength &&
+    isSparse(blocks) === false
+  )
+}
