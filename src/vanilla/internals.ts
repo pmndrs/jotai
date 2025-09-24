@@ -143,6 +143,9 @@ type StoreSub = (
   atom: AnyAtom,
   listener: () => void,
 ) => () => void
+type EnhanceBuildingBlocks = (
+  buildingBlocks: Readonly<BuildingBlocks>,
+) => Readonly<BuildingBlocks>
 
 type Store = {
   get: <Value>(atom: Atom<Value>) => Value
@@ -155,33 +158,34 @@ type Store = {
 
 type BuildingBlocks = [
   // store state
-  atomStateMap: AtomStateMap, //                             0
-  mountedMap: MountedMap, //                                 1
-  invalidatedAtoms: InvalidatedAtoms, //                     2
-  changedAtoms: ChangedAtoms, //                             3
-  mountCallbacks: Callbacks, //                              4
-  unmountCallbacks: Callbacks, //                            5
-  storeHooks: StoreHooks, //                                 6
+  atomStateMap: AtomStateMap, //                               0
+  mountedMap: MountedMap, //                                   1
+  invalidatedAtoms: InvalidatedAtoms, //                       2
+  changedAtoms: ChangedAtoms, //                               3
+  mountCallbacks: Callbacks, //                                4
+  unmountCallbacks: Callbacks, //                              5
+  storeHooks: StoreHooks, //                                   6
   // atom interceptors
-  atomRead: AtomRead, //                                     7
-  atomWrite: AtomWrite, //                                   8
-  atomOnInit: AtomOnInit, //                                 9
-  atomOnMount: AtomOnMount, //                               10
+  atomRead: AtomRead, //                                       7
+  atomWrite: AtomWrite, //                                     8
+  atomOnInit: AtomOnInit, //                                   9
+  atomOnMount: AtomOnMount, //                                 10
   // building-block functions
-  ensureAtomState: EnsureAtomState, //                       11
-  flushCallbacks: FlushCallbacks, //                         12
-  recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms, //   13
-  readAtomState: ReadAtomState, //                           14
-  invalidateDependents: InvalidateDependents, //             15
-  writeAtomState: WriteAtomState, //                         16
-  mountDependencies: MountDependencies, //                   17
-  mountAtom: MountAtom, //                                   18
-  unmountAtom: UnmountAtom, //                               19
-  setAtomStateValueOrPromise: SetAtomStateValueOrPromise, // 20
+  ensureAtomState: EnsureAtomState, //                         11
+  flushCallbacks: FlushCallbacks, //                           12
+  recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms, //     13
+  readAtomState: ReadAtomState, //                             14
+  invalidateDependents: InvalidateDependents, //               15
+  writeAtomState: WriteAtomState, //                           16
+  mountDependencies: MountDependencies, //                     17
+  mountAtom: MountAtom, //                                     18
+  unmountAtom: UnmountAtom, //                                 19
+  setAtomStateValueOrPromise: SetAtomStateValueOrPromise, //   20
   // store api
-  storeGet: StoreGet, //                                     21
-  storeSet: StoreSet, //                                     22
-  storeSub: StoreSub, //                                     23
+  storeGet: StoreGet, //                                       21
+  storeSet: StoreSet, //                                       22
+  storeSub: StoreSub, //                                       23
+  enhanceBuildingBlocks: EnhanceBuildingBlocks | undefined, // 24
 ]
 
 export type {
@@ -403,7 +407,7 @@ const atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
   atom.onMount?.(setAtom)
 
 const ensureAtomState: EnsureAtomState = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const atomStateMap = buildingBlocks[0]
   const atomOnInit = buildingBlocks[9]
   if (import.meta.env?.MODE !== 'production' && !atom) {
@@ -419,7 +423,7 @@ const ensureAtomState: EnsureAtomState = (store, atom) => {
 }
 
 const flushCallbacks: FlushCallbacks = (store) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const changedAtoms = buildingBlocks[3]
   const mountCallbacks = buildingBlocks[4]
@@ -457,7 +461,7 @@ const flushCallbacks: FlushCallbacks = (store) => {
 }
 
 const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const changedAtoms = buildingBlocks[3]
@@ -528,7 +532,7 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
 }
 
 const readAtomState: ReadAtomState = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const changedAtoms = buildingBlocks[3]
@@ -662,7 +666,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
 }
 
 const invalidateDependents: InvalidateDependents = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const ensureAtomState = buildingBlocks[11]
@@ -679,7 +683,7 @@ const invalidateDependents: InvalidateDependents = (store, atom) => {
 }
 
 const writeAtomState: WriteAtomState = (store, atom, ...args) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const changedAtoms = buildingBlocks[3]
   const storeHooks = buildingBlocks[6]
   const atomWrite = buildingBlocks[8]
@@ -731,7 +735,7 @@ const writeAtomState: WriteAtomState = (store, atom, ...args) => {
 }
 
 const mountDependencies: MountDependencies = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const changedAtoms = buildingBlocks[3]
   const storeHooks = buildingBlocks[6]
@@ -766,7 +770,7 @@ const mountDependencies: MountDependencies = (store, atom) => {
 }
 
 const mountAtom: MountAtom = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const mountCallbacks = buildingBlocks[4]
   const storeHooks = buildingBlocks[6]
@@ -830,7 +834,7 @@ const mountAtom: MountAtom = (store, atom) => {
 }
 
 const unmountAtom: UnmountAtom = (store, atom) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
@@ -866,7 +870,7 @@ const setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   atom,
   valueOrPromise,
 ) => {
-  const ensureAtomState = getBuildingBlocks(store)[11]
+  const ensureAtomState = getInternalBuildingBlocks(store)[11]
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
@@ -890,12 +894,12 @@ const setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
 }
 
 const storeGet: StoreGet = (store, atom) => {
-  const readAtomState = getBuildingBlocks(store)[14]
+  const readAtomState = getInternalBuildingBlocks(store)[14]
   return returnAtomValue(readAtomState(store, atom)) as any
 }
 
 const storeSet: StoreSet = (store, atom, ...args) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const flushCallbacks = buildingBlocks[12]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const writeAtomState = buildingBlocks[16]
@@ -908,7 +912,7 @@ const storeSet: StoreSet = (store, atom, ...args) => {
 }
 
 const storeSub: StoreSub = (store, atom, listener) => {
-  const buildingBlocks = getBuildingBlocks(store)
+  const buildingBlocks = getInternalBuildingBlocks(store)
   const flushCallbacks = buildingBlocks[12]
   const mountAtom = buildingBlocks[18]
   const unmountAtom = buildingBlocks[19]
@@ -925,28 +929,37 @@ const storeSub: StoreSub = (store, atom, listener) => {
 
 const buildingBlockMap = new WeakMap<Store, Readonly<BuildingBlocks>>()
 
-function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
-  const buildingBlocks = buildingBlockMap.get(store)
+const getInternalBuildingBlocks = (store: Store): Readonly<BuildingBlocks> => {
+  const buildingBlocks = buildingBlockMap.get(store)!
   if (import.meta.env?.MODE !== 'production' && !buildingBlocks) {
     throw new Error(
       'Store must be created by buildStore to read its building blocks',
     )
   }
-  return buildingBlocks!
+  return buildingBlocks
+}
+
+function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
+  const buildingBlocks = getInternalBuildingBlocks(store)
+  const enhanceBuildingBlocks = buildingBlocks[24]
+  if (enhanceBuildingBlocks) {
+    return enhanceBuildingBlocks(buildingBlocks)
+  }
+  return buildingBlocks
 }
 
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
   const store = {
     get(atom) {
-      const storeGet = getBuildingBlocks(store)[21]
+      const storeGet = getInternalBuildingBlocks(store)[21]
       return storeGet(store, atom)
     },
     set(atom, ...args) {
-      const storeSet = getBuildingBlocks(store)[22]
+      const storeSet = getInternalBuildingBlocks(store)[22]
       return storeSet(store, atom, ...args)
     },
     sub(atom, listener) {
-      const storeSub = getBuildingBlocks(store)[23]
+      const storeSub = getInternalBuildingBlocks(store)[23]
       return storeSub(store, atom, listener)
     },
   } as Store
@@ -980,6 +993,7 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       storeGet,
       storeSet,
       storeSub,
+      undefined,
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
