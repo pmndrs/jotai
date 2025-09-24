@@ -1,11 +1,4 @@
-import {
-  Component,
-  StrictMode,
-  Suspense,
-  version as reactVersion,
-  useEffect,
-  useState,
-} from 'react'
+import { Component, StrictMode, Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEventOrig from '@testing-library/user-event'
@@ -459,15 +452,9 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     await userEvent.click(screen.getByText('close'))
-    if (reactVersion.startsWith('17.')) {
-      expect(errorMessages).toContain(
-        'Error: Uncaught [Error: err_in_effect_cleanup]',
-      )
-    } else {
-      expect(
-        await screen.findByText('Errored: err_in_effect_cleanup'),
-      ).toBeInTheDocument()
-    }
+    expect(
+      await screen.findByText('Errored: err_in_effect_cleanup'),
+    ).toBeInTheDocument()
   })
 
   it('[DEV-ONLY] dobule setCount', async () => {
@@ -487,15 +474,9 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     await userEvent.click(screen.getByText('close'))
-    if (reactVersion.startsWith('17.')) {
-      expect(errorMessages).toContain(
-        'Error: Uncaught [Error: err_in_effect_cleanup]',
-      )
-    } else {
-      expect(
-        await screen.findByText('Errored: err_in_effect_cleanup'),
-      ).toBeInTheDocument()
-    }
+    expect(
+      await screen.findByText('Errored: err_in_effect_cleanup'),
+    ).toBeInTheDocument()
   })
 })
 
