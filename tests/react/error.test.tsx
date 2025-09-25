@@ -454,15 +454,15 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     expect(await screen.findByText('no error')).toBeInTheDocument()
-    expect(errorMessages).not.toContain(
-      'Error: Uncaught [Error: err_in_effect_cleanup]',
+    expect(errorMessages.some((m) => m.includes('err_in_effect_cleanup'))).toBe(
+      false,
     )
 
     await userEvent.click(screen.getByText('close'))
     if (reactVersion.startsWith('17.')) {
-      expect(errorMessages).toContain(
-        'Error: Uncaught [Error: err_in_effect_cleanup]',
-      )
+      expect(
+        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
+      ).toBe(true)
     } else {
       expect(
         await screen.findByText('Errored: err_in_effect_cleanup'),
@@ -482,15 +482,15 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     expect(await screen.findByText('no error')).toBeInTheDocument()
-    expect(errorMessages).not.toContain(
-      'Error: Uncaught [Error: err_in_effect_cleanup]',
+    expect(errorMessages.some((m) => m.includes('err_in_effect_cleanup'))).toBe(
+      false,
     )
 
     await userEvent.click(screen.getByText('close'))
     if (reactVersion.startsWith('17.')) {
-      expect(errorMessages).toContain(
-        'Error: Uncaught [Error: err_in_effect_cleanup]',
-      )
+      expect(
+        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
+      ).toBe(true)
     } else {
       expect(
         await screen.findByText('Errored: err_in_effect_cleanup'),
