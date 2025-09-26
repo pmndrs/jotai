@@ -1,11 +1,10 @@
 import { StrictMode } from 'react'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atomWithReducer } from 'jotai/vanilla/utils'
 
-it('atomWithReducer with optional action argument', async () => {
+it('atomWithReducer with optional action argument', () => {
   const reducer = (state: number, action?: 'INCREASE' | 'DECREASE') => {
     switch (action) {
       case 'INCREASE':
@@ -36,19 +35,19 @@ it('atomWithReducer with optional action argument', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch INCREASE'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch INCREASE'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch empty'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch empty'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch DECREASE'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch DECREASE'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 })
 
-it('atomWithReducer with non-optional action argument', async () => {
+it('atomWithReducer with non-optional action argument', () => {
   const reducer = (state: number, action: 'INCREASE' | 'DECREASE') => {
     switch (action) {
       case 'INCREASE':
@@ -76,11 +75,11 @@ it('atomWithReducer with non-optional action argument', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch INCREASE'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch INCREASE'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch DECREASE'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch DECREASE'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 })

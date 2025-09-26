@@ -1,10 +1,10 @@
 import { StrictMode } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { Provider, useAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 
-it('uses initial values from provider', async () => {
+it('uses initial values from provider', () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
 
@@ -32,13 +32,11 @@ it('uses initial values from provider', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-    expect(screen.getByText('pet: dog')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('pet: dog')).toBeInTheDocument()
 })
 
-it('only uses initial value from provider for specific atom', async () => {
+it('only uses initial value from provider for specific atom', () => {
   const countAtom = atom(1)
   const petAtom = atom('cat')
 
@@ -65,10 +63,8 @@ it('only uses initial value from provider for specific atom', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('pet: dog')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('pet: dog')).toBeInTheDocument()
 })
 
 it('renders correctly without children', () => {

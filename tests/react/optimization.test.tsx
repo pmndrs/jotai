@@ -1,11 +1,10 @@
 import { useEffect } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
-it('only relevant render function called (#156)', async () => {
+it('only relevant render function called (#156)', () => {
   const count1Atom = atom(0)
   const count2Atom = atom(0)
 
@@ -47,16 +46,14 @@ it('only relevant render function called (#156)', async () => {
   const viewCount1AfterMount = viewCount1
   const viewCount2AfterMount = viewCount2
 
-  await userEvent.click(screen.getByText('button1'))
-
+  fireEvent.click(screen.getByText('button1'))
   expect(screen.getByText('count1: 1')).toBeInTheDocument()
   expect(screen.getByText('count2: 0')).toBeInTheDocument()
 
   expect(viewCount1).toBe(viewCount1AfterMount + 1)
   expect(viewCount2).toBe(viewCount2AfterMount + 0)
 
-  await userEvent.click(screen.getByText('button2'))
-
+  fireEvent.click(screen.getByText('button2'))
   expect(screen.getByText('count1: 1')).toBeInTheDocument()
   expect(screen.getByText('count2: 1')).toBeInTheDocument()
 
@@ -64,7 +61,7 @@ it('only relevant render function called (#156)', async () => {
   expect(viewCount2).toBe(viewCount2AfterMount + 1)
 })
 
-it('only render once using atoms with write-only atom', async () => {
+it('only render once using atoms with write-only atom', () => {
   const count1Atom = atom(0)
   const count2Atom = atom(0)
   const incrementAtom = atom(null, (_get, set, _arg) => {
@@ -97,19 +94,19 @@ it('only render once using atoms with write-only atom', async () => {
     </>,
   )
 
-  expect(await screen.findByText('count1: 0, count2: 0')).toBeInTheDocument()
+  expect(screen.getByText('count1: 0, count2: 0')).toBeInTheDocument()
   const viewCountAfterMount = viewCount
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count1: 1, count2: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count1: 1, count2: 1')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 1)
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count1: 2, count2: 2')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count1: 2, count2: 2')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 2)
 })
 
-it('useless re-renders with static atoms (#355)', async () => {
+it('useless re-renders with static atoms (#355)', () => {
   // check out https://codesandbox.io/s/m82r5 to see the expected re-renders
   const countAtom = atom(0)
   const unrelatedAtom = atom(0)
@@ -135,19 +132,19 @@ it('useless re-renders with static atoms (#355)', async () => {
     </>,
   )
 
-  await screen.findByText('count: 0')
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
   const viewCountAfterMount = viewCount
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 1)
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 2)
 })
 
-it('does not re-render if value is the same (#1158)', async () => {
+it('does not re-render if value is the same (#1158)', () => {
   const countAtom = atom(0)
 
   let viewCount = 0
@@ -170,27 +167,27 @@ it('does not re-render if value is the same (#1158)', async () => {
     </>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
   const viewCountAfterMount = viewCount
 
-  await userEvent.click(screen.getByText('noop'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('noop'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 0)
 
-  await userEvent.click(screen.getByText('inc'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('inc'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 1)
 
-  await userEvent.click(screen.getByText('noop'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('noop'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 1)
 
-  await userEvent.click(screen.getByText('inc'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('inc'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
   expect(viewCount).toBe(viewCountAfterMount + 2)
 })
 
-it('no extra rerenders after commit with derived atoms (#1213)', async () => {
+it('no extra rerenders after commit with derived atoms (#1213)', () => {
   const baseAtom = atom({ count1: 0, count2: 0 })
   const count1Atom = atom((get) => get(baseAtom).count1)
   const count2Atom = atom((get) => get(baseAtom).count2)
@@ -243,30 +240,27 @@ it('no extra rerenders after commit with derived atoms (#1213)', async () => {
     </>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count1: 0')).toBeInTheDocument()
-    expect(screen.getByText('count2: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count1: 0')).toBeInTheDocument()
+  expect(screen.getByText('count2: 0')).toBeInTheDocument()
+
   expect(viewCount1 > 0).toBeTruthy()
   expect(viewCount2 > 0).toBeTruthy()
 
-  await userEvent.click(screen.getByText('inc1'))
-
+  fireEvent.click(screen.getByText('inc1'))
   expect(screen.getByText('count1: 1')).toBeInTheDocument()
   expect(screen.getByText('count2: 0')).toBeInTheDocument()
 
   expect(viewCount1).toBe(viewCount1AfterCommit)
 
-  await userEvent.click(screen.getByText('inc2'))
-
+  fireEvent.click(screen.getByText('inc2'))
   expect(screen.getByText('count1: 1')).toBeInTheDocument()
   expect(screen.getByText('count2: 1')).toBeInTheDocument()
 
   expect(viewCount2).toBe(viewCount2AfterCommit)
 
-  await userEvent.click(screen.getByText('inc1'))
-
+  fireEvent.click(screen.getByText('inc1'))
   expect(screen.getByText('count1: 2')).toBeInTheDocument()
   expect(screen.getByText('count2: 1')).toBeInTheDocument()
+
   expect(viewCount1).toBe(viewCount1AfterCommit)
 })
