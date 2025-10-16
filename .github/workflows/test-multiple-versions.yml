@@ -21,12 +21,12 @@ jobs:
           - 18.3.1
           - 19.0.0
           - 19.1.0
-          - 19.2.0-canary-3958d5d8-20250807
-          - 0.0.0-experimental-3958d5d8-20250807
+          - 19.2.0-canary-83c88ad4-20250923
+          - 0.0.0-experimental-83c88ad4-20250923
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 'lts/*'
           cache: 'pnpm'
