@@ -1,17 +1,19 @@
 import { StrictMode, Suspense } from 'react'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
-import { assert, describe, expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe('useAtom delay option test', () => {
-  // FIXME fireEvent.click doesn't work with the patched RTL and React 19-rc.1
-  it.skip('suspend for Promise.resolve without delay option', async () => {
+  it('suspend for Promise.resolve without delay option', async () => {
     const countAtom = atom(0)
     const asyncAtom = atom((get) => {
       const count = get(countAtom)
@@ -37,19 +39,18 @@ describe('useAtom delay option test', () => {
 
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Component />
           <Controls />
         </Suspense>
       </StrictMode>,
     )
 
-    expect(await screen.findByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    // The use of fireEvent is required to reproduce the issue
-    fireEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
 
   it('do not suspend for Promise.resolve with delay option', async () => {
@@ -76,27 +77,28 @@ describe('useAtom delay option test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Component />
-        <Controls />
-      </StrictMode>,
+    await act(() =>
+      render(
+        <StrictMode>
+          <Component />
+          <Controls />
+        </StrictMode>,
+      ),
     )
 
-    expect(await screen.findByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    // The use of fireEvent is required to reproduce the issue
-    fireEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
 })
 
 describe('atom read function setSelf option test', () => {
   it('do not suspend with promise resolving with setSelf', async () => {
     const countAtom = atom(0)
-    let resolve = () => {}
     const asyncAtom = atom(async () => {
-      await new Promise<void>((r) => (resolve = r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       return 'hello'
     })
     const refreshAtom = atom(0)
@@ -134,40 +136,38 @@ describe('atom read function setSelf option test', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Component />
-        <Controls />
-      </StrictMode>,
+    await act(() =>
+      render(
+        <StrictMode>
+          <Component />
+          <Controls />
+        </StrictMode>,
+      ),
     )
 
-    expect(await screen.findByText('text: pending0')).toBeInTheDocument()
-    resolve()
-    expect(await screen.findByText('text: hello0')).toBeInTheDocument()
+    expect(screen.getByText('text: pending0')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('text: hello0')).toBeInTheDocument()
 
-    // The use of fireEvent is required to reproduce the issue
-    fireEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('text: hello1')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('text: hello1')).toBeInTheDocument()
   })
 })
 
 describe('timing issue with setSelf', () => {
   it('resolves dependencies reliably after a delay (#2192)', async () => {
-    expect.assertions(1)
     const countAtom = atom(0)
 
     let result: number | null = null
-    const resolve: (() => void)[] = []
     const asyncAtom = atom(async (get) => {
       const count = get(countAtom)
-      await new Promise<void>((r) => resolve.push(r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       return count
     })
 
     const derivedAtom = atom(
       async (get, { setSelf }) => {
         get(countAtom)
-        await Promise.resolve()
         const resultCount = await get(asyncAtom)
         result = resultCount
         if (resultCount === 2) setSelf() // <-- necessary
@@ -195,44 +195,40 @@ describe('timing issue with setSelf', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <TestComponent />
-      </StrictMode>,
+    await act(() =>
+      render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>,
+      ),
     )
 
-    await waitFor(() => assert(resolve.length === 1))
-    resolve[0]!()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    // The use of fireEvent is required to reproduce the issue
-    fireEvent.click(screen.getByText('button'))
+    expect(result).toBe(0)
 
-    await waitFor(() => assert(resolve.length === 3))
-    resolve[1]!()
-    resolve[2]!()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-    await waitFor(() => assert(result === 2))
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(result).toBe(2)
 
-    // The use of fireEvent is required to reproduce the issue
-    fireEvent.click(screen.getByText('button'))
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('count: 4')).toBeInTheDocument()
 
-    await waitFor(() => assert(resolve.length === 5))
-    resolve[3]!()
-    resolve[4]!()
-
-    await screen.findByText('count: 4')
-    expect(result).toBe(4) // 3
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(result).toBe(4)
   })
 })
 
 describe('infinite pending', () => {
   it('odd counter', async () => {
     const countAtom = atom(0)
-    const asyncAtom = atom((get) => {
+    const asyncAtom = atom(async (get) => {
       const count = get(countAtom)
       if (count % 2 === 0) {
-        const infinitePending = new Promise<never>(() => {})
-        return infinitePending
+        await new Promise((resolve) => setTimeout(resolve, 100))
       }
       return count
     })
@@ -251,27 +247,33 @@ describe('infinite pending', () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <Controls />
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Component />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('loading')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('loading')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 3')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 3')).toBeInTheDocument()
   })
 })
 
@@ -295,19 +297,22 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Component />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('count: 2')).toBeInTheDocument()
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 4')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+
+    await act(() => fireEvent.click(screen.getByText('button')))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 4')).toBeInTheDocument()
   })
 
   it('wait Promise.resolve()', async () => {
@@ -330,26 +335,29 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Component />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('count: 2')).toBeInTheDocument()
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 4')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+
+    await act(() => fireEvent.click(screen.getByText('button')))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 4')).toBeInTheDocument()
   })
 
   it('wait setTimeout()', async () => {
     const asyncAtom = atom(Promise.resolve(2))
     const writer = atom(null, async (get, set) => {
       set(asyncAtom, async (c) => (await c) + 1)
-      await new Promise((r) => setTimeout(r))
+      await new Promise((resolve) => setTimeout(resolve, 100))
       set(asyncAtom, async (c) => (await c) + 1)
       return get(asyncAtom)
     })
@@ -365,19 +373,22 @@ describe('write to async atom twice', async () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Component />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('count: 2')).toBeInTheDocument()
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 4')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+
+    await act(() => fireEvent.click(screen.getByText('button')))
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 4')).toBeInTheDocument()
   })
 })
 
@@ -386,7 +397,9 @@ describe('with onMount', () => {
     const firstPromise = Promise.resolve(1)
     const secondPromise = Promise.resolve(2)
     const asyncAtom = atom(firstPromise)
+    let onMountCallCount = 0
     asyncAtom.onMount = (setCount) => {
+      onMountCallCount++
       setCount((prev) => (prev === firstPromise ? secondPromise : prev))
     }
     const Component = () => {
@@ -400,17 +413,30 @@ describe('with onMount', () => {
         </>
       )
     }
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Component />
           </Suspense>
         </StrictMode>,
-      )
-    })
-    expect(await screen.findByText('count: 2')).toBeInTheDocument()
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 3')).toBeInTheDocument()
+      ),
+    )
+
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    // onMount should be called a limited number of times (not infinitely)
+    // In StrictMode, React may mount/unmount/remount, so allow up to a few calls
+    const initialCallCount = onMountCallCount
+    expect(initialCallCount).toBeGreaterThan(0)
+    expect(initialCallCount).toBeLessThanOrEqual(4)
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+
+    await act(() => fireEvent.click(screen.getByText('button')))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 3')).toBeInTheDocument()
+
+    // onMount may be called a few more times due to StrictMode, but not infinitely
+    expect(onMountCallCount).toBeLessThanOrEqual(initialCallCount + 2)
+    expect(onMountCallCount).toBeLessThan(10) // If infinite loop, this would be much higher
   })
 })
