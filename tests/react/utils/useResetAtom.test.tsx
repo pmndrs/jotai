@@ -1,13 +1,12 @@
 import { StrictMode } from 'react'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { useResetAtom } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
 import { RESET, atomWithReducer, atomWithReset } from 'jotai/vanilla/utils'
 
-it('atomWithReset resets to its first value', async () => {
+it('atomWithReset resets to its first value', () => {
   const countAtom = atomWithReset(0)
 
   const Parent = () => {
@@ -31,30 +30,34 @@ it('atomWithReset resets to its first value', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('reset'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('set to 10'))
-  expect(await screen.findByText('count: 10')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('count: 11')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('count: 12')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('count: 13')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('reset'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('set to 10'))
+  expect(screen.getByText('count: 10')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 11')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 12')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 13')).toBeInTheDocument()
 })
 
-it('atomWithReset reset based on previous value', async () => {
+it('atomWithReset reset based on previous value', () => {
   const countAtom = atomWithReset(0)
 
   const Parent = () => {
@@ -81,20 +84,22 @@ it('atomWithReset reset based on previous value', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('increment till 3, then reset'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('increment till 3, then reset'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('increment till 3, then reset'))
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('increment till 3, then reset'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('increment till 3, then reset'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('increment till 3, then reset'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment till 3, then reset'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment till 3, then reset'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 })
 
-it('atomWithReset through read-write atom', async () => {
+it('atomWithReset through read-write atom', () => {
   const primitiveAtom = atomWithReset(0)
   const countAtom = atom(
     (get) => get(primitiveAtom),
@@ -120,16 +125,16 @@ it('atomWithReset through read-write atom', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('set to 10'))
-  expect(await screen.findByText('count: 10')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('set to 10'))
+  expect(screen.getByText('count: 10')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('reset'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('reset'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 })
 
-it('useResetAtom with custom atom', async () => {
+it('useResetAtom with custom atom', () => {
   const reducer = (state: number, action: 'INCREASE' | typeof RESET) => {
     switch (action) {
       case 'INCREASE':
@@ -161,15 +166,17 @@ it('useResetAtom with custom atom', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('reset'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('reset'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 })
