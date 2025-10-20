@@ -1270,3 +1270,19 @@ it('updates dependents when it eagerly recomputes dirty atoms', () => {
 
   expect(store.get(activeCountAtom)).toBe(1)
 })
+
+it('triggers the sub when setting inside an atom read', () => {
+  const store = createStore()
+  const basicAtom = atom(0)
+  const previousValueAtom = atom()
+  const testAtom = atom((get) => {
+    const newValue = get(basicAtom)
+    store.set(previousValueAtom, newValue)
+    const result = get(previousValueAtom)
+    return result
+  })
+  const spy = vi.fn()
+  store.sub(testAtom, spy)
+  store.set(basicAtom, 1)
+  expect(spy).toHaveBeenCalledTimes(1)
+})
