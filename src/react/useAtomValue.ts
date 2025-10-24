@@ -102,22 +102,25 @@ const createContinuablePromise = <T>(
 
 type Options = Parameters<typeof useStore>[0] & {
   delay?: number
+  unstable_defaultUse?: boolean
   unstable_promiseStatus?: boolean
 }
 
-export function useAtomValue<Value>(
+export function useAtomValue<Value, O extends Options = Options>(
   atom: Atom<Value>,
-  options?: Options,
-): Awaited<Value>
-
-export function useAtomValue<AtomType extends Atom<unknown>>(
-  atom: AtomType,
-  options?: Options,
-): Awaited<ExtractAtomValue<AtomType>>
+  options?: O,
+): O extends { unstable_defaultUse: true } ? Awaited<Value> : Value
+export function useAtomValue<Value, O extends Options = Options>(
+  atom: Atom<Value>,
+  options?: O,
+): O extends { unstable_defaultUse: true } ? Awaited<Value> : Value
 
 export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
-  const { delay, unstable_promiseStatus: promiseStatus = !React.use } =
-    options || {}
+  const {
+    delay,
+    unstable_promiseStatus: promiseStatus = !React.use,
+    unstable_defaultUse = true,
+  } = options || {}
   const store = useStore(options)
 
   const [[valueFromReducer, storeFromReducer, atomFromReducer], rerender] =
@@ -174,7 +177,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
     if (promiseStatus) {
       attachPromiseStatus(promise)
     }
-    return use(promise)
+    return unstable_defaultUse ? use(promise) : promise
   }
   return value as Awaited<Value>
 }
