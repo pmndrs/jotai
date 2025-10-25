@@ -722,7 +722,7 @@ it('Should bail for derived async chains (#877)', async () => {
   expect(syncAtomCount).toBe(1)
 })
 
-it('update correctly with async updates (#1250)', () => {
+it('update correctly with async updates (#1250)', async () => {
   const countAtom = atom(0)
 
   const countIsGreaterThanOneAtom = atom((get) => get(countAtom) > 1)
@@ -760,7 +760,7 @@ it('update correctly with async updates (#1250)', () => {
   expect(screen.getByText('countIsGreaterThanOne: false')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('Increment Count Twice'))
-  act(() => vi.advanceTimersByTime(0))
+  await act(() => vi.advanceTimersByTime(0))
   expect(screen.getByText('alsoCount: 2')).toBeInTheDocument()
   expect(screen.getByText('countIsGreaterThanOne: true')).toBeInTheDocument()
 })
@@ -1012,13 +1012,13 @@ it('works with async dependencies (#2565)', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <App />
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
   // FIXME this is not working
   // await screen.findByText('loading')
