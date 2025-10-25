@@ -77,18 +77,16 @@ describe('useAtom delay option test', () => {
       )
     }
 
-    await act(() =>
-      render(
-        <StrictMode>
-          <Component />
-          <Controls />
-        </StrictMode>,
-      ),
+    render(
+      <StrictMode>
+        <Component />
+        <Controls />
+      </StrictMode>,
     )
 
     expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
@@ -136,20 +134,18 @@ describe('atom read function setSelf option test', () => {
       )
     }
 
-    await act(() =>
-      render(
-        <StrictMode>
-          <Component />
-          <Controls />
-        </StrictMode>,
-      ),
+    render(
+      <StrictMode>
+        <Component />
+        <Controls />
+      </StrictMode>,
     )
 
     expect(screen.getByText('text: pending0')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('text: hello0')).toBeInTheDocument()
 
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
     expect(screen.getByText('text: hello1')).toBeInTheDocument()
   })
 })
@@ -195,29 +191,27 @@ describe('timing issue with setSelf', () => {
       )
     }
 
-    await act(() =>
-      render(
-        <StrictMode>
-          <TestComponent />
-        </StrictMode>,
-      ),
+    render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
     )
 
-    await act(() => vi.advanceTimersByTimeAsync(100))
+    await vi.advanceTimersByTimeAsync(100)
     expect(screen.getByText('count: 0')).toBeInTheDocument()
 
     expect(result).toBe(0)
 
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
     expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-    await act(() => vi.advanceTimersByTimeAsync(100))
+    await vi.advanceTimersByTimeAsync(100)
     expect(result).toBe(2)
 
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
     expect(screen.getByText('count: 4')).toBeInTheDocument()
 
-    await act(() => vi.advanceTimersByTimeAsync(100))
+    await vi.advanceTimersByTimeAsync(100)
     expect(result).toBe(4)
   })
 })
@@ -307,7 +301,7 @@ describe('write to async atom twice', async () => {
       ),
     )
 
-    await act(() => vi.advanceTimersByTimeAsync(0))
+    await vi.advanceTimersByTimeAsync(0)
     expect(screen.getByText('count: 2')).toBeInTheDocument()
 
     await act(() => fireEvent.click(screen.getByText('button')))
@@ -345,10 +339,10 @@ describe('write to async atom twice', async () => {
       ),
     )
 
-    await act(() => vi.advanceTimersByTimeAsync(0))
+    await vi.advanceTimersByTimeAsync(0)
     expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 4')).toBeInTheDocument()
   })
@@ -383,10 +377,10 @@ describe('write to async atom twice', async () => {
       ),
     )
 
-    await act(() => vi.advanceTimersByTimeAsync(0))
+    await vi.advanceTimersByTimeAsync(0)
     expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 4')).toBeInTheDocument()
   })
@@ -413,6 +407,7 @@ describe('with onMount', () => {
         </>
       )
     }
+
     await act(() =>
       render(
         <StrictMode>
