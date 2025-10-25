@@ -1,10 +1,17 @@
 import { Component, StrictMode, Suspense } from 'react'
 import type { ReactNode } from 'react'
-import { act, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 it('useAtomValue basic test', async () => {
   const countAtom = atom(0)
@@ -27,31 +34,9 @@ it('useAtomValue basic test', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('dispatch'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
-})
-
-it('useAtomValue with async atom (promise)', async () => {
-  const asyncAtom = atom(async () => 42)
-
-  const AsyncComponent = () => {
-    const value = useAtomValue(asyncAtom)
-
-    return <div>value: {value}</div>
-  }
-
-  await act(async () => {
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <AsyncComponent />
-        </Suspense>
-      </StrictMode>,
-    )
-  })
-
-  expect(await screen.findByText('value: 42')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 class ErrorBoundary extends Component<
@@ -96,7 +81,7 @@ it('useAtomValue with error throwing atom', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('error: fail')).toBeInTheDocument()
+  expect(screen.getByText('error: fail')).toBeInTheDocument()
 })
 
 it('useAtomValue with atom returning object', async () => {
@@ -118,5 +103,33 @@ it('useAtomValue with atom returning object', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('obj: 1,2')).toBeInTheDocument()
+  expect(screen.getByText('obj: 1,2')).toBeInTheDocument()
+})
+
+it('useAtomValue with async atom (promise)', async () => {
+  const asyncAtom = atom(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    return 42
+  })
+
+  const AsyncComponent = () => {
+    const value = useAtomValue(asyncAtom)
+
+    return <div>value: {value}</div>
+  }
+
+  await act(() =>
+    render(
+      <StrictMode>
+        <Suspense fallback={<div>loading</div>}>
+          <AsyncComponent />
+        </Suspense>
+      </StrictMode>,
+    ),
+  )
+
+  expect(screen.getByText('loading')).toBeInTheDocument()
+
+  await act(() => vi.advanceTimersByTimeAsync(10))
+  expect(screen.getByText('value: 42')).toBeInTheDocument()
 })

@@ -1,20 +1,21 @@
 import { StrictMode } from 'react'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useReducerAtom } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
 
 let savedConsoleWarn: any
+
 beforeEach(() => {
   savedConsoleWarn = console.warn
   console.warn = vi.fn()
 })
+
 afterEach(() => {
   console.warn = savedConsoleWarn
 })
 
-it('useReducerAtom with no action argument', async () => {
+it('useReducerAtom with no action argument', () => {
   const countAtom = atom(0)
   const reducer = (state: number) => state + 2
 
@@ -34,16 +35,16 @@ it('useReducerAtom with no action argument', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch'))
-  expect(await screen.findByText('count: 4')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('count: 4')).toBeInTheDocument()
 })
 
-it('useReducerAtom with optional action argument', async () => {
+it('useReducerAtom with optional action argument', () => {
   const countAtom = atom(0)
   const reducer = (state: number, action?: 'INCREASE' | 'DECREASE') => {
     switch (action) {
@@ -74,19 +75,19 @@ it('useReducerAtom with optional action argument', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch INCREASE'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch INCREASE'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch empty'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch empty'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch DECREASE'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch DECREASE'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 })
 
-it('useReducerAtom with non-optional action argument', async () => {
+it('useReducerAtom with non-optional action argument', () => {
   const countAtom = atom(0)
   const reducer = (state: number, action: 'INCREASE' | 'DECREASE') => {
     switch (action) {
@@ -114,11 +115,11 @@ it('useReducerAtom with non-optional action argument', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch INCREASE'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch INCREASE'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch DECREASE'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch DECREASE'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 })

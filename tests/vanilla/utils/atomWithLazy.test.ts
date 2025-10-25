@@ -2,7 +2,7 @@ import { expect, it, vi } from 'vitest'
 import { createStore } from 'jotai/vanilla'
 import { atomWithLazy } from 'jotai/vanilla/utils'
 
-it('initializes on first store get', async () => {
+it('initializes on first store get', () => {
   const storeA = createStore()
   const storeB = createStore()
 
@@ -22,7 +22,7 @@ it('initializes on first store get', async () => {
   expect(initializer).toHaveBeenCalledTimes(2)
 })
 
-it('is writable', async () => {
+it('is writable', () => {
   const store = createStore()
   const anAtom = atomWithLazy(() => 0)
 
@@ -31,7 +31,7 @@ it('is writable', async () => {
   expect(store.get(anAtom)).toEqual(123)
 })
 
-it('should work with a set state action', async () => {
+it('should work with a set state action', () => {
   const store = createStore()
   const anAtom = atomWithLazy(() => 4)
 
