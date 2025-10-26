@@ -170,13 +170,16 @@ it('loadable can use resolved promises synchronously', async () => {
     return <div>Ready</div>
   }
 
-  const { rerender } = render(
-    <StrictMode>
-      <Suspense fallback={<div>loading</div>}>
-        <ResolveAtomComponent />
-      </Suspense>
-    </StrictMode>,
-  )
+  let result: ReturnType<typeof render>
+  await act(async () => {
+    result = render(
+      <StrictMode>
+        <Suspense fallback={<div>loading</div>}>
+          <ResolveAtomComponent />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
   await act(() => vi.advanceTimersByTimeAsync(0))
   if (IS_REACT18 || IS_REACT19) {
@@ -190,7 +193,7 @@ it('loadable can use resolved promises synchronously', async () => {
     expect(screen.getByText('Ready')).toBeInTheDocument()
   }
 
-  rerender(
+  result!.rerender(
     <StrictMode>
       <LoadableComponent
         effectCallback={effectCallback}
