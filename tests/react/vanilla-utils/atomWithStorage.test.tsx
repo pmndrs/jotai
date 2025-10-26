@@ -270,13 +270,13 @@ describe('atomWithStorage (async)', () => {
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 10')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('button'))
+    await act(() => fireEvent.click(screen.getByText('button')))
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 11')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(asyncStorageData.count).toBe(11)
 
-    fireEvent.click(screen.getByText('reset'))
+    await act(() => fireEvent.click(screen.getByText('reset')))
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 1')).toBeInTheDocument()
     expect(asyncStorageData.count).toBeUndefined()
@@ -298,12 +298,14 @@ describe('atomWithStorage (async)', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
-          <Counter />
-        </Suspense>
-      </StrictMode>,
+    await act(() =>
+      render(
+        <StrictMode>
+          <Suspense fallback={<div>loading</div>}>
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      ),
     )
 
     expect(screen.getByText('loading')).toBeInTheDocument()
