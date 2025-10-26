@@ -339,10 +339,10 @@ describe('write to async atom twice', async () => {
       ),
     )
 
-    await vi.advanceTimersByTimeAsync(0)
+    await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('button'))
+    await act(() => fireEvent.click(screen.getByText('button')))
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 4')).toBeInTheDocument()
   })
@@ -380,7 +380,7 @@ describe('write to async atom twice', async () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('button'))
+    await act(() => fireEvent.click(screen.getByText('button')))
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 4')).toBeInTheDocument()
   })
