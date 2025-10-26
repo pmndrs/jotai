@@ -71,7 +71,7 @@ it('does not show async stale result', async () => {
 
   expect(committed).toEqual([0])
 
-  fireEvent.click(screen.getByText('button'))
+  await act(() => fireEvent.click(screen.getByText('button')))
   expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
   await act(() => vi.advanceTimersByTimeAsync(100))
@@ -137,7 +137,7 @@ it('does not show async stale result on derived atom', async () => {
   expect(screen.getByText('async value: null')).toBeInTheDocument()
   expect(screen.getByText('derived value: null')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByText('button'))
+  await act(() => fireEvent.click(screen.getByText('button')))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(screen.getByText('loading async value')).toBeInTheDocument()
   expect(screen.getByText('loading derived value')).toBeInTheDocument()
@@ -355,11 +355,11 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
   await act(() => vi.advanceTimersByTimeAsync(1000))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByText('button'))
+  await act(() => fireEvent.click(screen.getByText('button')))
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('no child')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByText('button'))
+  await act(() => fireEvent.click(screen.getByText('button')))
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('count: 2')).toBeInTheDocument()
 })
@@ -507,7 +507,7 @@ it('async get with another dep and useEffect on parent', async () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(screen.getByText('async: 1')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByText('button'))
+  await act(() => fireEvent.click(screen.getByText('button')))
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('count: 2')).toBeInTheDocument()
   expect(screen.getByText('async: 2')).toBeInTheDocument()
@@ -553,7 +553,7 @@ it('set promise atom value on write (#304)', async () => {
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByText('button'))
+  await act(() => fireEvent.click(screen.getByText('button')))
   expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
@@ -594,7 +594,7 @@ it('uses async atom double chain (#306)', async () => {
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('count: 0, delayed: 0')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByText('button'))
+  await act(() => fireEvent.click(screen.getByText('button')))
   expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('count: 1, delayed: 1')).toBeInTheDocument()
@@ -1097,9 +1097,9 @@ it('update unmounted async atom with intermediate atom', async () => {
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('derived: 2')).toBeInTheDocument()
 
-  fireEvent.click(screen.getByText('toggle enabled'))
+  await act(() => fireEvent.click(screen.getByText('toggle enabled')))
   await act(() => vi.advanceTimersByTimeAsync(0))
-  fireEvent.click(screen.getByText('increment count'))
+  await act(() => fireEvent.click(screen.getByText('increment count')))
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('derived: -1')).toBeInTheDocument()
 
