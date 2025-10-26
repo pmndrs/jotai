@@ -1027,10 +1027,12 @@ it('works with async dependencies (#2565)', async () => {
   expect(screen.getByText('count: 100')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('Count Up')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('count: 101')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('Count Up')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('count: 102')).toBeInTheDocument()
 })

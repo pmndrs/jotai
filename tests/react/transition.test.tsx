@@ -61,7 +61,8 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       await act(() => vi.advanceTimersByTimeAsync(100))
       expect(screen.getByText('delayed: 0')).toBeInTheDocument()
 
-      await act(() => fireEvent.click(screen.getByText('button')))
+      fireEvent.click(screen.getByText('button'))
+      expect(screen.getByText('delayed: 0')).toBeInTheDocument()
       await act(() => vi.advanceTimersByTimeAsync(100))
       expect(screen.getByText('delayed: 1')).toBeInTheDocument()
 

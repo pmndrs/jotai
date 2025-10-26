@@ -57,14 +57,17 @@ describe('abortable atom test', () => {
 
     expect(abortedCount).toBe(0)
 
-    await act(() => fireEvent.click(screen.getByText('button')))
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 2')).toBeInTheDocument()
 
     expect(abortedCount).toBe(1)
 
     await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 3')).toBeInTheDocument()
 
@@ -117,14 +120,17 @@ describe('abortable atom test', () => {
 
     expect(abortedCount).toBe(0)
 
-    await act(() => fireEvent.click(screen.getByText('button')))
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 2')).toBeInTheDocument()
 
     expect(abortedCount).toBe(1)
 
     await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 3')).toBeInTheDocument()
 
@@ -178,6 +184,7 @@ describe('abortable atom test', () => {
     expect(abortedCount).toBe(0)
 
     await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => fireEvent.click(screen.getByText('toggle')))
     expect(screen.getByText('hidden')).toBeInTheDocument()
 
@@ -225,12 +232,15 @@ describe('abortable atom test', () => {
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    await act(() => fireEvent.click(screen.getByText('button')))
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 2')).toBeInTheDocument()
 
     await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 3')).toBeInTheDocument()
   })

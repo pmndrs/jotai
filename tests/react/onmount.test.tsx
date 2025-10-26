@@ -495,10 +495,10 @@ it('create atom with onMount in async get', async () => {
   expect(screen.getByText('count: 10')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('button')))
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 11')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('button')))
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 12')).toBeInTheDocument()
 })

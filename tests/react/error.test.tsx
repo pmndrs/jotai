@@ -588,7 +588,7 @@ describe('error recovery', () => {
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('Errored: An error occurred')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('increment'))
+    await act(() => fireEvent.click(screen.getByText('increment')))
     await act(() => fireEvent.click(screen.getByText('retry')))
     expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(100))
