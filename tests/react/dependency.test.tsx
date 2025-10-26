@@ -77,7 +77,7 @@ it('works a primitive atom and a dependent async atom', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -702,7 +702,7 @@ it('Should bail for derived async chains (#877)', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Input />
           <ForceValue />
         </Suspense>
@@ -1005,7 +1005,7 @@ it('works with async dependencies (#2565)', async () => {
     return (
       <div>
         <button onClick={up}>Count Up</button>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Count />
         </Suspense>
       </div>

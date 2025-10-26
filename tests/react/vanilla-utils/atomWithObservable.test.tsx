@@ -78,7 +78,7 @@ it('count state', () => {
 
   render(
     <StrictMode>
-      <Suspense fallback="loading">
+      <Suspense fallback={<div>loading</div>}>
         <Counter />
       </Suspense>
     </StrictMode>,
@@ -103,7 +103,7 @@ it('writable count state', () => {
 
   render(
     <StrictMode>
-      <Suspense fallback="loading">
+      <Suspense fallback={<div>loading</div>}>
         <Counter />
       </Suspense>
     </StrictMode>,
@@ -137,7 +137,7 @@ it('writable count state without initial value', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <CounterValue />
         </Suspense>
         <CounterButton />
@@ -183,7 +183,7 @@ it('writable count state with delayed value', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -217,7 +217,7 @@ it('only subscribe once per atom', async () => {
     () =>
       ({ rerender } = render(
         <>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Counter />
           </Suspense>
         </>,
@@ -234,7 +234,7 @@ it('only subscribe once per atom', async () => {
 
   rerender!(
     <>
-      <Suspense fallback="loading">
+      <Suspense fallback={<div>loading</div>}>
         <Counter />
       </Suspense>
     </>,
@@ -269,7 +269,7 @@ it('cleanup subscription', async () => {
     () =>
       ({ rerender } = render(
         <StrictMode>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Counter />
           </Suspense>
         </StrictMode>,
@@ -310,7 +310,7 @@ it('resubscribe on remount', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Toggle>
             <Counter />
           </Toggle>
@@ -369,7 +369,7 @@ it('writable count state with initialValue', () => {
 
   render(
     <StrictMode>
-      <Suspense fallback="loading">
+      <Suspense fallback={<div>loading</div>}>
         <Counter />
       </Suspense>
     </StrictMode>,
@@ -403,7 +403,7 @@ it('writable count state with error', async () => {
     render(
       <StrictMode>
         <ErrorBoundary>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Counter />
           </Suspense>
         </ErrorBoundary>
@@ -501,7 +501,7 @@ it('with initially emitted undefined value', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -542,7 +542,7 @@ it("don't omit values emitted between init and mount", async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -610,7 +610,7 @@ describe('error handling', () => {
       render(
         <StrictMode>
           <ErrorBoundary>
-            <Suspense fallback="loading">
+            <Suspense fallback={<div>loading</div>}>
               <Counter />
             </Suspense>
           </ErrorBoundary>
@@ -656,7 +656,7 @@ describe('error handling', () => {
       }
       return (
         <ErrorBoundary retry={retry}>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Counter />
           </Suspense>
         </ErrorBoundary>
@@ -747,7 +747,7 @@ describe('error handling', () => {
       }
       return (
         <ErrorBoundary retry={retry}>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Counter />
           </Suspense>
         </ErrorBoundary>
@@ -796,7 +796,7 @@ describe('wonka', () => {
 
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -830,7 +830,7 @@ describe('wonka', () => {
       render(
         <StrictMode>
           <Controls />
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Counter />
           </Suspense>
         </StrictMode>,
@@ -917,7 +917,7 @@ it('should update continuous values in React 19', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,

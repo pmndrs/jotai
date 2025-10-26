@@ -172,7 +172,7 @@ it('loadable can use resolved promises synchronously', async () => {
 
   const { rerender } = render(
     <StrictMode>
-      <Suspense fallback="loading">
+      <Suspense fallback={<div>loading</div>}>
         <ResolveAtomComponent />
       </Suspense>
     </StrictMode>,

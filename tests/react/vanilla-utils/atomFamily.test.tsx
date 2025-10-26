@@ -242,7 +242,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,

@@ -259,7 +259,7 @@ describe('atomWithStorage (async)', () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Counter />
           </Suspense>
         </StrictMode>,
@@ -300,7 +300,7 @@ describe('atomWithStorage (async)', () => {
 
     render(
       <StrictMode>
-        <Suspense fallback="loading">
+        <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -792,7 +792,7 @@ describe('with custom async storage', () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback="loading">
+          <Suspense fallback={<div>loading</div>}>
             <Component />
           </Suspense>
         </StrictMode>,
