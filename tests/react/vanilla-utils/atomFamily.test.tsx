@@ -264,7 +264,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   expect(screen.getByText('derived: 13')).toBeInTheDocument()
 })
 
-it('setShouldRemove with custom equality function', async () => {
+it('setShouldRemove with custom equality function', () => {
   const myFamily = atomFamily(
     (num: { index: number }) => atom(num),
     (l, r) => l.index === r.index,

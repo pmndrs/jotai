@@ -306,6 +306,8 @@ describe('atomWithStorage (async)', () => {
       </StrictMode>,
     )
 
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 20')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('button'))
@@ -435,7 +437,7 @@ describe('atomWithStorage (with browser storage)', () => {
     window.addEventListener = addEventListener
   })
 
-  it('createJSONStorage subscribes to specific window storage events', async () => {
+  it('createJSONStorage subscribes to specific window storage events', () => {
     const store = createStore()
     const mockNativeStorage = Object.create(window.Storage.prototype)
     mockNativeStorage.setItem = vi.fn() as Storage['setItem']
@@ -613,7 +615,7 @@ describe('atomWithStorage (with non-browser storage)', () => {
     window.addEventListener = addEventListener
   })
 
-  it('createJSONStorage avoids attaching event handler for non-browser storage', async () => {
+  it('createJSONStorage avoids attaching event handler for non-browser storage', () => {
     const store = createStore()
     const mockNonNativeStorage = {
       setItem: vi.fn() as Storage['setItem'],
@@ -658,7 +660,7 @@ describe('withStorageValidator', () => {
 })
 
 describe('with subscribe method in string storage', () => {
-  it('createJSONStorage subscriber is called correctly', async () => {
+  it('createJSONStorage subscriber is called correctly', () => {
     const store = createStore()
 
     const subscribe = vi.fn()
