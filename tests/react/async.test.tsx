@@ -796,9 +796,11 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
 
 it('should override promise as atom value (#430)', async () => {
   const countAtom = atom(new Promise<number>(() => {}))
-  const setCountAtom = atom(null, async (_get, set, arg: number) => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
-    set(countAtom, Promise.resolve(arg))
+  const setCountAtom = atom(null, (_get, set, arg: number) => {
+    set(
+      countAtom,
+      new Promise<number>((resolve) => setTimeout(() => resolve(arg), 100)),
+    )
   })
 
   const Counter = () => {
