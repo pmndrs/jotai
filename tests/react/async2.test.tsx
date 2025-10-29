@@ -209,10 +209,11 @@ describe('timing issue with setSelf', () => {
 describe('infinite pending', () => {
   it('odd counter', async () => {
     const countAtom = atom(0)
-    const asyncAtom = atom(async (get) => {
+    const asyncAtom = atom((get) => {
       const count = get(countAtom)
       if (count % 2 === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        const infinitePending = new Promise<never>(() => {})
+        return infinitePending
       }
       return count
     })
@@ -243,8 +244,6 @@ describe('infinite pending', () => {
     )
 
     expect(screen.getByText('loading')).toBeInTheDocument()
-    await act(() => vi.advanceTimersByTimeAsync(100))
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
     await act(() => fireEvent.click(screen.getByText('button')))
     await act(() => vi.advanceTimersByTimeAsync(0))
@@ -252,8 +251,6 @@ describe('infinite pending', () => {
 
     await act(() => fireEvent.click(screen.getByText('button')))
     expect(screen.getByText('loading')).toBeInTheDocument()
-    await act(() => vi.advanceTimersByTimeAsync(100))
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
 
     await act(() => fireEvent.click(screen.getByText('button')))
     await act(() => vi.advanceTimersByTimeAsync(0))
