@@ -1049,7 +1049,7 @@ it('async atom double chain with setTimeout', async () => {
     )
   }
 
-  await act(async () =>
+  await act(() =>
     render(
       <StrictMode>
         <Parent />
