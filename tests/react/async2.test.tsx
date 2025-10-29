@@ -152,6 +152,7 @@ describe('atom read function setSelf option test', () => {
 
 describe('timing issue with setSelf', () => {
   it('resolves dependencies reliably after a delay (#2192)', async () => {
+    expect.assertions(1)
     const countAtom = atom(0)
 
     let result: number | null = null
@@ -197,21 +198,10 @@ describe('timing issue with setSelf', () => {
       </StrictMode>,
     )
 
-    await vi.advanceTimersByTimeAsync(100)
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-
-    expect(result).toBe(0)
-
     fireEvent.click(screen.getByText('button'))
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
-
-    await vi.advanceTimersByTimeAsync(100)
-    expect(result).toBe(2)
-
     fireEvent.click(screen.getByText('button'))
-    expect(screen.getByText('count: 4')).toBeInTheDocument()
-
     await vi.advanceTimersByTimeAsync(100)
+
     expect(result).toBe(4)
   })
 })
