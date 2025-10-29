@@ -450,9 +450,11 @@ it('async get and useEffect on parent', async () => {
 
   await act(() =>
     render(
-      <Suspense fallback={<div>loading</div>}>
-        <Parent />
-      </Suspense>,
+      <>
+        <Suspense fallback={<div>loading</div>}>
+          <Parent />
+        </Suspense>
+      </>,
     ),
   )
 
@@ -495,9 +497,11 @@ it('async get with another dep and useEffect on parent', async () => {
 
   await act(() =>
     render(
-      <Suspense fallback={<div>loading</div>}>
-        <Parent />
-      </Suspense>,
+      <>
+        <Suspense fallback={<div>loading</div>}>
+          <Parent />
+        </Suspense>
+      </>,
     ),
   )
 
@@ -541,9 +545,11 @@ it('set promise atom value on write (#304)', async () => {
 
   await act(() =>
     render(
-      <Suspense fallback={<div>loading</div>}>
-        <Parent />
-      </Suspense>,
+      <StrictMode>
+        <Suspense fallback={<div>loading</div>}>
+          <Parent />
+        </Suspense>
+      </StrictMode>,
     ),
   )
 
@@ -584,9 +590,11 @@ it('uses async atom double chain (#306)', async () => {
 
   await act(() =>
     render(
-      <Suspense fallback={<div>loading</div>}>
-        <Counter />
-      </Suspense>,
+      <StrictMode>
+        <Suspense fallback={<div>loading</div>}>
+          <Counter />
+        </Suspense>
+      </StrictMode>,
     ),
   )
 
@@ -660,9 +668,11 @@ it('a derived atom from a newly created async atom (#351)', async () => {
 
   await act(() =>
     render(
-      <Suspense fallback={<div>loading</div>}>
-        <Counter />
-      </Suspense>,
+      <>
+        <Suspense fallback={<div>loading</div>}>
+          <Counter />
+        </Suspense>
+      </>,
     ),
   )
 
@@ -801,7 +811,7 @@ it('should override promise as atom value (#430)', async () => {
     return <button onClick={() => setCount(1)}>button</button>
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback={<div>loading</div>}>
@@ -809,8 +819,8 @@ it('should override promise as atom value (#430)', async () => {
         </Suspense>
         <Control />
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
   expect(screen.getByText('loading')).toBeInTheDocument()
 
@@ -844,7 +854,7 @@ it('combine two promise atom values (#442)', async () => {
     return null
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback={<div>loading</div>}>
@@ -852,8 +862,8 @@ it('combine two promise atom values (#442)', async () => {
         </Suspense>
         <Control />
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
   expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
@@ -882,7 +892,7 @@ it('set two promise atoms at once', async () => {
     return <button onClick={() => setCounts()}>button</button>
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback={<div>loading</div>}>
@@ -890,8 +900,8 @@ it('set two promise atoms at once', async () => {
         </Suspense>
         <Control />
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
   expect(screen.getByText('loading')).toBeInTheDocument()
   fireEvent.click(screen.getByText('button'))
@@ -976,7 +986,13 @@ it('async atom double chain without setTimeout (#751)', async () => {
     )
   }
 
-  await act(() => render(<Parent />))
+  await act(() =>
+    render(
+      <StrictMode>
+        <Parent />
+      </StrictMode>,
+    ),
+  )
 
   expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
@@ -1031,7 +1047,13 @@ it('async atom double chain with setTimeout', async () => {
     )
   }
 
-  await act(async () => render(<Parent />))
+  await act(async () =>
+    render(
+      <StrictMode>
+        <Parent />
+      </StrictMode>,
+    ),
+  )
 
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('loading')).toBeInTheDocument()
@@ -1084,12 +1106,12 @@ it('update unmounted async atom with intermediate atom', async () => {
 
   await act(() =>
     render(
-      <>
+      <StrictMode>
         <Suspense fallback={<div>loading</div>}>
           <DerivedCounter />
         </Suspense>
         <Control />
-      </>,
+      </StrictMode>,
     ),
   )
 
@@ -1140,7 +1162,11 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
     )
   }
 
-  render(<App />)
+  render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
 
   await act(() => vi.advanceTimersByTime(100))
   expect(screen.getByText('aName: alpha')).toBeInTheDocument()

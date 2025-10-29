@@ -72,15 +72,15 @@ it('simple async get default', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
   expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
@@ -167,15 +167,15 @@ it('refresh async atoms to default values', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback={<div>loading</div>}>
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
   expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
@@ -219,7 +219,11 @@ it('can be set synchronously by passing value', () => {
     )
   }
 
-  render(<Counter />)
+  render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>,
+  )
 
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 

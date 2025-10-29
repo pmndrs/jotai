@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
@@ -233,11 +233,11 @@ it('no extra rerenders after commit with derived atoms (#1213)', () => {
   }
 
   render(
-    <>
+    <StrictMode>
       <Counter1 />
       <Counter2 />
       <Control />
-    </>,
+    </StrictMode>,
   )
 
   expect(screen.getByText('count1: 0')).toBeInTheDocument()

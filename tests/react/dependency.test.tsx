@@ -42,7 +42,11 @@ it('works with 2 level dependencies', () => {
     )
   }
 
-  render(<Counter />)
+  render(
+    <>
+      <Counter />
+    </>,
+  )
 
   expect(
     screen.getByText('commits: 1, count: 1, doubled: 2, tripled: 6'),

@@ -27,7 +27,11 @@ it('one atom, one effect', () => {
     )
   }
 
-  render(<Counter />)
+  render(
+    <>
+      <Counter />
+    </>,
+  )
 
   expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(onMountFn).toHaveBeenCalledTimes(1)
@@ -64,7 +68,11 @@ it('two atoms, one each', () => {
     )
   }
 
-  render(<Counter />)
+  render(
+    <>
+      <Counter />
+    </>,
+  )
 
   expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(screen.getByText('count2: 1')).toBeInTheDocument()
@@ -95,7 +103,11 @@ it('one derived atom, one onMount', () => {
     )
   }
 
-  render(<Counter />)
+  render(
+    <>
+      <Counter />
+    </>,
+  )
 
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 
@@ -128,7 +140,11 @@ it('mount/unmount test', () => {
     )
   }
 
-  render(<Display />)
+  render(
+    <>
+      <Display />
+    </>,
+  )
 
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
@@ -174,7 +190,11 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
     )
   }
 
-  render(<Display />)
+  render(
+    <>
+      <Display />
+    </>,
+  )
 
   expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
   expect(derivedOnUnMountFn).toHaveBeenCalledTimes(0)
@@ -301,9 +321,11 @@ it('mount/unmount test with async atom', async () => {
 
   await act(() =>
     render(
-      <Suspense fallback={<div>loading</div>}>
-        <Display />
-      </Suspense>,
+      <>
+        <Suspense fallback={<div>loading</div>}>
+          <Display />
+        </Suspense>
+      </>,
     ),
   )
 
