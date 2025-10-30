@@ -245,14 +245,14 @@ describe('infinite pending', () => {
 
     expect(screen.getByText('loading')).toBeInTheDocument()
 
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 1')).toBeInTheDocument()
 
     await act(() => fireEvent.click(screen.getByText('button')))
     expect(screen.getByText('loading')).toBeInTheDocument()
 
-    await act(() => fireEvent.click(screen.getByText('button')))
+    fireEvent.click(screen.getByText('button'))
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 3')).toBeInTheDocument()
   })
