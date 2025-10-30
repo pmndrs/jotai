@@ -233,7 +233,7 @@ it('uses multiple async atoms at once', async () => {
     return 'ready'
   })
   const someAtom2 = atom(async () => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
+    await new Promise<void>((resolve) => setTimeout(resolve, 50))
     return 'ready2'
   })
 
@@ -262,11 +262,8 @@ it('uses multiple async atoms at once', async () => {
   expect(screen.getByText('loading')).toBeInTheDocument()
 
   await act(() => vi.advanceTimersByTimeAsync(100))
-  // FIXME: Using 'vi.waitFor' as a workaround - should be replaced with proper timer handling
-  // 'as any' is used for compatibility with old TypeScript versions (4.1.5, 4.2.3, 4.3.5, 4.4.4)
-  await (vi as any).waitFor(() => {
-    expect(screen.getByText('ready ready2')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(50))
+  expect(screen.getByText('ready ready2')).toBeInTheDocument()
 })
 
 it('uses async atom in the middle of dependency chain', async () => {
