@@ -13,7 +13,7 @@ jobs:
         with:
           repository: 'jotaijs/jotai-ecosystem-ci'
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: 'pnpm'
@@ -35,7 +35,7 @@ jobs:
         env:
           JOTAI_PKG: https://pkg.csb.dev/pmndrs/jotai/commit/${{ steps.short_sha.outputs.x }}/jotai
           VERBOSE: 1
-      - uses: peter-evans/create-or-update-comment@v4
+      - uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.issue.number }}
           body: |
