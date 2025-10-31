@@ -58,7 +58,12 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
       } = atom(
         (get, { setSelf }) => {
           get(refreshAtom)
-          const prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
+          let prev: PromiseAndValue | undefined
+          try {
+            prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
+          } catch {
+            // ignore previous errors to avoid getting stuck in error state
+          }
           const promise = get(anAtom)
           if (!isPromiseLike(promise)) {
             return { v: promise as Awaited<Value> }
