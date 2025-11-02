@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import { unwrap } from 'jotai/vanilla/utils'
@@ -168,15 +169,14 @@ describe('unwrap', () => {
     const syncAtom = unwrap(asyncAtom)
     store.sub(syncAtom, () => {})
 
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await act(() => vi.advanceTimersByTimeAsync(0))
     expect(() => store.get(syncAtom)).toThrow('error')
 
     store.set(asyncAtom, Promise.resolve(3))
 
-    await new Promise((r) => setTimeout(r)) // wait for a tick
+    await act(() => vi.advanceTimersByTimeAsync(0))
     expect(store.get(syncAtom)).toBe(3)
   })
-})
 
   it('should update dependents with the value of the unwrapped atom when the promise resolves', async () => {
     const store = createStore()
