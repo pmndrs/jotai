@@ -950,7 +950,7 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', ()
   expect(firstDerivedFn).toBeCalledTimes(0)
 })
 
-it('works with unused hook (#2554)', () => {
+it('works with unused hook (#2554)', async () => {
   const isFooAtom = atom(false)
   const isBarAtom = atom(false)
   const isActive1Atom = atom<boolean>((get) => {
@@ -959,7 +959,7 @@ it('works with unused hook (#2554)', () => {
   const isActive2Atom = atom<boolean>((get) => {
     return get(isFooAtom) && get(isActive1Atom)
   })
-  const activateAction = atom(undefined, (_get, set) => {
+  const activateAction = atom(undefined, async (_get, set) => {
     set(isFooAtom, true)
     set(isBarAtom, true)
   })
