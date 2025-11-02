@@ -296,10 +296,7 @@ it('can throw an error in write function', () => {
 it('can throw an error in async write function', async () => {
   const countAtom = atom(0)
   const errorAtom = atom(
-    async (get) => {
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
-      return get(countAtom)
-    },
+    (get) => get(countAtom),
     async () => {
       throw new Error('error_in_async_write_function')
     },
@@ -323,18 +320,14 @@ it('can throw an error in async write function', async () => {
     )
   }
 
-  await act(() =>
-    render(
-      <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
-          <Counter />
-        </Suspense>
-      </StrictMode>,
-    ),
+  render(
+    <StrictMode>
+      <Suspense fallback={<div>loading</div>}>
+        <Counter />
+      </Suspense>
+    </StrictMode>,
   )
 
-  expect(screen.getByText('loading')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('no error')).toBeInTheDocument()
   expect(errorMessages).not.toContain('Error: error_in_async_write_function')
 
