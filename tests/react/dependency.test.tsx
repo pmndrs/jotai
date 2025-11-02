@@ -19,6 +19,7 @@ const useCommitCount = () => {
   useEffect(() => {
     commitCountRef.current += 1
   })
+  // eslint-disable-next-line react-hooks/refs
   return commitCountRef.current
 }
 
@@ -907,7 +908,7 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', ()
     if (!memoizedAtomRef.current) {
       const derivedFn = vi.fn((get: Getter) => get(countAtom))
       if (!firstDerivedFn) {
-        // eslint-disable-next-line react-hooks/react-compiler
+        // eslint-disable-next-line react-hooks/globals
         firstDerivedFn = derivedFn
       }
       memoizedAtomRef.current = atom(derivedFn)

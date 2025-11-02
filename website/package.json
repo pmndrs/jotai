@@ -16,7 +16,7 @@
     "clean": "gatsby clean",
     "browserslist": "npx browserslist@latest --update-db"
   },
-  "packageManager": "pnpm@8.15.0",
+  "packageManager": "pnpm@10.18.3",
   "dependencies": {
     "@headlessui/react": "^1.7.7",
     "@mdx-js/mdx": "^1.6.22",

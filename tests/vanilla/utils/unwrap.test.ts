@@ -162,6 +162,22 @@ describe('unwrap', () => {
     expect(store.get(syncAtom)).toEqual('concrete')
   })
 
+  it('should throw an error if underlying promise is rejected', async () => {
+    const store = createStore()
+    const asyncAtom = atom(Promise.reject<number>('error'))
+    const syncAtom = unwrap(asyncAtom)
+    store.sub(syncAtom, () => {})
+
+    await new Promise((r) => setTimeout(r)) // wait for a tick
+    expect(() => store.get(syncAtom)).toThrow('error')
+
+    store.set(asyncAtom, Promise.resolve(3))
+
+    await new Promise((r) => setTimeout(r)) // wait for a tick
+    expect(store.get(syncAtom)).toBe(3)
+  })
+})
+
   it('should update dependents with the value of the unwrapped atom when the promise resolves', async () => {
     const store = createStore()
     const asyncTarget = atom(() => Promise.resolve('value'))
