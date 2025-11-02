@@ -681,7 +681,7 @@ it('Should bail for derived async chains (#877)', async () => {
 
   const asyncAtom = atom(async (get) => {
     get(textAtom)
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await new Promise<void>((resolve) => setTimeout(resolve, 100))
     syncAtomCount++
     return 'My very long data'
   })
@@ -715,13 +715,13 @@ it('Should bail for derived async chains (#877)', async () => {
     ),
   )
 
+  expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('My very long data')).toBeInTheDocument()
 
   expect(syncAtomCount).toBe(1)
 
   fireEvent.click(screen.getByText("set value to 'hello'"))
-  await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('My very long data')).toBeInTheDocument()
 
   expect(syncAtomCount).toBe(1)
