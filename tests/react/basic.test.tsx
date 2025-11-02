@@ -339,9 +339,7 @@ it('works with async get without setTimeout', async () => {
     ),
   )
 
-  // FIXME this is not working
-  //screen.getByText('loading')
-
+  // NOTE: loading doesn't appear because async atom resolves immediately (microtask only)
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 0, delayedCount: 0')).toBeInTheDocument()
 
