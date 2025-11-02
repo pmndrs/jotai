@@ -1024,9 +1024,7 @@ it('works with async dependencies (#2565)', async () => {
     ),
   )
 
-  // FIXME this is not working
-  // await screen.findByText('loading')
-
+  expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('count: 100')).toBeInTheDocument()
 
