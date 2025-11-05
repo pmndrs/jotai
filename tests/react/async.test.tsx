@@ -58,7 +58,7 @@ it('does not show async stale result', async () => {
     render(
       <>
         <Counter />
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <DelayedCounter />
         </Suspense>
       </>,
@@ -174,7 +174,7 @@ it('works with async get with extra deps', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
           <DelayedCounter />
         </Suspense>
@@ -210,7 +210,7 @@ it('reuses promises on initial read', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Child />
           <Child />
         </Suspense>
@@ -253,7 +253,7 @@ it('uses multiple async atoms at once', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Component />
         </Suspense>
       </StrictMode>,
@@ -291,7 +291,7 @@ it('uses async atom in the middle of dependency chain', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -340,7 +340,7 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
   await act(() =>
     render(
       <>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </>,
@@ -397,7 +397,7 @@ it('updates an async atom in child useEffect on remount', async () => {
   await act(() =>
     render(
       <>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </>,
@@ -449,7 +449,7 @@ it('async get and useEffect on parent', async () => {
   await act(() =>
     render(
       <>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </>,
@@ -496,7 +496,7 @@ it('async get with another dep and useEffect on parent', async () => {
   await act(() =>
     render(
       <>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </>,
@@ -544,7 +544,7 @@ it('set promise atom value on write (#304)', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Parent />
         </Suspense>
       </StrictMode>,
@@ -589,7 +589,7 @@ it('uses async atom double chain (#306)', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -622,7 +622,7 @@ it('uses an async atom that depends on another async atom', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -667,7 +667,7 @@ it('a derived atom from a newly created async atom (#351)', async () => {
   await act(() =>
     render(
       <>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </>,
@@ -814,7 +814,7 @@ it('should override promise as atom value (#430)', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
         <Control />
@@ -857,7 +857,7 @@ it('combine two promise atom values (#442)', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
         <Control />
@@ -895,7 +895,7 @@ it('set two promise atoms at once', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
         <Control />
@@ -972,7 +972,7 @@ it('async atom double chain without setTimeout (#751)', async () => {
     const [, setEnabled] = useAtom(enabledAtom)
     return (
       <>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <AsyncComponent />
         </Suspense>
         <button
@@ -1033,7 +1033,7 @@ it('async atom double chain with setTimeout', async () => {
     const [, setEnabled] = useAtom(enabledAtom)
     return (
       <>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <AsyncComponent />
         </Suspense>
         <button
@@ -1107,7 +1107,7 @@ it('update unmounted async atom with intermediate atom', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <DerivedCounter />
         </Suspense>
         <Control />

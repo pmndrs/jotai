@@ -39,7 +39,7 @@ describe('useAtom delay option test', () => {
 
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Component />
           <Controls />
         </Suspense>
@@ -247,7 +247,7 @@ describe('infinite pending', () => {
       render(
         <StrictMode>
           <Controls />
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Component />
           </Suspense>
         </StrictMode>,
@@ -292,7 +292,7 @@ describe('write to async atom twice', async () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Component />
           </Suspense>
         </StrictMode>,
@@ -330,7 +330,7 @@ describe('write to async atom twice', async () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Component />
           </Suspense>
         </StrictMode>,
@@ -368,7 +368,7 @@ describe('write to async atom twice', async () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Component />
           </Suspense>
         </StrictMode>,
@@ -409,7 +409,7 @@ describe('with onMount', () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Component />
           </Suspense>
         </StrictMode>,

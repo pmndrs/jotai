@@ -75,7 +75,7 @@ it('simple async get default', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -170,7 +170,7 @@ it('refresh async atoms to default values', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,

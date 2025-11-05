@@ -50,7 +50,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
       await act(() =>
         render(
           <>
-            <Suspense fallback={<div>loading</div>}>
+            <Suspense fallback="loading">
               <Counter />
             </Suspense>
           </>,
@@ -104,7 +104,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Counter />
           </Suspense>
         </StrictMode>,

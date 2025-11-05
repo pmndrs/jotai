@@ -121,7 +121,7 @@ it('useAtomValue with async atom (promise)', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <AsyncComponent />
         </Suspense>
       </StrictMode>,

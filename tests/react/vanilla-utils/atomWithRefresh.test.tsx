@@ -63,7 +63,7 @@ it('async counter', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,

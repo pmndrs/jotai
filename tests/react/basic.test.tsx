@@ -282,7 +282,7 @@ it('works with async get', async () => {
   await act(() =>
     render(
       <>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </>,
@@ -332,7 +332,7 @@ it('works with async get without setTimeout', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
@@ -885,7 +885,7 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,

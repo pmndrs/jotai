@@ -322,7 +322,7 @@ it('mount/unmount test with async atom', async () => {
   await act(() =>
     render(
       <>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Display />
         </Suspense>
       </>,
@@ -503,7 +503,7 @@ it('create atom with onMount in async get', async () => {
   await act(() =>
     render(
       <StrictMode>
-        <Suspense fallback={<div>loading</div>}>
+        <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,

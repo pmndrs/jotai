@@ -42,7 +42,7 @@ describe('abortable atom test', () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Component />
             <Controls />
           </Suspense>
@@ -105,7 +105,7 @@ describe('abortable atom test', () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Component />
             <Controls />
           </Suspense>
@@ -169,7 +169,7 @@ describe('abortable atom test', () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Parent />
           </Suspense>
         </StrictMode>,
@@ -219,7 +219,7 @@ describe('abortable atom test', () => {
     await act(() =>
       render(
         <StrictMode>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Component />
             <Controls />
           </Suspense>

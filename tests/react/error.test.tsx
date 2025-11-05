@@ -196,7 +196,7 @@ it('can throw an initial error in async read function', async () => {
     render(
       <StrictMode>
         <ErrorBoundary>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Counter />
           </Suspense>
         </ErrorBoundary>
@@ -235,7 +235,7 @@ it('can throw an error in async read function', async () => {
     render(
       <StrictMode>
         <ErrorBoundary>
-          <Suspense fallback={<div>loading</div>}>
+          <Suspense fallback="loading">
             <Counter />
           </Suspense>
         </ErrorBoundary>
@@ -322,7 +322,7 @@ it('can throw an error in async write function', async () => {
 
   render(
     <StrictMode>
-      <Suspense fallback={<div>loading</div>}>
+      <Suspense fallback="loading">
         <Counter />
       </Suspense>
     </StrictMode>,
@@ -569,7 +569,7 @@ describe('error recovery', () => {
         <StrictMode>
           <Counter />
           <ErrorBoundary>
-            <Suspense fallback={<div>loading</div>}>
+            <Suspense fallback="loading">
               <Display />
             </Suspense>
           </ErrorBoundary>
