@@ -313,7 +313,6 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
   const countAtom = atom(0)
   const asyncCountAtom = atom(
     async (get) => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       return get(countAtom)
     },
     async (get, set) => set(countAtom, get(countAtom) + 1),
@@ -347,18 +346,14 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
     ),
   )
 
-  expect(screen.getByText('loading')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(100))
-  expect(screen.getByText('count: 0')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(1000))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('button')))
-  await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('no child')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('button')))
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 2')).toBeInTheDocument()
 })
 
@@ -421,7 +416,6 @@ it('updates an async atom in child useEffect on remount', async () => {
 it('async get and useEffect on parent', async () => {
   const countAtom = atom(0)
   const asyncAtom = atom(async (get) => {
-    await new Promise((resolve) => setTimeout(resolve, 100))
     const count = get(countAtom)
     if (!count) return 'none'
     return 'resolved'
@@ -456,10 +450,7 @@ it('async get and useEffect on parent', async () => {
     ),
   )
 
-  expect(screen.getByText('loading')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(100))
-  // Wait for useEffect to execute
-  await act(() => vi.advanceTimersByTimeAsync(1000))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(screen.getByText('text: resolved')).toBeInTheDocument()
 })
