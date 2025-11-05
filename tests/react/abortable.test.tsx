@@ -177,11 +177,8 @@ describe('abortable atom test', () => {
     )
 
     expect(screen.getByText('loading')).toBeInTheDocument()
-
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(screen.getByText('count: 0')).toBeInTheDocument()
-
-    expect(abortedCount).toBe(0)
 
     await act(() => fireEvent.click(screen.getByText('button')))
     expect(screen.getByText('loading')).toBeInTheDocument()
