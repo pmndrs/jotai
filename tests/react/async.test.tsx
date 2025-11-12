@@ -312,9 +312,7 @@ it('updates an async atom in child useEffect on remount without setTimeout', asy
   const toggleAtom = atom(true)
   const countAtom = atom(0)
   const asyncCountAtom = atom(
-    async (get) => {
-      return get(countAtom)
-    },
+    async (get) => get(countAtom),
     async (get, set) => set(countAtom, get(countAtom) + 1),
   )
 
