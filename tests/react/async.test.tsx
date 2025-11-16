@@ -817,10 +817,9 @@ it('should override promise as atom value (#430)', async () => {
 it('combine two promise atom values (#442)', async () => {
   const count1Atom = atom(new Promise<number>(() => {}))
   const count2Atom = atom(new Promise<number>(() => {}))
-  const derivedAtom = atom(async (get) => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
-    return (await get(count1Atom)) + (await get(count2Atom))
-  })
+  const derivedAtom = atom(
+    async (get) => (await get(count1Atom)) + (await get(count2Atom)),
+  )
   const initAtom = atom(null, (_get, set) => {
     setTimeout(() => set(count1Atom, Promise.resolve(1)))
     setTimeout(() => set(count2Atom, Promise.resolve(2)))
@@ -851,17 +850,17 @@ it('combine two promise atom values (#442)', async () => {
   )
 
   expect(screen.getByText('loading')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(100))
+
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 3')).toBeInTheDocument()
 })
 
 it('set two promise atoms at once', async () => {
   const count1Atom = atom(new Promise<number>(() => {}))
   const count2Atom = atom(new Promise<number>(() => {}))
-  const derivedAtom = atom(async (get) => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
-    return (await get(count1Atom)) + (await get(count2Atom))
-  })
+  const derivedAtom = atom(
+    async (get) => (await get(count1Atom)) + (await get(count2Atom)),
+  )
   const setCountsAtom = atom(null, (_get, set) => {
     set(count1Atom, Promise.resolve(1))
     set(count2Atom, Promise.resolve(2))
@@ -890,7 +889,7 @@ it('set two promise atoms at once', async () => {
 
   expect(screen.getByText('loading')).toBeInTheDocument()
   fireEvent.click(screen.getByText('button'))
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 3')).toBeInTheDocument()
 })
 
