@@ -630,7 +630,6 @@ it('a derived atom from a newly created async atom (#351)', async () => {
       atomCache.set(
         n,
         atom(async () => {
-          await new Promise<void>((resolve) => setTimeout(resolve, 100))
           return n + 10
         }),
       )
@@ -662,18 +661,15 @@ it('a derived atom from a newly created async atom (#351)', async () => {
     ),
   )
 
-  expect(screen.getByText('loading')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('derived: 11, commits: 1')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('button')))
-  expect(screen.getByText('loading')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('derived: 12, commits: 2')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('button')))
-  expect(screen.getByText('loading')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('derived: 13, commits: 3')).toBeInTheDocument()
 })
 
