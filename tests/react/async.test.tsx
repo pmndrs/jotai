@@ -783,10 +783,7 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
 it('should override promise as atom value (#430)', async () => {
   const countAtom = atom(new Promise<number>(() => {}))
   const setCountAtom = atom(null, (_get, set, arg: number) => {
-    set(
-      countAtom,
-      new Promise<number>((resolve) => setTimeout(() => resolve(arg), 100)),
-    )
+    set(countAtom, Promise.resolve(arg))
   })
 
   const Counter = () => {
@@ -813,7 +810,7 @@ it('should override promise as atom value (#430)', async () => {
   expect(screen.getByText('loading')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
