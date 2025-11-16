@@ -598,7 +598,9 @@ it('uses an async atom that depends on another async atom', async () => {
     get(anotherAsyncAtom)
     return 1
   })
-  const anotherAsyncAtom = atom(() => Promise.resolve(2))
+  const anotherAsyncAtom = atom(async () => {
+    return 2
+  })
 
   const Counter = () => {
     const [num] = useAtom(asyncAtom)
