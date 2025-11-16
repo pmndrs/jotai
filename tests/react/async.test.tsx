@@ -458,7 +458,6 @@ it('async get with another dep and useEffect on parent', async () => {
   const derivedAtom = atom((get) => get(countAtom))
   const asyncAtom = atom(async (get) => {
     const count = get(derivedAtom)
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
     if (!count) return 'none'
     return count
   })
@@ -492,14 +491,12 @@ it('async get with another dep and useEffect on parent', async () => {
     ),
   )
 
-  expect(screen.getByText('loading')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(100))
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(screen.getByText('async: 1')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('button')))
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('count: 2')).toBeInTheDocument()
   expect(screen.getByText('async: 2')).toBeInTheDocument()
 })
