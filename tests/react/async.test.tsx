@@ -753,7 +753,7 @@ it('async write self atom', async () => {
 it('non suspense async write self atom with setTimeout (#389)', async () => {
   const countAtom = atom(0, (get, set, _arg) => {
     set(countAtom, get(countAtom) + 1)
-    setTimeout(() => set(countAtom, -1), 100)
+    setTimeout(() => set(countAtom, -1))
   })
 
   const Counter = () => {
@@ -776,7 +776,7 @@ it('non suspense async write self atom with setTimeout (#389)', async () => {
 
   fireEvent.click(screen.getByText('button'))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTime(100))
+  await act(() => vi.advanceTimersByTime(0))
   expect(screen.getByText('count: -1')).toBeInTheDocument()
 })
 
