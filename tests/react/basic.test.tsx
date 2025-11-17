@@ -226,7 +226,7 @@ it('re-renders a time delayed derived atom with the same initial value (#947)', 
   aAtom.onMount = (set) => {
     setTimeout(() => {
       set(true)
-    }, 100)
+    })
   }
 
   const bAtom = atom(1)
@@ -254,7 +254,7 @@ it('re-renders a time delayed derived atom with the same initial value (#947)', 
 
   expect(screen.getByText('1')).toBeInTheDocument()
   // Wait for setTimeout to execute
-  await act(() => vi.advanceTimersByTime(100))
+  await act(() => vi.advanceTimersByTime(0))
   expect(screen.getByText('2')).toBeInTheDocument()
 })
 
