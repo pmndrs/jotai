@@ -1118,7 +1118,7 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
   const responseAtom = atom(
     (get) => get(responseBaseAtom),
     (_get, set) => {
-      setTimeout(() => set(responseBaseAtom, response1), 100)
+      setTimeout(() => set(responseBaseAtom, response1))
     },
   )
   responseAtom.onMount = (init) => {
@@ -1148,7 +1148,7 @@ it('multiple derived atoms with dependency chaining and async write (#813)', asy
     </StrictMode>,
   )
 
-  await act(() => vi.advanceTimersByTime(100))
+  await act(() => vi.advanceTimersByTime(0))
   expect(screen.getByText('aName: alpha')).toBeInTheDocument()
   expect(screen.getByText('bName: beta')).toBeInTheDocument()
 })
