@@ -165,6 +165,7 @@ describe('timing issue with setSelf', () => {
     const derivedAtom = atom(
       async (get, { setSelf }) => {
         get(countAtom)
+        await Promise.resolve()
         const resultCount = await get(asyncAtom)
         result = resultCount
         if (resultCount === 2) setSelf() // <-- necessary
