@@ -933,7 +933,10 @@ const getInternalBuildingBlocks = (store: Store): Readonly<BuildingBlocks> => {
 }
 
 function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
-  const buildingBlocks = getInternalBuildingBlocks(store)
+  const buildingBlocks: Readonly<BuildingBlocks> = Object.freeze([
+    ...getInternalBuildingBlocks(store),
+  ])
+  buildingBlockMap.set(store, buildingBlocks)
   const enhanceBuildingBlocks = buildingBlocks[24]
   if (enhanceBuildingBlocks) {
     return enhanceBuildingBlocks(buildingBlocks)
