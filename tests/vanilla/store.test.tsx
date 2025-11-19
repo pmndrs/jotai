@@ -1286,8 +1286,5 @@ it('[DEV-ONLY] should warn store mutation during read', () => {
   const derivedAtom = atom(() => {
     store.set(countAtom, (c) => c + 1)
   })
-  store.get(derivedAtom)
-  expect(console.warn).toHaveBeenCalledWith(
-    'Detected store mutation during atom read. This is not supported.',
-  )
+  expect(() => store.get(derivedAtom)).toThrow()
 })
