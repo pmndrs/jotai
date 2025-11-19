@@ -330,7 +330,7 @@ type StoreHookForAtoms = {
 
 /** StoreHooks are an experimental API. */
 type StoreHooks = {
-  /** Listener to notify when the atom is initialized. */
+  /** Listener to notify when the atom state is created. */
   readonly i?: StoreHookForAtoms
   /** Listener to notify when the atom is read. */
   readonly r?: StoreHookForAtoms
