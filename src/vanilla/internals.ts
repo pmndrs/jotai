@@ -524,7 +524,7 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
 }
 
 // Dev only
-const storeMutationMap: WeakMap<Store, number> = new WeakMap()
+const storeMutationSet = new WeakSet<Store>()
 
 const readAtomState: ReadAtomState = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
@@ -635,17 +635,14 @@ const readAtomState: ReadAtomState = (store, atom) => {
   }
   const prevEpochNumber = atomState.n
   try {
-    let prevStoreMutation: number | undefined
     if (import.meta.env?.MODE !== 'production') {
-      prevStoreMutation = storeMutationMap.get(store)
+      storeMutationSet.delete(store)
     }
     const valueOrPromise = atomRead(store, atom, getter, options as never)
-    if (import.meta.env?.MODE !== 'production') {
-      if (prevStoreMutation !== storeMutationMap.get(store)) {
-        console.warn(
-          'Detected store mutation during atom read. This is not supported.',
-        )
-      }
+    if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
+      console.warn(
+        'Detected store mutation during atom read. This is not supported.',
+      )
     }
     setAtomStateValueOrPromise(store, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
@@ -715,7 +712,7 @@ const writeAtomState: WriteAtomState = (store, atom, ...args) => {
           throw new Error('atom not writable')
         }
         if (import.meta.env?.MODE !== 'production') {
-          storeMutationMap.set(store, (storeMutationMap.get(store) || 0) + 1)
+          storeMutationSet.add(store)
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
