@@ -642,7 +642,9 @@ const readAtomState: ReadAtomState = (store, atom) => {
     const valueOrPromise = atomRead(store, atom, getter, options as never)
     if (import.meta.env?.MODE !== 'production') {
       if (prevStoreMutation !== storeMutationMap.get(store)) {
-        throw new Error('store mutated during atom read') // TMP
+        console.warn(
+          'Detected store mutation during atom read. This is not supported.',
+        )
       }
     }
     setAtomStateValueOrPromise(store, atom, valueOrPromise)
