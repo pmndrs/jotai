@@ -400,6 +400,7 @@ it('updates an async atom in child useEffect on remount', async () => {
   expect(screen.getByText('loading')).toBeInTheDocument()
   await act(() => vi.advanceTimersByTimeAsync(100))
   expect(screen.getByText('count: 0')).toBeInTheDocument()
+  // NOTE: 1000ms to wait for useEffect's write operation with React scheduling overhead
   await act(() => vi.advanceTimersByTimeAsync(1000))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 
@@ -407,6 +408,7 @@ it('updates an async atom in child useEffect on remount', async () => {
   expect(screen.getByText('no child')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
+  // NOTE: 1000ms to wait for useEffect's write operation with React scheduling overhead
   await act(() => vi.advanceTimersByTimeAsync(1000))
   expect(screen.getByText('count: 2')).toBeInTheDocument()
 })
