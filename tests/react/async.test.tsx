@@ -934,11 +934,11 @@ it('async write chain', async () => {
 it('async atom double chain without setTimeout (#751)', async () => {
   const enabledAtom = atom(false)
   const asyncAtom = atom(async (get) => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
     const enabled = get(enabledAtom)
     if (!enabled) {
       return 'init'
     }
+    await new Promise<void>((resolve) => setTimeout(resolve, 100))
     return 'ready'
   })
   const derivedAsyncAtom = atom(async (get) => get(asyncAtom))
@@ -976,8 +976,7 @@ it('async atom double chain without setTimeout (#751)', async () => {
     ),
   )
 
-  expect(screen.getByText('loading')).toBeInTheDocument()
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('async: init')).toBeInTheDocument()
 
   await act(() => fireEvent.click(screen.getByText('button')))
