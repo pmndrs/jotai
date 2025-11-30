@@ -262,7 +262,7 @@ it('loadable of a derived async atom with error does not trigger infinite loop (
   expect(screen.getByText('Error: thrown in baseAtom')).toBeInTheDocument()
 })
 
-it('does not repeatedly attempt to get the value of an unresolved promise atom wrapped in a loadable (#1481)', () => {
+it('does not repeatedly attempt to get the value of an unresolved promise atom wrapped in a loadable (#1481)', async () => {
   const baseAtom = atom(new Promise<number>(() => {}))
 
   let callsToGetBaseAtom = 0
@@ -277,6 +277,8 @@ it('does not repeatedly attempt to get the value of an unresolved promise atom w
     </StrictMode>,
   )
 
+  // we need a small delay to reproduce the issue
+  await act(() => vi.advanceTimersByTimeAsync(10))
   // depending on provider-less mode or versioned-write mode, there will be
   // either 2 or 3 calls.
   expect(callsToGetBaseAtom).toBeLessThanOrEqual(3)
