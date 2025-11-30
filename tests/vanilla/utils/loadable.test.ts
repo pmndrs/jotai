@@ -13,16 +13,12 @@ describe('loadable', () => {
 
   it('should return fulfilled value of an already resolved async atom', async () => {
     const store = createStore()
-    const asyncAtom = atom(
-      new Promise<string>((resolve) =>
-        setTimeout(() => resolve('concrete'), 100),
-      ),
-    )
+    const asyncAtom = atom(Promise.resolve('concrete'))
 
     expect(store.get(loadable(asyncAtom))).toEqual({
       state: 'loading',
     })
-    await vi.advanceTimersByTimeAsync(100)
+    await vi.advanceTimersByTimeAsync(0)
     expect(store.get(loadable(asyncAtom))).toEqual({
       state: 'hasData',
       data: 'concrete',
@@ -31,13 +27,11 @@ describe('loadable', () => {
 
   it('should get the latest loadable state after the promise resolves', async () => {
     const store = createStore()
-    const asyncAtom = atom(
-      new Promise<void>((resolve) => setTimeout(() => resolve(), 100)),
-    )
+    const asyncAtom = atom(Promise.resolve())
     const loadableAtom = loadable(asyncAtom)
 
     expect(store.get(loadableAtom)).toHaveProperty('state', 'loading')
-    await vi.advanceTimersByTimeAsync(100)
+    await vi.advanceTimersByTimeAsync(0)
     expect(store.get(loadableAtom)).toHaveProperty('state', 'hasData')
   })
 })

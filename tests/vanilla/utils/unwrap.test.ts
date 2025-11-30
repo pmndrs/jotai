@@ -110,56 +110,40 @@ describe('unwrap', () => {
 
   it('should unwrap an async writable atom', async () => {
     const store = createStore()
-    const asyncAtom = atom(
-      new Promise<number>((resolve) => setTimeout(() => resolve(1), 100)),
-    )
+    const asyncAtom = atom(Promise.resolve(1))
     const syncAtom = unwrap(asyncAtom, (prev?: number) => prev ?? 0)
 
     expect(store.get(syncAtom)).toBe(0)
-    await vi.advanceTimersByTimeAsync(100)
+    await vi.advanceTimersByTimeAsync(0)
     expect(store.get(syncAtom)).toBe(1)
 
-    store.set(
-      syncAtom,
-      new Promise<number>((resolve) => setTimeout(() => resolve(2), 100)),
-    )
+    store.set(syncAtom, Promise.resolve(2))
     expect(store.get(syncAtom)).toBe(1)
-    await vi.advanceTimersByTimeAsync(100)
+    await vi.advanceTimersByTimeAsync(0)
     expect(store.get(syncAtom)).toBe(2)
 
-    store.set(
-      syncAtom,
-      new Promise<number>((resolve) => setTimeout(() => resolve(3), 100)),
-    )
+    store.set(syncAtom, Promise.resolve(3))
     expect(store.get(syncAtom)).toBe(2)
-    await vi.advanceTimersByTimeAsync(100)
+    await vi.advanceTimersByTimeAsync(0)
     expect(store.get(syncAtom)).toBe(3)
   })
 
   it('should unwrap to a fulfilled value of an already resolved async atom', async () => {
     const store = createStore()
-    const asyncAtom = atom(
-      new Promise<string>((resolve) =>
-        setTimeout(() => resolve('concrete'), 100),
-      ),
-    )
+    const asyncAtom = atom(Promise.resolve('concrete'))
 
     expect(store.get(unwrap(asyncAtom))).toEqual(undefined)
-    await vi.advanceTimersByTimeAsync(100)
+    await vi.advanceTimersByTimeAsync(0)
     expect(store.get(unwrap(asyncAtom))).toEqual('concrete')
   })
 
   it('should get a fulfilled value after the promise resolves', async () => {
     const store = createStore()
-    const asyncAtom = atom(
-      new Promise<string>((resolve) =>
-        setTimeout(() => resolve('concrete'), 100),
-      ),
-    )
+    const asyncAtom = atom(Promise.resolve('concrete'))
     const syncAtom = unwrap(asyncAtom)
 
     expect(store.get(syncAtom)).toEqual(undefined)
-    await vi.advanceTimersByTimeAsync(100)
+    await vi.advanceTimersByTimeAsync(0)
     expect(store.get(syncAtom)).toEqual('concrete')
   })
 
