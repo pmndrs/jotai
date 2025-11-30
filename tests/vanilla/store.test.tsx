@@ -8,12 +8,17 @@ import {
 } from 'jotai/vanilla/internals'
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
 
+let savedConsoleWarn: any
+
 beforeEach(() => {
   vi.useFakeTimers()
+  savedConsoleWarn = console.warn
+  console.warn = vi.fn()
 })
 
 afterEach(() => {
   vi.useRealTimers()
+  console.warn = savedConsoleWarn
 })
 
 type DevStore = {
@@ -56,7 +61,7 @@ const deriveStore = (
   return derivedStore
 }
 
-it('should not fire on subscribe', () => {
+it('should not fire on subscribe', async () => {
   const store = createStore()
   const countAtom = atom(0)
   const callback1 = vi.fn()
@@ -1303,4 +1308,16 @@ it('updates dependents when it eagerly recomputes dirty atoms', () => {
   store.set(countAtom, 1)
 
   expect(store.get(activeCountAtom)).toBe(1)
+})
+
+it('[DEV-ONLY] should warn store mutation during read', () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const derivedAtom = atom(() => {
+    store.set(countAtom, (c) => c + 1)
+  })
+  store.get(derivedAtom)
+  expect(console.warn).toHaveBeenCalledWith(
+    'Detected store mutation during atom read. This is not supported.',
+  )
 })
