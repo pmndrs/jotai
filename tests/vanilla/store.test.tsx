@@ -786,7 +786,7 @@ describe('should mount and trigger listeners even when an error is thrown', () =
       () => {},
     )
     const b = atom(async (get) => {
-      await Promise.resolve()
+      await new Promise((resolve) => setTimeout(resolve))
       get(a)
       get(e)
     })
