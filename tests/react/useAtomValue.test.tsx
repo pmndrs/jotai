@@ -39,6 +39,34 @@ it('useAtomValue basic test', async () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
+it('useAtomValue with async atom (promise)', async () => {
+  const asyncAtom = atom(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    return 42
+  })
+
+  const AsyncComponent = () => {
+    const value = useAtomValue(asyncAtom)
+
+    return <div>value: {value}</div>
+  }
+
+  await act(() =>
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <AsyncComponent />
+        </Suspense>
+      </StrictMode>,
+    ),
+  )
+
+  expect(screen.getByText('loading')).toBeInTheDocument()
+
+  await act(() => vi.advanceTimersByTimeAsync(10))
+  expect(screen.getByText('value: 42')).toBeInTheDocument()
+})
+
 class ErrorBoundary extends Component<
   { children: ReactNode },
   { error: Error | null }
@@ -104,32 +132,4 @@ it('useAtomValue with atom returning object', async () => {
   )
 
   expect(screen.getByText('obj: 1,2')).toBeInTheDocument()
-})
-
-it('useAtomValue with async atom (promise)', async () => {
-  const asyncAtom = atom(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 10))
-    return 42
-  })
-
-  const AsyncComponent = () => {
-    const value = useAtomValue(asyncAtom)
-
-    return <div>value: {value}</div>
-  }
-
-  await act(() =>
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <AsyncComponent />
-        </Suspense>
-      </StrictMode>,
-    ),
-  )
-
-  expect(screen.getByText('loading')).toBeInTheDocument()
-
-  await act(() => vi.advanceTimersByTimeAsync(10))
-  expect(screen.getByText('value: 42')).toBeInTheDocument()
 })
