@@ -26,16 +26,21 @@ export function Provider({
   store?: Store
 }): ReactElement<
   { value: Store | undefined },
-  FunctionComponent<{ value: Store | undefined }>
+  FunctionComponent<{ value: Store }>
 > {
-  const storeRef = useRef<Store>(undefined)
-  if (!store && !storeRef.current) {
+  const storeRef = useRef<Store>(null)
+  if (store) {
+    return createElement(StoreContext.Provider, { value: store }, children)
+  }
+  if (storeRef.current === null) {
     storeRef.current = createStore()
   }
   return createElement(
     StoreContext.Provider,
     {
-      value: store || storeRef.current,
+      // TODO should we use useState instead?
+      // eslint-disable-next-line react-hooks/refs
+      value: storeRef.current,
     },
     children,
   )

@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run') }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: 'jotaijs/jotai-ecosystem-ci'
       - uses: pnpm/action-setup@v4
