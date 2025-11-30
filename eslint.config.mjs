@@ -17,7 +17,7 @@ export default defineConfig(
   tseslint.configs.recommended,
   react.configs.flat.recommended,
   react.configs.flat['jsx-runtime'],
-  reactHooks.configs.recommended,
+  reactHooks.configs.flat.recommended,
   {
     settings: {
       react: {
@@ -71,7 +71,6 @@ export default defineConfig(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      'react-hooks/react-compiler': 'error',
     },
   },
   {
