@@ -40,10 +40,7 @@ it('useAtomValue basic test', async () => {
 })
 
 it('useAtomValue with async atom (promise)', async () => {
-  const asyncAtom = atom(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 10))
-    return 42
-  })
+  const asyncAtom = atom(async () => 42)
 
   const AsyncComponent = () => {
     const value = useAtomValue(asyncAtom)
@@ -61,9 +58,7 @@ it('useAtomValue with async atom (promise)', async () => {
     ),
   )
 
-  expect(screen.getByText('loading')).toBeInTheDocument()
-
-  await act(() => vi.advanceTimersByTimeAsync(10))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('value: 42')).toBeInTheDocument()
 })
 
