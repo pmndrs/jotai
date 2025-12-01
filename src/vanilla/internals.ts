@@ -330,6 +330,8 @@ type StoreHookForAtoms = {
 
 /** StoreHooks are an experimental API. */
 type StoreHooks = {
+  /** Listener to notify when the atom is initialized. */
+  readonly i?: StoreHookForAtoms
   /** Listener to notify when the atom is read. */
   readonly r?: StoreHookForAtoms
   /** Listener to notify when the atom value is changed. */
@@ -380,6 +382,7 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
 
 function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
   type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
+  ;(storeHooks as SH).i ||= createStoreHookForAtoms()
   ;(storeHooks as SH).r ||= createStoreHookForAtoms()
   ;(storeHooks as SH).c ||= createStoreHookForAtoms()
   ;(storeHooks as SH).m ||= createStoreHookForAtoms()
@@ -401,6 +404,7 @@ const atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
 const ensureAtomState: EnsureAtomState = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
   const atomStateMap = buildingBlocks[0]
+  const storeHooks = buildingBlocks[6]
   const atomOnInit = buildingBlocks[9]
   if (import.meta.env?.MODE !== 'production' && !atom) {
     throw new Error('Atom is undefined or null')
@@ -409,6 +413,7 @@ const ensureAtomState: EnsureAtomState = (store, atom) => {
   if (!atomState) {
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
+    storeHooks.i?.(atom)
     atomOnInit?.(store, atom)
   }
   return atomState as never
