@@ -3,7 +3,7 @@
   "description": "👻 Primitive and flexible state management for React",
   "private": true,
   "type": "commonjs",
-  "version": "2.15.1",
+  "version": "2.15.2",
   "main": "./index.js",
   "types": "./index.d.ts",
   "typesVersions": {
