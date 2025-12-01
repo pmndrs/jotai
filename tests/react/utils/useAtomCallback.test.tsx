@@ -1,10 +1,17 @@
 import { StrictMode, useCallback, useEffect, useState } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { useAtomCallback } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'
+
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 it('useAtomCallback with get', async () => {
   const countAtom = atom(0)
@@ -31,7 +38,7 @@ it('useAtomCallback with get', async () => {
     useEffect(() => {
       const timer = setInterval(() => {
         readCount()
-      }, 10)
+      }, 100)
       return () => {
         clearInterval(timer)
       }
@@ -50,12 +57,12 @@ it('useAtomCallback with get', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('atom count: 0')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('dispatch'))
-  await waitFor(() => {
-    expect(screen.getByText('atom count: 1')).toBeInTheDocument()
-    expect(screen.getByText('state count: 1')).toBeInTheDocument()
-  })
+  expect(screen.getByText('atom count: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  await act(() => vi.advanceTimersByTime(100))
+  expect(screen.getByText('atom count: 1')).toBeInTheDocument()
+  expect(screen.getByText('state count: 1')).toBeInTheDocument()
 })
 
 it('useAtomCallback with set and update', async () => {
@@ -83,7 +90,7 @@ it('useAtomCallback with set and update', async () => {
     useEffect(() => {
       const timer = setInterval(() => {
         changeCount()
-      }, 10)
+      }, 100)
       return () => {
         clearInterval(timer)
       }
@@ -102,15 +109,15 @@ it('useAtomCallback with set and update', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('dispatch'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('changeable count: 1')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  await act(() => vi.advanceTimersByTime(100))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('changeable count: 1')).toBeInTheDocument()
 })
 
-it('useAtomCallback with set and update and arg', async () => {
+it('useAtomCallback with set and update and arg', () => {
   const countAtom = atom(0)
 
   const App = () => {
@@ -136,14 +143,13 @@ it('useAtomCallback with set and update and arg', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('dispatch'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 42')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('count: 42')).toBeInTheDocument()
 })
 
-it('useAtomCallback with sync atom (#1100)', async () => {
+it('useAtomCallback with sync atom (#1100)', () => {
   const countAtom = atom(0)
 
   const Counter = () => {
@@ -169,8 +175,8 @@ it('useAtomCallback with sync atom (#1100)', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('atom count: 0')).toBeInTheDocument()
+  expect(screen.getByText('atom count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('dispatch'))
-  expect(await screen.findByText('atom count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('atom count: 1')).toBeInTheDocument()
 })

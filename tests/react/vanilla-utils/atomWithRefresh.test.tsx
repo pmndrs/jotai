@@ -1,15 +1,18 @@
 import { StrictMode, Suspense } from 'react'
-import { act, render, screen } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atomWithRefresh } from 'jotai/vanilla/utils'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+beforeEach(() => {
+  vi.useFakeTimers()
+})
 
-it('sync counter', async () => {
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+it('sync counter', () => {
   let counter = 0
   const countAtom = atomWithRefresh(() => ++counter)
 
@@ -29,22 +32,21 @@ it('sync counter', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 
   expect(counter).toBe(3)
 })
 
 it('async counter', async () => {
-  let resolve = () => {}
   let counter = 0
   const countAtom = atomWithRefresh(async () => {
-    await new Promise<void>((r) => (resolve = r))
+    await new Promise<void>((resolve) => setTimeout(resolve, 100))
     return ++counter
   })
 
@@ -58,33 +60,34 @@ it('async counter', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  resolve()
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 
   expect(counter).toBe(3)
 })
 
-it('writable counter', async () => {
+it('writable counter', () => {
   let counter = 0
   const countAtom = atomWithRefresh(
     () => ++counter,
@@ -110,17 +113,17 @@ it('writable counter', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('set9'))
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('set9'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 10')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 10')).toBeInTheDocument()
 })

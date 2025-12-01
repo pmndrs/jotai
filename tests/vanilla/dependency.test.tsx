@@ -1,55 +1,55 @@
-import { expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
+
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 it('can propagate updates with async atom chains', async () => {
   const store = createStore()
 
   const countAtom = atom(1)
-  let resolve = () => {}
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
-    await new Promise<void>((r) => (resolve = r))
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
     return count
   })
   const async2Atom = atom((get) => get(asyncAtom))
   const async3Atom = atom((get) => get(async2Atom))
 
   expect(store.get(async3Atom) instanceof Promise).toBeTruthy()
-  resolve()
+  await vi.advanceTimersByTimeAsync(100)
   await expect(store.get(async3Atom)).resolves.toBe(1)
 
   store.set(countAtom, (c) => c + 1)
   expect(store.get(async3Atom) instanceof Promise).toBeTruthy()
-  resolve()
+  await vi.advanceTimersByTimeAsync(100)
   await expect(store.get(async3Atom)).resolves.toBe(2)
 
   store.set(countAtom, (c) => c + 1)
   expect(store.get(async3Atom) instanceof Promise).toBeTruthy()
-  resolve()
+  await vi.advanceTimersByTimeAsync(100)
   await expect(store.get(async3Atom)).resolves.toBe(3)
 })
 
 it('can get async atom with deps more than once before resolving (#1668)', async () => {
   const countAtom = atom(0)
-
-  const resolve: (() => void)[] = []
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
-    await new Promise<void>((r) => resolve.push(r))
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
     return count
   })
-
   const store = createStore()
 
   store.set(countAtom, (c) => c + 1)
   store.get(asyncAtom)
   store.set(countAtom, (c) => c + 1)
-  const promise = store.get(asyncAtom)
-  resolve.shift()?.()
-  await Promise.resolve()
-  resolve.shift()?.()
-  const count = await promise
-  expect(count).toBe(2)
+  await vi.advanceTimersByTimeAsync(100)
+  await expect(store.get(asyncAtom)).resolves.toBe(2)
 })
 
 it('correctly updates async derived atom after get/set update', async () => {
@@ -119,20 +119,18 @@ it('keeps atoms mounted between recalculations', async () => {
     }
   }
 
-  let resolve = () => {}
   const derivedAtom = atom(async (get) => {
     get(atom1)
-    await new Promise<void>((r) => (resolve = r))
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
     get(atom2)
   })
 
   const unrelatedAtom = atom(0)
 
   const store = createStore()
+
   store.sub(derivedAtom, () => {})
-  resolve()
-  await Promise.resolve()
-  await Promise.resolve() // we need two awaits to reproduce
+  await vi.advanceTimersByTimeAsync(100)
   store.set(unrelatedAtom, (c) => c + 1)
   expect(metrics1).toEqual({
     mounted: 1,
@@ -142,8 +140,9 @@ it('keeps atoms mounted between recalculations', async () => {
     mounted: 1,
     unmounted: 0,
   })
+
   store.set(atom1, (c) => c + 1)
-  resolve()
+  await vi.advanceTimersByTimeAsync(100)
   expect(metrics1).toEqual({
     mounted: 1,
     unmounted: 0,
@@ -211,7 +210,7 @@ it('settles never resolving async derivations with deps picked up sync', async (
   })
   resolve[1]?.(1)
 
-  await new Promise((r) => setTimeout(r)) // wait for a tick
+  await vi.advanceTimersByTimeAsync(0)
   expect(values).toEqual([1])
   expect(sub).toBe(1)
 })
@@ -225,7 +224,7 @@ it('settles never resolving async derivations with deps picked up async', async 
 
   const asyncAtom = atom(async (get) => {
     // we want to pick up `syncAtom` as an async dep
-    await Promise.resolve()
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
     return await get(syncAtom).promise
   })
 
@@ -239,13 +238,13 @@ it('settles never resolving async derivations with deps picked up async', async 
     store.get(asyncAtom).then((value) => values.push(value))
   })
 
-  await new Promise((r) => setTimeout(r)) // wait for a tick
+  await vi.advanceTimersByTimeAsync(100)
   store.set(syncAtom, {
     promise: new Promise<number>((r) => resolve.push(r)),
   })
   resolve[1]?.(1)
 
-  await new Promise((r) => setTimeout(r)) // wait for a tick
+  await vi.advanceTimersByTimeAsync(100)
   expect(values).toEqual([1])
   expect(sub).toBe(1)
 })
@@ -253,7 +252,6 @@ it('settles never resolving async derivations with deps picked up async', async 
 it('refreshes deps for each async read', async () => {
   const countAtom = atom(0)
   const depAtom = atom(false)
-  const resolve: (() => void)[] = []
   const values: number[] = []
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
@@ -261,17 +259,19 @@ it('refreshes deps for each async read', async () => {
     if (count === 0) {
       get(depAtom)
     }
-    await new Promise<void>((r) => resolve.push(r))
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
     return count
   })
   const store = createStore()
+
   store.get(asyncAtom)
   store.set(countAtom, (c) => c + 1)
-  resolve.splice(0).forEach((fn) => fn())
-  expect(await store.get(asyncAtom)).toBe(1)
+  await vi.advanceTimersByTimeAsync(100)
+  await expect(store.get(asyncAtom)).resolves.toBe(1)
+
   store.set(depAtom, true)
   store.get(asyncAtom)
-  resolve.splice(0).forEach((fn) => fn())
+  await vi.advanceTimersByTimeAsync(0)
   expect(values).toEqual([0, 1])
 })
 
@@ -317,22 +317,21 @@ it('handles complex dependency chains', async () => {
   const baseAtom = atom(1)
   const derived1 = atom((get) => get(baseAtom) * 2)
   const derived2 = atom((get) => get(derived1) + 1)
-  let resolve = () => {}
   const asyncDerived = atom(async (get) => {
     const value = get(derived2)
-    await new Promise<void>((r) => (resolve = r))
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
     return value * 2
   })
-
   const store = createStore()
-  const promise = store.get(asyncDerived)
-  resolve()
-  expect(await promise).toBe(6)
+
+  store.get(asyncDerived)
+  await vi.advanceTimersByTimeAsync(100)
+  await expect(store.get(asyncDerived)).resolves.toBe(6)
 
   store.set(baseAtom, 2)
-  const promise2 = store.get(asyncDerived)
-  resolve()
-  expect(await promise2).toBe(10)
+  store.get(asyncDerived)
+  await vi.advanceTimersByTimeAsync(100)
+  await expect(store.get(asyncDerived)).resolves.toBe(10)
 })
 
 it('can read sync derived atom in write without initializing', () => {

@@ -1,7 +1,15 @@
 import { StrictMode, Suspense } from 'react'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 import {
@@ -12,7 +20,13 @@ import {
 } from 'jotai/vanilla/utils'
 import type { SyncStringStorage } from 'jotai/vanilla/utils/atomWithStorage'
 
-const resolve: (() => void)[] = []
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe('atomWithStorage (sync)', () => {
   const storageData: Record<string, number> = {
@@ -52,7 +66,7 @@ describe('atomWithStorage (sync)', () => {
     },
   }
 
-  it('simple count', async () => {
+  it('simple count', () => {
     const countAtom = atomWithStorage('count', 1, dummyStorage)
 
     const Counter = () => {
@@ -72,18 +86,18 @@ describe('atomWithStorage (sync)', () => {
       </StrictMode>,
     )
 
-    expect(await screen.findByText('count: 10')).toBeInTheDocument()
+    expect(screen.getByText('count: 10')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 11')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('count: 11')).toBeInTheDocument()
     expect(storageData.count).toBe(11)
 
-    await userEvent.click(screen.getByText('reset'))
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('reset'))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
     expect(storageData.count).toBeUndefined()
   })
 
-  it('storage updates before mount (#1079)', async () => {
+  it('storage updates before mount (#1079)', () => {
     dummyStorage.setItem('count', 10)
     const countAtom = atomWithStorage('count', 1, dummyStorage)
 
@@ -102,7 +116,7 @@ describe('atomWithStorage (sync)', () => {
       </StrictMode>,
     )
 
-    expect(await screen.findByText('count: 9')).toBeInTheDocument()
+    expect(screen.getByText('count: 9')).toBeInTheDocument()
   })
 })
 
@@ -144,7 +158,7 @@ describe('with sync string storage', () => {
     return () => stringStorage.listeners.delete(listener)
   }
 
-  it('simple count', async () => {
+  it('simple count', () => {
     const countAtom = atomWithStorage('count', 1, dummyStorage)
 
     const Counter = () => {
@@ -167,26 +181,26 @@ describe('with sync string storage', () => {
       </StrictMode>,
     )
 
-    expect(await screen.findByText('count: 10')).toBeInTheDocument()
+    expect(screen.getByText('count: 10')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 11')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('count: 11')).toBeInTheDocument()
     expect(storageData.count).toBe('11')
 
-    await userEvent.click(screen.getByText('reset'))
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('reset'))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
     expect(storageData.count).toBeUndefined()
 
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 2')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
     expect(storageData.count).toBe('2')
 
-    await userEvent.click(screen.getByText('conditional reset'))
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('conditional reset'))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
     expect(storageData.count).toBeUndefined()
   })
 
-  it('no entry (#1086)', async () => {
+  it('no entry (#1086)', () => {
     const noentryAtom = atomWithStorage('noentry', -1, dummyStorage)
 
     const Counter = () => {
@@ -200,7 +214,7 @@ describe('with sync string storage', () => {
       </StrictMode>,
     )
 
-    expect(await screen.findByText('noentry: -1')).toBeInTheDocument()
+    expect(screen.getByText('noentry: -1')).toBeInTheDocument()
   })
 })
 
@@ -210,18 +224,18 @@ describe('atomWithStorage (async)', () => {
   }
   const asyncDummyStorage = {
     getItem: async (key: string, initialValue: number) => {
-      await new Promise<void>((r) => resolve.push(r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       if (!(key in asyncStorageData)) {
         return initialValue
       }
       return asyncStorageData[key] as number
     },
     setItem: async (key: string, newValue: number) => {
-      await new Promise<void>((r) => resolve.push(r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       asyncStorageData[key] = newValue
     },
     removeItem: async (key: string) => {
-      await new Promise<void>((r) => resolve.push(r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       delete asyncStorageData[key]
     },
   }
@@ -242,33 +256,30 @@ describe('atomWithStorage (async)', () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <Suspense fallback="loading">
             <Counter />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 10')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 10')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 11')).toBeInTheDocument()
-    resolve.splice(0).forEach((fn) => fn())
-    await waitFor(() => {
-      expect(asyncStorageData.count).toBe(11)
-    })
+    await act(() => fireEvent.click(screen.getByText('button')))
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 11')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(asyncStorageData.count).toBe(11)
 
-    await userEvent.click(screen.getByText('reset'))
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
-    await waitFor(() => {
-      expect(asyncStorageData.count).toBeUndefined()
-    })
+    await act(() => fireEvent.click(screen.getByText('reset')))
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(asyncStorageData.count).toBeUndefined()
   })
 
   it('async new count', async () => {
@@ -276,6 +287,7 @@ describe('atomWithStorage (async)', () => {
 
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom)
+
       return (
         <>
           <div>count: {count}</div>
@@ -286,28 +298,29 @@ describe('atomWithStorage (async)', () => {
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </StrictMode>,
+    await act(() =>
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      ),
     )
 
-    expect(await screen.findByText('count: 20')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 20')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 20')).toBeInTheDocument()
-    resolve.splice(0).forEach((fn) => fn())
-    await waitFor(() => {
-      expect(asyncStorageData.count2).toBe(21)
-    })
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('count: 20')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(300))
+    expect(asyncStorageData.count2).toBe(21)
   })
 })
 
 describe('atomWithStorage (without localStorage) (#949)', () => {
-  it('createJSONStorage without localStorage', async () => {
+  it('createJSONStorage without localStorage', () => {
     const countAtom = atomWithStorage(
       'count',
       1,
@@ -332,7 +345,7 @@ describe('atomWithStorage (without localStorage) (#949)', () => {
       </StrictMode>,
     )
 
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
 })
 
@@ -342,15 +355,15 @@ describe('atomWithStorage (in non-browser environment)', () => {
   }
   const asyncDummyStorage = {
     getItem: async (key: string) => {
-      await new Promise<void>((r) => resolve.push(r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       return asyncStorageData[key] as string
     },
     setItem: async (key: string, newValue: string) => {
-      await new Promise<void>((r) => resolve.push(r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       asyncStorageData[key] = newValue
     },
     removeItem: async (key: string) => {
-      await new Promise<void>((r) => resolve.push(r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       delete asyncStorageData[key]
     },
   }
@@ -399,17 +412,17 @@ describe('atomWithStorage (in non-browser environment)', () => {
     })
   })
 
-  it('createJSONStorage with undefined window.addEventListener', async () => {
+  it('createJSONStorage with undefined window.addEventListener', () => {
     const storage = createJSONStorage(() => asyncDummyStorage)
     expect(storage.subscribe).toBeUndefined()
   })
 
-  it('createJSONStorage with localStorage', async () => {
+  it('createJSONStorage with localStorage', () => {
     expect(() => createJSONStorage()).not.toThrow()
     expect(() => createJSONStorage(() => window.localStorage)).not.toThrow()
   })
 
-  it('createJSONStorage with sessionStorage', async () => {
+  it('createJSONStorage with sessionStorage', () => {
     expect(() => createJSONStorage(() => window.sessionStorage)).not.toThrow()
   })
 })
@@ -426,7 +439,7 @@ describe('atomWithStorage (with browser storage)', () => {
     window.addEventListener = addEventListener
   })
 
-  it('createJSONStorage subscribes to specific window storage events', async () => {
+  it('createJSONStorage subscribes to specific window storage events', () => {
     const store = createStore()
     const mockNativeStorage = Object.create(window.Storage.prototype)
     mockNativeStorage.setItem = vi.fn() as Storage['setItem']
@@ -485,8 +498,8 @@ describe('atomWithStorage (with browser storage)', () => {
 
     expect(store.get(dummyAtom)).toBe(2)
 
+    // simulate removeItem() from another window
     act(() => {
-      // simulate removeItem() from another window
       storageEventHandler?.({
         key: 'dummy',
         newValue: null,
@@ -497,7 +510,7 @@ describe('atomWithStorage (with browser storage)', () => {
     expect(store.get(dummyAtom)).toBe(1)
   })
 
-  it("should recompute dependents' state after onMount (#2098)", async () => {
+  it("should recompute dependents' state after onMount (#2098)", () => {
     const store = createStore()
     let currentValue: string | null = 'true'
     const mockNativeStorage = {
@@ -548,7 +561,7 @@ describe('atomWithStorage (with browser storage)', () => {
     expect(store.get(isDevModeStorageAtom)).toBeTruthy()
 
     expect(checkbox).toBeChecked()
-    await userEvent.click(checkbox)
+    fireEvent.click(checkbox)
     expect(checkbox).not.toBeChecked()
   })
 })
@@ -570,7 +583,7 @@ describe('atomWithStorage (with disabled browser storage)', () => {
     ;(window as any).localStorage = savedLocalStorage
   })
 
-  it('initial value of atomWithStorage can be used when cookies are disabled', async () => {
+  it('initial value of atomWithStorage can be used when cookies are disabled', () => {
     const countAtom = atomWithStorage<number>('counter', 4)
 
     const Counter = () => {
@@ -588,7 +601,7 @@ describe('atomWithStorage (with disabled browser storage)', () => {
       </StrictMode>,
     )
 
-    expect(await screen.findByText('count: 4')).toBeInTheDocument()
+    expect(screen.getByText('count: 4')).toBeInTheDocument()
   })
 })
 
@@ -604,7 +617,7 @@ describe('atomWithStorage (with non-browser storage)', () => {
     window.addEventListener = addEventListener
   })
 
-  it('createJSONStorage avoids attaching event handler for non-browser storage', async () => {
+  it('createJSONStorage avoids attaching event handler for non-browser storage', () => {
     const store = createStore()
     const mockNonNativeStorage = {
       setItem: vi.fn() as Storage['setItem'],
@@ -649,7 +662,7 @@ describe('withStorageValidator', () => {
 })
 
 describe('with subscribe method in string storage', () => {
-  it('createJSONStorage subscriber is called correctly', async () => {
+  it('createJSONStorage subscriber is called correctly', () => {
     const store = createStore()
 
     const subscribe = vi.fn()
@@ -684,7 +697,7 @@ describe('with subscribe method in string storage', () => {
     expect(subscribe).toHaveBeenCalledWith('dummy', expect.any(Function))
   })
 
-  it('createJSONStorage subscriber responds to events correctly', async () => {
+  it('createJSONStorage subscriber responds to events correctly', () => {
     const storageData: Record<string, string> = {
       count: '10',
     }
@@ -732,7 +745,7 @@ describe('with subscribe method in string storage', () => {
       </StrictMode>,
     )
 
-    expect(await screen.findByText('count: 10')).toBeInTheDocument()
+    expect(screen.getByText('count: 10')).toBeInTheDocument()
 
     storageData.count = '12'
     fireEvent(
@@ -741,7 +754,7 @@ describe('with subscribe method in string storage', () => {
         detail: '12',
       }),
     )
-    expect(await screen.findByText('count: 12')).toBeInTheDocument()
+    expect(screen.getByText('count: 12')).toBeInTheDocument()
     // expect(storageData.count).toBe('11')
   })
 })
@@ -777,19 +790,23 @@ describe('with custom async storage', () => {
         </>
       )
     }
-    await act(async () => {
+
+    await act(() =>
       render(
         <StrictMode>
           <Suspense fallback="loading">
             <Component />
           </Suspense>
         </StrictMode>,
-      )
-    })
-    expect(await screen.findByText('count: 0')).toBeInTheDocument()
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 2')).toBeInTheDocument()
+      ),
+    )
+
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
   })
 })

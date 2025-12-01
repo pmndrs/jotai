@@ -1,15 +1,18 @@
 /* eslint-disable react/no-unescaped-entities */
 import { StrictMode, Suspense, useEffect, useRef, useState } from 'react'
-import { act, render, screen, waitFor } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom, Getter } from 'jotai/vanilla'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -20,7 +23,7 @@ const useCommitCount = () => {
   return commitCountRef.current
 }
 
-it('works with 2 level dependencies', async () => {
+it('works with 2 level dependencies', () => {
   const countAtom = atom(1)
   const doubledAtom = atom((get) => get(countAtom) * 2)
   const tripledAtom = atom((get) => get(doubledAtom) * 3)
@@ -47,20 +50,19 @@ it('works with 2 level dependencies', async () => {
   )
 
   expect(
-    await screen.findByText('commits: 1, count: 1, doubled: 2, tripled: 6'),
+    screen.getByText('commits: 1, count: 1, doubled: 2, tripled: 6'),
   ).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   expect(
-    await screen.findByText('commits: 2, count: 2, doubled: 4, tripled: 12'),
+    screen.getByText('commits: 2, count: 2, doubled: 4, tripled: 12'),
   ).toBeInTheDocument()
 })
 
 it('works a primitive atom and a dependent async atom', async () => {
   const countAtom = atom(1)
-  let resolve = () => {}
   const doubledAtom = atom(async (get) => {
-    await new Promise<void>((r) => (resolve = r))
+    await new Promise<void>((r) => setTimeout(r, 100))
     return get(countAtom) * 2
   })
 
@@ -77,32 +79,34 @@ it('works a primitive atom and a dependent async atom', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
-  expect(await screen.findByText('count: 1, doubled: 2')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count: 1, doubled: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
-  expect(await screen.findByText('count: 2, doubled: 4')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  await act(() => vi.advanceTimersByTimeAsync(1))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(99))
+  expect(screen.getByText('count: 2, doubled: 4')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
-  expect(await screen.findByText('count: 3, doubled: 6')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  await act(() => vi.advanceTimersByTimeAsync(1))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(99))
+  expect(screen.getByText('count: 3, doubled: 6')).toBeInTheDocument()
 })
 
-it('should keep an atom value even if unmounted', async () => {
+it('should keep an atom value even if unmounted', () => {
   const countAtom = atom(0)
   const derivedFn = vi.fn((get: Getter) => get(countAtom))
   const derivedAtom = atom(derivedFn)
@@ -145,34 +149,30 @@ it('should keep an atom value even if unmounted', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-    expect(screen.getByText('derived: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('derived: 0')).toBeInTheDocument()
+
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('derived: 1')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('derived: 1')).toBeInTheDocument()
+
   expect(derivedFn).toHaveReturnedTimes(2)
 
-  await userEvent.click(screen.getByText('toggle'))
-  await waitFor(() => {
-    expect(screen.getByText('hidden')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('toggle'))
+  expect(screen.getByText('hidden')).toBeInTheDocument()
+
   expect(derivedFn).toHaveReturnedTimes(2)
 
-  await userEvent.click(screen.getByText('toggle'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('derived: 1')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('toggle'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('derived: 1')).toBeInTheDocument()
+
   expect(derivedFn).toHaveReturnedTimes(2)
 })
 
-it('should keep a dependent atom value even if unmounted', async () => {
+it('should keep a dependent atom value even if unmounted', () => {
   const countAtom = atom(0)
   const derivedFn = vi.fn((get: Getter) => get(countAtom))
   const derivedAtom = atom(derivedFn)
@@ -208,23 +208,23 @@ it('should keep a dependent atom value even if unmounted', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('derived: 0')).toBeInTheDocument()
+  expect(screen.getByText('derived: 0')).toBeInTheDocument()
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  await userEvent.click(screen.getByText('toggle'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('toggle'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  await userEvent.click(screen.getByText('toggle'))
-  expect(await screen.findByText('derived: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('toggle'))
+  expect(screen.getByText('derived: 1')).toBeInTheDocument()
   expect(derivedFn).toHaveReturnedTimes(2)
 })
 
-it('should bail out updating if not changed', async () => {
+it('should bail out updating if not changed', () => {
   const countAtom = atom(0)
   const derivedFn = vi.fn((get: Getter) => get(countAtom))
   const derivedAtom = atom(derivedFn)
@@ -251,17 +251,15 @@ it('should bail out updating if not changed', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-    expect(screen.getByText('derived: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('derived: 0')).toBeInTheDocument()
+
   expect(derivedFn).toHaveReturnedTimes(1)
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-    expect(screen.getByText('derived: 0')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('derived: 0')).toBeInTheDocument()
+
   expect(derivedFn).toHaveReturnedTimes(1)
 })
 
@@ -303,25 +301,23 @@ it('should bail out updating if not changed, 2 level', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('anotherCount: 10')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('anotherCount: 10')).toBeInTheDocument()
+
   expect(getDataCountFn).toHaveReturnedTimes(1)
   expect(getDataObjFn).toHaveReturnedTimes(1)
   expect(getAnotherCountFn).toHaveReturnedTimes(1)
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
-    expect(screen.getByText('anotherCount: 10')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+  expect(screen.getByText('anotherCount: 10')).toBeInTheDocument()
+
   expect(getDataCountFn).toHaveReturnedTimes(2)
   expect(getDataObjFn).toHaveReturnedTimes(2)
   expect(getAnotherCountFn).toHaveReturnedTimes(1)
 })
 
-it('derived atom to update base atom in callback', async () => {
+it('derived atom to update base atom in callback', () => {
   const countAtom = atom(1)
   const doubledAtom = atom(
     (get) => get(countAtom) * 2,
@@ -352,16 +348,16 @@ it('derived atom to update base atom in callback', async () => {
   )
 
   expect(
-    await screen.findByText('commits: 1, count: 1, doubled: 2'),
+    screen.getByText('commits: 1, count: 1, doubled: 2'),
   ).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   expect(
-    await screen.findByText('commits: 2, count: 2, doubled: 4'),
+    screen.getByText('commits: 2, count: 2, doubled: 4'),
   ).toBeInTheDocument()
 })
 
-it('can read sync derived atom in write without initializing', async () => {
+it('can read sync derived atom in write without initializing', () => {
   const countAtom = atom(1)
   const doubledAtom = atom((get) => get(countAtom) * 2)
   const addAtom = atom(null, (get, set, num: number) => {
@@ -385,16 +381,16 @@ it('can read sync derived atom in write without initializing', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 })
 
-it('can remount atoms with dependency (#490)', async () => {
+it('can remount atoms with dependency (#490)', () => {
   const countAtom = atom(0)
   const derivedAtom = atom((get) => get(countAtom))
 
@@ -436,36 +432,26 @@ it('can remount atoms with dependency (#490)', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-    expect(screen.getByText('derived: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('derived: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('derived: 1')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('derived: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('toggle'))
-  await waitFor(() => {
-    expect(screen.getByText('hidden')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('toggle'))
+  expect(screen.getByText('hidden')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('toggle'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('derived: 1')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('toggle'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('derived: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
-    expect(screen.getByText('derived: 2')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+  expect(screen.getByText('derived: 2')).toBeInTheDocument()
 })
 
-it('can remount atoms with intermediate atom', async () => {
+it('can remount atoms with intermediate atom', () => {
   const countAtom = atom(1)
 
   const resultAtom = atom(0)
@@ -517,43 +503,31 @@ it('can remount atoms with intermediate atom', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('derived: 2')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('derived: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
-    expect(screen.getByText('derived: 4')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+  expect(screen.getByText('derived: 4')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('toggle'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
-    expect(screen.getByText('hidden')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('toggle'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+  expect(screen.getByText('hidden')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 3')).toBeInTheDocument()
-    expect(screen.getByText('hidden')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
+  expect(screen.getByText('hidden')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('toggle'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 3')).toBeInTheDocument()
-    expect(screen.getByText('derived: 6')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('toggle'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
+  expect(screen.getByText('derived: 6')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 4')).toBeInTheDocument()
-    expect(screen.getByText('derived: 8')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 4')).toBeInTheDocument()
+  expect(screen.getByText('derived: 8')).toBeInTheDocument()
 })
 
-it('can update dependents with useEffect (#512)', async () => {
+it('can update dependents with useEffect (#512)', () => {
   const enabledAtom = atom(false)
   const countAtom = atom(1)
 
@@ -600,19 +574,15 @@ it('can update dependents with useEffect (#512)', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('derived: 2')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('derived: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
-    expect(screen.getByText('derived: 4')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+  expect(screen.getByText('derived: 4')).toBeInTheDocument()
 })
 
-it('update unmounted atom with intermediate atom', async () => {
+it('update unmounted atom with intermediate atom', () => {
   const enabledAtom = atom(true)
   const countAtom = atom(1)
 
@@ -650,17 +620,17 @@ it('update unmounted atom with intermediate atom', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('derived: 2')).toBeInTheDocument()
+  expect(screen.getByText('derived: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('toggle enabled'))
-  await userEvent.click(screen.getByText('increment count'))
-  expect(await screen.findByText('derived: -1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('toggle enabled'))
+  fireEvent.click(screen.getByText('increment count'))
+  expect(screen.getByText('derived: -1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('toggle enabled'))
-  expect(await screen.findByText('derived: 4')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('toggle enabled'))
+  expect(screen.getByText('derived: 4')).toBeInTheDocument()
 })
 
-it('Should bail for derived sync chains (#877)', async () => {
+it('Should bail for derived sync chains (#877)', () => {
   let syncAtomCount = 0
   const textAtom = atom('hello')
 
@@ -695,12 +665,13 @@ it('Should bail for derived sync chains (#877)', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('My very long data')).toBeInTheDocument()
+  expect(screen.getByText('My very long data')).toBeInTheDocument()
+
   expect(syncAtomCount).toBe(1)
 
-  await userEvent.click(screen.getByText(`set value to 'hello'`))
+  fireEvent.click(screen.getByText(`set value to 'hello'`))
+  expect(screen.getByText('My very long data')).toBeInTheDocument()
 
-  expect(await screen.findByText('My very long data')).toBeInTheDocument()
   expect(syncAtomCount).toBe(1)
 })
 
@@ -732,7 +703,7 @@ it('Should bail for derived async chains (#877)', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
@@ -740,15 +711,17 @@ it('Should bail for derived async chains (#877)', async () => {
           <ForceValue />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('My very long data')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('My very long data')).toBeInTheDocument()
+
   expect(syncAtomCount).toBe(1)
 
-  await userEvent.click(screen.getByText(`set value to 'hello'`))
+  fireEvent.click(screen.getByText("set value to 'hello'"))
+  expect(screen.getByText('My very long data')).toBeInTheDocument()
 
-  expect(await screen.findByText('My very long data')).toBeInTheDocument()
   expect(syncAtomCount).toBe(1)
 })
 
@@ -786,20 +759,17 @@ it('update correctly with async updates (#1250)', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('alsoCount: 0')).toBeInTheDocument()
-    expect(screen.getByText('countIsGreaterThanOne: false')).toBeInTheDocument()
-  })
+  expect(screen.getByText('alsoCount: 0')).toBeInTheDocument()
+  expect(screen.getByText('countIsGreaterThanOne: false')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Increment Count Twice'))
-  await waitFor(() => {
-    expect(screen.getByText('alsoCount: 2')).toBeInTheDocument()
-    expect(screen.getByText('countIsGreaterThanOne: true')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('Increment Count Twice'))
+  await act(() => vi.advanceTimersByTime(0))
+  expect(screen.getByText('alsoCount: 2')).toBeInTheDocument()
+  expect(screen.getByText('countIsGreaterThanOne: true')).toBeInTheDocument()
 })
 
 describe('glitch free', () => {
-  it('basic', async () => {
+  it('basic', () => {
     const baseAtom = atom(0)
     const derived1Atom = atom((get) => get(baseAtom))
     const derived2Atom = atom((get) => get(derived1Atom))
@@ -832,19 +802,15 @@ describe('glitch free', () => {
       </StrictMode>,
     )
 
-    expect(
-      await screen.findByText('value: v0: 0, v1: 0, v2: 0'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('value: v0: 0, v1: 0, v2: 0')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(1)
 
-    await userEvent.click(screen.getByText('button'))
-    expect(
-      await screen.findByText('value: v0: 1, v1: 1, v2: 1'),
-    ).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('value: v0: 1, v1: 1, v2: 1')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
 
-  it('same value', async () => {
+  it('same value', () => {
     const baseAtom = atom(0)
     const derived1Atom = atom((get) => get(baseAtom) * 0)
     const derived2Atom = atom((get) => get(derived1Atom) * 0)
@@ -877,15 +843,15 @@ describe('glitch free', () => {
       </StrictMode>,
     )
 
-    expect(await screen.findByText('value: 0')).toBeInTheDocument()
+    expect(screen.getByText('value: 0')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(1)
 
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('value: 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('value: 1')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
 
-  it('double chain', async () => {
+  it('double chain', () => {
     const baseAtom = atom(0)
     const derived1Atom = atom((get) => get(baseAtom))
     const derived2Atom = atom((get) => get(derived1Atom))
@@ -920,16 +886,16 @@ describe('glitch free', () => {
       </StrictMode>,
     )
 
-    expect(await screen.findByText('value: 0')).toBeInTheDocument()
+    expect(screen.getByText('value: 0')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(1)
 
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('value: 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    expect(screen.getByText('value: 1')).toBeInTheDocument()
     expect(computeValue).toHaveBeenCalledTimes(2)
   })
 })
 
-it('should not call read function for unmounted atoms in StrictMode (#2076)', async () => {
+it('should not call read function for unmounted atoms in StrictMode (#2076)', () => {
   const countAtom = atom(1)
   let firstDerivedFn:
     | (((get: Getter) => number) & { mockClear: () => void })
@@ -974,11 +940,11 @@ it('should not call read function for unmounted atoms in StrictMode (#2076)', as
     </StrictMode>,
   )
 
-  await userEvent.click(screen.getByText('hide'))
+  fireEvent.click(screen.getByText('hide'))
   expect(firstDerivedFn).toBeCalledTimes(1)
   firstDerivedFn?.mockClear()
 
-  await userEvent.click(screen.getByText('show'))
+  fireEvent.click(screen.getByText('show'))
   expect(firstDerivedFn).toBeCalledTimes(0)
 })
 
@@ -1014,10 +980,10 @@ it('works with unused hook (#2554)', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('not running')).toBeInTheDocument()
+  expect(screen.getByText('not running')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Activate'))
-  expect(await screen.findByText('running')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('Activate'))
+  expect(screen.getByText('running')).toBeInTheDocument()
 })
 
 it('works with async dependencies (#2565)', async () => {
@@ -1047,22 +1013,25 @@ it('works with async dependencies (#2565)', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <App />
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
   // FIXME this is not working
-  //await screen.findByText('loading')
+  // expect(screen.getByText('loading')).toBeInTheDocument()
 
-  expect(await screen.findByText('count: 100')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 100')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Count Up'))
-  expect(await screen.findByText('count: 101')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('Count Up')))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 101')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Count Up'))
-  expect(await screen.findByText('count: 102')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('Count Up')))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 102')).toBeInTheDocument()
 })
