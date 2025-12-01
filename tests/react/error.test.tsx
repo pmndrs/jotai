@@ -465,10 +465,9 @@ describe('throws an error while updating in effect cleanup', () => {
 
     fireEvent.click(screen.getByText('close'))
     if (reactVersion.startsWith('17.')) {
-      // FIXME this fails since https://github.com/pmndrs/jotai/pull/3184
-      //expect(
-      //  errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
-      //).toBe(true)
+      expect(
+        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
+      ).toBe(true)
     } else {
       expect(
         screen.getByText('Errored: err_in_effect_cleanup'),
@@ -494,10 +493,9 @@ describe('throws an error while updating in effect cleanup', () => {
 
     fireEvent.click(screen.getByText('close'))
     if (reactVersion.startsWith('17.')) {
-      // FIXME this fails since https://github.com/pmndrs/jotai/pull/3184
-      //expect(
-      //  errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
-      //).toBe(true)
+      expect(
+        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
+      ).toBe(true)
     } else {
       expect(
         screen.getByText('Errored: err_in_effect_cleanup'),
