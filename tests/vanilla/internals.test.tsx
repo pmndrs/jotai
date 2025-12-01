@@ -106,6 +106,17 @@ describe('store hooks', () => {
     return { store, storeHooks }
   }
 
+  describe('init hook (i)', () => {
+    it('should call init hook when atom state is initialized', () => {
+      const { store, storeHooks } = createStoreWithHooks()
+      const baseAtom = atom(0)
+      const initCallback = vi.fn()
+      storeHooks.i.add(baseAtom, initCallback)
+      store.get(baseAtom)
+      expect(initCallback).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('read hook (r)', () => {
     it('should call read hook when atom is read', () => {
       const { store, storeHooks } = createStoreWithHooks()

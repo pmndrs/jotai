@@ -47,57 +47,58 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
         PromiseLike<unknown>,
         Awaited<Value>
       >()
-      const refreshAtom = atom(0)
+      const refreshAtom = atom([() => {}, 0] as [() => void, number])
+      refreshAtom.unstable_onInit = (store) => {
+        store.set(refreshAtom, ([, c]) => [
+          () => store.set(refreshAtom, ([f, c]) => [f, c + 1]),
+          c,
+        ])
+      }
 
       if (import.meta.env?.MODE !== 'production') {
         refreshAtom.debugPrivate = true
       }
 
-      const promiseAndValueAtom: WritableAtom<PromiseAndValue, [], void> & {
+      const promiseAndValueAtom: Atom<PromiseAndValue> & {
         init?: undefined
-      } = atom(
-        (get, { setSelf }) => {
-          get(refreshAtom)
-          let prev: PromiseAndValue | undefined
-          try {
-            prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
-          } catch {
-            // ignore previous errors to avoid getting stuck in error state
+      } = atom((get) => {
+        const [triggerRefresh] = get(refreshAtom)
+        let prev: PromiseAndValue | undefined
+        try {
+          prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
+        } catch {
+          // ignore previous errors to avoid getting stuck in error state
+        }
+        const promise = get(anAtom)
+        if (!isPromiseLike(promise)) {
+          return { v: promise as Awaited<Value> }
+        }
+        if (promise !== prev?.p) {
+          promise.then(
+            (v) => {
+              promiseResultCache.set(promise, v as Awaited<Value>)
+              triggerRefresh()
+            },
+            (e) => {
+              promiseErrorCache.set(promise, e)
+              triggerRefresh()
+            },
+          )
+        }
+        if (promiseErrorCache.has(promise)) {
+          throw promiseErrorCache.get(promise)
+        }
+        if (promiseResultCache.has(promise)) {
+          return {
+            p: promise,
+            v: promiseResultCache.get(promise) as Awaited<Value>,
           }
-          const promise = get(anAtom)
-          if (!isPromiseLike(promise)) {
-            return { v: promise as Awaited<Value> }
-          }
-          if (promise !== prev?.p) {
-            promise.then(
-              (v) => {
-                promiseResultCache.set(promise, v as Awaited<Value>)
-                setSelf()
-              },
-              (e) => {
-                promiseErrorCache.set(promise, e)
-                setSelf()
-              },
-            )
-          }
-          if (promiseErrorCache.has(promise)) {
-            throw promiseErrorCache.get(promise)
-          }
-          if (promiseResultCache.has(promise)) {
-            return {
-              p: promise,
-              v: promiseResultCache.get(promise) as Awaited<Value>,
-            }
-          }
-          if (prev && 'v' in prev) {
-            return { p: promise, f: fallback(prev.v), v: prev.v }
-          }
-          return { p: promise, f: fallback() }
-        },
-        (_get, set) => {
-          set(refreshAtom, (c) => c + 1)
-        },
-      )
+        }
+        if (prev && 'v' in prev) {
+          return { p: promise, f: fallback(prev.v), v: prev.v }
+        }
+        return { p: promise, f: fallback() }
+      })
       // HACK to read PromiseAndValue atom before initialization
       promiseAndValueAtom.init = undefined
 
