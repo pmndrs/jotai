@@ -466,8 +466,8 @@ describe('throws an error while updating in effect cleanup', () => {
     fireEvent.click(screen.getByText('close'))
     if (reactVersion.startsWith('17.')) {
       expect(
-        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
-      ).toBe(true)
+        screen.getByText('Errored: err_in_effect_cleanup'),
+      ).toBeInTheDocument()
     } else {
       expect(
         screen.getByText('Errored: err_in_effect_cleanup'),
@@ -494,8 +494,8 @@ describe('throws an error while updating in effect cleanup', () => {
     fireEvent.click(screen.getByText('close'))
     if (reactVersion.startsWith('17.')) {
       expect(
-        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
-      ).toBe(true)
+        screen.getByText('Errored: err_in_effect_cleanup'),
+      ).toBeInTheDocument()
     } else {
       expect(
         screen.getByText('Errored: err_in_effect_cleanup'),
