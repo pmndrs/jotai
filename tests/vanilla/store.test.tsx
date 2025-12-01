@@ -1,5 +1,5 @@
 import { waitFor } from '@testing-library/react'
-import { assert, describe, expect, it, vi } from 'vitest'
+import { afterEach, assert, beforeEach, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 import {
@@ -48,6 +48,15 @@ const deriveStore = (
   const derivedStore = INTERNAL_buildStore(enhanceAtomStateMap(atomStateMap))
   return derivedStore
 }
+
+let savedConsoleWarn: any
+beforeEach(() => {
+  savedConsoleWarn = console.warn
+  console.warn = vi.fn()
+})
+afterEach(() => {
+  console.warn = savedConsoleWarn
+})
 
 it('should not fire on subscribe', async () => {
   const store = createStore()
@@ -1269,4 +1278,16 @@ it('updates dependents when it eagerly recomputes dirty atoms', () => {
   store.set(countAtom, 1)
 
   expect(store.get(activeCountAtom)).toBe(1)
+})
+
+it('[DEV-ONLY] should warn store mutation during read', () => {
+  const store = createStore()
+  const countAtom = atom(0)
+  const derivedAtom = atom(() => {
+    store.set(countAtom, (c) => c + 1)
+  })
+  store.get(derivedAtom)
+  expect(console.warn).toHaveBeenCalledWith(
+    'Detected store mutation during atom read. This is not supported.',
+  )
 })

@@ -528,6 +528,9 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
   }
 }
 
+// Dev only
+const storeMutationSet = new WeakSet<Store>()
+
 const readAtomState: ReadAtomState = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
@@ -637,7 +640,15 @@ const readAtomState: ReadAtomState = (store, atom) => {
   }
   const prevEpochNumber = atomState.n
   try {
+    if (import.meta.env?.MODE !== 'production') {
+      storeMutationSet.delete(store)
+    }
     const valueOrPromise = atomRead(store, atom, getter, options as never)
+    if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
+      console.warn(
+        'Detected store mutation during atom read. This is not supported.',
+      )
+    }
     setAtomStateValueOrPromise(store, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
       registerAbortHandler(valueOrPromise, () => controller?.abort())
@@ -704,6 +715,9 @@ const writeAtomState: WriteAtomState = (store, atom, ...args) => {
         if (!hasInitialValue(a)) {
           // NOTE technically possible but restricted as it may cause bugs
           throw new Error('atom not writable')
+        }
+        if (import.meta.env?.MODE !== 'production') {
+          storeMutationSet.add(store)
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
