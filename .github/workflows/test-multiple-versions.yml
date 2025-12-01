@@ -36,6 +36,10 @@ jobs:
         if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
         run: |
           pnpm add -D @testing-library/react@12.1.4
+      - name: Patch for React 17
+        if: ${{ startsWith(matrix.react, '17.') }}
+        run: |
+          pnpm add -D vitest@3.2.4
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
