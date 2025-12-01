@@ -7,17 +7,20 @@ import {
   useRef,
   useState,
 } from 'react'
-import { act, render, screen, waitFor } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { unstable_batchedUpdates } from 'react-dom'
-import { expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 const IS_REACT18 = /^18\./.test(reactVersion)
 
@@ -38,7 +41,7 @@ const useCommitCount = () => {
   return commitCountRef.current
 }
 
-it('uses a primitive atom', async () => {
+it('uses a primitive atom', () => {
   const countAtom = atom(0)
 
   const Counter = () => {
@@ -57,13 +60,13 @@ it('uses a primitive atom', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('uses a read-only derived atom', async () => {
+it('uses a read-only derived atom', () => {
   const countAtom = atom(0)
   const doubledCountAtom = atom((get) => get(countAtom) * 2)
 
@@ -85,18 +88,15 @@ it('uses a read-only derived atom', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-    expect(screen.getByText('doubledCount: 0')).toBeInTheDocument()
-  })
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('doubledCount: 2')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('doubledCount: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('doubledCount: 2')).toBeInTheDocument()
 })
 
-it('uses a read-write derived atom', async () => {
+it('uses a read-write derived atom', () => {
   const countAtom = atom(0)
   const doubledCountAtom = atom(
     (get) => get(countAtom) * 2,
@@ -121,18 +121,15 @@ it('uses a read-write derived atom', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-    expect(screen.getByText('doubledCount: 0')).toBeInTheDocument()
-  })
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
-    expect(screen.getByText('doubledCount: 4')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('doubledCount: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+  expect(screen.getByText('doubledCount: 4')).toBeInTheDocument()
 })
 
-it('uses a write-only derived atom', async () => {
+it('uses a write-only derived atom', () => {
   const countAtom = atom(0)
   const incrementCountAtom = atom(null, (get, set) =>
     set(countAtom, get(countAtom) + 1),
@@ -164,19 +161,15 @@ it('uses a write-only derived atom', async () => {
     </>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('commits: 1, count: 0')).toBeInTheDocument()
-    expect(screen.getByText('button commits: 1')).toBeInTheDocument()
-  })
+  expect(screen.getByText('commits: 1, count: 0')).toBeInTheDocument()
+  expect(screen.getByText('button commits: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('commits: 2, count: 1')).toBeInTheDocument()
-    expect(screen.getByText('button commits: 1')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('commits: 2, count: 1')).toBeInTheDocument()
+  expect(screen.getByText('button commits: 1')).toBeInTheDocument()
 })
 
-it('only re-renders if value has changed', async () => {
+it('only re-renders if value has changed', () => {
   const count1Atom = atom(0)
   const count2Atom = atom(0)
   const productAtom = atom((get) => get(count1Atom) * get(count2Atom))
@@ -213,23 +206,19 @@ it('only re-renders if value has changed', async () => {
     </>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('commits: 1, count1: 0')).toBeInTheDocument()
-    expect(screen.getByText('commits: 1, count2: 0')).toBeInTheDocument()
-    expect(screen.getByText('commits: 1, product: 0')).toBeInTheDocument()
-  })
-  await userEvent.click(screen.getByText('button-count1'))
-  await waitFor(() => {
-    expect(screen.getByText('commits: 2, count1: 1')).toBeInTheDocument()
-    expect(screen.getByText('commits: 1, count2: 0')).toBeInTheDocument()
-    expect(screen.getByText('commits: 1, product: 0')).toBeInTheDocument()
-  })
-  await userEvent.click(screen.getByText('button-count2'))
-  await waitFor(() => {
-    expect(screen.getByText('commits: 2, count1: 1')).toBeInTheDocument()
-    expect(screen.getByText('commits: 2, count2: 1')).toBeInTheDocument()
-    expect(screen.getByText('commits: 2, product: 1')).toBeInTheDocument()
-  })
+  expect(screen.getByText('commits: 1, count1: 0')).toBeInTheDocument()
+  expect(screen.getByText('commits: 1, count2: 0')).toBeInTheDocument()
+  expect(screen.getByText('commits: 1, product: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('button-count1'))
+  expect(screen.getByText('commits: 2, count1: 1')).toBeInTheDocument()
+  expect(screen.getByText('commits: 1, count2: 0')).toBeInTheDocument()
+  expect(screen.getByText('commits: 1, product: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('button-count2'))
+  expect(screen.getByText('commits: 2, count1: 1')).toBeInTheDocument()
+  expect(screen.getByText('commits: 2, count2: 1')).toBeInTheDocument()
+  expect(screen.getByText('commits: 2, product: 1')).toBeInTheDocument()
 })
 
 it('re-renders a time delayed derived atom with the same initial value (#947)', async () => {
@@ -263,14 +252,16 @@ it('re-renders a time delayed derived atom with the same initial value (#947)', 
     </StrictMode>,
   )
 
-  await screen.findByText('2')
+  expect(screen.getByText('1')).toBeInTheDocument()
+  // Wait for setTimeout to execute
+  await act(() => vi.advanceTimersByTime(0))
+  expect(screen.getByText('2')).toBeInTheDocument()
 })
 
 it('works with async get', async () => {
   const countAtom = atom(0)
-  let resolve = () => {}
   const asyncCountAtom = atom(async (get) => {
-    await new Promise<void>((r) => (resolve = r))
+    await new Promise<void>((resolve) => setTimeout(resolve, 100))
     return get(countAtom)
   })
 
@@ -288,34 +279,34 @@ it('works with async get', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
   expect(
-    await screen.findByText('commits: 1, count: 0, delayedCount: 0'),
+    screen.getByText('commits: 1, count: 0, delayedCount: 0'),
   ).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
   expect(
-    await screen.findByText('commits: 2, count: 1, delayedCount: 1'),
+    screen.getByText('commits: 2, count: 1, delayedCount: 1'),
   ).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
   expect(
-    await screen.findByText('commits: 3, count: 2, delayedCount: 2'),
+    screen.getByText('commits: 3, count: 2, delayedCount: 2'),
   ).toBeInTheDocument()
 })
 
@@ -338,42 +329,36 @@ it('works with async get without setTimeout', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  // FIXME this is not working
-  //await screen.findByText('loading')
+  // NOTE: loading doesn't appear because async atom resolves immediately (microtask only)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 0, delayedCount: 0')).toBeInTheDocument()
 
-  expect(
-    await screen.findByText('count: 0, delayedCount: 0'),
-  ).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1, delayedCount: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(
-    await screen.findByText('count: 1, delayedCount: 1'),
-  ).toBeInTheDocument()
-
-  await userEvent.click(screen.getByText('button'))
-  expect(
-    await screen.findByText('count: 2, delayedCount: 2'),
-  ).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 2, delayedCount: 2')).toBeInTheDocument()
 })
 
 it('uses atoms with tree dependencies', async () => {
   const topAtom = atom(0)
   const leftAtom = atom((get) => get(topAtom))
-  let resolve = () => {}
   const rightAtom = atom(
     (get) => get(topAtom),
     async (get, set, update: (prev: number) => number) => {
-      await new Promise<void>((r) => (resolve = r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       batchedUpdates(() => {
         set(topAtom, update(get(topAtom)))
       })
@@ -399,18 +384,18 @@ it('uses atoms with tree dependencies', async () => {
     </>,
   )
 
-  expect(await screen.findByText('commits: 1, count: 0')).toBeInTheDocument()
+  expect(screen.getByText('commits: 1, count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  resolve()
-  expect(await screen.findByText('commits: 2, count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('commits: 2, count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  resolve()
-  expect(await screen.findByText('commits: 3, count: 2')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('commits: 3, count: 2')).toBeInTheDocument()
 })
 
-it('runs update only once in StrictMode', async () => {
+it('runs update only once in StrictMode', () => {
   let updateCount = 0
   const countAtom = atom(0)
   const derivedAtom = atom(
@@ -437,21 +422,20 @@ it('runs update only once in StrictMode', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
   expect(updateCount).toBe(0)
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(updateCount).toBe(1)
 })
 
 it('uses an async write-only atom', async () => {
   const countAtom = atom(0)
-  let resolve = () => {}
   const asyncCountAtom = atom(
     null,
     async (get, set, update: (prev: number) => number) => {
-      await new Promise<void>((r) => (resolve = r))
+      await new Promise<void>((resolve) => setTimeout(resolve, 100))
       set(countAtom, update(get(countAtom)))
     },
   )
@@ -475,17 +459,16 @@ it('uses an async write-only atom', async () => {
     </>,
   )
 
-  expect(await screen.findByText('commits: 1, count: 0')).toBeInTheDocument()
+  expect(screen.getByText('commits: 1, count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  resolve()
-  expect(await screen.findByText('commits: 2, count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('commits: 2, count: 1')).toBeInTheDocument()
 })
 
 it('uses a writable atom without read function', async () => {
-  let resolve = () => {}
   const countAtom = atom(1, async (get, set, v: number) => {
-    await new Promise<void>((r) => (resolve = r))
+    await new Promise<void>((resolve) => setTimeout(resolve, 100))
     set(countAtom, get(countAtom) + 10 * v)
   })
 
@@ -505,11 +488,11 @@ it('uses a writable atom without read function', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  resolve()
-  expect(await screen.findByText('count: 11')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count: 11')).toBeInTheDocument()
 })
 
 it('can write an atom value on useEffect', async () => {
@@ -529,7 +512,8 @@ it('can write an atom value on useEffect', async () => {
     </>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 it('can write an atom value on useEffect in children', async () => {
@@ -563,10 +547,11 @@ it('can write an atom value on useEffect in children', async () => {
     </>,
   )
 
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 })
 
-it('only invoke read function on use atom', async () => {
+it('only invoke read function on use atom', () => {
   const countAtom = atom(0)
   let readCount = 0
   const doubledCountAtom = atom((get) => {
@@ -597,16 +582,16 @@ it('only invoke read function on use atom', async () => {
   )
 
   expect(
-    await screen.findByText('commits: 1, count: 0, readCount: 1, doubled: 0'),
+    screen.getByText('commits: 1, count: 0, readCount: 1, doubled: 0'),
   ).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   expect(
-    await screen.findByText('commits: 2, count: 1, readCount: 2, doubled: 2'),
+    screen.getByText('commits: 2, count: 1, readCount: 2, doubled: 2'),
   ).toBeInTheDocument()
 })
 
-it('uses a read-write derived atom with two primitive atoms', async () => {
+it('uses a read-write derived atom with two primitive atoms', () => {
   const countAAtom = atom(0)
   const countBAtom = atom(0)
   const sumAtom = atom(
@@ -645,32 +630,22 @@ it('uses a read-write derived atom with two primitive atoms', async () => {
     </StrictMode>,
   )
 
-  expect(
-    await screen.findByText('countA: 0, countB: 0, sum: 0'),
-  ).toBeInTheDocument()
+  expect(screen.getByText('countA: 0, countB: 0, sum: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('incA'))
-  expect(
-    await screen.findByText('countA: 1, countB: 0, sum: 1'),
-  ).toBeInTheDocument()
+  fireEvent.click(screen.getByText('incA'))
+  expect(screen.getByText('countA: 1, countB: 0, sum: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('incB'))
-  expect(
-    await screen.findByText('countA: 1, countB: 1, sum: 2'),
-  ).toBeInTheDocument()
+  fireEvent.click(screen.getByText('incB'))
+  expect(screen.getByText('countA: 1, countB: 1, sum: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('reset'))
-  expect(
-    await screen.findByText('countA: 0, countB: 0, sum: 0'),
-  ).toBeInTheDocument()
+  fireEvent.click(screen.getByText('reset'))
+  expect(screen.getByText('countA: 0, countB: 0, sum: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('incBoth'))
-  expect(
-    await screen.findByText('countA: 1, countB: 1, sum: 2'),
-  ).toBeInTheDocument()
+  fireEvent.click(screen.getByText('incBoth'))
+  expect(screen.getByText('countA: 1, countB: 1, sum: 2')).toBeInTheDocument()
 })
 
-it('updates a derived atom in useEffect with two primitive atoms', async () => {
+it('updates a derived atom in useEffect with two primitive atoms', () => {
   const countAAtom = atom(0)
   const countBAtom = atom(1)
   const sumAtom = atom((get) => get(countAAtom) + get(countBAtom))
@@ -698,17 +673,13 @@ it('updates a derived atom in useEffect with two primitive atoms', async () => {
     </>,
   )
 
-  expect(
-    await screen.findByText('countA: 1, countB: 1, sum: 2'),
-  ).toBeInTheDocument()
+  expect(screen.getByText('countA: 1, countB: 1, sum: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(
-    await screen.findByText('countA: 2, countB: 2, sum: 4'),
-  ).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('countA: 2, countB: 2, sum: 4')).toBeInTheDocument()
 })
 
-it('updates two atoms in child useEffect', async () => {
+it('updates two atoms in child useEffect', () => {
   const countAAtom = atom(0)
   const countBAtom = atom(10)
 
@@ -739,10 +710,8 @@ it('updates two atoms in child useEffect', async () => {
     </>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('countA: 1')).toBeInTheDocument()
-    expect(screen.getByText('countB: 11')).toBeInTheDocument()
-  })
+  expect(screen.getByText('countA: 1')).toBeInTheDocument()
+  expect(screen.getByText('countB: 11')).toBeInTheDocument()
 })
 
 it('set atom right after useEffect (#208)', async () => {
@@ -781,11 +750,12 @@ it('set atom right after useEffect (#208)', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
   expect(effectFn).toHaveBeenLastCalledWith(2)
 })
 
-it('changes atom from parent (#273, #275)', async () => {
+it('changes atom from parent (#273, #275)', () => {
   const atomA = atom({ id: 'a' })
   const atomB = atom({ id: 'b' })
 
@@ -816,19 +786,19 @@ it('changes atom from parent (#273, #275)', async () => {
     </>,
   )
 
-  expect(await screen.findByText('commits: 1, id: a')).toBeInTheDocument()
+  expect(screen.getByText('commits: 1, id: a')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('atom a'))
-  expect(await screen.findByText('commits: 1, id: a')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('atom a'))
+  expect(screen.getByText('commits: 1, id: a')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('atom b'))
-  expect(await screen.findByText('commits: 2, id: b')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('atom b'))
+  expect(screen.getByText('commits: 2, id: b')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('atom a'))
-  expect(await screen.findByText('commits: 3, id: a')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('atom a'))
+  expect(screen.getByText('commits: 3, id: a')).toBeInTheDocument()
 })
 
-it('should be able to use a double derived atom twice and useEffect (#373)', async () => {
+it('should be able to use a double derived atom twice and useEffect (#373)', () => {
   const countAtom = atom(0)
   const doubleAtom = atom((get) => get(countAtom) * 2)
   const fourfoldAtom = atom((get) => get(doubleAtom) * 2)
@@ -856,12 +826,13 @@ it('should be able to use a double derived atom twice and useEffect (#373)', asy
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0,0,0')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('one up'))
-  expect(await screen.findByText('count: 1,4,4')).toBeInTheDocument()
+  expect(screen.getByText('count: 0,0,0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('one up'))
+  expect(screen.getByText('count: 1,4,4')).toBeInTheDocument()
 })
 
-it('write self atom (undocumented usage)', async () => {
+it('write self atom (undocumented usage)', () => {
   const countAtom = atom(0, (get, set, _arg) => {
     set(countAtom, get(countAtom) + 1)
   })
@@ -882,10 +853,10 @@ it('write self atom (undocumented usage)', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 it('async chain for multiple sync and async atoms (#443)', async () => {
@@ -911,23 +882,24 @@ it('async chain for multiple sync and async atoms (#443)', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
   // FIXME this is not working
-  //await screen.findByText('loading')
+  //screen.getByText('loading')
 
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 })
 
-it('sync re-renders with useState re-renders (#827)', async () => {
+it('sync re-renders with useState re-renders (#827)', () => {
   const atom0 = atom('atom0')
   const atom1 = atom('atom1')
   const atom2 = atom('atom2')
@@ -957,14 +929,16 @@ it('sync re-renders with useState re-renders (#827)', async () => {
     </>,
   )
 
-  expect(await screen.findByText('commits: 1')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('rotate'))
-  expect(await screen.findByText('commits: 2')).toBeInTheDocument()
-  await userEvent.click(screen.getByText('rotate'))
-  expect(await screen.findByText('commits: 3')).toBeInTheDocument()
+  expect(screen.getByText('commits: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('rotate'))
+  expect(screen.getByText('commits: 2')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('rotate'))
+  expect(screen.getByText('commits: 3')).toBeInTheDocument()
 })
 
-it('chained derive atom with onMount and useEffect (#897)', async () => {
+it('chained derive atom with onMount and useEffect (#897)', () => {
   const countAtom = atom(0)
   countAtom.onMount = (set) => {
     set(1)
@@ -989,10 +963,10 @@ it('chained derive atom with onMount and useEffect (#897)', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('onMount is not called when atom value is accessed from writeGetter in derived atom (#942)', async () => {
+it('onMount is not called when atom value is accessed from writeGetter in derived atom (#942)', () => {
   const onUnmount = vi.fn()
   const onMount = vi.fn(() => {
     return onUnmount
@@ -1021,7 +995,7 @@ it('onMount is not called when atom value is accessed from writeGetter in derive
   expect(onUnmount).not.toHaveBeenCalled()
 })
 
-it('useAtom returns consistent value with input with changing atoms (#1235)', async () => {
+it('useAtom returns consistent value with input with changing atoms (#1235)', () => {
   const countAtom = atom(0)
   const valueAtoms = [atom(0), atom(1)]
 
@@ -1045,8 +1019,8 @@ it('useAtom returns consistent value with input with changing atoms (#1235)', as
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })

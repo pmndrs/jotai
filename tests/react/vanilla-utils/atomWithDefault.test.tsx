@@ -1,16 +1,19 @@
 import { StrictMode, Suspense } from 'react'
-import { act, render, screen, waitFor } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { RESET, atomWithDefault } from 'jotai/vanilla/utils'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+beforeEach(() => {
+  vi.useFakeTimers()
+})
 
-it('simple sync get default', async () => {
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+it('simple sync get default', () => {
   const count1Atom = atom(1)
   const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
 
@@ -34,23 +37,22 @@ it('simple sync get default', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count1: 1, count2: 2')).toBeInTheDocument()
+  expect(screen.getByText('count1: 1, count2: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  expect(await screen.findByText('count1: 2, count2: 4')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button1'))
+  expect(screen.getByText('count1: 2, count2: 4')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button2'))
-  expect(await screen.findByText('count1: 2, count2: 5')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button2'))
+  expect(screen.getByText('count1: 2, count2: 5')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  expect(await screen.findByText('count1: 3, count2: 5')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button1'))
+  expect(screen.getByText('count1: 3, count2: 5')).toBeInTheDocument()
 })
 
 it('simple async get default', async () => {
   const count1Atom = atom(1)
-  let resolve = () => {}
   const count2Atom = atomWithDefault(async (get) => {
-    await new Promise<void>((r) => (resolve = r))
+    await new Promise<void>((resolve) => setTimeout(resolve, 100))
     return get(count1Atom) * 2
   })
 
@@ -70,35 +72,35 @@ it('simple async get default', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
-  expect(await screen.findByText('count1: 1, count2: 2')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 1, count2: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
-  expect(await screen.findByText('count1: 2, count2: 4')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button1')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 2, count2: 4')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button2'))
-  resolve()
-  expect(await screen.findByText('count1: 2, count2: 5')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button2')))
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 2, count2: 5')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  resolve()
-  expect(await screen.findByText('count1: 3, count2: 5')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button1')))
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 3, count2: 5')).toBeInTheDocument()
 })
 
-it('refresh sync atoms to default values', async () => {
+it('refresh sync atoms to default values', () => {
   const count1Atom = atom(1)
   const count2Atom = atomWithDefault((get) => get(count1Atom) * 2)
 
@@ -123,29 +125,28 @@ it('refresh sync atoms to default values', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count1: 1, count2: 2')).toBeInTheDocument()
+  expect(screen.getByText('count1: 1, count2: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  expect(await screen.findByText('count1: 2, count2: 4')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button1'))
+  expect(screen.getByText('count1: 2, count2: 4')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button2'))
-  expect(await screen.findByText('count1: 2, count2: 5')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button2'))
+  expect(screen.getByText('count1: 2, count2: 5')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  expect(await screen.findByText('count1: 3, count2: 5')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button1'))
+  expect(screen.getByText('count1: 3, count2: 5')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Refresh count2'))
-  expect(await screen.findByText('count1: 3, count2: 6')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('Refresh count2'))
+  expect(screen.getByText('count1: 3, count2: 6')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  expect(await screen.findByText('count1: 4, count2: 8')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button1'))
+  expect(screen.getByText('count1: 4, count2: 8')).toBeInTheDocument()
 })
 
 it('refresh async atoms to default values', async () => {
   const count1Atom = atom(1)
-  let resolve = () => {}
   const count2Atom = atomWithDefault(async (get) => {
-    await new Promise<void>((r) => (resolve = r))
+    await new Promise<void>((reslove) => setTimeout(reslove, 100))
     return get(count1Atom) * 2
   })
 
@@ -166,55 +167,45 @@ it('refresh async atoms to default values', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  await waitFor(() => {
-    resolve()
-    expect(screen.getByText('count1: 1, count2: 2')).toBeInTheDocument()
-  })
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 1, count2: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  await screen.findByText('loading')
-  await waitFor(() => {
-    resolve()
-    expect(screen.getByText('count1: 2, count2: 4')).toBeInTheDocument()
-  })
+  await act(() => fireEvent.click(screen.getByText('button1')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 2, count2: 4')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button2'))
-  await waitFor(() => {
-    resolve()
-    expect(screen.getByText('count1: 2, count2: 5')).toBeInTheDocument()
-  })
+  await act(() => fireEvent.click(screen.getByText('button2')))
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 2, count2: 5')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  await waitFor(() => {
-    resolve()
-    expect(screen.getByText('count1: 3, count2: 5')).toBeInTheDocument()
-  })
+  await act(() => fireEvent.click(screen.getByText('button1')))
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 3, count2: 5')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Refresh count2'))
-  await waitFor(() => {
-    resolve()
-    expect(screen.getByText('count1: 3, count2: 6')).toBeInTheDocument()
-  })
+  await act(() => fireEvent.click(screen.getByText('Refresh count2')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 3, count2: 6')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button1'))
-  await waitFor(() => {
-    resolve()
-    expect(screen.getByText('count1: 4, count2: 8')).toBeInTheDocument()
-  })
+  await act(() => fireEvent.click(screen.getByText('button1')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count1: 4, count2: 8')).toBeInTheDocument()
 })
 
-it('can be set synchronously by passing value', async () => {
+it('can be set synchronously by passing value', () => {
   const countAtom = atomWithDefault(() => 1)
 
   const Counter = () => {
@@ -228,11 +219,14 @@ it('can be set synchronously by passing value', async () => {
     )
   }
 
-  render(<Counter />)
+  render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>,
+  )
 
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByRole('button', { name: 'Set to 10' }))
-
+  fireEvent.click(screen.getByRole('button', { name: 'Set to 10' }))
   expect(screen.getByText('count: 10')).toBeInTheDocument()
 })

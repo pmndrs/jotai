@@ -1,7 +1,6 @@
 import { Component, StrictMode, Suspense, useState } from 'react'
 import type { ReactElement, ReactNode } from 'react'
-import { act, render, screen, waitFor } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import {
   BehaviorSubject,
   Observable,
@@ -19,13 +18,9 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom, createStore } from 'jotai/vanilla'
 import { atomWithObservable } from 'jotai/vanilla/utils'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
-
 const consoleError = console.error
 beforeEach(() => {
-  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.useFakeTimers()
   // A workaround for missing performance.mark after using fake timers
   // https://github.com/pmndrs/jotai/pull/1913#discussion_r1186527192
   if (!performance.mark) {
@@ -72,7 +67,7 @@ class ErrorBoundary extends Component<
   }
 }
 
-it('count state', async () => {
+it('count state', () => {
   const observableAtom = atomWithObservable(() => of(1))
 
   const Counter = () => {
@@ -89,10 +84,10 @@ it('count state', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('writable count state', async () => {
+it('writable count state', () => {
   const subject = new BehaviorSubject(1)
   const observableAtom = atomWithObservable(() => subject)
 
@@ -114,13 +109,14 @@ it('writable count state', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
   act(() => subject.next(2))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  act(() => vi.advanceTimersByTime(0))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 9')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 9')).toBeInTheDocument()
   expect(subject.value).toBe(9)
 })
 
@@ -138,7 +134,7 @@ it('writable count state without initial value', async () => {
     return <button onClick={() => dispatch(9)}>button</button>
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
@@ -146,16 +142,18 @@ it('writable count state without initial value', async () => {
         </Suspense>
         <CounterButton />
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 9')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 9')).toBeInTheDocument()
 
   act(() => subject.next(3))
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 })
 
 it('writable count state with delayed value', async () => {
@@ -182,22 +180,22 @@ it('writable count state with delayed value', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  await act(() => vi.runOnlyPendingTimers())
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(10000))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 9')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 9')).toBeInTheDocument()
 })
 
 it('only subscribe once per atom', async () => {
@@ -215,19 +213,21 @@ it('only subscribe once per atom', async () => {
   }
 
   let rerender: (ui: ReactNode) => void
-  await act(async () => {
-    ;({ rerender } = render(
-      <>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </>,
-    ))
-  })
+  await act(
+    () =>
+      ({ rerender } = render(
+        <>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </>,
+      )),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
   act(() => subject.next(1))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
   rerender!(<div />)
   expect(totalSubscriptions).toEqual(1)
@@ -239,8 +239,10 @@ it('only subscribe once per atom', async () => {
       </Suspense>
     </>,
   )
+
   act(() => subject.next(2))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
   expect(totalSubscriptions).toEqual(2)
 })
@@ -263,24 +265,27 @@ it('cleanup subscription', async () => {
   }
 
   let rerender: (ui: ReactNode) => void
-  await act(async () => {
-    ;({ rerender } = render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </StrictMode>,
-    ))
-  })
+  await act(
+    () =>
+      ({ rerender } = render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      )),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
 
-  act(() => subject.next(1))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  subject.next(1)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
   expect(activeSubscriptions).toEqual(1)
   rerender!(<div />)
-  await waitFor(() => expect(activeSubscriptions).toEqual(0))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(activeSubscriptions).toEqual(0)
 })
 
 it('resubscribe on remount', async () => {
@@ -302,7 +307,7 @@ it('resubscribe on remount', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
@@ -311,21 +316,22 @@ it('resubscribe on remount', async () => {
           </Toggle>
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
   act(() => subject.next(1))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Toggle'))
-  await userEvent.click(screen.getByText('Toggle'))
-
+  fireEvent.click(screen.getByText('Toggle'))
+  fireEvent.click(screen.getByText('Toggle'))
   act(() => subject.next(2))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 })
 
-it("count state with initialValue doesn't suspend", async () => {
+it("count state with initialValue doesn't suspend", () => {
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => subject, { initialValue: 5 })
 
@@ -340,14 +346,14 @@ it("count state with initialValue doesn't suspend", async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 5')).toBeInTheDocument()
+  expect(screen.getByText('count: 5')).toBeInTheDocument()
 
   act(() => subject.next(10))
-
-  expect(await screen.findByText('count: 10')).toBeInTheDocument()
+  act(() => vi.advanceTimersByTime(0))
+  expect(screen.getByText('count: 10')).toBeInTheDocument()
 })
 
-it('writable count state with initialValue', async () => {
+it('writable count state with initialValue', () => {
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => subject, { initialValue: 5 })
 
@@ -369,12 +375,14 @@ it('writable count state with initialValue', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 5')).toBeInTheDocument()
+  expect(screen.getByText('count: 5')).toBeInTheDocument()
   act(() => subject.next(1))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  act(() => vi.advanceTimersByTime(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 9')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  act(() => vi.advanceTimersByTime(0))
+  expect(screen.getByText('count: 9')).toBeInTheDocument()
 })
 
 it('writable count state with error', async () => {
@@ -391,7 +399,7 @@ it('writable count state with error', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <ErrorBoundary>
@@ -400,16 +408,17 @@ it('writable count state with error', async () => {
           </Suspense>
         </ErrorBoundary>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
 
-  act(() => subject.error(new Error('Test Error')))
-  expect(await screen.findByText('Error: Test Error')).toBeInTheDocument()
+  subject.error(new Error('Test Error'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('Error: Test Error')).toBeInTheDocument()
 })
 
-it('synchronous subscription with initial value', async () => {
+it('synchronous subscription with initial value', () => {
   const observableAtom = atomWithObservable(() => of(1), { initialValue: 5 })
 
   const Counter = () => {
@@ -423,10 +432,10 @@ it('synchronous subscription with initial value', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('synchronous subscription with BehaviorSubject', async () => {
+it('synchronous subscription with BehaviorSubject', () => {
   const observableAtom = atomWithObservable(() => new BehaviorSubject(1))
 
   const Counter = () => {
@@ -440,10 +449,10 @@ it('synchronous subscription with BehaviorSubject', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('synchronous subscription with already emitted value', async () => {
+it('synchronous subscription with already emitted value', () => {
   const observableAtom = atomWithObservable(() => of(1))
 
   const Counter = () => {
@@ -458,10 +467,10 @@ it('synchronous subscription with already emitted value', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('with falsy initial value', async () => {
+it('with falsy initial value', () => {
   const observableAtom = atomWithObservable(() => new Subject<number>(), {
     initialValue: 0,
   })
@@ -477,7 +486,7 @@ it('with falsy initial value', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 })
 
 it('with initially emitted undefined value', async () => {
@@ -489,21 +498,25 @@ it('with initially emitted undefined value', async () => {
     return <>count: {state === undefined ? '-' : state}</>
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
+
   act(() => subject.next(undefined))
-  expect(await screen.findByText('count: -')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: -')).toBeInTheDocument()
+
   act(() => subject.next(1))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 it("don't omit values emitted between init and mount", async () => {
@@ -526,25 +539,25 @@ it("don't omit values emitted between init and mount", async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  act(() => {
-    subject.next(1)
-    subject.next(2)
-  })
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 9')).toBeInTheDocument()
+  subject.next(1)
+  subject.next(2)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 9')).toBeInTheDocument()
 })
 
 describe('error handling', () => {
@@ -593,7 +606,7 @@ describe('error handling', () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <ErrorBoundary>
@@ -602,12 +615,13 @@ describe('error handling', () => {
             </Suspense>
           </ErrorBoundary>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    act(() => subject.error(new Error('Test Error')))
-    expect(await screen.findByText('errored')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    subject.error(new Error('Test Error'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('errored')).toBeInTheDocument()
   })
 
   it('can recover from error with dependency', async () => {
@@ -649,32 +663,32 @@ describe('error handling', () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <App />
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    await act(() => vi.runOnlyPendingTimers())
-    expect(await screen.findByText('errored')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(10000))
+    expect(screen.getByText('errored')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('retry'))
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    await act(() => vi.runOnlyPendingTimers())
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('retry')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(10000))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('next'))
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    await act(() => vi.runOnlyPendingTimers())
-    expect(await screen.findByText('errored')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('next')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(10000))
+    expect(screen.getByText('errored')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('retry'))
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    await act(() => vi.runOnlyPendingTimers())
-    expect(await screen.findByText('count: 3')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('retry')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(10000))
+    expect(screen.getByText('count: 3')).toBeInTheDocument()
   })
 
   it('can recover with intermediate atom', async () => {
@@ -740,37 +754,37 @@ describe('error handling', () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <App />
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    await act(() => vi.runOnlyPendingTimers())
-    expect(await screen.findByText('errored')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(10000))
+    expect(screen.getByText('errored')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('retry'))
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    await act(() => vi.runOnlyPendingTimers())
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('retry')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(10000))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('refresh'))
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    await act(() => vi.runOnlyPendingTimers())
-    expect(await screen.findByText('errored')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('refresh')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(10000))
+    expect(screen.getByText('errored')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('retry'))
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    await act(() => vi.runOnlyPendingTimers())
-    expect(await screen.findByText('count: 3')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('retry')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(10000))
+    expect(screen.getByText('count: 3')).toBeInTheDocument()
   })
 })
 
 describe('wonka', () => {
-  it('count state', async () => {
+  it('count state', () => {
     const source = fromValue(1)
     const observable = pipe(source, toObservable)
     const observableAtom = atomWithObservable(() => observable)
@@ -780,17 +794,15 @@ describe('wonka', () => {
       return <>count: {count}</>
     }
 
-    await act(async () => {
-      render(
-        <StrictMode>
-          <Suspense fallback="loading">
-            <Counter />
-          </Suspense>
-        </StrictMode>,
-      )
-    })
+    render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
+    )
 
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
 
   it('make subject', async () => {
@@ -814,7 +826,7 @@ describe('wonka', () => {
       return <button onClick={() => setCount(1)}>button</button>
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <Controls />
@@ -822,13 +834,14 @@ describe('wonka', () => {
             <Counter />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('loading')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    expect(await screen.findByText('count: 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
 })
 
@@ -854,7 +867,7 @@ describe('atomWithObservable vanilla tests', () => {
     unsub()
   })
 
-  it('can propagate updates with rxjs chains', async () => {
+  it('can propagate updates with rxjs chains', () => {
     const store = createStore()
 
     const single$ = new Subject<number>()
@@ -911,6 +924,7 @@ it('should update continuous values in React 19', async () => {
     ),
   )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  expect(await screen.findByText('count: 3')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(400))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 })
