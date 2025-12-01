@@ -21,8 +21,9 @@ jobs:
           - 18.3.1
           - 19.0.0
           - 19.1.0
-          - 19.2.0-canary-83c88ad4-20250923
-          - 0.0.0-experimental-83c88ad4-20250923
+          - 19.2.0
+          - 19.3.0-canary-fd524fe0-20251121
+          - 0.0.0-experimental-fd524fe0-20251121
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
@@ -35,6 +36,10 @@ jobs:
         if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
         run: |
           pnpm add -D @testing-library/react@12.1.4
+      - name: Patch for React 17
+        if: ${{ startsWith(matrix.react, '17.') }}
+        run: |
+          pnpm add -D vitest@3.2.4
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |

@@ -55,8 +55,11 @@ export interface Atom<Value> {
   unstable_onInit?: (store: Store) => void
 }
 
-export interface WritableAtom<Value, Args extends unknown[], Result>
-  extends Atom<Value> {
+export interface WritableAtom<
+  Value,
+  Args extends unknown[],
+  Result,
+> extends Atom<Value> {
   read: Read<Value, SetAtom<Args, Result>>
   write: Write<Args, Result>
   onMount?: OnMount<Args, Result>
