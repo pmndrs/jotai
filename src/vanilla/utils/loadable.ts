@@ -21,51 +21,52 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
       PromiseLike<Awaited<Value>>,
       Loadable<Value>
     >()
-    const refreshAtom = atom(0)
+    const refreshAtom = atom([() => {}, 0] as [() => void, number])
+    refreshAtom.unstable_onInit = (store) => {
+      store.set(refreshAtom, ([, c]) => [
+        () => store.set(refreshAtom, ([f, c]) => [f, c + 1]),
+        c,
+      ])
+    }
 
     if (import.meta.env?.MODE !== 'production') {
       refreshAtom.debugPrivate = true
     }
 
-    const derivedAtom = atom(
-      (get, { setSelf }) => {
-        get(refreshAtom)
-        let value: Value
-        try {
-          value = get(anAtom)
-        } catch (error) {
-          return { state: 'hasError', error } as Loadable<Value>
-        }
-        if (!isPromiseLike<Value>(value)) {
-          return { state: 'hasData', data: value } as Loadable<Value>
-        }
-        const promise = value
-        const cached1 = loadableCache.get(promise)
-        if (cached1) {
-          return cached1
-        }
-        promise.then(
-          (data) => {
-            loadableCache.set(promise, { state: 'hasData', data })
-            setSelf()
-          },
-          (error) => {
-            loadableCache.set(promise, { state: 'hasError', error })
-            setSelf()
-          },
-        )
+    const derivedAtom = atom((get) => {
+      const [triggerRefresh] = get(refreshAtom)
+      let value: Value
+      try {
+        value = get(anAtom)
+      } catch (error) {
+        return { state: 'hasError', error } as Loadable<Value>
+      }
+      if (!isPromiseLike<Value>(value)) {
+        return { state: 'hasData', data: value } as Loadable<Value>
+      }
+      const promise = value
+      const cached1 = loadableCache.get(promise)
+      if (cached1) {
+        return cached1
+      }
+      promise.then(
+        (data) => {
+          loadableCache.set(promise, { state: 'hasData', data })
+          triggerRefresh()
+        },
+        (error) => {
+          loadableCache.set(promise, { state: 'hasError', error })
+          triggerRefresh()
+        },
+      )
 
-        const cached2 = loadableCache.get(promise)
-        if (cached2) {
-          return cached2
-        }
-        loadableCache.set(promise, LOADING as Loadable<Value>)
-        return LOADING as Loadable<Value>
-      },
-      (_get, set) => {
-        set(refreshAtom, (c) => c + 1)
-      },
-    )
+      const cached2 = loadableCache.get(promise)
+      if (cached2) {
+        return cached2
+      }
+      loadableCache.set(promise, LOADING as Loadable<Value>)
+      return LOADING as Loadable<Value>
+    })
 
     if (import.meta.env?.MODE !== 'production') {
       derivedAtom.debugPrivate = true
