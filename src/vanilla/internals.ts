@@ -57,36 +57,28 @@ type Mounted = {
   u?: () => void
 }
 
-type AtomStateMap = {
-  get(atom: AnyAtom): AtomState | undefined
-  set(atom: AnyAtom, atomState: AtomState): void
+type WeakMapLike<K, V> = {
+  get(key: K): V | undefined
+  set(key: K, value: V): void
+  has(key: K): boolean
+  delete(key: K): boolean
 }
-type MountedMap = {
-  get(atom: AnyAtom): Mounted | undefined
-  has(atom: AnyAtom): boolean
-  set(atom: AnyAtom, mounted: Mounted): void
-  delete(atom: AnyAtom): void
-}
-type InvalidatedAtoms = {
-  get(atom: AnyAtom): EpochNumber | undefined
-  has(atom: AnyAtom): boolean
-  set(atom: AnyAtom, n: EpochNumber): void
-  delete(atom: AnyAtom): void
-}
-type ChangedAtoms = {
+
+type SetLike<T> = {
   readonly size: number
-  add(atom: AnyAtom): void
-  has(atom: AnyAtom): boolean
+  add(value: T): void
+  has(value: T): boolean
+  delete(value: T): boolean
   clear(): void
-  forEach(callback: (atom: AnyAtom) => void): void
-  [Symbol.iterator](): IterableIterator<AnyAtom>
+  forEach(callback: (value: T) => void): void
+  [Symbol.iterator](): IterableIterator<T>
 }
-type Callbacks = {
-  readonly size: number
-  add(fn: () => void): void
-  clear(): void
-  forEach(callback: (fn: () => void) => void): void
-}
+
+type AtomStateMap = WeakMapLike<AnyAtom, AtomState>
+type MountedMap = WeakMapLike<AnyAtom, Mounted>
+type InvalidatedAtoms = WeakMapLike<AnyAtom, EpochNumber>
+type ChangedAtoms = SetLike<AnyAtom>
+type Callbacks = SetLike<() => void>
 
 type AtomRead = <Value>(
   store: Store,
@@ -320,12 +312,17 @@ function getMountedOrPendingDependents(
 type StoreHook = {
   (): void
   add(callback: () => void): () => void
+  callbacks: SetLike<() => void>
 }
 
 type StoreHookForAtoms = {
   (atom: AnyAtom): void
   add(atom: AnyAtom, callback: () => void): () => void
   add(atom: undefined, callback: (atom: AnyAtom) => void): () => void
+  callbacks: WeakMapLike<
+    AnyAtom | Record<any, never>,
+    SetLike<(atom?: AnyAtom) => void>
+  >
 }
 
 /** StoreHooks are an experimental API. */
@@ -351,11 +348,12 @@ const createStoreHook = (): StoreHook => {
     callbacks.add(fn)
     return () => callbacks.delete(fn)
   }
+  notify.callbacks = callbacks
   return notify
 }
 
 const createStoreHookForAtoms = (): StoreHookForAtoms => {
-  const all: object = {}
+  const all: Record<any, never> = {}
   const callbacks = new WeakMap<
     AnyAtom | typeof all,
     Set<(atom?: AnyAtom) => void>
@@ -377,6 +375,7 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
       }
     }
   }
+  notify.callbacks = callbacks
   return notify as StoreHookForAtoms
 }
 
@@ -865,12 +864,12 @@ const unmountAtom: UnmountAtom = (store, atom) => {
     }
     mounted = undefined
     mountedMap.delete(atom)
-    storeHooks.u?.(atom)
     // unmount dependencies
     for (const a of atomState.d.keys()) {
       const aMounted = unmountAtom(store, a)
       aMounted?.t.delete(atom)
     }
+    storeHooks.u?.(atom)
     return undefined
   }
   return mounted
