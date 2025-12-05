@@ -347,7 +347,7 @@ const createStoreHook = (): StoreHook => {
 }
 
 const createStoreHookForAtoms = (): StoreHookForAtoms => {
-  const all: Record<any, never> = {}
+  const all: object = {}
   const callbacks = new WeakMap<
     AnyAtom | typeof all,
     Set<(atom?: AnyAtom) => void>
