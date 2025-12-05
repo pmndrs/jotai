@@ -303,9 +303,7 @@ function getMountedOrPendingDependents(
 ): Set<AnyAtom> {
   const dependents = new Set<AnyAtom>()
   for (const a of mountedMap.get(atom)?.t || []) {
-    if (mountedMap.has(a)) {
-      dependents.add(a)
-    }
+    dependents.add(a)
   }
   for (const atomWithPendingPromise of atomState.p) {
     dependents.add(atomWithPendingPromise)
@@ -598,7 +596,9 @@ const readAtomState: ReadAtomState = (store, atom) => {
       if (isPendingPromise(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)
       }
-      mountedMap.get(a)?.t.add(atom)
+      if (mountedMap.has(atom)) {
+        mountedMap.get(a)?.t.add(atom)
+      }
       if (!isSync) {
         mountDependenciesIfAsync()
       }
