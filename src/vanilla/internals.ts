@@ -57,7 +57,7 @@ type Mounted = {
   u?: () => void
 }
 
-type WeakMapLike<K, V> = {
+type WeakMapLike<K extends object, V> = {
   get(key: K): V | undefined
   set(key: K, value: V): void
   has(key: K): boolean
@@ -365,8 +365,8 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
     }
     fns.add(fn)
     return () => {
-      fns?.delete(fn)
-      if (!fns.size) {
+      fns!.delete(fn)
+      if (!fns!.size) {
         callbacks.delete(key)
       }
     }
