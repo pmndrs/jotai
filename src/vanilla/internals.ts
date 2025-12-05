@@ -358,9 +358,11 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
   }
   notify.add = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
     const key = atom || all
-    const fns = (
-      callbacks.has(key) ? callbacks : callbacks.set(key, new Set())
-    ).get(key)!
+    let fns = callbacks.get(key)
+    if (!fns) {
+      fns = new Set()
+      callbacks.set(key, fns)
+    }
     fns.add(fn)
     return () => {
       fns?.delete(fn)
