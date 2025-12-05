@@ -1,19 +1,11 @@
-import { StrictMode, useEffect, useRef } from 'react'
+import { StrictMode } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai/vanilla'
 import { atom } from 'jotai/vanilla'
-
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
-  })
-  // eslint-disable-next-line react-hooks/refs
-  return commitCountRef.current
-}
+import { useCommitCount } from '../../test-utils'
 
 it('useHydrateAtoms should only hydrate on first render', () => {
   const countAtom = atom(0)

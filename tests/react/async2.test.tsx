@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+import { sleep } from '../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -96,7 +97,7 @@ describe('atom read function setSelf option test', () => {
   it('do not suspend with promise resolving with setSelf', async () => {
     const countAtom = atom(0)
     const asyncAtom = atom(async () => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       return 'hello'
     })
     const refreshAtom = atom(0)
@@ -158,7 +159,7 @@ describe('timing issue with setSelf', () => {
     let result: number | null = null
     const asyncAtom = atom(async (get) => {
       const count = get(countAtom)
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       return count
     })
 
@@ -350,7 +351,7 @@ describe('write to async atom twice', async () => {
     const asyncAtom = atom(Promise.resolve(2))
     const writer = atom(null, async (get, set) => {
       set(asyncAtom, async (c) => (await c) + 1)
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       set(asyncAtom, async (c) => (await c) + 1)
       return get(asyncAtom)
     })

@@ -7,6 +7,7 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
+import { sleep } from '../test-utils'
 
 let savedConsoleWarn: any
 
@@ -126,7 +127,7 @@ it('should update async atom with delay (#1813)', async () => {
 
   const delayedAtom = atom(async (get) => {
     const count = get(countAtom)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return count
   })
 
@@ -154,7 +155,7 @@ it('should override a promise by setting', async () => {
 it('should update async atom with deps after await (#1905)', async () => {
   const countAtom = atom(0)
   const delayedAtom = atom(async (get) => {
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     const count = get(countAtom)
     return count
   })
@@ -388,13 +389,13 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
 
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return count
   })
   const derivedAtom = atom(
     async (get, { setSelf }) => {
       get(countAtom)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 50))
+      await sleep(50)
       result = await get(asyncAtom)
       if (result === 2) setSelf() // <-- necessary
     },
@@ -473,7 +474,7 @@ describe('async atom with subtle timing', () => {
     const store = createStore()
     const a = atom(1)
     const b = atom(async (get) => {
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       return get(a)
     })
     const bValue = store.get(b)
@@ -490,7 +491,7 @@ describe('async atom with subtle timing', () => {
     const a = atom(1)
     const b = atom(async (get) => {
       const aValue = get(a)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       return aValue
     })
     const bValue = store.get(b)
@@ -519,7 +520,7 @@ describe('aborting atoms', () => {
     const store = createStore()
     const derivedAtom = atom(async (get, { signal }) => {
       const aVal = get(a)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       callBeforeAbort()
       throwIfAborted(signal)
       callAfterAbort()
@@ -543,7 +544,7 @@ describe('aborting atoms', () => {
     const store = createStore()
     const derivedAtom = atom(async (get, { signal }) => {
       const aVal = get(a)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       callBeforeAbort()
       throwIfAborted(signal)
       callAfterAbort()
@@ -565,7 +566,7 @@ describe('aborting atoms', () => {
     const store = createStore()
     const derivedAtom = atom(async (get, { signal }) => {
       const aVal = get(a)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       callBeforeAbort()
       throwIfAborted(signal)
       callAfterAbort()
@@ -791,7 +792,7 @@ describe('should mount and trigger listeners even when an error is thrown', () =
       () => {},
     )
     const b = atom(async (get) => {
-      await new Promise((resolve) => setTimeout(resolve))
+      await sleep(0)
       get(a)
       get(e)
     })
