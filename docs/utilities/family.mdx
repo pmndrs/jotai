@@ -6,6 +6,30 @@ keywords: family
 
 ## atomFamily
 
+:::caution Deprecated
+`atomFamily` is deprecated and will be removed in Jotai v3.
+
+Please migrate to the [`jotai-family`](https://github.com/jotaijs/jotai-family) package, which provides the same API with additional features like `atomTree`.
+
+**Migration:**
+
+```bash
+npm install jotai-family
+# or
+pnpm add jotai-family
+```
+
+```ts
+// Before
+import { atomFamily } from 'jotai/utils'
+
+// After
+import { atomFamily } from 'jotai-family'
+```
+
+The API is identical, so no code changes are needed beyond the import statement.
+:::
+
 Ref: https://github.com/pmndrs/jotai/issues/23
 
 ### Usage
@@ -115,3 +139,16 @@ const todoFamily = atomFamily(
 ### Stackblitz
 
 <Stackblitz id="vitejs-vite-rx6npn" file="src%2FApp.tsx" />
+
+---
+
+## Migration to jotai-family
+
+For new projects or when updating existing code, we recommend using the [`jotai-family`](https://github.com/jotaijs/jotai-family) package instead. It provides:
+
+- **Same API**: Drop-in replacement for `atomFamily`
+- **Additional features**: Includes `atomTree` for hierarchical atom management
+- **Better maintenance**: Dedicated package with focused development
+- **Future-proof**: Will continue to be supported in Jotai v3 and beyond
+
+See the [jotai-family documentation](https://github.com/jotaijs/jotai-family#readme) for more details.

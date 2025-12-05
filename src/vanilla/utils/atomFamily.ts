@@ -12,6 +12,21 @@ type Callback<Param, AtomType> = (event: {
   atom: AtomType
 }) => void
 
+/**
+ * @deprecated atomFamily is deprecated and will be removed in v3.
+ * Please use the `jotai-family` package instead: https://github.com/jotaijs/jotai-family
+ *
+ * Install: `npm install jotai-family` or `pnpm add jotai-family`
+ *
+ * Migration:
+ * ```ts
+ * // Before
+ * import { atomFamily } from 'jotai/utils'
+ *
+ * // After
+ * import { atomFamily } from 'jotai-family'
+ * ```
+ */
 export interface AtomFamily<Param, AtomType> {
   (param: Param): AtomType
   getParams(): Iterable<Param>
@@ -24,6 +39,21 @@ export interface AtomFamily<Param, AtomType> {
   unstable_listen(callback: Callback<Param, AtomType>): Cleanup
 }
 
+/**
+ * @deprecated atomFamily is deprecated and will be removed in v3.
+ * Please use the `jotai-family` package instead: https://github.com/jotaijs/jotai-family
+ *
+ * Install: `npm install jotai-family` or `pnpm add jotai-family`
+ *
+ * Migration:
+ * ```ts
+ * // Before
+ * import { atomFamily } from 'jotai/utils'
+ *
+ * // After
+ * import { atomFamily } from 'jotai-family'
+ * ```
+ */
 export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
   areEqual?: (a: Param, b: Param) => boolean,
