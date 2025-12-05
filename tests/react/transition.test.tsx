@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+import { sleep } from '../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -22,7 +23,7 @@ describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
     async () => {
       const countAtom = atom(0)
       const delayedAtom = atom(async (get) => {
-        await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+        await sleep(100)
         return get(countAtom)
       })
 

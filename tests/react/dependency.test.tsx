@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom, Getter } from 'jotai/vanilla'
+import { useCommitCount } from '../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -13,15 +14,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
 })
-
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
-  })
-  // eslint-disable-next-line react-hooks/refs
-  return commitCountRef.current
-}
 
 it('works with 2 level dependencies', () => {
   const countAtom = atom(1)

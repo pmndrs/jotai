@@ -19,6 +19,7 @@ import {
   unstable_withStorageValidator as withStorageValidator,
 } from 'jotai/vanilla/utils'
 import type { SyncStringStorage } from 'jotai/vanilla/utils/atomWithStorage'
+import { sleep } from '../../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -224,18 +225,18 @@ describe('atomWithStorage (async)', () => {
   }
   const asyncDummyStorage = {
     getItem: async (key: string, initialValue: number) => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       if (!(key in asyncStorageData)) {
         return initialValue
       }
       return asyncStorageData[key] as number
     },
     setItem: async (key: string, newValue: number) => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       asyncStorageData[key] = newValue
     },
     removeItem: async (key: string) => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       delete asyncStorageData[key]
     },
   }
@@ -355,15 +356,15 @@ describe('atomWithStorage (in non-browser environment)', () => {
   }
   const asyncDummyStorage = {
     getItem: async (key: string) => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       return asyncStorageData[key] as string
     },
     setItem: async (key: string, newValue: string) => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       asyncStorageData[key] = newValue
     },
     removeItem: async (key: string) => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       delete asyncStorageData[key]
     },
   }

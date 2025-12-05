@@ -5,17 +5,9 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom, PrimitiveAtom } from 'jotai/vanilla'
 import { splitAtom } from 'jotai/vanilla/utils'
+import { useCommitCount } from '../../test-utils'
 
 type TodoItem = { task: string; checked?: boolean }
-
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
-  })
-  // eslint-disable-next-line react-hooks/refs
-  return commitCountRef.current
-}
 
 it('no unnecessary updates when updating atoms', () => {
   const todosAtom = atom<TodoItem[]>([

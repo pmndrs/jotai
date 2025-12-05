@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
+import { sleep } from '../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -15,7 +16,7 @@ it('can propagate updates with async atom chains', async () => {
   const countAtom = atom(1)
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return count
   })
   const async2Atom = atom((get) => get(asyncAtom))
@@ -40,7 +41,7 @@ it('can get async atom with deps more than once before resolving (#1668)', async
   const countAtom = atom(0)
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return count
   })
   const store = createStore()
@@ -121,7 +122,7 @@ it('keeps atoms mounted between recalculations', async () => {
 
   const derivedAtom = atom(async (get) => {
     get(atom1)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     get(atom2)
   })
 
@@ -224,7 +225,7 @@ it('settles never resolving async derivations with deps picked up async', async 
 
   const asyncAtom = atom(async (get) => {
     // we want to pick up `syncAtom` as an async dep
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return await get(syncAtom).promise
   })
 
@@ -259,7 +260,7 @@ it('refreshes deps for each async read', async () => {
     if (count === 0) {
       get(depAtom)
     }
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return count
   })
   const store = createStore()
@@ -319,7 +320,7 @@ it('handles complex dependency chains', async () => {
   const derived2 = atom((get) => get(derived1) + 1)
   const asyncDerived = atom(async (get) => {
     const value = get(derived2)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return value * 2
   })
   const store = createStore()

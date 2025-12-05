@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atomWithRefresh } from 'jotai/vanilla/utils'
+import { sleep } from '../../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -46,7 +47,7 @@ it('sync counter', () => {
 it('async counter', async () => {
   let counter = 0
   const countAtom = atomWithRefresh(async () => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
+    await sleep(100)
     return ++counter
   })
 

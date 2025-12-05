@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { RESET, atomWithDefault } from 'jotai/vanilla/utils'
+import { sleep } from '../../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -52,7 +53,7 @@ it('simple sync get default', () => {
 it('simple async get default', async () => {
   const count1Atom = atom(1)
   const count2Atom = atomWithDefault(async (get) => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
+    await sleep(100)
     return get(count1Atom) * 2
   })
 

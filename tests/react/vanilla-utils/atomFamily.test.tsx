@@ -5,6 +5,7 @@ import { useAtom, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { SetStateAction, WritableAtom } from 'jotai/vanilla'
 import { atomFamily } from 'jotai/vanilla/utils'
+import { sleep } from '../../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -222,7 +223,7 @@ it('a derived atom from an async atomFamily (#351)', async () => {
   const countAtom = atom(1)
   const getAsyncAtom = atomFamily((n: number) =>
     atom(async () => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       return n + 10
     }),
   )
