@@ -553,14 +553,14 @@ const readAtomState: ReadAtomState = (store, atom) => {
     }
     // Otherwise, check if the dependencies have changed.
     // If all dependencies haven't changed, we can use the cache.
-    if (
-      Array.from(atomState.d).every(
-        ([a, n]) =>
-          // Recursively, read the atom state of the dependency, and
-          // check if the atom epoch number is unchanged
-          readAtomState(store, a).n === n,
-      )
-    ) {
+    let hasChangedDeps = false
+    for (const [a, n] of atomState.d) {
+      if (readAtomState(store, a).n !== n) {
+        hasChangedDeps = true
+        break
+      }
+    }
+    if (!hasChangedDeps) {
       return atomState
     }
   }
@@ -771,7 +771,7 @@ const mountDependencies: MountDependencies = (store, atom) => {
         }
       }
     }
-    for (const a of mounted.d || []) {
+    for (const a of mounted.d) {
       if (!atomState.d.has(a)) {
         mounted.d.delete(a)
         const aMounted = unmountAtom(store, a)
@@ -854,11 +854,17 @@ const unmountAtom: UnmountAtom = (store, atom) => {
   const unmountAtom = buildingBlocks[19]
   const atomState = ensureAtomState(store, atom)
   let mounted = mountedMap.get(atom)
-  if (
-    mounted &&
-    !mounted.l.size &&
-    !Array.from(mounted.t).some((a) => mountedMap.get(a)?.d.has(atom))
-  ) {
+  if (!mounted || mounted.l.size) {
+    return mounted
+  }
+  let isDependent = false
+  for (const a of mounted.t) {
+    if (mountedMap.get(a)?.d.has(atom)) {
+      isDependent = true
+      break
+    }
+  }
+  if (isDependent) {
     // unmount self
     if (mounted.u) {
       unmountCallbacks.add(mounted.u)
