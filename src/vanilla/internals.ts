@@ -719,8 +719,8 @@ const writeAtomState: WriteAtomState = (store, atom, ...args) => {
         mountDependencies(store, a)
         if (prevEpochNumber !== aState.n) {
           changedAtoms.add(a)
-          storeHooks.c?.(a)
           invalidateDependents(store, a)
+          storeHooks.c?.(a)
         }
         return undefined as R
       } else {
@@ -760,8 +760,8 @@ const mountDependencies: MountDependencies = (store, atom) => {
         mounted.d.add(a)
         if (n !== aState.n) {
           changedAtoms.add(a)
-          storeHooks.c?.(a)
           invalidateDependents(store, a)
+          storeHooks.c?.(a)
         }
       }
     }
@@ -803,7 +803,6 @@ const mountAtom: MountAtom = (store, atom) => {
       t: new Set(),
     }
     mountedMap.set(atom, mounted)
-    storeHooks.m?.(atom)
     if (isActuallyWritableAtom(atom)) {
       const processOnMount = () => {
         let isSync = true
@@ -835,6 +834,7 @@ const mountAtom: MountAtom = (store, atom) => {
       }
       mountCallbacks.add(processOnMount)
     }
+    storeHooks.m?.(atom)
   }
   return mounted
 }
