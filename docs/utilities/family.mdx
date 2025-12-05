@@ -66,24 +66,90 @@ import type { PrimitiveAtom } from 'jotai'
  * here the atom(id) returns a PrimitiveAtom<number>
  * and PrimitiveAtom<number> is a WritableAtom<number, SetStateAction<number>>
  */
-const myFamily = atomFamily((id: number) => atom(id)).
+const myFamily = atomFamily((id: number) => atom(id))
 ```
 
-You can explicitly declare the type of parameter, value, and atom's setState function using TypeScript generics.
+You can explicitly declare the type of parameter and atom type using TypeScript generics.
 
 ```ts
-atomFamily<Param, Value, Update>(initializeAtom: (param: Param) => WritableAtom<Value, Update>, areEqual?: (a: Param, b: Param) => boolean)
-atomFamily<Param, Value>(initializeAtom: (param: Param) => Atom<Value>, areEqual?: (a: Param, b: Param) => boolean)
+atomFamily<Param, AtomType extends Atom<unknown>>(
+  initializeAtom: (param: Param) => AtomType,
+  areEqual?: (a: Param, b: Param) => boolean
+): AtomFamily<Param, AtomType>
 ```
 
-If you want to explicitly declare the atomFamily for a primitive atom, you need to use `SetStateAction`.
+Example with explicit types:
 
 ```ts
-type SetStateAction<Value> = Value | ((prev: Value) => Value)
+import { atom } from 'jotai'
+import type { PrimitiveAtom } from 'jotai'
+import { atomFamily } from 'jotai/utils'
 
-const myFamily = atomFamily<number, number, SetStateAction<number>>(
-  (id: number) => atom(id),
+const myFamily = atomFamily<number, PrimitiveAtom<number>>((id: number) =>
+  atom(id),
 )
+```
+
+### API Methods
+
+The `atomFamily` function returns an object with the following methods:
+
+#### `myFamily(param)`
+
+Returns an atom for the given param. If the atom has already been created, it will be returned from the cache.
+
+#### `myFamily.getParams()`
+
+Returns an iterable of all params currently in the cache.
+
+```js
+const todoFamily = atomFamily((name) => atom(name))
+
+todoFamily('foo')
+todoFamily('bar')
+
+for (const param of todoFamily.getParams()) {
+  console.log(param) // 'foo', 'bar'
+}
+```
+
+#### `myFamily.remove(param)`
+
+Removes a specific param from the cache.
+
+```js
+todoFamily.remove('foo')
+```
+
+#### `myFamily.setShouldRemove(shouldRemove)`
+
+Registers a `shouldRemove` function which runs immediately **and** when you are about to get an atom from the cache.
+
+- `shouldRemove` is a function that takes two arguments: `createdAt` (in milliseconds) and `param`, and returns a boolean value.
+- Setting `null` will remove the previously registered function.
+
+```js
+// Remove atoms older than 1 hour
+todoFamily.setShouldRemove((createdAt, param) => {
+  return Date.now() - createdAt > 60 * 60 * 1000
+})
+```
+
+#### `myFamily.unstable_listen(callback)`
+
+**⚠️ Unstable API**: This API is for advanced use cases and can change without notice.
+
+Fires when an atom is created or removed. Returns a cleanup function.
+
+```js
+const cleanup = todoFamily.unstable_listen((event) => {
+  console.log(event.type) // 'CREATE' or 'REMOVE'
+  console.log(event.param) // the param
+  console.log(event.atom) // the atom
+})
+
+// Later, stop listening
+cleanup()
 ```
 
 ### Caveat: Memory Leaks
@@ -92,12 +158,7 @@ Internally, atomFamily is just a Map whose key is a param and whose value is an 
 Unless you explicitly remove unused params, this leads to memory leaks.
 This is crucial if you use infinite number of params.
 
-There are two ways to remove params.
-
-- `myFamily.remove(param)` allows you to remove a specific param.
-- `myFamily.setShouldRemove(shouldRemove)` is to register `shouldRemove` function which runs immediately **and** when you are about to get an atom from a cache.
-  - shouldRemove is a function that takes two arguments `createdAt` in milliseconds and `param`, and returns a boolean value.
-  - setting `null` will remove the previously registered function.
+Use `myFamily.remove(param)` or `myFamily.setShouldRemove(shouldRemove)` to manage memory.
 
 ### Examples
 
