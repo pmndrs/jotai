@@ -864,7 +864,7 @@ const unmountAtom: UnmountAtom = (store, atom) => {
       break
     }
   }
-  if (isDependent) {
+  if (!isDependent) {
     // unmount self
     if (mounted.u) {
       unmountCallbacks.add(mounted.u)
