@@ -312,17 +312,12 @@ function getMountedOrPendingDependents(
 type StoreHook = {
   (): void
   add(callback: () => void): () => void
-  callbacks: SetLike<() => void>
 }
 
 type StoreHookForAtoms = {
   (atom: AnyAtom): void
   add(atom: AnyAtom, callback: () => void): () => void
   add(atom: undefined, callback: (atom: AnyAtom) => void): () => void
-  callbacks: WeakMapLike<
-    AnyAtom | Record<any, never>,
-    SetLike<(atom?: AnyAtom) => void>
-  >
 }
 
 /** StoreHooks are an experimental API. */
@@ -348,7 +343,6 @@ const createStoreHook = (): StoreHook => {
     callbacks.add(fn)
     return () => callbacks.delete(fn)
   }
-  notify.callbacks = callbacks
   return notify
 }
 
@@ -375,7 +369,6 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
       }
     }
   }
-  notify.callbacks = callbacks
   return notify as StoreHookForAtoms
 }
 
