@@ -39,6 +39,8 @@ describe('internals', () => {
           } as INTERNAL_AtomState
         }),
         set: vi.fn(),
+        has: vi.fn(() => true),
+        delete: vi.fn(() => true),
       } as INTERNAL_AtomStateMap
     }
     const mockAtomStateMap1 = createMockAtomStateMap()

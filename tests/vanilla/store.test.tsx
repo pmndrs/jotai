@@ -1171,6 +1171,16 @@ it('should call onInit only once per store', () => {
           initializedAtoms.add(atom)
           atomStateMap.set(atom, atomState)
         },
+        has: (atom) => {
+          if (!initializedAtoms.has(atom)) {
+            return false
+          }
+          return atomStateMap.has(atom)
+        },
+        delete: (atom) => {
+          initializedAtoms.delete(atom)
+          return atomStateMap.delete(atom)
+        },
       }
     }) as Store,
   )
