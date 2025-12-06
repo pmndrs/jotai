@@ -463,8 +463,7 @@ it('should flush pending write triggered asynchronously and indirectly (#2451)',
 
   // executing the chain reaction
   await store.set(actionAtom)
-  expect(callbackFn).toHaveBeenCalledOnce()
-  expect(callbackFn).toHaveBeenCalledWith('next')
+  expect(callbackFn).toHaveBeenCalledExactlyOnceWith('next')
   unsub()
 })
 
