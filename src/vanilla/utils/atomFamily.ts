@@ -16,7 +16,7 @@ type Callback<Param, AtomType> = (event: {
  * @deprecated atomFamily is deprecated and will be removed in v3.
  * Please use the `jotai-family` package instead: https://github.com/jotaijs/jotai-family
  *
- * Install: `npm install jotai-family` or `pnpm add jotai-family`
+ * Install: `npm install jotai-family`
  *
  * Migration:
  * ```ts
@@ -45,7 +45,7 @@ let didWarnDeprecation = false
  * @deprecated atomFamily is deprecated and will be removed in v3.
  * Please use the `jotai-family` package instead: https://github.com/jotaijs/jotai-family
  *
- * Install: `npm install jotai-family` or `pnpm add jotai-family`
+ * Install: `npm install jotai-family`
  *
  * Migration:
  * ```ts
