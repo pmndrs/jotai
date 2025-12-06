@@ -39,6 +39,8 @@ export interface AtomFamily<Param, AtomType> {
   unstable_listen(callback: Callback<Param, AtomType>): Cleanup
 }
 
+let didWarnDeprecation = false
+
 /**
  * @deprecated atomFamily is deprecated and will be removed in v3.
  * Please use the `jotai-family` package instead: https://github.com/jotaijs/jotai-family
@@ -63,6 +65,13 @@ export function atomFamily<Param, AtomType extends Atom<unknown>>(
   initializeAtom: (param: Param) => AtomType,
   areEqual?: (a: Param, b: Param) => boolean,
 ) {
+  if (import.meta.env?.MODE !== 'production' && !didWarnDeprecation) {
+    console.warn(
+      '[DEPRECATED] atomFamily is deprecated and will be removed in v3. ' +
+        'Please use the `jotai-family` package instead: https://github.com/jotaijs/jotai-family',
+    )
+    didWarnDeprecation = true
+  }
   let shouldRemove: ShouldRemove<Param> | null = null
   const atoms: Map<Param, [AtomType, CreatedAt]> = new Map()
   const listeners = new Set<Callback<Param, AtomType>>()
