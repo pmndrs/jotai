@@ -1,3 +1,5 @@
+// NOTE: Using variable assignment for type checking instead of expectTypeOf
+// because TypeScript 3.8.3 doesn't support generic type arguments on untyped function calls.
 import { expect, it } from 'vitest'
 import { useHydrateAtoms } from 'jotai/react/utils'
 import { atom } from 'jotai/vanilla'

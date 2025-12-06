@@ -347,6 +347,8 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
 })
 
 // types-only tests
+// NOTE: Using direct hook calls for type checking instead of expectTypeOf
+// because TypeScript 3.8.3 doesn't support generic type arguments on untyped function calls.
 it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
   const numberAtom = {} as PrimitiveAtom<number>
   const booleanAtom = {} as PrimitiveAtom<boolean>
@@ -359,20 +361,18 @@ it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
     void
   >
 
-  // positive cases (should type-check)
-  /* eslint-disable @typescript-eslint/no-unused-expressions */
-  ;() =>
+  function Component() {
+    // positive cases (should type-check)
     // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([
       [numberAtom, 1],
       [booleanAtom, true],
       [stringUnionAtom, 'fulfilled'],
     ] as const)
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 2]])
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2]])
-  ;() =>
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([[writeOnlySingleNumberAtom, 2]])
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2]])
     // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms(
       new Map<
@@ -383,31 +383,32 @@ it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
         [stringUnionAtom, 'pending'],
       ]),
     )
-  type AnyWritableAtom = WritableAtom<unknown, unknown[], unknown>
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms([] as (readonly [AnyWritableAtom, unknown])[])
+    type AnyWritableAtom = WritableAtom<unknown, unknown[], unknown>
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([] as (readonly [AnyWritableAtom, unknown])[])
 
-  // negative cases (should fail type-check)
-  // @ts-expect-error wrong value type for primitive atom [SKIP-TS-3.9.7]
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms([[numberAtom, 'oops']])
-  // @ts-expect-error wrong value type for boolean atom [SKIP-TS-3.9.7]
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms([[booleanAtom, 0]])
-  // @ts-expect-error read-only atom is not writable [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms([[readOnlyAtom, 1]])
-  // @ts-expect-error wrong arg type for writable derived atom [SKIP-TS-3.9.7]
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 'x']])
-  // @ts-expect-error missing one arg for writable derived with two args [SKIP-TS-3.9.7]
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1]])
-  // @ts-expect-error too many args for writable derived with two args [SKIP-TS-3.9.7]
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2, 3]])
-  // @ts-expect-error map with read-only atom key [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
-  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
-  ;() => useHydrateAtoms(new Map([[readOnlyAtom, 1]]))
-  /* eslint-enable @typescript-eslint/no-unused-expressions */
+    // negative cases (should fail type-check)
+    // @ts-expect-error wrong value type for primitive atom [SKIP-TS-3.9.7]
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([[numberAtom, 'oops']])
+    // @ts-expect-error wrong value type for boolean atom [SKIP-TS-3.9.7]
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([[booleanAtom, 0]])
+    // @ts-expect-error read-only atom is not writable [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([[readOnlyAtom, 1]])
+    // @ts-expect-error wrong arg type for writable derived atom [SKIP-TS-3.9.7]
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([[writeOnlySingleNumberAtom, 'x']])
+    // @ts-expect-error missing one arg for writable derived with two args [SKIP-TS-3.9.7]
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1]])
+    // @ts-expect-error too many args for writable derived with two args [SKIP-TS-3.9.7]
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2, 3]])
+    // @ts-expect-error map with read-only atom key [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms(new Map([[readOnlyAtom, 1]]))
+  }
+  expect(Component).toBeDefined()
 })

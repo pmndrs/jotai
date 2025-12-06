@@ -454,7 +454,9 @@ it('no error with cached atoms (fix 510)', () => {
     </StrictMode>,
   )
 
+  expect(screen.getByText('01234')).toBeInTheDocument()
   fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('01234')).toBeInTheDocument()
 })
 
 it('variable sized split atom', () => {
