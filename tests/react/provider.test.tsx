@@ -68,9 +68,11 @@ it('only uses initial value from provider for specific atom', () => {
 })
 
 it('renders correctly without children', () => {
-  render(
+  const { container } = render(
     <StrictMode>
       <Provider />
     </StrictMode>,
   )
+
+  expect(container).toBeInTheDocument()
 })

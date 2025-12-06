@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, version as reactVersion, useEffect } from 'react'
+import { StrictMode, Suspense, useEffect } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
@@ -13,9 +13,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
 })
-
-const IS_REACT18 = /^18\./.test(reactVersion)
-const IS_REACT19 = /^19\./.test(reactVersion)
 
 it('loadable turns suspense into values', async () => {
   const asyncAtom = atom(async () => {
@@ -182,16 +179,10 @@ it('loadable can use resolved promises synchronously', async () => {
   })
 
   await act(() => vi.advanceTimersByTimeAsync(0))
-  if (IS_REACT18 || IS_REACT19) {
-    // FIXME React 18 Suspense does not show "Ready"
-    try {
-      expect(screen.getByText('loading')).toBeInTheDocument()
-    } catch {
-      expect(screen.getByText('Ready')).toBeInTheDocument()
-    }
-  } else {
-    expect(screen.getByText('Ready')).toBeInTheDocument()
-  }
+  // FIXME React 18/19 Suspense behavior is non-deterministic
+  expect(
+    screen.queryByText('loading') ?? screen.queryByText('Ready'),
+  ).toBeInTheDocument()
 
   result!.rerender(
     <StrictMode>

@@ -146,9 +146,6 @@ importers:
       shx:
         specifier: ^0.4.0
         version: 0.4.0
-      ts-expect:
-        specifier: ^1.3.0
-        version: 1.3.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -3268,9 +3265,6 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  ts-expect@1.3.0:
-    resolution: {integrity: sha512-e4g0EJtAjk64xgnFPD6kTBUtpnMVzDrMb12N1YZV0VvSlhnVT3SGxiYTLdGy8Q5cYHOIC/FAHmZ10eGrAguicQ==}
-
   tsconfig-paths@3.15.0:
     resolution: {integrity: sha512-2Ac2RgzDe/cn48GvOe3M+o82pEFewD3UPbyoUHHdKasHwJKjds4fLXWf/Ux5kATBKN20oaFGu+jbElp1pos0mg==}
 
@@ -3313,8 +3307,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typescript@6.0.0-dev.20251130:
-    resolution: {integrity: sha512-KsAcpCYlgZmHwL8h3eqhbFbYidBQR8MeRhfP9yQvhUG4gLb8U1jYjL02dqn2jKp88+pxqpZa5qXggULszSam6g==}
+  typescript@6.0.0-dev.20251204:
+    resolution: {integrity: sha512-lIiRrHQkFQME22BNpasnUmMVXm7tYSAzxGwd9v3YP5hfST0Gs0l52ENO+2USOOOHQfZnOwRZGVSILbU3JIJizg==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -5368,7 +5362,7 @@ snapshots:
     dependencies:
       semver: 7.7.3
       shelljs: 0.8.5
-      typescript: 6.0.0-dev.20251130
+      typescript: 6.0.0-dev.20251204
 
   dunder-proto@1.0.1:
     dependencies:
@@ -6902,8 +6896,6 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  ts-expect@1.3.0: {}
-
   tsconfig-paths@3.15.0:
     dependencies:
       '@types/json5': 0.0.29
@@ -6965,7 +6957,7 @@ snapshots:
 
   typescript@5.9.3: {}
 
-  typescript@6.0.0-dev.20251130: {}
+  typescript@6.0.0-dev.20251204: {}
 
   unbox-primitive@1.1.0:
     dependencies:
