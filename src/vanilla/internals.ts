@@ -71,6 +71,7 @@ type SetLike<T> = {
   delete(value: T): boolean
   clear(): void
   forEach(callback: (value: T) => void): void
+  [Symbol.iterator](): IterableIterator<T>
 }
 
 type AtomStateMap = WeakMapLike<AnyAtom, AtomState>
