@@ -38,7 +38,9 @@ export function Provider({
   return createElement(
     StoreContext.Provider,
     {
-      // TODO should we use useState instead?
+      // NOTE: Using useRef instead of useState to avoid calling createStore()
+      // when the store prop is provided. useState's initializer always runs on
+      // the first render, but useRef with early return allows us to skip it.
       // eslint-disable-next-line react-hooks/refs
       value: storeRef.current,
     },
