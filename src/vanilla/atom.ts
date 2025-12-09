@@ -50,7 +50,7 @@ export interface Atom<Value> {
   debugPrivate?: boolean
   /**
    * Fires after atom is referenced by the store for the first time
-   * This is still an experimental API and subject to change without notice.
+   * This is an internal API and subject to change without notice.
    */
   INTERNAL_onInit?: (store: Store) => void
   /**

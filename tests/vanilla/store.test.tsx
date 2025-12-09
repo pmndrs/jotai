@@ -1120,7 +1120,7 @@ it('should call onInit only once per atom', () => {
   const a = atom(0)
   const onInit = vi.fn()
 
-  a.unstable_onInit = onInit
+  a.INTERNAL_onInit = onInit
   store.get(a)
   expect(onInit).toHaveBeenCalledTimes(1)
   expect(onInit).toHaveBeenCalledWith(store)
@@ -1141,10 +1141,10 @@ it('should call onInit only once per atom', () => {
 it('should call onInit only once per store', () => {
   const a = atom(0)
   const aOnInit = vi.fn()
-  a.unstable_onInit = aOnInit
+  a.INTERNAL_onInit = aOnInit
   const b = atom(0)
   const bOnInit = vi.fn()
-  b.unstable_onInit = bOnInit
+  b.INTERNAL_onInit = bOnInit
   type Store = ReturnType<typeof createStore>
   function testInStore(store: Store) {
     store.get(a)
@@ -1182,7 +1182,7 @@ it('should pass store and atomState to the atom initializer', () => {
   const store = createStore()
   const a = atom(null)
 
-  a.unstable_onInit = (store) => {
+  a.INTERNAL_onInit = (store) => {
     expect(store).toBe(store)
   }
   store.get(a)
