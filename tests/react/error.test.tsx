@@ -11,6 +11,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+import { sleep } from '../test-utils'
 
 const consoleError = console.error
 const errorMessages: string[] = []
@@ -179,7 +180,7 @@ it('can throw a chained error in read function', () => {
 
 it('can throw an initial error in async read function', async () => {
   const errorAtom = atom(async () => {
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     throw new Error()
   })
 
@@ -212,7 +213,7 @@ it('can throw an initial error in async read function', async () => {
 it('can throw an error in async read function', async () => {
   const countAtom = atom(0)
   const errorAtom = atom(async (get) => {
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     if (get(countAtom) === 0) {
       return 0
     }
@@ -553,7 +554,7 @@ describe('error recovery', () => {
     const { counterAtom, Counter } = createCounter()
     const asyncAtom = atom(async (get) => {
       const value = get(counterAtom)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       if (value === 0) {
         throw new Error('An error occurred')
       }

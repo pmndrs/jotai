@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import { unwrap } from 'jotai/vanilla/utils'
+import { sleep } from '../../test-utils'
 
 describe('unwrap', () => {
   beforeEach(() => {
@@ -16,7 +17,7 @@ describe('unwrap', () => {
     const countAtom = atom(1)
     const asyncAtom = atom(async (get) => {
       const count = get(countAtom)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       return count * 2
     })
     const syncAtom = unwrap(asyncAtom)
@@ -41,7 +42,7 @@ describe('unwrap', () => {
     const countAtom = atom(1)
     const asyncAtom = atom(async (get) => {
       const count = get(countAtom)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       return count * 2
     })
     const syncAtom = unwrap(asyncAtom, () => -1)
@@ -66,7 +67,7 @@ describe('unwrap', () => {
     const countAtom = atom(1)
     const asyncAtom = atom(async (get) => {
       const count = get(countAtom)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       return count * 2
     })
     const syncAtom = unwrap(asyncAtom, (prev?: number) => prev ?? 0)
