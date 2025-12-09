@@ -52,6 +52,10 @@ export interface Atom<Value> {
    * Fires after atom is referenced by the store for the first time
    * This is still an experimental API and subject to change without notice.
    */
+  INTERNAL_onInit?: (store: Store) => void
+  /**
+   * @deprecated renamed to INTERNAL_onInit
+   */
   unstable_onInit?: (store: Store) => void
 }
 

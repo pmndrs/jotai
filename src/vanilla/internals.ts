@@ -397,7 +397,19 @@ function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
 
 const atomRead: AtomRead = (_store, atom, ...params) => atom.read(...params)
 const atomWrite: AtomWrite = (_store, atom, ...params) => atom.write(...params)
-const atomOnInit: AtomOnInit = (store, atom) => atom.unstable_onInit?.(store)
+//const atomOnInit: AtomOnInit = (store, atom) => atom.INTERNAL_onInit?.(store)
+// TODO: The above is the correct implementation, the below is temporary for backward compatibility
+const atomOnInit: AtomOnInit = (store, atom) => {
+  if ('INTERNAL_onInit' in atom) {
+    return atom.INTERNAL_onInit(store)
+  }
+  if ('unstable_onInit' in atom) {
+    console.warn(
+      '[DEPRECATED] atom.unstable_onInit is renamed to atom.INTERNAL_onInit.',
+    )
+    return atom.unstable_onInit(store)
+  }
+}
 const atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
   atom.onMount?.(setAtom)
 
