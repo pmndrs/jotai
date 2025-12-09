@@ -45,6 +45,18 @@ describe('deriveStore for scoping atoms', () => {
             atomStateMap.set(atom, atomState)
           }
         },
+        has: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.has(atom)
+          }
+          return atomStateMap.has(atom)
+        },
+        delete: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.delete(atom)
+          }
+          return atomStateMap.delete(atom)
+        },
       }
     })
 
@@ -87,6 +99,18 @@ describe('deriveStore for scoping atoms', () => {
             atomStateMap.set(atom, atomState)
           }
         },
+        has: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.has(atom)
+          }
+          return atomStateMap.has(atom)
+        },
+        delete: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.delete(atom)
+          }
+          return atomStateMap.delete(atom)
+        },
       }
     })
 
@@ -127,6 +151,18 @@ describe('deriveStore for scoping atoms', () => {
             } else {
               atomStateMap.set(atom, atomState)
             }
+          },
+          has: (atom) => {
+            if (scopedAtoms.has(atom)) {
+              return scopedAtomStateMap.has(atom)
+            }
+            return atomStateMap.has(atom)
+          },
+          delete: (atom) => {
+            if (scopedAtoms.has(atom)) {
+              return scopedAtomStateMap.delete(atom)
+            }
+            return atomStateMap.delete(atom)
           },
         }
       })
@@ -193,6 +229,16 @@ it('should pass the correct store instance to the atom initializer', () => {
       set: (atom, atomState) => {
         initializedAtoms.add(atom)
         atomStateMap.set(atom, atomState)
+      },
+      has: (atom) => {
+        if (!initializedAtoms.has(atom)) {
+          return false
+        }
+        return atomStateMap.has(atom)
+      },
+      delete: (atom) => {
+        initializedAtoms.delete(atom)
+        return atomStateMap.delete(atom)
       },
     }
   })
