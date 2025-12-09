@@ -38,9 +38,7 @@ export function Provider({
   return createElement(
     StoreContext.Provider,
     {
-      // NOTE: Using useRef instead of useState to avoid calling createStore()
-      // when the store prop is provided. useState's initializer always runs on
-      // the first render, but useRef with early return allows us to skip it.
+      // TODO: If this is not a false positive, consider using useState instead of useRef like https://github.com/pmndrs/jotai/pull/2771
       // eslint-disable-next-line react-hooks/refs
       value: storeRef.current,
     },
