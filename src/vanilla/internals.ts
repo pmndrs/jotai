@@ -400,10 +400,10 @@ const atomWrite: AtomWrite = (_store, atom, ...params) => atom.write(...params)
 //const atomOnInit: AtomOnInit = (store, atom) => atom.INTERNAL_onInit?.(store)
 // TODO: The above is the correct implementation, the below is temporary for backward compatibility
 const atomOnInit: AtomOnInit = (store, atom) => {
-  if (atom.INTERNAL_onInit) {
+  if ('INTERNAL_onInit' in atom) {
     return atom.INTERNAL_onInit(store)
   }
-  if (atom.unstable_onInit) {
+  if ('unstable_onInit' in atom) {
     console.warn(
       '[DEPRECATED] atom.unstable_onInit is renamed to atom.INTERNAL_onInit.',
     )
