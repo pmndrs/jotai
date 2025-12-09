@@ -7,6 +7,7 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 import type { INTERNAL_Store } from 'jotai/vanilla/internals'
+import { sleep } from '../test-utils'
 
 let savedConsoleWarn: any
 
@@ -126,7 +127,7 @@ it('should update async atom with delay (#1813)', async () => {
 
   const delayedAtom = atom(async (get) => {
     const count = get(countAtom)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return count
   })
 
@@ -154,7 +155,7 @@ it('should override a promise by setting', async () => {
 it('should update async atom with deps after await (#1905)', async () => {
   const countAtom = atom(0)
   const delayedAtom = atom(async (get) => {
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     const count = get(countAtom)
     return count
   })
@@ -388,13 +389,13 @@ it('resolves dependencies reliably after a delay (#2192)', async () => {
 
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return count
   })
   const derivedAtom = atom(
     async (get, { setSelf }) => {
       get(countAtom)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 50))
+      await sleep(50)
       result = await get(asyncAtom)
       if (result === 2) setSelf() // <-- necessary
     },
@@ -472,7 +473,7 @@ describe('async atom with subtle timing', () => {
     const store = createStore()
     const a = atom(1)
     const b = atom(async (get) => {
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       return get(a)
     })
     const bValue = store.get(b)
@@ -489,7 +490,7 @@ describe('async atom with subtle timing', () => {
     const a = atom(1)
     const b = atom(async (get) => {
       const aValue = get(a)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       return aValue
     })
     const bValue = store.get(b)
@@ -518,7 +519,7 @@ describe('aborting atoms', () => {
     const store = createStore()
     const derivedAtom = atom(async (get, { signal }) => {
       const aVal = get(a)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       callBeforeAbort()
       throwIfAborted(signal)
       callAfterAbort()
@@ -542,7 +543,7 @@ describe('aborting atoms', () => {
     const store = createStore()
     const derivedAtom = atom(async (get, { signal }) => {
       const aVal = get(a)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       callBeforeAbort()
       throwIfAborted(signal)
       callAfterAbort()
@@ -564,7 +565,7 @@ describe('aborting atoms', () => {
     const store = createStore()
     const derivedAtom = atom(async (get, { signal }) => {
       const aVal = get(a)
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+      await sleep(100)
       callBeforeAbort()
       throwIfAborted(signal)
       callAfterAbort()
@@ -790,7 +791,7 @@ describe('should mount and trigger listeners even when an error is thrown', () =
       () => {},
     )
     const b = atom(async (get) => {
-      await new Promise((resolve) => setTimeout(resolve))
+      await sleep(0)
       get(a)
       get(e)
     })
@@ -1119,7 +1120,7 @@ it('should call onInit only once per atom', () => {
   const a = atom(0)
   const onInit = vi.fn()
 
-  a.unstable_onInit = onInit
+  a.INTERNAL_onInit = onInit
   store.get(a)
   expect(onInit).toHaveBeenCalledTimes(1)
   expect(onInit).toHaveBeenCalledWith(store)
@@ -1140,10 +1141,10 @@ it('should call onInit only once per atom', () => {
 it('should call onInit only once per store', () => {
   const a = atom(0)
   const aOnInit = vi.fn()
-  a.unstable_onInit = aOnInit
+  a.INTERNAL_onInit = aOnInit
   const b = atom(0)
   const bOnInit = vi.fn()
-  b.unstable_onInit = bOnInit
+  b.INTERNAL_onInit = bOnInit
   type Store = ReturnType<typeof createStore>
   function testInStore(store: Store) {
     store.get(a)
@@ -1170,6 +1171,16 @@ it('should call onInit only once per store', () => {
           initializedAtoms.add(atom)
           atomStateMap.set(atom, atomState)
         },
+        has: (atom) => {
+          if (!initializedAtoms.has(atom)) {
+            return false
+          }
+          return atomStateMap.has(atom)
+        },
+        delete: (atom) => {
+          initializedAtoms.delete(atom)
+          return atomStateMap.delete(atom)
+        },
       }
     }) as Store,
   )
@@ -1181,7 +1192,7 @@ it('should pass store and atomState to the atom initializer', () => {
   const store = createStore()
   const a = atom(null)
 
-  a.unstable_onInit = (store) => {
+  a.INTERNAL_onInit = (store) => {
     expect(store).toBe(store)
   }
   store.get(a)

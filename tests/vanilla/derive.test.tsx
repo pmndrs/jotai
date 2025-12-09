@@ -45,6 +45,18 @@ describe('deriveStore for scoping atoms', () => {
             atomStateMap.set(atom, atomState)
           }
         },
+        has: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.has(atom)
+          }
+          return atomStateMap.has(atom)
+        },
+        delete: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.delete(atom)
+          }
+          return atomStateMap.delete(atom)
+        },
       }
     })
 
@@ -87,6 +99,18 @@ describe('deriveStore for scoping atoms', () => {
             atomStateMap.set(atom, atomState)
           }
         },
+        has: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.has(atom)
+          }
+          return atomStateMap.has(atom)
+        },
+        delete: (atom) => {
+          if (scopedAtoms.has(atom)) {
+            return scopedAtomStateMap.delete(atom)
+          }
+          return atomStateMap.delete(atom)
+        },
       }
     })
 
@@ -127,6 +151,18 @@ describe('deriveStore for scoping atoms', () => {
             } else {
               atomStateMap.set(atom, atomState)
             }
+          },
+          has: (atom) => {
+            if (scopedAtoms.has(atom)) {
+              return scopedAtomStateMap.has(atom)
+            }
+            return atomStateMap.has(atom)
+          },
+          delete: (atom) => {
+            if (scopedAtoms.has(atom)) {
+              return scopedAtomStateMap.delete(atom)
+            }
+            return atomStateMap.delete(atom)
           },
         }
       })
@@ -194,14 +230,24 @@ it('should pass the correct store instance to the atom initializer', () => {
         initializedAtoms.add(atom)
         atomStateMap.set(atom, atomState)
       },
+      has: (atom) => {
+        if (!initializedAtoms.has(atom)) {
+          return false
+        }
+        return atomStateMap.has(atom)
+      },
+      delete: (atom) => {
+        initializedAtoms.delete(atom)
+        return atomStateMap.delete(atom)
+      },
     }
   })
   const a = atom(null)
-  a.unstable_onInit = (store) => {
+  a.INTERNAL_onInit = (store) => {
     expect(store).toBe(baseStore)
   }
   baseStore.get(a)
-  a.unstable_onInit = (store) => {
+  a.INTERNAL_onInit = (store) => {
     expect(store).toBe(derivedStore)
   }
   derivedStore.get(a)
