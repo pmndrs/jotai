@@ -57,36 +57,28 @@ type Mounted = {
   u?: () => void
 }
 
-type AtomStateMap = {
-  get(atom: AnyAtom): AtomState | undefined
-  set(atom: AnyAtom, atomState: AtomState): void
+type WeakMapLike<K extends object, V> = {
+  get(key: K): V | undefined
+  set(key: K, value: V): void
+  has(key: K): boolean
+  delete(key: K): boolean
 }
-type MountedMap = {
-  get(atom: AnyAtom): Mounted | undefined
-  has(atom: AnyAtom): boolean
-  set(atom: AnyAtom, mounted: Mounted): void
-  delete(atom: AnyAtom): void
-}
-type InvalidatedAtoms = {
-  get(atom: AnyAtom): EpochNumber | undefined
-  has(atom: AnyAtom): boolean
-  set(atom: AnyAtom, n: EpochNumber): void
-  delete(atom: AnyAtom): void
-}
-type ChangedAtoms = {
+
+type SetLike<T> = {
   readonly size: number
-  add(atom: AnyAtom): void
-  has(atom: AnyAtom): boolean
+  add(value: T): void
+  has(value: T): boolean
+  delete(value: T): boolean
   clear(): void
-  forEach(callback: (atom: AnyAtom) => void): void
-  [Symbol.iterator](): IterableIterator<AnyAtom>
+  forEach(callback: (value: T) => void): void
+  [Symbol.iterator](): IterableIterator<T>
 }
-type Callbacks = {
-  readonly size: number
-  add(fn: () => void): void
-  clear(): void
-  forEach(callback: (fn: () => void) => void): void
-}
+
+type AtomStateMap = WeakMapLike<AnyAtom, AtomState>
+type MountedMap = WeakMapLike<AnyAtom, Mounted>
+type InvalidatedAtoms = WeakMapLike<AnyAtom, EpochNumber>
+type ChangedAtoms = SetLike<AnyAtom>
+type Callbacks = SetLike<() => void>
 
 type AtomRead = <Value>(
   store: Store,
@@ -330,7 +322,7 @@ type StoreHookForAtoms = {
 
 /** StoreHooks are an experimental API. */
 type StoreHooks = {
-  /** Listener to notify when the atom is initialized. */
+  /** Listener to notify when the atom state is created. */
   readonly i?: StoreHookForAtoms
   /** Listener to notify when the atom is read. */
   readonly r?: StoreHookForAtoms
@@ -366,13 +358,15 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
   }
   notify.add = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
     const key = atom || all
-    const fns = (
-      callbacks.has(key) ? callbacks : callbacks.set(key, new Set())
-    ).get(key)!
+    let fns = callbacks.get(key)
+    if (!fns) {
+      fns = new Set()
+      callbacks.set(key, fns)
+    }
     fns.add(fn)
     return () => {
-      fns?.delete(fn)
-      if (!fns.size) {
+      fns!.delete(fn)
+      if (!fns!.size) {
         callbacks.delete(key)
       }
     }
@@ -725,8 +719,8 @@ const writeAtomState: WriteAtomState = (store, atom, ...args) => {
         mountDependencies(store, a)
         if (prevEpochNumber !== aState.n) {
           changedAtoms.add(a)
-          storeHooks.c?.(a)
           invalidateDependents(store, a)
+          storeHooks.c?.(a)
         }
         return undefined as R
       } else {
@@ -766,8 +760,8 @@ const mountDependencies: MountDependencies = (store, atom) => {
         mounted.d.add(a)
         if (n !== aState.n) {
           changedAtoms.add(a)
-          storeHooks.c?.(a)
           invalidateDependents(store, a)
+          storeHooks.c?.(a)
         }
       }
     }
@@ -809,7 +803,6 @@ const mountAtom: MountAtom = (store, atom) => {
       t: new Set(),
     }
     mountedMap.set(atom, mounted)
-    storeHooks.m?.(atom)
     if (isActuallyWritableAtom(atom)) {
       const processOnMount = () => {
         let isSync = true
@@ -841,6 +834,7 @@ const mountAtom: MountAtom = (store, atom) => {
       }
       mountCallbacks.add(processOnMount)
     }
+    storeHooks.m?.(atom)
   }
   return mounted
 }
@@ -865,12 +859,12 @@ const unmountAtom: UnmountAtom = (store, atom) => {
     }
     mounted = undefined
     mountedMap.delete(atom)
-    storeHooks.u?.(atom)
     // unmount dependencies
     for (const a of atomState.d.keys()) {
       const aMounted = unmountAtom(store, a)
       aMounted?.t.delete(atom)
     }
+    storeHooks.u?.(atom)
     return undefined
   }
   return mounted
