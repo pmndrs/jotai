@@ -243,11 +243,11 @@ it('should pass the correct store instance to the atom initializer', () => {
     }
   })
   const a = atom(null)
-  a.unstable_onInit = (store) => {
+  a.INTERNAL_onInit = (store) => {
     expect(store).toBe(baseStore)
   }
   baseStore.get(a)
-  a.unstable_onInit = (store) => {
+  a.INTERNAL_onInit = (store) => {
     expect(store).toBe(derivedStore)
   }
   derivedStore.get(a)

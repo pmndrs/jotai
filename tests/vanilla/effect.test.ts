@@ -41,7 +41,7 @@ function syncEffect(effect: Effect): Atom<void> {
   internalAtom.onMount = () => {
     return () => {}
   }
-  internalAtom.unstable_onInit = (store) => {
+  internalAtom.INTERNAL_onInit = (store) => {
     const ref = store.get(refAtom)
     const runEffect = () => {
       const deps = new Set<Atom<unknown>>()

@@ -22,7 +22,7 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
       Loadable<Value>
     >()
     const refreshAtom = atom([() => {}, 0] as [() => void, number])
-    refreshAtom.unstable_onInit = (store) => {
+    refreshAtom.INTERNAL_onInit = (store) => {
       store.set(refreshAtom, ([, c]) => [
         () => store.set(refreshAtom, ([f, c]) => [f, c + 1]),
         c,
