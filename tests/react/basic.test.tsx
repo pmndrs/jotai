@@ -4,7 +4,6 @@ import {
   version as reactVersion,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
@@ -13,6 +12,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
+import { sleep, useCommitCount } from '../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -30,15 +30,6 @@ const batchedUpdates = (fn: () => void) => {
   } else {
     unstable_batchedUpdates(fn)
   }
-}
-
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
-  })
-  // eslint-disable-next-line react-hooks/refs
-  return commitCountRef.current
 }
 
 it('uses a primitive atom', () => {
@@ -261,7 +252,7 @@ it('re-renders a time delayed derived atom with the same initial value (#947)', 
 it('works with async get', async () => {
   const countAtom = atom(0)
   const asyncCountAtom = atom(async (get) => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
+    await sleep(100)
     return get(countAtom)
   })
 
@@ -358,7 +349,7 @@ it('uses atoms with tree dependencies', async () => {
   const rightAtom = atom(
     (get) => get(topAtom),
     async (get, set, update: (prev: number) => number) => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       batchedUpdates(() => {
         set(topAtom, update(get(topAtom)))
       })
@@ -435,7 +426,7 @@ it('uses an async write-only atom', async () => {
   const asyncCountAtom = atom(
     null,
     async (get, set, update: (prev: number) => number) => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       set(countAtom, update(get(countAtom)))
     },
   )
@@ -468,7 +459,7 @@ it('uses an async write-only atom', async () => {
 
 it('uses a writable atom without read function', async () => {
   const countAtom = atom(1, async (get, set, v: number) => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
+    await sleep(100)
     set(countAtom, get(countAtom) + 10 * v)
   })
 

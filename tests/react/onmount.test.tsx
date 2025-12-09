@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+import { sleep } from '../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -290,7 +291,7 @@ it('mount/unMount order', () => {
 it('mount/unmount test with async atom', async () => {
   const countAtom = atom(
     async () => {
-      await new Promise<void>((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       return 0
     },
     () => {},

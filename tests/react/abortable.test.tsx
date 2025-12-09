@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+import { sleep } from '../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -18,7 +19,7 @@ describe('abortable atom test', () => {
     let abortedCount = 0
     const derivedAtom = atom(async (get, { signal }) => {
       const count = get(countAtom)
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       if (signal.aborted) {
         ++abortedCount
       }
@@ -83,7 +84,7 @@ describe('abortable atom test', () => {
         ++abortedCount
       }
       signal.addEventListener('abort', callback)
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       signal.removeEventListener('abort', callback)
       return count
     })
@@ -142,7 +143,7 @@ describe('abortable atom test', () => {
     let abortedCount = 0
     const derivedAtom = atom(async (get, { signal }) => {
       const count = get(countAtom)
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       if (signal.aborted) {
         ++abortedCount
       }
@@ -192,7 +193,7 @@ describe('abortable atom test', () => {
     const countAtom = atom(0)
     const derivedAtom = atom(async (get, { signal }) => {
       const count = get(countAtom)
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await sleep(100)
       if (signal.aborted) {
         throw new Error('aborted')
       }

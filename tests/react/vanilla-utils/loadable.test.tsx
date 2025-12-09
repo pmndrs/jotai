@@ -5,6 +5,7 @@ import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
 import { loadable } from 'jotai/vanilla/utils'
+import { sleep } from '../../test-utils'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -19,7 +20,7 @@ const IS_REACT19 = /^19\./.test(reactVersion)
 
 it('loadable turns suspense into values', async () => {
   const asyncAtom = atom(async () => {
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return 5
   })
 
@@ -36,7 +37,7 @@ it('loadable turns suspense into values', async () => {
 
 it('loadable turns errors into values', async () => {
   const asyncAtom = atom(async () => {
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     throw new Error('An error occurred')
   })
 
@@ -53,7 +54,7 @@ it('loadable turns errors into values', async () => {
 
 it('loadable turns primitive throws into values', async () => {
   const asyncAtom = atom(async () => {
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     throw 'An error occurred'
   })
 
@@ -72,7 +73,7 @@ it('loadable goes back to loading after re-fetch', async () => {
   const refreshAtom = atom(0)
   const asyncAtom = atom(async (get) => {
     const count = get(refreshAtom)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return count === 0 ? 5 : 6
   })
 
@@ -108,7 +109,7 @@ it('loadable can recover from error', async () => {
   const refreshAtom = atom(0)
   const asyncAtom = atom(async (get) => {
     const count = get(refreshAtom)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     if (count === 0) {
       throw new Error('An error occurred')
     }
@@ -215,7 +216,7 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
   const baseAtom = atom(0)
   const asyncAtom = atom(async (get) => {
     get(baseAtom)
-    await new Promise<void>((resolve) => setTimeout(() => resolve(), 100))
+    await sleep(100)
     return 5
   })
 

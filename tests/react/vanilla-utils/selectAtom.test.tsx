@@ -1,18 +1,10 @@
-import { StrictMode, useEffect, useRef } from 'react'
+import { StrictMode } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { selectAtom } from 'jotai/vanilla/utils'
-
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
-  })
-  // eslint-disable-next-line react-hooks/refs
-  return commitCountRef.current
-}
+import { useCommitCount } from '../../test-utils'
 
 it('selectAtom works as expected', () => {
   const bigAtom = atom({ a: 0, b: 'othervalue' })
