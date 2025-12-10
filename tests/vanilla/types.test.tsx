@@ -1,5 +1,5 @@
-// NOTE: Using variable assignment for type checking instead of expectTypeOf
-// because TypeScript 3.8.3 doesn't support generic type arguments on untyped function calls.
+import { expectType } from 'ts-expect'
+import type { TypeOf } from 'ts-expect'
 import { expect, it } from 'vitest'
 import { atom } from 'jotai/vanilla'
 import type {
@@ -15,23 +15,20 @@ it('atom() should return the correct types', () => {
   function Component() {
     // primitive atom
     const primitiveAtom = atom(0)
-    const _primitiveAtom: PrimitiveAtom<number> = primitiveAtom
-    expect(_primitiveAtom).toBeDefined()
+    expectType<PrimitiveAtom<number>>(primitiveAtom)
+    expectType<TypeOf<PrimitiveAtom<number>, typeof primitiveAtom>>(true)
+    expectType<TypeOf<PrimitiveAtom<number | undefined>, typeof primitiveAtom>>(
+      false,
+    )
 
     // primitive atom without initial value
     const primitiveWithoutInitialAtom = atom<number | undefined>()
-    const _primitiveWithoutInitialAtom: PrimitiveAtom<number | undefined> =
-      primitiveWithoutInitialAtom
-    expect(_primitiveWithoutInitialAtom).toBeDefined()
-
-    const undefinedAtom = atom<undefined>()
-    const _undefinedAtom: PrimitiveAtom<undefined> = undefinedAtom
-    expect(_undefinedAtom).toBeDefined()
+    expectType<PrimitiveAtom<number | undefined>>(primitiveWithoutInitialAtom)
+    expectType<PrimitiveAtom<undefined>>(atom())
 
     // read-only derived atom
     const readonlyDerivedAtom = atom((get) => get(primitiveAtom) * 2)
-    const _readonlyDerivedAtom: Atom<number> = readonlyDerivedAtom
-    expect(_readonlyDerivedAtom).toBeDefined()
+    expectType<Atom<number>>(readonlyDerivedAtom)
 
     // read-write derived atom
     const readWriteDerivedAtom = atom(
@@ -40,17 +37,13 @@ it('atom() should return the correct types', () => {
         set(primitiveAtom, get(primitiveAtom) + value)
       },
     )
-    const _readWriteDerivedAtom: WritableAtom<number, [number], void> =
-      readWriteDerivedAtom
-    expect(_readWriteDerivedAtom).toBeDefined()
+    expectType<WritableAtom<number, [number], void>>(readWriteDerivedAtom)
 
     // write-only derived atom
     const writeonlyDerivedAtom = atom(null, (get, set) => {
       set(primitiveAtom, get(primitiveAtom) - 1)
     })
-    const _writeonlyDerivedAtom: WritableAtom<null, [], void> =
-      writeonlyDerivedAtom
-    expect(_writeonlyDerivedAtom).toBeDefined()
+    expectType<WritableAtom<null, [], void>>(writeonlyDerivedAtom)
   }
   expect(Component).toBeDefined()
 })
@@ -64,16 +57,13 @@ it('type utils should work', () => {
     expect(readWriteAtom).toBeDefined()
 
     const value: ExtractAtomValue<typeof readWriteAtom> = 1
-    const _value: number = value
-    expect(_value).toBeDefined()
+    expectType<number>(value)
 
     const args: ExtractAtomArgs<typeof readWriteAtom> = ['']
-    const _args: [string] = args
-    expect(_args).toBeDefined()
+    expectType<[string]>(args)
 
     const result: ExtractAtomResult<typeof readWriteAtom> = Promise.resolve()
-    const _result: Promise<void> = result
-    expect(_result).toBeDefined()
+    expectType<Promise<void>>(result)
   }
   expect(Component).toBeDefined()
 })
