@@ -450,7 +450,7 @@ describe('throws an error while updating in effect cleanup', () => {
     )
   }
 
-  it('[DEV-ONLY] single setCount', async () => {
+  it('[DEV-ONLY] single setCount', () => {
     render(
       <>
         <ErrorBoundary>
@@ -465,6 +465,10 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     fireEvent.click(screen.getByText('close'))
+
+    // NOTE: Conditional expect is required because behavior differs by React version
+    // AND build mode (dev vs prod). Using it.runIf/skipIf causes production build failures.
+    /* eslint-disable vitest/no-conditional-expect */
     if (reactVersion.startsWith('17.')) {
       expect(
         errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
@@ -474,9 +478,10 @@ describe('throws an error while updating in effect cleanup', () => {
         screen.getByText('Errored: err_in_effect_cleanup'),
       ).toBeInTheDocument()
     }
+    /* eslint-enable vitest/no-conditional-expect */
   })
 
-  it('[DEV-ONLY] dobule setCount', () => {
+  it('[DEV-ONLY] double setCount', () => {
     doubleSetCount = true
 
     render(
@@ -493,6 +498,10 @@ describe('throws an error while updating in effect cleanup', () => {
     )
 
     fireEvent.click(screen.getByText('close'))
+
+    // NOTE: Conditional expect is required because behavior differs by React version
+    // AND build mode (dev vs prod). Using it.runIf/skipIf causes production build failures.
+    /* eslint-disable vitest/no-conditional-expect */
     if (reactVersion.startsWith('17.')) {
       expect(
         errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
@@ -502,6 +511,7 @@ describe('throws an error while updating in effect cleanup', () => {
         screen.getByText('Errored: err_in_effect_cleanup'),
       ).toBeInTheDocument()
     }
+    /* eslint-enable vitest/no-conditional-expect */
   })
 })
 
