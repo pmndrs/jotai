@@ -656,9 +656,16 @@ describe('atomWithStorage (with non-browser storage)', () => {
 
 describe('withStorageValidator', () => {
   it('should use withStorageValidator with isNumber', () => {
+    const store = createStore()
     const storage = createJSONStorage()
     const isNumber = (v: unknown): v is number => typeof v === 'number'
-    atomWithStorage('my-number', 0, withStorageValidator(isNumber)(storage))
+    const numAtom = atomWithStorage(
+      'my-number',
+      0,
+      withStorageValidator(isNumber)(storage),
+    )
+
+    expect(store.get(numAtom)).toBe(0)
   })
 })
 

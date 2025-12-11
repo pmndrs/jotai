@@ -339,6 +339,7 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
 })
 
 // types-only tests
+// eslint-disable-next-line vitest/expect-expect
 it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
   const numberAtom = {} as PrimitiveAtom<number>
   const booleanAtom = {} as PrimitiveAtom<boolean>
