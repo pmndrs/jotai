@@ -138,6 +138,11 @@ type StoreSub = (
 type EnhanceBuildingBlocks = (
   buildingBlocks: Readonly<BuildingBlocks>,
 ) => Readonly<BuildingBlocks>
+type CreateGetter = <S extends Store, A extends AnyAtom>(
+  store: S,
+  atom: A,
+  isSync: boolean,
+) => Getter
 
 type Store = {
   get: <Value>(atom: Atom<Value>) => Value
@@ -178,6 +183,7 @@ type BuildingBlocks = [
   storeSet: StoreSet, //                                       22
   storeSub: StoreSub, //                                       23
   enhanceBuildingBlocks: EnhanceBuildingBlocks | undefined, // 24
+  createGetter: CreateGetter, //                               25
 ]
 
 export type {
@@ -535,6 +541,53 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
 // Dev only
 const storeMutationSet = new WeakSet<Store>()
 
+const createGetter: CreateGetter = (store, atom, isSync) => {
+  const buildingBlocks = getInternalBuildingBlocks(store)
+  const mountedMap = buildingBlocks[1]
+  const ensureAtomState = buildingBlocks[11]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const readAtomState = buildingBlocks[14]
+  const mountDependencies = buildingBlocks[17]
+  const flushCallbacks = buildingBlocks[12]
+  const setAtomStateValueOrPromise = buildingBlocks[20]
+  const atomState = ensureAtomState(store, atom)
+
+  return function getter(a) {
+    if (a === (atom as AnyAtom)) {
+      const aState = ensureAtomState(store, a)
+      if (!isAtomStateInitialized(aState)) {
+        if (hasInitialValue(a)) {
+          setAtomStateValueOrPromise(store, a, a.init)
+        } else {
+          // NOTE invalid derived atoms can reach here
+          throw new Error('no atom init')
+        }
+      }
+      return returnAtomValue(aState)
+    }
+    // a !== atom
+    const aState = readAtomState(store, a)
+    try {
+      return returnAtomValue(aState)
+    } finally {
+      atomState.d.set(a, aState.n)
+      if (isPendingPromise(atomState.v)) {
+        addPendingPromiseToDependency(atom, atomState.v, aState)
+      }
+      if (mountedMap.has(atom)) {
+        mountedMap.get(a)?.t.add(atom)
+      }
+      if (!isSync) {
+        if (mountedMap.has(atom)) {
+          mountDependencies(store, atom)
+          recomputeInvalidatedAtoms(store)
+          flushCallbacks(store)
+        }
+      }
+    }
+  }
+}
+
 const readAtomState: ReadAtomState = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
@@ -548,6 +601,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
   const readAtomState = buildingBlocks[14]
   const writeAtomState = buildingBlocks[16]
   const mountDependencies = buildingBlocks[17]
+  const createGetter = buildingBlocks[25]
   const atomState = ensureAtomState(store, atom)
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
@@ -580,36 +634,8 @@ const readAtomState: ReadAtomState = (store, atom) => {
       flushCallbacks(store)
     }
   }
-  function getter<V>(a: Atom<V>) {
-    if (a === (atom as AnyAtom)) {
-      const aState = ensureAtomState(store, a)
-      if (!isAtomStateInitialized(aState)) {
-        if (hasInitialValue(a)) {
-          setAtomStateValueOrPromise(store, a, a.init)
-        } else {
-          // NOTE invalid derived atoms can reach here
-          throw new Error('no atom init')
-        }
-      }
-      return returnAtomValue(aState)
-    }
-    // a !== atom
-    const aState = readAtomState(store, a)
-    try {
-      return returnAtomValue(aState)
-    } finally {
-      atomState.d.set(a, aState.n)
-      if (isPendingPromise(atomState.v)) {
-        addPendingPromiseToDependency(atom, atomState.v, aState)
-      }
-      if (mountedMap.has(atom)) {
-        mountedMap.get(a)?.t.add(atom)
-      }
-      if (!isSync) {
-        mountDependenciesIfAsync()
-      }
-    }
-  }
+  let getter = createGetter(store, atom, true)
+  const get: Getter = (a) => getter(a)
   let controller: AbortController | undefined
   let setSelf: ((...args: unknown[]) => unknown) | undefined
   const options = {
@@ -649,7 +675,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(store)
     }
-    const valueOrPromise = atomRead(store, atom, getter, options as never)
+    const valueOrPromise = atomRead(store, atom, get, options as never)
     if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
       console.warn(
         'Detected store mutation during atom read. This is not supported.',
@@ -669,6 +695,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
     return atomState
   } finally {
     isSync = false
+    getter = createGetter(store, atom, false)
     if (
       prevEpochNumber !== atomState.n &&
       invalidatedAtoms.get(atom) === prevEpochNumber
@@ -1018,6 +1045,7 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       storeSet,
       storeSub,
       undefined,
+      createGetter,
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
