@@ -312,10 +312,13 @@ type StoreHook = {
   add(callback: () => void): () => void
 }
 
-type StoreHookForAtoms = {
-  (atom: AnyAtom): void
-  add(atom: AnyAtom, callback: () => void): () => void
-  add(atom: undefined, callback: (atom: AnyAtom) => void): () => void
+type StoreHookForAtoms<Args extends unknown[] = never[]> = {
+  (atom: AnyAtom, ...args: Args): void
+  add(
+    atom: undefined,
+    callback: (atom: AnyAtom, ...args: Args) => void,
+  ): () => void
+  add(atom: AnyAtom, callback: (...args: Args) => void): () => void
 }
 
 /** StoreHooks are an experimental API. */
@@ -324,6 +327,8 @@ type StoreHooks = {
   readonly i?: StoreHookForAtoms
   /** Listener to notify when the atom is read. */
   readonly r?: StoreHookForAtoms
+  /** Listener to notify when atom dependency is added. */
+  readonly d?: StoreHookForAtoms<[AnyAtom, boolean]>
   /** Listener to notify when the atom value is changed. */
   readonly c?: StoreHookForAtoms
   /** Listener to notify when the atom is mounted. */
@@ -344,17 +349,29 @@ const createStoreHook = (): StoreHook => {
   return notify
 }
 
-const createStoreHookForAtoms = (): StoreHookForAtoms => {
+const createStoreHookForAtoms = <
+  T extends unknown[],
+>(): StoreHookForAtoms<T> => {
   const all: object = {}
   const callbacks = new WeakMap<
     AnyAtom | typeof all,
-    Set<(atom?: AnyAtom) => void>
+    Set<
+      (
+        atom: AnyAtom,
+        ...args: unknown[]
+      ) => void | ((...args: unknown[]) => void)
+    >
   >()
-  const notify = (atom: AnyAtom) => {
-    callbacks.get(all)?.forEach((fn) => fn(atom))
-    callbacks.get(atom)?.forEach((fn) => fn())
+  const notify = (atom: AnyAtom, ...args: unknown[]) => {
+    callbacks.get(all)?.forEach((fn) => fn(atom, ...args))
+    callbacks
+      .get(atom)
+      ?.forEach((fn) => (fn as (...args: unknown[]) => void)(...args))
   }
-  notify.add = (atom: AnyAtom | undefined, fn: (atom?: AnyAtom) => void) => {
+  notify.add = (
+    atom: AnyAtom | undefined,
+    fn: (atom?: AnyAtom, ...args: unknown[]) => void,
+  ) => {
     const key = atom || all
     let fns = callbacks.get(key)
     if (!fns) {
@@ -369,13 +386,14 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
       }
     }
   }
-  return notify as StoreHookForAtoms
+  return notify as unknown as StoreHookForAtoms<T>
 }
 
 function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
   type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
   ;(storeHooks as SH).i ||= createStoreHookForAtoms()
   ;(storeHooks as SH).r ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).d ||= createStoreHookForAtoms<[AnyAtom, boolean]>()
   ;(storeHooks as SH).c ||= createStoreHookForAtoms()
   ;(storeHooks as SH).m ||= createStoreHookForAtoms()
   ;(storeHooks as SH).u ||= createStoreHookForAtoms()
@@ -608,6 +626,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
       if (!isSync) {
         mountDependenciesIfAsync()
       }
+      storeHooks.d?.(atom, a, isSync)
     }
   }
   let controller: AbortController | undefined
