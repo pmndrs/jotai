@@ -1,6 +1,4 @@
-import { expectType } from 'ts-expect'
-import type { TypeEqual } from 'ts-expect'
-import { expect, it } from 'vitest'
+import { expect, expectTypeOf, it } from 'vitest'
 import { useAtom, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 
@@ -8,11 +6,16 @@ it('useAtom should return the correct types', () => {
   function Component() {
     // primitive atom
     const primitiveAtom = atom(0)
-    expectType<[number, (arg: number) => void]>(useAtom(primitiveAtom))
+    // NOTE: expectTypeOf is not available in TypeScript 4.0.5 and below
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(useAtom(primitiveAtom)).toEqualTypeOf<
+      [number, (arg: number | ((prev: number) => number)) => void]
+    >()
 
     // read-only derived atom
     const readonlyDerivedAtom = atom((get) => get(primitiveAtom) * 2)
-    expectType<[number, (arg: number) => void]>(useAtom(readonlyDerivedAtom))
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(useAtom(readonlyDerivedAtom)).toEqualTypeOf<[number, never]>()
 
     // read-write derived atom
     const readWriteDerivedAtom = atom(
@@ -21,13 +24,19 @@ it('useAtom should return the correct types', () => {
         set(primitiveAtom, get(primitiveAtom) + value)
       },
     )
-    expectType<[number, (arg: number) => void]>(useAtom(readWriteDerivedAtom))
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(useAtom(readWriteDerivedAtom)).toEqualTypeOf<
+      [number, (arg: number) => void]
+    >()
 
     // write-only derived atom
     const writeonlyDerivedAtom = atom(null, (get, set) => {
       set(primitiveAtom, get(primitiveAtom) - 1)
     })
-    expectType<[null, (arg: number) => void]>(useAtom(writeonlyDerivedAtom))
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(useAtom(writeonlyDerivedAtom)).toEqualTypeOf<
+      [null, () => void]
+    >()
   }
   expect(Component).toBeDefined()
 })
@@ -43,35 +52,28 @@ it('useAtom should handle inference of atoms (#1831 #1387)', () => {
   }
   function Component() {
     const [username, setUsername] = useField('username')
-    expect(username).toBeDefined()
-    expect(setUsername).toBeDefined()
-    expectType<TypeEqual<string, typeof username>>(true)
-    expectType<
-      TypeEqual<
-        (arg: string | ((prev: string) => string)) => void,
-        typeof setUsername
-      >
-    >(true)
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(username).toEqualTypeOf<string>()
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(setUsername).toEqualTypeOf<
+      (arg: string | ((prev: string) => string)) => void
+    >()
+
     const [age, setAge] = useField('age')
-    expect(age).toBeDefined()
-    expect(setAge).toBeDefined()
-    expectType<TypeEqual<number, typeof age>>(true)
-    expectType<
-      TypeEqual<
-        (arg: number | ((prev: number) => number)) => void,
-        typeof setAge
-      >
-    >(true)
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(age).toEqualTypeOf<number>()
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(setAge).toEqualTypeOf<
+      (arg: number | ((prev: number) => number)) => void
+    >()
+
     const [checked, setChecked] = useField('checked')
-    expect(checked).toBeDefined()
-    expect(setChecked).toBeDefined()
-    expectType<TypeEqual<boolean, typeof checked>>(true)
-    expectType<
-      TypeEqual<
-        (arg: boolean | ((prev: boolean) => boolean)) => void,
-        typeof setChecked
-      >
-    >(true)
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(checked).toEqualTypeOf<boolean>()
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(setChecked).toEqualTypeOf<
+      (arg: boolean | ((prev: boolean) => boolean)) => void
+    >()
   }
   expect(Component).toBeDefined()
 })
@@ -86,9 +88,12 @@ it('useAtom should handle inference of read-only atoms', () => {
     return useAtom(fieldAtoms[prop])
   }
   function Component() {
-    expectType<[string, never]>(useField('username'))
-    expectType<[number, never]>(useField('age'))
-    expectType<[boolean, never]>(useField('checked'))
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(useField('username')).toEqualTypeOf<[string, never]>()
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(useField('age')).toEqualTypeOf<[number, never]>()
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(useField('checked')).toEqualTypeOf<[boolean, never]>()
   }
   expect(Component).toBeDefined()
 })
@@ -104,46 +109,36 @@ it('useSetAtom should handle inference of atoms', () => {
   }
   function Component() {
     const setUsername = useSetField('username')
-    expect(setUsername).toBeDefined()
-    expectType<
-      TypeEqual<
-        (arg: string | ((prev: string) => string)) => void,
-        typeof setUsername
-      >
-    >(true)
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(setUsername).toEqualTypeOf<
+      (arg: string | ((prev: string) => string)) => void
+    >()
+
     const setAge = useSetField('age')
-    expect(setAge).toBeDefined()
-    expectType<
-      TypeEqual<
-        (arg: number | ((prev: number) => number)) => void,
-        typeof setAge
-      >
-    >(true)
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(setAge).toEqualTypeOf<
+      (arg: number | ((prev: number) => number)) => void
+    >()
+
     const setChecked = useSetField('checked')
-    expect(setChecked).toBeDefined()
-    expectType<
-      TypeEqual<
-        (arg: boolean | ((prev: boolean) => boolean)) => void,
-        typeof setChecked
-      >
-    >(true)
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(setChecked).toEqualTypeOf<
+      (arg: boolean | ((prev: boolean) => boolean)) => void
+    >()
   }
   expect(Component).toBeDefined()
 })
 
-it('useAtom should handle primitive atom with one type argeument', () => {
+it('useAtom should handle primitive atom with one type argument', () => {
   const countAtom = atom(0)
   function Component() {
     const [count, setCount] = useAtom<number>(countAtom)
-    expect(count).toBeDefined()
-    expect(setCount).toBeDefined()
-    expectType<TypeEqual<typeof count, number>>(true)
-    expectType<
-      TypeEqual<
-        typeof setCount,
-        (arg: number | ((prev: number) => number)) => void
-      >
-    >(true)
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(count).toEqualTypeOf<number>()
+    // [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    expectTypeOf(setCount).toEqualTypeOf<
+      (arg: number | ((prev: number) => number)) => void
+    >()
   }
   expect(Component).toBeDefined()
 })
