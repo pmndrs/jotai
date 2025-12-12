@@ -548,6 +548,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
   const readAtomState = buildingBlocks[14]
   const writeAtomState = buildingBlocks[16]
   const mountDependencies = buildingBlocks[17]
+  const setAtomStateValueOrPromise = buildingBlocks[20]
   const atomState = ensureAtomState(store, atom)
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
@@ -707,7 +708,9 @@ const writeAtomState: WriteAtomState = (store, atom, ...args) => {
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const readAtomState = buildingBlocks[14]
   const invalidateDependents = buildingBlocks[15]
+  const writeAtomState = buildingBlocks[16]
   const mountDependencies = buildingBlocks[17]
+  const setAtomStateValueOrPromise = buildingBlocks[20]
   let isSync = true
   const getter: Getter = <V>(a: Atom<V>) =>
     returnAtomValue(readAtomState(store, a))
@@ -798,6 +801,7 @@ const mountAtom: MountAtom = (store, atom) => {
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const readAtomState = buildingBlocks[14]
   const writeAtomState = buildingBlocks[16]
+  const mountAtom = buildingBlocks[18]
   const atomState = ensureAtomState(store, atom)
   let mounted = mountedMap.get(atom)
   if (!mounted) {
