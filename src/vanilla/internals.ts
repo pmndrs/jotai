@@ -26,12 +26,12 @@ type AtomState<Value = AnyValue> = {
    */
   readonly d: Map<AnyAtom, EpochNumber>
   /**
-   * Set of atoms with pending promise that depend on the atom.
+   * Map of atoms with pending promise that depend on this atom to their stores.
    *
    * This may cause memory leaks, but it's for the capability to continue promises
    * TODO(daishi): revisit how to handle this
    */
-  readonly p: Set<AnyAtom>
+  readonly p: Map<AnyAtom, Set<Store>>
   /** The epoch number of the atom. */
   n: EpochNumber
   /** Atom value */
@@ -51,8 +51,8 @@ type Mounted = {
   readonly l: Set<() => void>
   /** Set of mounted atoms that the atom depends on. */
   readonly d: Set<AnyAtom>
-  /** Set of mounted atoms that depends on the atom. */
-  readonly t: Set<AnyAtom>
+  /** Map of mounted atoms that depend on this atom to their stores. */
+  readonly t: Map<AnyAtom, Set<Store>>
   /** Function to run when the atom is unmounted. */
   u?: () => void
 }
@@ -276,13 +276,24 @@ function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
 }
 
 function addPendingPromiseToDependency(
+  store: Store,
   atom: AnyAtom,
   promise: PromiseLike<AnyValue>,
   dependencyAtomState: AtomState,
 ): void {
-  if (!dependencyAtomState.p.has(atom)) {
-    dependencyAtomState.p.add(atom)
-    const cleanup = () => dependencyAtomState.p.delete(atom)
+  let stores = dependencyAtomState.p.get(atom)
+  if (!stores) {
+    stores = new Set()
+    dependencyAtomState.p.set(atom, stores)
+  }
+  if (!stores.has(store)) {
+    stores.add(store)
+    const cleanup = () => {
+      stores!.delete(store)
+      if (!stores!.size) {
+        dependencyAtomState.p.delete(atom)
+      }
+    }
     promise.then(cleanup, cleanup)
   }
 }
@@ -292,13 +303,20 @@ function getMountedOrPendingDependents(
   atom: AnyAtom,
   atomState: AtomState,
   mountedMap: MountedMap,
-): Set<AnyAtom> {
-  const dependents = new Set<AnyAtom>()
-  for (const a of mountedMap.get(atom)?.t || []) {
-    dependents.add(a)
+): Set<[Store, AnyAtom]> {
+  const dependents = new Set<[Store, AnyAtom]>()
+  const mounted = mountedMap.get(atom)
+  if (mounted) {
+    for (const [a, stores] of mounted.t) {
+      for (const s of stores) {
+        dependents.add([s, a])
+      }
+    }
   }
-  for (const atomWithPendingPromise of atomState.p) {
-    dependents.add(atomWithPendingPromise)
+  for (const [a, stores] of atomState.p) {
+    for (const s of stores) {
+      dependents.add([s, a])
+    }
   }
   return dependents
 }
@@ -415,7 +433,7 @@ const ensureAtomState: EnsureAtomState = (store, atom) => {
   }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
-    atomState = { d: new Map(), p: new Set(), n: 0 }
+    atomState = { d: new Map(), p: new Map(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
     atomOnInit?.(store, atom)
@@ -463,26 +481,33 @@ const flushCallbacks: FlushCallbacks = (store) => {
 
 const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const changedAtoms = buildingBlocks[3]
-  const ensureAtomState = buildingBlocks[11]
-  const readAtomState = buildingBlocks[14]
-  const mountDependencies = buildingBlocks[17]
   // Step 1: traverse the dependency graph to build the topologically sorted atom list
   // We don't bother to check for cycles, which simplifies the algorithm.
   // This is a topological sort via depth-first search, slightly modified from
   // what's described here for simplicity and performance reasons:
   // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-  const topSortedReversed: [atom: AnyAtom, atomState: AtomState][] = []
+  // Stack items: [store, atom] tuples to track the native store for each dependent
+  const topSortedReversed: [
+    store: Store,
+    atom: AnyAtom,
+    atomState: AtomState,
+  ][] = []
   const visiting = new WeakSet<AnyAtom>()
   const visited = new WeakSet<AnyAtom>()
   // Visit the root atom. This is the only atom in the dependency graph
   // without incoming edges, which is one reason we can simplify the algorithm
-  const stack: AnyAtom[] = Array.from(changedAtoms)
+  const stack: [store: Store, atom: AnyAtom][] = Array.from(
+    changedAtoms,
+    (a) => [store, a],
+  )
   while (stack.length) {
-    const a = stack[stack.length - 1]!
-    const aState = ensureAtomState(store, a)
+    const [s, a] = stack[stack.length - 1]!
+    const sBuildingBlocks = getInternalBuildingBlocks(s)
+    const sMountedMap = sBuildingBlocks[1]
+    const sEnsureAtomState = sBuildingBlocks[11]
+    const aState = sEnsureAtomState(s, a)
     if (visited.has(a)) {
       // All dependents have been processed, now process this atom
       stack.pop()
@@ -493,7 +518,7 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
       // performance, we will simply push onto the end, and then will iterate in
       // reverse order later.
       if (invalidatedAtoms.get(a) === aState.n) {
-        topSortedReversed.push([a, aState])
+        topSortedReversed.push([s, a, aState])
       } else if (
         import.meta.env?.MODE !== 'production' &&
         invalidatedAtoms.has(a)
@@ -506,17 +531,20 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
       continue
     }
     visiting.add(a)
-    // Push unvisited dependents onto the stack
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
-      if (!visiting.has(d)) {
-        stack.push(d)
+    // Push unvisited dependents onto the stack with their native store
+    for (const [depStore, depAtom] of getMountedOrPendingDependents(a, aState, sMountedMap)) {
+      if (!visiting.has(depAtom)) {
+        stack.push([depStore, depAtom])
       }
     }
   }
   // Step 2: use the topSortedReversed atom list to recompute all affected atoms
   // Track what's changed, so that we can short circuit when possible
   for (let i = topSortedReversed.length - 1; i >= 0; --i) {
-    const [a, aState] = topSortedReversed[i]!
+    const [s, a, aState] = topSortedReversed[i]!
+    const sBuildingBlocks = getInternalBuildingBlocks(s)
+    const sReadAtomState = sBuildingBlocks[14]
+    const sMountDependencies = sBuildingBlocks[17]
     let hasChangedDeps = false
     for (const dep of aState.d.keys()) {
       if (dep !== a && changedAtoms.has(dep)) {
@@ -525,8 +553,8 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
       }
     }
     if (hasChangedDeps) {
-      readAtomState(store, a)
-      mountDependencies(store, a)
+      sReadAtomState(s, a)
+      sMountDependencies(s, a)
     }
     invalidatedAtoms.delete(a)
   }
@@ -600,10 +628,18 @@ const readAtomState: ReadAtomState = (store, atom) => {
     } finally {
       atomState.d.set(a, aState.n)
       if (isPendingPromise(atomState.v)) {
-        addPendingPromiseToDependency(atom, atomState.v, aState)
+        addPendingPromiseToDependency(store, atom, atomState.v, aState)
       }
       if (mountedMap.has(atom)) {
-        mountedMap.get(a)?.t.add(atom)
+        const aMounted = mountedMap.get(a)
+        if (aMounted) {
+          let stores = aMounted.t.get(atom)
+          if (!stores) {
+            stores = new Set()
+            aMounted.t.set(atom, stores)
+          }
+          stores.add(store)
+        }
       }
       if (!isSync) {
         mountDependenciesIfAsync()
@@ -682,17 +718,20 @@ const readAtomState: ReadAtomState = (store, atom) => {
 
 const invalidateDependents: InvalidateDependents = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
-  const ensureAtomState = buildingBlocks[11]
-  const stack: AnyAtom[] = [atom]
+  const stack: [store: Store, atom: AnyAtom][] = [[store, atom]]
   while (stack.length) {
-    const a = stack.pop()!
-    const aState = ensureAtomState(store, a)
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
-      const dState = ensureAtomState(store, d)
-      invalidatedAtoms.set(d, dState.n)
-      stack.push(d)
+    const [s, a] = stack.pop()!
+    const sBuildingBlocks = getInternalBuildingBlocks(s)
+    const sMountedMap = sBuildingBlocks[1]
+    const sEnsureAtomState = sBuildingBlocks[11]
+    const aState = sEnsureAtomState(s, a)
+    for (const [depStore, depAtom] of getMountedOrPendingDependents(a, aState, sMountedMap)) {
+      const depBuildingBlocks = getInternalBuildingBlocks(depStore)
+      const depEnsureAtomState = depBuildingBlocks[11]
+      const dState = depEnsureAtomState(depStore, depAtom)
+      invalidatedAtoms.set(depAtom, dState.n)
+      stack.push([depStore, depAtom])
     }
   }
 }
@@ -768,7 +807,12 @@ const mountDependencies: MountDependencies = (store, atom) => {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)
         const aMounted = mountAtom(store, a)
-        aMounted.t.add(atom)
+        let stores = aMounted.t.get(atom)
+        if (!stores) {
+          stores = new Set()
+          aMounted.t.set(atom, stores)
+        }
+        stores.add(store)
         mounted.d.add(a)
         if (n !== aState.n) {
           changedAtoms.add(a)
@@ -781,7 +825,15 @@ const mountDependencies: MountDependencies = (store, atom) => {
       if (!atomState.d.has(a)) {
         mounted.d.delete(a)
         const aMounted = unmountAtom(store, a)
-        aMounted?.t.delete(atom)
+        if (aMounted) {
+          const stores = aMounted.t.get(atom)
+          if (stores) {
+            stores.delete(store)
+            if (!stores.size) {
+              aMounted.t.delete(atom)
+            }
+          }
+        }
       }
     }
   }
@@ -806,13 +858,18 @@ const mountAtom: MountAtom = (store, atom) => {
     // mount dependencies first
     for (const a of atomState.d.keys()) {
       const aMounted = mountAtom(store, a)
-      aMounted.t.add(atom)
+      let stores = aMounted.t.get(atom)
+      if (!stores) {
+        stores = new Set()
+        aMounted.t.set(atom, stores)
+      }
+      stores.add(store)
     }
     // mount self
     mounted = {
       l: new Set(),
       d: new Set(atomState.d.keys()),
-      t: new Set(),
+      t: new Map(),
     }
     mountedMap.set(atom, mounted)
     if (isActuallyWritableAtom(atom)) {
@@ -864,7 +921,7 @@ const unmountAtom: UnmountAtom = (store, atom) => {
     return mounted
   }
   let isDependent = false
-  for (const a of mounted.t) {
+  for (const [a] of mounted.t) {
     if (mountedMap.get(a)?.d.has(atom)) {
       isDependent = true
       break
@@ -880,7 +937,15 @@ const unmountAtom: UnmountAtom = (store, atom) => {
     // unmount dependencies
     for (const a of atomState.d.keys()) {
       const aMounted = unmountAtom(store, a)
-      aMounted?.t.delete(atom)
+      if (aMounted) {
+        const stores = aMounted.t.get(atom)
+        if (stores) {
+          stores.delete(store)
+          if (!stores.size) {
+            aMounted.t.delete(atom)
+          }
+        }
+      }
     }
     storeHooks.u?.(atom)
     return undefined
@@ -901,6 +966,7 @@ const setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   if (isPromiseLike(valueOrPromise)) {
     for (const a of atomState.d.keys()) {
       addPendingPromiseToDependency(
+        store,
         atom,
         valueOrPromise,
         ensureAtomState(store, a),
