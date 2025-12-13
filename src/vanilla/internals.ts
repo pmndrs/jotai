@@ -31,13 +31,14 @@ type AtomState<Value = AnyValue> = {
    * This may cause memory leaks, but it's for the capability to continue promises
    * TODO(daishi): revisit how to handle this
    */
-  readonly p: Map<AnyAtom, Set<Store>>
+  readonly p: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: EpochNumber
   /** Atom value */
   v?: Value
   /** Atom error */
   e?: AnyError
+  
 }
 
 /**
@@ -276,24 +277,13 @@ function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
 }
 
 function addPendingPromiseToDependency(
-  store: Store,
   atom: AnyAtom,
   promise: PromiseLike<AnyValue>,
   dependencyAtomState: AtomState,
 ): void {
-  let stores = dependencyAtomState.p.get(atom)
-  if (!stores) {
-    stores = new Set()
-    dependencyAtomState.p.set(atom, stores)
-  }
-  if (!stores.has(store)) {
-    stores.add(store)
-    const cleanup = () => {
-      stores!.delete(store)
-      if (!stores!.size) {
-        dependencyAtomState.p.delete(atom)
-      }
-    }
+  if (!dependencyAtomState.p.has(atom)) {
+    dependencyAtomState.p.add(atom)
+    const cleanup = () => dependencyAtomState.p.delete(atom)
     promise.then(cleanup, cleanup)
   }
 }
@@ -303,8 +293,8 @@ function getMountedOrPendingDependents(
   atom: AnyAtom,
   atomState: AtomState,
   mountedMap: MountedMap,
-): Set<[Store, AnyAtom]> {
-  const dependents = new Set<[Store, AnyAtom]>()
+): Set<[Store | undefined, AnyAtom]> {
+  const dependents = new Set<[Store | undefined, AnyAtom]>()
   const mounted = mountedMap.get(atom)
   if (mounted) {
     for (const [a, stores] of mounted.t) {
@@ -313,10 +303,8 @@ function getMountedOrPendingDependents(
       }
     }
   }
-  for (const [a, stores] of atomState.p) {
-    for (const s of stores) {
-      dependents.add([s, a])
-    }
+  for (const atomWithPendingPromise of atomState.p) {
+    dependents.add([undefined, atomWithPendingPromise])
   }
   return dependents
 }
@@ -433,7 +421,7 @@ const ensureAtomState: EnsureAtomState = (store, atom) => {
   }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
-    atomState = { d: new Map(), p: new Map(), n: 0 }
+    atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
     atomOnInit?.(store, atom)
@@ -532,7 +520,7 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack with their native store
-    for (const [depStore, depAtom] of getMountedOrPendingDependents(a, aState, sMountedMap)) {
+    for (const [depStore = store, depAtom] of getMountedOrPendingDependents(a, aState, sMountedMap)) {
       if (!visiting.has(depAtom)) {
         stack.push([depStore, depAtom])
       }
@@ -628,18 +616,11 @@ const readAtomState: ReadAtomState = (store, atom) => {
     } finally {
       atomState.d.set(a, aState.n)
       if (isPendingPromise(atomState.v)) {
-        addPendingPromiseToDependency(store, atom, atomState.v, aState)
+        addPendingPromiseToDependency(atom, atomState.v, aState)
       }
-      if (mountedMap.has(atom)) {
-        const aMounted = mountedMap.get(a)
-        if (aMounted) {
-          let stores = aMounted.t.get(atom)
-          if (!stores) {
-            stores = new Set()
-            aMounted.t.set(atom, stores)
-          }
-          stores.add(store)
-        }
+      const aMounted = mountedMap.get(a)
+      if (aMounted) {
+        addTransitiveDependency(store, atom, aMounted)
       }
       if (!isSync) {
         mountDependenciesIfAsync()
@@ -717,8 +698,6 @@ const readAtomState: ReadAtomState = (store, atom) => {
 }
 
 const invalidateDependents: InvalidateDependents = (store, atom) => {
-  const buildingBlocks = getInternalBuildingBlocks(store)
-  const invalidatedAtoms = buildingBlocks[2]
   const stack: [store: Store, atom: AnyAtom][] = [[store, atom]]
   while (stack.length) {
     const [s, a] = stack.pop()!
@@ -726,8 +705,9 @@ const invalidateDependents: InvalidateDependents = (store, atom) => {
     const sMountedMap = sBuildingBlocks[1]
     const sEnsureAtomState = sBuildingBlocks[11]
     const aState = sEnsureAtomState(s, a)
-    for (const [depStore, depAtom] of getMountedOrPendingDependents(a, aState, sMountedMap)) {
+    for (const [depStore = store, depAtom] of getMountedOrPendingDependents(a, aState, sMountedMap)) {
       const depBuildingBlocks = getInternalBuildingBlocks(depStore)
+      const invalidatedAtoms = depBuildingBlocks[2]
       const depEnsureAtomState = depBuildingBlocks[11]
       const dState = depEnsureAtomState(depStore, depAtom)
       invalidatedAtoms.set(depAtom, dState.n)
@@ -807,12 +787,7 @@ const mountDependencies: MountDependencies = (store, atom) => {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)
         const aMounted = mountAtom(store, a)
-        let stores = aMounted.t.get(atom)
-        if (!stores) {
-          stores = new Set()
-          aMounted.t.set(atom, stores)
-        }
-        stores.add(store)
+        addTransitiveDependency(store, atom, aMounted)
         mounted.d.add(a)
         if (n !== aState.n) {
           changedAtoms.add(a)
@@ -826,13 +801,7 @@ const mountDependencies: MountDependencies = (store, atom) => {
         mounted.d.delete(a)
         const aMounted = unmountAtom(store, a)
         if (aMounted) {
-          const stores = aMounted.t.get(atom)
-          if (stores) {
-            stores.delete(store)
-            if (!stores.size) {
-              aMounted.t.delete(atom)
-            }
-          }
+          removeTransitiveDependency(store, atom, aMounted)
         }
       }
     }
@@ -858,12 +827,7 @@ const mountAtom: MountAtom = (store, atom) => {
     // mount dependencies first
     for (const a of atomState.d.keys()) {
       const aMounted = mountAtom(store, a)
-      let stores = aMounted.t.get(atom)
-      if (!stores) {
-        stores = new Set()
-        aMounted.t.set(atom, stores)
-      }
-      stores.add(store)
+      addTransitiveDependency(store, atom, aMounted)
     }
     // mount self
     mounted = {
@@ -938,13 +902,7 @@ const unmountAtom: UnmountAtom = (store, atom) => {
     for (const a of atomState.d.keys()) {
       const aMounted = unmountAtom(store, a)
       if (aMounted) {
-        const stores = aMounted.t.get(atom)
-        if (stores) {
-          stores.delete(store)
-          if (!stores.size) {
-            aMounted.t.delete(atom)
-          }
-        }
+        removeTransitiveDependency(store, atom, aMounted)
       }
     }
     storeHooks.u?.(atom)
@@ -952,6 +910,34 @@ const unmountAtom: UnmountAtom = (store, atom) => {
   }
   return mounted
 }
+
+function addTransitiveDependency(
+  store: Store,
+  atom: AnyAtom,
+  aMounted: Mounted,
+): void {
+    let stores = aMounted.t.get(atom)
+    if (!stores) {
+      stores = new Set()
+      aMounted.t.set(atom, stores)
+    }
+    stores.add(store)
+}
+
+function removeTransitiveDependency(
+  store: Store,
+  atom: AnyAtom,
+  aMounted: Mounted,
+): void {
+    const stores = aMounted.t.get(atom)
+    if (stores) {
+      stores.delete(store)
+      if (stores.size === 0) {
+        aMounted.t.delete(atom)
+      }
+  }
+}
+
 
 // TODO(daishi): revisit this implementation
 const setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
@@ -966,7 +952,6 @@ const setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   if (isPromiseLike(valueOrPromise)) {
     for (const a of atomState.d.keys()) {
       addPendingPromiseToDependency(
-        store,
         atom,
         valueOrPromise,
         ensureAtomState(store, a),
