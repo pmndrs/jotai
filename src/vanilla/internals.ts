@@ -50,8 +50,8 @@ type AtomState<Value = AnyValue> = {
 type Mounted = {
   /** Set of listeners to notify when the atom value changes. */
   readonly l: Set<() => void>
-  /** Set of mounted atoms that the atom depends on. */
-  readonly d: Set<AnyAtom>
+  /** Map of mounted atoms that the atom depends on to their stores. */
+  readonly d: Map<AnyAtom, Set<Store>>
   /** Map of mounted atoms that depend on this atom to their stores. */
   readonly t: Map<AnyAtom, Set<Store>>
   /** Function to run when the atom is unmounted. */
@@ -784,11 +784,16 @@ const mountDependencies: MountDependencies = (store, atom) => {
   const mounted = mountedMap.get(atom)
   if (mounted && !isPendingPromise(atomState.v)) {
     for (const [a, n] of atomState.d) {
-      if (!mounted.d.has(a)) {
+      let stores = mounted.d.get(a)
+      if (!stores || !stores.has(store)) {
         const aState = ensureAtomState(store, a)
         const aMounted = mountAtom(store, a)
         addTransitiveDependency(store, atom, aMounted)
-        mounted.d.add(a)
+        if (!stores) {
+          stores = new Set()
+          mounted.d.set(a, stores)
+        }
+        stores.add(store)
         if (n !== aState.n) {
           changedAtoms.add(a)
           invalidateDependents(store, a)
@@ -796,9 +801,12 @@ const mountDependencies: MountDependencies = (store, atom) => {
         }
       }
     }
-    for (const a of mounted.d) {
+    for (const [a, stores] of mounted.d) {
       if (!atomState.d.has(a)) {
-        mounted.d.delete(a)
+        stores.delete(store)
+        if (stores.size === 0) {
+          mounted.d.delete(a)
+        }
         const aMounted = unmountAtom(store, a)
         if (aMounted) {
           removeTransitiveDependency(store, atom, aMounted)
@@ -830,9 +838,13 @@ const mountAtom: MountAtom = (store, atom) => {
       addTransitiveDependency(store, atom, aMounted)
     }
     // mount self
+    const dMap = new Map<AnyAtom, Set<Store>>()
+    for (const a of atomState.d.keys()) {
+      dMap.set(a, new Set([store]))
+    }
     mounted = {
       l: new Set(),
-      d: new Set(atomState.d.keys()),
+      d: dMap,
       t: new Map(),
     }
     mountedMap.set(atom, mounted)
@@ -937,7 +949,6 @@ function removeTransitiveDependency(
       }
   }
 }
-
 
 // TODO(daishi): revisit this implementation
 const setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
