@@ -38,7 +38,6 @@ type AtomState<Value = AnyValue> = {
   v?: Value
   /** Atom error */
   e?: AnyError
-  
 }
 
 /**
@@ -520,7 +519,11 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack with their native store
-    for (const [depStore = store, depAtom] of getMountedOrPendingDependents(a, aState, sMountedMap)) {
+    for (const [depStore = store, depAtom] of getMountedOrPendingDependents(
+      a,
+      aState,
+      sMountedMap,
+    )) {
       if (!visiting.has(depAtom)) {
         stack.push([depStore, depAtom])
       }
@@ -705,7 +708,11 @@ const invalidateDependents: InvalidateDependents = (store, atom) => {
     const sMountedMap = sBuildingBlocks[1]
     const sEnsureAtomState = sBuildingBlocks[11]
     const aState = sEnsureAtomState(s, a)
-    for (const [depStore = store, depAtom] of getMountedOrPendingDependents(a, aState, sMountedMap)) {
+    for (const [depStore = store, depAtom] of getMountedOrPendingDependents(
+      a,
+      aState,
+      sMountedMap,
+    )) {
       const depBuildingBlocks = getInternalBuildingBlocks(depStore)
       const invalidatedAtoms = depBuildingBlocks[2]
       const depEnsureAtomState = depBuildingBlocks[11]
@@ -928,12 +935,12 @@ function addTransitiveDependency(
   atom: AnyAtom,
   aMounted: Mounted,
 ): void {
-    let stores = aMounted.t.get(atom)
-    if (!stores) {
-      stores = new Set()
-      aMounted.t.set(atom, stores)
-    }
-    stores.add(store)
+  let stores = aMounted.t.get(atom)
+  if (!stores) {
+    stores = new Set()
+    aMounted.t.set(atom, stores)
+  }
+  stores.add(store)
 }
 
 function removeTransitiveDependency(
@@ -941,12 +948,12 @@ function removeTransitiveDependency(
   atom: AnyAtom,
   aMounted: Mounted,
 ): void {
-    const stores = aMounted.t.get(atom)
-    if (stores) {
-      stores.delete(store)
-      if (stores.size === 0) {
-        aMounted.t.delete(atom)
-      }
+  const stores = aMounted.t.get(atom)
+  if (stores) {
+    stores.delete(store)
+    if (stores.size === 0) {
+      aMounted.t.delete(atom)
+    }
   }
 }
 
