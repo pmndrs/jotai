@@ -141,7 +141,7 @@ type EnhanceBuildingBlocks = (
 type CreateGetter = <S extends Store, A extends AnyAtom>(
   store: S,
   atom: A,
-  isSync: boolean,
+  getIsSync: () => boolean,
 ) => Getter
 
 type Store = {
@@ -541,7 +541,7 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
 // Dev only
 const storeMutationSet = new WeakSet<Store>()
 
-const createGetter: CreateGetter = (store, atom, isSync) => {
+const createGetter: CreateGetter = (store, atom, getIsSync) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const ensureAtomState = buildingBlocks[11]
@@ -553,6 +553,7 @@ const createGetter: CreateGetter = (store, atom, isSync) => {
   const atomState = ensureAtomState(store, atom)
 
   return function getter(a) {
+    const isSync = getIsSync()
     if (a === (atom as AnyAtom)) {
       const aState = ensureAtomState(store, a)
       if (!isAtomStateInitialized(aState)) {
@@ -634,8 +635,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
       flushCallbacks(store)
     }
   }
-  let getter = createGetter(store, atom, true)
-  const get: Getter = (a) => getter(a)
+  const getter = createGetter(store, atom, () => isSync)
   let controller: AbortController | undefined
   let setSelf: ((...args: unknown[]) => unknown) | undefined
   const options = {
@@ -675,7 +675,7 @@ const readAtomState: ReadAtomState = (store, atom) => {
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(store)
     }
-    const valueOrPromise = atomRead(store, atom, get, options as never)
+    const valueOrPromise = atomRead(store, atom, getter, options as never)
     if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
       console.warn(
         'Detected store mutation during atom read. This is not supported.',
@@ -695,7 +695,6 @@ const readAtomState: ReadAtomState = (store, atom) => {
     return atomState
   } finally {
     isSync = false
-    getter = createGetter(store, atom, false)
     if (
       prevEpochNumber !== atomState.n &&
       invalidatedAtoms.get(atom) === prevEpochNumber
