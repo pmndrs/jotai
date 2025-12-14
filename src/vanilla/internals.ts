@@ -330,6 +330,8 @@ type StoreHooks = {
   readonly m?: StoreHookForAtoms
   /** Listener to notify when the atom is unmounted. */
   readonly u?: StoreHookForAtoms
+  /** Listener to notify when the atom graph is recomputed. */
+  readonly g?: StoreHook
   /** Listener to notify when callbacks are being flushed. */
   readonly f?: StoreHook
 }
@@ -379,6 +381,7 @@ function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
   ;(storeHooks as SH).c ||= createStoreHookForAtoms()
   ;(storeHooks as SH).m ||= createStoreHookForAtoms()
   ;(storeHooks as SH).u ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).g ||= createStoreHook()
   ;(storeHooks as SH).f ||= createStoreHook()
   return storeHooks as Required<StoreHooks>
 }
@@ -466,6 +469,7 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const changedAtoms = buildingBlocks[3]
+  const storeHooks = buildingBlocks[6]
   const ensureAtomState = buildingBlocks[11]
   const readAtomState = buildingBlocks[14]
   const mountDependencies = buildingBlocks[17]
@@ -530,6 +534,7 @@ const recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (store) => {
     }
     invalidatedAtoms.delete(a)
   }
+  storeHooks.g?.()
 }
 
 // Dev only
