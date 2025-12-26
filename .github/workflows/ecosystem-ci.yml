@@ -43,3 +43,4 @@ jobs:
             ```
             ${{ steps.run_command.outputs.x }}
             ```
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
