@@ -147,7 +147,7 @@ it('refresh sync atoms to default values', () => {
 it('refresh async atoms to default values', async () => {
   const count1Atom = atom(1)
   const count2Atom = atomWithDefault(async (get) => {
-    await new Promise<void>((reslove) => setTimeout(reslove, 100))
+    await new Promise<void>((resolve) => setTimeout(resolve, 100))
     return get(count1Atom) * 2
   })
 
