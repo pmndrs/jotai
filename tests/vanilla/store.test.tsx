@@ -598,7 +598,7 @@ it('Unmount an atom that is no longer dependent within a derived atom (#2658)', 
   expect(onUnmount).toHaveBeenCalledTimes(1)
 })
 
-it('should update derived atom even if dependences changed (#2697)', () => {
+it('should update derived atom even if dependencies changed (#2697)', () => {
   const primitiveAtom = atom<number | undefined>(undefined)
   const derivedAtom = atom((get) => get(primitiveAtom))
   const conditionalAtom = atom((get) => {

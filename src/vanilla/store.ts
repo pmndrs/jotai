@@ -3,17 +3,17 @@ import type { INTERNAL_Store } from './internals.ts'
 
 export type Store = INTERNAL_Store
 
-let overiddenCreateStore: typeof createStore | undefined
+let overriddenCreateStore: typeof createStore | undefined
 
 export function INTERNAL_overrideCreateStore(
   fn: (prev: typeof createStore | undefined) => typeof createStore,
 ): void {
-  overiddenCreateStore = fn(overiddenCreateStore)
+  overriddenCreateStore = fn(overriddenCreateStore)
 }
 
 export function createStore(): Store {
-  if (overiddenCreateStore) {
-    return overiddenCreateStore()
+  if (overriddenCreateStore) {
+    return overriddenCreateStore()
   }
   return INTERNAL_buildStore()
 }

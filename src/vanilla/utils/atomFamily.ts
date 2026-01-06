@@ -33,7 +33,7 @@ export interface AtomFamily<Param, AtomType> {
   remove(param: Param): void
   setShouldRemove(shouldRemove: ShouldRemove<Param> | null): void
   /**
-   * fires when a atom is created or removed
+   * fires when an atom is created or removed
    * This API is for advanced use cases, and can change without notice.
    */
   unstable_listen(callback: Callback<Param, AtomType>): Cleanup
