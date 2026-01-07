@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import type { PropsWithChildren } from 'react'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -104,7 +104,7 @@ it('useSetAtom with write without an argument', async () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('useSetAtom throws when called with a read-only atom', async () => {
+it('useSetAtom throws when called with a read-only atom', () => {
   const originalEnv = import.meta.env
   Object.defineProperty(import.meta, 'env', {
     value: { MODE: 'development' },
@@ -124,15 +124,8 @@ it('useSetAtom throws when called with a read-only atom', async () => {
 
   render(<TestComponent />)
 
-  await waitFor(() => {
-    if (!setAtomFn) throw new Error('setAtomFn not assigned yet')
-  })
-
-  expect(() => {
-    act(() => {
-      setAtomFn?.(1)
-    })
-  }).toThrowError('not writable atom')
+  expect(setAtomFn).toBeDefined()
+  expect(() => act(() => setAtomFn!(1))).toThrowError('not writable atom')
 
   Object.defineProperty(import.meta, 'env', {
     value: originalEnv,
