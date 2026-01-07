@@ -1,15 +1,19 @@
 import { StrictMode, Suspense } from 'react'
-import { act, render, screen } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atomWithRefresh } from 'jotai/vanilla/utils'
+import { sleep } from '../../test-utils'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+beforeEach(() => {
+  vi.useFakeTimers()
+})
 
-it('sync counter', async () => {
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+it('sync counter', () => {
   let counter = 0
   const countAtom = atomWithRefresh(() => ++counter)
 
@@ -29,22 +33,21 @@ it('sync counter', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1')
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 3')
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 
   expect(counter).toBe(3)
 })
 
 it('async counter', async () => {
-  let resolve = () => {}
   let counter = 0
   const countAtom = atomWithRefresh(async () => {
-    await new Promise<void>((r) => (resolve = r))
+    await sleep(100)
     return ++counter
   })
 
@@ -58,33 +61,34 @@ it('async counter', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  await screen.findByText('loading')
-  resolve()
-  await screen.findByText('count: 1')
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
-  resolve()
-  await screen.findByText('count: 2')
+  await act(() => fireEvent.click(screen.getByText('button')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  resolve()
-  await screen.findByText('count: 3')
+  await act(() => fireEvent.click(screen.getByText('button')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 
   expect(counter).toBe(3)
 })
 
-it('writable counter', async () => {
+it('writable counter', () => {
   let counter = 0
   const countAtom = atomWithRefresh(
     () => ++counter,
@@ -110,17 +114,17 @@ it('writable counter', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1')
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 3')
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('set9'))
-  await screen.findByText('count: 3')
+  fireEvent.click(screen.getByText('set9'))
+  expect(screen.getByText('count: 3')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 10')
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 10')).toBeInTheDocument()
 })

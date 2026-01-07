@@ -1,16 +1,18 @@
 import { useStore } from '../../react.ts'
-import type { WritableAtom } from '../../vanilla.ts'
+import { type WritableAtom } from '../../vanilla.ts'
 
 type Store = ReturnType<typeof useStore>
 type Options = Parameters<typeof useStore>[0] & {
   dangerouslyForceHydrate?: boolean
 }
-type AnyWritableAtom = WritableAtom<unknown, never[], unknown>
+type AnyWritableAtom = WritableAtom<any, any[], any>
 
 type InferAtomTuples<T> = {
-  [K in keyof T]: T[K] extends readonly [infer A, unknown]
-    ? A extends WritableAtom<unknown, infer Args, infer _Result>
-      ? readonly [A, Args[0]]
+  [K in keyof T]: T[K] extends readonly [infer A, ...infer Rest]
+    ? A extends WritableAtom<unknown, infer Args, unknown>
+      ? Rest extends Args
+        ? readonly [A, ...Rest]
+        : never
       : T[K]
     : never
 }
@@ -22,7 +24,7 @@ export type INTERNAL_InferAtomTuples<T> = InferAtomTuples<T>
 const hydratedMap: WeakMap<Store, WeakSet<AnyWritableAtom>> = new WeakMap()
 
 export function useHydrateAtoms<
-  T extends (readonly [AnyWritableAtom, unknown])[],
+  T extends (readonly [AnyWritableAtom, ...unknown[]])[],
 >(values: InferAtomTuples<T>, options?: Options): void
 
 export function useHydrateAtoms<T extends Map<AnyWritableAtom, unknown>>(
@@ -31,19 +33,19 @@ export function useHydrateAtoms<T extends Map<AnyWritableAtom, unknown>>(
 ): void
 
 export function useHydrateAtoms<
-  T extends Iterable<readonly [AnyWritableAtom, unknown]>,
+  T extends Iterable<readonly [AnyWritableAtom, ...unknown[]]>,
 >(values: InferAtomTuples<T>, options?: Options): void
 
 export function useHydrateAtoms<
-  T extends Iterable<readonly [AnyWritableAtom, unknown]>,
+  T extends Iterable<readonly [AnyWritableAtom, ...unknown[]]>,
 >(values: T, options?: Options) {
   const store = useStore(options)
 
   const hydratedSet = getHydratedSet(store)
-  for (const [atom, value] of values) {
+  for (const [atom, ...args] of values) {
     if (!hydratedSet.has(atom) || options?.dangerouslyForceHydrate) {
       hydratedSet.add(atom)
-      store.set(atom, value as never)
+      store.set(atom, ...args)
     }
   }
 }

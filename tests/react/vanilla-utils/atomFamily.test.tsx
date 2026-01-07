@@ -1,17 +1,21 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { act, render, screen, waitFor } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
-import { expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { SetStateAction, WritableAtom } from 'jotai/vanilla'
 import { atomFamily } from 'jotai/vanilla/utils'
+import { sleep } from '../../test-utils'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+beforeEach(() => {
+  vi.useFakeTimers()
+})
 
-it('new atomFamily impl', async () => {
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+it('new atomFamily impl', () => {
   const myFamily = atomFamily((param: string) => atom(param))
 
   const Displayer = ({ index }: { index: string }) => {
@@ -21,31 +25,33 @@ it('new atomFamily impl', async () => {
 
   render(
     <StrictMode>
-      <Displayer index={'a'} />
+      <Displayer index="a" />
     </StrictMode>,
   )
 
-  await screen.findByText('count: a')
+  expect(screen.getByText('count: a')).toBeInTheDocument()
 })
 
-it('primitive atomFamily returns same reference for same parameters', async () => {
+it('primitive atomFamily returns same reference for same parameters', () => {
   const myFamily = atomFamily((num: number) => atom({ num }))
+
   expect(myFamily(0)).toEqual(myFamily(0))
   expect(myFamily(0)).not.toEqual(myFamily(1))
   expect(myFamily(1)).not.toEqual(myFamily(0))
 })
 
-it('read-only derived atomFamily returns same reference for same parameters', async () => {
+it('read-only derived atomFamily returns same reference for same parameters', () => {
   const arrayAtom = atom([0])
   const myFamily = atomFamily((num: number) =>
     atom((get) => get(arrayAtom)[num] as number),
   )
+
   expect(myFamily(0)).toEqual(myFamily(0))
   expect(myFamily(0)).not.toEqual(myFamily(1))
   expect(myFamily(1)).not.toEqual(myFamily(0))
 })
 
-it('removed atom creates a new reference', async () => {
+it('removed atom creates a new reference', () => {
   const bigAtom = atom([0])
   const myFamily = atomFamily((num: number) =>
     atom((get) => get(bigAtom)[num] as number),
@@ -66,7 +72,7 @@ it('removed atom creates a new reference', async () => {
   expect(myFamily(0)).toEqual(newReference)
 })
 
-it('primitive atomFamily initialized with props', async () => {
+it('primitive atomFamily initialized with props', () => {
   const myFamily = atomFamily((param: number) => atom(param))
 
   const Displayer = ({ index }: { index: number }) => {
@@ -96,19 +102,19 @@ it('primitive atomFamily initialized with props', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1')
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 11')
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 11')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('increment'))
-  await screen.findByText('count: 2')
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 12')
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 12')).toBeInTheDocument()
 })
 
-it('derived atomFamily functionality as usual', async () => {
+it('derived atomFamily functionality as usual', () => {
   const arrayAtom = atom([0, 0, 0])
 
   const myFamily = atomFamily((param: number) =>
@@ -173,35 +179,27 @@ it('derived atomFamily functionality as usual', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    screen.getByText('index: 0, count: 0')
-    screen.getByText('index: 1, count: 0')
-    screen.getByText('index: 2, count: 0')
-  })
+  expect(screen.getByText('index: 0, count: 0')).toBeInTheDocument()
+  expect(screen.getByText('index: 1, count: 0')).toBeInTheDocument()
+  expect(screen.getByText('index: 2, count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('increment #1'))
-  await waitFor(() => {
-    screen.getByText('index: 0, count: 0')
-    screen.getByText('index: 1, count: 1')
-    screen.getByText('index: 2, count: 0')
-  })
+  fireEvent.click(screen.getByText('increment #1'))
+  expect(screen.getByText('index: 0, count: 0')).toBeInTheDocument()
+  expect(screen.getByText('index: 1, count: 1')).toBeInTheDocument()
+  expect(screen.getByText('index: 2, count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('increment #0'))
-  await waitFor(() => {
-    screen.getByText('index: 0, count: 1')
-    screen.getByText('index: 1, count: 1')
-    screen.getByText('index: 2, count: 0')
-  })
+  fireEvent.click(screen.getByText('increment #0'))
+  expect(screen.getByText('index: 0, count: 1')).toBeInTheDocument()
+  expect(screen.getByText('index: 1, count: 1')).toBeInTheDocument()
+  expect(screen.getByText('index: 2, count: 0')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('increment #2'))
-  await waitFor(() => {
-    screen.getByText('index: 0, count: 1')
-    screen.getByText('index: 1, count: 1')
-    screen.getByText('index: 2, count: 1')
-  })
+  fireEvent.click(screen.getByText('increment #2'))
+  expect(screen.getByText('index: 0, count: 1')).toBeInTheDocument()
+  expect(screen.getByText('index: 1, count: 1')).toBeInTheDocument()
+  expect(screen.getByText('index: 2, count: 1')).toBeInTheDocument()
 })
 
-it('custom equality function work', async () => {
+it('custom equality function work', () => {
   const bigAtom = atom([0])
 
   const badFamily = atomFamily((num: { index: number }) =>
@@ -223,10 +221,9 @@ it('custom equality function work', async () => {
 
 it('a derived atom from an async atomFamily (#351)', async () => {
   const countAtom = atom(1)
-  const resolve: (() => void)[] = []
   const getAsyncAtom = atomFamily((n: number) =>
     atom(async () => {
-      await new Promise<void>((r) => resolve.push(r))
+      await sleep(100)
       return n + 10
     }),
   )
@@ -243,32 +240,32 @@ it('a derived atom from an async atomFamily (#351)', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  await screen.findByText('loading')
-  resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('derived: 11')
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('derived: 11')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
-  resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('derived: 12')
+  await act(() => fireEvent.click(screen.getByText('button')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('derived: 12')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
-  resolve.splice(0).forEach((fn) => fn())
-  await screen.findByText('derived: 13')
+  await act(() => fireEvent.click(screen.getByText('button')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('derived: 13')).toBeInTheDocument()
 })
 
-it('setShouldRemove with custom equality function', async () => {
+it('setShouldRemove with custom equality function', () => {
   const myFamily = atomFamily(
     (num: { index: number }) => atom(num),
     (l, r) => l.index === r.index,

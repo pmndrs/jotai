@@ -1,12 +1,11 @@
 import { StrictMode } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { expect, it } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
 
-it('remove an item, then add another', async () => {
+it('remove an item, then add another', () => {
   type Item = {
     text: string
     checked: boolean
@@ -68,32 +67,26 @@ it('remove an item, then add another', async () => {
     </StrictMode>,
   )
 
-  await userEvent.click(screen.getByText('Add'))
-  await screen.findByText('item1 checked: no')
+  fireEvent.click(screen.getByText('Add'))
+  expect(screen.getByText('item1 checked: no')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Add'))
-  await waitFor(() => {
-    screen.getByText('item1 checked: no')
-    screen.getByText('item2 checked: no')
-  })
+  fireEvent.click(screen.getByText('Add'))
+  expect(screen.getByText('item1 checked: no')).toBeInTheDocument()
+  expect(screen.getByText('item2 checked: no')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Check item2'))
-  await waitFor(() => {
-    screen.getByText('item1 checked: no')
-    screen.getByText('item2 checked: yes')
-  })
+  fireEvent.click(screen.getByText('Check item2'))
+  expect(screen.getByText('item1 checked: no')).toBeInTheDocument()
+  expect(screen.getByText('item2 checked: yes')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Remove item1'))
-  await screen.findByText('item2 checked: yes')
+  fireEvent.click(screen.getByText('Remove item1'))
+  expect(screen.getByText('item2 checked: yes')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('Add'))
-  await waitFor(() => {
-    screen.getByText('item2 checked: yes')
-    screen.getByText('item3 checked: no')
-  })
+  fireEvent.click(screen.getByText('Add'))
+  expect(screen.getByText('item2 checked: yes')).toBeInTheDocument()
+  expect(screen.getByText('item3 checked: no')).toBeInTheDocument()
 })
 
-it('add an item with filtered list', async () => {
+it('add an item with filtered list', () => {
   type Item = {
     text: string
     checked: boolean
@@ -197,8 +190,8 @@ it('add an item with filtered list', async () => {
     </StrictMode>,
   )
 
-  await userEvent.click(screen.getByText('Checked'))
-  await userEvent.click(screen.getByText('Add'))
-  await userEvent.click(screen.getByText('All'))
-  await screen.findByText('item1 checked: no')
+  fireEvent.click(screen.getByText('Checked'))
+  fireEvent.click(screen.getByText('Add'))
+  fireEvent.click(screen.getByText('All'))
+  expect(screen.getByText('item1 checked: no')).toBeInTheDocument()
 })

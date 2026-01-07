@@ -1,9 +1,15 @@
 #!/usr/bin/env npx tsx
 
+/// <reference types="node" />
+
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { add, complete, cycle, save, suite } from 'benny'
 import { atom } from '../src/vanilla/atom.ts'
 import type { PrimitiveAtom } from '../src/vanilla/atom.ts'
 import { createStore } from '../src/vanilla/store.ts'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const cleanupFns = new Set<() => void>()
 const cleanup = () => {

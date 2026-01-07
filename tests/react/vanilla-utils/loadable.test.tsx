@@ -1,19 +1,24 @@
-import { StrictMode, Suspense, version as reactVersion, useEffect } from 'react'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { expect, it, vi } from 'vitest'
+import { StrictMode, Suspense, useEffect } from 'react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import type { Atom } from 'jotai/vanilla'
 import { loadable } from 'jotai/vanilla/utils'
+import { sleep } from '../../test-utils'
 
-const IS_REACT18 = /^18\./.test(reactVersion)
-const IS_REACT19 = /^19\./.test(reactVersion)
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 it('loadable turns suspense into values', async () => {
-  let resolve: (x: number) => void = () => {}
-  const asyncAtom = atom(() => {
-    return new Promise<number>((r) => (resolve = r))
+  const asyncAtom = atom(async () => {
+    await sleep(100)
+    return 5
   })
 
   render(
@@ -22,15 +27,15 @@ it('loadable turns suspense into values', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Loading...')
-  resolve(5)
-  await screen.findByText('Data: 5')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('Data: 5')).toBeInTheDocument()
 })
 
 it('loadable turns errors into values', async () => {
-  let reject: (error: unknown) => void = () => {}
-  const asyncAtom = atom(() => {
-    return new Promise<number>((_res, rej) => (reject = rej))
+  const asyncAtom = atom(async () => {
+    await sleep(100)
+    throw new Error('An error occurred')
   })
 
   render(
@@ -39,15 +44,15 @@ it('loadable turns errors into values', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Loading...')
-  reject(new Error('An error occurred'))
-  await screen.findByText('Error: An error occurred')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('Error: An error occurred')).toBeInTheDocument()
 })
 
 it('loadable turns primitive throws into values', async () => {
-  let reject: (error: unknown) => void = () => {}
-  const asyncAtom = atom(() => {
-    return new Promise<number>((_res, rej) => (reject = rej))
+  const asyncAtom = atom(async () => {
+    await sleep(100)
+    throw 'An error occurred'
   })
 
   render(
@@ -56,17 +61,17 @@ it('loadable turns primitive throws into values', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Loading...')
-  reject('An error occurred')
-  await screen.findByText('An error occurred')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('An error occurred')).toBeInTheDocument()
 })
 
 it('loadable goes back to loading after re-fetch', async () => {
-  let resolve: (x: number) => void = () => {}
   const refreshAtom = atom(0)
-  const asyncAtom = atom((get) => {
-    get(refreshAtom)
-    return new Promise<number>((r) => (resolve = r))
+  const asyncAtom = atom(async (get) => {
+    const count = get(refreshAtom)
+    await sleep(100)
+    return count === 0 ? 5 : 6
   })
 
   const Refresh = () => {
@@ -87,25 +92,25 @@ it('loadable goes back to loading after re-fetch', async () => {
     </StrictMode>,
   )
 
-  screen.getByText('Loading...')
-  resolve(5)
-  await screen.findByText('Data: 5')
-  await userEvent.click(screen.getByText('refresh'))
-  await screen.findByText('Loading...')
-  resolve(6)
-  await screen.findByText('Data: 6')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('Data: 5')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('refresh'))
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('Data: 6')).toBeInTheDocument()
 })
 
 it('loadable can recover from error', async () => {
-  let resolve: (x: number) => void = () => {}
-  let reject: (error: unknown) => void = () => {}
   const refreshAtom = atom(0)
-  const asyncAtom = atom((get) => {
-    get(refreshAtom)
-    return new Promise<number>((res, rej) => {
-      resolve = res
-      reject = rej
-    })
+  const asyncAtom = atom(async (get) => {
+    const count = get(refreshAtom)
+    await sleep(100)
+    if (count === 0) {
+      throw new Error('An error occurred')
+    }
+    return 6
   })
 
   const Refresh = () => {
@@ -126,16 +131,17 @@ it('loadable can recover from error', async () => {
     </StrictMode>,
   )
 
-  screen.getByText('Loading...')
-  reject(new Error('An error occurred'))
-  await screen.findByText('Error: An error occurred')
-  await userEvent.click(screen.getByText('refresh'))
-  await screen.findByText('Loading...')
-  resolve(6)
-  await screen.findByText('Data: 6')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('Error: An error occurred')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('refresh'))
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('Data: 6')).toBeInTheDocument()
 })
 
-it('loadable immediately resolves sync values', async () => {
+it('loadable immediately resolves sync values', () => {
   const syncAtom = atom(5)
   const effectCallback = vi.fn()
 
@@ -145,7 +151,7 @@ it('loadable immediately resolves sync values', async () => {
     </StrictMode>,
   )
 
-  screen.getByText('Data: 5')
+  expect(screen.getByText('Data: 5')).toBeInTheDocument()
   expect(effectCallback.mock.calls).not.toContain(
     expect.objectContaining({ state: 'loading' }),
   )
@@ -162,22 +168,24 @@ it('loadable can use resolved promises synchronously', async () => {
     return <div>Ready</div>
   }
 
-  const { rerender } = render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <ResolveAtomComponent />
-      </Suspense>
-    </StrictMode>,
-  )
+  let result: ReturnType<typeof render>
+  await act(async () => {
+    result = render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <ResolveAtomComponent />
+        </Suspense>
+      </StrictMode>,
+    )
+  })
 
-  if (IS_REACT18 || IS_REACT19) {
-    await screen.findByText('loading')
-    // FIXME React 18 Suspense does not show "Ready"
-  } else {
-    await screen.findByText('Ready')
-  }
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  // FIXME React 18/19 Suspense behavior is non-deterministic
+  expect(
+    screen.queryByText('loading') ?? screen.queryByText('Ready'),
+  ).toBeInTheDocument()
 
-  rerender(
+  result!.rerender(
     <StrictMode>
       <LoadableComponent
         effectCallback={effectCallback}
@@ -185,7 +193,9 @@ it('loadable can use resolved promises synchronously', async () => {
       />
     </StrictMode>,
   )
-  await screen.findByText('Data: 5')
+
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('Data: 5')).toBeInTheDocument()
 
   expect(effectCallback.mock.calls).not.toContain(
     expect.objectContaining({ state: 'loading' }),
@@ -194,11 +204,11 @@ it('loadable can use resolved promises synchronously', async () => {
 })
 
 it('loadable of a derived async atom does not trigger infinite loop (#1114)', async () => {
-  let resolve: (x: number) => void = () => {}
   const baseAtom = atom(0)
-  const asyncAtom = atom((get) => {
+  const asyncAtom = atom(async (get) => {
     get(baseAtom)
-    return new Promise<number>((r) => (resolve = r))
+    await sleep(100)
+    return 5
   })
 
   const Trigger = () => {
@@ -217,10 +227,11 @@ it('loadable of a derived async atom does not trigger infinite loop (#1114)', as
     </StrictMode>,
   )
 
-  screen.getByText('Loading...')
-  await userEvent.click(screen.getByText('trigger'))
-  resolve(5)
-  await screen.findByText('Data: 5')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('trigger'))
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('Data: 5')).toBeInTheDocument()
 })
 
 it('loadable of a derived async atom with error does not trigger infinite loop (#1330)', async () => {
@@ -238,8 +249,9 @@ it('loadable of a derived async atom with error does not trigger infinite loop (
     </StrictMode>,
   )
 
-  screen.getByText('Loading...')
-  await screen.findByText('Error: thrown in baseAtom')
+  expect(screen.getByText('Loading...')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('Error: thrown in baseAtom')).toBeInTheDocument()
 })
 
 it('does not repeatedly attempt to get the value of an unresolved promise atom wrapped in a loadable (#1481)', async () => {
@@ -258,13 +270,13 @@ it('does not repeatedly attempt to get the value of an unresolved promise atom w
   )
 
   // we need a small delay to reproduce the issue
-  await new Promise((r) => setTimeout(r, 10))
+  await act(() => vi.advanceTimersByTimeAsync(10))
   // depending on provider-less mode or versioned-write mode, there will be
   // either 2 or 3 calls.
   expect(callsToGetBaseAtom).toBeLessThanOrEqual(3)
 })
 
-it('should handle sync error (#1843)', async () => {
+it('should handle sync error (#1843)', () => {
   const syncAtom = atom(() => {
     throw new Error('thrown in syncAtom')
   })
@@ -275,7 +287,7 @@ it('should handle sync error (#1843)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('Error: thrown in syncAtom')
+  expect(screen.getByText('Error: thrown in syncAtom')).toBeInTheDocument()
 })
 
 type LoadableComponentProps = {

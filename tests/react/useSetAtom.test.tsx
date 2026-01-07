@@ -1,24 +1,10 @@
-import { StrictMode, useEffect, useRef } from 'react'
+import { StrictMode } from 'react'
 import type { PropsWithChildren } from 'react'
-import {
-  act,
-  render,
-  renderHook,
-  screen,
-  waitFor,
-} from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
-import { type Atom, type WritableAtom, atom } from 'jotai/vanilla'
-
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
-  })
-  return commitCountRef.current
-}
+import { atom } from 'jotai/vanilla'
+import { useCommitCount } from '../test-utils'
 
 it('useSetAtom does not trigger rerender in component', async () => {
   const countAtom = atom(0)
@@ -61,25 +47,20 @@ it('useSetAtom does not trigger rerender in component', async () => {
     </>,
   )
 
-  await waitFor(() => {
-    screen.getByText('count: 0, commits: 1')
-    screen.getByText('updater commits: 1')
-  })
-  await userEvent.click(screen.getByText('increment'))
-  await waitFor(() => {
-    screen.getByText('count: 1, commits: 2')
-    screen.getByText('updater commits: 1')
-  })
-  await userEvent.click(screen.getByText('increment'))
-  await waitFor(() => {
-    screen.getByText('count: 2, commits: 3')
-    screen.getByText('updater commits: 1')
-  })
-  await userEvent.click(screen.getByText('increment'))
-  await waitFor(() => {
-    screen.getByText('count: 3, commits: 4')
-    screen.getByText('updater commits: 1')
-  })
+  expect(screen.getByText('count: 0, commits: 1')).toBeInTheDocument()
+  expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 1, commits: 2')).toBeInTheDocument()
+  expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 2, commits: 3')).toBeInTheDocument()
+  expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 3, commits: 4')).toBeInTheDocument()
+  expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
 })
 
 it('useSetAtom with write without an argument', async () => {
@@ -117,13 +98,10 @@ it('useSetAtom with write without an argument', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    screen.getByText('count: 0')
-  })
-  await userEvent.click(screen.getByText('increment'))
-  await waitFor(() => {
-    screen.getByText('count: 1')
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 it('useSetAtom throws when called with a read-only atom', async () => {
@@ -139,7 +117,7 @@ it('useSetAtom throws when called with a read-only atom', async () => {
   let setAtomFn: ((v: number) => void) | undefined
 
   function TestComponent() {
-    // eslint-disable-next-line react-hooks/react-compiler
+    // eslint-disable-next-line react-hooks/globals
     setAtomFn = useSetAtom(readOnlyAtom as any)
     return null
   }

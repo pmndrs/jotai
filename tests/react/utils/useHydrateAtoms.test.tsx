@@ -1,20 +1,13 @@
-import { StrictMode, useEffect, useRef } from 'react'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { StrictMode } from 'react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue } from 'jotai/react'
 import { useHydrateAtoms } from 'jotai/react/utils'
+import type { Atom, PrimitiveAtom, WritableAtom } from 'jotai/vanilla'
 import { atom } from 'jotai/vanilla'
+import { useCommitCount } from '../../test-utils'
 
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
-  })
-  return commitCountRef.current
-}
-
-it('useHydrateAtoms should only hydrate on first render', async () => {
+it('useHydrateAtoms should only hydrate on first render', () => {
   const countAtom = atom(0)
   const statusAtom = atom('fulfilled')
 
@@ -25,6 +18,7 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
     initialCount: number
     initialStatus: string
   }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([
       [countAtom, initialCount],
       [statusAtom, initialStatus],
@@ -55,23 +49,25 @@ it('useHydrateAtoms should only hydrate on first render', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('status: rejected')
-  await userEvent.click(screen.getByText('dispatch'))
-  await userEvent.click(screen.getByText('update'))
-  await screen.findByText('count: 43')
-  await screen.findByText('status: fulfilled')
+  expect(screen.getByText('count: 42')).toBeInTheDocument()
+  expect(screen.getByText('status: rejected')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  fireEvent.click(screen.getByText('update'))
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
+  expect(screen.getByText('status: fulfilled')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialStatus="rejected" />
     </StrictMode>,
   )
-  await screen.findByText('count: 43')
-  await screen.findByText('status: fulfilled')
+
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
+  expect(screen.getByText('status: fulfilled')).toBeInTheDocument()
 })
 
-it('useHydrateAtoms should only hydrate on first render using a Map', async () => {
+it('useHydrateAtoms should only hydrate on first render using a Map', () => {
   const countAtom = atom(0)
   const activeAtom = atom(true)
 
@@ -109,24 +105,27 @@ it('useHydrateAtoms should only hydrate on first render using a Map', async () =
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('is active: no')
-  await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 43')
+  expect(screen.getByText('count: 42')).toBeInTheDocument()
+  expect(screen.getByText('is active: no')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialActive={true} />
     </StrictMode>,
   )
-  await screen.findByText('count: 43')
-  await screen.findByText('is active: no')
+
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
+  expect(screen.getByText('is active: no')).toBeInTheDocument()
 })
 
-it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
+it('useHydrateAtoms should not trigger unnecessary re-renders', () => {
   const countAtom = atom(0)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
     const commits = useCommitCount()
@@ -145,18 +144,20 @@ it('useHydrateAtoms should not trigger unnecessary re-renders', async () => {
     </>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('commits: 1')
-  await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 43')
-  await screen.findByText('commits: 2')
+  expect(screen.getByText('count: 42')).toBeInTheDocument()
+  expect(screen.getByText('commits: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
+  expect(screen.getByText('commits: 2')).toBeInTheDocument()
 })
 
-it('useHydrateAtoms should work with derived atoms', async () => {
+it('useHydrateAtoms should work with derived atoms', () => {
   const countAtom = atom(0)
   const doubleAtom = atom((get) => get(countAtom) * 2)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
     const [doubleCount] = useAtom(doubleAtom)
@@ -175,17 +176,19 @@ it('useHydrateAtoms should work with derived atoms', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('doubleCount: 84')
-  await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 43')
-  await screen.findByText('doubleCount: 86')
+  expect(screen.getByText('count: 42')).toBeInTheDocument()
+  expect(screen.getByText('doubleCount: 84')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
+  expect(screen.getByText('doubleCount: 86')).toBeInTheDocument()
 })
 
-it('useHydrateAtoms can only restore an atom once', async () => {
+it('useHydrateAtoms can only restore an atom once', () => {
   const countAtom = atom(0)
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -197,6 +200,7 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     )
   }
   const Counter2 = ({ count }: { count: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, count]])
     const [countValue, setCount] = useAtom(countAtom)
 
@@ -214,9 +218,10 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
-  await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 43')
+  expect(screen.getByText('count: 42')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
@@ -224,17 +229,19 @@ it('useHydrateAtoms can only restore an atom once', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 43')
-  await userEvent.click(screen.getByText('dispatch'))
-  await screen.findByText('count: 44')
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  expect(screen.getByText('count: 44')).toBeInTheDocument()
 })
 
-it('useHydrateAtoms should respect onMount', async () => {
+it('useHydrateAtoms should respect onMount', () => {
   const countAtom = atom(0)
   const onMountFn = vi.fn(() => {})
   countAtom.onMount = onMountFn
 
   const Counter = ({ initialCount }: { initialCount: number }) => {
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
     useHydrateAtoms([[countAtom, initialCount]])
     const [countValue] = useAtom(countAtom)
 
@@ -247,11 +254,11 @@ it('useHydrateAtoms should respect onMount', async () => {
     </>,
   )
 
-  await screen.findByText('count: 42')
+  expect(screen.getByText('count: 42')).toBeInTheDocument()
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
-it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', async () => {
+it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', () => {
   const countAtom = atom(0)
   const statusAtom = atom('fulfilled')
 
@@ -265,6 +272,7 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
     dangerouslyForceHydrate?: boolean
   }) => {
     useHydrateAtoms(
+      // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
       [
         [countAtom, initialCount],
         [statusAtom, initialStatus],
@@ -300,20 +308,21 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
     </StrictMode>,
   )
 
-  await screen.findByText('count: 42')
-  await screen.findByText('status: rejected')
-  await userEvent.click(screen.getByText('dispatch'))
-  await userEvent.click(screen.getByText('update'))
-  await screen.findByText('count: 43')
-  await screen.findByText('status: fulfilled')
+  expect(screen.getByText('count: 42')).toBeInTheDocument()
+  expect(screen.getByText('status: rejected')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('dispatch'))
+  fireEvent.click(screen.getByText('update'))
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
+  expect(screen.getByText('status: fulfilled')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
       <Counter initialCount={65} initialStatus="rejected" />
     </StrictMode>,
   )
-  await screen.findByText('count: 43')
-  await screen.findByText('status: fulfilled')
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
+  expect(screen.getByText('status: fulfilled')).toBeInTheDocument()
 
   rerender(
     <StrictMode>
@@ -324,6 +333,74 @@ it('passing dangerouslyForceHydrate to useHydrateAtoms will re-hydrated atoms', 
       />
     </StrictMode>,
   )
-  await screen.findByText('count: 11')
-  await screen.findByText('status: rejected')
+
+  expect(screen.getByText('count: 11')).toBeInTheDocument()
+  expect(screen.getByText('status: rejected')).toBeInTheDocument()
+})
+
+// types-only tests
+// eslint-disable-next-line vitest/expect-expect
+it('types: useHydrateAtoms should enforce tuple/value/args types', () => {
+  const numberAtom = {} as PrimitiveAtom<number>
+  const booleanAtom = {} as PrimitiveAtom<boolean>
+  const stringUnionAtom = {} as PrimitiveAtom<'pending' | 'fulfilled'>
+  const readOnlyAtom = {} as Atom<number>
+  const writeOnlySingleNumberAtom = {} as WritableAtom<number, [number], void>
+  const writeOnlyDoubleNumberAtom = {} as WritableAtom<
+    number,
+    [number, number],
+    void
+  >
+
+  // positive cases (should type-check)
+  /* eslint-disable @typescript-eslint/no-unused-expressions */
+  ;() =>
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms([
+      [numberAtom, 1],
+      [booleanAtom, true],
+      [stringUnionAtom, 'fulfilled'],
+    ] as const)
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 2]])
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2]])
+  ;() =>
+    // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+    useHydrateAtoms(
+      new Map<
+        typeof numberAtom | typeof stringUnionAtom,
+        number | 'pending' | 'fulfilled'
+      >([
+        [numberAtom, 123],
+        [stringUnionAtom, 'pending'],
+      ]),
+    )
+  type AnyWritableAtom = WritableAtom<unknown, unknown[], unknown>
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([] as (readonly [AnyWritableAtom, unknown])[])
+
+  // negative cases (should fail type-check)
+  // @ts-expect-error wrong value type for primitive atom [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[numberAtom, 'oops']])
+  // @ts-expect-error wrong value type for boolean atom [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[booleanAtom, 0]])
+  // @ts-expect-error read-only atom is not writable [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[readOnlyAtom, 1]])
+  // @ts-expect-error wrong arg type for writable derived atom [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlySingleNumberAtom, 'x']])
+  // @ts-expect-error missing one arg for writable derived with two args [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1]])
+  // @ts-expect-error too many args for writable derived with two args [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms([[writeOnlyDoubleNumberAtom, 1, 2, 3]])
+  // @ts-expect-error map with read-only atom key [SKIP-TS-4.2.3] [SKIP-TS-4.1.5] [SKIP-TS-4.0.5] [SKIP-TS-3.9.7]
+  // [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
+  ;() => useHydrateAtoms(new Map([[readOnlyAtom, 1]]))
+  /* eslint-enable @typescript-eslint/no-unused-expressions */
 })

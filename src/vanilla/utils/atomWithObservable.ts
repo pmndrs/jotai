@@ -1,6 +1,9 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom, Getter, WritableAtom } from '../../vanilla.ts'
 
+const isPromiseLike = (x: unknown): x is PromiseLike<unknown> =>
+  typeof (x as any)?.then === 'function'
+
 type Timeout = ReturnType<typeof setTimeout>
 type AnyError = unknown
 
@@ -14,9 +17,7 @@ type Observer<T> = {
   complete: () => void
 }
 
-type ObservableLike<T> = {
-  [Symbol.observable]?: () => ObservableLike<T> | undefined
-} & (
+type ObservableLike<T> =
   | {
       subscribe(observer: Observer<T>): Subscription
     }
@@ -28,7 +29,6 @@ type ObservableLike<T> = {
       // Overload function to make typing happy
       subscribe(next: (value: T) => void): Subscription
     }
-)
 
 type SubjectLike<T> = ObservableLike<T> & Observer<T>
 
@@ -76,7 +76,9 @@ export function atomWithObservable<Data>(
 
   const observableResultAtom = atom((get) => {
     let observable = getObservable(get)
-    const itself = observable[Symbol.observable]?.()
+    const itself = (
+      observable as Partial<Record<symbol, () => typeof observable>>
+    )[Symbol.observable]?.()
     if (itself) {
       observable = itself
     }
@@ -165,7 +167,7 @@ export function atomWithObservable<Data>(
     (get) => {
       const [resultAtom] = get(observableResultAtom)
       const result = get(resultAtom)
-      if (result instanceof Promise) {
+      if (isPromiseLike(result)) {
         return result.then(returnResultData)
       }
       return returnResultData(result)
