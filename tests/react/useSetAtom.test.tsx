@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import type { PropsWithChildren } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { expect, it, onTestFinished, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
 import { useCommitCount } from '../test-utils'
@@ -105,9 +105,10 @@ it('useSetAtom with write without an argument', async () => {
 })
 
 it('useSetAtom throws when called with a read-only atom', () => {
-  vi.stubEnv('MODE', 'development')
-  onTestFinished(() => {
-    vi.unstubAllEnvs()
+  const originalEnv = import.meta.env
+  Object.defineProperty(import.meta, 'env', {
+    value: { MODE: 'development' },
+    writable: true,
   })
 
   const countAtom = atom(0)
@@ -125,4 +126,9 @@ it('useSetAtom throws when called with a read-only atom', () => {
 
   expect(setAtomFn).toBeDefined()
   expect(() => act(() => setAtomFn!(1))).toThrowError('not writable atom')
+
+  Object.defineProperty(import.meta, 'env', {
+    value: originalEnv,
+    writable: true,
+  })
 })
