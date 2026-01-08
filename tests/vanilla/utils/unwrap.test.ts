@@ -184,7 +184,7 @@ describe('unwrap', () => {
   })
 
   // https://github.com/pmndrs/jotai/discussions/3208#discussioncomment-15431859
-  it.fails('[DEV-ONLY] should not call store.set during atom read', async () => {
+  it('[DEV-ONLY] should not call store.set during atom read', async () => {
     const store = createStore()
     const example = atom('Hello')
     store.get(example)

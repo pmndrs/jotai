@@ -47,22 +47,23 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
         PromiseLike<unknown>,
         Awaited<Value>
       >()
-      const refreshAtom = atom([() => {}, 0] as [() => void, number])
-      refreshAtom.INTERNAL_onInit = (store) => {
-        store.set(refreshAtom, ([, c]) => [
-          () => store.set(refreshAtom, ([f, c]) => [f, c + 1]),
-          c,
+      const refreshAtom = atom(0)
+      const triggerRefreshAtom = atom([] as [triggerRefresh?: () => void])
+      triggerRefreshAtom.INTERNAL_onInit = (store) => {
+        store.set(triggerRefreshAtom, [
+          () => store.set(refreshAtom, (c) => c + 1),
         ])
       }
 
       if (import.meta.env?.MODE !== 'production') {
         refreshAtom.debugPrivate = true
+        triggerRefreshAtom.debugPrivate = true
       }
 
       const promiseAndValueAtom: Atom<PromiseAndValue> & {
         init?: undefined
       } = atom((get) => {
-        const [triggerRefresh] = get(refreshAtom)
+        get(refreshAtom)
         let prev: PromiseAndValue | undefined
         try {
           prev = get(promiseAndValueAtom) as PromiseAndValue | undefined
@@ -77,11 +78,13 @@ export function unwrap<Value, Args extends unknown[], Result, PendingValue>(
           promise.then(
             (v) => {
               promiseResultCache.set(promise, v as Awaited<Value>)
-              triggerRefresh()
+              const [triggerRefresh] = get(triggerRefreshAtom)
+              triggerRefresh!()
             },
             (e) => {
               promiseErrorCache.set(promise, e)
-              triggerRefresh()
+              const [triggerRefresh] = get(triggerRefreshAtom)
+              triggerRefresh!()
             },
           )
         }
