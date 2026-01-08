@@ -104,7 +104,9 @@ it('useSetAtom with write without an argument', async () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('useSetAtom throws when called with a read-only atom', () => {
+it.skipIf(import.meta.env?.MODE === 'production')(
+  'useSetAtom throws when called with a read-only atom',
+  () => {
   const originalEnv = import.meta.env
   Object.defineProperty(import.meta, 'env', {
     value: { MODE: 'development' },
@@ -131,4 +133,5 @@ it('useSetAtom throws when called with a read-only atom', () => {
     value: originalEnv,
     writable: true,
   })
-})
+},
+)
