@@ -104,23 +104,26 @@ it('useSetAtom with write without an argument', async () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it.skipIf(import.meta.env?.MODE === 'production')(
-  'useSetAtom throws when called with a read-only atom',
-  () => {
-    const countAtom = atom(0)
-    const readOnlyAtom = atom((get) => get(countAtom))
+it('useSetAtom throws when called with a read-only atom', () => {
+  const countAtom = atom(0)
+  const readOnlyAtom = atom((get) => get(countAtom))
 
-    let setAtomFn: ((v: number) => void) | undefined
+  let setAtomFn: ((v: number) => void) | undefined
 
-    function TestComponent() {
-      // eslint-disable-next-line react-hooks/globals
-      setAtomFn = useSetAtom(readOnlyAtom as any)
-      return null
-    }
+  function TestComponent() {
+    // eslint-disable-next-line react-hooks/globals
+    setAtomFn = useSetAtom(readOnlyAtom as any)
+    return null
+  }
 
-    render(<TestComponent />)
+  render(<TestComponent />)
 
-    expect(setAtomFn).toBeDefined()
+  expect(setAtomFn).toBeDefined()
+  if (import.meta.env?.MODE === 'production') {
+    // eslint-disable-next-line vitest/no-conditional-expect
+    expect(() => act(() => setAtomFn!(1))).toThrow()
+  } else {
+    // eslint-disable-next-line vitest/no-conditional-expect
     expect(() => act(() => setAtomFn!(1))).toThrowError('not writable atom')
-  },
-)
+  }
+})
