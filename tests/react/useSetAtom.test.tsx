@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import type { PropsWithChildren } from 'react'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
@@ -119,5 +119,5 @@ it('useSetAtom throws when called with a read-only atom', () => {
   render(<TestComponent />)
 
   expect(setAtomFn).toBeDefined()
-  expect(() => act(() => setAtomFn!(1))).toThrow()
+  expect(() => setAtomFn!(1)).toThrow()
 })
