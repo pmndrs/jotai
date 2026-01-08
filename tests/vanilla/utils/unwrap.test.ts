@@ -3,13 +3,18 @@ import { atom, createStore } from 'jotai/vanilla'
 import { unwrap } from 'jotai/vanilla/utils'
 import { sleep } from '../../test-utils'
 
+let savedConsoleWarn: any
+
 describe('unwrap', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    savedConsoleWarn = console.warn
+    console.warn = vi.fn()
   })
 
   afterEach(() => {
     vi.useRealTimers()
+    console.warn = savedConsoleWarn
   })
 
   it('should unwrap a promise with no fallback function', async () => {
@@ -176,5 +181,32 @@ describe('unwrap', () => {
 
     await vi.advanceTimersByTimeAsync(0)
     expect(results).toEqual(['effect undefined', 'effect value'])
+  })
+
+  // https://github.com/pmndrs/jotai/discussions/3208#discussioncomment-15431859
+  it.fails('[DEV-ONLY] should not call store.set during atom read', async () => {
+    const store = createStore()
+    const asyncAtom = atom(async () => {
+      await sleep(100)
+      return 'value'
+    })
+    const syncAtom = unwrap(asyncAtom)
+
+    // Clear any previous warnings
+    vi.clearAllMocks()
+
+    // First get triggers INTERNAL_onInit which calls store.set
+    store.get(syncAtom)
+
+    // The unwrap implementation currently violates the rule by calling
+    // store.set in two places:
+    // 1. In INTERNAL_onInit callback (lines 51-56 of unwrap.ts)
+    // 2. In promise.then callbacks that call triggerRefresh() (lines 77-86)
+    expect(console.warn).toHaveBeenCalledWith(
+      'Detected store mutation during atom read. This is not supported.',
+    )
+
+    await vi.advanceTimersByTimeAsync(100)
+    expect(store.get(syncAtom)).toBe('value')
   })
 })
