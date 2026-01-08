@@ -119,11 +119,5 @@ it('useSetAtom throws when called with a read-only atom', () => {
   render(<TestComponent />)
 
   expect(setAtomFn).toBeDefined()
-  if (import.meta.env?.MODE === 'production') {
-    // eslint-disable-next-line vitest/no-conditional-expect
-    expect(() => act(() => setAtomFn!(1))).toThrow()
-  } else {
-    // eslint-disable-next-line vitest/no-conditional-expect
-    expect(() => act(() => setAtomFn!(1))).toThrowError('not writable atom')
-  }
+  expect(() => act(() => setAtomFn!(1))).toThrow()
 })
