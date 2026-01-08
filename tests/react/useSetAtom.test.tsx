@@ -107,31 +107,31 @@ it('useSetAtom with write without an argument', async () => {
 it.skipIf(import.meta.env?.MODE === 'production')(
   'useSetAtom throws when called with a read-only atom',
   () => {
-  const originalEnv = import.meta.env
-  Object.defineProperty(import.meta, 'env', {
-    value: { MODE: 'development' },
-    writable: true,
-  })
+    const originalEnv = import.meta.env
+    Object.defineProperty(import.meta, 'env', {
+      value: { MODE: 'development' },
+      writable: true,
+    })
 
-  const countAtom = atom(0)
-  const readOnlyAtom = atom((get) => get(countAtom))
+    const countAtom = atom(0)
+    const readOnlyAtom = atom((get) => get(countAtom))
 
-  let setAtomFn: ((v: number) => void) | undefined
+    let setAtomFn: ((v: number) => void) | undefined
 
-  function TestComponent() {
-    // eslint-disable-next-line react-hooks/globals
-    setAtomFn = useSetAtom(readOnlyAtom as any)
-    return null
-  }
+    function TestComponent() {
+      // eslint-disable-next-line react-hooks/globals
+      setAtomFn = useSetAtom(readOnlyAtom as any)
+      return null
+    }
 
-  render(<TestComponent />)
+    render(<TestComponent />)
 
-  expect(setAtomFn).toBeDefined()
-  expect(() => act(() => setAtomFn!(1))).toThrowError('not writable atom')
+    expect(setAtomFn).toBeDefined()
+    expect(() => act(() => setAtomFn!(1))).toThrowError('not writable atom')
 
-  Object.defineProperty(import.meta, 'env', {
-    value: originalEnv,
-    writable: true,
-  })
-},
+    Object.defineProperty(import.meta, 'env', {
+      value: originalEnv,
+      writable: true,
+    })
+  },
 )
