@@ -112,7 +112,7 @@ it('useSetAtom throws when called with a read-only atom', () => {
     const setAtom = useSetAtom(readOnlyAtom as any)
 
     useEffect(() => {
-      expect(() => setAtom(1)).toThrow()
+      expect(() => setAtom(1)).toThrow('not writable atom')
     }, [setAtom])
 
     return null
