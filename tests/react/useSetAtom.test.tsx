@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import type { PropsWithChildren } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
@@ -108,16 +108,15 @@ it('useSetAtom throws when called with a read-only atom', () => {
   const countAtom = atom(0)
   const readOnlyAtom = atom((get) => get(countAtom))
 
-  let setAtomFn: ((v: number) => void) | undefined
-
   function TestComponent() {
-    // eslint-disable-next-line react-hooks/globals
-    setAtomFn = useSetAtom(readOnlyAtom as any)
+    const setAtom = useSetAtom(readOnlyAtom as any)
+
+    useEffect(() => {
+      expect(() => setAtom(1)).toThrow()
+    }, [setAtom])
+
     return null
   }
 
   render(<TestComponent />)
-
-  expect(setAtomFn).toBeDefined()
-  expect(() => setAtomFn!(1)).toThrow()
 })
