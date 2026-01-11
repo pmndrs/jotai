@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import type { PropsWithChildren } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
@@ -102,4 +102,22 @@ it('useSetAtom with write without an argument', async () => {
 
   fireEvent.click(screen.getByText('increment'))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
+})
+
+it('[DEV-ONLY] useSetAtom throws when called with a read-only atom', () => {
+  expect.assertions(1)
+  const countAtom = atom(0)
+  const readOnlyAtom = atom((get) => get(countAtom))
+
+  function TestComponent() {
+    const setAtom = useSetAtom(readOnlyAtom as any)
+
+    useEffect(() => {
+      expect(() => setAtom(1)).toThrow('not writable atom')
+    }, [setAtom])
+
+    return null
+  }
+
+  render(<TestComponent />)
 })
