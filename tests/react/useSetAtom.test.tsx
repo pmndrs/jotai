@@ -104,7 +104,7 @@ it('useSetAtom with write without an argument', async () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it('useSetAtom throws when called with a read-only atom', () => {
+it('[DEV-ONLY] useSetAtom throws when called with a read-only atom', () => {
   const countAtom = atom(0)
   const readOnlyAtom = atom((get) => get(countAtom))
 
