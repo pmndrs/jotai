@@ -105,6 +105,7 @@ it('useSetAtom with write without an argument', async () => {
 })
 
 it('[DEV-ONLY] useSetAtom throws when called with a read-only atom', () => {
+  expect.assertions(1)
   const countAtom = atom(0)
   const readOnlyAtom = atom((get) => get(countAtom))
 
