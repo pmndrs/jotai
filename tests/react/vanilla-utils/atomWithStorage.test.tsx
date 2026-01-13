@@ -318,6 +318,45 @@ describe('atomWithStorage (async)', () => {
     await act(() => vi.advanceTimersByTimeAsync(300))
     expect(asyncStorageData.count2).toBe(21)
   })
+
+  it('createJSONStorage with async string storage', async () => {
+    const asyncStringStorage = {
+      getItem: async (key: string) => {
+        await sleep(100)
+        if (key === 'count') {
+          return '10'
+        }
+        return null
+      },
+      setItem: async () => {},
+      removeItem: async () => {},
+    }
+
+    const countAtom = atomWithStorage(
+      'count',
+      0,
+      createJSONStorage<number>(() => asyncStringStorage),
+    )
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom)
+      return <div>count: {count}</div>
+    }
+
+    await act(() =>
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      ),
+    )
+
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 10')).toBeInTheDocument()
+  })
 })
 
 describe('atomWithStorage (without localStorage) (#949)', () => {
