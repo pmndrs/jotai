@@ -21,20 +21,21 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
       PromiseLike<Awaited<Value>>,
       Loadable<Value>
     >()
-    const refreshAtom = atom([() => {}, 0] as [() => void, number])
-    refreshAtom.INTERNAL_onInit = (store) => {
-      store.set(refreshAtom, ([, c]) => [
-        () => store.set(refreshAtom, ([f, c]) => [f, c + 1]),
-        c,
+    const refreshAtom = atom(0)
+    const triggerRefreshAtom = atom([] as [triggerRefresh?: () => void])
+    triggerRefreshAtom.INTERNAL_onInit = (store) => {
+      store.set(triggerRefreshAtom, [
+        () => store.set(refreshAtom, (c) => c + 1),
       ])
     }
 
     if (import.meta.env?.MODE !== 'production') {
       refreshAtom.debugPrivate = true
+      triggerRefreshAtom.debugPrivate = true
     }
 
     const derivedAtom = atom((get) => {
-      const [triggerRefresh] = get(refreshAtom)
+      get(refreshAtom)
       let value: Value
       try {
         value = get(anAtom)
@@ -52,11 +53,13 @@ export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
       promise.then(
         (data) => {
           loadableCache.set(promise, { state: 'hasData', data })
-          triggerRefresh()
+          const [triggerRefresh] = get(triggerRefreshAtom)
+          triggerRefresh!()
         },
         (error) => {
           loadableCache.set(promise, { state: 'hasError', error })
-          triggerRefresh()
+          const [triggerRefresh] = get(triggerRefreshAtom)
+          triggerRefresh!()
         },
       )
 

@@ -3,13 +3,18 @@ import { atom, createStore } from 'jotai/vanilla'
 import { unwrap } from 'jotai/vanilla/utils'
 import { sleep } from '../../test-utils'
 
+let savedConsoleWarn: any
+
 describe('unwrap', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    savedConsoleWarn = console.warn
+    console.warn = vi.fn()
   })
 
   afterEach(() => {
     vi.useRealTimers()
+    console.warn = savedConsoleWarn
   })
 
   it('should unwrap a promise with no fallback function', async () => {
@@ -176,5 +181,16 @@ describe('unwrap', () => {
 
     await vi.advanceTimersByTimeAsync(0)
     expect(results).toEqual(['effect undefined', 'effect value'])
+  })
+
+  // https://github.com/pmndrs/jotai/discussions/3208#discussioncomment-15431859
+  it('[DEV-ONLY] should not call store.set during atom read', async () => {
+    const store = createStore()
+    const example = atom('Hello')
+    store.get(example)
+    const unwrapAtom = unwrap(example)
+    vi.clearAllMocks()
+    store.get(unwrapAtom)
+    expect(console.warn).not.toHaveBeenCalled()
   })
 })
