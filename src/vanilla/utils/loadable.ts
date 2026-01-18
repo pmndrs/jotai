@@ -1,12 +1,12 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom } from '../../vanilla.ts'
+// XXX We don't usually depend on another util,
+// but our future plan is to deprecate loadable in favor of unwrap.
+import { unwrap } from './unwrap.ts'
 
 const cache1 = new WeakMap()
 const memo1 = <T>(create: () => T, dep1: object): T =>
   (cache1.has(dep1) ? cache1 : cache1.set(dep1, create())).get(dep1)
-
-const isPromiseLike = <Value>(p: unknown): p is PromiseLike<Awaited<Value>> =>
-  typeof (p as any)?.then === 'function'
 
 export type Loadable<Value> =
   | { state: 'loading' }
@@ -17,64 +17,18 @@ const LOADING: Loadable<unknown> = { state: 'loading' }
 
 export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
   return memo1(() => {
-    const loadableCache = new WeakMap<
-      PromiseLike<Awaited<Value>>,
-      Loadable<Value>
-    >()
-    const refreshAtom = atom(0)
-    const triggerRefreshAtom = atom([] as [triggerRefresh?: () => void])
-    triggerRefreshAtom.INTERNAL_onInit = (store) => {
-      store.set(triggerRefreshAtom, [
-        () => store.set(refreshAtom, (c) => c + 1),
-      ])
-    }
-
-    if (import.meta.env?.MODE !== 'production') {
-      refreshAtom.debugPrivate = true
-      triggerRefreshAtom.debugPrivate = true
-    }
-
-    const derivedAtom = atom((get) => {
-      get(refreshAtom)
-      let value: Value
+    const PENDING = Symbol()
+    const unwrappedAtom = unwrap(anAtom, () => PENDING)
+    return atom((get) => {
       try {
-        value = get(anAtom)
-      } catch (error) {
-        return { state: 'hasError', error } as Loadable<Value>
+        const value = get(unwrappedAtom)
+        if (value === PENDING) {
+          return LOADING as Loadable<Value>
+        }
+        return { state: 'hasData', data: value as Awaited<Value> }
+      } catch (e) {
+        return { state: 'hasError', error: e }
       }
-      if (!isPromiseLike<Value>(value)) {
-        return { state: 'hasData', data: value } as Loadable<Value>
-      }
-      const promise = value
-      const cached1 = loadableCache.get(promise)
-      if (cached1) {
-        return cached1
-      }
-      promise.then(
-        (data) => {
-          loadableCache.set(promise, { state: 'hasData', data })
-          const [triggerRefresh] = get(triggerRefreshAtom)
-          triggerRefresh!()
-        },
-        (error) => {
-          loadableCache.set(promise, { state: 'hasError', error })
-          const [triggerRefresh] = get(triggerRefreshAtom)
-          triggerRefresh!()
-        },
-      )
-
-      const cached2 = loadableCache.get(promise)
-      if (cached2) {
-        return cached2
-      }
-      loadableCache.set(promise, LOADING as Loadable<Value>)
-      return LOADING as Loadable<Value>
     })
-
-    if (import.meta.env?.MODE !== 'production') {
-      derivedAtom.debugPrivate = true
-    }
-
-    return atom((get) => get(derivedAtom))
   }, anAtom)
 }
