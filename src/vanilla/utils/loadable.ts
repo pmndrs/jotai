@@ -1,7 +1,5 @@
 import { atom } from '../../vanilla.ts'
 import type { Atom } from '../../vanilla.ts'
-// XXX We don't usually depend on another util,
-// but our future plan is to deprecate loadable in favor of unwrap.
 import { unwrap } from './unwrap.ts'
 
 const cache1 = new WeakMap()
@@ -13,21 +11,50 @@ export type Loadable<Value> =
   | { state: 'hasError'; error: unknown }
   | { state: 'hasData'; data: Awaited<Value> }
 
-const LOADING: Loadable<unknown> = { state: 'loading' }
+let didWarnDeprecation = false
 
+/**
+ * @deprecated `loadable` is deprecated infavor of `unwrap`.
+ *
+ * Userland implementation of loadable:
+ * ```js
+ * function loadable(anAtom) {
+ *   const LOADING = { state: 'loading' }
+ *   const unwrappedAtom = unwrap(anAtom, () => LOADING)
+ *   return atom((get) => {
+ *     try {
+ *       const data = get(unwrappedAtom)
+ *       if (data === LOADING) {
+ *         return LOADING
+ *       }
+ *       return { state: 'hasData', data }
+ *     } catch (error) {
+ *       return { state: 'hasError', error: e }
+ *     }
+ *   })
+ * }
+ * ```
+ */
 export function loadable<Value>(anAtom: Atom<Value>): Atom<Loadable<Value>> {
+  if (import.meta.env?.MODE !== 'production' && !didWarnDeprecation) {
+    console.warn(
+      '[DEPRECATED] loadable is deprecated and will be removed in v3. ' +
+        'Please use a userland util with the `unwrap` util: https://github.com/pmndrs/jotai/pull/3217',
+    )
+    didWarnDeprecation = true
+  }
   return memo1(() => {
-    const PENDING = Symbol()
-    const unwrappedAtom = unwrap(anAtom, () => PENDING)
+    const LOADING: Loadable<Value> = { state: 'loading' }
+    const unwrappedAtom = unwrap(anAtom, () => LOADING)
     return atom((get) => {
       try {
-        const value = get(unwrappedAtom)
-        if (value === PENDING) {
-          return LOADING as Loadable<Value>
+        const data = get(unwrappedAtom)
+        if (data === LOADING) {
+          return LOADING
         }
-        return { state: 'hasData', data: value as Awaited<Value> }
-      } catch (e) {
-        return { state: 'hasError', error: e }
+        return { state: 'hasData', data } as Loadable<Value>
+      } catch (error) {
+        return { state: 'hasError', error }
       }
     })
   }, anAtom)
