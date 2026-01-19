@@ -29,7 +29,7 @@ let didWarnDeprecation = false
  *       }
  *       return { state: 'hasData', data }
  *     } catch (error) {
- *       return { state: 'hasError', error: e }
+ *       return { state: 'hasError', error }
  *     }
  *   })
  * }
