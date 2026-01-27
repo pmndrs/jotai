@@ -55,7 +55,7 @@ it('creates atoms', () => {
   `)
 })
 
-it('should include debugLabel in toString output', () => {
+it('[DEV-ONLY] should include debugLabel in toString output', () => {
   const countAtom = atom(0)
   countAtom.debugLabel = 'count'
   expect(countAtom.toString()).toContain(':count')
