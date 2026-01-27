@@ -10,8 +10,9 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { unstable_batchedUpdates } from 'react-dom'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import { INTERNAL_overrideCreateStore, atom, createStore } from 'jotai/vanilla'
 import type { PrimitiveAtom } from 'jotai/vanilla'
+import { INTERNAL_buildStoreRev2 as INTERNAL_buildStore } from 'jotai/vanilla/internals'
 import { sleep, useCommitCount } from '../test-utils'
 
 beforeEach(() => {
@@ -1014,4 +1015,68 @@ it('useAtom returns consistent value with input with changing atoms (#1235)', ()
 
   fireEvent.click(screen.getByText('button'))
   expect(screen.getByText('count: 1')).toBeInTheDocument()
+})
+
+it('should allow disabling provider-less mode with INTERNAL_overrideCreateStore', () => {
+  const countAtom = atom(0)
+
+  const Counter = () => {
+    const [count] = useAtom(countAtom)
+    return <div>count: {count}</div>
+  }
+
+  INTERNAL_overrideCreateStore(() => (unstable_isDefaultStore) => {
+    if (unstable_isDefaultStore) {
+      throw new Error('Provider-less mode is disabled')
+    }
+    return INTERNAL_buildStore()
+  })
+
+  expect(() =>
+    render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    ),
+  ).toThrow('Provider-less mode is disabled')
+
+  INTERNAL_overrideCreateStore(() => undefined as any)
+})
+
+it('should allow swapping the default store with INTERNAL_overrideCreateStore', () => {
+  const countAtom = atom(0)
+  const customStore = createStore()
+  customStore.set(countAtom, 42)
+
+  INTERNAL_overrideCreateStore(() => (unstable_isDefaultStore) => {
+    if (unstable_isDefaultStore) {
+      return customStore
+    }
+    return INTERNAL_buildStore()
+  })
+
+  const Counter = () => {
+    const [count, setCount] = useAtom(countAtom)
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => setCount((c) => c + 1)}>increment</button>
+      </>
+    )
+  }
+
+  render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>,
+  )
+
+  expect(screen.getByText('count: 42')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 43')).toBeInTheDocument()
+
+  expect(customStore.get(countAtom)).toBe(43)
+
+  INTERNAL_overrideCreateStore(() => undefined as any)
 })
