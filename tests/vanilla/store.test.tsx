@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { atom, createStore } from 'jotai/vanilla'
+import { atom, createStore, getDefaultStore } from 'jotai/vanilla'
 import type { Atom, Getter, PrimitiveAtom } from 'jotai/vanilla'
 import {
   INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
@@ -1330,4 +1330,14 @@ it('[DEV-ONLY] should warn store mutation during read', () => {
   expect(console.warn).toHaveBeenCalledWith(
     'Detected store mutation during atom read. This is not supported.',
   )
+})
+
+it('[DEV-ONLY] should warn when multiple Jotai instances are detected', () => {
+  const prev = (globalThis as any).__JOTAI_DEFAULT_STORE__
+  ;(globalThis as any).__JOTAI_DEFAULT_STORE__ = {}
+  getDefaultStore()
+  expect(console.warn).toHaveBeenCalledWith(
+    expect.stringContaining('Detected multiple Jotai instances'),
+  )
+  ;(globalThis as any).__JOTAI_DEFAULT_STORE__ = prev
 })
