@@ -2,7 +2,7 @@ import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
-import { atom } from 'jotai/vanilla'
+import { atom, createStore } from 'jotai/vanilla'
 import type { Atom, PrimitiveAtom } from 'jotai/vanilla'
 import { splitAtom } from 'jotai/vanilla/utils'
 import { useCommitCount } from '../../test-utils'
@@ -513,4 +513,19 @@ it('should not update split atom when single item is set to identical value', ()
 
   fireEvent.click(screen.getByText('button'))
   expect(screen.getByText('changed: false')).toBeInTheDocument()
+})
+
+it('should throw error when writing to a removed item atom', () => {
+  const store = createStore()
+  const arrAtom = atom([1, 2, 3])
+  const splittedAtom = splitAtom(arrAtom)
+
+  const atomList = store.get(splittedAtom)
+  const secondAtom = atomList[1]!
+
+  store.set(arrAtom, [])
+
+  expect(() => store.set(secondAtom, 10)).toThrow(
+    'splitAtom: index out of bounds for write',
+  )
 })
