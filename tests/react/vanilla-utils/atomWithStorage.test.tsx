@@ -694,10 +694,11 @@ describe('atomWithStorage (with non-browser storage)', () => {
 })
 
 describe('withStorageValidator', () => {
+  const isNumber = (v: unknown): v is number => typeof v === 'number'
+
   it('should use withStorageValidator with isNumber', () => {
     const store = createStore()
     const storage = createJSONStorage()
-    const isNumber = (v: unknown): v is number => typeof v === 'number'
     const numAtom = atomWithStorage(
       'my-number',
       0,
@@ -705,6 +706,23 @@ describe('withStorageValidator', () => {
     )
 
     expect(store.get(numAtom)).toBe(0)
+  })
+
+  it('should return initialValue when validator fails', () => {
+    const store = createStore()
+    const stringStorage: SyncStringStorage = {
+      getItem: () => JSON.stringify('not-a-number'),
+      setItem: () => {},
+      removeItem: () => {},
+    }
+    const storage = createJSONStorage(() => stringStorage)
+    const numAtom = atomWithStorage(
+      'my-number',
+      42,
+      withStorageValidator(isNumber)(storage),
+    )
+
+    expect(store.get(numAtom)).toBe(42)
   })
 })
 
