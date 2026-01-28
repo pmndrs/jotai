@@ -619,6 +619,12 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
       return controller.signal
     },
     get setSelf() {
+      if (import.meta.env?.MODE !== 'production') {
+        // This is shown even before calling. It's a strong warning.
+        console.warn(
+          '[DEPRECATED] setSelf is deprecated and will be removed in v3.',
+        )
+      }
       if (
         import.meta.env?.MODE !== 'production' &&
         !isActuallyWritableAtom(atom)
