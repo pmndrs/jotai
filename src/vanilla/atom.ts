@@ -53,10 +53,6 @@ export interface Atom<Value> {
    * This is an internal API and subject to change without notice.
    */
   INTERNAL_onInit?: (store: Store) => void
-  /**
-   * @deprecated renamed to INTERNAL_onInit
-   */
-  unstable_onInit?: (store: Store) => void
 }
 
 export interface WritableAtom<

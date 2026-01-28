@@ -397,12 +397,6 @@ const BUILDING_BLOCK_atomOnInit: AtomOnInit = (store, atom) => {
   if (atom.INTERNAL_onInit) {
     return atom.INTERNAL_onInit(store)
   }
-  if (atom.unstable_onInit) {
-    console.warn(
-      '[DEPRECATED] atom.unstable_onInit is renamed to atom.INTERNAL_onInit.',
-    )
-    return atom.unstable_onInit(store)
-  }
 }
 const BUILDING_BLOCK_atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
   atom.onMount?.(setAtom)
