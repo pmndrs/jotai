@@ -75,5 +75,7 @@ it('type utils should work', () => {
 it('WritableAtom Result type should be covariant', () => {
   const writableAtom = atom(null, () => null)
 
+  // NOTE: expectTypeOf is not available in TypeScript 4.0.5 and below, toExtend is not available in TypeScript 4.6.4 and below
+  // [ONLY-TS-4.6.4] [ONLY-TS-4.5.5] [ONLY-TS-4.4.4] [ONLY-TS-4.3.5] [ONLY-TS-4.2.3] [ONLY-TS-4.1.5] [ONLY-TS-4.0.5] [ONLY-TS-3.9.7] [ONLY-TS-3.8.3] @ts-ignore
   expectTypeOf(writableAtom).toExtend<WritableAtom<null, [], number | null>>()
 })
