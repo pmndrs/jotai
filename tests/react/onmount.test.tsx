@@ -1,15 +1,19 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { act, render, screen, waitFor } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
-import { expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+import { sleep } from '../test-utils'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+beforeEach(() => {
+  vi.useFakeTimers()
+})
 
-it('one atom, one effect', async () => {
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+it('one atom, one effect', () => {
   const countAtom = atom(1)
   const onMountFn = vi.fn(() => {})
   countAtom.onMount = onMountFn
@@ -30,15 +34,15 @@ it('one atom, one effect', async () => {
     </>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(onMountFn).toHaveBeenCalledTimes(1)
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
-it('two atoms, one each', async () => {
+it('two atoms, one each', () => {
   const countAtom = atom(1)
   const countAtom2 = atom(1)
   const onMountFn = vi.fn(() => {})
@@ -71,24 +75,21 @@ it('two atoms, one each', async () => {
     </>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('count2: 1')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count2: 1')).toBeInTheDocument()
+
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onMountFn2).toHaveBeenCalledTimes(1)
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
-    expect(screen.getByText('count2: 2')).toBeInTheDocument()
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+  expect(screen.getByText('count2: 2')).toBeInTheDocument()
 
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onMountFn2).toHaveBeenCalledTimes(1)
 })
 
-it('one derived atom, one onMount', async () => {
+it('one derived atom, one onMount', () => {
   const countAtom = atom(1)
   const countAtom2 = atom((get) => get(countAtom))
   const onMountFn = vi.fn(() => {})
@@ -109,11 +110,12 @@ it('one derived atom, one onMount', async () => {
     </>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+
   expect(onMountFn).toHaveBeenCalledTimes(1)
 })
 
-it('mount/unmount test', async () => {
+it('mount/unmount test', () => {
   const countAtom = atom(1)
 
   const onUnMountFn = vi.fn()
@@ -148,13 +150,13 @@ it('mount/unmount test', async () => {
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
-  await userEvent.click(screen.getByText('button'))
+  fireEvent.click(screen.getByText('button'))
 
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(1)
 })
 
-it('one derived atom, one onMount for the derived one, and one for the regular atom + onUnMount', async () => {
+it('one derived atom, one onMount for the derived one, and one for the regular atom + onUnMount', () => {
   const countAtom = atom(1)
   const derivedAtom = atom(
     (get) => get(countAtom),
@@ -200,7 +202,7 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
-  await userEvent.click(screen.getByText('button'))
+  fireEvent.click(screen.getByText('button'))
 
   expect(derivedOnMountFn).toHaveBeenCalledTimes(1)
   expect(derivedOnUnMountFn).toHaveBeenCalledTimes(1)
@@ -208,7 +210,7 @@ it('one derived atom, one onMount for the derived one, and one for the regular a
   expect(onUnMountFn).toHaveBeenCalledTimes(1)
 })
 
-it('mount/unMount order', async () => {
+it('mount/unMount order', () => {
   const committed: number[] = [0, 0]
   const countAtom = atom(1)
   const derivedAtom = atom(
@@ -273,32 +275,23 @@ it('mount/unMount order', async () => {
 
   expect(committed).toEqual([0, 0])
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(committed).toEqual([1, 0])
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(committed).toEqual([1, 0])
 
-  await userEvent.click(screen.getByText('derived atom'))
-  await waitFor(() => {
-    expect(committed).toEqual([1, 1])
-  })
+  fireEvent.click(screen.getByText('derived atom'))
+  expect(committed).toEqual([1, 1])
 
-  await userEvent.click(screen.getByText('derived atom'))
-  await waitFor(() => {
-    expect(committed).toEqual([1, 0])
-  })
+  fireEvent.click(screen.getByText('derived atom'))
+  expect(committed).toEqual([1, 0])
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(committed).toEqual([0, 0])
-  })
+  fireEvent.click(screen.getByText('button'))
+  expect(committed).toEqual([0, 0])
 })
 
 it('mount/unmount test with async atom', async () => {
-  let resolve = () => {}
   const countAtom = atom(
     async () => {
-      await new Promise<void>((r) => (resolve = r))
+      await sleep(100)
       return 0
     },
     () => {},
@@ -327,28 +320,30 @@ it('mount/unmount test with async atom', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <>
         <Suspense fallback="loading">
           <Display />
         </Suspense>
       </>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('loading')).toBeInTheDocument()
-  resolve()
-  await screen.findByText('count: 0')
+  expect(screen.getByText('loading')).toBeInTheDocument()
+
+  await act(() => vi.advanceTimersByTimeAsync(100))
+
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(0)
 
-  await userEvent.click(screen.getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   expect(onMountFn).toHaveBeenCalledTimes(1)
   expect(onUnMountFn).toHaveBeenCalledTimes(1)
 })
 
-it('subscription usage test', async () => {
+it('subscription usage test', () => {
   const store = {
     count: 10,
     listeners: new Set<() => void>(),
@@ -393,32 +388,30 @@ it('subscription usage test', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 10')).toBeInTheDocument()
+  expect(screen.getByText('count: 10')).toBeInTheDocument()
 
-  act(() => {
-    store.inc()
-  })
-  expect(await screen.findByText('count: 11')).toBeInTheDocument()
+  act(() => store.inc())
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('N/A')).toBeInTheDocument()
+  expect(screen.getByText('count: 11')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 11')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('N/A')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('N/A')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 11')).toBeInTheDocument()
 
-  act(() => {
-    store.inc()
-  })
-  expect(await screen.findByText('N/A')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('N/A')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 12')).toBeInTheDocument()
+  act(() => store.inc())
+
+  expect(screen.getByText('N/A')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 12')).toBeInTheDocument()
 })
 
-it('subscription in base atom test', async () => {
+it('subscription in base atom test', () => {
   const store = {
     count: 10,
     listeners: new Set<() => void>(),
@@ -460,13 +453,13 @@ it('subscription in base atom test', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 10')).toBeInTheDocument()
+  expect(screen.getByText('count: 10')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 11')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 11')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 12')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('count: 12')).toBeInTheDocument()
 })
 
 it('create atom with onMount in async get', async () => {
@@ -508,24 +501,27 @@ it('create atom with onMount in async get', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
   // FIXME this is not working
-  //await screen.findByText('count: 1')
+  // await screen.findByText('count: 1')
 
-  expect(await screen.findByText('count: 10')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 10')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 11')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 11')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 12')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 12')).toBeInTheDocument()
 })

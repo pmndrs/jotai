@@ -1,10 +1,18 @@
-import { expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { Atom, Getter, Setter, WritableAtom } from 'jotai/vanilla'
 import { atom, createStore } from 'jotai/vanilla'
 import {
   INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
+
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 type Cleanup = () => void
 type Effect = (get: Getter, set: Setter) => Cleanup | void
@@ -33,7 +41,7 @@ function syncEffect(effect: Effect): Atom<void> {
   internalAtom.onMount = () => {
     return () => {}
   }
-  internalAtom.unstable_onInit = (store) => {
+  internalAtom.INTERNAL_onInit = (store) => {
     const ref = store.get(refAtom)
     const runEffect = () => {
       const deps = new Set<Atom<unknown>>()
@@ -261,6 +269,6 @@ it('supports recursive setting synchronous in read', async () => {
     return Promise.resolve().then(runEffect)
   })
   store.sub(effectAtom, () => {})
-  await Promise.resolve()
+  await vi.advanceTimersByTimeAsync(0)
   expect(store.get(a)).toBe(5)
 })

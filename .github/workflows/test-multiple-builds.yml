@@ -15,9 +15,9 @@ jobs:
         build: [cjs, esm, umd]
         env: [development, production]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           cache: 'pnpm'
@@ -48,7 +48,7 @@ jobs:
         if: ${{ matrix.build == 'esm' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/esm\1.mjs')/" vitest.config.mts
-          sed -i~ "1s/^/import.meta.env=import.meta.env||{};import.meta.env.MODE='${NODE_ENV}';/" tests/*/*.tsx tests/*/*/*.tsx
+          sed -i~ "1s/^/import.meta.env.MODE='${NODE_ENV}';/" tests/*/*.tsx tests/*/*/*.tsx
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Patch for UMD

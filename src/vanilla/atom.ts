@@ -50,13 +50,16 @@ export interface Atom<Value> {
   debugPrivate?: boolean
   /**
    * Fires after atom is referenced by the store for the first time
-   * This is still an experimental API and subject to change without notice.
+   * This is an internal API and subject to change without notice.
    */
-  unstable_onInit?: (store: Store) => void
+  INTERNAL_onInit?: (store: Store) => void
 }
 
-export interface WritableAtom<Value, Args extends unknown[], Result>
-  extends Atom<Value> {
+export interface WritableAtom<
+  Value,
+  Args extends unknown[],
+  Result,
+> extends Atom<Value> {
   read: Read<Value, SetAtom<Args, unknown>>
   write: Write<Args, Result>
   onMount?: OnMount<Args, Result>
