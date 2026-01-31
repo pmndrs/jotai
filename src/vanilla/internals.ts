@@ -461,7 +461,6 @@ const deferredRecomputeMap = new WeakMap<
   Store,
   {
     atoms: Set<AnyAtom>
-    scheduled: boolean
   }
 >()
 
@@ -476,25 +475,20 @@ const scheduleDeferredRecompute = (
   if (!state) {
     state = {
       atoms: new Set(),
-      scheduled: false,
     }
     deferredRecomputeMap.set(store, state)
   }
   state.atoms.add(atom)
-  if (!state.scheduled) {
-    state.scheduled = true
-    const run = () => {
-      state!.scheduled = false
-      const atoms = Array.from(state!.atoms)
-      state!.atoms.clear()
-      for (const a of atoms) {
-        readAtomState(store, a)
-        mountDependencies(store, a)
-        invalidatedAtoms.delete(a)
-      }
+  const run = () => {
+    const atoms = Array.from(state!.atoms)
+    state!.atoms.clear()
+    for (const a of atoms) {
+      readAtomState(store, a)
+      mountDependencies(store, a)
+      invalidatedAtoms.delete(a)
     }
-    Promise.resolve().then(run)
   }
+  Promise.resolve().then(run)
 }
 
 const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
