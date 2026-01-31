@@ -287,6 +287,19 @@ function addPendingPromiseToDependency(
   }
 }
 
+function* getMountedOrPendingDependents(
+  atom: AnyAtom,
+  atomState: AtomState,
+  mountedMap: MountedMap,
+): Iterable<AnyAtom> {
+  for (const d of mountedMap.get(atom)?.t || []) {
+    yield d
+  }
+  for (const d of atomState.p) {
+    yield d
+  }
+}
+
 //
 // Store hooks
 //
@@ -489,12 +502,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack
-    for (const d of mountedMap.get(a)?.t || []) {
-      if (!visiting.has(d)) {
-        stack.push(d)
-      }
-    }
-    for (const d of aState.p) {
+    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       if (!visiting.has(d)) {
         stack.push(d)
       }
@@ -682,24 +690,15 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const ensureAtomState = buildingBlocks[11]
-  const mountedStack: AnyAtom[] = [atom]
-  while (mountedStack.length) {
-    const a = mountedStack.pop()!
-    for (const d of mountedMap.get(a)?.t || []) {
-      const dState = ensureAtomState(store, d)
-      invalidatedAtoms.set(d, dState.n)
-      mountedStack.push(d)
-    }
-  }
-  const pendingStack: AnyAtom[] = [atom]
-  while (pendingStack.length) {
-    const a = pendingStack.pop()!
+  const stack: AnyAtom[] = [atom]
+  while (stack.length) {
+    const a = stack.pop()!
     const aState = ensureAtomState(store, a)
-    for (const d of aState.p) {
+    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       const dState = ensureAtomState(store, d)
       if (invalidatedAtoms.get(d) !== dState.n) {
         invalidatedAtoms.set(d, dState.n)
-        pendingStack.push(d)
+        stack.push(d)
       }
     }
   }
@@ -1063,4 +1062,5 @@ export {
   registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
   addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
+  getMountedOrPendingDependents as INTERNAL_getMountedOrPendingDependents,
 }
