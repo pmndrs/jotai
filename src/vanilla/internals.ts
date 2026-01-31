@@ -240,15 +240,11 @@ function returnAtomValue<Value>(atomState: AtomState<Value>): Value {
 
 const promiseStateMap: WeakMap<
   PromiseLike<unknown>,
-  [pending: boolean, abortHandlers: Set<() => void>, continuable?: boolean]
+  [pending: boolean, abortHandlers: Set<() => void>]
 > = new WeakMap()
 
 function isPendingPromise(value: unknown): value is PromiseLike<unknown> {
   return isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[0]
-}
-
-function isContinuablePromise(value: unknown): value is PromiseLike<unknown> {
-  return isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[2]
 }
 
 function abortPromise<T>(promise: PromiseLike<T>): void {
@@ -944,7 +940,7 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
     }
   }
   if (!isDependent) {
-    if (isPendingPromise(atomState.v) && !isContinuablePromise(atomState.v)) {
+    if (isPendingPromise(atomState.v)) {
       for (const a of atomState.d.keys()) {
         ensureAtomState(store, a).p.delete(atom)
       }
