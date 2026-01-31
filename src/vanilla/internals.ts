@@ -17,7 +17,7 @@ type EpochNumber = number
  * tracked for both mounted and unmounted atoms in a store.
  *
  * This should be garbage collectable.
- * We can mutate it during atom read. (except for fields with TODO)
+ * We can mutate it during atom read.
  */
 type AtomState<Value = AnyValue> = {
   /**
@@ -875,7 +875,6 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
   return mounted
 }
 
-// TODO(daishi): revisit this implementation
 const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   store,
   atom,
