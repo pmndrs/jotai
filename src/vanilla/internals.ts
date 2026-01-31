@@ -940,11 +940,6 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
     }
   }
   if (!isDependent) {
-    if (isPendingPromise(atomState.v)) {
-      for (const a of atomState.d.keys()) {
-        ensureAtomState(store, a).p.delete(atom)
-      }
-    }
     // unmount self
     if (mounted.u) {
       unmountCallbacks.add(mounted.u)
