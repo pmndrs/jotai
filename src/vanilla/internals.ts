@@ -287,20 +287,19 @@ function addPendingPromiseToDependency(
   }
 }
 
-// TODO(daishi): revisit this implementation
-function getMountedOrPendingDependents(
+function getMountedDependents(
   atom: AnyAtom,
-  atomState: AtomState,
   mountedMap: MountedMap,
 ): Set<AnyAtom> {
   const dependents = new Set<AnyAtom>()
   for (const a of mountedMap.get(atom)?.t || []) {
     dependents.add(a)
   }
-  for (const atomWithPendingPromise of atomState.p) {
-    dependents.add(atomWithPendingPromise)
-  }
   return dependents
+}
+
+function getPendingDependents(atomState: AtomState): Set<AnyAtom> {
+  return atomState.p
 }
 
 //
@@ -505,7 +504,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
+    for (const d of getMountedDependents(a, mountedMap)) {
       if (!visiting.has(d)) {
         stack.push(d)
       }
@@ -700,15 +699,28 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
+  const changedAtoms = buildingBlocks[3]
   const ensureAtomState = buildingBlocks[11]
-  const stack: AnyAtom[] = [atom]
-  while (stack.length) {
-    const a = stack.pop()!
-    const aState = ensureAtomState(store, a)
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
+  const mountedStack: AnyAtom[] = [atom]
+  while (mountedStack.length) {
+    const a = mountedStack.pop()!
+    for (const d of getMountedDependents(a, mountedMap)) {
       const dState = ensureAtomState(store, d)
       invalidatedAtoms.set(d, dState.n)
-      stack.push(d)
+      mountedStack.push(d)
+    }
+  }
+  const pendingStack: AnyAtom[] = [atom]
+  while (pendingStack.length) {
+    const a = pendingStack.pop()!
+    const aState = ensureAtomState(store, a)
+    for (const d of getPendingDependents(aState)) {
+      const dState = ensureAtomState(store, d)
+      if (invalidatedAtoms.get(d) !== dState.n) {
+        invalidatedAtoms.set(d, dState.n)
+        changedAtoms.add(d)
+        pendingStack.push(d)
+      }
     }
   }
 }
@@ -1068,5 +1080,6 @@ export {
   registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
   addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
-  getMountedOrPendingDependents as INTERNAL_getMountedOrPendingDependents,
+  getMountedDependents as INTERNAL_getMountedDependents,
+  getPendingDependents as INTERNAL_getPendingDependents,
 }
