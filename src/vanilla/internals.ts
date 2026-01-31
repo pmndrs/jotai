@@ -292,10 +292,7 @@ function getMountedOrPendingDependents(
   atomState: AtomState,
   mountedMap: MountedMap,
 ): Iterable<AnyAtom> {
-  return new Set([
-    ...(mountedMap.get(atom)?.t || []),
-    ...atomState.p,
-  ])
+  return new Set([...(mountedMap.get(atom)?.t || []), ...atomState.p])
 }
 
 //
