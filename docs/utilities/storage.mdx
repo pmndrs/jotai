@@ -47,7 +47,7 @@ The `atomWithStorage` function creates an atom with a value persisted in `localS
 
 If not specified, the default storage implementation uses `localStorage` for storage/retrieval, `JSON.stringify()`/`JSON.parse()` for serialization/deserialization, and subscribes to `storage` events for cross-tab synchronization.
 
-<Stackblitz id="vitejs-vite-wewrmi" file="src%2FApp.tsx" />
+<Stackblitz id="vitejs-vite-xvlgfxrk" file="src%2FApp.tsx" />
 
 ### `createJSONStorage` util
 
@@ -139,6 +139,53 @@ const storage = createJSONStorage(() => AsyncStorage)
 const content = {} // anything JSON serializable
 const storedAtom = atomWithStorage('stored-key', content, storage)
 ```
+
+**Note** set `getOnInit` to `true` if you want the atom to return the stored value immediately on initialization instead of the default value.
+
+**getOnInit true vs. false example**
+
+<details>
+
+```jsx
+// Assume localStorage already contains: { "symbol": "BTC_USDC" }
+
+// Without getOnInit (default behavior)
+const symbolAtom = atomWithStorage('symbol', 'SOL_USDC')
+
+function App() {
+  const symbol = useAtomValue(symbolAtom)
+
+  useEffect(() => {
+    console.log('symbol', symbol)
+  }, [symbol])
+
+  return <div>{symbol}</div>
+}
+
+// Console output WITHOUT getOnInit:
+// LOG "symbol" SOL_USDC  (initial render)
+// LOG "symbol" BTC_USDC  (after storage loads)
+
+// With getOnInit set to true
+const symbolAtom = atomWithStorage('symbol', 'SOL_USDC', undefined, {
+  getOnInit: true,
+})
+
+function App() {
+  const symbol = useAtomValue(symbolAtom)
+
+  useEffect(() => {
+    console.log('symbol', symbol)
+  }, [symbol])
+
+  return <div>{symbol}</div>
+}
+
+// Console output WITH getOnInit:
+// LOG "symbol" BTC_USDC  (gets stored value immediately)
+```
+
+</details>
 
 #### Notes with AsyncStorage (since v2.2.0)
 

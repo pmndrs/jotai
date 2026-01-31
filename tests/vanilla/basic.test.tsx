@@ -55,6 +55,12 @@ it('creates atoms', () => {
   `)
 })
 
+it('[DEV-ONLY] should include debugLabel in toString output', () => {
+  const countAtom = atom(0)
+  countAtom.debugLabel = 'count'
+  expect(countAtom.toString()).toContain(':count')
+})
+
 it('should let users mark atoms as private', () => {
   const internalAtom = atom(0)
   internalAtom.debugPrivate = true
