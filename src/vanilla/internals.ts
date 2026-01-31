@@ -262,7 +262,6 @@ function abortPromise<T>(promise: PromiseLike<T>): void {
 function registerAbortHandler<T>(
   promise: PromiseLike<T>,
   abortHandler: () => void,
-  continuable?: boolean,
 ): void {
   let promiseState = promiseStateMap.get(promise)
   if (!promiseState) {
@@ -272,9 +271,6 @@ function registerAbortHandler<T>(
       promiseState![0] = false
     }
     promise.then(settle, settle)
-  }
-  if (continuable) {
-    promiseState[2] = true
   }
   promiseState[1].add(abortHandler)
 }
