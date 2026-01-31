@@ -287,17 +287,15 @@ function addPendingPromiseToDependency(
   }
 }
 
-function* getMountedOrPendingDependents(
+function getMountedOrPendingDependents(
   atom: AnyAtom,
   atomState: AtomState,
   mountedMap: MountedMap,
 ): Iterable<AnyAtom> {
-  for (const d of mountedMap.get(atom)?.t || []) {
-    yield d
-  }
-  for (const d of atomState.p) {
-    yield d
-  }
+  return new Set([
+    ...(mountedMap.get(atom)?.t || []),
+    ...atomState.p,
+  ])
 }
 
 //
