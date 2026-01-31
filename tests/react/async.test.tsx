@@ -805,7 +805,7 @@ it('should override promise as atom value (#430)', async () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
-it.skip('combine two promise atom values (#442)', async () => {
+it('combine two promise atom values (#442)', async () => {
   const count1Atom = atom(new Promise<number>(() => {}))
   const count2Atom = atom(new Promise<number>(() => {}))
   const derivedAtom = atom(
@@ -846,7 +846,7 @@ it.skip('combine two promise atom values (#442)', async () => {
   expect(screen.getByText('count: 3')).toBeInTheDocument()
 })
 
-it.skip('set two promise atoms at once', async () => {
+it('set two promise atoms at once', async () => {
   const count1Atom = atom(new Promise<number>(() => {}))
   const count2Atom = atom(new Promise<number>(() => {}))
   const derivedAtom = atom(

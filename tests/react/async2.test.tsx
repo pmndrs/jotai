@@ -220,7 +220,7 @@ describe('timing issue with setSelf', () => {
 })
 
 describe('infinite pending', () => {
-  it.skip('odd counter', async () => {
+  it('odd counter', async () => {
     const countAtom = atom(0)
     const asyncAtom = atom((get) => {
       const count = get(countAtom)

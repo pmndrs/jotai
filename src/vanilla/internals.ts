@@ -17,7 +17,7 @@ type EpochNumber = number
  * tracked for both mounted and unmounted atoms in a store.
  *
  * This should be garbage collectable.
- * We can mutate it during atom read.
+ * We can mutate it during atom read. (except for fields with TODO)
  */
 type AtomState<Value = AnyValue> = {
   /**
@@ -25,6 +25,13 @@ type AtomState<Value = AnyValue> = {
    * The map value is the epoch number of the dependency.
    */
   readonly d: Map<AnyAtom, EpochNumber>
+  /**
+   * Set of atoms with pending promise that depend on the atom.
+   *
+   * This may cause memory leaks, but it's for the capability to continue promises
+   * TODO(daishi): revisit how to handle this
+   */
+  readonly p: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: EpochNumber
   /** Atom value */
@@ -268,13 +275,30 @@ function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
   return typeof (p as any)?.then === 'function'
 }
 
-function getMountedDependents(
+function addPendingPromiseToDependency(
   atom: AnyAtom,
+  promise: PromiseLike<AnyValue>,
+  dependencyAtomState: AtomState,
+): void {
+  if (!dependencyAtomState.p.has(atom)) {
+    dependencyAtomState.p.add(atom)
+    const cleanup = () => dependencyAtomState.p.delete(atom)
+    promise.then(cleanup, cleanup)
+  }
+}
+
+// TODO(daishi): revisit this implementation
+function getMountedOrPendingDependents(
+  atom: AnyAtom,
+  atomState: AtomState,
   mountedMap: MountedMap,
 ): Set<AnyAtom> {
   const dependents = new Set<AnyAtom>()
   for (const a of mountedMap.get(atom)?.t || []) {
     dependents.add(a)
+  }
+  for (const atomWithPendingPromise of atomState.p) {
+    dependents.add(atomWithPendingPromise)
   }
   return dependents
 }
@@ -387,7 +411,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
   }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
-    atomState = { d: new Map(), n: 0 }
+    atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
     atomOnInit?.(store, atom)
@@ -481,7 +505,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack
-    for (const d of getMountedDependents(a, mountedMap)) {
+    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       if (!visiting.has(d)) {
         stack.push(d)
       }
@@ -499,6 +523,14 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
       }
     }
     if (hasChangedDeps) {
+      if (!mountedMap.has(a) && isPendingPromise(aState.v)) {
+        Promise.resolve().then(() => {
+          readAtomState(store, a)
+          mountDependencies(store, a)
+          invalidatedAtoms.delete(a)
+        })
+        continue
+      }
       readAtomState(store, a)
       mountDependencies(store, a)
     }
@@ -574,6 +606,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
       return returnAtomValue(aState)
     } finally {
       atomState.d.set(a, aState.n)
+      if (isPendingPromise(atomState.v)) {
+        addPendingPromiseToDependency(atom, atomState.v, aState)
+      }
       if (mountedMap.has(atom)) {
         mountedMap.get(a)?.t.add(atom)
       }
@@ -669,7 +704,8 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   const stack: AnyAtom[] = [atom]
   while (stack.length) {
     const a = stack.pop()!
-    for (const d of getMountedDependents(a, mountedMap)) {
+    const aState = ensureAtomState(store, a)
+    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       const dState = ensureAtomState(store, d)
       invalidatedAtoms.set(d, dState.n)
       stack.push(d)
@@ -875,6 +911,7 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
   return mounted
 }
 
+// TODO(daishi): revisit this implementation
 const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   store,
   atom,
@@ -884,6 +921,15 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
+  if (isPromiseLike(valueOrPromise)) {
+    for (const a of atomState.d.keys()) {
+      addPendingPromiseToDependency(
+        atom,
+        valueOrPromise,
+        ensureAtomState(store, a),
+      )
+    }
+  }
   atomState.v = valueOrPromise
   delete atomState.e
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
@@ -1021,5 +1067,6 @@ export {
   abortPromise as INTERNAL_abortPromise,
   registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
-  getMountedDependents as INTERNAL_getMountedDependents,
+  addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
+  getMountedOrPendingDependents as INTERNAL_getMountedOrPendingDependents,
 }

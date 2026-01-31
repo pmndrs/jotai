@@ -37,9 +37,7 @@ it('can propagate updates with async atom chains', async () => {
   await expect(store.get(async3Atom)).resolves.toBe(3)
 })
 
-it.skip(
-  'can get async atom with deps more than once before resolving (#1668)',
-  async () => {
+it('can get async atom with deps more than once before resolving (#1668)', async () => {
   const countAtom = atom(0)
   const asyncAtom = atom(async (get) => {
     const count = get(countAtom)
@@ -53,8 +51,7 @@ it.skip(
   store.set(countAtom, (c) => c + 1)
   await vi.advanceTimersByTimeAsync(100)
   await expect(store.get(asyncAtom)).resolves.toBe(2)
-},
-)
+})
 
 it('correctly updates async derived atom after get/set update', async () => {
   const baseAtom = atom(0)
@@ -219,9 +216,7 @@ it('settles never resolving async derivations with deps picked up sync', async (
   expect(sub).toBe(1)
 })
 
-it.skip(
-  'settles never resolving async derivations with deps picked up async',
-  async () => {
+it('settles never resolving async derivations with deps picked up async', async () => {
   const resolve: ((value: number) => void)[] = []
 
   const syncAtom = atom({
@@ -253,10 +248,9 @@ it.skip(
   await vi.advanceTimersByTimeAsync(100)
   expect(values).toEqual([1])
   expect(sub).toBe(1)
-},
-)
+})
 
-it.skip('refreshes deps for each async read', async () => {
+it('refreshes deps for each async read', async () => {
   const countAtom = atom(0)
   const depAtom = atom(false)
   const values: number[] = []
