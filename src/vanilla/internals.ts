@@ -290,15 +290,12 @@ function addPendingPromiseToDependency(
 // TODO(daishi): revisit this implementation
 function getMountedOrPendingDependents(
   atom: AnyAtom,
-  atomState: AtomState,
+  _atomState: AtomState,
   mountedMap: MountedMap,
 ): Set<AnyAtom> {
   const dependents = new Set<AnyAtom>()
   for (const a of mountedMap.get(atom)?.t || []) {
     dependents.add(a)
-  }
-  for (const atomWithPendingPromise of atomState.p) {
-    dependents.add(atomWithPendingPromise)
   }
   return dependents
 }
@@ -523,14 +520,6 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
       }
     }
     if (hasChangedDeps) {
-      if (!mountedMap.has(a) && isPendingPromise(aState.v)) {
-        Promise.resolve().then(() => {
-          readAtomState(store, a)
-          mountDependencies(store, a)
-          invalidatedAtoms.delete(a)
-        })
-        continue
-      }
       readAtomState(store, a)
       mountDependencies(store, a)
     }
@@ -785,7 +774,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
   const unmountAtom = buildingBlocks[19]
   const atomState = ensureAtomState(store, atom)
   const mounted = mountedMap.get(atom)
-  if (mounted && !isPendingPromise(atomState.v)) {
+  if (mounted) {
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)

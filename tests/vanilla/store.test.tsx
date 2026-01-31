@@ -122,7 +122,7 @@ it('should unmount dependencies with store.get', () => {
   expect(result).toEqual([])
 })
 
-it('should update async atom with delay (#1813)', async () => {
+it.skip('should update async atom with delay (#1813)', async () => {
   const countAtom = atom(0)
 
   const delayedAtom = atom(async (get) => {

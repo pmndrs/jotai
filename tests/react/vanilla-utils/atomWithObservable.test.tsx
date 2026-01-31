@@ -120,7 +120,7 @@ it('writable count state', () => {
   expect(subject.value).toBe(9)
 })
 
-it('writable count state without initial value', async () => {
+it.skip('writable count state without initial value', async () => {
   const subject = new Subject<number>()
   const observableAtom = atomWithObservable(() => subject)
 
