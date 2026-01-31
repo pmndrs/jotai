@@ -240,11 +240,15 @@ function returnAtomValue<Value>(atomState: AtomState<Value>): Value {
 
 const promiseStateMap: WeakMap<
   PromiseLike<unknown>,
-  [pending: boolean, abortHandlers: Set<() => void>]
+  [pending: boolean, abortHandlers: Set<() => void>, continuable?: boolean]
 > = new WeakMap()
 
 function isPendingPromise(value: unknown): value is PromiseLike<unknown> {
   return isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[0]
+}
+
+function isContinuablePromise(value: unknown): value is PromiseLike<unknown> {
+  return isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[2]
 }
 
 function abortPromise<T>(promise: PromiseLike<T>): void {
@@ -258,6 +262,7 @@ function abortPromise<T>(promise: PromiseLike<T>): void {
 function registerAbortHandler<T>(
   promise: PromiseLike<T>,
   abortHandler: () => void,
+  continuable?: boolean,
 ): void {
   let promiseState = promiseStateMap.get(promise)
   if (!promiseState) {
@@ -267,6 +272,9 @@ function registerAbortHandler<T>(
       promiseState![0] = false
     }
     promise.then(settle, settle)
+  }
+  if (continuable) {
+    promiseState[2] = true
   }
   promiseState[1].add(abortHandler)
 }
@@ -457,6 +465,50 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   }
 }
 
+const deferredRecomputeMap = new WeakMap<
+  Store,
+  {
+    atoms: Set<AnyAtom>
+    scheduled: boolean
+  }
+>()
+
+const scheduleDeferredRecompute = (
+  store: Store,
+  atom: AnyAtom,
+  readAtomState: ReadAtomState,
+  mountDependencies: MountDependencies,
+  invalidatedAtoms: InvalidatedAtoms,
+) => {
+  let state = deferredRecomputeMap.get(store)
+  if (!state) {
+    state = {
+      atoms: new Set(),
+      scheduled: false,
+    }
+    deferredRecomputeMap.set(store, state)
+  }
+  state.atoms.add(atom)
+  if (!state.scheduled) {
+    state.scheduled = true
+    const run = () => {
+      state!.scheduled = false
+      const atoms = Array.from(state!.atoms)
+      state!.atoms.clear()
+      for (const a of atoms) {
+        readAtomState(store, a)
+        mountDependencies(store, a)
+        invalidatedAtoms.delete(a)
+      }
+    }
+    if (typeof queueMicrotask === 'function') {
+      queueMicrotask(run)
+    } else {
+      Promise.resolve().then(run)
+    }
+  }
+}
+
 const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   store,
 ) => {
@@ -523,6 +575,16 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
       }
     }
     if (hasChangedDeps) {
+      if (!mountedMap.has(a) && isPendingPromise(aState.v)) {
+        scheduleDeferredRecompute(
+          store,
+          a,
+          readAtomState,
+          mountDependencies,
+          invalidatedAtoms,
+        )
+        continue
+      }
       readAtomState(store, a)
       mountDependencies(store, a)
     }
@@ -886,6 +948,11 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
     }
   }
   if (!isDependent) {
+    if (isPendingPromise(atomState.v) && !isContinuablePromise(atomState.v)) {
+      for (const a of atomState.d.keys()) {
+        ensureAtomState(store, a).p.delete(atom)
+      }
+    }
     // unmount self
     if (mounted.u) {
       unmountCallbacks.add(mounted.u)
