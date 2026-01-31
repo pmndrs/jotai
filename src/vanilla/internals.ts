@@ -391,7 +391,8 @@ const BUILDING_BLOCK_atomRead: AtomRead = (_store, atom, ...params) =>
   atom.read(...params)
 const BUILDING_BLOCK_atomWrite: AtomWrite = (_store, atom, ...params) =>
   atom.write(...params)
-const BUILDING_BLOCK_atomOnInit: AtomOnInit = (store, atom) => atom.INTERNAL_onInit?.(store)
+const BUILDING_BLOCK_atomOnInit: AtomOnInit = (store, atom) =>
+  atom.INTERNAL_onInit?.(store)
 const BUILDING_BLOCK_atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
   atom.onMount?.(setAtom)
 
