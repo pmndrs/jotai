@@ -493,11 +493,7 @@ const scheduleDeferredRecompute = (
         invalidatedAtoms.delete(a)
       }
     }
-    if (typeof queueMicrotask === 'function') {
-      queueMicrotask(run)
-    } else {
-      Promise.resolve().then(run)
-    }
+    Promise.resolve().then(run)
   }
 }
 
