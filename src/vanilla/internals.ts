@@ -275,6 +275,14 @@ function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
   return typeof (p as any)?.then === 'function'
 }
 
+const continuablePromiseSymbol = Symbol('continuablePromise')
+function markContinuablePromise(promise: PromiseLike<unknown>): void {
+  ;(promise as any)[continuablePromiseSymbol] = true
+}
+function isContinuablePromise(promise: PromiseLike<unknown>): boolean {
+  return !!(promise as any)[continuablePromiseSymbol]
+}
+
 function addPendingPromiseToDependency(
   atom: AnyAtom,
   promise: PromiseLike<AnyValue>,
@@ -509,6 +517,11 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
         stack.push(d)
       }
     }
+    for (const d of getPendingDependents(aState)) {
+      if (!visiting.has(d)) {
+        stack.push(d)
+      }
+    }
   }
   // Step 2: use the topSortedReversed atom list to recompute all affected atoms
   // Track what's changed, so that we can short circuit when possible
@@ -521,19 +534,14 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
         break
       }
     }
+    let shouldDeleteInvalidated = true
     if (hasChangedDeps) {
-      if (!mountedMap.has(a) && isPendingPromise(aState.v)) {
-        Promise.resolve().then(() => {
-          readAtomState(store, a)
-          mountDependencies(store, a)
-          invalidatedAtoms.delete(a)
-        })
-        continue
-      }
       readAtomState(store, a)
       mountDependencies(store, a)
     }
-    invalidatedAtoms.delete(a)
+    if (shouldDeleteInvalidated) {
+      invalidatedAtoms.delete(a)
+    }
   }
 }
 
@@ -699,7 +707,6 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
-  const changedAtoms = buildingBlocks[3]
   const ensureAtomState = buildingBlocks[11]
   const mountedStack: AnyAtom[] = [atom]
   while (mountedStack.length) {
@@ -718,7 +725,6 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
       const dState = ensureAtomState(store, d)
       if (invalidatedAtoms.get(d) !== dState.n) {
         invalidatedAtoms.set(d, dState.n)
-        changedAtoms.add(d)
         pendingStack.push(d)
       }
     }
@@ -910,6 +916,9 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
     if (mounted.u) {
       unmountCallbacks.add(mounted.u)
     }
+    for (const a of atomState.d.keys()) {
+      ensureAtomState(store, a).p.delete(atom as AnyAtom)
+    }
     mounted = undefined
     mountedMap.delete(atom)
     // unmount dependencies
@@ -933,6 +942,13 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
+  if (
+    isPromiseLike(valueOrPromise) &&
+    isPromiseLike(prevValue) &&
+    isContinuablePromise(prevValue)
+  ) {
+    markContinuablePromise(valueOrPromise)
+  }
   if (isPromiseLike(valueOrPromise)) {
     for (const a of atomState.d.keys()) {
       addPendingPromiseToDependency(
@@ -1079,6 +1095,7 @@ export {
   abortPromise as INTERNAL_abortPromise,
   registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
+  markContinuablePromise as INTERNAL_markContinuablePromise,
   addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
   getMountedDependents as INTERNAL_getMountedDependents,
   getPendingDependents as INTERNAL_getPendingDependents,

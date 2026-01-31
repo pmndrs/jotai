@@ -60,7 +60,8 @@ it('pending asyncAtom -> syncAtom++', async () => {
 
   store.get(asyncAtom)
   expect(callback).toHaveBeenCalledTimes(1)
+  await new Promise((r) => setTimeout(r)) // wait for asyncAtom to resolve
   callback.mockClear()
   store.set(syncAtom, 1)
-  expect(callback).toHaveBeenCalledTimes(0) // FAILS: received 1
+  expect(callback).toHaveBeenCalledTimes(0)
 })
