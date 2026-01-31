@@ -275,14 +275,6 @@ function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
   return typeof (p as any)?.then === 'function'
 }
 
-const continuablePromiseSymbol = Symbol('continuablePromise')
-function markContinuablePromise(promise: PromiseLike<unknown>): void {
-  ;(promise as any)[continuablePromiseSymbol] = true
-}
-function isContinuablePromise(promise: PromiseLike<unknown>): boolean {
-  return !!(promise as any)[continuablePromiseSymbol]
-}
-
 function addPendingPromiseToDependency(
   atom: AnyAtom,
   promise: PromiseLike<AnyValue>,
@@ -534,14 +526,11 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
         break
       }
     }
-    let shouldDeleteInvalidated = true
     if (hasChangedDeps) {
       readAtomState(store, a)
       mountDependencies(store, a)
     }
-    if (shouldDeleteInvalidated) {
-      invalidatedAtoms.delete(a)
-    }
+    invalidatedAtoms.delete(a)
   }
 }
 
@@ -942,13 +931,6 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
-  if (
-    isPromiseLike(valueOrPromise) &&
-    isPromiseLike(prevValue) &&
-    isContinuablePromise(prevValue)
-  ) {
-    markContinuablePromise(valueOrPromise)
-  }
   if (isPromiseLike(valueOrPromise)) {
     for (const a of atomState.d.keys()) {
       addPendingPromiseToDependency(
@@ -1095,7 +1077,6 @@ export {
   abortPromise as INTERNAL_abortPromise,
   registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
-  markContinuablePromise as INTERNAL_markContinuablePromise,
   addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
   getMountedDependents as INTERNAL_getMountedDependents,
   getPendingDependents as INTERNAL_getPendingDependents,

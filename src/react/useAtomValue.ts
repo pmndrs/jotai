@@ -1,10 +1,7 @@
 /// <reference types="react/experimental" />
 
 import React, { useDebugValue, useEffect, useReducer } from 'react'
-import {
-  INTERNAL_markContinuablePromise as markContinuablePromise,
-  INTERNAL_registerAbortHandler as registerAbortHandler,
-} from '../vanilla/internals.ts'
+import { INTERNAL_registerAbortHandler as registerAbortHandler } from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
 import { useStore } from './Provider.ts'
 
@@ -173,7 +170,6 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
 
   useDebugValue(value)
   if (isPromiseLike(value)) {
-    markContinuablePromise(value)
     const promise = createContinuablePromise(value, () => store.get(atom))
     if (promiseStatus) {
       attachPromiseStatus(promise)
