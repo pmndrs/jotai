@@ -287,21 +287,6 @@ function addPendingPromiseToDependency(
   }
 }
 
-function getMountedDependents(
-  atom: AnyAtom,
-  mountedMap: MountedMap,
-): Set<AnyAtom> {
-  const dependents = new Set<AnyAtom>()
-  for (const a of mountedMap.get(atom)?.t || []) {
-    dependents.add(a)
-  }
-  return dependents
-}
-
-function getPendingDependents(atomState: AtomState): Set<AnyAtom> {
-  return atomState.p
-}
-
 //
 // Store hooks
 //
@@ -504,12 +489,12 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack
-    for (const d of getMountedDependents(a, mountedMap)) {
+    for (const d of mountedMap.get(a)?.t || []) {
       if (!visiting.has(d)) {
         stack.push(d)
       }
     }
-    for (const d of getPendingDependents(aState)) {
+    for (const d of aState.p) {
       if (!visiting.has(d)) {
         stack.push(d)
       }
@@ -700,7 +685,7 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   const mountedStack: AnyAtom[] = [atom]
   while (mountedStack.length) {
     const a = mountedStack.pop()!
-    for (const d of getMountedDependents(a, mountedMap)) {
+    for (const d of mountedMap.get(a)?.t || []) {
       const dState = ensureAtomState(store, d)
       invalidatedAtoms.set(d, dState.n)
       mountedStack.push(d)
@@ -710,7 +695,7 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   while (pendingStack.length) {
     const a = pendingStack.pop()!
     const aState = ensureAtomState(store, a)
-    for (const d of getPendingDependents(aState)) {
+    for (const d of aState.p) {
       const dState = ensureAtomState(store, d)
       if (invalidatedAtoms.get(d) !== dState.n) {
         invalidatedAtoms.set(d, dState.n)
@@ -1078,6 +1063,4 @@ export {
   registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
   addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
-  getMountedDependents as INTERNAL_getMountedDependents,
-  getPendingDependents as INTERNAL_getPendingDependents,
 }
