@@ -25,13 +25,6 @@ type AtomState<Value = AnyValue> = {
    * The map value is the epoch number of the dependency.
    */
   readonly d: Map<AnyAtom, EpochNumber>
-  /**
-   * Set of atoms with pending promise that depend on the atom.
-   *
-   * This may cause memory leaks, but it's for the capability to continue promises
-   * TODO(daishi): revisit how to handle this
-   */
-  readonly p: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: EpochNumber
   /** Atom value */
@@ -275,22 +268,8 @@ function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
   return typeof (p as any)?.then === 'function'
 }
 
-function addPendingPromiseToDependency(
+function getMountedDependents(
   atom: AnyAtom,
-  promise: PromiseLike<AnyValue>,
-  dependencyAtomState: AtomState,
-): void {
-  if (!dependencyAtomState.p.has(atom)) {
-    dependencyAtomState.p.add(atom)
-    const cleanup = () => dependencyAtomState.p.delete(atom)
-    promise.then(cleanup, cleanup)
-  }
-}
-
-// TODO(daishi): revisit this implementation
-function getMountedOrPendingDependents(
-  atom: AnyAtom,
-  _atomState: AtomState,
   mountedMap: MountedMap,
 ): Set<AnyAtom> {
   const dependents = new Set<AnyAtom>()
@@ -408,7 +387,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
   }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
-    atomState = { d: new Map(), p: new Set(), n: 0 }
+    atomState = { d: new Map(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
     atomOnInit?.(store, atom)
@@ -502,7 +481,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
+    for (const d of getMountedDependents(a, mountedMap)) {
       if (!visiting.has(d)) {
         stack.push(d)
       }
@@ -595,9 +574,6 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
       return returnAtomValue(aState)
     } finally {
       atomState.d.set(a, aState.n)
-      if (isPendingPromise(atomState.v)) {
-        addPendingPromiseToDependency(atom, atomState.v, aState)
-      }
       if (mountedMap.has(atom)) {
         mountedMap.get(a)?.t.add(atom)
       }
@@ -693,8 +669,7 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   const stack: AnyAtom[] = [atom]
   while (stack.length) {
     const a = stack.pop()!
-    const aState = ensureAtomState(store, a)
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
+    for (const d of getMountedDependents(a, mountedMap)) {
       const dState = ensureAtomState(store, d)
       invalidatedAtoms.set(d, dState.n)
       stack.push(d)
@@ -774,7 +749,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
   const unmountAtom = buildingBlocks[19]
   const atomState = ensureAtomState(store, atom)
   const mounted = mountedMap.get(atom)
-  if (mounted) {
+  if (mounted && !isPendingPromise(atomState.v)) {
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)
@@ -910,15 +885,6 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
-  if (isPromiseLike(valueOrPromise)) {
-    for (const a of atomState.d.keys()) {
-      addPendingPromiseToDependency(
-        atom,
-        valueOrPromise,
-        ensureAtomState(store, a),
-      )
-    }
-  }
   atomState.v = valueOrPromise
   delete atomState.e
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
@@ -1056,6 +1022,5 @@ export {
   abortPromise as INTERNAL_abortPromise,
   registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
-  addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
-  getMountedOrPendingDependents as INTERNAL_getMountedOrPendingDependents,
+  getMountedDependents as INTERNAL_getMountedDependents,
 }

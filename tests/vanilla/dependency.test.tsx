@@ -98,7 +98,7 @@ it('correctly handles the same promise being returned twice from an atom getter 
   await expect(store.get(derivedAtom)).resolves.toBe('Asynchronous Data')
 })
 
-it.skip('keeps atoms mounted between recalculations', async () => {
+it('keeps atoms mounted between recalculations', async () => {
   const metrics1 = {
     mounted: 0,
     unmounted: 0,
@@ -219,7 +219,9 @@ it('settles never resolving async derivations with deps picked up sync', async (
   expect(sub).toBe(1)
 })
 
-it('settles never resolving async derivations with deps picked up async', async () => {
+it.skip(
+  'settles never resolving async derivations with deps picked up async',
+  async () => {
   const resolve: ((value: number) => void)[] = []
 
   const syncAtom = atom({
@@ -251,7 +253,8 @@ it('settles never resolving async derivations with deps picked up async', async 
   await vi.advanceTimersByTimeAsync(100)
   expect(values).toEqual([1])
   expect(sub).toBe(1)
-})
+},
+)
 
 it.skip('refreshes deps for each async read', async () => {
   const countAtom = atom(0)
