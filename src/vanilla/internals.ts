@@ -457,40 +457,6 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   }
 }
 
-const deferredRecomputeMap = new WeakMap<
-  Store,
-  {
-    atoms: Set<AnyAtom>
-  }
->()
-
-const scheduleDeferredRecompute = (
-  store: Store,
-  atom: AnyAtom,
-  readAtomState: ReadAtomState,
-  mountDependencies: MountDependencies,
-  invalidatedAtoms: InvalidatedAtoms,
-) => {
-  let state = deferredRecomputeMap.get(store)
-  if (!state) {
-    state = {
-      atoms: new Set(),
-    }
-    deferredRecomputeMap.set(store, state)
-  }
-  state.atoms.add(atom)
-  const run = () => {
-    const atoms = Array.from(state!.atoms)
-    state!.atoms.clear()
-    for (const a of atoms) {
-      readAtomState(store, a)
-      mountDependencies(store, a)
-      invalidatedAtoms.delete(a)
-    }
-  }
-  Promise.resolve().then(run)
-}
-
 const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   store,
 ) => {
@@ -558,13 +524,11 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     if (hasChangedDeps) {
       if (!mountedMap.has(a) && isPendingPromise(aState.v)) {
-        scheduleDeferredRecompute(
-          store,
-          a,
-          readAtomState,
-          mountDependencies,
-          invalidatedAtoms,
-        )
+        Promise.resolve().then(() => {
+          readAtomState(store, a)
+          mountDependencies(store, a)
+          invalidatedAtoms.delete(a)
+        })
         continue
       }
       readAtomState(store, a)
