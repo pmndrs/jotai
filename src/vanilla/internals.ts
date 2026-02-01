@@ -32,10 +32,6 @@ type AtomState<Value = AnyValue> = {
    * TODO(daishi): revisit how to handle this
    */
   readonly p: Set<AnyAtom>
-  /**
-   * Previous dependencies snapshot for pruning.
-   */
-  s?: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: EpochNumber
   /** Atom value */
@@ -519,14 +515,10 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   for (let i = topSortedReversed.length - 1; i >= 0; --i) {
     const [a, aState] = topSortedReversed[i]!
     let hasChangedDeps = false
-    if (isPromiseLike(aState.v)) {
-      hasChangedDeps = true
-    } else {
-      for (const dep of aState.d.keys()) {
-        if (dep !== a && changedAtoms.has(dep)) {
-          hasChangedDeps = true
-          break
-        }
+    for (const dep of aState.d.keys()) {
+      if (dep !== a && changedAtoms.has(dep)) {
+        hasChangedDeps = true
+        break
       }
     }
     if (hasChangedDeps) {
@@ -578,15 +570,14 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   }
   // Compute a new state for this atom.
   let isSync = true
-  const nextDeps = new Map<AnyAtom, EpochNumber>()
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
+  const nextDeps = new Map<AnyAtom, EpochNumber>()
   const pruneDependencies = () => {
     for (const a of prevDeps) {
       if (!nextDeps.has(a)) {
         atomState.d.delete(a)
       }
     }
-    atomState.s = new Set(prevDeps)
     prevDeps.clear()
   }
   function mountDependenciesIfAsync() {
@@ -680,13 +671,6 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     }
     setAtomStateValueOrPromise(store, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
-      for (const a of nextDeps.keys()) {
-        addPendingPromiseToDependency(
-          atom,
-          valueOrPromise,
-          ensureAtomState(store, a),
-        )
-      }
       registerAbortHandler(valueOrPromise, () => controller?.abort())
       const settle = () => {
         pruneDependencies()
@@ -824,16 +808,12 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
         }
       }
     }
-    const prevDeps = atomState.s
-    if (prevDeps) {
-      for (const a of prevDeps) {
-        if (!atomState.d.has(a)) {
-          mounted.d.delete(a)
-          const aMounted = unmountAtom(store, a)
-          aMounted?.t.delete(atom)
-        }
+    for (const a of mounted.d) {
+      if (!atomState.d.has(a)) {
+        mounted.d.delete(a)
+        const aMounted = unmountAtom(store, a)
+        aMounted?.t.delete(atom)
       }
-      delete atomState.s
     }
   }
 }
