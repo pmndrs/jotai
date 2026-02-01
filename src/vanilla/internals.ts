@@ -292,7 +292,14 @@ function getMountedOrPendingDependents(
   atomState: AtomState,
   mountedMap: MountedMap,
 ): Iterable<AnyAtom> {
-  return new Set([...(mountedMap.get(atom)?.t || []), ...atomState.p])
+  const dependents = new Set<AnyAtom>()
+  for (const a of mountedMap.get(atom)?.t || []) {
+    dependents.add(a)
+  }
+  for (const atomWithPendingPromise of atomState.p) {
+    dependents.add(atomWithPendingPromise)
+  }
+  return dependents
 }
 
 //
