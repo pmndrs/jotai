@@ -573,14 +573,14 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     }
     prevDeps.clear()
   }
-  function mountDependenciesIfAsync() {
+  const mountDependenciesIfAsync = () => {
     if (mountedMap.has(atom)) {
       mountDependencies(store, atom)
       recomputeInvalidatedAtoms(store)
       flushCallbacks(store)
     }
   }
-  function getter<V>(a: Atom<V>) {
+  const getter = <V>(a: Atom<V>) => {
     if (a === (atom as AnyAtom)) {
       const aState = ensureAtomState(store, a)
       if (!isAtomStateInitialized(aState)) {
