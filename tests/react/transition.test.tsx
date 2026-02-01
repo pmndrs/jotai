@@ -1,4 +1,3 @@
-/// <reference types="react/experimental" />
 import ReactExports, { StrictMode, Suspense, useEffect } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -14,66 +13,62 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-const { use, useTransition } = ReactExports
+const { useTransition } = ReactExports
 
 describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
-  // FIXME some tests are failing with react@experimental
-  it.skipIf(typeof use === 'function')(
-    'no extra commit with useTransition (#1125)',
-    async () => {
-      const countAtom = atom(0)
-      const delayedAtom = atom(async (get) => {
-        await sleep(100)
-        return get(countAtom)
+  it('no extra commit with useTransition (#1125)', async () => {
+    const countAtom = atom(0)
+    const delayedAtom = atom(async (get) => {
+      await sleep(100)
+      return get(countAtom)
+    })
+
+    const committed: { pending: boolean; delayed: number }[] = []
+
+    const Counter = () => {
+      const setCount = useSetAtom(countAtom)
+      const delayed = useAtomValue(delayedAtom)
+      const [pending, startTransition] = useTransition()
+      useEffect(() => {
+        committed.push({ pending, delayed })
       })
-
-      const committed: { pending: boolean; delayed: number }[] = []
-
-      const Counter = () => {
-        const setCount = useSetAtom(countAtom)
-        const delayed = useAtomValue(delayedAtom)
-        const [pending, startTransition] = useTransition()
-        useEffect(() => {
-          committed.push({ pending, delayed })
-        })
-        return (
-          <>
-            <div>delayed: {delayed}</div>
-            <button
-              onClick={() => startTransition(() => setCount((c) => c + 1))}
-            >
-              button
-            </button>
-          </>
-        )
-      }
-
-      await act(() =>
-        render(
-          <>
-            <Suspense fallback="loading">
-              <Counter />
-            </Suspense>
-          </>,
-        ),
+      return (
+        <>
+          <div>delayed: {delayed}</div>
+          <button onClick={() => startTransition(() => setCount((c) => c + 1))}>
+            button
+          </button>
+        </>
       )
+    }
 
-      expect(screen.getByText('loading')).toBeInTheDocument()
-      await act(() => vi.advanceTimersByTimeAsync(100))
-      expect(screen.getByText('delayed: 0')).toBeInTheDocument()
+    await act(() =>
+      render(
+        <>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </>,
+      ),
+    )
 
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('delayed: 0')).toBeInTheDocument()
+
+    await act(async () => {
       fireEvent.click(screen.getByText('button'))
-      expect(screen.getByText('delayed: 0')).toBeInTheDocument()
-      await act(() => vi.advanceTimersByTimeAsync(100))
-      expect(screen.getByText('delayed: 1')).toBeInTheDocument()
+    })
+    expect(screen.getByText('delayed: 0')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('delayed: 1')).toBeInTheDocument()
 
-      expect(committed).toEqual([
-        { pending: false, delayed: 0 },
-        { pending: true, delayed: 0 },
-        { pending: false, delayed: 1 },
-      ])
-    },
-  )
+    expect(committed).toEqual([
+      { pending: false, delayed: 0 },
+      { pending: true, delayed: 0 },
+      { pending: false, delayed: 1 },
+    ])
+  })
 
   it('can update normal atom with useTransition (#1151)', async () => {
     const countAtom = atom(0)
