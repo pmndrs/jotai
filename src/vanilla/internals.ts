@@ -571,7 +571,6 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
         atomState.d.delete(a)
       }
     }
-    prevDeps.clear()
   }
   const mountDependenciesIfAsync = () => {
     if (mountedMap.has(atom)) {
