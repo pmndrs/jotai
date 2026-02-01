@@ -1,5 +1,3 @@
-/// <reference types="react/experimental" />
-
 import React, { useDebugValue, useEffect, useReducer } from 'react'
 import { INTERNAL_registerAbortHandler as registerAbortHandler } from '../vanilla/internals.ts'
 import type { Atom, ExtractAtomValue } from '../vanilla.ts'
