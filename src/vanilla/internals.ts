@@ -240,19 +240,19 @@ function returnAtomValue<Value>(atomState: AtomState<Value>): Value {
 
 const promiseStateMap: WeakMap<
   PromiseLike<unknown>,
-  [settled: boolean, abortHandlers: Set<() => void>]
+  [unsettled: boolean, abortHandlers: Set<() => void>]
 > = new WeakMap()
 
 function isUnsettledPromise(value: unknown): value is PromiseLike<unknown> {
   return (
-    isPromiseLike(value) && promiseStateMap.get(value as never)?.[0] === false
+    isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[0]
   )
 }
 
 function abortPromise<T>(promise: PromiseLike<T>): void {
   const promiseState = promiseStateMap.get(promise)
-  if (promiseState?.[0] === false) {
-    promiseState[0] = true
+  if (promiseState?.[0]) {
+    promiseState[0] = false
     promiseState[1].forEach((fn) => fn())
   }
 }
@@ -263,10 +263,10 @@ function registerAbortHandler<T>(
 ): void {
   let promiseState = promiseStateMap.get(promise)
   if (!promiseState) {
-    promiseState = [false, new Set()]
+    promiseState = [true, new Set()]
     promiseStateMap.set(promise, promiseState)
     const settle = () => {
-      promiseState![0] = true
+      promiseState![0] = false
     }
     promise.then(settle, settle)
   }
