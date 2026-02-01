@@ -35,7 +35,7 @@ type AtomState<Value = AnyValue> = {
   /**
    * Previous dependencies snapshot for pruning.
    */
-  pds?: Set<AnyAtom>
+  s?: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: EpochNumber
   /** Atom value */
@@ -414,7 +414,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
   }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
-    atomState = { d: new Map(), p: new Set(), n: 0, pds: new Set() }
+    atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
     atomOnInit?.(store, atom)
@@ -577,9 +577,8 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     }
   }
   // Compute a new state for this atom.
-  const nextDeps = new Map<AnyAtom, EpochNumber>()
   let isSync = true
-  let currentPromise: PromiseLike<AnyValue> | null = null
+  const nextDeps = new Map<AnyAtom, EpochNumber>()
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
   const pruneDependencies = () => {
     for (const a of prevDeps) {
@@ -587,7 +586,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
         atomState.d.delete(a)
       }
     }
-    atomState.pds = new Set(prevDeps)
+    atomState.s = new Set(prevDeps)
     prevDeps.clear()
   }
   function mountDependenciesIfAsync() {
@@ -617,8 +616,8 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     } finally {
       nextDeps.set(a, aState.n)
       atomState.d.set(a, aState.n)
-      if (currentPromise) {
-        addPendingPromiseToDependency(atom, currentPromise, aState)
+      if (isPromiseLike(atomState.v)) {
+        addPendingPromiseToDependency(atom, atomState.v, aState)
       }
       if (mountedMap.has(atom)) {
         mountedMap.get(a)?.t.add(atom)
@@ -681,29 +680,19 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     }
     setAtomStateValueOrPromise(store, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
-      currentPromise = valueOrPromise
       for (const a of nextDeps.keys()) {
         addPendingPromiseToDependency(
           atom,
-          currentPromise,
+          valueOrPromise,
           ensureAtomState(store, a),
         )
       }
       registerAbortHandler(valueOrPromise, () => controller?.abort())
-      valueOrPromise.then(
-        () => {
-          if (atomState.v === valueOrPromise) {
-            pruneDependencies()
-            mountDependenciesIfAsync()
-          }
-        },
-        () => {
-          if (atomState.v === valueOrPromise) {
-            pruneDependencies()
-            mountDependenciesIfAsync()
-          }
-        },
-      )
+      const settle = () => {
+        pruneDependencies()
+        mountDependenciesIfAsync()
+      }
+      valueOrPromise.then(settle, settle)
     } else {
       pruneDependencies()
     }
@@ -835,7 +824,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
         }
       }
     }
-    const prevDeps = atomState.pds
+    const prevDeps = atomState.s
     if (prevDeps) {
       for (const a of prevDeps) {
         if (!atomState.d.has(a)) {
@@ -844,7 +833,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
           aMounted?.t.delete(atom)
         }
       }
-      delete atomState.pds
+      delete atomState.s
     }
   }
 }
