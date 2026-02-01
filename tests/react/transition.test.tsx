@@ -1,5 +1,5 @@
 /// <reference types="react/experimental" />
-import ReactExports, { StrictMode, Suspense, useEffect } from 'react'
+import React, { StrictMode, Suspense, useEffect } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai/react'
@@ -14,7 +14,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-const { use, useTransition } = ReactExports
+const { use, useTransition } = React
 
 describe.skipIf(typeof useTransition !== 'function')('useTransition', () => {
   // FIXME some tests are failing with react@experimental
