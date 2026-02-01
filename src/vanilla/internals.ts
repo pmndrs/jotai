@@ -36,10 +36,6 @@ type AtomState<Value = AnyValue> = {
    * Previous dependencies snapshot for pruning.
    */
   pds?: Set<AnyAtom>
-  /**
-   * Whether previous dependencies are pending prune.
-   */
-  pdp?: boolean
   /** The epoch number of the atom. */
   n: EpochNumber
   /** Atom value */
@@ -584,27 +580,16 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   const nextDeps = new Map<AnyAtom, EpochNumber>()
   let isSync = true
   let currentPromise: PromiseLike<AnyValue> | null = null
+  const prevDeps = new Set<AnyAtom>(atomState.d.keys())
   const pruneDependencies = () => {
-    const prevDeps = atomState.pds
-    if (prevDeps) {
-      for (const a of prevDeps) {
-        if (!nextDeps.has(a)) {
-          atomState.d.delete(a)
-        }
+    for (const a of prevDeps) {
+      if (!nextDeps.has(a)) {
+        atomState.d.delete(a)
       }
     }
-    atomState.pdp = false
-  }
-  const setPrevDepsSnapshot = () => {
-    const prevDeps = atomState.pds || new Set<AnyAtom>()
+    atomState.pds = new Set(prevDeps)
     prevDeps.clear()
-    for (const a of atomState.d.keys()) {
-      prevDeps.add(a)
-    }
-    atomState.pds = prevDeps
-    atomState.pdp = true
   }
-  setPrevDepsSnapshot()
   function mountDependenciesIfAsync() {
     if (mountedMap.has(atom)) {
       mountDependencies(store, atom)
@@ -851,7 +836,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
       }
     }
     const prevDeps = atomState.pds
-    if (prevDeps && !atomState.pdp) {
+    if (prevDeps) {
       for (const a of prevDeps) {
         if (!atomState.d.has(a)) {
           mounted.d.delete(a)
@@ -859,7 +844,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
           aMounted?.t.delete(atom)
         }
       }
-      prevDeps.clear()
+      delete atomState.pds
     }
   }
 }
