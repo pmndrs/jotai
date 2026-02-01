@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
 import { sleep } from '../test-utils'
 
@@ -424,4 +424,51 @@ it('batches sync writes', () => {
   expect(fetch).toHaveBeenCalledOnce()
   expect(fetch).toBeCalledWith(1)
   expect(store.get(a)).toBe(1)
+})
+
+describe('getMountedOrPendingDependents consistent behavior', () => {
+  it('sub to asyncAtom -> syncAtom++', async () => {
+    const store = createStore()
+    const callback = vi.fn()
+    const syncAtom = atom(0)
+    const asyncAtom = atom((get) => {
+      get(syncAtom)
+      callback()
+      return new Promise((res) => setTimeout(res))
+    })
+
+    const unsub = store.sub(asyncAtom, () => {})
+    expect(callback).toHaveBeenCalledTimes(1)
+    callback.mockClear()
+    store.set(syncAtom, (v) => v + 1)
+    expect(callback).toHaveBeenCalledTimes(1)
+    callback.mockClear()
+    unsub()
+    expect(callback).toHaveBeenCalledTimes(0)
+    store.set(syncAtom, (v) => v + 1)
+    expect(callback).toHaveBeenCalledTimes(0)
+  })
+
+  it('sub to asyncAtom -> syncAtomWrapper -> syncAtom++', async () => {
+    const store = createStore()
+    const callback = vi.fn()
+    const syncAtom = atom(0)
+    const syncAtomWrapper = atom((get) => get(syncAtom))
+    const asyncAtom = atom((get) => {
+      callback()
+      get(syncAtomWrapper)
+      return new Promise((res) => setTimeout(res))
+    })
+
+    const unsub = store.sub(asyncAtom, () => {})
+    expect(callback).toHaveBeenCalledTimes(1)
+    callback.mockClear()
+    store.set(syncAtom, (v) => v + 1)
+    expect(callback).toHaveBeenCalledTimes(1)
+    callback.mockClear()
+    unsub()
+    expect(callback).toHaveBeenCalledTimes(0)
+    store.set(syncAtom, (v) => v + 1)
+    expect(callback).toHaveBeenCalledTimes(0)
+  })
 })
