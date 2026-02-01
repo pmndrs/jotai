@@ -240,10 +240,10 @@ function returnAtomValue<Value>(atomState: AtomState<Value>): Value {
 
 const promiseStateMap: WeakMap<
   PromiseLike<unknown>,
-  [pending: boolean, abortHandlers: Set<() => void>]
+  [unsettled: boolean, abortHandlers: Set<() => void>]
 > = new WeakMap()
 
-function isPendingPromise(value: unknown): value is PromiseLike<unknown> {
+function isUnsettledPromise(value: unknown): value is PromiseLike<unknown> {
   return isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[0]
 }
 
@@ -287,20 +287,12 @@ function addPendingPromiseToDependency(
   }
 }
 
-// TODO(daishi): revisit this implementation
 function getMountedOrPendingDependents(
   atom: AnyAtom,
   atomState: AtomState,
   mountedMap: MountedMap,
-): Set<AnyAtom> {
-  const dependents = new Set<AnyAtom>()
-  for (const a of mountedMap.get(atom)?.t || []) {
-    dependents.add(a)
-  }
-  for (const atomWithPendingPromise of atomState.p) {
-    dependents.add(atomWithPendingPromise)
-  }
-  return dependents
+): Iterable<AnyAtom> {
+  return new Set([...(mountedMap.get(atom)?.t || []), ...atomState.p])
 }
 
 //
@@ -598,7 +590,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
       return returnAtomValue(aState)
     } finally {
       atomState.d.set(a, aState.n)
-      if (isPendingPromise(atomState.v)) {
+      if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)
       }
       if (mountedMap.has(atom)) {
@@ -699,8 +691,10 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
     const aState = ensureAtomState(store, a)
     for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       const dState = ensureAtomState(store, d)
-      invalidatedAtoms.set(d, dState.n)
-      stack.push(d)
+      if (invalidatedAtoms.get(d) !== dState.n) {
+        invalidatedAtoms.set(d, dState.n)
+        stack.push(d)
+      }
     }
   }
 }
@@ -777,7 +771,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
   const unmountAtom = buildingBlocks[19]
   const atomState = ensureAtomState(store, atom)
   const mounted = mountedMap.get(atom)
-  if (mounted && !isPendingPromise(atomState.v)) {
+  if (mounted && !isUnsettledPromise(atomState.v)) {
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)
@@ -903,7 +897,6 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
   return mounted
 }
 
-// TODO(daishi): revisit this implementation
 const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   store,
   atom,
@@ -1055,7 +1048,7 @@ export {
   isAtomStateInitialized as INTERNAL_isAtomStateInitialized,
   returnAtomValue as INTERNAL_returnAtomValue,
   promiseStateMap as INTERNAL_promiseStateMap,
-  isPendingPromise as INTERNAL_isPendingPromise,
+  isUnsettledPromise as INTERNAL_isUnsettledPromise,
   abortPromise as INTERNAL_abortPromise,
   registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
