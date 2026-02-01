@@ -32,6 +32,14 @@ type AtomState<Value = AnyValue> = {
    * TODO(daishi): revisit how to handle this
    */
   readonly p: Set<AnyAtom>
+  /**
+   * Previous dependencies snapshot for pruning.
+   */
+  pds?: Set<AnyAtom>
+  /**
+   * Whether previous dependencies are pending prune.
+   */
+  pdp?: boolean
   /** The epoch number of the atom. */
   n: EpochNumber
   /** Atom value */
@@ -410,7 +418,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
   }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
-    atomState = { d: new Map(), p: new Set(), n: 0 }
+    atomState = { d: new Map(), p: new Set(), n: 0, pds: new Set() }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
     atomOnInit?.(store, atom)
@@ -515,10 +523,14 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   for (let i = topSortedReversed.length - 1; i >= 0; --i) {
     const [a, aState] = topSortedReversed[i]!
     let hasChangedDeps = false
-    for (const dep of aState.d.keys()) {
-      if (dep !== a && changedAtoms.has(dep)) {
-        hasChangedDeps = true
-        break
+    if (isPromiseLike(aState.v)) {
+      hasChangedDeps = true
+    } else {
+      for (const dep of aState.d.keys()) {
+        if (dep !== a && changedAtoms.has(dep)) {
+          hasChangedDeps = true
+          break
+        }
       }
     }
     if (hasChangedDeps) {
@@ -569,8 +581,30 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     }
   }
   // Compute a new state for this atom.
-  atomState.d.clear()
+  const nextDeps = new Map<AnyAtom, EpochNumber>()
   let isSync = true
+  let currentPromise: PromiseLike<AnyValue> | null = null
+  const pruneDependencies = () => {
+    const prevDeps = atomState.pds
+    if (prevDeps) {
+      for (const a of prevDeps) {
+        if (!nextDeps.has(a)) {
+          atomState.d.delete(a)
+        }
+      }
+    }
+    atomState.pdp = false
+  }
+  const setPrevDepsSnapshot = () => {
+    const prevDeps = atomState.pds || new Set<AnyAtom>()
+    prevDeps.clear()
+    for (const a of atomState.d.keys()) {
+      prevDeps.add(a)
+    }
+    atomState.pds = prevDeps
+    atomState.pdp = true
+  }
+  setPrevDepsSnapshot()
   function mountDependenciesIfAsync() {
     if (mountedMap.has(atom)) {
       mountDependencies(store, atom)
@@ -596,9 +630,10 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     try {
       return returnAtomValue(aState)
     } finally {
+      nextDeps.set(a, aState.n)
       atomState.d.set(a, aState.n)
-      if (isPromiseLike(atomState.v)) {
-        addPendingPromiseToDependency(atom, atomState.v, aState)
+      if (currentPromise) {
+        addPendingPromiseToDependency(atom, currentPromise, aState)
       }
       if (mountedMap.has(atom)) {
         mountedMap.get(a)?.t.add(atom)
@@ -661,8 +696,31 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     }
     setAtomStateValueOrPromise(store, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
+      currentPromise = valueOrPromise
+      for (const a of nextDeps.keys()) {
+        addPendingPromiseToDependency(
+          atom,
+          currentPromise,
+          ensureAtomState(store, a),
+        )
+      }
       registerAbortHandler(valueOrPromise, () => controller?.abort())
-      valueOrPromise.then(mountDependenciesIfAsync, mountDependenciesIfAsync)
+      valueOrPromise.then(
+        () => {
+          if (atomState.v === valueOrPromise) {
+            pruneDependencies()
+            mountDependenciesIfAsync()
+          }
+        },
+        () => {
+          if (atomState.v === valueOrPromise) {
+            pruneDependencies()
+            mountDependenciesIfAsync()
+          }
+        },
+      )
+    } else {
+      pruneDependencies()
     }
     storeHooks.r?.(atom)
     return atomState
@@ -778,7 +836,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
   const unmountAtom = buildingBlocks[19]
   const atomState = ensureAtomState(store, atom)
   const mounted = mountedMap.get(atom)
-  if (mounted && !isUnsettledPromise(atomState.v)) {
+  if (mounted) {
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)
@@ -792,12 +850,16 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
         }
       }
     }
-    for (const a of mounted.d) {
-      if (!atomState.d.has(a)) {
-        mounted.d.delete(a)
-        const aMounted = unmountAtom(store, a)
-        aMounted?.t.delete(atom)
+    const prevDeps = atomState.pds
+    if (prevDeps && !atomState.pdp) {
+      for (const a of prevDeps) {
+        if (!atomState.d.has(a)) {
+          mounted.d.delete(a)
+          const aMounted = unmountAtom(store, a)
+          aMounted?.t.delete(atom)
+        }
       }
+      prevDeps.clear()
     }
   }
 }
