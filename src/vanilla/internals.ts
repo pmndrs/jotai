@@ -244,9 +244,7 @@ const promiseStateMap: WeakMap<
 > = new WeakMap()
 
 function isUnsettledPromise(value: unknown): value is PromiseLike<unknown> {
-  return (
-    isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[0]
-  )
+  return isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[0]
 }
 
 function abortPromise<T>(promise: PromiseLike<T>): void {
