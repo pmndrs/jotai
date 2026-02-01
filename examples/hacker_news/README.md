@@ -2,7 +2,7 @@
 
 ## Description
 
-Demonstrate a news articles with jotai, hit next to see more articles.
+Demonstrate a news article with jotai, hit next to see more articles.
 
 ## Set up locally
 

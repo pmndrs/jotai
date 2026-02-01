@@ -9,11 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: 'jotaijs/jotai-ecosystem-ci'
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: 'pnpm'
@@ -30,11 +30,12 @@ jobs:
         id: run_command
         run: |
           echo "x<<EOF" >> $GITHUB_OUTPUT
-          pnpm run ecosystem-ci | grep -A999 -- '---- Jotai Ecosystem CI Results ----' >> $GITHUB_OUTPUT
+          pnpm run ecosystem-ci | tee >(grep -A999 -- '---- Jotai Ecosystem CI Results ----' >> $GITHUB_OUTPUT)
           echo "EOF" >> $GITHUB_OUTPUT
         env:
           JOTAI_PKG: https://pkg.csb.dev/pmndrs/jotai/commit/${{ steps.short_sha.outputs.x }}/jotai
-      - uses: peter-evans/create-or-update-comment@v4
+          VERBOSE: 1
+      - uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.issue.number }}
           body: |
@@ -42,3 +43,4 @@ jobs:
             ```
             ${{ steps.run_command.outputs.x }}
             ```
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

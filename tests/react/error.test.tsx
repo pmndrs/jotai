@@ -7,19 +7,17 @@ import {
   useState,
 } from 'react'
 import type { ReactNode } from 'react'
-import { act, render, screen, waitFor } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
-
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+import { sleep } from '../test-utils'
 
 const consoleError = console.error
 const errorMessages: string[] = []
+
 beforeEach(() => {
+  vi.useFakeTimers()
   errorMessages.splice(0)
   console.error = vi.fn((err: string) => {
     const match = /^(.*?)(\n|$)/.exec(err)
@@ -29,6 +27,7 @@ beforeEach(() => {
   })
 })
 afterEach(() => {
+  vi.useRealTimers()
   console.error = consoleError
 })
 
@@ -57,7 +56,7 @@ class ErrorBoundary extends Component<
   }
 }
 
-it('can throw an initial error in read function', async () => {
+it('can throw an initial error in read function', () => {
   const errorAtom = atom(() => {
     throw new Error()
   })
@@ -79,10 +78,10 @@ it('can throw an initial error in read function', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('Errored:')).toBeInTheDocument()
+  expect(screen.getByText('Errored:')).toBeInTheDocument()
 })
 
-it('can throw an error in read function', async () => {
+it('can throw an error in read function', () => {
   const countAtom = atom(0)
   const errorAtom = atom((get) => {
     if (get(countAtom) === 0) {
@@ -111,13 +110,13 @@ it('can throw an error in read function', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('no error')).toBeInTheDocument()
+  expect(screen.getByText('no error')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('Errored:')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('Errored:')).toBeInTheDocument()
 })
 
-it('can throw an initial chained error in read function', async () => {
+it('can throw an initial chained error in read function', () => {
   const errorAtom = atom(() => {
     throw new Error()
   })
@@ -140,10 +139,10 @@ it('can throw an initial chained error in read function', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('Errored:')).toBeInTheDocument()
+  expect(screen.getByText('Errored:')).toBeInTheDocument()
 })
 
-it('can throw a chained error in read function', async () => {
+it('can throw a chained error in read function', () => {
   const countAtom = atom(0)
   const errorAtom = atom((get) => {
     if (get(countAtom) === 0) {
@@ -173,14 +172,15 @@ it('can throw a chained error in read function', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('no error')).toBeInTheDocument()
+  expect(screen.getByText('no error')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('Errored:')).toBeInTheDocument()
+  fireEvent.click(screen.getByText('button'))
+  expect(screen.getByText('Errored:')).toBeInTheDocument()
 })
 
 it('can throw an initial error in async read function', async () => {
   const errorAtom = atom(async () => {
+    await sleep(100)
     throw new Error()
   })
 
@@ -193,24 +193,27 @@ it('can throw an initial error in async read function', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <ErrorBoundary>
-          <Suspense fallback={null}>
+          <Suspense fallback="loading">
             <Counter />
           </Suspense>
         </ErrorBoundary>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('Errored:')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('Errored:')).toBeInTheDocument()
 })
 
 it('can throw an error in async read function', async () => {
   const countAtom = atom(0)
   const errorAtom = atom(async (get) => {
+    await sleep(100)
     if (get(countAtom) === 0) {
       return 0
     }
@@ -229,25 +232,29 @@ it('can throw an error in async read function', async () => {
     )
   }
 
-  await act(async () => {
+  await act(() =>
     render(
       <StrictMode>
         <ErrorBoundary>
-          <Suspense fallback={null}>
+          <Suspense fallback="loading">
             <Counter />
           </Suspense>
         </ErrorBoundary>
       </StrictMode>,
-    )
-  })
+    ),
+  )
 
-  expect(await screen.findByText('no error')).toBeInTheDocument()
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('no error')).toBeInTheDocument()
 
-  await userEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('Errored:')).toBeInTheDocument()
+  await act(() => fireEvent.click(screen.getByText('button')))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  expect(screen.getByText('Errored:')).toBeInTheDocument()
 })
 
-it('can throw an error in write function', async () => {
+it('can throw an error in write function', () => {
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
@@ -280,10 +287,10 @@ it('can throw an error in write function', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('no error')).toBeInTheDocument()
+  expect(screen.getByText('no error')).toBeInTheDocument()
   expect(errorMessages).not.toContain('Error: error_in_write_function')
 
-  await userEvent.click(screen.getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   expect(errorMessages).toContain('Error: error_in_write_function')
 })
 
@@ -316,22 +323,21 @@ it('can throw an error in async write function', async () => {
 
   render(
     <StrictMode>
-      <Suspense fallback={null}>
+      <Suspense fallback="loading">
         <Counter />
       </Suspense>
     </StrictMode>,
   )
 
-  expect(await screen.findByText('no error')).toBeInTheDocument()
+  expect(screen.getByText('no error')).toBeInTheDocument()
   expect(errorMessages).not.toContain('Error: error_in_async_write_function')
 
-  await userEvent.click(screen.getByText('button'))
-  await waitFor(() => {
-    expect(errorMessages).toContain('Error: error_in_async_write_function')
-  })
+  fireEvent.click(screen.getByText('button'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(errorMessages).toContain('Error: error_in_async_write_function')
 })
 
-it('can throw a chained error in write function', async () => {
+it('can throw a chained error in write function', () => {
   const countAtom = atom(0)
   const errorAtom = atom(
     (get) => get(countAtom),
@@ -370,14 +376,14 @@ it('can throw a chained error in write function', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('no error')).toBeInTheDocument()
+  expect(screen.getByText('no error')).toBeInTheDocument()
   expect(errorMessages).not.toContain('Error: chained_err_in_write')
 
-  await userEvent.click(screen.getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   expect(errorMessages).toContain('Error: chained_err_in_write')
 })
 
-it('throws an error while updating in effect', async () => {
+it('throws an error while updating in effect', () => {
   const countAtom = atom(0)
 
   const Counter = () => {
@@ -406,7 +412,7 @@ it('throws an error while updating in effect', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('no error')).toBeInTheDocument()
+  expect(screen.getByText('no error')).toBeInTheDocument()
   expect(errorMessages).toContain('Error: err_updating_in_effect')
 })
 
@@ -444,7 +450,7 @@ describe('throws an error while updating in effect cleanup', () => {
     )
   }
 
-  it('[DEV-ONLY] single setCount', async () => {
+  it('[DEV-ONLY] single setCount', () => {
     render(
       <>
         <ErrorBoundary>
@@ -453,24 +459,29 @@ describe('throws an error while updating in effect cleanup', () => {
       </>,
     )
 
-    expect(await screen.findByText('no error')).toBeInTheDocument()
-    expect(errorMessages).not.toContain(
-      'Error: Uncaught [Error: err_in_effect_cleanup]',
+    expect(screen.getByText('no error')).toBeInTheDocument()
+    expect(errorMessages.some((m) => m.includes('err_in_effect_cleanup'))).toBe(
+      false,
     )
 
-    await userEvent.click(screen.getByText('close'))
+    fireEvent.click(screen.getByText('close'))
+
+    // NOTE: Conditional expect is required because behavior differs by React version
+    // AND build mode (dev vs prod). Using it.runIf/skipIf causes production build failures.
+    /* eslint-disable vitest/no-conditional-expect */
     if (reactVersion.startsWith('17.')) {
-      expect(errorMessages).toContain(
-        'Error: Uncaught [Error: err_in_effect_cleanup]',
-      )
+      expect(
+        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
+      ).toBe(true)
     } else {
       expect(
-        await screen.findByText('Errored: err_in_effect_cleanup'),
+        screen.getByText('Errored: err_in_effect_cleanup'),
       ).toBeInTheDocument()
     }
+    /* eslint-enable vitest/no-conditional-expect */
   })
 
-  it('[DEV-ONLY] dobule setCount', async () => {
+  it('[DEV-ONLY] double setCount', () => {
     doubleSetCount = true
 
     render(
@@ -481,21 +492,26 @@ describe('throws an error while updating in effect cleanup', () => {
       </>,
     )
 
-    expect(await screen.findByText('no error')).toBeInTheDocument()
-    expect(errorMessages).not.toContain(
-      'Error: Uncaught [Error: err_in_effect_cleanup]',
+    expect(screen.getByText('no error')).toBeInTheDocument()
+    expect(errorMessages.some((m) => m.includes('err_in_effect_cleanup'))).toBe(
+      false,
     )
 
-    await userEvent.click(screen.getByText('close'))
+    fireEvent.click(screen.getByText('close'))
+
+    // NOTE: Conditional expect is required because behavior differs by React version
+    // AND build mode (dev vs prod). Using it.runIf/skipIf causes production build failures.
+    /* eslint-disable vitest/no-conditional-expect */
     if (reactVersion.startsWith('17.')) {
-      expect(errorMessages).toContain(
-        'Error: Uncaught [Error: err_in_effect_cleanup]',
-      )
+      expect(
+        errorMessages.some((m) => m.includes('err_in_effect_cleanup')),
+      ).toBe(true)
     } else {
       expect(
-        await screen.findByText('Errored: err_in_effect_cleanup'),
+        screen.getByText('Errored: err_in_effect_cleanup'),
       ).toBeInTheDocument()
     }
+    /* eslint-enable vitest/no-conditional-expect */
   })
 })
 
@@ -511,7 +527,7 @@ describe('error recovery', () => {
     return { Counter, counterAtom }
   }
 
-  it('recovers from sync errors', async () => {
+  it('recovers from sync errors', () => {
     const { counterAtom, Counter } = createCounter()
 
     const syncAtom = atom((get) => {
@@ -537,21 +553,18 @@ describe('error recovery', () => {
       </StrictMode>,
     )
 
-    expect(
-      await screen.findByText('Errored: An error occurred'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Errored: An error occurred')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('increment'))
-    await userEvent.click(screen.getByText('retry'))
-    expect(await screen.findByText('Value: 1')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('increment'))
+    fireEvent.click(screen.getByText('retry'))
+    expect(screen.getByText('Value: 1')).toBeInTheDocument()
   })
 
   it('recovers from async errors', async () => {
     const { counterAtom, Counter } = createCounter()
-    let resolve = () => {}
     const asyncAtom = atom(async (get) => {
       const value = get(counterAtom)
-      await new Promise<void>((r) => (resolve = r))
+      await sleep(100)
       if (value === 0) {
         throw new Error('An error occurred')
       }
@@ -562,27 +575,27 @@ describe('error recovery', () => {
       return <div>Value: {useAtom(asyncAtom)[0]}</div>
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <Counter />
           <ErrorBoundary>
-            <Suspense fallback={null}>
+            <Suspense fallback="loading">
               <Display />
             </Suspense>
           </ErrorBoundary>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    resolve()
-    expect(
-      await screen.findByText('Errored: An error occurred'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('Errored: An error occurred')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('increment'))
-    await userEvent.click(screen.getByText('retry'))
-    resolve()
-    expect(await screen.findByText('Value: 1')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('increment')))
+    await act(() => fireEvent.click(screen.getByText('retry')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('Value: 1')).toBeInTheDocument()
   })
 })

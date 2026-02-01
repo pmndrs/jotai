@@ -1,18 +1,10 @@
-import { StrictMode, useEffect, useRef } from 'react'
+import { StrictMode, useEffect } from 'react'
 import type { PropsWithChildren } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
-
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
-  })
-  return commitCountRef.current
-}
+import { useCommitCount } from '../test-utils'
 
 it('useSetAtom does not trigger rerender in component', async () => {
   const countAtom = atom(0)
@@ -55,25 +47,20 @@ it('useSetAtom does not trigger rerender in component', async () => {
     </>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 0, commits: 1')).toBeInTheDocument()
-    expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
-  })
-  await userEvent.click(screen.getByText('increment'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 1, commits: 2')).toBeInTheDocument()
-    expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
-  })
-  await userEvent.click(screen.getByText('increment'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 2, commits: 3')).toBeInTheDocument()
-    expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
-  })
-  await userEvent.click(screen.getByText('increment'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 3, commits: 4')).toBeInTheDocument()
-    expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0, commits: 1')).toBeInTheDocument()
+  expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 1, commits: 2')).toBeInTheDocument()
+  expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 2, commits: 3')).toBeInTheDocument()
+  expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 3, commits: 4')).toBeInTheDocument()
+  expect(screen.getByText('updater commits: 1')).toBeInTheDocument()
 })
 
 it('useSetAtom with write without an argument', async () => {
@@ -111,11 +98,26 @@ it('useSetAtom with write without an argument', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-  })
-  await userEvent.click(screen.getByText('increment'))
-  await waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('increment'))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+})
+
+it('[DEV-ONLY] useSetAtom throws when called with a read-only atom', () => {
+  expect.assertions(1)
+  const countAtom = atom(0)
+  const readOnlyAtom = atom((get) => get(countAtom))
+
+  function TestComponent() {
+    const setAtom = useSetAtom(readOnlyAtom as any)
+
+    useEffect(() => {
+      expect(() => setAtom(1)).toThrow('not writable atom')
+    }, [setAtom])
+
+    return null
+  }
+
+  render(<TestComponent />)
 })

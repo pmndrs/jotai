@@ -1,22 +1,25 @@
 import { StrictMode, Suspense, useState } from 'react'
-import { act, render, screen, waitFor } from '@testing-library/react'
-import userEventOrig from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAtomValue, useSetAtom } from 'jotai/react'
 import { atom } from 'jotai/vanilla'
+import { sleep } from '../test-utils'
 
-const userEvent = {
-  click: (element: Element) => act(() => userEventOrig.click(element)),
-}
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe('abortable atom test', () => {
   it('can abort with signal.aborted', async () => {
     const countAtom = atom(0)
     let abortedCount = 0
-    const resolve: (() => void)[] = []
     const derivedAtom = atom(async (get, { signal }) => {
       const count = get(countAtom)
-      await new Promise<void>((r) => resolve.push(r))
+      await sleep(100)
       if (signal.aborted) {
         ++abortedCount
       }
@@ -37,7 +40,7 @@ describe('abortable atom test', () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <Suspense fallback="loading">
@@ -45,39 +48,43 @@ describe('abortable atom test', () => {
             <Controls />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('loading')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
 
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 0')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+
     expect(abortedCount).toBe(0)
 
-    await userEvent.click(screen.getByText('button'))
-    await userEvent.click(screen.getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 2')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
 
     expect(abortedCount).toBe(1)
 
-    await userEvent.click(screen.getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 3')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 3')).toBeInTheDocument()
+
     expect(abortedCount).toBe(1)
   })
 
   it('can abort with event listener', async () => {
     const countAtom = atom(0)
     let abortedCount = 0
-    const resolve: (() => void)[] = []
     const derivedAtom = atom(async (get, { signal }) => {
       const count = get(countAtom)
       const callback = () => {
         ++abortedCount
       }
       signal.addEventListener('abort', callback)
-      await new Promise<void>((r) => resolve.push(r))
+      await sleep(100)
       signal.removeEventListener('abort', callback)
       return count
     })
@@ -96,7 +103,7 @@ describe('abortable atom test', () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <Suspense fallback="loading">
@@ -104,25 +111,29 @@ describe('abortable atom test', () => {
             <Controls />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('loading')).toBeInTheDocument()
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
+
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
     expect(abortedCount).toBe(0)
 
-    await userEvent.click(screen.getByText('button'))
-    await userEvent.click(screen.getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 2')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
 
     expect(abortedCount).toBe(1)
 
-    await userEvent.click(screen.getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 3')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 3')).toBeInTheDocument()
 
     expect(abortedCount).toBe(1)
   })
@@ -130,10 +141,9 @@ describe('abortable atom test', () => {
   it('does not abort on unmount', async () => {
     const countAtom = atom(0)
     let abortedCount = 0
-    const resolve: (() => void)[] = []
     const derivedAtom = atom(async (get, { signal }) => {
       const count = get(countAtom)
-      await new Promise<void>((r) => resolve.push(r))
+      await sleep(100)
       if (signal.aborted) {
         ++abortedCount
       }
@@ -157,37 +167,33 @@ describe('abortable atom test', () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <Suspense fallback="loading">
             <Parent />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('loading')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 0')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('toggle')))
+    expect(screen.getByText('hidden')).toBeInTheDocument()
+
     expect(abortedCount).toBe(0)
-
-    await userEvent.click(screen.getByText('button'))
-    await userEvent.click(screen.getByText('toggle'))
-
-    expect(await screen.findByText('hidden')).toBeInTheDocument()
-
-    resolve.splice(0).forEach((fn) => fn())
-    await waitFor(() => expect(abortedCount).toBe(0))
   })
 
   it('throws aborted error (like fetch)', async () => {
     const countAtom = atom(0)
-    const resolve: (() => void)[] = []
     const derivedAtom = atom(async (get, { signal }) => {
       const count = get(countAtom)
-      await new Promise<void>((r) => resolve.push(r))
+      await sleep(100)
       if (signal.aborted) {
         throw new Error('aborted')
       }
@@ -208,7 +214,7 @@ describe('abortable atom test', () => {
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <Suspense fallback="loading">
@@ -216,21 +222,24 @@ describe('abortable atom test', () => {
             <Controls />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
-    expect(await screen.findByText('loading')).toBeInTheDocument()
+    expect(screen.getByText('loading')).toBeInTheDocument()
 
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 0')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    await userEvent.click(screen.getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 2')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByText('button'))
-    resolve.splice(0).forEach((fn) => fn())
-    expect(await screen.findByText('count: 3')).toBeInTheDocument()
+    await act(() => fireEvent.click(screen.getByText('button')))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 3')).toBeInTheDocument()
   })
 })
