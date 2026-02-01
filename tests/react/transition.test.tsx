@@ -1,4 +1,3 @@
-/// <reference types="react/experimental" />
 import React, { StrictMode, Suspense, useEffect } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
