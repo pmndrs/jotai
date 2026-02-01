@@ -238,37 +238,30 @@ function returnAtomValue<Value>(atomState: AtomState<Value>): Value {
 // Abortable Promise
 //
 
-const promiseStateMap: WeakMap<
+type AbortHandlers = Set<() => void>
+
+const abortHandlersMap: WeakMap<
   PromiseLike<unknown>,
-  [unsettled: boolean, abortHandlers: Set<() => void>]
+  AbortHandlers
 > = new WeakMap()
 
-function isUnsettledPromise(value: unknown): value is PromiseLike<unknown> {
-  return isPromiseLike(value) && !!promiseStateMap.get(value as never)?.[0]
-}
-
 function abortPromise<T>(promise: PromiseLike<T>): void {
-  const promiseState = promiseStateMap.get(promise)
-  if (promiseState?.[0]) {
-    promiseState[0] = false
-    promiseState[1].forEach((fn) => fn())
-  }
+  const abortHandlers = abortHandlersMap.get(promise)
+  abortHandlers?.forEach((fn) => fn())
 }
 
 function registerAbortHandler<T>(
   promise: PromiseLike<T>,
   abortHandler: () => void,
 ): void {
-  let promiseState = promiseStateMap.get(promise)
-  if (!promiseState) {
-    promiseState = [true, new Set()]
-    promiseStateMap.set(promise, promiseState)
-    const settle = () => {
-      promiseState![0] = false
-    }
-    promise.then(settle, settle)
+  let abortHandlers = abortHandlersMap.get(promise)
+  if (!abortHandlers) {
+    abortHandlers = new Set()
+    abortHandlersMap.set(promise, abortHandlers)
+    const cleanup = () => abortHandlersMap.delete(promise)
+    promise.then(cleanup, cleanup)
   }
-  promiseState[1].add(abortHandler)
+  abortHandlers.add(abortHandler)
 }
 
 function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
@@ -1070,8 +1063,7 @@ export {
   isActuallyWritableAtom as INTERNAL_isActuallyWritableAtom,
   isAtomStateInitialized as INTERNAL_isAtomStateInitialized,
   returnAtomValue as INTERNAL_returnAtomValue,
-  promiseStateMap as INTERNAL_promiseStateMap,
-  isUnsettledPromise as INTERNAL_isUnsettledPromise,
+  abortHandlersMap as INTERNAL_abortHandlersMap,
   abortPromise as INTERNAL_abortPromise,
   registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
