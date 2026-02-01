@@ -884,9 +884,6 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
     if (mounted.u) {
       unmountCallbacks.add(mounted.u)
     }
-    for (const a of atomState.d.keys()) {
-      ensureAtomState(store, a).p.delete(atom as AnyAtom)
-    }
     mounted = undefined
     mountedMap.delete(atom)
     // unmount dependencies
