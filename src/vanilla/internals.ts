@@ -138,6 +138,13 @@ type StoreSub = (
 type EnhanceBuildingBlocks = (
   buildingBlocks: Readonly<BuildingBlocks>,
 ) => Readonly<BuildingBlocks>
+type AbortHandlersMap = WeakMap<PromiseLike<unknown>, Set<() => void>>
+type RegisterAbortHandler = <T>(
+  store: Store,
+  promise: PromiseLike<T>,
+  abortHandler: () => void,
+) => void
+type AbortPromise = <T>(store: Store, promise: PromiseLike<T>) => void
 
 type Store = {
   get: <Value>(atom: Atom<Value>) => Value
@@ -178,6 +185,10 @@ type BuildingBlocks = [
   storeSet: StoreSet, //                                       22
   storeSub: StoreSub, //                                       23
   enhanceBuildingBlocks: EnhanceBuildingBlocks | undefined, // 24
+  // abortable promise support
+  abortHandlersMap: AbortHandlersMap, //                       25
+  registerAbortHandler: RegisterAbortHandler, //               26
+  abortPromise: AbortPromise, //                               27
 ]
 
 export type {
@@ -232,36 +243,6 @@ function returnAtomValue<Value>(atomState: AtomState<Value>): Value {
     throw new Error('[Bug] atom state is not initialized')
   }
   return atomState.v!
-}
-
-//
-// Abortable Promise
-//
-
-type AbortHandlers = Set<() => void>
-
-const abortHandlersMap: WeakMap<
-  PromiseLike<unknown>,
-  AbortHandlers
-> = new WeakMap()
-
-function abortPromise<T>(promise: PromiseLike<T>): void {
-  const abortHandlers = abortHandlersMap.get(promise)
-  abortHandlers?.forEach((fn) => fn())
-}
-
-function registerAbortHandler<T>(
-  promise: PromiseLike<T>,
-  abortHandler: () => void,
-): void {
-  let abortHandlers = abortHandlersMap.get(promise)
-  if (!abortHandlers) {
-    abortHandlers = new Set()
-    abortHandlersMap.set(promise, abortHandlers)
-    const cleanup = () => abortHandlersMap.delete(promise)
-    promise.then(cleanup, cleanup)
-  }
-  abortHandlers.add(abortHandler)
 }
 
 function isPromiseLike(p: unknown): p is PromiseLike<unknown> {
@@ -534,6 +515,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   const writeAtomState = buildingBlocks[16]
   const mountDependencies = buildingBlocks[17]
   const setAtomStateValueOrPromise = buildingBlocks[20]
+  const registerAbortHandler = buildingBlocks[26]
   const atomState = ensureAtomState(store, atom)
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
@@ -658,7 +640,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     }
     setAtomStateValueOrPromise(store, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
-      registerAbortHandler(valueOrPromise, () => controller?.abort())
+      registerAbortHandler(store, valueOrPromise, () => controller?.abort())
       const settle = () => {
         pruneDependencies()
         mountDependenciesIfAsync()
@@ -912,7 +894,9 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   atom,
   valueOrPromise,
 ) => {
-  const ensureAtomState = getInternalBuildingBlocks(store)[11]
+  const buildingBlocks = getInternalBuildingBlocks(store)
+  const ensureAtomState = buildingBlocks[11]
+  const abortPromise = buildingBlocks[27]
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
@@ -930,7 +914,7 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
     ++atomState.n
     if (isPromiseLike(prevValue)) {
-      abortPromise(prevValue)
+      abortPromise(store, prevValue)
     }
   }
 }
@@ -967,6 +951,30 @@ const BUILDING_BLOCK_storeSub: StoreSub = (store, atom, listener) => {
     unmountAtom(store, atom)
     flushCallbacks(store)
   }
+}
+
+const BUILDING_BLOCK_registerAbortHandler: RegisterAbortHandler = (
+  store,
+  promise,
+  abortHandler,
+) => {
+  const buildingBlocks = getInternalBuildingBlocks(store)
+  const abortHandlersMap = buildingBlocks[25]
+  let abortHandlers = abortHandlersMap.get(promise)
+  if (!abortHandlers) {
+    abortHandlers = new Set()
+    abortHandlersMap.set(promise, abortHandlers)
+    const cleanup = () => abortHandlersMap.delete(promise)
+    promise.then(cleanup, cleanup)
+  }
+  abortHandlers.add(abortHandler)
+}
+
+const BUILDING_BLOCK_abortPromise: AbortPromise = (store, promise) => {
+  const buildingBlocks = getInternalBuildingBlocks(store)
+  const abortHandlersMap = buildingBlocks[25]
+  const abortHandlers = abortHandlersMap.get(promise)
+  abortHandlers?.forEach((fn) => fn())
 }
 
 const buildingBlockMap = new WeakMap<Store, Readonly<BuildingBlocks>>()
@@ -1036,6 +1044,10 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       BUILDING_BLOCK_storeSet,
       BUILDING_BLOCK_storeSub,
       undefined,
+      // abortable promise support
+      new WeakMap(), // abortHandlersMap
+      BUILDING_BLOCK_registerAbortHandler,
+      BUILDING_BLOCK_abortPromise,
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
@@ -1057,9 +1069,6 @@ export {
   isActuallyWritableAtom as INTERNAL_isActuallyWritableAtom,
   isAtomStateInitialized as INTERNAL_isAtomStateInitialized,
   returnAtomValue as INTERNAL_returnAtomValue,
-  abortHandlersMap as INTERNAL_abortHandlersMap,
-  abortPromise as INTERNAL_abortPromise,
-  registerAbortHandler as INTERNAL_registerAbortHandler,
   isPromiseLike as INTERNAL_isPromiseLike,
   addPendingPromiseToDependency as INTERNAL_addPendingPromiseToDependency,
   getMountedOrPendingDependents as INTERNAL_getMountedOrPendingDependents,
