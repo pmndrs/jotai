@@ -138,7 +138,7 @@ type StoreSub = (
 type EnhanceBuildingBlocks = (
   buildingBlocks: Readonly<BuildingBlocks>,
 ) => Readonly<BuildingBlocks>
-type AbortHandlersMap = WeakMap<PromiseLike<unknown>, Set<() => void>>
+type AbortHandlersMap = WeakMapLike<PromiseLike<unknown>, Set<() => void>>
 type RegisterAbortHandler = <T>(
   store: Store,
   promise: PromiseLike<T>,
