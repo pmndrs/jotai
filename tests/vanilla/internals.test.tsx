@@ -4,6 +4,7 @@ import type {
   INTERNAL_AtomState,
   INTERNAL_AtomStateMap,
   INTERNAL_BuildingBlocks,
+  INTERNAL_InvalidatedAtoms,
 } from 'jotai/vanilla/internals'
 import {
   INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
@@ -11,7 +12,7 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
-const buildingBlockLength = 25
+const buildingBlockLength = 28
 
 describe('internals', () => {
   it('should not return a sparse building blocks array', () => {
@@ -95,6 +96,37 @@ describe('internals', () => {
     store2.get(atom(0))
     expect(didRun.internal).toBeCalledTimes(0)
     expect(didRun.external).toBeCalledTimes(1)
+  })
+
+  it('should not invalidate the same dependent twice via multiple paths', () => {
+    const invalidatedAtoms = (() => {
+      const map = new WeakMap()
+      return {
+        get: (key) => map.get(key),
+        set: (key, value) => {
+          const prev = map.get(key)
+          if (prev === value) {
+            throw new Error('duplicate invalidation')
+          }
+          map.set(key, value)
+        },
+        has: (key) => map.has(key),
+        delete: (key) => map.delete(key),
+      } as INTERNAL_InvalidatedAtoms
+    })()
+
+    const buildingBlocks: Partial<INTERNAL_BuildingBlocks> = []
+    buildingBlocks[2] = invalidatedAtoms
+    const store = INTERNAL_buildStore(...buildingBlocks)
+
+    const baseAtom = atom(0)
+    const midAtom1 = atom((get) => get(baseAtom))
+    const midAtom2 = atom((get) => get(baseAtom))
+    const leafAtom = atom((get) => get(midAtom1) + get(midAtom2))
+
+    const unsub = store.sub(leafAtom, () => {})
+    expect(() => store.set(baseAtom, 1)).not.toThrow()
+    unsub()
   })
 })
 
