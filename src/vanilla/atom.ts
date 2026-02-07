@@ -60,7 +60,7 @@ export interface WritableAtom<
   Args extends unknown[],
   Result,
 > extends Atom<Value> {
-  read: Read<Value, SetAtom<Args, Result>>
+  read: Read<Value, SetAtom<Args, unknown>>
   write: Write<Args, Result>
   onMount?: OnMount<Args, Result>
 }
@@ -77,7 +77,7 @@ let keyCount = 0 // global key count for all atoms
 
 // writable derived atom
 export function atom<Value, Args extends unknown[], Result>(
-  read: Read<Value, SetAtom<Args, Result>>,
+  read: Read<Value, SetAtom<Args, unknown>>,
   write: Write<Args, Result>,
 ): WritableAtom<Value, Args, Result>
 
@@ -100,7 +100,7 @@ export function atom<Value>(
 ): PrimitiveAtom<Value> & WithInitialValue<Value>
 
 export function atom<Value, Args extends unknown[], Result>(
-  read?: Value | Read<Value, SetAtom<Args, Result>>,
+  read?: Value | Read<Value, SetAtom<Args, unknown>>,
   write?: Write<Args, Result>,
 ) {
   const key = `atom${++keyCount}`
@@ -112,7 +112,7 @@ export function atom<Value, Args extends unknown[], Result>(
     },
   } as WritableAtom<Value, Args, Result> & { init?: Value | undefined }
   if (typeof read === 'function') {
-    config.read = read as Read<Value, SetAtom<Args, Result>>
+    config.read = read as Read<Value, SetAtom<Args, unknown>>
   } else {
     config.init = read
     config.read = defaultRead
