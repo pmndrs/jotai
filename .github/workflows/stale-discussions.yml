@@ -11,7 +11,7 @@ jobs:
     permissions:
       discussions: write
     steps:
-      - uses: steffen-karlsson/stalesweeper@v1.1.1
+      - uses: steffen-karlsson/stalesweeper@cbed739a89b490f703d8466fb59b37ddc0915889 # v1.1.1
         with:
           message: 'This discussion has been closed due to inactivity.'
           days-before-close: 180
