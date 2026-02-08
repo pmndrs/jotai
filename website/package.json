@@ -32,6 +32,7 @@
     "gatsby-plugin-sitemap": "^5.23.0",
     "gatsby-source-filesystem": "^4.23.0",
     "jotai": "^2.4.1",
+    "jotai-babel": "^0.1.0",
     "jotai-immer": "^0.2.0",
     "just-kebab-case": "^4.1.1",
     "just-throttle": "^4.1.1",
