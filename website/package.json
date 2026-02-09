@@ -43,6 +43,7 @@
     "react-remove-scroll": "^2.5.5"
   },
   "devDependencies": {
+    "@babel/preset-typescript": "^7.28.5",
     "@gatsbyjs/reach-router": "^2.0.1",
     "@tailwindcss/forms": "^0.5.6",
     "autoprefixer": "^10.4.11",
