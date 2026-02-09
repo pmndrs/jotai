@@ -1,5 +1,16 @@
 version: 2
 updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    labels: []
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - 'version-update:semver-patch'
+          - 'version-update:semver-minor'
+
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
