@@ -6,10 +6,15 @@ import type { PluginOptions } from './utils.ts'
 
 const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 
+/** @deprecated Use `jotai-babel/plugin-debug-label` instead. */
 export default function debugLabelPlugin(
   { types: t }: typeof babel,
   options?: PluginOptions,
 ): PluginObj {
+  console.warn(
+    '[DEPRECATED] jotai/babel/plugin-debug-label is deprecated and will be removed in v3.\n' +
+      'Please use the `jotai-babel` package instead: https://github.com/jotaijs/jotai-babel',
+  )
   return {
     visitor: {
       ExportDefaultDeclaration(nodePath, state) {
