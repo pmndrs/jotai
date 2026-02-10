@@ -15,6 +15,6 @@ jobs:
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success'
     steps:
-      - uses: live-codes/pr-comment-from-artifact@v1
+      - uses: live-codes/pr-comment-from-artifact@15cb31a249e2336571f5d8cc244f6132b7d90ead # v1.0.1
         with:
           GITHUB_TOKEN: ${{ github.token }}
