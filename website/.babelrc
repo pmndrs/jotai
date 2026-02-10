@@ -16,5 +16,5 @@
       }
     ]
   ],
-  "plugins": ["jotai-babel/plugin-react-refresh"]
+  "plugins": ["jotai/babel/plugin-react-refresh"]
 }
