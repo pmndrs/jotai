@@ -1331,3 +1331,35 @@ it('[DEV-ONLY] should warn store mutation during read', () => {
     'Detected store mutation during atom read. This is not supported.',
   )
 })
+
+it('should keep reactivity when a derived atom returns a function that calls get (#3240)', () => {
+  const store = createStore()
+  const stableAtom = atom(0)
+  const closureAtom = atom((get) => (x: number) => {
+    const s = get(stableAtom)
+    return x + s
+  })
+  const changingAtom = atom(0)
+  const upstreamAtom = atom((get) => {
+    const n = get(changingAtom)
+    const fn = get(closureAtom)
+    return fn(n)
+  })
+  const downstreamAtom = atom((get) => get(upstreamAtom) * 2)
+
+  const callback = vi.fn()
+  store.sub(downstreamAtom, callback)
+
+  expect(store.get(upstreamAtom)).toBe(0)
+  expect(store.get(downstreamAtom)).toBe(0)
+
+  store.set(changingAtom, 1)
+  expect(store.get(upstreamAtom)).toBe(1)
+  expect(store.get(downstreamAtom)).toBe(2)
+  expect(callback).toHaveBeenCalledTimes(1)
+
+  store.set(changingAtom, 2)
+  expect(store.get(upstreamAtom)).toBe(2)
+  expect(store.get(downstreamAtom)).toBe(4)
+  expect(callback).toHaveBeenCalledTimes(2)
+})
