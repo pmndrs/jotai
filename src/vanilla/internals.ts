@@ -569,9 +569,12 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   let isSync = true
   function mountDependenciesIfAsync() {
     if (mountedMap.has(atom)) {
+      const hasChangedAtoms = changedAtoms.size > 0
       mountDependencies(store, atom)
-      recomputeInvalidatedAtoms(store)
-      flushCallbacks(store)
+      if (!hasChangedAtoms) {
+        recomputeInvalidatedAtoms(store)
+        flushCallbacks(store)
+      }
     }
   }
   function getter<V>(a: Atom<V>) {
