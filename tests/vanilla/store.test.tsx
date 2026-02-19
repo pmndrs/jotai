@@ -1363,3 +1363,30 @@ it('should keep reactivity when a derived atom returns a function that calls get
   expect(store.get(downstreamAtom)).toBe(4)
   expect(callback).toHaveBeenCalledTimes(2)
 })
+
+// Regression (v2.12.1+, commit f5d843c): when a derived atom's read calls store.set
+// (e.g. via a write-only atom), that atom's subscribers are not notified on dependency
+// changes — store.get(atom) is correct but the subscription callback never runs.
+// Repro: counterAtom, write-only queryAtom, dataAtom = get => query(get(counterAtom)).
+// https://github.com/koutaro-masaki/jotai-atom-in-component-with-usesetatom
+it('notifies derived-atom subscriber when read calls store.set', () => {
+  const store = createStore()
+  const counterAtom = atom(0)
+  const queryAtom = atom(null, (get, _, v: number) => v + get(counterAtom))
+  const dataAtom = atom((get) => {
+    const v = get(counterAtom)
+    const result = store.set(queryAtom, v)
+    return result
+  })
+
+  const dataListener = vi.fn()
+  store.sub(dataAtom, dataListener)
+
+  expect(store.get(dataAtom)).toBe(0)
+  expect(dataListener.mock.calls.length).toBe(0)
+
+  store.set(counterAtom, 1)
+
+  expect(store.get(dataAtom)).toBe(2)
+  expect(dataListener.mock.calls.length).toBe(1)
+})
