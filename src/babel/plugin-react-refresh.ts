@@ -6,10 +6,15 @@ import type { PluginOptions } from './utils.ts'
 
 const templateBuilder = (_templateBuilder as any).default || _templateBuilder
 
+/** @deprecated Use `jotai-babel/plugin-react-refresh` instead. */
 export default function reactRefreshPlugin(
   { types: t }: typeof babel,
   options?: PluginOptions,
 ): PluginObj {
+  console.warn(
+    '[DEPRECATED] jotai/babel/plugin-react-refresh is deprecated and will be removed in v3.\n' +
+      'Please use the `jotai-babel` package instead: https://github.com/jotaijs/jotai-babel',
+  )
   return {
     pre({ opts }) {
       if (!opts.filename) {
