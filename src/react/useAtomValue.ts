@@ -104,6 +104,7 @@ const createContinuablePromise = <T>(
 type Options = Parameters<typeof useStore>[0] & {
   delay?: number
   unstable_promiseStatus?: boolean
+  subscribed?: boolean
 }
 
 export function useAtomValue<Value>(
@@ -117,8 +118,11 @@ export function useAtomValue<AtomType extends Atom<unknown>>(
 ): Awaited<ExtractAtomValue<AtomType>>
 
 export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
-  const { delay, unstable_promiseStatus: promiseStatus = !React.use } =
-    options || {}
+  const {
+    delay,
+    unstable_promiseStatus: promiseStatus = !React.use,
+    subscribed = true,
+  } = options || {}
   const store = useStore(options)
 
   const [[valueFromReducer, storeFromReducer, atomFromReducer], rerender] =
@@ -145,6 +149,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
   }
 
   useEffect(() => {
+    if (!subscribed) return
     const unsub = store.sub(atom, () => {
       if (promiseStatus) {
         try {
@@ -167,7 +172,7 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
     })
     rerender()
     return unsub
-  }, [store, atom, delay, promiseStatus])
+  }, [store, atom, delay, promiseStatus, subscribed])
 
   useDebugValue(value)
   if (isPromiseLike(value)) {
