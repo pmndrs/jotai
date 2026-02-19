@@ -551,9 +551,13 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   }
   const mountDependenciesIfAsync = () => {
     if (mountedMap.has(atom)) {
+      // If changedAtoms is already populated, an outer recompute cycle will handle it
+      const shouldRecompute = !changedAtoms.size
       mountDependencies(store, atom)
-      recomputeInvalidatedAtoms(store)
-      flushCallbacks(store)
+      if (shouldRecompute) {
+        recomputeInvalidatedAtoms(store)
+        flushCallbacks(store)
+      }
     }
   }
   const getter = <V>(a: Atom<V>) => {
