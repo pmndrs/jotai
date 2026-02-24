@@ -1389,4 +1389,9 @@ it('notifies derived-atom subscriber when read calls store.set', () => {
 
   expect(store.get(dataAtom)).toBe(2)
   expect(dataListener.mock.calls.length).toBe(1)
+
+  store.set(counterAtom, 2)
+
+  expect(store.get(dataAtom)).toBe(4)
+  expect(dataListener.mock.calls.length).toBe(2)
 })
