@@ -1372,10 +1372,10 @@ it('should keep reactivity when a derived atom returns a function that calls get
 it('notifies derived-atom subscriber when read calls store.set', () => {
   const store = createStore()
   const counterAtom = atom(0)
-  const queryAtom = atom(null, (get, _, v: number) => v + get(counterAtom))
+  const queryAtom = atom(null, (_get, _set, v: number) => v)
   const dataAtom = atom((get) => {
     const v = get(counterAtom)
-    const result = store.set(queryAtom, v)
+    const result = store.set(queryAtom, v * 2)
     return result
   })
 
