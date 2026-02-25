@@ -1395,3 +1395,184 @@ it('notifies derived-atom subscriber when read calls store.set', () => {
   expect(store.get(dataAtom)).toBe(4)
   expect(dataListener.mock.calls.length).toBe(2)
 })
+
+// Should innerReadAtom be considered a dependency of dataAtom in this case?
+it('notifies subscriber when read calls store.set with nested write (two levels)', () => {
+  const store = createStore()
+  const counterAtom = atom(0)
+  const innerReadAtom = atom((get) => get(counterAtom) * 2)
+  const queryAtom = atom(null, (get, _set) => get(innerReadAtom) * 2)
+  const dataAtom = atom((_get) => store.set(queryAtom) * 2)
+
+  const dataListener = vi.fn()
+  store.sub(dataAtom, dataListener)
+
+  expect(store.get(dataAtom)).toBe(0)
+  expect(dataListener.mock.calls.length).toBe(0)
+
+  store.set(counterAtom, 1)
+
+  expect(store.get(dataAtom)).toBe(8) // FAILS: expected 8 but got 0
+  expect(dataListener.mock.calls.length).toBe(1)
+})
+
+it('notifies subscriber through chain of derived atoms when root calls store.set', () => {
+  const store = createStore()
+  const counterAtom = atom(0)
+  const queryAtom = atom(null, (_get, _set, v: number) => v)
+  const baseAtom = atom((get) => {
+    const v = get(counterAtom)
+    return store.set(queryAtom, v * 2)
+  })
+  const derivedAtom = atom((get) => get(baseAtom) * 2)
+
+  const derivedListener = vi.fn()
+  store.sub(derivedAtom, derivedListener)
+
+  expect(store.get(derivedAtom)).toBe(0)
+  expect(derivedListener.mock.calls.length).toBe(0)
+
+  store.set(counterAtom, 1)
+
+  expect(store.get(derivedAtom)).toBe(4)
+  expect(derivedListener.mock.calls.length).toBe(1)
+})
+
+it('notifies subscriber when nested write uses get to read atom with store.set', () => {
+  const store = createStore()
+  const counterAtom = atom(0)
+  const innerQueryAtom = atom(null, (_get, _set, v: number) => v)
+  const middleAtom = atom((get) => {
+    const v = get(counterAtom)
+    return store.set(innerQueryAtom, v * 3)
+  })
+  const outerQueryAtom = atom(null, (get, _set, v: number) => {
+    const m = get(middleAtom)
+    return v + m
+  })
+  const dataAtom = atom((get) => {
+    const v = get(counterAtom)
+    return store.set(outerQueryAtom, v * 2)
+  })
+
+  const dataListener = vi.fn()
+  store.sub(dataAtom, dataListener)
+
+  expect(store.get(dataAtom)).toBe(0)
+  expect(dataListener.mock.calls.length).toBe(0)
+
+  store.set(counterAtom, 1)
+
+  expect(store.get(dataAtom)).toBe(5)
+  expect(dataListener.mock.calls.length).toBe(1)
+
+  store.set(counterAtom, 2)
+
+  expect(store.get(dataAtom)).toBe(10)
+  expect(dataListener.mock.calls.length).toBe(2)
+})
+
+it('notifies async derived-atom subscriber when read calls store.set before await', async () => {
+  const store = createStore()
+  const counterAtom = atom(0)
+  const queryAtom = atom(null, (_get, _set, v: number) => v)
+  const dataAtom = atom(async (get) => {
+    const v = get(counterAtom)
+    const result = store.set(queryAtom, v * 2)
+    await sleep(0)
+    return result
+  })
+
+  let lastValue: number | Promise<number> | undefined
+  store.sub(dataAtom, () => {
+    lastValue = store.get(dataAtom)
+  })
+
+  await vi.advanceTimersByTimeAsync(10)
+  expect(await store.get(dataAtom)).toBe(0)
+
+  store.set(counterAtom, 1)
+  await vi.advanceTimersByTimeAsync(10)
+  expect(await lastValue).toBe(2)
+
+  store.set(counterAtom, 2)
+  await vi.advanceTimersByTimeAsync(10)
+  expect(await lastValue).toBe(4)
+})
+
+it('notifies subscriber normally when store.set is in write function, not read', () => {
+  const store = createStore()
+  const counterAtom = atom(0)
+  const innerQueryAtom = atom(null, (_get, _set, v: number) => v)
+  const queryAtom = atom(null, (_get, _set, v: number) => store.set(innerQueryAtom, v))
+  const dataAtom = atom((get) => {
+    const v = get(counterAtom)
+    const result = store.set(queryAtom, v * 2)
+    return result
+  })
+
+  const dataListener = vi.fn()
+  store.sub(dataAtom, dataListener)
+
+  expect(store.get(dataAtom)).toBe(0)
+
+  store.set(counterAtom, 1)
+
+  expect(store.get(dataAtom)).toBe(2)
+  expect(dataListener.mock.calls.length).toBe(1)
+
+  store.set(counterAtom, 2)
+
+  expect(store.get(dataAtom)).toBe(4)
+  expect(dataListener.mock.calls.length).toBe(2)
+})
+
+it('store.set before get(dep) causes deep recursion but recovers', () => {
+  const store = createStore()
+  const counterAtom = atom(0)
+  const queryAtom = atom(null, (_get, _set, v: number) => v)
+  const dataAtom = atom((get) => {
+    const result = store.set(queryAtom, 1)
+    const v = get(counterAtom)
+    return result + v
+  })
+
+  const dataListener = vi.fn()
+  store.sub(dataAtom, dataListener)
+
+  expect(store.get(dataAtom)).toBe(1)
+
+  store.set(counterAtom, 1)
+
+  expect(store.get(dataAtom)).toBe(2)
+  expect(dataListener.mock.calls.length).toBeGreaterThanOrEqual(1)
+})
+
+it('notifies subscriber when read calls store.set multiple times', () => {
+  const store = createStore()
+  const counterAtom = atom(0)
+  const query1 = atom(null, (_get, _set, v: number) => v)
+  const query2 = atom(null, (_get, _set, v: number) => v * 10)
+  const dataAtom = atom((get) => {
+    const v = get(counterAtom)
+    const r1 = store.set(query1, v)
+    const r2 = store.set(query2, v)
+    return r1 + r2
+  })
+
+  const dataListener = vi.fn()
+  store.sub(dataAtom, dataListener)
+
+  expect(store.get(dataAtom)).toBe(0)
+  expect(dataListener.mock.calls.length).toBe(0)
+
+  store.set(counterAtom, 1)
+
+  expect(store.get(dataAtom)).toBe(11)
+  expect(dataListener.mock.calls.length).toBe(1)
+
+  store.set(counterAtom, 2)
+
+  expect(store.get(dataAtom)).toBe(22)
+  expect(dataListener.mock.calls.length).toBe(2)
+})
