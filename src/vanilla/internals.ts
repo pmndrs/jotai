@@ -632,6 +632,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     },
   }
   const prevEpochNumber = atomState.n
+  const prevInvalidated = invalidatedAtoms.get(atom) === prevEpochNumber
   try {
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(store)
@@ -662,10 +663,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     return atomState
   } finally {
     isSync = false
-    if (
-      prevEpochNumber !== atomState.n &&
-      invalidatedAtoms.get(atom) === prevEpochNumber
-    ) {
+    if (atomState.n !== prevEpochNumber && prevInvalidated) {
       invalidatedAtoms.set(atom, atomState.n)
       changedAtoms.add(atom)
       storeHooks.c?.(atom)
