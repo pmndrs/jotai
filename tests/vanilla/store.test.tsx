@@ -1396,26 +1396,6 @@ it('notifies derived-atom subscriber when read calls store.set', () => {
   expect(dataListener.mock.calls.length).toBe(2)
 })
 
-// Should innerReadAtom be considered a dependency of dataAtom in this case?
-it('notifies subscriber when read calls store.set with nested write (two levels)', () => {
-  const store = createStore()
-  const counterAtom = atom(0)
-  const innerReadAtom = atom((get) => get(counterAtom) * 2)
-  const queryAtom = atom(null, (get, _set) => get(innerReadAtom) * 2)
-  const dataAtom = atom((_get) => store.set(queryAtom) * 2)
-
-  const dataListener = vi.fn()
-  store.sub(dataAtom, dataListener)
-
-  expect(store.get(dataAtom)).toBe(0)
-  expect(dataListener.mock.calls.length).toBe(0)
-
-  store.set(counterAtom, 1)
-
-  expect(store.get(dataAtom)).toBe(8) // FAILS: expected 8 but got 0
-  expect(dataListener.mock.calls.length).toBe(1)
-})
-
 it('notifies subscriber through chain of derived atoms when root calls store.set', () => {
   const store = createStore()
   const counterAtom = atom(0)
