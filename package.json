@@ -149,6 +149,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "@vitest/eslint-plugin": "^1.6.9",
     "@vitest/ui": "^4.0.18",
+    "babel-plugin-react-compiler": "^1.0.0",
     "benny": "^3.7.1",
     "downlevel-dts": "^0.11.0",
     "esbuild": "^0.27.3",
@@ -195,5 +196,8 @@
     "react": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "react-compiler-runtime": "^1.0.0"
   }
 }
