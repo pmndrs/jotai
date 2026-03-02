@@ -724,6 +724,42 @@ describe('withStorageValidator', () => {
 
     expect(store.get(numAtom)).toBe(42)
   })
+
+  it('should return initialValue when async validator fails', async () => {
+    const asyncStringStorage = {
+      getItem: async () => {
+        await sleep(100)
+        return JSON.stringify('invalid')
+      },
+      setItem: async () => {},
+      removeItem: async () => {},
+    }
+    const storage = createJSONStorage(() => asyncStringStorage)
+    const numAtom = atomWithStorage(
+      'my-number',
+      42,
+      withStorageValidator(isNumber)(storage),
+    )
+
+    const Counter = () => {
+      const [count] = useAtom(numAtom)
+      return <div>count: {count}</div>
+    }
+
+    await act(() =>
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      ),
+    )
+
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 42')).toBeInTheDocument()
+  })
 })
 
 describe('with subscribe method in string storage', () => {
