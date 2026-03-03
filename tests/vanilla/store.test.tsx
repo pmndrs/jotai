@@ -1484,7 +1484,9 @@ it('notifies subscriber normally when store.set is in write function, not read',
   const store = createStore()
   const counterAtom = atom(0)
   const innerQueryAtom = atom(null, (_get, _set, v: number) => v)
-  const queryAtom = atom(null, (_get, _set, v: number) => store.set(innerQueryAtom, v))
+  const queryAtom = atom(null, (_get, _set, v: number) =>
+    store.set(innerQueryAtom, v),
+  )
   const dataAtom = atom((get) => {
     const v = get(counterAtom)
     const result = store.set(queryAtom, v * 2)
