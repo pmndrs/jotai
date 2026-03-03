@@ -1558,3 +1558,41 @@ it('notifies subscriber when read calls store.set multiple times', () => {
   expect(store.get(dataAtom)).toBe(22)
   expect(dataListener.mock.calls.length).toBe(2)
 })
+
+it('does not recompute derived atom redundantly when store.set in read modifies a shared dependency', () => {
+  const store = createStore()
+  const counterAtom = atom(0)
+  const sideEffectAtom: PrimitiveAtom<number> = atom(0)
+
+  let baseReadCount = 0
+  const baseAtom = atom((get) => {
+    baseReadCount++
+    const v = get(counterAtom)
+    store.set(sideEffectAtom, v * 10)
+    return v
+  })
+
+  let derivedReadCount = 0
+  const derivedAtom = atom((get) => {
+    derivedReadCount++
+    get(baseAtom)
+    return get(sideEffectAtom)
+  })
+
+  const listener = vi.fn()
+  store.sub(derivedAtom, listener)
+
+  expect(store.get(derivedAtom)).toBe(0)
+  expect(baseReadCount).toBe(1)
+  expect(derivedReadCount).toBe(1)
+
+  baseReadCount = 0
+  derivedReadCount = 0
+
+  store.set(counterAtom, 1)
+
+  expect(store.get(derivedAtom)).toBe(10)
+  expect(listener).toHaveBeenCalledTimes(1)
+  expect(baseReadCount).toBe(1)
+  expect(derivedReadCount).toBe(1)
+})
