@@ -491,6 +491,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
       }
     }
     if (hasChangedDeps) {
+      invalidatedAtoms.set(a, aState.n)
       readAtomState(store, a)
       mountDependencies(store, a)
     }
