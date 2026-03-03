@@ -725,6 +725,33 @@ describe('withStorageValidator', () => {
     expect(store.get(numAtom)).toBe(42)
   })
 
+  it('should return initialValue when sync validator fails with render', () => {
+    const stringStorage: SyncStringStorage = {
+      getItem: () => JSON.stringify('not-a-number'),
+      setItem: () => {},
+      removeItem: () => {},
+    }
+    const storage = createJSONStorage(() => stringStorage)
+    const numAtom = atomWithStorage(
+      'my-number',
+      42,
+      withStorageValidator(isNumber)(storage),
+    )
+
+    const Counter = () => {
+      const [count] = useAtom(numAtom)
+      return <div>count: {count}</div>
+    }
+
+    render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    )
+
+    expect(screen.getByText('count: 42')).toBeInTheDocument()
+  })
+
   it('should return stored value when async validator succeeds', async () => {
     const asyncStringStorage = {
       getItem: async () => {
