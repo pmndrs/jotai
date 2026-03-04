@@ -929,14 +929,18 @@ const BUILDING_BLOCK_storeGet: StoreGet = (store, atom) => {
 
 const BUILDING_BLOCK_storeSet: StoreSet = (store, atom, ...args) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
+  const changedAtoms = buildingBlocks[3]
   const flushCallbacks = buildingBlocks[12]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const writeAtomState = buildingBlocks[16]
+  const prevChangedAtomsSize = changedAtoms.size
   try {
     return writeAtomState(store, atom, ...args) as any
   } finally {
-    recomputeInvalidatedAtoms(store)
-    flushCallbacks(store)
+    if (changedAtoms.size !== prevChangedAtomsSize) {
+      recomputeInvalidatedAtoms(store)
+      flushCallbacks(store)
+    }
   }
 }
 
