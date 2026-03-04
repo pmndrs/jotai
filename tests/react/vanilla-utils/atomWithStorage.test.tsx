@@ -121,22 +121,12 @@ describe('atomWithStorage (sync)', () => {
   })
 
   it('should get stored value on init with getOnInit option', () => {
+    const store = createStore()
     const countAtom = atomWithStorage('count', 0, dummyStorage, {
       getOnInit: true,
     })
 
-    const Counter = () => {
-      const [count] = useAtom(countAtom)
-      return <div>count: {count}</div>
-    }
-
-    render(
-      <StrictMode>
-        <Counter />
-      </StrictMode>,
-    )
-
-    expect(screen.getByText('count: 10')).toBeInTheDocument()
+    expect(store.get(countAtom)).toBe(10)
   })
 })
 
