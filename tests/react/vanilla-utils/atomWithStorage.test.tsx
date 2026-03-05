@@ -119,6 +119,15 @@ describe('atomWithStorage (sync)', () => {
 
     expect(screen.getByText('count: 9')).toBeInTheDocument()
   })
+
+  it('should get stored value on init with getOnInit option', () => {
+    const store = createStore()
+    const countAtom = atomWithStorage('count', 0, dummyStorage, {
+      getOnInit: true,
+    })
+
+    expect(store.get(countAtom)).toBe(10)
+  })
 })
 
 describe('with sync string storage', () => {
@@ -723,6 +732,105 @@ describe('withStorageValidator', () => {
     )
 
     expect(store.get(numAtom)).toBe(42)
+  })
+
+  it('should return initialValue when sync validator fails with render', () => {
+    const stringStorage: SyncStringStorage = {
+      getItem: () => JSON.stringify('not-a-number'),
+      setItem: () => {},
+      removeItem: () => {},
+    }
+    const storage = createJSONStorage(() => stringStorage)
+    const numAtom = atomWithStorage(
+      'my-number',
+      42,
+      withStorageValidator(isNumber)(storage),
+    )
+
+    const Counter = () => {
+      const [count] = useAtom(numAtom)
+      return <div>count: {count}</div>
+    }
+
+    render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    )
+
+    expect(screen.getByText('count: 42')).toBeInTheDocument()
+  })
+
+  it('should return stored value when async validator succeeds', async () => {
+    const asyncStringStorage = {
+      getItem: async () => {
+        await sleep(100)
+        return JSON.stringify(99)
+      },
+      setItem: async () => {},
+      removeItem: async () => {},
+    }
+    const storage = createJSONStorage(() => asyncStringStorage)
+    const numAtom = atomWithStorage(
+      'my-number',
+      42,
+      withStorageValidator(isNumber)(storage),
+    )
+
+    const Counter = () => {
+      const [count] = useAtom(numAtom)
+      return <div>count: {count}</div>
+    }
+
+    await act(() =>
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      ),
+    )
+
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 99')).toBeInTheDocument()
+  })
+
+  it('should return initialValue when async validator fails', async () => {
+    const asyncStringStorage = {
+      getItem: async () => {
+        await sleep(100)
+        return JSON.stringify('invalid')
+      },
+      setItem: async () => {},
+      removeItem: async () => {},
+    }
+    const storage = createJSONStorage(() => asyncStringStorage)
+    const numAtom = atomWithStorage(
+      'my-number',
+      42,
+      withStorageValidator(isNumber)(storage),
+    )
+
+    const Counter = () => {
+      const [count] = useAtom(numAtom)
+      return <div>count: {count}</div>
+    }
+
+    await act(() =>
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      ),
+    )
+
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(100))
+    expect(screen.getByText('count: 42')).toBeInTheDocument()
   })
 })
 
