@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      react-compiler-runtime:
+        specifier: ^1.0.0
+        version: 1.0.0(react@19.2.4)
     devDependencies:
       '@babel/core':
         specifier: ^7.29.0
@@ -80,6 +84,9 @@ importers:
       '@vitest/ui':
         specifier: ^4.0.18
         version: 4.0.18(vitest@4.0.18)
+      babel-plugin-react-compiler:
+        specifier: ^1.0.0
+        version: 1.0.0
       benny:
         specifier: ^3.7.1
         version: 3.7.1
@@ -1658,6 +1665,9 @@ packages:
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
 
+  babel-plugin-react-compiler@1.0.0:
+    resolution: {integrity: sha512-Ixm8tFfoKKIPYdCCKYTsqv+Fd4IJ0DQqMyEimo+pxUOMUR9cVPlwTrFt9Avu+3cb6Zp3mAzl+t1MrG2fxxKsxw==}
+
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
@@ -2764,6 +2774,11 @@ packages:
   randombytes@2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
 
+  react-compiler-runtime@1.0.0:
+    resolution: {integrity: sha512-rRfjYv66HlG8896yPUDONgKzG5BxZD1nV9U6rkm+7VCuvQc903C4MjcoZR4zPw53IKSOX9wMQVpA1IAbRtzQ7w==}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0 || ^0.0.0-experimental
+
   react-dom@19.2.4:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
     peerDependencies:
@@ -3172,8 +3187,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typescript@6.0.0-dev.20260217:
-    resolution: {integrity: sha512-zETfGPMa3NO1naBo47X57eCicGBMr1MjOgrUXe6ImMLFa/TUjnNbT0hKheXvSvUPMvoRPVj7GXwnupX1IUJStQ==}
+  typescript@6.0.0-dev.20260305:
+    resolution: {integrity: sha512-JCpaEoo18VAXaQRsvdMLhwExx3k8QoryqWFTJXIvl3zkyVr5Gybd9Ap8mLatOP1RGfiUSYA7cW/mISZGBoBrbw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -4956,6 +4971,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  babel-plugin-react-compiler@1.0.0:
+    dependencies:
+      '@babel/types': 7.29.0
+
   balanced-match@1.0.2: {}
 
   baseline-browser-mapping@2.9.19: {}
@@ -5151,7 +5170,7 @@ snapshots:
     dependencies:
       semver: 7.7.4
       shelljs: 0.8.5
-      typescript: 6.0.0-dev.20260217
+      typescript: 6.0.0-dev.20260305
 
   dunder-proto@1.0.1:
     dependencies:
@@ -6230,6 +6249,10 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
+  react-compiler-runtime@1.0.0(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+
   react-dom@19.2.4(react@19.2.4):
     dependencies:
       react: 19.2.4
@@ -6718,7 +6741,7 @@ snapshots:
 
   typescript@5.9.3: {}
 
-  typescript@6.0.0-dev.20260217: {}
+  typescript@6.0.0-dev.20260305: {}
 
   unbox-primitive@1.1.0:
     dependencies:
