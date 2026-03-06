@@ -16,6 +16,7 @@ export default (api, targets) => {
       ],
     ],
     plugins: [
+      ['babel-plugin-react-compiler', { target: '17' }],
       [
         '@babel/plugin-transform-react-jsx',
         {
