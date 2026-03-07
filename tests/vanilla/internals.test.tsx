@@ -34,6 +34,7 @@ describe('internals', () => {
         get: vi.fn(() => {
           return {
             d: new Map(),
+            g: new Map(),
             p: new Set(),
             n: 0,
             v: 0,
