@@ -152,13 +152,11 @@ export function createJSONStorage<Value>(
     (subscriber: StringSubscribe): Subscribe<Value> =>
     (key, callback, initialValue) =>
       subscriber(key, (v) => {
-        let newValue: Value
         try {
-          newValue = JSON.parse(v || '')
+          callback(JSON.parse(v || ''))
         } catch {
-          newValue = initialValue
+          callback(initialValue)
         }
-        callback(newValue)
       })
 
   let subscriber: StringSubscribe | undefined
@@ -236,10 +234,9 @@ export function atomWithStorage<Value>(
 
   baseAtom.onMount = (setAtom) => {
     setAtom(storage.getItem(key, initialValue) as Value | Promise<Value>)
-    let unsub: Unsubscribe | undefined
-    if (storage.subscribe) {
-      unsub = storage.subscribe(key, setAtom, initialValue)
-    }
+    const unsub = storage.subscribe
+      ? storage.subscribe(key, setAtom, initialValue)
+      : undefined
     return unsub
   }
 
