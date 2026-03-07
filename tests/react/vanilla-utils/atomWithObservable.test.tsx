@@ -90,7 +90,6 @@ it('count state', () => {
 it('count state with Symbol.observable', () => {
   const subject = new BehaviorSubject(1)
   const observable = {
-    subscribe: subject.subscribe.bind(subject),
     [Symbol.observable]: () => ({
       subscribe: subject.subscribe.bind(subject),
     }),
