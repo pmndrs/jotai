@@ -26,6 +26,11 @@ type AtomState<Value = AnyValue> = {
    */
   readonly d: Map<AnyAtom, EpochNumber>
   /**
+   * Map tracking the read epoch when each dependency was last accessed.
+   * Used to prune stale dependencies without per-read Set/Map allocations.
+   */
+  readonly g: Map<AnyAtom, number>
+  /**
    * Set of atoms with pending promise that depend on the atom.
    *
    * This may cause memory leaks, but it's for the capability to continue promises
@@ -379,7 +384,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
   }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
-    atomState = { d: new Map(), p: new Set(), n: 0 }
+    atomState = { d: new Map(), g: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)
     atomOnInit?.(store, atom)
@@ -501,6 +506,11 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
 // Dev only
 const storeMutationSet = new WeakSet<Store>()
 
+// Global read epoch counter, incremented each readAtomState call.
+// Used with atomState.g to track which deps were accessed during a read,
+// eliminating per-read Set/Map allocations.
+let readEpoch = 0
+
 const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
@@ -540,12 +550,12 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   }
   // Compute a new state for this atom.
   let isSync = true
-  const prevDeps = new Set<AnyAtom>(atomState.d.keys())
-  const nextDeps = new Map<AnyAtom, EpochNumber>()
+  const currentEpoch = ++readEpoch
   const pruneDependencies = () => {
-    for (const a of prevDeps) {
-      if (!nextDeps.has(a)) {
+    for (const a of atomState.d.keys()) {
+      if ((atomState.g.get(a) as number) < currentEpoch) {
         atomState.d.delete(a)
+        atomState.g.delete(a)
       }
     }
   }
@@ -578,7 +588,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     try {
       return returnAtomValue(aState)
     } finally {
-      nextDeps.set(a, aState.n)
+      atomState.g.set(a, currentEpoch)
       atomState.d.set(a, aState.n)
       if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)
