@@ -991,16 +991,20 @@ const BUILDING_BLOCK_abortPromise: AbortPromise = (store, promise) => {
   abortHandlers?.forEach((fn) => fn())
 }
 
-const buildingBlockMap = new WeakMap<Store, Readonly<BuildingBlocks>>()
+// Symbol key for fast property-based building blocks access,
+// replacing the WeakMap lookup on every function call.
+const BB_KEY = Symbol()
 
 const getInternalBuildingBlocks = (store: Store): Readonly<BuildingBlocks> => {
-  const buildingBlocks = buildingBlockMap.get(store)!
+  const buildingBlocks = (store as any)[BB_KEY] as
+    | Readonly<BuildingBlocks>
+    | undefined
   if (import.meta.env?.MODE !== 'production' && !buildingBlocks) {
     throw new Error(
       'Store must be created by buildStore to read its building blocks',
     )
   }
-  return buildingBlocks
+  return buildingBlocks!
 }
 
 function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
@@ -1013,58 +1017,63 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
 }
 
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
+  // Forward-declare so store method closures can capture it directly,
+  // eliminating the double-lookup (WeakMap + function call) on every
+  // store.get / store.set / store.sub invocation.
+  let buildingBlocks: Readonly<BuildingBlocks>
+
   const store = {
     get(atom) {
-      const storeGet = getInternalBuildingBlocks(store)[21]
-      return storeGet(store, atom)
+      return buildingBlocks[21]!(store, atom)
     },
     set(atom, ...args) {
-      const storeSet = getInternalBuildingBlocks(store)[22]
-      return storeSet(store, atom, ...args)
+      return buildingBlocks[22]!(store, atom, ...args)
     },
     sub(atom, listener) {
-      const storeSub = getInternalBuildingBlocks(store)[23]
-      return storeSub(store, atom, listener)
+      return buildingBlocks[23]!(store, atom, listener)
     },
   } as Store
 
-  const buildingBlocks = (
-    [
-      // store state
-      new WeakMap(), // atomStateMap
-      new WeakMap(), // mountedMap
-      new WeakMap(), // invalidatedAtoms
-      new Set(), // changedAtoms
-      new Set(), // mountCallbacks
-      new Set(), // unmountCallbacks
-      {}, // storeHooks
-      // atom interceptors
-      BUILDING_BLOCK_atomRead,
-      BUILDING_BLOCK_atomWrite,
-      BUILDING_BLOCK_atomOnInit,
-      BUILDING_BLOCK_atomOnMount,
-      // building-block functions
-      BUILDING_BLOCK_ensureAtomState,
-      BUILDING_BLOCK_flushCallbacks,
-      BUILDING_BLOCK_recomputeInvalidatedAtoms,
-      BUILDING_BLOCK_readAtomState,
-      BUILDING_BLOCK_invalidateDependents,
-      BUILDING_BLOCK_writeAtomState,
-      BUILDING_BLOCK_mountDependencies,
-      BUILDING_BLOCK_mountAtom,
-      BUILDING_BLOCK_unmountAtom,
-      BUILDING_BLOCK_setAtomStateValueOrPromise,
-      BUILDING_BLOCK_storeGet,
-      BUILDING_BLOCK_storeSet,
-      BUILDING_BLOCK_storeSub,
-      undefined,
-      // abortable promise support
-      new WeakMap(), // abortHandlersMap
-      BUILDING_BLOCK_registerAbortHandler,
-      BUILDING_BLOCK_abortPromise,
-    ] satisfies BuildingBlocks
-  ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
-  buildingBlockMap.set(store, Object.freeze(buildingBlocks))
+  buildingBlocks = Object.freeze(
+    (
+      [
+        // store state
+        new WeakMap(), // atomStateMap
+        new WeakMap(), // mountedMap
+        new WeakMap(), // invalidatedAtoms
+        new Set(), // changedAtoms
+        new Set(), // mountCallbacks
+        new Set(), // unmountCallbacks
+        {}, // storeHooks
+        // atom interceptors
+        BUILDING_BLOCK_atomRead,
+        BUILDING_BLOCK_atomWrite,
+        BUILDING_BLOCK_atomOnInit,
+        BUILDING_BLOCK_atomOnMount,
+        // building-block functions
+        BUILDING_BLOCK_ensureAtomState,
+        BUILDING_BLOCK_flushCallbacks,
+        BUILDING_BLOCK_recomputeInvalidatedAtoms,
+        BUILDING_BLOCK_readAtomState,
+        BUILDING_BLOCK_invalidateDependents,
+        BUILDING_BLOCK_writeAtomState,
+        BUILDING_BLOCK_mountDependencies,
+        BUILDING_BLOCK_mountAtom,
+        BUILDING_BLOCK_unmountAtom,
+        BUILDING_BLOCK_setAtomStateValueOrPromise,
+        BUILDING_BLOCK_storeGet,
+        BUILDING_BLOCK_storeSet,
+        BUILDING_BLOCK_storeSub,
+        undefined,
+        // abortable promise support
+        new WeakMap(), // abortHandlersMap
+        BUILDING_BLOCK_registerAbortHandler,
+        BUILDING_BLOCK_abortPromise,
+      ] satisfies BuildingBlocks
+    ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks,
+  )
+  // Store building blocks as a property for fast access (symbol key).
+  ;(store as any)[BB_KEY] = buildingBlocks
   return store
 }
 
