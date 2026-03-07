@@ -377,13 +377,13 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
   if (import.meta.env?.MODE !== 'production' && !atom) {
     throw new Error('Atom is undefined or null')
   }
-  let atomState = atomStateMap.get(atom)
-  if (!atomState) {
-    atomState = { d: new Map(), p: new Set(), n: 0 }
-    atomStateMap.set(atom, atomState)
-    storeHooks.i?.(atom)
-    atomOnInit?.(store, atom)
+  if (atomStateMap.has(atom)) {
+    return atomStateMap.get(atom) as never
   }
+  const atomState: AtomState = { d: new Map(), p: new Set(), n: 0 }
+  atomStateMap.set(atom, atomState)
+  storeHooks.i?.(atom)
+  atomOnInit?.(store, atom)
   return atomState as never
 }
 
@@ -804,55 +804,55 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
   const writeAtomState = buildingBlocks[16]
   const mountAtom = buildingBlocks[18]
   const atomState = ensureAtomState(store, atom)
-  let mounted = mountedMap.get(atom)
-  if (!mounted) {
-    // recompute atom state
-    readAtomState(store, atom)
-    // mount dependencies first
-    for (const a of atomState.d.keys()) {
-      const aMounted = mountAtom(store, a)
-      aMounted.t.add(atom)
-    }
-    // mount self
-    mounted = {
-      l: new Set(),
-      d: new Set(atomState.d.keys()),
-      t: new Set(),
-    }
-    mountedMap.set(atom, mounted)
-    if (isActuallyWritableAtom(atom)) {
-      const processOnMount = () => {
-        let isSync = true
-        const setAtom = (...args: unknown[]) => {
-          try {
-            return writeAtomState(store, atom, ...args)
-          } finally {
-            if (!isSync) {
-              recomputeInvalidatedAtoms(store)
-              flushCallbacks(store)
-            }
-          }
-        }
+  if (mountedMap.has(atom)) {
+    return mountedMap.get(atom)!
+  }
+  // recompute atom state
+  readAtomState(store, atom)
+  // mount dependencies first
+  for (const a of atomState.d.keys()) {
+    const aMounted = mountAtom(store, a)
+    aMounted.t.add(atom)
+  }
+  // mount self
+  const mounted: Mounted = {
+    l: new Set(),
+    d: new Set(atomState.d.keys()),
+    t: new Set(),
+  }
+  mountedMap.set(atom, mounted)
+  if (isActuallyWritableAtom(atom)) {
+    const processOnMount = () => {
+      let isSync = true
+      const setAtom = (...args: unknown[]) => {
         try {
-          const onUnmount = atomOnMount(store, atom, setAtom)
-          if (onUnmount) {
-            mounted!.u = () => {
-              isSync = true
-              try {
-                onUnmount()
-              } finally {
-                isSync = false
-              }
-            }
-          }
+          return writeAtomState(store, atom, ...args)
         } finally {
-          isSync = false
+          if (!isSync) {
+            recomputeInvalidatedAtoms(store)
+            flushCallbacks(store)
+          }
         }
       }
-      mountCallbacks.add(processOnMount)
+      try {
+        const onUnmount = atomOnMount(store, atom, setAtom)
+        if (onUnmount) {
+          mounted.u = () => {
+            isSync = true
+            try {
+              onUnmount()
+            } finally {
+              isSync = false
+            }
+          }
+        }
+      } finally {
+        isSync = false
+      }
     }
-    storeHooks.m?.(atom)
+    mountCallbacks.add(processOnMount)
   }
+  storeHooks.m?.(atom)
   return mounted
 }
 
