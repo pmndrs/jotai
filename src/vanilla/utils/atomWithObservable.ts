@@ -17,7 +17,7 @@ type Observer<T> = {
   complete: () => void
 }
 
-type ObservableLike<T> =
+type SubscribableObservable<T> =
   | {
       subscribe(observer: Observer<T>): Subscription
     }
@@ -28,6 +28,12 @@ type ObservableLike<T> =
       subscribe(observer: Partial<Observer<T>>): Subscription
       // Overload function to make typing happy
       subscribe(next: (value: T) => void): Subscription
+    }
+
+type ObservableLike<T> =
+  | SubscribableObservable<T>
+  | {
+      [Symbol.observable]: () => SubscribableObservable<T>
     }
 
 type SubjectLike<T> = ObservableLike<T> & Observer<T>
@@ -75,13 +81,11 @@ export function atomWithObservable<Data>(
   }
 
   const observableResultAtom = atom((get) => {
-    let observable = getObservable(get)
+    const source = getObservable(get)
     const itself = (
-      observable as Partial<Record<symbol, () => typeof observable>>
+      source as Partial<Record<symbol, () => SubscribableObservable<Data>>>
     )[Symbol.observable]?.()
-    if (itself) {
-      observable = itself
-    }
+    const observable = itself || (source as SubscribableObservable<Data>)
 
     let resolve: ((result: Result) => void) | undefined
     const makePending = () =>
@@ -156,7 +160,7 @@ export function atomWithObservable<Data>(
         }
       }
     }
-    return [resultAtom, observable, makePending, start, isNotMounted] as const
+    return [resultAtom, source, makePending, start, isNotMounted] as const
   })
 
   if (import.meta.env?.MODE !== 'production') {
