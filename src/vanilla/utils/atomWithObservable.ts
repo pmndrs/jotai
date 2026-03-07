@@ -81,11 +81,11 @@ export function atomWithObservable<Data>(
   }
 
   const observableResultAtom = atom((get) => {
-    const source = getObservable(get)
+    const observable = getObservable(get)
     const itself = (
-      source as Partial<Record<symbol, () => SubscribableObservable<Data>>>
+      observable as Partial<Record<symbol, () => SubscribableObservable<Data>>>
     )[Symbol.observable]?.()
-    const observable = itself || (source as SubscribableObservable<Data>)
+    const subscribable = itself || (observable as SubscribableObservable<Data>)
 
     let resolve: ((result: Result) => void) | undefined
     const makePending = () =>
@@ -124,7 +124,7 @@ export function atomWithObservable<Data>(
         clearTimeout(timer)
         subscription.unsubscribe()
       }
-      subscription = observable.subscribe({
+      subscription = subscribable.subscribe({
         next: (d) => listener({ d }),
         error: (e) => listener({ e }),
         complete: () => {},
@@ -160,7 +160,7 @@ export function atomWithObservable<Data>(
         }
       }
     }
-    return [resultAtom, source, makePending, start, isNotMounted] as const
+    return [resultAtom, observable, makePending, start, isNotMounted] as const
   })
 
   if (import.meta.env?.MODE !== 'production') {
