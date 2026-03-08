@@ -50,11 +50,8 @@ export function useHydrateAtoms<
   }
 }
 
-const getHydratedSet = (store: Store) => {
-  let hydratedSet = hydratedMap.get(store)
-  if (!hydratedSet) {
-    hydratedSet = new WeakSet()
-    hydratedMap.set(store, hydratedSet)
-  }
-  return hydratedSet
-}
+const getHydratedSet = (store: Store) =>
+  (hydratedMap.has(store)
+    ? hydratedMap
+    : hydratedMap.set(store, new WeakSet())
+  ).get(store)!
