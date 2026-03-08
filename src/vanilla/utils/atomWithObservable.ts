@@ -83,11 +83,8 @@ export function atomWithObservable<Data>(
   const observableResultAtom = atom((get) => {
     const observable = getObservable(get)
     const subscribable =
-      (
-        observable as Partial<
-          Record<symbol, () => SubscribableObservable<Data>>
-        >
-      )[Symbol.observable]?.() || (observable as SubscribableObservable<Data>)
+      (observable as Partial<SymbolObservable<Data>>)[Symbol.observable]?.() ||
+      (observable as SubscribableObservable<Data>)
 
     let resolve: ((result: Result) => void) | undefined
     const makePending = () =>
