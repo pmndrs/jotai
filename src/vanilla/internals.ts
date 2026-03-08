@@ -473,7 +473,16 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
+    // Inline iteration to avoid Set allocation from getMountedOrPendingDependents
+    const aMounted = mountedMap.get(a)
+    if (aMounted) {
+      for (const d of aMounted.t) {
+        if (!visiting.has(d)) {
+          stack.push(d)
+        }
+      }
+    }
+    for (const d of aState.p) {
       if (!visiting.has(d)) {
         stack.push(d)
       }
@@ -496,6 +505,33 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     invalidatedAtoms.delete(a)
   }
+}
+
+// Store-level epoch counter for unmounted atom cache optimization.
+// Incremented on each store.set() call so that repeated store.get() calls
+// on unmounted atoms can skip redundant recursive dependency walks when
+// no mutations have occurred between reads.
+// The verified map is keyed per-store (not on AtomState) because
+// AtomState objects can be shared across derived stores.
+// Verified entries store [storeEpoch, atomEpoch] - we check both
+// because another store may mutate the shared AtomState.
+type VerifiedEntry = [storeEpoch: number, atomEpoch: EpochNumber]
+type StoreEpochState = {
+  epoch: number
+  verified: WeakMap<AnyAtom, VerifiedEntry>
+}
+const storeEpochMap = new WeakMap<Store, StoreEpochState>()
+const getStoreEpochState = (store: Store): StoreEpochState => {
+  let state = storeEpochMap.get(store)
+  if (!state) {
+    state = { epoch: 0, verified: new WeakMap() }
+    storeEpochMap.set(store, state)
+  }
+  return state
+}
+const incrementStoreEpoch = (store: Store): void => {
+  const state = getStoreEpochState(store)
+  ++state.epoch
 }
 
 // Dev only
@@ -685,7 +721,19 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   while (stack.length) {
     const a = stack.pop()!
     const aState = ensureAtomState(store, a)
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
+    // Inline iteration over mounted dependents and pending-promise dependents
+    // to avoid Set allocation from getMountedOrPendingDependents
+    const mounted = mountedMap.get(a)
+    if (mounted) {
+      for (const d of mounted.t) {
+        const dState = ensureAtomState(store, d)
+        if (invalidatedAtoms.get(d) !== dState.n) {
+          invalidatedAtoms.set(d, dState.n)
+          stack.push(d)
+        }
+      }
+    }
+    for (const d of aState.p) {
       const dState = ensureAtomState(store, d)
       if (invalidatedAtoms.get(d) !== dState.n) {
         invalidatedAtoms.set(d, dState.n)
@@ -924,7 +972,32 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
 }
 
 const BUILDING_BLOCK_storeGet: StoreGet = (store, atom) => {
-  const readAtomState = getInternalBuildingBlocks(store)[14]
+  const buildingBlocks = getInternalBuildingBlocks(store)
+  const mountedMap = buildingBlocks[1]
+  const readAtomState = buildingBlocks[14]
+  // For unmounted atoms, check if we can skip the read entirely.
+  // If the store epoch hasn't changed since the last verification, and the
+  // atom's own epoch hasn't changed (possible with shared AtomState across
+  // derived stores), we can return the cached value.
+  if (!mountedMap.has(atom)) {
+    const epochState = getStoreEpochState(store)
+    const atomStateMap = buildingBlocks[0]
+    const cachedState = atomStateMap.get(atom)
+    if (cachedState && ('v' in cachedState || 'e' in cachedState)) {
+      const entry = epochState.verified.get(atom)
+      if (
+        entry &&
+        entry[0] === epochState.epoch &&
+        entry[1] === cachedState.n
+      ) {
+        return returnAtomValue(cachedState) as any
+      }
+    }
+    const atomState = readAtomState(store, atom)
+    // Cache the verification result for this atom
+    epochState.verified.set(atom, [epochState.epoch, atomState.n])
+    return returnAtomValue(atomState) as any
+  }
   return returnAtomValue(readAtomState(store, atom)) as any
 }
 
@@ -933,6 +1006,8 @@ const BUILDING_BLOCK_storeSet: StoreSet = (store, atom, ...args) => {
   const flushCallbacks = buildingBlocks[12]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const writeAtomState = buildingBlocks[16]
+  // Increment store epoch to invalidate unmounted atom caches
+  incrementStoreEpoch(store)
   try {
     return writeAtomState(store, atom, ...args) as any
   } finally {
