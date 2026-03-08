@@ -236,11 +236,7 @@ export function atomWithStorage<Value>(
 
   baseAtom.onMount = (setAtom) => {
     setAtom(storage.getItem(key, initialValue) as Value | Promise<Value>)
-    let unsub: Unsubscribe | undefined
-    if (storage.subscribe) {
-      unsub = storage.subscribe(key, setAtom, initialValue)
-    }
-    return unsub
+    return storage.subscribe?.(key, setAtom, initialValue)
   }
 
   const anAtom = atom(
