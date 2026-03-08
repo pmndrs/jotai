@@ -152,11 +152,13 @@ export function createJSONStorage<Value>(
     (subscriber: StringSubscribe): Subscribe<Value> =>
     (key, callback, initialValue) =>
       subscriber(key, (v) => {
+        let newValue: Value
         try {
-          callback(JSON.parse(v || ''))
+          newValue = JSON.parse(v || '')
         } catch {
-          callback(initialValue)
+          newValue = initialValue
         }
+        callback(newValue)
       })
 
   let subscriber: StringSubscribe | undefined
