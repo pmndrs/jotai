@@ -87,6 +87,29 @@ it('count state', () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
+it('count state with Symbol.observable', () => {
+  const subject = new BehaviorSubject(1)
+  const observable = {
+    [Symbol.observable]: () => ({
+      subscribe: subject.subscribe.bind(subject),
+    }),
+  }
+  const observableAtom = atomWithObservable(() => observable)
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+    return <>count: {state}</>
+  }
+
+  render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>,
+  )
+
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+})
+
 it('writable count state', () => {
   const subject = new BehaviorSubject(1)
   const observableAtom = atomWithObservable(() => subject)
