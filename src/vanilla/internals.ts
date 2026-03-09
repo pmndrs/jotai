@@ -491,6 +491,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
       }
     }
     if (hasChangedDeps) {
+      invalidatedAtoms.set(a, aState.n)
       readAtomState(store, a)
       mountDependencies(store, a)
     }
@@ -632,6 +633,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     },
   }
   const prevEpochNumber = atomState.n
+  const prevInvalidated = invalidatedAtoms.get(atom) === prevEpochNumber
   try {
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(store)
@@ -662,10 +664,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     return atomState
   } finally {
     isSync = false
-    if (
-      prevEpochNumber !== atomState.n &&
-      invalidatedAtoms.get(atom) === prevEpochNumber
-    ) {
+    if (atomState.n !== prevEpochNumber && prevInvalidated) {
       invalidatedAtoms.set(atom, atomState.n)
       changedAtoms.add(atom)
       storeHooks.c?.(atom)
@@ -930,14 +929,18 @@ const BUILDING_BLOCK_storeGet: StoreGet = (store, atom) => {
 
 const BUILDING_BLOCK_storeSet: StoreSet = (store, atom, ...args) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
+  const changedAtoms = buildingBlocks[3]
   const flushCallbacks = buildingBlocks[12]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const writeAtomState = buildingBlocks[16]
+  const prevChangedAtomsSize = changedAtoms.size
   try {
     return writeAtomState(store, atom, ...args) as any
   } finally {
-    recomputeInvalidatedAtoms(store)
-    flushCallbacks(store)
+    if (changedAtoms.size !== prevChangedAtomsSize) {
+      recomputeInvalidatedAtoms(store)
+      flushCallbacks(store)
+    }
   }
 }
 
