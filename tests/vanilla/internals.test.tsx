@@ -98,7 +98,7 @@ describe('internals', () => {
     expect(didRun.external).toBeCalledTimes(1)
   })
 
-  it('should not invalidate the same dependent twice via multiple paths', () => {
+  it('invalidateDependents should not invalidate the same dependent twice via multiple paths', () => {
     const invalidatedAtoms = (() => {
       const map = new WeakMap()
       return {
@@ -125,7 +125,8 @@ describe('internals', () => {
     const leafAtom = atom((get) => get(midAtom1) + get(midAtom2))
 
     const unsub = store.sub(leafAtom, () => {})
-    expect(() => store.set(baseAtom, 1)).not.toThrow()
+    const invalidateDependents = INTERNAL_getBuildingBlocks(store)[15]
+    expect(() => invalidateDependents(store, baseAtom)).not.toThrow()
     unsub()
   })
 })
