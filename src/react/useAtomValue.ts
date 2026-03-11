@@ -102,7 +102,7 @@ const createContinuablePromise = <T>(
 }
 
 type Options = Parameters<typeof useStore>[0] & {
-  /** @deprecated delay option is deprecated and will be removed in v3. */
+  /** @deprecated delay option is deprecated and will be removed in v3. https://github.com/pmndrs/jotai/pull/3264 */
   delay?: number
   unstable_promiseStatus?: boolean
 }
@@ -178,7 +178,7 @@ function useAtomValueWithDelay<Value>(
       setTimeout(() => setValue(store.get(atom)), delay)
     })
     return unsub
-  }, [store, atom])
+  }, [store, atom, delay])
   return value
 }
 `)
