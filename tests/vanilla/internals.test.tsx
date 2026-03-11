@@ -98,6 +98,40 @@ describe('internals', () => {
     expect(didRun.external).toBeCalledTimes(1)
   })
 
+  it('each store.get causes full scan of atom dependencies when state unchanged (performance)', () => {
+    const SIZE = 10_000
+    const deps = Array.from({ length: SIZE }, () => atom(0))
+    const derivedAtom = atom((get) => deps.map(get))
+    const atomRead = vi.fn()
+    const wrapRead = <A extends { read: (...args: any[]) => any }>(a: A) => {
+      const { read } = a
+      a.read = ((...args: Parameters<A['read']>): ReturnType<A['read']> => {
+        atomRead(...args)
+        return read.apply(a, args)
+      }) as A['read']
+    }
+    ;[...deps, derivedAtom].forEach(wrapRead)
+    const rawBlocks = INTERNAL_getBuildingBlocks(INTERNAL_buildStore())
+    const buildingBlocks = [...rawBlocks] as INTERNAL_BuildingBlocks
+    const ras = vi.fn(buildingBlocks[14])
+    buildingBlocks[14] = ras as typeof buildingBlocks[14]
+    const store = INTERNAL_buildStore(...buildingBlocks)
+    console.time('store.get')
+    store.get(derivedAtom) // does a deep scan of atom dependencies
+    console.timeEnd('store.get')
+    expect(atomRead).toHaveBeenCalledTimes(SIZE + 1)
+    expect(ras).toHaveBeenCalledTimes(SIZE + 1)
+    atomRead.mockClear()
+    ras.mockClear()
+    console.time('store.get (cached)')
+    store.get(derivedAtom)
+    console.timeEnd('store.get (cached)')
+    // Cached value: no atom read needed
+    expect(atomRead).toHaveBeenCalledTimes(0)
+    // FIXME: readAtomState should be called once (for derived atom only), not full scan
+    expect(ras).toHaveBeenCalledTimes(1) // expected 1, received 10_001
+  })
+
   it('should not invalidate the same dependent twice via multiple paths', () => {
     const invalidatedAtoms = (() => {
       const map = new WeakMap()
