@@ -102,6 +102,7 @@ const createContinuablePromise = <T>(
 }
 
 type Options = Parameters<typeof useStore>[0] & {
+  /** @deprecated delay option is deprecated and will be removed in v3. */
   delay?: number
   unstable_promiseStatus?: boolean
 }
@@ -159,6 +160,28 @@ export function useAtomValue<Value>(atom: Atom<Value>, options?: Options) {
         }
       }
       if (typeof delay === 'number') {
+        console.warn(`[DEPRECATED] delay option is deprecated and will be removed in v3.
+
+Migration guide:
+
+Create a custom hook like the following.
+
+function useAtomValueWithDelay<Value>(
+  atom: Atom<Value>,
+  options: { delay: number },
+): Value {
+  const { delay } = options
+  const store = useStore(options)
+  const [value, setValue] = useState(() => store.get(atom))
+  useEffect(() => {
+    const unsub = store.sub(atom, () => {
+      setTimeout(() => setValue(store.get(atom)), delay)
+    })
+    return unsub
+  }, [store, atom])
+  return value
+}
+`)
         // delay rerendering to wait a promise possibly to resolve
         setTimeout(rerender, delay)
         return
