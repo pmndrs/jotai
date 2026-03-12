@@ -806,6 +806,37 @@ describe('error handling', () => {
   })
 })
 
+it('should throw error when writing to non-subject observable', () => {
+  const observable = of(1)
+  const observableAtom = atomWithObservable(() => observable)
+
+  const Counter = () => {
+    const [state, dispatch] = useAtom(observableAtom as any)
+    return (
+      <>
+        count: {state}
+        <button
+          onClick={() => {
+            expect(() => dispatch(2)).toThrow('observable is not subject')
+          }}
+        >
+          button
+        </button>
+      </>
+    )
+  }
+
+  render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>,
+  )
+
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('button'))
+})
+
 describe('wonka', () => {
   it('count state', () => {
     const source = fromValue(1)
@@ -917,6 +948,18 @@ describe('atomWithObservable vanilla tests', () => {
     expect(store.get(doubleAtom)).toBe(6)
 
     unsubs.forEach((unsub) => unsub())
+  })
+
+  it('should throw error when writing to non-subject observable', () => {
+    const store = createStore()
+    const observable = of(1)
+    const observableAtom = atomWithObservable(() => observable)
+
+    store.sub(observableAtom, () => {})
+
+    expect(() => store.set(observableAtom as any, 2)).toThrow(
+      'observable is not subject',
+    )
   })
 })
 
