@@ -1,0 +1,72 @@
+name: Test Multiple Builds
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  test_multiple_builds:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [cjs, esm, umd]
+        env: [development, production]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run build
+      - name: Use React 17 for production test
+        if: ${{ matrix.env == 'production' }}
+        run: |
+          pnpm add -D react@17.0.2 react-dom@17.0.2 @testing-library/react@12.1.4
+      - name: Patch for DEV-ONLY
+        if: ${{ matrix.env == 'development' }}
+        run: |
+          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[DEV-ONLY\]/\1('/" tests/*/*.ts* tests/*/*/*.ts*
+          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[PRD-ONLY\]/\1.skip('/" tests/*/*.ts* tests/*/*/*.ts*
+      - name: Patch for PRD-ONLY
+        if: ${{ matrix.env == 'production' }}
+        run: |
+          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\PRD-ONLY\]/\1('/" tests/*/*.ts* tests/*/*/*.ts*
+          sed -i~ "s/\(it\|describe\)[.a-zA-Z]*('\[DEV-ONLY\]/\1.skip('/" tests/*/*.ts* tests/*/*/*.ts*
+      - name: Patch for CJS
+        if: ${{ matrix.build == 'cjs' }}
+        run: |
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.mts
+          sed -i~ "s/import { useResetAtom } from 'jotai\/react\/utils'/const { useResetAtom } = require('..\/..\/..\/dist\/react\/utils.js')/" tests/react/utils/useResetAtom.test.tsx
+          sed -i~ "s/import { RESET, atomWithReducer, atomWithReset } from 'jotai\/vanilla\/utils'/const { RESET, atomWithReducer, atomWithReset } = require('..\/..\/..\/dist\/vanilla\/utils.js')/" tests/react/utils/useResetAtom.test.tsx
+          perl -i~ -0777 -pe "s/import {[^}]+} from 'jotai\/vanilla\/internals'/const { INTERNAL_buildStoreRev2: INTERNAL_buildStore, INTERNAL_initializeStoreHooksRev2: INTERNAL_initializeStoreHooks, INTERNAL_getBuildingBlocksRev2: INTERNAL_getBuildingBlocks } = require('..\/..\/dist\/vanilla\/internals.js')/g" tests/vanilla/store.test.tsx tests/vanilla/internals.test.tsx tests/vanilla/derive.test.tsx tests/vanilla/effect.test.ts
+      - name: Patch for ESM
+        if: ${{ matrix.build == 'esm' }}
+        run: |
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/esm\1.mjs')/" vitest.config.mts
+          sed -i~ "1s/^/import.meta.env.MODE='${NODE_ENV}';/" tests/*/*.tsx tests/*/*/*.tsx
+        env:
+          NODE_ENV: ${{ matrix.env }}
+      - name: Patch for UMD
+        if: ${{ matrix.build == 'umd' }}
+        run: |
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/umd\1.${NODE_ENV}.js')/" vitest.config.mts
+          rm tests/react/utils/useResetAtom.test.tsx # FIXME we skip this for now. Actually I'm not sure if we really run tests with UMD build
+          rm tests/vanilla/store.test.tsx tests/vanilla/internals.test.tsx tests/vanilla/derive.test.tsx tests/vanilla/effect.test.ts # FIXME we skip this for now. Actually I'm not sure if we really run tests with UMD build
+        env:
+          NODE_ENV: ${{ matrix.env }}
+      - name: Patch for SystemJS
+        if: ${{ matrix.build == 'system' }}
+        run: |
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/system\1.${NODE_ENV}.js')/" vitest.config.mts
+        env:
+          NODE_ENV: ${{ matrix.env }}
+      - name: Test ${{ matrix.build }} ${{ matrix.env }}
+        run: |
+          pnpm run test:spec
+        env:
+          NODE_ENV: ${{ matrix.env }}

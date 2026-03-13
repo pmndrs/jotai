@@ -1,0 +1,19 @@
+name: Close Stale Discussions
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  close-stale-discussions:
+    runs-on: ubuntu-latest
+    permissions:
+      discussions: write
+    steps:
+      - uses: steffen-karlsson/stalesweeper@cbed739a89b490f703d8466fb59b37ddc0915889 # v1.1.1
+        with:
+          message: 'This discussion has been closed due to inactivity.'
+          days-before-close: 180
+          close-unanswered: true
+          verbose: true

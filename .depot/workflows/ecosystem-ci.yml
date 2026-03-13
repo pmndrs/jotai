@@ -1,0 +1,46 @@
+name: Ecosystem CI
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/ecosystem-ci run') }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: 'jotaijs/jotai-ecosystem-ci'
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install
+      - name: Get Short SHA
+        id: short_sha
+        run: |
+          api="https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}"
+          sha=$(curl -s -H "Authorization: token $GITHUB_TOKEN" $api | jq -r '.head.sha' | cut -c1-8)
+          echo "x=$sha" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Ecosystem CI
+        id: run_command
+        run: |
+          echo "x<<EOF" >> $GITHUB_OUTPUT
+          pnpm run ecosystem-ci | tee >(grep -A999 -- '---- Jotai Ecosystem CI Results ----' >> $GITHUB_OUTPUT)
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          JOTAI_PKG: https://pkg.csb.dev/pmndrs/jotai/commit/${{ steps.short_sha.outputs.x }}/jotai
+          VERBOSE: 1
+      - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ## Ecosystem CI Output
+            ```
+            ${{ steps.run_command.outputs.x }}
+            ```
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
