@@ -39,7 +39,9 @@ Enhance your development experience with the UI based Jotai DevTool.
 
 Use [`jotai-babel`](https://github.com/jotaijs/jotai-babel) plugins for optimal debugging experience. Find the complete guide on the [babel](../tools/babel) page and/or [swc](../tools/swc) page.
 
-Example:
+```
+npm install -D jotai-babel
+```
 
 ```ts
 {
@@ -64,6 +66,28 @@ export default defineConfig({
         presets: ['jotai-babel/preset'],
       },
     }),
+  ],
+})
+```
+
+If you are using Vite 8, first install these additional packages:
+
+```
+npm install -D @rolldown/plugin-babel @babel/core
+```
+
+Then use the following example instead:
+
+```
+// vite.config.ts
+import babel from '@rolldown/plugin-babel';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    babel({
+      presets: ['jotai-babel/preset'],
+    })
   ],
 })
 ```
