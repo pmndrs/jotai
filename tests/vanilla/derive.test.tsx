@@ -19,9 +19,8 @@ const deriveStore = (
 ): Store => {
   const internalStore = createStore()
   const mappedAtoms = new WeakMap<AnyAtom, AnyAtom>()
-  let derivedStore!: Store
 
-  const mapAtom = <Value>(originalAtom: Atom<Value>): Atom<Value> => {
+  const mapAtom = <Value,>(originalAtom: Atom<Value>): Atom<Value> => {
     const cachedAtom = mappedAtoms.get(originalAtom as AnyAtom)
     if (cachedAtom) {
       return cachedAtom as Atom<Value>
@@ -31,13 +30,16 @@ const deriveStore = (
     if (hasInitialValue(originalAtom as AnyAtom)) {
       if (scopedAtoms.has(originalAtom as AnyAtom)) {
         const scopedAtom = atom(store.get(originalAtom as never))
-        scopedAtom.onMount = (originalAtom as AnyWritableAtom).onMount
-        scopedAtom.INTERNAL_onInit = () => originalAtom.INTERNAL_onInit?.(derivedStore)
+        scopedAtom.onMount = (originalAtom as AnyWritableAtom).onMount!
+        scopedAtom.INTERNAL_onInit = () =>
+          originalAtom.INTERNAL_onInit?.(derivedStore)
         mappedAtom = scopedAtom
       } else {
         const syncAtom = atom(0)
         syncAtom.onMount = (setSelf) =>
-          store.sub(originalAtom as AnyAtom, () => setSelf((value) => value + 1))
+          store.sub(originalAtom as AnyAtom, () =>
+            setSelf((value) => value + 1),
+          )
         const unscopedAtom = isWritableAtom(originalAtom as AnyAtom)
           ? atom(
               (get) => {
@@ -60,22 +62,24 @@ const deriveStore = (
         (get, options) =>
           originalAtom.read.call(
             originalAtom,
-            ((dependencyAtom: AnyAtom) => get(mapAtom(dependencyAtom))) as never,
+            ((dependencyAtom: AnyAtom) =>
+              get(mapAtom(dependencyAtom))) as never,
             options as never,
           ),
         (get, set, ...args) =>
           (originalAtom as AnyWritableAtom).write.call(
             originalAtom,
-            ((dependencyAtom: AnyAtom) => get(mapAtom(dependencyAtom))) as never,
+            ((dependencyAtom: AnyAtom) =>
+              get(mapAtom(dependencyAtom))) as never,
             ((dependencyAtom: AnyWritableAtom, ...innerArgs: unknown[]) =>
               set(
                 mapAtom(dependencyAtom as AnyAtom) as AnyWritableAtom,
-                ...(innerArgs as never),
+                ...innerArgs,
               )) as never,
-            ...(args as never),
+            ...args,
           ),
       )
-      mappedWritableAtom.onMount = (originalAtom as AnyWritableAtom).onMount
+      mappedWritableAtom.onMount = (originalAtom as AnyWritableAtom).onMount!
       mappedWritableAtom.INTERNAL_onInit = () =>
         originalAtom.INTERNAL_onInit?.(derivedStore)
       mappedAtom = mappedWritableAtom as AnyAtom
@@ -96,7 +100,7 @@ const deriveStore = (
     return mappedAtom as Atom<Value>
   }
 
-  derivedStore = {
+  const derivedStore: Store = {
     get: (atom) => internalStore.get(mapAtom(atom)),
     set: (atom, ...args) => internalStore.set(mapAtom(atom) as never, ...args),
     sub: (atom, listener) => internalStore.sub(mapAtom(atom), listener),
