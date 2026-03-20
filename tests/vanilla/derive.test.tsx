@@ -1,20 +1,107 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai/vanilla'
-import type { Atom } from 'jotai/vanilla'
-import {
-  INTERNAL_buildStoreRev2 as INTERNAL_buildStore,
-  INTERNAL_getBuildingBlocksRev2 as INTERNAL_getBuildingBlocks,
-} from 'jotai/vanilla/internals'
+import type { Atom, WritableAtom } from 'jotai/vanilla'
 
-type AtomStateMapType = ReturnType<typeof INTERNAL_getBuildingBlocks>[0]
+type Store = ReturnType<typeof createStore>
+type AnyAtom = Atom<unknown>
+type AnyWritableAtom = WritableAtom<unknown, unknown[], unknown>
+
+const hasInitialValue = (
+  atom: AnyAtom,
+): atom is AnyWritableAtom & { init: unknown } => 'init' in atom
+
+const isWritableAtom = (atom: AnyAtom): atom is AnyWritableAtom =>
+  'write' in atom
 
 const deriveStore = (
-  store: ReturnType<typeof createStore>,
-  enhanceAtomStateMap: (atomStateMap: AtomStateMapType) => AtomStateMapType,
-): ReturnType<typeof createStore> => {
-  const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-  const atomStateMap = buildingBlocks[0]
-  const derivedStore = INTERNAL_buildStore(enhanceAtomStateMap(atomStateMap))
+  store: Store,
+  scopedAtoms: ReadonlySet<AnyAtom> = new Set(),
+): Store => {
+  const internalStore = createStore()
+  const mappedAtoms = new WeakMap<AnyAtom, AnyAtom>()
+  let derivedStore!: Store
+
+  const mapAtom = <Value>(originalAtom: Atom<Value>): Atom<Value> => {
+    const cachedAtom = mappedAtoms.get(originalAtom as AnyAtom)
+    if (cachedAtom) {
+      return cachedAtom as Atom<Value>
+    }
+
+    let mappedAtom: AnyAtom
+    if (hasInitialValue(originalAtom as AnyAtom)) {
+      if (scopedAtoms.has(originalAtom as AnyAtom)) {
+        const scopedAtom = atom(store.get(originalAtom as never))
+        scopedAtom.onMount = (originalAtom as AnyWritableAtom).onMount
+        scopedAtom.INTERNAL_onInit = () => originalAtom.INTERNAL_onInit?.(derivedStore)
+        mappedAtom = scopedAtom
+      } else {
+        const syncAtom = atom(0)
+        syncAtom.onMount = (setSelf) =>
+          store.sub(originalAtom as AnyAtom, () => setSelf((value) => value + 1))
+        const unscopedAtom = isWritableAtom(originalAtom as AnyAtom)
+          ? atom(
+              (get) => {
+                get(syncAtom)
+                return store.get(originalAtom as never)
+              },
+              (_get, _set, ...args) =>
+                store.set(originalAtom as never, ...(args as never)),
+            )
+          : atom((get) => {
+              get(syncAtom)
+              return store.get(originalAtom as never)
+            })
+        unscopedAtom.INTERNAL_onInit = () =>
+          originalAtom.INTERNAL_onInit?.(derivedStore)
+        mappedAtom = unscopedAtom as AnyAtom
+      }
+    } else if (isWritableAtom(originalAtom as AnyAtom)) {
+      const mappedWritableAtom = atom(
+        (get, options) =>
+          originalAtom.read.call(
+            originalAtom,
+            ((dependencyAtom: AnyAtom) => get(mapAtom(dependencyAtom))) as never,
+            options as never,
+          ),
+        (get, set, ...args) =>
+          (originalAtom as AnyWritableAtom).write.call(
+            originalAtom,
+            ((dependencyAtom: AnyAtom) => get(mapAtom(dependencyAtom))) as never,
+            ((dependencyAtom: AnyWritableAtom, ...innerArgs: unknown[]) =>
+              set(
+                mapAtom(dependencyAtom as AnyAtom) as AnyWritableAtom,
+                ...(innerArgs as never),
+              )) as never,
+            ...(args as never),
+          ),
+      )
+      mappedWritableAtom.onMount = (originalAtom as AnyWritableAtom).onMount
+      mappedWritableAtom.INTERNAL_onInit = () =>
+        originalAtom.INTERNAL_onInit?.(derivedStore)
+      mappedAtom = mappedWritableAtom as AnyAtom
+    } else {
+      const mappedDerivedAtom = atom((get, options) =>
+        originalAtom.read.call(
+          originalAtom,
+          ((dependencyAtom: AnyAtom) => get(mapAtom(dependencyAtom))) as never,
+          options as never,
+        ),
+      )
+      mappedDerivedAtom.INTERNAL_onInit = () =>
+        originalAtom.INTERNAL_onInit?.(derivedStore)
+      mappedAtom = mappedDerivedAtom as AnyAtom
+    }
+
+    mappedAtoms.set(originalAtom as AnyAtom, mappedAtom)
+    return mappedAtom as Atom<Value>
+  }
+
+  derivedStore = {
+    get: (atom) => internalStore.get(mapAtom(atom)),
+    set: (atom, ...args) => internalStore.set(mapAtom(atom) as never, ...args),
+    sub: (atom, listener) => internalStore.sub(mapAtom(atom), listener),
+  }
+
   return derivedStore
 }
 
@@ -29,36 +116,7 @@ describe('deriveStore for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = deriveStore(store, (atomStateMap) => {
-      const scopedAtomStateMap = new WeakMap()
-      return {
-        get: (atom) => {
-          if (scopedAtoms.has(atom)) {
-            return scopedAtomStateMap.get(atom)
-          }
-          return atomStateMap.get(atom)
-        },
-        set: (atom, atomState) => {
-          if (scopedAtoms.has(atom)) {
-            scopedAtomStateMap.set(atom, atomState)
-          } else {
-            atomStateMap.set(atom, atomState)
-          }
-        },
-        has: (atom) => {
-          if (scopedAtoms.has(atom)) {
-            return scopedAtomStateMap.has(atom)
-          }
-          return atomStateMap.has(atom)
-        },
-        delete: (atom) => {
-          if (scopedAtoms.has(atom)) {
-            return scopedAtomStateMap.delete(atom)
-          }
-          return atomStateMap.delete(atom)
-        },
-      }
-    })
+    const derivedStore = deriveStore(store, scopedAtoms)
 
     expect(store.get(a)).toBe('a')
     expect(derivedStore.get(a)).toBe('a')
@@ -83,36 +141,7 @@ describe('deriveStore for scoping atoms', () => {
     const scopedAtoms = new Set<Atom<unknown>>([a])
 
     const store = createStore()
-    const derivedStore = deriveStore(store, (atomStateMap) => {
-      const scopedAtomStateMap = new WeakMap()
-      return {
-        get: (atom) => {
-          if (scopedAtoms.has(atom)) {
-            return scopedAtomStateMap.get(atom)
-          }
-          return atomStateMap.get(atom)
-        },
-        set: (atom, atomState) => {
-          if (scopedAtoms.has(atom)) {
-            scopedAtomStateMap.set(atom, atomState)
-          } else {
-            atomStateMap.set(atom, atomState)
-          }
-        },
-        has: (atom) => {
-          if (scopedAtoms.has(atom)) {
-            return scopedAtomStateMap.has(atom)
-          }
-          return atomStateMap.has(atom)
-        },
-        delete: (atom) => {
-          if (scopedAtoms.has(atom)) {
-            return scopedAtomStateMap.delete(atom)
-          }
-          return atomStateMap.delete(atom)
-        },
-      }
-    })
+    const derivedStore = deriveStore(store, scopedAtoms)
 
     expect(store.get(c)).toBe('ab')
     expect(derivedStore.get(c)).toBe('ab')
@@ -136,36 +165,7 @@ describe('deriveStore for scoping atoms', () => {
 
     function makeStores() {
       const store = createStore()
-      const derivedStore = deriveStore(store, (atomStateMap) => {
-        const scopedAtomStateMap = new WeakMap()
-        return {
-          get: (atom) => {
-            if (scopedAtoms.has(atom)) {
-              return scopedAtomStateMap.get(atom)
-            }
-            return atomStateMap.get(atom)
-          },
-          set: (atom, atomState) => {
-            if (scopedAtoms.has(atom)) {
-              scopedAtomStateMap.set(atom, atomState)
-            } else {
-              atomStateMap.set(atom, atomState)
-            }
-          },
-          has: (atom) => {
-            if (scopedAtoms.has(atom)) {
-              return scopedAtomStateMap.has(atom)
-            }
-            return atomStateMap.has(atom)
-          },
-          delete: (atom) => {
-            if (scopedAtoms.has(atom)) {
-              return scopedAtomStateMap.delete(atom)
-            }
-            return atomStateMap.delete(atom)
-          },
-        }
-      })
+      const derivedStore = deriveStore(store, scopedAtoms)
       expect(store.get(b)).toBe('a')
       expect(derivedStore.get(b)).toBe('a')
       return { store, derivedStore }
@@ -195,9 +195,9 @@ describe('deriveStore for scoping atoms', () => {
       derivedStore.sub(b, derivedCallback)
       store.set(b, '*')
       expect(store.get(b)).toBe('*')
-      //expect(derivedStore.get(b)).toBe('a') // FIXME: received '*'
+      expect(derivedStore.get(b)).toBe('a')
       expect(storeCallback).toHaveBeenCalledTimes(1)
-      //expect(derivedCallback).toHaveBeenCalledTimes(0) // FIXME: received 1
+      expect(derivedCallback).toHaveBeenCalledTimes(0)
     }
     {
       const { store, derivedStore } = makeStores()
@@ -206,7 +206,7 @@ describe('deriveStore for scoping atoms', () => {
       store.sub(b, storeCallback)
       derivedStore.sub(b, derivedCallback)
       derivedStore.set(b, '*')
-      //expect(store.get(b)).toBe('a') // FIXME: received '*'
+      expect(store.get(b)).toBe('a')
       expect(derivedStore.get(b)).toBe('*')
       expect(storeCallback).toHaveBeenCalledTimes(0)
       expect(derivedCallback).toHaveBeenCalledTimes(1)
@@ -217,31 +217,7 @@ describe('deriveStore for scoping atoms', () => {
 it('should pass the correct store instance to the atom initializer', () => {
   expect.assertions(2)
   const baseStore = createStore()
-  const derivedStore = deriveStore(baseStore, (atomStateMap) => {
-    const initializedAtoms = new WeakSet()
-    return {
-      get: (atom) => {
-        if (!initializedAtoms.has(atom)) {
-          return undefined
-        }
-        return atomStateMap.get(atom)
-      },
-      set: (atom, atomState) => {
-        initializedAtoms.add(atom)
-        atomStateMap.set(atom, atomState)
-      },
-      has: (atom) => {
-        if (!initializedAtoms.has(atom)) {
-          return false
-        }
-        return atomStateMap.has(atom)
-      },
-      delete: (atom) => {
-        initializedAtoms.delete(atom)
-        return atomStateMap.delete(atom)
-      },
-    }
-  })
+  const derivedStore = deriveStore(baseStore)
   const a = atom(null)
   a.INTERNAL_onInit = (store) => {
     expect(store).toBe(baseStore)
