@@ -12,7 +12,7 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
-const buildingBlockLength = 28
+const buildingBlockLength = 29
 
 describe('internals', () => {
   it('should not return a sparse building blocks array', () => {
