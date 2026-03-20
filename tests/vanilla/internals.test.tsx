@@ -114,7 +114,7 @@ describe('internals', () => {
     const rawBlocks = INTERNAL_getBuildingBlocks(INTERNAL_buildStore())
     const buildingBlocks = [...rawBlocks] as INTERNAL_BuildingBlocks
     const ras = vi.fn(buildingBlocks[14])
-    buildingBlocks[14] = ras as typeof buildingBlocks[14]
+    buildingBlocks[14] = ras as (typeof buildingBlocks)[14]
     const store = INTERNAL_buildStore(...buildingBlocks)
     console.time('store.get')
     store.get(derivedAtom) // does a deep scan of atom dependencies
@@ -132,7 +132,7 @@ describe('internals', () => {
     expect(ras).toHaveBeenCalledTimes(1) // expected 1, received 10_001
   })
 
-  it('should not invalidate the same dependent twice via multiple paths', () => {
+  it('invalidateDependents should not invalidate the same dependent twice via multiple paths', () => {
     const invalidatedAtoms = (() => {
       const map = new WeakMap()
       return {
@@ -159,7 +159,8 @@ describe('internals', () => {
     const leafAtom = atom((get) => get(midAtom1) + get(midAtom2))
 
     const unsub = store.sub(leafAtom, () => {})
-    expect(() => store.set(baseAtom, 1)).not.toThrow()
+    const invalidateDependents = INTERNAL_getBuildingBlocks(store)[15]
+    expect(() => invalidateDependents(store, baseAtom)).not.toThrow()
     unsub()
   })
 })

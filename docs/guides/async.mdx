@@ -81,7 +81,10 @@ const Component = () => {
 An interesting pattern that can be achieved with Jotai is switching from async to sync to trigger suspending when wanted.
 
 ```js
-const request = async () => fetch('https://...').then((res) => res.json())
+const request = async () =>
+  fetch('https://jsonplaceholder.typicode.com/todos/1').then((res) =>
+    res.json(),
+  )
 const baseAtom = atom(0)
 const Component = () => {
   const [value, setValue] = useAtom(baseAtom)

@@ -87,6 +87,29 @@ it('count state', () => {
   expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
+it('count state with Symbol.observable', () => {
+  const subject = new BehaviorSubject(1)
+  const observable = {
+    [Symbol.observable]: () => ({
+      subscribe: subject.subscribe.bind(subject),
+    }),
+  }
+  const observableAtom = atomWithObservable(() => observable)
+
+  const Counter = () => {
+    const [state] = useAtom(observableAtom)
+    return <>count: {state}</>
+  }
+
+  render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>,
+  )
+
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+})
+
 it('writable count state', () => {
   const subject = new BehaviorSubject(1)
   const observableAtom = atomWithObservable(() => subject)
@@ -783,6 +806,37 @@ describe('error handling', () => {
   })
 })
 
+it('should throw error when writing to non-subject observable', () => {
+  const observable = of(1)
+  const observableAtom = atomWithObservable(() => observable)
+
+  const Counter = () => {
+    const [state, dispatch] = useAtom(observableAtom as any)
+    return (
+      <>
+        count: {state}
+        <button
+          onClick={() => {
+            expect(() => dispatch(2)).toThrow('observable is not subject')
+          }}
+        >
+          button
+        </button>
+      </>
+    )
+  }
+
+  render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>,
+  )
+
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByText('button'))
+})
+
 describe('wonka', () => {
   it('count state', () => {
     const source = fromValue(1)
@@ -894,6 +948,18 @@ describe('atomWithObservable vanilla tests', () => {
     expect(store.get(doubleAtom)).toBe(6)
 
     unsubs.forEach((unsub) => unsub())
+  })
+
+  it('should throw error when writing to non-subject observable', () => {
+    const store = createStore()
+    const observable = of(1)
+    const observableAtom = atomWithObservable(() => observable)
+
+    store.sub(observableAtom, () => {})
+
+    expect(() => store.set(observableAtom as any, 2)).toThrow(
+      'observable is not subject',
+    )
   })
 })
 
