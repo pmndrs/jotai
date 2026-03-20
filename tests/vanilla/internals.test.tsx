@@ -128,8 +128,58 @@ describe('internals', () => {
     console.timeEnd('store.get (cached)')
     // Cached value: no atom read needed
     expect(atomRead).toHaveBeenCalledTimes(0)
-    // FIXME: readAtomState should be called once (for derived atom only), not full scan
-    expect(ras).toHaveBeenCalledTimes(1) // expected 1, received 10_001
+    // readAtomState should be called once, not full scan
+    expect(ras).toHaveBeenCalledTimes(1)
+  })
+
+  it('multiple unmounted derived atom caches stay valid after one mutation (performance)', () => {
+    const SIZE = 1_000
+    const baseAtom = atom(0)
+    const deps1 = Array.from({ length: SIZE }, () =>
+      atom((get) => get(baseAtom)),
+    )
+    const deps2 = Array.from({ length: SIZE }, () =>
+      atom((get) => get(baseAtom)),
+    )
+    const derivedAtom1 = atom((get) => deps1.map(get))
+    const derivedAtom2 = atom((get) => deps2.map(get))
+    const atomRead = vi.fn()
+    const wrapRead = <A extends { read: (...args: any[]) => any }>(a: A) => {
+      const { read } = a
+      a.read = ((...args: Parameters<A['read']>): ReturnType<A['read']> => {
+        atomRead(...args)
+        return read.apply(a, args)
+      }) as A['read']
+    }
+    ;[baseAtom, ...deps1, ...deps2, derivedAtom1, derivedAtom2].forEach(
+      wrapRead,
+    )
+    const rawBlocks = INTERNAL_getBuildingBlocks(INTERNAL_buildStore())
+    const buildingBlocks = [...rawBlocks] as INTERNAL_BuildingBlocks
+    const ras = vi.fn(buildingBlocks[14])
+    buildingBlocks[14] = ras as (typeof buildingBlocks)[14]
+    const store = INTERNAL_buildStore(...buildingBlocks)
+
+    store.get(derivedAtom1)
+    store.get(derivedAtom2)
+    atomRead.mockClear()
+    ras.mockClear()
+
+    store.set(baseAtom, 1)
+    store.get(derivedAtom1)
+    store.get(derivedAtom2)
+
+    atomRead.mockClear()
+    ras.mockClear()
+    store.get(derivedAtom1)
+    expect(atomRead).toHaveBeenCalledTimes(0)
+    expect(ras).toHaveBeenCalledTimes(1)
+
+    atomRead.mockClear()
+    ras.mockClear()
+    store.get(derivedAtom2)
+    expect(atomRead).toHaveBeenCalledTimes(0)
+    expect(ras).toHaveBeenCalledTimes(1)
   })
 
   it('invalidateDependents should not invalidate the same dependent twice via multiple paths', () => {
