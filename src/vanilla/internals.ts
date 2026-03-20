@@ -226,12 +226,6 @@ export type {
 // Some util functions
 //
 
-let globalEpochNumber: EpochNumber = 0
-
-function nextEpochNumber(): EpochNumber {
-  return ++globalEpochNumber
-}
-
 function hasInitialValue<T extends Atom<AnyValue>>(
   atom: T,
 ): atom is T & (T extends Atom<infer Value> ? { init: Value } : never) {
@@ -681,7 +675,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   } catch (error) {
     delete atomState.v
     atomState.e = error
-    atomState.n = nextEpochNumber()
+    ++atomState.n
     atomState.m = storeEpochNumber
     return atomState
   } finally {
@@ -939,7 +933,7 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   atomState.v = valueOrPromise
   delete atomState.e
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
-    atomState.n = nextEpochNumber()
+    ++atomState.n
     delete atomState.m
     if (isPromiseLike(prevValue)) {
       abortPromise(store, prevValue)
@@ -1099,7 +1093,6 @@ export {
   //
   // Still experimental and some of them will be gone soon
   //
-  nextEpochNumber as INTERNAL_nextEpochNumber,
   hasInitialValue as INTERNAL_hasInitialValue,
   isActuallyWritableAtom as INTERNAL_isActuallyWritableAtom,
   isAtomStateInitialized as INTERNAL_isAtomStateInitialized,
