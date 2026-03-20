@@ -34,6 +34,8 @@ type AtomState<Value = AnyValue> = {
   readonly p: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: EpochNumber
+  /** The store epoch number that last validated the atom. */
+  m?: EpochNumber
   /** Atom value */
   v?: Value
   /** Atom error */
@@ -528,6 +530,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   const registerAbortHandler = buildingBlocks[26]
   const storeEpochHolder = buildingBlocks[28]
   const atomState = ensureAtomState(store, atom)
+  const storeEpochNumber = storeEpochHolder[0]
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
     if (
@@ -537,8 +540,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
       (mountedMap.has(atom) && invalidatedAtoms.get(atom) !== atomState.n) ||
       // If atom is not mounted, we can use cached atom state,
       // only if store hasn't been mutated.
-      atomState.n === storeEpochHolder[0]
+      atomState.m === storeEpochNumber
     ) {
+      atomState.m = storeEpochNumber
       return atomState
     }
     // Otherwise, check if the dependencies have changed.
@@ -551,6 +555,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
       }
     }
     if (!hasChangedDeps) {
+      atomState.m = storeEpochNumber
       return atomState
     }
   }
@@ -671,11 +676,13 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
       pruneDependencies()
     }
     storeHooks.r?.(atom)
+    atomState.m = storeEpochNumber
     return atomState
   } catch (error) {
     delete atomState.v
     atomState.e = error
-    atomState.n = storeEpochHolder[0] = nextEpochNumber()
+    atomState.n = nextEpochNumber()
+    atomState.m = storeEpochNumber
     return atomState
   } finally {
     isSync = false
@@ -726,6 +733,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
   const writeAtomState = buildingBlocks[16]
   const mountDependencies = buildingBlocks[17]
   const setAtomStateValueOrPromise = buildingBlocks[20]
+  const storeEpochHolder = buildingBlocks[28]
   let isSync = true
   const getter: Getter = <V>(a: Atom<V>) =>
     returnAtomValue(readAtomState(store, a))
@@ -748,6 +756,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         setAtomStateValueOrPromise(store, a, v)
         mountDependencies(store, a)
         if (prevEpochNumber !== aState.n) {
+          ++storeEpochHolder[0]
           changedAtoms.add(a)
           invalidateDependents(store, a)
           storeHooks.c?.(a)
@@ -915,7 +924,6 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   const buildingBlocks = getInternalBuildingBlocks(store)
   const ensureAtomState = buildingBlocks[11]
   const abortPromise = buildingBlocks[27]
-  const storeEpochHolder = buildingBlocks[28]
   const atomState = ensureAtomState(store, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
@@ -931,7 +939,8 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   atomState.v = valueOrPromise
   delete atomState.e
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
-    atomState.n = storeEpochHolder[0] = nextEpochNumber()
+    atomState.n = nextEpochNumber()
+    delete atomState.m
     if (isPromiseLike(prevValue)) {
       abortPromise(store, prevValue)
     }
