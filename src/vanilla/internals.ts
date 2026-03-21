@@ -934,7 +934,6 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   delete atomState.e
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
     ++atomState.n
-    delete atomState.m
     if (isPromiseLike(prevValue)) {
       abortPromise(store, prevValue)
     }
