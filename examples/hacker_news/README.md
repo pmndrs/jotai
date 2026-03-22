@@ -2,7 +2,7 @@
 
 ## Description
 
-Browse Hacker News items with Jotai. Click `Next` to load the next item.
+Browse Hacker News items with Jotai. Click the arrow button to load the next item.
 
 ## Set up locally
 
