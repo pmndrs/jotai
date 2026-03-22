@@ -4,7 +4,7 @@
 
 ## Description
 
-Implement a todo list using atomFamily and localStorage, you can store your todo list to localStorage by click `Save to localStorage`, then remove your todo list and restore them by click `Load from localStorage`.
+Implement a todo list using atomFamily and `localStorage`. You can save your todo list by clicking `Save to localStorage`, then restore it by clicking `Load from localStorage`.
 
 ## Set up locally
 

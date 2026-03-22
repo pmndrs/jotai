@@ -2,7 +2,7 @@
 
 ## Description
 
-Demonstrate a news article with jotai, hit next to see more articles.
+Browse Hacker News items with Jotai. Click `Next` to load the next item.
 
 ## Set up locally
 
