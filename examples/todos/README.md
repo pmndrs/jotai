@@ -2,7 +2,7 @@
 
 ## Description
 
-Record your todo list by typing them into this app, check them if you have completed the task, and switch between `Completed` and `Incompleted` to see the status of your task.
+Create a todo list, mark tasks as completed, and switch between `Completed` and `Incomplete` to filter items.
 
 ## Set up locally
 
