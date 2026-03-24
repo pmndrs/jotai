@@ -12,7 +12,7 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
-const buildingBlockLength = 28
+const buildingBlockLength = 29
 
 describe('internals', () => {
   it('should not return a sparse building blocks array', () => {
@@ -96,6 +96,90 @@ describe('internals', () => {
     store2.get(atom(0))
     expect(didRun.internal).toBeCalledTimes(0)
     expect(didRun.external).toBeCalledTimes(1)
+  })
+
+  it('each store.get causes full scan of atom dependencies when state unchanged (performance)', () => {
+    const SIZE = 10_000
+    const deps = Array.from({ length: SIZE }, () => atom(0))
+    const derivedAtom = atom((get) => deps.map(get))
+    const atomRead = vi.fn()
+    const wrapRead = <A extends { read: (...args: any[]) => any }>(a: A) => {
+      const { read } = a
+      a.read = ((...args: Parameters<A['read']>): ReturnType<A['read']> => {
+        atomRead(...args)
+        return read.apply(a, args)
+      }) as A['read']
+    }
+    ;[...deps, derivedAtom].forEach(wrapRead)
+    const rawBlocks = INTERNAL_getBuildingBlocks(INTERNAL_buildStore())
+    const buildingBlocks = [...rawBlocks] as INTERNAL_BuildingBlocks
+    const ras = vi.fn(buildingBlocks[14])
+    buildingBlocks[14] = ras as (typeof buildingBlocks)[14]
+    const store = INTERNAL_buildStore(...buildingBlocks)
+    console.time('store.get')
+    store.get(derivedAtom) // does a deep scan of atom dependencies
+    console.timeEnd('store.get')
+    expect(atomRead).toHaveBeenCalledTimes(SIZE + 1)
+    expect(ras).toHaveBeenCalledTimes(SIZE + 1)
+    atomRead.mockClear()
+    ras.mockClear()
+    console.time('store.get (cached)')
+    store.get(derivedAtom)
+    console.timeEnd('store.get (cached)')
+    // Cached value: no atom read needed
+    expect(atomRead).toHaveBeenCalledTimes(0)
+    // readAtomState should be called once, not full scan
+    expect(ras).toHaveBeenCalledTimes(1)
+  })
+
+  it('multiple unmounted derived atom caches stay valid after one mutation (performance)', () => {
+    const SIZE = 1_000
+    const baseAtom = atom(0)
+    const deps1 = Array.from({ length: SIZE }, () =>
+      atom((get) => get(baseAtom)),
+    )
+    const deps2 = Array.from({ length: SIZE }, () =>
+      atom((get) => get(baseAtom)),
+    )
+    const derivedAtom1 = atom((get) => deps1.map(get))
+    const derivedAtom2 = atom((get) => deps2.map(get))
+    const atomRead = vi.fn()
+    const wrapRead = <A extends { read: (...args: any[]) => any }>(a: A) => {
+      const { read } = a
+      a.read = ((...args: Parameters<A['read']>): ReturnType<A['read']> => {
+        atomRead(...args)
+        return read.apply(a, args)
+      }) as A['read']
+    }
+    ;[baseAtom, ...deps1, ...deps2, derivedAtom1, derivedAtom2].forEach(
+      wrapRead,
+    )
+    const rawBlocks = INTERNAL_getBuildingBlocks(INTERNAL_buildStore())
+    const buildingBlocks = [...rawBlocks] as INTERNAL_BuildingBlocks
+    const ras = vi.fn(buildingBlocks[14])
+    buildingBlocks[14] = ras as (typeof buildingBlocks)[14]
+    const store = INTERNAL_buildStore(...buildingBlocks)
+
+    store.get(derivedAtom1)
+    store.get(derivedAtom2)
+    atomRead.mockClear()
+    ras.mockClear()
+
+    store.set(baseAtom, 1)
+    store.get(derivedAtom1)
+    store.get(derivedAtom2)
+
+    atomRead.mockClear()
+    ras.mockClear()
+    store.get(derivedAtom1)
+    expect(atomRead).toHaveBeenCalledTimes(0)
+    expect(ras).toHaveBeenCalledTimes(1)
+
+    atomRead.mockClear()
+    ras.mockClear()
+    store.get(derivedAtom2)
+    expect(atomRead).toHaveBeenCalledTimes(0)
+    expect(ras).toHaveBeenCalledTimes(1)
   })
 
   it('invalidateDependents should not invalidate the same dependent twice via multiple paths', () => {

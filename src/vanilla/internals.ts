@@ -34,6 +34,8 @@ type AtomState<Value = AnyValue> = {
   readonly p: Set<AnyAtom>
   /** The epoch number of the atom. */
   n: EpochNumber
+  /** The store epoch number that last validated the atom. */
+  m?: EpochNumber
   /** Atom value */
   v?: Value
   /** Atom error */
@@ -145,6 +147,7 @@ type RegisterAbortHandler = <T>(
   abortHandler: () => void,
 ) => void
 type AbortPromise = <T>(store: Store, promise: PromiseLike<T>) => void
+type StoreEpochHolder = [n: EpochNumber]
 
 type Store = {
   get: <Value>(atom: Atom<Value>) => Value
@@ -189,6 +192,8 @@ type BuildingBlocks = [
   abortHandlersMap: AbortHandlersMap, //                       25
   registerAbortHandler: RegisterAbortHandler, //               26
   abortPromise: AbortPromise, //                               27
+  // store epoch
+  storeEpochHolder: StoreEpochHolder, //                       28
 ]
 
 export type {
@@ -517,13 +522,21 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   const mountDependencies = buildingBlocks[17]
   const setAtomStateValueOrPromise = buildingBlocks[20]
   const registerAbortHandler = buildingBlocks[26]
+  const storeEpochHolder = buildingBlocks[28]
   const atomState = ensureAtomState(store, atom)
+  const storeEpochNumber = storeEpochHolder[0]
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
-    // If the atom is mounted, we can use cached atom state.
-    // because it should have been updated by dependencies.
-    // We can't use the cache if the atom is invalidated.
-    if (mountedMap.has(atom) && invalidatedAtoms.get(atom) !== atomState.n) {
+    if (
+      // If the atom is mounted, we can use cached atom state,
+      // because it should have been updated by dependencies.
+      // We can't use the cache if the atom is invalidated.
+      (mountedMap.has(atom) && invalidatedAtoms.get(atom) !== atomState.n) ||
+      // If atom is not mounted, we can use cached atom state,
+      // only if store hasn't been mutated.
+      atomState.m === storeEpochNumber
+    ) {
+      atomState.m = storeEpochNumber
       return atomState
     }
     // Otherwise, check if the dependencies have changed.
@@ -536,6 +549,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
       }
     }
     if (!hasChangedDeps) {
+      atomState.m = storeEpochNumber
       return atomState
     }
   }
@@ -656,11 +670,13 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
       pruneDependencies()
     }
     storeHooks.r?.(atom)
+    atomState.m = storeEpochNumber
     return atomState
   } catch (error) {
     delete atomState.v
     atomState.e = error
     ++atomState.n
+    atomState.m = storeEpochNumber
     return atomState
   } finally {
     isSync = false
@@ -711,6 +727,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
   const writeAtomState = buildingBlocks[16]
   const mountDependencies = buildingBlocks[17]
   const setAtomStateValueOrPromise = buildingBlocks[20]
+  const storeEpochHolder = buildingBlocks[28]
   let isSync = true
   const getter: Getter = <V>(a: Atom<V>) =>
     returnAtomValue(readAtomState(store, a))
@@ -733,6 +750,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         setAtomStateValueOrPromise(store, a, v)
         mountDependencies(store, a)
         if (prevEpochNumber !== aState.n) {
+          ++storeEpochHolder[0]
           changedAtoms.add(a)
           invalidateDependents(store, a)
           storeHooks.c?.(a)
@@ -1055,6 +1073,8 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       new WeakMap(), // abortHandlersMap
       BUILDING_BLOCK_registerAbortHandler,
       BUILDING_BLOCK_abortPromise,
+      // store epoch
+      [0],
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
