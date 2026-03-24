@@ -35,9 +35,11 @@ Do's:
 const friendsAtom = atom([])
 const fetchFriendsAtom = atom(null, async (get, set, payload) => {
   // Fetch all friends
-  const res = await fetch('https://...')
+  const res = await fetch('https://jsonplaceholder.typicode.com/users')
+  const data = await res.json()
+
   // Make heavy computation once only
-  const computed = res.filter(heavyComputation)
+  const computed = data.filter(heavyComputation)
   set(friendsAtom, computed)
 })
 // Usage in components
