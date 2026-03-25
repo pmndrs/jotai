@@ -1,7 +1,7 @@
 {
   "name": "hacker_news",
   "version": "2.0.0",
-  "description": "Demonstrate a news articles with jotai, hit next to see more articles.",
+  "description": "Browse Hacker News items with Jotai",
   "type": "module",
   "scripts": {
     "dev": "vite",
