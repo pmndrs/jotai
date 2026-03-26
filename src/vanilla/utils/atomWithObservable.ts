@@ -31,7 +31,7 @@ type SubscribableObservable<T> =
     }
 
 type SymbolObservable<T> = {
-  [Symbol.observable]: () => SubscribableObservable<T>
+  [key: symbol]: () => SubscribableObservable<T>
 }
 
 type ObservableLike<T> = SubscribableObservable<T> | SymbolObservable<T>
