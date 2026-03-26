@@ -86,6 +86,7 @@
     "fix:format": "prettier . --write",
     "fix:lint": "eslint . --fix",
     "test": "pnpm run \"/^test:.*/\"",
+    "test:bench": "node --expose-gc benchmarks/discussion-3275-cli.cjs",
     "test:format": "prettier . --list-different",
     "test:types": "tsc --noEmit",
     "test:lint": "eslint .",
