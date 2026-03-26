@@ -156,6 +156,7 @@ type Store = {
     ...args: Args
   ) => Result
   sub: (atom: AnyAtom, listener: () => void) => () => void
+  [BUILDING_BLOCKS_KEY]: Readonly<BuildingBlocks>
 }
 
 type BuildingBlocks = [
@@ -1002,10 +1003,10 @@ const BUILDING_BLOCK_abortPromise: AbortPromise = (store, promise) => {
   abortHandlers?.forEach((fn) => fn())
 }
 
-const buildingBlockMap = new WeakMap<Store, Readonly<BuildingBlocks>>()
+const BUILDING_BLOCKS_KEY: unique symbol = Symbol('buildingBlocks')
 
 const getInternalBuildingBlocks = (store: Store): Readonly<BuildingBlocks> => {
-  const buildingBlocks = buildingBlockMap.get(store)!
+  const buildingBlocks = store[BUILDING_BLOCKS_KEY]
   if (import.meta.env?.MODE !== 'production' && !buildingBlocks) {
     throw new Error(
       'Store must be created by buildStore to read its building blocks',
@@ -1077,7 +1078,7 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
       [0],
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
-  buildingBlockMap.set(store, Object.freeze(buildingBlocks))
+  store[BUILDING_BLOCKS_KEY] = Object.freeze(buildingBlocks)
   return store
 }
 
