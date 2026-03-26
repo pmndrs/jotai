@@ -50,6 +50,41 @@ const SUPPORTED_VERSIONS = [
   'v2.18.1',
   'v2.19.0',
 ];
+const EXPERIMENTS_DIR = path.join(root, 'benchmarks', 'experiments');
+const discoverExperiments = () => {
+  if (!fs.existsSync(EXPERIMENTS_DIR)) return [];
+  const seenIds = new Set();
+  const experiments = [];
+  const entries = fs
+    .readdirSync(EXPERIMENTS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory());
+  for (const entry of entries) {
+    const folderName = entry.name;
+    const id = folderName.replace(/^exp-/, '');
+    const internalsPath = path.join(EXPERIMENTS_DIR, folderName, 'internals.ts');
+    const approachPath = path.join(EXPERIMENTS_DIR, folderName, 'APPROACH.md');
+    if (!fs.existsSync(internalsPath) || !fs.existsSync(approachPath)) {
+      continue;
+    }
+    if (seenIds.has(id)) {
+      throw new Error(`Duplicate experiment id discovered: ${id}`);
+    }
+    seenIds.add(id);
+    experiments.push({
+      id,
+      label: `EXP:${id}`,
+      internalsPath,
+      approachPath,
+    });
+  }
+  experiments.sort((a, b) => a.id.localeCompare(b.id));
+  return experiments;
+};
+const EXPERIMENTS = discoverExperiments();
+const EXPERIMENT_BY_ID = Object.fromEntries(EXPERIMENTS.map((e) => [e.id, e]));
+const ROOT_INTERNALS_PATH = path.join(root, 'src', 'vanilla', 'internals.ts');
+const DIST_ROOT_PATH = path.join(root, 'dist');
+const EXPERIMENT_DIST_ROOT_PATH = path.join(DIST_ROOT_PATH, 'bench-experiments');
 
 const getArg = (name, short) => {
   const longEq = process.argv.find((a) => a.startsWith(`--${name}=`));
@@ -260,11 +295,11 @@ const createScenarios = ({ atom, createStore, selectAtom }) => ({
   },
 });
 
-const formatDelta = (value, base) => {
+const formatDeltaFromReference = (value, reference) => {
   if (value == null) return '';
-  if (base == null) return `${value.toFixed(3)}`;
-  if (base === 0) return `${value.toFixed(3)} (n/a)`;
-  const delta = ((value - base) / base) * 100;
+  if (reference == null) return `${value.toFixed(3)}`;
+  if (reference === 0) return `${value.toFixed(3)} (n/a)`;
+  const delta = ((value - reference) / reference) * 100;
   const sign = delta > 0 ? '+' : '';
   return `${value.toFixed(3)} (${sign}${delta.toFixed(1)}%)`;
 };
@@ -295,23 +330,92 @@ const withDownloadedVersion = (version, fn) => {
   }
 };
 
-const ensureHeadBuild = () => {
-  execFileSync('pnpm', ['run', 'build'], {
-    cwd: root,
-    stdio: 'pipe',
-  });
+const withSwappedInternals = (experimentId, fn) => {
+  if (!experimentId) return fn();
+  const experiment = EXPERIMENT_BY_ID[experimentId];
+  if (!experiment) {
+    throw new Error(`Unknown experiment id for build: ${experimentId}`);
+  }
+  if (!fs.existsSync(experiment.internalsPath)) {
+    throw new Error(`Experiment internals file not found: ${experiment.internalsPath}`);
+  }
+  const originalInternals = fs.readFileSync(ROOT_INTERNALS_PATH, 'utf8');
+  const experimentInternals = fs.readFileSync(experiment.internalsPath, 'utf8');
+  fs.writeFileSync(ROOT_INTERNALS_PATH, experimentInternals, 'utf8');
+  // Hard guard: ensure the build will read experiment internals, not stale source.
+  const activeInternals = fs.readFileSync(ROOT_INTERNALS_PATH, 'utf8');
+  if (activeInternals !== experimentInternals) {
+    throw new Error(
+      `Failed to swap internals.ts for experiment ${experimentId}: ${experiment.internalsPath}`,
+    );
+  }
+  try {
+    return fn();
+  } finally {
+    fs.writeFileSync(ROOT_INTERNALS_PATH, originalInternals, 'utf8');
+    const restoredInternals = fs.readFileSync(ROOT_INTERNALS_PATH, 'utf8');
+    if (restoredInternals !== originalInternals) {
+      throw new Error(`Failed to restore root internals.ts after experiment ${experimentId}`);
+    }
+  }
 };
 
-const runOne = (label, repoPath) => {
+const copyDirRecursive = (srcDir, destDir, excludeTopLevelNames = []) => {
+  fs.mkdirSync(destDir, { recursive: true });
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (excludeTopLevelNames.includes(entry.name)) continue;
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath);
+    } else if (entry.isFile()) {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+};
+
+const snapshotExperimentDist = (experimentId) => {
+  if (!fs.existsSync(DIST_ROOT_PATH)) {
+    throw new Error(`Build output directory not found: ${DIST_ROOT_PATH}`);
+  }
+  const experimentDistPath = path.join(EXPERIMENT_DIST_ROOT_PATH, experimentId);
+  fs.rmSync(experimentDistPath, { recursive: true, force: true });
+  copyDirRecursive(DIST_ROOT_PATH, experimentDistPath, ['bench-experiments']);
+  if (!fs.existsSync(path.join(experimentDistPath, 'vanilla.js'))) {
+    throw new Error(`Experiment dist snapshot missing vanilla.js: ${experimentDistPath}`);
+  }
+  return experimentDistPath;
+};
+
+const ensureLocalBuild = ({ repoPath, experimentId = null }) =>
+  withSwappedInternals(experimentId, () => {
+    execFileSync('pnpm', ['run', 'build'], {
+      cwd: repoPath,
+      stdio: 'pipe',
+      env: {
+        ...process.env,
+        NODE_ENV: 'production',
+        JOTAI_BENCH_SWAP_INTERNALS: experimentId || '',
+      },
+    });
+    if (experimentId) {
+      return snapshotExperimentDist(experimentId);
+    }
+    return null;
+  });
+
+const runOne = (label, repoPath, forceDist = false, distPathOverride = null) => {
   const req = createRequire(path.join(repoPath, 'package.json'));
   let vanilla;
   let selectAtom;
   const sourceVanilla = path.join(repoPath, 'src', 'vanilla.ts');
   const sourceUtils = path.join(repoPath, 'src', 'vanilla', 'utils.ts');
+  const distBasePath = distPathOverride || path.join(repoPath, 'dist');
   const loadFromDist = () => {
-    vanilla = req(path.join(repoPath, 'dist', 'vanilla.js'));
+    vanilla = req(path.join(distBasePath, 'vanilla.js'));
     try {
-      ({ selectAtom } = req(path.join(repoPath, 'dist', 'vanilla', 'utils.js')));
+      ({ selectAtom } = req(path.join(distBasePath, 'vanilla', 'utils.js')));
     } catch {
       selectAtom = undefined;
     }
@@ -348,8 +452,7 @@ const runOne = (label, repoPath) => {
     }
   };
   try {
-    // HEAD(dist) should benchmark built artifacts for fair comparison.
-    if (label === 'HEAD(dist)') {
+    if (forceDist || label === 'HEAD(dist)' || label.startsWith('EXP:')) {
       loadFromDist();
     } else {
       vanilla = req('jotai/vanilla');
@@ -363,9 +466,9 @@ const runOne = (label, repoPath) => {
     if (fs.existsSync(sourceVanilla)) {
       loadFromSource();
     } else {
-      vanilla = req(path.join(repoPath, 'dist', 'vanilla.js'));
+      vanilla = req(path.join(distBasePath, 'vanilla.js'));
       try {
-        ({ selectAtom } = req(path.join(repoPath, 'dist', 'vanilla', 'utils.js')));
+        ({ selectAtom } = req(path.join(distBasePath, 'vanilla', 'utils.js')));
       } catch {
         selectAtom = undefined;
       }
@@ -397,19 +500,46 @@ const runOne = (label, repoPath) => {
 const entryFromToken = (versionToken) => {
   const normalized = String(versionToken).trim();
   if (normalized.toUpperCase() === 'HEAD') {
-    return { label: 'HEAD(dist)', source: 'local' };
+    return { label: 'HEAD(dist)', source: 'local', repoPath: root };
+  }
+  if (normalized.toUpperCase().startsWith('EXP:')) {
+    const id = normalized.slice(4).toLowerCase();
+    const exp = EXPERIMENT_BY_ID[id];
+    if (!exp) {
+      throw new Error(`Unknown experiment token: ${normalized}`);
+    }
+    if (!fs.existsSync(exp.internalsPath)) {
+      throw new Error(`Experiment internals file not found: ${exp.internalsPath}`);
+    }
+    return {
+      label: exp.label,
+      source: 'experiment',
+      repoPath: root,
+      id,
+      internalsPath: exp.internalsPath,
+    };
   }
   const lower = normalized.toLowerCase();
   if (!/^v2\.(1[0-9])\.\d+$/.test(lower)) {
     throw new Error(`Unsupported version token: ${normalized}`);
   }
-  return { label: lower, source: 'npm' };
+  return { label: lower, source: 'npm', repoPath: null };
 };
 
 const resolveEntries = () => {
   const token = String(versionsArg).trim();
   if (token.toUpperCase() === 'ALL') {
-    return [...SUPPORTED_VERSIONS.map(entryFromToken), { label: 'HEAD(dist)', source: 'local' }];
+    return [
+      ...SUPPORTED_VERSIONS.map(entryFromToken),
+      { label: 'HEAD(dist)', source: 'local', repoPath: root },
+      ...EXPERIMENTS.map((e) => ({
+        label: e.label,
+        source: 'experiment',
+        repoPath: root,
+        id: e.id,
+        internalsPath: e.internalsPath,
+      })),
+    ];
   }
   return token
     .split(',')
@@ -450,6 +580,12 @@ const main = async () => {
       '                           Order matters: each row compares against the previous row as predecessor.',
     );
     console.log(
+      '                           EXP:* rows always use HEAD(dist) as predecessor.',
+    );
+    console.log(
+      `                           ALL includes ${EXPERIMENTS.length} experiments as EXP:<id> tokens (internals.ts swap build).`,
+    );
+    console.log(
       '  --threshold, -t <pct>    Max allowed HEAD slowdown (%) vs v2.19.0 per scenario. Exits non-zero on breach.',
     );
     console.log('  --help, -h               Show this help and exit.');
@@ -457,7 +593,8 @@ const main = async () => {
     console.log(
       `Default version set (ALL): ${SUPPORTED_VERSIONS[0]}..${SUPPORTED_VERSIONS[SUPPORTED_VERSIONS.length - 1]} plus HEAD(dist).`,
     );
-    console.log('HEAD(dist) is built first and benchmarked from local dist artifacts.');
+    console.log('HEAD(dist) and experiments are built first and benchmarked from local dist artifacts.');
+    console.log('Experiment builds pass JOTAI_BENCH_SWAP_INTERNALS=<id>, swap src/vanilla/internals.ts, and snapshot to dist/bench-experiments/<id>.');
     console.log('');
     console.log('Output columns:');
     console.log(
@@ -470,16 +607,17 @@ const main = async () => {
     }
     console.log('');
     console.log('Cell format:');
-    console.log('  <median_ms> (<delta_vs_fastest_in_column%>)');
+    console.log('  <median_ms> (<delta_vs_predecessor%>)');
     console.log('  Fastest value in each scenario is marked as (base).');
+    console.log('  Rows without a predecessor show only <median_ms>.');
     console.log('');
     console.log('Color legend:');
     const legendLabelWidth = 25;
     const legendLine = (label, style, description) =>
       console.log(`  ${color(label.padEnd(legendLabelWidth), ...style)}  ${description}`);
     legendLine('column fastest', [ANSI.bold, ANSI.yellow], 'Fastest value in that scenario column.');
-    legendLine('faster than predecessor', [ANSI.bold, ANSI.green], 'Faster than previous row.');
-    legendLine('slower than predecessor', [ANSI.bold, ANSI.red], 'Slower than previous row.');
+    legendLine('faster than predecessor', [ANSI.bold, ANSI.green], 'Faster than predecessor (experiments compare to HEAD(dist)).');
+    legendLine('slower than predecessor', [ANSI.bold, ANSI.red], 'Slower than predecessor (experiments compare to HEAD(dist)).');
     return;
   }
   if (!Number.isFinite(iterations) || iterations <= 0) {
@@ -502,8 +640,11 @@ const main = async () => {
     const entry = workerEntries[0];
     let one;
     if (entry.source === 'local') {
-      ensureHeadBuild();
-      one = runOne(entry.label, root);
+      ensureLocalBuild({ repoPath: entry.repoPath, experimentId: null });
+      one = runOne(entry.label, entry.repoPath, true);
+    } else if (entry.source === 'experiment') {
+      const experimentDistPath = ensureLocalBuild({ repoPath: entry.repoPath, experimentId: entry.id });
+      one = runOne(entry.label, entry.repoPath, true, experimentDistPath);
     } else {
       one = withDownloadedVersion(entry.label, (pkgPath) => runOne(entry.label, pkgPath));
     }
@@ -514,7 +655,12 @@ const main = async () => {
 
   const runEntryInChild = async (e) => {
     process.stderr.write(`running ${e.label}\n`);
-    const token = e.source === 'local' ? 'HEAD' : e.label;
+    const token =
+      e.source === 'local'
+        ? 'HEAD'
+        : e.source === 'experiment'
+          ? `EXP:${e.id}`
+          : e.label;
     const { stdout } = await execFileAsync(
       process.execPath,
       [
@@ -525,22 +671,44 @@ const main = async () => {
         `--iterations=${iterations}`,
         `--warmup=${warmup}`,
       ],
-      { cwd: root, maxBuffer: 1024 * 1024 * 20 },
+      {
+        cwd: root,
+        maxBuffer: 1024 * 1024 * 20,
+        env: { ...process.env, NODE_ENV: 'production' },
+      },
     );
     return JSON.parse(stdout.trim());
   };
 
   const all = new Array(entries.length);
-  let nextIndex = 0;
-  const workerCount = Math.min(Math.floor(concurrency), entries.length);
-  await Promise.all(
-    Array.from({ length: workerCount }, async () => {
-      while (nextIndex < entries.length) {
-        const idx = nextIndex++;
-        all[idx] = await runEntryInChild(entries[idx]);
-      }
-    }),
-  );
+  const npmIndexes = [];
+  const localIndexes = [];
+  entries.forEach((entry, idx) => {
+    if (entry.source === 'npm') {
+      npmIndexes.push(idx);
+    } else {
+      // Local and experiment entries touch the same workspace source tree.
+      // Keep them serialized to avoid concurrent internals.ts swaps.
+      localIndexes.push(idx);
+    }
+  });
+
+  if (npmIndexes.length) {
+    let nextNpm = 0;
+    const workerCount = Math.min(Math.floor(concurrency), npmIndexes.length);
+    await Promise.all(
+      Array.from({ length: workerCount }, async () => {
+        while (nextNpm < npmIndexes.length) {
+          const listIndex = nextNpm++;
+          const idx = npmIndexes[listIndex];
+          all[idx] = await runEntryInChild(entries[idx]);
+        }
+      }),
+    );
+  }
+  for (const idx of localIndexes) {
+    all[idx] = await runEntryInChild(entries[idx]);
+  }
 
   const v219 = all.find((r) => r.label === 'v2.19.0');
   if (!v219) {
@@ -553,6 +721,12 @@ const main = async () => {
   const predecessorByLabel = Object.fromEntries(
     orderedLabels.map((label, idx) => [label, idx > 0 ? orderedLabels[idx - 1] : null]),
   );
+  // Experiments always compare against HEAD(dist), not against each other.
+  for (const r of all) {
+    if (r.label.startsWith('EXP:')) {
+      predecessorByLabel[r.label] = 'HEAD(dist)';
+    }
+  }
   const fastestByScenario = Object.fromEntries(
     scenarios.map((s) => {
       const values = all
@@ -577,23 +751,22 @@ const main = async () => {
   console.log(`Command: ${displayedCommand}`);
   console.log(legend);
   for (const r of all) {
-    const cells = [r.label];
+    const displayLabel = r.label.startsWith('EXP:') ? `  ${r.label}` : r.label;
+    const cells = [displayLabel];
+    const predecessorLabel = predecessorByLabel[r.label];
     for (const s of scenarios) {
       const value = r.results?.[s]?.medianMs;
-      const base = fastestByScenario[s];
-      let text =
-        value == null
-          ? ''
-          : value === base
-            ? `${value.toFixed(3)} (base)`
-            : formatDelta(value, base);
       const fastest = fastestByScenario[s];
+      const predecessorValue =
+        predecessorLabel == null ? null : allByLabel[predecessorLabel]?.results?.[s]?.medianMs;
+      let text = formatDeltaFromReference(value, predecessorValue);
+      if (value != null && fastest != null && value === fastest) {
+        text = `${text} (base)`;
+      }
       if (value != null && fastest != null && value === fastest) {
         text = color(stripAnsi(text), ANSI.bold, ANSI.yellow);
       } else if (value != null) {
-        const predecessorLabel = predecessorByLabel[r.label];
         if (predecessorLabel) {
-          const predecessorValue = allByLabel[predecessorLabel]?.results?.[s]?.medianMs;
           if (predecessorValue != null) {
             if (value < predecessorValue) text = color(text, ANSI.bold, ANSI.green);
             else if (value > predecessorValue) text = color(text, ANSI.bold, ANSI.red);
