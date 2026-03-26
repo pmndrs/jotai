@@ -85,6 +85,7 @@
     "fix": "pnpm run fix:lint && pnpm run fix:format",
     "fix:format": "prettier . --write",
     "fix:lint": "eslint . --fix",
+    "bench": "npx tsx benchmarks/run-all.ts",
     "test": "pnpm run \"/^test:.*/\"",
     "test:format": "prettier . --list-different",
     "test:types": "tsc --noEmit",
