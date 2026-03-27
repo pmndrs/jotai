@@ -638,7 +638,7 @@ const main = async () => {
       `                           ALL includes ${EXPERIMENTS.length} experiments as <experiment-id> tokens (internals.ts swap build).`,
     );
     console.log(
-      '  --threshold, -t <pct>    Max allowed HEAD slowdown (%) vs v2.19.0 per scenario. Exits non-zero on breach.',
+      '  --threshold, -t <pct>    Max allowed HEAD slowdown (%) vs last selected version per scenario. Exits non-zero on breach.',
     );
     console.log('  --help, -h               Show this help and exit.');
     console.log('');
@@ -780,11 +780,6 @@ const main = async () => {
     all[idx] = await runEntryInChild(entries[idx]);
   }
 
-  const v219 = all.find((r) => r.label === 'v2.19.0');
-  if (!v219) {
-    progressState.total += 1;
-    all.push(await runEntryInChild({ label: 'v2.19.0', source: 'npm' }));
-  }
   const head = all.find((r) => r.label === 'HEAD(dist)');
   const allByLabel = Object.fromEntries(all.map((r) => [r.label, r]));
   const orderedLabels = all.map((r) => r.label);
@@ -865,26 +860,42 @@ const main = async () => {
   console.log(divider);
 
   if (threshold != null && head) {
-    const v219Row = allByLabel['v2.19.0'];
-    if (!v219Row) {
-      throw new Error('Threshold check requires v2.19.0 result.');
+    const thresholdBaselineLabel = entries[entries.length - 1]?.label ?? null;
+    const thresholdBaselineRow =
+      thresholdBaselineLabel == null ? null : allByLabel[thresholdBaselineLabel];
+    if (!thresholdBaselineRow) {
+      throw new Error('Threshold check requires the last selected version result.');
     }
     const breaches = [];
     for (const s of scenarios) {
       const headValue = head.results?.[s]?.medianMs;
-      const v219Value = v219Row.results?.[s]?.medianMs;
-      if (headValue == null || v219Value == null || v219Value === 0) continue;
-      const deltaPct = ((headValue - v219Value) / v219Value) * 100;
+      const baselineValue = thresholdBaselineRow.results?.[s]?.medianMs;
+      if (headValue == null || baselineValue == null || baselineValue === 0) continue;
+      const deltaPct = ((headValue - baselineValue) / baselineValue) * 100;
       if (deltaPct > threshold) {
-        breaches.push(`${s}: +${deltaPct.toFixed(1)}% vs v2.19.0 > ${threshold}%`);
+        breaches.push(
+          `${s}: +${deltaPct.toFixed(1)}% vs ${thresholdBaselineLabel} > ${threshold}%`,
+        );
       }
     }
     if (breaches.length) {
-      console.error(color('Threshold check FAILED for HEAD(dist):', ANSI.bold, ANSI.red));
+      console.error(
+        color(
+          `Threshold check FAILED for HEAD(dist) vs ${thresholdBaselineLabel}:`,
+          ANSI.bold,
+          ANSI.red,
+        ),
+      );
       for (const b of breaches) console.error(`- ${b}`);
       process.exitCode = 1;
     } else {
-      console.log(color('Threshold check PASSED for HEAD(dist).', ANSI.bold, ANSI.green));
+      console.log(
+        color(
+          `Threshold check PASSED for HEAD(dist) vs ${thresholdBaselineLabel}.`,
+          ANSI.bold,
+          ANSI.green,
+        ),
+      );
     }
   }
 };
