@@ -166,6 +166,23 @@ const useColor =
 const color = (text, ...codes) =>
   useColor ? `${codes.join('')}${text}${ANSI.reset}` : String(text);
 const stripAnsi = (text) => String(text).replace(/\x1b\[[0-9;]*m/g, '');
+const useInlineProgress = process.stderr.isTTY && process.env.CI !== 'true';
+let progressLineWidth = 0;
+const reportProgress = (text) => {
+  if (!useInlineProgress) {
+    process.stderr.write(`${text}\n`);
+    return;
+  }
+  const plain = stripAnsi(text);
+  progressLineWidth = Math.max(progressLineWidth, plain.length);
+  const padded = `${plain}${' '.repeat(progressLineWidth - plain.length)}`;
+  process.stderr.write(`\r${padded}`);
+};
+const clearProgress = () => {
+  if (!useInlineProgress || progressLineWidth === 0) return;
+  process.stderr.write(`\r${' '.repeat(progressLineWidth)}\r`);
+  progressLineWidth = 0;
+};
 
 const median = (values) => {
   const sorted = [...values].sort((a, b) => a - b);
@@ -651,7 +668,7 @@ const main = async () => {
   const entries = resolveEntries();
 
   const runEntryInChild = async (e) => {
-    process.stderr.write(`running ${e.label}\n`);
+    reportProgress(`running ${e.label}`);
     const token =
       e.source === 'local'
         ? 'HEAD'
@@ -709,7 +726,7 @@ const main = async () => {
 
   const v219 = all.find((r) => r.label === 'v2.19.0');
   if (!v219) {
-    process.stderr.write('running v2.19.0 (comparison-only)\n');
+    reportProgress('running v2.19.0 (comparison-only)');
     all.push(await runEntryInChild({ label: 'v2.19.0', source: 'npm' }));
   }
   const head = all.find((r) => r.label === 'HEAD(dist)');
@@ -745,6 +762,7 @@ const main = async () => {
     `--concurrency=${concurrency}`,
     `--threshold=${threshold == null ? 'disabled' : threshold}`,
   ].join(' ');
+  clearProgress();
   console.log(`Command: ${displayedCommand}`);
   console.log(legend);
   for (const r of all) {
