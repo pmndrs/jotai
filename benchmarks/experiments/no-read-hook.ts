@@ -1,6 +1,12 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
+/**
+ * Experiment: exp-no-read-hook
+ * Strategy: remove `storeHooks.r` notification from the `readAtomState` hot path.
+ * Expected effect:
+ * - Improve read-heavy scenarios by removing per-read hook callback overhead.
+ */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -395,23 +401,12 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
 
 const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  // Experiment: destructure building blocks once per function.
-  const [
-    ,
-    mountedMap,
-    ,
-    changedAtoms,
-    mountCallbacks,
-    unmountCallbacks,
-    storeHooks,
-    ,
-    ,
-    ,
-    ,
-    ,
-    ,
-    recomputeInvalidatedAtoms,
-  ] = buildingBlocks
+  const mountedMap = buildingBlocks[1]
+  const changedAtoms = buildingBlocks[3]
+  const mountCallbacks = buildingBlocks[4]
+  const unmountCallbacks = buildingBlocks[5]
+  const storeHooks = buildingBlocks[6]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
   const errors: unknown[] = []
   const call = (fn: () => void) => {
     try {
@@ -521,37 +516,20 @@ const storeMutationSet = new WeakSet<Store>()
 
 const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  const [
-    ,
-    mountedMap,
-    invalidatedAtoms,
-    changedAtoms,
-    ,
-    ,
-    storeHooks,
-    atomRead,
-    ,
-    ,
-    ,
-    ensureAtomState,
-    flushCallbacks,
-    recomputeInvalidatedAtoms,
-    readAtomState,
-    ,
-    writeAtomState,
-    mountDependencies,
-    ,
-    ,
-    setAtomStateValueOrPromise,
-    ,
-    ,
-    ,
-    ,
-    ,
-    registerAbortHandler,
-    ,
-    storeEpochHolder,
-  ] = buildingBlocks
+  const mountedMap = buildingBlocks[1]
+  const invalidatedAtoms = buildingBlocks[2]
+  const changedAtoms = buildingBlocks[3]
+  const storeHooks = buildingBlocks[6]
+  const atomRead = buildingBlocks[7]
+  const ensureAtomState = buildingBlocks[11]
+  const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const readAtomState = buildingBlocks[14]
+  const writeAtomState = buildingBlocks[16]
+  const mountDependencies = buildingBlocks[17]
+  const setAtomStateValueOrPromise = buildingBlocks[20]
+  const registerAbortHandler = buildingBlocks[26]
+  const storeEpochHolder = buildingBlocks[28]
   const atomState = ensureAtomState(store, atom)
   const storeEpochNumber = storeEpochHolder[0]
   // See if we can skip recomputing this atom.
@@ -698,7 +676,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     } else {
       pruneDependencies()
     }
-    storeHooks.r?.(atom)
+    // Experiment: disable read hook callback in hot read path.
     atomState.m = storeEpochNumber
     return atomState
   } catch (error) {
@@ -745,37 +723,18 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
   ...args
 ) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  const [
-    ,
-    ,
-    ,
-    changedAtoms,
-    ,
-    ,
-    storeHooks,
-    ,
-    atomWrite,
-    ,
-    ,
-    ensureAtomState,
-    flushCallbacks,
-    recomputeInvalidatedAtoms,
-    readAtomState,
-    invalidateDependents,
-    writeAtomState,
-    mountDependencies,
-    ,
-    ,
-    setAtomStateValueOrPromise,
-    ,
-    ,
-    ,
-    ,
-    ,
-    ,
-    ,
-    storeEpochHolder,
-  ] = buildingBlocks
+  const changedAtoms = buildingBlocks[3]
+  const storeHooks = buildingBlocks[6]
+  const atomWrite = buildingBlocks[8]
+  const ensureAtomState = buildingBlocks[11]
+  const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const readAtomState = buildingBlocks[14]
+  const invalidateDependents = buildingBlocks[15]
+  const writeAtomState = buildingBlocks[16]
+  const mountDependencies = buildingBlocks[17]
+  const setAtomStateValueOrPromise = buildingBlocks[20]
+  const storeEpochHolder = buildingBlocks[28]
   let isSync = true
   const getter: Getter = <V>(a: Atom<V>) =>
     returnAtomValue(readAtomState(store, a))

@@ -1,6 +1,13 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
+/**
+ * Experiment: write-noop-shortcircuit
+ * Strategy: skip setter work when the incoming primitive write value is
+ * `Object.is`-equal to the current value.
+ * Expected effect:
+ * - Reduce overhead in repetitive writes that do not change state.
+ */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -401,15 +408,6 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
-  // Experiment: skip flush machinery entirely when no work.
-  if (
-    changedAtoms.size === 0 &&
-    mountCallbacks.size === 0 &&
-    unmountCallbacks.size === 0 &&
-    !storeHooks.f
-  ) {
-    return
-  }
   const errors: unknown[] = []
   const call = (fn: () => void) => {
     try {
@@ -757,6 +755,9 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
+        if ('v' in aState && Object.is(aState.v, v)) {
+          return undefined as R
+        }
         setAtomStateValueOrPromise(store, a, v)
         mountDependencies(store, a)
         if (prevEpochNumber !== aState.n) {

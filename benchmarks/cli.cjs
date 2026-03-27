@@ -57,15 +57,13 @@ const discoverExperiments = () => {
   const experiments = [];
   const entries = fs
     .readdirSync(EXPERIMENTS_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory());
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.ts'));
   for (const entry of entries) {
-    const folderName = entry.name;
-    const id = folderName.replace(/^exp-/, '');
-    const internalsPath = path.join(EXPERIMENTS_DIR, folderName, 'internals.ts');
-    const approachPath = path.join(EXPERIMENTS_DIR, folderName, 'APPROACH.md');
-    if (!fs.existsSync(internalsPath) || !fs.existsSync(approachPath)) {
+    const id = path.basename(entry.name, '.ts');
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) {
       continue;
     }
+    const internalsPath = path.join(EXPERIMENTS_DIR, entry.name);
     if (seenIds.has(id)) {
       throw new Error(`Duplicate experiment id discovered: ${id}`);
     }
@@ -74,7 +72,6 @@ const discoverExperiments = () => {
       id,
       label: `EXP:${id}`,
       internalsPath,
-      approachPath,
     });
   }
   experiments.sort((a, b) => a.id.localeCompare(b.id));

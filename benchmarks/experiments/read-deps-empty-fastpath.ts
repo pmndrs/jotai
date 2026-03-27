@@ -1,6 +1,13 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
+/**
+ * Experiment: read-deps-empty-fastpath
+ * Strategy: short-circuit mounted reads when an atom has no tracked
+ * dependencies, avoiding dependency traversal in hot read loops.
+ * Expected effect:
+ * - Improve dependency-light read-heavy scenarios.
+ */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -529,6 +536,14 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
     if (
+      mountedMap.has(atom) &&
+      atomState.d.size === 0 &&
+      invalidatedAtoms.get(atom) !== atomState.n
+    ) {
+      atomState.m = storeEpochNumber
+      return atomState
+    }
+    if (
       // If the atom is mounted, we can use cached atom state,
       // because it should have been updated by dependencies.
       // We can't use the cache if the atom is invalidated.
@@ -1027,14 +1042,16 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
   const store = {
     get(atom) {
-      // Experiment: inline direct store API calls.
-      return BUILDING_BLOCK_storeGet(store, atom)
+      const storeGet = getInternalBuildingBlocks(store)[21]
+      return storeGet(store, atom)
     },
     set(atom, ...args) {
-      return BUILDING_BLOCK_storeSet(store, atom, ...args)
+      const storeSet = getInternalBuildingBlocks(store)[22]
+      return storeSet(store, atom, ...args)
     },
     sub(atom, listener) {
-      return BUILDING_BLOCK_storeSub(store, atom, listener)
+      const storeSub = getInternalBuildingBlocks(store)[23]
+      return storeSub(store, atom, listener)
     },
   } as Store
 

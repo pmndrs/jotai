@@ -1,6 +1,14 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
+/**
+ * Experiment: exp-inline-store-api
+ * Strategy: inline store API wrappers in `buildStore` so `store.get/set/sub`
+ * call core functions directly rather than reading function slots via
+ * building-block lookup on each call.
+ * Expected effect:
+ * - Reduce wrapper overhead for high-frequency API calls.
+ */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -670,7 +678,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     } else {
       pruneDependencies()
     }
-    // Experiment: disable read hook callback in hot read path.
+    storeHooks.r?.(atom)
     atomState.m = storeEpochNumber
     return atomState
   } catch (error) {
@@ -1027,16 +1035,14 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
   const store = {
     get(atom) {
-      const storeGet = getInternalBuildingBlocks(store)[21]
-      return storeGet(store, atom)
+      // Experiment: inline direct store API calls.
+      return BUILDING_BLOCK_storeGet(store, atom)
     },
     set(atom, ...args) {
-      const storeSet = getInternalBuildingBlocks(store)[22]
-      return storeSet(store, atom, ...args)
+      return BUILDING_BLOCK_storeSet(store, atom, ...args)
     },
     sub(atom, listener) {
-      const storeSub = getInternalBuildingBlocks(store)[23]
-      return storeSub(store, atom, listener)
+      return BUILDING_BLOCK_storeSub(store, atom, listener)
     },
   } as Store
 

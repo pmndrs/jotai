@@ -1,6 +1,14 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
+/**
+ * Experiment: exp-direct-self-check
+ * Strategy: add a quick no-op guard in `recomputeInvalidatedAtoms` to return
+ * immediately when there is no invalidation or changed-atom work.
+ * Expected effect:
+ * - Reduce recomputation overhead in cycles that currently do setup work but
+ *   have no meaningful graph updates.
+ */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -441,6 +449,10 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   const ensureAtomState = buildingBlocks[11]
   const readAtomState = buildingBlocks[14]
   const mountDependencies = buildingBlocks[17]
+  // Experiment: quick bail-out for no-op recompute cycles.
+  if (!changedAtoms.size || !invalidatedAtoms.size) {
+    return
+  }
   // Step 1: traverse the dependency graph to build the topologically sorted atom list
   // We don't bother to check for cycles, which simplifies the algorithm.
   // This is a topological sort via depth-first search, slightly modified from
@@ -653,8 +665,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(store)
     }
-    // Experiment: inline atom.read in hot read path.
-    const valueOrPromise = atom.read(getter, options as never)
+    const valueOrPromise = atomRead(store, atom, getter, options as never)
     if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
       console.warn(
         'Detected store mutation during atom read. This is not supported.',
@@ -769,8 +780,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
     }
   }
   try {
-    // Experiment: inline atom.write in hot write path.
-    return atom.write(getter, setter, ...args)
+    return atomWrite(store, atom, getter, setter, ...args)
   } finally {
     isSync = false
   }

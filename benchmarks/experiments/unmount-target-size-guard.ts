@@ -1,6 +1,13 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
+/**
+ * Experiment: unmount-target-size-guard
+ * Strategy: avoid scanning transitive targets when there are no dependent
+ * targets to evaluate.
+ * Expected effect:
+ * - Reduce subscription churn overhead in mount/unmount heavy workloads.
+ */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -352,9 +359,14 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
 }
 
 function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
-  // Experiment: disable all store hooks in production hot paths.
-  void storeHooks
-  return {} as Required<StoreHooks>
+  type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
+  ;(storeHooks as SH).i ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).r ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).c ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).m ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).u ||= createStoreHookForAtoms()
+  ;(storeHooks as SH).f ||= createStoreHook()
+  return storeHooks as Required<StoreHooks>
 }
 
 //
@@ -382,7 +394,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
   if (!atomState) {
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
-    // store hooks disabled in this experiment
+    storeHooks.i?.(atom)
     atomOnInit?.(store, atom)
   }
   return atomState as never
@@ -405,7 +417,9 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
     }
   }
   do {
-    // store hooks disabled in this experiment
+    if (storeHooks.f) {
+      call(storeHooks.f)
+    }
     const callbacks = new Set<() => void>()
     const add = callbacks.add.bind(callbacks)
     changedAtoms.forEach((atom) => mountedMap.get(atom)?.l.forEach(add))
@@ -663,7 +677,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     } else {
       pruneDependencies()
     }
-    // store hooks disabled in this experiment
+    storeHooks.r?.(atom)
     atomState.m = storeEpochNumber
     return atomState
   } catch (error) {
@@ -677,7 +691,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     if (atomState.n !== prevEpochNumber && prevInvalidated) {
       invalidatedAtoms.set(atom, atomState.n)
       changedAtoms.add(atom)
-      // store hooks disabled in this experiment
+      storeHooks.c?.(atom)
     }
   }
 }
@@ -747,7 +761,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
           ++storeEpochHolder[0]
           changedAtoms.add(a)
           invalidateDependents(store, a)
-          // store hooks disabled in this experiment
+          storeHooks.c?.(a)
         }
         return undefined as R
       } else {
@@ -788,7 +802,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
         if (n !== aState.n) {
           changedAtoms.add(a)
           invalidateDependents(store, a)
-          // store hooks disabled in this experiment
+          storeHooks.c?.(a)
         }
       }
     }
@@ -862,7 +876,7 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
       }
       mountCallbacks.add(processOnMount)
     }
-    // store hooks disabled in this experiment
+    storeHooks.m?.(atom)
   }
   return mounted
 }
@@ -880,10 +894,12 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
     return mounted
   }
   let isDependent = false
-  for (const a of mounted.t) {
-    if (mountedMap.get(a)?.d.has(atom)) {
-      isDependent = true
-      break
+  if (mounted.t.size) {
+    for (const a of mounted.t) {
+      if (mountedMap.get(a)?.d.has(atom)) {
+        isDependent = true
+        break
+      }
     }
   }
   if (!isDependent) {
@@ -898,7 +914,7 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
       const aMounted = unmountAtom(store, a)
       aMounted?.t.delete(atom)
     }
-    // store hooks disabled in this experiment
+    storeHooks.u?.(atom)
     return undefined
   }
   return mounted

@@ -1,6 +1,13 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
+/**
+ * Experiment: exp-flush-fastpath
+ * Strategy: add an early return in `BUILDING_BLOCK_flushCallbacks` when there
+ * are no changed atoms and no pending mount/unmount callbacks.
+ * Expected effect:
+ * - Reduce fixed overhead for lightweight updates and repeated operations.
+ */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -401,6 +408,15 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
+  // Experiment: skip flush machinery entirely when no work.
+  if (
+    changedAtoms.size === 0 &&
+    mountCallbacks.size === 0 &&
+    unmountCallbacks.size === 0 &&
+    !storeHooks.f
+  ) {
+    return
+  }
   const errors: unknown[] = []
   const call = (fn: () => void) => {
     try {
@@ -441,10 +457,6 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   const ensureAtomState = buildingBlocks[11]
   const readAtomState = buildingBlocks[14]
   const mountDependencies = buildingBlocks[17]
-  // Experiment: quick bail-out for no-op recompute cycles.
-  if (!changedAtoms.size || !invalidatedAtoms.size) {
-    return
-  }
   // Step 1: traverse the dependency graph to build the topologically sorted atom list
   // We don't bother to check for cycles, which simplifies the algorithm.
   // This is a topological sort via depth-first search, slightly modified from
