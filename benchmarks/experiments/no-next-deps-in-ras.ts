@@ -1,13 +1,11 @@
+/**
+ * This is a version of the internals.ts file that does not track the nextDeps as Map<AnyAtom, EpochNumber> in readAtomState.
+ * Instead, it tracks the previous deps as Set<AnyAtom> and prunes them when the read is complete.
+ */
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
-/**
- * Experiment: read-deps-empty-fastpath
- * Strategy: short-circuit mounted reads when an atom has no tracked
- * dependencies, avoiding dependency traversal in hot read loops.
- * Expected effect:
- * - Improve dependency-light read-heavy scenarios.
- */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -536,14 +534,6 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
     if (
-      mountedMap.has(atom) &&
-      atomState.d.size === 0 &&
-      invalidatedAtoms.get(atom) !== atomState.n
-    ) {
-      atomState.m = storeEpochNumber
-      return atomState
-    }
-    if (
       // If the atom is mounted, we can use cached atom state,
       // because it should have been updated by dependencies.
       // We can't use the cache if the atom is invalidated.
@@ -571,18 +561,16 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   }
   // Compute a new state for this atom.
   let isSync = true
+  // Track only the previous deps. As we encounter live deps during this read,
+  // remove them from prevDeps. Whatever remains gets pruned.
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
-  const nextDeps = new Map<AnyAtom, EpochNumber>()
   const pruneDependencies = () => {
     for (const a of prevDeps) {
-      if (!nextDeps.has(a)) {
-        atomState.d.delete(a)
-      }
+      atomState.d.delete(a)
     }
   }
   const mountDependenciesIfAsync = () => {
     if (mountedMap.has(atom)) {
-      // If changedAtoms is already populated, an outer recompute cycle will handle it
       const shouldRecompute = !changedAtoms.size
       mountDependencies(store, atom)
       if (shouldRecompute) {
@@ -609,7 +597,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     try {
       return returnAtomValue(aState)
     } finally {
-      nextDeps.set(a, aState.n)
+      prevDeps.delete(a)
       atomState.d.set(a, aState.n)
       if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)

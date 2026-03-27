@@ -70,7 +70,7 @@ const discoverExperiments = () => {
     seenIds.add(id);
     experiments.push({
       id,
-      label: `EXP:${id}`,
+      label: id,
       internalsPath,
     });
   }
@@ -182,6 +182,16 @@ const clearProgress = () => {
   if (!useInlineProgress || progressLineWidth === 0) return;
   process.stderr.write(`\r${' '.repeat(progressLineWidth)}\r`);
   progressLineWidth = 0;
+};
+const renderProgressBar = (completed, total, width = 24) => {
+  if (total <= 0) return `[${'-'.repeat(width)}]`;
+  const ratio = Math.max(0, Math.min(1, completed / total));
+  const filled = Math.round(ratio * width);
+  return `[${'='.repeat(filled)}${'-'.repeat(width - filled)}]`;
+};
+const renderBenchProgress = ({ completed, total, currentLabel }) => {
+  const label = currentLabel ? ` | ${currentLabel}` : '';
+  return `bench ${renderProgressBar(completed, total)} ${completed}/${total}${label}`;
 };
 
 const median = (values) => {
@@ -466,7 +476,7 @@ const runOne = (label, repoPath, forceDist = false, distPathOverride = null) => 
     }
   };
   try {
-    if (forceDist || label === 'HEAD(dist)' || label.startsWith('EXP:')) {
+    if (forceDist || label === 'HEAD(dist)' || EXPERIMENT_BY_ID[label]) {
       loadFromDist();
     } else {
       vanilla = req('jotai/vanilla');
@@ -516,12 +526,13 @@ const entryFromToken = (versionToken) => {
   if (normalized.toUpperCase() === 'HEAD') {
     return { label: 'HEAD(dist)', source: 'local', repoPath: root };
   }
-  if (normalized.toUpperCase().startsWith('EXP:')) {
-    const id = normalized.slice(4).toLowerCase();
+  const normalizedUpper = normalized.toUpperCase();
+  const idCandidate = normalizedUpper.startsWith('EXP:')
+    ? normalized.slice(4).toLowerCase()
+    : normalized.toLowerCase();
+  if (EXPERIMENT_BY_ID[idCandidate]) {
+    const id = idCandidate;
     const exp = EXPERIMENT_BY_ID[id];
-    if (!exp) {
-      throw new Error(`Unknown experiment token: ${normalized}`);
-    }
     if (!fs.existsSync(exp.internalsPath)) {
       throw new Error(`Experiment internals file not found: ${exp.internalsPath}`);
     }
@@ -545,6 +556,21 @@ const resolveEntries = () => {
   if (token.toUpperCase() === 'ALL') {
     return [
       ...SUPPORTED_VERSIONS.map(entryFromToken),
+      { label: 'HEAD(dist)', source: 'local', repoPath: root },
+      ...EXPERIMENTS.map((e) => ({
+        label: e.label,
+        source: 'experiment',
+        repoPath: root,
+        id: e.id,
+        internalsPath: e.internalsPath,
+      })),
+    ];
+  }
+  if (token.toUpperCase() === 'TAGS') {
+    return [...SUPPORTED_VERSIONS.map(entryFromToken)];
+  }
+  if (token.toUpperCase() === 'EXPERIMENTS') {
+    return [
       { label: 'HEAD(dist)', source: 'local', repoPath: root },
       ...EXPERIMENTS.map((e) => ({
         label: e.label,
@@ -588,16 +614,19 @@ const main = async () => {
       `  --concurrency, -c <n>    Max versions to run in parallel. Default: ${DEFAULTS.concurrency}`,
     );
     console.log(
-      `  --versions, -v <list>    Comma-separated version tokens (HEAD or v2.x.y). Default: ${DEFAULTS.versions}`,
+      `  --versions, -v <list>    Comma-separated version tokens (HEAD, <experiment-id>, or v2.x.y). Default: ${DEFAULTS.versions}`,
     );
     console.log(
       '                           Order matters: each row compares against the previous row as predecessor.',
     );
     console.log(
-      '                           EXP:* rows always use HEAD(dist) as predecessor.',
+      '                           Experiment rows always use HEAD(dist) as predecessor.',
     );
     console.log(
-      `                           ALL includes ${EXPERIMENTS.length} experiments as EXP:<id> tokens (internals.ts swap build).`,
+      '                           Special sets: TAGS (all released tags), EXPERIMENTS (HEAD(dist) + all experiments), ALL (TAGS + HEAD(dist) + all experiments).',
+    );
+    console.log(
+      `                           ALL includes ${EXPERIMENTS.length} experiments as <experiment-id> tokens (internals.ts swap build).`,
     );
     console.log(
       '  --threshold, -t <pct>    Max allowed HEAD slowdown (%) vs v2.19.0 per scenario. Exits non-zero on breach.',
@@ -666,14 +695,28 @@ const main = async () => {
     return;
   }
   const entries = resolveEntries();
+  const progressState = {
+    completed: 0,
+    total: entries.length,
+  };
+
+  const updateBenchProgress = (currentLabel) => {
+    reportProgress(
+      renderBenchProgress({
+        completed: progressState.completed,
+        total: progressState.total,
+        currentLabel,
+      }),
+    );
+  };
 
   const runEntryInChild = async (e) => {
-    reportProgress(`running ${e.label}`);
+    updateBenchProgress(`running ${e.label}`);
     const token =
       e.source === 'local'
         ? 'HEAD'
         : e.source === 'experiment'
-          ? `EXP:${e.id}`
+          ? e.id
           : e.label;
     const { stdout } = await execFileAsync(
       process.execPath,
@@ -691,7 +734,10 @@ const main = async () => {
         env: { ...process.env, NODE_ENV: 'production' },
       },
     );
-    return JSON.parse(stdout.trim());
+    const parsed = JSON.parse(stdout.trim());
+    progressState.completed += 1;
+    updateBenchProgress(`finished ${e.label}`);
+    return parsed;
   };
 
   const all = new Array(entries.length);
@@ -726,7 +772,7 @@ const main = async () => {
 
   const v219 = all.find((r) => r.label === 'v2.19.0');
   if (!v219) {
-    reportProgress('running v2.19.0 (comparison-only)');
+    progressState.total += 1;
     all.push(await runEntryInChild({ label: 'v2.19.0', source: 'npm' }));
   }
   const head = all.find((r) => r.label === 'HEAD(dist)');
@@ -737,7 +783,7 @@ const main = async () => {
   );
   // Experiments always compare against HEAD(dist), not against each other.
   for (const r of all) {
-    if (r.label.startsWith('EXP:')) {
+    if (EXPERIMENT_BY_ID[r.label]) {
       predecessorByLabel[r.label] = 'HEAD(dist)';
     }
   }
@@ -766,7 +812,7 @@ const main = async () => {
   console.log(`Command: ${displayedCommand}`);
   console.log(legend);
   for (const r of all) {
-    const displayLabel = r.label.startsWith('EXP:') ? `  ${r.label}` : r.label;
+    const displayLabel = EXPERIMENT_BY_ID[r.label] ? `  ${r.label}` : r.label;
     const cells = [displayLabel];
     const predecessorLabel = predecessorByLabel[r.label];
     for (const s of scenarios) {

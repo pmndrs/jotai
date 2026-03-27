@@ -1,12 +1,10 @@
+/**
+ * This is a version of the internals.ts file that inlines the getMountedOrPendingDependents function.
+ */
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
-/**
- * Experiment: exp-no-read-hook
- * Strategy: remove `storeHooks.r` notification from the `readAtomState` hot path.
- * Expected effect:
- * - Improve read-heavy scenarios by removing per-read hook callback overhead.
- */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -485,14 +483,32 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
-      if (!visiting.has(d)) {
-        stack.push(d)
+    const mountedDependents = mountedMap.get(a)?.t
+    if (mountedDependents) {
+      for (const d of mountedDependents) {
+        if (!visiting.has(d)) {
+          stack.push(d)
+        }
+      }
+    }
+    if (aState.p.size) {
+      if (!mountedDependents?.size) {
+        for (const d of aState.p) {
+          if (!visiting.has(d)) {
+            stack.push(d)
+          }
+        }
+      } else {
+        for (const d of aState.p) {
+          if (!mountedDependents.has(d) && !visiting.has(d)) {
+            stack.push(d)
+          }
+        }
       }
     }
   }
+
   // Step 2: use the topSortedReversed atom list to recompute all affected atoms
-  // Track what's changed, so that we can short circuit when possible
   for (let i = topSortedReversed.length - 1; i >= 0; --i) {
     const [a, aState] = topSortedReversed[i]!
     let hasChangedDeps = false
@@ -676,7 +692,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     } else {
       pruneDependencies()
     }
-    // Experiment: disable read hook callback in hot read path.
+    storeHooks.r?.(atom)
     atomState.m = storeEpochNumber
     return atomState
   } catch (error) {
@@ -707,11 +723,36 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   while (stack.length) {
     const a = stack.pop()!
     const aState = ensureAtomState(store, a)
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
-      const dState = ensureAtomState(store, d)
-      if (invalidatedAtoms.get(d) !== dState.n) {
-        invalidatedAtoms.set(d, dState.n)
-        stack.push(d)
+    const mountedDependents = mountedMap.get(a)?.t
+    if (mountedDependents) {
+      for (const d of mountedDependents) {
+        const dState = ensureAtomState(store, d)
+        if (invalidatedAtoms.get(d) !== dState.n) {
+          invalidatedAtoms.set(d, dState.n)
+          stack.push(d)
+        }
+      }
+    }
+    if (aState.p.size) {
+      if (!mountedDependents?.size) {
+        for (const d of aState.p) {
+          const dState = ensureAtomState(store, d)
+          if (invalidatedAtoms.get(d) !== dState.n) {
+            invalidatedAtoms.set(d, dState.n)
+            stack.push(d)
+          }
+        }
+      } else {
+        for (const d of aState.p) {
+          if (mountedDependents.has(d)) {
+            continue
+          }
+          const dState = ensureAtomState(store, d)
+          if (invalidatedAtoms.get(d) !== dState.n) {
+            invalidatedAtoms.set(d, dState.n)
+            stack.push(d)
+          }
+        }
       }
     }
   }

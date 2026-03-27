@@ -1,14 +1,10 @@
+/**
+ * Reduces the allocation overhead of flushCallbacks by using for..of instead of forEach.
+ */
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
-/**
- * Experiment: exp-destructure-args
- * Strategy: destructure building-block tuple entries once at function entry and
- * use locals in hot functions (`flushCallbacks`, `readAtomState`,
- * `writeAtomState`) instead of repeated indexed access.
- * Expected effect:
- * - Improve monomorphic access and reduce repeated tuple-index lookup overhead.
- */
 import type { Atom, WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
@@ -403,24 +399,15 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
 
 const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  // Experiment: destructure building blocks once per function.
-  const [
-    ,
-    mountedMap,
-    ,
-    changedAtoms,
-    mountCallbacks,
-    unmountCallbacks,
-    storeHooks,
-    ,
-    ,
-    ,
-    ,
-    ,
-    ,
-    recomputeInvalidatedAtoms,
-  ] = buildingBlocks
+  const mountedMap = buildingBlocks[1]
+  const changedAtoms = buildingBlocks[3]
+  const mountCallbacks = buildingBlocks[4]
+  const unmountCallbacks = buildingBlocks[5]
+  const storeHooks = buildingBlocks[6]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+
   const errors: unknown[] = []
+
   const call = (fn: () => void) => {
     try {
       fn()
@@ -428,23 +415,43 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
       errors.push(e)
     }
   }
+
   do {
     if (storeHooks.f) {
       call(storeHooks.f)
     }
+
     const callbacks = new Set<() => void>()
-    const add = callbacks.add.bind(callbacks)
-    changedAtoms.forEach((atom) => mountedMap.get(atom)?.l.forEach(add))
+
+    for (const atom of changedAtoms) {
+      const listeners = mountedMap.get(atom)?.l
+      if (listeners) {
+        for (const listener of listeners) {
+          callbacks.add(listener)
+        }
+      }
+    }
     changedAtoms.clear()
-    unmountCallbacks.forEach(add)
+
+    for (const fn of unmountCallbacks) {
+      callbacks.add(fn)
+    }
     unmountCallbacks.clear()
-    mountCallbacks.forEach(add)
+
+    for (const fn of mountCallbacks) {
+      callbacks.add(fn)
+    }
     mountCallbacks.clear()
-    callbacks.forEach(call)
+
+    for (const fn of callbacks) {
+      call(fn)
+    }
+
     if (changedAtoms.size) {
       recomputeInvalidatedAtoms(store)
     }
   } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
+
   if (errors.length) {
     throw new AggregateError(errors)
   }
@@ -529,37 +536,20 @@ const storeMutationSet = new WeakSet<Store>()
 
 const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  const [
-    ,
-    mountedMap,
-    invalidatedAtoms,
-    changedAtoms,
-    ,
-    ,
-    storeHooks,
-    atomRead,
-    ,
-    ,
-    ,
-    ensureAtomState,
-    flushCallbacks,
-    recomputeInvalidatedAtoms,
-    readAtomState,
-    ,
-    writeAtomState,
-    mountDependencies,
-    ,
-    ,
-    setAtomStateValueOrPromise,
-    ,
-    ,
-    ,
-    ,
-    ,
-    registerAbortHandler,
-    ,
-    storeEpochHolder,
-  ] = buildingBlocks
+  const mountedMap = buildingBlocks[1]
+  const invalidatedAtoms = buildingBlocks[2]
+  const changedAtoms = buildingBlocks[3]
+  const storeHooks = buildingBlocks[6]
+  const atomRead = buildingBlocks[7]
+  const ensureAtomState = buildingBlocks[11]
+  const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const readAtomState = buildingBlocks[14]
+  const writeAtomState = buildingBlocks[16]
+  const mountDependencies = buildingBlocks[17]
+  const setAtomStateValueOrPromise = buildingBlocks[20]
+  const registerAbortHandler = buildingBlocks[26]
+  const storeEpochHolder = buildingBlocks[28]
   const atomState = ensureAtomState(store, atom)
   const storeEpochNumber = storeEpochHolder[0]
   // See if we can skip recomputing this atom.
@@ -753,37 +743,18 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
   ...args
 ) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  const [
-    ,
-    ,
-    ,
-    changedAtoms,
-    ,
-    ,
-    storeHooks,
-    ,
-    atomWrite,
-    ,
-    ,
-    ensureAtomState,
-    flushCallbacks,
-    recomputeInvalidatedAtoms,
-    readAtomState,
-    invalidateDependents,
-    writeAtomState,
-    mountDependencies,
-    ,
-    ,
-    setAtomStateValueOrPromise,
-    ,
-    ,
-    ,
-    ,
-    ,
-    ,
-    ,
-    storeEpochHolder,
-  ] = buildingBlocks
+  const changedAtoms = buildingBlocks[3]
+  const storeHooks = buildingBlocks[6]
+  const atomWrite = buildingBlocks[8]
+  const ensureAtomState = buildingBlocks[11]
+  const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const readAtomState = buildingBlocks[14]
+  const invalidateDependents = buildingBlocks[15]
+  const writeAtomState = buildingBlocks[16]
+  const mountDependencies = buildingBlocks[17]
+  const setAtomStateValueOrPromise = buildingBlocks[20]
+  const storeEpochHolder = buildingBlocks[28]
   let isSync = true
   const getter: Getter = <V>(a: Atom<V>) =>
     returnAtomValue(readAtomState(store, a))
