@@ -1,6 +1,37 @@
+// Experiment strategy: combine all benchmark experiments into a single internals variant.
+// This file is generated from src/vanilla/internals.ts plus the union of edits from all experiment files.
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
+/**
+ * Experiment: exp-direct-self-check
+ * Strategy: add a quick no-op guard in `recomputeInvalidatedAtoms` to return
+ * immediately when there is no invalidation or changed-atom work.
+ * Expected effect:
+ * - Reduce recomputation overhead in cycles that currently do setup work but
+ *   have no meaningful graph updates.
+ */
+/**
+ * Experiment: exp-flush-fastpath
+ * Strategy: add an early return in `BUILDING_BLOCK_flushCallbacks` when there
+ * are no changed atoms and no pending mount/unmount callbacks.
+ * Expected effect:
+ * - Reduce fixed overhead for lightweight updates and repeated operations.
+ */
+/**
+ * This is a version of the internals.ts file that inlines the getMountedOrPendingDependents function.
+ */
+
+/**
+ * Experiment: exp-inline-readwrite
+ * Strategy: inline `atom.read` and `atom.write` calls directly in hot internals
+ * (`BUILDING_BLOCK_readAtomState`, `BUILDING_BLOCK_writeAtomState`) to reduce
+ * interceptor indirection and call overhead.
+ * Expected effect:
+ * - Improve read/write-heavy scenarios (`primitiveReadWrite`,
+ *   `computedReadNoMutation`, `derivedChain`).
+ */
 /**
  * Experiment: exp-inline-store-api
  * Strategy: inline store API wrappers in `buildStore` so `store.get/set/sub`
@@ -8,6 +39,37 @@
  * building-block lookup on each call.
  * Expected effect:
  * - Reduce wrapper overhead for high-frequency API calls.
+ */
+/**
+ * This is a version of the internals.ts file that does not track the nextDeps as Map<AnyAtom, EpochNumber> in readAtomState.
+ * Instead, it tracks the previous deps as Set<AnyAtom> and prunes them when the read is complete.
+ */
+
+/**
+ * Experiment: exp-no-store-hooks
+ * Strategy: disable all store hook notifications (`i`, `r`, `c`, `m`, `u`, `f`)
+ * to estimate hook bookkeeping overhead in production-like hot paths.
+ * Expected effect:
+ * - Improve write/subscription churn scenarios (`primitiveReadWrite`,
+ *   `subscriptionChurn`, `selectAtomPerf`).
+ */
+/**
+ * Reduces the allocation overhead of flushCallbacks by using for..of instead of forEach.
+ */
+
+/**
+ * Experiment: unmount-target-size-guard
+ * Strategy: avoid scanning transitive targets when there are no dependent
+ * targets to evaluate.
+ * Expected effect:
+ * - Reduce subscription churn overhead in mount/unmount heavy workloads.
+ */
+/**
+ * Experiment: write-noop-shortcircuit
+ * Strategy: skip setter work when the incoming primitive write value is
+ * `Object.is`-equal to the current value.
+ * Expected effect:
+ * - Reduce overhead in repetitive writes that do not change state.
  */
 import type { Atom, WritableAtom } from './atom.ts'
 
@@ -360,14 +422,9 @@ const createStoreHookForAtoms = (): StoreHookForAtoms => {
 }
 
 function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
-  type SH = { -readonly [P in keyof StoreHooks]: StoreHooks[P] }
-  ;(storeHooks as SH).i ||= createStoreHookForAtoms()
-  ;(storeHooks as SH).r ||= createStoreHookForAtoms()
-  ;(storeHooks as SH).c ||= createStoreHookForAtoms()
-  ;(storeHooks as SH).m ||= createStoreHookForAtoms()
-  ;(storeHooks as SH).u ||= createStoreHookForAtoms()
-  ;(storeHooks as SH).f ||= createStoreHook()
-  return storeHooks as Required<StoreHooks>
+  // Experiment: disable all store hooks in production hot paths.
+  void storeHooks
+  return {} as Required<StoreHooks>
 }
 
 //
@@ -395,7 +452,7 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
   if (!atomState) {
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
-    storeHooks.i?.(atom)
+    // store hooks disabled in this experiment
     atomOnInit?.(store, atom)
   }
   return atomState as never
@@ -409,7 +466,18 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
+  // Experiment: skip flush machinery entirely when no work.
+  if (
+    changedAtoms.size === 0 &&
+    mountCallbacks.size === 0 &&
+    unmountCallbacks.size === 0 &&
+    !storeHooks.f
+  ) {
+    return
+  }
+
   const errors: unknown[] = []
+
   const call = (fn: () => void) => {
     try {
       fn()
@@ -418,22 +486,40 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
     }
   }
   do {
-    if (storeHooks.f) {
-      call(storeHooks.f)
-    }
+    // store hooks disabled in this experiment
+
+
     const callbacks = new Set<() => void>()
-    const add = callbacks.add.bind(callbacks)
-    changedAtoms.forEach((atom) => mountedMap.get(atom)?.l.forEach(add))
+
+    for (const atom of changedAtoms) {
+      const listeners = mountedMap.get(atom)?.l
+      if (listeners) {
+        for (const listener of listeners) {
+          callbacks.add(listener)
+        }
+      }
+    }
     changedAtoms.clear()
-    unmountCallbacks.forEach(add)
+
+    for (const fn of unmountCallbacks) {
+      callbacks.add(fn)
+    }
     unmountCallbacks.clear()
-    mountCallbacks.forEach(add)
+
+    for (const fn of mountCallbacks) {
+      callbacks.add(fn)
+    }
     mountCallbacks.clear()
-    callbacks.forEach(call)
+
+    for (const fn of callbacks) {
+      call(fn)
+    }
+
     if (changedAtoms.size) {
       recomputeInvalidatedAtoms(store)
     }
   } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
+
   if (errors.length) {
     throw new AggregateError(errors)
   }
@@ -449,6 +535,10 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   const ensureAtomState = buildingBlocks[11]
   const readAtomState = buildingBlocks[14]
   const mountDependencies = buildingBlocks[17]
+  // Experiment: quick bail-out for no-op recompute cycles.
+  if (!changedAtoms.size || !invalidatedAtoms.size) {
+    return
+  }
   // Step 1: traverse the dependency graph to build the topologically sorted atom list
   // We don't bother to check for cycles, which simplifies the algorithm.
   // This is a topological sort via depth-first search, slightly modified from
@@ -487,14 +577,32 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
-      if (!visiting.has(d)) {
-        stack.push(d)
+    const mountedDependents = mountedMap.get(a)?.t
+    if (mountedDependents) {
+      for (const d of mountedDependents) {
+        if (!visiting.has(d)) {
+          stack.push(d)
+        }
+      }
+    }
+    if (aState.p.size) {
+      if (!mountedDependents?.size) {
+        for (const d of aState.p) {
+          if (!visiting.has(d)) {
+            stack.push(d)
+          }
+        }
+      } else {
+        for (const d of aState.p) {
+          if (!mountedDependents.has(d) && !visiting.has(d)) {
+            stack.push(d)
+          }
+        }
       }
     }
   }
+
   // Step 2: use the topSortedReversed atom list to recompute all affected atoms
-  // Track what's changed, so that we can short circuit when possible
   for (let i = topSortedReversed.length - 1; i >= 0; --i) {
     const [a, aState] = topSortedReversed[i]!
     let hasChangedDeps = false
@@ -564,18 +672,16 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   }
   // Compute a new state for this atom.
   let isSync = true
+  // Track only the previous deps. As we encounter live deps during this read,
+  // remove them from prevDeps. Whatever remains gets pruned.
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
-  const nextDeps = new Map<AnyAtom, EpochNumber>()
   const pruneDependencies = () => {
     for (const a of prevDeps) {
-      if (!nextDeps.has(a)) {
-        atomState.d.delete(a)
-      }
+      atomState.d.delete(a)
     }
   }
   const mountDependenciesIfAsync = () => {
     if (mountedMap.has(atom)) {
-      // If changedAtoms is already populated, an outer recompute cycle will handle it
       const shouldRecompute = !changedAtoms.size
       mountDependencies(store, atom)
       if (shouldRecompute) {
@@ -602,7 +708,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     try {
       return returnAtomValue(aState)
     } finally {
-      nextDeps.set(a, aState.n)
+      prevDeps.delete(a)
       atomState.d.set(a, aState.n)
       if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)
@@ -661,7 +767,8 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(store)
     }
-    const valueOrPromise = atomRead(store, atom, getter, options as never)
+    // Experiment: inline atom.read in hot read path.
+    const valueOrPromise = atom.read(getter, options as never)
     if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
       console.warn(
         'Detected store mutation during atom read. This is not supported.',
@@ -678,7 +785,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     } else {
       pruneDependencies()
     }
-    storeHooks.r?.(atom)
+    // store hooks disabled in this experiment
     atomState.m = storeEpochNumber
     return atomState
   } catch (error) {
@@ -692,7 +799,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     if (atomState.n !== prevEpochNumber && prevInvalidated) {
       invalidatedAtoms.set(atom, atomState.n)
       changedAtoms.add(atom)
-      storeHooks.c?.(atom)
+      // store hooks disabled in this experiment
     }
   }
 }
@@ -709,11 +816,36 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   while (stack.length) {
     const a = stack.pop()!
     const aState = ensureAtomState(store, a)
-    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
-      const dState = ensureAtomState(store, d)
-      if (invalidatedAtoms.get(d) !== dState.n) {
-        invalidatedAtoms.set(d, dState.n)
-        stack.push(d)
+    const mountedDependents = mountedMap.get(a)?.t
+    if (mountedDependents) {
+      for (const d of mountedDependents) {
+        const dState = ensureAtomState(store, d)
+        if (invalidatedAtoms.get(d) !== dState.n) {
+          invalidatedAtoms.set(d, dState.n)
+          stack.push(d)
+        }
+      }
+    }
+    if (aState.p.size) {
+      if (!mountedDependents?.size) {
+        for (const d of aState.p) {
+          const dState = ensureAtomState(store, d)
+          if (invalidatedAtoms.get(d) !== dState.n) {
+            invalidatedAtoms.set(d, dState.n)
+            stack.push(d)
+          }
+        }
+      } else {
+        for (const d of aState.p) {
+          if (mountedDependents.has(d)) {
+            continue
+          }
+          const dState = ensureAtomState(store, d)
+          if (invalidatedAtoms.get(d) !== dState.n) {
+            invalidatedAtoms.set(d, dState.n)
+            stack.push(d)
+          }
+        }
       }
     }
   }
@@ -756,13 +888,16 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
+        if ('v' in aState && Object.is(aState.v, v)) {
+          return undefined as R
+        }
         setAtomStateValueOrPromise(store, a, v)
         mountDependencies(store, a)
         if (prevEpochNumber !== aState.n) {
           ++storeEpochHolder[0]
           changedAtoms.add(a)
           invalidateDependents(store, a)
-          storeHooks.c?.(a)
+          // store hooks disabled in this experiment
         }
         return undefined as R
       } else {
@@ -776,7 +911,8 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
     }
   }
   try {
-    return atomWrite(store, atom, getter, setter, ...args)
+    // Experiment: inline atom.write in hot write path.
+    return atom.write(getter, setter, ...args)
   } finally {
     isSync = false
   }
@@ -803,7 +939,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
         if (n !== aState.n) {
           changedAtoms.add(a)
           invalidateDependents(store, a)
-          storeHooks.c?.(a)
+          // store hooks disabled in this experiment
         }
       }
     }
@@ -877,7 +1013,7 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
       }
       mountCallbacks.add(processOnMount)
     }
-    storeHooks.m?.(atom)
+    // store hooks disabled in this experiment
   }
   return mounted
 }
@@ -895,10 +1031,12 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
     return mounted
   }
   let isDependent = false
-  for (const a of mounted.t) {
-    if (mountedMap.get(a)?.d.has(atom)) {
-      isDependent = true
-      break
+  if (mounted.t.size) {
+    for (const a of mounted.t) {
+      if (mountedMap.get(a)?.d.has(atom)) {
+        isDependent = true
+        break
+      }
     }
   }
   if (!isDependent) {
@@ -913,7 +1051,7 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
       const aMounted = unmountAtom(store, a)
       aMounted?.t.delete(atom)
     }
-    storeHooks.u?.(atom)
+    // store hooks disabled in this experiment
     return undefined
   }
   return mounted

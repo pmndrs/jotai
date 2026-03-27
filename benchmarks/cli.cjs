@@ -553,39 +553,48 @@ const entryFromToken = (versionToken) => {
 
 const resolveEntries = () => {
   const token = String(versionsArg).trim();
+  const allEntries = () => [
+    ...SUPPORTED_VERSIONS.map(entryFromToken),
+    { label: 'HEAD(dist)', source: 'local', repoPath: root },
+    ...EXPERIMENTS.map((e) => ({
+      label: e.label,
+      source: 'experiment',
+      repoPath: root,
+      id: e.id,
+      internalsPath: e.internalsPath,
+    })),
+  ];
+  const tagsEntries = () => [...SUPPORTED_VERSIONS.map(entryFromToken)];
+  const experimentsEntries = () => [
+    { label: 'HEAD(dist)', source: 'local', repoPath: root },
+    ...EXPERIMENTS.map((e) => ({
+      label: e.label,
+      source: 'experiment',
+      repoPath: root,
+      id: e.id,
+      internalsPath: e.internalsPath,
+    })),
+  ];
   if (token.toUpperCase() === 'ALL') {
-    return [
-      ...SUPPORTED_VERSIONS.map(entryFromToken),
-      { label: 'HEAD(dist)', source: 'local', repoPath: root },
-      ...EXPERIMENTS.map((e) => ({
-        label: e.label,
-        source: 'experiment',
-        repoPath: root,
-        id: e.id,
-        internalsPath: e.internalsPath,
-      })),
-    ];
+    return allEntries();
   }
   if (token.toUpperCase() === 'TAGS') {
-    return [...SUPPORTED_VERSIONS.map(entryFromToken)];
+    return tagsEntries();
   }
   if (token.toUpperCase() === 'EXPERIMENTS') {
-    return [
-      { label: 'HEAD(dist)', source: 'local', repoPath: root },
-      ...EXPERIMENTS.map((e) => ({
-        label: e.label,
-        source: 'experiment',
-        repoPath: root,
-        id: e.id,
-        internalsPath: e.internalsPath,
-      })),
-    ];
+    return experimentsEntries();
   }
   return token
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
-    .map(entryFromToken);
+    .flatMap((t) => {
+      const upper = t.toUpperCase();
+      if (upper === 'ALL') return allEntries();
+      if (upper === 'TAGS') return tagsEntries();
+      if (upper === 'EXPERIMENTS') return experimentsEntries();
+      return [entryFromToken(t)];
+    });
 };
 
 const main = async () => {
