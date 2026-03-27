@@ -626,10 +626,10 @@ const main = async () => {
       `  --versions, -v <list>    Comma-separated version tokens (HEAD, <experiment-id>, or v2.x.y). Default: ${DEFAULTS.versions}`,
     );
     console.log(
-      '                           Order matters: each row compares against the previous row as predecessor.',
+      '                           Row order only affects display order.',
     );
     console.log(
-      '                           Experiment rows always use HEAD(dist) as predecessor.',
+      '                           Cell percentages are always computed against the scenario base (fastest value).',
     );
     console.log(
       '                           Special sets: TAGS (all released tags), EXPERIMENTS (HEAD(dist) + all experiments), ALL (TAGS + HEAD(dist) + all experiments).',
@@ -659,17 +659,18 @@ const main = async () => {
     }
     console.log('');
     console.log('Cell format:');
-    console.log('  <median_ms> (<delta_vs_predecessor%>)');
-    console.log('  Fastest value in each scenario is marked as (base).');
-    console.log('  Rows without a predecessor show only <median_ms>.');
+    console.log('  <median_ms> (<delta_vs_base%>)');
+    console.log('  Fastest value in each scenario is marked as (base) and omits percentage.');
+    console.log('  Rows without a scenario base show only <median_ms>.');
+    console.log('  Cell colors are based on predecessor performance deltas (positive=faster): <= -30% red, >= +30% green.');
     console.log('');
     console.log('Color legend:');
     const legendLabelWidth = 25;
     const legendLine = (label, style, description) =>
       console.log(`  ${color(label.padEnd(legendLabelWidth), ...style)}  ${description}`);
-    legendLine('column fastest', [ANSI.bold, ANSI.yellow], 'Fastest value in that scenario column.');
-    legendLine('faster than predecessor', [ANSI.bold, ANSI.green], 'Faster than predecessor (experiments compare to HEAD(dist)).');
-    legendLine('slower than predecessor', [ANSI.bold, ANSI.red], 'Slower than predecessor (experiments compare to HEAD(dist)).');
+    legendLine('column fastest', [ANSI.bold, ANSI.yellow], 'Fastest value in that scenario column (base).');
+    legendLine('<= -30% vs predecessor', [ANSI.bold, ANSI.red], 'Performance delta vs predecessor is -30% or lower (slower).');
+    legendLine('>= +30% vs predecessor', [ANSI.bold, ANSI.green], 'Performance delta vs predecessor is +30% or higher (faster).');
     return;
   }
   if (!Number.isFinite(iterations) || iterations <= 0) {
@@ -790,12 +791,6 @@ const main = async () => {
   const predecessorByLabel = Object.fromEntries(
     orderedLabels.map((label, idx) => [label, idx > 0 ? orderedLabels[idx - 1] : null]),
   );
-  // Experiments always compare against HEAD(dist), not against each other.
-  for (const r of all) {
-    if (EXPERIMENT_BY_ID[r.label]) {
-      predecessorByLabel[r.label] = 'HEAD(dist)';
-    }
-  }
   const fastestByScenario = Object.fromEntries(
     scenarios.map((s) => {
       const values = all
@@ -806,8 +801,8 @@ const main = async () => {
   );
   const rawRows = [];
   const legend =
-    `Legend: ${color('faster than predecessor', ANSI.bold, ANSI.green)} | ` +
-    `${color('slower than predecessor', ANSI.bold, ANSI.red)} | ` +
+    `Legend: ${color('<= -30% vs predecessor', ANSI.bold, ANSI.red)} | ` +
+    `${color('>= +30% vs predecessor', ANSI.bold, ANSI.green)} | ` +
     `${color('column fastest', ANSI.bold, ANSI.yellow)}`;
   const displayedCommand = [
     'pnpm run test:bench',
@@ -827,20 +822,21 @@ const main = async () => {
     for (const s of scenarios) {
       const value = r.results?.[s]?.medianMs;
       const fastest = fastestByScenario[s];
-      const predecessorValue =
-        predecessorLabel == null ? null : allByLabel[predecessorLabel]?.results?.[s]?.medianMs;
-      let text = formatDeltaFromReference(value, predecessorValue);
+      let text = formatDeltaFromReference(value, fastest);
       if (value != null && fastest != null && value === fastest) {
-        text = `${text} (base)`;
+        text = `${value.toFixed(3)} (base)`;
       }
       if (value != null && fastest != null && value === fastest) {
         text = color(stripAnsi(text), ANSI.bold, ANSI.yellow);
       } else if (value != null) {
-        if (predecessorLabel) {
-          if (predecessorValue != null) {
-            if (value < predecessorValue) text = color(text, ANSI.bold, ANSI.green);
-            else if (value > predecessorValue) text = color(text, ANSI.bold, ANSI.red);
-          }
+        const predecessorValue =
+          predecessorLabel == null ? null : allByLabel[predecessorLabel]?.results?.[s]?.medianMs;
+        if (predecessorValue != null && predecessorValue !== 0) {
+          // Latency is measured in ms, so lower is better.
+          // Positive delta means faster than predecessor.
+          const predecessorDeltaPct = ((predecessorValue - value) / predecessorValue) * 100;
+          if (predecessorDeltaPct <= -30) text = color(text, ANSI.bold, ANSI.red);
+          else if (predecessorDeltaPct >= 30) text = color(text, ANSI.bold, ANSI.green);
         }
       }
       cells.push(text);
