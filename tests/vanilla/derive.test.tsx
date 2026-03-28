@@ -96,11 +96,11 @@ const deriveStore = (
     return mappedAtom as AtomType
   }
 
-  const derivedStore: Store = {
+  const derivedStore = Object.assign(createStore(), {
     get: (atom) => internalStore.get(mapAtom(atom)),
     set: (atom, ...args) => internalStore.set(mapAtom(atom) as never, ...args),
     sub: (atom, listener) => internalStore.sub(mapAtom(atom), listener),
-  }
+  } as Store)
 
   return derivedStore
 }
