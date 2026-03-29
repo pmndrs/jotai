@@ -13,7 +13,9 @@ type ScenarioResult = number | { total: number; [k: string]: number }
 const median = (values: readonly number[]) => {
   const sorted = [...values].sort((a, b) => a - b)
   const mid = Math.floor(sorted.length / 2)
-  return sorted.length % 2 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2
+  return sorted.length % 2
+    ? sorted[mid]!
+    : (sorted[mid - 1]! + sorted[mid]!) / 2
 }
 
 /**
@@ -180,12 +182,12 @@ const main = async () => {
         }
       }
     }
-    const extra: Record<string, number> | undefined =
-      Object.keys(extraAgg).length
-        ? Object.fromEntries(
-            Object.entries(extraAgg).map(([k, vs]) => [k, median(vs)]),
-          )
-        : undefined
+    const extra: Record<string, number> | undefined = Object.keys(extraAgg)
+      .length
+      ? Object.fromEntries(
+          Object.entries(extraAgg).map(([k, vs]) => [k, median(vs)]),
+        )
+      : undefined
     results[name] = { medianMs: median(runs), runsMs: runs, extra }
   }
 

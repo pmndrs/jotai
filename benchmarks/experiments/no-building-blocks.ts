@@ -635,7 +635,10 @@ function buildStore(): Store {
         storeMutationSet.delete(store)
       }
       const valueOrPromise = atom.read(getter, options as never)
-      if (import.meta.env?.MODE !== 'production' && storeMutationSet.has(store)) {
+      if (
+        import.meta.env?.MODE !== 'production' &&
+        storeMutationSet.has(store)
+      ) {
         console.warn(
           'Detected store mutation during atom read. This is not supported.',
         )
@@ -690,8 +693,7 @@ function buildStore(): Store {
     ...args: Args
   ) => {
     let isSync = true
-    const getter: Getter = <V>(a: Atom<V>) =>
-      returnAtomValue(readAtomState(a))
+    const getter: Getter = <V>(a: Atom<V>) => returnAtomValue(readAtomState(a))
     const setter: Setter = <V, As extends unknown[], R>(
       a: WritableAtom<V, As, R>,
       ...args: As
@@ -778,7 +780,7 @@ function buildStore(): Store {
         d: new Set(atomState.d.keys()),
         t: new Set(),
       }
-            mountedMap.set(atom, mounted)
+      mountedMap.set(atom, mounted)
       if (isActuallyWritableAtom(atom)) {
         const processOnMount = () => {
           let isSync = true
@@ -834,7 +836,7 @@ function buildStore(): Store {
         unmountCallbacks.add(mounted.u)
       }
       mounted = undefined
-            // unmount dependencies
+      // unmount dependencies
       for (const a of atomState.d.keys()) {
         const aMounted = unmountAtom(a)
         aMounted?.t.delete(atom)
@@ -854,11 +856,7 @@ function buildStore(): Store {
     const prevValue = atomState.v
     if (isPromiseLike(valueOrPromise)) {
       for (const a of atomState.d.keys()) {
-        addPendingPromiseToDependency(
-          atom,
-          valueOrPromise,
-          ensureAtomState(a),
-        )
+        addPendingPromiseToDependency(atom, valueOrPromise, ensureAtomState(a))
       }
     }
     atomState.v = valueOrPromise

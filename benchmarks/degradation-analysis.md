@@ -351,9 +351,12 @@ function readAtomState(store: Store, atom: AnyAtom) {
 **Patch sketch**
 
 ```ts
-function writeAtomState(store: Store, atom: WritableAtom<any, any, any>, ...args: any[]) {
+function writeAtomState(
+  store: Store,
+  atom: WritableAtom<any, any, any>,
+  ...args: any[]
+) {
   // existing setup...
-
   // In self-write branch:
   // 1) setAtomStateValueOrPromise(...)
   // 2) if epoch unchanged, return early without invalidateDependents/storeHooks.c
@@ -442,4 +445,3 @@ After each step, rerun benchmark with:
 - `concurrency = 1`
 
 and validate scenario-level impact before stacking more changes.
-
