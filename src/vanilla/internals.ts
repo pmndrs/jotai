@@ -879,35 +879,59 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
   const ensureAtomState = buildingBlocks[11]
-  const unmountAtom = buildingBlocks[19]
-  const atomState = ensureAtomState(store, atom)
-  let mounted = mountedMap.get(atom)
-  if (!mounted || mounted.l.size) {
-    return mounted
-  }
-  let isDependent = false
-  for (const a of mounted.t) {
-    if (mountedMap.get(a)?.d.has(atom)) {
-      isDependent = true
-      break
+  const atomStack: AnyAtom[] = [atom]
+  const depIndexStack: number[] = [-1]
+  const depsStack: (AnyAtom[] | null)[] = [[]]
+  while (atomStack.length) {
+    const top = atomStack.length - 1
+    const a = atomStack[top]!
+    const depIndex = depIndexStack[top]!
+    if (depIndex < 0) {
+      const mounted = mountedMap.get(a)
+      if (!mounted || mounted.l.size) {
+        atomStack.pop()
+        depIndexStack.pop()
+        depsStack.pop()
+        continue
+      }
+      let isDependent = false
+      for (const t of mounted.t) {
+        if (mountedMap.get(t)?.d.has(a)) {
+          isDependent = true
+          break
+        }
+      }
+      if (isDependent) {
+        atomStack.pop()
+        depIndexStack.pop()
+        depsStack.pop()
+        continue
+      }
+      if (mounted.u) {
+        unmountCallbacks.add(mounted.u)
+      }
+      mountedMap.delete(a)
+      const aState = ensureAtomState(store, a)
+      depsStack[top] = Array.from(aState.d.keys())
+      depIndexStack[top] = 0
+      continue
     }
-  }
-  if (!isDependent) {
-    // unmount self
-    if (mounted.u) {
-      unmountCallbacks.add(mounted.u)
+    const deps = depsStack[top]!
+    if (depIndex < deps.length) {
+      const dep = deps[depIndex]!
+      depIndexStack[top] = depIndex + 1
+      mountedMap.get(dep)?.t.delete(a)
+      atomStack.push(dep)
+      depIndexStack.push(-1)
+      depsStack.push(null)
+      continue
     }
-    mounted = undefined
-    mountedMap.delete(atom)
-    // unmount dependencies
-    for (const a of atomState.d.keys()) {
-      const aMounted = unmountAtom(store, a)
-      aMounted?.t.delete(atom)
-    }
-    storeHooks.u?.(atom)
-    return undefined
+    storeHooks.u?.(a)
+    atomStack.pop()
+    depIndexStack.pop()
+    depsStack.pop()
   }
-  return mounted
+  return mountedMap.get(atom)
 }
 
 const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
