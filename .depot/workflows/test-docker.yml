@@ -3,5 +3,5 @@ on: push
 jobs:
   testpush:
     steps:
-      run: |
-        echo testpush
+      - run: |
+          echo testpush
