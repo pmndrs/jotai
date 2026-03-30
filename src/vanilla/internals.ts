@@ -109,7 +109,7 @@ type ReadAtomState = <Value>(
   store: Store,
   atom: Atom<Value>,
 ) => AtomState<Value>
-type InvalidateDependents = (store: Store, atom: AnyAtom) => void
+type InvalidateDependents = (store: Store, atoms: Iterable<AnyAtom>) => void
 type WriteAtomState = <Value, Args extends unknown[], Result>(
   store: Store,
   atom: WritableAtom<Value, Args, Result>,
@@ -690,21 +690,27 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
 
 const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   store,
-  atom,
+  atoms,
 ) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const ensureAtomState = buildingBlocks[11]
-  const stack: AnyAtom[] = [atom]
-  while (stack.length) {
-    const a = stack.pop()!
-    const aState = ensureAtomState(store, a)
+  const atomStack: AnyAtom[] = []
+  const stateStack: AtomState[] = []
+  for (const atom of atoms) {
+    atomStack.push(atom)
+    stateStack.push(ensureAtomState(store, atom))
+  }
+  while (atomStack.length) {
+    const a = atomStack.pop()!
+    const aState = stateStack.pop()!
     for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       const dState = ensureAtomState(store, d)
       if (invalidatedAtoms.get(d) !== dState.n) {
         invalidatedAtoms.set(d, dState.n)
-        stack.push(d)
+        atomStack.push(d)
+        stateStack.push(dState)
       }
     }
   }
@@ -752,7 +758,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         if (prevEpochNumber !== aState.n) {
           ++storeEpochHolder[0]
           changedAtoms.add(a)
-          invalidateDependents(store, a)
+          invalidateDependents(store, [a])
           storeHooks.c?.(a)
         }
         return undefined as R
@@ -785,6 +791,7 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
   const atomState = ensureAtomState(store, atom)
   const mounted = mountedMap.get(atom)
   if (mounted) {
+    const staleDeps = new Set<AnyAtom>()
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)
@@ -793,9 +800,14 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
         mounted.d.add(a)
         if (n !== aState.n) {
           changedAtoms.add(a)
-          invalidateDependents(store, a)
-          storeHooks.c?.(a)
+          staleDeps.add(a)
         }
+      }
+    }
+    if (staleDeps.size) {
+      invalidateDependents(store, staleDeps)
+      for (const a of staleDeps) {
+        storeHooks.c?.(a)
       }
     }
     for (const a of mounted.d) {
