@@ -1,4 +1,4 @@
-// Internal functions (subject to change without notice)
+// Experiment: only key change `recompute-invalidate-atoms-early-return` enabled.\n// Base: upstream/main:src/vanilla/internals.ts\n\n// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -437,6 +437,9 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const changedAtoms = buildingBlocks[3]
+  if (changedAtoms.size === 0) {
+    return
+  }
   const ensureAtomState = buildingBlocks[11]
   const readAtomState = buildingBlocks[14]
   const mountDependencies = buildingBlocks[17]

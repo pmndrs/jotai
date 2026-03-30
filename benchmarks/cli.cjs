@@ -123,7 +123,7 @@ const threshold =
     : Number(thresholdRaw)
 const showHelp = hasFlag('help', 'h')
 
-const scenarios = [
+const baseScenarios = [
   'atomCreation',
   'primitiveReadWrite',
   'derivedChain',
@@ -133,6 +133,7 @@ const scenarios = [
   'computedReadNoMutation',
   'selectAtomPerf',
 ]
+const bundleScenario = 'vanillaBundleSize'
 const scenarioDescriptions = {
   atomCreation: 'Time to create 10,000 primitive atoms.',
   primitiveReadWrite:
@@ -149,10 +150,27 @@ const scenarioDescriptions = {
     'Time for 10,000 repeated store.get on a derived atom with no base mutation.',
   selectAtomPerf:
     'Time for 10,000 selectAtom read/update iterations with partial selection.',
+  vanillaBundleSize:
+    'Built vanilla bundle size from dist/npm (KiB): vanilla.production.js + vanilla.js + vanilla/internals.js.',
 }
+const scenarioHeaderLabels = {
+  atomCreation: 'atomCreationMs',
+  primitiveReadWrite: 'primitiveReadWriteMs',
+  derivedChain: 'derivedChainMs',
+  wideFanOut: 'wideFanOutMs',
+  diamondPattern: 'diamondPatternMs',
+  subscriptionChurn: 'subscriptionChurnMs',
+  computedReadNoMutation: 'computedReadNoMutationMs',
+  selectAtomPerf: 'selectAtomPerfMs',
+  [bundleScenario]: 'vanillaBundleSizeKb',
+}
+const includeBundle = hasFlag('include-bundle', null)
+const scenarios = includeBundle
+  ? [...baseScenarios, bundleScenario]
+  : baseScenarios
 const outputLabelWidth = Math.max(
   'Version'.length,
-  ...scenarios.map((s) => s.length),
+  ...scenarios.map((s) => scenarioHeaderLabels[s].length),
 )
 
 const ANSI = {
@@ -195,7 +213,7 @@ const renderProgressBar = (completed, total, width = 24) => {
 }
 const renderBenchProgress = ({ completed, total, currentLabel }) => {
   const label = currentLabel ? ` | ${currentLabel}` : ''
-  return `bench ${renderProgressBar(completed, total)} ${completed}/${total}${label}`
+  return `${renderProgressBar(completed, total)} ${completed}/${total}${label}`
 }
 
 const median = (values) => {
@@ -330,6 +348,15 @@ const formatDeltaFromReference = (value, reference) => {
   const delta = ((value - reference) / reference) * 100
   const sign = delta > 0 ? '+' : ''
   return `${value.toFixed(3)} (${sign}${delta.toFixed(1)}%)`
+}
+
+const resolveBundleArtifactPaths = (bundleRootPath) => {
+  const canonical = [
+    path.join(bundleRootPath, 'umd', 'vanilla.production.js'),
+    path.join(bundleRootPath, 'vanilla.js'),
+    path.join(bundleRootPath, 'vanilla', 'internals.js'),
+  ]
+  return canonical.filter((filePath) => fs.existsSync(filePath))
 }
 
 const withDownloadedVersion = (version, fn) => {
@@ -533,6 +560,18 @@ const runOne = (
     const runs = runsByScenario[name]
     if (runs.length) results[name] = { medianMs: median(runs), runsMs: runs }
   }
+  if (includeBundle) {
+    const bundleRootPath = forceDist ? distBasePath : repoPath
+    const bundleArtifactPaths = resolveBundleArtifactPaths(bundleRootPath)
+    if (bundleArtifactPaths.length) {
+      const bytes = bundleArtifactPaths.reduce(
+        (acc, filePath) => acc + fs.statSync(filePath).size,
+        0,
+      )
+      const kib = bytes / 1024
+      results.vanillaBundleSize = { medianMs: kib, runsMs: [kib] }
+    }
+  }
   return { label, repoPath, results }
 }
 
@@ -655,6 +694,9 @@ const main = async () => {
     console.log(
       '  --threshold, -t <pct>    Max allowed HEAD slowdown (%) vs last selected version per scenario. Exits non-zero on breach.',
     )
+    console.log(
+      '  --include-bundle         Include vanillaBundleSizeKb as the right-most output column.',
+    )
     console.log('  --help, -h               Show this help and exit.')
     console.log('')
     console.log(
@@ -673,7 +715,7 @@ const main = async () => {
     )
     for (const scenario of scenarios) {
       console.log(
-        `  ${scenario.padEnd(outputLabelWidth)}  ${scenarioDescriptions[scenario]}`,
+        `  ${scenarioHeaderLabels[scenario].padEnd(outputLabelWidth)}  ${scenarioDescriptions[scenario]}`,
       )
     }
     console.log('')
@@ -777,6 +819,7 @@ const main = async () => {
         `--versions=${token}`,
         `--iterations=${iterations}`,
         `--warmup=${warmup}`,
+        ...(includeBundle ? ['--include-bundle'] : []),
       ],
       {
         cwd: root,
@@ -849,6 +892,7 @@ const main = async () => {
     `--versions=${versionsArg}`,
     `--concurrency=${concurrency}`,
     `--threshold=${threshold == null ? 'disabled' : threshold}`,
+    ...(includeBundle ? ['--include-bundle'] : []),
   ].join(' ')
   clearProgress()
   console.log(`Command: ${displayedCommand}`)
@@ -887,7 +931,7 @@ const main = async () => {
     rawRows.push(cells)
   }
 
-  const header = ['Version', ...scenarios]
+  const header = ['Version', ...scenarios.map((s) => scenarioHeaderLabels[s])]
   const widths = header.map((h, i) =>
     Math.max(
       h.length,

@@ -1,4 +1,4 @@
-// Internal functions (subject to change without notice)
+// Experiment: only key change `invalidate-dependents-two-stack` enabled.\n// Base: upstream/main:src/vanilla/internals.ts\n\n// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -696,15 +696,17 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const ensureAtomState = buildingBlocks[11]
-  const stack: AnyAtom[] = [atom]
-  while (stack.length) {
-    const a = stack.pop()!
-    const aState = ensureAtomState(store, a)
+  const atomStack: AnyAtom[] = [atom]
+  const stateStack: AtomState[] = [ensureAtomState(store, atom)]
+  while (atomStack.length) {
+    const a = atomStack.pop()!
+    const aState = stateStack.pop()!
     for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       const dState = ensureAtomState(store, d)
       if (invalidatedAtoms.get(d) !== dState.n) {
         invalidatedAtoms.set(d, dState.n)
-        stack.push(d)
+        atomStack.push(d)
+        stateStack.push(dState)
       }
     }
   }
