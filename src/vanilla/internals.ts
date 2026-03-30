@@ -814,35 +814,53 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
   const mountCallbacks = buildingBlocks[4]
   const storeHooks = buildingBlocks[6]
   const atomOnMount = buildingBlocks[10]
-  const ensureAtomState = buildingBlocks[11]
   const flushCallbacks = buildingBlocks[12]
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const readAtomState = buildingBlocks[14]
   const writeAtomState = buildingBlocks[16]
-  const mountAtom = buildingBlocks[18]
-  const atomState = ensureAtomState(store, atom)
-  let mounted = mountedMap.get(atom)
-  if (!mounted) {
-    // recompute atom state
-    readAtomState(store, atom)
-    // mount dependencies first
-    for (const a of atomState.d.keys()) {
-      const aMounted = mountAtom(store, a)
-      aMounted.t.add(atom)
+  const mounted = mountedMap.get(atom)
+  if (mounted) {
+    return mounted
+  }
+  const atomStack: AnyAtom[] = [atom]
+  const stateStack: (AtomState | undefined)[] = [undefined]
+  while (atomStack.length) {
+    const top = atomStack.length - 1
+    const a = atomStack[top]!
+    const existingMounted = mountedMap.get(a)
+    if (existingMounted) {
+      atomStack.pop()
+      stateStack.pop()
+      continue
     }
-    // mount self
-    mounted = {
+    let aState = stateStack[top]
+    if (!aState) {
+      // First visit: compute atom state before collecting dependencies.
+      aState = readAtomState(store, a)
+      stateStack[top] = aState
+      for (const dep of aState.d.keys()) {
+        if (!mountedMap.has(dep)) {
+          atomStack.push(dep)
+          stateStack.push(undefined)
+        }
+      }
+      continue
+    }
+    const nextMounted: Mounted = {
       l: new Set(),
-      d: new Set(atomState.d.keys()),
+      d: new Set(aState.d.keys()),
       t: new Set(),
     }
-    mountedMap.set(atom, mounted)
-    if (isActuallyWritableAtom(atom)) {
+    mountedMap.set(a, nextMounted)
+    for (const dep of aState.d.keys()) {
+      mountedMap.get(dep)?.t.add(a)
+    }
+    if (isActuallyWritableAtom(a)) {
       const processOnMount = () => {
         let isSync = true
         const setAtom = (...args: unknown[]) => {
           try {
-            return writeAtomState(store, atom, ...args)
+            return writeAtomState(store, a, ...args)
           } finally {
             if (!isSync) {
               recomputeInvalidatedAtoms(store)
@@ -851,9 +869,9 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
           }
         }
         try {
-          const onUnmount = atomOnMount(store, atom, setAtom)
+          const onUnmount = atomOnMount(store, a, setAtom)
           if (onUnmount) {
-            mounted!.u = () => {
+            nextMounted.u = () => {
               isSync = true
               try {
                 onUnmount()
@@ -868,9 +886,11 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
       }
       mountCallbacks.add(processOnMount)
     }
-    storeHooks.m?.(atom)
+    storeHooks.m?.(a)
+    atomStack.pop()
+    stateStack.pop()
   }
-  return mounted
+  return mountedMap.get(atom)!
 }
 
 const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
