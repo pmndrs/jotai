@@ -1,3 +1,6 @@
+// Experiment: only key change `ensure-atom-state-optimization` enabled.
+// Base: upstream/main:src/vanilla/internals.ts
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -102,6 +105,7 @@ type AtomOnMount = <Value, Args extends unknown[], Result>(
 type EnsureAtomState = <Value>(
   store: Store,
   atom: Atom<Value>,
+  atomStateMap?: AtomStateMap,
 ) => AtomState<Value>
 type FlushCallbacks = (store: Store) => void
 type RecomputeInvalidatedAtoms = (store: Store) => void
@@ -374,16 +378,20 @@ const BUILDING_BLOCK_atomOnInit: AtomOnInit = (store, atom) =>
 const BUILDING_BLOCK_atomOnMount: AtomOnMount = (_store, atom, setAtom) =>
   atom.onMount?.(setAtom)
 
-const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (store, atom) => {
+const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
+  store,
+  atom,
+  atomStateFromParam,
+) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
-  const atomStateMap = buildingBlocks[0]
-  const storeHooks = buildingBlocks[6]
-  const atomOnInit = buildingBlocks[9]
+  const atomStateMap = atomStateFromParam || buildingBlocks[0]
   if (import.meta.env?.MODE !== 'production' && !atom) {
     throw new Error('Atom is undefined or null')
   }
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
+    const storeHooks = buildingBlocks[6]
+    const atomOnInit = buildingBlocks[9]
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)

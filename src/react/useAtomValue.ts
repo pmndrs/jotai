@@ -63,7 +63,21 @@ const createContinuablePromise = <T>(
   getValue: () => PromiseLike<T> | T,
 ) => {
   const buildingBlocks = INTERNAL_getBuildingBlocks(store)
-  const registerAbortHandler = buildingBlocks[26]
+  const registerAbortHandler = buildingBlocks[26] as (
+    first: unknown,
+    promise: PromiseLike<T>,
+    abortHandler: () => void,
+  ) => void
+  const registerWithCompat = (
+    nextPromise: PromiseLike<T>,
+    abortHandler: () => void,
+  ) => {
+    try {
+      registerAbortHandler(store, nextPromise, abortHandler)
+    } catch {
+      registerAbortHandler(buildingBlocks, nextPromise, abortHandler)
+    }
+  }
   let continuablePromise = continuablePromiseMap.get(promise)
   if (!continuablePromise) {
     continuablePromise = new Promise<T>((resolve, reject) => {
@@ -85,7 +99,7 @@ const createContinuablePromise = <T>(
             continuablePromiseMap.set(nextValue, continuablePromise!)
             curr = nextValue
             nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
-            registerAbortHandler(buildingBlocks, nextValue, onAbort)
+            registerWithCompat(nextValue, onAbort)
           } else {
             resolve(nextValue)
           }
@@ -94,7 +108,7 @@ const createContinuablePromise = <T>(
         }
       }
       promise.then(onFulfilled(promise), onRejected(promise))
-      registerAbortHandler(buildingBlocks, promise, onAbort)
+      registerWithCompat(promise, onAbort)
     })
     continuablePromiseMap.set(promise, continuablePromise)
   }
