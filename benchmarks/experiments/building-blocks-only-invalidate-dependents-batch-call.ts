@@ -1,4 +1,4 @@
-// Experiment: only key change `invalidate-dependents-batch-call` enabled.\n// Base: upstream/main:src/vanilla/internals.ts\n\n// Internal functions (subject to change without notice)
+// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -109,7 +109,7 @@ type ReadAtomState = <Value>(
   store: Store,
   atom: Atom<Value>,
 ) => AtomState<Value>
-type InvalidateDependents = (store: Store, atoms: readonly AnyAtom[]) => void
+type InvalidateDependents = (store: Store, atom: AnyAtom) => void
 type WriteAtomState = <Value, Args extends unknown[], Result>(
   store: Store,
   atom: WritableAtom<Value, Args, Result>,
@@ -690,13 +690,13 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
 
 const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   store,
-  atoms,
+  atom,
 ) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const ensureAtomState = buildingBlocks[11]
-  const stack: AnyAtom[] = Array.from(atoms)
+  const stack: AnyAtom[] = [atom]
   while (stack.length) {
     const a = stack.pop()!
     const aState = ensureAtomState(store, a)
@@ -752,7 +752,7 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         if (prevEpochNumber !== aState.n) {
           ++storeEpochHolder[0]
           changedAtoms.add(a)
-          invalidateDependents(store, [a])
+          invalidateDependents(store, a)
           storeHooks.c?.(a)
         }
         return undefined as R
@@ -785,7 +785,6 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
   const atomState = ensureAtomState(store, atom)
   const mounted = mountedMap.get(atom)
   if (mounted) {
-    const staleDeps: AnyAtom[] = []
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(store, a)
@@ -793,17 +792,10 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (store, atom) => {
         aMounted.t.add(atom)
         mounted.d.add(a)
         if (n !== aState.n) {
-          staleDeps.push(a)
+          changedAtoms.add(a)
+          invalidateDependents(store, a)
+          storeHooks.c?.(a)
         }
-      }
-    }
-    if (staleDeps.length) {
-      for (const a of staleDeps) {
-        changedAtoms.add(a)
-      }
-      invalidateDependents(store, staleDeps)
-      for (const a of staleDeps) {
-        storeHooks.c?.(a)
       }
     }
     for (const a of mounted.d) {

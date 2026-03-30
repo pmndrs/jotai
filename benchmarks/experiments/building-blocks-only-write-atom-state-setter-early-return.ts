@@ -1,4 +1,4 @@
-// Experiment: only key change `write-atom-state-setter-early-return` enabled.\n// Base: upstream/main:src/vanilla/internals.ts\n\n// Internal functions (subject to change without notice)
+// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -747,9 +747,6 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
-        if ('v' in aState && Object.is(aState.v, v)) {
-          return undefined as R
-        }
         setAtomStateValueOrPromise(store, a, v)
         mountDependencies(store, a)
         if (prevEpochNumber !== aState.n) {

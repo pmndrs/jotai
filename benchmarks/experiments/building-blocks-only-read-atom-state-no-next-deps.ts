@@ -1,4 +1,4 @@
-// Experiment: only key change `read-atom-state-no-next-deps` enabled.\n// Base: upstream/main:src/vanilla/internals.ts\n\n// Internal functions (subject to change without notice)
+// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -556,9 +556,12 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   // Compute a new state for this atom.
   let isSync = true
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
+  const nextDeps = new Map<AnyAtom, EpochNumber>()
   const pruneDependencies = () => {
     for (const a of prevDeps) {
-      atomState.d.delete(a)
+      if (!nextDeps.has(a)) {
+        atomState.d.delete(a)
+      }
     }
   }
   const mountDependenciesIfAsync = () => {
@@ -590,7 +593,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     try {
       return returnAtomValue(aState)
     } finally {
-      prevDeps.delete(a)
+      nextDeps.set(a, aState.n)
       atomState.d.set(a, aState.n)
       if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)

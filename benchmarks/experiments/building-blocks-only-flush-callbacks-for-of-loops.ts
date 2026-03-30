@@ -1,4 +1,4 @@
-// Experiment: only key change `flush-callbacks-for-of-loops` enabled.\n// Base: upstream/main:src/vanilla/internals.ts\n\n// Internal functions (subject to change without notice)
+// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -413,26 +413,14 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
       call(storeHooks.f)
     }
     const callbacks = new Set<() => void>()
-    for (const atom of changedAtoms) {
-      const listeners = mountedMap.get(atom)?.l
-      if (listeners) {
-        for (const listener of listeners) {
-          callbacks.add(listener)
-        }
-      }
-    }
+    const add = callbacks.add.bind(callbacks)
+    changedAtoms.forEach((atom) => mountedMap.get(atom)?.l.forEach(add))
     changedAtoms.clear()
-    for (const fn of unmountCallbacks) {
-      callbacks.add(fn)
-    }
+    unmountCallbacks.forEach(add)
     unmountCallbacks.clear()
-    for (const fn of mountCallbacks) {
-      callbacks.add(fn)
-    }
+    mountCallbacks.forEach(add)
     mountCallbacks.clear()
-    for (const fn of callbacks) {
-      call(fn)
-    }
+    callbacks.forEach(call)
     if (changedAtoms.size) {
       recomputeInvalidatedAtoms(store)
     }

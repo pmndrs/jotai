@@ -1,4 +1,4 @@
-// Experiment: only key change `lazy-building-blocks` enabled.\n// Base: upstream/main:src/vanilla/internals.ts\n\n// Internal functions (subject to change without notice)
+// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -515,11 +515,11 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   const storeHooks = buildingBlocks[6]
   const atomRead = buildingBlocks[7]
   const ensureAtomState = buildingBlocks[11]
-  let flushCallbacks: FlushCallbacks
-  let recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms
+  const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
   const readAtomState = buildingBlocks[14]
-  let writeAtomState: WriteAtomState
-  let mountDependencies: MountDependencies
+  const writeAtomState = buildingBlocks[16]
+  const mountDependencies = buildingBlocks[17]
   const setAtomStateValueOrPromise = buildingBlocks[20]
   const registerAbortHandler = buildingBlocks[26]
   const storeEpochHolder = buildingBlocks[28]
@@ -568,11 +568,8 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
     if (mountedMap.has(atom)) {
       // If changedAtoms is already populated, an outer recompute cycle will handle it
       const shouldRecompute = !changedAtoms.size
-      mountDependencies ||= buildingBlocks[17]
       mountDependencies(store, atom)
       if (shouldRecompute) {
-        recomputeInvalidatedAtoms ||= buildingBlocks[13]
-        flushCallbacks ||= buildingBlocks[12]
         recomputeInvalidatedAtoms(store)
         flushCallbacks(store)
       }
@@ -638,11 +635,8 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
           }
           if (!isSync) {
             try {
-              writeAtomState ||= buildingBlocks[16]
               return writeAtomState(store, atom, ...args)
             } finally {
-              recomputeInvalidatedAtoms ||= buildingBlocks[13]
-              flushCallbacks ||= buildingBlocks[12]
               recomputeInvalidatedAtoms(store)
               flushCallbacks(store)
             }
@@ -767,8 +761,6 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
       }
     } finally {
       if (!isSync) {
-        recomputeInvalidatedAtoms ||= buildingBlocks[13]
-        flushCallbacks ||= buildingBlocks[12]
         recomputeInvalidatedAtoms(store)
         flushCallbacks(store)
       }
@@ -853,8 +845,6 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
             return writeAtomState(store, atom, ...args)
           } finally {
             if (!isSync) {
-              recomputeInvalidatedAtoms ||= buildingBlocks[13]
-              flushCallbacks ||= buildingBlocks[12]
               recomputeInvalidatedAtoms(store)
               flushCallbacks(store)
             }

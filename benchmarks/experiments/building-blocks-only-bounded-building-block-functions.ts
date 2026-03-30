@@ -1,6 +1,3 @@
-// Experiment: only key change `bounded-building-block-functions` enabled.
-// Base: upstream/main:src/vanilla/internals.ts
-
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -1027,7 +1024,20 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
 }
 
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
-  const store = {} as Store
+  const store = {
+    get(atom) {
+      const storeGet = getInternalBuildingBlocks(store)[21]
+      return storeGet(store, atom)
+    },
+    set(atom, ...args) {
+      const storeSet = getInternalBuildingBlocks(store)[22]
+      return storeSet(store, atom, ...args)
+    },
+    sub(atom, listener) {
+      const storeSub = getInternalBuildingBlocks(store)[23]
+      return storeSub(store, atom, listener)
+    },
+  } as Store
 
   const buildingBlocks = (
     [
@@ -1068,15 +1078,6 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
-
-  const storeGet = buildingBlocks[21].bind(undefined, store) as Store['get']
-  const storeSet = buildingBlocks[22].bind(undefined, store) as Store['set']
-  const storeSub = buildingBlocks[23].bind(undefined, store) as Store['sub']
-  Object.assign(store, {
-    get: storeGet,
-    set: storeSet,
-    sub: storeSub,
-  })
   return store
 }
 

@@ -1,4 +1,4 @@
-// Experiment: only key change `flush-callbacks-early-return` enabled.\n// Base: upstream/main:src/vanilla/internals.ts\n\n// Internal functions (subject to change without notice)
+// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -399,14 +399,6 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (store) => {
   const mountCallbacks = buildingBlocks[4]
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
-  if (
-    changedAtoms.size === 0 &&
-    mountCallbacks.size === 0 &&
-    unmountCallbacks.size === 0 &&
-    !storeHooks.f
-  ) {
-    return
-  }
   const recomputeInvalidatedAtoms = buildingBlocks[13]
   const errors: unknown[] = []
   const call = (fn: () => void) => {

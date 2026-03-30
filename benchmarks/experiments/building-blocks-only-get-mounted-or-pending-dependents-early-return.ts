@@ -1,4 +1,4 @@
-// Experiment: only key change `get-mounted-or-pending-dependents-early-return` enabled.\n// Base: upstream/main:src/vanilla/internals.ts\n\n// Internal functions (subject to change without notice)
+// Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
 import type { Atom, WritableAtom } from './atom.ts'
@@ -271,18 +271,12 @@ function getMountedOrPendingDependents(
   atomState: AtomState,
   mountedMap: MountedMap,
 ): Iterable<AnyAtom> {
-  const mounted = mountedMap.get(atom)
-  const mountedDependents = mounted?.t
-  const pendingDependents = atomState.p
-  if (!mountedDependents || mountedDependents.size === 0) {
-    return pendingDependents
-  }
-  if (pendingDependents.size === 0) {
-    return mountedDependents
-  }
-  const dependents = new Set<AnyAtom>(mountedDependents)
-  for (const a of pendingDependents) {
+  const dependents = new Set<AnyAtom>()
+  for (const a of mountedMap.get(atom)?.t || []) {
     dependents.add(a)
+  }
+  for (const atomWithPendingPromise of atomState.p) {
+    dependents.add(atomWithPendingPromise)
   }
   return dependents
 }
