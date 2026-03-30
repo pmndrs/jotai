@@ -1,0 +1,7 @@
+on: pull_request
+
+jobs:
+  testpr:
+    steps:
+      run: |
+        echo pr
