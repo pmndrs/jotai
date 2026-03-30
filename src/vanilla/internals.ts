@@ -747,6 +747,9 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
+        if ('v' in aState && Object.is(aState.v, v)) {
+          return undefined as R
+        }
         setAtomStateValueOrPromise(store, a, v)
         mountDependencies(store, a)
         if (prevEpochNumber !== aState.n) {
