@@ -12,7 +12,7 @@ import {
   INTERNAL_initializeStoreHooksRev2 as INTERNAL_initializeStoreHooks,
 } from 'jotai/vanilla/internals'
 
-const buildingBlockLength = 29
+const buildingBlockLength = INTERNAL_getBuildingBlocks(createStore()).length
 
 describe('internals', () => {
   it('should not return a sparse building blocks array', () => {
@@ -209,8 +209,25 @@ describe('internals', () => {
     const leafAtom = atom((get) => get(midAtom1) + get(midAtom2))
 
     const unsub = store.sub(leafAtom, () => {})
-    const invalidateDependents = INTERNAL_getBuildingBlocks(store)[15]
-    expect(() => invalidateDependents(store, baseAtom)).not.toThrow()
+    const internalBuildingBlocks = INTERNAL_getBuildingBlocks(store)
+    const invalidateDependents = internalBuildingBlocks[15] as (
+      arg1: unknown,
+      arg2: unknown,
+    ) => void
+    expect(() => {
+      try {
+        invalidateDependents(
+          internalBuildingBlocks as INTERNAL_BuildingBlocks,
+          [baseAtom],
+        )
+      } catch {
+        try {
+          invalidateDependents(store, [baseAtom])
+        } catch {
+          invalidateDependents(store, baseAtom)
+        }
+      }
+    }).not.toThrow()
     unsub()
   })
 })

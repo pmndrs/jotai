@@ -87,6 +87,7 @@
     "fix:lint": "eslint . --fix",
     "bench": "npx tsx benchmarks/run-all.ts",
     "test": "pnpm run \"/^test:.*/\"",
+    "test:bench": "node --expose-gc benchmarks/cli.cjs",
     "test:format": "prettier . --list-different",
     "test:types": "tsc --noEmit",
     "test:lint": "eslint .",
