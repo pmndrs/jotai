@@ -85,7 +85,7 @@ const createContinuablePromise = <T>(
             continuablePromiseMap.set(nextValue, continuablePromise!)
             curr = nextValue
             nextValue.then(onFulfilled(nextValue), onRejected(nextValue))
-            registerAbortHandler(store, nextValue, onAbort)
+            registerAbortHandler(buildingBlocks, nextValue, onAbort)
           } else {
             resolve(nextValue)
           }
@@ -94,7 +94,7 @@ const createContinuablePromise = <T>(
         }
       }
       promise.then(onFulfilled(promise), onRejected(promise))
-      registerAbortHandler(store, promise, onAbort)
+      registerAbortHandler(buildingBlocks, promise, onAbort)
     })
     continuablePromiseMap.set(promise, continuablePromise)
   }
