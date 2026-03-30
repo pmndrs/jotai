@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - invalidateDependents-two-stack: invalidateDependents uses a single atom stack with ensureAtomState in-loop
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -782,21 +786,15 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]
   const ensureAtomState = buildingBlocks[11]
-  const atomStack: AnyAtom[] = []
-  const stateStack: AtomState[] = []
-  for (const atom of atoms) {
-    atomStack.push(atom)
-    stateStack.push(ensureAtomState(buildingBlocks, atom, atomStateMap))
-  }
-  while (atomStack.length) {
-    const a = atomStack.pop()!
-    const aState = stateStack.pop()!
+  const stack: AnyAtom[] = Array.from(atoms)
+  while (stack.length) {
+    const a = stack.pop()!
+    const aState = ensureAtomState(buildingBlocks, a, atomStateMap)
     for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       const dState = ensureAtomState(buildingBlocks, d, atomStateMap)
       if (invalidatedAtoms.get(d) !== dState.n) {
         invalidatedAtoms.set(d, dState.n)
-        atomStack.push(d)
-        stateStack.push(dState)
+        stack.push(d)
       }
     }
   }

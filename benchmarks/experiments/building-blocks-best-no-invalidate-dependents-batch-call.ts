@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - invalidateDependents-batch-call: mountDependencies invalidates stale deps one-by-one instead of batching
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -891,7 +895,6 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (
   const atomState = ensureAtomState(buildingBlocks, atom, atomStateMap)
   const mounted = mountedMap.get(atom)
   if (mounted) {
-    const staleDeps: AnyAtom[] = []
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
         const aState = ensureAtomState(buildingBlocks, a, atomStateMap)
@@ -900,20 +903,13 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (
         aMounted.t.add(atom)
         mounted.d.add(a)
         if (n !== aState.n) {
-          staleDeps.push(a)
+          const changedAtoms = buildingBlocks[3]
+          changedAtoms.add(a)
+          const invalidateDependents = buildingBlocks[15]
+          invalidateDependents(buildingBlocks, [a])
+          const storeHooks = buildingBlocks[6]
+          storeHooks.c?.(a)
         }
-      }
-    }
-    if (staleDeps.length) {
-      const changedAtoms = buildingBlocks[3]
-      for (const a of staleDeps) {
-        changedAtoms.add(a)
-      }
-      const invalidateDependents = buildingBlocks[15]
-      invalidateDependents(buildingBlocks, staleDeps)
-      const storeHooks = buildingBlocks[6]
-      for (const a of staleDeps) {
-        storeHooks.c?.(a)
       }
     }
     for (const a of mounted.d) {

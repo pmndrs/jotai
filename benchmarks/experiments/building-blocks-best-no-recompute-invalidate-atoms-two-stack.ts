@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - recomputeInvalidateAtoms-two-stack: recomputeInvalidatedAtoms uses one stack and ensureAtomState per iteration
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -500,66 +504,39 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   let readAtomState: ReadAtomState
   let mountDependencies: MountDependencies
   const ensureAtomState = buildingBlocks[11]
-  // Step 1: traverse the dependency graph to build the topologically sorted atom list
-  // We don't bother to check for cycles, which simplifies the algorithm.
-  // This is a topological sort via depth-first search, slightly modified from
-  // what's described here for simplicity and performance reasons:
-  // https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
-  const sortedReversedAtoms: AnyAtom[] = []
-  const sortedReversedStates: AtomState[] = []
+  const topSortedReversed: [atom: AnyAtom, atomState: AtomState][] = []
   const visiting = new WeakSet<AnyAtom>()
   const visited = new WeakSet<AnyAtom>()
-  const stackAtoms: AnyAtom[] = []
-  const stackStates: AtomState[] = []
-  // Visit the root atoms. This is the only atom in the dependency graph
-  // without incoming edges, which is one reason we can simplify the algorithm
-  for (const atom of changedAtoms) {
-    stackAtoms.push(atom)
-    stackStates.push(ensureAtomState(buildingBlocks, atom, atomStateMap))
-  }
-  while (stackAtoms.length) {
-    const top = stackAtoms.length - 1
-    const a = stackAtoms[top]!
-    const aState = stackStates[top]!
+  const stack: AnyAtom[] = Array.from(changedAtoms)
+  while (stack.length) {
+    const a = stack[stack.length - 1]!
+    const aState = ensureAtomState(buildingBlocks, a, atomStateMap)
     if (visited.has(a)) {
-      // All dependents have been processed, now process this atom
-      stackAtoms.pop()
-      stackStates.pop()
+      stack.pop()
       continue
     }
     if (visiting.has(a)) {
-      // The algorithm calls for pushing onto the front of the list. For
-      // performance, we will simply push onto the end, and then  will iterate in
-      // reverse order later.
       if (invalidatedAtoms.get(a) === aState.n) {
-        sortedReversedAtoms.push(a)
-        sortedReversedStates.push(aState)
+        topSortedReversed.push([a, aState])
       } else if (
         import.meta.env?.MODE !== 'production' &&
         invalidatedAtoms.has(a)
       ) {
         throw new Error('[Bug] invalidated atom exists')
       }
-      // Atom has been visited but not yet processed
       visited.add(a)
-      stackAtoms.pop()
-      stackStates.pop()
+      stack.pop()
       continue
     }
     visiting.add(a)
-    // Push unvisited dependents onto the stack
     for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       if (!visiting.has(d)) {
-        stackAtoms.push(d)
-        stackStates.push(ensureAtomState(buildingBlocks, d, atomStateMap))
+        stack.push(d)
       }
     }
   }
-  // Step 2: use the topSortedReversed atom list to recompute all affected atoms
-  // Track what's changed, so that we can short circuit when possible
-  for (let i = sortedReversedAtoms.length - 1; i >= 0; --i) {
-    const a = sortedReversedAtoms[i]!
-    const aState = sortedReversedStates[i]!
+  for (let i = topSortedReversed.length - 1; i >= 0; --i) {
+    const [a, aState] = topSortedReversed[i]!
     let hasChangedDeps = false
     for (const dep of aState.d.keys()) {
       if (dep !== a && changedAtoms.has(dep)) {

@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - unmountAtom-iterative: unmountAtom uses recursive dependency unmounting
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -1021,62 +1025,37 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (buildingBlocks, atom) => {
   const atomStateMap = buildingBlocks[0]
   const mountedMap = buildingBlocks[1]
   const unmountCallbacks = buildingBlocks[5]
-  let storeHooks: StoreHooks
+  const storeHooks = buildingBlocks[6]
   const ensureAtomState = buildingBlocks[11]
-  const atomStack: AnyAtom[] = [atom]
-  const depIndexStack: number[] = [-1]
-  const depsStack: (AnyAtom[] | null)[] = [[]]
-  while (atomStack.length) {
-    const top = atomStack.length - 1
-    const a = atomStack[top]!
-    const depIndex = depIndexStack[top]!
-    if (depIndex < 0) {
-      const mounted = mountedMap.get(a)
-      if (!mounted || mounted.l.size) {
-        atomStack.pop()
-        depIndexStack.pop()
-        depsStack.pop()
-        continue
-      }
-      let isDependent = false
-      for (const t of mounted.t) {
-        if (mountedMap.get(t)?.d.has(a)) {
-          isDependent = true
-          break
-        }
-      }
-      if (isDependent) {
-        atomStack.pop()
-        depIndexStack.pop()
-        depsStack.pop()
-        continue
-      }
-      if (mounted.u) {
-        unmountCallbacks.add(mounted.u)
-      }
-      mountedMap.delete(a)
-      const aState = ensureAtomState(buildingBlocks, a, atomStateMap)
-      depsStack[top] = Array.from(aState.d.keys())
-      depIndexStack[top] = 0 // phase 0: read dependencies
-      continue
-    }
-    const deps = depsStack[top]!
-    if (depIndex < deps.length) {
-      const dep = deps[depIndex]!
-      depIndexStack[top] = depIndex + 1
-      mountedMap.get(dep)?.t.delete(a)
-      atomStack.push(dep)
-      depIndexStack.push(-1)
-      depsStack.push(null)
-      continue
-    }
-    storeHooks ||= buildingBlocks[6]
-    storeHooks.u?.(a)
-    atomStack.pop()
-    depIndexStack.pop()
-    depsStack.pop()
+  const unmountAtom = buildingBlocks[19]
+  const atomState = ensureAtomState(buildingBlocks, atom, atomStateMap)
+  let mounted = mountedMap.get(atom)
+  if (!mounted || mounted.l.size) {
+    return mounted
   }
-  return mountedMap.get(atom)
+  let isDependent = false
+  for (const a of mounted.t) {
+    if (mountedMap.get(a)?.d.has(atom)) {
+      isDependent = true
+      break
+    }
+  }
+  if (!isDependent) {
+    // unmount self
+    if (mounted.u) {
+      unmountCallbacks.add(mounted.u)
+    }
+    mounted = undefined
+    mountedMap.delete(atom)
+    // unmount dependencies
+    for (const a of atomState.d.keys()) {
+      const aMounted = unmountAtom(buildingBlocks, a)
+      aMounted?.t.delete(atom)
+    }
+    storeHooks.u?.(atom)
+    return undefined
+  }
+  return mounted
 }
 
 const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (

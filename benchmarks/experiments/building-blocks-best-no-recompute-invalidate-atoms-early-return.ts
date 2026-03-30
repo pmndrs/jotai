@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - recomputeInvalidateAtoms-early-return: recomputeInvalidatedAtoms no longer exits early for empty changedAtoms
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -491,9 +495,6 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   buildingBlocks,
 ) => {
   const changedAtoms = buildingBlocks[3]
-  if (changedAtoms.size === 0) {
-    return
-  }
   const atomStateMap = buildingBlocks[0]
   const mountedMap = buildingBlocks[1]
   const invalidatedAtoms = buildingBlocks[2]

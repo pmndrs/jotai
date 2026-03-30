@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - getMountedOrPendingDependents-early-return: always builds a new union Set in getMountedOrPendingDependents
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -288,19 +292,12 @@ function getMountedOrPendingDependents(
   atomState: AtomState,
   mountedMap: MountedMap,
 ): Iterable<AnyAtom> {
-  const mounted = mountedMap.get(atom)
-  const mountedDependents = mounted?.t
-  const pendingDependents = atomState.p
-  if (!mountedDependents || mountedDependents.size === 0) {
-    return pendingDependents
-  }
-  if (pendingDependents.size === 0) {
-    return mountedDependents
-  }
-  // only pay the union cost when both sides are non-empty
-  const dependents = new Set<AnyAtom>(mountedDependents)
-  for (const a of pendingDependents) {
+  const dependents = new Set<AnyAtom>()
+  for (const a of mountedMap.get(atom)?.t || []) {
     dependents.add(a)
+  }
+  for (const atomWithPendingPromise of atomState.p) {
+    dependents.add(atomWithPendingPromise)
   }
   return dependents
 }

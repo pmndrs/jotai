@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - flushCallbacks-for-of-loops: flushCallbacks uses forEach instead of for..of loops
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -456,27 +460,15 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (buildingBlocks) => {
       call(storeHooks.f)
     }
     const callbacks = new Set<() => void>()
+    const add = callbacks.add.bind(callbacks)
     mountedMap ||= buildingBlocks[1]
-    for (const atom of changedAtoms) {
-      const listeners = mountedMap.get(atom)?.l
-      if (listeners) {
-        for (const listener of listeners) {
-          callbacks.add(listener)
-        }
-      }
-    }
+    changedAtoms.forEach((atom) => mountedMap.get(atom)?.l.forEach(add))
     changedAtoms.clear()
-    for (const fn of unmountCallbacks) {
-      callbacks.add(fn)
-    }
+    unmountCallbacks.forEach(add)
     unmountCallbacks.clear()
-    for (const fn of mountCallbacks) {
-      callbacks.add(fn)
-    }
+    mountCallbacks.forEach(add)
     mountCallbacks.clear()
-    for (const fn of callbacks) {
-      call(fn)
-    }
+    callbacks.forEach(call)
     if (changedAtoms.size) {
       recomputeInvalidatedAtoms ||= buildingBlocks[13]
       recomputeInvalidatedAtoms(buildingBlocks)

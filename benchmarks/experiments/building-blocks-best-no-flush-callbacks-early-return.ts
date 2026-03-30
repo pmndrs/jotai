@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - flushCallbacks-early-return: flushCallbacks no longer exits early when there is no work
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -433,14 +437,6 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (buildingBlocks) => {
   const mountCallbacks = buildingBlocks[4]
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
-  if (
-    changedAtoms.size === 0 &&
-    mountCallbacks.size === 0 &&
-    unmountCallbacks.size === 0 &&
-    !storeHooks.f
-  ) {
-    return
-  }
   let mountedMap: MountedMap
   let recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms
   const errors: unknown[] = []

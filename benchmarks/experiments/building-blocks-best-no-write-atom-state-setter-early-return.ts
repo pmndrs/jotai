@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - writeAtomState-setter-early-return: writeAtomState setter no longer bails out on Object.is equal values
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -846,9 +850,6 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
-        if ('v' in aState && Object.is(aState.v, v)) {
-          return undefined as R
-        }
         setAtomStateValueOrPromise(buildingBlocks, a, v)
         mountDependencies(buildingBlocks, a)
         if (prevEpochNumber !== aState.n) {

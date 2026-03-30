@@ -1,3 +1,7 @@
+// Experiment variant based on building-blocks-best.ts
+// Includes all perf improvements from building-blocks-best except:
+// - ensureAtomState-optimization: ensureAtomState eagerly reads storeHooks/atomOnInit each call
+
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
@@ -416,10 +420,10 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
   if (import.meta.env?.MODE !== 'production' && !atom) {
     throw new Error('Atom is undefined or null')
   }
+  const storeHooks = buildingBlocks[6]
+  const atomOnInit = buildingBlocks[9]
   let atomState = atomStateMap.get(atom)
   if (!atomState) {
-    const storeHooks = buildingBlocks[6]
-    const atomOnInit = buildingBlocks[9]
     atomState = { d: new Map(), p: new Set(), n: 0 }
     atomStateMap.set(atom, atomState)
     storeHooks.i?.(atom)

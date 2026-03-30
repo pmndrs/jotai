@@ -146,8 +146,8 @@ type StoreSub = (
   listener: () => void,
 ) => () => void
 type EnhanceBuildingBlocks = (
-  buildingBlocks: Readonly<BuildingBlocks>,
-) => Readonly<BuildingBlocks>
+  buildingBlocks: BuildingBlocks,
+) => BuildingBlocks
 type AbortHandlersMap = WeakMapLike<PromiseLike<unknown>, Set<() => void>>
 type RegisterAbortHandler = <T>(
   store: Store,
@@ -374,7 +374,7 @@ function initializeStoreHooks(storeHooks: StoreHooks): Required<StoreHooks> {
 //
 
 // Compatibility helper retained for internal export shape.
-function getBuildingBlocks(_store: Store): Readonly<BuildingBlocks> {
+function getBuildingBlocks(_store: Store): BuildingBlocks {
   throw new Error(
     'INTERNAL_getBuildingBlocksRev2 is disabled in exp-no-building-blocks.',
   )
