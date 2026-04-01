@@ -876,43 +876,50 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
 const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
   const buildingBlocks = getInternalBuildingBlocks(store)
   const mountedMap = buildingBlocks[1]
+  if (!mountedMap.has(atom)) {
+    return
+  }
   const unmountCallbacks = buildingBlocks[5]
   const storeHooks = buildingBlocks[6]
-  const ensureAtomState = buildingBlocks[11]
   const atomStack: AnyAtom[] = [atom]
   const depIndexStack: number[] = [-1]
   const depsStack: (AnyAtom[] | null)[] = [[]]
+  const pop = () => {
+    atomStack.pop()
+    depIndexStack.pop()
+    depsStack.pop()
+  }
   while (atomStack.length) {
     const top = atomStack.length - 1
     const a = atomStack[top]!
     const depIndex = depIndexStack[top]!
     if (depIndex < 0) {
-      const mounted = mountedMap.get(a)
-      if (!mounted || mounted.l.size) {
-        atomStack.pop()
-        depIndexStack.pop()
-        depsStack.pop()
+      const aMounted = mountedMap.get(a)
+      if (!aMounted || aMounted.l.size) {
+        pop()
         continue
       }
       let isDependent = false
-      for (const t of mounted.t) {
+      for (const t of aMounted.t) {
         if (mountedMap.get(t)?.d.has(a)) {
           isDependent = true
           break
         }
       }
       if (isDependent) {
-        atomStack.pop()
-        depIndexStack.pop()
-        depsStack.pop()
+        pop()
         continue
       }
-      if (mounted.u) {
-        unmountCallbacks.add(mounted.u)
+      if (aMounted.u) {
+        unmountCallbacks.add(aMounted.u)
       }
       mountedMap.delete(a)
-      const aState = ensureAtomState(store, a)
-      depsStack[top] = Array.from(aState.d.keys())
+      if (aMounted.d.size === 0) {
+        storeHooks.u?.(a)
+        pop()
+        continue
+      }
+      depsStack[top] = Array.from(aMounted.d)
       depIndexStack[top] = 0
       continue
     }
@@ -920,16 +927,17 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (store, atom) => {
     if (depIndex < deps.length) {
       const dep = deps[depIndex]!
       depIndexStack[top] = depIndex + 1
-      mountedMap.get(dep)?.t.delete(a)
-      atomStack.push(dep)
-      depIndexStack.push(-1)
-      depsStack.push(null)
+      const depMounted = mountedMap.get(dep)
+      if (depMounted) {
+        depMounted.t.delete(a)
+        atomStack.push(dep)
+        depIndexStack.push(-1)
+        depsStack.push(null)
+      }
       continue
     }
     storeHooks.u?.(a)
-    atomStack.pop()
-    depIndexStack.pop()
-    depsStack.pop()
+    pop()
   }
   return mountedMap.get(atom)
 }
