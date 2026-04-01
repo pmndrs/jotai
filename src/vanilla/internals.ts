@@ -1,7 +1,7 @@
 // Internal functions (subject to change without notice)
 // In case you rely on them, be sure to pin the version
 
-import type { Atom, WritableAtom } from './atom.ts'
+import { type Atom, type WritableAtom } from './atom.ts'
 
 type AnyValue = unknown
 type AnyError = unknown
@@ -11,6 +11,9 @@ type OnUnmount = () => void
 type Getter = Parameters<AnyAtom['read']>[0]
 type Setter = Parameters<AnyWritableAtom['write']>[1]
 type EpochNumber = number
+type WithRequired<T, K extends keyof T> = Omit<T, K> & {
+  [P in K]-?: NonNullable<T[P]>
+}
 
 /**
  * Mutable atom state,
@@ -95,10 +98,9 @@ type AtomWrite = <Value, Args extends unknown[], Result>(
 type AtomOnInit = <Value>(store: Store, atom: Atom<Value>) => void
 type AtomOnMount = <Value, Args extends unknown[], Result>(
   store: Store,
-  atom: WritableAtom<Value, Args, Result>,
+  atom: WithRequired<WritableAtom<Value, Args, Result>, 'onMount'>,
   setAtom: (...args: Args) => Result,
 ) => OnUnmount | void
-
 type EnsureAtomState = <Value>(
   store: Store,
   atom: Atom<Value>,
@@ -234,6 +236,12 @@ function hasInitialValue<T extends Atom<AnyValue>>(
 
 function isActuallyWritableAtom(atom: AnyAtom): atom is AnyWritableAtom {
   return !!(atom as AnyWritableAtom).write
+}
+
+function hasOnMount<Value, Args extends unknown[], Result>(
+  atom: WritableAtom<Value, Args, Result>,
+): atom is WithRequired<WritableAtom<Value, Args, Result>, 'onMount'> {
+  return !!atom.onMount
 }
 
 function isAtomStateInitialized<Value>(atomState: AtomState<Value>): boolean {
@@ -837,7 +845,7 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
       t: new Set(),
     }
     mountedMap.set(atom, mounted)
-    if (isActuallyWritableAtom(atom)) {
+    if (isActuallyWritableAtom(atom) && hasOnMount(atom)) {
       const processOnMount = () => {
         let isSync = true
         const setAtom = (...args: unknown[]) => {
