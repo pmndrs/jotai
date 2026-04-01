@@ -837,7 +837,7 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (store, atom) => {
       t: new Set(),
     }
     mountedMap.set(atom, mounted)
-    if (isActuallyWritableAtom(atom)) {
+    if (isActuallyWritableAtom(atom) && atom.onMount) {
       const processOnMount = () => {
         let isSync = true
         const setAtom = (...args: unknown[]) => {
