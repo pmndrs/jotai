@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai'
+import type { Atom } from 'jotai'
 import type {
   INTERNAL_AtomState,
   INTERNAL_AtomStateMap,
@@ -213,6 +214,22 @@ describe('internals', () => {
     expect(() => invalidateDependents(store, baseAtom)).not.toThrow()
     unsub()
   })
+
+  it('subscribing to a linear chain deeper than the JS stack limit should not overflow', () => {
+    const stackDepth = measureMaxSyncRecursionDepth() * 10
+    const store = createStore()
+    const base = atom(0)
+    const chain: Atom<unknown>[] = [base]
+    for (let i = 0; i < stackDepth; i++) {
+      const parent = chain[chain.length - 1]!
+      chain.push(atom((get) => get(parent)))
+    }
+    chain.forEach(store.get)
+    const leaf = chain[chain.length - 1]!
+    expect(() => store.sub(leaf, () => {})).not.toThrowError(
+      'Maximum call stack size exceeded',
+    )
+  })
 })
 
 describe('store hooks', () => {
@@ -330,4 +347,18 @@ function isBuildingBlocks(blocks: ReadonlyArray<unknown> | undefined) {
     blocks.length === buildingBlockLength &&
     isSparse(blocks) === false
   )
+}
+
+/** Deepest nested synchronous self-call before the engine throws (stack overflow). */
+function measureMaxSyncRecursionDepth(): number {
+  let max = 0
+  const descend = (n: number) => {
+    try {
+      descend(n + 1)
+    } catch {
+      max = n
+    }
+  }
+  descend(0)
+  return max
 }
