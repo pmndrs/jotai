@@ -97,64 +97,69 @@ type AtomOnMount = <Value, Args extends unknown[], Result>(
 ) => OnUnmount | void
 
 type EnsureAtomState = <Value>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: Atom<Value>,
 ) => AtomState<Value>
-type FlushCallbacks = (buildingBlocks: BuildingBlocks) => void
-type RecomputeInvalidatedAtoms = (buildingBlocks: BuildingBlocks) => void
+type FlushCallbacks = (buildingBlocks: Readonly<BuildingBlocks>) => void
+type RecomputeInvalidatedAtoms = (
+  buildingBlocks: Readonly<BuildingBlocks>,
+) => void
 type ReadAtomState = <Value>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: Atom<Value>,
 ) => AtomState<Value>
 type InvalidateDependents = (
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: AnyAtom,
 ) => void
 type WriteAtomState = <Value, Args extends unknown[], Result>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: WritableAtom<Value, Args, Result>,
   args: Args,
 ) => Result
-type MountDependencies = (buildingBlocks: BuildingBlocks, atom: AnyAtom) => void
+type MountDependencies = (
+  buildingBlocks: Readonly<BuildingBlocks>,
+  atom: AnyAtom,
+) => void
 type MountAtom = <Value>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: Atom<Value>,
 ) => Mounted
 type UnmountAtom = <Value>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: Atom<Value>,
 ) => Mounted | undefined
 type SetAtomStateValueOrPromise = <Value>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: Atom<Value>,
   valueOrPromise: Value,
 ) => void
 type StoreGet = <Value>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: Atom<Value>,
 ) => Value
 type StoreSet = <Value, Args extends unknown[], Result>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: WritableAtom<Value, Args, Result>,
   args: Args,
 ) => Result
 type StoreSub = (
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   atom: AnyAtom,
   listener: () => void,
 ) => () => void
 type EnhanceBuildingBlocks = (
-  buildingBlocks: Readonly<BuildingBlocks>,
+  buildingBlocks: Readonly<Readonly<BuildingBlocks>>,
   store: Store,
-) => Readonly<BuildingBlocks>
+) => Readonly<Readonly<BuildingBlocks>>
 type AbortHandlersMap = WeakMapLike<PromiseLike<unknown>, Set<() => void>>
 type RegisterAbortHandler = <T>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   promise: PromiseLike<T>,
   abortHandler: () => void,
 ) => void
 type AbortPromise = <T>(
-  buildingBlocks: BuildingBlocks,
+  buildingBlocks: Readonly<BuildingBlocks>,
   promise: PromiseLike<T>,
 ) => void
 type StoreEpochHolder = [n: EpochNumber]
@@ -510,7 +515,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
 }
 
 // Dev only
-const storeMutationSet = new WeakSet<BuildingBlocks>()
+const storeMutationSet = new WeakSet<Readonly<BuildingBlocks>>()
 
 const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
   const BB_mountedMap = buildingBlocks[1]
