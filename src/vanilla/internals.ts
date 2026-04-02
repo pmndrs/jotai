@@ -384,29 +384,29 @@ const BUILDING_BLOCK_ensureAtomState: EnsureAtomState = (
   buildingBlocks,
   atom,
 ) => {
-  const BB_atomStateMap = buildingBlocks[0]
-  const BB_storeHooks = buildingBlocks[6]
-  const BB_atomOnInit = buildingBlocks[9]
+  const atomStateMap = buildingBlocks[0]
+  const storeHooks = buildingBlocks[6]
+  const atomOnInit = buildingBlocks[9]
   if (import.meta.env?.MODE !== 'production' && !atom) {
     throw new Error('Atom is undefined or null')
   }
-  let atomState = BB_atomStateMap.get(atom)
+  let atomState = atomStateMap.get(atom)
   if (!atomState) {
     atomState = { d: new Map(), p: new Set(), n: 0 }
-    BB_atomStateMap.set(atom, atomState)
-    BB_storeHooks.i?.(atom)
-    BB_atomOnInit?.(atom)
+    atomStateMap.set(atom, atomState)
+    storeHooks.i?.(atom)
+    atomOnInit?.(atom)
   }
   return atomState as never
 }
 
 const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (buildingBlocks) => {
-  const BB_mountedMap = buildingBlocks[1]
-  const BB_changedAtoms = buildingBlocks[3]
-  const BB_mountCallbacks = buildingBlocks[4]
-  const BB_unmountCallbacks = buildingBlocks[5]
-  const BB_storeHooks = buildingBlocks[6]
-  const BB_recomputeInvalidatedAtoms = buildingBlocks[13]
+  const mountedMap = buildingBlocks[1]
+  const changedAtoms = buildingBlocks[3]
+  const mountCallbacks = buildingBlocks[4]
+  const unmountCallbacks = buildingBlocks[5]
+  const storeHooks = buildingBlocks[6]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
   const errors: unknown[] = []
   const call = (fn: () => void) => {
     try {
@@ -416,26 +416,22 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (buildingBlocks) => {
     }
   }
   do {
-    if (BB_storeHooks.f) {
-      call(BB_storeHooks.f)
+    if (storeHooks.f) {
+      call(storeHooks.f)
     }
     const callbacks = new Set<() => void>()
     const add = callbacks.add.bind(callbacks)
-    BB_changedAtoms.forEach((atom) => BB_mountedMap.get(atom)?.l.forEach(add))
-    BB_changedAtoms.clear()
-    BB_unmountCallbacks.forEach(add)
-    BB_unmountCallbacks.clear()
-    BB_mountCallbacks.forEach(add)
-    BB_mountCallbacks.clear()
+    changedAtoms.forEach((atom) => mountedMap.get(atom)?.l.forEach(add))
+    changedAtoms.clear()
+    unmountCallbacks.forEach(add)
+    unmountCallbacks.clear()
+    mountCallbacks.forEach(add)
+    mountCallbacks.clear()
     callbacks.forEach(call)
-    if (BB_changedAtoms.size) {
-      BB_recomputeInvalidatedAtoms(buildingBlocks)
+    if (changedAtoms.size) {
+      recomputeInvalidatedAtoms(buildingBlocks)
     }
-  } while (
-    BB_changedAtoms.size ||
-    BB_unmountCallbacks.size ||
-    BB_mountCallbacks.size
-  )
+  } while (changedAtoms.size || unmountCallbacks.size || mountCallbacks.size)
   if (errors.length) {
     throw new AggregateError(errors)
   }
@@ -444,12 +440,12 @@ const BUILDING_BLOCK_flushCallbacks: FlushCallbacks = (buildingBlocks) => {
 const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   buildingBlocks,
 ) => {
-  const BB_mountedMap = buildingBlocks[1]
-  const BB_invalidatedAtoms = buildingBlocks[2]
-  const BB_changedAtoms = buildingBlocks[3]
-  const BB_ensureAtomState = buildingBlocks[11]
-  const BB_readAtomState = buildingBlocks[14]
-  const BB_mountDependencies = buildingBlocks[17]
+  const mountedMap = buildingBlocks[1]
+  const invalidatedAtoms = buildingBlocks[2]
+  const changedAtoms = buildingBlocks[3]
+  const ensureAtomState = buildingBlocks[11]
+  const readAtomState = buildingBlocks[14]
+  const mountDependencies = buildingBlocks[17]
   // Step 1: traverse the dependency graph to build the topologically sorted atom list
   // We don't bother to check for cycles, which simplifies the algorithm.
   // This is a topological sort via depth-first search, slightly modified from
@@ -460,10 +456,10 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
   const visited = new WeakSet<AnyAtom>()
   // Visit the root atom. This is the only atom in the dependency graph
   // without incoming edges, which is one reason we can simplify the algorithm
-  const stack: AnyAtom[] = Array.from(BB_changedAtoms)
+  const stack: AnyAtom[] = Array.from(changedAtoms)
   while (stack.length) {
     const a = stack[stack.length - 1]!
-    const aState = BB_ensureAtomState(buildingBlocks, a)
+    const aState = ensureAtomState(buildingBlocks, a)
     if (visited.has(a)) {
       // All dependents have been processed, now process this atom
       stack.pop()
@@ -473,11 +469,11 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
       // The algorithm calls for pushing onto the front of the list. For
       // performance, we will simply push onto the end, and then will iterate in
       // reverse order later.
-      if (BB_invalidatedAtoms.get(a) === aState.n) {
+      if (invalidatedAtoms.get(a) === aState.n) {
         topSortedReversed.push([a, aState])
       } else if (
         import.meta.env?.MODE !== 'production' &&
-        BB_invalidatedAtoms.has(a)
+        invalidatedAtoms.has(a)
       ) {
         throw new Error('[Bug] invalidated atom exists')
       }
@@ -488,7 +484,7 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     }
     visiting.add(a)
     // Push unvisited dependents onto the stack
-    for (const d of getMountedOrPendingDependents(a, aState, BB_mountedMap)) {
+    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
       if (!visiting.has(d)) {
         stack.push(d)
       }
@@ -500,17 +496,17 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
     const [a, aState] = topSortedReversed[i]!
     let hasChangedDeps = false
     for (const dep of aState.d.keys()) {
-      if (dep !== a && BB_changedAtoms.has(dep)) {
+      if (dep !== a && changedAtoms.has(dep)) {
         hasChangedDeps = true
         break
       }
     }
     if (hasChangedDeps) {
-      BB_invalidatedAtoms.set(a, aState.n)
-      BB_readAtomState(buildingBlocks, a)
-      BB_mountDependencies(buildingBlocks, a)
+      invalidatedAtoms.set(a, aState.n)
+      readAtomState(buildingBlocks, a)
+      mountDependencies(buildingBlocks, a)
     }
-    BB_invalidatedAtoms.delete(a)
+    invalidatedAtoms.delete(a)
   }
 }
 
@@ -518,30 +514,29 @@ const BUILDING_BLOCK_recomputeInvalidatedAtoms: RecomputeInvalidatedAtoms = (
 const storeMutationSet = new WeakSet<Readonly<BuildingBlocks>>()
 
 const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
-  const BB_mountedMap = buildingBlocks[1]
-  const BB_invalidatedAtoms = buildingBlocks[2]
-  const BB_changedAtoms = buildingBlocks[3]
-  const BB_storeHooks = buildingBlocks[6]
-  const BB_atomRead = buildingBlocks[7]
-  const BB_ensureAtomState = buildingBlocks[11]
-  const BB_flushCallbacks = buildingBlocks[12]
-  const BB_recomputeInvalidatedAtoms = buildingBlocks[13]
-  const BB_readAtomState = buildingBlocks[14]
-  const BB_writeAtomState = buildingBlocks[16]
-  const BB_mountDependencies = buildingBlocks[17]
-  const BB_setAtomStateValueOrPromise = buildingBlocks[20]
-  const BB_registerAbortHandler = buildingBlocks[26]
-  const BB_storeEpochHolder = buildingBlocks[28]
-  const atomState = BB_ensureAtomState(buildingBlocks, atom)
-  const storeEpochNumber = BB_storeEpochHolder[0]
+  const mountedMap = buildingBlocks[1]
+  const invalidatedAtoms = buildingBlocks[2]
+  const changedAtoms = buildingBlocks[3]
+  const storeHooks = buildingBlocks[6]
+  const atomRead = buildingBlocks[7]
+  const ensureAtomState = buildingBlocks[11]
+  const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const readAtomState = buildingBlocks[14]
+  const writeAtomState = buildingBlocks[16]
+  const mountDependencies = buildingBlocks[17]
+  const setAtomStateValueOrPromise = buildingBlocks[20]
+  const registerAbortHandler = buildingBlocks[26]
+  const storeEpochHolder = buildingBlocks[28]
+  const atomState = ensureAtomState(buildingBlocks, atom)
+  const storeEpochNumber = storeEpochHolder[0]
   // See if we can skip recomputing this atom.
   if (isAtomStateInitialized(atomState)) {
     if (
       // If the atom is mounted, we can use cached atom state,
       // because it should have been updated by dependencies.
       // We can't use the cache if the atom is invalidated.
-      (BB_mountedMap.has(atom) &&
-        BB_invalidatedAtoms.get(atom) !== atomState.n) ||
+      (mountedMap.has(atom) && invalidatedAtoms.get(atom) !== atomState.n) ||
       // If atom is not mounted, we can use cached atom state,
       // only if store hasn't been mutated.
       atomState.m === storeEpochNumber
@@ -553,7 +548,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
     // If all dependencies haven't changed, we can use the cache.
     let hasChangedDeps = false
     for (const [a, n] of atomState.d) {
-      if (BB_readAtomState(buildingBlocks, a).n !== n) {
+      if (readAtomState(buildingBlocks, a).n !== n) {
         hasChangedDeps = true
         break
       }
@@ -575,22 +570,22 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
     }
   }
   const mountDependenciesIfAsync = () => {
-    if (BB_mountedMap.has(atom)) {
+    if (mountedMap.has(atom)) {
       // If changedAtoms is already populated, an outer recompute cycle will handle it
-      const shouldRecompute = !BB_changedAtoms.size
-      BB_mountDependencies(buildingBlocks, atom)
+      const shouldRecompute = !changedAtoms.size
+      mountDependencies(buildingBlocks, atom)
       if (shouldRecompute) {
-        BB_recomputeInvalidatedAtoms(buildingBlocks)
-        BB_flushCallbacks(buildingBlocks)
+        recomputeInvalidatedAtoms(buildingBlocks)
+        flushCallbacks(buildingBlocks)
       }
     }
   }
   const getter = <V>(a: Atom<V>) => {
     if (a === (atom as AnyAtom)) {
-      const aState = BB_ensureAtomState(buildingBlocks, a)
+      const aState = ensureAtomState(buildingBlocks, a)
       if (!isAtomStateInitialized(aState)) {
         if (hasInitialValue(a)) {
-          BB_setAtomStateValueOrPromise(buildingBlocks, a, a.init)
+          setAtomStateValueOrPromise(buildingBlocks, a, a.init)
         } else {
           // NOTE invalid derived atoms can reach here
           throw new Error('no atom init')
@@ -599,7 +594,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
       return returnAtomValue(aState)
     }
     // a !== atom
-    const aState = BB_readAtomState(buildingBlocks, a)
+    const aState = readAtomState(buildingBlocks, a)
     try {
       return returnAtomValue(aState)
     } finally {
@@ -608,8 +603,8 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
       if (isPromiseLike(atomState.v)) {
         addPendingPromiseToDependency(atom, atomState.v, aState)
       }
-      if (BB_mountedMap.has(atom)) {
-        BB_mountedMap.get(a)?.t.add(atom)
+      if (mountedMap.has(atom)) {
+        mountedMap.get(a)?.t.add(atom)
       }
       if (!isSync) {
         mountDependenciesIfAsync()
@@ -645,10 +640,10 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
           }
           if (!isSync) {
             try {
-              return BB_writeAtomState(buildingBlocks, atom, args)
+              return writeAtomState(buildingBlocks, atom, args)
             } finally {
-              BB_recomputeInvalidatedAtoms(buildingBlocks)
-              BB_flushCallbacks(buildingBlocks)
+              recomputeInvalidatedAtoms(buildingBlocks)
+              flushCallbacks(buildingBlocks)
             }
           }
         }
@@ -657,12 +652,12 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
     },
   }
   const prevEpochNumber = atomState.n
-  const prevInvalidated = BB_invalidatedAtoms.get(atom) === prevEpochNumber
+  const prevInvalidated = invalidatedAtoms.get(atom) === prevEpochNumber
   try {
     if (import.meta.env?.MODE !== 'production') {
       storeMutationSet.delete(buildingBlocks)
     }
-    const valueOrPromise = BB_atomRead(atom, getter, options as never)
+    const valueOrPromise = atomRead(atom, getter, options as never)
     if (
       import.meta.env?.MODE !== 'production' &&
       storeMutationSet.has(buildingBlocks)
@@ -671,9 +666,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
         'Detected store mutation during atom read. This is not supported.',
       )
     }
-    BB_setAtomStateValueOrPromise(buildingBlocks, atom, valueOrPromise)
+    setAtomStateValueOrPromise(buildingBlocks, atom, valueOrPromise)
     if (isPromiseLike(valueOrPromise)) {
-      BB_registerAbortHandler(buildingBlocks, valueOrPromise, () =>
+      registerAbortHandler(buildingBlocks, valueOrPromise, () =>
         controller?.abort(),
       )
       const settle = () => {
@@ -684,7 +679,7 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
     } else {
       pruneDependencies()
     }
-    BB_storeHooks.r?.(atom)
+    storeHooks.r?.(atom)
     atomState.m = storeEpochNumber
     return atomState
   } catch (error) {
@@ -696,9 +691,9 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (buildingBlocks, atom) => {
   } finally {
     isSync = false
     if (atomState.n !== prevEpochNumber && prevInvalidated) {
-      BB_invalidatedAtoms.set(atom, atomState.n)
-      BB_changedAtoms.add(atom)
-      BB_storeHooks.c?.(atom)
+      invalidatedAtoms.set(atom, atomState.n)
+      changedAtoms.add(atom)
+      storeHooks.c?.(atom)
     }
   }
 }
@@ -707,17 +702,17 @@ const BUILDING_BLOCK_invalidateDependents: InvalidateDependents = (
   buildingBlocks,
   atom,
 ) => {
-  const BB_mountedMap = buildingBlocks[1]
-  const BB_invalidatedAtoms = buildingBlocks[2]
-  const BB_ensureAtomState = buildingBlocks[11]
+  const mountedMap = buildingBlocks[1]
+  const invalidatedAtoms = buildingBlocks[2]
+  const ensureAtomState = buildingBlocks[11]
   const stack: AnyAtom[] = [atom]
   while (stack.length) {
     const a = stack.pop()!
-    const aState = BB_ensureAtomState(buildingBlocks, a)
-    for (const d of getMountedOrPendingDependents(a, aState, BB_mountedMap)) {
-      const dState = BB_ensureAtomState(buildingBlocks, d)
-      if (BB_invalidatedAtoms.get(d) !== dState.n) {
-        BB_invalidatedAtoms.set(d, dState.n)
+    const aState = ensureAtomState(buildingBlocks, a)
+    for (const d of getMountedOrPendingDependents(a, aState, mountedMap)) {
+      const dState = ensureAtomState(buildingBlocks, d)
+      if (invalidatedAtoms.get(d) !== dState.n) {
+        invalidatedAtoms.set(d, dState.n)
         stack.push(d)
       }
     }
@@ -729,26 +724,26 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
   atom,
   args,
 ) => {
-  const BB_changedAtoms = buildingBlocks[3]
-  const BB_storeHooks = buildingBlocks[6]
-  const BB_atomWrite = buildingBlocks[8]
-  const BB_ensureAtomState = buildingBlocks[11]
-  const BB_flushCallbacks = buildingBlocks[12]
-  const BB_recomputeInvalidatedAtoms = buildingBlocks[13]
-  const BB_readAtomState = buildingBlocks[14]
-  const BB_invalidateDependents = buildingBlocks[15]
-  const BB_writeAtomState = buildingBlocks[16]
-  const BB_mountDependencies = buildingBlocks[17]
-  const BB_setAtomStateValueOrPromise = buildingBlocks[20]
-  const BB_storeEpochHolder = buildingBlocks[28]
+  const changedAtoms = buildingBlocks[3]
+  const storeHooks = buildingBlocks[6]
+  const atomWrite = buildingBlocks[8]
+  const ensureAtomState = buildingBlocks[11]
+  const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const readAtomState = buildingBlocks[14]
+  const invalidateDependents = buildingBlocks[15]
+  const writeAtomState = buildingBlocks[16]
+  const mountDependencies = buildingBlocks[17]
+  const setAtomStateValueOrPromise = buildingBlocks[20]
+  const storeEpochHolder = buildingBlocks[28]
   let isSync = true
   const getter: Getter = <V>(a: Atom<V>) =>
-    returnAtomValue(BB_readAtomState(buildingBlocks, a))
+    returnAtomValue(readAtomState(buildingBlocks, a))
   const setter: Setter = <V, As extends unknown[], R>(
     a: WritableAtom<V, As, R>,
     ...args: As
   ) => {
-    const aState = BB_ensureAtomState(buildingBlocks, a)
+    const aState = ensureAtomState(buildingBlocks, a)
     try {
       if (a === (atom as AnyAtom)) {
         if (!hasInitialValue(a)) {
@@ -760,27 +755,27 @@ const BUILDING_BLOCK_writeAtomState: WriteAtomState = (
         }
         const prevEpochNumber = aState.n
         const v = args[0] as V
-        BB_setAtomStateValueOrPromise(buildingBlocks, a, v)
-        BB_mountDependencies(buildingBlocks, a)
+        setAtomStateValueOrPromise(buildingBlocks, a, v)
+        mountDependencies(buildingBlocks, a)
         if (prevEpochNumber !== aState.n) {
-          ++BB_storeEpochHolder[0]
-          BB_changedAtoms.add(a)
-          BB_invalidateDependents(buildingBlocks, a)
-          BB_storeHooks.c?.(a)
+          ++storeEpochHolder[0]
+          changedAtoms.add(a)
+          invalidateDependents(buildingBlocks, a)
+          storeHooks.c?.(a)
         }
         return undefined as R
       } else {
-        return BB_writeAtomState(buildingBlocks, a, args)
+        return writeAtomState(buildingBlocks, a, args)
       }
     } finally {
       if (!isSync) {
-        BB_recomputeInvalidatedAtoms(buildingBlocks)
-        BB_flushCallbacks(buildingBlocks)
+        recomputeInvalidatedAtoms(buildingBlocks)
+        flushCallbacks(buildingBlocks)
       }
     }
   }
   try {
-    return BB_atomWrite(atom, getter, setter, ...args)
+    return atomWrite(atom, getter, setter, ...args)
   } finally {
     isSync = false
   }
@@ -790,33 +785,33 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (
   buildingBlocks,
   atom,
 ) => {
-  const BB_mountedMap = buildingBlocks[1]
-  const BB_changedAtoms = buildingBlocks[3]
-  const BB_storeHooks = buildingBlocks[6]
-  const BB_ensureAtomState = buildingBlocks[11]
-  const BB_invalidateDependents = buildingBlocks[15]
-  const BB_mountAtom = buildingBlocks[18]
-  const BB_unmountAtom = buildingBlocks[19]
-  const atomState = BB_ensureAtomState(buildingBlocks, atom)
-  const mounted = BB_mountedMap.get(atom)
+  const mountedMap = buildingBlocks[1]
+  const changedAtoms = buildingBlocks[3]
+  const storeHooks = buildingBlocks[6]
+  const ensureAtomState = buildingBlocks[11]
+  const invalidateDependents = buildingBlocks[15]
+  const mountAtom = buildingBlocks[18]
+  const unmountAtom = buildingBlocks[19]
+  const atomState = ensureAtomState(buildingBlocks, atom)
+  const mounted = mountedMap.get(atom)
   if (mounted) {
     for (const [a, n] of atomState.d) {
       if (!mounted.d.has(a)) {
-        const aState = BB_ensureAtomState(buildingBlocks, a)
-        const aMounted = BB_mountAtom(buildingBlocks, a)
+        const aState = ensureAtomState(buildingBlocks, a)
+        const aMounted = mountAtom(buildingBlocks, a)
         aMounted.t.add(atom)
         mounted.d.add(a)
         if (n !== aState.n) {
-          BB_changedAtoms.add(a)
-          BB_invalidateDependents(buildingBlocks, a)
-          BB_storeHooks.c?.(a)
+          changedAtoms.add(a)
+          invalidateDependents(buildingBlocks, a)
+          storeHooks.c?.(a)
         }
       }
     }
     for (const a of mounted.d) {
       if (!atomState.d.has(a)) {
         mounted.d.delete(a)
-        const aMounted = BB_unmountAtom(buildingBlocks, a)
+        const aMounted = unmountAtom(buildingBlocks, a)
         aMounted?.t.delete(atom)
       }
     }
@@ -824,24 +819,24 @@ const BUILDING_BLOCK_mountDependencies: MountDependencies = (
 }
 
 const BUILDING_BLOCK_mountAtom: MountAtom = (buildingBlocks, atom) => {
-  const BB_mountedMap = buildingBlocks[1]
-  const BB_mountCallbacks = buildingBlocks[4]
-  const BB_storeHooks = buildingBlocks[6]
-  const BB_atomOnMount = buildingBlocks[10]
-  const BB_ensureAtomState = buildingBlocks[11]
-  const BB_flushCallbacks = buildingBlocks[12]
-  const BB_recomputeInvalidatedAtoms = buildingBlocks[13]
-  const BB_readAtomState = buildingBlocks[14]
-  const BB_writeAtomState = buildingBlocks[16]
-  const BB_mountAtom = buildingBlocks[18]
-  const atomState = BB_ensureAtomState(buildingBlocks, atom)
-  let mounted = BB_mountedMap.get(atom)
+  const mountedMap = buildingBlocks[1]
+  const mountCallbacks = buildingBlocks[4]
+  const storeHooks = buildingBlocks[6]
+  const atomOnMount = buildingBlocks[10]
+  const ensureAtomState = buildingBlocks[11]
+  const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const readAtomState = buildingBlocks[14]
+  const writeAtomState = buildingBlocks[16]
+  const mountAtom = buildingBlocks[18]
+  const atomState = ensureAtomState(buildingBlocks, atom)
+  let mounted = mountedMap.get(atom)
   if (!mounted) {
     // recompute atom state
-    BB_readAtomState(buildingBlocks, atom)
+    readAtomState(buildingBlocks, atom)
     // mount dependencies first
     for (const a of atomState.d.keys()) {
-      const aMounted = BB_mountAtom(buildingBlocks, a)
+      const aMounted = mountAtom(buildingBlocks, a)
       aMounted.t.add(atom)
     }
     // mount self
@@ -850,22 +845,22 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (buildingBlocks, atom) => {
       d: new Set(atomState.d.keys()),
       t: new Set(),
     }
-    BB_mountedMap.set(atom, mounted)
+    mountedMap.set(atom, mounted)
     if (isActuallyWritableAtom(atom)) {
       const processOnMount = () => {
         let isSync = true
         const setAtom = (...args: unknown[]) => {
           try {
-            return BB_writeAtomState(buildingBlocks, atom, args)
+            return writeAtomState(buildingBlocks, atom, args)
           } finally {
             if (!isSync) {
-              BB_recomputeInvalidatedAtoms(buildingBlocks)
-              BB_flushCallbacks(buildingBlocks)
+              recomputeInvalidatedAtoms(buildingBlocks)
+              flushCallbacks(buildingBlocks)
             }
           }
         }
         try {
-          const onUnmount = BB_atomOnMount(atom, setAtom)
+          const onUnmount = atomOnMount(atom, setAtom)
           if (onUnmount) {
             mounted!.u = () => {
               isSync = true
@@ -880,27 +875,27 @@ const BUILDING_BLOCK_mountAtom: MountAtom = (buildingBlocks, atom) => {
           isSync = false
         }
       }
-      BB_mountCallbacks.add(processOnMount)
+      mountCallbacks.add(processOnMount)
     }
-    BB_storeHooks.m?.(atom)
+    storeHooks.m?.(atom)
   }
   return mounted
 }
 
 const BUILDING_BLOCK_unmountAtom: UnmountAtom = (buildingBlocks, atom) => {
-  const BB_mountedMap = buildingBlocks[1]
-  const BB_unmountCallbacks = buildingBlocks[5]
-  const BB_storeHooks = buildingBlocks[6]
-  const BB_ensureAtomState = buildingBlocks[11]
-  const BB_unmountAtom = buildingBlocks[19]
-  const atomState = BB_ensureAtomState(buildingBlocks, atom)
-  let mounted = BB_mountedMap.get(atom)
+  const mountedMap = buildingBlocks[1]
+  const unmountCallbacks = buildingBlocks[5]
+  const storeHooks = buildingBlocks[6]
+  const ensureAtomState = buildingBlocks[11]
+  const unmountAtom = buildingBlocks[19]
+  const atomState = ensureAtomState(buildingBlocks, atom)
+  let mounted = mountedMap.get(atom)
   if (!mounted || mounted.l.size) {
     return mounted
   }
   let isDependent = false
   for (const a of mounted.t) {
-    if (BB_mountedMap.get(a)?.d.has(atom)) {
+    if (mountedMap.get(a)?.d.has(atom)) {
       isDependent = true
       break
     }
@@ -908,16 +903,16 @@ const BUILDING_BLOCK_unmountAtom: UnmountAtom = (buildingBlocks, atom) => {
   if (!isDependent) {
     // unmount self
     if (mounted.u) {
-      BB_unmountCallbacks.add(mounted.u)
+      unmountCallbacks.add(mounted.u)
     }
     mounted = undefined
-    BB_mountedMap.delete(atom)
+    mountedMap.delete(atom)
     // unmount dependencies
     for (const a of atomState.d.keys()) {
-      const aMounted = BB_unmountAtom(buildingBlocks, a)
+      const aMounted = unmountAtom(buildingBlocks, a)
       aMounted?.t.delete(atom)
     }
-    BB_storeHooks.u?.(atom)
+    storeHooks.u?.(atom)
     return undefined
   }
   return mounted
@@ -928,9 +923,9 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   atom,
   valueOrPromise,
 ) => {
-  const BB_ensureAtomState = buildingBlocks[11]
-  const BB_abortPromise = buildingBlocks[27]
-  const atomState = BB_ensureAtomState(buildingBlocks, atom)
+  const ensureAtomState = buildingBlocks[11]
+  const abortPromise = buildingBlocks[27]
+  const atomState = ensureAtomState(buildingBlocks, atom)
   const hasPrevValue = 'v' in atomState
   const prevValue = atomState.v
   if (isPromiseLike(valueOrPromise)) {
@@ -938,7 +933,7 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
       addPendingPromiseToDependency(
         atom,
         valueOrPromise,
-        BB_ensureAtomState(buildingBlocks, a),
+        ensureAtomState(buildingBlocks, a),
       )
     }
   }
@@ -947,44 +942,44 @@ const BUILDING_BLOCK_setAtomStateValueOrPromise: SetAtomStateValueOrPromise = (
   if (!hasPrevValue || !Object.is(prevValue, atomState.v)) {
     ++atomState.n
     if (isPromiseLike(prevValue)) {
-      BB_abortPromise(buildingBlocks, prevValue)
+      abortPromise(buildingBlocks, prevValue)
     }
   }
 }
 
 const BUILDING_BLOCK_storeGet: StoreGet = (buildingBlocks, atom) => {
-  const BB_readAtomState = buildingBlocks[14]
-  return returnAtomValue(BB_readAtomState(buildingBlocks, atom)) as any
+  const readAtomState = buildingBlocks[14]
+  return returnAtomValue(readAtomState(buildingBlocks, atom)) as any
 }
 
 const BUILDING_BLOCK_storeSet: StoreSet = (buildingBlocks, atom, args) => {
-  const BB_changedAtoms = buildingBlocks[3]
-  const BB_flushCallbacks = buildingBlocks[12]
-  const BB_recomputeInvalidatedAtoms = buildingBlocks[13]
-  const BB_writeAtomState = buildingBlocks[16]
-  const prevChangedAtomsSize = BB_changedAtoms.size
+  const changedAtoms = buildingBlocks[3]
+  const flushCallbacks = buildingBlocks[12]
+  const recomputeInvalidatedAtoms = buildingBlocks[13]
+  const writeAtomState = buildingBlocks[16]
+  const prevChangedAtomsSize = changedAtoms.size
   try {
-    return BB_writeAtomState(buildingBlocks, atom, args) as any
+    return writeAtomState(buildingBlocks, atom, args) as any
   } finally {
-    if (BB_changedAtoms.size !== prevChangedAtomsSize) {
-      BB_recomputeInvalidatedAtoms(buildingBlocks)
-      BB_flushCallbacks(buildingBlocks)
+    if (changedAtoms.size !== prevChangedAtomsSize) {
+      recomputeInvalidatedAtoms(buildingBlocks)
+      flushCallbacks(buildingBlocks)
     }
   }
 }
 
 const BUILDING_BLOCK_storeSub: StoreSub = (buildingBlocks, atom, listener) => {
-  const BB_flushCallbacks = buildingBlocks[12]
-  const BB_mountAtom = buildingBlocks[18]
-  const BB_unmountAtom = buildingBlocks[19]
-  const mounted = BB_mountAtom(buildingBlocks, atom)
+  const flushCallbacks = buildingBlocks[12]
+  const mountAtom = buildingBlocks[18]
+  const unmountAtom = buildingBlocks[19]
+  const mounted = mountAtom(buildingBlocks, atom)
   const listeners = mounted.l
   listeners.add(listener)
-  BB_flushCallbacks(buildingBlocks)
+  flushCallbacks(buildingBlocks)
   return () => {
     listeners.delete(listener)
-    BB_unmountAtom(buildingBlocks, atom)
-    BB_flushCallbacks(buildingBlocks)
+    unmountAtom(buildingBlocks, atom)
+    flushCallbacks(buildingBlocks)
   }
 }
 
@@ -993,20 +988,20 @@ const BUILDING_BLOCK_registerAbortHandler: RegisterAbortHandler = (
   promise,
   abortHandler,
 ) => {
-  const BB_abortHandlersMap = buildingBlocks[25]
-  let abortHandlers = BB_abortHandlersMap.get(promise)
+  const abortHandlersMap = buildingBlocks[25]
+  let abortHandlers = abortHandlersMap.get(promise)
   if (!abortHandlers) {
     abortHandlers = new Set()
-    BB_abortHandlersMap.set(promise, abortHandlers)
-    const cleanup = () => BB_abortHandlersMap.delete(promise)
+    abortHandlersMap.set(promise, abortHandlers)
+    const cleanup = () => abortHandlersMap.delete(promise)
     promise.then(cleanup, cleanup)
   }
   abortHandlers.add(abortHandler)
 }
 
 const BUILDING_BLOCK_abortPromise: AbortPromise = (buildingBlocks, promise) => {
-  const BB_abortHandlersMap = buildingBlocks[25]
-  const abortHandlers = BB_abortHandlersMap.get(promise)
+  const abortHandlersMap = buildingBlocks[25]
+  const abortHandlers = abortHandlersMap.get(promise)
   abortHandlers?.forEach((fn) => fn())
 }
 
@@ -1019,9 +1014,9 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
       'Store must be created by buildStore to read its building blocks',
     )
   }
-  const BB_enhanceBuildingBlocks = buildingBlocks[24]
-  if (BB_enhanceBuildingBlocks) {
-    return BB_enhanceBuildingBlocks(buildingBlocks, store)
+  const enhanceBuildingBlocks = buildingBlocks[24]
+  if (enhanceBuildingBlocks) {
+    return enhanceBuildingBlocks(buildingBlocks, store)
   }
   return buildingBlocks
 }
@@ -1029,13 +1024,13 @@ function getBuildingBlocks(store: Store): Readonly<BuildingBlocks> {
 function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
   const store = {
     get(atom) {
-      return BB_storeGet(buildingBlocks, atom)
+      return storeGet(buildingBlocks, atom)
     },
     set(atom, ...args) {
-      return BB_storeSet(buildingBlocks, atom, args)
+      return storeSet(buildingBlocks, atom, args)
     },
     sub(atom, listener) {
-      return BB_storeSub(buildingBlocks, atom, listener)
+      return storeSub(buildingBlocks, atom, listener)
     },
   } as Store
 
@@ -1078,9 +1073,9 @@ function buildStore(...buildArgs: Partial<BuildingBlocks>): Store {
     ] satisfies BuildingBlocks
   ).map((fn, i) => buildArgs[i] || fn) as BuildingBlocks
   buildingBlockMap.set(store, Object.freeze(buildingBlocks))
-  const BB_storeGet = buildingBlocks[21]
-  const BB_storeSet = buildingBlocks[22]
-  const BB_storeSub = buildingBlocks[23]
+  const storeGet = buildingBlocks[21]
+  const storeSet = buildingBlocks[22]
+  const storeSub = buildingBlocks[23]
   return store
 }
 
