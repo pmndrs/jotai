@@ -555,8 +555,6 @@ const BUILDING_BLOCK_readAtomState: ReadAtomState = (store, atom) => {
   }
   // Compute a new state for this atom.
   let isSync = true
-  // Track only the previous deps. As we encounter live deps during this read,
-  // remove them from prevDeps. Whatever remains gets pruned.
   const prevDeps = new Set<AnyAtom>(atomState.d.keys())
   const pruneDependencies = () => {
     for (const a of prevDeps) {
