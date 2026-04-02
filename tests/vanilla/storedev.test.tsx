@@ -32,7 +32,7 @@ const createDevStore = (): INTERNAL_Store & DevStore => {
     undefined,
     storeHooks,
     undefined,
-    (_store, atom, get, set, ...args) => {
+    (atom, get, set, ...args) => {
       if (inRestoreAtom) {
         return set(atom, ...(args as any))
       }
