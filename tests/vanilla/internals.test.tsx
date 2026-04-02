@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { atom, createStore } from 'jotai'
+import type { Atom } from 'jotai'
 import type {
   INTERNAL_AtomState,
   INTERNAL_AtomStateMap,
@@ -15,6 +16,24 @@ import {
 const buildingBlockLength = 29
 
 describe('internals', () => {
+  it('every dependency (deep) should be mounted', () => {
+    const depth = measureMaxSyncRecursionDepth()
+    const mountedMap = new Map()
+    const bb = []
+    bb[1] = mountedMap
+    const store = INTERNAL_buildStore(...bb)
+    const base = atom(0)
+    const chain: Atom<unknown>[] = [base]
+    for (let i = 0; i < depth; i++) {
+      const parent = chain[chain.length - 1]!
+      chain.push(atom((get) => get(parent)))
+    }
+    const leaf = chain[chain.length - 1]!
+    store.sub(leaf, () => {})
+    expect(chain.length).toBe(depth + 1)
+    expect(mountedMap.size).toBe(chain.length)
+  })
+
   it('should not return a sparse building blocks array', () => {
     {
       const store = createStore()
@@ -334,4 +353,18 @@ function isBuildingBlocks(blocks: ReadonlyArray<unknown> | undefined) {
     blocks.length === buildingBlockLength &&
     isSparse(blocks) === false
   )
+}
+
+/** Deepest nested synchronous self-call before the engine throws (stack overflow). */
+function measureMaxSyncRecursionDepth(): number {
+  let max = 0
+  const descend = (n: number) => {
+    try {
+      descend(n + 1)
+    } catch {
+      max = n
+    }
+  }
+  descend(0)
+  return max
 }
